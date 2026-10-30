@@ -1,0 +1,67 @@
+{
+  "_comment": "Path ownership per role agent. Used by pr-policy CI and the dispatcher. Keep in sync with fs_write rules in .kiro/agents/*.json. Paths not owned by any role (.kiro/**, .github/**, tools/**, scripts/check.sh) are owner-only.",
+  "shared": [
+    "package.json",
+    "package-lock.json",
+    ".env.example"
+  ],
+  "roles": {
+    "platform-dev": [
+      "*.config.*",
+      "tsconfig.json",
+      "next-env.d.ts",
+      ".gitignore",
+      ".dockerignore",
+      ".nvmrc",
+      "Dockerfile",
+      "deploy/**",
+      "drizzle/**",
+      "drizzle.config.*",
+      "scripts/migrate.mjs",
+      "src/middleware.ts",
+      "src/app/layout.tsx",
+      "src/app/page.tsx",
+      "src/app/globals.css",
+      "src/app/api/health/**",
+      "src/lib/db/**",
+      "src/lib/version.ts",
+      "src/test/**",
+      "public/**"
+    ],
+    "frontend-dev": [
+      "src/app/**/*.tsx",
+      "src/app/**/*.css",
+      "src/app/fonts/**",
+      "src/components/**",
+      "src/lib/cards/**",
+      "src/lib/ics/**",
+      "src/lib/recall/**",
+      "content/personas/**",
+      "public/**"
+    ],
+    "data-dev": [
+      "src/lib/sources/**",
+      "src/lib/figures/**",
+      "src/lib/events/**",
+      "src/app/api/figures/**",
+      "src/lib/db/schema/figures*",
+      "drizzle/**",
+      "scripts/fetch-figures*",
+      "scripts/prefetch*"
+    ],
+    "crypto-dev": [
+      "src/lib/crypto/**",
+      "src/lib/seal-format/**",
+      "src/app/api/letters/**",
+      "src/app/api/openings/**",
+      "src/lib/db/schema/letters*",
+      "drizzle/**",
+      "scripts/seal-personas*"
+    ]
+  },
+  "exclude_from_size": [
+    "package-lock.json",
+    "drizzle/meta/**"
+  ],
+  "max_changed_lines": 400
+}

@@ -1,0 +1,91 @@
+{
+  "name": "qa",
+  "description": "Revenant independent reviewer: checks a PR against its ticket and the steering docs, writes .qa/verdict.json.",
+  "prompt": "file://./prompts/qa.md",
+  "tools": [
+    "fs_read",
+    "fs_write",
+    "execute_bash",
+    "grep",
+    "glob",
+    "code"
+  ],
+  "includeMcpJson": false,
+  "mcpServers": {},
+  "resources": [
+    "file://.kiro/steering/**/*.md",
+    "file://.kiro/agents/prompts/common.md"
+  ],
+  "permissions": {
+    "rules": [
+      {
+        "capability": "fs_read",
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_write",
+        "match": [
+          ".qa/**"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_write",
+        "match": [
+          ".kiro/**",
+          ".github/**",
+          "tools/**",
+          "scripts/check.sh"
+        ],
+        "effect": "deny"
+      },
+      {
+        "capability": "shell",
+        "match": [
+          "npm *",
+          "npx *",
+          "node *",
+          "bash scripts/check.sh*",
+          "git status*",
+          "git diff*",
+          "git log*",
+          "git show*",
+          "git rev-parse*",
+          "git ls-files*",
+          "ls*",
+          "mkdir *",
+          "pwd",
+          "git add .qa*",
+          "git commit *",
+          "git fetch origin*",
+          "git merge-base*",
+          "helm lint*",
+          "helm template*"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "shell",
+        "match": [
+          "git push*",
+          "git remote*",
+          "git config*",
+          "git reset*",
+          "git checkout main*",
+          "gh *",
+          "sudo *",
+          "kubectl *",
+          "helm install*",
+          "helm upgrade*",
+          "rm -rf /*",
+          "rm -rf ~*",
+          "env",
+          "printenv*",
+          "*github.com*",
+          "*api.github*"
+        ],
+        "effect": "deny"
+      }
+    ]
+  }
+}

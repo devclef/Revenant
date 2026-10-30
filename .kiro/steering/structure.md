@@ -10,8 +10,15 @@ Planned layout. Update this file when the structure changes.
 .
 ├── .kiro/
 │   └── steering/            # These docs
+├── .kiro/agents/            # Role agents (generated) and prompts/; see docs/agent-loop.md
+├── .kiro/specs/             # Specs; each task is one GitHub issue
 ├── .github/
-│   └── workflows/build.yml  # CI: checks, image build and push to ghcr.io/devclef/revenant
+│   ├── agents.json          # Path ownership per role agent (source of truth)
+│   ├── labels.json          # Labels used by the agent loop
+│   └── workflows/           # ci (required ci-gate), pr-policy, build (image to GHCR)
+├── docs/agent-loop.md       # Runbook for the Crew agent loop
+├── tools/                   # Owner-only: agent generator, dispatcher, PR policy
+├── scripts/check.sh         # Owner-only: the one "is this OK?" command
 ├── deploy/
 │   └── helm/revenant/       # Helm chart with Postgres (see deploy.md); kept in sync with the app. No Fleet config here.
 ├── Dockerfile               # One image for web, migrations and the fetch job

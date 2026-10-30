@@ -1,0 +1,118 @@
+{
+  "name": "platform-dev",
+  "description": "Revenant platform engineer: scaffold, config, health routes, DB client and migrations, Dockerfile, Helm chart.",
+  "prompt": "file://./prompts/platform-dev.md",
+  "tools": [
+    "fs_read",
+    "fs_write",
+    "execute_bash",
+    "grep",
+    "glob",
+    "code"
+  ],
+  "includeMcpJson": false,
+  "mcpServers": {},
+  "resources": [
+    "file://.kiro/steering/**/*.md",
+    "file://.kiro/agents/prompts/common.md"
+  ],
+  "permissions": {
+    "rules": [
+      {
+        "capability": "fs_read",
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_write",
+        "match": [
+          "*.config.*",
+          ".dockerignore",
+          ".env.example",
+          ".gitignore",
+          ".nvmrc",
+          "Dockerfile",
+          "deploy/**",
+          "drizzle.config.*",
+          "drizzle/**",
+          "next-env.d.ts",
+          "package-lock.json",
+          "package.json",
+          "public/**",
+          "scripts/migrate.mjs",
+          "src/app/api/health/**",
+          "src/app/globals.css",
+          "src/app/layout.tsx",
+          "src/app/page.tsx",
+          "src/lib/db/**",
+          "src/lib/version.ts",
+          "src/middleware.ts",
+          "src/test/**",
+          "tsconfig.json"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_write",
+        "match": [
+          ".kiro/**",
+          ".github/**",
+          "tools/**",
+          "scripts/check.sh"
+        ],
+        "effect": "deny"
+      },
+      {
+        "capability": "shell",
+        "match": [
+          "npm *",
+          "npx *",
+          "node *",
+          "bash scripts/check.sh*",
+          "git status*",
+          "git diff*",
+          "git log*",
+          "git show*",
+          "git add *",
+          "git commit *",
+          "git rev-parse*",
+          "git ls-files*",
+          "ls*",
+          "mkdir *",
+          "pwd",
+          "docker build*",
+          "docker run*",
+          "docker rm*",
+          "docker stop*",
+          "docker logs*",
+          "helm lint*",
+          "helm template*",
+          "curl *localhost*",
+          "curl *127.0.0.1*"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "shell",
+        "match": [
+          "git push*",
+          "git remote*",
+          "git config*",
+          "git reset*",
+          "git checkout main*",
+          "gh *",
+          "sudo *",
+          "kubectl *",
+          "helm install*",
+          "helm upgrade*",
+          "rm -rf /*",
+          "rm -rf ~*",
+          "env",
+          "printenv*",
+          "*github.com*",
+          "*api.github*"
+        ],
+        "effect": "deny"
+      }
+    ]
+  }
+}

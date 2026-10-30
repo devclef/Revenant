@@ -17,10 +17,9 @@ Revenant runs on the user's self-hosted, internet-facing cluster: an RKE2 guest 
 
 ## CI (GitHub Actions)
 
-`.github/workflows/build.yml`:
-
-- On pull requests: lint, type-check, build the image without pushing, and run `helm lint` and `helm template` on the chart.
-- On push to `main` and on `v*` tags: build and push the image to GHCR, using the built-in `GITHUB_TOKEN` with `packages: write`. No personal access tokens.
+- `.github/workflows/ci.yml` (pull requests and `main`): runs `scripts/check.sh` (lint, typecheck, tests, build, `helm lint`, `helm template`), then builds the image and smoke-tests it against a Postgres service container. Its `ci-gate` job is the one required check. Each step skips itself until the files it needs exist.
+- `.github/workflows/pr-policy.yml`: agent PRs must link their issue, carry one agent label, stay inside that agent's paths in `.github/agents.json`, and stay under the size limit.
+- `.github/workflows/build.yml`: after `ci` succeeds on `main`, and on `v*` tags, builds and pushes the image to GHCR, using the built-in `GITHUB_TOKEN` with `packages: write`. No personal access tokens.
 - Pin third-party actions to a full commit SHA.
 - Build for `linux/amd64` (add `arm64` only if the cluster needs it).
 - The workflow never deploys to the cluster. Deployment is the GitOps repository's job.

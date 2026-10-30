@@ -1,0 +1,100 @@
+{
+  "name": "crypto-dev",
+  "description": "Revenant crypto engineer: browser crypto, sealed format, letter/opening APIs, sealed tables and triggers.",
+  "prompt": "file://./prompts/crypto-dev.md",
+  "tools": [
+    "fs_read",
+    "fs_write",
+    "execute_bash",
+    "grep",
+    "glob",
+    "code"
+  ],
+  "includeMcpJson": false,
+  "mcpServers": {},
+  "resources": [
+    "file://.kiro/steering/**/*.md",
+    "file://.kiro/agents/prompts/common.md"
+  ],
+  "permissions": {
+    "rules": [
+      {
+        "capability": "fs_read",
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_write",
+        "match": [
+          ".env.example",
+          "drizzle/**",
+          "package-lock.json",
+          "package.json",
+          "scripts/seal-personas*",
+          "src/app/api/letters/**",
+          "src/app/api/openings/**",
+          "src/lib/crypto/**",
+          "src/lib/db/schema/letters*",
+          "src/lib/seal-format/**"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "fs_write",
+        "match": [
+          ".kiro/**",
+          ".github/**",
+          "tools/**",
+          "scripts/check.sh"
+        ],
+        "effect": "deny"
+      },
+      {
+        "capability": "shell",
+        "match": [
+          "npm *",
+          "npx *",
+          "node *",
+          "bash scripts/check.sh*",
+          "git status*",
+          "git diff*",
+          "git log*",
+          "git show*",
+          "git add *",
+          "git commit *",
+          "git rev-parse*",
+          "git ls-files*",
+          "ls*",
+          "mkdir *",
+          "pwd",
+          "docker run*",
+          "docker rm*",
+          "docker stop*",
+          "docker logs*"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "shell",
+        "match": [
+          "git push*",
+          "git remote*",
+          "git config*",
+          "git reset*",
+          "git checkout main*",
+          "gh *",
+          "sudo *",
+          "kubectl *",
+          "helm install*",
+          "helm upgrade*",
+          "rm -rf /*",
+          "rm -rf ~*",
+          "env",
+          "printenv*",
+          "*github.com*",
+          "*api.github*"
+        ],
+        "effect": "deny"
+      }
+    ]
+  }
+}

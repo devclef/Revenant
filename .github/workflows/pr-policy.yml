@@ -1,0 +1,31 @@
+name: pr-policy
+
+# Enforces the agent workflow rules on every PR to main:
+# linked issue, exactly one agent label, changed paths inside that agent's
+# ownership (.github/agents.json), and size limits. PRs labelled "owner"
+# (human bootstrap changes) are exempt from the agent rules.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: read
+
+jobs:
+  policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # Policy code always comes from main, never from the PR.
+          ref: ${{ github.event.pull_request.base.sha }}
+          fetch-depth: 0
+      - name: Check policy
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+          PR: ${{ github.event.pull_request.number }}
+        run: python3 tools/dispatcher/pr_policy.py

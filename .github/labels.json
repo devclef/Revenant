@@ -1,0 +1,19 @@
+[
+  {"name": "agent:platform-dev", "color": "5319e7", "description": "Worked by the platform-dev agent"},
+  {"name": "agent:frontend-dev", "color": "5319e7", "description": "Worked by the frontend-dev agent"},
+  {"name": "agent:data-dev", "color": "5319e7", "description": "Worked by the data-dev agent"},
+  {"name": "agent:crypto-dev", "color": "5319e7", "description": "Worked by the crypto-dev agent"},
+  {"name": "status:ready", "color": "0e8a16", "description": "Ready to be claimed once dependencies are closed"},
+  {"name": "status:in-progress", "color": "fbca04", "description": "Claimed; a Task Runner run is working on it"},
+  {"name": "status:in-review", "color": "1d76db", "description": "PR open, waiting for CI and QA"},
+  {"name": "status:blocked", "color": "b60205", "description": "Needs a human: run failed or retries exhausted"},
+  {"name": "needs-qa", "color": "d93f0b", "description": "PR waiting for QA review"},
+  {"name": "status:qa-running", "color": "c5def5", "description": "QA agent is reviewing this PR"},
+  {"name": "status:qa-passed", "color": "0e8a16", "description": "QA approved; merges when CI is green"},
+  {"name": "status:changes-requested", "color": "e99695", "description": "QA or CI failed; a fix run is working on it"},
+  {"name": "owner", "color": "000000", "description": "Owner change; exempt from agent path policy"},
+  {"name": "spec:01-skeleton", "color": "c2e0c6", "description": "Spec 01: skeleton"},
+  {"name": "spec:02-figures", "color": "c2e0c6", "description": "Spec 02: figures"},
+  {"name": "spec:03-seal-and-open", "color": "c2e0c6", "description": "Spec 03: seal and open"},
+  {"name": "spec:04-demo", "color": "c2e0c6", "description": "Spec 04: demo"}
+]
