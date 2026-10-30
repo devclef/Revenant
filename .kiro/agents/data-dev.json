@@ -98,7 +98,19 @@
           "env",
           "printenv*",
           "*github.com*",
-          "*api.github*"
+          "*api.github*",
+          "cd *",
+          "*&& cd *",
+          "*; cd *",
+          "pushd *",
+          "*--prefix*",
+          "npm -g*",
+          "npm * -g*",
+          "npm *--global*",
+          "npx --yes*",
+          "*~/*",
+          "*$HOME*",
+          "*/home/*"
         ],
         "effect": "deny"
       }

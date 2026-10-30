@@ -39,6 +39,11 @@ DENY_SHELL = [
     "git push*", "git remote*", "git config*", "git reset*", "git checkout main*",
     "gh *", "sudo *", "kubectl *", "helm install*", "helm upgrade*",
     "rm -rf /*", "rm -rf ~*", "env", "printenv*", "*github.com*", "*api.github*",
+    # Keep every command inside the worktree: no changing directory, no
+    # installs aimed elsewhere, no global installs. An npm install in a parent
+    # folder creates a second lockfile and confuses Next.js's workspace root.
+    "cd *", "*&& cd *", "*; cd *", "pushd *", "*--prefix*", "npm -g*", "npm * -g*",
+    "npm *--global*", "npx --yes*", "*~/*", "*$HOME*", "*/home/*",
 ]
 OWNER_ONLY = [".kiro/**", ".github/**", "tools/**", "scripts/check.sh"]
 

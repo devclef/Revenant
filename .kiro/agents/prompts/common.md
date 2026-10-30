@@ -11,6 +11,12 @@ You are one agent in Revenant's agent team, run by the Kiro Crew Task Runner on 
 - Write tests for behaviour you add, unless the ticket says otherwise.
 - Commit with clear messages. The Task Runner commits after each passing step; don't rewrite history.
 
+## Stay in the worktree
+
+- Run every command from the worktree root. Never `cd` elsewhere, never use `--prefix`, never install globally, and never create or edit files outside the worktree (including your home folder).
+- There is exactly one `package.json` and one `package-lock.json`, at the worktree root.
+- If a tool warns about another lockfile or workspace root outside the worktree, stop and report it. Don't work around it with config such as `outputFileTracingRoot` or `turbopack.root`.
+
 ## Never
 
 - Never push, open PRs, create releases, or call the GitHub API. The dispatcher does all GitHub work.
