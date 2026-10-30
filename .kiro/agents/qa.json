@@ -10,6 +10,12 @@
     "glob",
     "code"
   ],
+  "allowedTools": [
+    "fs_read",
+    "grep",
+    "glob",
+    "code"
+  ],
   "includeMcpJson": false,
   "mcpServers": {},
   "resources": [

@@ -56,6 +56,10 @@ def build(role: str, ownership: dict) -> dict:
         "description": DESCRIPTIONS[role],
         "prompt": f"file://./prompts/{role}.md",
         "tools": ["fs_read", "fs_write", "execute_bash", "grep", "glob", "code"],
+        # Kiro Crew 0.10 bundles kiro-cli-chat 2.27, which skips an agent that has
+        # `permissions` but no `allowedTools`. Read-only tools only: writes and
+        # shell stay governed by the permission rules below.
+        "allowedTools": ["fs_read", "grep", "glob", "code"],
         "includeMcpJson": False,
         "mcpServers": {},
         "resources": ["file://.kiro/steering/**/*.md", "file://.kiro/agents/prompts/common.md"],
