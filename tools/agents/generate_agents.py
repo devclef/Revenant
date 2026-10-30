@@ -71,8 +71,32 @@ def build(role: str, ownership: dict) -> dict:
     }
 
 
+def install_global(ownership: dict) -> None:
+    """Copy the role agents into ~/.kiro/agents for Kiro Crew.
+
+    The Crew Task Runner starts some sessions (planning) outside the repo, so
+    kiro-cli only finds global agents there. Prompts go to
+    ~/.kiro/agents/revenant-prompts/ to avoid clashing with other agents.
+    Steering stays a cwd-relative resource, so runs still read the repo's copy.
+    """
+    home = Path.home() / ".kiro" / "agents"
+    prompts = home / "revenant-prompts"
+    prompts.mkdir(parents=True, exist_ok=True)
+    for src in (ROOT / ".kiro/agents/prompts").glob("*.md"):
+        (prompts / src.name).write_text(src.read_text())
+    for role in DESCRIPTIONS:
+        agent = build(role, ownership)
+        agent["prompt"] = f"file://./revenant-prompts/{role}.md"
+        agent["resources"] = ["file://.kiro/steering/**/*.md", f"file://{prompts / 'common.md'}"]
+        (home / f"{role}.json").write_text(json.dumps(agent, indent=2) + "\n")
+        print(f"installed {home / f'{role}.json'}")
+
+
 def main() -> int:
     ownership = json.loads((ROOT / ".github/agents.json").read_text())
+    if "--install-global" in sys.argv:
+        install_global(ownership)
+        return 0
     check = "--check" in sys.argv
     stale = []
     for role in DESCRIPTIONS:

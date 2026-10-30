@@ -37,13 +37,17 @@ One run per role at a time, and `REVENANT_MAX_DEV_RUNS` (default 1) runs in tota
    kirocrew restart
    ```
    Leave `taskrunner.workspace_dir` empty; the dispatcher passes a workspace per run.
-4. **Install the dispatcher:** `python3 tools/dispatcher/revenant_dispatch.py install` copies it to `~/.kiro/crew/crons/`.
-5. **Add the cron job:**
+4. **Install the role agents globally.** Crew's Task Runner plans each run outside the repo, where `kiro-cli` only sees `~/.kiro/agents/`. Re-run this after any change to `.github/agents.json` or the prompts:
+   ```bash
+   python3 tools/agents/generate_agents.py --install-global
+   ```
+5. **Install the dispatcher:** `python3 tools/dispatcher/revenant_dispatch.py install` copies it to `~/.kiro/crew/crons/`.
+6. **Add the cron job:**
    ```bash
    kirocrew cron add revenant-dispatch "Revenant agent loop" \
      --script ~/.kiro/crew/crons/revenant_dispatch.py:run --every 300
    ```
-6. **Grant the secret:** request the grant `REVENANT_GITHUB_TOKEN → github_revenant_repo` for the job, then approve it on the Schedule page. Any change to the installed script needs re-approval.
+7. **Grant the secret:** request the grant `REVENANT_GITHUB_TOKEN → github_revenant_repo` for the job, then approve it on the Schedule page. Any change to the installed script needs re-approval.
 
 The dispatcher keeps two clones of its own under `~/kiro/revenant-crew/` (`dev`, `qa`). It never touches your working checkout.
 
