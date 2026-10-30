@@ -1,11 +1,15 @@
 import { defineConfig } from "vitest/config";
-import tsconfigPaths from "vite-tsconfig-paths";
 
+// Vitest's bundled Vite resolves tsconfig `paths` natively, so no
+// vite-tsconfig-paths plugin is needed. The deprecated plugin emits a warning
+// that trips the strict test gate, so it is intentionally omitted.
 export default defineConfig({
-  plugins: [tsconfigPaths()],
   test: {
     globals: true,
     environment: "node",
     include: ["src/**/*.{test,spec}.{ts,tsx}"],
+  },
+  resolve: {
+    tsconfigPaths: true,
   },
 });
