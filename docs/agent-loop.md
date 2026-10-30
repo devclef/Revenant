@@ -31,9 +31,12 @@ One run per role at a time, and `REVENANT_MAX_DEV_RUNS` (default 1) runs in tota
 
 1. **Labels:** create every label in `.github/labels.json` on the repo.
 2. **Branch protection on `main`:** require the `ci-gate` and `policy` checks, require linear history, block force pushes. Allow the token owner to merge.
-3. **Crew Task Runner settings** (Settings → Task Runner):
-   - Test command: `["bash", "scripts/check.sh"]`
-   - Leave the default workspace empty; the dispatcher passes one per run.
+3. **Crew Task Runner test command** (not shown in the dashboard; set it from the CLI, then restart the gateway):
+   ```bash
+   kirocrew config set taskrunner.test_command '["bash", "scripts/check.sh"]'
+   kirocrew restart
+   ```
+   Leave `taskrunner.workspace_dir` empty; the dispatcher passes a workspace per run.
 4. **Install the dispatcher:** `python3 tools/dispatcher/revenant_dispatch.py install` copies it to `~/.kiro/crew/crons/`.
 5. **Add the cron job:**
    ```bash
