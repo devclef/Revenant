@@ -1,1 +1,29 @@
-__pycache__/
+# Dependencies
+node_modules/
+
+# Next.js build output
+.next/
+out/
+
+# Production build / standalone
+build/
+dist/
+
+# Environment files (keep the example checked in)
+.env
+.env.*
+!.env.example
+
+# Test coverage
+coverage/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+next-env.d.ts.timestamp
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
