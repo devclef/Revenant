@@ -29,6 +29,9 @@ Paths this task may change:
 - [ ] `/` renders "Revenant" and "Your past self returns with the receipts." as plain text, with no links.
 - [ ] `src/lib/version.ts` exports the app version (from `APP_VERSION` if set, otherwise `package.json`), with a Vitest test.
 - [ ] `.env.example` exists. `.gitignore` covers `node_modules`, `.next`, `.env*` except `.env.example`, and does **not** exclude `.kiro/`.
+- [ ] Exactly one `package.json` and one `package-lock.json`, both at the repo root. Nothing is created or changed outside the repo.
+- [ ] `next.config.ts` sets `outputFileTracingRoot` to the project folder, and `npm run build` puts `server.js` directly in `.next/standalone/` (not in a nested path).
+- [ ] Linting uses one ESLint flat config (`eslint.config.mjs`) with `eslint-config-next`. `npm run lint` runs `eslint .` and passes with no "plugin conflicted" or duplicate-plugin errors.
 
 ## Validation
 
