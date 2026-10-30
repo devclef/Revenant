@@ -20,7 +20,16 @@ if [[ -d tools/dispatcher/tests ]]; then
 fi
 
 if [[ -f package.json ]]; then
-  if [[ ! -d node_modules ]] || [[ package-lock.json -nt node_modules ]]; then
+  if [[ ! -f package-lock.json ]]; then
+    if [[ -n "${CI:-}" ]]; then
+      echo "package-lock.json is missing. Run 'npm install' and commit the lockfile." >&2
+      exit 1
+    fi
+    # Mid-task (e.g. the scaffold step) a lockfile may not exist yet:
+    # npm install creates it, npm ci would refuse to run.
+    step "npm install (no lockfile yet; creates package-lock.json)"
+    npm install --no-audit --no-fund
+  elif [[ ! -d node_modules ]] || [[ package-lock.json -nt node_modules ]]; then
     step "npm ci"
     npm ci --no-audit --no-fund
   fi
