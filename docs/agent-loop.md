@@ -41,7 +41,7 @@ One run per role at a time, and `REVENANT_MAX_DEV_RUNS` (default 1) runs in tota
 5. **Add the cron job:**
    ```bash
    kirocrew cron add revenant-dispatch "Revenant agent loop" \
-     --script revenant_dispatch.py:run --every 300
+     --script ~/.kiro/crew/crons/revenant_dispatch.py:run --every 300
    ```
 6. **Grant the secret:** request the grant `REVENANT_GITHUB_TOKEN → github_revenant_repo` for the job, then approve it on the Schedule page. Any change to the installed script needs re-approval.
 
