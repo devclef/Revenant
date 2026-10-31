@@ -127,7 +127,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
   - Validation: `helm template ci deploy/helm/revenant` and `helm template ci deploy/helm/revenant --set demo.sealPersonas=false` (compare the `migrate` command), `docker build .`, then `bash scripts/check.sh`
   - _Requirements: R4.13_
 
-- [ ] 6. Demo index, persona cards, demo label and landing link
+- [x] 6. Demo index, persona cards, demo label and landing link
   - Agent: `frontend-dev` · Depends on: 3
   - Before this task: none.
   - Scope: `src/app/demo/page.tsx`, `src/app/demo/page.test.tsx`, `src/app/demo/*.css` if needed, `src/app/page.tsx`, `src/components/demo/PersonaCard.tsx`, `DemoLabel.tsx`, `dates.ts`, `copy.ts`, `*.module.css` and their `*.test.ts(x)`
