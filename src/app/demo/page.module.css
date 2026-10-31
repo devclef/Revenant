@@ -1,0 +1,43 @@
+/*
+ * Demo_Index page layout. Colours and spacing come from globals.css tokens
+ * only. No green/red or directional colour anywhere (neutrality.md); the
+ * heading and body text clear the 4.5:1 WCAG 2.2 AA floor on --paper
+ * (--ink 15.3:1, --ink-soft 10.57:1 per the globals.css record).
+ *
+ * The list is an unstyled column of cards with even spacing. DemoLabel and the
+ * intro note sit above it in document order, so they show first on a narrow
+ * 360 by 640 viewport (R6.4, R6.5).
+ */
+
+.heading {
+  font-family: var(--font-serif);
+  color: var(--ink);
+  margin: 0;
+}
+
+.introNote {
+  font-family: var(--font-sans);
+  color: var(--ink-soft);
+  max-width: var(--measure);
+  margin: 0;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: clamp(1rem, 3vw, 1.75rem);
+}
+
+.listItem {
+  margin: 0;
+  padding: 0;
+}
+
+.empty {
+  font-family: var(--font-sans);
+  color: var(--ink-soft);
+  margin: 0;
+}
