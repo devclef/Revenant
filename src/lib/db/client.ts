@@ -58,3 +58,19 @@ export function getDb(): PostgresJsDatabase {
   }
   return dbInstance;
 }
+
+/**
+ * Run a trivial `SELECT 1` to confirm the database is reachable. Resolves
+ * `true` on success. On any failure it throws a value-free error so the
+ * connection string is never echoed into logs or responses: the underlying
+ * error (which may embed `DATABASE_URL`) is deliberately discarded and never
+ * chained. Used by the readiness probe.
+ */
+export async function checkDatabaseConnection(): Promise<true> {
+  try {
+    await getSql()`select 1`;
+    return true;
+  } catch {
+    throw new Error("Database connection check failed.");
+  }
+}
