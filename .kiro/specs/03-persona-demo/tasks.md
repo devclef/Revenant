@@ -4,7 +4,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
 
 "Before this task" lists work from other specs that must be on `main` first; the owner holds those. "Depends on" lists only tasks in this spec. Every property test is a fast-check test tagged `// Feature: 03-persona-demo, Property N: <title>`, with `numRuns: 100` unless the task says otherwise. No test makes a network request (R16.1).
 
-- [ ] 1. Change calculator, exact decimals and change display formatting
+- [x] 1. Change calculator, exact decimals and change display formatting
   - Agent: `data-dev` · Depends on: none
   - Before this task: spec 02-demo-figures task 1 is on `main` (`periodEnd`, `isRealDate`, `isRealMonth`, the catalogue's `display_rescale`, and `FigureV1` from `src/lib/seal-format`). Blocked by #38.
   - Scope: `src/lib/figures/decimal.ts`, `change.ts`, `format-change.ts`, `locale.ts`, `rescale.ts`, `src/lib/figures/index.ts` (add exports) and their `*.test.ts`
