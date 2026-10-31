@@ -55,13 +55,13 @@ const MAX_BODY_CHARS = 100_000;
 const MAX_CIPHERTEXT_BYTES = 65_536;
 
 /**
- * The request body shape. `strictObject` strips unknown keys (so a client
- * `openedAt` is ignored, R7.1) and rejects any extra property. Both `ciphertext`
- * and `nonce` must be valid unpadded base64url; `nonce` must decode to exactly
- * 12 bytes (the AES-GCM nonce) and `ciphertext` to at least one byte. The upper
+ * The request body shape. A plain `z.object` strips unknown keys (so a client
+ * `openedAt` is ignored, not rejected — R7.1). Both `ciphertext` and `nonce`
+ * must be valid unpadded base64url; `nonce` must decode to exactly 12 bytes
+ * (the AES-GCM nonce) and `ciphertext` to at least one byte. The upper
  * ciphertext bound is checked separately so it can return 413 rather than 400.
  */
-const bodySchema = z.strictObject({
+const bodySchema = z.object({
   letterId: z.string(),
   ciphertext: z.string().refine(decodesToAtLeastOneByte, {
     message: "invalid base64url ciphertext",
