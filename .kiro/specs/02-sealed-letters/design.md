@@ -63,7 +63,7 @@ sequenceDiagram
 | `base64url.ts` | `encodeBase64url(bytes)`, `decodeBase64url(s, expectedLength?)`, `isLetterId(s)` |
 | `canonical-json.ts` | `canonicalize(value): string` |
 | `hash.ts` | `envelopeHash(envelope): Promise<string>` (64 lowercase hex) |
-| `v1/payload.ts` | `payloadV1Schema` (Zod), `PayloadV1` type |
+| `v1/payload.ts` | `payloadV1Schema`, `figureV1Schema`, `metricDefinitionV1Schema` (Zod), and the types `PayloadV1`, `FigureV1`, `MetricDefinitionV1`. The figure and metric schemas are the same objects the payload schema uses, exported for spec 02-demo-figures. |
 | `v1/header.ts` | `headerV1Schema` (Zod), `EnvelopeV1` type, `headerWithoutCiphertext(env)` |
 | `registry.ts` | `formats: { 1: { payload, header } }`, `parseEnvelope(json)`, `parsePayload(json)` |
 | `index.ts` | Re-exports the above |
