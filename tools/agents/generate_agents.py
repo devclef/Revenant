@@ -34,7 +34,17 @@ EXTRA_SHELL = {
     "data-dev": CONTAINER_SHELL,
     # Tasks with integration tests pass DATABASE_URL inline for a local test database.
     "crypto-dev": [*CONTAINER_SHELL, "DATABASE_URL=* npm *", "DATABASE_URL=* bash scripts/check.sh*"],
-    "qa": ["git fetch origin*", "git merge-base*", "helm lint*", "helm template*"],
+    # QA runs the app locally for the browser check: a throwaway Postgres container,
+    # migrations, the persona sealing script, and the app itself on a free port.
+    # Env-prefixed forms are listed because "npm *" does not match "PORT=1 npm ...".
+    # `kill *` cannot be limited to processes QA started (shell rules match command
+    # text only); the QA prompt tells it to kill only the PIDs it recorded.
+    "qa": ["git fetch origin*", "git merge-base*", "helm lint*", "helm template*",
+           "docker run*", "docker rm*", "docker stop*",
+           "npm run build", "npm start*", "npm run db:migrate", "npm run seal-personas*",
+           "PORT=* npm start*", "PORT=* DATABASE_URL=* npm start*",
+           "DATABASE_URL=* npm run db:migrate", "DATABASE_URL=* npm run seal-personas*",
+           "kill *"],
 }
 DENY_SHELL = [
     "git push*", "git remote*", "git config*", "git reset*", "git checkout main*",
@@ -46,6 +56,25 @@ DENY_SHELL = [
     "cd *", "*&& cd *", "*; cd *", "pushd *", "*--prefix*", "npm -g*", "npm * -g*",
     "npm *--global*", "npx --yes*", "*~/*", "*$HOME*", "*/home/*",
 ]
+# Browser for the qa role only (headless Chromium via Playwright MCP). Version pinned
+# exactly. Auto-named output goes outside the repo, and that folder is also the one
+# allowed root for explicit absolute screenshot paths. kiro-cli does not expand $HOME
+# in `env` values (it passed the text through), so a shell sets the variable instead.
+# That keeps the committed file identical on every machine.
+PLAYWRIGHT_VERSION = "0.0.83"
+QA_SHOTS_DIR = "$HOME/kiro/revenant-crew/qa-shots"
+PLAYWRIGHT_SERVER = {
+    "command": "sh",
+    "args": [
+        "-c",
+        f'PLAYWRIGHT_MCP_OUTPUT_DIR="{QA_SHOTS_DIR}" exec npx -y @playwright/mcp@{PLAYWRIGHT_VERSION}'
+        " --headless --browser chromium --isolated --file-paths absolute",
+    ],
+    "timeout": 120000,
+}
+# Not needed for walking pages; both reach beyond the browser (server-side code, local files).
+PLAYWRIGHT_DENY = ["playwright/browser_run_code_unsafe", "playwright/browser_file_upload"]
+MCP_SERVERS = {"qa": {"playwright": PLAYWRIGHT_SERVER}}
 OWNER_ONLY = [".kiro/**", ".github/**", "tools/**", "scripts/check.sh"]
 
 # Hooks (kiro-cli object form). The scripts live in tools/hooks/ (owner-only) and
@@ -70,30 +99,34 @@ def build(role: str, ownership: dict) -> dict:
     else:
         write = sorted(set(ownership["roles"][role] + ownership["shared"]))
         shell = list(COMMON_SHELL)
+    mcp_servers = json.loads(json.dumps(MCP_SERVERS.get(role, {})))
+    rules = [
+        {"capability": "fs_read", "effect": "allow"},
+        {"capability": "fs_write", "match": write, "effect": "allow"},
+        {"capability": "fs_write", "match": OWNER_ONLY, "effect": "deny"},
+        {"capability": "shell", "match": shell + EXTRA_SHELL[role], "effect": "allow"},
+        {"capability": "shell", "match": DENY_SHELL, "effect": "deny"},
+    ]
+    if "playwright" in mcp_servers:
+        rules += [
+            {"capability": "mcp", "match": ["playwright/*"], "effect": "allow"},
+            {"capability": "mcp", "match": PLAYWRIGHT_DENY, "effect": "deny"},
+        ]
     return {
         "name": role,
         "description": DESCRIPTIONS[role],
         "prompt": f"file://./prompts/{role}.md",
-        "tools": ["fs_read", "fs_write", "execute_bash", "grep", "glob", "code"],
+        "tools": ["fs_read", "fs_write", "execute_bash", "grep", "glob", "code", *(f"@{n}" for n in mcp_servers)],
         # Kiro Crew 0.10 bundles kiro-cli-chat 2.27, which skips an agent that has
-        # `permissions` but no `allowedTools`. Read-only tools only: writes and
+        # `permissions` but no `allowedTools`. Read-only tools (plus the qa browser server) only: writes and
         # shell stay governed by the permission rules below.
-        "allowedTools": ["fs_read", "grep", "glob", "code"],
+        "allowedTools": ["fs_read", "grep", "glob", "code", *(f"@{n}" for n in mcp_servers)],
         "includeMcpJson": False,
-        "mcpServers": {},
+        "mcpServers": mcp_servers,
         "hooks": json.loads(json.dumps(HOOKS[role])),
         "resources": ["file://.kiro/steering/**/*.md", "file://.kiro/agents/prompts/common.md"],
-        "permissions": {
-            "rules": [
-                {"capability": "fs_read", "effect": "allow"},
-                {"capability": "fs_write", "match": write, "effect": "allow"},
-                {"capability": "fs_write", "match": OWNER_ONLY, "effect": "deny"},
-                {"capability": "shell", "match": shell + EXTRA_SHELL[role], "effect": "allow"},
-                {"capability": "shell", "match": DENY_SHELL, "effect": "deny"},
-            ]
-        },
+        "permissions": {"rules": rules},
     }
-
 
 def install_global(ownership: dict) -> None:
     """Copy the role agents into ~/.kiro/agents for Kiro Crew.
