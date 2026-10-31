@@ -19,7 +19,7 @@ const ENTRIES = Object.entries(DEMO_COPY) as ReadonlyArray<
 >;
 
 /** Error-or-empty-state strings that must name an action the reader can take. */
-const ACTION_KEYS = ["indexEmpty"] as const;
+const ACTION_KEYS = ["indexEmpty", "notFoundBody"] as const;
 
 /**
  * tone.md's banned clichés and puns. The spec names boo / spook / skull /
@@ -42,7 +42,9 @@ const CLICHES = [
 /** A rough actionable-verb/instruction vocabulary for empty-state copy. */
 const ACTION_WORDS = [
   "come back",
+  "go back",
   "open",
+  "choose",
   "try",
   "scan",
   "check",
