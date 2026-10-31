@@ -42,6 +42,7 @@
           "src/components/**",
           "src/lib/cards/**",
           "src/lib/ics/**",
+          "src/lib/personas/**",
           "src/lib/recall/**"
         ],
         "effect": "allow"
