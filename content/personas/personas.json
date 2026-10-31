@@ -1,0 +1,18 @@
+{
+  "personas": [
+    {
+      "key": "us-maya",
+      "display_name": "Maya",
+      "region": "United States",
+      "letter_id": "wom_GdH6gqP6AGgnyhIMgA",
+      "written_as_of": "2024-05-12",
+      "opens_at": "2024-11-05T00:00:00.000Z",
+      "metrics": [
+        { "metric_id": "fixture-us-gasoline-regular", "recall_subject": "a gallon of regular gasoline" },
+        { "metric_id": "fixture-us-diesel", "recall_subject": "a gallon of diesel" }
+      ],
+      "letter_path": "letters/us-maya.txt"
+    }
+  ],
+  "retired_letter_ids": []
+}
