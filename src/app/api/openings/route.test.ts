@@ -30,6 +30,7 @@
 // `isLetterId`, `decodeBase64url`, `encodeBase64url`, the Zod schema, the clock
 // helper and the `http` helpers are the real modules.
 
+import fc from "fast-check";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type {
   LetterRow,
@@ -441,5 +442,152 @@ describe("check ORDER is strict", () => {
     findLetterSpy.mockResolvedValueOnce(null);
     const res = await POST(postJson(validBody()));
     expect(res.status).toBe(404);
+  });
+});
+
+// Shared generators for the property tests below.
+const timeMs = fc.integer({ min: -8640000000000000, max: 8640000000000000 });
+const clientTime = fc.string();
+const nonLetterId = fc
+  .string()
+  .filter((s) => !/^[A-Za-z0-9_-]{21}[AQgw]$/.test(s));
+
+// Feature: 02-sealed-letters, Property 16: the server clock alone decides
+// whether an opening is recorded; a client-supplied time is irrelevant, and
+// insertOpening runs only when dbNow>=opensAt.
+describe("Property 16 — the server clock decides POST /api/openings", () => {
+  it("records only when dbNow>=opensAt (else 403 {opensAt}), ignoring any client time", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        timeMs,
+        timeMs,
+        fc.boolean(),
+        clientTime,
+        async (opensMs, nowMs, demo, headerDate) => {
+          findLetterSpy.mockReset();
+          insertOpeningSpy.mockReset();
+          const opensAt = new Date(opensMs);
+          const dbNow = new Date(nowMs);
+          findLetterSpy.mockResolvedValueOnce(
+            openableRow({ opensAt, dbNow, demo }),
+          );
+          insertOpeningSpy.mockResolvedValueOnce(insertResult());
+
+          const res = await POST(
+            postJson(validBody(), { "X-Client-Now": headerDate }),
+          );
+          expect(res.headers.get("Cache-Control")).toBe("no-store");
+
+          const body = (await bodyOf(res)) as Record<string, unknown>;
+          if (nowMs >= opensMs) {
+            expect(res.status).toBe(201);
+            expect(Object.keys(body).sort()).toEqual([
+              "openedAt",
+              "openingId",
+            ]);
+            expect(insertOpeningSpy).toHaveBeenCalledTimes(1);
+          } else {
+            expect(res.status).toBe(403);
+            expect(Object.keys(body)).toEqual(["opensAt"]);
+            expect(body.opensAt).toBe(opensAt.toISOString());
+            // Nothing is recorded before the opening date.
+            expect(insertOpeningSpy).not.toHaveBeenCalled();
+          }
+          return true;
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+});
+
+// Feature: 02-sealed-letters, Property 17: malformed and unknown IDs are
+// indistinguishable — byte-identical 404 body and headers — and nothing is ever
+// stored.
+describe("Property 17 — 404s are indistinguishable on POST /api/openings", () => {
+  it("returns a byte-identical 404 for any non-letter-id, storing nothing", async () => {
+    // The canonical 404 against a known-unknown valid ID.
+    findLetterSpy.mockReset();
+    insertOpeningSpy.mockReset();
+    findLetterSpy.mockResolvedValue(null);
+    const canonical = await POST(postJson(validBody()));
+    const canonicalBody = await canonical.clone().text();
+
+    await fc.assert(
+      fc.asyncProperty(nonLetterId, async (id) => {
+        findLetterSpy.mockClear();
+        insertOpeningSpy.mockClear();
+        const res = await POST(postJson(validBody({ letterId: id })));
+        expect(res.status).toBe(404);
+        expect(await res.text()).toBe(canonicalBody);
+        expect(res.headers.get("Cache-Control")).toBe("no-store");
+        expect(res.headers.get("Content-Type")).toBe(
+          canonical.headers.get("Content-Type"),
+        );
+        // A malformed ID is never looked up and never stored.
+        expect(findLetterSpy).not.toHaveBeenCalled();
+        expect(insertOpeningSpy).not.toHaveBeenCalled();
+        return true;
+      }),
+      { numRuns: 100 },
+    );
+  });
+});
+
+// Feature: 02-sealed-letters, Property 18: an invalid opening body is a 400
+// naming only the failing field, and the submitted value (a random marker)
+// never appears in the response. The letter is never looked up and nothing is
+// stored.
+describe("Property 18 — invalid opening bodies name the field and never echo it", () => {
+  it("returns 400 field=ciphertext for any non-base64url ciphertext, marker absent, nothing queried", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        // A marker that cannot be valid base64url (contains a space and '!').
+        fc.string().map((s) => `!! ${s} !!`),
+        async (marker) => {
+          findLetterSpy.mockReset();
+          insertOpeningSpy.mockReset();
+          const res = await POST(postJson(validBody({ ciphertext: marker })));
+          expect(res.status).toBe(400);
+          const text = await res.text();
+          const parsed = JSON.parse(text) as Record<string, unknown>;
+          expect(parsed.error).toBe("invalid_body");
+          expect(parsed.field).toBe("ciphertext");
+          // The submitted value is never echoed back (R8.3).
+          expect(text).not.toContain(marker);
+          // A bad body is rejected before any letter lookup or store.
+          expect(findLetterSpy).not.toHaveBeenCalled();
+          expect(insertOpeningSpy).not.toHaveBeenCalled();
+          return true;
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  it("returns 400 field=nonce for any nonce not decoding to 12 bytes, marker absent, nothing queried", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        // A valid base64url string of a byte length that is never 12, so the
+        // nonce refinement fails. 0..11 and 13..32 bytes, encoded.
+        fc
+          .integer({ min: 0, max: 32 })
+          .filter((n) => n !== 12)
+          .map((n) => encodeBase64url(new Uint8Array(n).fill(3))),
+        async (badNonce) => {
+          findLetterSpy.mockReset();
+          insertOpeningSpy.mockReset();
+          const res = await POST(postJson(validBody({ nonce: badNonce })));
+          expect(res.status).toBe(400);
+          const parsed = (await bodyOf(res)) as Record<string, unknown>;
+          expect(parsed.error).toBe("invalid_body");
+          expect(parsed.field).toBe("nonce");
+          expect(findLetterSpy).not.toHaveBeenCalled();
+          expect(insertOpeningSpy).not.toHaveBeenCalled();
+          return true;
+        },
+      ),
+      { numRuns: 100 },
+    );
   });
 });

@@ -19,6 +19,7 @@
 // `findLetter` is mocked, so no database is touched. `isLetterId`, `isOpenable`
 // and the `http` helpers are the real modules.
 
+import fc from "fast-check";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LetterRow } from "@/lib/letter-store/queries";
 
@@ -267,5 +268,97 @@ describe("client-supplied time makes no difference (R6.4)", () => {
     );
     const body = (await bodyOf(res)) as Record<string, unknown>;
     expect(body.status).toBe("openable");
+  });
+});
+
+// Shared generators for the property tests below.
+//
+// `timeMs` spans the whole valid JS Date range, so opensAt/dbNow are drawn
+// without bias toward either side of the boundary. `clientTime` is an arbitrary
+// string a client might smuggle in (a Date header or query time); it must never
+// change the outcome. `nonLetterId` is any string that is NOT a canonical
+// letter ID, used to drive the malformed-ID 404 path.
+
+const timeMs = fc.integer({ min: -8640000000000000, max: 8640000000000000 });
+const clientTime = fc.string();
+const nonLetterId = fc
+  .string()
+  .filter((s) => !/^[A-Za-z0-9_-]{21}[AQgw]$/.test(s));
+
+// Feature: 02-sealed-letters, Property 16: the server clock alone decides
+// sealed vs openable, and a client-supplied time is irrelevant.
+describe("Property 16 — the server clock decides GET /api/letters/[id]", () => {
+  it("returns exactly the sealed or openable key set by dbNow>=opensAt, ignoring any client time", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        timeMs,
+        timeMs,
+        fc.boolean(),
+        clientTime,
+        async (opensMs, nowMs, demo, headerDate) => {
+          findLetterSpy.mockReset();
+          const opensAt = new Date(opensMs);
+          const dbNow = new Date(nowMs);
+          findLetterSpy.mockResolvedValueOnce(
+            openableRow({ opensAt, dbNow, demo }),
+          );
+
+          // A client Date header carrying an arbitrary value must make no
+          // difference: the decision is row.dbNow vs row.opensAt only.
+          const res = await GET(
+            new Request("http://x/l", { headers: { "X-Client-Now": headerDate } }),
+            ctx(VALID_ID),
+          );
+          expect(res.status).toBe(200);
+          expect(res.headers.get("Cache-Control")).toBe("no-store");
+
+          const body = (await bodyOf(res)) as Record<string, unknown>;
+          const open = nowMs >= opensMs;
+          expect(body.status).toBe(open ? "openable" : "sealed");
+          expect(body.opensAt).toBe(opensAt.toISOString());
+          expect(body.opensAt as string).toMatch(
+            /^[+-]?\d{4,}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/,
+          );
+          expect(body.demo).toBe(demo);
+          expect(Object.keys(body).sort()).toEqual(
+            open
+              ? ["demo", "envelope", "envelopeHash", "opensAt", "status"]
+              : ["demo", "opensAt", "status"],
+          );
+          return true;
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+});
+
+// Feature: 02-sealed-letters, Property 17: malformed and unknown IDs are
+// indistinguishable — byte-identical 404 body and headers, nothing queried for
+// a malformed ID.
+describe("Property 17 — 404s are indistinguishable on GET /api/letters/[id]", () => {
+  it("returns a byte-identical 404 for any non-letter-id without querying", async () => {
+    // The canonical 404 against a known-unknown valid ID.
+    findLetterSpy.mockReset();
+    findLetterSpy.mockResolvedValue(null);
+    const canonical = await GET(new Request("http://x/l"), ctx(VALID_ID));
+    const canonicalBody = await canonical.clone().text();
+
+    await fc.assert(
+      fc.asyncProperty(nonLetterId, async (id) => {
+        findLetterSpy.mockClear();
+        const res = await GET(new Request("http://x/l"), ctx(id));
+        expect(res.status).toBe(404);
+        expect(await res.text()).toBe(canonicalBody);
+        expect(res.headers.get("Cache-Control")).toBe("no-store");
+        expect(res.headers.get("Content-Type")).toBe(
+          canonical.headers.get("Content-Type"),
+        );
+        // A malformed ID is never looked up.
+        expect(findLetterSpy).not.toHaveBeenCalled();
+        return true;
+      }),
+      { numRuns: 100 },
+    );
   });
 });

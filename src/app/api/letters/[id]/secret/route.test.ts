@@ -19,6 +19,7 @@
 // `findLetter` is mocked, so no database is touched. `isLetterId`,
 // `isOpenable`, `encodeBase64url` and the `http` helpers are the real modules.
 
+import fc from "fast-check";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { LetterRow } from "@/lib/letter-store/queries";
 import { encodeBase64url } from "@/lib/seal-format";
@@ -251,5 +252,94 @@ describe("client-supplied time makes no difference (R6.4)", () => {
     expect(res.status).toBe(200);
     const body = (await bodyOf(res)) as Record<string, unknown>;
     expect(Object.keys(body)).toEqual(["serverSecret"]);
+  });
+});
+
+// Shared generators for the property tests below.
+const timeMs = fc.integer({ min: -8640000000000000, max: 8640000000000000 });
+const clientTime = fc.string();
+const nonLetterId = fc
+  .string()
+  .filter((s) => !/^[A-Za-z0-9_-]{21}[AQgw]$/.test(s));
+
+// Feature: 02-sealed-letters, Property 16: the server clock alone decides
+// whether the secret is released (200) or withheld (403); a client-supplied
+// time is irrelevant, and a sealed response never contains the secret.
+describe("Property 16 — the server clock decides GET /api/letters/[id]/secret", () => {
+  it("returns 200 {serverSecret} iff dbNow>=opensAt, else 403 {opensAt}, ignoring any client time", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        timeMs,
+        timeMs,
+        fc.boolean(),
+        clientTime,
+        async (opensMs, nowMs, demo, headerDate) => {
+          findLetterSpy.mockReset();
+          const opensAt = new Date(opensMs);
+          const dbNow = new Date(nowMs);
+          const secret = Buffer.from(
+            Array.from({ length: 32 }, (_, i) => (i * 13 + 1) & 0xff),
+          );
+          findLetterSpy.mockResolvedValueOnce(
+            openableRow({ opensAt, dbNow, demo, serverSecret: secret }),
+          );
+
+          const res = await GET(
+            new Request("http://x/l/secret", {
+              headers: { "X-Client-Now": headerDate },
+            }),
+            ctx(VALID_ID),
+          );
+          expect(res.headers.get("Cache-Control")).toBe("no-store");
+
+          const body = (await bodyOf(res)) as Record<string, unknown>;
+          if (nowMs >= opensMs) {
+            expect(res.status).toBe(200);
+            expect(Object.keys(body)).toEqual(["serverSecret"]);
+            expect(body.serverSecret).toBe(
+              encodeBase64url(new Uint8Array(secret)),
+            );
+          } else {
+            expect(res.status).toBe(403);
+            expect(Object.keys(body)).toEqual(["opensAt"]);
+            expect(body.opensAt).toBe(opensAt.toISOString());
+            // The secret never leaks on a sealed response.
+            expect(JSON.stringify(body)).not.toContain(
+              encodeBase64url(new Uint8Array(secret)),
+            );
+          }
+          return true;
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+});
+
+// Feature: 02-sealed-letters, Property 17: malformed and unknown IDs are
+// indistinguishable — byte-identical 404 body and headers, nothing queried for
+// a malformed ID.
+describe("Property 17 — 404s are indistinguishable on GET /api/letters/[id]/secret", () => {
+  it("returns a byte-identical 404 for any non-letter-id without querying", async () => {
+    findLetterSpy.mockReset();
+    findLetterSpy.mockResolvedValue(null);
+    const canonical = await GET(new Request("http://x/l/secret"), ctx(VALID_ID));
+    const canonicalBody = await canonical.clone().text();
+
+    await fc.assert(
+      fc.asyncProperty(nonLetterId, async (id) => {
+        findLetterSpy.mockClear();
+        const res = await GET(new Request("http://x/l/secret"), ctx(id));
+        expect(res.status).toBe(404);
+        expect(await res.text()).toBe(canonicalBody);
+        expect(res.headers.get("Cache-Control")).toBe("no-store");
+        expect(res.headers.get("Content-Type")).toBe(
+          canonical.headers.get("Content-Type"),
+        );
+        expect(findLetterSpy).not.toHaveBeenCalled();
+        return true;
+      }),
+      { numRuns: 100 },
+    );
   });
 });
