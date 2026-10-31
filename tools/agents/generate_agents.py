@@ -48,6 +48,19 @@ DENY_SHELL = [
 ]
 OWNER_ONLY = [".kiro/**", ".github/**", "tools/**", "scripts/check.sh"]
 
+# Hooks (kiro-cli object form). The scripts live in tools/hooks/ (owner-only) and
+# always exit 0. frontend-dev's stop hook may ask for one more turn (once per
+# session) when the tone check finds something. See docs/agent-loop.md.
+HOOK_TIMEOUT_MS = 60000
+TONE_CHECK_STOP = {"command": "node tools/hooks/tone-check.mjs --role frontend-dev", "timeout_ms": HOOK_TIMEOUT_MS}
+HOOKS = {
+    "frontend-dev": {"stop": [TONE_CHECK_STOP]},
+    "crypto-dev": {},
+    "data-dev": {},
+    "platform-dev": {},
+    "qa": {},
+}
+
 
 def build(role: str, ownership: dict) -> dict:
     if role == "qa":
@@ -68,6 +81,7 @@ def build(role: str, ownership: dict) -> dict:
         "allowedTools": ["fs_read", "grep", "glob", "code"],
         "includeMcpJson": False,
         "mcpServers": {},
+        "hooks": json.loads(json.dumps(HOOKS[role])),
         "resources": ["file://.kiro/steering/**/*.md", "file://.kiro/agents/prompts/common.md"],
         "permissions": {
             "rules": [

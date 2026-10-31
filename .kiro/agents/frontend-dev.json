@@ -18,6 +18,14 @@
   ],
   "includeMcpJson": false,
   "mcpServers": {},
+  "hooks": {
+    "stop": [
+      {
+        "command": "node tools/hooks/tone-check.mjs --role frontend-dev",
+        "timeout_ms": 60000
+      }
+    ]
+  },
   "resources": [
     "file://.kiro/steering/**/*.md",
     "file://.kiro/agents/prompts/common.md"
