@@ -360,4 +360,86 @@ describeDb("seal, store, open, record answers, immutability (integration)", () =
     `;
     expect(count).toBe(0);
   });
+
+  // --- Step 4: record recall answers for an openable letter. The browser
+  // encrypts the answers under the per-letter opening key and POSTs the
+  // ciphertext BEFORE anything is shown ("Recall first", R7); the operator only
+  // ever stores ciphertext (operator-blind, R8). This proves the record lands
+  // as exactly one append-only row and decrypts back to the original answers. -
+  it("records encrypted recall answers that round-trip for an openable letter", async () => {
+    // Seal and store a FRESH openable letter so this test depends on no earlier
+    // one. A past opening instant makes it openable immediately.
+    const sealed = await sealOne({ opensAt: "2024-11-05T00:00:00.000Z" });
+    await storePersonaLetter({
+      envelope: sealed.sealResult.envelope,
+      envelopeHash: sealed.sealResult.envelopeHash,
+      serverSecret: sealed.serverSecret,
+    });
+
+    // Open it to obtain the per-letter opening key, exactly as the reveal flow
+    // does: read the stored envelope/hash back, release the secret, open.
+    const opened = await openLetter({
+      envelope: sealed.sealResult.envelope,
+      envelopeHash: sealed.sealResult.envelopeHash,
+      serverSecret: sealed.serverSecret,
+      backupKey: sealed.backupKey,
+    });
+    expect(opened.ok).toBe(true);
+    if (!opened.ok) {
+      throw new Error("expected the letter to open");
+    }
+    const openingKey = opened.openingKey;
+
+    // The reader's answers to the sealed recall questions. Any JSON value is
+    // accepted; a map keyed by question id is the natural shape.
+    const answers = {
+      "q-fuel": { answer_type: "number", value: "2.89" },
+    };
+
+    // Encrypt in the browser's shoes, binding the record to this letter's ID
+    // bytes as AAD, then POST the ciphertext/nonce to the openings route.
+    const record = await encryptOpeningRecord(
+      openingKey,
+      sealed.letterIdBytes,
+      answers,
+    );
+    const openingRes = await postOpening(
+      new Request("https://revenant.test/api/openings", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          letterId: sealed.letterId,
+          ciphertext: record.ciphertext,
+          nonce: record.nonce,
+        }),
+      }),
+    );
+    expect(openingRes.status).toBe(201);
+
+    // Exactly one opening row now references this (demo) letter. The raw client
+    // reads it back; the ciphertext and nonce are stored as bytea, so re-encode
+    // the returned bytes as base64url to feed the decrypt step.
+    const rows = await sql<
+      { ciphertext: Uint8Array; nonce: Uint8Array }[]
+    >`
+      SELECT ciphertext, nonce
+      FROM openings
+      WHERE demo_letter_id = ${sealed.letterId}
+    `;
+    expect(rows).toHaveLength(1);
+    const stored = {
+      ciphertext: encodeBase64url(new Uint8Array(rows[0].ciphertext)),
+      nonce: encodeBase64url(new Uint8Array(rows[0].nonce)),
+    };
+
+    // Decrypt the stored record with the same opening key and letter ID bytes.
+    // The AAD-bound GCM box authenticates and the plaintext parses back to the
+    // exact answers the reader gave — operator-blind storage round-trips.
+    const decrypted = await decryptOpeningRecord(
+      openingKey,
+      sealed.letterIdBytes,
+      stored,
+    );
+    expect(decrypted).toEqual(answers);
+  });
 });
