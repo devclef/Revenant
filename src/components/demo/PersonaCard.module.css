@@ -1,0 +1,66 @@
+/*
+ * PersonaCard styling. Colours come from globals.css tokens only; the card is
+ * a ParchmentSurface with tone="deep", so its background is --paper-deep.
+ *
+ * Contrast on --paper-deep (globals.css record): --ink 13.17:1 (name, dates),
+ * --ink-soft 9.58:1 (labels, region), --seal 7.92:1 ("Break the seal" link),
+ * all well above the 4.5:1 WCAG 2.2 AA floor. No green/red or directional
+ * colour anywhere -- up and down would get the same treatment (neutrality.md);
+ * there are no figures on this card.
+ */
+
+.card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  max-width: var(--measure);
+}
+
+.name {
+  font-family: var(--font-serif);
+  color: var(--ink);
+  margin: 0;
+}
+
+.region {
+  font-family: var(--font-sans);
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.dates {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin: 0;
+}
+
+.dateRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  align-items: baseline;
+}
+
+.dateLabel {
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.dateValue {
+  font-family: var(--font-sans);
+  color: var(--ink);
+  margin: 0;
+}
+
+.breakSeal {
+  align-self: flex-start;
+  margin-top: 0.25rem;
+  font-family: var(--font-sans);
+  color: var(--seal);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
