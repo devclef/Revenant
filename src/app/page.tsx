@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 import { PageShell, ParchmentSurface, WaxSeal, Wordmark } from "@/components/ui";
 
 /**
@@ -9,8 +11,9 @@ import { PageShell, ParchmentSurface, WaxSeal, Wordmark } from "@/components/ui"
  * it describes what Revenant does and names no party, policy or judgement, and
  * reads the same to any reader.
  *
- * There is no call-to-action link. The seal and demo flows are not finished, so
- * per the ticket nothing here links to an unfinished feature.
+ * The only call-to-action link points to the finished demo index at /demo, and
+ * nowhere else. The seal and open flows are not finished, so nothing here links
+ * to them.
  */
 export default function Home() {
   return (
@@ -33,6 +36,9 @@ export default function Home() {
           When that date arrives, the letter opens. First it asks how you
           remember things. Then it shows what you wrote, and the numbers then
           beside the numbers now. The space between the two is yours to read.
+        </p>
+        <p>
+          <Link href="/demo">Open the demo letters</Link>
         </p>
       </ParchmentSurface>
     </PageShell>

@@ -4,7 +4,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
 
 "Before this task" lists work from other specs that must be on `main` first; the owner holds those. "Depends on" lists only tasks in this spec. Every property test is a fast-check test tagged `// Feature: 03-persona-demo, Property N: <title>`, with `numRuns: 100` unless the task says otherwise. No test makes a network request (R16.1).
 
-- [ ] 1. Change calculator, exact decimals and change display formatting
+- [x] 1. Change calculator, exact decimals and change display formatting
   - Agent: `data-dev` · Depends on: none
   - Before this task: spec 02-demo-figures task 1 is on `main` (`periodEnd`, `isRealDate`, `isRealMonth`, the catalogue's `display_rescale`, and `FigureV1` from `src/lib/seal-format`). Blocked by #38.
   - Scope: `src/lib/figures/decimal.ts`, `change.ts`, `format-change.ts`, `locale.ts`, `rescale.ts`, `src/lib/figures/index.ts` (add exports) and their `*.test.ts`
@@ -115,7 +115,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
   - Before this task: none.
   - Scope: `.dockerignore`, `Dockerfile`, `deploy/helm/revenant/templates/deployment.yaml`, `deploy/helm/revenant/values.yaml`, `deploy/helm/revenant/README.md`, `deploy/helm/revenant/Chart.yaml`
   - Acceptance:
-    - `.dockerignore` gets `!scripts/seal-personas*` next to `!scripts/migrate.mjs`, so the builder stage sees the sources. `content/` stays included.
+    - `.dockerignore`: the `!scripts/seal-personas*` line next to `!scripts/migrate.mjs` is already on main (added by the owner to unblock task 4). It only needs to be checked, so the builder stage sees the sources. `content/` stays included.
     - The Dockerfile runner stage copies `/app/dist/seal-personas.mjs` to `./scripts/seal-personas.mjs` owned by `1001:1001`, with one sentence in the comment above the migrate copies. No extra `node_modules` copy.
     - The `migrate` init container runs `sh -c` with `node scripts/migrate.mjs && node scripts/seal-personas.mjs` when `demo.sealPersonas` is true and `node scripts/migrate.mjs` alone when false, as in design.md. A non-zero exit from either fails the init container, so `web` doesn't start. `DATABASE_URL` still comes from the existing Secret.
     - `values.yaml` documents `demo.sealPersonas: true` with the design.md comment.
@@ -127,7 +127,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
   - Validation: `helm template ci deploy/helm/revenant` and `helm template ci deploy/helm/revenant --set demo.sealPersonas=false` (compare the `migrate` command), `docker build .`, then `bash scripts/check.sh`
   - _Requirements: R4.13_
 
-- [ ] 6. Demo index, persona cards, demo label and landing link
+- [x] 6. Demo index, persona cards, demo label and landing link
   - Agent: `frontend-dev` · Depends on: 3
   - Before this task: none.
   - Scope: `src/app/demo/page.tsx`, `src/app/demo/page.test.tsx`, `src/app/demo/*.css` if needed, `src/app/page.tsx`, `src/components/demo/PersonaCard.tsx`, `DemoLabel.tsx`, `dates.ts`, `copy.ts`, `*.module.css` and their `*.test.ts(x)`
