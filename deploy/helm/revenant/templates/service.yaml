@@ -1,0 +1,21 @@
+{{/*
+Web application Service.
+
+ClusterIP only: the app is never exposed directly, it is reached through the
+Ingress. The Service forwards to the web container's named `http` port (3000).
+*/}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ include "revenant.fullname" . }}
+  labels:
+    {{- include "revenant.labels" . | nindent 4 }}
+spec:
+  type: {{ .Values.service.type }}
+  ports:
+    - name: http
+      port: {{ .Values.service.port }}
+      targetPort: http
+      protocol: TCP
+  selector:
+    {{- include "revenant.selectorLabels" . | nindent 4 }}
