@@ -25,7 +25,9 @@ tools/
 scripts/
 # ...except the migration entrypoint, which the runtime image invokes
 # (`node scripts/migrate.mjs`). Un-ignore just that one file.
+# The seal-personas sources are also needed by `npm run build` in the builder stage.
 !scripts/migrate.mjs
+!scripts/seal-personas*
 deploy/
 
 # Test coverage
