@@ -353,6 +353,34 @@ def ensure_clone(path: Path, token: str) -> None:
         git(path, "config", "user.email", "revenant-dispatcher@users.noreply.github.com")
 
 
+def sync_global_agents(clone: Path, token: str) -> str | None:
+    """Keep ~/.kiro/agents/<role>.json derived from the repo source of truth.
+
+    kiro-cli resolves repo-local .kiro/agents/ only when a run's CWD is inside
+    the checkout. The Task Runner's execution sessions run inside the clone and
+    see the repo copy, but its planning phase starts outside any worktree and
+    can only find GLOBAL agents in ~/.kiro/agents/. That global copy is a mirror
+    with no CI guard, so it silently goes stale whenever .github/agents.json
+    changes without a manual `generate_agents.py --install-global`.
+
+    Regenerating it from the freshly-pulled clone on every tick removes the
+    manual step: the global copy can never lag the merged source of truth by
+    more than one tick. Best-effort -- a failure here must not abort dispatch.
+    """
+    gen = clone / "tools" / "agents" / "generate_agents.py"
+    try:
+        git(clone, "fetch", "origin", "main", token=token)
+        git(clone, "checkout", "-q", "origin/main", "--", ".github/agents.json",
+            "tools/agents/generate_agents.py", ".kiro/agents")
+        if not gen.is_file():
+            return None
+        subprocess.run([sys.executable, str(gen), "--install-global"],
+                       cwd=clone, capture_output=True, text=True, timeout=60, check=True)
+        return None
+    except (RuntimeError, subprocess.SubprocessError, OSError) as exc:
+        return f"global-agents sync skipped: {exc}"
+
+
 def read_verdict(task_id: str, pr_number: int) -> str | None:
     """Find the QA verdict wherever the run left it: committed on the run
     branch, committed on the QA base branch, or uncommitted in either tree."""
@@ -420,6 +448,9 @@ class Tick:
     def run(self) -> None:
         ensure_clone(DEV_CLONE, self.token)
         ensure_clone(QA_CLONE, self.token)
+        warn = sync_global_agents(DEV_CLONE, self.token)
+        if warn:
+            self.say(warn)
         runs = self.crew.runs()
         open_items = self.gh.issues("open")
         issues = [i for i in open_items if "pull_request" not in i]
