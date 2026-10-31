@@ -14,6 +14,7 @@ Revenant runs on the user's self-hosted, internet-facing cluster: an RKE2 guest 
 - The same image runs three things: the web server, database migrations, and the daily fetch script.
 - Published to `ghcr.io/devclef/revenant`.
 - Tags: the full git commit SHA on every push to `main`, and the version (for example `0.3.0`) on git tags `v*`. The chart's default `image.tag` is its `appVersion`. Never rely on `latest`.
+- `dev`: a moving tag, set by the same build as the SHA tag, that always points at the newest `main` build. It is for the iterative cycle only, so the deployer can pin `image.tag: dev` and restart the pod instead of editing a hash. It is never moved by `v*` builds and must not be used for an installation holding real letters. Using it needs `image.pullPolicy: Always` and a pod restart to pick up a new build.
 
 ## CI (GitHub Actions)
 
