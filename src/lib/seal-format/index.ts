@@ -26,8 +26,16 @@ export {
   type ParseResult,
 } from "./registry";
 
-// Payload v1 schema and type.
-export { payloadV1Schema, type PayloadV1 } from "./v1/payload";
+// Payload v1 schema and type, plus the single-figure and single-metric schemas
+// it is built from.
+export {
+  payloadV1Schema,
+  figureV1Schema,
+  metricDefinitionV1Schema,
+  type PayloadV1,
+  type FigureV1,
+  type MetricDefinitionV1,
+} from "./v1/payload";
 
 // Header v1 schema, type and the hash-input helper.
 export {

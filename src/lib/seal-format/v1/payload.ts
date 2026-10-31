@@ -207,3 +207,11 @@ export const payloadV1Schema = payloadBaseSchema.superRefine((payload, ctx) => {
 });
 
 export type PayloadV1 = z.infer<typeof payloadV1Schema>;
+
+// Single-figure and single-metric schemas, for code that validates figures and
+// metric definitions on their own (spec 02-demo-figures). These are the same
+// schema objects payloadV1Schema uses, not copies, so they can never drift.
+export const figureV1Schema = figureSchema;
+export const metricDefinitionV1Schema = metricSchema;
+export type FigureV1 = z.infer<typeof figureV1Schema>;
+export type MetricDefinitionV1 = z.infer<typeof metricDefinitionV1Schema>;
