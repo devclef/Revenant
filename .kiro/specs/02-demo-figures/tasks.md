@@ -22,7 +22,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
   - Validation: `bash scripts/check.sh` (`npm ci && npm run lint && npm run typecheck && npm test && npm run build`)
   - _Requirements: R1.1–R1.4, R2.1–R2.8, R3.1–R3.5, R5.1, R5.4, R5.6, R7.1, R7.3, R7.4, R7.7_
 
-- [ ] 2. US fuel fixture and the then/now helper
+- [x] 2. US fuel fixture and the then/now helper
   - Agent: `data-dev` · Depends on: 1
   - Before this task: `src/lib/seal-format` on `main` exports `figureV1Schema`, `metricDefinitionV1Schema`, `FigureV1` and `MetricDefinitionV1` (spec 02-sealed-letters task 1, issue 28, or its follow-up).
   - Scope: `src/lib/figures/demo/us-fuel.fixture.json`, `src/lib/figures/demo/index.ts`, `src/lib/figures/then-now.ts`, `src/lib/figures/index.ts` (add exports) and their `*.test.ts`
