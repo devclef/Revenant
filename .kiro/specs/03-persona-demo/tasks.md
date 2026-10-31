@@ -61,7 +61,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
   - Validation: `bash scripts/check.sh` (`npm run lint && npm run typecheck && npm test && npm run build`)
   - _Requirements: R2.1–R2.7, R2.10, R3.1–R3.7, R14.5_
 
-- [ ] 3. Persona list, Maya's letter and persona validation
+- [x] 3. Persona list, Maya's letter and persona validation
   - Agent: `frontend-dev` · Depends on: 2
   - Before this task: spec 02-demo-figures task 2 is on `main` (`DEMO_FIGURES`, with `isRealDate` from task 1). Blocked by #39.
   - Scope: `content/personas/personas.json`, `content/personas/letters/us-maya.txt`, `src/lib/personas/schema.ts`, `index.ts`, `banned-terms.ts`, `letter-checks.ts` and their `*.test.ts`
