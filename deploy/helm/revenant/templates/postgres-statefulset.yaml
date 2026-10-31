@@ -1,0 +1,96 @@
+{{- if .Values.postgres.enabled -}}
+{{/*
+Bundled PostgreSQL StatefulSet. Sealed letters live here.
+
+Single replica, hardcoded: this is a single-primary Postgres with one data
+volume. NEVER scale it — more than one replica would mount/compete for the same
+data and corrupt it. High availability is out of scope for the MVP.
+
+The volumeClaimTemplate carries `helm.sh/resource-policy: keep` so the data PVC
+(and its bound PV) survives a `helm uninstall`. Letters are immutable and
+irreplaceable; the volume must never be reclaimed by a chart removal.
+
+Not exposed via Ingress — reached only through the headless ClusterIP Service.
+The securityContext runs Postgres as its own non-root uid/gid (999 in the
+official image) with fsGroup so the mounted volume is writable. It deliberately
+does NOT reuse the web container's readOnlyRootFilesystem context, which would
+stop Postgres from writing its data directory and socket.
+*/}}
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: {{ .Values.postgres.service.name }}
+  labels:
+    {{- include "revenant.postgres.labels" . | nindent 4 }}
+spec:
+  serviceName: {{ .Values.postgres.service.name }}
+  replicas: 1
+  selector:
+    matchLabels:
+      {{- include "revenant.postgres.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "revenant.postgres.labels" . | nindent 8 }}
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 999
+        runAsGroup: 999
+        fsGroup: 999
+      containers:
+        - name: postgres
+          image: {{ .Values.postgres.image | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: postgres
+              containerPort: 5432
+              protocol: TCP
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.existingSecret }}
+                  key: POSTGRES_PASSWORD
+            # PGDATA points at a subdirectory of the mount so Postgres does not
+            # try to initialise in the volume's lost+found root.
+            - name: PGDATA
+              value: /var/lib/postgresql/data/pgdata
+          volumeMounts:
+            - name: data
+              mountPath: /var/lib/postgresql/data
+          readinessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - postgres
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            exec:
+              command:
+                - pg_isready
+                - -U
+                - postgres
+            initialDelaySeconds: 30
+            periodSeconds: 10
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          {{- include "revenant.postgres.labels" . | nindent 10 }}
+        annotations:
+          # Keep the PVC (and its PV) on `helm uninstall`. Letters are immutable
+          # and irreplaceable — never let a chart removal reclaim this volume.
+          helm.sh/resource-policy: keep
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: {{ .Values.postgres.storage.size }}
+        {{- if .Values.postgres.storage.className }}
+        storageClassName: {{ .Values.postgres.storage.className }}
+        {{- end }}
+{{- end }}

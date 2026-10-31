@@ -27,8 +27,11 @@ spec:
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
       initContainers:
-        # Block startup until Postgres accepts connections. Uses pg_isready
-        # from the pinned Postgres image against the in-cluster Service.
+        {{- if .Values.postgres.enabled }}
+        # Block startup until the bundled Postgres accepts connections. Uses
+        # pg_isready from the pinned Postgres image against the in-cluster
+        # Service. Only runs when postgres.enabled is true; with an external
+        # database there is no in-cluster Service to wait on.
         - name: wait-for-postgres
           image: {{ .Values.postgres.image | quote }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
@@ -44,6 +47,7 @@ spec:
             {{- toYaml .Values.securityContext | nindent 12 }}
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
+        {{- end }}
         # Apply database migrations once Postgres is reachable. Runs the app
         # image's migration command; DATABASE_URL comes from the existing
         # Secret and is never rendered here.

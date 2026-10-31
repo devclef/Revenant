@@ -1,0 +1,26 @@
+{{- if .Values.postgres.enabled -}}
+{{/*
+Headless Service for the bundled Postgres StatefulSet.
+
+ClusterIP only and NEVER exposed via Ingress — ingress.yaml routes only the web
+Service on `/`. This is the stable in-cluster name the app and the
+wait-for-postgres init container connect through (`{{ .Values.postgres.service.name }}:{{ .Values.postgres.service.port }}`).
+clusterIP: None makes it headless so the StatefulSet gets a stable pod DNS name.
+*/}}
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Values.postgres.service.name }}
+  labels:
+    {{- include "revenant.postgres.labels" . | nindent 4 }}
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - name: postgres
+      port: {{ .Values.postgres.service.port }}
+      targetPort: postgres
+      protocol: TCP
+  selector:
+    {{- include "revenant.postgres.selectorLabels" . | nindent 4 }}
+{{- end }}
