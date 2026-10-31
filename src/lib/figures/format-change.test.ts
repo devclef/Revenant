@@ -164,6 +164,54 @@ describe("formatValue", () => {
     expect(formatValue("33.333333333333333333", "U.S.", 1)).toBe("33.3");
     expect(formatValue("2.5", "U.S.", 0)).toBe("3");
   });
+
+  // The three regions the product supports (product.md). Each test asserts the
+  // locale-formatted zero for that region rather than a hardcoded "0"/"0.00",
+  // so a future locale change can't make these pass against the wrong text.
+  const REGIONS = ["U.S.", "EU", "Sweden"] as const;
+
+  describe.each(REGIONS)("in %s", (region) => {
+    // A value that rounds to zero at the requested digits displays with no
+    // sign — the three ticket cases (issue #66), proven against the locale's
+    // own formatting of a true zero at the same digits.
+    it("drops the sign when -0.4 rounds to zero at 0 digits", () => {
+      const zero = formatValue("0", region, 0);
+      expect(formatValue("-0.4", region, 0)).toBe(zero);
+      expect(formatValue("-0.4", region, 0)).not.toContain("-");
+      expect(formatValue("-0.4", region, 0)).not.toContain(MINUS);
+    });
+
+    it("drops the sign when -0.001 rounds to zero at 0 digits", () => {
+      const zero = formatValue("0", region, 0);
+      expect(formatValue("-0.001", region, 0)).toBe(zero);
+      expect(formatValue("-0.001", region, 0)).not.toContain("-");
+      expect(formatValue("-0.001", region, 0)).not.toContain(MINUS);
+    });
+
+    it("drops the sign when -0.0004 rounds to zero at 2 digits", () => {
+      const zero = formatValue("0", region, 2);
+      expect(formatValue("-0.0004", region, 2)).toBe(zero);
+      expect(formatValue("-0.0004", region, 2)).not.toContain("-");
+      expect(formatValue("-0.0004", region, 2)).not.toContain(MINUS);
+    });
+
+    // A non-zero negative still carries its minus sign, so the fix only
+    // touches values that genuinely round to zero.
+    it("keeps the minus sign on a non-zero negative at 0 digits", () => {
+      const result = formatValue("-0.6", region, 0);
+      // -0.6 rounds half away from zero to -1, which is not zero.
+      expect(result).not.toBe(formatValue("0", region, 0));
+      expect(result).toContain("-");
+      expect(result.startsWith("-")).toBe(true);
+    });
+
+    it("keeps the minus sign on a non-zero negative at 2 digits", () => {
+      const result = formatValue("-3.41", region, 2);
+      expect(result).not.toBe(formatValue("0", region, 2));
+      expect(result).toContain("-");
+      expect(result.startsWith("-")).toBe(true);
+    });
+  });
 });
 
 describe("formatPeriod", () => {
