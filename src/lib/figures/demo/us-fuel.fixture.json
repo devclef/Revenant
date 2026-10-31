@@ -1,0 +1,150 @@
+{
+  "fixture": true,
+  "note": "Fake figures for building the persona demo. Not real prices. Replaced by real data in a later spec.",
+  "series": [
+    {
+      "metric": {
+        "id": "fixture-us-gasoline-regular",
+        "display_name": "Regular gasoline (all formulations), retail price (fixture)",
+        "unit": "USD per gallon",
+        "region": "U.S.",
+        "source": "FIXTURE U.S. EIA weekly retail gasoline (fake data)",
+        "series_id": "FIXTURE-EMM_EPMR_PTE_NUS_DPG"
+      },
+      "period_type": "weekly"
+    },
+    {
+      "metric": {
+        "id": "fixture-us-diesel",
+        "display_name": "No. 2 diesel, retail price (fixture)",
+        "unit": "USD per gallon",
+        "region": "U.S.",
+        "source": "FIXTURE U.S. EIA weekly retail diesel (fake data)",
+        "series_id": "FIXTURE-EMD_EPD2D_PTE_NUS_DPG"
+      },
+      "period_type": "weekly"
+    }
+  ],
+  "figures": [
+    {
+      "kind": "official",
+      "metric_id": "fixture-us-gasoline-regular",
+      "value": "1.00",
+      "unit": "USD per gallon",
+      "region": "U.S.",
+      "period": "2023-11-06",
+      "source": "FIXTURE U.S. EIA weekly retail gasoline (fake data)",
+      "series_id": "FIXTURE-EMM_EPMR_PTE_NUS_DPG",
+      "retrieved_at": "2000-01-01T00:00:00Z",
+      "source_url": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMM_EPMR_PTE_NUS_DPG&f=W"
+    },
+    {
+      "kind": "official",
+      "metric_id": "fixture-us-gasoline-regular",
+      "value": "2.00",
+      "unit": "USD per gallon",
+      "region": "U.S.",
+      "period": "2024-05-06",
+      "source": "FIXTURE U.S. EIA weekly retail gasoline (fake data)",
+      "series_id": "FIXTURE-EMM_EPMR_PTE_NUS_DPG",
+      "retrieved_at": "2000-01-01T00:00:00Z",
+      "source_url": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMM_EPMR_PTE_NUS_DPG&f=W"
+    },
+    {
+      "kind": "official",
+      "metric_id": "fixture-us-gasoline-regular",
+      "value": "3.00",
+      "unit": "USD per gallon",
+      "region": "U.S.",
+      "period": "2024-11-04",
+      "source": "FIXTURE U.S. EIA weekly retail gasoline (fake data)",
+      "series_id": "FIXTURE-EMM_EPMR_PTE_NUS_DPG",
+      "retrieved_at": "2000-01-01T00:00:00Z",
+      "source_url": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMM_EPMR_PTE_NUS_DPG&f=W"
+    },
+    {
+      "kind": "official",
+      "metric_id": "fixture-us-gasoline-regular",
+      "value": "4.00",
+      "unit": "USD per gallon",
+      "region": "U.S.",
+      "period": "2025-11-03",
+      "source": "FIXTURE U.S. EIA weekly retail gasoline (fake data)",
+      "series_id": "FIXTURE-EMM_EPMR_PTE_NUS_DPG",
+      "retrieved_at": "2000-01-01T00:00:00Z",
+      "source_url": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMM_EPMR_PTE_NUS_DPG&f=W"
+    },
+    {
+      "kind": "official",
+      "metric_id": "fixture-us-gasoline-regular",
+      "value": "5.00",
+      "unit": "USD per gallon",
+      "region": "U.S.",
+      "period": "2026-10-26",
+      "source": "FIXTURE U.S. EIA weekly retail gasoline (fake data)",
+      "series_id": "FIXTURE-EMM_EPMR_PTE_NUS_DPG",
+      "retrieved_at": "2000-01-01T00:00:00Z",
+      "source_url": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMM_EPMR_PTE_NUS_DPG&f=W"
+    },
+    {
+      "kind": "official",
+      "metric_id": "fixture-us-diesel",
+      "value": "10.00",
+      "unit": "USD per gallon",
+      "region": "U.S.",
+      "period": "2023-11-06",
+      "source": "FIXTURE U.S. EIA weekly retail diesel (fake data)",
+      "series_id": "FIXTURE-EMD_EPD2D_PTE_NUS_DPG",
+      "retrieved_at": "2000-01-01T00:00:00Z",
+      "source_url": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMD_EPD2D_PTE_NUS_DPG&f=W"
+    },
+    {
+      "kind": "official",
+      "metric_id": "fixture-us-diesel",
+      "value": "9.00",
+      "unit": "USD per gallon",
+      "region": "U.S.",
+      "period": "2024-05-06",
+      "source": "FIXTURE U.S. EIA weekly retail diesel (fake data)",
+      "series_id": "FIXTURE-EMD_EPD2D_PTE_NUS_DPG",
+      "retrieved_at": "2000-01-01T00:00:00Z",
+      "source_url": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMD_EPD2D_PTE_NUS_DPG&f=W"
+    },
+    {
+      "kind": "official",
+      "metric_id": "fixture-us-diesel",
+      "value": "8.00",
+      "unit": "USD per gallon",
+      "region": "U.S.",
+      "period": "2024-11-04",
+      "source": "FIXTURE U.S. EIA weekly retail diesel (fake data)",
+      "series_id": "FIXTURE-EMD_EPD2D_PTE_NUS_DPG",
+      "retrieved_at": "2000-01-01T00:00:00Z",
+      "source_url": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMD_EPD2D_PTE_NUS_DPG&f=W"
+    },
+    {
+      "kind": "official",
+      "metric_id": "fixture-us-diesel",
+      "value": "7.00",
+      "unit": "USD per gallon",
+      "region": "U.S.",
+      "period": "2025-11-03",
+      "source": "FIXTURE U.S. EIA weekly retail diesel (fake data)",
+      "series_id": "FIXTURE-EMD_EPD2D_PTE_NUS_DPG",
+      "retrieved_at": "2000-01-01T00:00:00Z",
+      "source_url": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMD_EPD2D_PTE_NUS_DPG&f=W"
+    },
+    {
+      "kind": "official",
+      "metric_id": "fixture-us-diesel",
+      "value": "6.00",
+      "unit": "USD per gallon",
+      "region": "U.S.",
+      "period": "2026-10-26",
+      "source": "FIXTURE U.S. EIA weekly retail diesel (fake data)",
+      "series_id": "FIXTURE-EMD_EPD2D_PTE_NUS_DPG",
+      "retrieved_at": "2000-01-01T00:00:00Z",
+      "source_url": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMD_EPD2D_PTE_NUS_DPG&f=W"
+    }
+  ]
+}
