@@ -43,8 +43,15 @@ const writtenAsOf = z
   .string()
   .regex(/^\d{4}-\d{2}-\d{2}$/)
   .refine((s) => {
-    const [y, m, d] = s.split("-").map(Number);
-    const date = new Date(Date.UTC(y, m - 1, d));
+    // Zod runs this refine even when the regex above failed, so `s` may be a
+    // malformed string here. Build the date defensively and treat an invalid
+    // one (e.g. 2024-02-30, or a non-matching shape) as a rejection rather than
+    // letting Date#toISOString throw.
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+    if (m === null) return false;
+    const [, y, mo, d] = m.map(Number);
+    const date = new Date(Date.UTC(y, mo - 1, d));
+    if (Number.isNaN(date.getTime())) return false;
     return date.toISOString().slice(0, 10) === s;
   }, { message: "written_as_of is not a real calendar date" });
 
