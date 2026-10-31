@@ -1,0 +1,54 @@
+# Keep the Docker build context small and the image lean.
+# Kept consistent with .gitignore; the multi-stage build installs
+# dependencies and builds inside the image, so local artifacts are excluded.
+
+# Dependencies (reinstalled in the image)
+node_modules/
+
+# Next.js build output (rebuilt in the image)
+.next/
+out/
+
+# Production build / standalone
+build/
+dist/
+
+# Version control and CI
+.git/
+.gitignore
+.github/
+
+# Project tooling and docs not needed at build time
+.kiro/
+docs/
+tools/
+scripts/
+# ...except the migration entrypoint, which the runtime image invokes
+# (`node scripts/migrate.mjs`). Un-ignore just that one file.
+!scripts/migrate.mjs
+deploy/
+
+# Test coverage
+coverage/
+
+# TypeScript incremental build info
+*.tsbuildinfo
+next-env.d.ts.timestamp
+
+# Environment files (never copy secrets into the image; .env.example not needed either)
+.env
+.env.*
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / editor
+.DS_Store
+
+# Python bytecode (tools/)
+__pycache__/
+
+# Docker files themselves
+Dockerfile
+.dockerignore
