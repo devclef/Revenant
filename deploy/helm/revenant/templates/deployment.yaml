@@ -1,0 +1,112 @@
+{{/*
+Web application Deployment.
+
+One replica only (see values.yaml replicaCount): the migrate init container
+runs the schema migrations, and running them from more than one pod at once is
+unsafe. Scaling past one needs a separate migration Job first.
+
+Secrets are referenced by the existing Secret name only — this template
+renders no secret values and no `kind: Secret`.
+*/}}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "revenant.fullname" . }}
+  labels:
+    {{- include "revenant.labels" . | nindent 4 }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      {{- include "revenant.selectorLabels" . | nindent 6 }}
+  template:
+    metadata:
+      labels:
+        {{- include "revenant.selectorLabels" . | nindent 8 }}
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      initContainers:
+        # Block startup until Postgres accepts connections. Uses pg_isready
+        # from the pinned Postgres image against the in-cluster Service.
+        - name: wait-for-postgres
+          image: {{ .Values.postgres.image | quote }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - sh
+            - -c
+            - |
+              until pg_isready -h {{ .Values.postgres.service.name | quote }} -p {{ .Values.postgres.service.port }}; do
+                echo "waiting for postgres at {{ .Values.postgres.service.name }}:{{ .Values.postgres.service.port }}"
+                sleep 2
+              done
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+        # Apply database migrations once Postgres is reachable. Runs the app
+        # image's migration command; DATABASE_URL comes from the existing
+        # Secret and is never rendered here.
+        - name: migrate
+          image: {{ include "revenant.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - node
+            - scripts/migrate.mjs
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.existingSecret | quote }}
+                  key: DATABASE_URL
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      containers:
+        - name: web
+          image: {{ include "revenant.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+          # Non-secret config (RP_ID, APP_ORIGIN) from the ConfigMap; secrets
+          # (DATABASE_URL and any source API keys) from the existing Secret.
+          envFrom:
+            - configMapRef:
+                name: {{ include "revenant.fullname" . }}-config
+            - secretRef:
+                name: {{ .Values.existingSecret | quote }}
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: http
+            initialDelaySeconds: 10
+            periodSeconds: 15
+            timeoutSeconds: 5
+            failureThreshold: 3
+          readinessProbe:
+            httpGet:
+              path: /api/health/ready
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+      {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
