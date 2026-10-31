@@ -117,8 +117,45 @@
 
 /* --- Staged reveal --- */
 
+.reveal {
+  text-align: left;
+}
+
 .stage {
   margin: 0 0 2.5rem;
+}
+
+/* The next-stage and "Show everything" controls, shown together while a stage
+   is still hidden (R9.4). Both are plain .button controls; neither direction
+   nor progress is encoded in colour. */
+.stageControls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+/* --- Reveal, stage 1 (remembered answers) --- */
+
+.remembered {
+  text-align: left;
+}
+
+/* One question-and-answer pair. No layout difference between questions, and no
+   ordering or colour that could hint at which way a figure moved
+   (neutrality.md). */
+.rememberedItem {
+  margin: 0 0 1.25rem;
+}
+
+.rememberedQuestion {
+  font-family: var(--font-serif);
+  color: var(--ink);
+}
+
+.rememberedAnswer {
+  margin: 0.2rem 0 0;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
 }
 
 /* Each stage fades in; disabled under reduced motion (see the block below). */

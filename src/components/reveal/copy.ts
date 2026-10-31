@@ -132,6 +132,12 @@ export const REVEAL_COPY = {
 
   /** The control that advances from stage 1 to the letter. */
   stage1Next: "Read the letter",
+
+  /**
+   * The control that reveals every hidden stage at once, in order. Shown
+   * alongside the next-stage button while a stage is still hidden (R9.4).
+   */
+  showAll: "Show everything",
 } as const;
 
 export type RevealCopy = typeof REVEAL_COPY;
