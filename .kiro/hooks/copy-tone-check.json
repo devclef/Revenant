@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Tone and neutrality check",
+      "trigger": "PostFileSave",
+      "matcher": "^src/.*\\.tsx$|content/.*\\.(md|txt)$",
+      "action": {
+        "type": "agent",
+        "prompt": "A UI or copy file was saved. Check its user-facing text against .kiro/steering/tone.md and neutrality.md. Flag: judgemental words (soared, plunged, skyrocketed, finally fell), exclamation marks, puns or horror clichés, and red/green or arrow styling that implies a number going up or down is good or bad. Report file and line for each hit, or say it is clean. Do not edit."
+      }
+    }
+  ]
+}
