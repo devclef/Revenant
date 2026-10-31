@@ -442,4 +442,144 @@ describeDb("seal, store, open, record answers, immutability (integration)", () =
     );
     expect(decrypted).toEqual(answers);
   });
+
+  // --- Step 5: immutability triggers. Every sealed table carries a
+  // `revenant_forbid_change` BEFORE UPDATE OR DELETE trigger that raises, so no
+  // application code can alter or remove a sealed row (data-integrity.md:
+  // "Enforce this at the database level, not just in app logic"). This proves it
+  // directly with the raw client on one row of each table — `letters`,
+  // `demo_letters` and `openings` — and shows each row is byte-for-byte
+  // unchanged after both a rejected UPDATE and a rejected DELETE. -------------
+  it("rejects UPDATE and DELETE on letters, demo_letters and openings rows", async () => {
+    // A real `letters` row, inserted directly with a parameterised INSERT (the
+    // store writes `demo_letters`, never `letters`). The envelope, hash and
+    // 32-byte secret come from a real seal so every row CHECK is satisfied;
+    // `opens_at` is set exactly 3 months + 1 day after `sealed_at` so the
+    // letters 3-month lock CHECK holds. Fresh random ID → independent row.
+    const realSealed = await sealOne({ opensAt: "2024-11-05T00:00:00.000Z" });
+    const realSealedAt = "2024-01-01T00:00:00.000Z";
+    const realOpensAt = "2024-04-02T00:00:00.000Z"; // 3 months + 1 day later
+    await sql`
+      INSERT INTO letters (id, envelope, envelope_hash, sealed_at, opens_at, server_secret)
+      VALUES (
+        ${realSealed.letterId},
+        ${JSON.stringify(realSealed.sealResult.envelope)},
+        ${realSealed.sealResult.envelopeHash},
+        ${realSealedAt},
+        ${realOpensAt},
+        ${Buffer.from(realSealed.serverSecret)}
+      )
+    `;
+
+    // A `demo_letters` row via the store, openable (past opening instant) so the
+    // opening row below can be recorded through the POST route.
+    const demoSealed = await sealOne({ opensAt: "2024-11-05T00:00:00.000Z" });
+    await storePersonaLetter({
+      envelope: demoSealed.sealResult.envelope,
+      envelopeHash: demoSealed.sealResult.envelopeHash,
+      serverSecret: demoSealed.serverSecret,
+    });
+
+    // An `openings` row, recorded through the POST route for the demo letter —
+    // the only write path for openings. Open the demo letter to get its opening
+    // key, encrypt an answer bound to its ID bytes, and POST it.
+    const opened = await openLetter({
+      envelope: demoSealed.sealResult.envelope,
+      envelopeHash: demoSealed.sealResult.envelopeHash,
+      serverSecret: demoSealed.serverSecret,
+      backupKey: demoSealed.backupKey,
+    });
+    expect(opened.ok).toBe(true);
+    if (!opened.ok) {
+      throw new Error("expected the demo letter to open");
+    }
+    const record = await encryptOpeningRecord(
+      opened.openingKey,
+      demoSealed.letterIdBytes,
+      { "q-fuel": { answer_type: "number", value: "2.89" } },
+    );
+    const openingRes = await postOpening(
+      new Request("https://revenant.test/api/openings", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({
+          letterId: demoSealed.letterId,
+          ciphertext: record.ciphertext,
+          nonce: record.nonce,
+        }),
+      }),
+    );
+    expect(openingRes.status).toBe(201);
+
+    // The three rows now exist, each identified by a stable predicate the raw
+    // client can re-read after each failed write.
+    type Row = Record<string, unknown>;
+
+    /**
+     * Prove a single row is immutable: read it, assert a parameterised UPDATE
+     * and a parameterised DELETE each reject (the `revenant_forbid_change`
+     * trigger raises), and after each rejection re-read the row and assert it
+     * deep-equals the pre-attempt read. `readOne`, `attemptUpdate` and
+     * `attemptDelete` all target the same single row by its key.
+     */
+    async function proveImmutable(opts: {
+      readOne: () => Promise<Row[]>;
+      attemptUpdate: () => Promise<unknown>;
+      attemptDelete: () => Promise<unknown>;
+    }): Promise<void> {
+      const before = await opts.readOne();
+      expect(before).toHaveLength(1);
+
+      await expect(opts.attemptUpdate()).rejects.toThrow(/not allowed/);
+      const afterUpdate = await opts.readOne();
+      expect(afterUpdate).toEqual(before);
+
+      await expect(opts.attemptDelete()).rejects.toThrow(/not allowed/);
+      const afterDelete = await opts.readOne();
+      expect(afterDelete).toEqual(before);
+    }
+
+    // letters: a harmless UPDATE (reusing the stored hash) and a DELETE by ID.
+    await proveImmutable({
+      readOne: () =>
+        sql`SELECT * FROM letters WHERE id = ${realSealed.letterId}`,
+      attemptUpdate: () =>
+        sql`
+          UPDATE letters
+          SET envelope_hash = ${realSealed.sealResult.envelopeHash}
+          WHERE id = ${realSealed.letterId}
+        `,
+      attemptDelete: () =>
+        sql`DELETE FROM letters WHERE id = ${realSealed.letterId}`,
+    });
+
+    // demo_letters: same pattern against the stored persona row.
+    await proveImmutable({
+      readOne: () =>
+        sql`SELECT * FROM demo_letters WHERE id = ${demoSealed.letterId}`,
+      attemptUpdate: () =>
+        sql`
+          UPDATE demo_letters
+          SET envelope_hash = ${demoSealed.sealResult.envelopeHash}
+          WHERE id = ${demoSealed.letterId}
+        `,
+      attemptDelete: () =>
+        sql`DELETE FROM demo_letters WHERE id = ${demoSealed.letterId}`,
+    });
+
+    // openings: identify the single row by its demo letter, then prove it too
+    // is immutable. The UPDATE re-sets the nonce to its own value.
+    await proveImmutable({
+      readOne: () =>
+        sql`SELECT * FROM openings WHERE demo_letter_id = ${demoSealed.letterId}`,
+      attemptUpdate: () =>
+        sql`
+          UPDATE openings
+          SET nonce = nonce
+          WHERE demo_letter_id = ${demoSealed.letterId}
+        `,
+      attemptDelete: () =>
+        sql`DELETE FROM openings WHERE demo_letter_id = ${demoSealed.letterId}`,
+    });
+  });
 });
