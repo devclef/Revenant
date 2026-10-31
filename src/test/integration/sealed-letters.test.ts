@@ -289,4 +289,75 @@ describeDb("seal, store, open, record answers, immutability (integration)", () =
     // The opening-records key is a real CryptoKey, ready to seal recall answers.
     expect(opened.openingKey).toBeInstanceOf(CryptoKey);
   });
+
+  // --- Step 3: a sealed letter whose opening instant is in the FUTURE hides
+  // everything — no envelope, no hash, no secret, and it records nothing. ----
+  it("hides everything while a future-dated letter is still sealed", async () => {
+    // Seal and store a SECOND persona letter opening far in the future, so the
+    // database clock cannot be at or after it during this test. `sealedAt`
+    // (2023, inside `sealOne`) stays before this opening instant, so the seal
+    // is consistent; the persona store accepts any opening instant.
+    const sealed = await sealOne({ opensAt: "2099-01-01T00:00:00.000Z" });
+    await storePersonaLetter({
+      envelope: sealed.sealResult.envelope,
+      envelopeHash: sealed.sealResult.envelopeHash,
+      serverSecret: sealed.serverSecret,
+    });
+
+    // (a) The letter route returns 200 but reveals ONLY the sealed status, the
+    // opening instant and the demo flag — never the envelope or its hash, so a
+    // scan before `opens_at` learns nothing about the contents.
+    const letterRes = await getLetter(
+      new Request(`https://revenant.test/api/letters/${sealed.letterId}`),
+      { params: Promise.resolve({ id: sealed.letterId }) },
+    );
+    expect(letterRes.status).toBe(200);
+    const letterBody = (await letterRes.json()) as Record<string, unknown>;
+    expect(letterBody).toEqual({
+      status: "sealed",
+      opensAt: "2099-01-01T00:00:00.000Z",
+      demo: true,
+    });
+    // Belt-and-braces: the sealed body carries no envelope material at all.
+    expect(letterBody).not.toHaveProperty("envelope");
+    expect(letterBody).not.toHaveProperty("envelopeHash");
+
+    // (b) The secret route refuses to release the time-lock secret before the
+    // opening instant: 403, and its body carries only the opening instant —
+    // never the server secret.
+    const secretRes = await getSecret(
+      new Request(
+        `https://revenant.test/api/letters/${sealed.letterId}/secret`,
+      ),
+      { params: Promise.resolve({ id: sealed.letterId }) },
+    );
+    expect(secretRes.status).toBe(403);
+    const secretBody = (await secretRes.json()) as Record<string, unknown>;
+    expect(secretBody).toEqual({ opensAt: "2099-01-01T00:00:00.000Z" });
+    expect(secretBody).not.toHaveProperty("serverSecret");
+
+    // (c) Posting an opening before the letter opens is refused with 403, and
+    // nothing is recorded. The ciphertext/nonce below are well-formed so the
+    // request passes every earlier check and is rejected solely on the
+    // not-yet-openable gate.
+    const ciphertext = encodeBase64url(new Uint8Array(randomBytes(48)));
+    const nonce = encodeBase64url(new Uint8Array(randomBytes(12)));
+    const openingRes = await postOpening(
+      new Request("https://revenant.test/api/openings", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ letterId: sealed.letterId, ciphertext, nonce }),
+      }),
+    );
+    expect(openingRes.status).toBe(403);
+
+    // The letter is a persona (demo) letter, so any opening row would reference
+    // it by `demo_letter_id`. The raw client confirms none was recorded.
+    const [{ count }] = await sql<{ count: number }[]>`
+      SELECT COUNT(*)::int AS count
+      FROM openings
+      WHERE demo_letter_id = ${sealed.letterId}
+    `;
+    expect(count).toBe(0);
+  });
 });
