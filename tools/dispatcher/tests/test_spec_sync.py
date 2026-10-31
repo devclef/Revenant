@@ -52,3 +52,20 @@ class Checks(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class Tick(unittest.TestCase):
+    def test_ticks_only_done_tasks_and_never_unticks(self):
+        text = "- [ ] 1. A\n  - Agent: `x`\n- [x] 2. B\n- [ ] 3. C\n"
+        self.assertEqual(s.tick_text(text, {1, 2}), "- [x] 1. A\n  - Agent: `x`\n- [x] 2. B\n- [ ] 3. C\n")
+        self.assertEqual(s.tick_text(text, set()), text)
+
+    def test_only_completed_issues_count(self):
+        body = "<!-- spec-task: a/1 -->"
+        issues = [
+            {"state": "closed", "state_reason": "completed", "body": body},
+            {"state": "closed", "state_reason": "not_planned", "body": "<!-- spec-task: a/2 -->"},
+            {"state": "open", "state_reason": None, "body": "<!-- spec-task: a/3 -->"},
+            {"state": "closed", "state_reason": "completed", "body": "no marker"},
+        ]
+        self.assertEqual(s.completed_keys(issues), {"a/1"})

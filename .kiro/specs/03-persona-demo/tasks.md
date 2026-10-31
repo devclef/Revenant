@@ -37,7 +37,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
   - Validation: `bash scripts/check.sh` (`npm run lint && npm run typecheck && npm test && npm run build`)
   - _Requirements: R11.8, R11.9, R11.10, R12.1–R12.11, R15.3_
 
-- [ ] 2. Recall question generator and recall record schema
+- [x] 2. Recall question generator and recall record schema
   - Agent: `frontend-dev` · Depends on: none
   - Before this task: spec 02-sealed-letters task 2 is on `main` (`encryptOpeningRecord`, `decryptOpeningRecord`, `sealLetter`, for Property 11). Blocked by #29.
   - Scope: `src/lib/recall/generate.ts`, `banned-words.ts`, `record.ts`, `index.ts` and their `*.test.ts`

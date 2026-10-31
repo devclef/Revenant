@@ -2,7 +2,7 @@
 
 Each task is one GitHub issue, worked by one agent, and leaves `main` passing the CI gate. Validation always includes the CI gate; commands below are what the agent must run locally first. Both tasks need `src/lib/seal-format` on `main` exports `figureV1Schema`, `metricDefinitionV1Schema`, `FigureV1` and `MetricDefinitionV1` (spec 02-sealed-letters task 1, issue 28, or its follow-up). `zod` and `fast-check` come with that work. The owner keeps this file off `main` until then.
 
-- [ ] 1. Figures model: periods, fixture predicates, catalogue and loader
+- [x] 1. Figures model: periods, fixture predicates, catalogue and loader
   - Agent: `data-dev` · Depends on: none
   - Before this task: `src/lib/seal-format` on `main` exports `figureV1Schema`, `metricDefinitionV1Schema`, `FigureV1` and `MetricDefinitionV1` (spec 02-sealed-letters task 1, issue 28, or its follow-up).
   - Scope: `src/lib/figures/types.ts`, `periods.ts`, `fixture.ts`, `catalogue.ts`, `load.ts`, `index.ts` and their `*.test.ts`
