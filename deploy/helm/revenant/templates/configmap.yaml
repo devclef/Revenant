@@ -1,0 +1,19 @@
+{{/*
+Non-secret application configuration.
+
+Only values that are safe to store in plain text live here. Every sensitive
+value (DATABASE_URL, POSTGRES_PASSWORD, source API keys) comes from the
+existing Secret named by .Values.existingSecret and is never rendered by the
+chart. See values.yaml and tech.md.
+*/}}
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "revenant.fullname" . }}-config
+  labels:
+    {{- include "revenant.labels" . | nindent 4 }}
+data:
+  # WebAuthn Relying Party ID. Passkeys are bound to this domain.
+  RP_ID: {{ .Values.rpId | quote }}
+  # Full origin (scheme + host) the app runs on.
+  APP_ORIGIN: {{ .Values.appOrigin | quote }}
