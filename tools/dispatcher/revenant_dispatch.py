@@ -44,6 +44,7 @@ ROLES = ("platform-dev", "frontend-dev", "data-dev", "crypto-dev")
 MAX_DEV_RUNS = int(os.environ.get("REVENANT_MAX_DEV_RUNS", "1"))
 MAX_FIX_ATTEMPTS = 2
 CI_CHECK = "ci-gate"
+REQUIRED_CHECKS = ("ci-gate", "policy")
 MARKER = "revenant-dispatch"
 
 L_READY, L_PROGRESS, L_REVIEW, L_BLOCKED = (
@@ -170,9 +171,16 @@ def qa_spec(pr: dict, issue: dict) -> str:
         f"#{issue['number']} as the `qa` agent, following `.kiro/agents/prompts/qa.md`. "
         "The base is `origin/main`.",
         "",
+        "## Steps",
+        "This is ONE step. Do not split it. In that single step: read the diff, run "
+        "`bash scripts/check.sh`, check each acceptance criterion, then write and commit "
+        "`.qa/verdict.json` in this worktree.",
+        "",
         "## Requirements",
         "- Change no files except `.qa/verdict.json`.",
         "- Write the verdict in exactly the JSON shape given in qa.md and commit it.",
+        "- File ownership and size are enforced by the `policy` CI check, which has "
+        "already passed. Don't raise path-ownership findings.",
         "",
         "## Acceptance criteria",
         "- `.qa/verdict.json` exists, is valid JSON, and has `verdict` of `pass` or `fail`.",
@@ -225,6 +233,16 @@ def run_state(run: dict | None) -> str:
     if status in ("paused", "pending", "queued", "running", "reviewing", "planning"):
         return "running"
     return "failed"
+
+
+def check_state(runs: list[dict]) -> str:
+    """State of one named check from its check runs (newest wins)."""
+    if not runs:
+        return "pending"
+    latest = max(runs, key=lambda c: c.get("started_at") or "")
+    if latest.get("status") != "completed":
+        return "pending"
+    return "success" if latest.get("conclusion") in ("success", "skipped", "neutral") else "failure"
 
 
 def branch_for(issue_number: int, role: str) -> str:
@@ -302,15 +320,14 @@ class GitHub:
         self.add_labels(number, add)
 
     def ci_state(self, sha: str) -> str:
-        """success / failure / pending for the ci-gate check on a commit."""
-        runs = self.call("GET", self.r(f"/commits/{sha}/check-runs?check_name={CI_CHECK}"))
-        runs = runs.get("check_runs", [])
-        if not runs:
-            return "pending"
-        latest = max(runs, key=lambda c: c.get("started_at") or "")
-        if latest.get("status") != "completed":
-            return "pending"
-        return "success" if latest.get("conclusion") == "success" else "failure"
+        """success / failure / pending across the required checks on a commit."""
+        states = []
+        for name in REQUIRED_CHECKS:
+            runs = self.call("GET", self.r(f"/commits/{sha}/check-runs?check_name={name}"))
+            states.append(check_state(runs.get("check_runs", [])))
+        if "failure" in states:
+            return "failure"
+        return "pending" if "pending" in states else "success"
 
 
 # ── Git (dispatcher-owned clones, never the owner's checkout) ────────────────
@@ -334,6 +351,20 @@ def ensure_clone(path: Path, token: str) -> None:
         git(path.parent, "clone", REMOTE, path.name, token=token)
         git(path, "config", "user.name", "revenant-dispatcher")
         git(path, "config", "user.email", "revenant-dispatcher@users.noreply.github.com")
+
+
+def read_verdict(task_id: str, pr_number: int) -> str | None:
+    """Find the QA verdict wherever the run left it: committed on the run
+    branch, committed on the QA base branch, or uncommitted in either tree."""
+    for ref in (f"kirocrew/task/{task_id}", f"qa/pr-{pr_number}"):
+        try:
+            return git(QA_CLONE, "show", f"{ref}:.qa/verdict.json")
+        except RuntimeError:
+            pass
+    for path in (HOME / ".kirocrew-work" / task_id / ".qa/verdict.json", QA_CLONE / ".qa/verdict.json"):
+        if path.is_file():
+            return path.read_text()
+    return None
 
 
 def checkout_base(path: Path, token: str, local_branch: str, remote_ref: str) -> None:
@@ -447,15 +478,21 @@ class Tick:
             state = run_state(runs.get(marker["task_id"]))
             if state == "running":
                 continue
-            text = None
-            if state == "passed":
-                try:
-                    text = git(QA_CLONE, "show", f"kirocrew/task/{marker['task_id']}:.qa/verdict.json")
-                except RuntimeError:
-                    text = None
-            verdict = parse_verdict(text) if state == "passed" else {
-                "verdict": "fail", "summary": f"QA run ended as {state}.", "findings": []}
             n = pr["number"]
+            head = self.gh.call("GET", self.gh.r(f"/pulls/{n}"))["head"]["sha"]
+            if head != marker.get("sha"):
+                # The PR changed while QA was reviewing; that verdict is stale.
+                self.gh.set_status(n, L_NEEDS_QA, L_QA_RUNNING)
+                self.say(f"PR #{n}: QA result discarded, PR changed during review")
+                continue
+            # A QA run that wrote a verdict counts, even if Task Runner marked a
+            # later step failed: the verdict file is the QA agent's answer.
+            text = read_verdict(marker["task_id"], n)
+            if text is None:
+                verdict = {"verdict": "fail", "findings": [],
+                           "summary": f"QA run ended as {state} without writing .qa/verdict.json."}
+            else:
+                verdict = parse_verdict(text)
             body = format_findings(verdict)
             if verdict["verdict"] == "pass":
                 self.gh.set_status(n, L_QA_PASSED, L_QA_RUNNING, L_NEEDS_QA)

@@ -1,0 +1,29 @@
+name: spec-sync
+
+# Opens one issue per spec task, so the dispatcher always has the next
+# ticket to claim. Idempotent; safe to re-run.
+on:
+  push:
+    branches: [main]
+    paths: [".kiro/specs/**/tasks.md", "tools/dispatcher/spec_sync.py"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: spec-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - name: Open issues for spec tasks
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPO: ${{ github.repository }}
+        run: python3 tools/dispatcher/spec_sync.py
