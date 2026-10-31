@@ -13,8 +13,10 @@ FROM base AS deps
 WORKDIR /app
 # Only the manifests, so this layer caches until dependencies change.
 COPY package.json package-lock.json ./
-# npm ci honours package-lock.json exactly. allowScripts in package.json lets
-# the unrs-resolver postinstall run, which eslint/next resolution needs.
+# npm ci honours package-lock.json exactly and runs lifecycle scripts by
+# default, so the unrs-resolver postinstall (needed for eslint/next resolution
+# at build time) runs without extra flags. (The `allowScripts` key in
+# package.json is a pnpm/lavamoat concept; npm ignores it.)
 RUN npm ci
 
 # --- builder: compile the app and emit .next/standalone -----------------------

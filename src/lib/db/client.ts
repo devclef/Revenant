@@ -37,6 +37,14 @@ export function getDatabaseUrl(): string {
 
 let sqlClient: Sql | undefined;
 let dbInstance: PostgresJsDatabase | undefined;
+let probeClient: Sql | undefined;
+
+/**
+ * How long the readiness probe waits for Postgres before giving up, in
+ * milliseconds. The `/api/health/ready` route must answer within ~2 s even when
+ * the database hangs, so the probe is bounded to this value.
+ */
+const READINESS_PROBE_TIMEOUT_MS = 2000;
 
 /**
  * The raw postgres-js SQL client, created on first use. Exposed for the migrate
@@ -60,17 +68,53 @@ export function getDb(): PostgresJsDatabase {
 }
 
 /**
- * Run a trivial `SELECT 1` to confirm the database is reachable. Resolves
- * `true` on success. On any failure it throws a value-free error so the
- * connection string is never echoed into logs or responses: the underlying
- * error (which may embed `DATABASE_URL`) is deliberately discarded and never
- * chained. Used by the readiness probe.
+ * A dedicated probe client for the readiness check, created on first use. It
+ * carries short `connect_timeout` and `idle_timeout` values (in seconds) so a
+ * stalled TCP connect does not leave the probe hanging past its bound, and so
+ * the probe does not hold an idle connection open between checks. Kept separate
+ * from `getSql()` so readiness probing never perturbs the main client's pool.
+ */
+function getProbeSql(): Sql {
+  if (!probeClient) {
+    probeClient = postgres(getDatabaseUrl(), {
+      max: 1,
+      connect_timeout: 2,
+      idle_timeout: 2,
+    });
+  }
+  return probeClient;
+}
+
+/**
+ * Run a trivial `SELECT 1` to confirm the database is reachable, bounded to
+ * ~2 s so the readiness probe always answers in time even when Postgres hangs.
+ * Resolves `true` on success. On any failure, or on timeout, it rejects with a
+ * value-free error so the connection string is never echoed into logs or
+ * responses: the underlying error (which may embed `DATABASE_URL`) is
+ * deliberately discarded and never chained. Used by the readiness probe.
  */
 export async function checkDatabaseConnection(): Promise<true> {
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  const timeout = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => {
+      reject(new Error("Database connection check failed."));
+    }, READINESS_PROBE_TIMEOUT_MS);
+  });
+
+  const probe = (async (): Promise<true> => {
+    try {
+      await getProbeSql()`select 1`;
+      return true;
+    } catch {
+      throw new Error("Database connection check failed.");
+    }
+  })();
+
   try {
-    await getSql()`select 1`;
-    return true;
-  } catch {
-    throw new Error("Database connection check failed.");
+    return await Promise.race([probe, timeout]);
+  } finally {
+    if (timer) {
+      clearTimeout(timer);
+    }
   }
 }
