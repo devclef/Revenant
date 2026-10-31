@@ -59,4 +59,24 @@ describe("GET /api/health/ready", () => {
     expect(body).not.toContain("postgres://");
     expect(body).toContain("unavailable");
   });
+
+  it("returns 503 { status: 'unavailable' } with no-store when the DB check times out", async () => {
+    // The ~2 s bound in checkDatabaseConnection rejects with a value-free
+    // timeout error when Postgres hangs. The route must treat that exactly like
+    // any other rejection: 503, no-store, no leaked detail. The mock stands in
+    // for the timed-out check so no real connection is opened and the test does
+    // not wait the real bound.
+    checkDatabaseConnection.mockRejectedValue(
+      new Error("Database connection check failed."),
+    );
+
+    const response = await GET();
+    const body = await response.text();
+
+    expect(response.status).toBe(503);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(JSON.parse(body)).toEqual({ status: "unavailable" });
+    // The value-free timeout error must never reach the client body.
+    expect(body).not.toContain("Database connection check failed");
+  });
 });
