@@ -70,7 +70,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
   - Validation: `bash scripts/check.sh` (`npm run lint && npm run typecheck && npm test && npm run build`)
   - _Requirements: R3.2, R6.1–R6.10, R7.1–R7.7, R8.1–R8.6_
 
-- [ ] 5. End-to-end test: seal, store, open, record answers, prove immutability
+- [x] 5. End-to-end test: seal, store, open, record answers, prove immutability
   - Agent: `crypto-dev` · Depends on: 2, 4
   - Scope: `src/test/integration/sealed-letters.test.ts`
   - Acceptance:
