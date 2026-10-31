@@ -1,0 +1,15 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Run crypto and seal-format tests",
+      "trigger": "PostFileSave",
+      "matcher": "^src/lib/(crypto|seal-format)/",
+      "action": {
+        "type": "command",
+        "command": "f=$(cat | grep -o 'src/lib/[a-z-]*' | head -1); npx vitest run \"${f:-src/lib/crypto}\" 2>&1 | tail -30",
+        "timeout": 120
+      }
+    }
+  ]
+}
