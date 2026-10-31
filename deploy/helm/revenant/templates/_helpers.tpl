@@ -53,6 +53,30 @@ app.kubernetes.io/instance: {{ .Release.Name }}
 {{- end }}
 
 {{/*
+Selector labels for the bundled Postgres workload. Distinct from the web
+selector labels so the StatefulSet, its Service and PVC never match the web
+pods. Stable across upgrades — never add version-dependent labels here.
+*/}}
+{{- define "revenant.postgres.selectorLabels" -}}
+app.kubernetes.io/name: {{ include "revenant.name" . }}-postgres
+app.kubernetes.io/instance: {{ .Release.Name }}
+{{- end }}
+
+{{/*
+Common labels for the bundled Postgres workload (StatefulSet, Service, PVC).
+Mirrors revenant.labels but carries the Postgres selector labels so Postgres
+resources are labelled distinctly from the web workload.
+*/}}
+{{- define "revenant.postgres.labels" -}}
+helm.sh/chart: {{ include "revenant.chart" . }}
+{{ include "revenant.postgres.selectorLabels" . }}
+{{- if .Chart.AppVersion }}
+app.kubernetes.io/version: {{ .Chart.AppVersion | quote }}
+{{- end }}
+app.kubernetes.io/managed-by: {{ .Release.Service }}
+{{- end }}
+
+{{/*
 Resolve the full container image reference. The tag falls back to the chart's
 appVersion when .Values.image.tag is empty, so a release never silently uses
 `latest`.
