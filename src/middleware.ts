@@ -27,15 +27,26 @@ export function middleware(request: NextRequest): NextResponse {
 
   // Forward the nonce to server components / the document on a request header
   // so inline bootstrap scripts can carry the matching `nonce` attribute.
+  const securityHeaders = buildSecurityHeaders(nonce);
+  const contentSecurityPolicy = securityHeaders["Content-Security-Policy"];
+
+  // Forward the nonce AND the CSP on the request headers. Next.js's App Router
+  // reads the request's `Content-Security-Policy` header, extracts the
+  // `script-src` nonce, and stamps that nonce onto every inline bootstrap
+  // script it emits (the `self.__next_f.push(...)` flight-data scripts). Without
+  // the CSP on the request, those inline scripts ship with no nonce and the
+  // browser blocks them, producing CSP console errors. `x-nonce` is kept so
+  // server components can read the nonce directly if needed.
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set("x-nonce", nonce);
+  requestHeaders.set("Content-Security-Policy", contentSecurityPolicy);
 
   const response = NextResponse.next({
     request: { headers: requestHeaders },
   });
 
   // Attach the shared security headers (CSP built with this request's nonce).
-  for (const [name, value] of Object.entries(buildSecurityHeaders(nonce))) {
+  for (const [name, value] of Object.entries(securityHeaders)) {
     response.headers.set(name, value);
   }
 
