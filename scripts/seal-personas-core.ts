@@ -20,12 +20,22 @@ import type { Persona } from "@/lib/personas";
 import type { LetterRow } from "@/lib/letter-store/queries";
 import { generateRecallQuestions } from "@/lib/recall";
 import {
+  canonicalize,
+  decodeBase64url,
   payloadV1Schema,
   type PayloadV1,
   type MetricDefinitionV1,
 } from "@/lib/seal-format";
 import { thenAndNow } from "@/lib/figures/then-now";
 import type { LoadedFigures } from "@/lib/figures";
+import {
+  openLetter,
+  parseBackupKey,
+  sealLetter,
+  PUBLIC_DEMO_BACKUP_KEY,
+} from "@/lib/crypto";
+import type { BackupKeyBytes } from "@/lib/crypto";
+import { LetterStoreError } from "@/lib/letter-store/store";
 
 /**
  * The outcome of sealing one persona (R4.11). A `stored` result means a new
@@ -35,7 +45,25 @@ import type { LoadedFigures } from "@/lib/figures";
  */
 export type PersonaResult =
   | { key: string; letterId: string; result: "stored" | "skipped" }
-  | { key: string; letterId: string; result: "failed"; reason: FailureReason };
+  | {
+      key: string;
+      letterId: string;
+      result: "failed";
+      reason: FailureReason;
+      /**
+       * The metric ID without a "then" figure. Set only when `reason` is
+       * `missing_then_figure`, so {@link formatResultLine} can name it. It is a
+       * catalogue identifier, never a figure value or secret.
+       */
+      metricId?: string;
+      /**
+       * The persona's `written_as_of` date. Set only when `reason` is
+       * `missing_then_figure`, so the line can report the date the "then"
+       * figure was looked up for. It is a public calendar date from the
+       * committed list, never a secret.
+       */
+      writtenAsOf?: string;
+    };
 
 /**
  * Why sealing one persona failed. Each value is a fixed reason that maps to a
@@ -168,4 +196,194 @@ export function buildPersonaPayload(
   });
 
   return { ok: true, payload };
+}
+
+/** The number of random bytes in a per-letter time-lock server secret. */
+const SERVER_SECRET_BYTES = 32;
+
+/**
+ * Coerce a stored `serverSecret` (a Node `Buffer` from `findLetter`, or any
+ * other `Uint8Array`-like) to a plain `Uint8Array` the crypto library accepts.
+ * A `Buffer` already IS a `Uint8Array`, so this copies its exact bytes into a
+ * fresh view without reinterpreting them.
+ */
+function toUint8Array(value: Uint8Array): Uint8Array {
+  return Uint8Array.from(value);
+}
+
+/**
+ * Seal every persona in `deps.personas`, in list order, each isolated in its
+ * own try/catch so one failure never stops the rest (R4.14).
+ *
+ * The published demo backup key is parsed once up front. If it does not parse,
+ * every persona fails with `unexpected_error` and nothing is stored; spec 02's
+ * test guarantees it parses, so this is a defensive path only.
+ *
+ * For each persona (R4.5–R4.10):
+ *
+ *   1. `buildPersonaPayload`. `ok: false` → `failed: missing_then_figure`; the
+ *      result names the metric ID so the entry line can report it.
+ *   2. `findLetter(letter_id)`:
+ *      - a row with `demo === false` is a real letter sharing the ID →
+ *        `failed: real_letter_collision` (R4.9).
+ *      - a row with `demo === true` is opened with the demo key and its stored
+ *        server secret. If it will not open, or its canonical payload is not
+ *        byte-identical to the freshly built one, → `failed: stored_letter_differs`
+ *        (R4.8). An exact match → `skipped` (R4.7): the row is left untouched.
+ *      - no row → a fresh 32-byte server secret, `sealLetter`, then
+ *        `storePersonaLetter` → `stored` (R4.5, R4.6). A `LetterStoreError`
+ *        (for example a racing insert) → `failed: store_rejected`.
+ *   3. Any other throw → `failed: unexpected_error`; the error object is
+ *      dropped and never stored or printed (R4.11), because a driver error can
+ *      echo a stored value.
+ *
+ * Only `findLetter` reads and only `storePersonaLetter` inserts; the logic
+ * issues no UPDATE, DELETE or TRUNCATE, and the table triggers would reject
+ * them anyway (R5.1). `exitCode` is 1 when any persona failed, else 0 (R4.14).
+ */
+export async function sealPersonas(
+  deps: Deps,
+): Promise<{ results: PersonaResult[]; exitCode: 0 | 1 }> {
+  const results: PersonaResult[] = [];
+
+  // Parse the published demo key once. A failure here poisons every persona,
+  // but it cannot happen while spec 02's PUBLIC_DEMO_BACKUP_KEY test holds.
+  let backupKey: BackupKeyBytes | null = null;
+  const parsed = parseBackupKey(PUBLIC_DEMO_BACKUP_KEY);
+  if (parsed.ok) {
+    backupKey = parsed.key;
+  }
+
+  for (const persona of deps.personas) {
+    results.push(await sealOne(persona, backupKey, deps));
+  }
+
+  const exitCode: 0 | 1 = results.some((r) => r.result === "failed") ? 1 : 0;
+  return { results, exitCode };
+}
+
+/**
+ * Seal one persona, returning its {@link PersonaResult}. Every throw is caught
+ * here and mapped to a fixed {@link FailureReason}; no error object, secret or
+ * payload value ever escapes (R4.11, R4.14).
+ */
+async function sealOne(
+  persona: Persona,
+  backupKey: BackupKeyBytes | null,
+  deps: Deps,
+): Promise<PersonaResult> {
+  const { key, letter_id: letterId } = persona;
+
+  try {
+    // The demo key did not parse (defensive): the persona cannot be sealed.
+    if (backupKey === null) {
+      return { key, letterId, result: "failed", reason: "unexpected_error" };
+    }
+
+    // Step 1: build the payload. A missing "then" figure fails this persona.
+    const text = deps.readLetterText(persona.letter_path);
+    const built = buildPersonaPayload(persona, text, deps.figures);
+    if (!built.ok) {
+      return {
+        key,
+        letterId,
+        result: "failed",
+        reason: "missing_then_figure",
+        // The metric ID and lookup date are carried through for the entry line
+        // (R4.3). Both are public catalogue/list values, never secrets.
+        metricId: built.metricId,
+        writtenAsOf: persona.written_as_of,
+      };
+    }
+
+    // Step 2: does a row already exist for this ID?
+    const existing = await deps.findLetter(letterId);
+
+    if (existing !== null) {
+      // A real letter sharing this ID is a hard collision (R4.9).
+      if (!existing.demo) {
+        return { key, letterId, result: "failed", reason: "real_letter_collision" };
+      }
+
+      // A demo row: it must open AND canonically equal the freshly built
+      // payload, or this persona needs a new ID (R4.7, R4.8).
+      const envelope =
+        typeof existing.envelope === "string"
+          ? JSON.parse(existing.envelope)
+          : existing.envelope;
+      const opened = await openLetter({
+        envelope,
+        envelopeHash: existing.envelopeHash,
+        serverSecret: toUint8Array(existing.serverSecret),
+        backupKey,
+      });
+      if (!opened.ok) {
+        return { key, letterId, result: "failed", reason: "stored_letter_differs" };
+      }
+      if (canonicalize(opened.payload) === canonicalize(built.payload)) {
+        return { key, letterId, result: "skipped" };
+      }
+      return { key, letterId, result: "failed", reason: "stored_letter_differs" };
+    }
+
+    // Step 3: no row — seal and store. A fresh 32-byte time-lock secret.
+    const serverSecret = deps.randomBytes(SERVER_SECRET_BYTES);
+    const sealed = await sealLetter({
+      payload: built.payload,
+      letterId: decodeBase64url(letterId, 16),
+      serverSecret,
+      backupKey,
+      sealedAt: deps.now().toISOString(),
+      opensAt: persona.opens_at,
+    });
+    try {
+      await deps.storePersonaLetter({
+        envelope: sealed.envelope,
+        envelopeHash: sealed.envelopeHash,
+        serverSecret,
+      });
+    } catch (error) {
+      if (error instanceof LetterStoreError) {
+        return { key, letterId, result: "failed", reason: "store_rejected" };
+      }
+      throw error;
+    }
+    return { key, letterId, result: "stored" };
+  } catch {
+    // Any other throw: drop the error entirely (R4.11) and report a fixed
+    // reason. Never store it, never print it.
+    return { key, letterId, result: "failed", reason: "unexpected_error" };
+  }
+}
+
+/**
+ * The exact output line for one {@link PersonaResult} (R4.11). The lines are
+ * fixed strings; no library error message, secret, ciphertext or letter text is
+ * ever included. The `missing_then_figure` line names the metric ID carried on
+ * the result; every other failure uses a constant sentence.
+ */
+export function formatResultLine(r: PersonaResult): string {
+  const prefix = `seal-personas ${r.key} ${r.letterId}`;
+  if (r.result !== "failed") {
+    return `${prefix} ${r.result}`;
+  }
+  switch (r.reason) {
+    case "missing_then_figure":
+      return `${prefix} failed: no then figure for ${r.metricId ?? ""} at ${
+        r.writtenAsOf ?? ""
+      }`;
+    case "stored_letter_differs":
+      return `${prefix} failed: the stored letter can't be reused; give this persona a new letter ID`;
+    case "real_letter_collision":
+      return `${prefix} failed: letter ID collides with a real letter`;
+    case "store_rejected":
+      return `${prefix} failed: the letter could not be stored`;
+    case "unexpected_error":
+      return `${prefix} failed: unexpected error`;
+    default: {
+      // Exhaustiveness guard: a new FailureReason must add a line above.
+      const _never: never = r.reason;
+      return _never;
+    }
+  }
 }
