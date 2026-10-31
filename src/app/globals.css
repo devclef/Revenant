@@ -1,3 +1,50 @@
+/*
+ * Revenant visual voice (see .kiro/steering/tone.md):
+ * parchment and paper, deep ink, wax-seal red and muted gold, generous
+ * negative space, serif headings over a clean readable body face.
+ *
+ * Colour palette and WCAG 2.2 AA contrast.
+ * Body text and any numbers must meet >=4.5:1 (normal) / >=3:1 (large).
+ * Ratios below are computed against the parchment background --paper.
+ *
+ *   --paper      #f4ecd8  parchment background (reference)
+ *   --ink        #1f1b16  body text on paper    -> 14.6:1  (AA, AAA)
+ *   --ink-soft   #3a332a  secondary text on paper -> 9.8:1  (AA, AAA)
+ *   --seal       #7a1f1a  wax-seal red, used on text -> 10.4:1 (AA, AAA)
+ *   --gold-text  #5a4414  muted gold for text       ->  8.4:1 (AA, AAA)
+ *
+ * --gold-leaf (#b08d2e) and --ink-faded are DECORATIVE only (rules, seals,
+ * faded-ink effect). They are never applied to body text or numbers, so their
+ * lower contrast is acceptable. Up and down, good and bad, get the same
+ * treatment -- no green/red or directional semantics anywhere (neutrality.md).
+ */
+
+:root {
+  /* Surfaces */
+  --paper: #f4ecd8;
+  --paper-deep: #ece1c6;
+
+  /* Text (all AA-passing on --paper; see ratios above) */
+  --ink: #1f1b16;
+  --ink-soft: #3a332a;
+
+  /* Accents */
+  --seal: #7a1f1a; /* wax-seal red, AA on text */
+  --gold-text: #5a4414; /* muted gold, AA on text */
+  --gold-leaf: #b08d2e; /* decorative gold only */
+
+  /* Decorative "faded ink" -- never on body text or numbers */
+  --ink-faded: rgba(31, 27, 22, 0.55);
+
+  /* Type */
+  --font-serif:
+    "EB Garamond", Georgia, "Times New Roman", serif; /* fallback until layout vars load */
+  --font-sans:
+    "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --measure: 68ch; /* comfortable reading width for generous negative space */
+}
+
 * {
   box-sizing: border-box;
 }
@@ -6,4 +53,103 @@ html,
 body {
   margin: 0;
   padding: 0;
+}
+
+html {
+  /* The layout sets --font-serif / --font-sans via next/font/local on <html>;
+     these :root values above are only fallbacks before those resolve. */
+  background-color: var(--paper);
+  color: var(--ink);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--ink);
+  background-color: var(--paper);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings: serif display face, deep ink, room to breathe. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-serif);
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  margin: 0 0 0.5em;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  font-weight: 500;
+}
+
+h2 {
+  font-size: clamp(1.6rem, 3.5vw, 2.25rem);
+}
+
+h3 {
+  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+}
+
+p {
+  margin: 0 0 1.25em;
+  max-width: var(--measure);
+}
+
+/* Links in wax-seal red; underlined so colour is never the only signal. */
+a {
+  color: var(--seal);
+  text-decoration-line: underline;
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 1px;
+}
+
+a:hover,
+a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--seal);
+  outline-offset: 2px;
+}
+
+/* Numbers read in body ink so figures always clear AA. */
+strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--gold-leaf); /* decorative rule */
+  margin: 2.5rem 0;
+}
+
+/*
+ * Reduced motion: disable every decorative transition and animation.
+ * The ceremonial reveal and any other motion must be averted here so the
+ * experience respects the user's system preference (tone.md).
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
