@@ -1,0 +1,25 @@
+/*
+ * Persona not-found page layout. Colours and spacing come from globals.css
+ * tokens only. No green/red or directional colour anywhere (neutrality.md);
+ * the heading and body text clear the 4.5:1 WCAG 2.2 AA floor on the
+ * ParchmentSurface (--ink 13.17:1, --ink-soft 9.58:1 per the globals.css
+ * record). The back link inherits the global --seal underlined link style.
+ */
+
+.title {
+  font-family: var(--font-serif);
+  color: var(--ink);
+  margin: 0 0 0.5em;
+}
+
+.body {
+  font-family: var(--font-sans);
+  color: var(--ink-soft);
+  max-width: var(--measure);
+  margin: 0 0 1.25em;
+}
+
+.back {
+  font-family: var(--font-sans);
+  display: inline-block;
+}
