@@ -18,6 +18,7 @@
   ],
   "includeMcpJson": false,
   "mcpServers": {},
+  "hooks": {},
   "resources": [
     "file://.kiro/steering/**/*.md",
     "file://.kiro/agents/prompts/common.md"
