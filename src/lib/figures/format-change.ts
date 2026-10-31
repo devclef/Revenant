@@ -89,6 +89,20 @@ export function formatValue(
   const formatter = new Intl.NumberFormat(locale, options) as Intl.NumberFormat & {
     format(value: string): string;
   };
+
+  // A negative value whose displayed magnitude rounds to all zeros (e.g.
+  // "-0.001" at 2 digits) would otherwise render as a negative zero ("−0.00")
+  // and leak a minus sign that implies the figure fell. Negative zero and
+  // positive zero are the same quantity, so always show it unsigned: format
+  // the magnitude when the signed result carries no non-zero digit.
+  if (value.charCodeAt(0) === 0x2d) {
+    const signed = formatter.format(value);
+    if (!/[1-9]/.test(signed)) {
+      return formatter.format(value.slice(1));
+    }
+    return signed;
+  }
+
   return formatter.format(value);
 }
 
