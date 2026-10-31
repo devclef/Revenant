@@ -50,13 +50,17 @@ spec:
         {{- end }}
         # Apply database migrations once Postgres is reachable. Runs the app
         # image's migration command; DATABASE_URL comes from the existing
-        # Secret and is never rendered here.
+        # Secret and is never rendered here. When demo.sealPersonas is true it
+        # also seals the demo persona letters after migrations succeed; a
+        # non-zero exit from either step fails the init container, so web
+        # doesn't start.
         - name: migrate
           image: {{ include "revenant.image" . }}
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
-            - node
-            - scripts/migrate.mjs
+            - sh
+            - -c
+            - {{ if (.Values.demo).sealPersonas }}node scripts/migrate.mjs && node scripts/seal-personas.mjs{{ else }}node scripts/migrate.mjs{{ end }}
           env:
             - name: DATABASE_URL
               valueFrom:
