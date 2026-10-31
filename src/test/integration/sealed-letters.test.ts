@@ -216,4 +216,77 @@ describeDb("seal, store, open, record answers, immutability (integration)", () =
     expect(sealed.letterIdBytes).toHaveLength(16);
     expect(sealed.serverSecret).toHaveLength(32);
   });
+
+  // --- Step 2: openable letter, full seal -> store -> read -> secret ->
+  // hash-verify -> decrypt -> deep-equal round trip. -------------------------
+  it("seals, stores, reads back and reveals an openable letter", async () => {
+    // Seal a fresh letter with a PAST opening instant. `sealedAt` inside
+    // `sealOne` is fixed in 2023, far enough before this 2024 opening that a
+    // real letter's 3-month lock would also hold; the persona store accepts a
+    // past `opensAt` either way, since persona letters carry historical dates.
+    const sealed = await sealOne({ opensAt: "2024-11-05T00:00:00.000Z" });
+
+    // Store it as a persona (demo) letter. The store re-derives and checks the
+    // hash, so passing the sealed hash through proves it round-trips.
+    await storePersonaLetter({
+      envelope: sealed.sealResult.envelope,
+      envelopeHash: sealed.sealResult.envelopeHash,
+      serverSecret: sealed.serverSecret,
+    });
+
+    // Read the letter back through the exported route GET handler. Because the
+    // opening instant is in the past, the row is openable and the route hands
+    // back the full envelope and hash.
+    const letterRes = await getLetter(
+      new Request(`https://revenant.test/api/letters/${sealed.letterId}`),
+      { params: Promise.resolve({ id: sealed.letterId }) },
+    );
+    expect(letterRes.status).toBe(200);
+    const letterBody = (await letterRes.json()) as {
+      status: string;
+      demo: boolean;
+      opensAt: string;
+      envelope: unknown;
+      envelopeHash: string;
+    };
+    expect(letterBody.status).toBe("openable");
+    expect(letterBody.demo).toBe(true);
+    // The envelope the route returns is the stored canonical JSON parsed back
+    // to its values, so it deep-equals the sealed envelope exactly.
+    expect(letterBody.envelope).toEqual(sealed.sealResult.envelope);
+    expect(letterBody.envelopeHash).toBe(sealed.sealResult.envelopeHash);
+
+    // Release the time-lock server secret through the exported secret route
+    // GET handler. The opening instant is past, so the secret is released.
+    const secretRes = await getSecret(
+      new Request(
+        `https://revenant.test/api/letters/${sealed.letterId}/secret`,
+      ),
+      { params: Promise.resolve({ id: sealed.letterId }) },
+    );
+    expect(secretRes.status).toBe(200);
+    const secretBody = (await secretRes.json()) as { serverSecret: string };
+    const releasedSecret = decodeBase64url(secretBody.serverSecret, 32);
+    expect(releasedSecret).toHaveLength(32);
+    // The bytes the route released are exactly the sealed server secret.
+    expect(Array.from(releasedSecret)).toEqual(Array.from(sealed.serverSecret));
+
+    // Open the letter in the browser's shoes: the route-supplied envelope and
+    // hash, the released secret and the test backup key. This verifies the
+    // hash, unwraps the DEK, decrypts the payload and parses it.
+    const opened = await openLetter({
+      envelope: letterBody.envelope,
+      envelopeHash: letterBody.envelopeHash,
+      serverSecret: releasedSecret,
+      backupKey: sealed.backupKey,
+    });
+    expect(opened.ok).toBe(true);
+    if (!opened.ok) {
+      throw new Error("expected the letter to open");
+    }
+    // The decrypted payload deep-equals the plaintext that was sealed.
+    expect(opened.payload).toEqual(sealed.payload);
+    // The opening-records key is a real CryptoKey, ready to seal recall answers.
+    expect(opened.openingKey).toBeInstanceOf(CryptoKey);
+  });
 });
