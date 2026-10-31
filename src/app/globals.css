@@ -1,3 +1,55 @@
+/*
+ * Revenant visual voice (see .kiro/steering/tone.md):
+ * parchment and paper, deep ink, wax-seal red and muted gold, generous
+ * negative space, serif headings over a clean readable body face.
+ *
+ * Colour palette and WCAG 2.2 AA contrast.
+ * Body text and any numbers must meet >=4.5:1 (normal) / >=3:1 (large and
+ * UI components). Ratios below are the lower of the two reference surfaces,
+ * --paper (#f4ecd8) and --paper-deep (#ece1c6), and are independently
+ * computed (sRGB relative luminance, WCAG formula). The full per-surface
+ * table and method are recorded at the end of this file.
+ *
+ *   --paper      #f4ecd8  parchment background (reference surface)
+ *   --paper-deep #ece1c6  deeper parchment (reference surface)
+ *   --ink        #1f1b16  body/headings/numbers -> 13.17:1 (AA, AAA)
+ *   --ink-soft   #3a332a  secondary text         ->  9.58:1 (AA, AAA)
+ *   --seal       #7a1f1a  wax-seal red on text    ->  7.92:1 (AA, AAA)
+ *   --gold-text  #5a4414  muted gold for text     ->  7.11:1 (AA, AAA)
+ *
+ * --gold-leaf (#b08d2e, 2.41:1) and --ink-faded are DECORATIVE only (rules,
+ * seals, faded-ink effect). They are never applied to body text or numbers,
+ * so their lower contrast is acceptable. Up and down, good and bad, get the
+ * same treatment -- no green/red or directional semantics anywhere
+ * (neutrality.md).
+ */
+
+:root {
+  /* Surfaces */
+  --paper: #f4ecd8;
+  --paper-deep: #ece1c6;
+
+  /* Text (all AA-passing on --paper; see ratios above) */
+  --ink: #1f1b16;
+  --ink-soft: #3a332a;
+
+  /* Accents */
+  --seal: #7a1f1a; /* wax-seal red, AA on text */
+  --gold-text: #5a4414; /* muted gold, AA on text */
+  --gold-leaf: #b08d2e; /* decorative gold only */
+
+  /* Decorative "faded ink" -- never on body text or numbers */
+  --ink-faded: rgba(31, 27, 22, 0.55);
+
+  /* Type */
+  --font-serif:
+    "EB Garamond", Georgia, "Times New Roman", serif; /* fallback until layout vars load */
+  --font-sans:
+    "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+
+  --measure: 68ch; /* comfortable reading width for generous negative space */
+}
+
 * {
   box-sizing: border-box;
 }
@@ -7,3 +59,140 @@ body {
   margin: 0;
   padding: 0;
 }
+
+html {
+  /* The layout sets --font-serif / --font-sans via next/font/local on <html>;
+     these :root values above are only fallbacks before those resolve. */
+  background-color: var(--paper);
+  color: var(--ink);
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 1.0625rem;
+  line-height: 1.7;
+  color: var(--ink);
+  background-color: var(--paper);
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings: serif display face, deep ink, room to breathe. */
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  font-family: var(--font-serif);
+  color: var(--ink);
+  font-weight: 600;
+  line-height: 1.2;
+  letter-spacing: 0.01em;
+  margin: 0 0 0.5em;
+  text-wrap: balance;
+}
+
+h1 {
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
+  font-weight: 500;
+}
+
+h2 {
+  font-size: clamp(1.6rem, 3.5vw, 2.25rem);
+}
+
+h3 {
+  font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+}
+
+p {
+  margin: 0 0 1.25em;
+  max-width: var(--measure);
+}
+
+/* Links in wax-seal red; underlined so colour is never the only signal. */
+a {
+  color: var(--seal);
+  text-decoration-line: underline;
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 1px;
+}
+
+a:hover,
+a:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
+:focus-visible {
+  outline: 2px solid var(--seal);
+  outline-offset: 2px;
+}
+
+/* Numbers read in body ink so figures always clear AA. */
+strong {
+  color: var(--ink);
+  font-weight: 600;
+}
+
+hr {
+  border: none;
+  border-top: 1px solid var(--gold-leaf); /* decorative rule */
+  margin: 2.5rem 0;
+}
+
+/*
+ * Reduced motion: disable every decorative transition and animation.
+ * The ceremonial reveal and any other motion must be averted here so the
+ * experience respects the user's system preference (tone.md).
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/*
+ * ---------------------------------------------------------------------------
+ * WCAG 2.2 AA contrast record (ticket contrast check)
+ * ---------------------------------------------------------------------------
+ * Method: sRGB -> linearised channels -> relative luminance L (WCAG formula),
+ * contrast = (L_light + 0.05) / (L_dark + 0.05). Computed from the hex tokens
+ * below, not eyeballed. AA thresholds: >=4.5:1 normal text, >=3:1 large text
+ * (>=24px, or >=18.66px bold) and UI components.
+ *
+ * Every text/number token is verified on BOTH background surfaces actually
+ * used: --paper (#f4ecd8, PageShell + ParchmentSurface.paper) and --paper-deep
+ * (#ece1c6, ParchmentSurface.deep). The worse of the two is what matters.
+ *
+ *   TEXT TOKEN              USED FOR                 on --paper  on --paper-deep
+ *   --ink      #1f1b16   body, headings, numbers      14.54:1      13.17:1   PASS
+ *   --ink-soft #3a332a   tagline, secondary text      10.57:1       9.58:1   PASS
+ *   --seal     #7a1f1a   links, accent text, focus     8.75:1       7.92:1   PASS
+ *   --gold-text#5a4414   muted gold text (reserved)     7.85:1       7.11:1   PASS
+ *
+ * Lowest text ratio anywhere: 7.11:1 (--gold-text on --paper-deep) -- well
+ * above the 4.5:1 normal-text floor, so all text/number pairs clear AA (and
+ * AAA's 7:1) on either surface.
+ *
+ * UI COMPONENT / NON-TEXT
+ *   focus-visible outline uses --seal (#7a1f1a): 8.75:1 on paper -- PASS (>=3:1).
+ *   link underline is --seal and never the only signal (text is underlined).
+ *
+ * DECORATIVE ONLY -- not held to the text threshold, and never applied to
+ * text or numbers:
+ *   --gold-leaf #b08d2e  2.66:1 / 2.41:1   hairline rules, hr, seal rim
+ *   --ink-faded rgba(31,27,22,.55)         faded-ink effect on decoration only
+ *   paper-grain gradients (<=0.025 alpha)  texture, carries no information
+ *
+ * Neutrality: up/down, good/bad share one treatment; no green/red or
+ * directional colour anywhere (neutrality.md).
+ * ---------------------------------------------------------------------------
+ */
