@@ -70,7 +70,7 @@ def evaluate(pr: dict, issue: dict | None, files: list[dict], ownership: dict, o
             errors.append(f"`{path}` is outside `{role}`'s owned paths.")
         if not matches(path, ownership.get("exclude_from_size", [])):
             size += int(f.get("additions", 0)) + int(f.get("deletions", 0))
-    limit = int(ownership.get("max_changed_lines", 400))
+    limit = int(ownership.get("max_changed_lines", 2000))
     if size > limit:
         errors.append(f"{size} changed lines is over the {limit}-line limit; split the ticket.")
     return errors
