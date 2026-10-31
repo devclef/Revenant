@@ -1,0 +1,48 @@
+Revenant is sealed and ready.
+
+The app will be served at:
+
+    https://{{ .Values.host }}
+
+Before it can open a single letter, two things must be in place.
+
+1. The Secret this release reads from.
+
+   This chart never holds secret values. It reads them from an existing
+   Kubernetes Secret named "{{ .Values.existingSecret }}" in namespace
+   {{ .Release.Namespace }}. Create that Secret before you install, with at
+   least these keys:
+
+       DATABASE_URL        the Postgres connection string the app and
+                           migrations use
+       POSTGRES_PASSWORD   the password for the bundled Postgres
+
+   Source API keys (for example BLS_API_KEY and EIA_API_KEY) are added to the
+   same Secret as the daily fetch job needs them.
+
+   Check the Secret is present:
+
+       kubectl -n {{ .Release.Namespace }} get secret {{ .Values.existingSecret }}
+
+   If it is missing, the web pod will not start.
+
+{{- if .Values.ingress.enabled }}
+2. TLS for the host.
+
+   Passkeys are bound to {{ .Values.rpId }}, so the site must be served over
+   HTTPS at exactly that host. cert-manager issues the certificate using the
+   ClusterIssuer "{{ .Values.ingress.clusterIssuer }}". The first certificate
+   can take a minute or two.
+
+   Watch it settle:
+
+       kubectl -n {{ .Release.Namespace }} get certificate
+{{- else }}
+2. TLS for the host.
+
+   The Ingress is disabled in this release, so you must route HTTPS to the
+   Service yourself. Passkeys are bound to {{ .Values.rpId }}: the site must be
+   reached over HTTPS at exactly that host, or letters cannot be opened.
+{{- end }}
+
+When both are in place, open https://{{ .Values.host }} and seal a letter.

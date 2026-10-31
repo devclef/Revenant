@@ -1,0 +1,47 @@
+{{/*
+Ingress for the web Service.
+
+Only rendered when .Values.ingress.enabled is true. The host MUST equal
+.Values.rpId: passkeys are bound to this origin, so TLS and a matching host
+are required (see tech.md).
+
+TLS: cert-manager issues the certificate for `host` via the named
+ClusterIssuer and writes it into the referenced Secret. The chart never
+renders that Secret — it only names it so cert-manager fills it. The Secret
+name is derived from the release, never a shared or hardcoded name.
+
+No auth or SSO annotations: the app is internet-facing and manages its own
+unlocking (WebAuthn / backup key). Routing is a single path (/) to the web
+Service on port 3000.
+*/}}
+{{- if .Values.ingress.enabled -}}
+{{- $fullName := include "revenant.fullname" . -}}
+{{- $svcPort := .Values.service.port -}}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ $fullName }}
+  labels:
+    {{- include "revenant.labels" . | nindent 4 }}
+  annotations:
+    cert-manager.io/cluster-issuer: {{ .Values.ingress.clusterIssuer | quote }}
+spec:
+  {{- if .Values.ingress.className }}
+  ingressClassName: {{ .Values.ingress.className }}
+  {{- end }}
+  tls:
+    - hosts:
+        - {{ .Values.host | quote }}
+      secretName: {{ printf "%s-tls" $fullName }}
+  rules:
+    - host: {{ .Values.host | quote }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $fullName }}
+                port:
+                  number: {{ $svcPort }}
+{{- end }}
