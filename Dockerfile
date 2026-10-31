@@ -52,6 +52,20 @@ RUN addgroup -g 1001 -S nodejs \
 COPY --from=builder --chown=1001:1001 /app/.next/standalone ./
 COPY --from=builder --chown=1001:1001 /app/.next/static ./.next/static
 
+# The same image also runs the migration entrypoint (`node scripts/migrate.mjs`),
+# invoked by the Helm pre-upgrade hook and the CI smoke job. The Next.js
+# standalone trace only bundles the web server's runtime deps, so the migrate
+# script, the migrations folder and the two packages the script imports are
+# copied in explicitly. The script hardcodes the `./drizzle` migrations folder,
+# so drizzle.config.ts (which pulls in the drizzle-kit devDependency) is not
+# needed at runtime. `postgres` and `drizzle-orm` have no hard runtime
+# dependencies of their own, so copying just these two from the fully-installed
+# deps stage is enough and keeps the image small.
+COPY --from=builder --chown=1001:1001 /app/scripts/migrate.mjs ./scripts/migrate.mjs
+COPY --from=builder --chown=1001:1001 /app/drizzle ./drizzle
+COPY --from=deps --chown=1001:1001 /app/node_modules/postgres ./node_modules/postgres
+COPY --from=deps --chown=1001:1001 /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
+
 USER 1001
 EXPOSE 3000
 

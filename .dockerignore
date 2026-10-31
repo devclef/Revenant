@@ -23,6 +23,9 @@ dist/
 docs/
 tools/
 scripts/
+# ...except the migration entrypoint, which the runtime image invokes
+# (`node scripts/migrate.mjs`). Un-ignore just that one file.
+!scripts/migrate.mjs
 deploy/
 
 # Test coverage
