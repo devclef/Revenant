@@ -582,4 +582,67 @@ describeDb("seal, store, open, record answers, immutability (integration)", () =
         sql`DELETE FROM openings WHERE demo_letter_id = ${demoSealed.letterId}`,
     });
   });
+
+  // --- Step 6: the letters 3-month lock CHECK. `letters_opens_at_min_lock`
+  // requires (opens_at AT TIME ZONE 'UTC') >= (sealed_at AT TIME ZONE 'UTC') +
+  // interval '3 months', so a real letter can never open sooner than three
+  // months after it was sealed (product.md / tech.md: "at least 3 months after
+  // sealing for real letters"). This proves R-lock at the database level,
+  // independent of any app code, with DIRECT parameterised inserts into
+  // `letters` — the store only ever writes `demo_letters`, which carries no such
+  // CHECK. Both rows use fresh random IDs and a minimal but valid envelope,
+  // 64-hex hash and 32-byte secret so only the lock decides the outcome. -----
+  it("enforces the letters 3-month lock CHECK on direct inserts", async () => {
+    // A minimal row that satisfies every OTHER letters CHECK: a valid 22-char
+    // ID, a 64-hex envelope hash, a 32-byte server secret and a non-empty
+    // envelope. Only `opens_at` relative to `sealed_at` varies between the two
+    // inserts, so the lock CHECK is the sole cause of a rejection.
+    const sealedAt = "2024-01-01T00:00:00.000Z";
+    // Postgres: 2024-01-01 + interval '3 months' = 2024-04-01, so this is one
+    // day BEFORE the earliest allowed opening instant — the CHECK must reject.
+    const tooSoonOpensAt = "2024-03-31T00:00:00.000Z";
+    // Exactly 2024-01-01 + 3 months — the boundary the `>=` CHECK accepts.
+    const exactlyThreeMonthsOpensAt = "2024-04-01T00:00:00.000Z";
+    const envelopeText = "{}";
+    const hashHex = "0".repeat(64);
+
+    /** INSERT one `letters` row with the given ID and opening instant. */
+    function insertLetter(id: string, opensAt: string): Promise<unknown> {
+      return sql`
+        INSERT INTO letters (id, envelope, envelope_hash, sealed_at, opens_at, server_secret)
+        VALUES (
+          ${id},
+          ${envelopeText},
+          ${hashHex},
+          ${sealedAt},
+          ${opensAt},
+          ${Buffer.from(new Uint8Array(randomBytes(32)))}
+        )
+      `;
+    }
+
+    // (a) One day short of three months: the lock CHECK rejects the insert. The
+    // message names the failing constraint, so assert on it to prove the lock —
+    // and not some other CHECK — is what rejected the row.
+    const tooSoonId = freshLetterId();
+    await expect(
+      insertLetter(tooSoonId, tooSoonOpensAt),
+    ).rejects.toThrow(/letters_opens_at_min_lock/);
+
+    // The rejected insert left no row behind.
+    const [{ tooSoonCount }] = await sql<{ tooSoonCount: number }[]>`
+      SELECT COUNT(*)::int AS "tooSoonCount" FROM letters WHERE id = ${tooSoonId}
+    `;
+    expect(tooSoonCount).toBe(0);
+
+    // (b) Exactly three months after sealing: the CHECK's `>=` accepts it, so
+    // the insert succeeds and the row is present. A separate fresh ID keeps
+    // this independent of the rejected insert above.
+    const exactId = freshLetterId();
+    await insertLetter(exactId, exactlyThreeMonthsOpensAt);
+    const [{ exactCount }] = await sql<{ exactCount: number }[]>`
+      SELECT COUNT(*)::int AS "exactCount" FROM letters WHERE id = ${exactId}
+    `;
+    expect(exactCount).toBe(1);
+  });
 });
