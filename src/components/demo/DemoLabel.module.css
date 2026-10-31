@@ -1,0 +1,23 @@
+/*
+ * DemoLabel: a small, quiet "Demo" badge. Set in the body sans face, upper
+ * case with wide tracking so it reads as a label rather than a heading.
+ *
+ * Colour: --ink-soft text inside a hairline --gold-leaf border. --ink-soft on
+ * --paper is 10.57:1 and on --paper-deep 9.58:1 (globals.css record), well
+ * above the 4.5:1 AA floor. The border is --gold-leaf, used decoratively only
+ * (never on text). No green/red or directional colour -- neutrality.md.
+ */
+
+.badge {
+  display: inline-block;
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  padding: 0.25rem 0.6rem;
+  border: 1px solid var(--gold-leaf);
+  border-radius: 0.25rem;
+  line-height: 1;
+}
