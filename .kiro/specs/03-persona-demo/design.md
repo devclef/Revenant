@@ -230,8 +230,7 @@ function computeChange(then: FigureV1, now: FigureV1): ChangeResult;
 
 1. If `then.kind` or `now.kind` is not `official`, the reason is `kind`. A difference in `kind` also gives `kind`.
 2. Then `source`, `series_id`, `unit` and `region` are compared in that order. The first one that differs is the reason (R12.2).
-3. The period end of each figure is `periodEnd(p, "weekly")` for a real `YYYY-MM-DD` and `periodEnd(p, "monthly")` for a real `YYYY-MM`. If either period is in neither form, the reason is `unreadable_period`. Otherwise, if the now period end is not later than the then period end, the reason is `no_newer_figure` (R12.3).
-   *Owner decision:* `unreadable_period` is a reason beyond the list in R11.6 and R12.3, which name only `no_newer_figure`. A requirements update can follow if the owner wants it.
+3. The period end of each figure is `periodEnd(p, "weekly")` for a real `YYYY-MM-DD` and `periodEnd(p, "monthly")` for a real `YYYY-MM`. If either period is in neither form, the reason is `unreadable_period` (R12.3). Otherwise, if the now period end is not later than the then period end, the reason is `no_newer_figure` (R12.11).
 4. Otherwise it returns `difference = now − then`, and `percent = ratioPercent(difference, then)` unless `then` is zero.
 
 It reads only its two arguments, copies the value and period strings into the result, and never mutates its inputs (R12.6). The result stores the inputs' value strings as given, so the formula display shows the published values.
@@ -741,7 +740,7 @@ For any Comparable pair with a non-zero then value, `percent.value` has at most 
 
 For any valid pair of figures and any mutation that makes either `kind` non-official, or changes one or more of `kind`, `source`, `series_id`, `unit` and `region`, or replaces either period with a string in neither `YYYY-MM-DD` nor `YYYY-MM` form, or makes the now period end equal to or earlier than the then period end, `computeChange` returns `comparable: false`. The reason is the first failing check in the order `kind`, `source`, `series_id`, `unit`, `region`, `unreadable_period`, `no_newer_figure`, and there is no difference or percent.
 
-**Validates: Requirements 12.2, 12.3, 12.8**
+**Validates: Requirements 12.2, 12.3, 12.8, 12.11**
 
 ### Property 6: Change text shows direction only through sign or the three words
 

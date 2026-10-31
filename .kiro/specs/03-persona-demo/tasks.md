@@ -30,12 +30,12 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
       - Property 2: A rise and its mirror-image fall differ only in sign. Validates R12.7.
       - Property 3: Trailing fractional zeros don't change the result. Validates R12.7.
       - Property 4: The percentage carries at least ten significant digits. Validates R12.5.
-      - Property 5: Non-comparable pairs are reported with the first failing field. Validates R12.2, R12.3, R12.8.
+      - Property 5: Non-comparable pairs are reported with the first failing field. Validates R12.2, R12.3, R12.8, R12.11.
       - Property 6: Change text shows direction only through sign or the three words. Validates R11.8, R12.9, R15.3.
       - Property 7: Display rounding is exact decimal rounding. Validates R11.9, R11.10.
     - Pure modules: nothing imported from `src/lib/crypto`, `src/lib/db` or Node built-ins. No new dependencies.
   - Validation: `bash scripts/check.sh` (`npm run lint && npm run typecheck && npm test && npm run build`)
-  - _Requirements: R11.8, R11.9, R11.10, R12.1–R12.10, R15.3_
+  - _Requirements: R11.8, R11.9, R11.10, R12.1–R12.11, R15.3_
 
 - [ ] 2. Recall question generator and recall record schema
   - Agent: `frontend-dev` · Depends on: none
