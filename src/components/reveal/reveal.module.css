@@ -59,11 +59,27 @@
 
 /* --- Recall step --- */
 
+.recall {
+  text-align: left;
+}
+
+.recallHint {
+  color: var(--ink-soft);
+}
+
 .fieldset {
   border: 1px solid var(--gold-leaf); /* decorative rule only */
   border-radius: 2px;
   margin: 0 0 1.5rem;
   padding: 1rem 1.25rem;
+}
+
+.noAnswer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-top: 0.6rem;
+  color: var(--ink);
 }
 
 .legend {
