@@ -15,7 +15,8 @@ You are one agent in Revenant's agent team, run by the Kiro Crew Task Runner on 
 
 - Run every command from the worktree root. Never `cd` elsewhere, never use `--prefix`, never install globally, and never create or edit files outside the worktree (including your home folder).
 - There is exactly one `package.json` and one `package-lock.json`, at the worktree root.
-- If a tool warns about another lockfile or workspace root outside the worktree, stop and report it. Don't work around it with config such as `outputFileTracingRoot` or `turbopack.root`.
+- `next.config.ts` pins `outputFileTracingRoot` to the project folder, so a stray lockfile in a parent folder can't change the build root. Keep it.
+- If a tool still warns about another lockfile, workspace root or a plugin "conflicted between" two folders, the cause is outside the worktree. Don't install anything to fix it. Stop and report the exact message.
 
 ## Never
 
