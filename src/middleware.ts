@@ -67,6 +67,8 @@ export function middleware(request: NextRequest): NextResponse {
 }
 
 export const config = {
-  // Run on every route (including /api/health) except Next's static assets.
+  // Run on every route except Next's static assets. The negative lookahead
+  // excludes only _next/static, _next/image and favicon.ico, so both `/` and
+  // the `/api/health` route handler match and receive the R4.1 headers.
   matcher: ["/((?!_next/static|_next/image|favicon.ico).*)"],
 };
