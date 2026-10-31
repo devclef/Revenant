@@ -31,6 +31,16 @@ will not start.
 - Liveness probe: `GET /api/health`
 - Readiness probe: `GET /api/health/ready`
 
+## PostgreSQL
+
+When `postgres.enabled` is `true` (the default), the chart deploys a bundled
+PostgreSQL as a single-replica StatefulSet. Its PersistentVolumeClaim carries
+`helm.sh/resource-policy: keep`, so the volume — and the sealed letters on it —
+survives a `helm uninstall`. Postgres is reached only in-cluster through the
+`postgres.service.name` Service and is never exposed via the Ingress. Set
+`postgres.enabled: false` to use an external database instead; the app then
+reads `DATABASE_URL` from the Secret as usual.
+
 ## Install
 
 Create the Secret first, then install:
