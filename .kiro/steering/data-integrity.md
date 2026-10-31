@@ -33,6 +33,7 @@ Self-reported personal numbers use `source = self-reported` and are always label
 - Do not interpolate, extrapolate, average across gaps, or substitute a "close enough" series or region.
 - Never convert currencies. An exact unit rescale (for example a source's "per 1,000 litres" shown as "per litre") is allowed only at display time, is shown to the user, and the stored value stays as published.
 - Do not hardcode figures, use placeholder numbers, or generate numbers with an LLM. Seed and test data must be clearly fake and must never reach production or a demo presented as real.
+- Fixture figures (source and series_id starting with FIXTURE) may appear on the demo site, including in sealed persona letters, only with a visible 'fixture data' label next to each one, until real data replaces them.
 - If a figure is unavailable (source down, series discontinued, period not yet published), show that it is unavailable and why. An honest gap is acceptable. A guessed number is not.
 - If the "then" and "now" figures differ in unit, region, methodology or series, do not compare them. Say they are not comparable.
 
