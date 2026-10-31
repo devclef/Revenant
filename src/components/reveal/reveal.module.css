@@ -1,0 +1,185 @@
+/*
+ * Styles for the Opening_Flow, recall step and staged Reveal.
+ *
+ * Only the colour tokens from globals.css are used: --ink / --ink-soft for
+ * text, --seal and --gold-text for labels, --paper / --paper-deep for
+ * surfaces, and --gold-leaf / --ink-faded for decoration only. There is no
+ * judgement colour anywhere -- no green/red, no directional semantics. A
+ * figure that rose and one that fell are drawn with the exact same classes
+ * (see .change, .figure below), so up and down get identical treatment
+ * (neutrality.md).
+ *
+ * R9.5: the @media (prefers-reduced-motion: reduce) block sets
+ *       transition: none and animation: none.
+ * R9.6: :focus-visible gets a 2px ink outline.
+ * R9.7 / R13.6: text uses --ink / --ink-soft; labels use --seal / --gold-text,
+ *       all AA on --paper per globals.css.
+ */
+
+/* --- Layout --- */
+
+.flow {
+  max-width: var(--measure);
+  margin: 0 auto;
+  padding: 2rem 1.25rem 4rem;
+}
+
+.view {
+  margin: 0 auto;
+}
+
+/* --- Still sealed / verification / errors --- */
+
+.sealed,
+.intact,
+.error {
+  text-align: left;
+}
+
+.remaining {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Plain text button in the product voice; no judgement colour. */
+.button {
+  font: inherit;
+  color: var(--ink);
+  background-color: var(--paper-deep);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  padding: 0.5rem 1.1rem;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.button:hover {
+  background-color: var(--paper);
+}
+
+/* --- Recall step --- */
+
+.fieldset {
+  border: 1px solid var(--gold-leaf); /* decorative rule only */
+  border-radius: 2px;
+  margin: 0 0 1.5rem;
+  padding: 1rem 1.25rem;
+}
+
+.legend {
+  font-family: var(--font-serif);
+  color: var(--ink);
+  padding: 0 0.4rem;
+}
+
+.inputRow {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.input {
+  font: inherit;
+  color: var(--ink);
+  background-color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  padding: 0.4rem 0.6rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.unit {
+  color: var(--ink-soft);
+}
+
+.fieldError {
+  display: block;
+  margin-top: 0.4rem;
+  color: var(--seal); /* AA label colour, never the only signal */
+}
+
+/* --- Staged reveal --- */
+
+.stage {
+  margin: 0 0 2.5rem;
+}
+
+/* Each stage fades in; disabled under reduced motion (see the block below). */
+.fade {
+  animation: reveal-fade-in 600ms ease both;
+}
+
+@keyframes reveal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.letter {
+  white-space: pre-wrap;
+  font-family: var(--font-serif);
+  color: var(--ink);
+}
+
+/*
+ * A figure that rose and one that fell share this single class. There is no
+ * .rose / .fell variant and no colour change, so direction is never encoded
+ * in the styling (neutrality.md).
+ */
+.figure,
+.change {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+.period,
+.region {
+  color: var(--ink-soft);
+}
+
+.formula {
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+/* "fixture data" / historical-record label: ink text in a 1px ink border, so
+   it is readable without relying on colour alone (R13.5, R13.6). */
+.fixtureLabel {
+  display: inline-block;
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  padding: 0.05rem 0.4rem;
+  font-size: 0.85em;
+}
+
+.source {
+  color: var(--ink-soft);
+}
+
+.source summary {
+  color: var(--seal);
+  cursor: pointer;
+}
+
+/* --- Focus (R9.6) --- */
+
+:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* --- Reduced motion (R9.5) --- */
+
+@media (prefers-reduced-motion: reduce) {
+  .fade,
+  .button,
+  .stage {
+    transition: none;
+    animation: none;
+  }
+}
