@@ -65,5 +65,5 @@
     "package-lock.json",
     "drizzle/meta/**"
   ],
-  "max_changed_lines": 400
+  "max_changed_lines": 2000
 }

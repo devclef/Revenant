@@ -114,7 +114,7 @@ class Policy(unittest.TestCase):
     def test_missing_issue_and_size(self):
         self.assertTrue(pr_policy.evaluate(self.pr, None, [], OWNERSHIP, "devclef"))
         errs = pr_policy.evaluate(self.pr, issue(1, ["agent:data-dev"]),
-                                  self.files("src/lib/sources/eia.ts", size=500), OWNERSHIP, "devclef")
+                                  self.files("src/lib/sources/eia.ts", size=OWNERSHIP["max_changed_lines"] + 1), OWNERSHIP, "devclef")
         self.assertIn("limit", errs[0])
 
     def test_owner_label_needs_owner_author(self):
