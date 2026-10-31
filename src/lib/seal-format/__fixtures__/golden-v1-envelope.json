@@ -1,0 +1,15 @@
+{
+  "formatVersion": 1,
+  "letterId": "AAECAwQFBgcICQoLDA0ODw",
+  "opensAt": "2027-02-01T00:00:00.000Z",
+  "payloadCiphertext": "REREREREREREREREREREREREREREREREREREREREREQ",
+  "payloadNonce": "MzMzMzMzMzMzMzMz",
+  "sealedAt": "2026-10-31T12:00:00.000Z",
+  "wrappedDeks": [
+    {
+      "factor": "backup",
+      "nonce": "ERERERERERERERER",
+      "wrappedKey": "IiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIiIi"
+    }
+  ]
+}
