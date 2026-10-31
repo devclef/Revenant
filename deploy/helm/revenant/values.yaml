@@ -1,0 +1,112 @@
+# Default values for the Revenant chart.
+# Every setting is documented here; the chart README mirrors this file.
+# No secret values live here — all secrets come from an existing Kubernetes
+# Secret (see `existingSecret` below). See deploy.md and tech.md.
+
+# -- Number of web Deployment replicas. Keep at 1 in the MVP: migrations run in
+# an init container of the web pod, so more than one replica would run them
+# concurrently. Moving to >1 requires a separate migration Job first.
+replicaCount: 1
+
+image:
+  # -- Container image repository. One image serves web, migrations and the
+  # daily fetch job.
+  repository: ghcr.io/devclef/revenant
+  # -- Image tag. Empty falls back to the chart's appVersion. Never rely on
+  # `latest`. Use a full git SHA or a `v*` version in production; `dev` is a
+  # moving tag for the iterative cycle only (needs pullPolicy: Always).
+  tag: ""
+  # -- Image pull policy. IfNotPresent for pinned tags; use Always only with the
+  # moving `dev` tag.
+  pullPolicy: IfNotPresent
+
+service:
+  # -- Service type. ClusterIP; the app is reached through the Ingress.
+  type: ClusterIP
+  # -- Service port. The web container listens on 3000 (Next.js standalone).
+  port: 3000
+
+# -- Public hostname served by the Ingress. MUST equal `rpId`: passkeys are
+# bound to this origin, so TLS and a matching host are required.
+host: revenant.devclef.se
+
+# -- WebAuthn Relying Party ID. Passkeys are bound to this domain. Must match
+# the Ingress `host` and the registrable domain of `appOrigin`.
+rpId: revenant.devclef.se
+
+# -- Full origin (scheme + host) the app runs on. Used for WebAuthn and
+# absolute links. Must be https and match `host`.
+appOrigin: https://revenant.devclef.se
+
+ingress:
+  # -- Create an Ingress for the web Service.
+  enabled: true
+  # -- IngressController class name. Empty uses the cluster's default class.
+  className: ""
+  # -- cert-manager ClusterIssuer that issues the TLS certificate for `host`.
+  clusterIssuer: letsencrypt-prod
+
+# -- Name of an existing Kubernetes Secret holding all sensitive values. The
+# chart NEVER renders secret values; create this Secret out of band. Required
+# keys:
+#   DATABASE_URL      — postgres connection string the app and migrations use
+#   POSTGRES_PASSWORD — password for the bundled Postgres
+# Source API keys (e.g. BLS_API_KEY, EIA_API_KEY) are added to this Secret as
+# the fetch job needs them.
+existingSecret: revenant
+
+postgres:
+  # -- Deploy the bundled PostgreSQL StatefulSet. Sealed letters live here.
+  enabled: true
+  # -- Postgres image, pinned to a major version. Also provides `pg_isready`
+  # for the wait-for-postgres init container.
+  image: postgres:17-alpine
+  service:
+    # -- In-cluster Service name the app connects through. Never exposed via
+    # Ingress.
+    name: postgres
+    # -- Postgres Service port.
+    port: 5432
+  storage:
+    # -- PersistentVolumeClaim size for Postgres data.
+    size: 5Gi
+    # -- StorageClass for the PVC. Empty uses the cluster default (Harvester
+    # CSI on this cluster).
+    className: ""
+
+# -- Pod-level security context. Runs the whole pod as a non-root user.
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  runAsGroup: 1001
+  fsGroup: 1001
+
+# -- Container-level security context for the web app. Non-root, no privilege
+# escalation, all capabilities dropped, read-only root filesystem.
+securityContext:
+  runAsNonRoot: true
+  runAsUser: 1001
+  allowPrivilegeEscalation: false
+  readOnlyRootFilesystem: true
+  capabilities:
+    drop:
+      - ALL
+
+# -- CPU/memory requests and limits for the web container. Empty by default;
+# set per environment.
+resources: {}
+  # limits:
+  #   cpu: 500m
+  #   memory: 512Mi
+  # requests:
+  #   cpu: 100m
+  #   memory: 256Mi
+
+# -- Node selector for scheduling the web pod. Empty by default.
+nodeSelector: {}
+
+# -- Tolerations for the web pod. Empty by default.
+tolerations: []
+
+# -- Affinity rules for the web pod. Empty by default.
+affinity: {}
