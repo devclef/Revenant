@@ -78,6 +78,19 @@ Per-write test hooks were dropped: the Task Runner runs `scripts/check.sh` at th
 
 Not every hook output reaches the agent. In kiro-cli 2.35 the output of a `postToolUse` hook is not shown to the agent, which is why the check runs on `stop`. To change a role's hooks, edit `HOOKS` in the generator and run it again.
 
+## QA browser check
+
+The `qa` agent (and only `qa`) has a headless Chromium through the Playwright MCP server, so it can click through UI changes instead of only reading code. It runs when a PR changes `src/app/**` or `src/components/**`. The steps are in `.kiro/agents/prompts/qa.md`.
+
+- **Server:** `@playwright/mcp@0.0.83`, pinned exactly in `tools/agents/generate_agents.py`, started with `--headless --browser chromium --isolated`. Other roles have no MCP servers. Two tools are denied for qa: `browser_run_code_unsafe` and `browser_file_upload`.
+- **Browser binary (once per machine):** `npx -y playwright-core@1.64.0-alpha-1790635538000 install chromium`. That is the Playwright version `@playwright/mcp@0.0.83` depends on; it installs to `~/.cache/ms-playwright`. Bump both together when you bump the MCP version.
+- **Screenshots:** `~/kiro/revenant-crew/qa-shots/pr-<number>/`, outside the repo. That folder is the only place the browser tools may write. Auto-named snapshots and console logs land in its root.
+- **App for the check:** QA builds and starts the app on a free `PORT`. If the ticket needs letters it starts a throwaway Postgres with `docker run`, runs `npm run db:migrate` and, if the branch has it, `npm run seal-personas`. It stops the app and removes the container afterwards, even on failure.
+- **Findings:** browser findings go into `.qa/verdict.json`. If setup fails, that is one minor finding, never a blocker.
+- **Shell rules added for qa:** `docker run*`, `docker rm*`, `docker stop*`, `kill *`, and the `npm` commands above, with `PORT=` and `DATABASE_URL=` prefixed forms. `kill *` cannot be limited to QA's own processes (rules match command text only); the prompt tells QA to kill only the PIDs it started.
+- **Quirks:** kiro-cli does not expand `$HOME` in MCP `env` values, so the server is started through `sh -c`. MCP tools connect a moment after a session starts and load on demand, so the prompt tells QA to build first and retry before calling the browser unavailable.
+- After changing any of this, run `python3 tools/agents/generate_agents.py --install-global` so Crew sessions pick it up.
+
 ## When something goes wrong
 
 - **status:blocked:** read the issue and PR comments, then the run in the Crew dashboard Tasks page. Fix the ticket or the code, remove `status:blocked`, and set the right status label.
