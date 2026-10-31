@@ -23,8 +23,11 @@ you create out of band before installing. It must hold at least:
 | `POSTGRES_PASSWORD` | Password for the bundled PostgreSQL. |
 
 Source API keys (for example `BLS_API_KEY`, `EIA_API_KEY`) are added to the same
-Secret as the daily fetch job needs them. If the Secret is missing, the web pod
-will not start.
+Secret as the daily fetch job needs them.
+
+**Create this Secret before you install the chart.** The chart does not create
+it. If the Secret named by `existingSecret` is missing, the web pod will not
+start. See [Install](#install) for the `kubectl create secret` command.
 
 ## Health
 
@@ -95,6 +98,29 @@ helm template t deploy/helm/revenant
 | `nodeSelector` | `{}` | Node selector for scheduling the web pod. |
 | `tolerations` | `[]` | Tolerations for the web pod. |
 | `affinity` | `{}` | Affinity rules for the web pod. |
+
+## Release / GitOps overrides
+
+The MVP is deployed with Fleet from a separate GitOps repository (see
+`.kiro/steering/deploy.md`). That repo keeps its own values and usually
+overrides:
+
+| Value | Why a GitOps repo overrides it |
+|---|---|
+| `image.repository` | Point at the published image, `ghcr.io/devclef/revenant`. |
+| `image.tag` | Pin to a released `v*` tag or a full git SHA, never `latest`. |
+| `host` | The public hostname for the target cluster. |
+| `rpId` | WebAuthn Relying Party ID; must equal `host`. |
+| `appOrigin` | Full origin the app runs on; must be https and match `host`. |
+| `ingress.className` | The cluster's IngressController class. |
+| `ingress.clusterIssuer` | The cert-manager ClusterIssuer for TLS on `host`. |
+| `postgres.storage.className` | The StorageClass for the Postgres PVC. |
+| `resources` | CPU/memory requests and limits per environment. |
+| `existingSecret` | Name of the pre-created Secret holding sensitive values. |
+
+After this change is merged, the owner tags `v0.1.0`. That tag publishes the
+image `ghcr.io/devclef/revenant:0.1.0`, which a GitOps repo then references via
+`image.tag`.
 
 ## Chart version
 
