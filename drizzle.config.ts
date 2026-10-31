@@ -3,8 +3,8 @@ import { defineConfig } from "drizzle-kit";
 /**
  * drizzle-kit configuration.
  *
- * `schema` points at the future schema location under `src/lib/db`; no tables
- * exist yet, so `db:generate` currently produces no migrations. `out` is the
+ * `schema` picks up every file in `src/lib/db/schema/` (one per owning role,
+ * for example `letters.ts` and `figures*.ts`), so no shared barrel file is needed. `out` is the
  * migrations directory the migrate script reads.
  *
  * Credentials come from `DATABASE_URL`. The value is never embedded or logged
@@ -13,7 +13,7 @@ import { defineConfig } from "drizzle-kit";
  */
 export default defineConfig({
   dialect: "postgresql",
-  schema: "./src/lib/db/schema.ts",
+  schema: "./src/lib/db/schema/*.ts",
   out: "./drizzle",
   dbCredentials: {
     url: process.env.DATABASE_URL ?? "",

@@ -32,7 +32,8 @@ EXTRA_SHELL = {
                      "curl *localhost*", "curl *127.0.0.1*"],
     "frontend-dev": [],
     "data-dev": CONTAINER_SHELL,
-    "crypto-dev": CONTAINER_SHELL,
+    # Tasks with integration tests pass DATABASE_URL inline for a local test database.
+    "crypto-dev": [*CONTAINER_SHELL, "DATABASE_URL=* npm *", "DATABASE_URL=* bash scripts/check.sh*"],
     "qa": ["git fetch origin*", "git merge-base*", "helm lint*", "helm template*"],
 }
 DENY_SHELL = [
