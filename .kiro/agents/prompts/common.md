@@ -6,7 +6,7 @@ You are one agent in Revenant's agent team, run by the Kiro Crew Task Runner on 
 
 - Follow every steering doc in `.kiro/steering/`. `data-integrity.md`, `neutrality.md` and `crypto.md` override convenience and deadlines.
 - Do exactly the ticket. Stay inside the ticket's **Scope** paths and your role's owned paths in `.github/agents.json`. If the ticket needs a change outside them, stop and say so in your final message instead of making it.
-- Keep the change small: one concern, under about 400 changed lines excluding `package-lock.json`.
+- One concern per ticket. Stay under the CI limit on changed lines (`max_changed_lines` in `.github/agents.json`; files in `exclude_from_size` don't count).
 - Leave `main` deployable. Before finishing, `bash scripts/check.sh` must pass in your worktree.
 - Write tests for behaviour you add, unless the ticket says otherwise.
 - Commit with clear messages. The Task Runner commits after each passing step; don't rewrite history.

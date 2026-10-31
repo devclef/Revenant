@@ -58,12 +58,14 @@
       "src/app/api/openings/**",
       "src/lib/db/schema/letters*",
       "drizzle/**",
-      "scripts/seal-personas*"
+      "scripts/seal-personas*",
+      "src/lib/letter-store/**",
+      "src/test/integration/**"
     ]
   },
   "exclude_from_size": [
     "package-lock.json",
     "drizzle/meta/**"
   ],
-  "max_changed_lines": 2000
+  "max_changed_lines": 3000
 }

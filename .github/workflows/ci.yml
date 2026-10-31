@@ -17,6 +17,18 @@ jobs:
   checks:
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    # Integration tests (src/test/integration) need a real Postgres. They only run
+    # against a database whose name contains "test", and fail if CI would skip them.
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_PASSWORD: ci
+          POSTGRES_DB: revenant_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U postgres" --health-interval 5s
+          --health-timeout 5s --health-retries 10
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - if: hashFiles('package-lock.json') != ''
@@ -26,6 +38,8 @@ jobs:
           cache: npm
       - uses: azure/setup-helm@9bc31f4ebc9c6b171d7bfbaa5d006ae7abdb4310 # v5.0.1
       - name: scripts/check.sh
+        env:
+          DATABASE_URL: postgres://postgres:ci@localhost:5432/revenant_test
         run: bash scripts/check.sh
 
   smoke:

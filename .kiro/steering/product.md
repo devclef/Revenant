@@ -95,8 +95,14 @@ This demo shows the unlock capability. The judge writes a short letter, picks fi
 
 ## Build order
 
-1. **Starter data sources (first spec task).** Pick a small set of official series per region (for example fuel and a few grocery items) that are reachable, publish real prices or a clearly labelled index, and cover the demo windows. Enough to build on, not an exhaustive survey.
-2. Feature work follows from the spec.
+The hackathon demo comes first, not the full product.
+
+1. **01 Skeleton.** Deployable site, health checks, image, Helm chart. Done.
+2. **02 Sealed letters.** Sealed letter format, browser crypto with a known demo key (no passkey or PRF), the first migration (letters, demo letters, openings, immutability triggers), and the API routes to get a letter, release its server secret after the opening date, and store encrypted recall answers.
+3. **02 Demo figures (data-dev, alongside 02).** Two or three official series per region that cover the demo windows and today, delivered as a JSON file with full provenance. No fetch job.
+4. **03 Persona demo** at `/demo`: pick a persona, break the seal, answer the recall questions, then see the answers, the letter, and the figures then vs now.
+5. **Live passkey demo**, if time allows.
+6. Remaining product work (passkey sealing for real letters, backup key card, PDF cards, `.ics`, the daily fetch job) after the demo.
 
 ## Open product questions
 
