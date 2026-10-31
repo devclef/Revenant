@@ -80,7 +80,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
   - Validation: `bash scripts/check.sh` (`npm run lint && npm run typecheck && npm test && npm run build`)
   - _Requirements: R1.1–R1.10, R2.4, R2.10, R5.2_
 
-- [ ] 4. Sealing script, its bundle and its integration tests
+- [x] 4. Sealing script, its bundle and its integration tests
   - Agent: `crypto-dev` · Depends on: 2, 3
   - Before this task: spec 02-sealed-letters tasks 2, 3 and 4 are on `main` (`sealLetter`, `openLetter`, `parseBackupKey`, `PUBLIC_DEMO_BACKUP_KEY`, `storePersonaLetter`, `LetterStoreError`, `findLetter`, `describeDb`), and spec 02-demo-figures task 2 is on `main` (`DEMO_FIGURES`, `thenAndNow`). Blocked by #29, #30, #31, #39.
   - Scope: `scripts/seal-personas-core.ts`, `scripts/seal-personas.ts`, `scripts/seal-personas.build.mjs`, `scripts/seal-personas-texts.d.ts`, `src/test/integration/seal-personas.test.ts`, `src/test/integration/seal-personas-core.test.ts`, `package.json`, `package-lock.json`
