@@ -12,4 +12,13 @@ export default defineConfig({
   resolve: {
     tsconfigPaths: true,
   },
+  // tsconfig pins `jsx: "preserve"` for the Next.js build, which leaves JSX
+  // untransformed. Vitest has no such build step, so tell Vite 8's Oxc pass to
+  // compile JSX with React's automatic runtime (react/jsx-runtime). This is
+  // test-only and does not touch the Next.js build.
+  oxc: {
+    jsx: {
+      runtime: "automatic",
+    },
+  },
 });
