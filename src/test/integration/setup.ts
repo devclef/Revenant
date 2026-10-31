@@ -75,7 +75,18 @@ function isCI(): boolean {
  * journal table, so repeated runs across files are no-ops. A dedicated
  * single-connection client is opened and closed so the suite leaves no pooled
  * connections behind. `DATABASE_URL` is never logged.
+ *
+ * Vitest runs each test file in its own worker in parallel, so every file's
+ * `beforeAll` calls this at once. On a fresh database their first migration
+ * runs would race to CREATE the same tables and types and one would fail with a
+ * duplicate-key error on `pg_type`. A session-level Postgres advisory lock
+ * serialises them: the first connection to arrive migrates while the others
+ * wait on the same lock, and once it releases they each find the migrations
+ * already recorded in the journal and do nothing. The lock key is an arbitrary
+ * fixed constant, unique to this migrator.
  */
+const MIGRATION_ADVISORY_LOCK_KEY = 0x5265_7641; // "RevA" — arbitrary, fixed.
+
 async function applyMigrations(): Promise<void> {
   const url = process.env.DATABASE_URL;
   if (!url) {
@@ -84,8 +95,16 @@ async function applyMigrations(): Promise<void> {
   }
   const sql = postgres(url, { max: 1 });
   try {
-    const db = drizzle(sql);
-    await migrate(db, { migrationsFolder: "./drizzle" });
+    // Block until no other test-file worker is mid-migration. The lock is held
+    // for this session only and released below, so a crash still frees it when
+    // the connection closes.
+    await sql`SELECT pg_advisory_lock(${MIGRATION_ADVISORY_LOCK_KEY})`;
+    try {
+      const db = drizzle(sql);
+      await migrate(db, { migrationsFolder: "./drizzle" });
+    } finally {
+      await sql`SELECT pg_advisory_unlock(${MIGRATION_ADVISORY_LOCK_KEY})`;
+    }
   } finally {
     await sql.end({ timeout: 5 });
   }
