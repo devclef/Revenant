@@ -50,6 +50,7 @@
           "src/app/layout.tsx",
           "src/app/page.tsx",
           "src/lib/db/**",
+          "src/lib/version.test.ts",
           "src/lib/version.ts",
           "src/middleware.ts",
           "src/test/**",

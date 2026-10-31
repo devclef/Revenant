@@ -25,6 +25,7 @@
       "src/app/api/health/**",
       "src/lib/db/**",
       "src/lib/version.ts",
+      "src/lib/version.test.ts",
       "src/test/**",
       "public/**"
     ],
