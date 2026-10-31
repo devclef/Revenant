@@ -64,7 +64,19 @@ function reorderKeys(value: unknown, rng: () => number): unknown {
       [entries[i], entries[j]] = [entries[j], entries[i]];
     }
     const out: Record<string, unknown> = {};
-    for (const [k, v] of entries) out[k] = reorderKeys(v, rng);
+    // Assign with defineProperty so a key like "__proto__" becomes a genuine
+    // own data property (matching how canonicalize reads it via Object.keys),
+    // instead of triggering the Object.prototype __proto__ setter and being
+    // silently dropped. A plain `out[k] = v` would lose such a key and make the
+    // reordered clone diverge from the original.
+    for (const [k, v] of entries) {
+      Object.defineProperty(out, k, {
+        value: reorderKeys(v, rng),
+        writable: true,
+        enumerable: true,
+        configurable: true,
+      });
+    }
     return out;
   }
   return value;
