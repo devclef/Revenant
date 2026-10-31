@@ -52,7 +52,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
   - Validation: `docker run -d -e POSTGRES_PASSWORD=test -e POSTGRES_DB=revenant_test -p 5432:5432 postgres:17-alpine`, then with `DATABASE_URL=postgres://postgres:test@localhost:5432/revenant_test` run `npm run db:migrate` twice, `npm test`, and `bash scripts/check.sh`
   - _Requirements: R4.1–R4.11, R5.1–R5.3, R8.4, R8.5_
 
-- [ ] 4. Routes: read a letter, release its server secret, record recall answers
+- [x] 4. Routes: read a letter, release its server secret, record recall answers
   - Agent: `crypto-dev` · Depends on: 3
   - Scope: `src/app/api/letters/[id]/route.ts` and `route.test.ts`, `src/app/api/letters/[id]/secret/route.ts` and `route.test.ts`, `src/app/api/openings/route.ts` and `route.test.ts`, `src/lib/letter-store/queries.ts`, `clock.ts`, `http.ts` and their tests, `src/lib/letter-store/no-console.test.ts`
   - Acceptance:
