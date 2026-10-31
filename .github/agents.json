@@ -38,6 +38,7 @@
       "src/lib/cards/**",
       "src/lib/ics/**",
       "src/lib/recall/**",
+      "src/lib/personas/**",
       "content/personas/**",
       "public/**"
     ],
