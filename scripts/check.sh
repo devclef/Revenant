@@ -5,6 +5,8 @@
 # Owner-only file: agents must not edit it.
 set -euo pipefail
 cd "$(dirname "$0")/.."
+# Never leave .pyc files behind for an agent to commit.
+export PYTHONDONTWRITEBYTECODE=1
 
 ran=0
 step() { echo; echo "==> $*"; ran=$((ran + 1)); }
