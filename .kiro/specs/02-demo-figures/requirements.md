@@ -4,13 +4,15 @@ Spec: 02 Demo figures
 
 ## Introduction
 
-This spec defines the data model for fuel figures and a clearly fake fixture for one example persona, so spec 03 (persona demo) can be built before real data is fetched. It delivers a catalogue of real metric definitions for petrol and diesel retail prices in the US (USD), the EU (EUR, EU weighted average) and Sweden (SEK), a fixture file with fake figures for the US persona window (2023-11 to election day, 5 November 2024) plus a few later "now" points, and a pure helper in `src/lib/figures` that picks the "then" and "now" figure for a series. Metric definitions and figures drop into the spec 02 sealed payload version 1 unchanged. Owner role: data-dev. Follows `data-integrity.md`, `neutrality.md` and `tech.md`.
+This spec defines the data model for fuel figures and a clearly fake fixture for one example persona, so spec 03 (persona demo) can be built before real data is fetched. It delivers a catalogue of real metric definitions for petrol and diesel retail prices in the US (USD) and the EU (EUR, EU weighted average), a fixture file with fake figures for the US persona window (2023-11 to election day, 5 November 2024) plus a few later "now" points, and a pure helper in `src/lib/figures` that picks the "then" and "now" figure for a series. Metric definitions and figures drop into the spec 02 sealed payload version 1 unchanged. Owner role: data-dev. Follows `data-integrity.md`, `neutrality.md` and `tech.md`.
 
 Depends on spec 02-sealed-letters task 1 (`src/lib/seal-format`) being merged, since this spec reuses its schemas.
 
 ## Out of scope
 
-Real fetching, source adapters, API keys, the fetch CronJob, the real-data file itself, groceries, rent, wages, fixture figures for the EU and Sweden, persona letter text, recall question wording, any UI, database tables and API routes.
+Real fetching, source adapters, API keys, the fetch CronJob, the real-data file itself, groceries, rent, wages, fixture figures for the EU, Sweden fuel (see below), persona letter text, recall question wording, any UI, database tables and API routes.
+
+Sweden fuel is deferred to the real-data spec. That spec must first check SCB and Energimyndigheten for an official SEK source, and otherwise decide between EUR prices from the Weekly Oil Bulletin and no Sweden fuel. The Oil Bulletin no longer publishes Sweden in SEK, and converting from EUR is not allowed.
 
 ## Requirements
 
@@ -28,7 +30,7 @@ Real fetching, source adapters, API keys, the fetch CronJob, the real-data file 
 
 **User story:** As a reader of a sealed letter, I want each fuel series to name its real publisher and identifier, so the "now" figure can be found later without guessing.
 
-1. THE catalogue SHALL hold one real metric definition for each of these six series: petrol and diesel retail price for the US (EIA weekly U.S. average, USD), the EU (European Commission Weekly Oil Bulletin, EU weighted average, EUR) and Sweden (Weekly Oil Bulletin, SEK).
+1. THE catalogue SHALL hold one real metric definition for each of these four series: petrol and diesel retail price for the US (EIA weekly U.S. average, USD) and the EU (European Commission Weekly Oil Bulletin, EU weighted average, EUR). THE catalogue SHALL hold no Sweden series in this spec.
 2. EACH real metric definition SHALL carry the publisher's real source name. WHERE the publisher is the U.S. EIA, THE `series_id` SHALL be EIA's real series ID. WHERE the source is the Weekly Oil Bulletin, which publishes no series IDs, THE `series_id` SHALL be a plain description of where the figure sits in the published file (file name, sheet, column and country), and SHALL NOT be written to look like an official identifier. THE design SHALL record, for each series, where the ID or file location was confirmed (URL and date checked).
 3. EACH metric ID SHALL be unique across the catalogue and the fixture together.
 4. EACH catalogue series SHALL also carry these catalogue-only fields, which are not part of the sealed payload: a period type of `weekly` or `monthly`, and an optional display rescale.
@@ -57,7 +59,7 @@ Real fetching, source adapters, API keys, the fetch CronJob, the real-data file 
 4. EVERY fixture figure `value` SHALL be round, meaning the value matches `^[0-9]+\.00$`.
 5. EVERY fixture figure `retrieved_at` SHALL be `2000-01-01T00:00:00Z`.
 6. FOR EACH of the two fixture series, THE fixture SHALL hold at least one figure with a period end from 2023-11-01 to 2024-11-05 and at least two figures with a period end after 2024-11-05.
-7. THE fixture SHALL hold no figures for the EU or Sweden.
+7. THE fixture SHALL hold no figures for the EU.
 8. THE location of the real-data file SHALL be fixed in the design under `src/lib/figures/`, and THIS spec SHALL NOT create it. Real data SHALL be added later as that new file, and the fixture file SHALL NOT be edited into real data.
 
 ### R5. Fixture guard
