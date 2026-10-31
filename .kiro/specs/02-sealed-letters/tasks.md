@@ -2,7 +2,7 @@
 
 Each task is one GitHub issue, worked by one agent, and leaves `main` passing the CI gate. Validation always includes the CI gate; commands below are what the agent must run locally first.
 
-- [ ] 1. Seal format: payload v1, header v1, canonical JSON and envelope hash
+- [x] 1. Seal format: payload v1, header v1, canonical JSON and envelope hash
   - Agent: `crypto-dev` · Depends on: none
   - Before this task: the owner has committed the RFC 8785 fixture files.
   - Scope: `src/lib/seal-format/**` (`base64url.ts`, `canonical-json.ts`, `hash.ts`, `registry.ts`, `index.ts`, `v1/payload.ts`, `v1/header.ts`, `*.test.ts`, `__fixtures__/golden-v1-envelope.json`), `package.json`, `package-lock.json` (zod, fast-check). Reads but does not create `__fixtures__/rfc8785/**`.
@@ -19,7 +19,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
   - Validation: `bash scripts/check.sh` (`npm ci && npm run lint && npm run typecheck && npm test && npm run build`)
   - _Requirements: R1.1–R1.14, R2.1–R2.10_
 
-- [ ] 2. Crypto: backup key, demo key, seal, open and opening records
+- [x] 2. Crypto: backup key, demo key, seal, open and opening records
   - Agent: `crypto-dev` · Depends on: 1
   - Scope: `src/lib/crypto/**` (`backup-key.ts`, `demo-key.ts`, `kdf.ts`, `seal.ts`, `open.ts`, `opening-records.ts`, `errors.ts`, `index.ts`, `*.test.ts`, `import-boundary.test.ts`)
   - Acceptance:
@@ -35,7 +35,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
   - Validation: `bash scripts/check.sh` (`npm run lint && npm run typecheck && npm test && npm run build`)
   - _Requirements: R1.4, R1.10, R1.11, R1.13, R3.1–R3.16_
 
-- [ ] 3. Migration, Drizzle schema and the persona store function
+- [x] 3. Migration, Drizzle schema and the persona store function
   - Agent: `crypto-dev` · Depends on: 1
   - Before this task: the owner has added the CI Postgres service and `DATABASE_URL` to the `checks` job, changed `drizzle.config.ts` `schema` to `./src/lib/db/schema/*.ts`, and added `src/lib/letter-store/**` and `src/test/integration/**` to crypto-dev in `.github/agents.json`.
   - Scope: `src/lib/db/schema/letters.ts`, `drizzle/0000_sealed_letters.sql`, `drizzle/meta/_journal.json`, `drizzle/meta/0000_snapshot.json`, `src/lib/letter-store/store.ts`, `src/lib/letter-store/store.test.ts`, `src/test/integration/setup.ts`, `src/test/integration/schema.test.ts`

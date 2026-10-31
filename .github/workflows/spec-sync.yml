@@ -1,15 +1,18 @@
 name: spec-sync
 
 # Opens one issue per spec task, so the dispatcher always has the next
-# ticket to claim. Idempotent; safe to re-run.
+# ticket to claim, and ticks a task's box in tasks.md once its issue is
+# closed as completed (its PR merged). Idempotent; safe to re-run.
 on:
   push:
     branches: [main]
     paths: [".kiro/specs/**/tasks.md", "tools/dispatcher/spec_sync.py"]
+  issues:
+    types: [closed]
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
   issues: write
 
 concurrency:
@@ -22,8 +25,18 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-      - name: Open issues for spec tasks
+        with:
+          ref: main
+      - name: Open issues for spec tasks and tick finished ones
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPO: ${{ github.repository }}
         run: python3 tools/dispatcher/spec_sync.py
+      - name: Commit ticked boxes
+        run: |
+          git diff --quiet -- .kiro/specs && exit 0
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .kiro/specs
+          git commit -m "Tick completed spec tasks [skip ci]"
+          git push origin HEAD:main || { git pull --rebase origin main && git push origin HEAD:main; }

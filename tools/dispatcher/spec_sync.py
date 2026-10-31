@@ -151,9 +151,55 @@ def sync(gh: GitHub, dry_run: bool = False) -> list[str]:
     return log
 
 
+def tick_text(text: str, done: set[int]) -> str:
+    """Turn `- [ ] N.` into `- [x] N.` for each N in done. Never unticks."""
+    out = []
+    for line in text.split("\n"):
+        m = _TASK_RE.match(line)
+        if m and int(m.group(1)) in done and line.startswith("- [ ] "):
+            line = "- [x] " + line[len("- [ ] "):]
+        out.append(line)
+    return "\n".join(out)
+
+
+def completed_keys(existing: list[dict]) -> set[str]:
+    """Spec task keys whose issue was closed as completed (merged PR), not
+    closed as 'not planned' or by hand without the work landing."""
+    keys = set()
+    for i in existing:
+        if i.get("state") != "closed" or i.get("state_reason") != "completed":
+            continue
+        m = _MARKER_RE.search(i.get("body") or "")
+        if m:
+            keys.add(m.group(1))
+    return keys
+
+
+def tick(gh: GitHub, dry_run: bool = False) -> list[str]:
+    """Tick the box in tasks.md for every task whose issue is completed."""
+    log = []
+    existing = [i for i in gh.issues("closed") if "pull_request" not in i]
+    done_keys = completed_keys(existing)
+    for path in sorted((ROOT / ".kiro/specs").glob("*/tasks.md")):
+        spec = path.parent.name
+        text = path.read_text()
+        done = {t.number for t in parse_tasks(spec, text) if t.key in done_keys}
+        new = tick_text(text, done)
+        if new != text:
+            if not dry_run:
+                path.write_text(new)
+            before = {int(m.group(1)) for m in re.finditer(r"(?m)^- \[x\] (\d+)\.", text)}
+            after = {int(m.group(1)) for m in re.finditer(r"(?m)^- \[x\] (\d+)\.", new)}
+            log.append(f"ticked {spec}: {sorted(after - before)}")
+    return log
+
+
 def main() -> int:
     gh = GitHub(os.environ["GITHUB_TOKEN"], os.environ.get("REPO", "devclef/Revenant"))
-    for line in sync(gh, dry_run="--dry-run" in sys.argv):
+    dry = "--dry-run" in sys.argv
+    lines = sync(gh, dry_run=dry) if "--tick-only" not in sys.argv else []
+    lines += tick(gh, dry_run=dry)
+    for line in lines:
         print(line)
     return 0
 
