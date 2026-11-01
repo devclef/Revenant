@@ -146,7 +146,7 @@ All Source_Files are downloaded from the publishers' public pages without a key 
       - **R11.3**: no file under `content/personas/` or `src/app/demo/` names a metric ID that starts with `fixture-`.
       - A source scan finds no import of `src/lib/figures/demo/us-fuel.fixture.json` in a non-test file.
     - `personas-consistency.test.ts`: the first `describe` (every persona metric has a found "then" figure; R10.7, R12.1) stays unchanged. The second `describe` (payload identity for Maya's fixture metrics) goes: it names `DEMO_FIXTURE_FIGURES`, which this task removes, and it checks fixture metrics that no persona tracks since task 8. Update the file's header comment to match. Nothing else imports `DEMO_FIXTURE_FIGURES`.
-  - The R10.7 / R12.1 test from task 7 still passes. `src/test/integration/seal-personas-core.test.ts` and, with Postgres, `seal-personas.test.ts` pass unchanged; Maya's payload is built from the same catalogue series and figure objects as after task 8.
+    - The R10.7 / R12.1 test from task 7 still passes. `src/test/integration/seal-personas-core.test.ts` and, with Postgres, `seal-personas.test.ts` pass unchanged; Maya's payload is built from the same catalogue series and figure objects as after task 8.
     - The reveal's fixture-label code and its tests stay in place (R11.4).
   - Validation: `bash scripts/check.sh`; and with `DATABASE_URL=postgres://postgres:test@localhost:5432/revenant_test` against `postgres:17-alpine`: `npm run db:migrate`, then `npm test` (the integration test must run).
   - _Requirements: R9.7–R9.12, R10.7, R11.1, R11.3, R11.4, R12.1_
