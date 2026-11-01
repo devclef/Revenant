@@ -1,0 +1,340 @@
+{
+  "id": "9ffad066-58c8-4a1a-a7a2-0a54e8af6194",
+  "prevId": "b50e60dc-99b6-4082-9d64-85777fd075d6",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.demo_letter_drafts": {
+      "name": "demo_letter_drafts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "server_secret": {
+          "name": "server_secret",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "demo_letter_drafts_created_at_idx": {
+          "name": "demo_letter_drafts_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "demo_letter_drafts_id_format": {
+          "name": "demo_letter_drafts_id_format",
+          "value": "\"demo_letter_drafts\".\"id\" ~ '^[A-Za-z0-9_-]{21}[AQgw]$'"
+        },
+        "demo_letter_drafts_server_secret_len": {
+          "name": "demo_letter_drafts_server_secret_len",
+          "value": "octet_length(\"demo_letter_drafts\".\"server_secret\") = 32"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.demo_letters": {
+      "name": "demo_letters",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "envelope": {
+          "name": "envelope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "envelope_hash": {
+          "name": "envelope_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sealed_at": {
+          "name": "sealed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "opens_at": {
+          "name": "opens_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server_secret": {
+          "name": "server_secret",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "demo_letters_id_format": {
+          "name": "demo_letters_id_format",
+          "value": "\"demo_letters\".\"id\" ~ '^[A-Za-z0-9_-]{21}[AQgw]$'"
+        },
+        "demo_letters_envelope_hash_format": {
+          "name": "demo_letters_envelope_hash_format",
+          "value": "\"demo_letters\".\"envelope_hash\" ~ '^[0-9a-f]{64}$'"
+        },
+        "demo_letters_server_secret_len": {
+          "name": "demo_letters_server_secret_len",
+          "value": "octet_length(\"demo_letters\".\"server_secret\") = 32"
+        },
+        "demo_letters_kind": {
+          "name": "demo_letters_kind",
+          "value": "\"demo_letters\".\"kind\" IN ('persona', 'live')"
+        },
+        "demo_letters_live_lock": {
+          "name": "demo_letters_live_lock",
+          "value": "\"demo_letters\".\"kind\" <> 'live' OR \"demo_letters\".\"opens_at\" = \"demo_letters\".\"sealed_at\" + interval '30 seconds'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.letters": {
+      "name": "letters",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "envelope": {
+          "name": "envelope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "envelope_hash": {
+          "name": "envelope_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sealed_at": {
+          "name": "sealed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "opens_at": {
+          "name": "opens_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server_secret": {
+          "name": "server_secret",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "letters_id_format": {
+          "name": "letters_id_format",
+          "value": "\"letters\".\"id\" ~ '^[A-Za-z0-9_-]{21}[AQgw]$'"
+        },
+        "letters_envelope_hash_format": {
+          "name": "letters_envelope_hash_format",
+          "value": "\"letters\".\"envelope_hash\" ~ '^[0-9a-f]{64}$'"
+        },
+        "letters_server_secret_len": {
+          "name": "letters_server_secret_len",
+          "value": "octet_length(\"letters\".\"server_secret\") = 32"
+        },
+        "letters_opens_at_min_lock": {
+          "name": "letters_opens_at_min_lock",
+          "value": "(\"letters\".\"opens_at\" AT TIME ZONE 'UTC') >= (\"letters\".\"sealed_at\" AT TIME ZONE 'UTC') + interval '3 months'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.openings": {
+      "name": "openings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "letter_id": {
+          "name": "letter_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "demo_letter_id": {
+          "name": "demo_letter_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ciphertext": {
+          "name": "ciphertext",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nonce": {
+          "name": "nonce",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "opened_at": {
+          "name": "opened_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "openings_letter_id_idx": {
+          "name": "openings_letter_id_idx",
+          "columns": [
+            {
+              "expression": "letter_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "openings_demo_letter_id_idx": {
+          "name": "openings_demo_letter_id_idx",
+          "columns": [
+            {
+              "expression": "demo_letter_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "openings_letter_id_letters_id_fk": {
+          "name": "openings_letter_id_letters_id_fk",
+          "tableFrom": "openings",
+          "tableTo": "letters",
+          "columnsFrom": [
+            "letter_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "openings_demo_letter_id_demo_letters_id_fk": {
+          "name": "openings_demo_letter_id_demo_letters_id_fk",
+          "tableFrom": "openings",
+          "tableTo": "demo_letters",
+          "columnsFrom": [
+            "demo_letter_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "openings_ciphertext_len": {
+          "name": "openings_ciphertext_len",
+          "value": "octet_length(\"openings\".\"ciphertext\") BETWEEN 1 AND 65536"
+        },
+        "openings_nonce_len": {
+          "name": "openings_nonce_len",
+          "value": "octet_length(\"openings\".\"nonce\") = 12"
+        },
+        "openings_exactly_one_letter": {
+          "name": "openings_exactly_one_letter",
+          "value": "num_nonnulls(\"openings\".\"letter_id\", \"openings\".\"demo_letter_id\") = 1"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

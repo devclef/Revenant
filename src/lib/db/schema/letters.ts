@@ -82,8 +82,8 @@ export const letters = pgTable(
 
 /**
  * Demo persona letters. Same shared constraints as `letters`, but no minimum
- * lock period, plus a `kind` discriminator pinned to `'persona'` for this spec.
- * A later migration widens the `kind` CHECK to add `'live'`.
+ * lock period, plus a `kind` discriminator: `'persona'` or `'live'`. A `live`
+ * row must open exactly 30 seconds after it was sealed (`demo_letters_live_lock`).
  */
 export const demoLetters = pgTable(
   "demo_letters",
@@ -104,7 +104,39 @@ export const demoLetters = pgTable(
       "demo_letters_server_secret_len",
       sql`octet_length(${table.serverSecret}) = 32`,
     ),
-    check("demo_letters_kind", sql`${table.kind} IN ('persona')`),
+    check("demo_letters_kind", sql`${table.kind} IN ('persona', 'live')`),
+    check(
+      "demo_letters_live_lock",
+      sql`${table.kind} <> 'live' OR ${table.opensAt} = ${table.sealedAt} + interval '30 seconds'`,
+    ),
+  ],
+);
+
+/**
+ * Drafts for live demo letters. A draft holds the 32-byte `server_secret` that
+ * the Prepare_Route issues, and it is deleted when the Seal_Route uses it or
+ * when it expires. It holds no letter content, so it has no immutability
+ * trigger.
+ */
+export const demoLetterDrafts = pgTable(
+  "demo_letter_drafts",
+  {
+    id: text("id").primaryKey(),
+    serverSecret: bytea("server_secret").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (table) => [
+    check(
+      "demo_letter_drafts_id_format",
+      sql`${table.id} ~ '^[A-Za-z0-9_-]{21}[AQgw]$'`,
+    ),
+    check(
+      "demo_letter_drafts_server_secret_len",
+      sql`octet_length(${table.serverSecret}) = 32`,
+    ),
+    index("demo_letter_drafts_created_at_idx").on(table.createdAt),
   ],
 );
 
