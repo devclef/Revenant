@@ -12,7 +12,7 @@ All Source_Files are downloaded from the publishers' public pages without a key 
 
 ## Tasks
 
-- [ ] 1. Shared source modules and the `@e965/xlsx` devDependency
+- [x] 1. Shared source modules and the `@e965/xlsx` devDependency
   - Agent: `data-dev` · Depends on: none · Estimated size: ~1,550 changed lines
   - Before this task: none.
   - Scope: `package.json`, `package-lock.json`, `src/lib/sources/types.ts`, `errors.ts`, `fetcher.ts`, `serial-date.ts`, `decimal-rule.ts`, `test-support/workbook.ts`, `boundary.test.ts` and the `*.test.ts` for each
