@@ -37,7 +37,7 @@ describe("ceremony/constants", () => {
     // would type-check, the directive would become unused, and the build would
     // fail -- which is the guard we want.
     // @ts-expect-error POSITION_PROPERTIES is a readonly tuple; push is not callable on it.
-    POSITION_PROPERTIES.push;
+    void POSITION_PROPERTIES.push;
     // Runtime shape the neutrality rule depends on.
     const members: readonly string[] = POSITION_PROPERTIES;
     expect(members).toHaveLength(3);
