@@ -4,7 +4,7 @@
 
 Built for the Kiroween 2026 hackathon, Resurrection category. The technology being resurrected is the sealed letter to your future self: the classroom time capsule a teacher mails back years later.
 
-![Revenant design concept](docs/concept.png)
+<img src="docs/concept.png" srcset="docs/concept.png 1x, docs/concept@2x.png 2x" alt="Revenant design concept" width="800">
 
 *Design concept. Figures and some wording in the mock are illustrative and not product data.*
 
