@@ -89,6 +89,11 @@ def playwright_server(shots_dir: str) -> dict:
 # Not needed for walking pages; both reach beyond the browser (server-side code, local files).
 PLAYWRIGHT_DENY = ["playwright/browser_run_code_unsafe", "playwright/browser_file_upload"]
 MCP_SERVERS = {role: {"playwright": playwright_server(d)} for role, d in SHOTS_DIRS.items()}
+# Optional per-role model. A role not listed here has no "model" field and keeps
+# using Auto. qa stays on Auto.
+MODELS = {
+    "data-dev": "claude-haiku-5.5",
+}
 OWNER_ONLY = [".kiro/**", ".github/**", "tools/**", "scripts/check.sh"]
 
 # Hooks (kiro-cli object form). The scripts live in tools/hooks/ (owner-only) and
@@ -130,7 +135,7 @@ def build(role: str, ownership: dict) -> dict:
             {"capability": "mcp", "match": ["playwright/*"], "effect": "allow"},
             {"capability": "mcp", "match": PLAYWRIGHT_DENY, "effect": "deny"},
         ]
-    return {
+    agent = {
         "name": role,
         "description": DESCRIPTIONS[role],
         "prompt": f"file://./prompts/{role}.md",
@@ -145,6 +150,9 @@ def build(role: str, ownership: dict) -> dict:
         "resources": ["file://.kiro/steering/**/*.md", "file://.kiro/agents/prompts/common.md"],
         "permissions": {"rules": rules},
     }
+    if role in MODELS:
+        agent["model"] = MODELS[role]
+    return agent
 
 def install_global(ownership: dict) -> None:
     """Copy the role agents into ~/.kiro/agents for Kiro Crew.
