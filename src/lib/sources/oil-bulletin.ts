@@ -91,10 +91,60 @@ export interface BulletinResult {
  * `SourceError` of kind `link_not_found` naming the page URL.
  */
 export function findBulletinLink(pageHtml: string, pageUrl: string): string {
-  void pageHtml;
-  void pageUrl;
-  void BULLETIN_FILE_NAME;
-  throw new SourceError("oil-bulletin", "link_not_found", { url: pageUrl });
+  // Scan every href in the page, tolerating single quotes, double quotes and
+  // unquoted attribute values. Nothing is fetched here; this is pure.
+  const hrefPattern = /href\s*=\s*(?:"([^"]*)"|'([^']*)'|([^\s"'>]+))/gi;
+
+  const matches: string[] = [];
+  for (
+    let match = hrefPattern.exec(pageHtml);
+    match !== null;
+    match = hrefPattern.exec(pageHtml)
+  ) {
+    const raw = match[1] ?? match[2] ?? match[3];
+    if (raw === undefined || raw === "") continue;
+
+    // Resolve the href against the page URL. An href the URL constructor
+    // cannot parse (relative to an invalid base, or malformed) is skipped
+    // rather than treated as a match.
+    let resolved: URL;
+    try {
+      resolved = new URL(decodeHtmlEntities(raw), pageUrl);
+    } catch {
+      continue;
+    }
+
+    // Keep links whose `filename=` query value is exactly the history
+    // workbook's name. searchParams.get decodes percent-encoding, so an
+    // encoded filename= value still compares equal.
+    if (resolved.searchParams.get("filename") === BULLETIN_FILE_NAME) {
+      matches.push(resolved.toString());
+    }
+  }
+
+  // Exactly one link must carry the file name. Zero or several is a failure
+  // naming the page URL (R4, design.md "Finding the Bulletin file").
+  if (matches.length !== 1) {
+    throw new SourceError("oil-bulletin", "link_not_found", { url: pageUrl });
+  }
+
+  return matches[0];
+}
+
+/**
+ * Decode the handful of HTML entities that commonly appear inside an href in
+ * served HTML, most importantly `&amp;` separating query parameters. Without
+ * this, `?a=1&amp;filename=…` would hide the `filename` parameter from the URL
+ * parser. Pure string work; no network, no DOM.
+ */
+function decodeHtmlEntities(value: string): string {
+  return value
+    .replace(/&amp;/gi, "&")
+    .replace(/&lt;/gi, "<")
+    .replace(/&gt;/gi, ">")
+    .replace(/&quot;/gi, '"')
+    .replace(/&#0*39;/g, "'")
+    .replace(/&#x0*27;/gi, "'");
 }
 
 /**
