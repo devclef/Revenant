@@ -17,6 +17,7 @@ import * as XLSX from "@e965/xlsx";
 
 import { cellToDecimal, type Cell } from "./decimal-rule";
 import { SourceError } from "./errors";
+import { download, defaultFetcher } from "./fetcher";
 import { serialToDate } from "./serial-date";
 import type { AdapterDeps, SeriesResult, SourceFigure, SourceGap } from "./types";
 
@@ -234,6 +235,52 @@ export function parseEiaWorkbook(bytes: Uint8Array, seriesId: string): SeriesRes
   points.sort((a, b) => (a.period < b.period ? -1 : a.period > b.period ? 1 : 0));
 
   return { points, gaps };
+}
+
+/**
+ * Format a `Date` as `YYYY-MM-DDTHH:MM:SSZ` in UTC, with no milliseconds.
+ *
+ * This is the stamp recorded as `downloadedAt` (the UTC time a download
+ * finished). It reads only the UTC fields of `date`, so the machine's local
+ * timezone never leaks into the value.
+ */
+function formatUtcSeconds(date: Date): string {
+  const pad = (n: number, width = 2): string => String(n).padStart(width, "0");
+  const year = pad(date.getUTCFullYear(), 4);
+  const month = pad(date.getUTCMonth() + 1);
+  const day = pad(date.getUTCDate());
+  const hours = pad(date.getUTCHours());
+  const minutes = pad(date.getUTCMinutes());
+  const seconds = pad(date.getUTCSeconds());
+  return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}Z`;
+}
+
+/**
+ * Fetch and parse one EIA weekly series end to end.
+ *
+ * Builds the download URL with {@link eiaDownloadUrl}, downloads it through the
+ * shared {@link download} (which refuses any host but `www.eia.gov`), records
+ * the UTC time the download finished, and parses the bytes with
+ * {@link parseEiaWorkbook}. Tests inject `deps.fetcher` with recorded bytes and
+ * `deps.now` with a fixed clock, so the real network and wall clock are never
+ * touched in the suite (R2.6).
+ *
+ * Reads no environment variable, logs nothing, and reaches no host other than
+ * the one `eiaDownloadUrl` produces.
+ */
+export async function fetchEiaSeries(
+  seriesId: string,
+  deps?: AdapterDeps,
+): Promise<EiaResult> {
+  const fetcher = deps?.fetcher ?? defaultFetcher;
+  const now = deps?.now ?? ((): Date => new Date());
+
+  const downloadUrl = eiaDownloadUrl(seriesId);
+  const fetched = await download(fetcher, downloadUrl, "eia");
+  const downloadedAt = formatUtcSeconds(now());
+  const result = parseEiaWorkbook(fetched.body, seriesId);
+
+  return { seriesId, downloadUrl, downloadedAt, result };
 }
 
 // `AdapterDeps` is part of this module's public surface for task 2's
