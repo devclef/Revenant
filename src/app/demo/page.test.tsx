@@ -4,6 +4,18 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DEMO_COPY } from "@/components/demo/copy";
 
+// Each card is a DeskEnvelopeLink, which needs the app router and a
+// MotionProvider. The router is stubbed here; the provider is wrapped around
+// the page in renderWithPersonas.
+const routerStub = vi.hoisted(() => ({
+  prefetch: () => undefined,
+  push: () => undefined,
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => routerStub,
+}));
+
 /**
  * Markup tests for the Demo_Index page at `/demo` (R6.4, R6.5, R6.8). Rendered
  * with `renderToStaticMarkup` and `createElement` — no DOM library and no JSX,
@@ -41,7 +53,12 @@ async function renderWithPersonas(
   vi.resetModules();
   vi.doMock("@/lib/personas", () => ({ PERSONAS: personas }));
   const { default: DemoIndexPage } = await import("./page");
-  return renderToStaticMarkup(createElement(DemoIndexPage));
+  // Import the provider after resetModules so it is the same module instance
+  // the freshly imported page reads its motion context from.
+  const { MotionProvider } = await import("@/components/ceremony/motion");
+  return renderToStaticMarkup(
+    createElement(MotionProvider, null, createElement(DemoIndexPage)),
+  );
 }
 
 beforeEach(() => {
