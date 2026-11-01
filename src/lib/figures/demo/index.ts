@@ -31,11 +31,21 @@ import realFile from "../real/fuel-figures.json";
 import fixture from "./us-fuel.fixture.json";
 
 /**
+ * The fixture-only figures, loaded once. These are the exact objects that
+ * DEMO_FIGURES merges in, so identity checks against DEMO_FIGURES hold. A
+ * second loadFigureFile call would create new objects.
+ */
+export const DEMO_FIXTURE_FIGURES: LoadedFigures = loadFigureFile(
+  fixture,
+  CATALOGUE,
+);
+
+/**
  * The demo figures: the real figure file and the US fuel fixture, each
  * validated against the catalogue and frozen, then merged. Loaded once at
  * module import; a bad file throws here.
  */
 export const DEMO_FIGURES: LoadedFigures = mergeLoadedFigures(
   loadFigureFile(realFile, CATALOGUE),
-  loadFigureFile(fixture, CATALOGUE),
+  DEMO_FIXTURE_FIGURES,
 );
