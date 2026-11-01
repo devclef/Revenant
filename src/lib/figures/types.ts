@@ -40,6 +40,10 @@ export interface LoadedSeries {
 }
 
 export interface LoadedFigures {
+  // True when this set holds fixture data. A Merged_Set (see merge.ts) is fixture
+  // when either input is fixture, so the flag means "may contain fixture figures"
+  // (R9.3). Each figure still carries its own FIXTURE-prefixed source, so fixture
+  // figures must be labelled one by one.
   readonly fixture: boolean;
   readonly series: ReadonlyMap<string, LoadedSeries>; // key: metric id; catalogue order first, then file order
 }

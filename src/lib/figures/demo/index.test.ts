@@ -145,15 +145,24 @@ describe("DEMO_FIGURES: loaded fixture", () => {
     expect(DEMO_FIGURES.fixture).toBe(true);
   });
 
-  it("holds the two fixture series (alongside the empty catalogue series)", () => {
+  it("holds the four catalogue series with figures and the two fixture series with five each", () => {
     const keys = [...DEMO_FIGURES.series.keys()];
     expect(keys).toContain(GASOLINE_ID);
     expect(keys).toContain(DIESEL_ID);
-    // The catalogue series are present too, but carry no figures in the demo
-    // file, so a real series id resolves to no_figures rather than unknown.
-    const real = DEMO_FIGURES.series.get("us-gasoline-regular");
-    expect(real).toBeDefined();
-    expect(real!.figures).toHaveLength(0);
+    for (const id of [
+      "us-gasoline-regular",
+      "us-diesel",
+      "eu-petrol-euro95",
+      "eu-diesel",
+    ]) {
+      const series = DEMO_FIGURES.series.get(id);
+      expect(series).toBeDefined();
+      expect(series!.figures.length).toBeGreaterThan(0);
+    }
+    for (const id of [GASOLINE_ID, DIESEL_ID]) {
+      expect(DEMO_FIGURES.series.get(id)!.figures).toHaveLength(5);
+    }
+    expect(DEMO_FIGURES.fixture).toBe(true);
   });
 
   it("each loaded series carries five figures sorted oldest first", () => {

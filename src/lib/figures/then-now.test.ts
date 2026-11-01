@@ -74,16 +74,18 @@ describe("thenAndNow on the demo figures", () => {
     expect(diesel.now.figure.value).toBe("6.00");
   });
 
-  it("a real catalogue series id has no figures in the demo file: no_figures", () => {
+  it("a real catalogue series id has a real figure at the date in the demo figures", () => {
     const { then, now } = thenAndNow(
       "us-gasoline-regular",
       "2024-11-05",
       DEMO_FIGURES,
     );
-    assertMissing(then);
-    assertMissing(now);
-    expect(then.reason).toBe("no_figures");
-    expect(now.reason).toBe("no_figures");
+    assertFound(then);
+    assertFound(now);
+    expect(then.figure.period).toBe("2024-11-04");
+    expect(then.figure.value).toBe("3.069");
+    expect(now.figure.period).toBe("2026-10-26");
+    expect(now.figure.value).toBe("4.269");
   });
 
   it("an unknown series id: unknown_series for both", () => {
