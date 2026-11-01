@@ -1,0 +1,42 @@
+Recorded excerpt of a real EIA file. NOT display data.
+
+The numbers in this file must NOT be used for display. It exists only so the
+EIA adapter tests can read a real-shaped workbook without touching the network.
+
+What it is
+  A recorded excerpt of the real EIA weekly U.S. regular gasoline retail price
+  file (series EMM_EPMR_PTE_NUS_DPG), cut down to a handful of rows for testing.
+
+Download URL
+  https://www.eia.gov/dnav/pet/hist_xls/EMM_EPMR_PTE_NUS_DPGw.xls
+
+Recorded (UTC)
+  2026-11-01T10:22:50Z
+
+What is kept
+  Sheet:        Data 1 only. The Contents sheet from the real file is dropped.
+  Header rows:  worksheet rows 1-3 (series identity, unit) kept in full.
+  Data rows:    only the rows for these dates, at their original row positions:
+                  2023-05-29  (before Coverage_Start 2023-06-01; kept so the
+                               adapter tests can prove it is left out)
+                  2023-06-05
+                  2023-06-12
+                  2024-05-06
+                  2024-11-04
+                  2026-10-26
+                Every other data row is removed. All columns of each kept row
+                are kept, preserving each cell's type, stored number, displayed
+                text and number format.
+
+How it was made
+  Written by scripts/prefetch-excerpt-eia.mjs, run once by hand by a developer
+  with network access. Nothing in the build, test, lint or typecheck runs it,
+  and no test imports it.
+
+Re-encoded, not a byte slice (decision D4)
+  EIA offers only legacy BIFF8 .xls files (118-128 KB), which a hand edit cannot
+  cut. So this excerpt is the real file re-encoded by the @e965/xlsx (SheetJS)
+  writer with the unwanted rows and the Contents sheet removed. It is NOT a
+  byte-for-byte slice of the original file. After writing, the tool read the
+  excerpt back and compared every kept cell's type, stored number, displayed
+  text and number format with the original; the comparison passed.
