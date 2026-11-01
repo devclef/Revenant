@@ -111,13 +111,17 @@ describe("Property 1: the Decimal_Rule is exact and idempotent on typed values",
     );
   });
 
-  it("throws for a value out of range, NaN, Infinity, or a non-numeric cell", () => {
+  it("throws for an exponent-form value, NaN, Infinity, or a non-numeric cell", () => {
     fc.assert(
       fc.property(
         fc.oneof(
-          // Out of range (too small, including the zero edge).
-          fc.double({ min: 0, max: MIN_ABS, maxExcluded: true, noNaN: true, noDefaultInfinity: true }),
-          // Out of range (too large).
+          // Too small: a non-zero magnitude whose String() form is an exponent
+          // (0 < |v| < 1e-6). Zero is excluded: String(0) is "0", a plain
+          // decimal the rule accepts, so it is not a rejection case.
+          fc
+            .double({ min: 0, max: MIN_ABS, maxExcluded: true, noNaN: true, noDefaultInfinity: true })
+            .map((n) => (n === 0 ? Number.MIN_VALUE : n)),
+          // Too large: |v| >= 1e21, where String() is also an exponent form.
           fc.double({ min: MAX_ABS, max: Number.MAX_VALUE, noNaN: true, noDefaultInfinity: true }),
           // NaN and infinities.
           fc.constantFrom(Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY),
@@ -127,14 +131,20 @@ describe("Property 1: the Decimal_Rule is exact and idempotent on typed values",
         // A non-numeric cell type should also throw regardless of value.
         fc.oneof(fc.constant("n"), fc.constantFrom("s", "b", "e", "", "str")),
         (value, t) => {
-          const isFiniteNumber = typeof value === "number" && Number.isFinite(value);
-          const inRange =
-            isFiniteNumber && Math.abs(value as number) >= MIN_ABS && Math.abs(value as number) < MAX_ABS;
-          // Only assert throwing for cases the rule must reject: a non-"n" type,
-          // a non-number v, or a finite number outside the band / non-finite.
-          fc.pre(t !== "n" || typeof value !== "number" || !inRange);
+          // The rule rejects a cell when: the type is not "n"; the stored value
+          // is not a finite number; or (with w === String(v), so the noise
+          // guard never fires) String(v) is not a plain decimal of <=40 chars,
+          // which is exactly the exponent forms. Only assert throwing for those.
+          const w = typeof value === "number" ? String(value) : undefined;
+          const rejects =
+            t !== "n" ||
+            typeof value !== "number" ||
+            !Number.isFinite(value) ||
+            !DECIMAL_PATTERN.test(String(value)) ||
+            String(value).length > MAX_LENGTH;
+          fc.pre(rejects);
 
-          const cell: Cell = { t, v: value, w: typeof value === "number" ? String(value) : undefined };
+          const cell: Cell = { t, v: value, w };
           expect(() => cellToDecimal(cell)).toThrow();
         },
       ),
