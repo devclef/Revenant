@@ -18,8 +18,13 @@
 //     `@/lib/letter-store`, reads `process.env`, or contains `console.`, so the
 //     Adapters carry no secret, no logging and no app-internal dependency
 //     (R13.2).
-//
-// The `scripts/prefetch*` half of the walk is added in task 5, not here.
+//   - No non-test module under `src/app/`, `src/components/`, `src/lib/figures/`
+//     or `scripts/seal-personas*` imports `scripts/prefetch*` or `lib/sources`,
+//     and neither the `Dockerfile` nor `.dockerignore` carries a `prefetch`
+//     line, so the Prefetch_Script and the Adapters stay out of the product and
+//     out of the runtime image (the `scripts/prefetch*` half of R6.7). These
+//     checks only became meaningful once the prefetch files exist, so they are
+//     added here (task 5) rather than at task 1.
 //
 // How the scan reads source: comments and string/template literals are stripped
 // first with `stripCommentsAndStrings`, so a rule word that appears only in a
@@ -42,6 +47,9 @@ const ROOT = join(__dirname, "..", "..", "..");
 const SRC_DIR = join(ROOT, "src");
 const SOURCES_DIR = join(ROOT, "src", "lib", "sources");
 const SCRIPTS_DIR = join(ROOT, "scripts");
+const APP_DIR = join(ROOT, "src", "app");
+const COMPONENTS_DIR = join(ROOT, "src", "components");
+const FIGURES_DIR = join(ROOT, "src", "lib", "figures");
 
 /** A source file is a test file when its name ends in `.test.ts` / `.test.tsx`. */
 function isTestFile(path: string): boolean {
@@ -366,6 +374,82 @@ describe("src/lib/sources: no app-internal import, env read or logging (R13.2)",
         /\bconsole\s*\./.test(code),
         `${rel} uses console. in code`,
       ).toBe(false);
+    });
+  }
+});
+
+describe("import boundary: the product never imports the Prefetch_Script or the Adapters (R6.7)", () => {
+  // The Prefetch_Script and the Adapters are dev-only data tooling. No module
+  // that ships in the Next.js app (pages, components, the figures library) and
+  // no Sealing_Script may import `scripts/prefetch*` or `lib/sources`. The
+  // figures library reaches figures through the committed JSON file, never
+  // through the Adapters at runtime.
+  const appFiles = walk(APP_DIR).filter((p) => isTsSource(p) && !isTestFile(p));
+  const componentFiles = walk(COMPONENTS_DIR).filter(
+    (p) => isTsSource(p) && !isTestFile(p),
+  );
+  const figuresFiles = walk(FIGURES_DIR).filter(
+    (p) => isTsSource(p) && !isTestFile(p),
+  );
+
+  // scripts/seal-personas* files (any extension), non-test.
+  const sealScriptFiles = walk(SCRIPTS_DIR).filter((p) => {
+    const base = p.slice(SCRIPTS_DIR.length + 1);
+    return base.startsWith("seal-personas") && !isTestFile(p);
+  });
+
+  const guarded = [
+    ...appFiles,
+    ...componentFiles,
+    ...figuresFiles,
+    ...sealScriptFiles,
+  ];
+
+  it("finds files to scan (the walk is wired up)", () => {
+    // These directories all carry non-test modules on this branch, and the
+    // seal scripts exist. An empty walk would be a wiring bug, so fail loudly
+    // rather than pass vacuously.
+    expect(appFiles.length).toBeGreaterThan(0);
+    expect(componentFiles.length).toBeGreaterThan(0);
+    expect(figuresFiles.length).toBeGreaterThan(0);
+    expect(sealScriptFiles.length).toBeGreaterThan(0);
+  });
+
+  for (const file of guarded) {
+    const rel = relative(ROOT, file);
+    it(`${rel} does not import scripts/prefetch* or lib/sources`, () => {
+      const specs = collectImportSpecifiers(readFileSync(file, "utf8"));
+      for (const spec of specs) {
+        expect(
+          spec.includes("scripts/prefetch") || /(^|\/)prefetch/.test(spec),
+          `${rel} imports "${spec}" which reaches the Prefetch_Script`,
+        ).toBe(false);
+        expect(
+          spec.includes("lib/sources"),
+          `${rel} imports "${spec}" which reaches lib/sources`,
+        ).toBe(false);
+      }
+    });
+  }
+});
+
+describe("Dockerfile and .dockerignore carry no prefetch line (R6.7)", () => {
+  // The runtime image must not copy or reference the dev-only Prefetch_Script.
+  // Both files are read-only here: this only asserts their content, it never
+  // edits them.
+  for (const name of ["Dockerfile", ".dockerignore"] as const) {
+    it(`${name} contains no line mentioning prefetch`, () => {
+      const text = readFileSync(join(ROOT, name), "utf8");
+      const offending = text
+        .split("\n")
+        .map((line, index) => ({ line, index }))
+        .filter(({ line }) => line.includes("prefetch"));
+      expect(
+        offending.length,
+        `${name} mentions prefetch on line(s): ${offending
+          .map(({ index }) => index + 1)
+          .join(", ")}`,
+      ).toBe(0);
     });
   }
 });
