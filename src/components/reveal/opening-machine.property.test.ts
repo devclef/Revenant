@@ -41,6 +41,7 @@ import fc from "fast-check";
 
 import type { RecallRecordV1, Draft } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
+import { CEREMONY_COPY } from "@/components/ceremony/copy";
 import {
   INITIAL_STATE,
   reduce,
@@ -422,7 +423,8 @@ const RENDER_CASES: RenderCase[] = [
     revealsLetter: false,
     revealsFigures: false,
   },
-  // Reveal stage 1: only the judge's remembered answers. No letter, no figures.
+  // Reveal stage 1: the `marks` Stage. The judge's remembered answers, the
+  // unbroken seal and the "Break the seal" button. No letter, no figures.
   {
     state: { tag: "reveal", opened: OPENED, record: RECORD, stage: 1 },
     revealsQuestion: true,
@@ -514,6 +516,43 @@ describe("Property 17: views never render letter content before the reveal", () 
           }
         },
       ),
+      { numRuns: 100 },
+    );
+  });
+
+  it("renders the marks Stage at reveal stage 1: unbroken seal and \"Break the seal\" (SealBreak)", () => {
+    // Stage 1 is the `marks` Stage. It shows the seal-break control and never
+    // the old stage-1 \"Read the letter\" button (stage1Next was removed). The
+    // seal-break control belongs to stage 1 only: once the seal has broken and
+    // the reveal is at stage 2 or 3, it is gone.
+    const stage1 = RENDER_CASES.filter(
+      (c) => c.state.tag === "reveal" && c.state.stage === 1,
+    );
+    const afterBreak = RENDER_CASES.filter(
+      (c) =>
+        c.state.tag === "reveal" && (c.state.stage === 2 || c.state.stage === 3),
+    );
+    fc.assert(
+      fc.property(fc.constantFrom(...stage1), ({ state }) => {
+        const html = render(state);
+        expect(html).toContain(CEREMONY_COPY.sealButton);
+        expect(html).not.toContain("Read the letter");
+        expect(html).not.toContain(PAYLOAD.letter_text);
+        for (const needle of STAGE3_VERBATIM_STRINGS) {
+          expect(html.includes(needle)).toBe(false);
+        }
+      }),
+      { numRuns: 100 },
+    );
+    fc.assert(
+      fc.property(fc.constantFrom(...afterBreak), ({ state }) => {
+        const html = render(state);
+        expect(
+          html.includes(CEREMONY_COPY.sealButton),
+          `${state.tag} must not render the seal-break button after the break`,
+        ).toBe(false);
+        expect(html.includes("Read the letter")).toBe(false);
+      }),
       { numRuns: 100 },
     );
   });
