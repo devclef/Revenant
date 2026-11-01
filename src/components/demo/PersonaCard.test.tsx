@@ -49,9 +49,9 @@ describe("PersonaCard markup", () => {
     expect(formatUtcDate(PROPS.opens_at)).toBe("5 November 2024");
   });
 
-  it('renders a "Break the seal" link to /demo/personas/{key}', () => {
+  it('renders a "Pick up the letter" link to /demo/personas/{key}', () => {
     const html = render();
-    expect(html).toContain(DEMO_COPY.breakSeal);
+    expect(html).toContain(DEMO_COPY.openLetter);
     expect(html).toContain(`href="/demo/personas/${PROPS.personaKey}"`);
   });
 
@@ -67,8 +67,11 @@ describe("PersonaCard markup", () => {
     // A card never receives the letter body, its metric figures, units,
     // sources or periods. None of these could appear because the component
     // only reads the list-field props above. Guard against a future prop leak.
+    // "letter text" (not the bare word "letter", which is product vocabulary
+    // used in the "Pick up the letter" link label) stands in for the sealed
+    // letter body; the rest are real payload markers a card can never hold.
     const payloadStrings = [
-      "letter",
+      "letter text",
       "USD per gallon",
       "U.S. EIA",
       "3.412",

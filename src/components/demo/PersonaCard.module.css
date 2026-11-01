@@ -3,7 +3,7 @@
  * a ParchmentSurface with tone="deep", so its background is --paper-deep.
  *
  * Contrast on --paper-deep (globals.css record): --ink 13.17:1 (name, dates),
- * --ink-soft 9.58:1 (labels, region), --seal 7.92:1 ("Break the seal" link),
+ * --ink-soft 9.58:1 (labels, region), --seal 7.92:1 ("Pick up the letter" link),
  * all well above the 4.5:1 WCAG 2.2 AA floor. No green/red or directional
  * colour anywhere -- up and down would get the same treatment (neutrality.md);
  * there are no figures on this card.
@@ -56,7 +56,7 @@
   margin: 0;
 }
 
-.breakSeal {
+.openLetter {
   align-self: flex-start;
   margin-top: 0.25rem;
   font-family: var(--font-sans);

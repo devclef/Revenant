@@ -27,7 +27,7 @@ export const REVEAL_COPY = {
   // --- Opening and still sealed ---
 
   /** Shown while the letter is being fetched and verified. */
-  loading: "Breaking the seal.",
+  loading: "Bringing the letter into the light.",
 
   /** Heading for the still-sealed state. */
   sealedTitle: "Still sealed",

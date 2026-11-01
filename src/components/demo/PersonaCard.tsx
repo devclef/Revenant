@@ -57,8 +57,8 @@ export function PersonaCard({
           <dd className={styles.dateValue}>{formatUtcDate(opens_at)}</dd>
         </div>
       </dl>
-      <Link className={styles.breakSeal} href={`/demo/personas/${personaKey}`}>
-        {DEMO_COPY.breakSeal}
+      <Link className={styles.openLetter} href={`/demo/personas/${personaKey}`}>
+        {DEMO_COPY.openLetter}
       </Link>
     </ParchmentSurface>
   );
