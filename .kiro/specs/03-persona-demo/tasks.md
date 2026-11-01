@@ -199,6 +199,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
       - Property 19: Every figure shows its provenance and the right label. Validates R11.1, R11.2, R11.3, R13.1, R13.2, R13.3, R13.4, R13.5.
       - Property 20: A rise and a fall render the same markup. Validates R11.8, R16.4.
     - No network request for figures; `DEMO_FIGURES` is a static import.
+    - Tests that need fixture figures load src/lib/figures/demo/us-fuel.fixture.json themselves with loadFigureFile(fixture, CATALOGUE). They do not read fixture IDs or values through DEMO_FIGURES, because spec 04 removes the fixture from DEMO_FIGURES.
   - Validation: `bash scripts/check.sh` (`npm run lint && npm run typecheck && npm test && npm run build`)
   - _Requirements: R9.1, R9.4–R9.7, R10.1–R10.5, R11.1–R11.10, R13.1–R13.6, R15.1–R15.4, R16.4_
 
