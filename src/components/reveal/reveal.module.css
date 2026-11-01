@@ -128,6 +128,9 @@
 /* One reveal stage's paper panel (StagePanel). The panel sets its own text
    colour, so stage text never inherits the desk's cream ink (issue #119). */
 .stagePanel {
+  /* The panel defines its own ink, so stage text never inherits the desk's
+     cream --desk-ink (issue #119). */
+  --ink: #1f1b16;
   color: var(--ink);
   margin: 0;
 }

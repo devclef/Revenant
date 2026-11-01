@@ -132,6 +132,18 @@
 }
 
 /*
+ * The region itself is a -1 tab stop that receives focus when a Stage changes
+ * (CeremonyRoot.tsx). It is a container, not a control, so it draws no focus
+ * ring. The rings above (`.desk :focus`, `.onPaper :focus`) still apply to the
+ * controls and headings inside it. This rule comes after them and has the same
+ * specificity, so it wins.
+ */
+.ceremony:focus,
+.ceremony:focus-visible {
+  outline: none;
+}
+
+/*
  * A Stage fades in over STAGE_FADE_MS (constants.ts). The animation is
  * decorative only: it never inserts, removes or reorders content.
  */
