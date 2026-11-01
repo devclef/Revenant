@@ -1,7 +1,7 @@
 /**
  * User-facing strings for the Opening_Flow, its error states, the recall step
- * and stage 1 of the reveal. Every word a reader sees in these views comes
- * from here; the components hold no inline literals (R15.1).
+ * and all three stages of the reveal. Every word a reader sees in these views
+ * comes from here; the components hold no inline literals (R15.1).
  *
  * Tone (tone.md): calm, second person, short sentences, the product
  * vocabulary of seal / sealed / open / letter / record / then / now.
@@ -15,8 +15,11 @@
  * `{...}` marks a value filled in at render time; the value itself is never a
  * sentence and carries no judgement.
  *
- * The stage 2 and stage 3 figure strings are added by a later task; this
- * module carries only the flow, recall and stage 1 copy for now.
+ * Stage 2 (the sealed letter) and stage 3 (the figures then and now) strings
+ * are now present, including the figure labels, the fixture note, the source
+ * summary, the missing-now messages, the formula line and the one neutral
+ * "not comparable" sentence per NotComparableReason. The direction words
+ * (rose / fell / unchanged) live only in format-change.ts, never here (R12.9).
  *
  * Plain readonly constants only. No JSX lives here.
  */
@@ -138,6 +141,110 @@ export const REVEAL_COPY = {
    * alongside the next-stage button while a stage is still hidden (R9.4).
    */
   showAll: "Show everything",
+
+  // --- Reveal, stage 2: the sealed letter ---
+
+  /** Heading for stage 2 of the reveal: what was written then. */
+  stage2Title: "What was written then",
+
+  /** The "written as of" line. `{date}` is the payload's written-as-of date. */
+  writtenAsOfPrefix: "Written as of {date}",
+
+  /**
+   * The always-shown demo letter label (R10.3). `{name}` is the persona's
+   * display name.
+   */
+  demoLetterLabel:
+    "A demo letter. {name} is fictional, and this letter was prepared later than its written as of date.",
+
+  /** The "sealed for the demo on" line. `{sealedAt}` is the header's seal date. */
+  sealedForDemoOn: "Sealed for the demo on {sealedAt}",
+
+  /** The control that advances from the letter to the figures (R9.4). */
+  stage2Next: "See the numbers",
+
+  // --- Reveal, stage 3: the figures then and now ---
+
+  /** Heading for stage 3 of the reveal: the figures then and now. */
+  stage3Title: "The numbers, then and now",
+
+  /** Label on the then figure. */
+  then: "Then",
+
+  /** Label on the now figure. */
+  now: "Now",
+
+  /**
+   * The fixture note, shown once at the top of stage 3 when any shown figure
+   * is a fixture (R13.5).
+   */
+  fixtureNote:
+    "Some figures here are fixture data. They were made up for building the demo and are not real prices.",
+
+  /** The "fixture data" label on a fixture figure or change line (R13.4). */
+  labelFixtureData: "fixture data",
+
+  /**
+   * The historical-record label on a non-fixture then figure (R13.2).
+   * `{date}` is the retrieved date in UTC.
+   */
+  labelHistoricalRecord: "historical record, retrieved {date}",
+
+  /** The retrieved label on a now figure. `{date}` is the retrieved date in UTC. */
+  labelRetrieved: "retrieved {date}",
+
+  /** The summary that opens a figure's source details (R11.2, R13.1). */
+  sourceSummary: "Source",
+
+  /** Label before a figure's series identifier. */
+  seriesLabel: "Series",
+
+  /** The link text to a figure's source URL. */
+  checkAtSource: "Check this figure at the source",
+
+  /**
+   * The display-rescale note (R11.10). `{toUnit}` is the shown unit and
+   * `{fromUnit}` is the published unit.
+   */
+  rescaledNote: "Shown per {toUnit}. Published per {fromUnit}.",
+
+  /** Label before the then-vs-now formula (R12.9). */
+  formulaLabel: "Formula",
+
+  /** The now figure is unavailable because its series left the catalogue. */
+  nowUnavailableUnknown:
+    "The current figure is unavailable. This series is no longer in the catalogue.",
+
+  /** The now figure is unavailable because its series has no figures yet. */
+  nowUnavailableEmpty:
+    "The current figure is unavailable. This series has no figures yet.",
+
+  /** The lead line shown when the then and now figures can't be compared. */
+  notComparable:
+    "These figures can't be compared, so no change is shown.",
+
+  /**
+   * One neutral "not comparable" sentence per NotComparableReason, named for
+   * the first failing check in computeChange (change.ts). None describes a
+   * direction or a judgement.
+   */
+  reason: {
+    /** `kind`: one figure is not official data. */
+    kind: "One of them is not official data.",
+    /** `source`: the figures come from different publishers. */
+    source: "They come from different sources.",
+    /** `series_id`: the figures come from different series. */
+    series_id: "They come from different series.",
+    /** `unit`: the figures use different units. */
+    unit: "They use different units.",
+    /** `region`: the figures cover different regions. */
+    region: "They cover different regions.",
+    /** `unreadable_period`: a period could not be read. */
+    unreadable_period:
+      "A figure's period could not be read, so no change is shown.",
+    /** `no_newer_figure`: there is no newer figure for the series yet. */
+    no_newer_figure: "There is no newer figure for this series yet.",
+  },
 } as const;
 
 export type RevealCopy = typeof REVEAL_COPY;
