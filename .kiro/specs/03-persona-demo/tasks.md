@@ -177,7 +177,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
   - Validation: `bash scripts/check.sh` (`npm run lint && npm run typecheck && npm test && npm run build`)
   - _Requirements: R2.9, R3.4, R3.8, R5.4, R5.5, R7.1–R7.10, R8.1–R8.9, R9.2–R9.4, R9.6, R14.1–R14.4, R14.6, R14.7, R15.1–R15.4, R16.1, R16.4_
 
-- [ ] 8. Reveal: letter view, figures then vs now, fixture labels
+- [x] 8. Reveal: letter view, figures then vs now, fixture labels
   - Agent: `frontend-dev` · Depends on: 1, 7
   - Before this task: spec 02-demo-figures task 2 is on `main` (`DEMO_FIGURES`, `thenAndNow`, `isFixtureFigure`). Blocked by #39.
   - Scope: `src/components/reveal/Reveal.tsx`, `SealedLetter.tsx`, `FiguresThenNow.tsx`, `FigureLine.tsx`, `ChangeLine.tsx`, `FixtureNote.tsx`, `copy.ts` (add reveal strings), `reveal.module.css` and their `*.test.ts(x)`, plus the Property 17 test file from task 7
