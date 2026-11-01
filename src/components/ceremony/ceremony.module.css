@@ -112,6 +112,26 @@
 }
 
 /*
+ * The polite live region (LiveRegion.tsx, R3.1). Visually hidden but present
+ * for assistive technology: it is heard, never seen. The clip/size recipe
+ * keeps it off-screen without display:none or visibility:hidden (which would
+ * stop a screen reader announcing it). It carries no colour or direction, so
+ * it treats then, now, a rise and a fall identically (neutrality.md, R10.1).
+ */
+.liveRegion {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+/*
  * Calm_Mode / prefers-reduced-motion: no decorative motion runs (R11).
  * Both the OS preference and the judge's Calm control resolve to
  * data-ceremony-motion="calm" on the root; the media query covers the OS
