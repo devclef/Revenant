@@ -5,17 +5,18 @@
 // Reading and writing the Real_File is the caller's job (the script entry).
 //
 // Pure dev-side module. It imports only the two Adapters, the append-only
-// refresh and the figures model (CATALOGUE, loadFigureFile, FigureDataError).
-// It performs no file access, no network beyond the Adapters, reads no
-// environment variable and logs nothing. Nothing here depends on the browser or
-// the server runtime, and nothing in the app or the image imports it (R6.7).
+// refresh and the figures model (CATALOGUE, loadFigureFile). It performs no
+// file access, no network beyond the Adapters, reads no environment variable
+// and logs nothing. Nothing here depends on the browser or the server runtime,
+// and nothing in the app or the image imports it (R6.7).
 //
 // Data integrity (data-integrity.md, neutrality.md): no number is invented,
 // estimated or filled; existing figures are carried through exactly as parsed.
 // Every error message states only what happened and never says a value rose,
 // fell, improved, worsened, was corrected or revised.
 
-import { CATALOGUE, FigureDataError, loadFigureFile } from "@/lib/figures";
+import { CATALOGUE, loadFigureFile } from "@/lib/figures";
+import type { FigureV1 } from "@/lib/seal-format";
 
 import { fetchEiaSeries } from "./eia";
 import type { EiaResult } from "./eia";
@@ -28,18 +29,6 @@ import {
   type Report,
 } from "./refresh";
 import type { AdapterDeps, Fetcher } from "./types";
-
-// `mergeRefresh`, `serialiseFigureFile`, `loadFigureFile` and `FigureDataError`
-// are the documented surface the second half of `runPrefetch` uses (task 3);
-// `FreshSeries` is the type it builds the fresh series from. The first half
-// (both Adapters and the column-letter check) is implemented below, in task 2;
-// reference the task-3 surface here so the imports stay used until then.
-void mergeRefresh;
-void serialiseFigureFile;
-void loadFigureFile;
-void FigureDataError;
-type _UsedTypes = FreshSeries;
-void (0 as unknown as _UsedTypes);
 
 // --- Types -------------------------------------------------------------------
 
@@ -96,8 +85,8 @@ const EIA_SERIES: readonly { metricId: string; seriesId: string }[] = [
 
 /**
  * The two Bulletin metric ids paired with the header key each reads, so the
- * fresh series (task 3) and the column-letter check (below) know which of the
- * two {@link BulletinResult} series belongs to which catalogue entry.
+ * fresh-series build and the column-letter check know which of the two
+ * {@link BulletinResult} series belongs to which catalogue entry.
  */
 const BULLETIN_SERIES: readonly { metricId: string; key: BulletinKey }[] = [
   { metricId: "eu-petrol-euro95", key: "EU_price_with_tax_euro95" },
@@ -109,8 +98,8 @@ const BULLETIN_SERIES: readonly { metricId: string; key: BulletinKey }[] = [
  * the catalogue reference page recorded beside each entry in `catalogue.ts`
  * (data-integrity.md: a figure's `source_url` is a link a user can follow). The
  * two EIA series each point at their own history page; both EU series point at
- * the Weekly Oil Bulletin landing page. Task 3 tags each fresh point with the
- * URL for its metric id.
+ * the Weekly Oil Bulletin landing page. The fresh-series build tags each point
+ * with the URL for its metric id.
  */
 const SOURCE_URL: Readonly<Record<string, string>> = {
   "us-gasoline-regular":
@@ -122,10 +111,6 @@ const SOURCE_URL: Readonly<Record<string, string>> = {
   "eu-diesel":
     "https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en",
 };
-
-// SOURCE_URL is consumed by the fresh-series build in task 3; reference it here
-// so the table stays used until then without inventing a premature caller.
-void SOURCE_URL;
 
 // --- Column-letter check (R4.4) ----------------------------------------------
 
@@ -192,6 +177,133 @@ function checkColumnLetters(columns: Record<BulletinKey, string>): void {
   }
 }
 
+// --- Existing figures --------------------------------------------------------
+
+/**
+ * Parse the committed figure file into the existing {@link FigureV1}[], or an
+ * empty array when there is none yet (`existingJson === null`, the first run).
+ *
+ * Reuses {@link loadFigureFile} against the live {@link CATALOGUE} so a corrupt
+ * or out-of-catalogue committed file fails the run exactly as it would at load
+ * time: its `FigureDataError` propagates unchanged (design.md "Prefetch" step 6
+ * loads the *output*; this loads the *input* so a bad committed file is caught
+ * before anything is merged). Figures are returned exactly as parsed — values
+ * and `retrieved_at` are never recomputed (data-integrity.md).
+ */
+function parseExisting(existingJson: unknown | null): FigureV1[] {
+  if (existingJson === null) return [];
+  const loaded = loadFigureFile(existingJson, CATALOGUE);
+  const figures: FigureV1[] = [];
+  for (const series of loaded.series.values()) {
+    for (const fig of series.figures) figures.push(fig);
+  }
+  return figures;
+}
+
+// --- Fresh series ------------------------------------------------------------
+
+/**
+ * Build the {@link FreshSeries}[] the refresh merges, one per catalogue series
+ * that this script downloads, in catalogue order (design.md "Prefetch" step 3):
+ *
+ *  - `us-gasoline-regular` and `us-diesel` take their points from the matching
+ *    {@link EiaResult}, paired by `series_id`.
+ *  - `eu-petrol-euro95` and `eu-diesel` take their points from the matching
+ *    {@link BulletinResult} series, paired by header key.
+ *
+ * Each series' points carry that download's own `downloadedAt` and the series'
+ * reference `sourceUrl` from {@link SOURCE_URL}; the merge tags each added
+ * figure with them (data-integrity.md: every figure carries `retrieved_at` and
+ * `source_url`). Points are passed through exactly as the Adapter read them;
+ * nothing is invented, estimated, reordered or filled.
+ */
+function buildFresh(
+  eiaResults: readonly EiaResult[],
+  bulletin: BulletinResult,
+): FreshSeries[] {
+  const fresh: FreshSeries[] = [];
+
+  // Index the EIA downloads by series id. Every EIA_SERIES id is fetched by
+  // runPrefetch before this is called, so a miss is an internal wiring fault,
+  // not a data condition — it is never a PrefetchError kind.
+  const eiaBySeriesId = new Map<string, EiaResult>();
+  for (const result of eiaResults) eiaBySeriesId.set(result.seriesId, result);
+
+  for (const { metricId, seriesId } of EIA_SERIES) {
+    const result = eiaBySeriesId.get(seriesId);
+    if (result === undefined) {
+      throw new Error(
+        `runPrefetch: no EIA download for series ${seriesId} (${metricId})`,
+      );
+    }
+    fresh.push({
+      metricId,
+      points: result.result.points,
+      downloadedAt: result.downloadedAt,
+      sourceUrl: SOURCE_URL[metricId],
+    });
+  }
+
+  // Bulletin: one download carries both EU series, keyed by header key.
+  for (const { metricId, key } of BULLETIN_SERIES) {
+    fresh.push({
+      metricId,
+      points: bulletin.series[key].points,
+      downloadedAt: bulletin.downloadedAt,
+      sourceUrl: SOURCE_URL[metricId],
+    });
+  }
+
+  return fresh;
+}
+
+// --- Coverage check (R6.5) ---------------------------------------------------
+
+/**
+ * The latest start the merged file may have for any series: each series' very
+ * first figure must fall on or before this date, so every series reaches back
+ * through the demo windows. String comparison of `YYYY-MM-DD` matches the
+ * figures layer's own weekly ordering.
+ */
+const COVERAGE_LATEST_START = "2023-06-07";
+
+/**
+ * Check that each catalogue series' earliest figure period is on or before
+ * {@link COVERAGE_LATEST_START} (design.md "Prefetch" step 5, R6.5). A series
+ * whose earliest period is later — or a series with no figures at all — throws
+ * {@link PrefetchError} of kind `coverage`, naming the series and that earliest
+ * period, and carrying the merge `report` so the entry can still print what the
+ * run found. The message states only the series id and the date; it makes no
+ * judgement about any value (neutrality.md).
+ */
+function checkCoverage(figures: readonly FigureV1[], report: Report): void {
+  for (const series of CATALOGUE) {
+    const metricId = series.metric.id;
+
+    let earliest: string | null = null;
+    for (const fig of figures) {
+      if (fig.metric_id !== metricId) continue;
+      if (earliest === null || fig.period < earliest) earliest = fig.period;
+    }
+
+    if (earliest === null) {
+      throw new PrefetchError(
+        "coverage",
+        `coverage ${metricId}: no figures`,
+        report,
+      );
+    }
+
+    if (earliest > COVERAGE_LATEST_START) {
+      throw new PrefetchError(
+        "coverage",
+        `coverage ${metricId}: earliest ${earliest} after ${COVERAGE_LATEST_START}`,
+        report,
+      );
+    }
+  }
+}
+
 // --- Run ---------------------------------------------------------------------
 
 /**
@@ -206,8 +318,13 @@ function checkColumnLetters(columns: Record<BulletinKey, string>): void {
  *  2. The column-letter check (R4.4): each Bulletin catalogue entry's
  *     `column <LETTER> "<KEY>"` text is compared with the letter the Adapter
  *     found the key in; a difference is a `column_letter` {@link PrefetchError}.
- *  3. (task 3) Build the fresh series, `mergeRefresh`, the coverage check,
- *     `serialiseFigureFile`, and prove the text loads with `loadFigureFile`.
+ *  3. Build the fresh series (each download's points tagged with its
+ *     `downloadedAt` and the series' reference URL), parse the committed
+ *     figures, `mergeRefresh` (a backfill becomes a `backfill`
+ *     {@link PrefetchError}), the coverage check (a series starting after
+ *     {@link COVERAGE_LATEST_START} is a `coverage` {@link PrefetchError}),
+ *     `serialiseFigureFile`, and prove the text loads with `loadFigureFile`
+ *     (its `FigureDataError` propagates). It returns `{ text, report }`.
  *
  * `deps.fetcher` and `deps.now` are threaded into both Adapters so tests drive
  * the whole run from recorded bytes and a fixed clock with no network (R2.6).
@@ -230,9 +347,28 @@ export async function runPrefetch(
   //    before any merge or file is produced.
   checkColumnLetters(bulletin.columns);
 
-  // 3. The fresh-series build, merge, coverage check and serialise/round-trip
-  //    land in task 3. `eiaResults` and `bulletin` feed that step.
-  void existingJson;
-  void eiaResults;
-  throw new Error("runPrefetch: merge and serialise not implemented (task 3)");
+  // 3. Build the fresh series (points tagged with each download's time and the
+  //    series' reference URL) and parse the committed figures, if any.
+  const existing = parseExisting(existingJson);
+  const fresh = buildFresh(eiaResults, bulletin);
+
+  // 4. Append-only merge. A backfill fails the whole run: nothing is written.
+  const merged = mergeRefresh(existing, fresh);
+  if (!merged.ok) {
+    throw new PrefetchError(
+      "backfill",
+      "backfill: a fresh period is earlier than the series' latest existing period",
+      merged.report,
+    );
+  }
+
+  // 5. Coverage check (R6.5): every series must reach back to COVERAGE window.
+  checkCoverage(merged.figures, merged.report);
+
+  // 6. Serialise deterministically, then prove the text loads against the
+  //    catalogue. A FigureDataError from loadFigureFile propagates unchanged.
+  const text = serialiseFigureFile(merged.figures);
+  loadFigureFile(JSON.parse(text), CATALOGUE);
+
+  return { text, report: merged.report };
 }
