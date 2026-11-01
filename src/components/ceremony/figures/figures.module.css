@@ -147,3 +147,73 @@
     animation: none;
   }
 }
+
+/* --- Counter: rolling digit strips over the final value (Counter.tsx) --- */
+
+/* The counter sets its own text colour, so the figure never inherits one from
+   the surrounding surface. Digits use tabular figures so a roll never shifts
+   the width of the value. */
+.counter {
+  position: relative;
+  display: inline-block;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.counterFace {
+  display: inline-flex;
+  align-items: flex-start;
+  white-space: nowrap;
+}
+
+.counterChar {
+  display: inline-block;
+  height: 1em;
+  line-height: 1em;
+}
+
+/* One window per digit. It shows one digit at a time and hides the rest. */
+.counterCell {
+  display: inline-block;
+  position: relative;
+  width: 1ch;
+  height: 1em;
+  overflow: hidden;
+  text-align: center;
+}
+
+/* The strip rests on its last digit: it moves up --counter-steps digit heights.
+   The value comes from Counter.tsx, so every strip moves the same distance. */
+.counterStrip {
+  display: block;
+  transform: translateY(calc(var(--counter-steps) * -1em));
+}
+
+.counterDigit {
+  display: block;
+  height: 1em;
+  line-height: 1em;
+}
+
+/* The roll runs from the first digit to the last. Timing comes from
+   constants.ts through inline styles, so no duration is written here. */
+.roll {
+  animation-name: counterRoll;
+  animation-fill-mode: both;
+}
+
+@keyframes counterRoll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(var(--counter-steps) * -1em));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roll {
+    animation: none;
+  }
+}
