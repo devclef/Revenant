@@ -17,7 +17,7 @@
 
 import * as XLSX from "@e965/xlsx";
 import { SourceError } from "./errors";
-import { download, ALLOWED_HOSTS, defaultFetcher } from "./fetcher";
+import { download, defaultFetcher } from "./fetcher";
 import { cellToDecimal, type Cell } from "./decimal-rule";
 import { serialToDate } from "./serial-date";
 import type {
@@ -471,11 +471,33 @@ export async function fetchBulletin(
 ): Promise<BulletinResult> {
   const fetcher: Fetcher = deps?.fetcher ?? defaultFetcher;
   const now = deps?.now ?? (() => new Date());
-  void fetcher;
-  void now;
-  void download;
-  void ALLOWED_HOSTS;
-  void findBulletinLink;
-  void parseBulletinWorkbook;
-  throw new SourceError("oil-bulletin", "network", { url: BULLETIN_PAGE });
+
+  // Request 1: the landing page. `download` enforces ALLOWED_HOSTS before and
+  // after redirects, so no host other than energy.ec.europa.eu is reachable.
+  const page = await download(fetcher, BULLETIN_PAGE, "oil-bulletin");
+  const html = new TextDecoder("utf-8").decode(page.body);
+
+  // Find the single history-workbook link on the page. Zero or several
+  // matches throws `link_not_found` (findBulletinLink's own contract).
+  const fileUrl = findBulletinLink(html, BULLETIN_PAGE);
+
+  // Request 2: the workbook itself. `download` re-checks the host, so a link
+  // resolving off-host is refused with `wrong_host` rather than followed.
+  const workbook = await download(fetcher, fileUrl, "oil-bulletin");
+
+  // The moment the workbook download finished, as UTC with second precision
+  // and no milliseconds (YYYY-MM-DDTHH:MM:SSZ). The injected clock makes this
+  // deterministic in tests.
+  const downloadedAt = now().toISOString().replace(/\.\d{3}Z$/, "Z");
+
+  // Parse the bytes into the two EU series with their found column letters.
+  const { columns, series } = parseBulletinWorkbook(workbook.body);
+
+  return {
+    pageUrl: BULLETIN_PAGE,
+    downloadUrl: fileUrl,
+    downloadedAt,
+    columns,
+    series,
+  };
 }
