@@ -52,7 +52,16 @@ describe("PersonaCard markup", () => {
   it('renders a "Pick up the letter" link to /demo/personas/{key}', () => {
     const html = render();
     expect(html).toContain(DEMO_COPY.openLetter);
+    expect(html).toContain("Pick up the letter");
     expect(html).toContain(`href="/demo/personas/${PROPS.personaKey}"`);
+  });
+
+  it('never says "Break the seal" on the card (R2)', () => {
+    // The old link copy was "Break the seal"; the seal-break moment belongs to
+    // the reveal ceremony, not a persona card. The card only invites the reader
+    // in, so the words must appear nowhere in its markup.
+    const html = render();
+    expect(html).not.toContain("Break the seal");
   });
 
   it("renders the raw ISO/calendar inputs nowhere — only the formatted dates", () => {
