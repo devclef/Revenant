@@ -40,6 +40,7 @@ const recallGenerateBase = join(srcRoot, "lib", "recall", "generate");
 const demoRoot = join(srcRoot, "app", "demo");
 const componentsRoot = join(srcRoot, "components");
 const revealRoot = join(srcRoot, "components", "reveal");
+const ceremonyRoot = join(srcRoot, "components", "ceremony");
 
 // Recursively collect every .ts/.tsx file under `dir`, skipping __fixtures__
 // (committed vectors, not source).
@@ -248,14 +249,24 @@ describe("import boundary: src/components/** may import lib/crypto only dynamica
   });
 });
 
-describe("import boundary: src/components/reveal must not import lib/recall/generate", () => {
-  const revealFiles = collectSourceFiles(revealRoot);
+describe("import boundary: src/components/reveal and ceremony must not import lib/recall/generate", () => {
+  // The ceremony flow is part of the opening sequence, so the same rule applies:
+  // recall questions are sealed into the letter and read from the payload, never
+  // regenerated. Covered here alongside reveal (additions only).
+  const revealFiles = [
+    ...collectSourceFiles(revealRoot),
+    ...collectSourceFiles(ceremonyRoot),
+  ];
 
   it("has a non-empty set of reveal source files", () => {
-    expect(revealFiles.length).toBeGreaterThan(0);
+    expect(collectSourceFiles(revealRoot).length).toBeGreaterThan(0);
   });
 
-  it("no src/components/reveal file imports src/lib/recall/generate (static or dynamic)", () => {
+  it("has a non-empty set of ceremony source files", () => {
+    expect(collectSourceFiles(ceremonyRoot).length).toBeGreaterThan(0);
+  });
+
+  it("no src/components/reveal or ceremony file imports src/lib/recall/generate (static or dynamic)", () => {
     const violations: string[] = [];
     for (const file of revealFiles) {
       let source: string;

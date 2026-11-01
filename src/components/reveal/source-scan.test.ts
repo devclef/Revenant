@@ -31,6 +31,11 @@ const srcRoot = resolve(here, "..", "..");
 const revealRoot = join(srcRoot, "components", "reveal");
 const demoComponentsRoot = join(srcRoot, "components", "demo");
 const personaRouteRoot = join(srcRoot, "app", "demo", "personas");
+// The ceremony flow renders on the persona demo page, so its .tsx fall under
+// the same inline-JSX-text rule (R15.1) and its source under the same
+// browser-API hygiene rule. `collectFiles` recurses, so the nested desk/ is
+// covered automatically.
+const ceremonyRoot = join(srcRoot, "components", "ceremony");
 
 /** Recursively collect files under `dir` matching `pred`, skipping fixtures. */
 function collectFiles(
@@ -148,10 +153,12 @@ function findInlineText(residue: string): string[] {
 }
 
 describe("no inline JSX text: every reveal/demo string comes from copy.ts (R15.1)", () => {
-  // Non-test .tsx under src/components/reveal and the persona route.
+  // Non-test .tsx under src/components/reveal, the persona route and the
+  // ceremony flow.
   const sourceTsx = [
     ...collectFiles(revealRoot, isSourceTsx),
     ...collectFiles(personaRouteRoot, isSourceTsx),
+    ...collectFiles(ceremonyRoot, isSourceTsx),
   ];
 
   it("has a non-empty set of .tsx component/route files", () => {
@@ -210,6 +217,7 @@ describe("no client storage, logging, history or raw HTML in reveal/demo code", 
   const sources = [
     ...collectFiles(revealRoot, isSourceTs),
     ...collectFiles(demoComponentsRoot, isSourceTs),
+    ...collectFiles(ceremonyRoot, isSourceTs),
   ];
 
   it("has a non-empty set of source files", () => {

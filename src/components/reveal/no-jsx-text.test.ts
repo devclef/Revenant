@@ -29,6 +29,8 @@ import { describe, expect, it } from "vitest";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const revealDir = here;
+// src/components/reveal -> src/components/ceremony
+const ceremonyDir = resolve(here, "..", "ceremony");
 
 function tsxFilesIn(dir: string): string[] {
   let names: string[];
@@ -45,7 +47,38 @@ function tsxFilesIn(dir: string): string[] {
     .sort();
 }
 
-const scannedFiles = tsxFilesIn(revealDir);
+// Recursively collect non-test `.tsx` under `dir`. The ceremony folder nests a
+// `desk/` subdirectory (DeskScene.tsx), so the flat `tsxFilesIn` would miss it;
+// this walk covers every component .tsx in the tree.
+function tsxFilesUnder(dir: string): string[] {
+  let names: string[];
+  try {
+    names = readdirSync(dir);
+  } catch {
+    return [];
+  }
+  const out: string[] = [];
+  for (const name of names) {
+    const full = resolve(dir, name);
+    const stat = statSync(full);
+    if (stat.isDirectory()) {
+      out.push(...tsxFilesUnder(full));
+      continue;
+    }
+    if (
+      name.endsWith(".tsx") &&
+      !/\.(test|spec)\.tsx$/.test(name) &&
+      stat.isFile()
+    ) {
+      out.push(full);
+    }
+  }
+  return out.sort();
+}
+
+const ceremonyFiles = tsxFilesUnder(ceremonyDir);
+
+const scannedFiles = [...tsxFilesIn(revealDir), ...ceremonyFiles].sort();
 
 const hasLetter = /[A-Za-z]/;
 
@@ -95,6 +128,15 @@ const EXPECTED_REVEAL_TSX = [
   "SealedLetter.tsx",
 ] as const;
 
+// The ceremony components this ticket brings under the same literals guard.
+// Asserting they are in the scanned set keeps the guard from silently dropping
+// coverage of the ceremony flow (including the nested desk/ component).
+const EXPECTED_CEREMONY_TSX = [
+  "CeremonyRoot.tsx",
+  "DeskScene.tsx",
+  "LiveRegion.tsx",
+] as const;
+
 describe("no literal JSX text nodes in reveal components (R15.1)", () => {
   it("scans a non-empty set of files", () => {
     expect(scannedFiles.length).toBeGreaterThan(0);
@@ -106,6 +148,20 @@ describe("no literal JSX text nodes in reveal components (R15.1)", () => {
       expect(names, `expected ${expected} in the scanned reveal .tsx set`).toContain(
         expected,
       );
+    }
+  });
+
+  it("scans a non-empty set of ceremony files", () => {
+    expect(ceremonyFiles.length).toBeGreaterThan(0);
+  });
+
+  it("covers the ceremony components (including the nested desk/ one)", () => {
+    const names = new Set(scannedFiles.map((f) => basename(f)));
+    for (const expected of EXPECTED_CEREMONY_TSX) {
+      expect(
+        names,
+        `expected ${expected} in the scanned ceremony .tsx set`,
+      ).toContain(expected);
     }
   });
 
