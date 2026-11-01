@@ -15,9 +15,10 @@
 // in EUR per 1,000 litres exactly as published; display rounding lives in the
 // figures layer, not here.
 
+import * as XLSX from "@e965/xlsx";
 import { SourceError } from "./errors";
 import { download, ALLOWED_HOSTS, defaultFetcher } from "./fetcher";
-import { cellToDecimal } from "./decimal-rule";
+import { cellToDecimal, type Cell } from "./decimal-rule";
 import { serialToDate } from "./serial-date";
 import type {
   SourceFigure,
@@ -66,6 +67,57 @@ export const BULLETIN_FILE_NAME =
 export type BulletinKey =
   | "EU_price_with_tax_euro95"
   | "EU_price_with_tax_diesel";
+
+/**
+ * The two header keys in the order the Adapter scans and reports them. Each
+ * appears in exactly one column of row 1; the array drives the by-name search
+ * so neither key is ever located by column letter or position (R4.1).
+ */
+const BULLETIN_KEYS: readonly BulletinKey[] = [
+  "EU_price_with_tax_euro95",
+  "EU_price_with_tax_diesel",
+] as const;
+
+/** The only sheet the Adapter opens: the EU weighted-average price table. */
+const BULLETIN_SHEET = "Prices with taxes";
+
+/**
+ * The row-3 label of the date column, found by its text so the date column is
+ * never located by letter or position. The real file carries it in column A.
+ */
+const DATE_HEADER = "Date";
+
+/**
+ * The exact unit label each value column must carry in row 3. The Bulletin
+ * publishes EU prices per 1,000 litres; anything else is `unit_mismatch`.
+ */
+const BULLETIN_UNIT = "1000 l";
+
+/**
+ * The marker column B must hold on every emitted (in-window) row: `EU_` means
+ * the EU27 weighted average. A different marker is `bad_row_marker`. The whole
+ * window (from Coverage_Start, after the 2020 membership change) is one
+ * membership, so this never varies in the data this Adapter emits.
+ */
+const BULLETIN_MARKER = "EU_";
+
+/**
+ * Column B, 0-based index 1. The marker's column is fixed by the file's layout
+ * and is read by position only to check the row marker (R4.1 forbids locating a
+ * *series* by position; the marker is not a series).
+ */
+const BULLETIN_MARKER_COLUMN = 1;
+
+/** The first data row, worksheet row 4 (0-based row 3). Rows 1-3 are headers. */
+const BULLETIN_FIRST_DATA_ROW = 3;
+
+/**
+ * Coverage_Start: the window begins on 2023-06-01. Rows with an earlier period
+ * are not emitted (the EU27 2020 membership and the demo windows both sit
+ * inside this window). String comparison of `YYYY-MM-DD` matches the figures
+ * layer's own ordering.
+ */
+const COVERAGE_START = "2023-06-01";
 
 /**
  * The result of one Oil Bulletin fetch: the page and workbook URLs, when the
@@ -160,16 +212,248 @@ export function parseBulletinWorkbook(bytes: Uint8Array): {
   columns: Record<BulletinKey, string>;
   series: Record<BulletinKey, SeriesResult>;
 } {
-  void bytes;
-  void cellToDecimal;
-  void serialToDate;
-  // Tasks 2 and 3 fill these per-column collections; a SeriesResult is these
-  // two arrays. Declared here so the parser's output vocabulary type-checks.
-  const points: BulletinFigure[] = [];
-  const gaps: BulletinGap[] = [];
-  void points;
-  void gaps;
-  throw new SourceError("oil-bulletin", "unreadable_file", {});
+  // 1. Open only the `Prices with taxes` sheet. `cellDates: false` keeps dates
+  //    as raw serials (serialToDate reads them). Any failure opening the bytes
+  //    is `unreadable_file`; we never leak the parser's own error message.
+  let workbook: XLSX.WorkBook;
+  try {
+    workbook = XLSX.read(bytes, {
+      type: "buffer",
+      sheets: [BULLETIN_SHEET],
+      cellDates: false,
+    });
+  } catch {
+    throw new SourceError("oil-bulletin", "unreadable_file", {});
+  }
+
+  const sheet = workbook.Sheets[BULLETIN_SHEET];
+  if (sheet === undefined) {
+    throw new SourceError("oil-bulletin", "sheet_missing", {
+      sheet: BULLETIN_SHEET,
+    });
+  }
+
+  // Reject the 1904 date system: serialToDate assumes the 1900 epoch, so a
+  // 1904 workbook would silently shift every date (R4; `date_system`).
+  if (workbook.Workbook?.WBProps?.date1904 === true) {
+    throw new SourceError("oil-bulletin", "date_system", {});
+  }
+
+  // The sheet's bounding range tells us how many rows and columns to scan. A
+  // sheet with no `!ref` has no data; treat it as having no header keys.
+  const ref = typeof sheet["!ref"] === "string" ? sheet["!ref"] : undefined;
+  if (ref === undefined) {
+    throw new SourceError("oil-bulletin", "header_missing", {
+      headerKey: BULLETIN_KEYS[0],
+    });
+  }
+  const range = XLSX.utils.decode_range(ref);
+
+  /** Read the cell at a 0-based row/column, or undefined if blank. */
+  const cellAt = (r: number, c: number): XLSX.CellObject | undefined => {
+    const address = XLSX.utils.encode_cell({ r, c });
+    return sheet[address] as XLSX.CellObject | undefined;
+  };
+
+  /** The trimmed display/string text of a cell, "" when blank or non-text. */
+  const textAt = (r: number, c: number): string => {
+    const cell = cellAt(r, c);
+    if (cell === undefined) return "";
+    // Prefer the formatted text `w`; fall back to a string value `v`.
+    if (typeof cell.w === "string") return cell.w.trim();
+    if (cell.t === "s" && typeof cell.v === "string") return cell.v.trim();
+    return "";
+  };
+
+  // 2. Find each header key in row 1 (0-based row 0) by name, never by letter
+  //    or position (R4.1). A key in no column is `header_missing`; a key in two
+  //    or more columns is `header_duplicated`. The column index is kept only to
+  //    report the letter (R4.4) and to read that column's unit label and data.
+  const keyColumn: Record<BulletinKey, number> = {
+    EU_price_with_tax_euro95: -1,
+    EU_price_with_tax_diesel: -1,
+  };
+
+  for (const key of BULLETIN_KEYS) {
+    let found = -1;
+    for (let c = range.s.c; c <= range.e.c; c += 1) {
+      if (textAt(0, c) === key) {
+        if (found !== -1) {
+          throw new SourceError("oil-bulletin", "header_duplicated", {
+            headerKey: key,
+          });
+        }
+        found = c;
+      }
+    }
+    if (found === -1) {
+      throw new SourceError("oil-bulletin", "header_missing", {
+        headerKey: key,
+      });
+    }
+    keyColumn[key] = found;
+  }
+
+  // The date column is the row-3 (0-based row 2) cell whose text is `Date`,
+  // found by content, not by position. None present is `header_missing`.
+  let dateColumn = -1;
+  for (let c = range.s.c; c <= range.e.c; c += 1) {
+    if (textAt(2, c) === DATE_HEADER) {
+      dateColumn = c;
+      break;
+    }
+  }
+  if (dateColumn === -1) {
+    throw new SourceError("oil-bulletin", "header_missing", {
+      headerKey: DATE_HEADER,
+    });
+  }
+
+  // 3. The unit label of each value column is its row-3 (0-based row 2) text.
+  //    It must equal exactly `1000 l`, else `unit_mismatch` naming what we saw.
+  for (const key of BULLETIN_KEYS) {
+    const foundUnit = textAt(2, keyColumn[key]);
+    if (foundUnit !== BULLETIN_UNIT) {
+      throw new SourceError("oil-bulletin", "unit_mismatch", {
+        headerKey: key,
+        foundUnit,
+      });
+    }
+  }
+
+  // Per-key figure and gap collections, plus a per-key seen-period set so a
+  // period appearing twice in one column is `duplicate_date`.
+  const pointsByKey: Record<BulletinKey, BulletinFigure[]> = {
+    EU_price_with_tax_euro95: [],
+    EU_price_with_tax_diesel: [],
+  };
+  const gapsByKey: Record<BulletinKey, BulletinGap[]> = {
+    EU_price_with_tax_euro95: [],
+    EU_price_with_tax_diesel: [],
+  };
+  const seenByKey: Record<BulletinKey, Set<string>> = {
+    EU_price_with_tax_euro95: new Set<string>(),
+    EU_price_with_tax_diesel: new Set<string>(),
+  };
+
+  // 4. Data rows run from worksheet row 4 (0-based row 3) down. A numeric date
+  //    cell is a data row; a non-numeric date cell where a value cell IS a
+  //    number is `bad_date`; otherwise the row is a footnote and is skipped.
+  for (let r = BULLETIN_FIRST_DATA_ROW; r <= range.e.r; r += 1) {
+    const oneBasedRow = r + 1;
+    const dateCell = cellAt(r, dateColumn);
+    const dateIsNumber =
+      dateCell !== undefined &&
+      dateCell.t === "n" &&
+      typeof dateCell.v === "number";
+
+    if (!dateIsNumber) {
+      // Not a data row unless a value cell is numeric, which would make a
+      // missing/invalid date a genuine `bad_date` rather than a footnote.
+      const anyValueNumeric = BULLETIN_KEYS.some((key) => {
+        const vc = cellAt(r, keyColumn[key]);
+        return vc !== undefined && vc.t === "n" && typeof vc.v === "number";
+      });
+      if (anyValueNumeric) {
+        throw new SourceError("oil-bulletin", "bad_date", { row: oneBasedRow });
+      }
+      continue;
+    }
+
+    // Convert the serial. A RangeError becomes `bad_date` naming the 1-based row.
+    let period: string;
+    try {
+      period = serialToDate(dateCell.v as number);
+    } catch {
+      throw new SourceError("oil-bulletin", "bad_date", { row: oneBasedRow });
+    }
+
+    // Rows before Coverage_Start are not emitted (the window begins 2023-06-01).
+    if (period < COVERAGE_START) {
+      continue;
+    }
+
+    // 5. In-window rows must carry the `EU_` marker in column B (the EU27
+    //    weighted average). Anything else is `bad_row_marker` naming the row.
+    const marker = textAt(r, BULLETIN_MARKER_COLUMN);
+    if (marker !== BULLETIN_MARKER) {
+      throw new SourceError("oil-bulletin", "bad_row_marker", {
+        row: oneBasedRow,
+        marker,
+      });
+    }
+
+    for (const key of BULLETIN_KEYS) {
+      // A period seen twice in the same column is `duplicate_date`.
+      if (seenByKey[key].has(period)) {
+        throw new SourceError("oil-bulletin", "duplicate_date", {
+          date: period,
+        });
+      }
+      seenByKey[key].add(period);
+
+      const valueCell = cellAt(r, keyColumn[key]);
+      if (valueCell === undefined || valueCell.t === "z") {
+        // Empty value cell: a gap, never filled (data-integrity.md).
+        gapsByKey[key].push({ period, reason: "no_number" });
+        continue;
+      }
+      if (valueCell.t !== "n") {
+        // A text (or other non-numeric) cell: a `not_a_number` gap.
+        gapsByKey[key].push({ period, reason: "not_a_number" });
+        continue;
+      }
+      // A numeric cell: the Decimal_Rule gives the published value, unchanged
+      // (EUR per 1,000 litres). A failure is `bad_cell` naming series, period
+      // and the single offending raw value — never any other cell contents.
+      try {
+        const value = cellToDecimal(valueCell as Cell);
+        pointsByKey[key].push({ period, value });
+      } catch {
+        throw new SourceError("oil-bulletin", "bad_cell", {
+          expectedSeriesId: key,
+          date: period,
+          cellValue:
+            typeof valueCell.w === "string"
+              ? valueCell.w.trim()
+              : String(valueCell.v),
+        });
+      }
+    }
+  }
+
+  // 6. Sort each column's points ascending by period (the file is newest-first,
+  //    so this reverses it), and report the found column letters (R4.4).
+  const series: Record<BulletinKey, SeriesResult> = {
+    EU_price_with_tax_euro95: {
+      points: sortByPeriod(pointsByKey.EU_price_with_tax_euro95),
+      gaps: gapsByKey.EU_price_with_tax_euro95,
+    },
+    EU_price_with_tax_diesel: {
+      points: sortByPeriod(pointsByKey.EU_price_with_tax_diesel),
+      gaps: gapsByKey.EU_price_with_tax_diesel,
+    },
+  };
+
+  const columns: Record<BulletinKey, string> = {
+    EU_price_with_tax_euro95: XLSX.utils.encode_col(
+      keyColumn.EU_price_with_tax_euro95,
+    ),
+    EU_price_with_tax_diesel: XLSX.utils.encode_col(
+      keyColumn.EU_price_with_tax_diesel,
+    ),
+  };
+
+  return { columns, series };
+}
+
+/**
+ * Return a new array of figures sorted ascending by `period` (string order of
+ * `YYYY-MM-DD`, the same order the figures layer uses). The input is never
+ * mutated. Periods are already de-duplicated per column by the caller.
+ */
+function sortByPeriod(points: readonly BulletinFigure[]): BulletinFigure[] {
+  return [...points].sort((a, b) => (a.period < b.period ? -1 : 1));
 }
 
 /**
