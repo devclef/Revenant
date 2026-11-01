@@ -246,7 +246,39 @@ def parse_verdict(text: str | None) -> dict:
         data["verdict"] = "fail"
         data["summary"] = "QA listed a blocker but said pass; treated as fail. " + str(data.get("summary", ""))
     data["findings"] = findings
+    shots = data.get("screenshots")
+    if shots is None:
+        return data
+    if not isinstance(shots, list):
+        data["verdict"] = "fail"
+        data["summary"] = "QA verdict had a `screenshots` field that is not a list; treated as fail. " + str(
+            data.get("summary", ""))
+        return data
+    bad = [screenshot_problem(s) for s in shots]
+    bad = [b for b in bad if b]
+    if bad and data["verdict"] == "pass":
+        data["verdict"] = "fail"
+        data["summary"] = ("QA said pass but a screenshot was unreadable or failed a check; treated as fail. "
+                           + str(data.get("summary", "")))
+        findings += [{"severity": "blocker", "file": None, "detail": b} for b in bad]
     return data
+
+
+def screenshot_problem(shot: object) -> str | None:
+    """Why one `screenshots` entry fails, or None. Only `readable: true` with an
+    empty `failed_checks` passes; anything malformed fails."""
+    if not isinstance(shot, dict):
+        return "A screenshots entry was not an object."
+    name = str(shot.get("file") or "unnamed screenshot")
+    checks = shot.get("failed_checks", [])
+    problems = []
+    if shot.get("readable") is not True:
+        problems.append("not readable")
+    if not isinstance(checks, list):
+        problems.append("`failed_checks` is not a list")
+    elif checks:
+        problems.append("failed checks " + ", ".join(str(c) for c in checks))
+    return f"Screenshot `{name}`: " + "; ".join(problems) + "." if problems else None
 
 
 def format_findings(verdict: dict) -> str:
