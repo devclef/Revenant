@@ -6,6 +6,7 @@ import {
   isFixtureFigure,
   rescaleForDisplay,
 } from "@/lib/figures";
+import { formatUtcDate } from "@/components/demo/dates";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
 
@@ -22,9 +23,9 @@ import styles from "./reveal.module.css";
  * - A non-fixture "then" figure shows "historical record, retrieved {date}"
  *   (R13.2); a non-fixture "now" figure shows "retrieved {date}".
  *
- * `{date}` is the UTC calendar date of `retrieved_at` — the published instant
- * is already UTC, so the date is its first ten characters, shown as stored
- * with no reformatting or time-zone shift (data-integrity.md).
+ * `{date}` is `retrieved_at` formatted with `formatUtcDate` into the en-GB
+ * long form (e.g. "30 October 2024"). The formatter is UTC-pinned, so the
+ * date never shifts under the viewer's timezone (data-integrity.md).
  *
  * When the series carries a `display_rescale`, the value is shown rescaled
  * (exact, display-only) in the rescaled unit, with the plain note saying what
@@ -61,8 +62,9 @@ export function FigureLine({ figure, role, displayRescale }: FigureLineProps) {
   if (fixture) {
     label = REVEAL_COPY.labelFixtureData;
   } else {
-    // retrieved_at is a UTC instant; its date is the first ten characters.
-    const retrievedDate = figure.retrieved_at.slice(0, 10);
+    // retrieved_at is a UTC instant; formatUtcDate renders it as the en-GB
+    // long form (e.g. "30 October 2024"), UTC-pinned so it never shifts.
+    const retrievedDate = formatUtcDate(figure.retrieved_at);
     label =
       role === "then"
         ? REVEAL_COPY.labelHistoricalRecord.replace("{date}", retrievedDate)

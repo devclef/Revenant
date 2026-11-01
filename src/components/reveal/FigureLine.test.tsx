@@ -5,6 +5,7 @@ import fc from "fast-check";
 
 import { FigureLine } from "./FigureLine";
 import { REVEAL_COPY } from "./copy";
+import { formatUtcDate } from "@/components/demo/dates";
 import {
   formatValue,
   formatPeriod,
@@ -135,21 +136,45 @@ describe("FigureLine markup", () => {
     const html = render(OFFICIAL_THEN, "then");
     const expected = REVEAL_COPY.labelHistoricalRecord.replace(
       "{date}",
-      OFFICIAL_THEN.retrieved_at.slice(0, 10),
+      formatUtcDate(OFFICIAL_THEN.retrieved_at),
     );
     expect(html).toContain(expected);
-    expect(html).toContain("2024-10-30");
+    expect(html).toContain("30 October 2024");
+    // The ISO date must never leak through as the short form.
+    expect(html).not.toContain("2024-10-30");
   });
 
   it('shows "retrieved {date}" for a non-fixture now figure, not the historical-record label', () => {
     const html = render(OFFICIAL_NOW, "now");
     const expected = REVEAL_COPY.labelRetrieved.replace(
       "{date}",
-      OFFICIAL_NOW.retrieved_at.slice(0, 10),
+      formatUtcDate(OFFICIAL_NOW.retrieved_at),
     );
     expect(html).toContain(expected);
-    expect(html).toContain("2026-10-30");
+    expect(html).toContain("30 October 2026");
+    expect(html).not.toContain("2026-10-30");
     expect(html).not.toContain("historical record");
+  });
+
+  it("renders the same long-form retrieved date whatever the viewer timezone (R13.3)", () => {
+    // retrieved_at is formatted UTC-pinned, so the day never shifts under an
+    // extreme viewer timezone. Pacific/Kiritimati is UTC+14 and America/Adak is
+    // UTC-10 — the widest offsets — so a non-UTC-pinned format would roll the
+    // day over. process.env.TZ decides the host timezone for Intl.
+    const original = process.env.TZ;
+    try {
+      for (const tz of ["UTC", "Pacific/Kiritimati", "America/Adak"]) {
+        process.env.TZ = tz;
+        const then = render(OFFICIAL_THEN, "then");
+        expect(then).toContain("30 October 2024");
+        expect(then).not.toContain("2024-10-30");
+        const now = render(OFFICIAL_NOW, "now");
+        expect(now).toContain("30 October 2026");
+        expect(now).not.toContain("2026-10-30");
+      }
+    } finally {
+      process.env.TZ = original;
+    }
   });
 
   it("shows the fixture-data label and never the historical-record label for a fixture figure (R13.4)", () => {
