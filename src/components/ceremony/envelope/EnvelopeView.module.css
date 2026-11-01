@@ -1,0 +1,90 @@
+/*
+ * EnvelopeView styles (design.md "Envelope and seal", R8.7, R10.1, R9.5, R9.6).
+ *
+ * Only colour tokens from globals.css are used: --ink / --ink-soft for text,
+ * --paper / --paper-deep for surfaces, --seal for the one label colour. There
+ * is no judgement colour anywhere -- no green/red, no directional semantics.
+ * Every envelope, whatever a letter's figures did, is drawn the same way
+ * (neutrality.md, R10.1).
+ *
+ * The envelope rests at the one fixed geometry ENVELOPE_TARGET (R8.7): the
+ * component sets the width and the top offset inline from the constants, and
+ * this module centres the frame horizontally and holds the envelope's aspect so
+ * the first paint on the persona page matches the last frame of the /demo
+ * camera move. No geometry here reads letter content (R3.6).
+ */
+
+/* --- Stages --- */
+
+.envelopeStage,
+.intactStage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.25rem;
+}
+
+/* --- The envelope's resting frame (ENVELOPE_TARGET) --- */
+
+.frame {
+  /* width and margin-top come inline from ENVELOPE_TARGET; this centres it. */
+  margin-left: auto;
+  margin-right: auto;
+  /* The envelope keeps its own 300:188 aspect; the frame just bounds the
+     width, so the SVG scales without distortion. */
+}
+
+/* --- Statements (loading / verifying / seal-is-intact) --- */
+
+.statement {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  line-height: 1.4;
+  max-width: var(--measure);
+}
+
+/* --- Plain text button in the product voice; no judgement colour. --- */
+
+.button {
+  font: inherit;
+  color: var(--ink);
+  background-color: var(--paper-deep);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  padding: 0.5rem 1.1rem;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.button:hover {
+  background-color: var(--paper);
+}
+
+/* --- The still-sealed panel wrapper (R7.2). The reused StillSealed view
+       carries its own heading, body, countdown and retry styling; this only
+       bounds and centres it inside the envelope stage. --- */
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  max-width: var(--measure);
+}
+
+/* --- Focus (R9.6) --- */
+
+.envelopeStage :focus-visible,
+.intactStage :focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* --- Reduced motion (R9.5) --- */
+
+@media (prefers-reduced-motion: reduce) {
+  .button {
+    transition: none;
+  }
+}
