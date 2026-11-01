@@ -1,10 +1,25 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
-import { PersonaCard } from "./PersonaCard";
+import { DeskEnvelopeLink } from "@/components/ceremony/desk/DeskEnvelopeLink";
+import { MotionProvider } from "@/components/ceremony/motion";
+import { WaxSeal } from "@/components/ceremony/envelope/WaxSeal";
+
+import { PersonaCard, type PersonaCardProps } from "./PersonaCard";
 import { DEMO_COPY } from "./copy";
 import { formatCalendarDate, formatUtcDate } from "./dates";
+
+// `next/navigation`'s useRouter throws outside the app router, so the static
+// render needs a stub. The stub is hoisted so the mock factory can reach it.
+const routerStub = vi.hoisted(() => ({
+  prefetch: () => undefined,
+  push: () => undefined,
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => routerStub,
+}));
 
 /**
  * Markup tests for a single PersonaCard (R6.2, R6.6, R6.7). Renders with
@@ -25,7 +40,35 @@ const PROPS = {
   opens_at: "2024-11-05T00:00:00.000Z",
 } as const;
 
-const render = () => renderToStaticMarkup(createElement(PersonaCard, PROPS));
+/**
+ * The card reads the motion mode through DeskEnvelopeLink, so it renders
+ * inside a MotionProvider, as it does on the Demo_Index page through DeskScene.
+ */
+const render = (props: PersonaCardProps = PROPS) =>
+  renderToStaticMarkup(
+    createElement(MotionProvider, null, createElement(PersonaCard, props)),
+  );
+
+/** A minimal view of a React element, enough to walk an unrendered tree. */
+type El = { type: unknown; props: { children?: unknown; [name: string]: unknown } };
+
+/** Every element of `type` in an unrendered element tree, in source order. */
+function findElements(node: unknown, type: unknown, out: El[] = []): El[] {
+  if (Array.isArray(node)) {
+    for (const child of node) findElements(child, type, out);
+    return out;
+  }
+  if (node !== null && typeof node === "object" && "props" in node) {
+    const el = node as El;
+    if (el.type === type) out.push(el);
+    findElements(el.props.children, type, out);
+  }
+  return out;
+}
+
+/** The unrendered element tree the card returns (it calls no hooks itself). */
+const tree = (props: PersonaCardProps = PROPS) =>
+  PersonaCard(props) as unknown as El;
 
 describe("PersonaCard markup", () => {
   it("shows the display name and region", () => {
@@ -95,5 +138,55 @@ describe("PersonaCard markup", () => {
         `card markup must not contain payload string "${needle}"`,
       ).not.toContain(needle.toLowerCase());
     }
+  });
+
+  it("is one desk envelope: the anchor is a DeskEnvelopeLink to the persona letter", () => {
+    const root = tree();
+    expect(root.type).toBe(DeskEnvelopeLink);
+    expect(root.props.href).toBe(`/demo/personas/${PROPS.personaKey}`);
+  });
+
+  it("renders the envelope as a real anchor with the persona href", () => {
+    const html = render();
+    expect(html).toMatch(
+      new RegExp(`<a[^>]*href="/demo/personas/${PROPS.personaKey}"[^>]*>`),
+    );
+  });
+
+  it("seeds the WaxSeal from personaKey and nothing else", () => {
+    const seals = findElements(tree(), WaxSeal);
+    expect(seals).toHaveLength(1);
+    expect(seals[0]?.props.patternKey).toBe(PROPS.personaKey);
+  });
+
+  it("the WaxSeal markup is the one for personaKey, and it is hidden from assistive tech", () => {
+    const html = render();
+    const sealSvg = renderToStaticMarkup(
+      createElement(WaxSeal, { patternKey: PROPS.personaKey, size: 48 }),
+    );
+    expect(html).toContain(sealSvg);
+    // The seal is decorative: the link already carries the persona's name.
+    expect(html).toMatch(/aria-hidden="true"[^>]*>\s*<svg/);
+  });
+
+  it("passes only the list fields to the card, never sealed payload", () => {
+    const withPayload = {
+      ...PROPS,
+      letter_text: "SEALED BODY MARKER",
+      figures: [{ value: "9.999", unit: "USD per gallon" }],
+    } as unknown as PersonaCardProps;
+    const html = render(withPayload);
+    expect(html).not.toContain("SEALED BODY MARKER");
+    expect(html).not.toContain("9.999");
+    // The element tree carries only the list fields the card reads.
+    const root = tree(withPayload);
+    expect(Object.keys(root.props).sort()).toEqual(["children", "className", "href"]);
+  });
+
+  it("keeps the card's text unchanged inside the envelope", () => {
+    const html = render();
+    expect(html).toContain(PROPS.display_name);
+    expect(html).toContain(PROPS.region);
+    expect(html).toContain(DEMO_COPY.openLetter);
   });
 });

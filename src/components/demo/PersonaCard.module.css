@@ -1,19 +1,42 @@
 /*
- * PersonaCard styling. Colours come from globals.css tokens only; the card is
- * a ParchmentSurface with tone="deep", so its background is --paper-deep.
+ * PersonaCard styling: one desk envelope. The anchor (.envelope) is the
+ * envelope the camera move carries, so it is sized to match the envelope
+ * target on the persona page: width min(84vw, 26rem), the same as
+ * ENVELOPE_TARGET in ceremony/constants.ts. No placeholder envelopes and no
+ * fixed heights, so 1 to 6 cards flow in the list at any width.
  *
- * Contrast on --paper-deep (globals.css record): --ink 13.17:1 (name, dates),
- * --ink-soft 9.58:1 (labels, region), --seal 7.92:1 ("Pick up the letter" link),
- * all well above the 4.5:1 WCAG 2.2 AA floor. No green/red or directional
- * colour anywhere -- up and down would get the same treatment (neutrality.md);
- * there are no figures on this card.
+ * Colours come from globals.css tokens only. The card is a ParchmentSurface
+ * with tone="deep" and sets --ink itself, so the desk's cream text never
+ * reaches the paper. Contrast on --paper-deep (globals.css record): --ink
+ * 13.17:1, --ink-soft 9.58:1, --seal 7.92:1, all above the 4.5:1 WCAG 2.2 AA
+ * floor. No green/red or directional colour (neutrality.md); no figures here.
  */
+
+.envelope {
+  display: block;
+  width: min(84vw, 26rem);
+  max-width: 100%;
+  color: var(--ink);
+  text-decoration: none;
+}
+
+.envelope:focus-visible {
+  outline: 2px solid var(--seal);
+  outline-offset: 4px;
+}
 
 .card {
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
-  max-width: var(--measure);
+  color: var(--ink);
+}
+
+.seal {
+  display: block;
+  align-self: flex-end;
+  line-height: 0;
+  margin-bottom: 0.25rem;
 }
 
 .name {
@@ -63,4 +86,8 @@
   color: var(--seal);
   text-decoration: underline;
   text-underline-offset: 0.15em;
+}
+
+.envelope:hover .openLetter {
+  text-decoration-thickness: 2px;
 }

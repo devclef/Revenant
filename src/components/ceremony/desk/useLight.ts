@@ -105,7 +105,7 @@ export function lightFromPointer(
 }
 
 /** Write one resolved light frame onto the target element's inline style. */
-function applyLight(el: HTMLElement, v: LightValues): void {
+export function applyLight(el: HTMLElement, v: LightValues): void {
   el.style.setProperty("--light-x", String(v.x));
   el.style.setProperty("--light-y", String(v.y));
   el.style.setProperty("--parallax-x", `${v.px}px`);
