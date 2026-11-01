@@ -216,3 +216,27 @@ describe("ink timing depends on the line count alone (Property 14, Property 16)"
     expect(start?.plan).toEqual(inkPlan(10));
   });
 });
+
+describe("Skip shows the whole text", () => {
+  it("removes every mask style so the full letter is visible at once", () => {
+    const { target, style, animations } = fakeTarget();
+    const start = { lineHeightPx: 22.4, plan: inkPlan(4) };
+    const session = startInkSession(target, start, () => {});
+    expect(style.has("mask-image")).toBe(true);
+
+    session?.skip();
+
+    expect(animations[0]?.cancelled).toBe(true);
+    expect(style.size).toBe(0);
+  });
+
+  it("settles the run as complete, so the skip control has nothing left to do", () => {
+    const { target } = fakeTarget();
+    const onSettled = vi.fn();
+    const session = startInkSession(target, { lineHeightPx: 22.4, plan: inkPlan(4) }, onSettled);
+
+    session?.skip();
+
+    expect(onSettled).toHaveBeenCalledTimes(1);
+  });
+});
