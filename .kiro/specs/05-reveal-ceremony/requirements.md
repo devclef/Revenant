@@ -10,7 +10,7 @@ It is a UX layer only. It changes how the existing flow looks and moves. It does
 
 Concept B, "One Desk", is decided: one dark oak desk, lit by one candle, seen close and slightly from above. The camera moves between stations on the desk instead of the page changing. Animation uses CSS, SVG, the Web Animations API and one small 2D canvas for dust. There is no animation library and no 3D engine.
 
-This spec builds on spec 03 (the Opening_Flow, its state machine, the Reveal) and on task #49 (spec 03 task 8, which builds the reveal's letter and figures stages and which this spec reworks). Spec 04 task 10 (#84) adds a test against the same figures component, so the number-line work also waits for #84.
+This spec builds on spec 03 (the Opening_Flow, its state machine, the Reveal) and on task #49 (spec 03 task 8, which builds the reveal's letter and figures stages and which this spec reworks). Spec 04 task 10 (#84) adds a test against the same figures component. It waits on the end of the spec 04 data chain, not on this spec, so R9.7 and R9.8 keep `FiguresThenNow({ opened })` and its labels unchanged for it.
 
 The design is written after #49 merges, because #49 is rewriting `src/components/reveal`. This document therefore names behaviour and rules, not files or props, except where a file is a hard boundary.
 
@@ -119,7 +119,7 @@ The scale cannot take its range from data, because a range taken from the sealed
 
 Two units need more than two widenings, so the scale is a fixed logarithmic scale, the same for every question.
 
-1. THE Recall_Scale SHALL be the same for every question in every letter: a logarithmic track from 0.01 to 100,000, seven decades, with faint decade labels (0.01, 0.1, 1, 10, 100, 1,000, 10,000, 100,000) and no other number on the track. It SHALL take nothing from the payload except the question text and the unit label that spec 03 already shows. No range, tick, default position or label SHALL come from a figure, a period or a metric.
+1. THE Recall_Scale SHALL be the same for every question in every letter: a logarithmic track from 0.01 to 100,000, seven decades, with faint decade labels (0.01, 0.1, 1, 10, 100, 1,000, 10,000, 100,000) and no other number on the track at level 0. WHILE the track is zoomed (levels 1 and 2, criterion 12), it MAY also show its two window end labels, which come only from the marker's position. It SHALL take nothing from the payload except the question text and the unit label that spec 03 already shows. No range, tick, default position or label SHALL come from a figure, a period or a metric.
 2. THE Mark SHALL start unplaced. The judge places it by dragging the marker, or by pressing on the track, with a pointer, finger or pen.
 3. WHILE the judge drags the marker, THE Recall_Scale SHALL show the value under the marker, rounded to three significant figures, written as a plain decimal with no exponent, with the unit. The value shown SHALL be the value that will be recorded if the judge lets go there.
 4. WHEN the judge releases the marker, THE Recall_Scale SHALL send `EDIT_DRAFT` for that question with that decimal string, and the Mark SHALL stay in ink at that place. A Mark placed or moved by any route SHALL send `EDIT_DRAFT` with a string that passes the Recall_Record number rule (spec 03 R3.3).
@@ -249,7 +249,7 @@ Two units need more than two widenings, so the scale is a fixed logarithmic scal
 4. THE largest contentful paint on `/demo` SHALL be at most 2.5 s on a mid-range Android phone with Lighthouse mobile throttling. This is a manual check, recorded in the PR. The LCP element SHALL be server-rendered text (the heading or intro), not an image, and SHALL NOT wait for scripts or textures. Cumulative layout shift SHALL be under 0.1 and interaction latency under 200 ms.
 5. THE total of all image and texture bytes the Ceremony loads SHALL be at most 150 kB, and at most 40 kB before the first paint. Prefer CSS gradients and inline SVG to files. No file SHALL be loaded by a `data:` or `blob:` URL (the CSP allows images only from `'self'`). The build SHALL be checked to make sure Next does not inline a CSS asset as a `data:` URI.
 6. WHERE the device is low-power (fewer than four logical cores, or measured frame time above 24 ms over one second), THE Ceremony SHALL switch to a lighter mode on its own: no dust, no parallax, no tilt, camera moves as cross-fades. The Flow SHALL not change.
-7. THE Ceremony SHALL animate only `transform` and `opacity` for anything that moves, SHALL keep the desk to one composited plane, and SHALL mount a Station's heavy layers only while it is in view.
+7. THE Ceremony SHALL animate only `transform` and `opacity` for anything that moves, SHALL keep the desk to one composited plane, and SHALL mount a Station's decorative layers only while it is in view. Only decorative layers (dust, light, flakes, wheels) unmount. The answers, the letter and the figures SHALL stay in the document once shown, because the reveal stages accumulate and "Show everything" shows all three.
 
 ### R14. Sound and vibration (optional)
 
@@ -309,29 +309,30 @@ Two units need more than two widenings, so the scale is a fixed logarithmic scal
 **User story:** As the owner, I want the work cut so the video moments land first, each task leaves the flow working, and each PR stays reviewable.
 
 1. EACH task SHALL be one GitHub issue and one PR, under 2,500 changed lines as `max_changed_lines` counts them in `.github/agents.json`, with a line estimate in `tasks.md`, and SHALL stay inside frontend-dev's paths plus `shared`.
-2. EVERY task body SHALL contain the line "Before this task: Blocked by #49". Tasks 4a and 4b SHALL each contain "Before this task: Blocked by #49, #84".
-3. THE tasks SHALL run in this order, so the moments for the 3-minute video land first:
+2. EVERY task body SHALL contain the line "Before this task: Blocked by #49". No task is blocked by #84.
+3. THE tasks SHALL run in this order, so the moments for the 3-minute video land first. The dependencies are a straight chain, each task depending on the one before it, so only one spec 05 PR is open at a time:
 
-   | # | Task | Rough lines |
-   |---|---|---|
-   | 1 | Scene base: desk surface, light, dust, motion settings and Calm_Mode, Skip, Stage wrapper with `data-ceremony`, constants and Position_Property list, contrast tokens, `ASSETS.md`, and the live region (R3, R10.3, R10.5, R11, R13, R15) | 1,500 |
-   | 2 | Envelope and checking views, the `intact` Stage, and the R2 copy change with its test updates (R2, R3, R5) | 1,400 |
-   | 3 | Seal_Break, the `seal` Stage (R6) | 1,800 |
-   | 4a | Number_Line, Stamps, range and Mark rules, the extended Property 20 with mirror reflection (R4.10, R9, R10.1 to R10.4, R12.1 to R12.4). Blocked by #49 and #84 | 1,400 |
-   | 4b | Passage transition, counter, the sequenced Steps `then`, `passage` and `now`, and the constants test (R10.5, R10.6, R12.5 to R12.8). Blocked by #49 and #84 | 1,000 |
-   | 5 | Letter ink-soak (R7) | 800 |
-   | 6 | The desk on `/demo` (R8) | 1,700 |
-   | 7 | Recall_Scale (R4) | 1,900 |
-   | 8 | Close, Skip across all sequences including the Stage 3 Steps, and the reduced-motion and contrast review (R11, R12.9, R17) | 1,200 |
-   | 9 | Sound and vibration (R14), optional | 900 |
+   | # | Task | Depends on | Rough lines |
+   |---|---|---|---|
+   | 1 | Scene base: desk surface, light, motion settings and Calm_Mode, Skip, Stage wrapper with `data-ceremony`, constants and Position_Property list, contrast tokens, `ASSETS.md`, and the live region (R3, R10.3, R10.5, R11, R13, R15) | none | 1,950 |
+   | 2 | Envelope and checking views, the `intact` Stage, and the R2 copy change with its test updates (R2, R3, R5) | 1 | 1,650 |
+   | 3 | Seal_Break, the `marks` and `seal` Stages (R6) | 2 | 1,500 |
+   | 4 | Number_Lines, Stamps, range and Mark rules, the extended Property 20 with mirror reflection (R4.10, R9, R10.1 to R10.4, R12.1 to R12.4) | 3 | 1,750 |
+   | 5 | Passage transition, counter, the sequenced Steps `then`, `passage` and `now`, and the constants test (R10.5, R10.6, R12.5 to R12.8) | 4 | 1,400 |
+   | 6 | Letter ink-soak (R7) | 5 | 600 |
+   | 7 | The desk on `/demo` (R8) | 6 | 1,600 |
+   | 8 | Recall_Scale (R4) | 7 | 1,800 |
+   | 9 | Close, Skip across all sequences including the Stage 3 Steps, and the reduced-motion and contrast review (R11, R12.9, R17) | 8 | 1,150 |
+   | 10 | Sound and vibration (R14), optional | 9 | 650 |
 
-   About 13,600 lines in total. Task 4a draws the Number_Lines and Stamps with both Stamps shown at once; task 4b adds the sequence between them. IF the design finds any task over 2,500, THEN it SHALL be split and the split noted.
+   About 14,050 lines in total. Task 4 draws the Number_Lines and Stamps with both Stamps shown at once; task 5 adds the sequence between them. IF a task is found over 2,500 lines, THEN it SHALL be split and the split noted.
 4. EACH task SHALL leave the Flow working end to end. A Stage that its task has not rebuilt yet SHALL keep the spec 03 look, on the new surface.
-5. EACH task that adds a sequence SHALL include that sequence's Skip, Calm_Mode path and button equivalent. Task 8 reviews them as a whole, and adds the one that crosses sequences.
-6. THE sound toggle and vibration come only in task 9. Tasks 1 to 8 SHALL NOT vibrate or play sound.
+5. EACH task that adds a sequence SHALL include that sequence's Skip, Calm_Mode path and button equivalent. Task 9 reviews them as a whole, and adds the one that crosses sequences.
+6. THE sound toggle and vibration come only in task 10. Tasks 1 to 9 SHALL NOT vibrate or play sound.
 7. THE tasks SHALL NOT change a file outside frontend-dev's paths. A requirement that needs one SHALL be listed in the design for the owner's decision. The known ones are `src/app/layout.tsx`, `src/app/page.tsx` and `src/app/globals.css` (R1.7), `scripts/check.sh` and `scripts/check-js-budget.mjs` (R13.2) and `public/**` (listed for both platform-dev and frontend-dev; the Ceremony SHALL NOT use it).
 8. EACH task's PR description SHALL state: the measured values from `scripts/check-js-budget.mjs`, the screenshots of its Stages taken with the QA agent's steps (R3.9), and a list of every asset added with its `ASSETS.md` entry.
-9. THE tasks SHALL carry the "Validation" line `bash scripts/check.sh` and, for tasks 2, 3, 4a, 4b and 7, a note of which spec 03 tests they change and why.
+10. EACH task body SHALL list the QA step numbers (design, "QA browser steps") that apply to it, and SHALL say that Stages from later tasks being missing or still in their spec 03 look is expected and is not a finding.
+9. THE tasks SHALL carry the "Validation" line `bash scripts/check.sh` and, for tasks 2, 3, 4, 5 and 8, a note of which spec 03 tests they change and why.
 
 ## Open items for the owner
 
