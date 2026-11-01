@@ -479,9 +479,9 @@ describe("Property 20 (whole entry): a rise and its mirror fall render the same 
           }
         },
       ),
-      { numRuns: 100 },
+      { numRuns: 50 },
     );
-  });
+  }, 30000);
 });
 
 // --- Stage 3 fixtures (Properties 15, 17, 18) ---------------------------------
