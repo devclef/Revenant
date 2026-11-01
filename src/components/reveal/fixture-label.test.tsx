@@ -4,11 +4,15 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { FiguresThenNow } from "./FiguresThenNow";
 import { REVEAL_COPY } from "./copy";
-import { DEMO_FIGURES } from "@/lib/figures/demo";
+import { CATALOGUE } from "@/lib/figures/catalogue";
+import { loadFigureFile } from "@/lib/figures/load";
 import { thenAndNow } from "@/lib/figures/then-now";
 import { computeChange, isFixtureFigure } from "@/lib/figures";
+import type { LoadedFigures } from "@/lib/figures";
 import type { Opened } from "./opening-machine";
 import type { FigureV1, MetricDefinitionV1, PayloadV1 } from "@/lib/seal-format";
+
+import usFuelFixture from "@/lib/figures/demo/us-fuel.fixture.json";
 
 /**
  * R16.4 (data-integrity.md "Fixture figures ... only with a visible 'fixture
@@ -28,11 +32,14 @@ import type { FigureV1, MetricDefinitionV1, PayloadV1 } from "@/lib/seal-format"
  * label only where it renders element-bounded (`>fixture data<`), which the
  * inline note never produces.
  *
- * The figures are the two fixture series that exist in `DEMO_FIGURES`
- * (`fixture-us-gasoline-regular`, `fixture-us-diesel`), so `thenAndNow` finds a
- * real frozen fixture "now" figure and the component renders a then figure, a
- * now figure and a change line for each — three visible labels per comparable
- * fixture entry. No network: the now data is a static import.
+ * The fixture figures come from loading the US fuel fixture file directly —
+ * `loadFigureFile(us-fuel.fixture.json, CATALOGUE)` — not from the `DEMO_FIGURES`
+ * re-export (owner note). This is the same validated, frozen result the demo
+ * uses, read straight from its source file. The two fixture series it defines
+ * (`fixture-us-gasoline-regular`, `fixture-us-diesel`) each give a real frozen
+ * fixture "now" figure, so the component renders a then figure, a now figure
+ * and a change line for each — three visible labels per comparable fixture
+ * entry. No network: the file is a static import.
  */
 
 // The label text, and a guard that the note is a different, longer string that
@@ -43,20 +50,27 @@ const ELEMENT_BOUNDED_LABEL = `>${LABEL}<`;
 
 // --- fixtures ----------------------------------------------------------------
 
-// The latest frozen "now" fixture figures in DEMO_FIGURES, read straight from
-// the loaded catalogue so the test uses the same bytes the component does.
+// The US fuel fixture file, loaded directly through the same loader the demo
+// uses but read straight from its source JSON (owner note: not DEMO_FIGURES).
+// loadFigureFile validates it against the real CATALOGUE and deep-freezes the
+// result, so these are the exact frozen figures the component also sees.
+const FIXTURE: LoadedFigures = loadFigureFile(usFuelFixture, CATALOGUE);
+
+// The latest frozen "now" fixture figures in the loaded fixture file, read
+// straight from the loaded catalogue so the test uses the same bytes the
+// component does.
 const GASOLINE_NOW = (() => {
   const { now } = thenAndNow(
     "fixture-us-gasoline-regular",
     "2026-10-27",
-    DEMO_FIGURES,
+    FIXTURE,
   );
   if (!now.found) throw new Error("test setup: gasoline now must be found");
   return now.figure;
 })();
 
 const DIESEL_NOW = (() => {
-  const { now } = thenAndNow("fixture-us-diesel", "2026-10-27", DEMO_FIGURES);
+  const { now } = thenAndNow("fixture-us-diesel", "2026-10-27", FIXTURE);
   if (!now.found) throw new Error("test setup: diesel now must be found");
   return now.figure;
 })();
