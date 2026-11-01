@@ -40,6 +40,13 @@ class Plan(unittest.TestCase):
         self.assertEqual(d.parse_dependencies(s.issue_body(t, [5, 6])), [5, 6])
         self.assertEqual(d.parse_dependencies(s.issue_body(t, [])), [])
 
+    def test_body_has_no_validation_section(self):
+        t = s.Task("01-skeleton", 6, "x", "platform-dev", [], "detail")
+        body = s.issue_body(t, [])
+        self.assertNotIn("## Validation", body)
+        self.assertIn("## Task\n\ndetail", body)
+        self.assertIn(f"<!-- spec-task: {t.key} -->", body)
+
 
 class Checks(unittest.TestCase):
     def test_check_state(self):

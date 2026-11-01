@@ -107,10 +107,42 @@ class Specs(unittest.TestCase):
         self.assertIn("reproduces the failure", spec)
         self.assertNotIn("2 to 4 steps", spec)
 
+    def test_strip_validation(self):
+        body = "## Task\n\ndo it\n\n## Validation\n\n```bash\nbash scripts/check.sh\n```\n\n<!-- spec-task: x -->\n"
+        out = d.strip_validation(body)
+        self.assertNotIn("Validation", out)
+        self.assertNotIn("check.sh", out)
+        self.assertIn("## Task\n\ndo it\n\n<!-- spec-task: x -->", out)
+
+    def test_strip_validation_keeps_following_section(self):
+        body = "## Validation\n```\nx\n```\n## Notes\nkeep\n"
+        self.assertEqual(d.strip_validation(body), "## Notes\nkeep\n")
+
+    def test_strip_validation_without_section_or_body(self):
+        self.assertEqual(d.strip_validation("## Task\nx\n"), "## Task\nx\n")
+        self.assertEqual(d.strip_validation(None), "")
+
+    def test_specs_quote_ticket_without_validation(self):
+        body = "## Task\n\nwork\n\n## Validation\n\n```bash\nbash scripts/check.sh\n```\n"
+        dev = d.dev_spec(issue(3, [], body), "data-dev")
+        qa = d.qa_spec({"number": 7, "title": "t"}, issue(3, [], body))
+        for spec in (dev, qa):
+            self.assertIn("work", spec)
+            self.assertNotIn("## Validation", spec)
+        self.assertEqual(dev.count("````"), 2)
+
+    def test_new_step_wording(self):
+        dev = d.dev_spec(issue(3, []), "data-dev")
+        self.assertIn("Do not plan a step for the ticket's validation command. "
+                      "The Task Runner runs it after every step.", dev)
+        qa = d.qa_spec({"number": 7, "title": "t"}, issue(3, []))
+        self.assertIn("Do not run scripts/check.sh and do not plan a step for it. "
+                      "CI already ran it on this commit and it is green.", qa)
+
     def test_qa_spec_does_not_run_check_sh(self):
         spec = d.qa_spec({"number": 7, "title": "t"}, issue(3, []))
         self.assertIn("This is ONE step.", spec)
-        self.assertNotIn("check.sh", spec)
+        self.assertNotIn("`bash scripts/check.sh`", spec)
 
 
 class RunState(unittest.TestCase):

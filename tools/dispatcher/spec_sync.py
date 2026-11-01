@@ -83,7 +83,6 @@ def issue_body(task: Task, dep_issues: list[int]) -> str:
         f"**Agent:** {task.agent}\n"
         f"**Depends on:** {deps}\n\n"
         f"## Task\n\n{task.detail}\n\n"
-        "## Validation\n\n```bash\nbash scripts/check.sh\n```\n\n"
         f"<!-- spec-task: {task.key} -->\n"
     )
 
