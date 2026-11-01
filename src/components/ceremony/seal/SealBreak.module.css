@@ -1,0 +1,272 @@
+/*
+ * Seal_Break styles (design.md "Seal_Break", R6, R10.1, R11.2, R11.8).
+ *
+ * The seal is the pointer target; under it sit the instruction line and a real
+ * "Break the seal" button (R6.3). On break the wax splits into flakes, the flap
+ * lifts and the letter slides out. Every decorative motion here is gated off in
+ * Calm_Mode and under prefers-reduced-motion (R11.2): the final, settled state
+ * is what shows, with no animation.
+ *
+ * Durations that Property 14 reads come from constants.ts, never hard-coded
+ * here. The component passes them in as CSS custom properties on the stage
+ * root:
+ *
+ *   --seal-split-ms   SEAL_SPLIT_MS   (the split and the flakes)
+ *   --seal-settle-ms  SEAL_SETTLE_MS  (the cracks receding on early release)
+ *   --flap-lift-ms    FLAP_LIFT_MS    (the flap lifting)
+ *   --letter-slide-ms LETTER_SLIDE_MS (the letter sliding out)
+ *
+ * The animation-duration rules below reference only those variables. The
+ * easings EASE_STANDARD and EASE_STAMP are constant strings, so they may appear
+ * literally (the design allows constant easings to be literal). Fallbacks after
+ * each var() keep the stylesheet readable on its own and never override the
+ * value the component passes.
+ *
+ * Neutrality (neutrality.md, R10.1): nothing here depends on a value or a
+ * direction. Every seal — whatever its key, and whatever a letter's figures did
+ * — breaks with exactly these rules. There is no green/red and no directional
+ * treatment. The seal carries its own one wax colour from WaxSeal.module.css;
+ * this module names no judgement colour and sets no literal colour of its own.
+ *
+ * Colour and tokens: the stage sits on a paper panel, so it reuses the paper
+ * surface tokens and the --ink text token from globals.css, exactly as
+ * EnvelopeView does. The "Break the seal" button matches EnvelopeView's plain
+ * paper button, and focus rings follow the ceremony focus-ring convention
+ * (R11.8): 2px --ink on paper.
+ */
+
+/* --- The marks / seal stage wrapper --- */
+
+.stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1.25rem;
+  max-width: var(--measure);
+  margin: 0 auto;
+}
+
+/* --- The seal pointer target --- */
+
+/*
+ * The wax seal sits here as the pointer target. It is aria-hidden and not
+ * focusable in the markup (the button below is the accessible control, R6.3 /
+ * Property 19); this box only gives it a hit area and holds the crack overlay
+ * and the flakes on top of it. touch-action: none so a press-and-hold drag on
+ * the seal never scrolls the page.
+ */
+.sealTarget {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: min(42vw, 9rem);
+  height: min(42vw, 9rem);
+  touch-action: none;
+  cursor: pointer;
+}
+
+/* The WaxSeal itself fills the target. */
+.seal {
+  width: 100%;
+  height: 100%;
+}
+
+/* --- The crack overlay --- */
+
+/*
+ * The cracks are drawn as SVG strokes in the WaxSeal's 100×100 user space, laid
+ * exactly over the disc. The overlay is decoration (aria-hidden); the stroke
+ * colour reuses the pressed wax-rim ink so the cracks read as splits in the
+ * same wax, never as a judgement colour.
+ */
+.crackOverlay {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.crack {
+  fill: none;
+  stroke: var(--seal-rim, #5c1713);
+  stroke-width: 2.4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  /* stroke-dasharray / stroke-dashoffset are set inline by the component from
+     cracks.ts (TOTAL_LENGTH and the per-path dashoffset), so the dash reveal is
+     driven by the pure model, not by a value computed here. */
+}
+
+/* --- The flakes --- */
+
+/*
+ * On break the wax splits into FLAKE_COUNT flakes that fall along the fixed
+ * paths in cracks.ts. Each flake is a small wax shard; its resting offset and
+ * its fall transform are set inline per index by the component (never random,
+ * never from data). The split runs over --seal-split-ms with a per-flake delay.
+ */
+.flakeLayer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.flake {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 10%;
+  height: 10%;
+  background-color: var(--seal-wax, #7a1f1a);
+  border-radius: 1px;
+  /* The resting offset (--flake-x / --flake-y) and the fall vector
+     (--flake-dx / --flake-dy / --flake-rot) are passed inline per index. The
+     settled state rests the flake in place; the fall animation carries it out
+     over --seal-split-ms. */
+  transform: translate(
+    calc(-50% + var(--flake-x, 0px)),
+    calc(-50% + var(--flake-y, 0px))
+  );
+  animation-name: seal-flake-fall;
+  animation-duration: var(--seal-split-ms, 900ms);
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1); /* EASE_STANDARD */
+  animation-delay: var(--flake-delay, 0ms);
+  animation-fill-mode: both;
+}
+
+@keyframes seal-flake-fall {
+  from {
+    transform: translate(
+      calc(-50% + var(--flake-x, 0px)),
+      calc(-50% + var(--flake-y, 0px))
+    ) rotate(0deg);
+    opacity: 1;
+  }
+  to {
+    transform: translate(
+      calc(-50% + var(--flake-x, 0px) + var(--flake-dx, 0px)),
+      calc(-50% + var(--flake-y, 0px) + var(--flake-dy, 0px))
+    ) rotate(var(--flake-rot, 0deg));
+    opacity: 0;
+  }
+}
+
+/* --- The instruction line --- */
+
+.instruction {
+  margin: 0;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  line-height: 1.4;
+  max-width: var(--measure);
+}
+
+/* --- The "Break the seal" button (matches EnvelopeView's paper button) --- */
+
+.button {
+  font: inherit;
+  color: var(--ink);
+  background-color: var(--paper-deep);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  padding: 0.5rem 1.1rem;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.button:hover {
+  background-color: var(--paper);
+}
+
+/* --- The flap lift and the letter slide --- */
+
+/*
+ * After the split the envelope flap lifts over --flap-lift-ms and the letter
+ * slides out over --letter-slide-ms. Both are decoration layered over the
+ * settled, final markup (the letter text is in the document from the moment
+ * ADVANCE is sent, under the slide). The transforms move only; they never
+ * insert, remove or reorder content.
+ */
+.flap {
+  transform-origin: 50% 100%;
+  animation-name: seal-flap-lift;
+  animation-duration: var(--flap-lift-ms, 700ms);
+  animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1); /* EASE_STAMP */
+  animation-fill-mode: both;
+}
+
+@keyframes seal-flap-lift {
+  from {
+    transform: rotateX(0deg);
+  }
+  to {
+    transform: rotateX(-160deg);
+  }
+}
+
+.letter {
+  animation-name: seal-letter-slide;
+  animation-duration: var(--letter-slide-ms, 800ms);
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1); /* EASE_STANDARD */
+  animation-fill-mode: both;
+}
+
+@keyframes seal-letter-slide {
+  from {
+    transform: translateY(14%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* --- Focus (R11.8): 2px --ink ring on the paper surface --- */
+
+.stage :focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* --- Calm_Mode and reduced motion (R11.2): no decorative motion --- */
+
+/*
+ * Both the judge's Calm control and the OS preference resolve to
+ * data-ceremony-motion="calm" on the ceremony root. "light" settles motion the
+ * same way for these decorative effects. Targeted the build-safe way a CSS
+ * module reaches a global ancestor attribute (as DeskScene does for
+ * data-desk-motion): :global(...) on the attribute, then the local class.
+ * The final, settled state shows with no animation; the button's hover
+ * transition is also stilled.
+ */
+:global([data-ceremony-motion="calm"]) .flake,
+:global([data-ceremony-motion="light"]) .flake,
+:global([data-ceremony-motion="calm"]) .flap,
+:global([data-ceremony-motion="light"]) .flap,
+:global([data-ceremony-motion="calm"]) .letter,
+:global([data-ceremony-motion="light"]) .letter {
+  animation: none;
+}
+
+:global([data-ceremony-motion="calm"]) .button,
+:global([data-ceremony-motion="light"]) .button {
+  transition: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flake,
+  .flap,
+  .letter {
+    animation: none;
+  }
+
+  .button {
+    transition: none;
+  }
+}
