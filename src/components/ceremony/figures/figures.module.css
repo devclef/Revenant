@@ -67,13 +67,18 @@
 
 /* --- Number_Line: a plain axis, two pins and an optional Mark --- */
 
+/* The Number_Line draws on the paper panel, so its graphics use the ink token
+   and are checked against the paper surface (WCAG 2.2 AA, 3:1 for graphical
+   objects; see number-line.test.tsx). The pair is named here once. */
 .numberLine {
+  --figure-line: var(--ink);
+  --figure-surface: var(--paper);
   position: relative;
   box-sizing: border-box;
   width: 100%;
   height: 0;
   margin: 2.5rem 0;
-  color: var(--ink);
+  color: var(--figure-line);
 }
 
 .axis {
@@ -81,7 +86,7 @@
   left: 0;
   right: 0;
   top: 0;
-  border-top: 2px solid var(--ink);
+  border-top: 2px solid var(--figure-line);
 }
 
 /* The pin above the axis drops from the then Stamp; the pin below it rises to
@@ -91,7 +96,7 @@
   position: absolute;
   width: 0;
   height: 1.5rem;
-  border-left: 2px solid var(--ink);
+  border-left: 2px solid var(--figure-line);
 }
 
 .pinThen {
@@ -120,7 +125,7 @@
   left: 0;
   width: 0;
   height: 1.2rem;
-  border-left: 3px solid var(--ink);
+  border-left: 3px solid var(--figure-line);
 }
 
 /* Hidden from sight, read by screen readers (R11.9). */
