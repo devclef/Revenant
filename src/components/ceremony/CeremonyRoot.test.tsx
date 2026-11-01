@@ -367,6 +367,62 @@ describe("CeremonyRoot Skip control", () => {
   });
 });
 
+// --- control count and styling ----------------------------------------------
+//
+// The Calm and Skip controls must each render exactly once per state: Calm
+// always (its label flips with the motion mode), Skip only while a sequence is
+// registered. A control counted by its exact button markup, so a stray second
+// copy or a missing one fails the test.
+
+/** Count `<button ...>text</button>` elements whose text is exactly `text`. */
+function countButtons(html: string, text: string): number {
+  const pattern = new RegExp(`<button[^>]*>${esc(text)}</button>`, "g");
+  return (html.match(pattern) ?? []).length;
+}
+
+describe("CeremonyRoot desk-token controls render once per state", () => {
+  const flowStates: Array<{ name: string; state: FlowState }> = [
+    { name: "loading", state: { tag: "loading" } },
+    { name: "verified", state: { tag: "verified", opened: OPENED } },
+    {
+      name: "reveal stage 3",
+      state: { tag: "reveal", opened: OPENED, record: RECORD, stage: 3 },
+    },
+  ];
+  const motionModes = ["full", "calm"] as const;
+
+  for (const { name, state } of flowStates) {
+    for (const mode of motionModes) {
+      for (const active of [false, true]) {
+        it(`${name}, ${mode} motion, skip ${active ? "active" : "idle"}: each control once`, () => {
+          setMotionMode(mode);
+          setHasActive(active);
+          const html = render(state);
+          const calmLabel =
+            mode === "calm" ? CEREMONY_COPY.calmOff : CEREMONY_COPY.calmOn;
+          expect(countButtons(html, calmLabel)).toBe(1);
+          expect(countButtons(html, CEREMONY_COPY.skip)).toBe(active ? 1 : 0);
+        });
+      }
+    }
+  }
+
+  it("gives both controls the desk-control class", () => {
+    setMotionMode("full");
+    setHasActive(true);
+    const html = render({ tag: "loading" });
+    const buttons = html.match(/<button[^>]*>[^<]*<\/button>/g) ?? [];
+    const controls = buttons.filter(
+      (b) =>
+        b.includes(esc(CEREMONY_COPY.calmOn)) || b.includes(esc(CEREMONY_COPY.skip)),
+    );
+    expect(controls).toHaveLength(2);
+    for (const control of controls) {
+      expect(control).toMatch(/class="[^"]+"/);
+    }
+  });
+});
+
 describe("CeremonyRoot render is I/O-free", () => {
   it("never fetches during render (the guard would throw otherwise)", () => {
     render({ tag: "loading" });
@@ -376,15 +432,17 @@ describe("CeremonyRoot render is I/O-free", () => {
   });
 });
 
-describe("CeremonyRoot controls use the paper button style (R11.2, R11.4)", () => {
-  it("gives the Calm control the control class from ceremony.module.css", () => {
+describe("CeremonyRoot controls use the desk control style (R11.2, R11.4)", () => {
+  it("gives the Calm control the desk-control class from ceremony.module.css", () => {
     const html = render({ tag: "loading" });
-    expect(html).toMatch(/<button type="button" class="[^"]*control[^"]*"/);
+    expect(html).toMatch(/<button type="button" class="[^"]+"/);
   });
 
-  it("the control class is defined with the paper button recipe", () => {
+  it("the desk-control class fades its hover and stops the fade under reduced motion", () => {
     const css = readFileSync(join(__dirname, "ceremony.module.css"), "utf8");
-    expect(css).toMatch(/\.control\s*\{[^}]*background-color:\s*var\(--paper-deep\)/);
-    expect(css).toMatch(/\.control\s*\{[^}]*color:\s*var\(--ink\)/);
+    expect(css).toMatch(/\.deskControl\s*\{[^}]*transition:\s*background-color\s+150ms/);
+    expect(css).toMatch(
+      /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.deskControl\s*\{\s*transition:\s*none;/,
+    );
   });
 });

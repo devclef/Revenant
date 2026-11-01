@@ -137,6 +137,15 @@ def strip_validation(body: str | None) -> str:
     return _VALIDATION_RE.sub("", body or "")
 
 
+FRONTEND_BROWSER_STEP = (
+    "The last step also includes the browser check from "
+    ".kiro/agents/prompts/frontend-dev.md ('Look at your work'): build, start the app, "
+    "screenshot each changed page at desktop and 360 px into your shots folder, and fix "
+    "anything unreadable or unstyled before finishing. This is part of the last step, "
+    "not a separate step."
+)
+
+
 def dev_spec(issue: dict, role: str, feedback: str | None = None) -> str:
     """Task Runner spec for a dev or fix run. The ticket body is untrusted
     input; it is quoted and fenced, never treated as instructions about tools."""
@@ -161,6 +170,7 @@ def dev_spec(issue: dict, role: str, feedback: str | None = None) -> str:
         "run checks: the Task Runner already runs `scripts/check.sh` and a reviewer "
         "after every step. Do not plan a step for the ticket's validation command. "
         "The Task Runner runs it after every step.",
+        *([FRONTEND_BROWSER_STEP] if role == "frontend-dev" else []),
         "",
         "## Reading the spec",
         "- Read the \"Rules for every task\" section of the spec's `tasks.md`.",

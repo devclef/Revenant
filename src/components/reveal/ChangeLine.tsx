@@ -43,6 +43,21 @@ export type ChangeLineProps = {
   now: Readonly<FigureV1>;
 };
 
+/**
+ * The formula as a reader sees it, built from the sealed inputs: for example
+ * `(3.600 - 3.000) / 3.000 x 100`. When the then value is zero there is no
+ * percent, so the formula is the plain difference. The formula identifier
+ * (CHANGE_FORMULA_ID) is not printed; it lives in a data attribute.
+ */
+function readableFormula(result: Extract<ChangeResult, { comparable: true }>): string {
+  const thenValue = result.then.value;
+  const nowValue = result.now.value;
+  if (result.percent === null) {
+    return `${nowValue} - ${thenValue}`;
+  }
+  return `(${nowValue} - ${thenValue}) / ${thenValue} x 100`;
+}
+
 export function ChangeLine({ result, region, then, now }: ChangeLineProps) {
   const display = formatChange(result, region);
   const fixture = isFixtureFigure(then) || isFixtureFigure(now);
@@ -68,8 +83,8 @@ export function ChangeLine({ result, region, then, now }: ChangeLineProps) {
         {REVEAL_COPY.periodRange}
         <span className={styles.period}>{display.nowPeriod}</span>
       </p>
-      <p className={styles.formula}>
-        {REVEAL_COPY.formulaLabel}: {CHANGE_FORMULA_ID}
+      <p className={styles.formula} data-formula={CHANGE_FORMULA_ID}>
+        {REVEAL_COPY.formulaLabel}: {readableFormula(result)}
       </p>
     </div>
   );

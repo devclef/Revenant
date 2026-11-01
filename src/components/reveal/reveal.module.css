@@ -125,6 +125,16 @@
   margin: 0 0 2.5rem;
 }
 
+/* One reveal stage's paper panel (StagePanel). The panel sets its own text
+   colour, so stage text never inherits the desk's cream ink (issue #119). */
+.stagePanel {
+  /* The panel defines its own ink, so stage text never inherits the desk's
+     cream --desk-ink (issue #119). */
+  --ink: #1f1b16;
+  color: var(--ink);
+  margin: 0;
+}
+
 /* The next-stage and "Show everything" controls, shown together while a stage
    is still hidden (R9.4). Both are plain .button controls; neither direction
    nor progress is encoded in colour. */
@@ -228,7 +238,9 @@
 }
 
 .source summary {
-  color: var(--seal);
+  /* Neutral ink, not the wax red: a Source control is not a warning or a
+     judgement (neutrality.md). Clears AA on --paper and --paper-deep. */
+  color: var(--ink);
   cursor: pointer;
 }
 

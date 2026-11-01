@@ -155,6 +155,20 @@ class Specs(unittest.TestCase):
         self.assertIn("reproduces the failure", spec)
         self.assertNotIn("2 to 4 steps", spec)
 
+    def test_frontend_steps_include_browser_check(self):
+        spec = d.dev_spec(issue(3, []), "frontend-dev")
+        self.assertIn("The last step also includes the browser check from "
+                      ".kiro/agents/prompts/frontend-dev.md ('Look at your work'): build, start the app, "
+                      "screenshot each changed page at desktop and 360 px into your shots folder, and fix "
+                      "anything unreadable or unstyled before finishing. This is part of the last step, "
+                      "not a separate step.", spec)
+        steps = spec.split("## Steps", 1)[1].split("## Reading the spec", 1)[0]
+        self.assertIn("browser check", steps)
+
+    def test_other_roles_do_not_get_browser_check(self):
+        self.assertNotIn("browser check", d.dev_spec(issue(3, []), "data-dev"))
+        self.assertNotIn("browser check", d.dev_spec(issue(3, []), "platform-dev", "- blocker"))
+
     def test_strip_validation(self):
         body = "## Task\n\ndo it\n\n## Validation\n\n```bash\nbash scripts/check.sh\n```\n\n<!-- spec-task: x -->\n"
         out = d.strip_validation(body)

@@ -68,6 +68,12 @@ Open the file once. Then, before taking the next shot, write its entry for the `
 
 **Persona letter text is exempt from `C9`.** The letter body (from "Dear …" to the signature) is the persona's own voice. Never fail a shot for its words. `C1` still applies to it: the letter must be readable.
 
+**Problems that already exist on main.** For each failed check, find the file that causes it. If that file is not in `git diff --name-only origin/main...HEAD` and the ticket's `Scope:` line does not name it, the problem is already on main, because the file's output is unchanged by this PR. Then:
+- Record it as a minor finding with `file` set to the causing file.
+- Leave that check out of `failed_checks`, and don't let it set `readable` to `false`.
+
+Any other failed check is a blocker. If the causing file is in the diff or in the ticket's Scope, the check is a blocker even if main looks the same.
+
 `readable` is `false` when `C1` or `C2` fails. A Stage from a later task may still have its plain spec 03 look, which is expected and not a finding, but it must stay readable: readable on `main` and unreadable now is a blocker.
 
 ### Ticket checks

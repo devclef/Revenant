@@ -6,6 +6,7 @@ import type { RecallRecordV1 } from "@/lib/recall";
 import { RememberedAnswers } from "./RememberedAnswers";
 import { SealedLetter } from "./SealedLetter";
 import { FiguresThenNow } from "./FiguresThenNow";
+import { StagePanel } from "./StagePanel";
 import { ThenNowSequence } from "@/components/ceremony/figures/ThenNowSequence";
 import { SealBreak } from "@/components/ceremony/seal/SealBreak";
 import { useLocalView } from "@/components/ceremony/local-view";
@@ -126,27 +127,33 @@ export function Reveal({
   return (
     <section className={styles.reveal}>
       <div className={`${styles.stage} ${styles.fade}`}>
-        <RememberedAnswers opened={opened} record={record} />
-        {stage === 1 ? (
-          <SealBreak
-            patternKey={personaName}
-            onAdvance={onAdvance}
-            onShowAll={onShowAll}
-            onSealingChange={onSealingChange}
-          />
-        ) : null}
+        <StagePanel>
+          <RememberedAnswers opened={opened} record={record} />
+          {stage === 1 ? (
+            <SealBreak
+              patternKey={personaName}
+              onAdvance={onAdvance}
+              onShowAll={onShowAll}
+              onSealingChange={onSealingChange}
+            />
+          ) : null}
+        </StagePanel>
       </div>
 
       {stage >= 2 ? (
         <div ref={stage2Ref} className={`${styles.stage} ${styles.fade}`}>
-          <SealedLetter opened={opened} personaName={personaName} />
+          <StagePanel>
+            <SealedLetter opened={opened} personaName={personaName} />
+          </StagePanel>
         </div>
       ) : null}
 
       {stage >= 3 ? (
         <div ref={stage3Ref} className={`${styles.stage} ${styles.fade}`}>
           <ThenNowSequence entries={thenNowEntries}>
-            <FiguresThenNow opened={opened} record={record} />
+            <StagePanel>
+              <FiguresThenNow opened={opened} record={record} />
+            </StagePanel>
           </ThenNowSequence>
         </div>
       ) : null}
