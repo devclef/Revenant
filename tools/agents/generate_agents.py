@@ -92,15 +92,19 @@ MCP_SERVERS = {role: {"playwright": playwright_server(d)} for role, d in SHOTS_D
 OWNER_ONLY = [".kiro/**", ".github/**", "tools/**", "scripts/check.sh"]
 
 # Hooks (kiro-cli object form). The scripts live in tools/hooks/ (owner-only) and
-# always exit 0. frontend-dev's stop hook may ask for one more turn (once per
-# session) when the tone check finds something. See docs/agent-loop.md.
+# always exit 0. each dev role's stop hook may ask for one more turn (once per
+# session) when the scope check finds something; frontend-dev also has the tone check. See docs/agent-loop.md.
 HOOK_TIMEOUT_MS = 60000
 TONE_CHECK_STOP = {"command": "node tools/hooks/tone-check.mjs --role frontend-dev", "timeout_ms": HOOK_TIMEOUT_MS}
+def scope_check_stop(role: str) -> dict:
+    return {"command": f"python3 tools/hooks/scope-check.py --role {role}", "timeout_ms": HOOK_TIMEOUT_MS}
+
+
 HOOKS = {
-    "frontend-dev": {"stop": [TONE_CHECK_STOP]},
-    "crypto-dev": {},
-    "data-dev": {},
-    "platform-dev": {},
+    "frontend-dev": {"stop": [TONE_CHECK_STOP, scope_check_stop("frontend-dev")]},
+    "crypto-dev": {"stop": [scope_check_stop("crypto-dev")]},
+    "data-dev": {"stop": [scope_check_stop("data-dev")]},
+    "platform-dev": {"stop": [scope_check_stop("platform-dev")]},
     "qa": {},
 }
 
