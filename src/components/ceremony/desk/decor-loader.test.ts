@@ -93,4 +93,12 @@ describe("DeskDecor gates on the motion mode", () => {
     expect(componentSource).toContain("loadDeskDecor(mode)");
     expect(componentSource).toContain("wantsDeskDecor(mode)");
   });
+
+  it("calls loadDeskDecor only inside the mount effect, so the modules load after mount", () => {
+    const effectAt = componentSource.indexOf("useEffect(");
+    const loadAt = componentSource.indexOf("loadDeskDecor(mode)");
+    expect(effectAt).toBeGreaterThan(-1);
+    expect(loadAt).toBeGreaterThan(effectAt);
+    expect(componentSource.match(/loadDeskDecor\(/g)).toHaveLength(1); // the single call in the effect
+  });
 });
