@@ -19,22 +19,34 @@ if (typeof window !== "undefined") {
 
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { demoLetters, letters } from "@/lib/db/schema/letters";
+import { demoLetterDrafts, demoLetters, letters } from "@/lib/db/schema/letters";
 import { canonicalize, envelopeHash, parseEnvelope } from "@/lib/seal-format";
+import {
+  LIVE_SEAL_CAP,
+  LIVE_SEAL_WINDOW_MS,
+  LIVE_KIND,
+  SEAL_LOCK_KEY,
+} from "@/lib/letter-store/live-constants";
+import { draftIsFresh, lockRuleHolds } from "@/lib/letter-store/live-rules";
 
 /**
- * Which validation step rejected a `storePersonaLetter` call.
+ * Which validation step rejected a store call.
  *   - `envelope`: the envelope did not parse as a known, valid sealed format.
  *   - `server_secret`: the time-lock secret was not exactly 32 bytes.
  *   - `hash_mismatch`: the submitted hash did not match the envelope's real hash.
  *   - `duplicate_id`: the letter ID already exists in `letters` or `demo_letters`.
+ *   - `draft_not_found`: no fresh Draft exists for the letter ID (`storeLiveLetter`).
+ *   - `busy`: the rolling Live_Letter cap is reached (`storeLiveLetter`), or the draft cap is reached (`createDraft`).
+ *   - `lock_out_of_range`: the envelope's Lock rule does not hold (`storeLiveLetter`).
  */
 export type LetterStoreCheck =
   | "envelope"
   | "server_secret"
   | "hash_mismatch"
   | "duplicate_id"
-  | "busy";
+  | "draft_not_found"
+  | "busy"
+  | "lock_out_of_range";
 
 /**
  * A fixed message per check. These strings never include any submitted value
@@ -45,7 +57,10 @@ const MESSAGES: Record<LetterStoreCheck, string> = {
   server_secret: "The server secret must be exactly 32 bytes.",
   hash_mismatch: "The envelope hash does not match the envelope.",
   duplicate_id: "A letter with this ID already exists.",
+  draft_not_found: "No fresh draft exists for this letter.",
   busy: "The service is busy. Try again in a moment.",
+  lock_out_of_range:
+    "The lock must open 30 seconds after sealing, within the allowed window.",
 };
 
 /**
@@ -162,6 +177,139 @@ export async function storePersonaLetter(
     // error and never chained. The route layer turns it into a 500.
     throw new Error("The letter could not be stored.");
   }
+}
+
+/** Arguments to {@link storeLiveLetter}. The time-lock secret comes from the Draft, not the caller. */
+export interface StoreLiveLetterArgs {
+  /** The sealed Live_Letter envelope as a parsed JSON value. */
+  envelope: unknown;
+  /** The SHA-256 of the canonical envelope, as submitted alongside it. */
+  envelopeHash: string;
+}
+
+/** What a stored Live_Letter reports back: the header fields the Seal_Route returns. */
+export interface StoreLiveLetterResult {
+  letterId: string;
+  sealedAt: Date;
+  opensAt: Date;
+}
+
+/**
+ * Validate and store a sealed Live_Letter, consuming its Draft.
+ *
+ * The envelope is parsed and its hash re-checked first, before any database
+ * access. Then one transaction runs, in this order:
+ *   1. Take `pg_advisory_xact_lock(SEAL_LOCK_KEY)`.
+ *   2. Read `clock_timestamp()` once. That is the server time `now`.
+ *   3. Lock the Draft row (`SELECT ... FOR UPDATE`). No row, or a Draft that is
+ *      not fresh, throws `draft_not_found`.
+ *   4. The ID must be absent from `letters` and `demo_letters`, else
+ *      `duplicate_id`.
+ *   5. Count live rows sealed in the last `LIVE_SEAL_WINDOW_MS`. A count above
+ *      `LIVE_SEAL_CAP` throws `busy`, so exactly `LIVE_SEAL_CAP` rows still accept.
+ *   6. `lockRuleHolds` must be true, else `lock_out_of_range`.
+ *   7. Insert the row into `demo_letters` with `kind = 'live'`, using the
+ *      Draft's `server_secret`, then delete the Draft.
+ *
+ * Any throw rolls the whole transaction back, so the Draft stays in place. A
+ * unique-key violation on insert (a concurrent write of the same ID) maps to
+ * `duplicate_id`. Any other driver error becomes a value-free error, never
+ * chained via `cause`.
+ */
+export async function storeLiveLetter(
+  args: StoreLiveLetterArgs,
+): Promise<StoreLiveLetterResult> {
+  const { envelope, envelopeHash: submittedHash } = args;
+
+  // Envelope must parse as a known, valid sealed format.
+  const parsed = parseEnvelope(envelope);
+  if (!parsed.ok) {
+    throw new LetterStoreError("envelope");
+  }
+  const header = parsed.value;
+
+  // The submitted hash must match the envelope's real hash, before any query.
+  const realHash = await envelopeHash(envelope);
+  if (submittedHash !== realHash) {
+    throw new LetterStoreError("hash_mismatch");
+  }
+
+  const id = header.letterId;
+  const sealedAt = new Date(header.sealedAt);
+  const opensAt = new Date(header.opensAt);
+  const canonicalEnvelope = canonicalize(envelope);
+
+  const db = getDb();
+  try {
+    await db.transaction(async (tx) => {
+      await tx.execute(sql`SELECT pg_advisory_xact_lock(${SEAL_LOCK_KEY})`);
+
+      const [clock] = await tx.execute<{ t: Date }>(
+        sql`SELECT clock_timestamp() AS t`,
+      );
+      const now = new Date(clock.t);
+
+      const drafts = await tx.execute<{
+        server_secret: Buffer;
+        created_at: Date;
+      }>(sql`
+        SELECT ${demoLetterDrafts.serverSecret}, ${demoLetterDrafts.createdAt}
+        FROM ${demoLetterDrafts}
+        WHERE ${demoLetterDrafts.id} = ${id}
+        FOR UPDATE
+      `);
+      const draft = drafts[0];
+      if (!draft || !draftIsFresh(new Date(draft.created_at), now)) {
+        throw new LetterStoreError("draft_not_found");
+      }
+
+      const taken = await tx.execute(sql`
+        SELECT 1 AS present
+        WHERE EXISTS (SELECT 1 FROM ${letters} WHERE ${letters.id} = ${id})
+           OR EXISTS (SELECT 1 FROM ${demoLetters} WHERE ${demoLetters.id} = ${id})
+      `);
+      if (taken.length > 0) {
+        throw new LetterStoreError("duplicate_id");
+      }
+
+      const [counted] = await tx.execute<{ n: number }>(sql`
+        SELECT count(*)::int AS n FROM ${demoLetters}
+        WHERE ${demoLetters.kind} = ${LIVE_KIND}
+          AND ${demoLetters.sealedAt} > ${new Date(now.getTime() - LIVE_SEAL_WINDOW_MS)}
+      `);
+      if (counted.n > LIVE_SEAL_CAP) {
+        throw new LetterStoreError("busy");
+      }
+
+      if (!lockRuleHolds(sealedAt, opensAt, now)) {
+        throw new LetterStoreError("lock_out_of_range");
+      }
+
+      await tx.execute(sql`
+        INSERT INTO ${demoLetters}
+          (id, kind, envelope, envelope_hash, sealed_at, opens_at, server_secret)
+        VALUES
+          (${id}, ${LIVE_KIND}, ${canonicalEnvelope}, ${realHash}, ${sealedAt}, ${opensAt}, ${draft.server_secret})
+      `);
+
+      await tx.execute(sql`
+        DELETE FROM ${demoLetterDrafts} WHERE ${demoLetterDrafts.id} = ${id}
+      `);
+    });
+  } catch (error) {
+    // Our own checks are re-raised unchanged.
+    if (error instanceof LetterStoreError) {
+      throw error;
+    }
+    // A unique-key violation on insert is a concurrent write of the same ID.
+    if (isUniqueViolation(error)) {
+      throw new LetterStoreError("duplicate_id");
+    }
+    // Any other driver error is replaced with a value-free error, never chained.
+    throw new Error("The letter could not be stored.");
+  }
+
+  return { letterId: id, sealedAt, opensAt };
 }
 
 /**
