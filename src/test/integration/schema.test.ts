@@ -264,7 +264,7 @@ describeDb("sealed-letter schema (integration)", () => {
 
   // --- R4.8 demo_letters.kind CHECK ------------------------------------------
 
-  it("accepts kind='persona' and rejects any other kind on demo_letters", async () => {
+  it("accepts kind='persona' and 'live' and rejects any other kind on demo_letters", async () => {
     const hash = "a".repeat(64);
     const secret = Buffer.from(freshSecret());
     const sealed = new Date("2024-01-01T00:00:00.000Z");
@@ -280,9 +280,33 @@ describeDb("sealed-letter schema (integration)", () => {
     await expect(
       sql`
         INSERT INTO demo_letters (id, envelope, envelope_hash, sealed_at, opens_at, server_secret, kind)
-        VALUES (${freshLetterId()}, ${"{}"}, ${hash}, ${sealed}, ${opens}, ${secret}, ${"live"})
+        VALUES (${freshLetterId()}, ${"{}"}, ${hash}, ${sealed}, ${opens}, ${secret}, ${"other"})
       `,
     ).rejects.toThrow(/demo_letters_kind/);
+  });
+
+  // --- R4.8 demo_letters live 30-second lock CHECK ---------------------------
+
+  it("accepts a live demo letter only when it opens exactly 30 seconds after sealing", async () => {
+    const hash = "a".repeat(64);
+    const secret = Buffer.from(freshSecret());
+    const sealed = new Date("2024-01-01T00:00:00.000Z");
+
+    // Opens one month later: rejected by the live-lock CHECK.
+    await expect(
+      sql`
+        INSERT INTO demo_letters (id, envelope, envelope_hash, sealed_at, opens_at, server_secret, kind)
+        VALUES (${freshLetterId()}, ${"{}"}, ${hash}, ${sealed}, ${new Date("2024-02-01T00:00:00.000Z")}, ${secret}, ${"live"})
+      `,
+    ).rejects.toThrow(/demo_letters_live_lock/);
+
+    // Opens exactly 30 seconds later: accepted.
+    await expect(
+      sql`
+        INSERT INTO demo_letters (id, envelope, envelope_hash, sealed_at, opens_at, server_secret, kind)
+        VALUES (${freshLetterId()}, ${"{}"}, ${hash}, ${sealed}, ${new Date("2024-01-01T00:00:30.000Z")}, ${secret}, ${"live"})
+      `,
+    ).resolves.toBeDefined();
   });
 
   // --- R4.9 openings exactly-one-letter CHECK and opened_at default ----------
