@@ -10,6 +10,13 @@
 
 import { applyInk, countInkLines, readLineHeightPx, type InkRun, type InkTarget } from "./inkMask";
 import { inkPlan, type InkPlan } from "./inkPlan";
+
+// The timing rules, exported from this module so the ink run reads its whole
+// timing from one place. `inkStepMs` is the per-line delay:
+// min(INK_LINE_DELAY_MS, floor((INK_TOTAL_MAX_MS - INK_LINE_FADE_MS) / lines)).
+// It is defined in inkPlan.ts, which this module imports, to avoid a cycle.
+export { INK_LINE_DELAY_MS, INK_LINE_FADE_MS, INK_TOTAL_MAX_MS } from "../constants";
+export { inkStepMs } from "./inkPlan";
 import type { MotionMode } from "../motion";
 
 /** What a letter needs before it can animate: the measured line and plan. */
