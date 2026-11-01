@@ -35,6 +35,15 @@
   --desk-ink-soft: #d9c9a8;
   --desk-gold: #d9b866;
 
+  /* The darkest shading under text on a paper panel sitting on the desk (the
+     envelope, the letter, the stamps). Paper panels keep the globals.css
+     text tokens; --paper-shadowed is their deepest shaded surface, on which
+     the lowest text token (--gold-text) still clears AA (see design.md
+     "Colour and contrast", verified by contrast.test.ts / Property 22). It
+     lives here, not in globals.css, because the Ceremony never edits
+     globals.css (R1.7). */
+  --paper-shadowed: #d9cba9;
+
   color: var(--desk-ink);
   background-color: var(--desk);
 }
