@@ -94,7 +94,7 @@ export type EnvelopeLinkEnv = {
 export type EnvelopeLinkHandlers = {
   onPointerEnter: () => void;
   onFocus: () => void;
-  onClick: (event: EnvelopeClickEvent) => Promise<void>;
+  onClick: (event: EnvelopeClickEvent) => void;
 };
 
 /** Modes that always get plain navigation: Calm, and the light desk (R8.7). */
@@ -158,6 +158,28 @@ export function flipTo(el: FlipTarget, target: Rect, durationMs: number): Promis
 }
 
 /**
+ * One click on an envelope link: plain navigation when the click is not a
+ * full-motion primary click, otherwise cancel the browser navigation, run the
+ * FLIP, then push. Any failure in the animation or the push falls back to a
+ * plain location change. Resolves when the push or the fallback has run.
+ */
+export async function handleEnvelopeClick(
+  env: EnvelopeLinkEnv,
+  event: EnvelopeClickEvent,
+): Promise<void> {
+  if (isPlainNavigation(env.mode, event)) return;
+
+  event.preventDefault();
+  try {
+    const target = envelopeTargetRect(env.viewport(), env.remPx());
+    await flipTo(event.currentTarget, target, DESK_TO_ENVELOPE_MS);
+    env.router.push(env.href, { scroll: true });
+  } catch {
+    env.navigate(env.href);
+  }
+}
+
+/**
  * The three handlers for one envelope link. Pure: every dependency comes in
  * through `env`, so the tests can drive each branch directly.
  */
@@ -173,17 +195,8 @@ export function createEnvelopeLinkHandlers(env: EnvelopeLinkEnv): EnvelopeLinkHa
   return {
     onPointerEnter: prefetch,
     onFocus: prefetch,
-    onClick: async (event) => {
-      if (isPlainNavigation(env.mode, event)) return;
-
-      event.preventDefault();
-      try {
-        const target = envelopeTargetRect(env.viewport(), env.remPx());
-        await flipTo(event.currentTarget, target, DESK_TO_ENVELOPE_MS);
-        env.router.push(env.href, { scroll: true });
-      } catch {
-        env.navigate(env.href);
-      }
+    onClick: (event) => {
+      void handleEnvelopeClick(env, event);
     },
   };
 }

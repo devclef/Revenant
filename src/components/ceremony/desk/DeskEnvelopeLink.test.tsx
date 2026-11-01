@@ -29,6 +29,7 @@ import {
   createEnvelopeLinkHandlers,
   envelopeTargetRect,
   flipTo,
+  handleEnvelopeClick,
   isPlainNavigation,
 } from "./DeskEnvelopeLink";
 
@@ -182,7 +183,7 @@ describe("plain navigation", () => {
     const { env, router } = makeEnv({ mode });
     const target = fakeTarget();
     const { event, preventDefault } = click(target);
-    await createEnvelopeLinkHandlers(env).onClick(event);
+    await handleEnvelopeClick(env, event);
     expect(preventDefault).not.toHaveBeenCalled();
     expect(target.animateCalls).toHaveLength(0);
     expect(router.push).not.toHaveBeenCalled();
@@ -198,7 +199,7 @@ describe("plain navigation", () => {
     const { env, router, navigate } = makeEnv();
     const target = fakeTarget();
     const { event, preventDefault } = click(target, extra);
-    await createEnvelopeLinkHandlers(env).onClick(event);
+    await handleEnvelopeClick(env, event);
     expect(preventDefault).not.toHaveBeenCalled();
     expect(target.animateCalls).toHaveLength(0);
     expect(router.push).not.toHaveBeenCalled();
@@ -211,7 +212,7 @@ describe("full-motion click", () => {
     const { env, router, navigate } = makeEnv();
     const target = fakeTarget();
     const { event, preventDefault } = click(target);
-    await createEnvelopeLinkHandlers(env).onClick(event);
+    await handleEnvelopeClick(env, event);
 
     expect(preventDefault).toHaveBeenCalledTimes(1);
     expect(target.animateCalls).toHaveLength(1);
@@ -229,7 +230,7 @@ describe("full-motion click", () => {
     const { env, router } = makeEnv();
     const target = fakeTarget({ finished });
     const { event } = click(target);
-    const done = createEnvelopeLinkHandlers(env).onClick(event);
+    const done = handleEnvelopeClick(env, event);
     await Promise.resolve();
     expect(router.push).not.toHaveBeenCalled();
     finish();
@@ -242,7 +243,7 @@ describe("throw fallback", () => {
   it("navigates with a plain location change when the element cannot animate", async () => {
     const { env, router, navigate } = makeEnv();
     const { event } = click(fakeTarget({ noAnimate: true }));
-    await createEnvelopeLinkHandlers(env).onClick(event);
+    await handleEnvelopeClick(env, event);
     expect(navigate).toHaveBeenCalledWith(HREF);
     expect(router.push).not.toHaveBeenCalled();
   });
@@ -250,7 +251,7 @@ describe("throw fallback", () => {
   it("navigates with a plain location change when animate throws", async () => {
     const { env, router, navigate } = makeEnv();
     const { event } = click(fakeTarget({ animateThrows: true }));
-    await createEnvelopeLinkHandlers(env).onClick(event);
+    await handleEnvelopeClick(env, event);
     expect(navigate).toHaveBeenCalledWith(HREF);
     expect(router.push).not.toHaveBeenCalled();
   });
@@ -258,7 +259,7 @@ describe("throw fallback", () => {
   it("navigates with a plain location change when the animation is cancelled", async () => {
     const { env, router, navigate } = makeEnv();
     const { event } = click(fakeTarget({ finished: Promise.reject(new Error("cancelled")) }));
-    await createEnvelopeLinkHandlers(env).onClick(event);
+    await handleEnvelopeClick(env, event);
     expect(navigate).toHaveBeenCalledWith(HREF);
     expect(router.push).not.toHaveBeenCalled();
   });
@@ -269,7 +270,7 @@ describe("throw fallback", () => {
       throw new Error("router gone");
     });
     const { event } = click(fakeTarget());
-    await createEnvelopeLinkHandlers(env).onClick(event);
+    await handleEnvelopeClick(env, event);
     expect(navigate).toHaveBeenCalledWith(HREF);
   });
 });
