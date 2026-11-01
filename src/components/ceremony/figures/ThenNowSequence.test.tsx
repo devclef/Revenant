@@ -26,13 +26,18 @@ import {
   stepAfterSkip,
   ThenNowSequence,
   type ThenNowEntry,
+  type ThenNowSequenceProps,
 } from "./ThenNowSequence";
 
 const entriesOf = (count: number): ThenNowEntry[] =>
   Array.from({ length: count }, (_, index) => ({ key: `metric-${index}` }));
 
-const renderSequence = (entries: ThenNowEntry[]): string =>
-  renderToStaticMarkup(
+const renderSequence = (entries: ThenNowEntry[]): string => {
+  const sequenceProps: ThenNowSequenceProps = {
+    entries,
+    children: createElement("p", null, "figures"),
+  };
+  return renderToStaticMarkup(
     createElement(
       LocalViewProvider,
       null,
@@ -44,12 +49,13 @@ const renderSequence = (entries: ThenNowEntry[]): string =>
           null,
           createElement(
             ThenNowSequence,
-            { entries, children: createElement("p", null, "figures") },
+            sequenceProps,
           ),
         ),
       ),
     ),
   );
+};
 
 describe("planThenNow stage order", () => {
   it("runs then, passage, now, done in that order", () => {
