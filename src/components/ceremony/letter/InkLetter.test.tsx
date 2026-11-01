@@ -79,3 +79,22 @@ describe("InkLetter first render", () => {
     expect(html).not.toMatch(/mask/i);
   });
 });
+
+describe("Property 16: the ink effect never touches the letter's characters", () => {
+  it("contains the letter text exactly once, inside the data-ink-text paragraph", () => {
+    const html = render();
+    const encoded = renderToStaticMarkup(createElement("p", null, LETTER_TEXT));
+    const inner = encoded.slice("<p>".length, -"</p>".length);
+    expect(html.split(inner).length - 1).toBe(1);
+    const paragraph = html.match(/<p[^>]*data-ink-text[^>]*>([\s\S]*?)<\/p>/);
+    expect(paragraph?.[1]).toBe(inner);
+  });
+
+  it("keeps the labels before the letter paragraph", () => {
+    const html = render();
+    const label = html.indexOf(REVEAL_COPY.demoLetterLabel.replace("{name}", PERSONA_NAME));
+    const letter = html.indexOf("data-ink-text");
+    expect(label).toBeGreaterThanOrEqual(0);
+    expect(label).toBeLessThan(letter);
+  });
+});

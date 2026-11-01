@@ -163,3 +163,29 @@ describe("startInkSession", () => {
     expect(animations).toHaveLength(0);
   });
 });
+
+describe("inkSession timing exports (Property 14 ink clause, Property 16)", () => {
+  it("re-exports the INK_* constants and the per-line delay formula", async () => {
+    const session = await import("./inkSession");
+    const constants = await import("../constants");
+    expect(session.INK_TOTAL_MAX_MS).toBe(constants.INK_TOTAL_MAX_MS);
+    expect(session.INK_LINE_DELAY_MS).toBe(constants.INK_LINE_DELAY_MS);
+    expect(session.INK_LINE_FADE_MS).toBe(constants.INK_LINE_FADE_MS);
+    for (const lines of [1, 2, 10, 40, 200, 1000]) {
+      const expected = Math.min(
+        constants.INK_LINE_DELAY_MS,
+        Math.floor((constants.INK_TOTAL_MAX_MS - constants.INK_LINE_FADE_MS) / lines),
+      );
+      expect(session.inkStepMs(lines)).toBe(expected);
+    }
+  });
+
+  it("keeps the whole run within INK_TOTAL_MAX_MS for any line count", async () => {
+    const session = await import("./inkSession");
+    for (let lines = 1; lines <= 2000; lines += 37) {
+      const step = session.inkStepMs(lines);
+      const total = (lines - 1) * step + session.INK_LINE_FADE_MS;
+      expect(total).toBeLessThanOrEqual(session.INK_TOTAL_MAX_MS);
+    }
+  });
+});
