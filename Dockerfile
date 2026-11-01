@@ -62,8 +62,11 @@ COPY --from=builder --chown=1001:1001 /app/.next/static ./.next/static
 # so drizzle.config.ts (which pulls in the drizzle-kit devDependency) is not
 # needed at runtime. `postgres` and `drizzle-orm` have no hard runtime
 # dependencies of their own, so copying just these two from the fully-installed
-# deps stage is enough and keeps the image small.
+# deps stage is enough and keeps the image small. The compiled seal-personas
+# entrypoint is copied alongside it for the demo persona sealing step, which
+# shares the same postgres and drizzle-orm packages.
 COPY --from=builder --chown=1001:1001 /app/scripts/migrate.mjs ./scripts/migrate.mjs
+COPY --from=builder --chown=1001:1001 /app/dist/seal-personas.mjs ./scripts/seal-personas.mjs
 COPY --from=builder --chown=1001:1001 /app/drizzle ./drizzle
 COPY --from=deps --chown=1001:1001 /app/node_modules/postgres ./node_modules/postgres
 COPY --from=deps --chown=1001:1001 /app/node_modules/drizzle-orm ./node_modules/drizzle-orm
