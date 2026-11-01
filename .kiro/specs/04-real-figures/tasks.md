@@ -134,9 +134,9 @@ All Source_Files are downloaded from the publishers' public pages without a key 
   - _Requirements: R10.1–R10.6, R10.8, R12.1, R12.5_
 
 - [ ] 9. `DEMO_FIGURES` drops the fixture and the no-fixture checks
-  - Agent: `data-dev` · Depends on: 8 · Estimated size: ~450 changed lines
-  - Before this task: Blocked by #49 (spec 03 task 8, the reveal's figures stage), so that the reveal and its tests are on `main` when this task runs. No test outside `src/lib/figures/` and `src/lib/personas/` should read a fixture ID or value through `DEMO_FIGURES`. Run `grep -rn "fixture-us\|us-fuel.fixture" src --include=*.ts --include=*.tsx`; if it finds any such test in `src/components/**`, stop and ask the owner to have it fixed first (it belongs to frontend-dev and this task cannot edit it).
-  - Scope: `src/lib/figures/demo/index.ts`, `src/lib/figures/demo/index.test.ts`, `src/lib/figures/then-now.test.ts`, `src/lib/figures/demo/no-fixture.test.ts`
+  - Agent: `data-dev` · Depends on: 8, 11 · Estimated size: ~450 changed lines
+  - Before this task: Blocked by #49 (spec 03 task 8, the reveal's figures stage), so that the reveal and its tests are on `main` when this task runs. Task 11 has moved every reveal and ceremony test that needs fixture figures off `DEMO_FIGURES`. Before starting, run `grep -rln "DEMO_FIGURES" src/components --include=*.test.tsx`; each file it lists must either mock `@/lib/figures/demo` or use only real catalogue metric IDs. If one reads `fixture-us-*` data through the real `DEMO_FIGURES`, stop and ask the owner (it belongs to frontend-dev and this task cannot edit it).
+  - Scope: `src/lib/figures/demo/index.ts`, `src/lib/figures/demo/index.test.ts`, `src/lib/figures/then-now.test.ts`, `src/lib/figures/demo/personas-consistency.test.ts`, `src/lib/figures/demo/no-fixture.test.ts`
   - Acceptance:
     - `demo/index.ts` exports `DEMO_FIGURES = loadFigureFile(realFile, CATALOGUE)` and no longer imports the Fixture_File, with the module comment describing the real file (R9.11). `merge.ts` stays and keeps its tests. The Fixture_File stays in the repository, unchanged (R9.9).
     - The tests in `demo/index.test.ts` and `then-now.test.ts` that read fixture IDs or values through `DEMO_FIGURES` now load the fixture themselves with `loadFigureFile(fixture, CATALOGUE)` and run against that, with the same assertions; tests about the demo use the real metric IDs (R9.10). The fixture-shape tests in `demo/index.test.ts` stay.
@@ -145,6 +145,7 @@ All Source_Files are downloaded from the publishers' public pages without a key 
       - **R11.1**: for every persona in `PERSONAS` and every tracked metric, the Then_Figure and Now_Figure from `thenAndNow(metric_id, written_as_of, DEMO_FIGURES)` are found and not fixture figures.
       - **R11.3**: no file under `content/personas/` or `src/app/demo/` names a metric ID that starts with `fixture-`.
       - A source scan finds no import of `src/lib/figures/demo/us-fuel.fixture.json` in a non-test file.
+    - `personas-consistency.test.ts`: the first `describe` (every persona metric has a found "then" figure; R10.7, R12.1) stays unchanged. The second `describe` (payload identity for Maya's fixture metrics) goes: it names `DEMO_FIXTURE_FIGURES`, which this task removes, and it checks fixture metrics that no persona tracks since task 8. Update the file's header comment to match. Nothing else imports `DEMO_FIXTURE_FIGURES`.
     - The R10.7 / R12.1 test from task 7 still passes. `src/test/integration/seal-personas-core.test.ts` and, with Postgres, `seal-personas.test.ts` pass unchanged; Maya's payload is built from the same catalogue series and figure objects as after task 8.
     - The reveal's fixture-label code and its tests stay in place (R11.4).
   - Validation: `bash scripts/check.sh`; and with `DATABASE_URL=postgres://postgres:test@localhost:5432/revenant_test` against `postgres:17-alpine`: `npm run db:migrate`, then `npm test` (the integration test must run).
@@ -160,16 +161,29 @@ All Source_Files are downloaded from the publishers' public pages without a key 
   - Validation: `bash scripts/check.sh`
   - _Requirements: R11.2_
 
+- [ ] 11. Reveal and ceremony tests load the fixture themselves
+  - Agent: `frontend-dev` · Depends on: 8 · Estimated size: ~40 changed lines
+  - Before this task: none. This task merges before task 9. It is numbered 11 so that the issues already opened for tasks 9 and 10 keep their numbers.
+  - Scope: `src/components/reveal/FiguresThenNow.test.tsx`, `src/components/reveal/change-neutral.property.test.tsx`, `src/components/reveal/fixture-label.test.tsx`, `src/components/ceremony/figures/ThenNowMounted.test.tsx`
+  - Acceptance:
+    - Each of the four files gets a `vi.mock("@/lib/figures/demo", async () => { ... })` whose factory loads the fixture on its own and returns `{ DEMO_FIGURES: loadFigureFile(fixture, CATALOGUE) }`, using dynamic `import()` inside the factory for `@/lib/figures/load`, `@/lib/figures/catalogue` and `@/lib/figures/demo/us-fuel.fixture.json` (`vi.mock` is hoisted above static imports). `FiguresThenNow` and the ceremony component read `DEMO_FIGURES` from that module, so the mock is what lets a `fixture-us-*` "now" figure be found. The mock lives in each test file. Do not add a shared helper file: task 9 scans non-test files for imports of the fixture JSON and a helper would fail it.
+    - No assertion changes, no metric ID changes, no component code changes. `fixture-label.test.tsx` keeps loading the fixture directly for its "then" figures; its "now" figures now come through the mock (a second load of the same file, so equal in value, not the same objects). R11.4 stays: the fixture-label code and its tests stay in place.
+    - The four files pass with `DEMO_FIGURES` as the merged set (as on `main` now) and with `DEMO_FIGURES` as the real file only. To check the second case, temporarily change `src/lib/figures/demo/index.ts` to `export const DEMO_FIGURES = loadFigureFile(realFile, CATALOGUE);`, run `npx vitest run src/components`, then revert that file completely. `index.ts` must not appear in the PR.
+    - No other test under `src/components/**` reads a `fixture-us-*` ID or value through the real `DEMO_FIGURES`. `grep -rn "fixture-us" src/components --include=*.test.tsx` lists only the four files above.
+    - This is a test-only change with no page or component edits, so the browser check in the last step does not apply; say so in the PR description.
+  - Validation: `bash scripts/check.sh`
+  - _Requirements: R9.10, R11.4_
+
 ## Notes
 
-- **Order and merging.** Tasks 7, 8 and 9 are merged one at a time in that order. After each, `main` is consistent: every persona's metric is in `DEMO_FIGURES` and has a "then" figure, and the payload the Sealing_Script rebuilds matches the stored letter or has none stored (design.md "Consistency across tasks 7, 8 and 9"). Task 6 changes no behaviour (the file is imported only by its own test), and task 10 adds a test only.
+- **Order and merging.** Tasks 7, 8, 11 and 9 are merged one at a time in that order (task 11 is a test-only change in the reveal and ceremony tests, added after task 9 was found to break them). After each, `main` is consistent: every persona's metric is in `DEMO_FIGURES` and has a "then" figure, and the payload the Sealing_Script rebuilds matches the stored letter or has none stored (design.md "Consistency across tasks 7, 8 and 9"). Task 6 changes no behaviour (the file is imported only by its own test), and task 10 adds a test only.
 - **Owner actions.** (1) Task 6 needs internet access; if the agent can't reach the publishers, the owner runs `npm run prefetch` and decides how to commit the file.
 - **Refreshing later.** `npm run prefetch` adds new weeks and nothing else. If a source publishes a week that is earlier than a series' latest committed week, the run fails and prints a `backfill` line; nothing is written, and the owner decides what to do (design.md, D5).
 - **Size.** The estimates are about 1,000 to 1,550 lines for the code tasks, so none is near the 2,500 line split threshold. Tasks 2 and 3 were kept separate because together they would be about 2,350 lines and share no files.
 
 ## Task Dependency Graph
 
-Dependencies: 1 → 2, 1 → 3, 1 → 4, 2 → 5, 3 → 5, 4 → 5, 5 → 6, 6 → 7, 7 → 8, 8 → 9, 9 → 10. Tasks 2, 3 and 4 touch disjoint files and can run in parallel. Tasks 9 and 10 are also "Blocked by #49" (spec 03 task 8, the reveal's figures stage); that cross-spec dependency is in their "Before this task" lines, not in `Depends on`. Spec 03 task 8 carries a bullet telling its agent to load the fixture file itself, so its tests don't break task 9.
+Dependencies: 1 → 2, 1 → 3, 1 → 4, 2 → 5, 3 → 5, 4 → 5, 5 → 6, 6 → 7, 7 → 8, 8 → 11, 8 → 9, 11 → 9, 9 → 10. Tasks 2, 3 and 4 touch disjoint files and can run in parallel. Tasks 9 and 10 are also "Blocked by #49" (spec 03 task 8, the reveal's figures stage); that cross-spec dependency is in their "Before this task" lines, not in `Depends on`. Spec 03 task 8 carries a bullet telling its agent to load the fixture file itself, so its tests don't break task 9.
 
 ```json
 {
@@ -180,8 +194,9 @@ Dependencies: 1 → 2, 1 → 3, 1 → 4, 2 → 5, 3 → 5, 4 → 5, 5 → 6, 6 �
     { "id": 3, "tasks": ["6"] },
     { "id": 4, "tasks": ["7"] },
     { "id": 5, "tasks": ["8"] },
-    { "id": 6, "tasks": ["9"] },
-    { "id": 7, "tasks": ["10"] }
+    { "id": 6, "tasks": ["11"] },
+    { "id": 7, "tasks": ["9"] },
+    { "id": 8, "tasks": ["10"] }
   ]
 }
 ```
