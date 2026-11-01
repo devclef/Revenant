@@ -96,6 +96,14 @@ describe("Demo_Index page markup", () => {
     expect(html).not.toContain(DEMO_COPY.indexEmpty);
   });
 
+  it("never shows the old 'Break the seal' wording (R2)", async () => {
+    const withCards = await renderWithPersonas(TWO_PERSONAS);
+    expect(withCards).not.toContain("Break the seal");
+
+    const empty = await renderWithPersonas([]);
+    expect(empty).not.toContain("Break the seal");
+  });
+
   it("renders indexEmpty and no cards for an empty list (R6.8)", async () => {
     const html = await renderWithPersonas([]);
     expect(html).toContain(DEMO_COPY.indexEmpty);
