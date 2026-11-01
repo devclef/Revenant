@@ -43,6 +43,19 @@ export const DEMO_COPY = {
    * action so the reader knows what to do next.
    */
   indexEmpty: "No demo letters are sealed yet. Come back later to open one.",
+
+  /** Heading of the persona not-found page (no demo letter at that address). */
+  notFoundTitle: "No letter here",
+
+  /**
+   * Body of the persona not-found page. It names an action so the reader
+   * knows what to do next.
+   */
+  notFoundBody:
+    "There is no demo letter at this address. Go back to the demo letters to choose one.",
+
+  /** The link back to the demo letters index from the not-found page. */
+  backToDemo: "Back to the demo letters",
 } as const;
 
 export type DemoCopy = typeof DEMO_COPY;
