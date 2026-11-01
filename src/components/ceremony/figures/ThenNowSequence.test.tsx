@@ -44,8 +44,7 @@ const renderSequence = (entries: ThenNowEntry[]): string =>
           null,
           createElement(
             ThenNowSequence,
-            { entries },
-            createElement("p", null, "figures"),
+            { entries, children: createElement("p", null, "figures") },
           ),
         ),
       ),
