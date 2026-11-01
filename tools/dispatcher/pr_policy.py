@@ -53,13 +53,19 @@ def evaluate(pr: dict, issue: dict | None, files: list[dict], ownership: dict, o
         "OWNER", "MEMBER", "COLLABORATOR")
     if "owner" in labels and trusted_author:
         return []
-    errors: list[str] = []
     if issue is None:
         return ["PR body must link its issue with `Closes #<n>`."]
     roles = [l["name"][6:] for l in issue.get("labels", []) if l["name"].startswith("agent:")]
     if len(roles) != 1 or roles[0] not in ownership["roles"]:
         return [f"Issue #{issue['number']} must have exactly one known agent:* label (found {roles})."]
-    role = roles[0]
+    return check_files(roles[0], files, ownership)
+
+
+def check_files(role: str, files: list[dict], ownership: dict) -> list[str]:
+    """Path and size rules for one role. Needs no GitHub API: `files` is a list
+    of {"filename", "additions", "deletions"}. Shared by evaluate() and the
+    scope-check agent hook."""
+    errors: list[str] = []
     allowed = ownership["roles"][role] + ownership["shared"]
     size = 0
     for f in files:

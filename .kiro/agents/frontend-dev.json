@@ -34,6 +34,10 @@
       {
         "command": "node tools/hooks/tone-check.mjs --role frontend-dev",
         "timeout_ms": 60000
+      },
+      {
+        "command": "python3 tools/hooks/scope-check.py --role frontend-dev",
+        "timeout_ms": 60000
       }
     ]
   },

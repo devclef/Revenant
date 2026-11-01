@@ -18,7 +18,14 @@
   ],
   "includeMcpJson": false,
   "mcpServers": {},
-  "hooks": {},
+  "hooks": {
+    "stop": [
+      {
+        "command": "python3 tools/hooks/scope-check.py --role crypto-dev",
+        "timeout_ms": 60000
+      }
+    ]
+  },
   "resources": [
     "file://.kiro/steering/**/*.md",
     "file://.kiro/agents/prompts/common.md"

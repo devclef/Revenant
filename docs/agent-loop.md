@@ -63,8 +63,9 @@ Agent hooks (scripts in `tools/hooks/`, owner-only):
 
 | Role | Hook |
 |---|---|
-| `frontend-dev` | `stop`: `tone-check.mjs` |
-| `crypto-dev`, `data-dev`, `platform-dev`, `qa` | none |
+| `frontend-dev` | `stop`: `tone-check.mjs`, `scope-check.py` |
+| `crypto-dev`, `data-dev`, `platform-dev` | `stop`: `scope-check.py` |
+| `qa` | none |
 
 Per-write test hooks were dropped: the Task Runner runs `scripts/check.sh` at the end of a run and CI runs everything.
 
@@ -73,6 +74,8 @@ Per-write test hooks were dropped: the Task Runner runs `scripts/check.sh` at th
 - On hits it prints `{"decision":"block","reason":"..."}` with the `file:line` findings. kiro-cli passes the reason to the agent, which takes another turn.
 - It blocks at most once per `session_id`. The marker is a file under the OS temp dir (`revenant-hooks/`), outside the repo. A second stop in the same session prints the findings and does not block.
 - Errors, a missing `session_id` and garbage input never block. The script always exits 0 and writes nothing inside the repo.
+
+**`scope-check.py --role <role>`** applies the `policy` CI rules to the files changed in the run (diff against the merge-base with `origin/main`, plus untracked files): every file must be owned by the role per `.github/agents.json`, no owner-only paths, and changed lines under `max_changed_lines`. It reuses `check_files()` from `tools/dispatcher/pr_policy.py`. Findings are per file, and it blocks at most once per `session_id`, like `tone-check.mjs`.
 
 **Log:** every run appends one line to `~/kiro/revenant-crew/hooks.log` (UTC time, role, hook, files checked, result: `clean`, `block:N`, `report:N` or `skipped:...`). The folder is created if missing.
 
