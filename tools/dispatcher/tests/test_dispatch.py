@@ -162,6 +162,221 @@ class StartQA(unittest.TestCase):
         self.assertFalse(verdict.exists())
 
 
+class CheckoutBase(unittest.TestCase):
+    def test_force_and_clean_without_x(self):
+        from unittest import mock
+        with mock.patch.object(d, "git") as g:
+            d.checkout_base(Path("/c"), "tok", "br", "main")
+        calls = [c.args[1:] for c in g.call_args_list]
+        self.assertIn(("checkout", "-f", "-B", "br", "origin/main"), calls)
+        clean = next(c for c in calls if c[0] == "clean")
+        self.assertEqual(clean, ("clean", "-fdq"))
+        self.assertLess(calls.index(("checkout", "-f", "-B", "br", "origin/main")), calls.index(clean))
+
+
+class RecGH:
+    """GitHub double that records writes."""
+
+    def __init__(self, issues=(), pulls=None, merge_error=None, failed=()):
+        self.events, self.issue_list, self.pulls = [], list(issues), pulls or {}
+        self.merge_error, self.failed = merge_error, list(failed)
+
+    def r(self, p):
+        return p
+
+    def login(self):
+        return "bot"
+
+    def issues(self, state="open"):
+        return [] if state == "closed" else self.issue_list
+
+    def comments(self, n):
+        return []
+
+    def call(self, method, path, body=None):
+        self.events.append((method, path))
+        if method == "PUT" and self.merge_error:
+            raise RuntimeError(self.merge_error)
+        if method == "GET" and "/pulls/" in path:
+            n = int(path.rsplit("/", 1)[1])
+            return {"head": {"sha": f"sha{n}", "ref": f"b{n}"}}
+        if method == "GET" and "/issues/" in path:
+            return issue(int(path.rsplit("/", 1)[1]), [])
+
+    def ci_state(self, sha):
+        return "failure" if self.failed else "success"
+
+    def failed_checks(self, sha):
+        return self.failed
+
+    def add_labels(self, n, *labels):
+        self.events.append(("label+", n, labels))
+
+    def remove_label(self, n, label):
+        self.events.append(("label-", n, label))
+
+    def set_status(self, n, add, *remove):
+        self.events.append(("status", n, add, tuple(remove)))
+
+    def comment(self, n, body):
+        self.events.append(("comment", n, body))
+
+    def has(self, kind, n=None):
+        return [e for e in self.events if e[0] == kind and (n is None or e[1] == n)]
+
+
+def make_tick(gh):
+    from unittest import mock
+    notes = []
+    tick = d.Tick(gh, mock.Mock(), "tok", notify=notes.append)
+    tick.crew.start.return_value = "t1"
+    return tick, notes
+
+
+def pr_item(n, *labels):
+    return {"number": n, "title": f"PR {n}", "body": f"Closes #{n + 100}",
+            "labels": [{"name": l} for l in labels]}
+
+
+class Claim(unittest.TestCase):
+    def test_checkout_failure_leaves_issue_untouched(self):
+        from unittest import mock
+        gh = RecGH()
+        tick, notes = make_tick(gh)
+        i = issue(79, ["status:ready", "agent:data-dev"])
+        with mock.patch.object(d, "checkout_base", side_effect=RuntimeError("git checkout failed")):
+            tick.claim([i], set())
+        self.assertEqual(gh.has("status", 79), [("status", 79, "status:blocked", ("status:ready",))])
+        self.assertFalse([e for e in gh.events if e[0] == "POST"])  # never assigned
+        self.assertNotIn(("status", 79, "status:in-progress", ("status:ready",)), gh.events)
+        tick.crew.start.assert_not_called()
+        self.assertTrue(notes)
+
+    def test_failure_stops_claiming_this_tick(self):
+        from unittest import mock
+        gh = RecGH()
+        tick, _ = make_tick(gh)
+        issues = [issue(1, ["status:ready", "agent:data-dev"]), issue(2, ["status:ready", "agent:frontend-dev"])]
+        with mock.patch.object(d, "checkout_base", side_effect=RuntimeError("network")) as cb:
+            tick.claim(issues, set())
+        self.assertEqual(cb.call_count, 1)
+        self.assertEqual(gh.has("status", 1)[0][2], "status:blocked")
+        self.assertEqual(gh.has("status", 2), [])
+
+    def test_order_checkout_start_then_github(self):
+        from unittest import mock
+        gh = RecGH()
+        tick, _ = make_tick(gh)
+        order = []
+        tick.crew.start.side_effect = lambda *a, **k: order.append("start") or "t1"
+        with mock.patch.object(d, "checkout_base", lambda *a: order.append("checkout")), \
+                mock.patch.object(d, "dev_spec", lambda *a: "s"):
+            tick.claim([issue(2, ["status:ready", "agent:data-dev"])], set())
+        self.assertEqual(order, ["checkout", "start"])
+        self.assertIn(("status", 2, "status:in-progress", ("status:ready",)), gh.events)
+        self.assertEqual(len([e for e in gh.events if e[0] == "POST"]), 1)
+
+
+class MergeReady(unittest.TestCase):
+    def test_405_blocks_and_continues(self):
+        gh = RecGH(merge_error='GitHub PUT /x -> 405: {"message": "Merge conflict."}')
+        tick, notes = make_tick(gh)
+        tick.merge_ready([pr_item(1, "status:qa-passed"), pr_item(2, "status:qa-passed")])
+        self.assertIn(("status", 1, "status:blocked", ("status:qa-passed",)), gh.events)
+        self.assertIn(("status", 2, "status:blocked", ("status:qa-passed",)), gh.events)
+        self.assertIn("Can't merge: Merge conflict. Needs a rebase or a human.", gh.has("comment", 1)[0][2])
+        self.assertEqual(len(notes), 2)
+
+    def test_other_error_blocks_with_reason(self):
+        gh = RecGH()
+        tick, _ = make_tick(gh)
+        gh.call = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("GitHub GET /x -> 500: oops"))
+        tick.merge_ready([pr_item(1, "status:qa-passed")])
+        self.assertIn("oops", gh.has("comment", 1)[0][2])
+
+
+class StartFixes(unittest.TestCase):
+    def test_checkout_failure_blocks_and_continues(self):
+        from unittest import mock
+        gh = RecGH()
+        tick, _ = make_tick(gh)
+        issues = [issue(101, ["status:in-review", "agent:data-dev"]),
+                  issue(102, ["status:in-review", "agent:frontend-dev"])]
+        prs = [pr_item(1, "status:changes-requested"), pr_item(2, "status:changes-requested")]
+        n = {"c": 0}
+
+        def checkout(*a):
+            n["c"] += 1
+            if n["c"] == 1:
+                raise RuntimeError("dirty")
+
+        with mock.patch.object(d, "checkout_base", checkout), mock.patch.object(d, "dev_spec", lambda *a: "s"):
+            busy = tick.start_fixes(prs, issues)
+        self.assertIn(("status", 1, "status:blocked", ("status:changes-requested",)), gh.events)
+        self.assertEqual(busy, {"frontend-dev"})
+
+
+class CIFeedback(unittest.TestCase):
+    def failing(self, *checks):
+        return RecGH(failed=[{"name": n, "annotations": f"- `f.ts:1` {n} broke"} for n in checks])
+
+    def run_qa(self, gh):
+        tick, notes = make_tick(gh)
+        tick.start_qa([pr_item(5, "needs-qa")])
+        return notes
+
+    def test_names_failed_check_and_annotations(self):
+        gh = self.failing("policy", "ci-gate")
+        self.run_qa(gh)
+        body = gh.has("comment", 5)[0][2]
+        self.assertIn("`policy`, `ci-gate`", body)
+        self.assertIn("policy broke", body)
+        self.assertIn("bash scripts/check.sh", body)
+        self.assertIn(("status", 5, "status:changes-requested", ("needs-qa",)), gh.events)
+
+    def test_policy_failure_alone_is_not_sent_back(self):
+        gh = self.failing("policy")
+        notes = self.run_qa(gh)
+        self.assertIn(("status", 5, "status:blocked", ("needs-qa",)), gh.events)
+        self.assertIn(("status", 105, "status:blocked", ("status:in-review", "status:in-progress")), gh.events)
+        self.assertNotIn("status:changes-requested", [e[2] for e in gh.has("status")])
+        self.assertIn("policy broke", gh.has("comment", 5)[0][2])
+        self.assertNotIn("check.sh", gh.has("comment", 5)[0][2])
+        self.assertTrue(notes)
+
+    def test_empty_failed_checks_retries_next_tick(self):
+        gh = RecGH()
+        gh.ci_state = lambda sha: "failure"  # failure, but the newer run has no failed checks yet
+        tick, notes = make_tick(gh)
+        tick.start_qa([pr_item(5, "needs-qa")])
+        self.assertEqual(gh.has("comment"), [])
+        self.assertEqual(gh.has("status"), [])
+        self.assertEqual(notes, [])
+
+    def test_qa_error_blocks_pr_and_stops(self):
+        from unittest import mock
+        gh = RecGH()
+        gh.add_labels = lambda *a: (_ for _ in ()).throw(RuntimeError("GitHub POST /x -> 500: down"))
+        tick, _ = make_tick(gh)
+        with mock.patch.object(d, "checkout_base"), mock.patch.object(d, "qa_spec", lambda *a: "s"), \
+                mock.patch.object(d, "QA_CLONE", Path("/nonexistent-qa")):
+            tick.start_qa([pr_item(5, "needs-qa"), pr_item(6, "needs-qa")])
+        self.assertEqual(tick.crew.start.call_count, 1)
+        self.assertIn(("status", 5, "status:blocked", ("needs-qa",)), gh.events)
+        self.assertEqual(gh.has("status", 6), [])
+
+    def test_ci_gate_only_mentions_check_sh_not_policy(self):
+        body = d.ci_failure_comment([{"name": "ci-gate", "annotations": "- x"}], "abcdef123")
+        self.assertIn("bash scripts/check.sh", body)
+        self.assertNotIn("does not run the other checks", body)
+
+    def test_annotation_formatting(self):
+        out = d.format_annotations([{"path": "a.ts", "start_line": 3, "message": "bad",
+                                     "annotation_level": "failure"},
+                                    {"message": "note", "annotation_level": "notice"}])
+        self.assertEqual(out, "- `a.ts:3` bad")
+
+
 class Policy(unittest.TestCase):
     pr = {"labels": [], "user": {"login": "bot"}}
 
