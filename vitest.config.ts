@@ -7,7 +7,28 @@ export default defineConfig({
   test: {
     globals: true,
     environment: "node",
-    include: ["src/**/*.{test,spec}.{ts,tsx}"],
+    // Two projects so `npm test` runs everything with no extra flags. The
+    // integration files share one Postgres database and TRUNCATE the same
+    // tables, so they must run one at a time or Postgres reports "deadlock
+    // detected". Unit tests stay parallel.
+    projects: [
+      {
+        extends: true,
+        test: {
+          name: "unit",
+          include: ["src/**/*.{test,spec}.{ts,tsx}"],
+          exclude: ["**/node_modules/**", "src/test/integration/**"],
+        },
+      },
+      {
+        extends: true,
+        test: {
+          name: "integration",
+          include: ["src/test/integration/**/*.{test,spec}.{ts,tsx}"],
+          fileParallelism: false,
+        },
+      },
+    ],
   },
   resolve: {
     tsconfigPaths: true,
