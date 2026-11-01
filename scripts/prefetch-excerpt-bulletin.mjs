@@ -85,28 +85,17 @@ const KEEP_COLUMNS = new Set(["A", "B", "C", "D"]);
 
 const MAX_XLSX_BYTES = 100_000;
 
-// The 1900 date system with the Lotus leap-year bug, matching serialToDate:
-// serial 1 is 1899-12-31 and serial 61 is 1900-03-01. We only need the serial
-// for the small set of DATA_DATES, so a direct day count is enough here.
+// Inverse of serialToDate (src/lib/sources/serial-date.ts): that converter is a
+// plain linear day count from the UTC epoch 1899-12-30, with no phantom
+// 1900-02-29. The serials we need are all for dates in 2023-2026, far above the
+// quirk, so matching it exactly means the serials we select here are the same
+// ones the parser maps back to these dates. A phantom-day correction would put
+// every serial one day too high and the rows would not be found.
+const EPOCH_MS = Date.UTC(1899, 11, 30);
+const MS_PER_DAY = 86_400_000;
 function dateToSerial(iso) {
   const [y, m, d] = iso.split("-").map((n) => Number(n));
-  // Days from 1899-12-30 (serial 0) using a civil-date day count, then add the
-  // single phantom day for 1900-02-29 that the 1900 system includes.
-  const a = Math.floor((14 - m) / 12);
-  const yy = y + 4800 - a;
-  const mm = m + 12 * a - 3;
-  const jdn =
-    d +
-    Math.floor((153 * mm + 2) / 5) +
-    365 * yy +
-    Math.floor(yy / 4) -
-    Math.floor(yy / 100) +
-    Math.floor(yy / 400) -
-    32045;
-  const jdn18991230 = 2415019; // Julian day number of 1899-12-30.
-  let serial = jdn - jdn18991230;
-  if (serial >= 60) serial += 1; // Phantom 1900-02-29.
-  return serial;
+  return Math.round((Date.UTC(y, m - 1, d) - EPOCH_MS) / MS_PER_DAY);
 }
 
 const DATA_SERIALS = new Set(DATA_DATES.map((d) => dateToSerial(d)));
@@ -346,13 +335,11 @@ function slicePageHtml(html) {
 
 // --- Note files ------------------------------------------------------------
 
-function writeNote(artifactPath, downloadUrl, recordedAt, keeps, howMade) {
+function writeNote(artifactPath, downloadUrl, recordedAt, warning, keeps, howMade) {
   const note =
     `${relative(ROOT, artifactPath)}\n` +
     `\n` +
-    `Recorded excerpt of a real file. NOT for display: the numbers it carries\n` +
-    `are a test fixture, must never be shown to a user or treated as a figure,\n` +
-    `and are the publisher's bytes kept only so the parser can be tested.\n` +
+    `${warning}\n` +
     `\n` +
     `Source URL:   ${downloadUrl}\n` +
     `Recorded at:  ${recordedAt} (UTC)\n` +
@@ -429,6 +416,10 @@ async function main() {
       outXlsx,
       workbookUrl,
       recordedAt,
+      `Recorded excerpt of a real file, kept only to test the parser. Its\n` +
+        `numbers MUST NOT be used for display: they are a test fixture, never a\n` +
+        `figure shown to a user (R8.2). Every kept value is the publisher's bytes,\n` +
+        `unchanged, so the parser reads them back exactly as it would the full file.`,
       `  Sheet "${SHEET_NAME}" only; columns A-D only.\n` +
         `  Rows: header rows 1-3, footer rows 1096-1097, and the data rows for\n` +
         `  ${DATA_DATES.join(", ")}.\n` +
@@ -450,6 +441,9 @@ async function main() {
       outHtml,
       page.finalUrl,
       recordedAt,
+      `Recorded excerpt of a real page, kept only to test the link-finder. It\n` +
+        `carries links, not figures, and nothing in it may be used for display\n` +
+        `(R8.2). It is a test fixture, never content shown to a user.`,
       `  The text around the "Price developments" links, including the single\n` +
         `  history-file link (filename=${BULLETIN_FILE_NAME}) and at least one\n` +
         `  other .xlsx link, so the exactly-one-match rule is testable.`,
