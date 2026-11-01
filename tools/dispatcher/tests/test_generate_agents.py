@@ -15,7 +15,7 @@ OWNERSHIP = json.loads((ROOT / ".github/agents.json").read_text())
 
 class Models(unittest.TestCase):
     def test_only_listed_roles_get_a_model(self):
-        self.assertEqual(ga.MODELS, {"data-dev": "claude-haiku-5.5"})
+        self.assertEqual(ga.MODELS, {"data-dev": "claude-haiku-5.5", "frontend-dev": "claude-haiku-5.5"})
         for role in ga.DESCRIPTIONS:
             agent = ga.build(role, OWNERSHIP)
             if role in ga.MODELS:

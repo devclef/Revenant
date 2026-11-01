@@ -93,6 +93,7 @@ MCP_SERVERS = {role: {"playwright": playwright_server(d)} for role, d in SHOTS_D
 # using Auto. qa stays on Auto.
 MODELS = {
     "data-dev": "claude-haiku-5.5",
+    "frontend-dev": "claude-haiku-5.5",
 }
 OWNER_ONLY = [".kiro/**", ".github/**", "tools/**", "scripts/check.sh"]
 
