@@ -44,7 +44,7 @@ Follow `design.md` in this folder for every file name, constant, interface and a
   - Validation: `bash scripts/check.sh`
   - _Requirements: R1, R3.1–R3.3, R3.8, R10.3, R10.5, R11.2, R11.3, R11.5–R11.8, R13.1, R13.4–R13.7, R15, R16, R17.3_
 
-- [ ] 2. Envelope, checking views and the card and loading wording
+- [x] 2. Envelope, checking views and the card and loading wording
   - Agent: `frontend-dev` · Depends on: 1 · Estimated size: ~1,650 changed lines
   - Before this task: Blocked by #49 (spec 03 task 8, the reveal's letter and figures stages).
   - Scope: `src/components/ceremony/envelope/**`, `src/components/ceremony/copy.ts`, `src/components/reveal/OpeningFlow.tsx`, `src/components/reveal/copy.ts`, `src/components/demo/copy.ts`, `src/components/demo/PersonaCard.tsx`, `src/components/demo/PersonaCard.test.tsx`, `src/app/demo/page.test.tsx`, and the `*.test.ts(x)` for each new file
