@@ -19,6 +19,7 @@ import { MotionProvider } from "../motion";
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import type { Opened } from "@/components/reveal/opening-machine";
 import type { PayloadV1 } from "@/lib/seal-format";
+import { CEREMONY_COPY } from "../copy";
 import { InkLetter } from "./InkLetter";
 
 const PERSONA_NAME = "Maya";
@@ -96,5 +97,13 @@ describe("Property 16: the ink effect never touches the letter's characters", ()
     const letter = html.indexOf("data-ink-text");
     expect(label).toBeGreaterThanOrEqual(0);
     expect(label).toBeLessThan(letter);
+  });
+});
+
+describe("InkLetter skip control before the ink runs", () => {
+  it("shows no skip control on the first render, so the text is shown without a control", () => {
+    const html = render();
+    expect(html).not.toContain(CEREMONY_COPY.inkSkip);
+    expect(html).not.toContain("<button");
   });
 });

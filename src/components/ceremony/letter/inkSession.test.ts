@@ -10,6 +10,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { INK_TOTAL_MAX_MS } from "../constants";
 import type { InkTarget } from "./inkMask";
 import { INK_MASK_PROPERTIES } from "./inkMask";
+import { inkPlan } from "./inkPlan";
 import { planInkRun, startInkSession } from "./inkSession";
 
 function fakeTarget() {
@@ -187,5 +188,31 @@ describe("inkSession timing exports (Property 14 ink clause, Property 16)", () =
       const total = (lines - 1) * step + session.INK_LINE_FADE_MS;
       expect(total).toBeLessThanOrEqual(session.INK_TOTAL_MAX_MS);
     }
+  });
+});
+
+describe("text shows when the line height is unreadable", () => {
+  it.each(["auto", "", "0px", "-4px", "abc"])(
+    "gives no animation for computed line height %j",
+    (computedLineHeight) => {
+      expect(
+        planInkRun({ mode: "full", computedLineHeight, boxHeightPx: 67.2 }),
+      ).toBeUndefined();
+    },
+  );
+});
+
+describe("ink timing depends on the line count alone (Property 14, Property 16)", () => {
+  it("gives the same plan for two line heights that fit the same number of lines", () => {
+    const tall = planInkRun({ mode: "full", computedLineHeight: "30px", boxHeightPx: 90 });
+    const short = planInkRun({ mode: "full", computedLineHeight: "18px", boxHeightPx: 54 });
+    expect(tall).toBeDefined();
+    expect(short).toBeDefined();
+    expect(tall?.plan).toEqual(short?.plan);
+  });
+
+  it("matches inkPlan for the counted lines", () => {
+    const start = planInkRun({ mode: "full", computedLineHeight: "22.4px", boxHeightPx: 224 });
+    expect(start?.plan).toEqual(inkPlan(10));
   });
 });
