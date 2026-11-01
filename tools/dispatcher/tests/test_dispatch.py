@@ -366,7 +366,7 @@ class Claim(unittest.TestCase):
         tick, notes = make_tick(gh)
         i = issue(79, ["status:ready", "agent:data-dev"])
         with mock.patch.object(d, "checkout_base", side_effect=RuntimeError("git checkout failed")):
-            tick.claim([i], set())
+            tick.claim([i])
         self.assertEqual(gh.has("status", 79), [("status", 79, "status:blocked", ("status:ready",))])
         self.assertFalse([e for e in gh.events if e[0] == "POST"])  # never assigned
         self.assertNotIn(("status", 79, "status:in-progress", ("status:ready",)), gh.events)
@@ -379,7 +379,7 @@ class Claim(unittest.TestCase):
         tick, _ = make_tick(gh)
         issues = [issue(1, ["status:ready", "agent:data-dev"]), issue(2, ["status:ready", "agent:frontend-dev"])]
         with mock.patch.object(d, "checkout_base", side_effect=RuntimeError("network")) as cb:
-            tick.claim(issues, set())
+            tick.claim(issues)
         self.assertEqual(cb.call_count, 1)
         self.assertEqual(gh.has("status", 1)[0][2], "status:blocked")
         self.assertEqual(gh.has("status", 2), [])
@@ -392,7 +392,7 @@ class Claim(unittest.TestCase):
         tick.crew.start.side_effect = lambda *a, **k: order.append("start") or "t1"
         with mock.patch.object(d, "checkout_base", lambda *a: order.append("checkout")), \
                 mock.patch.object(d, "dev_spec", lambda *a: "s"):
-            tick.claim([issue(2, ["status:ready", "agent:data-dev"])], set())
+            tick.claim([issue(2, ["status:ready", "agent:data-dev"])])
         self.assertEqual(order, ["checkout", "start"])
         self.assertIn(("status", 2, "status:in-progress", ("status:ready",)), gh.events)
         self.assertEqual(len([e for e in gh.events if e[0] == "POST"]), 1)
@@ -432,9 +432,10 @@ class StartFixes(unittest.TestCase):
                 raise RuntimeError("dirty")
 
         with mock.patch.object(d, "checkout_base", checkout), mock.patch.object(d, "dev_spec", lambda *a: "s"):
-            busy = tick.start_fixes(prs, issues)
+            started = tick.start_fixes(prs, issues)
         self.assertIn(("status", 1, "status:blocked", ("status:changes-requested",)), gh.events)
-        self.assertEqual(busy, {"frontend-dev"})
+        self.assertTrue(started)
+        self.assertEqual(n["c"], 2)  # the second PR's fix run was the one started
 
 
 class CIFeedback(unittest.TestCase):
@@ -538,6 +539,65 @@ class Policy(unittest.TestCase):
         self.assertTrue(pr_policy.matches("src/app/api/health/route.ts", ["src/app/api/health/**"]))
         self.assertTrue(pr_policy.matches("next.config.ts", ["*.config.*"]))
         self.assertFalse(pr_policy.matches("src/x.config.ts", ["*.config.*"]))
+
+
+class OneRunAtATime(unittest.TestCase):
+    """Dev, fix and QA runs share one Task Runner, so only one may be in flight."""
+
+    def setUp(self):
+        import tempfile
+        from unittest import mock
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(__import__("shutil").rmtree, self.tmp, True)
+        self.gh = RecGH()
+        self.tick, _ = make_tick(self.gh)
+        for p in (mock.patch.object(d, "QA_CLONE", self.tmp),
+                  mock.patch.object(d, "checkout_base", lambda *a: None),
+                  mock.patch.object(d, "dev_spec", lambda *a: "s"),
+                  mock.patch.object(d, "qa_spec", lambda pr, i: "s")):
+            p.start()
+            self.addCleanup(p.stop)
+
+    def started(self):
+        return self.tick.crew.start.call_count
+
+    def test_qa_waits_while_a_dev_run_is_in_progress(self):
+        started = self.tick.start_qa([pr_item(5, "needs-qa")],
+                                     [issue(9, ["status:in-progress", "agent:data-dev"])])
+        self.assertFalse(started)
+        self.assertEqual(self.started(), 0)
+
+    def test_fix_waits_while_a_qa_run_is_in_progress(self):
+        prs = [pr_item(5, "status:changes-requested"), pr_item(6, "status:qa-running")]
+        issues = [issue(105, ["status:in-review", "agent:frontend-dev"])]
+        self.assertFalse(self.tick.start_fixes(prs, issues))
+        self.assertEqual(self.started(), 0)
+
+    def test_fix_waits_while_a_dev_run_is_in_progress(self):
+        prs = [pr_item(5, "status:changes-requested")]
+        issues = [issue(105, ["status:in-review", "agent:frontend-dev"]),
+                  issue(9, ["status:in-progress", "agent:data-dev"])]
+        self.assertFalse(self.tick.start_fixes(prs, issues))
+        self.assertEqual(self.started(), 0)
+
+    def test_claim_waits_while_a_qa_run_is_in_progress(self):
+        self.tick.claim([issue(79, ["status:ready", "agent:data-dev"])], [pr_item(5, "status:qa-running")])
+        self.assertEqual(self.started(), 0)
+
+    def test_claim_waits_while_a_dev_run_is_in_progress(self):
+        self.tick.claim([issue(79, ["status:ready", "agent:data-dev"]),
+                         issue(9, ["status:in-progress", "agent:frontend-dev"])])
+        self.assertEqual(self.started(), 0)
+
+    def test_claim_starts_when_nothing_is_running(self):
+        self.tick.claim([issue(79, ["status:ready", "agent:data-dev"])], [pr_item(5, "needs-qa")])
+        self.assertEqual(self.started(), 1)
+
+    def test_active_runs_counts_dev_and_qa_together(self):
+        issues = [issue(9, ["status:in-progress", "agent:data-dev"]), issue(10, ["status:ready"])]
+        prs = [pr_item(5, "status:qa-running"), pr_item(6, "needs-qa")]
+        self.assertEqual(d.active_runs(issues, prs), 2)
+
 
 
 if __name__ == "__main__":
