@@ -80,6 +80,10 @@ export function onTick(s: HoldState, now: number): HoldState {
     const settleStart = a.settleStart ?? now;
     const settleFrom = a.settleFrom ?? a.progress;
     const elapsed = SEAL_SETTLE_MS <= 0 ? 1 : (now - settleStart) / SEAL_SETTLE_MS;
+    // Once the settle window has elapsed, return idle exactly. Computing the
+    // receded value first can leave a tiny positive residue from floating-point
+    // rounding (for example 7e-18), which would keep the phase in `settling`.
+    if (elapsed >= 1) return IDLE;
     const progress = settleFrom * (1 - clamp01(elapsed));
     if (progress <= 0) return IDLE;
     return { phase: "settling", progress, settleStart, settleFrom } as Anchored;
