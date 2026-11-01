@@ -58,7 +58,7 @@ All Source_Files are downloaded from the publishers' public pages without a key 
   - Validation: `bash scripts/check.sh`
   - _Requirements: R2.1–R2.6, R4.1–R4.9, R5.5, R5.6, R8.2–R8.6, R8.9, R14.1, R14.4_
 
-- [ ] 4. Append-only refresh logic: merge, backfill refusal, serialisation
+- [x] 4. Append-only refresh logic: merge, backfill refusal, serialisation
   - Agent: `data-dev` · Depends on: 1 · Estimated size: ~1,100 changed lines
   - Before this task: none.
   - Scope: `src/lib/sources/refresh.ts`, `refresh.test.ts`, `refresh.property.test.ts`
