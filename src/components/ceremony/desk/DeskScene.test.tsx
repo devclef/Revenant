@@ -137,4 +137,10 @@ describe("DeskScene static render", () => {
     const wrappingTag = firstTagBefore.slice(lastOpenTag);
     expect(wrappingTag).not.toContain('aria-hidden="true"');
   });
+
+  it("has one root class and no Calm button of its own", () => {
+    const html = render();
+    expect(html).toMatch(/<div[^>]*data-desk[^>]*class="[^"]+"/);
+    expect(html).not.toContain("<button");
+  });
 });
