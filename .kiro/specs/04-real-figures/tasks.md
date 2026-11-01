@@ -43,7 +43,7 @@ All Source_Files are downloaded from the publishers' public pages without a key 
   - Validation: `bash scripts/check.sh`
   - _Requirements: R2.1–R2.6, R3.1–R3.7, R5.5, R5.6, R8.2–R8.6, R8.9, R14.1, R14.4_
 
-- [ ] 3. Oil Bulletin adapter and its recorded excerpts
+- [x] 3. Oil Bulletin adapter and its recorded excerpts
   - Agent: `data-dev` · Depends on: 1 · Estimated size: ~1,200 changed lines (the `.xlsx` excerpt is binary, 0; the HTML excerpt and the three note files are text)
   - Before this task: none.
   - Scope: `src/lib/sources/oil-bulletin.ts`, `oil-bulletin.test.ts`, `oil-bulletin.property.test.ts`, `src/lib/sources/__recorded__/oil-bulletin-prices-with-taxes.xlsx`, `oil-bulletin-page.html` and their `.note.txt`, `scripts/prefetch-excerpt-bulletin.mjs`
