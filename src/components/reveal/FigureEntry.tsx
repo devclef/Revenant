@@ -3,6 +3,7 @@ import type { ChangeResult, DisplayRescale } from "@/lib/figures";
 import { rescaleForDisplay } from "@/lib/figures";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { NumberLine } from "@/components/ceremony/figures/NumberLine";
+import figureStyles from "@/components/ceremony/figures/figures.module.css";
 import { Stamp } from "@/components/ceremony/figures/Stamp";
 import { ChangeLine } from "./ChangeLine";
 import { REVEAL_COPY } from "./copy";
@@ -61,7 +62,7 @@ export function FigureEntry({ then, now, change, rescale, markValue }: FigureEnt
 
   return (
     <MotionProvider>
-      <div>
+      <div className={figureStyles.paperPanel}>
         <p className={styles.then}>{REVEAL_COPY.then}</p>
         <Stamp figure={then} role="then" displayRescale={rescale} />
 

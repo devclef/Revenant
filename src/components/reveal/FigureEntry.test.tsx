@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -121,5 +124,47 @@ describe("FigureEntry shows the figures in the display rescale (R11.10)", () => 
     };
     const html = render({ rescale });
     expect(html).toContain("USD per 1,000 gallons");
+  });
+});
+
+describe("FigureEntry sits on its own paper surface (tone.md, Property 22)", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const figuresCss = readFileSync(
+    resolve(here, "..", "ceremony", "figures", "figures.module.css"),
+    "utf8",
+  );
+
+  // The rule body for `.paperPanel`, read from the CSS module so the test
+  // tracks the real declarations.
+  function paperPanelRule(): string {
+    const match = figuresCss.match(/\.paperPanel\s*\{([^}]*)\}/);
+    if (!match) throw new Error("test setup: .paperPanel rule not found");
+    return match[1];
+  }
+
+  it("wraps the comparable entry in a paper panel class", () => {
+    const html = render();
+    expect(html).toMatch(/class=\"[^\"]*paperPanel[^\"]*\"/);
+  });
+
+  it("the panel sets its own text colour and paper background", () => {
+    const rule = paperPanelRule();
+    expect(rule).toMatch(/color:\s*var\(--ink\)/);
+    expect(rule).toMatch(/background-color:\s*var\(--paper\)/);
+  });
+
+  it("the panel's text colour is the paper ink token, not a desk token", () => {
+    const rule = paperPanelRule();
+    expect(rule).not.toMatch(/--desk/);
+  });
+
+  it("keeps the then and now labels, change line and formula inside the panel", () => {
+    const html = render();
+    const start = html.indexOf("paperPanel");
+    const panelOpen = html.lastIndexOf("<div", start);
+    const inside = html.slice(panelOpen);
+    expect(inside).toContain(REVEAL_COPY.then);
+    expect(inside).toContain(REVEAL_COPY.now);
+    expect(inside).toContain(REVEAL_COPY.formulaLabel);
   });
 });

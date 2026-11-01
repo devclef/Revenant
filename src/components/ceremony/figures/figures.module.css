@@ -11,6 +11,17 @@
  * vary, and they reach the markup through the --pos-* custom properties only.
  */
 
+/* --- Paper panel: one comparable entry (its then and now stamps, the
+   Number_Line and the change line) sits on a paper surface. The panel sets
+   its own text colour, so no text inherits the dark desk ink (tone.md). --- */
+
+.paperPanel {
+  box-sizing: border-box;
+  padding: 1rem 1.25rem;
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
 /* --- Stamp: a pressed frame holding a figure --- */
 
 .stamp {
