@@ -5,17 +5,16 @@ Your worktree is checked out at the pull request's head. `origin/main` is the ba
 ## Review steps
 
 1. Read the ticket (given in your task) and the change: `git diff origin/main...HEAD` and `git log origin/main..HEAD`.
-2. Run `bash scripts/check.sh`. Any failure is a fail.
-3. Check every acceptance criterion in the ticket. Each must be demonstrably met by code or a test.
-4. Path ownership and size are already enforced by the `policy` CI check, which passes before QA starts. Don't raise findings about which paths a file is in; focus on whether the change does the ticket correctly and safely.
-5. Check the steering docs that apply: `data-integrity.md` checklist for any figure code, `neutrality.md` copy test and `tone.md` for UI text, `crypto.md` for anything that seals or opens letters, `deploy.md` for the image and chart, `tech.md` conventions for everything.
-6. Look for: secrets or tokens, weakened tests or lint rules, third-party scripts, invented numbers, missing tests for new behaviour, changes that would break the deployed site.
+2. Check every acceptance criterion in the ticket. Each must be demonstrably met by code or a test.
+3. Path ownership and size are already enforced by the `policy` CI check, which passes before QA starts. Don't raise findings about which paths a file is in; focus on whether the change does the ticket correctly and safely.
+4. Check the steering docs that apply: `data-integrity.md` checklist for any figure code, `neutrality.md` copy test and `tone.md` for UI text, `crypto.md` for anything that seals or opens letters, `deploy.md` for the image and chart, `tech.md` conventions for everything.
+5. Look for: secrets or tokens, weakened tests or lint rules, third-party scripts, invented numbers, missing tests for new behaviour, changes that would break the deployed site.
 
 ## Browser check
 Only when the diff touches `src/app/**` or `src/components/**`. Otherwise skip it. You have a headless Chromium through the `playwright` MCP tools. This is the one place you may write outside the worktree: screenshots go to the qa-shots folder, nowhere else. Never change anything in the repo except `.qa/verdict.json`.
-The browser tools connect a few seconds after the session starts and load on demand, so don't look for them in your first turn. Do steps 1 and 2 first. If the `playwright` tools still seem missing when you need them, load them (search for `playwright`, then `tool_load`) and try once more before you treat the browser as unavailable.
+The browser tools connect a few seconds after the session starts and load on demand, so don't look for them in your first turn. Do review steps 1 and 2 first. If the `playwright` tools still seem missing when you need them, load them (search for `playwright`, then `tool_load`) and try once more before you treat the browser as unavailable.
 1. **Free port.** Pick one: `node -e "const s=require('net').createServer().listen(0,()=>{console.log(s.address().port);s.close()})"`. Use it as `PORT`. Note every PID and container name you start.
-2. **Build and start.** `npm run build`, then `PORT=<port> npm start` in the background. For pages that need no database, start it without `DATABASE_URL`. Wait until `http://localhost:<port>/` answers.
+2. **Build and start.** `npm run build` (only here, for the browser check), then `PORT=<port> npm start` in the background. For pages that need no database, start it without `DATABASE_URL`. Wait until `http://localhost:<port>/` answers.
 3. **Letters, only if the ticket needs them.** They are needed for any ticket that touches the persona page, `src/components/reveal` or `src/components/ceremony`. Pick a second free port. `docker run -d --name qa-pg-<port> -e POSTGRES_PASSWORD=qa -e POSTGRES_DB=revenant -p 127.0.0.1:<port>:5432 postgres:17-alpine`, wait for it to accept connections, then with `DATABASE_URL=postgres://postgres:qa@127.0.0.1:<port>/revenant` run `npm run db:migrate` and, only if `package.json` has a `seal-personas` script on this branch, `npm run seal-personas`. Restart the app with the same `DATABASE_URL`.
 4. **Walk the ticket.** Use the browser tools to go through the ticket's user-facing acceptance criteria as a user would, using only what the page shows. For `/demo` that means: the persona card is shown; the persona card's open link; the recall questions come before anything else; the reveal order is memory, then letter, then numbers; the fixture label is visible next to fixture figures; no exclamation marks anywhere in the copy; and a rise and a fall are styled the same. Check the same page at a narrow width too. For spec 05 tickets, also check the look the ticket describes (colours, layers, motion), not only attributes in the markup.
 5. **Screenshots.** Take one of each key state. Use `browser_take_screenshot` with an absolute `filename` inside the qa-shots folder: `<qa-shots>/pr-<number>/<nn>-<state>.png`. The qa-shots folder is the directory shown in the result of a screenshot taken without a filename. Take that first one at the start and use it from then on. Other paths are refused. After each screenshot, open it and write one line on what it shows. A claim in the verdict that the screenshots don't support is a blocker.
@@ -36,6 +35,6 @@ Write exactly one file, `.qa/verdict.json`, and commit it. Change nothing else i
 }
 ```
 
-- `pass` only if there are no blocker findings and `scripts/check.sh` passed.
+- `pass` only if there are no blocker findings. CI is already green when QA starts, so don't re-run `scripts/check.sh`.
 - Minor findings don't block, but list them.
 - Be specific enough that another agent can fix each blocker without asking.
