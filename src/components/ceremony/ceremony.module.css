@@ -139,7 +139,6 @@
 }
 
 /*
-/*
  * The region itself is a -1 tab stop that receives focus when a Stage changes
  * (CeremonyRoot.tsx). It is a container, not a control, so it draws no focus
  * ring. The rings above (`.desk :focus`, `.onPaper :focus`) still apply to the

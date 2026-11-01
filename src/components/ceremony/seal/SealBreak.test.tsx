@@ -346,10 +346,10 @@ describe("SealBreak button path sends ADVANCE exactly once (Property 19, Propert
   });
 });
 
-describe("the seal instruction uses the desk cream token (WCAG AA on the desk)", () => {
-  it("sets the instruction line to the desk ink, not the paper ink", () => {
+describe("the seal instruction uses the paper ink (the seal sits in StagePanel's paper panel)", () => {
+  it("sets the instruction line to the ink, not the desk ink", () => {
     const css = readFileSync(join(__dirname, "SealBreak.module.css"), "utf8");
-    expect(css).toMatch(/\.instruction\s*\{[^}]*color:\s*var\(--desk-ink/);
-    expect(css).not.toMatch(/\.instruction\s*\{[^}]*color:\s*var\(--ink\)/);
+    expect(css).toMatch(/\.instruction\s*\{[^}]*color:\s*var\(--ink\)/);
+    expect(css).not.toMatch(/\.instruction\s*\{[^}]*color:\s*var\(--desk-ink/);
   });
 });

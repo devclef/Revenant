@@ -179,10 +179,10 @@ describe("SealedLetter markup", () => {
   });
 });
 
-describe("stage 2 letter sits on a paper panel, not the desk (WCAG AA)", () => {
-  it("gives the sealed letter section a paper background and the ink text colour", () => {
+describe("stage 2 letter sits on StagePanel's paper panel (WCAG AA)", () => {
+  it("leaves the paper and ink to StagePanel, so the section sets no background or colour", () => {
     const css = readFileSync(join(__dirname, "reveal.module.css"), "utf8");
-    expect(css).toMatch(/\.sealedLetter\s*\{[^}]*background-color:\s*var\(--paper\)/);
-    expect(css).toMatch(/\.sealedLetter\s*\{[^}]*color:\s*var\(--ink\)/);
+    expect(css).not.toMatch(/\.sealedLetter\s*\{[^}]*background-color:/);
+    expect(css).not.toMatch(/\.sealedLetter\s*\{[^}]*color:/);
   });
 });

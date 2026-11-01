@@ -247,11 +247,11 @@ describe("Reveal stage 1 is the marks Stage", () => {
   });
 });
 
-describe("stage 1 text sits on a paper panel, not the desk (WCAG AA)", () => {
-  it("gives the remembered panel a paper background and the ink text colour", () => {
+describe("stage 1 text sits on StagePanel's paper panel (WCAG AA)", () => {
+  it("leaves the paper and ink to StagePanel, so the section sets no background or colour", () => {
     const css = readFileSync(join(__dirname, "reveal.module.css"), "utf8");
-    expect(css).toMatch(/\.remembered\s*\{[^}]*background-color:\s*var\(--paper\)/);
-    expect(css).toMatch(/\.remembered\s*\{[^}]*color:\s*var\(--ink\)/);
+    expect(css).not.toMatch(/\.remembered\s*\{[^}]*background-color:/);
+    expect(css).not.toMatch(/\.remembered\s*\{[^}]*color:/);
   });
 
   it("renders the stage 1 section with the remembered class", () => {
