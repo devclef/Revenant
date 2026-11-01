@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { REVEAL_COPY } from "./copy";
+import { CEREMONY_COPY } from "@/components/ceremony/copy";
 import { DEMO_COPY } from "@/components/demo/copy";
 import type {
   FlowState,
@@ -400,6 +401,11 @@ describe("OpeningFlow view selection", () => {
     });
     expect(html).toContain(REVEAL_COPY.stage1Title);
     expect(html).toContain(`${REVEAL_COPY.yourAnswer}: 3.50`);
+    // Stage 1 is the `marks` Stage: the remembered answers above the unbroken
+    // seal, its instruction line and the "Break the seal" button (owned by
+    // SealBreak). It replaces the old stage1Next ("Read the letter") control.
+    expect(html).toContain(CEREMONY_COPY.sealButton);
+    expect(html).toContain(esc(CEREMONY_COPY.sealInstruction));
     // Stages 2 (letter) and 3 (figures) are filled by a later task: the letter
     // text and the sealed figure must not appear at stage 1.
     for (const needle of SEALED_PAYLOAD_STRINGS) {
@@ -551,9 +557,15 @@ describe("OpeningFlow Ceremony root attributes (R3.1, R3.2, R17.3)", () => {
       expect(
         render({ tag: "recall", opened: OPENED, drafts: DRAFTS, invalid: [] }),
       ).toContain(OPENED.payload.recall_questions[0].text);
-      expect(
-        render({ tag: "reveal", opened: OPENED, record: RECORD, stage: 1 }),
-      ).toContain(REVEAL_COPY.stage1Title);
+      const revealHtml = render({
+        tag: "reveal",
+        opened: OPENED,
+        record: RECORD,
+        stage: 1,
+      });
+      expect(revealHtml).toContain(REVEAL_COPY.stage1Title);
+      // Stage 1 is the `marks` Stage: the "Break the seal" button is shown.
+      expect(revealHtml).toContain(CEREMONY_COPY.sealButton);
     },
   );
 });
