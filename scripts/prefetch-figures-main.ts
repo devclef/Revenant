@@ -35,6 +35,7 @@ import path from "node:path";
 
 import { runPrefetch, PrefetchError } from "@/lib/sources/prefetch";
 import { formatReportLine, type Report } from "@/lib/sources/refresh";
+import type { Fetcher } from "@/lib/sources/types";
 
 /**
  * The committed figure file this script refreshes (design.md "Prefetch"). A
@@ -67,6 +68,13 @@ export interface MainDeps {
   errorLog: (line: string) => void;
   /** The clock threaded into the Adapters through `runPrefetch`. */
   now: () => Date;
+  /**
+   * The HTTP fetcher threaded into the Adapters through `runPrefetch`. Omitted
+   * in production, where each Adapter uses its own real `fetch` default; a test
+   * passes a stub that returns the recorded excerpts so the whole entry runs
+   * with no network (R2.6, R8.1).
+   */
+  fetcher?: Fetcher;
 }
 
 /** The real dependencies: node:fs promises, `process` and the system clock. */
@@ -93,10 +101,11 @@ function defaultDeps(): MainDeps {
 /**
  * Emit a merge {@link Report} as lines in a fixed order: each series' `added`
  * line (in the order the merge listed them, which is catalogue order), then
- * revisions, then gaps, then missing-from-source. Every line is produced by
- * {@link formatReportLine}, the single place the wording lives, so the printed
- * text and the tested wording never drift apart. Used for both a successful run
- * and the report a `backfill`/`coverage` {@link PrefetchError} carries.
+ * revisions, then backfills, then gaps, then missing-from-source. Every line is
+ * produced by {@link formatReportLine}, the single place the wording lives, so
+ * the printed text and the tested wording never drift apart. Used for both a
+ * successful run and the report a `backfill`/`coverage` {@link PrefetchError}
+ * carries, so every `backfill` line the refusal recorded is visible.
  */
 function printReport(report: Report, log: (line: string) => void): void {
   for (const s of report.perSeries) {
@@ -118,6 +127,16 @@ function printReport(report: Report, log: (line: string) => void): void {
         period: r.period,
         committed: r.committed,
         source: r.source,
+      }),
+    );
+  }
+  for (const b of report.backfills) {
+    log(
+      formatReportLine({
+        kind: "backfill",
+        metricId: b.metricId,
+        period: b.period,
+        latest: b.latest,
       }),
     );
   }
@@ -160,6 +179,7 @@ export async function main(deps: MainDeps = defaultDeps()): Promise<void> {
 
     const { text, report } = await runPrefetch(existingJson, {
       now: deps.now,
+      fetcher: deps.fetcher,
     });
 
     // Atomic replace: write a temp file next to the target, then rename it over
