@@ -21,10 +21,8 @@ import type { FigureV1 } from "@/lib/seal-format";
 
 import type { SourceFigure } from "./types";
 
-// Reference CATALOGUE and loadFigureFile so the imports are used before the
-// stubbed functions below are implemented (tasks 3 and 4). They are the only
-// runtime dependencies this module is allowed.
-void CATALOGUE;
+// Reference loadFigureFile so the import is used before `serialiseFigureFile`
+// (task 4) is implemented. `mergeRefresh` below uses CATALOGUE directly.
 void loadFigureFile;
 
 // --- Types -------------------------------------------------------------------
@@ -131,15 +129,160 @@ export function formatReportLine(line: ReportLine): string {
 
 /**
  * Merge freshly-downloaded series into the existing figures, append-only, with
- * backfill refusal. Implemented in task 3 (see design.md "Refresh").
+ * backfill refusal (design.md "Append-only merge with backfill refusal", D5).
+ *
+ * The catalogue is walked in its own order; for each series its existing
+ * figures and the matching fresh series are reconciled:
+ *
+ *  - A fresh point whose `metric_id|period` key already exists is a revision
+ *    when its value differs; the existing figure is reported and kept exactly
+ *    as parsed — its `value` and `retrieved_at` are never recomputed.
+ *  - A fresh point earlier than the series' latest existing period is a
+ *    backfill: it is reported with that latest period, and nothing is added.
+ *  - Otherwise the fresh point is added as a new official figure built from the
+ *    catalogue metric and the fresh series' `downloadedAt` / `sourceUrl`.
+ *  - An existing figure with no matching fresh point is reported as
+ *    missing-from-source and kept.
+ *
+ * If any backfill was reported the run fails: `{ ok: false, report }` is
+ * returned and no figure at all is produced, not even later periods. Otherwise
+ * every existing figure is carried through unchanged plus the added ones.
+ *
+ * Period comparison is a plain string comparison of the `YYYY-MM-DD` form, the
+ * same order `loadFigureFile` sorts weekly series by.
  */
 export function mergeRefresh(
   existing: readonly FigureV1[],
   fresh: readonly FreshSeries[],
 ): MergeResult {
-  void existing;
-  void fresh;
-  throw new Error("mergeRefresh is not implemented yet");
+  const key = (metricId: string, period: string): string =>
+    `${metricId}|${period}`;
+
+  // Index existing figures by key so revision and missing-from-source checks
+  // are O(1), and keep them grouped per metric for the per-series pass.
+  const existingByKey = new Map<string, FigureV1>();
+  const existingByMetric = new Map<string, FigureV1[]>();
+  for (const fig of existing) {
+    existingByKey.set(key(fig.metric_id, fig.period), fig);
+    const group = existingByMetric.get(fig.metric_id);
+    if (group) group.push(fig);
+    else existingByMetric.set(fig.metric_id, [fig]);
+  }
+
+  // Index the fresh series by metric id. A catalogue series with no fresh
+  // series simply has no new points.
+  const freshByMetric = new Map<string, FreshSeries>();
+  for (const series of fresh) freshByMetric.set(series.metricId, series);
+
+  const report: Report = {
+    perSeries: [],
+    gaps: [],
+    revisions: [],
+    missingFromSource: [],
+    backfills: [],
+  };
+
+  const added: FigureV1[] = [];
+
+  for (const series of CATALOGUE) {
+    const metricId = series.metric.id;
+    const existingGroup = existingByMetric.get(metricId) ?? [];
+    const freshSeries = freshByMetric.get(metricId);
+
+    // The greatest existing period for this series, or none. String compare of
+    // YYYY-MM-DD, matching loadFigureFile's weekly ordering.
+    let latest: string | null = null;
+    for (const fig of existingGroup) {
+      if (latest === null || fig.period > latest) latest = fig.period;
+    }
+
+    // Which periods the fresh series actually carries, so existing figures
+    // absent from it can be reported missing-from-source.
+    const freshPeriods = new Set<string>();
+
+    // The added periods for this series, for the per-series summary. Fresh
+    // points are ascending by `period` (the adapters sort them), so the first
+    // and last added keep that order.
+    let seriesFirstAdded: string | null = null;
+    let seriesLastAdded: string | null = null;
+    let seriesAddedCount = 0;
+
+    if (freshSeries) {
+      for (const point of freshSeries.points) {
+        freshPeriods.add(point.period);
+        const existingFig = existingByKey.get(key(metricId, point.period));
+
+        if (existingFig) {
+          // Present already: a revision only when the value differs. Keep the
+          // existing figure untouched either way.
+          if (existingFig.value !== point.value) {
+            report.revisions.push({
+              metricId,
+              period: point.period,
+              committed: existingFig.value,
+              source: point.value,
+            });
+          }
+          continue;
+        }
+
+        if (latest !== null && point.period < latest) {
+          // Earlier than the latest existing period: a backfill. Report it and
+          // add nothing.
+          report.backfills.push({ metricId, period: point.period, latest });
+          continue;
+        }
+
+        // A genuinely new period at or after `latest` (or the first run, where
+        // `latest` is none): add it as an official figure built from the
+        // catalogue metric and the fresh series' download provenance.
+        added.push({
+          kind: "official",
+          metric_id: metricId,
+          value: point.value,
+          unit: series.metric.unit,
+          region: series.metric.region,
+          period: point.period,
+          source: series.metric.source,
+          series_id: series.metric.series_id,
+          retrieved_at: freshSeries.downloadedAt,
+          source_url: freshSeries.sourceUrl,
+        });
+        seriesAddedCount += 1;
+        if (seriesFirstAdded === null) seriesFirstAdded = point.period;
+        seriesLastAdded = point.period;
+      }
+    }
+
+    // Existing figures with no matching fresh point are missing-from-source.
+    // A period present in `existing` whose fresh point was a gap (never in
+    // `freshSeries.points`) falls here, not under revision.
+    for (const fig of existingGroup) {
+      if (!freshPeriods.has(fig.period)) {
+        report.missingFromSource.push({ metricId, period: fig.period });
+      }
+    }
+
+    if (seriesAddedCount > 0) {
+      report.perSeries.push({
+        metricId,
+        kept: existingGroup.length,
+        added: seriesAddedCount,
+        first: seriesFirstAdded as string,
+        last: seriesLastAdded as string,
+      });
+    }
+  }
+
+  // A backfill fails the whole run: nothing is written, not even later periods.
+  if (report.backfills.length > 0) {
+    return { ok: false, report };
+  }
+
+  // Every existing figure is carried through exactly as parsed, plus the added
+  // ones. Serialisation (task 4) imposes the final catalogue/period order.
+  const figures: FigureV1[] = [...existing, ...added];
+  return { ok: true, figures, report };
 }
 
 /**
