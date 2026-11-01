@@ -33,7 +33,8 @@ export type LetterStoreCheck =
   | "envelope"
   | "server_secret"
   | "hash_mismatch"
-  | "duplicate_id";
+  | "duplicate_id"
+  | "busy";
 
 /**
  * A fixed message per check. These strings never include any submitted value
@@ -44,6 +45,7 @@ const MESSAGES: Record<LetterStoreCheck, string> = {
   server_secret: "The server secret must be exactly 32 bytes.",
   hash_mismatch: "The envelope hash does not match the envelope.",
   duplicate_id: "A letter with this ID already exists.",
+  busy: "The service is busy. Try again in a moment.",
 };
 
 /**
