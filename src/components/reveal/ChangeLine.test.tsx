@@ -85,11 +85,25 @@ describe("ChangeLine markup", () => {
     expect(html).toContain(REVEAL_COPY.periodRange);
   });
 
-  it("renders the formula line from copy.ts and the formula id", () => {
+  it("renders a readable formula with its inputs, not the formula id", () => {
     const result = comparableResult();
     const html = render(result, THEN, NOW);
     expect(html).toContain(REVEAL_COPY.formulaLabel);
-    expect(html).toContain(CHANGE_FORMULA_ID);
+    // THEN 3.000, NOW 3.600: (now - then) / then x 100.
+    expect(html).toContain("(3.600 - 3.000) / 3.000 x 100");
+    // The identifier is kept in a data attribute only, never in visible text.
+    expect(html).toContain(`data-formula="${CHANGE_FORMULA_ID}"`);
+    const visibleText = html.replace(/<[^>]*>/g, "");
+    expect(visibleText).not.toContain(CHANGE_FORMULA_ID);
+  });
+
+  it("shows the plain difference when the then value is zero (no percent)", () => {
+    const zeroThen: Readonly<FigureV1> = { ...THEN, value: "0.000" };
+    const result = computeChange(zeroThen, NOW);
+    if (!result.comparable) throw new Error("test setup: must be comparable");
+    const html = render(result, zeroThen, NOW);
+    expect(html).toContain("3.600 - 0.000");
+    expect(html).not.toContain(" / 0.000");
   });
 
   it("does not render the fixture-data label when neither input is a fixture", () => {

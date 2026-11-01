@@ -31,6 +31,12 @@
   /* width and margin-top come inline from ENVELOPE_TARGET; this centres it. */
   margin-left: auto;
   margin-right: auto;
+  /* The frame stays inside its paper panel. If the inline width is wider than
+     the panel, the frame narrows and any overflow is clipped, not spilled. */
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  overflow: hidden;
   /* The envelope keeps its own 300:188 aspect; the frame just bounds the
      width, so the SVG scales without distortion. */
 }

@@ -106,6 +106,14 @@ export const CEREMONY_COPY = {
   /** The note explaining that sound and vibration start off. */
   soundNote: "Sound and vibration are off unless you turn them on.",
 
+  // --- Number_Line (the figures stage) ---
+
+  /**
+   * The hidden text for the Mark on a Number_Line. `{value}` is the answer as
+   * typed; `{unit}` is the figure's unit. Read by screen readers only.
+   */
+  markAnswer: "Your answer: {value} {unit}",
+
   // --- Live region, one short line per Stage ---
 
   /**

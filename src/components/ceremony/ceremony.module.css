@@ -83,6 +83,43 @@
   outline-offset: 2px;
 }
 
+/*
+ * The Calm and Skip controls (CeremonyRoot.tsx). They sit on the desk, not in
+ * a paper panel, so they use the desk tokens and never the browser's default
+ * button look. `.desk` (above) sets --desk-ink and the desk background on the
+ * element; this rule then sets the lit-desk surface and a solid ink border.
+ * --desk-lit and --desk-lit-max are the two lit-desk surfaces that the
+ * contrast test checks for --desk-ink text, so the label clears AA on both.
+ * The border is --desk-ink, which clears the 3:1 non-text contrast minimum
+ * (WCAG 1.4.11) on the lit desk.
+ */
+.deskControl {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin: 0.25rem 0.5rem 0.25rem 0;
+  padding: 0.5rem 1rem;
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.25;
+  color: var(--desk-ink);
+  background-color: var(--desk-lit);
+  border: 1px solid var(--desk-ink);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.deskControl:hover {
+  background-color: var(--desk-lit-max);
+}
+
+/* The control carries `.desk` itself, so `.desk :focus-visible` (a descendant
+   rule) does not reach it. This gives it the same 2px desk-ink ring. */
+.deskControl:focus-visible {
+  outline: 2px solid var(--desk-ink);
+  outline-offset: 2px;
+}
+
 /* --- Shared Ceremony rules (R1.7) --- */
 
 /*
@@ -92,6 +129,18 @@
 .ceremony {
   position: relative;
   min-height: 100%;
+}
+
+/*
+ * The region itself is a -1 tab stop that receives focus when a Stage changes
+ * (CeremonyRoot.tsx). It is a container, not a control, so it draws no focus
+ * ring. The rings above (`.desk :focus`, `.onPaper :focus`) still apply to the
+ * controls and headings inside it. This rule comes after them and has the same
+ * specificity, so it wins.
+ */
+.ceremony:focus,
+.ceremony:focus-visible {
+  outline: none;
 }
 
 /*

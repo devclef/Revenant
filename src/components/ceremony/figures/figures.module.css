@@ -1,0 +1,149 @@
+/*
+ * Styles for the comparable-figure entries: the pressed Stamps and the
+ * Number_Line (design.md "Number_Line geometry", "Stamps and counter").
+ *
+ * Paper surfaces. Every element here sets --ink itself, so no text inherits a
+ * colour from the desk (tone.md, Property 22). The tokens come from
+ * globals.css.
+ *
+ * Neutrality (neutrality.md, R10.1): no colour or direction depends on a value.
+ * A rise and a fall use identical rules. Positions are the only values that
+ * vary, and they reach the markup through the --pos-* custom properties only.
+ */
+
+/* --- Paper panel: one comparable entry (its then and now stamps, the
+   Number_Line and the change line) sits on a paper surface. The panel sets
+   its own text colour, so no text inherits the dark desk ink (tone.md). --- */
+
+.paperPanel {
+  box-sizing: border-box;
+  padding: 1rem 1.25rem;
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+/* --- Stamp: a pressed frame holding a figure --- */
+
+.stamp {
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  border: 2px solid var(--ink);
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+.face {
+  display: block;
+  font-size: 1.75rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.2;
+}
+
+.sourceName {
+  display: block;
+  font-size: 0.9rem;
+}
+
+/* Vertical drop on mount, full motion only. Timing comes from constants.ts
+   through inline styles, so the duration is never a literal here. */
+.drop {
+  animation-name: stampDrop;
+  animation-fill-mode: both;
+}
+
+@keyframes stampDrop {
+  from {
+    transform: translateY(-1rem) scale(1.04);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+/* --- Number_Line: a plain axis, two pins and an optional Mark --- */
+
+/* The Number_Line is only rendered inside the paper panel (FigureEntry), never
+   on the dark desk. Its graphics use the ink token and are checked against the
+   paper surface (WCAG 2.2 AA, 3:1 for graphical objects; see
+   NumberLine.test.tsx). The pair is named here once. */
+.numberLine {
+  --figure-line: var(--ink);
+  --figure-surface: var(--paper);
+  position: relative;
+  box-sizing: border-box;
+  width: 100%;
+  height: 0;
+  margin: 2.5rem 0;
+  color: var(--figure-line);
+}
+
+.axis {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  border-top: 2px solid var(--figure-line);
+}
+
+/* The pin above the axis drops from the then Stamp; the pin below it rises to
+   the now Stamp. Only the left edge carries a position variable. */
+.pinThen,
+.pinNow {
+  position: absolute;
+  width: 0;
+  height: 1.5rem;
+  border-left: 2px solid var(--figure-line);
+}
+
+.pinThen {
+  left: calc(var(--pos-then) * 100%);
+  bottom: 0;
+}
+
+.pinNow {
+  left: calc(var(--pos-now) * 100%);
+  top: 0;
+}
+
+/* The Mark: a small ink stroke on the axis at --pos-mark. Its wrapper holds
+   the hidden text, so only this wrapper is positioned by the variable. */
+.markWrap {
+  position: absolute;
+  top: 0;
+  left: calc(var(--pos-mark) * 100%);
+  width: 0;
+  height: 0;
+}
+
+.markStroke {
+  position: absolute;
+  top: -0.6rem;
+  left: 0;
+  width: 0;
+  height: 1.2rem;
+  border-left: 3px solid var(--figure-line);
+}
+
+/* Hidden from sight, read by screen readers (R11.9). */
+.srOnly {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .drop {
+    animation: none;
+  }
+}
