@@ -14,6 +14,8 @@
 import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
+import { isLetterId } from "../seal-format/base64url";
+
 import {
   PERSONAS,
   RETIRED_LETTER_IDS,
@@ -110,5 +112,51 @@ describe("index — loads without any letter .txt file", () => {
     const mod = await import("./index");
     expect(mod.PERSONAS.length).toBeGreaterThanOrEqual(1);
     expect(mod.PERSONAS[0].letter_path).toMatch(/^letters\/.+\.txt$/);
+  });
+});
+
+// Example checks against the committed personas.json for issue #82: Maya moved
+// to catalogue metrics and her letter ID was rotated. The old ID is retired.
+describe("index — committed list: Maya after the catalogue move (#82)", () => {
+  const OLD_LETTER_ID = "wom_GdH6gqP6AGgnyhIMgA";
+  const NEW_LETTER_ID = "GNUIStxJIx6BBmZXHGHBnA";
+
+  function maya() {
+    const entry = PERSONAS.find((p) => p.key === "us-maya");
+    expect(entry).toBeDefined();
+    return entry!;
+  }
+
+  it("lists Maya's metrics as the catalogue IDs in order, with recall subjects", () => {
+    expect(maya().metrics).toEqual([
+      {
+        metric_id: "us-gasoline-regular",
+        recall_subject: "a gallon of regular gasoline",
+      },
+      { metric_id: "us-diesel", recall_subject: "a gallon of diesel" },
+    ]);
+  });
+
+  it("retires the old letter ID and does not use it as a current letter_id", () => {
+    expect(RETIRED_LETTER_IDS).toContain(OLD_LETTER_ID);
+    expect(PERSONAS.map((p) => p.letter_id)).not.toContain(OLD_LETTER_ID);
+  });
+
+  it("uses a new letter_id that passes isLetterId and is unique across entries and retired IDs", () => {
+    expect(maya().letter_id).toBe(NEW_LETTER_ID);
+    expect(isLetterId(maya().letter_id)).toBe(true);
+
+    const all = [
+      ...PERSONAS.map((p) => p.letter_id),
+      ...RETIRED_LETTER_IDS,
+    ];
+    expect(all.filter((id) => id === NEW_LETTER_ID)).toHaveLength(1);
+  });
+
+  it("keeps key, written_as_of, opens_at and letter_path unchanged", () => {
+    expect(maya().key).toBe("us-maya");
+    expect(maya().written_as_of).toBe("2024-05-12");
+    expect(maya().opens_at).toBe("2024-11-05T00:00:00.000Z");
+    expect(maya().letter_path).toBe("letters/us-maya.txt");
   });
 });
