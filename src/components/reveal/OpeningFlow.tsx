@@ -27,12 +27,21 @@
  *
  * Focus (R9.6, accessibility): when the view changes, focus moves to the new
  * view's region so a keyboard or screen-reader user lands on the fresh content
- * instead of staying on a control that no longer exists. Each view is wrapped
- * in a `tabIndex={-1}` region labelled for the current step; the effect focuses
- * it whenever `state.tag` changes. `StillSealed` and `RecallStep` render their
- * own `<h1>`; the wrapper region is the reliable focus target for every view,
- * including the inline loading and verifying statements and the ones without a
- * heading element.
+ * instead of staying on a control that no longer exists. The region is now
+ * `CeremonyRoot` (design.md "OpeningFlow changes"): it keeps the same
+ * `tabIndex={-1}`, `role="region"` and `aria-label` as the old plain root
+ * `div`, owns the focus-on-`state.tag` effect, and additionally carries
+ * `data-ceremony` (the Stage) and `data-ceremony-motion` (`full` or `calm`),
+ * announcing each new Stage in a polite live region. `StillSealed` and
+ * `RecallStep` render their own `<h1>`; the wrapper region is the reliable
+ * focus target for every view, including the inline loading and verifying
+ * statements and the ones without a heading element.
+ *
+ * Motion and skip contexts (design.md "Final state first"): the tree is wrapped
+ * in `MotionProvider` and `SkipProvider` so `useMotion` and `useSequence`
+ * resolve inside `CeremonyRoot` and the views. The providers resolve `full`
+ * motion and no active sequence on the server and first render, so the static
+ * render is unchanged.
  *
  * Crypto boundary (R14.6): this module imports no `@/lib/crypto`, statically or
  * otherwise. Crypto is reached only through the dynamic `import()` inside
@@ -43,8 +52,10 @@
  * inline user-facing literal.
  */
 
-import { useEffect, useRef } from "react";
 import { ParchmentSurface } from "@/components/ui";
+import { CeremonyRoot } from "@/components/ceremony/CeremonyRoot";
+import { MotionProvider } from "@/components/ceremony/motion";
+import { SkipProvider } from "@/components/ceremony/skip";
 import { useOpeningFlow } from "./useOpeningFlow";
 import { StillSealed } from "./StillSealed";
 import { SealIntact } from "./SealIntact";
@@ -59,11 +70,17 @@ export type OpeningFlowProps = {
   /**
    * The letter's public ID, taken only from the persona list. Passed straight
    * to `useOpeningFlow`, which uses it for every API call and as the recall
-   * record's AAD. This component never reads it from the URL.
+   * record's AAD. This component never reads it from the URL (R16.5).
    */
   letterId: string;
   /** The persona's name, for the region's accessible label. */
   personaName: string;
+  /**
+   * List fields for the envelope (R3.7) and the seal pattern (R8.4). Optional,
+   * so the spec 03 tests render as before. It feeds the scene only; it never
+   * supplies the letter id, which always comes from `letterId` (R16.5).
+   */
+  persona?: { key: string; written_as_of: string; opens_at: string };
 };
 
 /**
@@ -79,28 +96,36 @@ const OPEN_FAILED_KIND: Record<OpenFailedKind, FlowErrorKind> = {
   invalid_input: "invalidInput",
 };
 
-export function OpeningFlow({ letterId, personaName }: OpeningFlowProps) {
+export function OpeningFlow({
+  letterId,
+  personaName,
+  persona,
+}: OpeningFlowProps) {
   const flow = useOpeningFlow(letterId);
   const { state } = flow;
 
-  // Move focus to the new view's region whenever the step changes (R9.6). The
-  // region is a -1 tab stop, so this focuses it programmatically without adding
-  // it to the normal tab order.
-  const regionRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    regionRef.current?.focus();
-  }, [state.tag]);
-
+  // The root is `CeremonyRoot`: it keeps the region role, the persona label and
+  // the -1 tab stop, owns the focus-on-`state.tag` effect, and derives
+  // `data-ceremony` / `data-ceremony-motion` plus the live-region announcement
+  // from the current flow state. `MotionProvider` and `SkipProvider` wrap it so
+  // `useMotion` and `useSequence` resolve for the root and the views; both
+  // resolve `full` motion and no active sequence on the server and first
+  // render, so the static markup is unchanged (design.md "Final state first").
   return (
-    <div
-      ref={regionRef}
-      tabIndex={-1}
-      role="region"
-      aria-label={personaName}
-      className={styles.flow}
-    >
-      <div className={styles.view}>{selectView(state, flow, personaName)}</div>
-    </div>
+    <MotionProvider>
+      <SkipProvider>
+        <CeremonyRoot
+          state={state}
+          personaName={personaName}
+          persona={persona}
+          className={styles.flow}
+        >
+          <div className={styles.view}>
+            {selectView(state, flow, personaName)}
+          </div>
+        </CeremonyRoot>
+      </SkipProvider>
+    </MotionProvider>
   );
 }
 

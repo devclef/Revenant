@@ -29,11 +29,15 @@ const here = dirname(fileURLToPath(import.meta.url));
 // src/components/demo -> src
 const srcRoot = resolve(here, "..", "..");
 
-// The two directories whose `.tsx` files render demo markup.
+// The directories whose `.tsx` files render demo/ceremony markup. The ceremony
+// flow renders on the persona demo page, so its literals fall under the same
+// R15.1 guard. `tsxFilesIn` is flat; the ceremony tree nests a `desk/`
+// subdirectory, so it is walked recursively by `tsxFilesUnder` below.
 const scannedDirs = [
   resolve(srcRoot, "components", "demo"),
   resolve(srcRoot, "app", "demo"),
 ];
+const ceremonyDir = resolve(srcRoot, "components", "ceremony");
 
 function tsxFilesIn(dir: string): string[] {
   let names: string[];
@@ -52,7 +56,37 @@ function tsxFilesIn(dir: string): string[] {
     .sort();
 }
 
-const scannedFiles = scannedDirs.flatMap(tsxFilesIn);
+// Recursively collect non-test `.tsx` under `dir` (covers the nested
+// ceremony/desk/ component).
+function tsxFilesUnder(dir: string): string[] {
+  let names: string[];
+  try {
+    names = readdirSync(dir);
+  } catch {
+    return [];
+  }
+  const out: string[] = [];
+  for (const name of names) {
+    const full = resolve(dir, name);
+    const stat = statSync(full);
+    if (stat.isDirectory()) {
+      out.push(...tsxFilesUnder(full));
+      continue;
+    }
+    if (
+      name.endsWith(".tsx") &&
+      !/\.(test|spec)\.tsx$/.test(name) &&
+      stat.isFile()
+    ) {
+      out.push(full);
+    }
+  }
+  return out.sort();
+}
+
+const ceremonyFiles = tsxFilesUnder(ceremonyDir);
+
+const scannedFiles = [...scannedDirs.flatMap(tsxFilesIn), ...ceremonyFiles];
 
 const hasLetter = /[A-Za-z]/;
 
@@ -93,6 +127,10 @@ function literalJsxText(
 describe("no literal JSX text nodes in demo components and pages (R15.1)", () => {
   it("scans a non-empty set of files", () => {
     expect(scannedFiles.length).toBeGreaterThan(0);
+  });
+
+  it("scans a non-empty set of ceremony files", () => {
+    expect(ceremonyFiles.length).toBeGreaterThan(0);
   });
 
   it.each(scannedFiles)("has no literal JSX text node: %s", (file) => {

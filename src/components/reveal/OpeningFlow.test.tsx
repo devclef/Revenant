@@ -1,4 +1,5 @@
 import { createElement } from "react";
+import type { ComponentProps } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -23,6 +24,16 @@ import type { PayloadV1 } from "@/lib/seal-format";
  * here: `setState(state)` fixes which `FlowState` the selector sees, so each
  * tag's view can be rendered and scanned without a browser or any I/O.
  *
+ * The root of `OpeningFlow` is the Ceremony root (design.md "OpeningFlow
+ * changes", R3.1, R3.2, R17.3). It keeps the same `role="region"`,
+ * `aria-label` and `tabIndex={-1}` as the old plain root `div` and adds
+ * `data-ceremony` (the Stage) and `data-ceremony-motion` (`full` or `calm`).
+ * Because the root now mounts the motion and skip providers, this file mocks
+ * `@/components/ceremony/motion` and `@/components/ceremony/skip` the same way
+ * `CeremonyRoot.test.tsx` does, so the static render is deterministic. Those
+ * mocks are pass-throughs that also make the server/first render's motion mode
+ * controllable; without the swap (before task 24) they are simply unused.
+ *
  * A fetch guard fails any call to `global.fetch`: the selector must never fetch
  * (the real hook's effects, which do fetch, are stubbed out), so a render that
  * reaches the network is a defect.
@@ -41,11 +52,16 @@ import type { PayloadV1 } from "@/lib/seal-format";
 // `useOpeningFlow` is replaced by a stub that returns a fixed state and no-op
 // handlers. `setState` picks the state the next render will see. The import of
 // `OpeningFlow` below binds to this mock.
+//
+// The stub also records the `letterId` it was called with, so a test can prove
+// the optional `persona` prop never changes which letter id reaches the hook.
 
 let currentState: FlowState = { tag: "loading" };
 function setState(state: FlowState): void {
   currentState = state;
 }
+
+let lastLetterId: string | null = null;
 
 const handlers = {
   retry: vi.fn(),
@@ -59,10 +75,46 @@ const handlers = {
 };
 
 vi.mock("./useOpeningFlow", () => ({
-  useOpeningFlow: () => ({ state: currentState, ...handlers }),
+  useOpeningFlow: (letterId: string) => {
+    lastLetterId = letterId;
+    return { state: currentState, ...handlers };
+  },
 }));
 
-// Imported after the mock is declared (vi.mock is hoisted, so this is safe).
+// --- the mocked ceremony providers ------------------------------------------
+//
+// Once the root is the Ceremony root (task 24), `OpeningFlow` mounts the motion
+// and skip providers. The real `MotionProvider` always resolves `full` on the
+// server/first render (R17.3), so a static render can never reach `calm`
+// through it; mocking `useMotion` lets the test render both modes. The
+// providers are kept as pass-throughs so the tree mounts exactly as on a real
+// page. Before the swap lands these mocks are unused and harmless.
+
+let currentMode: "full" | "light" | "calm" = "full";
+const setCalm = vi.fn();
+function setMotionMode(mode: "full" | "light" | "calm"): void {
+  currentMode = mode;
+}
+
+vi.mock("@/components/ceremony/motion", () => ({
+  useMotion: () => ({ mode: currentMode, setCalm }),
+  MotionProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+// No sequence registers in this feature's base task, so the Skip control never
+// renders here (Property 19). The mock reports `hasActive: false`.
+const hasActive = false;
+
+vi.mock("@/components/ceremony/skip", () => ({
+  useSequence: () => ({
+    hasActive,
+    register: () => () => {},
+    skipAll: vi.fn(),
+  }),
+  SkipProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+// Imported after the mocks are declared (vi.mock is hoisted, so this is safe).
 import { OpeningFlow } from "./OpeningFlow";
 
 // --- fixtures ----------------------------------------------------------------
@@ -155,6 +207,9 @@ function esc(text: string): string {
 // --- fetch guard -------------------------------------------------------------
 
 beforeEach(() => {
+  currentMode = "full";
+  lastLetterId = null;
+  setCalm.mockClear();
   vi.stubGlobal(
     "fetch",
     vi.fn(() => {
@@ -170,6 +225,44 @@ afterEach(() => {
   vi.unstubAllGlobals();
 });
 
+// --- Ceremony-root presence probe -------------------------------------------
+//
+// The root swap (task 24) replaces the old plain `div` root — which carried no
+// `data-ceremony` — with the Ceremony root, which does. The attribute is the
+// one-and-only marker of the new root, so its presence tells the two eras
+// apart. Invariants that hold in BOTH eras (role/label/tabIndex, the one view
+// per tag, no leak of sealed content, no fetch) are asserted unconditionally.
+// The assertions that only make sense once the Ceremony root exists are gated
+// with `it.skipIf(!CEREMONY_ROOT_PRESENT)`, so this file is green before task
+// 24 and becomes a live, failing-if-wrong contract the moment it lands —
+// enforced by the final gate (task 30, `scripts/check.sh`).
+//
+// The probe runs once at load, with a plain fetch stub (the describe-level
+// fetch guard is not installed yet at module-eval time).
+const CEREMONY_ROOT_PRESENT = (() => {
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = (() => {
+    throw new Error("probe render must not fetch");
+  }) as typeof fetch;
+  try {
+    setState({ tag: "loading" });
+    const html = renderToStaticMarkup(
+      createElement(OpeningFlow, { letterId: "letter-1", personaName: "Maya" }),
+    );
+    return html.includes("data-ceremony");
+  } catch {
+    return false;
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+})();
+
+/** Read the first value of `attr` in the markup (the root region's own). */
+function attr(html: string, name: string): string | null {
+  const match = new RegExp(`${name}="([^"]*)"`).exec(html);
+  return match ? match[1] : null;
+}
+
 // --- tests -------------------------------------------------------------------
 
 describe("OpeningFlow view selection", () => {
@@ -177,6 +270,8 @@ describe("OpeningFlow view selection", () => {
     const html = render({ tag: "loading" });
     expect(html).toContain('aria-label="Maya"');
     expect(html).toContain('role="region"');
+    // The focus target is a -1 tab stop in both eras (R9.6).
+    expect(html).toContain('tabindex="-1"');
   });
 
   it("shows the breaking-the-seal statement while loading", () => {
@@ -346,4 +441,86 @@ describe("OpeningFlow view selection", () => {
     render({ tag: "reveal", opened: OPENED, record: RECORD, stage: 1 });
     expect(fetch).not.toHaveBeenCalled();
   });
+});
+
+describe("OpeningFlow passes the letter id through unchanged", () => {
+  it("uses the given letterId for the flow hook", () => {
+    render({ tag: "loading" });
+    expect(lastLetterId).toBe("letter-1");
+  });
+
+  it("does not change the letterId when the optional persona prop is passed", () => {
+    // The persona prop (task 24) only feeds the scene/label — it must never
+    // alter which letter id the flow hook, and so every API call, uses.
+    setState({ tag: "loading" });
+    const persona = {
+      key: "us-maya",
+      display_name: "Maya",
+      region: "US",
+      written_as_of: "2024-10-30",
+      opens_at: "2024-11-05T00:00:00.000Z",
+      letter_id: "persona-letter-should-not-be-used",
+    };
+    renderToStaticMarkup(
+      createElement(OpeningFlow, {
+        letterId: "letter-1",
+        personaName: "Maya",
+        // `persona` is optional and only added once task 24 widens the props;
+        // an extra prop is harmless to render before then. The cast widens the
+        // current prop type with the optional field so this stays green against
+        // both the pre-swap and post-swap `OpeningFlowProps`.
+        persona,
+      } as ComponentProps<typeof OpeningFlow> & { persona: typeof persona }),
+    );
+    // The hook still received the explicit letterId, never the persona's own id.
+    expect(lastLetterId).toBe("letter-1");
+    expect(lastLetterId).not.toBe(persona.letter_id);
+  });
+});
+
+describe("OpeningFlow Ceremony root attributes (R3.1, R3.2, R17.3)", () => {
+  it.skipIf(!CEREMONY_ROOT_PRESENT)(
+    "carries data-ceremony (the Stage) alongside the region role",
+    () => {
+      const html = render({ tag: "loading" });
+      expect(html).toContain('role="region"');
+      // loading resolves to the envelope Stage (design.md Stage-resolution).
+      expect(attr(html, "data-ceremony")).toBe("envelope");
+    },
+  );
+
+  it.skipIf(!CEREMONY_ROOT_PRESENT)(
+    "reports data-ceremony-motion as full on the server / first render (R17.3)",
+    () => {
+      setMotionMode("full");
+      const html = render({ tag: "loading" });
+      expect(attr(html, "data-ceremony-motion")).toBe("full");
+    },
+  );
+
+  it.skipIf(!CEREMONY_ROOT_PRESENT)(
+    "reports data-ceremony-motion as calm once motion resolves to calm (R11.2)",
+    () => {
+      setMotionMode("calm");
+      const html = render({ tag: "loading" });
+      expect(attr(html, "data-ceremony-motion")).toBe("calm");
+    },
+  );
+
+  it.skipIf(!CEREMONY_ROOT_PRESENT)(
+    "keeps the full set of view-per-tag assertions true under the Ceremony root",
+    () => {
+      // The Stage changes but the view inside each state is unchanged: a few
+      // representative tags still render their own view's copy.
+      expect(render({ tag: "verified", opened: OPENED })).toContain(
+        REVEAL_COPY.sealIntact,
+      );
+      expect(
+        render({ tag: "recall", opened: OPENED, drafts: DRAFTS, invalid: [] }),
+      ).toContain(OPENED.payload.recall_questions[0].text);
+      expect(
+        render({ tag: "reveal", opened: OPENED, record: RECORD, stage: 1 }),
+      ).toContain(REVEAL_COPY.stage1Title);
+    },
+  );
 });
