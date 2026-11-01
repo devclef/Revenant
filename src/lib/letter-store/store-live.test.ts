@@ -149,7 +149,7 @@ function makeFakeDb(seed: FakeOptions = {}) {
       }
       if (text.includes("count(*)")) {
         const kind = params[0] as string;
-        const cutoff = params[1] as Date;
+        const cutoff = new Date(params[1] as string);
         const n = demo.filter(
           (r) => r.kind === kind && r.sealedAt.getTime() > cutoff.getTime(),
         ).length;
@@ -171,8 +171,8 @@ function makeFakeDb(seed: FakeOptions = {}) {
           kind: params[1] as string,
           envelope: params[2] as string,
           envelopeHash: params[3] as string,
-          sealedAt: params[4] as Date,
-          opensAt: params[5] as Date,
+          sealedAt: new Date(params[4] as string),
+          opensAt: new Date(params[5] as string),
           serverSecret: params[6] as Buffer,
         });
         return [];

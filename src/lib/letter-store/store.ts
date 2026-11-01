@@ -275,7 +275,7 @@ export async function storeLiveLetter(
       const [counted] = await tx.execute<{ n: number }>(sql`
         SELECT count(*)::int AS n FROM ${demoLetters}
         WHERE ${demoLetters.kind} = ${LIVE_KIND}
-          AND ${demoLetters.sealedAt} > ${new Date(now.getTime() - LIVE_SEAL_WINDOW_MS)}
+          AND ${demoLetters.sealedAt} > ${new Date(now.getTime() - LIVE_SEAL_WINDOW_MS).toISOString()}
       `);
       if (counted.n > LIVE_SEAL_CAP) {
         throw new LetterStoreError("busy");
@@ -289,7 +289,7 @@ export async function storeLiveLetter(
         INSERT INTO ${demoLetters}
           (id, kind, envelope, envelope_hash, sealed_at, opens_at, server_secret)
         VALUES
-          (${id}, ${LIVE_KIND}, ${canonicalEnvelope}, ${realHash}, ${sealedAt}, ${opensAt}, ${draft.server_secret})
+          (${id}, ${LIVE_KIND}, ${canonicalEnvelope}, ${realHash}, ${sealedAt.toISOString()}, ${opensAt.toISOString()}, ${draft.server_secret})
       `);
 
       await tx.execute(sql`

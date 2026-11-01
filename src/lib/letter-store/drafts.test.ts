@@ -64,7 +64,7 @@ function makeFakeDb(seed: { drafts?: FakeDraft[]; taken?: string[] } = {}) {
         return [{ t: CLOCK }];
       }
       if (text.startsWith("DELETE FROM")) {
-        const cutoff = params[0] as Date;
+        const cutoff = new Date(params[0] as string);
         for (let i = drafts.length - 1; i >= 0; i--) {
           if (drafts[i].createdAt.getTime() < cutoff.getTime()) {
             drafts.splice(i, 1);
@@ -84,7 +84,7 @@ function makeFakeDb(seed: { drafts?: FakeDraft[]; taken?: string[] } = {}) {
         drafts.push({
           id: params[0] as string,
           serverSecret: params[1] as Buffer,
-          createdAt: params[2] as Date,
+          createdAt: new Date(params[2] as string),
         });
         return [];
       }

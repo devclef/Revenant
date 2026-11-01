@@ -74,7 +74,7 @@ export async function createDraft(
 
       await tx.execute(sql`
         DELETE FROM ${demoLetterDrafts}
-        WHERE ${demoLetterDrafts.createdAt} < ${new Date(now.getTime() - DRAFT_LIFETIME_MS)}
+        WHERE ${demoLetterDrafts.createdAt} < ${new Date(now.getTime() - DRAFT_LIFETIME_MS).toISOString()}
       `);
 
       const [counted] = await tx.execute<{ n: number }>(
@@ -105,7 +105,7 @@ export async function createDraft(
       const serverSecret = randomBytes(32);
       await tx.execute(sql`
         INSERT INTO ${demoLetterDrafts} (id, server_secret, created_at)
-        VALUES (${id}, ${Buffer.from(serverSecret)}, ${now})
+        VALUES (${id}, ${Buffer.from(serverSecret)}, ${now.toISOString()})
       `);
 
       return { letterId: id, serverSecret, serverNow: now };
