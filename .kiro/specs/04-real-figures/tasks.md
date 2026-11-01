@@ -71,7 +71,7 @@ All Source_Files are downloaded from the publishers' public pages without a key 
   - Validation: `bash scripts/check.sh`
   - _Requirements: R1.9, R7.1–R7.8, R14.1–R14.3_
 
-- [ ] 5. Prefetch script: run both Adapters, refresh, write the file
+- [x] 5. Prefetch script: run both Adapters, refresh, write the file
   - Agent: `data-dev` · Depends on: 2, 3, 4 · Estimated size: ~1,000 changed lines
   - Before this task: none.
   - Scope: `src/lib/sources/prefetch.ts`, `prefetch.test.ts`, `scripts/prefetch-figures.mjs`, `scripts/prefetch-figures-main.ts`, `scripts/prefetch-figures-main.test.ts`, `src/lib/sources/boundary.test.ts` (extend), `package.json`, and, only if R4.4 applies, `src/lib/figures/catalogue.ts` (see below)
