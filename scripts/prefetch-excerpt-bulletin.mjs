@@ -136,10 +136,15 @@ function nowUtc() {
 // The <v> value of column A in a <row> element's XML, as the publisher's text.
 // Returns null when the row has no column-A numeric cell (header/footer rows).
 function columnAValue(rowXml) {
-  // Match the A<n> cell and capture its <v> text verbatim.
-  const cell = rowXml.match(/<c\b[^>]*\br="A\d+"[^>]*>([\s\S]*?)<\/c>/);
+  // Match the A<n> cell — self-closing (no value) or open/close — and read the
+  // <v> inside that one cell only, never spilling into a following cell.
+  const cell = rowXml.match(
+    /<c\b[^>]*?\br="A\d+"[^>]*?\/>|<c\b[^>]*?\br="A\d+"[^>]*?>([\s\S]*?)<\/c>/,
+  );
   if (!cell) return null;
-  const v = cell[1].match(/<v>([\s\S]*?)<\/v>/);
+  const inner = cell[1];
+  if (inner === undefined) return null; // self-closing A cell: no value
+  const v = inner.match(/<v>([\s\S]*?)<\/v>/);
   return v ? v[1] : null;
 }
 
@@ -149,11 +154,17 @@ function rowNumberOf(rowXml) {
 }
 
 // Drop every cell whose column letter is not in KEEP_COLUMNS, editing the row
-// XML as text so kept cells (and their <v> bytes) are untouched.
+// XML as text so kept cells (and their <v> bytes) are untouched. A self-closing
+// cell (`<c r="E2" s="1"/>`) is matched by its own alternative first, so it is
+// never mistaken for an open tag whose `</c>` search would swallow the cells
+// that follow it.
 function keepColumnsAD(rowXml) {
   return rowXml.replace(
-    /<c\b[^>]*\br="([A-Z]+)\d+"[^>]*(?:\/>|>[\s\S]*?<\/c>)/g,
-    (match, col) => (KEEP_COLUMNS.has(col) ? match : ""),
+    /<c\b[^>]*?\br="([A-Z]+)\d+"[^>]*?\/>|<c\b[^>]*?\br="([A-Z]+)\d+"[^>]*?>[\s\S]*?<\/c>/g,
+    (match, selfCol, openCol) => {
+      const col = selfCol ?? openCol;
+      return KEEP_COLUMNS.has(col) ? match : "";
+    },
   );
 }
 
@@ -202,7 +213,12 @@ function sliceSheetXml(sheetPath) {
   if (!sheetDataMatch) throw new Error("no <sheetData> in sheet XML");
   const sheetData = sheetDataMatch[1];
 
-  const rowRe = /<row\b[\s\S]*?(?:\/>|<\/row>)/g;
+  // Match a whole <row>: either a self-closing empty row (`<row .../>`), or an
+  // open row and everything up to its own `</row>`. The two alternatives are
+  // ordered so a self-closing CELL inside the row (`<c r="A2" s="28"/>`) never
+  // ends the row early — the earlier regex stopped at the first `/>` and so
+  // dropped every cell after an empty one (the row-2/row-3 unit labels).
+  const rowRe = /<row\b[^>]*?\/>|<row\b[^>]*?>[\s\S]*?<\/row>/g;
   const kept = [];
   for (let m = rowRe.exec(sheetData); m; m = rowRe.exec(sheetData)) {
     const rowXml = m[0];

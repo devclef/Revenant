@@ -20,3 +20,14 @@ How it was made:
   deleted as text (every kept <v> is the publisher's bytes, unchanged);
   the other sheets and the comments/drawings/printerSettings parts were
   removed from the package; the result was zipped again.
+
+Repair (2026-11-01):
+  The first recorder run (06559..) left rows 2 and 3 truncated: a regex
+  stopped a row at the first self-closing cell, so the product-name cells
+  (C2/D2) and the unit-label cells (C3/D3 = "1000 l") were dropped and the
+  sheet XML was left malformed. The row/cell matching in
+  scripts/prefetch-excerpt-bulletin.mjs was fixed, and this excerpt's
+  sheetData was rebuilt well-formed, restoring C2/D2 and C3/D3 from the
+  publisher's own shared strings already inside the package. Every data
+  <v> is the publisher's bytes, unchanged; no figure was altered or
+  invented. A fresh recorder run reproduces this same structure.
