@@ -158,9 +158,22 @@ describe("the Number_Line graphics clear 3:1 on the paper panel (WCAG 2.2 AA)", 
     }
   });
 
-  it("the --ink line on the --paper surface clears 3:1", () => {
+  it("sits on a paper surface, never the dark desk", () => {
+    expect(figuresCss).toMatch(/--figure-surface:\s*var\(--paper\)/);
+    expect(figuresCss).not.toMatch(/--figure-surface:[^;]*--desk/);
+  });
+
+  it("the --ink line clears 3:1 on --paper and on the shaded --paper-deep", () => {
     const line = readToken(globalsCss, "--ink");
-    const surface = readToken(globalsCss, "--paper");
-    expect(contrast(line, surface)).toBeGreaterThanOrEqual(GRAPHIC_MIN);
+    for (const surfaceToken of ["--paper", "--paper-deep"]) {
+      const surface = readToken(globalsCss, surfaceToken);
+      expect(contrast(line, surface), surfaceToken).toBeGreaterThanOrEqual(GRAPHIC_MIN);
+    }
+  });
+
+  it("the Stamp drop stops under prefers-reduced-motion (checked in Stamp.test.tsx)", () => {
+    expect(figuresCss).toMatch(
+      /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.drop\s*\{\s*animation:\s*none;?\s*\}\s*\}/,
+    );
   });
 });

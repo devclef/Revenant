@@ -67,9 +67,10 @@
 
 /* --- Number_Line: a plain axis, two pins and an optional Mark --- */
 
-/* The Number_Line draws on the paper panel, so its graphics use the ink token
-   and are checked against the paper surface (WCAG 2.2 AA, 3:1 for graphical
-   objects; see number-line.test.tsx). The pair is named here once. */
+/* The Number_Line is only rendered inside the paper panel (FigureEntry), never
+   on the dark desk. Its graphics use the ink token and are checked against the
+   paper surface (WCAG 2.2 AA, 3:1 for graphical objects; see
+   NumberLine.test.tsx). The pair is named here once. */
 .numberLine {
   --figure-line: var(--ink);
   --figure-surface: var(--paper);
