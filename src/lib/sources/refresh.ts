@@ -21,8 +21,10 @@ import type { FigureV1 } from "@/lib/seal-format";
 
 import type { SourceFigure } from "./types";
 
-// Reference loadFigureFile so the import is used before `serialiseFigureFile`
-// (task 4) is implemented. `mergeRefresh` below uses CATALOGUE directly.
+// `loadFigureFile` is part of this module's documented `@/lib/figures` surface
+// (it validates a serialised file when prefetch.ts, task 5, round-trips the
+// output). It is referenced here so the import stays used; `mergeRefresh` and
+// `serialiseFigureFile` below use CATALOGUE directly.
 void loadFigureFile;
 
 // --- Types -------------------------------------------------------------------
@@ -286,10 +288,94 @@ export function mergeRefresh(
 }
 
 /**
- * Serialise figures to the deterministic figure-file layout and key order.
- * Implemented in task 4 (see design.md "Deterministic serialisation").
+ * The fixed, neutral `note` for the real fuel-figures file (design.md
+ * "Deterministic serialisation"). It states what wrote the file and that
+ * existing figures are never changed; it says nothing about any value rising,
+ * falling, improving, worsening, being corrected or revised. Under 500
+ * characters (data-integrity.md, neutrality.md).
+ */
+const FIGURE_FILE_NOTE =
+  "Official weekly fuel prices from the U.S. EIA and the European Commission " +
+  "Weekly Oil Bulletin, from 2023-06-01. Written by scripts/prefetch-figures; " +
+  "existing figures are never changed.";
+
+/**
+ * Catalogue position of each metric id, used to order figures. A metric id not
+ * in the catalogue sorts after every catalogued one (it should never occur for
+ * a figure built from the catalogue, but ordering must still be total).
+ */
+const CATALOGUE_INDEX = new Map<string, number>(
+  CATALOGUE.map((series, index) => [series.metric.id, index]),
+);
+
+function catalogueIndex(metricId: string): number {
+  const index = CATALOGUE_INDEX.get(metricId);
+  return index === undefined ? CATALOGUE.length : index;
+}
+
+/**
+ * Serialise figures to the deterministic figure-file layout and key order
+ * (design.md "Deterministic serialisation", R1.9).
+ *
+ * The output is byte-identical for the same set of figures regardless of the
+ * input order: a fresh array is built and sorted by catalogue position of
+ * `metric_id`, then `period` ascending (string order of `YYYY-MM-DD`). Each
+ * figure is `JSON.stringify` of an object built in the fixed key order
+ * `kind, metric_id, value, unit, region, period, source, series_id,
+ * retrieved_at, source_url` — never relying on the key insertion order of the
+ * parsed input. Top-level keys are `fixture`, `note`, `series`, `figures`,
+ * followed by a final newline. Serialising the parse of a serialisation gives
+ * identical bytes.
  */
 export function serialiseFigureFile(figures: readonly FigureV1[]): string {
-  void figures;
-  throw new Error("serialiseFigureFile is not implemented yet");
+  // Build a fresh, fully-ordered array. Never mutate the input and never rely
+  // on its ordering.
+  const ordered = [...figures].sort((a, b) => {
+    const ai = catalogueIndex(a.metric_id);
+    const bi = catalogueIndex(b.metric_id);
+    if (ai !== bi) return ai - bi;
+    if (a.metric_id !== b.metric_id)
+      return a.metric_id < b.metric_id ? -1 : 1;
+    if (a.period !== b.period) return a.period < b.period ? -1 : 1;
+    return 0;
+  });
+
+  // Each figure line: JSON.stringify of a freshly-built object with the fixed
+  // key order, indented four spaces. A trailing comma on every line but the
+  // last. `source_url` is the final key and belongs only to official figures;
+  // a self-reported figure has no such field (its schema is strict), so it is
+  // omitted rather than emitted as undefined. Figures in the real fuel file are
+  // always official, but the signature accepts any FigureV1.
+  const figureLines = ordered.map((fig, index) => {
+    const base = {
+      kind: fig.kind,
+      metric_id: fig.metric_id,
+      value: fig.value,
+      unit: fig.unit,
+      region: fig.region,
+      period: fig.period,
+      source: fig.source,
+      series_id: fig.series_id,
+      retrieved_at: fig.retrieved_at,
+    };
+    const orderedFig =
+      fig.kind === "official"
+        ? { ...base, source_url: fig.source_url }
+        : base;
+    const comma = index === ordered.length - 1 ? "" : ",";
+    return `    ${JSON.stringify(orderedFig)}${comma}`;
+  });
+
+  const lines = [
+    "{",
+    `  "fixture": false,`,
+    `  "note": ${JSON.stringify(FIGURE_FILE_NOTE)},`,
+    `  "series": [],`,
+    `  "figures": [`,
+    ...figureLines,
+    `  ]`,
+    "}",
+  ];
+
+  return lines.join("\n") + "\n";
 }
