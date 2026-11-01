@@ -1,0 +1,18 @@
+src/lib/sources/__recorded__/oil-bulletin-page.html
+
+Recorded excerpt of a real page, kept only to test the link-finder. It
+carries links, not figures, and nothing in it may be used for display
+(R8.2). It is a test fixture, never content shown to a user.
+
+Source URL:   https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en
+Recorded at:  2026-11-01T11:04:04Z (UTC)
+Recorded by:  scripts/prefetch-excerpt-bulletin.mjs
+
+Keeps:
+  The text around the "Price developments" links, including the single
+  history-file link (filename=Weekly_Oil_Bulletin_Prices_History_maticni_4web.xlsx) and at least one
+  other .xlsx link, so the exactly-one-match rule is testable.
+
+How it was made:
+  The landing page HTML was fetched and a region around the
+  "Price developments" anchor was sliced out verbatim.

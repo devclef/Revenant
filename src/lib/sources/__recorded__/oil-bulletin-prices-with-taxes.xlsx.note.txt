@@ -1,0 +1,33 @@
+src/lib/sources/__recorded__/oil-bulletin-prices-with-taxes.xlsx
+
+Recorded excerpt of a real file, kept only to test the parser. Its
+numbers MUST NOT be used for display: they are a test fixture, never a
+figure shown to a user (R8.2). Every kept value is the publisher's bytes,
+unchanged, so the parser reads them back exactly as it would the full file.
+
+Source URL:   https://energy.ec.europa.eu/document/download/906e60ca-8b6a-44e7-8589-652854d2fd3f_en?filename=Weekly_Oil_Bulletin_Prices_History_maticni_4web.xlsx
+Recorded at:  2026-11-01T11:04:04Z (UTC)
+Recorded by:  scripts/prefetch-excerpt-bulletin.mjs
+
+Keeps:
+  Sheet "Prices with taxes" only; columns A-D only.
+  Rows: header rows 1-3, footer rows 1096-1097, and the data rows for
+  2026-10-26, 2026-10-19, 2026-10-12, 2024-11-04, 2024-05-06, 2023-06-05, 2023-05-29.
+  All other sheets, comments, drawings and printer settings removed.
+
+How it was made:
+  The real .xlsx was unzipped; rows and cells in the sheet XML were
+  deleted as text (every kept <v> is the publisher's bytes, unchanged);
+  the other sheets and the comments/drawings/printerSettings parts were
+  removed from the package; the result was zipped again.
+
+Repair (2026-11-01):
+  The first recorder run (06559..) left rows 2 and 3 truncated: a regex
+  stopped a row at the first self-closing cell, so the product-name cells
+  (C2/D2) and the unit-label cells (C3/D3 = "1000 l") were dropped and the
+  sheet XML was left malformed. The row/cell matching in
+  scripts/prefetch-excerpt-bulletin.mjs was fixed, and this excerpt's
+  sheetData was rebuilt well-formed, restoring C2/D2 and C3/D3 from the
+  publisher's own shared strings already inside the package. Every data
+  <v> is the publisher's bytes, unchanged; no figure was altered or
+  invented. A fresh recorder run reproduces this same structure.
