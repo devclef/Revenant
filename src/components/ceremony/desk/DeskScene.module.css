@@ -1,0 +1,174 @@
+/*
+ * DeskScene styles (design.md "Desk", R13.1, R13.4-R13.7, R8.6, R11.5).
+ *
+ * The dark desk the persona page rests on, drawn entirely with CSS gradients
+ * from the desk tokens in ceremony.module.css (R1.7). DeskScene renders three
+ * elements, each marked with a global data attribute (NOT a CSS-module class),
+ * so these rules target those attributes via :global() — the build-safe way to
+ * style global attributes from a CSS module (a bare attribute selector would
+ * be rejected as "not pure"):
+ *
+ *   [data-desk]        the desk surface (gradient fill, the static fallback),
+ *                      also carrying [data-desk-motion="full"|"light"|"calm"]
+ *   [data-candle]      a decorative radial-gradient candle light pool, above
+ *                      the desk and below the content (aria-hidden)
+ *   [data-desk-plane]  the parallax plane that carries the page content; it
+ *                      reads --light-x / --light-y and --parallax-* set by
+ *                      useLight.ts
+ *
+ * DeskScene applies no hashed className from this module, so a local `.desk`
+ * selector would never match the rendered markup. The attributes are specific
+ * to this scene, so the rules stay scoped in practice.
+ *
+ * Static-desk fallback: with no JavaScript the light and parallax custom
+ * properties are never set, so each falls back to a settled centre value and
+ * the desk is a complete, readable scene on its own (R13.4 — "without
+ * JavaScript the page shows the static desk"). Nothing here depends on JS.
+ *
+ * Final state first (design.md): this file applies no start-state. The settled
+ * desk is the first render; task 20 moves to a start state in a layout effect
+ * on the client in full motion only.
+ *
+ * Candle flicker (R11.5): the light layer's opacity swings by at most
+ * CANDLE_FLICKER_AMPLITUDE (0.04) over a smooth keyframe whose period is at
+ * least CANDLE_FLICKER_MIN_PERIOD_MS (900 ms) — no step changes. It is
+ * decoration only and is disabled under prefers-reduced-motion and in the
+ * settled (data-desk-motion="calm" / "light") modes.
+ *
+ * Neutrality (neutrality.md, R10.1): no colour, gradient or animation here
+ * depends on any value or direction. There is no judgement colour anywhere.
+ *
+ * Contrast: the desk colour tokens come from ceremony.module.css and are
+ * verified by contrast.test.ts / Property 22. The candle only swings the lit
+ * desk between --desk-lit and --desk-lit-max, so text never drops below AA.
+ */
+
+/* The desk surface. */
+:global([data-desk]) {
+  position: relative;
+  isolation: isolate; /* keep the candle's stacking contained */
+  min-height: 100svh;
+  width: 100%;
+  overflow: hidden;
+
+  /* Desk surface: a quiet vertical gradient on the darkest desk token, with a
+     faint warmer pool toward the lower centre where the candle sits. The
+     static desk reads fine with no JS; the pool below is a fixed resting
+     position, not driven by the pointer. */
+  background-color: var(--desk);
+  background-image:
+    radial-gradient(
+      120% 90% at 50% 120%,
+      var(--desk-lit) 0%,
+      transparent 60%
+    ),
+    linear-gradient(180deg, color-mix(in srgb, var(--desk) 80%, #000) 0%, var(--desk) 55%);
+}
+
+/*
+ * The candle light layer: a soft radial pool placed at the pointer position
+ * (--light-x / --light-y, 0..1 across the desk) or, with no JS, at a settled
+ * resting point low and central. It sits above the desk surface and below the
+ * content, is decoration, and is aria-hidden in the markup.
+ *
+ * The pool never brightens the desk past --desk-lit-max, so text over the lit
+ * desk always clears AA (contrast.test.ts / Property 22).
+ */
+:global([data-candle]) {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+
+  /* Fallbacks: a settled resting light position when useLight has not run. */
+  --light-x: 0.5;
+  --light-y: 0.62;
+
+  background: radial-gradient(
+    38vmax 34vmax at
+      calc(var(--light-x) * 100%)
+      calc(var(--light-y) * 100%),
+    color-mix(in srgb, var(--desk-lit-max) 100%, transparent) 0%,
+    color-mix(in srgb, var(--desk-lit) 60%, transparent) 38%,
+    transparent 72%
+  );
+
+  /* The smooth flicker: opacity swings within CANDLE_FLICKER_AMPLITUDE (0.04)
+     over a period >= CANDLE_FLICKER_MIN_PERIOD_MS (900 ms), eased so there are
+     no steps. */
+  opacity: 1;
+  animation: desk-candle-flicker 1800ms ease-in-out infinite alternate;
+}
+
+/*
+ * Flicker keyframe. The whole swing is 0.04 (1.0 -> 0.96): the lit pool only
+ * ever moves between --desk-lit and --desk-lit-max, keeping text above AA.
+ * Smooth easing, no step() — one gentle breath, slower than
+ * CANDLE_FLICKER_MIN_PERIOD_MS.
+ */
+@keyframes desk-candle-flicker {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0.96; /* CANDLE_FLICKER_AMPLITUDE = 0.04 total swing */
+  }
+}
+
+/*
+ * The parallax plane carries the page content. It reads the parallax offset
+ * and tilt set by useLight.ts (--parallax-x / --parallax-y in px, and the two
+ * tilt degrees), falling back to no movement when JS has not run, so the
+ * static desk holds its content perfectly still and centred.
+ */
+:global([data-desk-plane]) {
+  position: relative;
+  z-index: 1;
+
+  /* Fallbacks keep the static plane settled (no JS = no transform shift). */
+  --parallax-x: 0px;
+  --parallax-y: 0px;
+  --parallax-deg-x: 0deg;
+  --parallax-deg-y: 0deg;
+
+  transform:
+    translate3d(var(--parallax-x), var(--parallax-y), 0)
+    rotateX(var(--parallax-deg-x))
+    rotateY(var(--parallax-deg-y));
+  transform-origin: 50% 40%;
+  will-change: transform;
+
+  /* The Demo label and intro note must stay visible without scrolling at
+     360×640 (QA step 02). The plane adds no top offset of its own and keeps
+     a compact top padding so the label sits inside the first viewport. */
+  padding: clamp(0.75rem, 3vh, 1.5rem) 1rem 2rem;
+  box-sizing: border-box;
+}
+
+/*
+ * Settled modes and the OS reduced-motion preference: no flicker and no
+ * parallax transform. DeskScene carries data-desk-motion="calm" | "light" |
+ * "full"; "calm" and "light" settle the desk, and the media query covers the
+ * OS preference directly for the no-JS / full case too.
+ */
+:global([data-desk][data-desk-motion="calm"] [data-candle]),
+:global([data-desk][data-desk-motion="light"] [data-candle]) {
+  animation: none;
+  opacity: 1;
+}
+
+:global([data-desk][data-desk-motion="calm"] [data-desk-plane]),
+:global([data-desk][data-desk-motion="light"] [data-desk-plane]) {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :global([data-candle]) {
+    animation: none;
+    opacity: 1;
+  }
+
+  :global([data-desk-plane]) {
+    transform: none;
+  }
+}
