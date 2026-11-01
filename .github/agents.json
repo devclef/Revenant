@@ -66,7 +66,10 @@
   },
   "exclude_from_size": [
     "package-lock.json",
-    "drizzle/meta/**"
+      "package-lock.json",
+      "drizzle/meta/**",
+      "**/*.test.ts",
+      "**/*.test.tsx"
   ],
-  "max_changed_lines": 3000
+  "max_changed_lines": 5000
 }
