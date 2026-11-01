@@ -8,8 +8,8 @@
 //
 // Style follows src/lib/figures/*.property.test.ts: fast-check generators,
 // `fc.assert(fc.property(...))` with { numRuns: 100 }, no network and no I/O.
-// The schema is pure; DEMO_FIGURES is built at import time from the fixture
-// JSON.
+// The schema is pure; DEMO_FIGURES is built at import time from the catalogue
+// metrics.
 
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
