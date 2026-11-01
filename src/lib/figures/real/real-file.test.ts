@@ -13,6 +13,9 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import type { FigureV1 } from "@/lib/seal-format";
+import { serialiseFigureFile } from "@/lib/sources/refresh";
+
 import { CATALOGUE } from "../catalogue";
 import { loadFigureFile } from "../load";
 import { isRealDate } from "../periods";
@@ -24,6 +27,10 @@ const MAX_FILE_BYTES = 1_000_000;
 const RETRIEVED_AT_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 const PERIOD_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const PLACEHOLDER_RETRIEVED_AT = "2000-01-01T00:00:00Z";
+const EARLY_COVERAGE_LIMIT = "2023-06-07";
+const LATE_COVERAGE_LIMIT = "2024-11-05";
+const MIN_FIGURES_PER_SERIES = 178;
+const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
 const CATALOGUE_SOURCE_URLS: Readonly<Record<string, string>> = {
   "us-gasoline-regular":
@@ -113,5 +120,53 @@ describe("committed real figure file", () => {
     for (const figure of file.figures) {
       expect(figure.period <= utcDateOf(figure.retrieved_at)).toBe(true);
     }
+  });
+});
+
+// Group the committed figures by series, keeping file order (sorted by period).
+function figuresBySeries(): Map<string, Array<(typeof file.figures)[number]>> {
+  const groups = new Map<string, Array<(typeof file.figures)[number]>>();
+  for (const figure of file.figures) {
+    const group = groups.get(figure.metric_id) ?? [];
+    group.push(figure);
+    groups.set(figure.metric_id, group);
+  }
+  return groups;
+}
+
+function utcMillis(period: string): number {
+  return Date.parse(`${period}T00:00:00Z`);
+}
+
+describe("committed real figure file: coverage, spacing and serialisation", () => {
+  it("covers every catalogue series from on or before 2023-06-07 to after 2024-11-05", () => {
+    const groups = figuresBySeries();
+    for (const entry of CATALOGUE) {
+      const periods = (groups.get(entry.metric.id) ?? []).map((figure) => figure.period);
+      expect(periods.length).toBeGreaterThan(0);
+      expect(periods.some((period) => period <= EARLY_COVERAGE_LIMIT)).toBe(true);
+      expect(periods.some((period) => period > LATE_COVERAGE_LIMIT)).toBe(true);
+    }
+  });
+
+  it("has at least 178 figures for every series", () => {
+    for (const entry of CATALOGUE) {
+      const count = figuresBySeries().get(entry.metric.id)?.length ?? 0;
+      expect(count).toBeGreaterThanOrEqual(MIN_FIGURES_PER_SERIES);
+    }
+  });
+
+  it("spaces each series' consecutive periods exactly 7 days apart with no repeats", () => {
+    for (const [metricId, figures] of figuresBySeries()) {
+      for (let i = 1; i < figures.length; i += 1) {
+        const gap = utcMillis(figures[i].period) - utcMillis(figures[i - 1].period);
+        expect(gap, `${metricId} at ${figures[i].period}`).toBe(WEEK_MS);
+      }
+    }
+  });
+
+  it("is exactly what serialiseFigureFile produces from its own parsed content", () => {
+    const parsed = JSON.parse(raw) as { figures: FigureV1[] };
+    expect(serialiseFigureFile(parsed.figures)).toBe(raw);
   });
 });
