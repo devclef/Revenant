@@ -92,7 +92,7 @@ All Source_Files are downloaded from the publishers' public pages without a key 
   - Validation: `bash scripts/check.sh`
   - _Requirements: R4.4, R6.1–R6.9, R7.1–R7.8, R8.7, R13.2, R13.5, R14.1_
 
-- [ ] 6. The committed Real_File and its checks
+- [x] 6. The committed Real_File and its checks
   - Agent: `data-dev` · Depends on: 5 · Estimated size: ~970 changed lines (about 720 of data, about 250 of tests)
   - Before this task: none. This task needs internet access to `www.eia.gov` and `energy.ec.europa.eu`. If the agent's environment can't reach them, it stops and reports to the owner; it does not write the file by hand and does not use another source.
   - Scope: `src/lib/figures/real/fuel-figures.json`, `src/lib/figures/real/real-file.test.ts`
