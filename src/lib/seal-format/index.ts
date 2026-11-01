@@ -43,3 +43,10 @@ export {
   headerWithoutCiphertext,
   type EnvelopeV1,
 } from "./v1/header";
+
+// Time-lock constants for Live_Letters (shared with the browser).
+export {
+  LOCK_DURATION_MS,
+  DRAFT_LIFETIME_MS,
+  LOCK_MAX_AHEAD_MS,
+} from "./live-constants";

@@ -59,6 +59,21 @@ export const INTERNAL = Object.freeze({ error: "internal" } as const);
 /** Fixed error body: the request payload exceeded the allowed size (R-size). */
 export const TOO_LARGE = Object.freeze({ error: "too_large" } as const);
 
+/** Fixed error body: the Live_Letter demo is busy (429). Nothing was sealed. */
+export const BUSY = Object.freeze({ error: "busy" } as const);
+
+/** Fixed error body: the Live_Letter demo is not configured on this server (503). */
+export const NOT_CONFIGURED = Object.freeze({ error: "not_configured" } as const);
+
+/** Fixed error body: the sealed envelope did not parse as a valid letter (400). */
+export const INVALID_ENVELOPE = Object.freeze({ error: "invalid_envelope" } as const);
+
+/** Fixed error body: the submitted envelope hash does not match the envelope (400). */
+export const HASH_MISMATCH = Object.freeze({ error: "hash_mismatch" } as const);
+
+/** Fixed error body: the envelope's lock does not fit the server clock (422). */
+export const LOCK_OUT_OF_RANGE = Object.freeze({ error: "lock_out_of_range" } as const);
+
 /**
  * Build the fixed `invalid_body` error body for a named field (400).
  *
