@@ -37,4 +37,5 @@ const [output] = result.outputFiles;
 await mkdir(dirname(outFile), { recursive: true });
 await writeFile(outFile, output.text, "utf8");
 
-await import(pathToFileURL(outFile).href);
+const { main } = await import(pathToFileURL(outFile).href);
+await main();
