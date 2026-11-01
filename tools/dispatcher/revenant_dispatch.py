@@ -128,6 +128,13 @@ def pick_next_issue(issues: list[dict], closed: set[int], busy_roles: set[str]) 
 def dev_spec(issue: dict, role: str, feedback: str | None = None) -> str:
     """Task Runner spec for a dev or fix run. The ticket body is untrusted
     input; it is quoted and fenced, never treated as instructions about tools."""
+    if feedback:
+        step_count = (
+            "Plan 1 to 2 steps. Do not plan a step that reproduces the failure: "
+            "the failure is quoted in the review feedback below."
+        )
+    else:
+        step_count = "Plan 2 to 4 steps."
     lines = [
         f"# {issue['title']}",
         "",
@@ -136,10 +143,23 @@ def dev_spec(issue: dict, role: str, feedback: str | None = None) -> str:
         f"`{role}` agent. Follow `.kiro/agents/prompts/common.md` and every "
         "steering doc in `.kiro/steering/`.",
         "",
+        "## Steps",
+        f"{step_count} Each step writes code or tests and ends in a state worth "
+        "committing. Do not plan steps that only read, inspect, confirm, verify or "
+        "run checks: the Task Runner already runs `scripts/check.sh` and a reviewer "
+        "after every step.",
+        "",
+        "## Reading the spec",
+        "- Read the \"Rules for every task\" section of the spec's `tasks.md`.",
+        "- Read `design.md` and `requirements.md` only for the sections the ticket "
+        "names: list the headings with `grep -n '^#'`, then read those line ranges.",
+        "",
         "## Requirements",
         "- Do only what the ticket below asks, inside its Scope paths.",
         "- Do not push, open PRs, or call GitHub. Commit your work locally.",
-        "- `bash scripts/check.sh` must pass before you finish.",
+        "- The Task Runner runs `bash scripts/check.sh` after every step and it must "
+        "pass. While working, run only targeted checks (`npx vitest run <path>`, "
+        "`npx tsc --noEmit`, `npx eslint <files>`).",
         "",
         "## Acceptance criteria",
         "- Every acceptance criterion in the ticket below is met and tested.",
@@ -175,8 +195,8 @@ def qa_spec(pr: dict, issue: dict) -> str:
         "The base is `origin/main`.",
         "",
         "## Steps",
-        "This is ONE step. Do not split it. In that single step: read the diff, run "
-        "`bash scripts/check.sh`, check each acceptance criterion, then write and commit "
+        "This is ONE step. Do not split it. In that single step: read the diff, "
+        "check each acceptance criterion, then write and commit "
         "`.qa/verdict.json` in this worktree.",
         "",
         "## Requirements",

@@ -85,6 +85,33 @@ class Specs(unittest.TestCase):
     def test_feedback_included(self):
         self.assertIn("Fix every blocker", d.dev_spec(issue(3, []), "data-dev", "- blocker"))
 
+    def test_dev_requirements_check_wording(self):
+        spec = d.dev_spec(issue(3, []), "data-dev")
+        self.assertIn("runs `bash scripts/check.sh` after every step and it must pass", spec)
+        self.assertIn("npx vitest run <path>", spec)
+        self.assertNotIn("must pass before you finish", spec)
+        self.assertIn("- `bash scripts/check.sh` passes.", spec)
+
+    def test_dev_steps_section(self):
+        spec = d.dev_spec(issue(3, []), "data-dev")
+        self.assertIn("## Steps", spec)
+        self.assertIn("Plan 2 to 4 steps.", spec)
+        self.assertIn("only read, inspect, confirm, verify or run checks", spec)
+        self.assertIn("Rules for every task", spec)
+        self.assertIn("grep -n '^#'", spec)
+        self.assertNotIn("1 to 2 steps", spec)
+
+    def test_fix_steps_section(self):
+        spec = d.dev_spec(issue(3, []), "data-dev", "- blocker")
+        self.assertIn("Plan 1 to 2 steps.", spec)
+        self.assertIn("reproduces the failure", spec)
+        self.assertNotIn("2 to 4 steps", spec)
+
+    def test_qa_spec_does_not_run_check_sh(self):
+        spec = d.qa_spec({"number": 7, "title": "t"}, issue(3, []))
+        self.assertIn("This is ONE step.", spec)
+        self.assertNotIn("check.sh", spec)
+
 
 class RunState(unittest.TestCase):
     def test_states(self):
