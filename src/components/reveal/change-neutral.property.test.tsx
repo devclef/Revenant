@@ -55,6 +55,16 @@ import { LocalViewProvider } from "@/components/ceremony/local-view";
 import { SkipProvider } from "@/components/ceremony/skip";
 import { MotionProvider, type MotionMode } from "@/components/ceremony/motion";
 
+// The reveal tests read the fixture through a mocked DEMO_FIGURES, so they do
+// not depend on the real figure file (spec 04, task 11). The factory loads the
+// fixture against the real catalogue, as demo/index.ts does for the fixture half.
+vi.mock("@/lib/figures/demo", async () => {
+  const { loadFigureFile } = await import("@/lib/figures/load");
+  const { CATALOGUE } = await import("@/lib/figures/catalogue");
+  const fixture = await import("@/lib/figures/demo/us-fuel.fixture.json");
+  return { DEMO_FIGURES: loadFigureFile(fixture.default, CATALOGUE) };
+});
+
 // --- the motion mode for the calm clause -----------------------------------
 //
 // The real `MotionProvider` resolves `full` on the server and in the first
