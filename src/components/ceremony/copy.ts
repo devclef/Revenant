@@ -31,9 +31,6 @@ export const CEREMONY_COPY = {
   /** Skips the current stage's motion and settles it at once. */
   skip: "Skip",
 
-  /** Skips the ink reveal of the letter and shows the whole text at once. */
-  inkSkip: "Show the whole letter",
-
   // --- Envelope stage ---
 
   /** The envelope's written-as-of line. `{date}` is the written-as-of date. */
