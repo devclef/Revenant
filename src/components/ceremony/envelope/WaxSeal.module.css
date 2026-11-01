@@ -1,0 +1,25 @@
+/*
+ * WaxSeal styles (design.md "Envelope and seal", R10.1).
+ *
+ * The seal is one wax colour for every key. These tokens set that colour and
+ * the slightly darker "pressed" ink used for the rim and glyph strokes, so the
+ * component itself names no literal colour in a style attribute. Both reuse the
+ * existing wax red (--seal, #7a1f1a, defined in globals.css); the component
+ * falls back to those literals if a token is ever missing.
+ *
+ * Neutrality (neutrality.md, R10.1): nothing here depends on a value or a
+ * direction. Every seal — whatever its key, and whatever a letter's figures did
+ * — is drawn with exactly these colours. There is no green/red and no
+ * directional semantics. The seal carries no text, so it needs no text-contrast
+ * token; it is decoration on a paper flap.
+ */
+
+.seal {
+  /* One wax colour for every key (R10.1), reusing the wax red from globals.css. */
+  --seal-wax: #7a1f1a;
+  /* The darker pressed ink for the rim and centre glyph. A shade of the same
+     wax, so the whole seal stays one hue. */
+  --seal-rim: #5c1713;
+
+  display: block;
+}

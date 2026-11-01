@@ -12,11 +12,20 @@
  * `state.tag`.
  *
  * View per tag (design.md state machine):
- * - `loading`            -> an inline "breaking the seal" statement.
- * - `sealed`             -> `StillSealed` (opening date + countdown, retry).
- * - `openable` /
- *   `verifying`          -> an inline "checking the seal" statement.
- * - `verified`           -> `SealIntact` (the seal-is-intact statement + Begin).
+ * - `loading` /
+ *   `sealed` /
+ *   `openable` /
+ *   `verifying` /
+ *   `verified`           -> `EnvelopeView` (design.md "Envelope and seal"): the
+ *                           envelope Stage carries the "Bringing the letter into
+ *                           the light." statement (`loading`), the still-sealed
+ *                           opening date and countdown (`sealed`), the "Checking
+ *                           the seal." statement (`openable` / `verifying`), and
+ *                           the intact Stage with the seal-is-intact statement
+ *                           and Begin (`verified`). The persona list fields feed
+ *                           the envelope's dates and seal pattern; with no
+ *                           persona the envelope uses its default pattern and
+ *                           shows no dates (spec 03 renders).
  * - `recall`             -> `RecallStep` (answer the sealed questions).
  * - `submitting` /
  *   `submit_failed`      -> `RecallStep`, with the submit control disabled while
@@ -52,13 +61,15 @@
  * inline user-facing literal.
  */
 
-import { ParchmentSurface } from "@/components/ui";
 import { CeremonyRoot } from "@/components/ceremony/CeremonyRoot";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { SkipProvider } from "@/components/ceremony/skip";
+import {
+  EnvelopeView,
+  type EnvelopeViewVariant,
+} from "@/components/ceremony/envelope/EnvelopeView";
+import type { EnvelopePersona } from "@/components/ceremony/envelope/Envelope";
 import { useOpeningFlow } from "./useOpeningFlow";
-import { StillSealed } from "./StillSealed";
-import { SealIntact } from "./SealIntact";
 import { RecallStep } from "./RecallStep";
 import { Reveal } from "./Reveal";
 import { FlowError, type FlowErrorKind } from "./FlowError";
@@ -121,7 +132,7 @@ export function OpeningFlow({
           className={styles.flow}
         >
           <div className={styles.view}>
-            {selectView(state, flow, personaName)}
+            {selectView(state, flow, personaName, persona)}
           </div>
         </CeremonyRoot>
       </SkipProvider>
@@ -134,28 +145,47 @@ function selectView(
   state: FlowState,
   flow: ReturnType<typeof useOpeningFlow>,
   personaName: string,
+  persona?: OpeningFlowProps["persona"],
 ): React.ReactNode {
+  // The envelope's per-letter inputs: the persona list fields plus the demo
+  // flag. These are always demo persona letters, so `demo` is true whenever a
+  // persona is present. With no persona (spec 03 renders) the envelope falls
+  // back to its default seal pattern and shows no dates (R3.7). The seal
+  // patternKey is seeded from `persona.key` inside the Envelope/WaxSeal (R8.4).
+  const envelopePersona: EnvelopePersona | undefined =
+    persona === undefined ? undefined : { ...persona, demo: true };
+
+  /** Render the shared EnvelopeView for one of the envelope-group variants. */
+  const envelopeView = (variant: EnvelopeViewVariant): React.ReactNode => (
+    <EnvelopeView
+      variant={variant}
+      persona={envelopePersona}
+      onBegin={flow.begin}
+      onRetry={flow.retry}
+    />
+  );
+
   switch (state.tag) {
     case "loading":
-      return (
-        <ParchmentSurface as="section" className={styles.sealed}>
-          <h1>{REVEAL_COPY.loading}</h1>
-        </ParchmentSurface>
-      );
+      return envelopeView("loading");
 
     case "sealed":
-      return <StillSealed opensAt={state.opensAt} onRetry={flow.retry} />;
+      // The still-sealed opening date and countdown come from EnvelopeView's
+      // reused StillSealed, which reads them from the persona list field
+      // `opens_at` (the same letter's opening instant the server released).
+      // With no persona (spec 03 renders) the closed envelope stands alone.
+      return envelopeView("sealed");
 
     case "openable":
+      // `openable` is a brief transition into checking the seal; it shows the
+      // same "Checking the seal." scene as `verifying`.
+      return envelopeView("verifying");
+
     case "verifying":
-      return (
-        <ParchmentSurface as="section" className={styles.intact}>
-          <h1>{REVEAL_COPY.verifying}</h1>
-        </ParchmentSurface>
-      );
+      return envelopeView("verifying");
 
     case "verified":
-      return <SealIntact onBegin={flow.begin} />;
+      return envelopeView("verified");
 
     case "recall":
       return (

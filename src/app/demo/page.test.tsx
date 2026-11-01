@@ -71,9 +71,9 @@ describe("Demo_Index page markup", () => {
 
   it("renders one card per persona, in list order", async () => {
     const html = await renderWithPersonas(TWO_PERSONAS);
-    // One "Break the seal" link per persona.
+    // One "Pick up the letter" link per persona.
     const sealLinks = html.match(
-      new RegExp(DEMO_COPY.breakSeal, "g"),
+      new RegExp(DEMO_COPY.openLetter, "g"),
     );
     expect(sealLinks).not.toBeNull();
     expect(sealLinks).toHaveLength(TWO_PERSONAS.length);
@@ -96,11 +96,19 @@ describe("Demo_Index page markup", () => {
     expect(html).not.toContain(DEMO_COPY.indexEmpty);
   });
 
+  it("never shows the old 'Break the seal' wording (R2)", async () => {
+    const withCards = await renderWithPersonas(TWO_PERSONAS);
+    expect(withCards).not.toContain("Break the seal");
+
+    const empty = await renderWithPersonas([]);
+    expect(empty).not.toContain("Break the seal");
+  });
+
   it("renders indexEmpty and no cards for an empty list (R6.8)", async () => {
     const html = await renderWithPersonas([]);
     expect(html).toContain(DEMO_COPY.indexEmpty);
-    // No persona cards: no "Break the seal" link appears.
-    expect(html).not.toContain(DEMO_COPY.breakSeal);
+    // No persona cards: no "Pick up the letter" link appears.
+    expect(html).not.toContain(DEMO_COPY.openLetter);
     expect(html).not.toContain('href="/demo/personas/');
   });
 });
