@@ -45,6 +45,33 @@ import type { RecallRecordV1 } from "@/lib/recall";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
 import { POSITION_PROPERTIES } from "@/components/ceremony/constants";
 import { numberLineGeometry } from "@/components/ceremony/figures/number-line";
+import { Counter } from "@/components/ceremony/figures/Counter";
+import {
+  ThenNowSequence,
+  type ThenNowEntry,
+  type ThenNowSequenceProps,
+} from "@/components/ceremony/figures/ThenNowSequence";
+import { LocalViewProvider } from "@/components/ceremony/local-view";
+import { SkipProvider } from "@/components/ceremony/skip";
+import { MotionProvider, type MotionMode } from "@/components/ceremony/motion";
+
+// --- the motion mode for the calm clause -----------------------------------
+//
+// The real `MotionProvider` resolves `full` on the server and in the first
+// render (R17.3), so a static render can never show `calm` through it. The
+// mock below reads `motionState.mode`, which defaults to `full`, so every test
+// that does not set it sees the same markup as the real provider. Only the
+// calm clause changes it. `importOriginal` keeps every other export.
+
+const motionState = vi.hoisted(() => ({ mode: "full" as MotionMode }));
+
+vi.mock("@/components/ceremony/motion", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@/components/ceremony/motion")>();
+  return {
+    ...actual,
+    useMotion: () => ({ mode: motionState.mode, setCalm: () => undefined }),
+  };
+});
 
 // A fixed base figure. Only `value` and `period` vary across a run; the unit,
 // region, source and series stay constant so every generated pair is
@@ -718,6 +745,174 @@ describe("Property 18: not-comparable and unavailable entries draw no line (R9.6
           expect(html).toContain(figureLineMarkup(missingFigure(), "then"));
           expect(html).toContain(figureLineMarkup(gasBadPeriod(), "then"));
           expect(html).toContain(figureLineMarkup(GAS_NOW, "now"));
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+});
+
+// --- Counter clause of Property 13, and the calm clause of Property 20 --------
+
+/**
+ * Every `[data-counter]` cell in a markup string, each as its own substring.
+ * A cell ends where its own `<span>` closes, found by counting nested spans, so
+ * the nested digit strips never cut a cell short.
+ */
+function counterCells(html: string): string[] {
+  const marker = 'data-counter="digit"';
+  const cells: string[] = [];
+  let from = 0;
+  for (;;) {
+    const at = html.indexOf(marker, from);
+    if (at === -1) break;
+    const start = html.lastIndexOf("<span", at);
+    const spans = /<span\b|<\/span>/g;
+    spans.lastIndex = start;
+    let depth = 0;
+    let end = html.length;
+    for (let m = spans.exec(html); m !== null; m = spans.exec(html)) {
+      if (m[0] === "</span>") {
+        depth -= 1;
+        if (depth === 0) {
+          end = m.index + m[0].length;
+          break;
+        }
+      } else {
+        depth += 1;
+      }
+    }
+    cells.push(html.slice(start, end));
+    from = end;
+  }
+  return cells;
+}
+
+/** The digits in a value, in order. */
+function digitCount(value: string): number {
+  return value.replace(/\D/g, "").length;
+}
+
+/** Renders a Counter in full motion (the server and first render). */
+function counterMarkup(value: string): string {
+  return renderToStaticMarkup(
+    createElement(MotionProvider, null, createElement(Counter, { value })),
+  );
+}
+
+describe("Property 13 (counter clause): every counter cell matches once its digits are replaced (R10.6)", () => {
+  it("gives each [data-counter] cell the same markup, for a rise and its mirror fall", () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          thenScaled: fc.integer({ min: 1000, max: 9999999 }),
+          deltaScaled: fc.integer({ min: 1, max: 4999000 }),
+        }),
+        ({ thenScaled, deltaScaled }) => {
+          fc.pre(thenScaled - deltaScaled >= 0);
+          const values = [
+            thousandths(thenScaled),
+            thousandths(thenScaled + deltaScaled),
+            thousandths(thenScaled - deltaScaled),
+          ];
+
+          const cells = values.flatMap((value) => counterCells(counterMarkup(value)));
+          // One cell per digit, and at least one cell in every counter.
+          expect(cells.length).toBe(values.reduce((n, v) => n + digitCount(v), 0));
+
+          const reference = skeletonOf(cells[0] ?? "");
+          for (const cell of cells) {
+            expect(skeletonOf(cell)).toBe(reference);
+          }
+
+          // Collapse every counter to a token, as Property 13 step 4 does.
+          for (const value of values) {
+            const html = counterMarkup(value);
+            let collapsed = html;
+            for (const cell of counterCells(html)) {
+              collapsed = collapsed.split(cell).join("§");
+            }
+            expect(collapsed).not.toContain('data-counter="digit"');
+          }
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+});
+
+/** Renders the stage 3 sequence with a static child, in whatever mode is set. */
+function renderSequence(count: number): string {
+  const entries: ThenNowEntry[] = Array.from({ length: count }, (_, index) => ({
+    key: `metric-${index}`,
+  }));
+  const sequenceProps: ThenNowSequenceProps = {
+    entries,
+    children: createElement("p", null, "figures"),
+  };
+  return renderToStaticMarkup(
+    createElement(
+      LocalViewProvider,
+      null,
+      createElement(
+        SkipProvider,
+        null,
+        createElement(
+          MotionProvider,
+          null,
+          createElement(ThenNowSequence, sequenceProps),
+        ),
+      ),
+    ),
+  );
+}
+
+describe("Property 20 (calm clause): Calm_Mode jumps straight to the final state (R11.2)", () => {
+  beforeEach(() => {
+    motionState.mode = "calm";
+  });
+
+  afterEach(() => {
+    motionState.mode = "full";
+  });
+
+  it("renders the stage 3 sequence and its Counters at their final state, with no animation", () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          count: fc.integer({ min: 0, max: 20 }),
+          digits: fc.array(fc.integer({ min: 0, max: 9 }), { minLength: 1, maxLength: 8 }),
+        }),
+        ({ count, digits }) => {
+          const value = digits.join("");
+
+          // The sequence in calm is the settled `done` state and nothing animates.
+          motionState.mode = "calm";
+          const calmSequence = renderSequence(count);
+          expect(calmSequence).toContain('data-step="done"');
+          expect(calmSequence).not.toContain("animation-duration");
+          expect(calmSequence).not.toContain("data-counter");
+
+          // Full motion's server render is the same final state, so calm equals it.
+          motionState.mode = "full";
+          const finalSequence = renderSequence(count);
+          expect(calmSequence).toBe(finalSequence);
+
+          // A Counter in calm rests on each digit: no roll class, no animation,
+          // and each strip's last digit is the value's digit (the final state).
+          motionState.mode = "calm";
+          const calmCounter = counterMarkup(value);
+          expect(calmCounter).not.toContain("animation-duration");
+          expect(calmCounter).not.toMatch(/class="[^"]*roll/);
+          const cells = counterCells(calmCounter);
+          expect(cells.length).toBe(value.length);
+          cells.forEach((cell, index) => {
+            const strip = [...cell.matchAll(/counterDigit[^"]*">(\d)<\/span>/g)].map((m) =>
+              Number(m[1]),
+            );
+            expect(strip.length).toBe(10);
+            expect(strip[strip.length - 1]).toBe(Number(value[index]));
+          });
         },
       ),
       { numRuns: 100 },
