@@ -45,7 +45,7 @@
 import { useEffect, useRef, type ReactNode } from "react";
 
 import { CEREMONY_COPY } from "./copy";
-import { LiveRegion } from "./LiveRegion";
+import { LiveRegion, LiveRegionProvider } from "./LiveRegion";
 import { LocalViewProvider, useLocalView } from "./local-view";
 import { useMotion } from "./motion";
 import { useSequence } from "./skip";
@@ -71,16 +71,20 @@ export type CeremonyRootProps = {
 };
 
 /**
- * The Ceremony root. Provides the local-view context to the region and the
- * views beneath it (so a running view can report its animation state up), then
- * renders the region itself. The provider's initial value is
- * `DEFAULT_LOCAL_VIEW`, so the first render is the settled state and hydration
- * matches (design.md "Final state first").
+ * The Ceremony root. Provides the local-view and live-region contexts to the
+ * region and the views beneath it, then renders the region itself. The
+ * local-view provider's initial value is `DEFAULT_LOCAL_VIEW`, so the first
+ * render is the settled state and hydration matches (design.md "Final state
+ * first"). The `LiveRegionProvider` gives a view deeper in the tree —
+ * `SealBreak` — a working `useLiveRegion()` so it can announce the seal's
+ * state; the per-Stage line is announced by the region itself (below).
  */
 export function CeremonyRoot(props: CeremonyRootProps) {
   return (
     <LocalViewProvider>
-      <CeremonyRegion {...props} />
+      <LiveRegionProvider>
+        <CeremonyRegion {...props} />
+      </LiveRegionProvider>
     </LocalViewProvider>
   );
 }

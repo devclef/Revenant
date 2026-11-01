@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback, useEffect, useRef } from "react";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV1 } from "@/lib/recall";
 import { RememberedAnswers } from "./RememberedAnswers";
 import { SealedLetter } from "./SealedLetter";
 import { FiguresThenNow } from "./FiguresThenNow";
+import { SealBreak } from "@/components/ceremony/seal/SealBreak";
+import { useLocalView } from "@/components/ceremony/local-view";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
 
@@ -16,12 +18,22 @@ import styles from "./reveal.module.css";
  * the stages the current `stage` has reached and the controls that let the
  * judge move forward, one part at a time.
  *
- * - Stage 1 (`RememberedAnswers`) is always shown: it is what the judge just
- *   remembered, and holds nothing from inside the letter (R9.2, R9.3).
+ * - Stage 1 is the `marks` Stage (design.md "Seal_Break"): the existing
+ *   `RememberedAnswers` as plain text — what the judge just remembered — above
+ *   the unbroken wax seal, its instruction line and the "Break the seal"
+ *   button, all owned by `SealBreak`. It holds nothing from inside the letter
+ *   (R9.2, R9.3). Pressing and holding the seal for `SEAL_HOLD_MS`, or pressing
+ *   the button, breaks the seal and sends `ADVANCE` exactly once (via
+ *   `SealBreak`'s `onAdvance`), which reveals stage 2. `SealBreak` reports its
+ *   `sealing` flag up through the local-view context, so the Ceremony Stage
+ *   reads `seal` while a break is in progress and `marks` otherwise (design.md
+ *   "Stage resolution").
  * - Stage 2 (`SealedLetter`) is shown once `stage >= 2`: what was written then.
+ *   Its "See the numbers" button (`stage2Next`) dispatches `ADVANCE`.
  * - Stage 3 (`FiguresThenNow`) is shown once `stage >= 3`: the figures then and
- *   now. "Show everything" takes the stage straight to 3, so all three render
- *   at once.
+ *   now. "Show everything" (`SHOW_ALL`) takes the stage straight to 3, so all
+ *   three render at once; at stage 1 `SealBreak` renders the seal already split
+ *   when "Show everything" is pressed.
  *
  * Each stage sits in a `${styles.stage} ${styles.fade}` container, so a newly
  * revealed stage fades in over 600 ms and instantly under reduced motion (the
@@ -34,14 +46,14 @@ import styles from "./reveal.module.css";
  * reveal just reached, so "Show everything" lands focus on the last stage it
  * opened.
  *
- * Pacing is driven only by the judge, never by a timer (R9.1): the next-stage
- * button dispatches `ADVANCE` (its label is `stage1Next` at stage 1 and
- * `stage2Next` at stage 2) and the "Show everything" control dispatches
- * `SHOW_ALL`. Both are shown only while a stage is still hidden (`stage < 3`),
- * and both disappear once every stage is visible (R9.4). This component owns no
- * stage state and reads no clock; the stage lives in the reducer.
+ * Pacing is driven only by the judge, never by a timer (R9.1): stage 1 is paced
+ * by the seal break (hold or button), stage 2's `stage2Next` button dispatches
+ * `ADVANCE`, and "Show everything" dispatches `SHOW_ALL`. The stage-2 controls
+ * are shown only while a stage is still hidden (`stage === 2`) and disappear
+ * once every stage is visible (R9.4). This component owns no stage state and
+ * reads no clock; the stage lives in the reducer.
  *
- * Every string comes from copy.ts (R15.1).
+ * Every string comes from copy.ts / the ceremony copy (R15.1).
  */
 
 export type RevealProps = {
@@ -67,8 +79,10 @@ export function Reveal({
   onAdvance,
   onShowAll,
 }: RevealProps) {
-  // A stage is still hidden while the current stage is below 3.
-  const hasHiddenStage = stage < 3;
+  // The local-view context lets stage 1's SealBreak report its `sealing` flag
+  // up to CeremonyRoot, so `stageFor(state, local)` resolves `seal` while a
+  // break is in progress and `marks` otherwise (design.md "Stage resolution").
+  const { setLocalView } = useLocalView();
 
   // The containers for stages 2 and 3; focus moves to the heading inside the
   // stage the reveal just reached.
@@ -90,14 +104,30 @@ export function Reveal({
     heading?.focus();
   }, [stage]);
 
-  // The next-stage button advances 1 -> 2 (read the letter) then 2 -> 3 (see
-  // the numbers). Its label is the copy for the stage being left.
-  const nextLabel = stage === 1 ? REVEAL_COPY.stage1Next : REVEAL_COPY.stage2Next;
+  // Report the seal-break's in-progress flag up to the local view so the
+  // Ceremony Stage reads `seal` while holding and settles back to `marks`.
+  const onSealingChange = useCallback(
+    (sealing: boolean) => {
+      setLocalView({ sealing });
+    },
+    [setLocalView],
+  );
+
+  // Stage 2 still shows its own next control; "Show everything" sits beside it.
+  const stage2HasHidden = stage === 2;
 
   return (
     <section className={styles.reveal}>
       <div className={`${styles.stage} ${styles.fade}`}>
         <RememberedAnswers opened={opened} record={record} />
+        {stage === 1 ? (
+          <SealBreak
+            patternKey={personaName}
+            onAdvance={onAdvance}
+            onShowAll={onShowAll}
+            onSealingChange={onSealingChange}
+          />
+        ) : null}
       </div>
 
       {stage >= 2 ? (
@@ -112,14 +142,14 @@ export function Reveal({
         </div>
       ) : null}
 
-      {hasHiddenStage ? (
+      {stage2HasHidden ? (
         <div className={styles.stageControls}>
           <button
             type="button"
             className={styles.button}
             onClick={onAdvance}
           >
-            {nextLabel}
+            {REVEAL_COPY.stage2Next}
           </button>
           <button
             type="button"
