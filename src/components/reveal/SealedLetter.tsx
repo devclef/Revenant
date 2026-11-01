@@ -59,7 +59,7 @@ export function SealedLetter({ opened, personaName }: SealedLetterProps) {
 
   return (
     <section className={styles.sealedLetter}>
-      <h2>{REVEAL_COPY.stage2Title}</h2>
+      <h2 tabIndex={-1}>{REVEAL_COPY.stage2Title}</h2>
 
       {writtenAsOf === undefined ? null : (
         <p className={styles.period}>{writtenAsOf}</p>
