@@ -15,7 +15,7 @@ Rules specific to your role:
 
 ## Look at your work
 
-Before you finish, look at what you built. You have a headless browser (Playwright) and can run the app locally.
+Do this only in the last step of a run, not in earlier steps. Before you finish, look at what you built. You have a headless browser (Playwright) and can run the app locally.
 
 1. Run `npm run build`. Start a throwaway Postgres (`docker run`), run `npm run db:migrate`, and start the app on a free port with `PORT=<port> DATABASE_URL=<url> npm start`. When the ticket touches the persona page, `src/components/reveal` or `src/components/ceremony`, also run `npm run seal-personas` so the page has letters.
 2. Open every page the ticket changes, at desktop width and at 360 px wide. Take a screenshot of each and open it. Take a first screenshot without a filename: the folder shown in its result is your shots folder. Save the others there with an absolute filename, `<folder>/issue-<number>/<nn>-<state>.png`. Other paths are refused.
