@@ -4,7 +4,8 @@ import { computeChange, isFixtureFigure } from "@/lib/figures";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
 import { thenAndNow } from "@/lib/figures/then-now";
 import type { Opened } from "./opening-machine";
-import { ChangeLine } from "./ChangeLine";
+import type { RecallRecordV1 } from "@/lib/recall";
+import { FigureEntry } from "./FigureEntry";
 import { FigureLine } from "./FigureLine";
 import { FixtureNote } from "./FixtureNote";
 import { REVEAL_COPY } from "./copy";
@@ -33,7 +34,11 @@ import styles from "./reveal.module.css";
  * - When both figures are present, {@link computeChange} decides comparability.
  *   Not comparable: both figures are shown with their own periods, plus the one
  *   neutral reason sentence for the first failing check (R12.x,
- *   data-integrity.md). Comparable: a single {@link ChangeLine} (R12.9).
+ *   data-integrity.md). Comparable: a {@link FigureEntry}, which holds the then
+ *   and now stamps, the Number_Line with the judge's Mark, and the one neutral
+ *   change line (R9.1, R12.9).
+ * - The Mark for a metric is the judge's answer to its number question in the
+ *   stored record (`record`, optional). No record, or "No answer", draws no Mark.
  *
  * The display rescale (if any) comes from the series as loaded in
  * `DEMO_FIGURES` and is passed to each {@link FigureLine}; it is display-only
@@ -53,6 +58,11 @@ import styles from "./reveal.module.css";
 export type FiguresThenNowProps = {
   /** The opened letter; its payload holds the sealed figures and metrics. */
   opened: Opened;
+  /**
+   * The stored recall record. Its answer for each number question gives the
+   * Mark on that metric's Number_Line. Without it, no entry has a Mark.
+   */
+  record?: RecallRecordV1;
 };
 
 // The copy for a missing "now" figure, by the reason thenAndNow reports. A
@@ -66,7 +76,27 @@ function missingNowCopy(
     : REVEAL_COPY.nowUnavailableEmpty;
 }
 
-export function FiguresThenNow({ opened }: FiguresThenNowProps) {
+/**
+ * The judge's typed answer for the number question about `metricId`, or
+ * `undefined` for "No answer", no record, or no number question for the metric.
+ */
+function markValueFor(
+  metricId: string,
+  questions: Opened["payload"]["recall_questions"],
+  record: RecallRecordV1 | undefined,
+): string | undefined {
+  if (record === undefined) return undefined;
+  const question = questions.find(
+    (q) => q.answer_type === "number" && q.metric_id === metricId,
+  );
+  if (question === undefined) return undefined;
+  const answer = record.answers.find((a) => a.question_id === question.id);
+  return answer !== undefined && answer.kind === "number"
+    ? answer.value
+    : undefined;
+}
+
+export function FiguresThenNow({ opened, record }: FiguresThenNowProps) {
   const { payload, header } = opened;
 
   // The reference date for "now" is the UTC calendar date the letter was
@@ -89,6 +119,7 @@ export function FiguresThenNow({ opened }: FiguresThenNowProps) {
     nowMissing: string | undefined;
     rescale: Readonly<DisplayRescale> | undefined;
     change: ReturnType<typeof computeChange> | undefined;
+    markValue: string | undefined;
   };
 
   const entries: Entry[] = [];
@@ -124,6 +155,7 @@ export function FiguresThenNow({ opened }: FiguresThenNowProps) {
       nowMissing,
       rescale,
       change,
+      markValue: markValueFor(then.metric_id, payload.recall_questions, record),
     });
   });
 
@@ -150,29 +182,15 @@ export function FiguresThenNow({ opened }: FiguresThenNowProps) {
               <p className={styles.period}>{entry.nowMissing}</p>
             </>
           ) : entry.change !== undefined && entry.change.comparable ? (
-            // Comparable: one neutral change line (the then and now periods are
-            // part of it). The raw then and now figures are still shown so the
-            // reader can reach each figure's provenance.
-            <>
-              <p className={styles.then}>{REVEAL_COPY.then}</p>
-              <FigureLine
-                figure={entry.then}
-                role="then"
-                displayRescale={entry.rescale}
-              />
-              <p className={styles.now}>{REVEAL_COPY.now}</p>
-              <FigureLine
-                figure={entry.now}
-                role="now"
-                displayRescale={entry.rescale}
-              />
-              <ChangeLine
-                result={entry.change}
-                region={entry.then.region}
-                then={entry.then}
-                now={entry.now}
-              />
-            </>
+            // Comparable: the then and now stamps, the Number_Line with the
+            // Mark, and the one neutral change line (FigureEntry, R9.1, R12.1).
+            <FigureEntry
+              then={entry.then}
+              now={entry.now}
+              change={entry.change}
+              rescale={entry.rescale}
+              markValue={entry.markValue}
+            />
           ) : (
             // Not comparable: both figures with their own periods, plus the one
             // neutral reason sentence for the first failing check.

@@ -138,7 +138,7 @@ export function Reveal({
 
       {stage >= 3 ? (
         <div ref={stage3Ref} className={`${styles.stage} ${styles.fade}`}>
-          <FiguresThenNow opened={opened} />
+          <FiguresThenNow opened={opened} record={record} />
         </div>
       ) : null}
 
