@@ -32,7 +32,9 @@ export default function DemoIndexPage() {
     <MotionProvider>
       <DeskScene>
         <div className={styles.page}>
-          <DemoLabel />
+          <div className={styles.label}>
+            <DemoLabel />
+          </div>
           <h1 className={styles.heading}>{DEMO_COPY.heading}</h1>
           <p className={styles.introNote}>{DEMO_COPY.introNote}</p>
 

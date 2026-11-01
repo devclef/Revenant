@@ -19,6 +19,11 @@
   box-sizing: border-box;
 }
 
+/* The label is an inline badge. Keep it at its own width, not the column width. */
+.label {
+  align-self: flex-start;
+}
+
 .heading {
   font-family: var(--font-serif);
   color: var(--desk-ink);
