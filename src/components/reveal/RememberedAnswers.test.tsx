@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -242,5 +244,18 @@ describe("Reveal stage 1 is the marks Stage", () => {
         `the marks Stage must not leak "${needle}"`,
       ).not.toContain(needle);
     }
+  });
+});
+
+describe("stage 1 text sits on a paper panel, not the desk (WCAG AA)", () => {
+  it("gives the remembered panel a paper background and the ink text colour", () => {
+    const css = readFileSync(join(__dirname, "reveal.module.css"), "utf8");
+    expect(css).toMatch(/\.remembered\s*\{[^}]*background-color:\s*var\(--paper\)/);
+    expect(css).toMatch(/\.remembered\s*\{[^}]*color:\s*var\(--ink\)/);
+  });
+
+  it("renders the stage 1 section with the remembered class", () => {
+    const html = render(RECORD);
+    expect(html).toMatch(/<section class="[^"]*remembered[^"]*">/);
   });
 });

@@ -108,8 +108,8 @@ const RIM_STYLES: readonly ReactNode[] = [
 ];
 
 /**
- * Twelve centre glyphs, indexed 0..11 (GLYPH_COUNT): simple ring, star and leaf
- * marks drawn as SVG paths defined in this repo. Each is drawn at the disc
+ * Twelve centre glyphs, indexed 0..11 (GLYPH_COUNT): rings, dots, stars, leaves
+ * and bursts drawn as SVG paths defined in this repo. Each is drawn at the disc
  * centre and is the same for every seal on that glyph index. Decorative only.
  */
 const GLYPHS: readonly ReactNode[] = [
@@ -130,11 +130,12 @@ const GLYPHS: readonly ReactNode[] = [
     key="g3"
     d="M50 37 L53.5 47.5 L64.5 47.5 L55.5 54 L59 64.5 L50 58 L41 64.5 L44.5 54 L35.5 47.5 L46.5 47.5 Z"
   />,
-  // 4 — six-point star (two triangles)
-  <path
-    key="g4"
-    d="M50 37 L61 56 L39 56 Z M50 63 L39 44 L61 44 Z"
-  />,
+  // 4 — three dots in a row
+  <g key="g4" stroke="none" fill="var(--seal-rim, #5c1713)">
+    <circle cx={40} cy={CENTER} r={2.5} />
+    <circle cx={CENTER} cy={CENTER} r={2.5} />
+    <circle cx={60} cy={CENTER} r={2.5} />
+  </g>,
   // 5 — single leaf
   <path
     key="g5"

@@ -30,6 +30,8 @@
 // which is where it is the root — so the test tracks the real wiring rather
 // than a guessed standalone signature.
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -371,5 +373,18 @@ describe("CeremonyRoot render is I/O-free", () => {
     render({ tag: "verified", opened: OPENED });
     render({ tag: "reveal", opened: OPENED, record: RECORD, stage: 3 });
     expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("CeremonyRoot controls use the paper button style (R11.2, R11.4)", () => {
+  it("gives the Calm control the control class from ceremony.module.css", () => {
+    const html = render({ tag: "loading" });
+    expect(html).toMatch(/<button type="button" class="[^"]*control[^"]*"/);
+  });
+
+  it("the control class is defined with the paper button recipe", () => {
+    const css = readFileSync(join(__dirname, "ceremony.module.css"), "utf8");
+    expect(css).toMatch(/\.control\s*\{[^}]*background-color:\s*var\(--paper-deep\)/);
+    expect(css).toMatch(/\.control\s*\{[^}]*color:\s*var\(--ink\)/);
   });
 });

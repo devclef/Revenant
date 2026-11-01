@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -174,5 +176,13 @@ describe("SealedLetter markup", () => {
     for (const needle of forbidden) {
       expect(html, `stage 2 must not render "${needle}"`).not.toContain(needle);
     }
+  });
+});
+
+describe("stage 2 letter sits on a paper panel, not the desk (WCAG AA)", () => {
+  it("gives the sealed letter section a paper background and the ink text colour", () => {
+    const css = readFileSync(join(__dirname, "reveal.module.css"), "utf8");
+    expect(css).toMatch(/\.sealedLetter\s*\{[^}]*background-color:\s*var\(--paper\)/);
+    expect(css).toMatch(/\.sealedLetter\s*\{[^}]*color:\s*var\(--ink\)/);
   });
 });

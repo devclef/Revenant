@@ -231,6 +231,9 @@ describe("Property 20: a rise and a fall render the same markup (R11.8, R16.4)",
 const CONSTANT_STYLE_PROPERTIES = [
   "animation-duration",
   "animation-timing-function",
+  // The Counter's strip step count: COUNTER_ROLL_STEPS for every digit, so it
+  // is the same on a rise and on a fall (Stamp renders it through Counter).
+  "--counter-steps",
 ] as const;
 
 // The only style properties an entry may carry (design.md Property 13, step 1).
@@ -451,8 +454,13 @@ describe("Property 20 (whole entry): a rise and its mirror fall render the same 
             mark === undefined
               ? html
               : html.split(markAnswerText(mark, then.unit)).join("MARK");
-          expect(skeletonOf(withMarkText(riseHtml, riseMark))).toBe(
-            skeletonOf(withMarkText(fallHtml, fallMark)),
+          // Property 13 step 4: each Counter face collapses to one token first.
+          // Its cell count follows the digits of the value, so a rise that
+          // gains a digit would otherwise differ from its fall in structure.
+          expect(
+            skeletonOf(collapseCounterFaces(withMarkText(riseHtml, riseMark))),
+          ).toBe(
+            skeletonOf(collapseCounterFaces(withMarkText(fallHtml, fallMark))),
           );
           if (fallMark !== undefined) {
             expect(fallHtml).toContain(markAnswerText(fallMark, then.unit));
@@ -786,6 +794,36 @@ function counterCells(html: string): string[] {
     from = end;
   }
   return cells;
+}
+
+/**
+ * Each Counter face (`counterFace`, its digit cells and strips) replaced by one
+ * token. The face's markup depends on how many digits the value has, so the
+ * whole-entry skeleton compares each face as one token (Property 13 step 4).
+ */
+function collapseCounterFaces(html: string): string {
+  const open = /<span class="[^"]*counterFace[^"]*" aria-hidden="true">/;
+  let out = html;
+  for (let match = open.exec(out); match !== null; match = open.exec(out)) {
+    const start = match.index;
+    const spans = /<span\b|<\/span>/g;
+    spans.lastIndex = start;
+    let depth = 0;
+    let end = out.length;
+    for (let m = spans.exec(out); m !== null; m = spans.exec(out)) {
+      if (m[0] === "</span>") {
+        depth -= 1;
+        if (depth === 0) {
+          end = m.index + m[0].length;
+          break;
+        }
+      } else {
+        depth += 1;
+      }
+    }
+    out = `${out.slice(0, start)}§COUNTER§${out.slice(end)}`;
+  }
+  return out;
 }
 
 /** The digits in a value, in order. */

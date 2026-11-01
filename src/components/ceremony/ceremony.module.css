@@ -95,6 +95,33 @@
 }
 
 /*
+ * The Calm and Skip controls (CeremonyRoot.tsx). They copy the paper button
+ * recipe of the Break-the-seal button (SealBreak.module.css .button) so every
+ * button in the Ceremony looks the same. The button sets its own text colour,
+ * so the control does not inherit desk text.
+ */
+.control {
+  font: inherit;
+  color: var(--ink);
+  background-color: var(--paper-deep);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  padding: 0.5rem 1.1rem;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.control:hover {
+  background-color: var(--paper);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .control {
+    transition: none;
+  }
+}
+
+/*
  * A Stage fades in over STAGE_FADE_MS (constants.ts). The animation is
  * decorative only: it never inserts, removes or reorders content.
  */

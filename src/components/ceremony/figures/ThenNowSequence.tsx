@@ -35,6 +35,7 @@ import {
   useLayoutEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 import {
@@ -196,8 +197,17 @@ export function ThenNowSequence({ entries, children }: ThenNowSequenceProps) {
     setLocalView({ step });
   }, [step, setLocalView]);
 
+  // The change fade is timed from the plan, not from a CSS literal: its start
+  // and duration reach figures.module.css as custom properties (R10.5).
+  const plan = planThenNow(entries);
+  const fadeStyle = {
+    "--change-delay": `${plan.changeFade.startMs}ms`,
+    "--change-fade-ms": `${plan.changeFade.durationMs}ms`,
+    "--change-easing": plan.changeFade.easing,
+  } as CSSProperties;
+
   return (
-    <div className={styles.sequence} data-step={step}>
+    <div className={styles.sequence} data-step={step} style={fadeStyle}>
       {step === "passage" ? <Passage /> : null}
       {children}
     </div>

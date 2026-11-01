@@ -314,3 +314,35 @@
 .sequence {
   position: relative;
 }
+
+/* The change and formula lines (ChangeLine's data-change block) fade in over
+   the plan's changeFade timing. Before the fade starts, `both` fill holds them
+   at opacity 0. Skip and Calm settle at data-step="done", which ends the fade
+   at once, and reduced motion turns it off. Timing comes from ThenNowSequence
+   through the custom properties, so no duration is written here. */
+.sequence [data-change] {
+  animation-name: changeFadeIn;
+  animation-fill-mode: both;
+  animation-duration: var(--change-fade-ms);
+  animation-timing-function: var(--change-easing);
+  animation-delay: var(--change-delay);
+}
+
+.sequence[data-step="done"] [data-change] {
+  animation: none;
+}
+
+@keyframes changeFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sequence [data-change] {
+    animation: none;
+  }
+}

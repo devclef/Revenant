@@ -158,9 +158,10 @@
 
 /* --- The instruction line --- */
 
+/* The instruction sits on the desk, so it uses the desk cream token. */
 .instruction {
   margin: 0;
-  color: var(--ink);
+  color: var(--desk-ink, #f1e6cf);
   font-family: var(--font-serif);
   line-height: 1.4;
   max-width: var(--measure);

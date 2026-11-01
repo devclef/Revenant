@@ -3,6 +3,8 @@
 // R11.2, R11.4, R12.7, R12.8): stage order, Skip, Calm, and a plan whose length
 // does not grow with the number of entries.
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -151,5 +153,31 @@ describe("Skip and Calm", () => {
     expect(html).toContain('data-step="done"');
     expect(html).toContain("<p>figures</p>");
     expect(html).not.toContain("role=\"status\"");
+  });
+});
+
+describe("the change and formula lines fade from the plan (R3.1, R10.5)", () => {
+  it("passes the planned fade start and duration to the sequence as custom properties", () => {
+    const entries = entriesOf(2);
+    const plan = planThenNow(entries);
+    const html = renderSequence(entries);
+    expect(html).toContain(`--change-delay:${plan.changeFade.startMs}ms`);
+    expect(html).toContain(`--change-fade-ms:${CHANGE_FADE_MS}ms`);
+  });
+
+  it("starts the fade after the now Step has finished", () => {
+    const plan = planThenNow(entriesOf(1));
+    const now = plan.steps.find((s) => s.step === "now");
+    expect(plan.changeFade.startMs).toBe((now?.startMs ?? 0) + (now?.durationMs ?? 0));
+  });
+
+  it("ends the fade in the stylesheet at data-step done, under reduced motion, and never in Calm", () => {
+    const css = readFileSync(join(__dirname, "figures.module.css"), "utf8");
+    expect(css).toMatch(/\.sequence \[data-change\]\s*\{[^}]*animation-delay:\s*var\(--change-delay\)/);
+    expect(css).toMatch(/\.sequence \[data-change\]\s*\{[^}]*animation-duration:\s*var\(--change-fade-ms\)/);
+    expect(css).toMatch(/\.sequence\[data-step="done"\] \[data-change\]\s*\{\s*animation:\s*none;?\s*\}/);
+    expect(css).toMatch(
+      /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.sequence \[data-change\]\s*\{\s*animation:\s*none;?\s*\}\s*\}/,
+    );
   });
 });
