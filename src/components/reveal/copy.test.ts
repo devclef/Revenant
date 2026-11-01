@@ -23,10 +23,31 @@ import { REVEAL_COPY } from "./copy";
  * never make a sentence falsely long. They carry no judgement by construction.
  */
 
-/** Every string a reader could see, paired with its key for readable failures. */
-const ENTRIES = Object.entries(REVEAL_COPY) as ReadonlyArray<
-  readonly [keyof typeof REVEAL_COPY, string]
->;
+/**
+ * Every string a reader could see, paired with its key for readable failures.
+ * REVEAL_COPY is mostly flat, but the stage-3 `reason` sub-object nests one
+ * "not comparable" sentence per NotComparableReason. The scanner walks one
+ * level of nesting so those sentences are held to the same bar, keyed as
+ * `reason.<name>` for a readable failure message.
+ */
+const flattenStrings = (
+  obj: Record<string, unknown>,
+  prefix = "",
+): Array<readonly [string, string]> => {
+  const out: Array<readonly [string, string]> = [];
+  for (const [key, value] of Object.entries(obj)) {
+    const path = prefix ? `${prefix}.${key}` : key;
+    if (typeof value === "string") {
+      out.push([path, value]);
+    } else if (value && typeof value === "object") {
+      out.push(...flattenStrings(value as Record<string, unknown>, path));
+    }
+  }
+  return out;
+};
+
+const ENTRIES: ReadonlyArray<readonly [string, string]> =
+  flattenStrings(REVEAL_COPY as unknown as Record<string, unknown>);
 
 /**
  * Error- or empty-state strings that must name an action the reader can take

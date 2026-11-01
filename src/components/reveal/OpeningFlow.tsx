@@ -99,7 +99,7 @@ export function OpeningFlow({ letterId, personaName }: OpeningFlowProps) {
       aria-label={personaName}
       className={styles.flow}
     >
-      <div className={styles.view}>{selectView(state, flow)}</div>
+      <div className={styles.view}>{selectView(state, flow, personaName)}</div>
     </div>
   );
 }
@@ -108,6 +108,7 @@ export function OpeningFlow({ letterId, personaName }: OpeningFlowProps) {
 function selectView(
   state: FlowState,
   flow: ReturnType<typeof useOpeningFlow>,
+  personaName: string,
 ): React.ReactNode {
   switch (state.tag) {
     case "loading":
@@ -180,6 +181,7 @@ function selectView(
         <Reveal
           opened={state.opened}
           record={state.record}
+          personaName={personaName}
           stage={state.stage}
           onAdvance={flow.advance}
           onShowAll={flow.showAll}
