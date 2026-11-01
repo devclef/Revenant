@@ -6,6 +6,8 @@
  * --paper is 10.57:1 and on --paper-deep 9.58:1 (globals.css record), well
  * above the 4.5:1 AA floor. The border is --gold-leaf, used decoratively only
  * (never on text). No green/red or directional colour -- neutrality.md.
+ *
+ * On the ceremony desk the two tokens are overridden to desk ink and desk gold.
  */
 
 .badge {
@@ -15,9 +17,13 @@
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ink-soft);
+  /* The text and rule colours come from two tokens so a surface can retune
+     them. The default is the paper pair. The ceremony desk sets both tokens
+     to its own text and gold (DeskScene.module.css), because paper ink is
+     unreadable on the dark desk. */
+  color: var(--demo-label-ink, var(--ink-soft));
   padding: 0.25rem 0.6rem;
-  border: 1px solid var(--gold-leaf);
+  border: 1px solid var(--demo-label-rule, var(--gold-leaf));
   border-radius: 0.25rem;
   line-height: 1;
 }

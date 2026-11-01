@@ -131,6 +131,12 @@ function CeremonyRegion({
   const calmLabel =
     motionAttr === "calm" ? CEREMONY_COPY.calmOff : CEREMONY_COPY.calmOn;
 
+  // Both controls are desk-token buttons (R11.2, R1.7). `styles.desk` defines
+  // the desk tokens on the button itself, because the scene's `.desk` root is
+  // a sibling, not an ancestor. `styles.deskControl` then sets the surface and
+  // border, and it is declared after `.desk` so it wins.
+  const controlClass = `${styles.desk} ${styles.deskControl}`;
+
   return (
     <div
       ref={regionRef}
@@ -142,11 +148,15 @@ function CeremonyRegion({
       className={className ? `${styles.ceremony} ${className}` : styles.ceremony}
     >
       <LiveRegion message={liveLine} />
-      <button type="button" onClick={() => setCalm(motionAttr !== "calm")}>
+      <button
+        type="button"
+        className={controlClass}
+        onClick={() => setCalm(motionAttr !== "calm")}
+      >
         {calmLabel}
       </button>
       {hasActive ? (
-        <button type="button" onClick={skipAll}>
+        <button type="button" className={controlClass} onClick={skipAll}>
           {CEREMONY_COPY.skip}
         </button>
       ) : null}

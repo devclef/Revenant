@@ -365,6 +365,62 @@ describe("CeremonyRoot Skip control", () => {
   });
 });
 
+// --- control count and styling ----------------------------------------------
+//
+// The Calm and Skip controls must each render exactly once per state: Calm
+// always (its label flips with the motion mode), Skip only while a sequence is
+// registered. A control counted by its exact button markup, so a stray second
+// copy or a missing one fails the test.
+
+/** Count `<button ...>text</button>` elements whose text is exactly `text`. */
+function countButtons(html: string, text: string): number {
+  const pattern = new RegExp(`<button[^>]*>${esc(text)}</button>`, "g");
+  return (html.match(pattern) ?? []).length;
+}
+
+describe("CeremonyRoot desk-token controls render once per state", () => {
+  const flowStates: Array<{ name: string; state: FlowState }> = [
+    { name: "loading", state: { tag: "loading" } },
+    { name: "verified", state: { tag: "verified", opened: OPENED } },
+    {
+      name: "reveal stage 3",
+      state: { tag: "reveal", opened: OPENED, record: RECORD, stage: 3 },
+    },
+  ];
+  const motionModes = ["full", "calm"] as const;
+
+  for (const { name, state } of flowStates) {
+    for (const mode of motionModes) {
+      for (const active of [false, true]) {
+        it(`${name}, ${mode} motion, skip ${active ? "active" : "idle"}: each control once`, () => {
+          setMotionMode(mode);
+          setHasActive(active);
+          const html = render(state);
+          const calmLabel =
+            mode === "calm" ? CEREMONY_COPY.calmOff : CEREMONY_COPY.calmOn;
+          expect(countButtons(html, calmLabel)).toBe(1);
+          expect(countButtons(html, CEREMONY_COPY.skip)).toBe(active ? 1 : 0);
+        });
+      }
+    }
+  }
+
+  it("gives both controls the desk-control class", () => {
+    setMotionMode("full");
+    setHasActive(true);
+    const html = render({ tag: "loading" });
+    const buttons = html.match(/<button[^>]*>[^<]*<\/button>/g) ?? [];
+    const controls = buttons.filter(
+      (b) =>
+        b.includes(esc(CEREMONY_COPY.calmOn)) || b.includes(esc(CEREMONY_COPY.skip)),
+    );
+    expect(controls).toHaveLength(2);
+    for (const control of controls) {
+      expect(control).toMatch(/class="[^"]+"/);
+    }
+  });
+});
+
 describe("CeremonyRoot render is I/O-free", () => {
   it("never fetches during render (the guard would throw otherwise)", () => {
     render({ tag: "loading" });

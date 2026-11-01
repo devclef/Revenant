@@ -94,11 +94,19 @@ function renderChange(
 // what remains is the direction-independent skeleton: tags, classes and the
 // static copy (the period range connector and the formula line). Longest
 // fragments are replaced first so a shorter one never eats part of a longer.
-function normalise(html: string, display: ReturnType<typeof formatChange>): string {
+// The formula line prints its inputs (issue #119), so the sealed now value,
+// which differs between a rise and its mirror, is normalised too. The formula's
+// operators and layout are still compared byte for byte.
+function normalise(
+  html: string,
+  display: ReturnType<typeof formatChange>,
+  inputValues: readonly string[],
+): string {
   const fragments = [
     display.difference,
     display.percent ?? "",
     display.direction,
+    ...inputValues,
   ].filter((f) => f.length > 0);
   // Longest first: the signed difference/percent can contain the magnitude, and
   // we want them removed whole rather than partially.
@@ -186,8 +194,12 @@ describe("Property 20: a rise and a fall render the same markup (R11.8, R16.4)",
 
           // With the magnitude, direction word and sign normalised out, the
           // remaining markup -- every tag and every class -- is byte-identical.
-          const riseSkeleton = normalise(riseHtml, riseDisplay);
-          const fallSkeleton = normalise(fallHtml, fallDisplay);
+          const riseSkeleton = normalise(riseHtml, riseDisplay, [
+            riseNowValue,
+          ]);
+          const fallSkeleton = normalise(fallHtml, fallDisplay, [
+            fallNowValue,
+          ]);
           expect(riseSkeleton).toBe(fallSkeleton);
         },
       ),

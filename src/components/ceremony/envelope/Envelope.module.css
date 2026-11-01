@@ -23,6 +23,9 @@
      fixed viewBox never distorts. */
   position: relative;
   width: 100%;
+  /* Never wider than the paper panel around it, even at 360 px. */
+  max-width: 100%;
+  min-width: 0;
   aspect-ratio: 300 / 188;
   /* Fall back to the paper tokens from globals.css. */
   --env-paper: var(--paper, #f4ecd8);
