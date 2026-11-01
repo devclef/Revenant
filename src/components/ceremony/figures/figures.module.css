@@ -217,3 +217,100 @@
     animation: none;
   }
 }
+
+/* --- Sequence: the stage 3 Steps (ThenNowSequence.tsx) ---
+
+   The now figures stay hidden until their own Step. `visibility` keeps their
+   space, so nothing shifts when they appear. The rule reads the Step from the
+   sequence's data-step attribute and the role from the Stamp's data-role. */
+
+.sequence[data-step="then"] [data-role="now"],
+.sequence[data-step="passage"] [data-role="now"] {
+  visibility: hidden;
+}
+
+/* --- Passage: three paper sheets and a drifting light (Passage.tsx) ---
+
+   The panel sets its own text colour, so the live line never inherits one from
+   the desk. Every colour is a token from globals.css. */
+
+.passage {
+  position: relative;
+  box-sizing: border-box;
+  margin: 1rem 0;
+  padding: 1rem 1.25rem;
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+.passageScene {
+  position: relative;
+  height: 6rem;
+  perspective: 40rem;
+}
+
+.passageSheet {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--ink);
+  background-color: var(--paper);
+  transform-origin: left center;
+  transform: rotateY(0deg);
+}
+
+/* The light layer sits over the sheets. It starts clear, so the scene is paper
+   with no light change when the passage is drawn still. */
+.passageLight {
+  position: absolute;
+  inset: 0;
+  background-color: var(--paper);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.turn {
+  animation-name: passageTurn;
+  animation-fill-mode: both;
+}
+
+.drift {
+  animation-name: passageDrift;
+  animation-fill-mode: both;
+}
+
+@keyframes passageTurn {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(-160deg);
+  }
+}
+
+@keyframes passageDrift {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.25;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.passageLive {
+  margin: 0.75rem 0 0;
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn,
+  .drift {
+    animation: none;
+  }
+}
+
+.sequence {
+  position: relative;
+}
