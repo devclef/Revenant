@@ -60,7 +60,13 @@ export function DeskDecor({ target }: DeskDecorProps) {
       }
 
       const el = target.current;
-      if (mods.tilt.needsTiltPermission(mods.tilt.browserTiltWindow())) {
+      const win = mods.tilt.browserTiltWindow();
+      if (!mods.tilt.hasOrientationSensor(win)) {
+        // No real orientation sensor (desktop): no control, no listener. The
+        // pointer light stays.
+        return;
+      }
+      if (mods.tilt.needsTiltPermission(win)) {
         // iOS: wait for a tap before tilt can start.
         setAskForTilt(true);
       } else if (el !== null) {

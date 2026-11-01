@@ -8,6 +8,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { PARALLAX_MAX_DEG, PARALLAX_MAX_PX } from "../constants";
 import {
+  hasOrientationSensor,
   lightFromOrientation,
   needsTiltPermission,
   requestTiltPermission,
@@ -144,5 +145,38 @@ describe("startTilt", () => {
     const stop = startTilt(el, win);
     stop();
     expect(listeners.size).toBe(0);
+  });
+});
+
+describe("hasOrientationSensor (desktop Chromium gets no tilt control)", () => {
+  /** A window with the orientation API and a chosen number of touch points. */
+  function windowWithTouch(maxTouchPoints: number | undefined): TiltWindow {
+    const { win } = fakeWindow();
+    return {
+      ...win,
+      navigator: maxTouchPoints === undefined ? undefined : { maxTouchPoints },
+    };
+  }
+
+  it("is false on desktop Chromium: the API exists but there are no touch points", () => {
+    expect(hasOrientationSensor(windowWithTouch(0))).toBe(false);
+  });
+
+  it("is false when the browser reports no navigator at all", () => {
+    expect(hasOrientationSensor(windowWithTouch(undefined))).toBe(false);
+  });
+
+  it("is false when the orientation API is absent, even on a touch device", () => {
+    const { win } = fakeWindow();
+    const noApi: TiltWindow = {
+      ...win,
+      DeviceOrientationEvent: undefined,
+      navigator: { maxTouchPoints: 5 },
+    };
+    expect(hasOrientationSensor(noApi)).toBe(false);
+  });
+
+  it("is true on a touch-capable phone with the orientation API", () => {
+    expect(hasOrientationSensor(windowWithTouch(5))).toBe(true);
   });
 });

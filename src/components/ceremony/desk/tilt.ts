@@ -32,6 +32,8 @@ export type TiltWindow = {
   readonly DeviceOrientationEvent?: {
     readonly requestPermission?: () => Promise<string>;
   };
+  /** Touch capability. A phone or tablet reports touch points; desktop Chromium reports none. */
+  readonly navigator?: { readonly maxTouchPoints?: number };
   addEventListener(
     type: "deviceorientation",
     listener: (event: OrientationReading) => void,
@@ -69,6 +71,18 @@ export function lightFromOrientation(reading: OrientationReading): LightValues {
     0.5 + gamma / (2 * TILT_SPAN_DEG),
     0.5 + beta / (2 * TILT_SPAN_DEG),
   );
+}
+
+/**
+ * Whether this window has a real orientation sensor to follow: the
+ * DeviceOrientationEvent API exists and the device is touch-capable (a phone or
+ * tablet). Desktop Chromium has the API but no touch points, so it gets no
+ * tilt control and no tilt listener (R8.6). A narrower check than a sensor
+ * probe, and it needs no event to fire first.
+ */
+export function hasOrientationSensor(win: TiltWindow): boolean {
+  if (win.DeviceOrientationEvent === undefined) return false;
+  return (win.navigator?.maxTouchPoints ?? 0) > 0;
 }
 
 /** Whether the browser needs a permission request before it sends tilt events (iOS). */
