@@ -1,0 +1,116 @@
+/*
+ * Envelope styles (design.md "Envelope and seal", R3.6, R11.6, R10.1).
+ *
+ * The envelope is a paper object, so it keeps the paper surface and the paper
+ * text tokens from globals.css rather than the dark desk tokens: the date lines
+ * read on paper, where --ink clears AA well above 4.5:1 (see design.md "Colour
+ * and contrast"). The SVG strokes reuse the same ink and a faint fold shade of
+ * the paper; the component names no literal colour in a style attribute.
+ *
+ * Neutrality (neutrality.md, R10.1): nothing here depends on a value or a
+ * direction. Every envelope — whatever a letter's figures did — is drawn with
+ * exactly these colours and the same geometry. There is no green/red and no
+ * directional treatment. The seal carries its own one wax colour from
+ * WaxSeal.module.css.
+ *
+ * R3.6: the geometry is fixed in the SVG itself; this stylesheet sets only
+ * colours, stroke widths and the layout of the date lines, none of which reads
+ * letter content.
+ */
+
+.envelope {
+  /* A paper object sized by its container, kept to the envelope aspect so the
+     fixed viewBox never distorts. */
+  position: relative;
+  width: 100%;
+  aspect-ratio: 300 / 188;
+  /* Fall back to the paper tokens from globals.css. */
+  --env-paper: var(--paper, #f4ecd8);
+  --env-paper-deep: var(--paper-deep, #e8dcc0);
+  --env-fold: var(--paper-shadowed, #d9cba9);
+  --env-ink: var(--ink, #2a2016);
+}
+
+.art {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* The paper body, shared by every state. */
+.paper {
+  fill: var(--env-paper);
+  stroke: var(--env-fold);
+  stroke-width: 2;
+}
+
+/* Front postmark: faint ink rings and cancel bars, decoration only. */
+.postmark circle,
+.postmark line {
+  fill: none;
+  stroke: var(--env-ink);
+  stroke-width: 1.5;
+  opacity: 0.45;
+}
+
+/* Back folds: faint shaded triangles so the folds read without heavy lines. */
+.fold {
+  fill: var(--env-paper-deep);
+  stroke: var(--env-fold);
+  stroke-width: 1.5;
+}
+
+/* The flap folded down over the back. */
+.flapDown {
+  fill: var(--env-paper);
+  stroke: var(--env-fold);
+  stroke-width: 2;
+}
+
+/* The lifted flap and the body pocket on the open state. */
+.flapUp {
+  fill: var(--env-paper-deep);
+  stroke: var(--env-fold);
+  stroke-width: 2;
+}
+
+.pocket {
+  fill: var(--env-paper);
+  stroke: var(--env-fold);
+  stroke-width: 2;
+}
+
+/* The letter sheet peeking out of the open envelope. */
+.sheet {
+  fill: var(--env-paper-deep);
+  stroke: var(--env-fold);
+  stroke-width: 1.5;
+}
+
+/*
+ * The date lines, laid over the front face as HTML so they stay selectable and
+ * accessible. They sit in the lower-left of the paper, away from the postmark.
+ */
+.lines {
+  position: absolute;
+  left: 8%;
+  right: 8%;
+  bottom: 12%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  color: var(--env-ink);
+}
+
+.line {
+  margin: 0;
+  font-size: clamp(0.85rem, 2.4vw, 1rem);
+  line-height: 1.3;
+}
+
+.demoNote {
+  margin: 0.15rem 0 0;
+  font-size: clamp(0.75rem, 2.1vw, 0.9rem);
+  /* A slightly quieter ink, still a paper text token that clears AA. */
+  color: var(--gold-text, #7a5a1e);
+}
