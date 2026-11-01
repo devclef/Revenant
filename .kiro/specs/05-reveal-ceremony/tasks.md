@@ -99,7 +99,7 @@ Follow `design.md` in this folder for every file name, constant, interface and a
   - Validation: `bash scripts/check.sh`
   - _Requirements: R4.10, R9, R10.1–R10.4, R11.9, R12.1–R12.4, R17.3_
 
-- [ ] 5. Passage, counter and the then-and-now steps
+- [x] 5. Passage, counter and the then-and-now steps
   - Agent: `frontend-dev` · Depends on: 4, 11 · Estimated size: ~1,400 changed lines
   - Before this task: Blocked by #49 (spec 03 task 8, the reveal's letter and figures stages).
   - Scope: `src/components/ceremony/figures/Counter.tsx`, `Passage.tsx`, `ThenNowSequence.tsx`, `figures.module.css`, `src/components/ceremony/copy.ts`, `src/components/reveal/Reveal.tsx`, `src/components/reveal/change-neutral.property.test.tsx`, and the `*.test.ts(x)` for each new file
