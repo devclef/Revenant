@@ -100,7 +100,7 @@ Follow `design.md` in this folder for every file name, constant, interface and a
   - _Requirements: R4.10, R9, R10.1–R10.4, R11.9, R12.1–R12.4, R17.3_
 
 - [ ] 5. Passage, counter and the then-and-now steps
-  - Agent: `frontend-dev` · Depends on: 4 · Estimated size: ~1,400 changed lines
+  - Agent: `frontend-dev` · Depends on: 4, 11 · Estimated size: ~1,400 changed lines
   - Before this task: Blocked by #49 (spec 03 task 8, the reveal's letter and figures stages).
   - Scope: `src/components/ceremony/figures/Counter.tsx`, `Passage.tsx`, `ThenNowSequence.tsx`, `figures.module.css`, `src/components/ceremony/copy.ts`, `src/components/reveal/Reveal.tsx`, `src/components/reveal/change-neutral.property.test.tsx`, and the `*.test.ts(x)` for each new file
   - Acceptance:
@@ -192,16 +192,31 @@ Follow `design.md` in this folder for every file name, constant, interface and a
   - Validation: `bash scripts/check.sh`
   - _Requirements: R14, R17.3_
 
+- [ ] 11. Reveal stages readable on the desk
+  - Agent: `frontend-dev` · Depends on: 4 · Estimated size: ~900 changed lines
+  - Before this task: Blocked by #49 (spec 03 task 8, the reveal's letter and figures stages).
+  - Scope: `src/components/reveal/`, `src/components/ceremony/`, and their tests. If a fix needs `src/components/ui/ParchmentSurface.module.css` or `src/components/demo/DemoLabel.module.css`, which are outside this scope, stop and ask the owner before editing them.
+  - Acceptance:
+    - (a) Every reveal stage (What you remembered, the marks Stage, What was written then, The numbers then and now) sits on a `ParchmentSurface` panel that sets its own `--ink`, as the spec 03 views did. Text inside a stage never inherits the desk's cream ink.
+    - (b) Every heading, body text, label and number meets WCAG 2.2 AA against its own surface, at desktop width and at 360 px. A test computes the ratio for each token pair used on those surfaces.
+    - (c) "Turn off motion" and "Skip" are styled controls (desk tokens, not the browser's default button look), and each appears once on the page in each state. A test counts them.
+    - (d) The Demo label meets AA on the surface it sits on.
+    - (e) "Source" controls use a neutral ink colour, not red. Up and down figures keep the same visual treatment (R9, `neutrality.md`).
+    - (f) The seal centre glyphs use no religious or political symbols: no six-pointed or five-pointed stars, no crosses, no crescents. Use rings, leaves or dots instead. A test scans the glyph list in `sealPattern` (and any other seal artwork) and fails on those shapes.
+  - QA steps: walk `/demo` for one persona through every stage at desktop width and at 360 px, and screenshot each stage: What you remembered, the marks Stage, What was written then, and The numbers then and now, plus the envelope and the close. Attach the screenshots to the PR. Stages that later tasks build are not findings (R18.10).
+  - Validation: `bash scripts/check.sh`
+  - _Requirements: R8.8, R9, R11.6, R16_
+
 ## Notes
 
 - **Order and merging.** The tasks are a straight chain: each depends on the one before it. The dispatcher frees `frontend-dev` as soon as a PR goes to review, and nothing rebases open PRs. With several tasks ready at once, two PRs that both edit `ceremony/copy.ts`, `Reveal.tsx` or `OpeningFlow.tsx` could be open together, and a PR that can't merge makes every dispatcher tick fail. The chain keeps one spec 05 PR open at a time. After each merge `main` is consistent: a Stage whose task hasn't merged keeps its spec 03 look on the desk surface (R18.4).
 - **#84 and the figures component.** Spec 04 task 10 adds a test against `FiguresThenNow({ opened })`. It waits on the spec 04 data chain, not on this spec. Task 4 and task 5 keep the signature and the labels (R9.7, R9.8).
 - **The retrieved date label.** A separate issue fixes the date format in `FigureLine` (using `formatUtcDate`). No task here touches it.
-- **Task 10 is optional.** The Ceremony is complete after task 9.
+- **Task 10 is optional.** The Ceremony is complete after tasks 9 and 11. Task 11 is required and runs between tasks 4 and 5.
 
 ## Task Dependency Graph
 
-Dependencies: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10, a straight chain.
+Dependencies: 1 → 2 → 3 → 4 → 11 → 5 → 6 → 7 → 8 → 9 → 10, a straight chain.
 
 ```json
 {
@@ -210,12 +225,13 @@ Dependencies: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10, a straig
     { "id": 1, "tasks": ["2"] },
     { "id": 2, "tasks": ["3"] },
     { "id": 3, "tasks": ["4"] },
-    { "id": 4, "tasks": ["5"] },
-    { "id": 5, "tasks": ["6"] },
-    { "id": 6, "tasks": ["7"] },
-    { "id": 7, "tasks": ["8"] },
-    { "id": 8, "tasks": ["9"] },
-    { "id": 9, "tasks": ["10"] }
+    { "id": 4, "tasks": ["11"] },
+    { "id": 5, "tasks": ["5"] },
+    { "id": 6, "tasks": ["6"] },
+    { "id": 7, "tasks": ["7"] },
+    { "id": 8, "tasks": ["8"] },
+    { "id": 9, "tasks": ["9"] },
+    { "id": 10, "tasks": ["10"] }
   ]
 }
 ```
