@@ -75,6 +75,54 @@ class Verdict(unittest.TestCase):
     def test_pass(self):
         self.assertEqual(d.parse_verdict('{"verdict": "pass", "summary": "ok", "findings": []}')["verdict"], "pass")
 
+    def shots(self, *entries, verdict="pass"):
+        return d.parse_verdict(json.dumps({"verdict": verdict, "summary": "ok", "findings": [],
+                                           "screenshots": list(entries)}))
+
+    def test_clean_screenshots_pass(self):
+        v = self.shots({"file": "01-desk.png", "shows": "desk", "readable": True, "failed_checks": []})
+        self.assertEqual(v["verdict"], "pass")
+        self.assertEqual(v["findings"], [])
+
+    def test_empty_screenshots_list_passes(self):
+        self.assertEqual(self.shots()["verdict"], "pass")
+
+    def test_unreadable_screenshot_fails(self):
+        v = self.shots({"file": "04-marks.png", "readable": False, "failed_checks": []})
+        self.assertEqual(v["verdict"], "fail")
+        self.assertIn("treated as fail", v["summary"])
+        self.assertEqual(v["findings"][0]["severity"], "blocker")
+        self.assertIn("`04-marks.png`: not readable", v["findings"][0]["detail"])
+
+    def test_failed_checks_fail(self):
+        v = self.shots({"file": "01-desk.png", "readable": True, "failed_checks": []},
+                       {"file": "07-numbers.png", "readable": True, "failed_checks": ["C3", "C5"]})
+        self.assertEqual(v["verdict"], "fail")
+        self.assertEqual(len(v["findings"]), 1)
+        self.assertIn("failed checks C3, C5", v["findings"][0]["detail"])
+
+    def test_malformed_entries_fail(self):
+        for entry in ("01-desk.png", {"file": "x.png", "failed_checks": []},
+                      {"file": "x.png", "readable": "true", "failed_checks": []},
+                      {"file": "x.png", "readable": True, "failed_checks": "C1"}):
+            self.assertEqual(self.shots(entry)["verdict"], "fail", entry)
+
+    def test_screenshots_not_a_list_fails(self):
+        v = d.parse_verdict(json.dumps({"verdict": "pass", "findings": [], "screenshots": "all fine"}))
+        self.assertEqual(v["verdict"], "fail")
+
+    def test_null_screenshots_parses_as_before(self):
+        v = d.parse_verdict(json.dumps({"verdict": "pass", "findings": [], "screenshots": None}))
+        self.assertEqual(v["verdict"], "pass")
+
+    def test_fail_verdict_keeps_its_own_findings(self):
+        own = [{"severity": "blocker", "file": "a.tsx", "detail": "dark text on desk"}]
+        v = d.parse_verdict(json.dumps({"verdict": "fail", "summary": "s", "findings": own,
+                                        "screenshots": [{"file": "x.png", "readable": False,
+                                                         "failed_checks": ["C1"]}]}))
+        self.assertEqual(v["verdict"], "fail")
+        self.assertEqual(v["findings"], own)
+
 
 class Specs(unittest.TestCase):
     def test_ticket_is_fenced(self):
