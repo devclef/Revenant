@@ -6,7 +6,8 @@ Each tick it:
   3. merges PRs that passed QA once the ci-gate check is green
   4. starts QA on PRs labelled needs-qa whose CI is green
   5. starts fix runs on PRs with changes requested (CI or QA)
-  6. claims one ready, unblocked issue per free slot and starts a dev run
+  6. claims one ready, unblocked issue and starts a dev run, when no Task
+     Runner run is in flight (dev, fix or QA)
 
 All GitHub writes happen here, with a token granted to this script only.
 Role agents and QA never see the token.
@@ -41,7 +42,7 @@ HOME = Path(os.environ.get("REVENANT_CREW_HOME", Path.home() / "kiro" / "revenan
 DEV_CLONE = HOME / "dev"
 QA_CLONE = HOME / "qa"
 ROLES = ("platform-dev", "frontend-dev", "data-dev", "crypto-dev")
-MAX_DEV_RUNS = int(os.environ.get("REVENANT_MAX_DEV_RUNS", "1"))
+MAX_DEV_RUNS = int(os.environ.get("REVENANT_MAX_DEV_RUNS", "1"))  # all Task Runner runs, dev + fix + QA
 MAX_FIX_ATTEMPTS = 2
 CI_CHECK = "ci-gate"
 REQUIRED_CHECKS = ("ci-gate", "policy")
@@ -65,6 +66,13 @@ _MARKER_RE = re.compile(r"<!--\s*" + MARKER + r"\s+(\{.*?\})\s*-->", re.S)
 
 def label_names(item: dict) -> set[str]:
     return {lbl["name"] if isinstance(lbl, dict) else lbl for lbl in item.get("labels", [])}
+
+
+def active_runs(issues: list[dict], prs: list[dict]) -> int:
+    """Task Runner runs in flight, across dev, fix and QA. A dev or fix run holds its
+    issue in status:in-progress; a QA run holds its PR in status:qa-running."""
+    return (sum(L_PROGRESS in label_names(i) for i in issues)
+            + sum(L_QA_RUNNING in label_names(p) for p in prs))
 
 
 def issue_role(issue: dict) -> str | None:
@@ -611,9 +619,13 @@ class Tick:
         self.finish_dev_runs(issues, prs, runs)
         self.finish_qa_runs(prs, runs)
         self.merge_ready(prs)
-        self.start_qa(prs)
-        busy = self.start_fixes(prs, issues)
-        self.claim(issues, busy)
+        # One Task Runner run in flight at a time, across dev, fix and QA. A step that
+        # starts a run ends the tick, so two starts can't race within one tick.
+        if self.start_qa(prs, issues):
+            return
+        if self.start_fixes(prs, issues):
+            return
+        self.claim(issues, prs)
 
     # 1 ─ dev and fix runs finished → push and open/update PR
     def finish_dev_runs(self, issues: list[dict], prs: list[dict], runs: dict) -> None:
@@ -719,24 +731,24 @@ class Tick:
         self.notify(f"Revenant PR #{pr['number']} merged: {pr['title']}")
 
     # 4 ─ start QA when CI is green; CI failure goes straight back to the agent
-    def start_qa(self, prs: list[dict]) -> None:
-        # All QA runs share one clone (QA_CLONE), and checkout_base moves its HEAD.
-        # A second run would swap the code under the first. One at a time.
-        if any(L_QA_RUNNING in label_names(p) for p in prs):
-            return
+    def start_qa(self, prs: list[dict], issues: list[dict] = ()) -> bool:
+        """Start QA on one ready PR. Returns True if a run started."""
+        if active_runs(issues, prs) >= MAX_DEV_RUNS:
+            return False
         for pr in prs:
             names = label_names(pr)
             if L_NEEDS_QA not in names or L_QA_RUNNING in names:
                 continue
             try:
                 if self._start_qa_one(pr):
-                    return  # at most one QA run per tick
+                    return True
             except RuntimeError as exc:
                 self.block_pr(pr, f"The dispatcher could not start QA: {http_reason(exc)}. "
                                   "Needs a human.")
                 # A run may already be going without status:qa-running; starting
                 # another would move the QA clone under it.
-                return
+                return False
+        return False
 
     def _start_qa_one(self, pr: dict) -> bool:
         issue_n = closes_issue(pr.get("body"))
@@ -776,15 +788,17 @@ class Tick:
         return True
 
     # 5 ─ fix runs
-    def start_fixes(self, prs: list[dict], issues: list[dict]) -> set[str]:
-        busy = {r for i in issues if L_PROGRESS in label_names(i) for r in [issue_role(i)] if r}
+    def start_fixes(self, prs: list[dict], issues: list[dict]) -> bool:
+        """Start a fix run on one PR with changes requested. Returns True if a run started."""
+        if active_runs(issues, prs) >= MAX_DEV_RUNS:
+            return False
         for pr in prs:
             if L_CHANGES not in label_names(pr):
                 continue
             issue_n = closes_issue(pr.get("body"))
             issue = next((i for i in issues if i["number"] == issue_n), None)
             role = issue_role(issue) if issue else None
-            if not issue or not role or role in busy or len(busy) >= MAX_DEV_RUNS:
+            if not issue or not role:
                 continue
             try:
                 comments = self.gh.comments(issue_n)
@@ -801,8 +815,8 @@ class Tick:
                 self.block_pr(pr, f"The dispatcher could not start the fix run: {http_reason(exc)}. "
                                   "Needs a human.")
                 continue
-            busy.add(role)
-        return busy
+            return True
+        return False
 
     def _start_fix_one(self, pr: dict, issue: dict, role: str) -> None:
         issue_n = issue["number"]
@@ -821,18 +835,18 @@ class Tick:
         self.say(f"#{issue_n}: fix run started")
 
     # 6 ─ claim new work
-    def claim(self, issues: list[dict], busy: set[str]) -> None:
-        if len(busy) >= MAX_DEV_RUNS:
+    def claim(self, issues: list[dict], prs: list[dict] = ()) -> None:
+        if active_runs(issues, prs) >= MAX_DEV_RUNS:
             return
         closed = {i["number"] for i in self.gh.issues("closed") if "pull_request" not in i}
-        issue = pick_next_issue(issues, closed, busy)
+        issue = pick_next_issue(issues, closed, set())
         if issue is None:
             return
         n, role = issue["number"], issue_role(issue)
         assert role
         try:
             # Start the run first: if the checkout or the start fails, the
-            # issue is untouched and its role is not left busy.
+            # issue is untouched.
             checkout_base(DEV_CLONE, self.token, f"base/issue-{n}", "main")
             task_id = self.crew.start(dev_spec(issue, role), agent=role, workspace=DEV_CLONE,
                                       name=f"issue-{n}")
