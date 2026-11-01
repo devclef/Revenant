@@ -82,7 +82,7 @@ Follow `design.md` in this folder for every file name, constant, interface and a
   - Validation: `bash scripts/check.sh`
   - _Requirements: R3.1, R3.3, R3.4, R6, R11.1, R11.2, R11.4, R16_
 
-- [ ] 4. Number lines, stamps and the extended neutrality test
+- [x] 4. Number lines, stamps and the extended neutrality test
   - Agent: `frontend-dev` · Depends on: 3 · Estimated size: ~1,750 changed lines
   - Before this task: Blocked by #49 (spec 03 task 8, the reveal's letter and figures stages).
   - Scope: `src/components/ceremony/figures/number-line.ts`, `NumberLine.tsx`, `Stamp.tsx`, `figures.module.css`, `src/components/reveal/FigureEntry.tsx`, `src/components/reveal/FiguresThenNow.tsx`, `src/components/reveal/Reveal.tsx`, `src/components/reveal/change-neutral.property.test.tsx`, and the `*.test.ts(x)` for each new file
