@@ -133,9 +133,6 @@ export const REVEAL_COPY = {
   /** Prefix for a remembered answer. `{value}` is filled in at render time. */
   yourAnswer: "Your answer",
 
-  /** The control that advances from stage 1 to the letter. */
-  stage1Next: "Read the letter",
-
   /**
    * The control that reveals every hidden stage at once, in order. Shown
    * alongside the next-stage button while a stage is still hidden (R9.4).

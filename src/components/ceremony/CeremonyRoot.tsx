@@ -7,9 +7,17 @@
 // region contract — `role="region"`, `aria-label`, `tabIndex={-1}` and the
 // focus-on-`state.tag` effect — and adds the Ceremony skin on top:
 //
-//  - `data-ceremony`: the current Stage, from `stageFor(state, DEFAULT_LOCAL_VIEW)`.
-//    A static render reports the final, settled local view (design.md "Final
-//    state first"), so reveal stage 3 reads `close`.
+//  - `data-ceremony`: the current Stage, from `stageFor(state, localView)`.
+//    The local view is the view-local animation state reported up through the
+//    local-view context (design.md "Stage resolution"): `SealBreak` sets
+//    `{ sealing: true }` while a break is in progress, so stage 1 resolves to
+//    `seal` while sealing and `marks` otherwise, and the stage 3 sequence sets
+//    `{ step }`. The provider's initial value is `DEFAULT_LOCAL_VIEW`, so the
+//    server render and the FIRST client render report the final, settled local
+//    view (design.md "Final state first"): a static stage-1 reveal reads
+//    `marks` and a static stage-3 reveal reads `close`. A view only moves the
+//    local view in an event handler or effect after mount, so hydration
+//    matches.
 //  - `data-ceremony-motion`: `calm` when the motion mode is `calm`, else `full`.
 //    Low-power (`light`) counts as `full`, because Stages still change by
 //    motion, only lighter (design.md "Motion modes", R3.2).
@@ -28,18 +36,20 @@
 // client render are identical (no hydration mismatch).
 //
 // Final state first (R17.3): the server and first client render always report
-// `full` motion (the real provider resolves the device mode in an effect), so
-// the static markup this component emits is deterministic. `Math.random` and
-// `Date.now` are never called in render, and this module imports no
-// `@/lib/crypto` (the ceremony source scan enforces both).
+// `full` motion (the real provider resolves the device mode in an effect) and
+// the `DEFAULT_LOCAL_VIEW` local view (the running views move it only after
+// mount), so the static markup this component emits is deterministic.
+// `Math.random` and `Date.now` are never called in render, and this module
+// imports no `@/lib/crypto` (the ceremony source scan enforces both).
 
 import { useEffect, useRef, type ReactNode } from "react";
 
 import { CEREMONY_COPY } from "./copy";
-import { LiveRegion } from "./LiveRegion";
+import { LiveRegion, LiveRegionProvider } from "./LiveRegion";
+import { LocalViewProvider, useLocalView } from "./local-view";
 import { useMotion } from "./motion";
 import { useSequence } from "./skip";
-import { DEFAULT_LOCAL_VIEW, stageFor } from "./stages";
+import { stageFor } from "./stages";
 import type { FlowState } from "../reveal/opening-machine";
 import styles from "./ceremony.module.css";
 
@@ -61,11 +71,30 @@ export type CeremonyRootProps = {
 };
 
 /**
- * The Ceremony root region. Derives the Stage and motion mode, announces the
- * Stage politely, and renders the Calm and (when a sequence is active) Skip
- * controls around the current view.
+ * The Ceremony root. Provides the local-view and live-region contexts to the
+ * region and the views beneath it, then renders the region itself. The
+ * local-view provider's initial value is `DEFAULT_LOCAL_VIEW`, so the first
+ * render is the settled state and hydration matches (design.md "Final state
+ * first"). The `LiveRegionProvider` gives a view deeper in the tree —
+ * `SealBreak` — a working `useLiveRegion()` so it can announce the seal's
+ * state; the per-Stage line is announced by the region itself (below).
  */
-export function CeremonyRoot({
+export function CeremonyRoot(props: CeremonyRootProps) {
+  return (
+    <LocalViewProvider>
+      <LiveRegionProvider>
+        <CeremonyRegion {...props} />
+      </LiveRegionProvider>
+    </LocalViewProvider>
+  );
+}
+
+/**
+ * The Ceremony root region. Derives the Stage from `stageFor(state, localView)`
+ * and the motion mode, announces the Stage politely, and renders the Calm and
+ * (when a sequence is active) Skip controls around the current view.
+ */
+function CeremonyRegion({
   state,
   personaName,
   className,
@@ -73,11 +102,15 @@ export function CeremonyRoot({
 }: CeremonyRootProps) {
   const { mode, setCalm } = useMotion();
   const { hasActive, skipAll } = useSequence();
+  const { localView } = useLocalView();
 
-  // The Stage for the current state, at the settled default local view
-  // (design.md "Final state first"). The root reports the Stage; the running
-  // views report their live local view through the skip/motion contexts.
-  const stage = stageFor(state, DEFAULT_LOCAL_VIEW);
+  // The Stage for the current state at the live local view (design.md "Stage
+  // resolution"). On the server and first render `localView` is
+  // `DEFAULT_LOCAL_VIEW`, so the static markup reports the settled Stage
+  // (`marks` for a stage-1 reveal, `close` for stage 3); a running view moves
+  // it after mount, so `data-ceremony` tracks `seal` while a break is in
+  // progress, then settles.
+  const stage = stageFor(state, localView);
 
   // `light` counts as `full` for the attribute: Stages still change by motion,
   // only lighter (R3.2). Only `calm` turns motion off.
