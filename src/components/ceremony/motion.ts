@@ -56,6 +56,26 @@ export type MotionContextValue = {
   setCalm: (on: boolean) => void;
 };
 
+/**
+ * The pure mode resolution, the single source of truth for `useMotion().mode`.
+ * Calm (reduced motion OR the judge's Calm control) wins over everything, then
+ * a low-power device is `light`, else `full`. Takes resolved booleans only, so
+ * it reads no global and touches no storage — exhaustively unit-testable.
+ */
+export function resolveMode(state: {
+  reducedMotion: boolean;
+  calmControl: boolean;
+  lowPower: boolean;
+}): MotionMode {
+  if (state.reducedMotion || state.calmControl) {
+    return "calm";
+  }
+  if (state.lowPower) {
+    return "light";
+  }
+  return "full";
+}
+
 const MotionContext = createContext<MotionContextValue | null>(null);
 
 /**
@@ -92,6 +112,27 @@ function fewCores(): boolean {
   }
   const cores = navigator.hardwareConcurrency;
   return typeof cores === "number" && cores > 0 && cores < LOW_POWER_CORES;
+}
+
+/** The three device signals that can mark a device as low-power. */
+export type LowPowerSignals = {
+  /** `navigator.hardwareConcurrency` is below `LOW_POWER_CORES`. */
+  fewCores: boolean;
+  /** `navigator.connection.saveData` is on. */
+  saveData: boolean;
+  /** The one-second frame probe measured an average frame slower than `LOW_POWER_FRAME_MS`. */
+  slowFrame: boolean;
+};
+
+/**
+ * The pure low-power decision: a device is low-power when ANY signal fired.
+ * Takes resolved signals and returns a boolean only — it reads no global, runs
+ * no probe and touches no storage, so it is exhaustively unit-testable. A
+ * low-power device renders the `light` mode (lighter Stages, no dust/parallax);
+ * with no signal it stays `full`.
+ */
+export function decideLowPower(signals: LowPowerSignals): boolean {
+  return signals.fewCores || signals.saveData || signals.slowFrame;
 }
 
 /**
@@ -181,11 +222,12 @@ export function MotionProvider({ children }: { children: ReactNode }) {
     // 2. Low-power: the cheap signals decide immediately; otherwise the frame
     // probe runs for one second. Reduced motion already forces calm, so the
     // probe is skipped when it is set (nothing would change the resolved mode).
-    if (fewCores() || saveDataRequested()) {
+    // `decideLowPower` is the single source of truth for the OR of the signals.
+    if (decideLowPower({ fewCores: fewCores(), saveData: saveDataRequested(), slowFrame: false })) {
       setLowPower(true);
     } else if (!prefersReducedMotion()) {
       void probeFrameRate().then((slow) => {
-        if (active && slow) {
+        if (active && decideLowPower({ fewCores: false, saveData: false, slowFrame: slow })) {
           setLowPower(true);
         }
       });
@@ -197,15 +239,10 @@ export function MotionProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const mode: MotionMode = useMemo(() => {
-    if (reducedMotion || calmControl) {
-      return "calm";
-    }
-    if (lowPower) {
-      return "light";
-    }
-    return "full";
-  }, [reducedMotion, calmControl, lowPower]);
+  const mode: MotionMode = useMemo(
+    () => resolveMode({ reducedMotion, calmControl, lowPower }),
+    [reducedMotion, calmControl, lowPower],
+  );
 
   const value = useMemo<MotionContextValue>(
     () => ({ mode, setCalm }),
