@@ -1,7 +1,8 @@
 import { notFound } from "next/navigation";
-import { PageShell } from "@/components/ui";
 import { DemoLabel } from "@/components/demo/DemoLabel";
 import { OpeningFlow } from "@/components/reveal/OpeningFlow";
+import { DeskScene } from "@/components/ceremony/desk/DeskScene";
+import { MotionProvider } from "@/components/ceremony/motion";
 import { PERSONAS } from "@/lib/personas";
 
 /**
@@ -13,6 +14,24 @@ import { PERSONAS } from "@/lib/personas";
  * Next.js then renders the co-located `not-found.tsx`. When a persona is found
  * it renders the "Demo" label and the client `OpeningFlow`, which drives the
  * whole opening ceremony (countdown, unseal, recall, reveal).
+ *
+ * The desk (design.md "How the Ceremony wraps the flow"): `DeskScene` replaces
+ * the old `PageShell` as the wrapper, so every view sits on the dark desk
+ * rather than a bare paper column. `DeskScene` is a client component that reads
+ * the motion mode, so the page renders one `MotionProvider` around it -- the
+ * single motion owner for this page visit (design.md "State ownership"). The
+ * page itself stays a server component: a server component may render a client
+ * provider and a client wrapper, and does so here without any client hook of
+ * its own. The server (and first client) render reports `full` motion and the
+ * settled desk, so the first paint is the static desk with no JavaScript
+ * (R13.4) and hydration never mismatches (R17.3). `DemoLabel` stays the first
+ * child so the "Demo" badge is visible above the fold, before the heading
+ * (R6.5).
+ *
+ * The scene feeds OpeningFlow the persona's list fields (`key`,
+ * `written_as_of`, `opens_at`) through the optional `persona` prop, for the
+ * envelope (R3.7) and the seal pattern (R8.4). These feed the scene only; the
+ * letter id still comes solely from `letterId` (R16.5).
  *
  * Letter ID provenance (R16.5): `letterId` is taken ONLY from the persona list
  * entry, never from the URL or any request input, so the route can only open a
@@ -44,12 +63,19 @@ export default async function PersonaLetterPage({
   }
 
   return (
-    <PageShell>
-      <DemoLabel />
-      <OpeningFlow
-        letterId={persona.letter_id}
-        personaName={persona.display_name}
-      />
-    </PageShell>
+    <MotionProvider>
+      <DeskScene>
+        <DemoLabel />
+        <OpeningFlow
+          letterId={persona.letter_id}
+          personaName={persona.display_name}
+          persona={{
+            key: persona.key,
+            written_as_of: persona.written_as_of,
+            opens_at: persona.opens_at,
+          }}
+        />
+      </DeskScene>
+    </MotionProvider>
   );
 }
