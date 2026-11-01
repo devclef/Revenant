@@ -138,6 +138,12 @@
   transform-origin: 50% 40%;
   will-change: transform;
 
+  /* The Demo label (a descendant with its own paper colours) takes its text
+     and rule colours from these tokens, so it reads on the dark desk
+     (issue #119). Paper panels inside the plane set their own --ink. */
+  --demo-label-ink: var(--desk-ink);
+  --demo-label-rule: var(--desk-gold);
+
   /* The Demo label and intro note must stay visible without scrolling at
      360×640 (QA step 02). The plane adds no top offset of its own and keeps
      a compact top padding so the label sits inside the first viewport. */

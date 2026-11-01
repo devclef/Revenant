@@ -108,11 +108,13 @@ const RIM_STYLES: readonly ReactNode[] = [
 ];
 
 /**
- * Twelve centre glyphs, indexed 0..11 (GLYPH_COUNT): simple ring, star and leaf
- * marks drawn as SVG paths defined in this repo. Each is drawn at the disc
- * centre and is the same for every seal on that glyph index. Decorative only.
+ * Twelve centre glyphs, indexed 0..11 (GLYPH_COUNT): rings, dots, leaves and
+ * simple geometric marks drawn in this repo. Each is drawn at the disc centre
+ * and is the same for every seal on that glyph index. Decorative only. No star,
+ * cross or crescent shapes: those carry religious or political meaning, so the
+ * glyph list must not use them (issue #119).
  */
-const GLYPHS: readonly ReactNode[] = [
+export const GLYPHS: readonly ReactNode[] = [
   // 0 — small ring
   <circle key="g0" cx={CENTER} cy={CENTER} r={10} />,
   // 1 — ring with a dot
@@ -120,21 +122,42 @@ const GLYPHS: readonly ReactNode[] = [
     <circle cx={CENTER} cy={CENTER} r={11} />
     <circle cx={CENTER} cy={CENTER} r={2.5} stroke="none" fill="var(--seal-rim, #5c1713)" />
   </g>,
-  // 2 — four-point star
-  <path
-    key="g2"
-    d="M50 36 L54 50 L50 64 L46 50 Z M36 50 L50 46 L64 50 L50 54 Z"
-  />,
-  // 3 — five-point star
-  <path
-    key="g3"
-    d="M50 37 L53.5 47.5 L64.5 47.5 L55.5 54 L59 64.5 L50 58 L41 64.5 L44.5 54 L35.5 47.5 L46.5 47.5 Z"
-  />,
-  // 4 — six-point star (two triangles)
-  <path
-    key="g4"
-    d="M50 37 L61 56 L39 56 Z M50 63 L39 44 L61 44 Z"
-  />,
+  // 2 — four dots around a centre dot
+  <g key="g2" stroke="none" fill="var(--seal-rim, #5c1713)">
+    <circle cx={CENTER} cy={CENTER - 9} r={2.4} />
+    <circle cx={CENTER + 9} cy={CENTER} r={2.4} />
+    <circle cx={CENTER} cy={CENTER + 9} r={2.4} />
+    <circle cx={CENTER - 9} cy={CENTER} r={2.4} />
+    <circle cx={CENTER} cy={CENTER} r={2.4} />
+  </g>,
+  // 3 — five dots on a ring
+  <g key="g3" stroke="none" fill="var(--seal-rim, #5c1713)">
+    {Array.from({ length: 5 }, (_, i) => {
+      const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
+      return (
+        <circle
+          key={i}
+          cx={CENTER + Math.cos(a) * 11}
+          cy={CENTER + Math.sin(a) * 11}
+          r={2.4}
+        />
+      );
+    })}
+  </g>,
+  // 4 — six dots on a ring
+  <g key="g4" stroke="none" fill="var(--seal-rim, #5c1713)">
+    {Array.from({ length: 6 }, (_, i) => {
+      const a = (i / 6) * Math.PI * 2;
+      return (
+        <circle
+          key={i}
+          cx={CENTER + Math.cos(a) * 11}
+          cy={CENTER + Math.sin(a) * 11}
+          r={2.4}
+        />
+      );
+    })}
+  </g>,
   // 5 — single leaf
   <path
     key="g5"
@@ -155,29 +178,47 @@ const GLYPHS: readonly ReactNode[] = [
     <circle cx={CENTER} cy={CENTER} r={12} />
     <circle cx={CENTER} cy={CENTER} r={6} />
   </g>,
-  // 9 — eight-point burst
-  <g key="g9">
+  // 9 — eight dots on a ring
+  <g key="g9" stroke="none" fill="var(--seal-rim, #5c1713)">
     {Array.from({ length: 8 }, (_, i) => {
       const a = (i / 8) * Math.PI * 2;
       return (
-        <line
+        <circle
           key={i}
-          x1={CENTER}
-          y1={CENTER}
-          x2={CENTER + Math.cos(a) * 12}
-          y2={CENTER + Math.sin(a) * 12}
+          cx={CENTER + Math.cos(a) * 12}
+          cy={CENTER + Math.sin(a) * 12}
+          r={2}
         />
       );
     })}
   </g>,
   // 10 — diamond
   <path key="g10" d="M50 37 L62 50 L50 63 L38 50 Z" />,
-  // 11 — ring with a cross
+  // 11 — ring with a small leaf
   <g key="g11">
     <circle cx={CENTER} cy={CENTER} r={11} />
-    <line x1={CENTER} y1={40} x2={CENTER} y2={60} />
-    <line x1={40} y1={CENTER} x2={60} y2={CENTER} />
+    <path d="M50 42 C54 45 54 55 50 58 C46 55 46 45 50 42 Z" />
   </g>,
+];
+
+/**
+ * A short shape name for each centre glyph, in GLYPHS order. The glyph test
+ * scans this list and fails on any star, cross or crescent name. Keep the two
+ * lists the same length and in the same order.
+ */
+export const GLYPH_SHAPES: readonly string[] = [
+  "ring",
+  "ring with a dot",
+  "four dots around a centre dot",
+  "dots on a ring of five",
+  "dots on a ring of six",
+  "leaf",
+  "two leaves",
+  "three-leaf sprig",
+  "concentric rings",
+  "eight dots on a ring",
+  "diamond",
+  "ring with a leaf",
 ];
 
 export type WaxSealProps = {

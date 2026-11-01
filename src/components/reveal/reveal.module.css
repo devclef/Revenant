@@ -229,7 +229,9 @@
 }
 
 .source summary {
-  color: var(--seal);
+  /* Neutral ink, not the wax red: a Source control is not a warning or a
+     judgement (neutrality.md). Clears AA on --paper and --paper-deep. */
+  color: var(--ink);
   cursor: pointer;
 }
 
