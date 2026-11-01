@@ -473,6 +473,8 @@ Desk tokens live in `ceremony.module.css` (R1.7). Ratios are computed with the W
 
 Paper panels (the envelope, the letter, the stamps) keep `--paper` and `--paper-deep` and the `globals.css` text tokens. Their darkest shading under text is `--paper-shadowed` `#d9cba9`, on which the lowest text token `--gold-text` is 5.75:1. Wax `--seal-wax` reuses `#7a1f1a` and never carries text. Focus rings are 2 px: `--ink` on paper, `--desk-ink` on the desk, both at least 9:1 against their surface (R11.8). No colour depends on any value or direction (R10.1).
 
+Each surface sets its own text colour. Desk text uses the desk tokens (`--desk-ink`, `--desk-ink-soft`, `--desk-gold`), and every paper panel sets `color: var(--ink)` itself (ParchmentSurface `.surface` does). Text never inherits across surfaces: `.desk` sets `--desk-ink`, so a paper panel that sets no colour renders cream on cream. The Demo label and every control on the desk (including the Calm control) must meet AA on the desk. The ring belongs to controls and Stage headings, not to the ceremony region.
+
 ### Copy (`ceremony/copy.ts`)
 
 All new strings, for the owner's tone and neutrality review. Existing strings in `reveal/copy.ts` and `demo/copy.ts` stay where they are; R2 changes two of them.

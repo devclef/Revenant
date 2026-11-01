@@ -30,7 +30,13 @@ CONTAINER_SHELL = ["docker run*", "docker rm*", "docker stop*", "docker logs*"]
 EXTRA_SHELL = {
     "platform-dev": ["docker build*", *CONTAINER_SHELL, "helm lint*", "helm template*",
                      "curl *localhost*", "curl *127.0.0.1*"],
-    "frontend-dev": [],
+    # Same local-app set as qa (throwaway Postgres, migrate, seal personas, start the
+    # app) so frontend-dev can look at its own work. See the qa note below.
+    "frontend-dev": ["docker run*", "docker rm*", "docker stop*",
+                     "npm run build", "npm start*", "npm run db:migrate", "npm run seal-personas*",
+                     "PORT=* npm start*", "PORT=* DATABASE_URL=* npm start*",
+                     "DATABASE_URL=* npm run db:migrate", "DATABASE_URL=* npm run seal-personas*",
+                     "kill *"],
     "data-dev": CONTAINER_SHELL,
     # Tasks with integration tests pass DATABASE_URL inline for a local test database.
     "crypto-dev": [*CONTAINER_SHELL, "DATABASE_URL=* npm *", "DATABASE_URL=* bash scripts/check.sh*"],
@@ -56,25 +62,33 @@ DENY_SHELL = [
     "cd *", "*&& cd *", "*; cd *", "pushd *", "*--prefix*", "npm -g*", "npm * -g*",
     "npm *--global*", "npx --yes*", "*~/*", "*$HOME*", "*/home/*",
 ]
-# Browser for the qa role only (headless Chromium via Playwright MCP). Version pinned
+# Browser for the qa and frontend-dev roles (headless Chromium via Playwright MCP). Version pinned
 # exactly. Auto-named output goes outside the repo, and that folder is also the one
 # allowed root for explicit absolute screenshot paths. kiro-cli does not expand $HOME
 # in `env` values (it passed the text through), so a shell sets the variable instead.
 # That keeps the committed file identical on every machine.
 PLAYWRIGHT_VERSION = "0.0.83"
-QA_SHOTS_DIR = "$HOME/kiro/revenant-crew/qa-shots"
-PLAYWRIGHT_SERVER = {
-    "command": "sh",
-    "args": [
-        "-c",
-        f'PLAYWRIGHT_MCP_OUTPUT_DIR="{QA_SHOTS_DIR}" exec npx -y @playwright/mcp@{PLAYWRIGHT_VERSION}'
-        " --headless --browser chromium --isolated --file-paths absolute",
-    ],
-    "timeout": 120000,
+SHOTS_DIRS = {
+    "qa": "$HOME/kiro/revenant-crew/qa-shots",
+    "frontend-dev": "$HOME/kiro/revenant-crew/dev-shots",
 }
+
+
+def playwright_server(shots_dir: str) -> dict:
+    return {
+        "command": "sh",
+        "args": [
+            "-c",
+            f'PLAYWRIGHT_MCP_OUTPUT_DIR="{shots_dir}" exec npx -y @playwright/mcp@{PLAYWRIGHT_VERSION}'
+            " --headless --browser chromium --isolated --file-paths absolute",
+        ],
+        "timeout": 120000,
+    }
+
+
 # Not needed for walking pages; both reach beyond the browser (server-side code, local files).
 PLAYWRIGHT_DENY = ["playwright/browser_run_code_unsafe", "playwright/browser_file_upload"]
-MCP_SERVERS = {"qa": {"playwright": PLAYWRIGHT_SERVER}}
+MCP_SERVERS = {role: {"playwright": playwright_server(d)} for role, d in SHOTS_DIRS.items()}
 OWNER_ONLY = [".kiro/**", ".github/**", "tools/**", "scripts/check.sh"]
 
 # Hooks (kiro-cli object form). The scripts live in tools/hooks/ (owner-only) and
