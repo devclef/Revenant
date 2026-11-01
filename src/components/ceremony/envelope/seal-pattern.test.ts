@@ -103,7 +103,9 @@ describe("sealPattern — signature takes only a key (type-level)", () => {
     type Params = Parameters<Fn>;
     type Return = ReturnType<Fn>;
 
-    const expectType = <T>(_value: T): void => {};
+    const expectType = <T>(value: T): void => {
+      void value;
+    };
     expectType<[key: string]>([] as unknown as Params);
     expectType<SealPattern>({} as Return);
 
