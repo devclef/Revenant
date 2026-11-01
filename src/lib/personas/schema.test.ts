@@ -91,11 +91,11 @@ function validList(): PersonaList {
         opens_at: "2024-11-05T00:00:00.000Z",
         metrics: [
           {
-            metric_id: "fixture-us-gasoline-regular",
+            metric_id: "us-gasoline-regular",
             recall_subject: "a gallon of regular gasoline",
           },
           {
-            metric_id: "fixture-us-diesel",
+            metric_id: "us-diesel",
             recall_subject: "a gallon of diesel",
           },
         ],
@@ -252,7 +252,7 @@ describe("parsePersonaList — metrics rules", () => {
   it("rejects more than 20 metrics", () => {
     const list = validList();
     list.personas[0].metrics = Array.from({ length: 21 }, () => ({
-      metric_id: "fixture-us-gasoline-regular",
+      metric_id: "us-gasoline-regular",
       recall_subject: "a gallon of regular gasoline",
     }));
     expect(
@@ -263,8 +263,8 @@ describe("parsePersonaList — metrics rules", () => {
   it("rejects duplicate metric_id within a persona", () => {
     const list = validList();
     list.personas[0].metrics = [
-      { metric_id: "fixture-us-diesel", recall_subject: "a gallon of diesel" },
-      { metric_id: "fixture-us-diesel", recall_subject: "a gallon of diesel" },
+      { metric_id: "us-diesel", recall_subject: "a gallon of diesel" },
+      { metric_id: "us-diesel", recall_subject: "a gallon of diesel" },
     ];
     expect(
       problemsFor(list).some((p) =>
@@ -290,7 +290,7 @@ describe("parsePersonaList — metrics rules", () => {
     // A direction word ("higher") is banned by R2.4 / checkRecallSubject.
     list.personas[0].metrics = [
       {
-        metric_id: "fixture-us-gasoline-regular",
+        metric_id: "us-gasoline-regular",
         recall_subject: "a higher gallon of gasoline",
       },
     ];
