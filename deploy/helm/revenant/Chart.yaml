@@ -3,6 +3,6 @@ name: revenant
 description: Revenant — seal a letter to your future self, opened with the receipts. Deploys the Next.js app (web, migrations and the daily fetch job share one image) with a bundled PostgreSQL.
 type: application
 # Chart version. Bump this on every change to the chart (see deploy.md and tech.md).
-version: 0.2.1
+version: 0.3.0
 # Matches the app version in package.json.
 appVersion: "0.1.0"
