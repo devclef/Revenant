@@ -150,7 +150,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
   - Validation: `bash scripts/check.sh` (`npm run lint && npm run typecheck && npm test && npm run build`)
   - _Requirements: R1.4, R5.3, R6.1–R6.8, R15.1–R15.4, R16.5_
 
-- [ ] 7. Persona route, opening flow, recall step and reveal shell
+- [x] 7. Persona route, opening flow, recall step and reveal shell
   - Agent: `frontend-dev` · Depends on: 2, 3, 6
   - Before this task: spec 02-sealed-letters tasks 2 and 4 are on `main` (crypto API and the letter, secret and openings routes). Blocked by #29, #31.
   - Scope: `src/app/demo/personas/[key]/page.tsx`, `src/app/demo/personas/[key]/not-found.tsx` and their tests, `src/components/demo/copy.ts` (add not-found strings), `src/components/reveal/opening-machine.ts`, `api.ts`, `useOpeningFlow.ts`, `OpeningFlow.tsx`, `StillSealed.tsx`, `SealIntact.tsx`, `FlowError.tsx`, `RecallStep.tsx`, `Reveal.tsx`, `RememberedAnswers.tsx`, `copy.ts`, `reveal.module.css`, `import-boundary.test.ts` and their `*.test.ts(x)`
