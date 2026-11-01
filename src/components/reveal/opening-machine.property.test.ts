@@ -22,8 +22,11 @@
 //
 // 2. Render clauses. For every state this task's views render, assert the
 //    renderToStaticMarkup output:
-//      - the letter text appears only in a reveal stage >= 2 (no state rendered
-//        here renders stage >= 2 content yet, so it never appears) (R9.1);
+//      - the sealed letter text appears only in a reveal at stage >= 2
+//        (SealedLetter), and nowhere earlier (R9.1);
+//      - the sealed figure value/source/series/url appear only in a reveal at
+//        stage 3 (FiguresThenNow), and nowhere earlier; the raw figure period
+//        is reformatted so it never appears verbatim, at any stage (R9.1);
 //      - recall question text appears only in recall/submitting/submit_failed/
 //        reveal (R8.1, R9.4);
 //      - no sealed payload string appears at all in verification_failed/
@@ -93,7 +96,10 @@ const PAYLOAD = {
       value: "3.412",
       unit: "USD per gallon",
       region: "U.S. city average",
-      period: "2024-10",
+      // Chosen so the figure's period ("July 2024") never collides with the
+      // seal date ("1 October 2024") or opening date ("5 November 2024"), so the
+      // stage-3 period assertion below distinguishes the figure stage cleanly.
+      period: "2024-07",
       source: "U.S. EIA",
       series_id: "EMM_EPMR_PTE_NUS_DPG",
       retrieved_at: "2024-10-30T14:02:11Z",
@@ -126,15 +132,35 @@ const SEALED: SealedRecord = {
   nonce: "bm9uY2U",
 };
 
-/** Strings from inside the letter that no pre-reveal view may ever render. */
+/**
+ * Strings from inside the letter that appear only in the figure stage (reveal
+ * stage 3) and never earlier. These are the raw sealed values as stored; the
+ * period is held separately because `FigureLine` reformats it (see
+ * STAGE3_FIGURE_RENDERED below), so its raw form never appears in any markup.
+ */
 const SEALED_PAYLOAD_STRINGS = [
-  PAYLOAD.letter_text,
-  "3.412", // the sealed figure value
-  "2024-10", // the figure's period
+  "3.412", // the sealed figure value (formatValue keeps the digits verbatim)
+  "2024-07", // the figure's period, raw: reformatted at stage 3, so never shown
   "U.S. EIA", // the figure's source
   "EMM_EPMR_PTE_NUS_DPG", // the series id
   "https://www.eia.gov/fixture", // the source url
 ] as const;
+
+/**
+ * The figure strings that DO render verbatim in the stage-3 markup. The period
+ * is omitted on purpose: `FigureLine` formats "2024-07" to "July 2024"
+ * (format-change.ts `formatPeriod`), so the raw period never appears anywhere.
+ * Its formatted form is asserted via STAGE3_FIGURE_RENDERED instead.
+ */
+const STAGE3_VERBATIM_STRINGS = [
+  "3.412",
+  "U.S. EIA",
+  "EMM_EPMR_PTE_NUS_DPG",
+  "https://www.eia.gov/fixture",
+] as const;
+
+/** The sealed period as stage 3 renders it ("2024-07" -> "July 2024"). */
+const STAGE3_FIGURE_RENDERED = "July 2024";
 
 const QUESTION_TEXTS = QUESTIONS.map((q) => q.text);
 
@@ -320,20 +346,47 @@ function render(state: FlowState): string {
 // Every reachable state this task renders, with the slice each view needs. The
 // `revealsQuestion` flag marks the states whose view may render a recall
 // question text (RecallStep or RememberedAnswers); every other state must not.
-type RenderCase = { state: FlowState; revealsQuestion: boolean };
+// `revealsLetter` marks the states that render the sealed letter text (reveal
+// stage >= 2); `revealsFigures` marks the states that render the sealed figure
+// values/period/source/series/url (reveal stage 3 only).
+type RenderCase = {
+  state: FlowState;
+  revealsQuestion: boolean;
+  revealsLetter: boolean;
+  revealsFigures: boolean;
+};
 
 const RENDER_CASES: RenderCase[] = [
-  { state: { tag: "loading" }, revealsQuestion: false },
+  {
+    state: { tag: "loading" },
+    revealsQuestion: false,
+    revealsLetter: false,
+    revealsFigures: false,
+  },
   {
     state: { tag: "sealed", opensAt: "2024-11-05T00:00:00.000Z" },
     revealsQuestion: false,
+    revealsLetter: false,
+    revealsFigures: false,
   },
   {
     state: { tag: "openable", envelope: {}, envelopeHash: "h" },
     revealsQuestion: false,
+    revealsLetter: false,
+    revealsFigures: false,
   },
-  { state: { tag: "verifying" }, revealsQuestion: false },
-  { state: { tag: "verified", opened: OPENED }, revealsQuestion: false },
+  {
+    state: { tag: "verifying" },
+    revealsQuestion: false,
+    revealsLetter: false,
+    revealsFigures: false,
+  },
+  {
+    state: { tag: "verified", opened: OPENED },
+    revealsQuestion: false,
+    revealsLetter: false,
+    revealsFigures: false,
+  },
   {
     state: {
       tag: "recall",
@@ -342,6 +395,8 @@ const RENDER_CASES: RenderCase[] = [
       invalid: [],
     },
     revealsQuestion: true,
+    revealsLetter: false,
+    revealsFigures: false,
   },
   {
     state: {
@@ -352,6 +407,8 @@ const RENDER_CASES: RenderCase[] = [
       sealed: SEALED,
     },
     revealsQuestion: true,
+    revealsLetter: false,
+    revealsFigures: false,
   },
   {
     state: {
@@ -362,17 +419,53 @@ const RENDER_CASES: RenderCase[] = [
       sealed: SEALED,
     },
     revealsQuestion: true,
+    revealsLetter: false,
+    revealsFigures: false,
   },
+  // Reveal stage 1: only the judge's remembered answers. No letter, no figures.
   {
     state: { tag: "reveal", opened: OPENED, record: RECORD, stage: 1 },
     revealsQuestion: true,
+    revealsLetter: false,
+    revealsFigures: false,
   },
-  { state: { tag: "not_placed" }, revealsQuestion: false },
-  { state: { tag: "unreachable" }, revealsQuestion: false },
-  { state: { tag: "verification_failed" }, revealsQuestion: false },
+  // Reveal stage 2: the sealed letter is now shown (R9.1); figures are not yet.
+  {
+    state: { tag: "reveal", opened: OPENED, record: RECORD, stage: 2 },
+    revealsQuestion: true,
+    revealsLetter: true,
+    revealsFigures: false,
+  },
+  // Reveal stage 3: letter and the figures then vs now are both shown.
+  {
+    state: { tag: "reveal", opened: OPENED, record: RECORD, stage: 3 },
+    revealsQuestion: true,
+    revealsLetter: true,
+    revealsFigures: true,
+  },
+  {
+    state: { tag: "not_placed" },
+    revealsQuestion: false,
+    revealsLetter: false,
+    revealsFigures: false,
+  },
+  {
+    state: { tag: "unreachable" },
+    revealsQuestion: false,
+    revealsLetter: false,
+    revealsFigures: false,
+  },
+  {
+    state: { tag: "verification_failed" },
+    revealsQuestion: false,
+    revealsLetter: false,
+    revealsFigures: false,
+  },
   {
     state: { tag: "open_failed", kind: "wrong_key" },
     revealsQuestion: false,
+    revealsLetter: false,
+    revealsFigures: false,
   },
 ];
 
@@ -402,15 +495,25 @@ describe("Property 17: views never render letter content before the reveal", () 
     vi.unstubAllGlobals();
   });
 
-  it("renders the letter text in no state this task reaches (stage >= 2 only)", () => {
-    // The letter body belongs to reveal stage 2, which no state here renders.
-    // fast-check drives the same render repeatedly to pin the invariant with
-    // numRuns 100, as Property 17 requires.
+  it("renders the letter text only in a reveal at stage >= 2 (R9.1)", () => {
+    // The letter body belongs to reveal stage 2 (SealedLetter): it appears in a
+    // reveal at stage 2 or 3 and nowhere else. fast-check drives the same render
+    // repeatedly to pin the invariant with numRuns 100, as Property 17 requires.
     fc.assert(
-      fc.property(fc.constantFrom(...RENDER_CASES), ({ state }) => {
-        const html = render(state);
-        expect(html).not.toContain(PAYLOAD.letter_text);
-      }),
+      fc.property(
+        fc.constantFrom(...RENDER_CASES),
+        ({ state, revealsLetter }) => {
+          const html = render(state);
+          if (revealsLetter) {
+            expect(html).toContain(PAYLOAD.letter_text);
+          } else {
+            expect(
+              html.includes(PAYLOAD.letter_text),
+              `${state.tag} must not render the sealed letter text`,
+            ).toBe(false);
+          }
+        },
+      ),
       { numRuns: 100 },
     );
   });
@@ -445,6 +548,11 @@ describe("Property 17: views never render letter content before the reveal", () 
     fc.assert(
       fc.property(fc.constantFrom(...errorCases), ({ state }) => {
         const html = render(state);
+        // The letter body must never leak from a payload-free error state.
+        expect(
+          html.includes(PAYLOAD.letter_text),
+          `${state.tag} must not leak the letter text`,
+        ).toBe(false);
         for (const needle of SEALED_PAYLOAD_STRINGS) {
           expect(
             html.includes(needle),
@@ -462,20 +570,45 @@ describe("Property 17: views never render letter content before the reveal", () 
     );
   });
 
-  it("renders no sealed figure string before the reveal's figure stage (none here)", () => {
-    // The figure value, period, source, series and url belong to reveal stage
-    // 3, which no state here renders. Stage 1 (RememberedAnswers) shows only the
-    // judge's own answer, never the sealed figure.
+  it("renders the sealed figure strings only in the reveal's figure stage (stage 3, R9.1)", () => {
+    // The figure value, source, series and url belong to reveal stage 3
+    // (FiguresThenNow): they appear only in a reveal at stage 3 and nowhere
+    // earlier. The raw period "2024-07" is never shown even at stage 3, because
+    // FigureLine reformats it to "July 2024"; the formatted form is asserted at
+    // stage 3 and the raw form is asserted absent everywhere.
     fc.assert(
-      fc.property(fc.constantFrom(...RENDER_CASES), ({ state }) => {
-        const html = render(state);
-        for (const needle of SEALED_PAYLOAD_STRINGS) {
+      fc.property(
+        fc.constantFrom(...RENDER_CASES),
+        ({ state, revealsFigures }) => {
+          const html = render(state);
+
+          // The raw period is reformatted by FigureLine, so it never appears in
+          // any markup, at any stage.
           expect(
-            html.includes(needle),
-            `${state.tag} must not leak "${needle}"`,
+            html.includes("2024-07"),
+            `${state.tag} must not render the raw sealed period`,
           ).toBe(false);
-        }
-      }),
+
+          if (revealsFigures) {
+            for (const needle of STAGE3_VERBATIM_STRINGS) {
+              expect(html).toContain(needle);
+            }
+            // The period is shown, formatted, only at the figure stage.
+            expect(html).toContain(STAGE3_FIGURE_RENDERED);
+          } else {
+            for (const needle of STAGE3_VERBATIM_STRINGS) {
+              expect(
+                html.includes(needle),
+                `${state.tag} must not leak sealed figure "${needle}"`,
+              ).toBe(false);
+            }
+            expect(
+              html.includes(STAGE3_FIGURE_RENDERED),
+              `${state.tag} must not render the sealed figure period`,
+            ).toBe(false);
+          }
+        },
+      ),
       { numRuns: 100 },
     );
   });
