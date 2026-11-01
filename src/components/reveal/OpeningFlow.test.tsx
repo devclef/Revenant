@@ -191,6 +191,31 @@ function render(state: FlowState): string {
 }
 
 /**
+ * The persona list fields the demo flow always supplies. The envelope-group
+ * views (loading / sealed / openable / verifying / verified) now route through
+ * `EnvelopeView`, whose reused `StillSealed` reads the opening date from the
+ * persona's `opens_at`. A past instant keeps `StillSealed`'s seeded static
+ * frame at zero, so "Try again" renders deterministically.
+ */
+const PERSONA = {
+  key: "us-maya",
+  written_as_of: "2024-05-12",
+  opens_at: "2024-11-05T00:00:00.000Z",
+} as const;
+
+/** Like `render`, but with the optional persona the real demo flow passes. */
+function renderWithPersona(state: FlowState): string {
+  setState(state);
+  return renderToStaticMarkup(
+    createElement(OpeningFlow, {
+      letterId: "letter-1",
+      personaName: "Maya",
+      persona: PERSONA,
+    }),
+  );
+}
+
+/**
  * Escape a copy string the way React escapes text content in
  * `renderToStaticMarkup`, so an assertion on a string containing `'`, `"`, `&`,
  * `<` or `>` matches the serialised HTML (e.g. "hasn't" -> "hasn&#x27;t").
@@ -279,15 +304,23 @@ describe("OpeningFlow view selection", () => {
     expect(html).toContain(REVEAL_COPY.loading);
   });
 
-  it("shows StillSealed for the sealed state (date, no contents)", () => {
-    const html = render({
+  it("shows the still-sealed scene for the sealed state (date, no contents)", () => {
+    // The sealed tag now routes through EnvelopeView, whose reused StillSealed
+    // reads the opening date from the persona the demo flow supplies.
+    const html = renderWithPersona({
       tag: "sealed",
       opensAt: "2024-11-05T00:00:00.000Z",
     });
     expect(html).toContain(REVEAL_COPY.sealedTitle);
+    // The opening date, and nothing from inside the letter.
+    for (const needle of SEALED_PAYLOAD_STRINGS) {
+      expect(html, `sealed must not leak "${needle}"`).not.toContain(needle);
+    }
   });
 
   it("shows the checking-the-seal statement for openable and verifying", () => {
+    // Both the openable and verifying tags route to the envelope's
+    // "Checking the seal." scene; the statement shows with or without a persona.
     expect(
       render({ tag: "openable", envelope: {}, envelopeHash: "h" }),
     ).toContain(REVEAL_COPY.verifying);
