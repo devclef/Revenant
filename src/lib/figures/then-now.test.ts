@@ -1,14 +1,22 @@
 // Example tests for the then-and-now lookup (spec 02-demo-figures, Task 2).
 //
-// These are the worked examples from the ticket, run against the real demo
-// figures (the US fuel fixture validated through loadFigureFile). No network,
-// no database: DEMO_FIGURES is built at import time from the fixture JSON.
+// These are the worked examples from the ticket. Fixture-series examples load
+// the US fuel fixture through loadFigureFile on its own; examples about the
+// demo itself (a real catalogue series) run against DEMO_FIGURES. No network,
+// no database.
 
 import { describe, expect, it } from "vitest";
 
 import { thenAndNow } from "./then-now";
 import { DEMO_FIGURES } from "./demo";
+import { CATALOGUE } from "./catalogue";
+import { loadFigureFile } from "./load";
+import fixture from "./demo/us-fuel.fixture.json";
 import type { Found, Missing } from "./types";
+
+// The fixture validated against the real catalogue, as DEMO_FIGURES does for
+// its fixture half. Fixture-ID examples read from here.
+const FIXTURE_FIGURES = loadFigureFile(fixture, CATALOGUE);
 
 // Type guards that narrow a result and fail the test loudly if the branch is
 // wrong, so the value assertions below read cleanly.
@@ -23,12 +31,12 @@ function assertMissing(r: Found | Missing): asserts r is Missing {
   }
 }
 
-describe("thenAndNow on the demo figures", () => {
+describe("thenAndNow on the fixture figures", () => {
   it("gasoline at 2024-11-05: then 3.00 (2024-11-04), now 5.00 (2026-10-26)", () => {
     const { then, now } = thenAndNow(
       "fixture-us-gasoline-regular",
       "2024-11-05",
-      DEMO_FIGURES,
+      FIXTURE_FIGURES,
     );
     assertFound(then);
     assertFound(now);
@@ -42,7 +50,7 @@ describe("thenAndNow on the demo figures", () => {
     const { then, now } = thenAndNow(
       "fixture-us-diesel",
       "2024-11-05",
-      DEMO_FIGURES,
+      FIXTURE_FIGURES,
     );
     assertFound(then);
     assertFound(now);
@@ -56,18 +64,14 @@ describe("thenAndNow on the demo figures", () => {
     const gasoline = thenAndNow(
       "fixture-us-gasoline-regular",
       "2023-10-01",
-      DEMO_FIGURES,
+      FIXTURE_FIGURES,
     );
     assertMissing(gasoline.then);
     assertFound(gasoline.now);
     expect(gasoline.then.reason).toBe("none_at_or_before_date");
     expect(gasoline.now.figure.value).toBe("5.00");
 
-    const diesel = thenAndNow(
-      "fixture-us-diesel",
-      "2023-10-01",
-      DEMO_FIGURES,
-    );
+    const diesel = thenAndNow("fixture-us-diesel", "2023-10-01", FIXTURE_FIGURES);
     assertMissing(diesel.then);
     assertFound(diesel.now);
     expect(diesel.then.reason).toBe("none_at_or_before_date");
@@ -102,10 +106,10 @@ describe("thenAndNow on the demo figures", () => {
 
   it("a non-date string throws RangeError", () => {
     expect(() =>
-      thenAndNow("fixture-us-gasoline-regular", "not-a-date", DEMO_FIGURES),
+      thenAndNow("fixture-us-gasoline-regular", "not-a-date", FIXTURE_FIGURES),
     ).toThrow(RangeError);
     expect(() =>
-      thenAndNow("fixture-us-gasoline-regular", "2024-13-01", DEMO_FIGURES),
+      thenAndNow("fixture-us-gasoline-regular", "2024-13-01", FIXTURE_FIGURES),
     ).toThrow(RangeError);
   });
 
@@ -113,10 +117,10 @@ describe("thenAndNow on the demo figures", () => {
     const { now } = thenAndNow(
       "fixture-us-gasoline-regular",
       "2026-10-26",
-      DEMO_FIGURES,
+      FIXTURE_FIGURES,
     );
     assertFound(now);
-    const series = DEMO_FIGURES.series.get("fixture-us-gasoline-regular");
+    const series = FIXTURE_FIGURES.series.get("fixture-us-gasoline-regular");
     expect(series).toBeDefined();
     const last = series!.figures[series!.figures.length - 1];
     // Same object, not a copy: the lookup never clones or rebuilds a figure.
