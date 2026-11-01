@@ -29,7 +29,7 @@ All Source_Files are downloaded from the publishers' public pages without a key 
   - Validation: `npm ci && bash scripts/check.sh`
   - _Requirements: R2.1, R2.3–R2.6, R3.4, R5.1–R5.6, R6.7 (boundary), R6.9, R8.1, R8.6, R13.1, R13.2, R13.5, R14.1_
 
-- [ ] 2. EIA adapter and its recorded excerpts
+- [x] 2. EIA adapter and its recorded excerpts
   - Agent: `data-dev` · Depends on: 1 · Estimated size: ~1,150 changed lines (excerpts are binary, 0)
   - Before this task: none.
   - Scope: `src/lib/sources/eia.ts`, `eia.test.ts`, `eia.property.test.ts`, `src/lib/sources/__recorded__/eia-gasoline.xls`, `eia-diesel.xls` and their `.note.txt`, `scripts/prefetch-excerpt-eia.mjs`
