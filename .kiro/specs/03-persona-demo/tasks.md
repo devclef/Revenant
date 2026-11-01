@@ -110,7 +110,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
   - Validation: with `DATABASE_URL=postgres://postgres:test@localhost:5432/revenant_test` against `postgres:17-alpine`: `npm run db:migrate`, `npm test` twice in a row, `npm run build && npm run seal-personas` twice (second run all `skipped`, exit 0), then `bash scripts/check.sh`
   - _Requirements: R2.8, R4.1–R4.12, R4.13 (bundle and package.json parts), R4.14, R5.1, R14.5, R14.6, R16.1–R16.3_
 
-- [ ] 5. Run the sealing script in the migrate init container
+- [x] 5. Run the sealing script in the migrate init container
   - Agent: `platform-dev` · Depends on: 4
   - Before this task: none.
   - Scope: `.dockerignore`, `Dockerfile`, `deploy/helm/revenant/templates/deployment.yaml`, `deploy/helm/revenant/values.yaml`, `deploy/helm/revenant/README.md`, `deploy/helm/revenant/Chart.yaml`
