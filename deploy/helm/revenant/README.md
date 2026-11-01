@@ -98,6 +98,19 @@ helm template t deploy/helm/revenant
 | `nodeSelector` | `{}` | Node selector for scheduling the web pod. |
 | `tolerations` | `[]` | Tolerations for the web pod. |
 | `affinity` | `{}` | Affinity rules for the web pod. |
+| `demo.sealPersonas` | `true` | When true, the migrate init container seals demo persona letters after running migrations (`node scripts/migrate.mjs && node scripts/seal-personas.mjs`). Set to `false` to run migrations only. A non-zero exit from the sealing step fails the init container and blocks web startup. |
+
+## Demo persona letters
+
+When `demo.sealPersonas` is `true` (the default), the migrate init container runs the persona sealing script immediately after migrations complete. The combined command is:
+
+```
+node scripts/migrate.mjs && node scripts/seal-personas.mjs
+```
+
+The sealing script reads persona letter sources from `content/personas/` and writes sealed demo letters to the database. Because the two commands are joined with `&&`, a non-zero exit from either step fails the init container and prevents the web container from starting. This ensures the demo personas are always present before the app accepts traffic.
+
+Set `demo.sealPersonas: false` to skip persona sealing — for example in a production deployment where real letters are the only content, or during a migration-only rollout.
 
 ## Release / GitOps overrides
 
