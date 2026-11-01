@@ -25,7 +25,7 @@ issue: status:ready + agent:<role>, dependencies closed
                       (after 2 fix runs: status:blocked, needs a human)
 ```
 
-One Task Runner run at a time, across dev, fix and QA. A dev or fix run holds its issue in `status:in-progress`, and a QA run holds its PR in `status:qa-running`. While either is set, the dispatcher starts nothing else. `REVENANT_MAX_DEV_RUNS` (default 1) is the cap on that total. Keep it at 1: runs share one Crew gateway process, and when several ran at once, commands from one run executed in another run's workspace.
+One Task Runner run at a time, across dev, fix and QA. A dev or fix run holds its issue in `status:in-progress`, and a QA run holds its PR in `status:qa-running`. The dispatcher also counts the runs Task Runner reports as still going, and uses the larger count. While any run is in flight, it starts nothing else, and a start that fails stops the tick. `REVENANT_MAX_DEV_RUNS` (default 1) is the cap on that total. Keep it at 1: runs share one Crew gateway process, and when several ran at once, commands from one run executed in another run's workspace.
 
 ## One-time setup
 
@@ -97,6 +97,6 @@ The `qa` agent (and only `qa`) has a headless Chromium through the Playwright MC
 ## When something goes wrong
 
 - **status:blocked:** read the issue and PR comments, then the run in the Crew dashboard Tasks page. Fix the ticket or the code, remove `status:blocked`, and set the right status label.
-- **A stuck `status:in-progress` or `status:qa-running` label:** it holds the whole queue, not just its role, because only one Task Runner run is allowed at a time. Check the run in the Crew dashboard, then set the item to `status:blocked` or fix its label.
+- **A stuck `status:in-progress` or `status:qa-running` label, or a run Task Runner still reports:** it holds the whole queue, because only one Task Runner run is allowed at a time. Check the run in the Crew dashboard. Then set the item to `status:blocked` or fix its label, or cancel the run.
 - **Re-run QA:** remove `status:qa-passed` or `status:changes-requested` and add `needs-qa`.
 - **Pause everything:** pause the `revenant-dispatch` cron job.

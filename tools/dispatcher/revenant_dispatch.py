@@ -68,11 +68,18 @@ def label_names(item: dict) -> set[str]:
     return {lbl["name"] if isinstance(lbl, dict) else lbl for lbl in item.get("labels", [])}
 
 
-def active_runs(issues: list[dict], prs: list[dict]) -> int:
-    """Task Runner runs in flight, across dev, fix and QA. A dev or fix run holds its
-    issue in status:in-progress; a QA run holds its PR in status:qa-running."""
-    return (sum(L_PROGRESS in label_names(i) for i in issues)
-            + sum(L_QA_RUNNING in label_names(p) for p in prs))
+def active_runs(issues: list[dict], prs: list[dict], runs: dict[str, dict]) -> int:
+    """Task Runner runs in flight, across dev, fix and QA. Returns the larger of two counts.
+
+    Labels: a dev or fix run holds its issue in status:in-progress, and a QA run holds
+    its PR in status:qa-running. Labels can be missing (a run started but its label
+    write failed) or changed by hand. Runs: what Task Runner reports as still going,
+    including a run being cancelled or paused, which still holds the gateway."""
+    by_label = (sum(L_PROGRESS in label_names(i) for i in issues)
+                + sum(L_QA_RUNNING in label_names(p) for p in prs))
+    by_run = sum(1 for r in runs.values()
+                 if run_state(r) == "running" or str(r.get("status", "")).lower() in ("cancelling", "pausing"))
+    return max(by_label, by_run)
 
 
 def issue_role(issue: dict) -> str | None:
@@ -587,6 +594,8 @@ class Tick:
     token: str
     log: list[str] = field(default_factory=list)
     notify: Callable[[str], None] = lambda _m: None
+    # Task Runner runs as of this tick's start, set by run() before any start step.
+    runs: dict[str, dict] = field(default_factory=dict)
 
     def say(self, msg: str) -> None:
         self.log.append(msg)
@@ -613,6 +622,7 @@ class Tick:
         if warn:
             self.say(warn)
         runs = self.crew.runs()
+        self.runs = runs
         open_items = self.gh.issues("open")
         issues = [i for i in open_items if "pull_request" not in i]
         prs = [i for i in open_items if "pull_request" in i]
@@ -731,9 +741,13 @@ class Tick:
         self.notify(f"Revenant PR #{pr['number']} merged: {pr['title']}")
 
     # 4 ─ start QA when CI is green; CI failure goes straight back to the agent
-    def start_qa(self, prs: list[dict], issues: list[dict] = ()) -> bool:
-        """Start QA on one ready PR. Returns True if a run started."""
-        if active_runs(issues, prs) >= MAX_DEV_RUNS:
+    def start_qa(self, prs: list[dict], issues: list[dict]) -> bool:
+        """Start QA on one ready PR. Returns True when this tick should stop: a run started,
+        or a start failed after the run may have begun. Only one QA run at a time, whatever
+        the cap, because all QA runs share QA_CLONE."""
+        if any(L_QA_RUNNING in label_names(p) for p in prs):
+            return False
+        if active_runs(issues, prs, self.runs) >= MAX_DEV_RUNS:
             return False
         for pr in prs:
             names = label_names(pr)
@@ -745,9 +759,9 @@ class Tick:
             except RuntimeError as exc:
                 self.block_pr(pr, f"The dispatcher could not start QA: {http_reason(exc)}. "
                                   "Needs a human.")
-                # A run may already be going without status:qa-running; starting
-                # another would move the QA clone under it.
-                return False
+                # The run may already be going without its label. Stop this tick, so
+                # no other run starts alongside it.
+                return True
         return False
 
     def _start_qa_one(self, pr: dict) -> bool:
@@ -789,8 +803,9 @@ class Tick:
 
     # 5 ─ fix runs
     def start_fixes(self, prs: list[dict], issues: list[dict]) -> bool:
-        """Start a fix run on one PR with changes requested. Returns True if a run started."""
-        if active_runs(issues, prs) >= MAX_DEV_RUNS:
+        """Start a fix run on one PR with changes requested. Returns True when this tick
+        should stop: a run started, or a start failed after the run may have begun."""
+        if active_runs(issues, prs, self.runs) >= MAX_DEV_RUNS:
             return False
         for pr in prs:
             if L_CHANGES not in label_names(pr):
@@ -814,10 +829,9 @@ class Tick:
             except RuntimeError as exc:
                 self.block_pr(pr, f"The dispatcher could not start the fix run: {http_reason(exc)}. "
                                   "Needs a human.")
-                continue
+                return True  # stop this tick; a run may be going without its label
             return True
         return False
-
     def _start_fix_one(self, pr: dict, issue: dict, role: str) -> None:
         issue_n = issue["number"]
         pr_comments = self.gh.comments(pr["number"])
@@ -835,8 +849,8 @@ class Tick:
         self.say(f"#{issue_n}: fix run started")
 
     # 6 ─ claim new work
-    def claim(self, issues: list[dict], prs: list[dict] = ()) -> None:
-        if active_runs(issues, prs) >= MAX_DEV_RUNS:
+    def claim(self, issues: list[dict], prs: list[dict]) -> None:
+        if active_runs(issues, prs, self.runs) >= MAX_DEV_RUNS:
             return
         closed = {i["number"] for i in self.gh.issues("closed") if "pull_request" not in i}
         issue = pick_next_issue(issues, closed, set())
