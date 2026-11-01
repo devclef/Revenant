@@ -211,6 +211,13 @@ export const REVEAL_COPY = {
   /** Label before the then-vs-now formula (R12.9). */
   formulaLabel: "Formula",
 
+  /**
+   * The neutral connector between the then period and the now period on a
+   * change line, e.g. "Sep 2024" + this + "Sep 2026". Shown with a leading and
+   * trailing space; it names no direction and carries no judgement.
+   */
+  periodRange: " to ",
+
   /** The now figure is unavailable because its series left the catalogue. */
   nowUnavailableUnknown:
     "The current figure is unavailable. This series is no longer in the catalogue.",
