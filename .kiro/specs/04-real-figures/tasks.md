@@ -104,7 +104,7 @@ All Source_Files are downloaded from the publishers' public pages without a key 
   - Validation: `npm run prefetch` (once, with network), then `bash scripts/check.sh`. A second `npm run prefetch` leaves the file byte-identical (run it and confirm with `git diff --stat`; do not commit a change).
   - _Requirements: R1.1–R1.10, R6.2, R7.5, R8.8, R12.2, R13.4, R14.2_
 
-- [ ] 7. `DEMO_FIGURES` loads the real figures and the fixture together
+- [x] 7. `DEMO_FIGURES` loads the real figures and the fixture together
   - Agent: `data-dev` · Depends on: 6 · Estimated size: ~700 changed lines
   - Before this task: none. (The Sealing_Script, issue #45, and the `migrate` init container step, issue #46, are merged.) Task 7, 8 and 9 merge in that order, each as its own PR.
   - Scope: `src/lib/figures/merge.ts`, `merge.test.ts`, `merge.property.test.ts`, `src/lib/figures/types.ts` (doc comment only), `src/lib/figures/demo/index.ts`, `src/lib/figures/demo/index.test.ts`, `src/lib/figures/then-now.test.ts`, `src/lib/figures/demo/personas-consistency.test.ts`
