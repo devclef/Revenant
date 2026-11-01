@@ -125,6 +125,13 @@
   margin: 0 0 2.5rem;
 }
 
+/* One reveal stage's paper panel (StagePanel). The panel sets its own text
+   colour, so stage text never inherits the desk's cream ink (issue #119). */
+.stagePanel {
+  color: var(--ink);
+  margin: 0;
+}
+
 /* The next-stage and "Show everything" controls, shown together while a stage
    is still hidden (R9.4). Both are plain .button controls; neither direction
    nor progress is encoded in colour. */
