@@ -15,13 +15,13 @@
 //                        the candle and the plane in calm / light modes.
 //     [data-candle]      a decorative radial-gradient candle pool, aria-hidden.
 //     [data-desk-plane]  the parallax plane that holds `children`, in order.
-//     <Calm control>     one button that toggles motion off/on, rendered on the
-//                        client only (see "Final state first" below).
 //
-// All three scene elements carry bare *global* data attributes (not hashed
-// CSS-module class names); DeskScene.module.css targets them with `:global(...)`
-// selectors. The scene applies no className of its own, so the static markup is
-// exactly the data attributes the module styles.
+// The one Calm control lives in CeremonyRoot; this scene has none.
+//
+// The scene elements carry local CSS-module classes (.desk, .candle, .plane)
+// from DeskScene.module.css, plus the data attributes the tests and the
+// motion selectors key off. The root also carries `.desk` from
+// ceremony.module.css, which holds the desk tokens and focus rings.
 //
 // Pointer light and parallax (R13.6, R8.6): `useLight` returns a ref attached
 // to the desk root. In `full` motion it listens for pointer movement and writes
@@ -34,29 +34,25 @@
 //
 // Final state first (design.md, R17.3): the very first render — the server
 // render and the first client render — is the settled desk, drawn purely with
-// CSS, with no JS-only chrome. The Calm control is JS-only: a reader with no
-// JavaScript cannot toggle a React boolean, so the button appears only after
-// mount. Gating it behind a mounted flag keeps the static markup to the desk
-// and its children alone (the server render carries no control text), and the
-// hydrated client then shows the button. This also matches the scene's test,
-// which renders the static markup and asserts the scene contributes no inline
-// text of its own.
+// CSS. The scene has no button and no JS-only chrome, so the static markup is
+// the desk and its children alone and works with no JavaScript.
 //
-// Copy (R15.1): the Calm control's label is the only text the scene adds, and
-// it comes from `CEREMONY_COPY` — no inline literal lives here. Its label flips
-// with the resolved mode, exactly as CeremonyRoot does, so the control reads
-// "Turn off motion" while motion is on and "Turn motion back on" once off.
+// Copy (R15.1): the scene adds no text of its own. The one Calm control is
+// rendered by CeremonyRoot, which shares this scene's motion mode through the
+// one MotionProvider, so pressing it sets both data-desk-motion and
+// data-ceremony-motion.
 //
 // No `Math.random` and no `Date.now` in render (Property 21 / the ceremony
-// source scan): the pointer work lives in `useLight`'s effect, and `mounted`
-// is a plain boolean flipped in an effect. The server and the first client
-// render produce identical markup. Imports no `@/lib/crypto`.
+// source scan): the pointer work lives in `useLight`'s effect. The server and
+// the first client render produce identical markup. Imports no
+// `@/lib/crypto`.
 
-import { useEffect, useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 
-import { CEREMONY_COPY } from "../copy";
 import { useMotion } from "../motion";
+import ceremony from "../ceremony.module.css";
 import { useLight } from "./useLight";
+import styles from "./DeskScene.module.css";
 
 export type DeskSceneProps = {
   /** The page content that rests on the desk, in source order. */
@@ -65,43 +61,25 @@ export type DeskSceneProps = {
 
 /**
  * The dark desk. Renders the desk surface (the pointer-light / parallax target),
- * a decorative candle light layer, the parallax plane carrying the children,
- * and — on the client only — the Calm control.
+ * and a decorative candle light layer, the parallax plane carrying the children.
  */
 export function DeskScene({ children }: DeskSceneProps) {
-  const { mode, setCalm } = useMotion();
+  const { mode } = useMotion();
   // The pointer-light and parallax ref. `useLight` attaches its listeners only
   // in `full` motion; in `light` / `calm` the desk stays settled.
   const deskRef = useLight<HTMLDivElement>();
 
-  // The Calm control is JS-only, so it is withheld from the server render and
-  // the first client render (Final state first). After mount it appears.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
-  // `light` counts as `full` for the control label: only `calm` is "motion
-  // off" (R3.2 / CeremonyRoot). The label flips with the mode.
-  const motionOff = mode === "calm";
-  const calmLabel = motionOff ? CEREMONY_COPY.calmOff : CEREMONY_COPY.calmOn;
-
   return (
-    <div ref={deskRef} data-desk data-desk-motion={mode}>
+    <div
+      ref={deskRef}
+      data-desk
+      data-desk-motion={mode}
+      className={`${ceremony.desk} ${styles.desk}`}
+    >
       {/* Candle light layer: a radial gradient above the desk, decoration. */}
-      <div data-candle aria-hidden="true" />
+      <div data-candle className={styles.candle} aria-hidden="true" />
       {/* Parallax plane: holds the content, in order, and tilts in full motion. */}
-      <div data-desk-plane>{children}</div>
-      {/* Calm control (R11.2): client-only, labelled from CEREMONY_COPY. */}
-      {mounted ? (
-        <button
-          type="button"
-          data-desk-calm
-          onClick={() => setCalm(!motionOff)}
-        >
-          {calmLabel}
-        </button>
-      ) : null}
+      <div data-desk-plane className={styles.plane}>{children}</div>
     </div>
   );
 }

@@ -44,7 +44,7 @@
  */
 
 /* The desk surface. */
-:global([data-desk]) {
+.desk {
   position: relative;
   isolation: isolate; /* keep the candle's stacking contained */
   min-height: 100svh;
@@ -74,7 +74,7 @@
  * The pool never brightens the desk past --desk-lit-max, so text over the lit
  * desk always clears AA (contrast.test.ts / Property 22).
  */
-:global([data-candle]) {
+.candle {
   position: absolute;
   inset: 0;
   z-index: 0;
@@ -121,7 +121,7 @@
  * tilt degrees), falling back to no movement when JS has not run, so the
  * static desk holds its content perfectly still and centred.
  */
-:global([data-desk-plane]) {
+.plane {
   position: relative;
   z-index: 1;
 
@@ -151,24 +151,24 @@
  * "full"; "calm" and "light" settle the desk, and the media query covers the
  * OS preference directly for the no-JS / full case too.
  */
-:global([data-desk][data-desk-motion="calm"] [data-candle]),
-:global([data-desk][data-desk-motion="light"] [data-candle]) {
+:global([data-desk-motion="calm"]) .candle,
+:global([data-desk-motion="light"]) .candle {
   animation: none;
   opacity: 1;
 }
 
-:global([data-desk][data-desk-motion="calm"] [data-desk-plane]),
-:global([data-desk][data-desk-motion="light"] [data-desk-plane]) {
+:global([data-desk-motion="calm"]) .plane,
+:global([data-desk-motion="light"]) .plane {
   transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :global([data-candle]) {
+  .candle {
     animation: none;
     opacity: 1;
   }
 
-  :global([data-desk-plane]) {
+  .plane {
     transform: none;
   }
 }

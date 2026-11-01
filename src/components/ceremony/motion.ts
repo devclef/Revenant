@@ -32,6 +32,7 @@
 import {
   createContext,
   createElement,
+  Fragment,
   useCallback,
   useContext,
   useLayoutEffect,
@@ -190,6 +191,16 @@ function probeFrameRate(): Promise<boolean> {
  * else `light` when a low-power signal fired, else `full`.
  */
 export function MotionProvider({ children }: { children: ReactNode }) {
+  // One Calm control per page: a nested provider defers to the parent, so the
+  // desk and the ceremony always share one mode.
+  const parent = useContext(MotionContext);
+  if (parent !== null) {
+    return createElement(Fragment, null, children);
+  }
+  return createElement(RootMotionProvider, null, children);
+}
+
+function RootMotionProvider({ children }: { children: ReactNode }) {
   // The Calm control (R1.5): React state only.
   const [calmControl, setCalmControl] = useState(false);
   // The device-resolved signals, read after mount. Both start cleared so the

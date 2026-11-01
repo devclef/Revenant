@@ -209,3 +209,20 @@ describe("useMotion — provider boundary", () => {
     );
   });
 });
+
+describe("MotionProvider — nesting", () => {
+  it("a nested provider shares the parent's context value", () => {
+    const seen: MotionContextValue[] = [];
+    function Probe() {
+      seen.push(useMotion());
+      return null;
+    }
+    function Outer() {
+      seen.push(useMotion());
+      return createElement(MotionProvider, null, createElement(Probe));
+    }
+    renderToStaticMarkup(createElement(MotionProvider, null, createElement(Outer)));
+    expect(seen).toHaveLength(2);
+    expect(seen[1]).toBe(seen[0]);
+  });
+});

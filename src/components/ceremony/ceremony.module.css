@@ -146,12 +146,12 @@
  * data-ceremony-motion="calm" on the root; the media query covers the OS
  * preference directly.
  */
-.desk[data-ceremony-motion="calm"] .stageFade,
-.desk[data-ceremony-motion="light"] .stageFade {
+.ceremony[data-ceremony-motion="calm"] .stageFade,
+.ceremony[data-ceremony-motion="light"] .stageFade {
   animation-duration: 120ms; /* CALM_FADE_MS: at most 150 (R11.2) */
 }
 
-.desk[data-ceremony-motion="calm"] .stageFade {
+.ceremony[data-ceremony-motion="calm"] .stageFade {
   animation: none;
 }
 
