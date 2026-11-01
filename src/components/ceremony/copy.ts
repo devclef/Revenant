@@ -100,6 +100,15 @@ export const CEREMONY_COPY = {
   /** The control that asks for device-motion permission for the light tilt. */
   tiltEnable: "Let the light follow your phone",
 
+  /** The note beside the tilt control: what the permission request is for. */
+  tiltPermissionNote:
+    "Your phone asks for permission to read its motion. Saying no keeps the light where it is.",
+
+  // --- Desk ---
+
+  /** Shown on the desk when there are no envelopes to place on it. */
+  deskEmpty: "No letters are on the desk yet.",
+
   /** Turns sound on (when sound is currently off). */
   soundOn: "Turn sound on",
 

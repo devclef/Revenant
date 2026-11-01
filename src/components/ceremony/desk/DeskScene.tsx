@@ -30,7 +30,8 @@
 // follows the pointer in full/light modes and the parallax tilt is full-only;
 // `useLight` itself only attaches in `full`, and the module CSS also drops the
 // transform in `light`, so a light-mode desk shows the settled plane either
-// way. No dust and no tilt here — those load by dynamic import in task 7.
+// way. The dust and the tilt control are `DeskDecor`, mounted here and loaded by
+// dynamic import() in `full` motion only (decor-loader.ts).
 //
 // Final state first (design.md, R17.3): the very first render — the server
 // render and the first client render — is the settled desk, drawn purely with
@@ -51,6 +52,7 @@ import { type ReactNode } from "react";
 
 import { useMotion } from "../motion";
 import ceremony from "../ceremony.module.css";
+import { DeskDecor } from "./DeskDecor";
 import { useLight } from "./useLight";
 import styles from "./DeskScene.module.css";
 
@@ -78,6 +80,8 @@ export function DeskScene({ children }: DeskSceneProps) {
     >
       {/* Candle light layer: a radial gradient above the desk, decoration. */}
       <div data-candle className={styles.candle} aria-hidden="true" />
+      {/* Dust and tilt: in full motion only, loaded after mount (R13.3). */}
+      <DeskDecor target={deskRef} />
       {/* Parallax plane: holds the content, in order, and tilts in full motion. */}
       <div data-desk-plane className={styles.plane}>{children}</div>
     </div>
