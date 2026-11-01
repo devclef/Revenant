@@ -89,7 +89,7 @@ The header must not reveal what the letter contains or tracks.
 
 ## Demo letters
 
-- Persona letters are sealed by a script with a published demo backup key and an `opensAt` in the past. "Break the seal" uses that key. Persona letters have no passkey wrap and never prompt for a passkey.
+- Persona letters are sealed by a script with a published demo backup key and an `opensAt` in the past. The persona page opens them with that key. Persona letters have no passkey wrap and never prompt for a passkey.
 - Live demo letters use the real flow, including the PRF check, letter card and `.ics`, with `opensAt = sealedAt + 30 seconds`. The server accepts this only for the demo table.
 
 ## Threat model

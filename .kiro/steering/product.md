@@ -73,14 +73,14 @@ Judges can't wait years, so there are two demos. Both live at `/demo`, are clear
 
 ### Demo 1: Persona letters
 
-Pre-sealed letters from fictional people, written before a recent election in their region and set to open on that election day. Judges get the opening experience without a passkey: break the seal, recall, reveal.
+Pre-sealed letters from fictional people, written before a recent election in their region and set to open on that election day. Judges get the opening experience without a passkey: open the letter, recall, break the seal, reveal.
 
 - One or two personas per region, chosen from these fixed windows (the 12 months up to and including election day):
   - **US:** presidential election, 5 November 2024.
   - **EU:** European Parliament election, 6–9 June 2024.
   - **Sweden:** Riksdag election, 11 September 2022 (the one before the 2026 election, which is too recent to show a meaningful gap).
 - Figures are official everyday metrics (for example fuel and groceries), as real historical records for the persona's date, with full provenance. Personas have no personal numbers.
-- No passkey. Each persona letter is sealed with a published demo key, and "Break the seal" opens it.
+- No passkey. Each persona letter is sealed with a published demo key, the demo key opens it in the browser, and the seal break in the reveal shows it.
 - The persona letter is shown as a demo, written "as of" its window date. It never claims to have been sealed at that date.
 - The personas themselves are chosen after the MVP is up.
 
@@ -100,7 +100,7 @@ The hackathon demo comes first, not the full product.
 1. **01 Skeleton.** Deployable site, health checks, image, Helm chart. Done.
 2. **02 Sealed letters.** Sealed letter format, browser crypto with a known demo key (no passkey or PRF), the first migration (letters, demo letters, openings, immutability triggers), and the API routes to get a letter, release its server secret after the opening date, and store encrypted recall answers.
 3. **02 Demo figures (data-dev, alongside 02).** Two or three official series per region that cover the demo windows and today, delivered as a JSON file with full provenance. No fetch job.
-4. **03 Persona demo** at `/demo`: pick a persona, break the seal, answer the recall questions, then see the answers, the letter, and the figures then vs now.
+4. **03 Persona demo** at `/demo`: pick a persona, answer the recall questions, break the seal, then see the answers, the letter, and the figures then vs now.
 5. **Live passkey demo**, if time allows.
 6. Remaining product work (passkey sealing for real letters, backup key card, PDF cards, `.ics`, the daily fetch job) after the demo.
 
