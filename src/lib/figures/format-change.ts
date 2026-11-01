@@ -67,6 +67,13 @@ function magnitude(value: string): string {
  * the exact decimal is rendered without ever becoming a binary float. Rounding,
  * when `fractionDigits` forces it, is half away from zero (`"halfExpand"`).
  * When `fractionDigits` is omitted the value is shown at its own precision.
+ *
+ * `signDisplay: "negative"` shows a minus only on a genuinely negative result:
+ * a value that rounds to zero at the requested digits (e.g. `"-0.4"` at 0
+ * digits) is formatted as negative zero, and the formatter then omits the sign,
+ * yielding `"0"` rather than `"-0"`. A non-zero negative keeps its minus. This
+ * is the only place the sign of a direct `formatValue` call is decided; the
+ * callers pass magnitudes here and apply U+2212 themselves.
  */
 export function formatValue(
   value: string,
@@ -74,7 +81,10 @@ export function formatValue(
   fractionDigits?: number,
 ): string {
   const locale = localeForRegion(region);
-  const options: Intl.NumberFormatOptions = { roundingMode: "halfExpand" };
+  const options: Intl.NumberFormatOptions = {
+    roundingMode: "halfExpand",
+    signDisplay: "negative",
+  };
   if (fractionDigits !== undefined) {
     options.minimumFractionDigits = fractionDigits;
     options.maximumFractionDigits = fractionDigits;

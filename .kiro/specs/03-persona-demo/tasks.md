@@ -80,7 +80,7 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
   - Validation: `bash scripts/check.sh` (`npm run lint && npm run typecheck && npm test && npm run build`)
   - _Requirements: R1.1–R1.10, R2.4, R2.10, R5.2_
 
-- [ ] 4. Sealing script, its bundle and its integration tests
+- [x] 4. Sealing script, its bundle and its integration tests
   - Agent: `crypto-dev` · Depends on: 2, 3
   - Before this task: spec 02-sealed-letters tasks 2, 3 and 4 are on `main` (`sealLetter`, `openLetter`, `parseBackupKey`, `PUBLIC_DEMO_BACKUP_KEY`, `storePersonaLetter`, `LetterStoreError`, `findLetter`, `describeDb`), and spec 02-demo-figures task 2 is on `main` (`DEMO_FIGURES`, `thenAndNow`). Blocked by #29, #30, #31, #39.
   - Scope: `scripts/seal-personas-core.ts`, `scripts/seal-personas.ts`, `scripts/seal-personas.build.mjs`, `scripts/seal-personas-texts.d.ts`, `src/test/integration/seal-personas.test.ts`, `src/test/integration/seal-personas-core.test.ts`, `package.json`, `package-lock.json`
@@ -110,12 +110,12 @@ Each task is one GitHub issue, worked by one agent, and leaves `main` passing th
   - Validation: with `DATABASE_URL=postgres://postgres:test@localhost:5432/revenant_test` against `postgres:17-alpine`: `npm run db:migrate`, `npm test` twice in a row, `npm run build && npm run seal-personas` twice (second run all `skipped`, exit 0), then `bash scripts/check.sh`
   - _Requirements: R2.8, R4.1–R4.12, R4.13 (bundle and package.json parts), R4.14, R5.1, R14.5, R14.6, R16.1–R16.3_
 
-- [ ] 5. Run the sealing script in the migrate init container
+- [x] 5. Run the sealing script in the migrate init container
   - Agent: `platform-dev` · Depends on: 4
   - Before this task: none.
   - Scope: `.dockerignore`, `Dockerfile`, `deploy/helm/revenant/templates/deployment.yaml`, `deploy/helm/revenant/values.yaml`, `deploy/helm/revenant/README.md`, `deploy/helm/revenant/Chart.yaml`
   - Acceptance:
-    - `.dockerignore` gets `!scripts/seal-personas*` next to `!scripts/migrate.mjs`, so the builder stage sees the sources. `content/` stays included.
+    - `.dockerignore`: the `!scripts/seal-personas*` line next to `!scripts/migrate.mjs` is already on main (added by the owner to unblock task 4). It only needs to be checked, so the builder stage sees the sources. `content/` stays included.
     - The Dockerfile runner stage copies `/app/dist/seal-personas.mjs` to `./scripts/seal-personas.mjs` owned by `1001:1001`, with one sentence in the comment above the migrate copies. No extra `node_modules` copy.
     - The `migrate` init container runs `sh -c` with `node scripts/migrate.mjs && node scripts/seal-personas.mjs` when `demo.sealPersonas` is true and `node scripts/migrate.mjs` alone when false, as in design.md. A non-zero exit from either fails the init container, so `web` doesn't start. `DATABASE_URL` still comes from the existing Secret.
     - `values.yaml` documents `demo.sealPersonas: true` with the design.md comment.
