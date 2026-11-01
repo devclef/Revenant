@@ -119,7 +119,7 @@ All Source_Files are downloaded from the publishers' public pages without a key 
   - Validation: `bash scripts/check.sh`; and with `DATABASE_URL=postgres://postgres:test@localhost:5432/revenant_test` against `postgres:17-alpine`: `npm run db:migrate`, then `npm test` (the integration test must run, not skip).
   - _Requirements: R9.1–R9.6, R9.12, R10.7, R12.1, R12.3, R13.3_
 
-- [ ] 8. Maya moves to the catalogue metrics
+- [x] 8. Maya moves to the catalogue metrics
   - Agent: `frontend-dev` · Depends on: 7 · Estimated size: ~150 changed lines
   - Before this task: none.
   - Scope: `content/personas/personas.json`, `src/lib/personas/schema.test.ts`, `src/lib/personas/schema.property.test.ts`, `src/lib/personas/index.test.ts`
