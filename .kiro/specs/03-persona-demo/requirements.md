@@ -130,19 +130,19 @@ Passkeys and PRF, the live demo (Demo 2), real data fetching and the real-data f
 **User story:** As a judge, I want to find the demo from the front page and pick a persona, so I can try the opening experience without waiting years.
 
 1. THE landing page SHALL show a link to `/demo` whose visible text contains the word "demo" and says that it opens the demo, without puns or exclamation marks.
-2. THE Demo_Index SHALL show exactly one card per persona in the Persona_List, in the order the Persona_List gives, with the persona's display name, region, the `written_as_of` date labelled "written as of", the opening date taken from `opens_at`, and a "Break the seal" control.
+2. THE Demo_Index SHALL show exactly one card per persona in the Persona_List, in the order the Persona_List gives, with the persona's display name, region, the `written_as_of` date labelled "written as of", the opening date taken from `opens_at`, and a link that opens that persona's letter. The link's text is a plain call to open the letter and does not say the seal is broken at this point; the exact words are set in `components/demo/copy.ts` by spec 05-reveal-ceremony (R2). The seal is broken later, in the Reveal.
 3. THE Demo_Index SHALL show the `written_as_of` date and the opening date as day, full month name and four-digit year (for example "5 November 2024"), matching the calendar dates in the Persona_List whatever the viewer's timezone.
 4. THE Demo_Index SHALL say, in plain words visible without scrolling on a 360 by 640 CSS pixel viewport, that the personas are fictional, that their letters were prepared later as a demo, and that no passkey is needed.
 5. THE Demo_Index and every Opening_Flow page SHALL carry a "Demo" label that is visible without scrolling on a 360 by 640 CSS pixel viewport.
 6. THE persona cards SHALL show nothing from inside the sealed payload: no letter text, figures, metric names or recall questions.
-7. WHEN a judge activates a persona card's "Break the seal" control, THE Demo_Index SHALL open the Opening_Flow for that persona's letter ID without asking for a passkey or a key.
+7. WHEN a judge activates a persona card's open link (criterion 2), THE Demo_Index SHALL open the Opening_Flow for that persona's letter ID without asking for a passkey or a key.
 8. IF the Persona_List contains no personas, THEN THE Demo_Index SHALL show an empty-state message, in the voice of `tone.md`, saying that no demo letters are available, and SHALL show no persona cards.
 
-### R7. Breaking the seal
+### R7. Opening the letter
 
-**User story:** As a judge, I want "Break the seal" to open the real sealed letter in my browser, so the demo shows the actual mechanism.
+**User story:** As a judge, I want the card's open link to fetch and verify the real sealed letter in my browser, so the demo shows the actual mechanism. The seal is broken later, after the recall step, when the Reveal moves from my answers to the letter (spec 05-reveal-ceremony).
 
-1. WHEN the judge activates "Break the seal", THE Opening_Flow SHALL request `GET /api/letters/{id}` for the persona's letter ID from the Persona_List, and SHALL ignore further activations of the control until that opening attempt has ended in a displayed result or error.
+1. WHEN the judge activates the persona card's open link, THE Opening_Flow SHALL request `GET /api/letters/{id}` for the persona's letter ID from the Persona_List, and SHALL ignore further activations of the control until that opening attempt has ended in a displayed result or error.
 2. WHILE the letter route returns `status` `sealed`, or the secret route refuses the server secret because its opening date has not been reached, THE Opening_Flow SHALL show a "still sealed" state with the opening date and the time remaining, and SHALL show nothing about the contents.
 3. WHEN the letter route returns `status` `openable`, THE Opening_Flow SHALL request `GET /api/letters/{id}/secret`, parse the Demo_Key with `parseBackupKey`, and call `openLetter` with the envelope, envelope hash, server secret and parsed Demo_Key, all in the browser.
 4. THE Opening_Flow SHALL make no request to any origin other than the app's own origin, and SHALL send no key, plaintext, answer or payload field to the server other than the encrypted Recall_Record through `POST /api/openings`.
@@ -173,7 +173,7 @@ Passkeys and PRF, the live demo (Demo 2), real data fetching and the real-data f
 
 1. WHEN the Recall_Record has been stored, THE Opening_Flow SHALL start the Reveal and show its three parts one at a time in this order: the judge's answers, then the letter text, then the figures then vs now, and SHALL NOT make any part visible before the part that precedes it.
 2. THE Opening_Flow SHALL show each of the judge's answers next to its question's full sealed text and unit, and SHALL show "no answer" for any question the judge marked "no answer" with the control in R8.3.
-3. THE Opening_Flow SHALL NOT compute, show or label any difference, accuracy or grade between a judge's answer and any figure.
+3. THE Opening_Flow SHALL NOT compute, write, colour or score any difference, accuracy or grade between a judge's answer and any figure. THE Opening_Flow MAY draw the judge's own mark on the same number line as a figure (spec 05-reveal-ceremony, R12), because the gap between memory and record is the product and Revenant does not interpret it. No text, number, colour, size, order or motion SHALL depend on the distance between the mark and any figure.
 4. WHILE any part of the Reveal is not yet visible, THE Opening_Flow SHALL show a visible control that can be reached and activated by keyboard and that, when activated, shows all three parts at once in the same order as criterion 1.
 5. WHERE the browser reports `prefers-reduced-motion: reduce`, THE Opening_Flow SHALL show the Reveal without animated transitions and SHALL keep the order from criterion 1.
 6. THE Opening_Flow SHALL let a judge reach and activate every control in the recall step and the Reveal using the keyboard alone, and SHALL show a visible focus indicator on the focused control.

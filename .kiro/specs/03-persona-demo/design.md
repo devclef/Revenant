@@ -95,7 +95,7 @@ flowchart TB
 
 - `export const dynamicParams = true` and no `generateStaticParams`. The root layout already reads `headers()` so every page renders dynamically with the CSP nonce, and these pages follow that.
 - The middleware matcher covers `/demo/**` and not-found responses, so they get the same CSP and `Referrer-Policy: no-referrer` as every other page (R14.1, R14.3). This spec doesn't change the middleware or the CSP.
-- The card's "Break the seal" control is a link to `/demo/personas/[key]`. The Opening_Flow starts on mount, so following that link is the activation (R6.7, R7.1). A `useRef` guard makes sure one mount starts one attempt, including under React Strict Mode's double effect.
+- The card's open link ("Pick up the letter", set by spec 05-reveal-ceremony R2) is a link to `/demo/personas/[key]`. The Opening_Flow starts on mount, so following that link is the activation (R6.7, R7.1). A `useRef` guard makes sure one mount starts one attempt, including under React Strict Mode's double effect.
 
 ### Opening sequence
 
@@ -104,7 +104,7 @@ sequenceDiagram
   participant J as Judge
   participant B as Browser (OpeningFlow)
   participant A as API
-  J->>B: Break the seal (navigate)
+  J->>B: Open the letter (navigate)
   B->>A: GET /api/letters/{id}
   A-->>B: sealed {opensAt} | openable {envelope, envelopeHash} | 404
   B->>B: parseBackupKey(PUBLIC_DEMO_BACKUP_KEY)
@@ -179,7 +179,7 @@ Rules the reducer enforces:
 - **Seal message first (R7.5).** `verified` shows only the verification statement and a "Begin" button. Recall questions render only in `recall`.
 - **Validation (R3.4, R8.3, R8.4).** `SUBMIT` builds the record with `buildRecallRecord(questions, drafts)`. A question with `noAnswer: true` becomes `{ kind: "no_answer" }`, whatever its text. Otherwise the text is trimmed and must match the R3.3 pattern. An empty text without the toggle is invalid. Invalid questions go into `invalid`, and the drafts stay as typed. When every question is valid, the effect runner encrypts the record and sends `RECORD_SEALED`, which moves the state to `submitting`.
 - **Single submission (R8.9).** In `submitting`, submit and retry controls are disabled, and the reducer ignores `SUBMIT` and `RETRY_POST`.
-- **Retry resends the same record (R8.7).** `submit_failed` keeps `sealed`, and `RETRY_POST` posts those exact bytes again. A new opening (R8.8) only happens on a fresh page load or after "Break the seal" again.
+- **Retry resends the same record (R8.7).** `submit_failed` keeps `sealed`, and `RETRY_POST` posts those exact bytes again. A new opening (R8.8) only happens on a fresh page load or after the card's open link is followed again.
 - **Reveal gate (R8.1, R9.1).** Only `POST_OK` from `submitting` enters `reveal`, and it always enters with `stage: 1`. `ADVANCE` adds one stage up to 3. `SHOW_ALL` sets the stage to 3.
 - **Error states hold no payload.** `verification_failed`, `open_failed`, `not_placed` and `unreachable` carry no `Opened`, so their views cannot render any payload field (R7.6, R7.7, R7.9).
 - **Memory only (R7.10).** State lives in `useReducer`. Nothing is written to storage, cookies, the URL or the console. On unmount, the component drops its state.
@@ -498,7 +498,7 @@ flowchart TD
 ### Demo_Index and landing link
 
 - `src/app/demo/page.tsx` (server) renders `<DemoLabel/>`, a heading, the intro note (R6.4), and then `PERSONAS.map(p => <PersonaCard …/>)`. With an empty list it renders the empty state instead (R6.8).
-- `src/components/demo/PersonaCard.tsx` shows the display name, region, "Written as of {date}", "Opens {date}" and a "Break the seal" link to `/demo/personas/{key}` (R6.2, R6.7). It receives only list fields, so it can't show payload contents (R6.6).
+- `src/components/demo/PersonaCard.tsx` shows the display name, region, "Written as of {date}", "Opens {date}" and an open link to `/demo/personas/{key}` (R6.2, R6.7). It receives only list fields, so it can't show payload contents (R6.6).
 - `src/components/demo/dates.ts` has `formatCalendarDate("2024-05-12") → "12 May 2024"` and `formatUtcDate(opens_at) → "5 November 2024"`, both with `Intl.DateTimeFormat("en-GB", { day: "numeric", month: "long", year: "numeric", timeZone: "UTC" })` (R6.3, R10.2). The same helpers format "written as of" in the reveal and the retrieved date in the historical-record label.
 - `DemoLabel` is a small text badge, "Demo", at the top of the page header on `/demo` and on every Opening_Flow page. It is placed before the heading so it is visible without scrolling on a 360 by 640 viewport (R6.5). The intro note sits directly under the heading for the same reason (R6.4).
 - `src/app/page.tsx` gets one `<Link href="/demo">` after the last paragraph, with the text "Open the demo letters". It follows the landing page's existing inline-copy style, because R15.1 covers only the demo pages. The comment about "no call-to-action link" is updated.
@@ -605,7 +605,7 @@ All strings live in copy modules. `src/components/demo/copy.ts` holds the Demo_I
 | `indexIntro` | The people who wrote these letters are fictional. We prepared each letter later, as a demo. You don't need a passkey to open one. |
 | `cardWrittenAsOf` | Written as of {date} |
 | `cardOpens` | Opens {date} |
-| `cardBreakSeal` | Break the seal |
+| `cardBreakSeal` | Pick up the letter |
 | `indexEmpty` | No demo letters are ready yet. Come back later, or return to the front page. |
 | `notFoundTitle` | No letter here |
 | `notFoundBody` | There is no demo letter at this address. Go back to the demo letters to choose one. |
@@ -615,7 +615,7 @@ All strings live in copy modules. `src/components/demo/copy.ts` holds the Demo_I
 
 | Key | Text |
 |---|---|
-| `loading` | Breaking the seal. |
+| `loading` | Bringing the letter into the light. |
 | `sealedTitle` | Still sealed |
 | `sealedBody` | This letter is still sealed. It opens on {date}. |
 | `sealedRemaining` | Time remaining: {days} days, {hours} hours and {minutes} minutes. |

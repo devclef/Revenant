@@ -43,6 +43,10 @@ if [[ -f package.json ]]; then
       echo "(no '$s' script yet; skipped)"
     fi
   done
+  if [[ -f scripts/check-js-budget.mjs ]]; then
+    step "JS budget"
+    node scripts/check-js-budget.mjs
+  fi
 fi
 
 if [[ -f deploy/helm/revenant/Chart.yaml ]] && command -v helm >/dev/null; then
