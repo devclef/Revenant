@@ -25,7 +25,7 @@ Follow `design.md` in this folder for every file name, constant, interface and a
 
 ## Tasks
 
-- [ ] 1. Scene base on the persona page
+- [x] 1. Scene base on the persona page
   - Agent: `frontend-dev` · Depends on: none · Estimated size: ~1,950 changed lines
   - Before this task: Blocked by #49 (spec 03 task 8, the reveal's letter and figures stages).
   - Scope: `src/components/ceremony/constants.ts`, `stages.ts`, `motion.ts`, `skip.tsx`, `LiveRegion.tsx`, `CeremonyRoot.tsx`, `copy.ts`, `ceremony.module.css`, `ASSETS.md`, `desk/DeskScene.tsx`, `desk/DeskScene.module.css`, `desk/useLight.ts`, `src/components/reveal/OpeningFlow.tsx`, `src/app/demo/personas/[key]/page.tsx`, the scan tests in `src/components/reveal` and `src/components/demo`, and the `*.test.ts(x)` for each new file
