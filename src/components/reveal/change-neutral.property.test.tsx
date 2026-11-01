@@ -957,3 +957,37 @@ describe("Property 20 (calm clause): Calm_Mode jumps straight to the final state
     );
   });
 });
+
+describe("Property 20 (counter clause): a rise and its mirror fall roll every counter cell alike (R10.6, R11.2)", () => {
+  it("gives every [data-counter] cell of the rise and of the fall the same markup once its digits are replaced", () => {
+    fc.assert(
+      fc.property(
+        fc.record({
+          thenScaled: fc.integer({ min: 1000, max: 9999999 }),
+          deltaScaled: fc.integer({ min: 1, max: 4999000 }),
+        }),
+        ({ thenScaled, deltaScaled }) => {
+          // The fall is the exact mirror of the rise, so both stay non-negative.
+          fc.pre(thenScaled - deltaScaled >= 0);
+          const riseValue = thousandths(thenScaled + deltaScaled);
+          const fallValue = thousandths(thenScaled - deltaScaled);
+
+          const riseCells = counterCells(counterMarkup(riseValue));
+          const fallCells = counterCells(counterMarkup(fallValue));
+
+          // One cell per digit on each side, so a rise and its fall are counted alike.
+          expect(riseCells.length).toBe(digitCount(riseValue));
+          expect(fallCells.length).toBe(digitCount(fallValue));
+
+          // Digits replaced, every cell on both sides is the same markup.
+          const digitless = (cell: string): string => cell.replace(/\d/g, "#");
+          const reference = digitless(riseCells[0] ?? "");
+          for (const cell of [...riseCells, ...fallCells]) {
+            expect(digitless(cell)).toBe(reference);
+          }
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+});
