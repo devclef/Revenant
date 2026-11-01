@@ -2,10 +2,15 @@
  * DemoLabel: a small, quiet "Demo" badge. Set in the body sans face, upper
  * case with wide tracking so it reads as a label rather than a heading.
  *
- * Colour: --ink-soft text inside a hairline --gold-leaf border. --ink-soft on
- * --paper is 10.57:1 and on --paper-deep 9.58:1 (globals.css record), well
- * above the 4.5:1 AA floor. The border is --gold-leaf, used decoratively only
- * (never on text). No green/red or directional colour -- neutrality.md.
+ * Colour: the label sits on two kinds of surface.
+ *   - On the dark desk (persona pages, inside DeskScene), the text uses the
+ *     desk token --desk-ink (cream #f1e6cf, defined on .desk in
+ *     ceremony.module.css). It clears WCAG 2.2 AA on every desk surface, and
+ *     the border uses --desk-gold as a decorative rule.
+ *   - On paper (the /demo index and the not-found page), there is no .desk
+ *     ancestor, so the desk tokens are undefined and the fallbacks apply:
+ *     --ink-soft on --paper is 10.57:1, and --gold-leaf is decorative only.
+ * No green/red or directional colour -- neutrality.md.
  */
 
 .badge {
@@ -15,9 +20,9 @@
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--ink-soft);
+  color: var(--desk-ink, var(--ink-soft));
   padding: 0.25rem 0.6rem;
-  border: 1px solid var(--gold-leaf);
+  border: 1px solid var(--desk-gold, var(--gold-leaf));
   border-radius: 0.25rem;
   line-height: 1;
 }
