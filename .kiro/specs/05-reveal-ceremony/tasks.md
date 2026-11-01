@@ -59,7 +59,7 @@ Follow `design.md` in this folder for every file name, constant, interface and a
   - Validation: `bash scripts/check.sh`
   - _Requirements: R2, R3.1, R3.6, R3.7, R5, R8.4, R10.7, R16_
 
-- [ ] 3. Seal_Break and the marks Stage
+- [x] 3. Seal_Break and the marks Stage
   - Agent: `frontend-dev` · Depends on: 2 · Estimated size: ~1,500 changed lines
   - Before this task: Blocked by #49 (spec 03 task 8, the reveal's letter and figures stages).
   - Scope: `src/components/ceremony/seal/**`, `src/components/ceremony/copy.ts`, `src/components/reveal/Reveal.tsx`, `src/components/reveal/copy.ts`, `src/components/ui/ParchmentSurface.module.css`, `src/components/ceremony/ceremony.module.css`, `src/components/ceremony/CeremonyRoot.tsx`, `src/components/ceremony/desk/DeskScene.module.css`, `src/components/ceremony/desk/DeskScene.tsx`, `src/components/demo/DemoLabel.module.css`, and the `*.test.ts(x)` for each new file
