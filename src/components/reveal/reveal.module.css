@@ -176,6 +176,9 @@
   white-space: pre-wrap;
   font-family: var(--font-serif);
   color: var(--ink);
+  background-color: var(--paper);
+  padding: 1rem 1.25rem;
+  border-radius: 2px;
 }
 
 /*

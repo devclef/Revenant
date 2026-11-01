@@ -125,16 +125,17 @@ const GLYPHS: readonly ReactNode[] = [
     key="g2"
     d="M50 36 L54 50 L50 64 L46 50 Z M36 50 L50 46 L64 50 L50 54 Z"
   />,
-  // 3 — five-point star
-  <path
-    key="g3"
-    d="M50 37 L53.5 47.5 L64.5 47.5 L55.5 54 L59 64.5 L50 58 L41 64.5 L44.5 54 L35.5 47.5 L46.5 47.5 Z"
-  />,
-  // 4 — six-point star (two triangles)
-  <path
-    key="g4"
-    d="M50 37 L61 56 L39 56 Z M50 63 L39 44 L61 44 Z"
-  />,
+  // 3 — three dots in a triangle (no star)
+  <g key="g3">
+    <circle cx={50} cy={40} r={3} />
+    <circle cx={42} cy={56} r={3} />
+    <circle cx={58} cy={56} r={3} />
+  </g>,
+  // 4 — a bar with a centre dot (no star)
+  <g key="g4">
+    <path d="M38 50 L62 50" />
+    <circle cx={50} cy={50} r={3} />
+  </g>,
   // 5 — single leaf
   <path
     key="g5"

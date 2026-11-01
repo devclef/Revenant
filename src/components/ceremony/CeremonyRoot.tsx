@@ -142,11 +142,11 @@ function CeremonyRegion({
       className={className ? `${styles.ceremony} ${className}` : styles.ceremony}
     >
       <LiveRegion message={liveLine} />
-      <button type="button" onClick={() => setCalm(motionAttr !== "calm")}>
+      <button type="button" className={styles.button} onClick={() => setCalm(motionAttr !== "calm")}>
         {calmLabel}
       </button>
       {hasActive ? (
-        <button type="button" onClick={skipAll}>
+        <button type="button" className={styles.button} onClick={skipAll}>
           {CEREMONY_COPY.skip}
         </button>
       ) : null}

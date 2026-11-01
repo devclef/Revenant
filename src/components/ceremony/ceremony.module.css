@@ -160,3 +160,21 @@
     animation: none;
   }
 }
+
+/* --- Shared control button (Calm and Skip) ---
+ * A paper-coloured control on the desk, styled like the other Stage buttons
+ * (see SealBreak, EnvelopeView, reveal). Text is --ink on --paper-deep. */
+.button {
+  font: inherit;
+  color: var(--ink);
+  background-color: var(--paper-deep);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  padding: 0.5rem 1.1rem;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.button:hover {
+  background-color: var(--paper);
+}
