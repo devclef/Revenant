@@ -479,7 +479,7 @@ describe("Property 20 (whole entry): a rise and its mirror fall render the same 
           }
         },
       ),
-      { numRuns: 50 },
+      { numRuns: 100 },
     );
   }, 30000);
 });
