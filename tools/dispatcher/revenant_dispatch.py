@@ -45,6 +45,8 @@ MAX_DEV_RUNS = int(os.environ.get("REVENANT_MAX_DEV_RUNS", "3"))
 MAX_FIX_ATTEMPTS = 2
 CI_CHECK = "ci-gate"
 REQUIRED_CHECKS = ("ci-gate", "policy")
+# Text of the size error in pr_policy.evaluate; only a human can split a ticket.
+POLICY_SIZE_ERROR = "changed lines is over the"
 MARKER = "revenant-dispatch"
 MAX_ANNOTATIONS = 30
 
@@ -673,8 +675,10 @@ class Tick:
             failed = self.gh.failed_checks(sha)
             if not failed:
                 return False  # a newer run started in between; look again next tick
-            if all(f["name"] == "policy" for f in failed):
-                # An agent can't split a ticket, so sending this back would loop.
+            if all(f["name"] == "policy" for f in failed) and POLICY_SIZE_ERROR in failed[0]["annotations"]:
+                # An agent can't split a ticket, so sending this back would loop. A path
+                # error ("outside <role>'s owned paths", "owner-only") it can fix, so
+                # that goes back like any CI failure.
                 self.block_pr(pr, f"**Policy check failed** on {sha[:7]}. "
                                   "This needs a human (for example to split the ticket).\n\n"
                                   + failed[0]["annotations"])

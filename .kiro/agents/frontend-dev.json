@@ -8,16 +8,27 @@
     "execute_bash",
     "grep",
     "glob",
-    "code"
+    "code",
+    "@playwright"
   ],
   "allowedTools": [
     "fs_read",
     "grep",
     "glob",
-    "code"
+    "code",
+    "@playwright"
   ],
   "includeMcpJson": false,
-  "mcpServers": {},
+  "mcpServers": {
+    "playwright": {
+      "command": "sh",
+      "args": [
+        "-c",
+        "PLAYWRIGHT_MCP_OUTPUT_DIR=\"$HOME/kiro/revenant-crew/dev-shots\" exec npx -y @playwright/mcp@0.0.83 --headless --browser chromium --isolated --file-paths absolute"
+      ],
+      "timeout": 120000
+    }
+  },
   "hooks": {
     "stop": [
       {
@@ -82,7 +93,19 @@
           "git ls-files*",
           "ls*",
           "mkdir *",
-          "pwd"
+          "pwd",
+          "docker run*",
+          "docker rm*",
+          "docker stop*",
+          "npm run build",
+          "npm start*",
+          "npm run db:migrate",
+          "npm run seal-personas*",
+          "PORT=* npm start*",
+          "PORT=* DATABASE_URL=* npm start*",
+          "DATABASE_URL=* npm run db:migrate",
+          "DATABASE_URL=* npm run seal-personas*",
+          "kill *"
         ],
         "effect": "allow"
       },
@@ -117,6 +140,21 @@
           "*~/*",
           "*$HOME*",
           "*/home/*"
+        ],
+        "effect": "deny"
+      },
+      {
+        "capability": "mcp",
+        "match": [
+          "playwright/*"
+        ],
+        "effect": "allow"
+      },
+      {
+        "capability": "mcp",
+        "match": [
+          "playwright/browser_run_code_unsafe",
+          "playwright/browser_file_upload"
         ],
         "effect": "deny"
       }

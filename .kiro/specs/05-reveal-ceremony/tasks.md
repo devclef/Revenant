@@ -62,7 +62,7 @@ Follow `design.md` in this folder for every file name, constant, interface and a
 - [ ] 3. Seal_Break and the marks Stage
   - Agent: `frontend-dev` · Depends on: 2 · Estimated size: ~1,500 changed lines
   - Before this task: Blocked by #49 (spec 03 task 8, the reveal's letter and figures stages).
-  - Scope: `src/components/ceremony/seal/**`, `src/components/ceremony/copy.ts`, `src/components/reveal/Reveal.tsx`, `src/components/reveal/copy.ts`, and the `*.test.ts(x)` for each new file
+  - Scope: `src/components/ceremony/seal/**`, `src/components/ceremony/copy.ts`, `src/components/reveal/Reveal.tsx`, `src/components/reveal/copy.ts`, `src/components/ui/ParchmentSurface.module.css`, `src/components/ceremony/ceremony.module.css`, `src/components/ceremony/CeremonyRoot.tsx`, `src/components/ceremony/desk/DeskScene.module.css`, `src/components/ceremony/desk/DeskScene.tsx`, `src/components/demo/DemoLabel.module.css`, and the `*.test.ts(x)` for each new file
   - Acceptance:
     - `hold.ts` (pure hold model), `cracks.ts` (nine fixed paths from the seal's centre, in a fixed draw order) and `SealBreak.tsx` per design.md "Seal_Break".
     - Reveal stage 1 shows the existing answers as plain text (the `marks` Stage), the unbroken seal, the instruction line and the "Break the seal" button. It replaces the `stage1Next` button. The `stage1Next` key is removed from `reveal/copy.ts` with its test. "Show everything" stays.
@@ -71,6 +71,12 @@ Follow `design.md` in this folder for every file name, constant, interface and a
     - `setPointerCapture` is called inside a `try`; if it throws, the hold continues with listeners on the window.
     - The crack paths do not depend on the contact point, the persona or any data. No vibration.
     - Tests: Property 5 (exactly one `ADVANCE`, only when complete); Property 6 (cracks independent of contact point and key); the seal clause of Property 19 (the pointer hold has a button that sends the same event); Property 2's seal clauses (no split seal, open flap or letter before stage 2).
+  - Desk fixes from task 1 (found when the desk was first looked at in a browser; each is an acceptance item with a QA check):
+    - (a) Paper text is cream on cream: `.desk` sets `color: var(--desk-ink)` and ParchmentSurface `.surface` sets no colour, so paper panels inherit it. Give `.surface` `color: var(--ink)`. QA check: on the persona page, the text inside the paper panel is dark ink and clears AA on `--paper`.
+    - (b) The Demo label is `--ink-soft` with no background on the desk. It must meet AA there: use desk tokens or give it its own paper background. QA check: the label is readable at desktop width and at 360 px, and its ratio on the desk surface is at least 4.5:1.
+    - (c) A cream ring is drawn around the whole ceremony region on every state change. No ring on the region itself; keep rings on controls and Stage headings. QA check: change state (for example answer a question, then advance) and no outline appears around the region; Tab still shows a ring on each control, and a Stage heading focused by script still shows its ring.
+    - (d) The Calm control is a plain grey browser button. Make it a small, quiet text button in desk tokens at the top right of the region. QA check: the control is styled (no default grey button), sits at the top right at desktop width and at 360 px, meets AA on the desk and has a visible focus ring.
+    - (e) The resting candle light sits far below the paper. Rest it behind the paper. QA check: at rest, the light is centred behind the paper panel, not below it, at desktop width and at 360 px.
   - Spec 03 tests changed: any test that names `stage1Next` or the "Read the letter" button (`Reveal` stage 1 clauses in `opening-machine.property.test.ts` and `OpeningFlow.test.tsx`). Find them with `grep -rn "stage1Next\|Read the letter" src`.
   - QA steps: 05, 08, 09, 10, 11, 18 (button path and keyboard), 22 (`seal` at 360 px). Steps 09 and 10 dispatch with `pointerId: 1`.
   - Validation: `bash scripts/check.sh`

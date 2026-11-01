@@ -334,13 +334,21 @@ class CIFeedback(unittest.TestCase):
         self.assertIn("bash scripts/check.sh", body)
         self.assertIn(("status", 5, "status:changes-requested", ("needs-qa",)), gh.events)
 
-    def test_policy_failure_alone_is_not_sent_back(self):
-        gh = self.failing("policy")
+    def test_policy_path_error_alone_is_sent_back_with_annotations(self):
+        for msg in ("`scripts/x.ts` is outside `frontend-dev`'s owned paths.", "`tools/x` is owner-only."):
+            gh = RecGH(failed=[{"name": "policy", "annotations": f"- {msg}"}])
+            self.run_qa(gh)
+            self.assertIn(("status", 5, "status:changes-requested", ("needs-qa",)), gh.events)
+            self.assertNotIn("status:blocked", [e[2] for e in gh.has("status")])
+            self.assertIn(msg, gh.has("comment", 5)[0][2])
+
+    def test_policy_size_error_alone_is_not_sent_back(self):
+        gh = RecGH(failed=[{"name": "policy", "annotations": "- 2100 changed lines is over the 2000-line limit; split the ticket."}])
         notes = self.run_qa(gh)
         self.assertIn(("status", 5, "status:blocked", ("needs-qa",)), gh.events)
         self.assertIn(("status", 105, "status:blocked", ("status:in-review", "status:in-progress")), gh.events)
         self.assertNotIn("status:changes-requested", [e[2] for e in gh.has("status")])
-        self.assertIn("policy broke", gh.has("comment", 5)[0][2])
+        self.assertIn("over the 2000-line limit", gh.has("comment", 5)[0][2])
         self.assertNotIn("check.sh", gh.has("comment", 5)[0][2])
         self.assertTrue(notes)
 
