@@ -65,7 +65,7 @@ function problemsFor(raw: unknown): string[] {
 //
 // Keys are URL segments matching ^[a-z0-9]+(-[a-z0-9]+)*$; letter IDs are real
 // 22-char base64url encodings of 16 bytes (so isLetterId passes); metrics are
-// drawn from the two fixture series that DEMO_FIGURES actually holds, each with
+// drawn from the two series that DEMO_FIGURES actually holds, each with
 // a recall subject that checkRecallSubject accepts.
 
 const B64URL = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-_";
@@ -109,10 +109,10 @@ const dayArb: fc.Arbitrary<string> = fc
   })
   .map((d) => d.toISOString().slice(0, 10));
 
-// The two fixture metrics DEMO_FIGURES holds, with accepted recall subjects.
+// The two metrics DEMO_FIGURES holds, with accepted recall subjects.
 const METRICS = [
-  { metric_id: "fixture-us-gasoline-regular", recall_subject: "a gallon of regular gasoline" },
-  { metric_id: "fixture-us-diesel", recall_subject: "a gallon of diesel" },
+  { metric_id: "us-gasoline-regular", recall_subject: "a gallon of regular gasoline" },
+  { metric_id: "us-diesel", recall_subject: "a gallon of diesel" },
 ] as const;
 
 interface RawPersona {
@@ -226,8 +226,8 @@ const mutations: ReadonlyArray<
   // repeated metric_id within a persona.
   (list) => {
     list.personas[0].metrics = [
-      { metric_id: "fixture-us-diesel", recall_subject: "a gallon of diesel" },
-      { metric_id: "fixture-us-diesel", recall_subject: "a gallon of diesel" },
+      { metric_id: "us-diesel", recall_subject: "a gallon of diesel" },
+      { metric_id: "us-diesel", recall_subject: "a gallon of diesel" },
     ];
     return { list, personaIndex: 0, fieldFragment: ": metrics.1.metric_id:" };
   },
@@ -242,7 +242,7 @@ const mutations: ReadonlyArray<
   (list) => {
     list.personas[0].metrics = [
       {
-        metric_id: "fixture-us-gasoline-regular",
+        metric_id: "us-gasoline-regular",
         recall_subject: "a higher gallon of gasoline",
       },
     ];
