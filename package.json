@@ -12,7 +12,8 @@
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/migrate.mjs",
-    "seal-personas": "node dist/seal-personas.mjs"
+    "seal-personas": "node dist/seal-personas.mjs",
+    "prefetch": "node scripts/prefetch-figures.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.4",
