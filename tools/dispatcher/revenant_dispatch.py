@@ -46,6 +46,7 @@ MAX_FIX_ATTEMPTS = 2
 CI_CHECK = "ci-gate"
 REQUIRED_CHECKS = ("ci-gate", "policy")
 MARKER = "revenant-dispatch"
+MAX_ANNOTATIONS = 30
 
 L_READY, L_PROGRESS, L_REVIEW, L_BLOCKED = (
     "status:ready", "status:in-progress", "status:in-review", "status:blocked")
@@ -245,6 +246,49 @@ def check_state(runs: list[dict]) -> str:
     return "success" if latest.get("conclusion") in ("success", "skipped", "neutral") else "failure"
 
 
+def format_annotations(annotations: list[dict], fallback: str = "") -> str:
+    """Failure annotations of one check run as a bullet list."""
+    out = []
+    for a in annotations[:MAX_ANNOTATIONS]:
+        if a.get("annotation_level") not in (None, "failure"):
+            continue
+        line = a.get("start_line")
+        where = f"`{a['path']}{':' + str(line) if line else ''}` " if a.get("path") else ""
+        out.append(f"- {where}{(a.get('message') or a.get('title') or '').strip()}")
+    return "\n".join(out) or (f"- {fallback}" if fallback else "- (the check left no annotations)")
+
+
+def ci_failure_comment(failed: list[dict], sha: str) -> str:
+    """Feedback for the fix agent. Names every failed check with its annotations.
+    check.sh covers ci-gate only; policy is checked server-side, so say so."""
+    names = ", ".join(f"`{f['name']}`" for f in failed)
+    lines = [f"**CI failed** ({names} on {sha[:7]})."]
+    for f in failed:
+        lines += ["", f"`{f['name']}` failed:", f["annotations"]]
+    if any(f["name"] == CI_CHECK for f in failed):
+        lines += ["", "Run `bash scripts/check.sh` and fix the failing step."]
+    if any(f["name"] != CI_CHECK for f in failed):
+        lines += ["", "`bash scripts/check.sh` does not run the other checks; "
+                      "fix what the annotations above say."]
+    return "\n".join(lines)
+
+
+def http_reason(exc: Exception) -> str:
+    """The human part of a GitHub error: its JSON `message`, else the raw text."""
+    m = re.search(r"-> \d+: (.*)", str(exc), re.S)
+    raw = (m.group(1) if m else str(exc)).strip()
+    try:
+        msg = json.loads(raw).get("message")
+        if msg:
+            return str(msg).rstrip(".")
+    except (ValueError, AttributeError):
+        pass
+    return raw.rstrip(".")
+
+
+STATUS_LABELS = {L_READY, L_PROGRESS, L_REVIEW, L_NEEDS_QA, L_QA_RUNNING, L_QA_PASSED, L_CHANGES}
+
+
 def branch_for(issue_number: int, role: str) -> str:
     return f"agent/{role}/issue-{issue_number}"
 
@@ -329,6 +373,19 @@ class GitHub:
             return "failure"
         return "pending" if "pending" in states else "success"
 
+    def failed_checks(self, sha: str) -> list[dict]:
+        """Required checks that failed on a commit, with their annotations."""
+        out = []
+        for name in REQUIRED_CHECKS:
+            runs = self.call("GET", self.r(f"/commits/{sha}/check-runs?check_name={name}")).get("check_runs", [])
+            if check_state(runs) != "failure":
+                continue
+            latest = max(runs, key=lambda c: c.get("started_at") or "")
+            anns = self.call("GET", self.r(f"/check-runs/{latest['id']}/annotations")) or []
+            fallback = (latest.get("output") or {}).get("title") or ""
+            out.append({"name": name, "annotations": format_annotations(anns, fallback)})
+        return out
+
 
 # ── Git (dispatcher-owned clones, never the owner's checkout) ────────────────
 
@@ -399,7 +456,10 @@ def checkout_base(path: Path, token: str, local_branch: str, remote_ref: str) ->
     """Point the clone's HEAD at a fresh local branch for the Task Runner to
     branch from. The Task Runner creates its worktree from this HEAD."""
     git(path, "fetch", "--prune", "origin", token=token)
-    git(path, "checkout", "-B", local_branch, f"origin/{remote_ref}")
+    # The clones belong to the dispatcher. Agents leave edits and new files
+    # behind, so discard them (no -x: ignored files such as node_modules stay).
+    git(path, "checkout", "-f", "-B", local_branch, f"origin/{remote_ref}")
+    git(path, "clean", "-fdq")
 
 
 # ── Crew Task Runner (gateway loopback API) ──────────────────────────────────
@@ -444,6 +504,21 @@ class Tick:
 
     def say(self, msg: str) -> None:
         self.log.append(msg)
+
+    def block(self, number: int, reason: str, names: set[str] | None = None) -> None:
+        """Comment why, move the item from its current status to blocked, notify."""
+        current = (names if names is not None else STATUS_LABELS) & STATUS_LABELS
+        self.gh.comment(number, reason)
+        self.gh.set_status(number, L_BLOCKED, *sorted(current))
+        self.notify(f"Revenant #{number} blocked: {reason[:200]}")
+        self.say(f"#{number}: blocked")
+
+    def block_pr(self, pr: dict, reason: str) -> None:
+        """Block a PR and the issue it closes."""
+        self.block(pr["number"], reason, label_names(pr))
+        issue_n = closes_issue(pr.get("body"))
+        if issue_n is not None:
+            self.gh.set_status(issue_n, L_BLOCKED, L_REVIEW, L_PROGRESS)
 
     def run(self) -> None:
         ensure_clone(DEV_CLONE, self.token)
@@ -539,18 +614,31 @@ class Tick:
         for pr in prs:
             if L_QA_PASSED not in label_names(pr):
                 continue
-            full = self.gh.call("GET", self.gh.r(f"/pulls/{pr['number']}"))
-            marker = latest_marker(self.gh.comments(pr["number"]), "qa")
-            if marker and marker.get("sha") != full["head"]["sha"]:
-                # New commits after QA: review again.
-                self.gh.set_status(pr["number"], L_NEEDS_QA, L_QA_PASSED)
-                continue
-            if self.gh.ci_state(full["head"]["sha"]) != "success":
-                continue
+            try:
+                self._merge_one(pr)
+            except RuntimeError as exc:
+                self.block_pr(pr, f"The dispatcher could not process this PR: {http_reason(exc)}. "
+                                  "Needs a human.")
+
+    def _merge_one(self, pr: dict) -> None:
+        full = self.gh.call("GET", self.gh.r(f"/pulls/{pr['number']}"))
+        marker = latest_marker(self.gh.comments(pr["number"]), "qa")
+        if marker and marker.get("sha") != full["head"]["sha"]:
+            # New commits after QA: review again.
+            self.gh.set_status(pr["number"], L_NEEDS_QA, L_QA_PASSED)
+            return
+        if self.gh.ci_state(full["head"]["sha"]) != "success":
+            return
+        try:
             self.gh.call("PUT", self.gh.r(f"/pulls/{pr['number']}/merge"), {
                 "merge_method": "squash", "sha": full["head"]["sha"]})
-            self.say(f"PR #{pr['number']}: merged")
-            self.notify(f"Revenant PR #{pr['number']} merged: {pr['title']}")
+        except RuntimeError as exc:
+            if re.search(r"-> (405|409)\b", str(exc)):
+                self.block_pr(pr, f"Can't merge: {http_reason(exc)}. Needs a rebase or a human.")
+                return
+            raise
+        self.say(f"PR #{pr['number']}: merged")
+        self.notify(f"Revenant PR #{pr['number']} merged: {pr['title']}")
 
     # 4 ─ start QA when CI is green; CI failure goes straight back to the agent
     def start_qa(self, prs: list[dict]) -> None:
@@ -562,31 +650,50 @@ class Tick:
             names = label_names(pr)
             if L_NEEDS_QA not in names or L_QA_RUNNING in names:
                 continue
-            issue_n = closes_issue(pr.get("body"))
-            if issue_n is None:
-                continue
-            full = self.gh.call("GET", self.gh.r(f"/pulls/{pr['number']}"))
-            sha = full["head"]["sha"]
-            ci = self.gh.ci_state(sha)
-            if ci == "pending":
-                continue
-            if ci == "failure":
-                self.gh.set_status(pr["number"], L_CHANGES, L_NEEDS_QA)
-                self.gh.comment(pr["number"], f"**CI failed** (`{CI_CHECK}` on {sha[:7]}). "
-                                "Run `bash scripts/check.sh` and fix the failing step.\n\n"
-                                + make_marker({"kind": "feedback", "source": "ci", "sha": sha}))
-                continue
-            issue = self.gh.call("GET", self.gh.r(f"/issues/{issue_n}"))
-            # A leftover verdict from an earlier run must not be read as this PR's.
-            (QA_CLONE / ".qa" / "verdict.json").unlink(missing_ok=True)
-            checkout_base(QA_CLONE, self.token, f"qa/pr-{pr['number']}", full["head"]["ref"])
-            task_id = self.crew.start(qa_spec(pr, issue), agent="qa", workspace=QA_CLONE,
-                                      name=f"qa-pr-{pr['number']}")
-            self.gh.add_labels(pr["number"], L_QA_RUNNING)
-            self.gh.comment(pr["number"], f"QA review started (run `{task_id}`).\n\n"
-                            + make_marker({"kind": "qa", "task_id": task_id, "sha": sha}))
-            self.say(f"PR #{pr['number']}: QA started")
-            return  # at most one QA run per tick
+            try:
+                if self._start_qa_one(pr):
+                    return  # at most one QA run per tick
+            except RuntimeError as exc:
+                self.block_pr(pr, f"The dispatcher could not start QA: {http_reason(exc)}. "
+                                  "Needs a human.")
+                # A run may already be going without status:qa-running; starting
+                # another would move the QA clone under it.
+                return
+
+    def _start_qa_one(self, pr: dict) -> bool:
+        issue_n = closes_issue(pr.get("body"))
+        if issue_n is None:
+            return False
+        full = self.gh.call("GET", self.gh.r(f"/pulls/{pr['number']}"))
+        sha = full["head"]["sha"]
+        ci = self.gh.ci_state(sha)
+        if ci == "pending":
+            return False
+        if ci == "failure":
+            failed = self.gh.failed_checks(sha)
+            if not failed:
+                return False  # a newer run started in between; look again next tick
+            if all(f["name"] == "policy" for f in failed):
+                # An agent can't split a ticket, so sending this back would loop.
+                self.block_pr(pr, f"**Policy check failed** on {sha[:7]}. "
+                                  "This needs a human (for example to split the ticket).\n\n"
+                                  + failed[0]["annotations"])
+                return False
+            self.gh.set_status(pr["number"], L_CHANGES, L_NEEDS_QA)
+            self.gh.comment(pr["number"], ci_failure_comment(failed, sha) + "\n\n"
+                            + make_marker({"kind": "feedback", "source": "ci", "sha": sha}))
+            return False
+        issue = self.gh.call("GET", self.gh.r(f"/issues/{issue_n}"))
+        # A leftover verdict from an earlier run must not be read as this PR's.
+        (QA_CLONE / ".qa" / "verdict.json").unlink(missing_ok=True)
+        checkout_base(QA_CLONE, self.token, f"qa/pr-{pr['number']}", full["head"]["ref"])
+        task_id = self.crew.start(qa_spec(pr, issue), agent="qa", workspace=QA_CLONE,
+                                  name=f"qa-pr-{pr['number']}")
+        self.gh.add_labels(pr["number"], L_QA_RUNNING)
+        self.gh.comment(pr["number"], f"QA review started (run `{task_id}`).\n\n"
+                        + make_marker({"kind": "qa", "task_id": task_id, "sha": sha}))
+        self.say(f"PR #{pr['number']}: QA started")
+        return True
 
     # 5 ─ fix runs
     def start_fixes(self, prs: list[dict], issues: list[dict]) -> set[str]:
@@ -599,30 +706,39 @@ class Tick:
             role = issue_role(issue) if issue else None
             if not issue or not role or role in busy or len(busy) >= MAX_DEV_RUNS:
                 continue
-            comments = self.gh.comments(issue_n)
-            attempts = sum(1 for c in comments if c.get("_trusted") and '"kind": "dev"' in (c.get("body") or "")
-                           and '"fix": true' in (c.get("body") or ""))
-            if attempts >= MAX_FIX_ATTEMPTS:
-                self.gh.set_status(issue_n, L_BLOCKED, L_REVIEW)
-                self.gh.set_status(pr["number"], L_BLOCKED, L_CHANGES)
-                self.gh.comment(pr["number"], f"Sent back {attempts} times. Needs a human.")
-                self.notify(f"Revenant #{issue_n} blocked after {attempts} fix attempts")
+            try:
+                comments = self.gh.comments(issue_n)
+                attempts = sum(1 for c in comments if c.get("_trusted") and '"kind": "dev"' in (c.get("body") or "")
+                               and '"fix": true' in (c.get("body") or ""))
+                if attempts >= MAX_FIX_ATTEMPTS:
+                    self.gh.set_status(issue_n, L_BLOCKED, L_REVIEW)
+                    self.gh.set_status(pr["number"], L_BLOCKED, L_CHANGES)
+                    self.gh.comment(pr["number"], f"Sent back {attempts} times. Needs a human.")
+                    self.notify(f"Revenant #{issue_n} blocked after {attempts} fix attempts")
+                    continue
+                self._start_fix_one(pr, issue, role)
+            except RuntimeError as exc:
+                self.block_pr(pr, f"The dispatcher could not start the fix run: {http_reason(exc)}. "
+                                  "Needs a human.")
                 continue
-            pr_comments = self.gh.comments(pr["number"])
-            feedback = next((c["body"] for c in reversed(pr_comments)
-                             if c.get("_trusted") and '"kind": "feedback"' in (c.get("body") or "")), "")
-            feedback = _MARKER_RE.sub("", feedback).strip()
-            head = self.gh.call("GET", self.gh.r(f"/pulls/{pr['number']}"))["head"]["ref"]
-            checkout_base(DEV_CLONE, self.token, f"fix/issue-{issue_n}", head)
-            task_id = self.crew.start(dev_spec(issue, role, feedback), agent=role, workspace=DEV_CLONE,
-                                      name=f"fix-{issue_n}")
-            self.gh.remove_label(pr["number"], L_CHANGES)
-            self.gh.set_status(issue_n, L_PROGRESS, L_REVIEW)
-            self.gh.comment(issue_n, f"Fix run started for PR #{pr['number']} (run `{task_id}`).\n\n"
-                            + make_marker({"kind": "dev", "task_id": task_id, "role": role, "fix": True}))
             busy.add(role)
-            self.say(f"#{issue_n}: fix run started")
         return busy
+
+    def _start_fix_one(self, pr: dict, issue: dict, role: str) -> None:
+        issue_n = issue["number"]
+        pr_comments = self.gh.comments(pr["number"])
+        feedback = next((c["body"] for c in reversed(pr_comments)
+                         if c.get("_trusted") and '"kind": "feedback"' in (c.get("body") or "")), "")
+        feedback = _MARKER_RE.sub("", feedback).strip()
+        head = self.gh.call("GET", self.gh.r(f"/pulls/{pr['number']}"))["head"]["ref"]
+        checkout_base(DEV_CLONE, self.token, f"fix/issue-{issue_n}", head)
+        task_id = self.crew.start(dev_spec(issue, role, feedback), agent=role, workspace=DEV_CLONE,
+                                  name=f"fix-{issue_n}")
+        self.gh.remove_label(pr["number"], L_CHANGES)
+        self.gh.set_status(issue_n, L_PROGRESS, L_REVIEW)
+        self.gh.comment(issue_n, f"Fix run started for PR #{pr['number']} (run `{task_id}`).\n\n"
+                        + make_marker({"kind": "dev", "task_id": task_id, "role": role, "fix": True}))
+        self.say(f"#{issue_n}: fix run started")
 
     # 6 ─ claim new work
     def claim(self, issues: list[dict], busy: set[str]) -> None:
@@ -634,12 +750,20 @@ class Tick:
             return
         n, role = issue["number"], issue_role(issue)
         assert role
-        self.gh.call("POST", self.gh.r(f"/issues/{n}/assignees"), {"assignees": [self.gh.login()]})
-        self.gh.set_status(n, L_PROGRESS, L_READY)
-        checkout_base(DEV_CLONE, self.token, f"base/issue-{n}", "main")
-        task_id = self.crew.start(dev_spec(issue, role), agent=role, workspace=DEV_CLONE, name=f"issue-{n}")
-        self.gh.comment(n, f"Claimed by `{role}`. Task Runner run `{task_id}` started.\n\n"
-                        + make_marker({"kind": "dev", "task_id": task_id, "role": role}))
+        try:
+            # Start the run first: if the checkout or the start fails, the
+            # issue is untouched and its role is not left busy.
+            checkout_base(DEV_CLONE, self.token, f"base/issue-{n}", "main")
+            task_id = self.crew.start(dev_spec(issue, role), agent=role, workspace=DEV_CLONE,
+                                      name=f"issue-{n}")
+            self.gh.call("POST", self.gh.r(f"/issues/{n}/assignees"), {"assignees": [self.gh.login()]})
+            self.gh.set_status(n, L_PROGRESS, L_READY)
+            self.gh.comment(n, f"Claimed by `{role}`. Task Runner run `{task_id}` started.\n\n"
+                            + make_marker({"kind": "dev", "task_id": task_id, "role": role}))
+        except RuntimeError as exc:
+            self.block(n, f"The dispatcher could not start this issue: {http_reason(exc)}. "
+                          "Needs a human.", label_names(issue))
+            return  # the cause may be shared; don't block the rest of the queue
         self.say(f"#{n}: claimed by {role}")
 
 
