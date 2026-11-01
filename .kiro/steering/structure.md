@@ -42,12 +42,14 @@ Planned layout. Update this file when the structure changes.
 │   ├── components/
 │   │   ├── seal/            # Sealing ceremony UI
 │   │   ├── reveal/          # Unsealing sequence, then vs now views
+│   │   ├── live/            # Live demo UI: write, seal with a passkey, 30-second wait, unlock
 │   │   └── ui/              # Shared primitives (buttons, parchment surfaces, typography)
 │   └── lib/
 │       ├── crypto/          # Browser-only: WebAuthn PRF, HKDF, AES-GCM, backup key, envelope hash
 │       ├── seal-format/     # Versioned sealed payload schema (one module per format_version)
 │       ├── cards/           # Browser-only: letter card (QR link) and backup key card (PDF)
 │       ├── ics/             # Browser-only: calendar file for the opening date
+│       ├── letter-store/    # Server-only: reads and appends letter, live demo letter and opening rows
 │       ├── figures/         # Provenance types, comparability checks, then-vs-now change
 │       ├── sources/         # One adapter per publisher: eia, bls, oil-bulletin, eurostat, scb
 │       ├── recall/          # Writes recall questions at sealing time; they are then sealed
@@ -60,6 +62,7 @@ Planned layout. Update this file when the structure changes.
 
 - `.kiro/` (steering, specs, hooks) is committed to the repository and must never be added to `.gitignore`. The hackathon requires it.
 - `lib/crypto`, `lib/cards` and `lib/ics` are browser-only. Server code must not import them.
+- `lib/letter-store` is server-only. Browser code and client components must not import it.
 - `lib/sources` adapters are the only code that talks to external data publishers. Everything else reads figures from the database.
 - `lib/figures` is the only place that computes derived values like the then-vs-now change, so the formula shown to users and the formula used are the same code.
 - Demo letters (personas and live) and real sealed letters live in separate tables (see `data-integrity.md`).
