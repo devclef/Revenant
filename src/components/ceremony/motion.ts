@@ -7,34 +7,40 @@
 // `useMotion()` reads it.
 //
 // Mode:
-//  - `calm` when `prefers-reduced-motion: reduce` matches, or the judge presses
-//    the Calm control. Calm settings live in React state only (R1.5): no
-//    storage, no network.
-//  - `light` for a low-power device (few cores, Save-Data, or a slow frame
-//    probe): dust, parallax and tilt are off and camera moves become
-//    cross-fades (R13.6). The Flow is unchanged.
+//  - `calm` when `matchMedia("(prefers-reduced-motion: reduce)")` matches, or
+//    the judge presses the Calm control. Calm settings live in React state
+//    only (R1.5): no storage, no network.
+//  - `light` for a low-power device: `navigator.hardwareConcurrency` below
+//    `LOW_POWER_CORES`, `navigator.connection.saveData`, or a one-second frame
+//    probe whose average frame is slower than `LOW_POWER_FRAME_MS`. In `light`
+//    dust, parallax and tilt are off and camera moves become cross-fades
+//    (R13.6). The Flow is unchanged.
 //  - `full` otherwise.
 //
-// The server render and the FIRST client render always report `full` and the
-// final state, so the server and client markup match (hydration, R17.3). The
-// real mode is read in a layout effect after mount; a later task (task 5)
-// fills in the media-query listener, the Calm toggle and the low-power probe.
-// This module keeps its public surface — `MotionProvider`, `useMotion`,
-// `MotionMode`, `MotionContextValue` — so dependants (`DeskScene`,
-// `CeremonyRoot`) and their tests compile against the final shape.
+// Final state first (design.md, R17.3): the server render and the FIRST client
+// render always report `full`. The device mode (reduced-motion and the
+// low-power signals) is read in a layout effect AFTER mount, so the server and
+// the first client render produce identical markup and hydration never
+// mismatches. Pressing Calm is a user action after mount, so it only ever
+// moves the already-hydrated tree.
 //
-// No `Math.random` and no `Date.now`: the server and client render the same
-// markup (Property 21). Imports no `@/lib/crypto`.
+// No `Math.random` and no `Date.now` in render: the resolved mode is computed
+// in effects, not during render, so the server and client render the same
+// markup (Property 21). The frame probe reads `performance.now()` inside an
+// effect only. This module imports no `@/lib/crypto`.
 
 import {
   createContext,
   createElement,
   useCallback,
   useContext,
+  useLayoutEffect,
   useMemo,
   useState,
   type ReactNode,
 } from "react";
+
+import { LOW_POWER_CORES, LOW_POWER_FRAME_MS, LOW_POWER_PROBE_MS } from "./constants";
 
 /** The three motion modes. `light` still changes Stages, only lighter. */
 export type MotionMode = "full" | "light" | "calm";
@@ -53,18 +59,153 @@ export type MotionContextValue = {
 const MotionContext = createContext<MotionContextValue | null>(null);
 
 /**
- * Provides the motion context. The initial value is always `full` and the
- * final state, matching the server render (R17.3); task 5 adds the layout
- * effect that resolves the real device mode after mount.
+ * Whether the device asks for reduced motion right now. Reads `matchMedia`
+ * defensively: a server or a browser without it reports `false` (no reduced
+ * motion), which keeps the default `full`. Called only from effects.
+ */
+function prefersReducedMotion(): boolean {
+  if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+    return false;
+  }
+  return window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+
+/**
+ * The `saveData` hint from the Network Information API, where the browser
+ * exposes it. The API is non-standard and absent from the TS DOM lib, so it is
+ * read through a narrow local shape rather than widening global types.
+ */
+function saveDataRequested(): boolean {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+  const connection = (navigator as Navigator & {
+    connection?: { saveData?: boolean };
+  }).connection;
+  return connection?.saveData === true;
+}
+
+/** Whether the machine reports fewer than `LOW_POWER_CORES` logical cores. */
+function fewCores(): boolean {
+  if (typeof navigator === "undefined") {
+    return false;
+  }
+  const cores = navigator.hardwareConcurrency;
+  return typeof cores === "number" && cores > 0 && cores < LOW_POWER_CORES;
+}
+
+/**
+ * Run a one-second frame probe. Resolves `true` when the average frame over
+ * `LOW_POWER_PROBE_MS` is slower than `LOW_POWER_FRAME_MS` (a low-power
+ * signal). Resolves `false` when it can't run (no `requestAnimationFrame`, no
+ * frames observed, or a fast machine). The probe is read with
+ * `performance.now()` inside this effect-time helper, never during render.
+ */
+function probeFrameRate(): Promise<boolean> {
+  return new Promise((resolve) => {
+    if (
+      typeof window === "undefined" ||
+      typeof window.requestAnimationFrame !== "function" ||
+      typeof performance === "undefined" ||
+      typeof performance.now !== "function"
+    ) {
+      resolve(false);
+      return;
+    }
+
+    const start = performance.now();
+    let frames = 0;
+
+    const tick = (now: number) => {
+      frames += 1;
+      if (now - start < LOW_POWER_PROBE_MS) {
+        window.requestAnimationFrame(tick);
+        return;
+      }
+      const elapsed = now - start;
+      // No frames observed: can't judge, so not low-power.
+      if (frames <= 0 || elapsed <= 0) {
+        resolve(false);
+        return;
+      }
+      const averageFrameMs = elapsed / frames;
+      resolve(averageFrameMs > LOW_POWER_FRAME_MS);
+    };
+
+    window.requestAnimationFrame(tick);
+  });
+}
+
+/**
+ * Provides the motion context. The initial mode is always `full`, matching the
+ * server render and the first client render (R17.3). After mount, a layout
+ * effect resolves the real device mode:
+ *
+ *  1. A `prefers-reduced-motion` listener keeps the calm signal current.
+ *  2. The low-power signals (few cores, Save-Data, or the frame probe) resolve
+ *     `light` once, if calm is not in force.
+ *
+ * The resolved mode is `calm` when reduced motion or the Calm control is on,
+ * else `light` when a low-power signal fired, else `full`.
  */
 export function MotionProvider({ children }: { children: ReactNode }) {
-  const [calm, setCalmState] = useState(false);
+  // The Calm control (R1.5): React state only.
+  const [calmControl, setCalmControl] = useState(false);
+  // The device-resolved signals, read after mount. Both start cleared so the
+  // first render is `full` and matches the server (R17.3).
+  const [reducedMotion, setReducedMotion] = useState(false);
+  const [lowPower, setLowPower] = useState(false);
 
   const setCalm = useCallback((on: boolean) => {
-    setCalmState(on);
+    setCalmControl(on);
   }, []);
 
-  const mode: MotionMode = calm ? "calm" : "full";
+  useLayoutEffect(() => {
+    let active = true;
+
+    // 1. Reduced-motion: read once and then follow changes.
+    const media =
+      typeof window !== "undefined" && typeof window.matchMedia === "function"
+        ? window.matchMedia("(prefers-reduced-motion: reduce)")
+        : null;
+
+    setReducedMotion(prefersReducedMotion());
+
+    const onMediaChange = (event: MediaQueryListEvent) => {
+      if (active) {
+        setReducedMotion(event.matches);
+      }
+    };
+    media?.addEventListener("change", onMediaChange);
+
+    // 2. Low-power: the cheap signals decide immediately; otherwise the frame
+    // probe runs for one second. Reduced motion already forces calm, so the
+    // probe is skipped when it is set (nothing would change the resolved mode).
+    if (fewCores() || saveDataRequested()) {
+      setLowPower(true);
+    } else if (!prefersReducedMotion()) {
+      void probeFrameRate().then((slow) => {
+        if (active && slow) {
+          setLowPower(true);
+        }
+      });
+    }
+
+    return () => {
+      active = false;
+      media?.removeEventListener("change", onMediaChange);
+    };
+  }, []);
+
+  const mode: MotionMode = useMemo(() => {
+    if (reducedMotion || calmControl) {
+      return "calm";
+    }
+    if (lowPower) {
+      return "light";
+    }
+    return "full";
+  }, [reducedMotion, calmControl, lowPower]);
 
   const value = useMemo<MotionContextValue>(
     () => ({ mode, setCalm }),
