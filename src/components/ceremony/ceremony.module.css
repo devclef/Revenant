@@ -1,0 +1,133 @@
+/*
+ * Shared Ceremony styles: desk colour tokens, focus rings and the rules every
+ * Stage shares (R1.7).
+ *
+ * R1.7: the Ceremony never edits src/app/globals.css. All of its colours,
+ * tokens and global-looking rules live here, in a CSS module under
+ * src/components/ceremony/. The desk tokens below are the dark-desk
+ * counterparts to the paper tokens in globals.css; paper surfaces (the
+ * envelope, the letter, the stamps) keep --paper / --paper-deep and the
+ * globals.css text tokens unchanged.
+ *
+ * Contrast (see design.md "Colour and contrast", verified by contrast.test.ts
+ * / Property 22): on the desk, every text token clears WCAG 2.2 AA on each of
+ * --desk, --desk-lit and --desk-lit-max. The candle light layer swings the lit
+ * desk between --desk-lit and --desk-lit-max only, so text never drops below
+ * AA. Tokens are kept as 6-digit hex so the contrast test can parse them.
+ *
+ * Neutrality (neutrality.md, R10.1): no colour here depends on any value or
+ * direction. A figure that rose and one that fell are drawn with identical
+ * rules; there is no green/red and no directional semantics anywhere.
+ */
+
+/* --- Desk colour tokens (R1.7) --- */
+
+.desk {
+  /* Surfaces: the unlit desk, the lit pool under the candle, and the
+     brightest the candle ever lifts it to (the 4% light swing stays within
+     --desk-lit..--desk-lit-max). */
+  --desk: #17100b;
+  --desk-lit: #3b2a1b;
+  --desk-lit-max: #4a3522;
+
+  /* Text on the desk. All three clear AA on every desk surface above. */
+  --desk-ink: #f1e6cf;
+  --desk-ink-soft: #d9c9a8;
+  --desk-gold: #d9b866;
+
+  color: var(--desk-ink);
+  background-color: var(--desk);
+}
+
+/* --- Focus rings (R11.8) --- */
+
+/*
+ * Focus indicators are 2px and at least 9:1 against their surface:
+ *   - --ink on paper surfaces (the globals.css ink token),
+ *   - --desk-ink on the desk.
+ * Up and down, past and present all share these rules; focus colour never
+ * encodes a value or direction (neutrality.md).
+ */
+.desk :focus-visible {
+  outline: 2px solid var(--desk-ink);
+  outline-offset: 2px;
+}
+
+/* Paper surfaces that sit on the desk keep the ink focus ring. */
+.onPaper :focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/*
+ * A Stage heading is given focus programmatically when its Stage appears
+ * (it carries tabIndex={-1}). A scripted .focus() does not match
+ * :focus-visible, so a plainly focused heading gets the same 2px ring.
+ */
+.desk :focus {
+  outline: 2px solid var(--desk-ink);
+  outline-offset: 2px;
+}
+
+.onPaper :focus {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* --- Shared Ceremony rules (R1.7) --- */
+
+/*
+ * The region that wraps a whole Ceremony page. Centres the stage and keeps a
+ * readable measure; carries no judgement colour.
+ */
+.ceremony {
+  position: relative;
+  min-height: 100%;
+}
+
+/*
+ * A Stage fades in over STAGE_FADE_MS (constants.ts). The animation is
+ * decorative only: it never inserts, removes or reorders content.
+ */
+.stageFade {
+  animation: ceremony-stage-fade 400ms ease both;
+}
+
+@keyframes ceremony-stage-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/*
+ * A spec 03 Stage that the Ceremony has not rebuilt yet renders its paper view
+ * inside a surface on the desk (R18.4).
+ */
+.onPaper {
+  margin: 0 auto;
+  max-width: var(--measure);
+}
+
+/*
+ * Calm_Mode / prefers-reduced-motion: no decorative motion runs (R11).
+ * Both the OS preference and the judge's Calm control resolve to
+ * data-ceremony-motion="calm" on the root; the media query covers the OS
+ * preference directly.
+ */
+.desk[data-ceremony-motion="calm"] .stageFade,
+.desk[data-ceremony-motion="light"] .stageFade {
+  animation-duration: 120ms; /* CALM_FADE_MS: at most 150 (R11.2) */
+}
+
+.desk[data-ceremony-motion="calm"] .stageFade {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .stageFade {
+    animation: none;
+  }
+}
