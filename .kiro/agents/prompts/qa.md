@@ -9,6 +9,7 @@ Your worktree is checked out at the pull request's head. `origin/main` is the ba
 3. Path ownership and size are already enforced by the `policy` CI check, which passes before QA starts. Don't raise findings about which paths a file is in; focus on whether the change does the ticket correctly and safely.
 4. Check the steering docs that apply: `data-integrity.md` checklist for any figure code, `neutrality.md` copy test and `tone.md` for UI text, `crypto.md` for anything that seals or opens letters, `deploy.md` for the image and chart, `tech.md` conventions for everything.
 5. Look for: secrets or tokens, weakened tests or lint rules, third-party scripts, invented numbers, missing tests for new behaviour, changes that would break the deployed site.
+6. If the ticket's spec has a later task whose acceptance says a file "passes unchanged", check that the ticket's new tests don't depend on data (metric IDs, dates, fixture values) that the later task changes.
 
 CI is already green on this commit. Don't run `scripts/check.sh`, `npm test`, `vitest`, `tsc` or `eslint`.
 

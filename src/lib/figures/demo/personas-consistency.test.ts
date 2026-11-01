@@ -16,6 +16,12 @@ import { DEMO_FIGURES, DEMO_FIXTURE_FIGURES } from ".";
 
 const MAYA_KEY = "us-maya";
 const MAYA_WRITTEN_AS_OF = "2024-05-12";
+// Fixed fixture IDs, not read from PERSONAS: task 8 moves Maya to the catalogue
+// metrics, and these identity checks must keep passing after that.
+const MAYA_FIXTURE_METRIC_IDS = [
+  "fixture-us-gasoline-regular",
+  "fixture-us-diesel",
+] as const;
 
 describe("demo figures: every persona metric has a then figure", () => {
   it("loads at least one persona", () => {
@@ -41,20 +47,18 @@ describe("demo figures: payload identity for Maya's fixture metrics", () => {
   if (maya === undefined) {
     throw new Error(`persona ${MAYA_KEY} is missing from PERSONAS`);
   }
-  const mayaMetricIds = maya.metrics.map((m) => m.metric_id);
-
   it("Maya's written_as_of is the date these identity checks use", () => {
     expect(maya.written_as_of).toBe(MAYA_WRITTEN_AS_OF);
   });
 
-  it("every fixture metric Maya tracks is in the fixture-only set", () => {
-    for (const id of mayaMetricIds) {
+  it("every fixture metric used by the identity checks is in the fixture-only set", () => {
+    for (const id of MAYA_FIXTURE_METRIC_IDS) {
       expect(DEMO_FIXTURE_FIGURES.series.has(id)).toBe(true);
     }
   });
 
   it("DEMO_FIGURES.series.get(id) is === the fixture-only LoadedSeries", () => {
-    for (const id of mayaMetricIds) {
+    for (const id of MAYA_FIXTURE_METRIC_IDS) {
       const merged = DEMO_FIGURES.series.get(id);
       const fixtureOnly = DEMO_FIXTURE_FIGURES.series.get(id);
       expect(fixtureOnly).toBeDefined();
@@ -63,7 +67,7 @@ describe("demo figures: payload identity for Maya's fixture metrics", () => {
   });
 
   it("thenAndNow on DEMO_FIGURES returns figure objects === the fixture-only ones", () => {
-    for (const id of mayaMetricIds) {
+    for (const id of MAYA_FIXTURE_METRIC_IDS) {
       const fixtureOnly = DEMO_FIXTURE_FIGURES.series.get(id);
       if (fixtureOnly === undefined) {
         throw new Error(`fixture-only set has no series ${id}`);
