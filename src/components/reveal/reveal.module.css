@@ -210,6 +210,13 @@
   font-size: 0.85em;
 }
 
+/* The stage-3 fixture notice, shown once when any figure is fixture data
+   (R13.5). Plain ink text, no judgement colour; the per-figure label
+   (.fixtureLabel) is separate. */
+.fixtureNote {
+  color: var(--ink);
+}
+
 .source {
   color: var(--ink-soft);
 }
@@ -219,9 +226,51 @@
   cursor: pointer;
 }
 
+/* --- Reveal, stage 2 (the sealed letter) --- */
+
+.sealedLetter {
+  text-align: left;
+}
+
+/* --- Reveal, stage 3 (figures then vs now) --- */
+
+.figuresThenNow {
+  text-align: left;
+}
+
+/* One metric's then/now block. No layout or ordering difference between
+   metrics, and no colour that could hint at which way a figure moved
+   (neutrality.md). */
+.figureGroup {
+  margin: 0 0 2rem;
+}
+
+.metricName {
+  font-family: var(--font-serif);
+  color: var(--ink);
+}
+
+/* "then" / "now" row labels: plain ink text, identical treatment for both, so
+   neither the past nor the present figure is visually favoured (neutrality.md). */
+.then,
+.now {
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
 /* --- Focus (R9.6) --- */
 
 .flow :focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+/* Each stage heading is given focus programmatically when its stage appears
+   (it carries tabIndex={-1}). A scripted .focus() does not match
+   :focus-visible, so give a plainly focused stage heading the same 2px ink
+   outline, no judgement colour. */
+.sealedLetter h2:focus,
+.figuresThenNow h2:focus {
   outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
