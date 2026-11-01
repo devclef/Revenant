@@ -95,6 +95,73 @@ class RunState(unittest.TestCase):
         self.assertEqual(d.run_state({"status": "cancelled"}), "failed")
 
 
+class FakeGH:
+    def call(self, method, path, body=None):
+        n = int(path.rsplit("/", 1)[1])
+        return {"head": {"sha": f"sha{n}", "ref": f"branch-{n}"}, "number": n}
+
+    def r(self, p):
+        return p
+
+    def ci_state(self, sha):
+        return "success"
+
+    def add_labels(self, n, *labels):
+        self.labelled.append((n, labels))
+
+    def comment(self, n, body):
+        pass
+
+    labelled: list
+
+
+class StartQA(unittest.TestCase):
+    def setUp(self):
+        import tempfile
+        from unittest import mock
+        self.tmp = Path(tempfile.mkdtemp())
+        self.addCleanup(__import__("shutil").rmtree, self.tmp, True)
+        self.checkouts = []
+        self.started = []
+        gh = FakeGH()
+        gh.labelled = []
+        self.gh = gh
+        crew = mock.Mock()
+        crew.start.side_effect = lambda *a, **k: self.started.append(k["name"]) or f"t{len(self.started)}"
+        self.tick = d.Tick(gh, crew, "tok")
+        for p in (mock.patch.object(d, "QA_CLONE", self.tmp),
+                  mock.patch.object(d, "checkout_base",
+                                    lambda *a: self.checkouts.append(a[2])),
+                  mock.patch.object(d, "qa_spec", lambda pr, i: "spec")):
+            p.start()
+            self.addCleanup(p.stop)
+
+    @staticmethod
+    def pr(n, *labels):
+        return {"number": n, "body": f"Closes #{n + 100}", "labels": [{"name": l} for l in labels]}
+
+    def test_running_qa_blocks_new_start(self):
+        self.tick.start_qa([self.pr(87, "status:qa-running"), self.pr(88, "needs-qa")])
+        self.assertEqual(self.started, [])
+        self.assertEqual(self.checkouts, [])
+
+    def test_two_needs_qa_start_only_one(self):
+        self.tick.start_qa([self.pr(87, "needs-qa"), self.pr(88, "needs-qa")])
+        self.assertEqual(self.started, ["qa-pr-87"])
+        self.assertEqual(self.checkouts, ["qa/pr-87"])
+
+    def test_stale_verdict_removed_before_checkout(self):
+        verdict = self.tmp / ".qa" / "verdict.json"
+        verdict.parent.mkdir()
+        verdict.write_text("{}")
+        seen = []
+        from unittest import mock
+        with mock.patch.object(d, "checkout_base", lambda *a: seen.append(verdict.exists())):
+            self.tick.start_qa([self.pr(88, "needs-qa")])
+        self.assertEqual(seen, [False])
+        self.assertFalse(verdict.exists())
+
+
 class Policy(unittest.TestCase):
     pr = {"labels": [], "user": {"login": "bot"}}
 

@@ -554,6 +554,10 @@ class Tick:
 
     # 4 ─ start QA when CI is green; CI failure goes straight back to the agent
     def start_qa(self, prs: list[dict]) -> None:
+        # All QA runs share one clone (QA_CLONE), and checkout_base moves its HEAD.
+        # A second run would swap the code under the first. One at a time.
+        if any(L_QA_RUNNING in label_names(p) for p in prs):
+            return
         for pr in prs:
             names = label_names(pr)
             if L_NEEDS_QA not in names or L_QA_RUNNING in names:
@@ -573,6 +577,8 @@ class Tick:
                                 + make_marker({"kind": "feedback", "source": "ci", "sha": sha}))
                 continue
             issue = self.gh.call("GET", self.gh.r(f"/issues/{issue_n}"))
+            # A leftover verdict from an earlier run must not be read as this PR's.
+            (QA_CLONE / ".qa" / "verdict.json").unlink(missing_ok=True)
             checkout_base(QA_CLONE, self.token, f"qa/pr-{pr['number']}", full["head"]["ref"])
             task_id = self.crew.start(qa_spec(pr, issue), agent="qa", workspace=QA_CLONE,
                                       name=f"qa-pr-{pr['number']}")
@@ -580,6 +586,7 @@ class Tick:
             self.gh.comment(pr["number"], f"QA review started (run `{task_id}`).\n\n"
                             + make_marker({"kind": "qa", "task_id": task_id, "sha": sha}))
             self.say(f"PR #{pr['number']}: QA started")
+            return  # at most one QA run per tick
 
     # 5 ─ fix runs
     def start_fixes(self, prs: list[dict], issues: list[dict]) -> set[str]:
