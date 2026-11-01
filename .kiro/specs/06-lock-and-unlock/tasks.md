@@ -30,7 +30,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
 
 ## Tasks
 
-- [ ] 1. Migration, schema, letter store, Prepare_Route and Seal_Route
+- [x] 1. Migration, schema, letter store, Prepare_Route and Seal_Route
   - Agent: `crypto-dev` (owns `drizzle/**`, `src/lib/db/schema/letters*`, `src/lib/letter-store/**`, `src/app/api/letters/**`, `src/lib/seal-format/**`) · Depends on: none · Estimated size: ~850 changed lines plus ~1,500 test lines
   - Before this task: only `main`. This task can run now, in parallel with task 2 and task 5. Tasks 1 and 2 share no file.
   - Scope: `drizzle/0001_live_letters.sql`, `drizzle/meta/0001_snapshot.json`, `drizzle/meta/_journal.json`, `src/lib/db/schema/letters.ts`, `src/lib/seal-format/live-constants.ts`, `src/lib/seal-format/index.ts`, `src/lib/letter-store/live-constants.ts`, `src/lib/letter-store/live-rules.ts`, `src/lib/letter-store/config.ts`, `src/lib/letter-store/drafts.ts`, `src/lib/letter-store/store.ts`, `src/lib/letter-store/http.ts`, `src/app/api/letters/demo/prepare/route.ts`, `src/app/api/letters/demo/seal/route.ts`, `.env.example`, and the tests `src/lib/letter-store/live-rules.test.ts`, `live-rules.property.test.ts`, `drafts.test.ts`, `store-live.test.ts`, `src/app/api/letters/demo/prepare/route.test.ts`, `src/app/api/letters/demo/seal/route.test.ts`, `src/test/integration/live-letters.test.ts`
