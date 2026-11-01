@@ -144,5 +144,6 @@
         "effect": "deny"
       }
     ]
-  }
+  },
+  "model": "claude-haiku-5.5"
 }

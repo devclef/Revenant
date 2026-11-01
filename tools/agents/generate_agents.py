@@ -90,11 +90,9 @@ def playwright_server(shots_dir: str) -> dict:
 PLAYWRIGHT_DENY = ["playwright/browser_run_code_unsafe", "playwright/browser_file_upload"]
 MCP_SERVERS = {role: {"playwright": playwright_server(d)} for role, d in SHOTS_DIRS.items()}
 # Optional per-role model. A role not listed here has no "model" field and keeps
-# using Auto. qa stays on Auto.
-MODELS = {
-    "data-dev": "claude-haiku-5.5",
-    "frontend-dev": "claude-haiku-5.5",
-}
+# using Auto.
+MODEL = "claude-haiku-5.5"
+MODELS = {role: MODEL for role in DESCRIPTIONS}
 OWNER_ONLY = [".kiro/**", ".github/**", "tools/**", "scripts/check.sh"]
 
 # Hooks (kiro-cli object form). The scripts live in tools/hooks/ (owner-only) and

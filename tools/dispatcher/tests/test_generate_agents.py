@@ -2,6 +2,7 @@ import importlib.util
 import json
 import sys
 import unittest
+from unittest import mock
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[3]
@@ -14,18 +15,14 @@ OWNERSHIP = json.loads((ROOT / ".github/agents.json").read_text())
 
 
 class Models(unittest.TestCase):
-    def test_only_listed_roles_get_a_model(self):
-        self.assertEqual(ga.MODELS, {"data-dev": "claude-haiku-5.5", "frontend-dev": "claude-haiku-5.5"})
+    def test_every_role_uses_haiku(self):
+        self.assertEqual(set(ga.MODELS), set(ga.DESCRIPTIONS))
         for role in ga.DESCRIPTIONS:
-            agent = ga.build(role, OWNERSHIP)
-            if role in ga.MODELS:
-                self.assertEqual(agent["model"], ga.MODELS[role])
-            else:
-                self.assertNotIn("model", agent)
+            self.assertEqual(ga.build(role, OWNERSHIP)["model"], "claude-haiku-5.5")
 
-    def test_qa_stays_on_auto(self):
-        self.assertNotIn("model", ga.build("qa", OWNERSHIP))
-        self.assertNotIn("model", json.loads((ROOT / ".kiro/agents/qa.json").read_text()))
+    def test_role_without_a_model_entry_has_no_field(self):
+        with mock.patch.dict(ga.MODELS, clear=True):
+            self.assertNotIn("model", ga.build("qa", OWNERSHIP))
 
     def test_committed_files_match(self):
         for role in ga.DESCRIPTIONS:
