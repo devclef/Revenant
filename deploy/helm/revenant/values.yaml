@@ -74,6 +74,14 @@ postgres:
     # CSI on this cluster).
     className: ""
 
+demo:
+  # -- Seal the demo persona letters in the migrate init container, after the
+  # schema migrations succeed. When true, the migrate init container runs
+  # `node scripts/migrate.mjs && node scripts/seal-personas.mjs`; when false it
+  # runs `node scripts/migrate.mjs` alone. A non-zero exit from either step
+  # fails the init container, so the web container never starts.
+  sealPersonas: true
+
 # -- Pod-level security context. Runs the whole pod as a non-root user.
 podSecurityContext:
   runAsNonRoot: true
