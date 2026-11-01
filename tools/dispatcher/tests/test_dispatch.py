@@ -262,12 +262,12 @@ class StartQA(unittest.TestCase):
         return {"number": n, "body": f"Closes #{n + 100}", "labels": [{"name": l} for l in labels]}
 
     def test_running_qa_blocks_new_start(self):
-        self.tick.start_qa([self.pr(87, "status:qa-running"), self.pr(88, "needs-qa")])
+        self.tick.start_qa([self.pr(87, "status:qa-running"), self.pr(88, "needs-qa")], [])
         self.assertEqual(self.started, [])
         self.assertEqual(self.checkouts, [])
 
     def test_two_needs_qa_start_only_one(self):
-        self.tick.start_qa([self.pr(87, "needs-qa"), self.pr(88, "needs-qa")])
+        self.tick.start_qa([self.pr(87, "needs-qa"), self.pr(88, "needs-qa")], [])
         self.assertEqual(self.started, ["qa-pr-87"])
         self.assertEqual(self.checkouts, ["qa/pr-87"])
 
@@ -278,7 +278,7 @@ class StartQA(unittest.TestCase):
         seen = []
         from unittest import mock
         with mock.patch.object(d, "checkout_base", lambda *a: seen.append(verdict.exists())):
-            self.tick.start_qa([self.pr(88, "needs-qa")])
+            self.tick.start_qa([self.pr(88, "needs-qa")], [])
         self.assertEqual(seen, [False])
         self.assertFalse(verdict.exists())
 
@@ -366,7 +366,7 @@ class Claim(unittest.TestCase):
         tick, notes = make_tick(gh)
         i = issue(79, ["status:ready", "agent:data-dev"])
         with mock.patch.object(d, "checkout_base", side_effect=RuntimeError("git checkout failed")):
-            tick.claim([i])
+            tick.claim([i], [])
         self.assertEqual(gh.has("status", 79), [("status", 79, "status:blocked", ("status:ready",))])
         self.assertFalse([e for e in gh.events if e[0] == "POST"])  # never assigned
         self.assertNotIn(("status", 79, "status:in-progress", ("status:ready",)), gh.events)
@@ -379,7 +379,7 @@ class Claim(unittest.TestCase):
         tick, _ = make_tick(gh)
         issues = [issue(1, ["status:ready", "agent:data-dev"]), issue(2, ["status:ready", "agent:frontend-dev"])]
         with mock.patch.object(d, "checkout_base", side_effect=RuntimeError("network")) as cb:
-            tick.claim(issues)
+            tick.claim(issues, [])
         self.assertEqual(cb.call_count, 1)
         self.assertEqual(gh.has("status", 1)[0][2], "status:blocked")
         self.assertEqual(gh.has("status", 2), [])
@@ -392,7 +392,7 @@ class Claim(unittest.TestCase):
         tick.crew.start.side_effect = lambda *a, **k: order.append("start") or "t1"
         with mock.patch.object(d, "checkout_base", lambda *a: order.append("checkout")), \
                 mock.patch.object(d, "dev_spec", lambda *a: "s"):
-            tick.claim([issue(2, ["status:ready", "agent:data-dev"])])
+            tick.claim([issue(2, ["status:ready", "agent:data-dev"])], [])
         self.assertEqual(order, ["checkout", "start"])
         self.assertIn(("status", 2, "status:in-progress", ("status:ready",)), gh.events)
         self.assertEqual(len([e for e in gh.events if e[0] == "POST"]), 1)
@@ -417,7 +417,7 @@ class MergeReady(unittest.TestCase):
 
 
 class StartFixes(unittest.TestCase):
-    def test_checkout_failure_blocks_and_continues(self):
+    def test_checkout_failure_blocks_and_stops_tick(self):
         from unittest import mock
         gh = RecGH()
         tick, _ = make_tick(gh)
@@ -432,10 +432,11 @@ class StartFixes(unittest.TestCase):
                 raise RuntimeError("dirty")
 
         with mock.patch.object(d, "checkout_base", checkout), mock.patch.object(d, "dev_spec", lambda *a: "s"):
-            started = tick.start_fixes(prs, issues)
+            stopped = tick.start_fixes(prs, issues)
         self.assertIn(("status", 1, "status:blocked", ("status:changes-requested",)), gh.events)
-        self.assertTrue(started)
-        self.assertEqual(n["c"], 2)  # the second PR's fix run was the one started
+        self.assertTrue(stopped)
+        self.assertEqual(n["c"], 1)  # the second PR was not tried in this tick
+        tick.crew.start.assert_not_called()
 
 
 class CIFeedback(unittest.TestCase):
@@ -444,7 +445,7 @@ class CIFeedback(unittest.TestCase):
 
     def run_qa(self, gh):
         tick, notes = make_tick(gh)
-        tick.start_qa([pr_item(5, "needs-qa")])
+        tick.start_qa([pr_item(5, "needs-qa")], [])
         return notes
 
     def test_names_failed_check_and_annotations(self):
@@ -478,7 +479,7 @@ class CIFeedback(unittest.TestCase):
         gh = RecGH()
         gh.ci_state = lambda sha: "failure"  # failure, but the newer run has no failed checks yet
         tick, notes = make_tick(gh)
-        tick.start_qa([pr_item(5, "needs-qa")])
+        tick.start_qa([pr_item(5, "needs-qa")], [])
         self.assertEqual(gh.has("comment"), [])
         self.assertEqual(gh.has("status"), [])
         self.assertEqual(notes, [])
@@ -490,7 +491,7 @@ class CIFeedback(unittest.TestCase):
         tick, _ = make_tick(gh)
         with mock.patch.object(d, "checkout_base"), mock.patch.object(d, "qa_spec", lambda *a: "s"), \
                 mock.patch.object(d, "QA_CLONE", Path("/nonexistent-qa")):
-            tick.start_qa([pr_item(5, "needs-qa"), pr_item(6, "needs-qa")])
+            tick.start_qa([pr_item(5, "needs-qa"), pr_item(6, "needs-qa")], [])
         self.assertEqual(tick.crew.start.call_count, 1)
         self.assertIn(("status", 5, "status:blocked", ("needs-qa",)), gh.events)
         self.assertEqual(gh.has("status", 6), [])
@@ -586,7 +587,7 @@ class OneRunAtATime(unittest.TestCase):
 
     def test_claim_waits_while_a_dev_run_is_in_progress(self):
         self.tick.claim([issue(79, ["status:ready", "agent:data-dev"]),
-                         issue(9, ["status:in-progress", "agent:frontend-dev"])])
+                         issue(9, ["status:in-progress", "agent:frontend-dev"])], [])
         self.assertEqual(self.started(), 0)
 
     def test_claim_starts_when_nothing_is_running(self):
@@ -596,7 +597,65 @@ class OneRunAtATime(unittest.TestCase):
     def test_active_runs_counts_dev_and_qa_together(self):
         issues = [issue(9, ["status:in-progress", "agent:data-dev"]), issue(10, ["status:ready"])]
         prs = [pr_item(5, "status:qa-running"), pr_item(6, "needs-qa")]
-        self.assertEqual(d.active_runs(issues, prs), 2)
+        self.assertEqual(d.active_runs(issues, prs, {}), 2)
+
+    # 2. Task Runner runs count too, and the larger of label and run counts wins.
+
+    def test_run_without_its_label_blocks_qa(self):
+        self.tick.runs = {"TASK_a": {"task_id": "TASK_a", "running": True, "status": "running"}}
+        self.assertFalse(self.tick.start_qa([pr_item(5, "needs-qa")], []))
+        self.assertEqual(self.started(), 0)
+
+    def test_run_without_its_label_blocks_claim(self):
+        self.tick.runs = {"TASK_a": {"task_id": "TASK_a", "running": True, "status": "running"}}
+        self.tick.claim([issue(79, ["status:ready", "agent:data-dev"])], [])
+        self.assertEqual(self.started(), 0)
+
+    def test_cancelling_run_still_blocks(self):
+        self.tick.runs = {"TASK_a": {"task_id": "TASK_a", "running": False, "status": "cancelling"}}
+        self.assertFalse(self.tick.start_qa([pr_item(5, "needs-qa")], []))
+        self.assertEqual(self.started(), 0)
+
+    def test_finished_run_does_not_block(self):
+        self.tick.runs = {"TASK_a": {"task_id": "TASK_a", "running": False, "status": "completed", "failed": 0}}
+        self.assertTrue(self.tick.start_qa([pr_item(5, "needs-qa")], []))
+        self.assertEqual(self.started(), 1)
+
+    def test_active_runs_takes_the_larger_count(self):
+        busy_issue = [issue(9, ["status:in-progress", "agent:data-dev"])]
+        running = {"TASK_a": {"running": True, "status": "running"}, "TASK_b": {"running": True, "status": "running"}}
+        self.assertEqual(d.active_runs(busy_issue, [], {}), 1)            # labels only
+        self.assertEqual(d.active_runs([], [], running), 2)               # runs only
+        self.assertEqual(d.active_runs(busy_issue, [], {"TASK_a": running["TASK_a"]}), 1)  # same run, not double counted
+        self.assertEqual(d.active_runs([], [], {"TASK_a": {"running": False, "status": "failed"}}), 0)
+
+    # 1. A start that fails stops the tick, so no second run starts alongside it.
+
+    def test_qa_error_after_start_stops_tick(self):
+        self.gh.add_labels = lambda *a: (_ for _ in ()).throw(RuntimeError("GitHub POST /x -> 500: down"))
+        stopped = self.tick.start_qa([pr_item(5, "needs-qa"), pr_item(6, "needs-qa")], [])
+        self.assertTrue(stopped)
+        self.assertEqual(self.started(), 1)  # the QA run started before the label write failed; PR 6 untouched
+
+    def test_fix_error_stops_tick(self):
+        from unittest import mock
+        prs = [pr_item(5, "status:changes-requested"), pr_item(6, "status:changes-requested")]
+        issues = [issue(105, ["status:in-review", "agent:frontend-dev"]),
+                  issue(106, ["status:in-review", "agent:data-dev"])]
+        with mock.patch.object(d, "checkout_base", side_effect=RuntimeError("network")) as cb:
+            stopped = self.tick.start_fixes(prs, issues)
+        self.assertTrue(stopped)
+        self.assertEqual(cb.call_count, 1)  # PR 6 is not tried in this tick
+        self.assertEqual(self.started(), 0)
+
+    # 3. No second QA run while a PR is qa-running, even if the cap were raised.
+
+    def test_second_qa_run_blocked_even_above_the_cap(self):
+        from unittest import mock
+        with mock.patch.object(d, "MAX_DEV_RUNS", 5):
+            started = self.tick.start_qa([pr_item(6, "status:qa-running"), pr_item(5, "needs-qa")], [])
+        self.assertFalse(started)
+        self.assertEqual(self.started(), 0)
 
 
 
