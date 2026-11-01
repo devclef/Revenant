@@ -192,7 +192,7 @@ Follow `design.md` in this folder for every file name, constant, interface and a
   - Validation: `bash scripts/check.sh`
   - _Requirements: R14, R17.3_
 
-- [ ] 11. Reveal stages readable on the desk
+- [x] 11. Reveal stages readable on the desk
   - Agent: `frontend-dev` · Depends on: 4 · Estimated size: ~900 changed lines
   - Before this task: Blocked by #49 (spec 03 task 8, the reveal's letter and figures stages).
   - Scope: `src/components/reveal/`, `src/components/ceremony/`, and their tests. If a fix needs `src/components/ui/ParchmentSurface.module.css` or `src/components/demo/DemoLabel.module.css`, which are outside this scope, stop and ask the owner before editing them.
