@@ -154,3 +154,12 @@ describe("ChangeLine markup", () => {
     expect(html).toContain(REVEAL_COPY.labelFixtureData);
   });
 });
+
+describe("ChangeLine fade marker (R3.1)", () => {
+  it("marks the change and formula block with data-change so the stage 3 Steps can fade it", () => {
+    const html = render(comparableResult(), THEN, NOW);
+    expect(html).toMatch(/<div class="[^"]*change[^"]*" data-change="">/);
+    // Both the change line and the formula line sit inside that block.
+    expect(html).toContain(REVEAL_COPY.formulaLabel);
+  });
+});

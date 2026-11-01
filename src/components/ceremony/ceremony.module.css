@@ -107,10 +107,17 @@
   border: 1px solid var(--desk-ink);
   border-radius: 2px;
   cursor: pointer;
+  transition: background-color 150ms ease;
 }
 
 .deskControl:hover {
   background-color: var(--desk-lit-max);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .deskControl {
+    transition: none;
+  }
 }
 
 /* The control carries `.desk` itself, so `.desk :focus-visible` (a descendant

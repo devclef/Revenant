@@ -17,7 +17,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { WaxSeal } from "./WaxSeal";
-import { SEAL_WAX_TOKEN } from "./seal-pattern";
+import { GLYPH_COUNT, SEAL_WAX_TOKEN, sealPattern } from "./seal-pattern";
 
 const renderSeal = (patternKey: string, size?: number): string =>
   renderToStaticMarkup(createElement(WaxSeal, { patternKey, size }));
@@ -109,5 +109,25 @@ describe("WaxSeal — reads only its key, never a letter payload", () => {
     const small = stripSize(renderSeal("us-maya", 48));
     const large = stripSize(renderSeal("us-maya", 128));
     expect(small).toBe(large);
+  });
+});
+
+describe("WaxSeal — no six-point star in the glyph set (R10.1)", () => {
+  it("draws the glyph at index 4 as three dots, not the removed six-point star", () => {
+    // Glyph 4 used to be the two-triangle star path. Every seal key that lands
+    // on glyph 4 must now draw dots instead, so the old path is gone everywhere.
+    let key: string | undefined;
+    for (let i = 0; key === undefined && i < 1000; i += 1) {
+      if (sealPattern(`probe-${i}`).glyph === 4) key = `probe-${i}`;
+    }
+    expect(key).toBeDefined();
+    const markup = renderSeal(key ?? "");
+    expect(markup).toContain("<circle");
+    expect(markup).not.toContain("M50 37 L61 56 L39 56 Z");
+    expect(markup).not.toContain("M50 63 L39 44 L61 44 Z");
+  });
+
+  it("keeps the glyph count at 12, so the pattern ranges do not change", () => {
+    expect(GLYPH_COUNT).toBe(12);
   });
 });

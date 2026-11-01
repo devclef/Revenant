@@ -147,3 +147,202 @@
     animation: none;
   }
 }
+
+/* --- Counter: rolling digit strips over the final value (Counter.tsx) --- */
+
+/* The counter sets its own text colour, so the figure never inherits one from
+   the surrounding surface. Digits use tabular figures so a roll never shifts
+   the width of the value. */
+.counter {
+  position: relative;
+  display: inline-block;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.counterFace {
+  display: inline-flex;
+  align-items: flex-start;
+  white-space: nowrap;
+}
+
+.counterChar {
+  display: inline-block;
+  height: 1em;
+  line-height: 1em;
+}
+
+/* One window per digit. It shows one digit at a time and hides the rest. */
+.counterCell {
+  display: inline-block;
+  position: relative;
+  width: 1ch;
+  height: 1em;
+  overflow: hidden;
+  text-align: center;
+}
+
+/* The strip rests on its last digit: it moves up --counter-steps digit heights.
+   The value comes from Counter.tsx, so every strip moves the same distance. */
+.counterStrip {
+  display: block;
+  transform: translateY(calc(var(--counter-steps) * -1em));
+}
+
+.counterDigit {
+  display: block;
+  height: 1em;
+  line-height: 1em;
+}
+
+/* The roll runs from the first digit to the last. Timing comes from
+   constants.ts through inline styles, so no duration is written here. */
+.roll {
+  animation-name: counterRoll;
+  animation-fill-mode: both;
+}
+
+@keyframes counterRoll {
+  from {
+    transform: translateY(0);
+  }
+  to {
+    transform: translateY(calc(var(--counter-steps) * -1em));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .roll {
+    animation: none;
+  }
+}
+
+/* --- Sequence: the stage 3 Steps (ThenNowSequence.tsx) ---
+
+   The now figures stay hidden until their own Step. `visibility` keeps their
+   space, so nothing shifts when they appear. The rule reads the Step from the
+   sequence's data-step attribute and the role from the Stamp's data-role. */
+
+.sequence[data-step="then"] [data-role="now"],
+.sequence[data-step="passage"] [data-role="now"] {
+  visibility: hidden;
+}
+
+/* --- Passage: three paper sheets and a drifting light (Passage.tsx) ---
+
+   The panel sets its own text colour, so the live line never inherits one from
+   the desk. Every colour is a token from globals.css. */
+
+.passage {
+  position: relative;
+  box-sizing: border-box;
+  margin: 1rem 0;
+  padding: 1rem 1.25rem;
+  background-color: var(--paper);
+  color: var(--ink);
+}
+
+.passageScene {
+  position: relative;
+  height: 6rem;
+  perspective: 40rem;
+}
+
+.passageSheet {
+  position: absolute;
+  inset: 0;
+  border: 1px solid var(--ink);
+  background-color: var(--paper);
+  transform-origin: left center;
+  transform: rotateY(0deg);
+}
+
+/* The light layer sits over the sheets. It starts clear, so the scene is paper
+   with no light change when the passage is drawn still. */
+.passageLight {
+  position: absolute;
+  inset: 0;
+  background-color: var(--paper);
+  opacity: 0;
+  pointer-events: none;
+}
+
+.turn {
+  animation-name: passageTurn;
+  animation-fill-mode: both;
+}
+
+.drift {
+  animation-name: passageDrift;
+  animation-fill-mode: both;
+}
+
+@keyframes passageTurn {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(-160deg);
+  }
+}
+
+@keyframes passageDrift {
+  0% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 0.25;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+.passageLive {
+  margin: 0.75rem 0 0;
+  color: var(--ink);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turn,
+  .drift {
+    animation: none;
+  }
+}
+
+.sequence {
+  position: relative;
+}
+
+/* The change and formula lines (ChangeLine's data-change block) fade in over
+   the plan's changeFade timing. Before the fade starts, `both` fill holds them
+   at opacity 0. Skip and Calm settle at data-step="done", which ends the fade
+   at once, and reduced motion turns it off. Timing comes from ThenNowSequence
+   through the custom properties, so no duration is written here. */
+.sequence [data-change] {
+  animation-name: changeFadeIn;
+  animation-fill-mode: both;
+  animation-duration: var(--change-fade-ms);
+  animation-timing-function: var(--change-easing);
+  animation-delay: var(--change-delay);
+}
+
+.sequence[data-step="done"] [data-change] {
+  animation: none;
+}
+
+@keyframes changeFadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sequence [data-change] {
+    animation: none;
+  }
+}

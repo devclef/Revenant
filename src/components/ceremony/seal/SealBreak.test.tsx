@@ -15,6 +15,7 @@
 // React, so the static markup tests still use React's own renderer.
 
 import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -342,5 +343,13 @@ describe("SealBreak button path sends ADVANCE exactly once (Property 19, Propert
 
     runFrames(SEAL_HOLD_MS);
     expect(onAdvance).toHaveBeenCalledTimes(1);
+  });
+});
+
+describe("the seal instruction uses the paper ink (the seal sits in StagePanel's paper panel)", () => {
+  it("sets the instruction line to the ink, not the desk ink", () => {
+    const css = readFileSync(join(__dirname, "SealBreak.module.css"), "utf8");
+    expect(css).toMatch(/\.instruction\s*\{[^}]*color:\s*var\(--ink\)/);
+    expect(css).not.toMatch(/\.instruction\s*\{[^}]*color:\s*var\(--desk-ink/);
   });
 });

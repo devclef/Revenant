@@ -9,6 +9,7 @@ import { describe, expect, it } from "vitest";
 import { FigureLine } from "@/components/reveal/FigureLine";
 import type { FigureV1 } from "@/lib/seal-format";
 import { MotionProvider } from "../motion";
+import { COUNTER_ROLL_MS } from "../constants";
 import { Stamp, dropsOnMount, type StampProps } from "./Stamp";
 import styles from "./figures.module.css";
 import { readFileSync } from "node:fs";
@@ -51,9 +52,16 @@ describe("Stamp frames the existing FigureLine unchanged (R9.1, R9.8)", () => {
 });
 
 describe("Stamp adds the face value and the source name as text (R9.2, R12.6)", () => {
-  it("shows the face value with the unit, hidden from screen readers", () => {
+  it("shows the face value through Counter, one digit cell per digit, hidden from screen readers", () => {
     const html = renderStamp({ figure: FIGURE, role: "then" });
-    expect(html).toMatch(/<span class="[^"]*face[^"]*" aria-hidden="true">3\.412 USD per gallon<\/span>/);
+    expect(html).toMatch(/<span class="[^"]*face[^"]*" aria-hidden="true">/);
+    // 3.412 has four digits, so four [data-counter] cells (the point is text).
+    expect(html.match(/data-counter="digit"/g)?.length).toBe(4);
+  });
+
+  it("keeps the unit outside Counter so its spaces survive", () => {
+    const html = renderStamp({ figure: FIGURE, role: "then" });
+    expect(html).toMatch(/<\/span> USD per gallon<\/span>/);
   });
 
   it("shows the source name as readable text", () => {
@@ -67,7 +75,15 @@ describe("Stamp adds the face value and the source name as text (R9.2, R12.6)", 
       role: "then",
       displayRescale: { divisor: 1000, unit: "USD per litre" },
     });
-    expect(html).toMatch(/aria-hidden="true">3\.412 USD per litre<\/span>/);
+    expect(html.match(/data-counter="digit"/g)?.length).toBe(4);
+    expect(html).toMatch(/<\/span> USD per litre<\/span>/);
+  });
+});
+
+describe("the counter's digit strips roll only in full motion (R10.6, R11.2)", () => {
+  it("rolls the digit strips in the full-motion render", () => {
+    const html = renderStamp({ figure: FIGURE, role: "then" });
+    expect(html).toContain(`animation-duration:${COUNTER_ROLL_MS}ms`);
   });
 });
 

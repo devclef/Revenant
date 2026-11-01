@@ -7,6 +7,7 @@ import { RememberedAnswers } from "./RememberedAnswers";
 import { SealedLetter } from "./SealedLetter";
 import { FiguresThenNow } from "./FiguresThenNow";
 import { StagePanel } from "./StagePanel";
+import { ThenNowSequence } from "@/components/ceremony/figures/ThenNowSequence";
 import { SealBreak } from "@/components/ceremony/seal/SealBreak";
 import { useLocalView } from "@/components/ceremony/local-view";
 import { REVEAL_COPY } from "./copy";
@@ -114,6 +115,12 @@ export function Reveal({
     [setLocalView],
   );
 
+  // One entry per sealed figure, in payload order. The stage 3 Steps are timed
+  // by the number of entries only, never by their values (R10.5).
+  const thenNowEntries = opened.payload.figures.map((figure, index) => ({
+    key: `${figure.metric_id}-${index}`,
+  }));
+
   // Stage 2 still shows its own next control; "Show everything" sits beside it.
   const stage2HasHidden = stage === 2;
 
@@ -143,9 +150,11 @@ export function Reveal({
 
       {stage >= 3 ? (
         <div ref={stage3Ref} className={`${styles.stage} ${styles.fade}`}>
-          <StagePanel>
-            <FiguresThenNow opened={opened} record={record} />
-          </StagePanel>
+          <ThenNowSequence entries={thenNowEntries}>
+            <StagePanel>
+              <FiguresThenNow opened={opened} record={record} />
+            </StagePanel>
+          </ThenNowSequence>
         </div>
       ) : null}
 

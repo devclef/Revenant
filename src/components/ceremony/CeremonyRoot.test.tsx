@@ -30,6 +30,8 @@
 // which is where it is the root — so the test tracks the real wiring rather
 // than a guessed standalone signature.
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -427,5 +429,20 @@ describe("CeremonyRoot render is I/O-free", () => {
     render({ tag: "verified", opened: OPENED });
     render({ tag: "reveal", opened: OPENED, record: RECORD, stage: 3 });
     expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("CeremonyRoot controls use the desk control style (R11.2, R11.4)", () => {
+  it("gives the Calm control the desk-control class from ceremony.module.css", () => {
+    const html = render({ tag: "loading" });
+    expect(html).toMatch(/<button type="button" class="[^"]+"/);
+  });
+
+  it("the desk-control class fades its hover and stops the fade under reduced motion", () => {
+    const css = readFileSync(join(__dirname, "ceremony.module.css"), "utf8");
+    expect(css).toMatch(/\.deskControl\s*\{[^}]*transition:\s*background-color\s+150ms/);
+    expect(css).toMatch(
+      /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.deskControl\s*\{\s*transition:\s*none;/,
+    );
   });
 });

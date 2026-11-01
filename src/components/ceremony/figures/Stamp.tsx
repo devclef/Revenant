@@ -21,6 +21,7 @@ import { FigureLine } from "@/components/reveal/FigureLine";
 import { EASE_STAMP, STAMP_DROP_MS } from "../constants";
 import type { MotionMode } from "../motion";
 import { useMotion } from "../motion";
+import { Counter } from "./Counter";
 import styles from "./figures.module.css";
 
 export type StampProps = {
@@ -63,8 +64,11 @@ export function Stamp({ figure, role, displayRescale }: StampProps) {
 
   return (
     <div className={className} style={dropStyle} data-role={role}>
+      {/* The value rolls through Counter's digit strips. The unit stays outside
+          Counter: its letters are split into flex cells, which would lose the
+          spaces between words. The accessible value is FigureLine's text below. */}
       <span className={styles.face} aria-hidden="true">
-        {faceValue} {faceUnit}
+        <Counter value={faceValue} /> {faceUnit}
       </span>
       <span className={styles.sourceName}>{figure.source}</span>
       <FigureLine figure={figure} role={role} displayRescale={displayRescale} />

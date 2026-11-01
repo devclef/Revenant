@@ -66,7 +66,9 @@ export function ChangeLine({ result, region, then, now }: ChangeLineProps) {
   // was non-zero). The periods are always shown so the reader sees which two
   // periods the change spans (data-integrity.md).
   return (
-    <div className={styles.change}>
+    // data-change marks the change and formula lines so the stage 3 Steps can
+    // fade them in from the plan (ThenNowSequence, figures.module.css).
+    <div className={styles.change} data-change="">
       <p>
         {fixture ? (
           <>
