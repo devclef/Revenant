@@ -75,6 +75,7 @@ import { useOpeningFlow } from "./useOpeningFlow";
 import { onceOnly, type AuthenticatorPort } from "@/components/live/unlock";
 import { RecallStep } from "./RecallStep";
 import { Reveal } from "./Reveal";
+import { LiveLockNote } from "@/components/live/LiveLockNote";
 import { FlowError, type FlowErrorKind } from "./FlowError";
 import type { FlowState, OpenFailedKind } from "./opening-machine";
 import { REVEAL_COPY } from "./copy";
@@ -339,15 +340,22 @@ function selectView(
 
     case "reveal":
       return (
-        <Reveal
-          opened={state.opened}
-          record={state.record}
-          personaName={personaName}
-          stage={state.stage}
-          onAdvance={flow.advance}
-          onShowAll={flow.showAll}
-          variant={mode}
-        />
+        <>
+          <Reveal
+            opened={state.opened}
+            record={state.record}
+            personaName={personaName}
+            stage={state.stage}
+            onAdvance={flow.advance}
+            onShowAll={flow.showAll}
+            variant={mode}
+          />
+          {mode === "live" && state.stage === 3 ? (
+            <div className={styles.fade}>
+              <LiveLockNote />
+            </div>
+          ) : null}
+        </>
       );
 
     case "not_placed":
