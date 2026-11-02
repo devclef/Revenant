@@ -4,9 +4,13 @@ import { describe, expect, it } from "vitest";
 
 import { RecallStep } from "./RecallStep";
 import { REVEAL_COPY } from "./copy";
+import { CEREMONY_COPY } from "@/components/ceremony/copy";
 import type { Opened } from "./opening-machine";
 import type { Draft } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
+
+/** The spoken text a slider with no Mark gives (RecallScale's empty state). */
+const CEREMONY_NO_MARK = CEREMONY_COPY.recallNoMarkYet;
 
 /**
  * Markup tests for the recall step (R8.1-R8.4, R16.4, neutrality.md). Rendered
@@ -209,5 +213,75 @@ describe("RecallStep markup", () => {
         `recall step must not leak "${needle}"`,
       ).not.toContain(needle);
     }
+  });
+});
+
+/**
+ * The recall scale inside each fieldset (issue #102). A number question gets one
+ * slider above its input; the text question gets none. Each slider's Mark,
+ * readout and disabled state follow that question's draft.
+ */
+describe("RecallStep recall scale", () => {
+  // Split the markup into one chunk per fieldset, in payload order.
+  function fieldsetsOf(html: string): string[] {
+    return html.split("<fieldset").slice(1);
+  }
+
+  it("puts one slider inside each number question's fieldset and none in the text question", () => {
+    const html = render(EMPTY_DRAFTS, [], false);
+    const fieldsets = fieldsetsOf(html);
+    expect(fieldsets).toHaveLength(OPENED.payload.recall_questions.length);
+    // q-fuel and q-milk are number questions; q-note is a text question.
+    expect(fieldsets[0]).toContain('role="slider"');
+    expect(fieldsets[1]).toContain('role="slider"');
+    expect(fieldsets[2]).not.toContain('role="slider"');
+    expect(html.match(/role="slider"/g) ?? []).toHaveLength(2);
+  });
+
+  it("labels each slider with its question text and the figure's unit", () => {
+    const html = render(EMPTY_DRAFTS, [], false);
+    const [fuel] = fieldsetsOf(html);
+    expect(fuel).toContain(`aria-label="${OPENED.payload.recall_questions[0].text}"`);
+    expect(fuel).toContain(`aria-valuetext="${CEREMONY_NO_MARK}"`);
+  });
+
+  it("marks the typed number on the slider and shows it as the readout", () => {
+    const drafts: Record<string, Draft> = {
+      ...EMPTY_DRAFTS,
+      "q-fuel": { text: "3.5", noAnswer: false },
+    };
+    const [fuel] = fieldsetsOf(render(drafts, [], false));
+    expect(fuel).toContain('aria-valuetext="3.5 USD per gallon"');
+    expect(fuel).toContain('data-readout="readout">3.5<');
+  });
+
+  it("shows no Mark while the typed text is not a plain decimal", () => {
+    const drafts: Record<string, Draft> = {
+      ...EMPTY_DRAFTS,
+      "q-fuel": { text: "3,50", noAnswer: false },
+    };
+    const [fuel] = fieldsetsOf(render(drafts, [], false));
+    expect(fuel).toContain(`aria-valuetext="${CEREMONY_NO_MARK}"`);
+    expect(fuel).not.toContain("data-readout");
+  });
+
+  it("disables the slider and removes its Mark when the question is No answer", () => {
+    const drafts: Record<string, Draft> = {
+      ...EMPTY_DRAFTS,
+      "q-fuel": { text: "3.5", noAnswer: true },
+    };
+    const [fuel, milk] = fieldsetsOf(render(drafts, [], false));
+    expect(fuel).toContain('aria-disabled="true"');
+    expect(fuel).toContain('tabindex="-1"');
+    expect(fuel).not.toContain("data-readout");
+    // The other question's slider stays live.
+    expect(milk).not.toContain('aria-disabled="true"');
+    expect(milk).toContain('tabindex="0"');
+  });
+
+  it("leaves the slider enabled when the question is not No answer", () => {
+    const html = render(EMPTY_DRAFTS, [], false);
+    expect(html).not.toContain('aria-disabled="true"');
+    expect(html).not.toContain('aria-readonly="true"');
   });
 });

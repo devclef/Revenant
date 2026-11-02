@@ -9,9 +9,13 @@ import { FiguresThenNow } from "./FiguresThenNow";
 import { StagePanel } from "./StagePanel";
 import { ThenNowSequence } from "@/components/ceremony/figures/ThenNowSequence";
 import { SealBreak } from "@/components/ceremony/seal/SealBreak";
+import { RecallScale } from "@/components/ceremony/recall/RecallScale";
 import { useLocalView } from "@/components/ceremony/local-view";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
+
+/** The marks stage's scales are read-only, so they never send an edit. */
+const NO_EDIT = () => undefined;
 
 /**
  * The staged reveal (design.md "Reveal", R9.1, R9.4). The reveal is shown only
@@ -121,6 +125,40 @@ export function Reveal({
     key: `${figure.metric_id}-${index}`,
   }));
 
+  // The marks stage shows each number answer on a read-only scale, with the Mark
+  // at the recorded value. A question with no stored number shows no Mark. The
+  // unit comes from the sealed metric; the answer comes from the stored record.
+  const unitByMetricId = new Map<string, string>();
+  for (const metric of opened.payload.metrics) {
+    unitByMetricId.set(metric.id, metric.unit);
+  }
+  const answerByQuestionId = new Map(
+    record.answers.map((answer) => [answer.question_id, answer] as const),
+  );
+  const recordedScales = opened.payload.recall_questions.flatMap((question) => {
+    const unit =
+      question.answer_type === "number"
+        ? unitByMetricId.get(question.metric_id)
+        : undefined;
+    if (unit === undefined) return [];
+    const answer = answerByQuestionId.get(question.id);
+    const recordedValue =
+      answer !== undefined && answer.kind === "number" ? Number(answer.value) : null;
+    return [
+      <RecallScale
+        key={question.id}
+        id={question.id}
+        label={question.text}
+        unitLabel={unit}
+        value={recordedValue}
+        noAnswer={recordedValue === null}
+        onEdit={NO_EDIT}
+        readOnly
+        spokenPrefix={REVEAL_COPY.yourAnswer}
+      />,
+    ];
+  });
+
   // Stage 2 still shows its own next control; "Show everything" sits beside it.
   const stage2HasHidden = stage === 2;
 
@@ -129,6 +167,7 @@ export function Reveal({
       <div className={`${styles.stage} ${styles.fade}`}>
         <StagePanel>
           <RememberedAnswers opened={opened} record={record} />
+          {recordedScales}
           {stage === 1 ? (
             <SealBreak
               patternKey={personaName}

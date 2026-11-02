@@ -176,9 +176,16 @@ describe("Property 9: values beyond the track sit at the ends and look the same"
 });
 
 describe("Property 10: the zoom reads nothing but the marker and the pointer", () => {
-  it("the props are only id, label, unit label, value, no-answer and onEdit", () => {
+  it("the props are only id, label, unit label, value, no-answer, onEdit, and the read-only flags", () => {
     expectTypeOf<keyof RecallScaleProps>().toEqualTypeOf<
-      "id" | "label" | "unitLabel" | "value" | "noAnswer" | "onEdit"
+      | "id"
+      | "label"
+      | "unitLabel"
+      | "value"
+      | "noAnswer"
+      | "onEdit"
+      | "readOnly"
+      | "spokenPrefix"
     >();
   });
 
@@ -330,5 +337,25 @@ describe("markup", () => {
     expect(mark).not.toBeNull();
     expect(mark![1]).toMatch(/width:\s*44px/);
     expect(mark![1]).toMatch(/height:\s*44px/);
+  });
+});
+
+describe("RecallScale read-only mode (marks stage)", () => {
+  it("is read-only and out of the tab order, with no disabled attribute", () => {
+    const markup = render({ value: 2.5, readOnly: true });
+    expect(markup).toContain('aria-readonly="true"');
+    expect(markup).toContain('tabindex="-1"');
+    expect(markup).not.toContain("aria-disabled");
+  });
+
+  it("speaks the spoken prefix before the Mark's value and unit", () => {
+    const markup = render({ value: 2.5, readOnly: true, spokenPrefix: "Your answer" });
+    expect(markup).toContain('aria-valuetext="Your answer: 2.5 USD per gallon"');
+  });
+
+  it("keeps the plain value text when no prefix is given", () => {
+    const markup = render({ value: 2.5 });
+    expect(markup).toContain('aria-valuetext="2.5 USD per gallon"');
+    expect(markup).not.toContain('aria-readonly');
   });
 });

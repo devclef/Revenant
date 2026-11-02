@@ -61,6 +61,16 @@ export type RecallScaleProps = {
   noAnswer: boolean;
   /** Called with the question id and the plain-decimal text to send as EDIT_DRAFT. */
   onEdit: (id: string, text: string) => void;
+  /**
+   * True in the marks stage: the Mark shows the recorded value, but the track
+   * takes no pointer or key input and is out of the tab order.
+   */
+  readOnly?: boolean;
+  /**
+   * Text placed before the value in the spoken value, for example "Your answer".
+   * Used only when the Mark is shown. It is not drawn on screen.
+   */
+  spokenPrefix?: string;
 };
 
 /**
@@ -175,6 +185,8 @@ export function RecallScale({
   value,
   noAnswer,
   onEdit,
+  readOnly = false,
+  spokenPrefix,
 }: RecallScaleProps) {
   const [level, setLevel] = useState<ZoomLevel>(0);
   // The value the zoomed window is built around. Set on each zoom-in and key step.
@@ -193,8 +205,11 @@ export function RecallScale({
   const hasMark = !noAnswer && shownValue !== null;
   const markPosition = positionInWindow(base, win);
   const readout = !noAnswer && shownValue !== null ? readoutText(shownValue) : "";
+  const markText = hasMark ? `${readout} ${unitLabel}` : CEREMONY_COPY.recallNoMarkYet;
   const spokenValue =
-    hasMark ? `${readout} ${unitLabel}` : CEREMONY_COPY.recallNoMarkYet;
+    hasMark && readOnly && spokenPrefix !== undefined
+      ? `${spokenPrefix}: ${markText}`
+      : markText;
 
   const trackStyle = {
     "--pos-mark": String(markPosition),
@@ -255,7 +270,7 @@ export function RecallScale({
   }
 
   function onPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (noAnswer || drag.current !== null) return;
+    if (readOnly || noAnswer || drag.current !== null) return;
     const start = valueAtClientX(event.clientX, win);
     if (start === null) return;
     const state: DragState = {
@@ -278,7 +293,7 @@ export function RecallScale({
   }
 
   function onKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
-    if (noAnswer) return;
+    if (readOnly || noAnswer) return;
     const next = nextValueForKey(event.key, base);
     if (next === null) return;
     event.preventDefault();
@@ -316,14 +331,15 @@ export function RecallScale({
         <div className={styles.rail} aria-hidden="true" />
         <div
           role="slider"
-          tabIndex={noAnswer ? -1 : 0}
+          tabIndex={noAnswer || readOnly ? -1 : 0}
           aria-label={label}
           aria-orientation="horizontal"
           aria-valuemin={0}
           aria-valuemax={1000}
           aria-valuenow={ariaValueNow}
           aria-valuetext={spokenValue}
-          aria-disabled={noAnswer ? "true" : "false"}
+          aria-readonly={readOnly ? "true" : undefined}
+          aria-disabled={noAnswer ? "true" : undefined}
           className={hasMark ? styles.mark : `${styles.mark} ${styles.markFaded}`}
           onKeyDown={onKeyDown}
         />
