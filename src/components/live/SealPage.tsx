@@ -85,8 +85,9 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
       text: writeDraft.text,
       metricIds: writeDraft.metricIds,
       figures: deps?.figures ?? DEMO_FIGURES,
+      backupCard: writeDraft.backupCardTicked,
     }),
-    [writeDraft.text, writeDraft.metricIds, deps?.figures],
+    [writeDraft.text, writeDraft.metricIds, writeDraft.backupCardTicked, deps?.figures],
   );
 
   const flow = useSealFlow(sealDeps, draft);
@@ -144,6 +145,7 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
             text={writeDraft.text}
             metricIds={writeDraft.metricIds}
             warningTicked={writeDraft.warningTicked}
+            backupCardTicked={writeDraft.backupCardTicked}
             onTextChange={(text) =>
               dispatchDraft({ type: "TEXT_CHANGED", text })
             }
@@ -152,6 +154,9 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
             }
             onWarningChange={(ticked) =>
               dispatchDraft({ type: "WARNING_CHANGED", ticked })
+            }
+            onBackupCardChange={(ticked) =>
+              dispatchDraft({ type: "BACKUP_CARD_CHANGED", ticked })
             }
             onCreatePress={flow.onCreatePress}
             onConfirmPress={flow.onConfirmPress}

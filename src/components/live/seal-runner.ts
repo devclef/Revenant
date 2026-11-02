@@ -49,6 +49,11 @@ export interface SealDraft {
   text: string;
   metricIds: readonly string[];
   figures: LoadedFigures;
+  /**
+   * Whether the visitor asked for a backup key card (R21.1). Read at the
+   * Confirm_Press; the key itself is generated there, not here.
+   */
+  backupCard?: boolean;
 }
 
 export type SealedEvent = Extract<SealEvent, { type: "SEALED" }>;
@@ -132,6 +137,11 @@ export interface SealRunInput {
   draft: SealDraft;
   confirmed: Confirmed;
   /**
+   * The optional backup key. When present the header carries both wraps
+   * (R21.1). Read here, never zeroed, so the backup key card can show it.
+   */
+  backupKey?: BackupKey;
+  /**
    * Called once the Prepare_Route has answered, so the reducer can move from
    * `preparing` to `sealing`.
    */
@@ -146,7 +156,9 @@ export interface BackupSealRunInput {
 }
 
 /** Which factor locks the letter. The passkey carries its PRF output; the backup key is the caller's. */
-type Lock = { kind: "passkey"; confirmed: Confirmed } | { kind: "backup"; backupKey: BackupKey };
+type Lock =
+  | { kind: "passkey"; confirmed: Confirmed; backupKey?: BackupKey }
+  | { kind: "backup"; backupKey: BackupKey };
 
 function decodeOrNull(value: string): Uint8Array | null {
   try {
@@ -215,6 +227,7 @@ async function runSeal(
               prfSalt: lock.confirmed.prfSalt,
               rpId: deps.rpId,
             },
+            ...(lock.backupKey !== undefined ? { backupKey: lock.backupKey } : {}),
           }
         : { backupKey: lock.backupKey };
 
@@ -261,7 +274,12 @@ async function runSeal(
         sealedAt: posted.sealedAt,
         opensAt: posted.opensAt,
         offsetMs: times.offsetMs,
-        factors: lock.kind === "passkey" ? "passkey" : "backup",
+        factors:
+          lock.kind === "backup"
+            ? "backup"
+            : lock.backupKey !== undefined
+              ? "both"
+              : "passkey",
       },
     };
   } finally {
@@ -273,9 +291,21 @@ async function runSeal(
   }
 }
 
-/** Seals with the passkey wrap. Both passkey prompts have already passed. */
+/**
+ * Seals with the passkey wrap, and with a backup wrap when `backupKey` is
+ * given. Both passkey prompts have already passed.
+ */
 export function sealWithPasskey(deps: SealDeps, input: SealRunInput): Promise<SealOutcome> {
-  return runSeal(deps, input.draft, { kind: "passkey", confirmed: input.confirmed }, input.onPrepared);
+  return runSeal(
+    deps,
+    input.draft,
+    {
+      kind: "passkey",
+      confirmed: input.confirmed,
+      ...(input.backupKey !== undefined ? { backupKey: input.backupKey } : {}),
+    },
+    input.onPrepared,
+  );
 }
 
 /**

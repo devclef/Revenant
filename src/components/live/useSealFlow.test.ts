@@ -273,3 +273,54 @@ describe("useSealFlow backup-key fallback", () => {
     expect(calls).toEqual([]);
   });
 });
+
+/** A draft with the backup key card box ticked (R21.1). */
+function draftWithCard(): SealDraft {
+  return { ...draft(), backupCard: true };
+}
+
+describe("useSealFlow backup key card at the seal step (R21.1)", () => {
+  it("generates no backup key on Create_Press, and generates one at the seal step when ticked", async () => {
+    const { deps, createSpy, getSpy, api, generateSpy } = await fallbackDeps();
+    const flow = mount(deps, draftWithCard());
+    flow.onCreatePress();
+    await waitUntil(() => createSpy.mock.calls.length > 0);
+    expect(generateSpy).not.toHaveBeenCalled();
+    await pressUntil(() => flow.onConfirmPress(), () => getSpy.mock.calls.length > 0);
+    await waitUntil(() => api.seal.mock.calls.length > 0);
+    expect(generateSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("seals with both wraps, backup first, when the card box is ticked", async () => {
+    const { deps, createSpy, getSpy, api } = await fallbackDeps();
+    const flow = mount(deps, draftWithCard());
+    flow.onCreatePress();
+    await waitUntil(() => createSpy.mock.calls.length > 0);
+    await pressUntil(() => flow.onConfirmPress(), () => getSpy.mock.calls.length > 0);
+    await waitUntil(() => api.seal.mock.calls.length > 0);
+
+    const calls = api.seal.mock.calls as unknown as [
+      { envelope: { wrappedDeks: { factor: string }[] } },
+    ][];
+    const body = calls[0]?.[0];
+    if (body === undefined) throw new Error("no seal request was posted");
+    expect(body.envelope.wrappedDeks.map((w) => w.factor)).toEqual(["backup", "passkey"]);
+  });
+
+  it("generates no backup key and seals the passkey wrap alone when the card box is unticked", async () => {
+    const { deps, createSpy, getSpy, api, generateSpy } = await fallbackDeps();
+    const flow = mount(deps, draft());
+    flow.onCreatePress();
+    await waitUntil(() => createSpy.mock.calls.length > 0);
+    await pressUntil(() => flow.onConfirmPress(), () => getSpy.mock.calls.length > 0);
+    await waitUntil(() => api.seal.mock.calls.length > 0);
+
+    expect(generateSpy).not.toHaveBeenCalled();
+    const calls = api.seal.mock.calls as unknown as [
+      { envelope: { wrappedDeks: { factor: string }[] } },
+    ][];
+    const body = calls[0]?.[0];
+    if (body === undefined) throw new Error("no seal request was posted");
+    expect(body.envelope.wrappedDeks.map((w) => w.factor)).toEqual(["passkey"]);
+  });
+});

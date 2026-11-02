@@ -103,13 +103,27 @@ export function useSealFlow(deps: SealDeps | null, draft: SealDraft): SealFlow {
         }
         confirmed.current = step.confirmed;
         send({ type: "CONFIRMED" });
+        // The optional backup wrap (R21.1). Generated here, at the seal step,
+        // only when the visitor ticked the card box. It stays in the ref and
+        // the printed text so the backup key card can show it after sealing.
+        let backupKeyForSeal: BackupKey | undefined;
+        if (draft.backupCard === true) {
+          const bytes = deps.crypto.generateBackupKey();
+          backupKey.current = bytes;
+          setBackupKeyText(deps.crypto.formatBackupKey(bytes));
+          backupKeyForSeal = bytes;
+        }
         const outcome = await sealWithPasskey(deps, {
           draft,
           confirmed: step.confirmed,
+          ...(backupKeyForSeal !== undefined ? { backupKey: backupKeyForSeal } : {}),
           onPrepared: () => send({ type: "PREPARED" }),
         });
+        // A failed seal keeps nothing: the key is dropped with the attempt.
+        if (!outcome.ok) clearBackupKey();
         send(outcome.event);
       } catch {
+        clearBackupKey();
         send({ type: "FAILED", kind: "server", passkeyCreated: true });
       } finally {
         // Terminal either way: the next attempt starts from a new passkey.
@@ -119,7 +133,7 @@ export function useSealFlow(deps: SealDeps | null, draft: SealDraft): SealFlow {
       }
     };
     void run();
-  }, [deps, draft, send]);
+  }, [clearBackupKey, deps, draft, send]);
 
   /**
    * Starts the backup-key fallback. The key is generated here, from the loaded

@@ -30,7 +30,23 @@ describe("the write draft starts empty", () => {
       text: "",
       metricIds: [],
       warningTicked: false,
+      backupCardTicked: false,
     });
+  });
+});
+
+describe("the backup key card box (R21.1)", () => {
+  it("starts unticked and ticks and unticks on its own event", () => {
+    const ticked = reduceWriteDraft(INITIAL_WRITE_DRAFT, { type: "BACKUP_CARD_CHANGED", ticked: true });
+    expect(ticked.backupCardTicked).toBe(true);
+    const unticked = reduceWriteDraft(ticked, { type: "BACKUP_CARD_CHANGED", ticked: false });
+    expect(unticked.backupCardTicked).toBe(false);
+  });
+
+  it("leaves the warning tick alone", () => {
+    const warned = reduceWriteDraft(INITIAL_WRITE_DRAFT, { type: "WARNING_CHANGED", ticked: true });
+    const next = reduceWriteDraft(warned, { type: "BACKUP_CARD_CHANGED", ticked: true });
+    expect(next.warningTicked).toBe(true);
   });
 });
 
