@@ -28,10 +28,12 @@ import type { BackupKeyBytes } from "./errors";
 /** Info strings, fixed per crypto.md. Never change the meaning of one. */
 const INFO_KEK_BACKUP = "revenant-kek-backup-v1";
 const INFO_OPENING = "revenant-opening-v1";
+const INFO_KEK_PASSKEY = "revenant-kek-passkey-v1";
 
 const LETTER_ID_BYTES = 16;
 const SERVER_SECRET_BYTES = 32;
 const DEK_BYTES = 32;
+const PRF_OUTPUT_BYTES = 32;
 
 const utf8 = new TextEncoder();
 
@@ -158,4 +160,35 @@ export async function deriveOpeningKey(
     throw new Error("letter ID must be 16 bytes");
   }
   return hkdfToAesGcmKey(toArrayBufferView(dek), letterId, INFO_OPENING);
+}
+
+/**
+ * Derive the passkey key-encryption key.
+ *
+ *   KEK_passkey = HKDF-SHA256(
+ *     ikm  = prfOutput(32) ‖ serverSecret(32),
+ *     salt = letterId(16),
+ *     info = "revenant-kek-passkey-v1",
+ *   )
+ *
+ * `prfOutput` is the WebAuthn PRF result for the letter's `prfSalt`. Returned as
+ * a non-extractable AES-256-GCM `CryptoKey`, used like `deriveBackupKek`.
+ * Internal to src/lib/crypto, not re-exported from index.ts.
+ */
+export async function derivePasskeyKek(
+  prfOutput: Uint8Array,
+  serverSecret: Uint8Array,
+  letterId: Uint8Array,
+): Promise<CryptoKey> {
+  if (prfOutput.length !== PRF_OUTPUT_BYTES) {
+    throw new Error("PRF output must be 32 bytes");
+  }
+  if (serverSecret.length !== SERVER_SECRET_BYTES) {
+    throw new Error("server secret must be 32 bytes");
+  }
+  if (letterId.length !== LETTER_ID_BYTES) {
+    throw new Error("letter ID must be 16 bytes");
+  }
+  const ikm = concatBytes(prfOutput, serverSecret);
+  return hkdfToAesGcmKey(ikm, letterId, INFO_KEK_PASSKEY);
 }

@@ -8,6 +8,13 @@
       "when": 1793466953791,
       "tag": "0000_sealed_letters",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1793568873270,
+      "tag": "0001_live_letters",
+      "breakpoints": true
     }
   ]
 }

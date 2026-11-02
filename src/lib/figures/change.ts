@@ -79,14 +79,20 @@ function periodEndOrNull(period: string): string | null {
  * 6. `unreadable_period` — either period is neither a real `YYYY-MM-DD` nor a
  *    real `YYYY-MM`.
  * 7. `no_newer_figure` — the now period end is not later than the then period
- *    end.
+ *    end. With `options.allowSamePeriod` true, an equal period end is accepted
+ *    only when the value and the period string are both identical; a now period
+ *    end earlier than the then period end is still `no_newer_figure`.
  *
  * On success the difference is `now − then` (exact) and the percent is
  * `(now − then) ÷ then × 100`, or `null` when the then value is zero. Value and
  * period strings are copied from the inputs as given. The inputs are never
  * mutated.
  */
-export function computeChange(then: FigureV1, now: FigureV1): ChangeResult {
+export function computeChange(
+  then: FigureV1,
+  now: FigureV1,
+  options: { allowSamePeriod?: boolean } = {},
+): ChangeResult {
   if (then.kind !== "official" || now.kind !== "official") {
     return { comparable: false, reason: "kind" };
   }
@@ -108,7 +114,16 @@ export function computeChange(then: FigureV1, now: FigureV1): ChangeResult {
   if (thenEnd === null || nowEnd === null) {
     return { comparable: false, reason: "unreadable_period" };
   }
-  if (nowEnd <= thenEnd) {
+  if (options.allowSamePeriod === true) {
+    // Same-figure comparison: an equal period end is accepted only when the
+    // value and the period string are both identical.
+    if (nowEnd < thenEnd) {
+      return { comparable: false, reason: "no_newer_figure" };
+    }
+    if (nowEnd === thenEnd && (then.value !== now.value || then.period !== now.period)) {
+      return { comparable: false, reason: "no_newer_figure" };
+    }
+  } else if (nowEnd <= thenEnd) {
     return { comparable: false, reason: "no_newer_figure" };
   }
 

@@ -29,6 +29,8 @@ const scannedFiles = [
   "app/api/letters/[id]/route.ts",
   "app/api/letters/[id]/secret/route.ts",
   "app/api/openings/route.ts",
+  "app/api/letters/demo/prepare/route.ts",
+  "app/api/letters/demo/seal/route.ts",
   "lib/letter-store/clock.ts",
   "lib/letter-store/http.ts",
   "lib/letter-store/queries.ts",

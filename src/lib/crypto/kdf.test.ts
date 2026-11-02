@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { hkdfSync } from "node:crypto";
-import { deriveBackupKek } from "./kdf";
+import { deriveBackupKek, derivePasskeyKek } from "./kdf";
 import type { BackupKeyBytes } from "./errors";
 
 // Known-answer test for KEK_backup (design.md requires the KAT against
@@ -161,6 +161,49 @@ describe("deriveBackupKek known-answer test (vs node:crypto hkdfSync)", () => {
     ).rejects.toThrow();
     await expect(
       deriveBackupKek(BACKUP_KEY, SERVER_SECRET, new Uint8Array(15)),
+    ).rejects.toThrow();
+  });
+});
+
+describe("derivePasskeyKek known-answer test (vs node:crypto hkdfSync)", () => {
+  const PRF_OUTPUT = Uint8Array.from(
+    Array.from({ length: 32 }, (_, i) => 0x40 + i),
+  ); // 40 41 ... 5f
+
+  it("derives the same AES-256-GCM key as HKDF over prfOutput || serverSecret", async () => {
+    const subtle = globalThis.crypto.subtle;
+    const moduleKey = await derivePasskeyKek(PRF_OUTPUT, SERVER_SECRET, LETTER_ID);
+    const refBytes = toArrayBufferView(
+      new Uint8Array(
+        hkdfSync(
+          "sha256",
+          concat(PRF_OUTPUT, SERVER_SECRET),
+          LETTER_ID,
+          "revenant-kek-passkey-v1",
+          32,
+        ),
+      ),
+    );
+    const refKey = await subtle.importKey("raw", refBytes, { name: "AES-GCM" }, false, [
+      "encrypt",
+      "decrypt",
+    ]);
+    const iv = new Uint8Array(12);
+    const plain = Uint8Array.from([1, 2, 3, 4]);
+    const ct = await subtle.encrypt({ name: "AES-GCM", iv }, moduleKey, plain);
+    const back = await subtle.decrypt({ name: "AES-GCM", iv }, refKey, ct);
+    expect(new Uint8Array(back)).toEqual(plain);
+  });
+
+  it("rejects wrong-length inputs before deriving", async () => {
+    await expect(
+      derivePasskeyKek(new Uint8Array(31), SERVER_SECRET, LETTER_ID),
+    ).rejects.toThrow();
+    await expect(
+      derivePasskeyKek(PRF_OUTPUT, new Uint8Array(31), LETTER_ID),
+    ).rejects.toThrow();
+    await expect(
+      derivePasskeyKek(PRF_OUTPUT, SERVER_SECRET, new Uint8Array(15)),
     ).rejects.toThrow();
   });
 });

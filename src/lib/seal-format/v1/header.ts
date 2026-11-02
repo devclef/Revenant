@@ -67,18 +67,21 @@ const millisecondZ = z.string().refine(
 
 // rpId: a lowercase hostname of 1-253 characters. `localhost` is allowed. Each
 // label is 1-63 chars of [a-z0-9-], not starting or ending with a hyphen.
+/** True when `s` is a lowercase hostname or `localhost` (the rpId rule). */
+export function isRpId(s: string): boolean {
+  return (
+    s === "localhost" ||
+    /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/.test(
+      s,
+    )
+  );
+}
+
 const rpId = z
   .string()
   .min(1)
   .max(253)
-  .refine(
-    (s) =>
-      s === "localhost" ||
-      /^(?=.{1,253}$)([a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/.test(
-        s,
-      ),
-    { message: "rpId must be a lowercase hostname" },
-  );
+  .refine(isRpId, { message: "rpId must be a lowercase hostname" });
 
 // --- Wrapped DEK -------------------------------------------------------------
 

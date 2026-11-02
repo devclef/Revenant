@@ -30,7 +30,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
 
 ## Tasks
 
-- [ ] 1. Migration, schema, letter store, Prepare_Route and Seal_Route
+- [x] 1. Migration, schema, letter store, Prepare_Route and Seal_Route
   - Agent: `crypto-dev` (owns `drizzle/**`, `src/lib/db/schema/letters*`, `src/lib/letter-store/**`, `src/app/api/letters/**`, `src/lib/seal-format/**`) · Depends on: none · Estimated size: ~850 changed lines plus ~1,500 test lines
   - Before this task: only `main`. This task can run now, in parallel with task 2 and task 5. Tasks 1 and 2 share no file.
   - Scope: `drizzle/0001_live_letters.sql`, `drizzle/meta/0001_snapshot.json`, `drizzle/meta/_journal.json`, `src/lib/db/schema/letters.ts`, `src/lib/seal-format/live-constants.ts`, `src/lib/seal-format/index.ts`, `src/lib/letter-store/live-constants.ts`, `src/lib/letter-store/live-rules.ts`, `src/lib/letter-store/config.ts`, `src/lib/letter-store/drafts.ts`, `src/lib/letter-store/store.ts`, `src/lib/letter-store/http.ts`, `src/app/api/letters/demo/prepare/route.ts`, `src/app/api/letters/demo/seal/route.ts`, `.env.example`, and the tests `src/lib/letter-store/live-rules.test.ts`, `live-rules.property.test.ts`, `drafts.test.ts`, `store-live.test.ts`, `src/app/api/letters/demo/prepare/route.test.ts`, `src/app/api/letters/demo/seal/route.test.ts`, `src/test/integration/live-letters.test.ts`
@@ -50,7 +50,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
   - Validation: `bash scripts/check.sh`; `npx vitest run src/lib/letter-store src/app/api/letters src/test/integration/live-letters.test.ts`
   - _Requirements: R1, R2, R3, R4, R5, R6.1–R6.5, R22.4–R22.6, R24.3_
 
-- [ ] 2. Authenticator_Port, Passkey_Module, fake, and passkey support in sealLetter and openLetter
+- [x] 2. Authenticator_Port, Passkey_Module, fake, and passkey support in sealLetter and openLetter
   - Agent: `crypto-dev` (owns `src/lib/crypto/**` and `src/lib/seal-format/**`) · Depends on: none · Estimated size: ~1,000 changed lines plus ~1,300 test lines
   - Before this task: only `main`. Runs in parallel with task 1. This task does not touch `src/lib/seal-format/index.ts`, which task 1 edits; it reaches `isRpId` by deep import.
   - Scope: `src/lib/crypto/authenticator-port.ts`, `src/lib/crypto/passkey.ts`, `src/lib/crypto/testing/fake-authenticator.ts`, `src/lib/crypto/kdf.ts`, `src/lib/crypto/seal.ts`, `src/lib/crypto/open.ts`, `src/lib/crypto/errors.ts`, `src/lib/crypto/index.ts`, `src/lib/seal-format/v1/header.ts`, and the tests `src/lib/crypto/passkey.test.ts`, `authenticator-port.test.ts`, `seal-passkey.test.ts`, `open-passkey.test.ts`, `seal-open-passkey.property.test.ts`, `no-fake-import.test.ts`, `no-leak.test.ts`
@@ -70,7 +70,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
   - Validation: `bash scripts/check.sh`; `npx vitest run src/lib/crypto src/lib/seal-format`
   - _Requirements: R1.5, R7, R8, R9, R10, R11, R22.2_
 
-- [ ] 3. Integration test of the whole server and crypto path
+- [x] 3. Integration test of the whole server and crypto path
   - Agent: `crypto-dev` · Depends on: 1, 2 · Estimated size: ~120 changed lines plus ~300 test lines
   - Before this task: tasks 1 and 2 are on `main`.
   - Scope: `src/test/integration/live-helpers.ts`, `src/test/integration/live-flow.test.ts`
@@ -84,7 +84,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
   - Validation: `bash scripts/check.sh`; `npx vitest run src/test/integration/live-flow.test.ts`
   - _Requirements: R6.1, R6.2, R6.6, R22.3_
 
-- [ ] 4. Same-figure change option in computeChange (prerequisite for task 9)
+- [x] 4. Same-figure change option in computeChange (prerequisite for task 9)
   - Agent: `data-dev` (owns `src/lib/figures/**`; confirmed in `.github/agents.json`) · Depends on: none · Estimated size: ~60 changed lines plus tests
   - Before this task: only `main`. This task is outside R24 and has its own issue. It can run any time before task 9.
   - Scope: `src/lib/figures/change.ts`, `src/lib/figures/change.test.ts`, `src/lib/figures/change.property.test.ts`

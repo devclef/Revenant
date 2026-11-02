@@ -14,9 +14,14 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  BUSY,
+  HASH_MISMATCH,
   INTERNAL,
+  INVALID_ENVELOPE,
   invalidBody,
   json,
+  LOCK_OUT_OF_RANGE,
+  NOT_CONFIGURED,
   NOT_FOUND,
   TOO_LARGE,
 } from "./http";
@@ -67,6 +72,26 @@ describe("fixed error bodies serialise to the exact expected JSON", () => {
     expect(JSON.stringify(TOO_LARGE)).toBe('{"error":"too_large"}');
   });
 
+  it("BUSY", () => {
+    expect(JSON.stringify(BUSY)).toBe('{"error":"busy"}');
+  });
+
+  it("NOT_CONFIGURED", () => {
+    expect(JSON.stringify(NOT_CONFIGURED)).toBe('{"error":"not_configured"}');
+  });
+
+  it("INVALID_ENVELOPE", () => {
+    expect(JSON.stringify(INVALID_ENVELOPE)).toBe('{"error":"invalid_envelope"}');
+  });
+
+  it("HASH_MISMATCH", () => {
+    expect(JSON.stringify(HASH_MISMATCH)).toBe('{"error":"hash_mismatch"}');
+  });
+
+  it("LOCK_OUT_OF_RANGE", () => {
+    expect(JSON.stringify(LOCK_OUT_OF_RANGE)).toBe('{"error":"lock_out_of_range"}');
+  });
+
   it("invalidBody carries the field name", () => {
     expect(JSON.stringify(invalidBody("answers"))).toBe(
       '{"error":"invalid_body","field":"answers"}',
@@ -88,5 +113,10 @@ describe("fixed error bodies are frozen (byte-identical on reuse)", () => {
     expect(Object.isFrozen(INTERNAL)).toBe(true);
     expect(Object.isFrozen(TOO_LARGE)).toBe(true);
     expect(Object.isFrozen(invalidBody("x"))).toBe(true);
+    expect(Object.isFrozen(BUSY)).toBe(true);
+    expect(Object.isFrozen(NOT_CONFIGURED)).toBe(true);
+    expect(Object.isFrozen(INVALID_ENVELOPE)).toBe(true);
+    expect(Object.isFrozen(HASH_MISMATCH)).toBe(true);
+    expect(Object.isFrozen(LOCK_OUT_OF_RANGE)).toBe(true);
   });
 });
