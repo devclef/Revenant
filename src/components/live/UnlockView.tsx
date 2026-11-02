@@ -10,20 +10,24 @@
  * - a backup wrap only: the backup-only text and the key field, and no passkey
  *   control (R17.10).
  *
- * The passkey button stays disabled until `controls.ready` is true, which means
- * `controls.ready` is true, which means the crypto module has loaded (R17.2). Each notice goes into a `role="status"`
- * region, so a screen reader hears it. The text comes from LIVE_COPY (R19.1).
+ * The passkey button stays disabled until the crypto module has loaded (R17.2).
+ * Each notice goes into a `role="status"` region, so a screen reader hears it.
+ * The text comes from LIVE_COPY (R19.1).
  *
  * The key field takes a typed or pasted key. It has no paste handler: the
  * pasted text goes to `controls.backup`, which parses it. A mistyped key sends
  * no request and keeps the text in the field (R17.10). The field has the
  * attributes that stop a phone or browser from altering a key.
  *
+ * The typed key text is owned by the parent (`OpeningFlow`), not by this view.
+ * The view unmounts while the letter is being checked, so keeping the text in
+ * local state would lose a wrong key on the round trip back to `awaiting_key`.
+ *
  * This file imports no crypto module. The key step only calls the controls the
  * effect runner passes in (`useOpeningFlow`), which owns the crypto load.
  */
 
-import { useState, type FormEvent } from "react";
+import type { FormEvent } from "react";
 
 import type { KeyNotice, UnlockInfo } from "@/components/reveal/opening-machine";
 import type { UnlockControls } from "@/components/reveal/unlock";
@@ -37,6 +41,10 @@ export type UnlockViewProps = {
   notice: KeyNotice | null;
   /** The controls the effect runner built for this flow. */
   controls: UnlockControls;
+  /** The key text the reader has typed, kept by the parent across retries. */
+  keyText: string;
+  /** Called with the new text on every edit. */
+  onKeyTextChange: (text: string) => void;
 };
 
 /**
@@ -62,9 +70,13 @@ function noticeText(notice: KeyNotice, rpId: string): string {
   }
 }
 
-export function UnlockView({ unlock, notice, controls }: UnlockViewProps) {
-  const [keyText, setKeyText] = useState("");
-
+export function UnlockView({
+  unlock,
+  notice,
+  controls,
+  keyText,
+  onKeyTextChange,
+}: UnlockViewProps) {
   const hasPasskey = unlock.passkey !== null;
   const hasBackup = unlock.backup;
 
@@ -106,7 +118,7 @@ export function UnlockView({ unlock, notice, controls }: UnlockViewProps) {
             type="text"
             className={styles.keyField}
             value={keyText}
-            onChange={(event) => setKeyText(event.target.value)}
+            onChange={(event) => onKeyTextChange(event.target.value)}
             autoComplete="off"
             autoCorrect="off"
             autoCapitalize="off"

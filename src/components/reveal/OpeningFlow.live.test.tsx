@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -185,5 +188,19 @@ describe("OpeningFlow persona route (R17.13)", () => {
   it("keeps the loading scene for a persona letter", () => {
     const markup = renderPersona({ tag: "loading" });
     expect(markup).toContain(esc(REVEAL_COPY.loading));
+  });
+});
+
+describe("OpeningFlow live mode: the typed key is owned by the parent", () => {
+  // The key step is loaded after mount, so a server render never shows the
+  // field. A DOM round trip (type, submit, KEY_REJECTED, field still holds the
+  // text) needs a DOM environment, which this repo does not have. These source
+  // checks pin the ownership that makes the round trip work.
+  it("holds the key text in OpeningFlow, which stays mounted through unlocking", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(resolve(here, "OpeningFlow.tsx"), "utf8");
+    expect(source).toMatch(/const \[keyText, setKeyText\] = useState\(""\);/);
+    expect(source).toMatch(/keyText=\{keyEntry\.keyText\}/);
+    expect(source).toMatch(/onKeyTextChange=\{keyEntry\.onKeyTextChange\}/);
   });
 });

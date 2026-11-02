@@ -162,6 +162,10 @@ export function OpeningFlow({
   );
   const { state, retry } = flow;
   const KeyStep = useKeyStep(state.tag === "awaiting_key");
+  // The typed backup key lives here, not in the key step, so it survives the
+  // `unlocking` view (which unmounts the key step) and a wrong-key return to
+  // `awaiting_key` shows the same text again.
+  const [keyText, setKeyText] = useState("");
 
   // The still-sealed countdown reaches zero once per page load: one automatic
   // re-check (R17.4). `onceOnly` makes the second zero a no-op; the view then
@@ -186,13 +190,22 @@ export function OpeningFlow({
         >
           {flow.live?.demo === true ? <DemoLabel /> : null}
           <div className={styles.view}>
-            {selectView(state, flow, personaName, persona, retryAtZero, KeyStep)}
+            {selectView(state, flow, personaName, persona, retryAtZero, KeyStep, {
+              keyText,
+              onKeyTextChange: setKeyText,
+            })}
           </div>
         </CeremonyRoot>
       </SkipProvider>
     </MotionProvider>
   );
 }
+
+/** The typed key text and its setter, owned by `OpeningFlow`. */
+type KeyEntry = {
+  keyText: string;
+  onKeyTextChange: (text: string) => void;
+};
 
 /** Render the one view that belongs to the current `state.tag`. */
 function selectView(
@@ -202,6 +215,7 @@ function selectView(
   persona: OpeningFlowProps["persona"],
   retryAtZero: () => void,
   KeyStep: KeyStepComponent | null,
+  keyEntry: KeyEntry,
 ): React.ReactNode {
   // The envelope's per-letter inputs: the persona list fields plus the demo
   // flag. These are always demo persona letters, so `demo` is true whenever a
@@ -262,6 +276,8 @@ function selectView(
               unlock={state.unlock}
               notice={state.notice}
               controls={live.unlock}
+              keyText={keyEntry.keyText}
+              onKeyTextChange={keyEntry.onKeyTextChange}
             />
           ),
       });

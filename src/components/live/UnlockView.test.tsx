@@ -41,9 +41,16 @@ function render(
   unlock: UnlockInfo,
   notice: KeyNotice | null,
   ready = true,
+  keyText = "",
 ): string {
   return renderToStaticMarkup(
-    createElement(UnlockView, { unlock, notice, controls: controlsWith(ready) }),
+    createElement(UnlockView, {
+      unlock,
+      notice,
+      controls: controlsWith(ready),
+      keyText,
+      onKeyTextChange: vi.fn(),
+    }),
   );
 }
 
@@ -103,6 +110,32 @@ describe("UnlockView: the key field (R17.10)", () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const source = readFileSync(resolve(here, "UnlockView.tsx"), "utf8");
     expect(source).not.toMatch(/@\/lib\/crypto/);
+  });
+});
+
+describe("UnlockView: the typed key survives a wrong-key round trip", () => {
+  // The parent owns the key text and passes it back in each time the key step
+  // is shown. A KEY_REJECTED return to awaiting_key renders the same value.
+  it("shows the typed backup key in the field", () => {
+    const markup = render(BACKUP_ONLY, null, true, "typed-key-1234");
+    expect(markup).toContain('value="typed-key-1234"');
+  });
+
+  it("shows the same typed key after a wrong_backup notice returns the reader to the field", () => {
+    const typed = "typed-key-1234";
+    const before = render(BACKUP_ONLY, null, true, typed);
+    const after = render(BACKUP_ONLY, "wrong_backup", true, typed);
+    expect(before).toContain(`value="${typed}"`);
+    expect(after).toContain(`value="${typed}"`);
+    expect(after).toContain(esc(LIVE_COPY.noticeWrongBackup));
+  });
+
+  it("keeps the key text in the parent, not in local view state", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const source = readFileSync(resolve(here, "UnlockView.tsx"), "utf8");
+    expect(source).not.toMatch(/useState/);
+    expect(source).toMatch(/keyText: string/);
+    expect(source).toMatch(/onKeyTextChange/);
   });
 });
 
