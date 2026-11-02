@@ -146,7 +146,7 @@ Follow `design.md` in this folder for every file name, constant, interface and a
   - Validation: `bash scripts/check.sh`
   - _Requirements: R8, R11.1–R11.3, R13.1, R13.3–R13.7, R16_
 
-- [ ] 8. Recall scale
+- [x] 8. Recall scale
   - Agent: `frontend-dev` · Depends on: 7 · Estimated size: ~1,800 changed lines
   - Before this task: Blocked by #49 (spec 03 task 8, the reveal's letter and figures stages).
   - Scope: `src/components/ceremony/recall/**`, `src/components/ceremony/copy.ts`, `src/components/reveal/RecallStep.tsx`, `src/components/reveal/Reveal.tsx`, `src/components/reveal/RecallStep.test.tsx`, and the `*.test.ts(x)` for each new file
