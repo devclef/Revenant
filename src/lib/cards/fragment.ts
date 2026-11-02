@@ -32,3 +32,21 @@ export function stripFragment(win: Pick<Window, "history" | "location">): void {
   const { pathname, search } = win.location;
   win.history.replaceState(null, "", pathname + search);
 }
+
+/**
+ * Read the backup key from the current URL and strip it from the address bar.
+ * Returns the key text, or null when the URL has no key. The fragment is
+ * removed only when it held a key, so other fragments are left alone.
+ *
+ * `LiveLetter` calls this once, in its mount effect, before it renders the
+ * opening flow.
+ */
+export function takeBackupKeyFromLocation(
+  win: Pick<Window, "history" | "location">,
+): string | null {
+  const key = readKeyFragment(win.location.hash);
+  if (key !== null) {
+    stripFragment(win);
+  }
+  return key;
+}
