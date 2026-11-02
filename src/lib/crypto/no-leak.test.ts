@@ -18,7 +18,7 @@ import { decodeBase64url, encodeBase64url } from "../seal-format";
 const RP_ID = "revenant.devclef.se";
 const SEALED_AT = "2026-10-31T12:00:00.000Z";
 const OPENS_AT = "2027-02-01T00:00:00.000Z";
-const RUNS = 50;
+const RUNS = 100;
 const CONSOLE_METHODS = ["log", "info", "warn", "error", "debug", "trace"] as const;
 
 // The original getRandomValues, bound at load time. Test inputs (IDs, salts,
@@ -289,7 +289,7 @@ describe("Property 11: no backup key, PRF output, content key or plaintext leaks
     vi.restoreAllMocks();
   });
 
-  it(`seal and open succeed without a leak, for both factor choices (${RUNS} runs)`, async () => {
+  it(`seal and open succeed without a leak, for both factor choices (100 runs)`, async () => {
     await fc.assert(
       fc.asyncProperty(
         fc.string({ minLength: 1, maxLength: 200 }).filter((s) => s.trim().length > 0),
