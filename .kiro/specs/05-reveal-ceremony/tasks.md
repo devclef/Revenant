@@ -129,7 +129,7 @@ Follow `design.md` in this folder for every file name, constant, interface and a
   - Validation: `bash scripts/check.sh`
   - _Requirements: R7, R11.2, R11.4, R16_
 
-- [ ] 7. The desk on /demo
+- [x] 7. The desk on /demo
   - Agent: `frontend-dev` · Depends on: 6 · Estimated size: ~1,600 changed lines
   - Before this task: Blocked by #49 (spec 03 task 8, the reveal's letter and figures stages).
   - Scope: `src/app/demo/page.tsx`, `src/app/demo/page.module.css`, `src/app/demo/page.test.tsx`, `src/components/demo/PersonaCard.tsx`, `PersonaCard.module.css`, `PersonaCard.test.tsx`, `src/components/ceremony/desk/**`, `src/components/ceremony/copy.ts`, and the `*.test.ts(x)` for each new file
