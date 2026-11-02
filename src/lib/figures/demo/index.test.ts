@@ -12,10 +12,16 @@ import { figureV1Schema, metricDefinitionV1Schema } from "@/lib/seal-format";
 import { DEMO_FIGURES } from ".";
 import { isFixtureFigure, isFixtureMetric } from "../fixture";
 import { CATALOGUE } from "../catalogue";
+import { loadFigureFile } from "../load";
 import fixture from "./us-fuel.fixture.json";
 
 const GASOLINE_ID = "fixture-us-gasoline-regular";
 const DIESEL_ID = "fixture-us-diesel";
+
+// The fixture alone, loaded the same way DEMO_FIGURES loads it. Tests that read
+// fixture IDs or values use this, so they keep passing once DEMO_FIGURES is the
+// real figure file only.
+const FIXTURE_FIGURES = loadFigureFile(fixture, CATALOGUE);
 
 // Periods that fall inside the demo window vs after it (the ticket's split of
 // 3 figures per series in the window and 2 after).
@@ -140,15 +146,32 @@ describe("us-fuel fixture: detected as fixture data", () => {
   });
 });
 
-describe("DEMO_FIGURES: loaded fixture", () => {
+describe("FIXTURE_FIGURES: loaded fixture", () => {
   it("is flagged as a fixture", () => {
-    expect(DEMO_FIGURES.fixture).toBe(true);
+    expect(FIXTURE_FIGURES.fixture).toBe(true);
   });
 
-  it("holds the four catalogue series with figures and the two fixture series with five each", () => {
-    const keys = [...DEMO_FIGURES.series.keys()];
+  it("holds the two fixture series with five figures each", () => {
+    const keys = [...FIXTURE_FIGURES.series.keys()];
     expect(keys).toContain(GASOLINE_ID);
     expect(keys).toContain(DIESEL_ID);
+    for (const id of [GASOLINE_ID, DIESEL_ID]) {
+      expect(FIXTURE_FIGURES.series.get(id)!.figures).toHaveLength(5);
+    }
+  });
+
+  it("each loaded series carries five figures sorted oldest first", () => {
+    for (const id of [GASOLINE_ID, DIESEL_ID]) {
+      const series = FIXTURE_FIGURES.series.get(id)!;
+      expect(series.figures).toHaveLength(5);
+      const periods = series.figures.map((f) => f.period);
+      expect(periods).toEqual([...periods].sort());
+    }
+  });
+});
+
+describe("DEMO_FIGURES: the real catalogue series", () => {
+  it("holds the four catalogue series with figures", () => {
     for (const id of [
       "us-gasoline-regular",
       "us-diesel",
@@ -158,19 +181,6 @@ describe("DEMO_FIGURES: loaded fixture", () => {
       const series = DEMO_FIGURES.series.get(id);
       expect(series).toBeDefined();
       expect(series!.figures.length).toBeGreaterThan(0);
-    }
-    for (const id of [GASOLINE_ID, DIESEL_ID]) {
-      expect(DEMO_FIGURES.series.get(id)!.figures).toHaveLength(5);
-    }
-    expect(DEMO_FIGURES.fixture).toBe(true);
-  });
-
-  it("each loaded series carries five figures sorted oldest first", () => {
-    for (const id of [GASOLINE_ID, DIESEL_ID]) {
-      const series = DEMO_FIGURES.series.get(id)!;
-      expect(series.figures).toHaveLength(5);
-      const periods = series.figures.map((f) => f.period);
-      expect(periods).toEqual([...periods].sort());
     }
   });
 });
