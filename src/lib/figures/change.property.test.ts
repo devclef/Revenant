@@ -361,3 +361,54 @@ function roundHalfAwayFromZero(value: string, digits: number): string {
   const signed = negative ? -roundedUp : roundedUp;
   return toDecimalString({ int: signed, scale: digits });
 }
+
+// Property 19: same-figure comparison (spec 06-lock-and-unlock, task 4, issue #129).
+describe("computeChange — same-figure comparison (Property 19)", () => {
+  // A real YYYY-MM period from 2000-01 to 2030-12.
+  const monthArb: fc.Arbitrary<string> = fc
+    .record({
+      year: fc.integer({ min: 2000, max: 2030 }),
+      month: fc.integer({ min: 1, max: 12 }),
+    })
+    .map(({ year, month }) => `${year}-${String(month).padStart(2, "0")}`);
+
+  it("property 19a: a figure compared with itself under allowSamePeriod is comparable with difference 0", () => {
+    fc.assert(
+      fc.property(valueArb, monthArb, (value, period) => {
+        const f = official({ value, period });
+        const result = computeChange(f, f, { allowSamePeriod: true });
+
+        expect(result.comparable).toBe(true);
+        if (!result.comparable) return;
+        expect(result.difference).toBe("0");
+      }),
+      { numRuns: 300 },
+    );
+  });
+
+  it("property 19b: a figure compared with itself without the option is no_newer_figure", () => {
+    fc.assert(
+      fc.property(valueArb, monthArb, (value, period) => {
+        const f = official({ value, period });
+        const result = computeChange(f, f);
+
+        expect(result).toEqual({ comparable: false, reason: "no_newer_figure" });
+      }),
+      { numRuns: 300 },
+    );
+  });
+
+  it("property 19c: two figures with the same period and different values under allowSamePeriod are no_newer_figure", () => {
+    fc.assert(
+      fc.property(valueArb, valueArb, monthArb, (thenV, nowV, period) => {
+        fc.pre(thenV !== nowV);
+        const then = official({ value: thenV, period });
+        const now = official({ value: nowV, period });
+        const result = computeChange(then, now, { allowSamePeriod: true });
+
+        expect(result).toEqual({ comparable: false, reason: "no_newer_figure" });
+      }),
+      { numRuns: 300 },
+    );
+  });
+});
