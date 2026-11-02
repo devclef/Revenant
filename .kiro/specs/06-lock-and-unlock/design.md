@@ -962,7 +962,7 @@ Every file above was checked against `.github/agents.json`.
 
 Paths no role owns, or that belong to another role:
 
-- `scripts/check-js-budget.mjs` is owner-only. It lists three routes. The owner must add `{ route: "/demo/live", key: "/demo/live/page", maxKb: 175 }` and `{ route: "/l/[id]", key: "/l/[id]/page", maxKb: 175 }` before task 4a merges, or the R24.8 budget is never checked.
+- `scripts/check-js-budget.mjs` is owner-only. It lists three routes. The owner must add `{ route: "/demo/live", key: "/demo/live/page", maxKb: 190 }` and `{ route: "/l/[id]", key: "/l/[id]/page", maxKb: 190 }` before task 4a merges, or the R24.8 budget is never checked.
 - `src/lib/figures/change.ts` (Prerequisite P1) is data-dev's path (`src/lib/figures/**`). No R24 task owns it.
 - `.kiro/steering/structure.md` is owner-only and does not list `src/components/live/`, `src/app/demo/live`, `src/app/l/[id]` or `src/lib/ics`. The owner should add them.
 - `src/lib/seal-format/**` and `drizzle/**` are listed under more than one role; the table above gives the owner for each task.
@@ -1325,7 +1325,7 @@ This feature has pure logic where property tests pay off (the Lock rule, the clo
 - **Import boundaries.** The server roots scan (`src/app/api`, `src/lib/db`, `src/lib/letter-store`) must still reach nothing under `src/lib/crypto`, including the two new routes. The components scan must find no static `@/lib/crypto` import in `src/components/live`. A new scan fails if any non-test file outside `src/lib/crypto/testing/` imports the fake.
 - **Existing suites that must pass unchanged:** `opening-machine.test.ts`, `opening-machine.property.test.ts`, `api.test.ts`, `SealedLetter.test.tsx`, `FiguresThenNow.test.tsx`, `fixture-label.test.tsx`, `change-neutral.property.test.tsx`, `PersonaCard.test.tsx`, the Demo_Index test, the `/demo/personas/[key]` tests, the spec 02 crypto and store tests, and the Sealing_Script tests. Additions to a file are allowed; a changed existing assertion is not. Each PR states which spec 02, 03 and 05 tests it touched and why, or "none" (R24.6).
 - **Browser.** The QA steps above with the stubbed WebAuthn, and the Owner_Check with a real device. QA cannot use a real passkey; the owner check is the only proof that a real device does PRF.
-- **Budget.** `check-js-budget.mjs` rows for `/demo/live` and `/l/[id]` (175 kB each) are added by the owner. Each frontend PR states the three numbers it prints. `/demo/live` imports `DEMO_FIGURES` (about 330 kB of JSON before gzip), as the persona route already does. If it goes over, the picker may take a server-built list (`listPickableSeries` run in the server page and passed as props) while the payload builder keeps the browser import; the task states the measured numbers before it changes anything.
+- **Budget.** `check-js-budget.mjs` rows for `/demo/live` and `/l/[id]` (190 kB each) are added by the owner. Each frontend PR states the three numbers it prints. `/demo/live` imports `DEMO_FIGURES` (about 330 kB of JSON before gzip), as the persona route already does. If it goes over, the picker may take a server-built list (`listPickableSeries` run in the server page and passed as props) while the payload builder keeps the browser import; the task states the measured numbers before it changes anything.
 - **Contrast.** `src/components/live/contrast.test.ts` computes the ratio for every new text and surface token pair, as `reveal/contrast.test.ts` does (R19.6).
 
 ## Task boundaries

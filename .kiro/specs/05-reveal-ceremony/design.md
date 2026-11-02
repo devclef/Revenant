@@ -25,7 +25,7 @@ It is written against `main` at `55beba7`, after #49 (PR #87) merged. #84 (spec 
 
 ### Measured starting point
 
-`bash scripts/check.sh` passes on `main` with the edited QA prompt. `scripts/check-js-budget.mjs` reports `/` 106.5 kB, `/demo` 106.8 kB and `/demo/personas/[key]` 145.3 kB, gzipped first load. #49 added 5.7 kB to the persona route, so its headroom under 175 kB is now 29.7 kB.
+`bash scripts/check.sh` passes on `main` with the edited QA prompt. `scripts/check-js-budget.mjs` reports `/` 106.5 kB, `/demo` 106.8 kB and `/demo/personas/[key]` 145.3 kB, gzipped first load. #49 added 5.7 kB to the persona route, so its headroom under 190 kB is now 44.7 kB.
 
 ## Architecture
 

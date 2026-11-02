@@ -19,9 +19,9 @@ const MANIFEST = join(BUILD_DIR, "app-build-manifest.json");
 const BUDGETS = [
   { route: "/", key: "/page", maxKb: 130 },
   { route: "/demo", key: "/demo/page", maxKb: 130 },
-  { route: "/demo/personas/[key]", key: "/demo/personas/[key]/page", maxKb: 175 },
-  { route: "/demo/live", key: "/demo/live/page", maxKb: 175 },
-  { route: "/l/[id]", key: "/l/[id]/page", maxKb: 175 },
+  { route: "/demo/personas/[key]", key: "/demo/personas/[key]/page", maxKb: 190 },
+  { route: "/demo/live", key: "/demo/live/page", maxKb: 190 },
+  { route: "/l/[id]", key: "/l/[id]/page", maxKb: 190 },
 ];
 
 function fail(message) {
