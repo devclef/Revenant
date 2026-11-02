@@ -151,7 +151,7 @@ All Source_Files are downloaded from the publishers' public pages without a key 
   - Validation: `bash scripts/check.sh`; and with `DATABASE_URL=postgres://postgres:test@localhost:5432/revenant_test` against `postgres:17-alpine`: `npm run db:migrate`, then `npm test` (the integration test must run).
   - _Requirements: R9.7–R9.12, R10.7, R11.1, R11.3, R11.4, R12.1_
 
-- [ ] 10. Reveal shows no fixture label for the committed personas
+- [x] 10. Reveal shows no fixture label for the committed personas
   - Agent: `frontend-dev` · Depends on: 9 · Estimated size: ~150 changed lines
   - Before this task: Blocked by #49 (spec 03 task 8, the reveal's figures stage). `FiguresThenNow` and the fixture labelling must exist on `main`; do not write a stand-in. If its component names differ from the ones used here, use the real names and say so in the PR description.
   - Scope: one new test file under `src/components/reveal/` (for example `Reveal.real-figures.test.tsx`)
