@@ -107,6 +107,11 @@ vi.mock("react", async (importOriginal) => {
       if (!harness.active) return actual.useCallback(fn as never, deps);
       return fn;
     },
+    useContext: <T,>(ctx: import("react").Context<T>): T => {
+      // Inside the harness SealBreak runs with sound off, the context default.
+      if (harness.active) return false as T;
+      return actual.useContext(ctx);
+    },
     useEffect: (effect: () => void | (() => void), deps?: unknown[]) => {
       if (!harness.active) return actual.useEffect(effect, deps);
       harness.effects.push(() => {

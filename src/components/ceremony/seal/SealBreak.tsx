@@ -35,10 +35,13 @@
 // R15.1: every user-facing string comes from CEREMONY_COPY; no inline literal
 // copy lives here. R10.1: nothing drawn here depends on a value or a direction;
 // every seal breaks the same way and only its decorative WaxSeal pattern
-// differs. No vibration anywhere.
+// differs. Sound and vibration (R14.2) are optional: the break plays its cue and
+// vibrates only while the sound toggle is on (SoundEnabledContext), and the
+// sound module loads only after the first turn-on (sound/cues.ts).
 
 import {
   useCallback,
+  useContext,
   useEffect,
   useRef,
   useState,
@@ -61,6 +64,8 @@ import {
 import { useLiveRegion } from "../LiveRegion";
 import { useMotion } from "../motion";
 import { useSequence } from "../skip";
+import { SoundEnabledContext } from "../sound/SoundEnabledContext";
+import { soundCues } from "../sound/cues";
 import { WaxSeal } from "../envelope/WaxSeal";
 import {
   CRACK_PATHS,
@@ -211,6 +216,9 @@ export function SealBreak({
 
   const { register } = useSequence();
   const { announce } = useLiveRegion();
+  // Whether the sound toggle is on (R14.2). Read from the context, so the cue
+  // plays only while the reader has turned sound on.
+  const soundOn = useContext(SoundEnabledContext);
 
   // The hold state drives the crack overlay. The FIRST render (server and
   // client) is always IDLE — the intact seal — so the static markup is the
@@ -234,11 +242,13 @@ export function SealBreak({
   const onAdvanceRef = useRef(onAdvance);
   const onSealingChangeRef = useRef(onSealingChange);
   const announceRef = useRef(announce);
+  const soundOnRef = useRef(soundOn);
   useEffect(() => {
     onAdvanceRef.current = onAdvance;
     onSealingChangeRef.current = onSealingChange;
     announceRef.current = announce;
-  }, [onAdvance, onSealingChange, announce]);
+    soundOnRef.current = soundOn;
+  }, [onAdvance, onSealingChange, announce, soundOn]);
 
   const setHoldBoth = useCallback((next: HoldState) => {
     holdRef.current = next;
@@ -261,6 +271,9 @@ export function SealBreak({
     announceRef.current(CEREMONY_COPY.sealBroken);
     if (!advancedRef.current) {
       advancedRef.current = true;
+      // The break cue and vibration fire with the single ADVANCE, so they play
+      // exactly once per break and only while sound is on (R14.2).
+      void soundCues.sealBreak(soundOnRef.current);
       // ADVANCE is sent when the split STARTS, so stage 2's text is already in
       // the document under the slide (design.md "The view").
       onAdvanceRef.current();

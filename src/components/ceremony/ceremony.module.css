@@ -216,3 +216,16 @@
     animation: none;
   }
 }
+
+/*
+ * The sound note beside the sound toggle (CeremonyRoot.tsx). It carries `.desk`
+ * itself, so the desk tokens reach it, and it uses the softer desk ink, which
+ * clears AA on every desk surface.
+ */
+.soundNote {
+  display: block;
+  margin: 0.25rem 0.5rem 0.25rem 0;
+  font-size: 0.875rem;
+  line-height: 1.4;
+  color: var(--desk-ink-soft);
+}
