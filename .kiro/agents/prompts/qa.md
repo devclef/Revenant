@@ -48,6 +48,8 @@ Use `browser_take_screenshot` for the viewport only. Never pass `fullPage`. Take
 
 If a state can't be reached, say so in the entry for that shot and set `failed_checks` to `["unreachable"]`.
 
+If you run out of time before finishing the browser walk, list the steps you didn't run as one minor finding; an unfinished walk is never a blocker.
+
 **Other pages.** For each changed page (at most 3), take `<nn>-<page>` at 1280×800 and `<nn>-<page>-360` at 360×640, both at the top of the page.
 
 ### Judge each screenshot right after taking it
