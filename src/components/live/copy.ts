@@ -39,7 +39,6 @@ export const LIVE_COPY = {
   createButton: "Create your passkey",
   confirmButton: "Confirm your passkey",
   preparing: "Getting ready.",
-  notYet: "Sealing opens soon.",
   stepCreating: "Waiting for your device. Create the passkey when it asks.",
   stepCreated: "Your passkey is created. Press the button to confirm it.",
   stepConfirming: "Waiting for your device. Confirm the passkey when it asks.",
@@ -71,6 +70,8 @@ export const LIVE_COPY = {
   tryAgain: "Try again",
   failedBody:
     "Your letter was not sealed. Check your connection and try again.",
+  failedServerBody:
+    "The server could not finish. Nothing was sealed, and your letter is still here. Try again.",
   clockBody:
     "Your device clock differs from Revenant's clock by more than the demo allows. Nothing was sealed. Check your device time and try again.",
   busyBody: "Demo 2 is busy right now. Nothing was sealed. Try again later.",

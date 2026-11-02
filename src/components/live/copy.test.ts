@@ -50,8 +50,7 @@ describe("LIVE_COPY", () => {
     expect(LIVE_COPY.warningLabel).toContain("can never be opened");
   });
 
-  it("has the notYet and unavailable strings that the page needs", () => {
-    expect(LIVE_COPY.notYet.length).toBeGreaterThan(0);
+  it("has the unavailable string that the page needs", () => {
     expect(LIVE_COPY.unavailable.length).toBeGreaterThan(0);
   });
 });

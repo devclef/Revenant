@@ -16,11 +16,30 @@ import { DEMO_FIGURES } from "@/lib/figures/demo";
 import { listPickableSeries } from "./catalogue-list";
 import { validateWrite } from "./form";
 import { LIVE_COPY } from "./copy";
+import type { SealState } from "./seal-machine";
 import { SealPage } from "./SealPage";
-import { PROBLEM_COPY, WriteForm } from "./WriteForm";
+import { PROBLEM_COPY, WriteForm, type WriteFormProps } from "./WriteForm";
 
 const SERIES = listPickableSeries(DEMO_FIGURES);
 const DIR = join(fileURLToPath(new URL(".", import.meta.url)));
+
+/** WriteForm props with sensible defaults; override per test. */
+function formProps(over: Partial<WriteFormProps> = {}): WriteFormProps {
+  return {
+    series: SERIES,
+    state: { tag: "write" } as SealState,
+    cryptoLoaded: true,
+    onCreatePress: () => {},
+    onConfirmPress: () => {},
+    text: "",
+    metricIds: [],
+    warningTicked: false,
+    onTextChange: () => {},
+    onToggleFigure: () => {},
+    onWarningChange: () => {},
+    ...over,
+  };
+}
 
 // React escapes quotes in static markup, so copy with quotes is compared in
 // its escaped form. Matches React's escapeTextForBrowser for & < > " '.
@@ -33,8 +52,8 @@ function esc(text: string): string {
     .replace(/'/g, "&#x27;");
 }
 
-function renderWriteForm(): string {
-  return renderToStaticMarkup(createElement(WriteForm, { series: SERIES }));
+function renderWriteForm(over: Partial<WriteFormProps> = {}): string {
+  return renderToStaticMarkup(createElement(WriteForm, formProps(over)));
 }
 
 describe("WriteForm", () => {
@@ -90,12 +109,32 @@ describe("WriteForm", () => {
     }
   });
 
-  it("disables the create button and shows the not-yet line", () => {
-    expect(html).toMatch(
+  it("disables the create button until the crypto module has loaded (R15.3)", () => {
+    const notLoaded = renderWriteForm({ cryptoLoaded: false });
+    expect(notLoaded).toMatch(
       /<button[^>]*disabled=""[^>]*>Create your passkey<\/button>/,
     );
-    expect(html).toContain(LIVE_COPY.notYet);
+  });
+
+  it("keeps the create button in its create label in the write state", () => {
+    expect(html).toContain(esc(LIVE_COPY.createButton));
+    expect(html).not.toContain(esc(LIVE_COPY.confirmButton));
+  });
+
+  it("swaps to the confirm label once a passkey is created", () => {
+    const created = renderWriteForm({ state: { tag: "created" } });
+    expect(created).toContain(esc(LIVE_COPY.confirmButton));
+    expect(created).not.toContain(esc(LIVE_COPY.createButton));
+  });
+
+  it("renders a role=status line and never the old not-yet line", () => {
     expect(html).toContain('role="status"');
+    expect(html).not.toContain("Sealing opens soon.");
+  });
+
+  it("shows the matching step line in a mid-flow state", () => {
+    const confirming = renderWriteForm({ state: { tag: "confirming" } });
+    expect(confirming).toContain(LIVE_COPY.stepConfirming);
   });
 
   it("refuses a warning that is unticked, so nothing can start", () => {
@@ -169,5 +208,79 @@ describe("SealPage", () => {
 
     expect(html).toContain(LIVE_COPY.heading);
     expect(html).toContain(LIVE_COPY.createButton);
+  });
+});
+
+describe("WriteForm — create button label and state", () => {
+  const validDraft = {
+    text: "A letter",
+    metricIds: [SERIES[0]!.metricId],
+    warningTicked: true,
+  };
+
+  /** The opening tag of the one button in the markup. */
+  function buttonTag(markup: string): string {
+    return /<button[^>]*>/.exec(markup)?.[0] ?? "";
+  }
+
+  const midFlow = [
+    "creating",
+    "confirming",
+    "preparing",
+    "sealing",
+    "fallback_key",
+  ] as const;
+  const terminal = ["cancelled", "failed", "cannot_lock", "sealed"] as const;
+
+  it("is enabled in write with valid input, and labelled Create", () => {
+    const html = renderWriteForm({ ...validDraft, state: { tag: "write" } });
+    expect(buttonTag(html)).not.toContain("disabled");
+    expect(html).toContain(esc(LIVE_COPY.createButton));
+  });
+
+  it("is disabled in write while the input is invalid", () => {
+    const html = renderWriteForm({ state: { tag: "write" } });
+    expect(buttonTag(html)).toContain("disabled");
+  });
+
+  it("is enabled in created and labelled Confirm", () => {
+    const html = renderWriteForm({
+      ...validDraft,
+      state: { tag: "created" },
+    });
+    expect(buttonTag(html)).not.toContain("disabled");
+    expect(html).toContain(esc(LIVE_COPY.confirmButton));
+    expect(html).not.toContain(esc(LIVE_COPY.createButton));
+  });
+
+  it("stays enabled in created even with the input no longer valid", () => {
+    // The input was valid when the passkey was created; Confirm does not re-check it.
+    const html = renderWriteForm({
+      state: { tag: "created" },
+      text: "",
+      metricIds: [],
+      warningTicked: false,
+    });
+    expect(buttonTag(html)).not.toContain("disabled");
+    expect(html).toContain(esc(LIVE_COPY.confirmButton));
+  });
+
+  it.each(midFlow)("is disabled in %s", (tag) => {
+    const html = renderWriteForm({ ...validDraft, state: { tag } as SealState });
+    expect(buttonTag(html)).toContain("disabled");
+  });
+
+  it.each(midFlow)("keeps the Create label in %s", (tag) => {
+    const html = renderWriteForm({ ...validDraft, state: { tag } as SealState });
+    expect(html).toContain(esc(LIVE_COPY.createButton));
+    expect(html).not.toContain(esc(LIVE_COPY.confirmButton));
+  });
+
+  it.each(terminal)("is disabled and not Confirm in %s", (tag) => {
+    // Terminal states are shown by SealPage, but WriteForm must still refuse to
+    // press if it were ever rendered in one.
+    const html = renderWriteForm({ ...validDraft, state: { tag } as SealState });
+    expect(buttonTag(html)).toContain("disabled");
+    expect(html).not.toContain(esc(LIVE_COPY.confirmButton));
   });
 });

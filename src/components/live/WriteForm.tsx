@@ -1,7 +1,5 @@
 "use client";
 
-import { useState } from "react";
-
 import { DemoLabel } from "@/components/demo/DemoLabel";
 
 import type { PickableSeries } from "./catalogue-list";
@@ -10,10 +8,32 @@ import { LIVE_COPY } from "./copy";
 import { FigurePicker } from "./FigurePicker";
 import { countCodePoints, validateWrite, type WriteProblem } from "./form";
 import styles from "./live.module.css";
+import type { SealState } from "./seal-machine";
+import { StepStatus } from "./StepStatus";
 
 export interface WriteFormProps {
   /** The figures the visitor can pick from. */
   series: readonly PickableSeries[];
+  /** The current sealing state, from useSealFlow in the page. */
+  state: SealState;
+  /** True once useCryptoModule() has loaded the crypto module (R15.3). */
+  cryptoLoaded: boolean;
+  /** The letter text, held by the page (controlled). */
+  text: string;
+  /** The chosen figure IDs, held by the page (controlled). */
+  metricIds: string[];
+  /** Whether the warning box is ticked, held by the page (controlled). */
+  warningTicked: boolean;
+  /** The visitor typed in the letter. */
+  onTextChange: (text: string) => void;
+  /** The visitor picked or unpicked a figure. */
+  onToggleFigure: (metricId: string) => void;
+  /** The visitor ticked or unticked the warning box. */
+  onWarningChange: (ticked: boolean) => void;
+  /** The Create_Press: starts the first passkey prompt. */
+  onCreatePress: () => void;
+  /** The Confirm_Press: starts the second prompt and the seal. */
+  onConfirmPress: () => void;
 }
 
 /** The message shown for each write problem that the form renders. */
@@ -25,18 +45,43 @@ export const PROBLEM_COPY: Partial<Record<WriteProblem, string>> = {
 };
 
 /**
- * The write step of the live Seal_Page. Holds the form state (letter text,
- * chosen figures, warning checkbox) as React state. Nothing here reaches the
- * network: typing and picking only update local state (R12.7).
- *
- * In this step the "Create your passkey" button is disabled and shows the
- * not-yet status line. The next step enables it.
+ * Whether the create/confirm button may be pressed in this state. `write` needs
+ * valid input; `created` needs nothing more; every other state is mid-flow or
+ * terminal, so the button stays disabled.
  */
-export function WriteForm({ series }: WriteFormProps) {
-  const [text, setText] = useState("");
-  const [metricIds, setMetricIds] = useState<string[]>([]);
-  const [warningTicked, setWarningTicked] = useState(false);
+export function buttonLive(
+  state: SealState,
+  problems: readonly WriteProblem[],
+): boolean {
+  if (state.tag === "created") return true;
+  if (state.tag === "write") return problems.length === 0;
+  return false;
+}
 
+/**
+ * The write step of the live Seal_Page. Holds the form state (letter text,
+ * chosen figures, warning checkbox) as React state and reports the draft up to
+ * the page. Nothing here reaches the network: typing and picking only update
+ * local state (R12.7); the two presses are the page's flow handlers.
+ *
+ * The create button is disabled until the crypto module has loaded (R15.3) and
+ * until the write input is valid. In the `write` state it is labelled "Create
+ * your passkey"; once the passkey is created it becomes "Confirm your passkey"
+ * (R15.10). The step line below it is a `role="status"` region (StepStatus).
+ */
+export function WriteForm({
+  series,
+  state,
+  cryptoLoaded,
+  text,
+  metricIds,
+  warningTicked,
+  onTextChange,
+  onToggleFigure,
+  onWarningChange,
+  onCreatePress,
+  onConfirmPress,
+}: WriteFormProps) {
   const letterCount = countCodePoints(text);
   const problems = validateWrite({ text, metricIds, warningTicked });
   const atLimit = metricIds.length >= MAX_FIGURES;
@@ -48,15 +93,16 @@ export function WriteForm({ series }: WriteFormProps) {
   const letterProblem =
     problemText("letter_empty") || problemText("letter_too_long");
 
-  function toggleFigure(metricId: string): void {
-    setMetricIds((current) => {
-      if (current.includes(metricId)) {
-        return current.filter((id) => id !== metricId);
-      }
-      if (current.length >= MAX_FIGURES) return current;
-      return [...current, metricId];
-    });
-  }
+  // In `created` the button confirms the passkey; everywhere else it creates
+  // one. The button is only live in `write` (Create, blocked while the input is
+  // invalid) and `created` (Confirm, not blocked by the input, which was valid
+  // when the passkey was created). In every other state it is disabled.
+  const inCreated = state.tag === "created";
+  const buttonLabel = inCreated
+    ? LIVE_COPY.confirmButton
+    : LIVE_COPY.createButton;
+  const buttonDisabled = !cryptoLoaded || !buttonLive(state, problems);
+  const onButtonPress = inCreated ? onConfirmPress : onCreatePress;
 
   return (
     <form
@@ -81,7 +127,7 @@ export function WriteForm({ series }: WriteFormProps) {
           rows={10}
           value={text}
           aria-describedby="live-letter-count live-letter-problem"
-          onChange={(event) => setText(event.target.value)}
+          onChange={(event) => onTextChange(event.target.value)}
         />
         <p id="live-letter-count" className={styles.count}>
           {LIVE_COPY.letterCount.replace("{count}", String(letterCount))}
@@ -95,7 +141,7 @@ export function WriteForm({ series }: WriteFormProps) {
         series={series}
         selected={metricIds}
         atLimit={atLimit}
-        onToggle={toggleFigure}
+        onToggle={onToggleFigure}
       />
       <p id="live-figures-problem" className={styles.problem}>
         {problemText("figures_none")}
@@ -115,7 +161,7 @@ export function WriteForm({ series }: WriteFormProps) {
             className={styles.checkbox}
             checked={warningTicked}
             aria-describedby="live-warning-problem"
-            onChange={(event) => setWarningTicked(event.target.checked)}
+            onChange={(event) => onWarningChange(event.target.checked)}
           />
           <span>{LIVE_COPY.warningLabel}</span>
         </label>
@@ -125,12 +171,15 @@ export function WriteForm({ series }: WriteFormProps) {
       </div>
 
       <div className={styles.actions}>
-        <button type="submit" className={styles.primary} disabled>
-          {LIVE_COPY.createButton}
+        <button
+          type="button"
+          className={styles.primary}
+          disabled={buttonDisabled}
+          onClick={onButtonPress}
+        >
+          {buttonLabel}
         </button>
-        <p role="status" className={styles.status}>
-          {LIVE_COPY.notYet}
-        </p>
+        <StepStatus state={state} />
       </div>
     </form>
   );
