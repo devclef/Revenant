@@ -17,7 +17,7 @@ import { listPickableSeries } from "./catalogue-list";
 import { validateWrite } from "./form";
 import { LIVE_COPY } from "./copy";
 import { SealPage } from "./SealPage";
-import { WriteForm } from "./WriteForm";
+import { PROBLEM_COPY, WriteForm } from "./WriteForm";
 
 const SERIES = listPickableSeries(DEMO_FIGURES);
 const DIR = join(fileURLToPath(new URL(".", import.meta.url)));
@@ -113,6 +113,48 @@ describe("WriteForm", () => {
       expect(source, file).not.toMatch(/\bfetch\(/);
       expect(source, file).not.toMatch(/XMLHttpRequest|navigator\.sendBeacon/);
     }
+  });
+
+  it("shows each missing-input message next to its field on first render", () => {
+    // A new form has an empty letter, no figures and an unticked warning.
+    expect(html).toContain(esc(LIVE_COPY.letterEmpty));
+    expect(html).toContain(esc(LIVE_COPY.figuresNone));
+    expect(html).toContain(esc(LIVE_COPY.warningUnticked));
+    expect(html.indexOf(esc(LIVE_COPY.letterEmpty))).toBeLessThan(
+      html.indexOf('id="live-figures-problem"'),
+    );
+    expect(html.indexOf(esc(LIVE_COPY.figuresNone))).toBeLessThan(
+      html.indexOf('id="live-warning"'),
+    );
+  });
+
+  it("maps each rendered write problem to its message", () => {
+    expect(PROBLEM_COPY.letter_empty).toBe(LIVE_COPY.letterEmpty);
+    expect(PROBLEM_COPY.letter_too_long).toBe(LIVE_COPY.letterTooLong);
+    expect(PROBLEM_COPY.figures_none).toBe(LIVE_COPY.figuresNone);
+    expect(PROBLEM_COPY.warning_unticked).toBe(LIVE_COPY.warningUnticked);
+  });
+
+  it("gives the warning message the same field-level id the checkbox names", () => {
+    expect(html).toMatch(
+      /<input[^>]*id="live-warning"[^>]*aria-describedby="live-warning-problem"/,
+    );
+    expect(html).toContain('id="live-warning-problem"');
+  });
+});
+
+describe("Seal_Page panel", () => {
+  const css = readFileSync(join(DIR, "live.module.css"), "utf8");
+  const panel = /\.panel\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
+
+  it("keeps the paper background and padding", () => {
+    expect(panel).toMatch(/background-color:\s*var\(--paper\)/);
+    expect(panel).toMatch(/padding:/);
+  });
+
+  it("has no outer border", () => {
+    expect(panel).not.toMatch(/\bborder\s*:/);
+    expect(panel).not.toContain("gold-leaf");
   });
 });
 

@@ -19,7 +19,6 @@
   padding: clamp(1.25rem, 4vw, 2.5rem);
   color: var(--ink);
   background-color: var(--paper);
-  border: 1px solid var(--gold-leaf);
   border-radius: 4px;
   font-family: var(--font-serif);
   font-size: 1.125rem;

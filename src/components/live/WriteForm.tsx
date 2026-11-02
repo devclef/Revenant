@@ -8,13 +8,21 @@ import type { PickableSeries } from "./catalogue-list";
 import { MAX_FIGURES } from "./constants";
 import { LIVE_COPY } from "./copy";
 import { FigurePicker } from "./FigurePicker";
-import { countCodePoints, validateWrite } from "./form";
+import { countCodePoints, validateWrite, type WriteProblem } from "./form";
 import styles from "./live.module.css";
 
 export interface WriteFormProps {
   /** The figures the visitor can pick from. */
   series: readonly PickableSeries[];
 }
+
+/** The message shown for each write problem that the form renders. */
+export const PROBLEM_COPY: Partial<Record<WriteProblem, string>> = {
+  letter_empty: LIVE_COPY.letterEmpty,
+  letter_too_long: LIVE_COPY.letterTooLong,
+  figures_none: LIVE_COPY.figuresNone,
+  warning_unticked: LIVE_COPY.warningUnticked,
+};
 
 /**
  * The write step of the live Seal_Page. Holds the form state (letter text,
@@ -31,8 +39,14 @@ export function WriteForm({ series }: WriteFormProps) {
 
   const letterCount = countCodePoints(text);
   const problems = validateWrite({ text, metricIds, warningTicked });
-  const letterTooLong = problems.includes("letter_too_long");
   const atLimit = metricIds.length >= MAX_FIGURES;
+
+  /** The message for a problem, or "" when validateWrite does not report it. */
+  function problemText(problem: WriteProblem): string {
+    return problems.includes(problem) ? (PROBLEM_COPY[problem] ?? "") : "";
+  }
+  const letterProblem =
+    problemText("letter_empty") || problemText("letter_too_long");
 
   function toggleFigure(metricId: string): void {
     setMetricIds((current) => {
@@ -73,7 +87,7 @@ export function WriteForm({ series }: WriteFormProps) {
           {LIVE_COPY.letterCount.replace("{count}", String(letterCount))}
         </p>
         <p id="live-letter-problem" className={styles.problem}>
-          {letterTooLong ? LIVE_COPY.letterTooLong : ""}
+          {letterProblem}
         </p>
       </div>
 
@@ -83,6 +97,9 @@ export function WriteForm({ series }: WriteFormProps) {
         atLimit={atLimit}
         onToggle={toggleFigure}
       />
+      <p id="live-figures-problem" className={styles.problem}>
+        {problemText("figures_none")}
+      </p>
 
       <div className={styles.explain}>
         <p>{LIVE_COPY.passkeySteps}</p>
@@ -97,10 +114,14 @@ export function WriteForm({ series }: WriteFormProps) {
             type="checkbox"
             className={styles.checkbox}
             checked={warningTicked}
+            aria-describedby="live-warning-problem"
             onChange={(event) => setWarningTicked(event.target.checked)}
           />
           <span>{LIVE_COPY.warningLabel}</span>
         </label>
+        <p id="live-warning-problem" className={styles.problem}>
+          {problemText("warning_unticked")}
+        </p>
       </div>
 
       <div className={styles.actions}>
