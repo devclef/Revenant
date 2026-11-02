@@ -10,7 +10,7 @@ The owner check list is in `owner-check.md` in this folder. The owner ticks it o
 |---|---|---|---|
 | `/demo` | 111.4 kB | 130 kB | ok |
 | `/demo/live` | 158.9 kB | 190 kB | ok |
-| `/l/[id]` | 177.3 kB | 190 kB | ok |
+| `/l/[id]` | 177.2 kB | 190 kB | ok |
 
 ## Browser run
 
@@ -25,7 +25,7 @@ Throwaway Postgres, `npm run db:migrate`, `npm run seal-personas`, then the app 
 | 11 | Reveal | <img src="owner-check-shots/11-reveal.png" alt="Step 11 reveal at 1280 px" width="320"> | <img src="owner-check-shots/11-reveal-360.png" alt="Step 11 reveal at 360 px" width="320"> |
 | 13 | Cannot lock (no PRF) | <img src="owner-check-shots/13-unsupported.png" alt="Step 13 cannot lock at 1280 px" width="320"> | <img src="owner-check-shots/13-unsupported-360.png" alt="Step 13 cannot lock at 360 px" width="320"> |
 
-Screenshots are committed in `owner-check-shots/` next to this file.
+Screenshots are committed in `owner-check-shots/` next to this file. The re-run screenshots for steps 02, 07, 09, 10, 11 and 13 at 1280 px and 360 px are also in `/home/dopey/kiro/revenant-crew/dev-shots/issue-135/`.
 
 ## Findings
 
