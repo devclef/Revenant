@@ -64,13 +64,28 @@ export type BackupKeyError = { kind: "mistyped_key" };
 export type OpenError =
   | {
       kind: "invalid_input";
-      field: "letterId" | "serverSecret" | "envelope" | "written_as_of";
+      field:
+        | "letterId"
+        | "serverSecret"
+        | "envelope"
+        | "written_as_of"
+        | "backupKey"
+        | "passkey";
     }
   | { kind: "verification_failed" }
   | { kind: "wrong_key" }
   | { kind: "tampered" }
   | { kind: "unsupported_format"; formatVersion: number }
   | { kind: "invalid_payload"; field: string };
+
+/**
+ * Everything `sealLetter` can refuse with: the input checks shared with
+ * `OpenError` (`invalid_input`), or `wrap_failed` when the passkey wrap does not
+ * unwrap to the same DEK (R8.5). Carries no value, only the kind and field.
+ */
+export type SealErrorDetail =
+  | Extract<OpenError, { kind: "invalid_input" }>
+  | { kind: "wrap_failed" };
 
 /**
  * The result of `openLetter`. On success it carries the validated v1 payload
