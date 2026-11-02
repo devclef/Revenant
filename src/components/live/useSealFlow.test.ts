@@ -159,17 +159,98 @@ describe("useSealFlow double-press guard", () => {
     );
     expect(createSpy).toHaveBeenCalledTimes(2);
   });
+});
 
-  it("the fallback handlers are no-op stubs and never call the crypto module", async () => {
-    const { deps, createSpy, getSpy, api } = await buildDeps();
+/**
+ * Drives the flow to cannot_lock with a short PRF at Confirm_Press. The create
+ * prompt succeeds, then the confirm prompt fails, so the reducer lands in
+ * cannot_lock with passkeyCreated true and no prepare request is sent.
+ */
+async function reachCannotLock(flow: SealFlow, createSpy: { mock: { calls: unknown[] } }, getSpy: { mock: { calls: unknown[] } }): Promise<void> {
+  flow.onCreatePress();
+  await waitUntil(() => createSpy.mock.calls.length > 0);
+  await pressUntil(() => flow.onConfirmPress(), () => getSpy.mock.calls.length > 0);
+  await flush();
+}
+
+/** Deps whose crypto module records each generateBackupKey call. */
+async function fallbackDeps(config: Parameters<typeof buildDeps>[0] = {}) {
+  const built = await buildDeps(config);
+  const generateSpy = vi.fn(built.deps.crypto.generateBackupKey);
+  const crypto = { ...built.deps.crypto, generateBackupKey: generateSpy } as unknown as CryptoModule;
+  return { ...built, generateSpy, deps: { ...built.deps, crypto } };
+}
+
+describe("useSealFlow backup-key fallback", () => {
+  it("generates the key from the loaded module on FALLBACK_START, and not before", async () => {
+    const { deps, createSpy, getSpy, generateSpy } = await fallbackDeps({ getPrf: "short" });
     const flow = mount(deps, draft());
     flow.onFallbackStart();
-    flow.onFallbackSealPress();
-    flow.onFallbackDecline();
     await flush();
-    expect(createSpy).not.toHaveBeenCalled();
-    expect(getSpy).not.toHaveBeenCalled();
+    expect(generateSpy).not.toHaveBeenCalled();
+
+    await reachCannotLock(flow, createSpy, getSpy);
+    await pressUntil(() => flow.onFallbackStart(), () => generateSpy.mock.calls.length > 0);
+    flow.onFallbackStart();
+    await flush();
+    expect(generateSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("declining seals nothing and sends no request", async () => {
+    const { deps, createSpy, getSpy, api, generateSpy } = await fallbackDeps({ getPrf: "short" });
+    const flow = mount(deps, draft());
+    await reachCannotLock(flow, createSpy, getSpy);
+    await pressUntil(() => flow.onFallbackStart(), () => generateSpy.mock.calls.length > 0);
+
+    flow.onFallbackDecline();
+    flow.onFallbackSealPress();
+    await flush();
+
     expect(api.prepare).not.toHaveBeenCalled();
-    expect(flow.backupKeyText).toBeNull();
+    expect(api.seal).not.toHaveBeenCalled();
+    expect(createSpy).toHaveBeenCalledTimes(1);
+    expect(getSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("the seal press before a fallback start sends no request", async () => {
+    const { deps, createSpy, getSpy, api } = await fallbackDeps({ getPrf: "short" });
+    const flow = mount(deps, draft());
+    await reachCannotLock(flow, createSpy, getSpy);
+    flow.onFallbackSealPress();
+    await flush();
+    expect(api.prepare).not.toHaveBeenCalled();
+  });
+
+  it("sealing with the backup key sends one prepare and one seal and no passkey prompt", async () => {
+    const { deps, createSpy, getSpy, api, generateSpy } = await fallbackDeps({ getPrf: "short" });
+    const flow = mount(deps, draft());
+    await reachCannotLock(flow, createSpy, getSpy);
+    await pressUntil(() => flow.onFallbackStart(), () => generateSpy.mock.calls.length > 0);
+
+    const promptsBefore = createSpy.mock.calls.length + getSpy.mock.calls.length;
+    await pressUntil(() => flow.onFallbackSealPress(), () => api.seal.mock.calls.length > 0);
+    flow.onFallbackSealPress();
+    await waitUntil(() => api.seal.mock.calls.length > 0);
+
+    expect(api.prepare).toHaveBeenCalledTimes(1);
+    expect(api.seal).toHaveBeenCalledTimes(1);
+    expect(createSpy.mock.calls.length + getSpy.mock.calls.length).toBe(promptsBefore);
+  });
+
+  it("writes nothing to the console while the backup key is generated and sealed", async () => {
+    const { deps, createSpy, getSpy, api, generateSpy } = await fallbackDeps({ getPrf: "short" });
+    const calls: unknown[][] = [];
+    const methods = ["log", "info", "warn", "error", "debug"] as const;
+    const spies = methods.map((m) => vi.spyOn(console, m).mockImplementation((...args: unknown[]) => { calls.push(args); }));
+    try {
+      const flow = mount(deps, draft());
+      await reachCannotLock(flow, createSpy, getSpy);
+      await pressUntil(() => flow.onFallbackStart(), () => generateSpy.mock.calls.length > 0);
+      await pressUntil(() => flow.onFallbackSealPress(), () => api.seal.mock.calls.length > 0);
+      await waitUntil(() => api.seal.mock.calls.length > 0);
+    } finally {
+      for (const spy of spies) spy.mockRestore();
+    }
+    expect(calls).toEqual([]);
   });
 });

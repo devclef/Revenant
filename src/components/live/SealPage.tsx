@@ -7,6 +7,7 @@ import type { LoadedFigures } from "@/lib/figures";
 
 import { realSealApi, type SealApi } from "./api";
 import { listPickableSeries } from "./catalogue-list";
+import { BackupFallback } from "./BackupFallback";
 import { SealedView } from "./SealedView";
 import { SealFailure } from "./SealFailure";
 import type { AuthenticatorPort, SealDeps, SealDraft } from "./seal-runner";
@@ -114,7 +115,24 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
       case "cannot_lock":
       case "cancelled":
       case "failed":
-        return <SealFailure state={state} onRetry={flow.onRetry} />;
+        return (
+          <SealFailure
+            state={state}
+            onRetry={flow.onRetry}
+            onFallbackStart={flow.onFallbackStart}
+          />
+        );
+      case "fallback_key":
+        // The key is generated on FALLBACK_START, so it is present here. The
+        // null guard only covers a state that should never reach this branch.
+        if (flow.backupKeyText === null) return null;
+        return (
+          <BackupFallback
+            keyText={flow.backupKeyText}
+            onSealPress={flow.onFallbackSealPress}
+            onDecline={flow.onFallbackDecline}
+          />
+        );
       default:
         // write, creating, created, confirming, preparing, sealing: the write
         // form knows which of its controls to show for each step.

@@ -244,6 +244,52 @@
   cursor: not-allowed;
 }
 
+/* The printed backup key: groups of four, kept on one line where the width allows. */
+.keyBox {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0 0 1rem;
+  padding: 1rem;
+  font-family: var(--font-sans);
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background-color: var(--paper-deep);
+  border: 1px solid var(--ink-soft);
+  border-radius: 3px;
+  overflow-wrap: anywhere;
+}
+
+.keyGroup {
+  white-space: nowrap;
+}
+
+/* A plain outlined control for Copy and Not now. Same ink and size as primary. */
+.secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  max-width: 100%;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+  background-color: transparent;
+  border: 1px solid var(--ink);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.secondary:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
 /*
  * The span stands in for the go-to-letter link while the countdown runs. It is
  * not interactive, so it reads as faded and shows a not-allowed cursor. No

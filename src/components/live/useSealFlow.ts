@@ -1,17 +1,20 @@
 // Glue between the seal reducer and the sealing runner (spec 06-lock-and-unlock,
 // design.md "Seal_Page state machine"). It owns the refs for the passkey
 // results and the backup key, guards double presses, and dispatches reducer
-// events. The Backup_Fallback handlers are no-op stubs until that task lands.
+// events.
 //
 // Nothing here is stored or logged. The refs hold secret bytes only in memory,
-// and they are cleared when the flow reaches a terminal state or retries.
+// and they are cleared when the flow reaches a terminal state, declines the
+// backup key or retries.
 
 import { useCallback, useReducer, useRef, useState } from "react";
 
 import {
   pressConfirm,
   pressCreate,
+  sealWithBackupKey,
   sealWithPasskey,
+  type BackupKey,
   type Confirmed,
   type Created,
   type SealDeps,
@@ -27,6 +30,7 @@ export interface SealFlow {
   onFallbackSealPress: () => void;
   onFallbackDecline: () => void;
   onRetry: () => void;
+  /** The backup key as printed on the card, shown only in fallback_key. */
   backupKeyText: string | null;
 }
 
@@ -43,9 +47,18 @@ export function useSealFlow(deps: SealDeps | null, draft: SealDraft): SealFlow {
   const inFlight = useRef(false);
   const created = useRef<Created | null>(null);
   const confirmed = useRef<Confirmed | null>(null);
-  // Reserved for the Backup_Fallback; cleared with the other refs on retry.
-  const backupKey = useRef<Uint8Array | null>(null);
-  const [backupKeyText] = useState<string | null>(null);
+  // The backup key bytes, set at FALLBACK_START and cleared when the fallback
+  // ends (declined, sealed or failed) or the flow retries.
+  const backupKey = useRef<BackupKey | null>(null);
+  // The printed form of the same key. React needs it in state to render the
+  // card, and it is cleared with the bytes.
+  const [backupKeyText, setBackupKeyText] = useState<string | null>(null);
+
+  /** Drops the backup key from the ref and from the rendered state. */
+  const clearBackupKey = useCallback(() => {
+    backupKey.current = null;
+    setBackupKeyText(null);
+  }, []);
 
   const send = useCallback((event: SealEvent) => {
     phase.current = sealReducer(phase.current, event);
@@ -108,17 +121,60 @@ export function useSealFlow(deps: SealDeps | null, draft: SealDraft): SealFlow {
     void run();
   }, [deps, draft, send]);
 
-  const onFallbackStart = useCallback(() => undefined, []);
-  const onFallbackSealPress = useCallback(() => undefined, []);
-  const onFallbackDecline = useCallback(() => undefined, []);
+  /**
+   * Starts the backup-key fallback. The key is generated here, from the loaded
+   * module, and only once the reducer has accepted FALLBACK_START.
+   */
+  const onFallbackStart = useCallback(() => {
+    if (deps === null || phase.current.tag !== "cannot_lock") return;
+    const bytes = deps.crypto.generateBackupKey();
+    backupKey.current = bytes;
+    setBackupKeyText(deps.crypto.formatBackupKey(bytes));
+    send({ type: "FALLBACK_START" });
+  }, [deps, send]);
+
+  /** Declines the fallback. Drops the key and seals nothing; no request is sent. */
+  const onFallbackDecline = useCallback(() => {
+    if (phase.current.tag !== "fallback_key") return;
+    clearBackupKey();
+    send({ type: "FALLBACK_DECLINE" });
+  }, [clearBackupKey, send]);
+
+  /** Seals with the backup key only. Uses the same draft as the passkey path. */
+  const onFallbackSealPress = useCallback(() => {
+    const key = backupKey.current;
+    if (deps === null || inFlight.current || phase.current.tag !== "fallback_key" || key === null) {
+      return;
+    }
+    inFlight.current = true;
+    send({ type: "FALLBACK_SEAL_PRESS" });
+
+    const run = async (): Promise<void> => {
+      try {
+        const outcome = await sealWithBackupKey(deps, {
+          draft,
+          backupKey: key,
+          onPrepared: () => send({ type: "PREPARED" }),
+        });
+        send(outcome.event);
+      } catch {
+        send({ type: "FAILED", kind: "server", passkeyCreated: false });
+      } finally {
+        // Sealing has ended, so the key is no longer needed in memory.
+        clearBackupKey();
+        inFlight.current = false;
+      }
+    };
+    void run();
+  }, [clearBackupKey, deps, draft, send]);
 
   const onRetry = useCallback(() => {
     if (inFlight.current) return;
     created.current = null;
     confirmed.current = null;
-    backupKey.current = null;
+    clearBackupKey();
     send({ type: "RETRY" });
-  }, [send]);
+  }, [clearBackupKey, send]);
 
   return {
     state,

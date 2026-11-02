@@ -21,8 +21,8 @@ import type { SealState } from "./seal-machine";
  * reader string comes from LIVE_COPY (R19.1); there are no literals here.
  *
  * `onRetry` moves the flow back to the write step (the RETRY event). The
- * `onFallbackStart` placeholder is accepted so SealPage can wire it, but the
- * fallback control is rendered DISABLED with no behaviour until task 7.
+ * `onFallbackStart` starts the backup-key fallback from cannot_lock. Without
+ * it the fallback control is rendered disabled.
  */
 
 /**
@@ -48,8 +48,8 @@ export interface SealFailureProps {
   /** Called by the "Try again" button; the parent dispatches RETRY. */
   onRetry: () => void;
   /**
-   * Placeholder for the backup-key fallback (task 7 wires it). The control is
-   * rendered disabled, so this is never called here.
+   * Starts the backup-key fallback (cannot_lock only). Without it the control
+   * is rendered disabled.
    */
   onFallbackStart?: () => void;
 }
@@ -74,7 +74,7 @@ function failedBody(
   }
 }
 
-export function SealFailure({ state, onRetry }: SealFailureProps) {
+export function SealFailure({ state, onRetry, onFallbackStart }: SealFailureProps) {
   if (state.tag === "cannot_lock") {
     return (
       <div className={styles.panel} data-live-failure="cannot_lock">
@@ -86,7 +86,12 @@ export function SealFailure({ state, onRetry }: SealFailureProps) {
           <p className={styles.intro}>{LIVE_COPY.passkeyDeleteNote}</p>
         ) : null}
         <div className={styles.actions}>
-          <button type="button" className={styles.primary} disabled>
+          <button
+            type="button"
+            className={styles.primary}
+            disabled={onFallbackStart === undefined}
+            onClick={onFallbackStart}
+          >
             {LIVE_COPY.fallbackButton}
           </button>
         </div>
