@@ -22,10 +22,17 @@ issue: status:ready + agent:<role>, dependencies closed
             └─ ci-gate green → dispatcher starts Task Runner as qa on the PR head
                  ├─ pass → status:qa-passed → dispatcher squash-merges when ci-gate is green
                  └─ fail (or CI failed) → status:changes-requested → fix run as <role> → back to needs-qa
-                      (after 2 fix runs: status:blocked, needs a human)
+                      (after 2 fix runs that committed: status:blocked, needs a human)
 ```
 
 One Task Runner run at a time, across dev, fix and QA. A dev or fix run holds its issue in `status:in-progress`, and a QA run holds its PR in `status:qa-running`. The dispatcher also counts the runs Task Runner reports as still going, and uses the larger count. While any run is in flight, it starts nothing else, and a start that fails stops the tick. `REVENANT_MAX_DEV_RUNS` (default 1) is the cap on that total. Keep it at 1: runs share one Crew gateway process, and when several ran at once, commands from one run executed in another run's workspace.
+
+## Feedback and attempts
+
+- **CI feedback** quotes the failing job logs: each failing job's failing steps and the last lines of its log, with every `##[error]` or `FAIL` line kept. It no longer relies on the gate's "exit code 1".
+- **Same commit, same failure:** if CI fails again on a commit the dispatcher already sent back, it re-runs the failed CI jobs once. If that commit still fails 10 minutes after the re-run, the PR is blocked for a human. Nothing is posted twice.
+- **Fix runs that commit nothing** do not count toward the two attempts. A run that ends at the PR head gets a `dev-result` marker with `commits: false`. After CI feedback, the PR goes back to CI (and so to the re-run rule above). After QA feedback, the PR is blocked, because the same review would come back.
+- **Manual ticket items** (a manual Lighthouse run, for example) are QA notes. They are minor findings and never fail a verdict.
 
 ## One-time setup
 
@@ -96,7 +103,6 @@ The `qa` agent (and only `qa`) has a headless Chromium through the Playwright MC
 
 ## When something goes wrong
 
-- **status:blocked:** read the issue and PR comments, then the run in the Crew dashboard Tasks page. Fix the ticket or the code, remove `status:blocked`, and set the right status label.
-- **A stuck `status:in-progress` or `status:qa-running` label, or a run Task Runner still reports:** it holds the whole queue, because only one Task Runner run is allowed at a time. Check the run in the Crew dashboard. Then set the item to `status:blocked` or fix its label, or cancel the run.
+- **status:blocked:** read the issue and PR comments, then the run in the Crew dashboard Tasks page. Fix the ticket or the code, remove `status:blocked`, and set the right status label.- **A stuck `status:in-progress` or `status:qa-running` label, or a run Task Runner still reports:** it holds the whole queue, because only one Task Runner run is allowed at a time. Check the run in the Crew dashboard. Then set the item to `status:blocked` or fix its label, or cancel the run.
 - **Re-run QA:** remove `status:qa-passed` or `status:changes-requested` and add `needs-qa`.
 - **Pause everything:** pause the `revenant-dispatch` cron job.

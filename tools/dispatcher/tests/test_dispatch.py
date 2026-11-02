@@ -301,6 +301,7 @@ class RecGH:
     def __init__(self, issues=(), pulls=None, merge_error=None, failed=()):
         self.events, self.issue_list, self.pulls = [], list(issues), pulls or {}
         self.merge_error, self.failed = merge_error, list(failed)
+        self.comments_by, self.rerun_ok = {}, True
 
     def r(self, p):
         return p
@@ -312,7 +313,13 @@ class RecGH:
         return [] if state == "closed" else self.issue_list
 
     def comments(self, n):
-        return []
+        return self.comments_by.get(n, [])
+
+    def rerun_failed_ci(self, sha):
+        self.events.append(("rerun", sha))
+        if isinstance(self.rerun_ok, Exception):
+            raise self.rerun_ok
+        return self.rerun_ok
 
     def call(self, method, path, body=None):
         self.events.append((method, path))
@@ -657,6 +664,164 @@ class OneRunAtATime(unittest.TestCase):
         self.assertFalse(started)
         self.assertEqual(self.started(), 0)
 
+
+
+class LogTail(unittest.TestCase):
+    def test_strips_prefix_timestamps_and_colour_and_keeps_errors(self):
+        raw = "\n".join([
+            "checks\tUNKNOWN STEP\t2026-11-01T21:34:14.5280424Z ok   /: 106 kB",
+            "checks\tUNKNOWN STEP\t2026-11-01T21:34:14.5281501Z \x1b[31mFAIL /l/[id]: no entry\x1b[0m",
+            "checks\tUNKNOWN STEP\t2026-11-01T21:34:14.5329742Z ##[error]Process completed with exit code 1.",
+        ] + [f"checks\tUNKNOWN STEP\t2026-11-01T21:34:15.0000000Z line {i}" for i in range(100)])
+        out = d.log_tail(raw)
+        self.assertNotIn("2026-11-01", out)
+        self.assertNotIn("\x1b", out)
+        self.assertNotIn("UNKNOWN STEP", out)
+        self.assertIn("##[error]Process completed with exit code 1.", out)
+        self.assertIn("line 99", out)
+        self.assertNotIn("line 0\n", out)  # older lines are cut off
+        self.assertIn("FAIL /l/[id]: no entry", out)  # FAIL lines are error lines, kept whole
+
+    def test_size_cap_keeps_the_end(self):
+        out = d.log_tail("x" * 10000 + "\nlast line")
+        self.assertLessEqual(len(out), d.LOG_MAX_CHARS + 4)
+        self.assertTrue(out.endswith("last line"))
+
+    def test_error_lines_survive_the_size_cap(self):
+        text = "FAIL /demo/live: no entry\n" + "\n".join("y" * 200 for _ in range(60))
+        out = d.log_tail(text)
+        self.assertLessEqual(len(out), d.LOG_MAX_CHARS)
+        self.assertIn("FAIL /demo/live: no entry", out)
+
+    def test_empty_log(self):
+        self.assertEqual(d.log_tail(""), "(the log was empty)")
+
+
+class FixAttempts(unittest.TestCase):
+    @staticmethod
+    def c(data, trusted=True):
+        return {"body": d.make_marker(data), "_trusted": trusted}
+
+    def test_counts_started_fix_runs(self):
+        comments = [self.c({"kind": "dev", "task_id": "a", "fix": True}),
+                    self.c({"kind": "dev", "task_id": "b", "fix": True})]
+        self.assertEqual(d.fix_attempts(comments), 2)
+
+    def test_run_that_made_no_commits_does_not_count(self):
+        comments = [self.c({"kind": "dev", "task_id": "a", "fix": True}),
+                    self.c({"kind": "dev", "task_id": "b", "fix": True}),
+                    self.c({"kind": "dev-result", "task_id": "a", "commits": False})]
+        self.assertEqual(d.fix_attempts(comments), 1)
+
+    def test_untrusted_and_first_runs_do_not_count(self):
+        comments = [self.c({"kind": "dev", "task_id": "x", "fix": True}, trusted=False),
+                    self.c({"kind": "dev", "task_id": "y", "role": "frontend-dev"})]
+        self.assertEqual(d.fix_attempts(comments), 0)
+
+
+class CIFeedbackLogs(unittest.TestCase):
+    def test_ci_gate_feedback_quotes_the_log_not_exit_code_alone(self):
+        body = d.ci_failure_comment(
+            [{"name": "ci-gate", "annotations": "- Process completed with exit code 1.",
+              "logs": "Job `checks`, failing step: `scripts/check.sh`\nFAIL /demo/live: no entry"}],
+            "3f8e16f1")
+        self.assertIn("FAIL /demo/live: no entry", body)
+        self.assertIn("failing step: `scripts/check.sh`", body)
+        self.assertNotIn("exit code 1", body)
+
+    def test_first_ci_failure_posts_the_log(self):
+        gh = RecGH(failed=[{"name": "ci-gate", "annotations": "- exit code 1",
+                            "logs": "FAIL /demo/live: no entry"}])
+        tick, _ = make_tick(gh)
+        tick.start_qa([pr_item(5, "needs-qa")], [])
+        self.assertIn("FAIL /demo/live: no entry", gh.has("comment", 5)[0][2])
+        self.assertIn(("status", 5, "status:changes-requested", ("needs-qa",)), gh.events)
+
+    def test_same_commit_failing_again_reruns_once_then_blocks(self):
+        from datetime import datetime, timezone
+        from unittest import mock
+        gh = RecGH(failed=[{"name": "ci-gate", "annotations": "x", "logs": "FAIL"}])
+        gh.comments_by[5] = [{"body": d.make_marker({"kind": "feedback", "source": "ci", "sha": "sha5"}),
+                              "_trusted": True, "created_at": "2026-11-01T21:00:00Z"}]
+        tick, _ = make_tick(gh)
+        tick.start_qa([pr_item(5, "needs-qa")], [])
+        self.assertEqual(gh.has("rerun"), [("rerun", "sha5")])
+        self.assertEqual(gh.has("status", 5), [])  # not sent back a second time
+        gh.comments_by[5].append({"body": d.make_marker({"kind": "ci-retry", "sha": "sha5"}),
+                                  "_trusted": True, "created_at": "2026-11-01T21:05:00Z"})
+        with mock.patch.object(d, "_now", lambda: datetime(2026, 11, 1, 21, 10, tzinfo=timezone.utc)):
+            tick.start_qa([pr_item(5, "needs-qa")], [])  # re-run has not reported yet
+        self.assertEqual(gh.has("status", 5), [])
+        with mock.patch.object(d, "_now", lambda: datetime(2026, 11, 1, 21, 30, tzinfo=timezone.utc)):
+            tick.start_qa([pr_item(5, "needs-qa")], [])
+        self.assertIn(("status", 5, "status:blocked", ("needs-qa",)), gh.events)
+        self.assertEqual(len(gh.has("rerun")), 1)
+
+    def test_failed_rerun_blocks_with_reason(self):
+        gh = RecGH(failed=[{"name": "ci-gate", "annotations": "x", "logs": "FAIL"}])
+        gh.comments_by[5] = [{"body": d.make_marker({"kind": "feedback", "source": "ci", "sha": "sha5"}),
+                              "_trusted": True}]
+        gh.rerun_ok = RuntimeError("GitHub POST /x -> 403: Resource not accessible")
+        tick, _ = make_tick(gh)
+        tick.start_qa([pr_item(5, "needs-qa")], [])
+        self.assertIn(("status", 5, "status:blocked", ("needs-qa",)), gh.events)
+        self.assertIn("could not re-run it", gh.has("comment", 5)[-1][2])
+
+
+class EmptyFixRun(unittest.TestCase):
+    """A fix run that ends at the PR head: no push, not an attempt, no repeat of the same feedback."""
+
+    def run_finish(self, gh, feedback_source, run_sha):
+        from unittest import mock
+        gh.comments_by[105] = [{"body": d.make_marker({"kind": "dev", "task_id": "T1",
+                                                       "role": "frontend-dev", "fix": True}),
+                                "_trusted": True}]
+        gh.comments_by[5] = [{"body": d.make_marker({"kind": "feedback", "source": feedback_source,
+                                                     "sha": "sha5"}), "_trusted": True}]
+        tick, _ = make_tick(gh)
+        git_calls = []
+
+        def fake_git(cwd, *args, token=None):
+            git_calls.append(args)
+            return run_sha if args[0] == "rev-parse" else ""
+
+        with mock.patch.object(d, "git", fake_git):
+            tick.finish_dev_runs([issue(105, ["status:in-progress", "agent:frontend-dev"])],
+                                 [pr_item(5, "status:changes-requested")], {"T1": {"status": "completed"}})
+        return git_calls
+
+    def test_no_commits_after_ci_feedback_goes_back_to_ci_without_push(self):
+        gh = RecGH()
+        git_calls = self.run_finish(gh, "ci", "sha5")
+        self.assertFalse(any(a[0] == "push" for a in git_calls))
+        note = gh.has("comment", 105)[0][2]
+        self.assertIn("made no commits", note)
+        self.assertIn('"commits": false', note)
+        self.assertIn(("status", 5, "needs-qa", ("status:changes-requested",)), gh.events)
+        self.assertEqual(gh.has("status", 5)[0][2], "needs-qa")
+
+    def test_no_commits_after_qa_feedback_is_flagged_now(self):
+        gh = RecGH()
+        self.run_finish(gh, "qa", "sha5")
+        self.assertIn(("status", 5, "status:blocked", ("status:changes-requested",)), gh.events)
+
+    def test_run_with_commits_is_pushed_as_before(self):
+        gh = RecGH()
+        git_calls = self.run_finish(gh, "ci", "other")
+        self.assertTrue(any(a[0] == "push" for a in git_calls))
+        self.assertIn(("status", 5, "needs-qa", ("status:changes-requested", "status:qa-passed")), gh.events)
+
+
+class QASpecManual(unittest.TestCase):
+    def test_manual_items_are_notes_in_the_qa_spec(self):
+        text = d.qa_spec({"number": 1, "title": "t"}, {"number": 2, "body": "x"})
+        self.assertIn("manual", text)
+        self.assertIn("never makes the verdict fail", text)
+
+    def test_qa_prompt_says_manual_items_are_not_blockers(self):
+        prompt = (Path(__file__).resolve().parents[3] / ".kiro/agents/prompts/qa.md").read_text()
+        self.assertIn("manual", prompt)
+        self.assertIn("never makes the verdict `fail`", prompt)
 
 
 if __name__ == "__main__":
