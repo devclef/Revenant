@@ -71,6 +71,20 @@ export type CeremonyRootProps = {
 };
 
 /**
+ * The index of the Stage heading to focus, given the tag names of the region's
+ * headings in document order. The newest Stage is the last heading, so the
+ * index of the last `h1` or `h2`, or -1 when the region has none. Pure, so the
+ * focus rule is testable without a DOM.
+ */
+export function stageHeadingIndex(tagNames: readonly string[]): number {
+  for (let index = tagNames.length - 1; index >= 0; index -= 1) {
+    const tag = tagNames[index];
+    if (tag === "h1" || tag === "h2") return index;
+  }
+  return -1;
+}
+
+/**
  * The Ceremony root. Provides the local-view and live-region contexts to the
  * region and the views beneath it, then renders the region itself. The
  * local-view provider's initial value is `DEFAULT_LOCAL_VIEW`, so the first
@@ -119,13 +133,24 @@ function CeremonyRegion({
   // The live line for this Stage (R3.1). One short, neutral sentence.
   const liveLine = CEREMONY_COPY.stageLive[stage];
 
-  // Move focus to the region whenever the step changes (R9.6). The region is a
-  // -1 tab stop, so this focuses it programmatically without adding it to the
-  // normal tab order. Runs after mount only, so server and first render match.
+  // Move focus when the view or the Stage changes (R9.6, R11, the Stage heading
+  // rule). The target is the newest heading in the region, so each Stage lands
+  // the reader on its own `<h1>`/`<h2>`. A view without a heading (the envelope,
+  // the loading statement) takes the region itself. Runs after mount only, so
+  // server and first render match. The effect reads the DOM only.
   const regionRef = useRef<HTMLDivElement>(null);
   useEffect(() => {
-    regionRef.current?.focus();
-  }, [state.tag]);
+    const region = regionRef.current;
+    if (region === null) return;
+    const headings = Array.from(region.querySelectorAll<HTMLElement>("h1, h2"));
+    const index = stageHeadingIndex(headings.map((heading) => heading.tagName.toLowerCase()));
+    const target = index < 0 ? region : headings[index];
+    if (target === undefined) return;
+    if (target !== region && !target.hasAttribute("tabindex")) {
+      target.tabIndex = -1;
+    }
+    target.focus();
+  }, [state.tag, stage]);
 
   // The Calm control toggles motion off/on; its label flips with the mode.
   const calmLabel =

@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback } from "react";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV1 } from "@/lib/recall";
 import { RememberedAnswers } from "./RememberedAnswers";
@@ -46,12 +46,9 @@ const NO_EDIT = () => undefined;
  * revealed stage fades in over 600 ms and instantly under reduced motion (the
  * CSS keyframe and the reduced-motion block live in reveal.module.css, R9.5).
  *
- * Focus (R9.6, accessibility): when a stage is newly revealed by forward
- * movement, focus moves to that stage's `<h2>` so a keyboard or screen-reader
- * user lands on the fresh content. The effect fires only on an increase in
- * `stage` (never on a re-render at the same stage), and only for the stage the
- * reveal just reached, so "Show everything" lands focus on the last stage it
- * opened.
+ * Focus (R9.6, accessibility): `CeremonyRoot` moves focus to the newest Stage
+ * heading whenever the Stage changes, so this component holds no focus code.
+ * "Show everything" therefore lands focus on stage 3's heading.
  *
  * Pacing is driven only by the judge, never by a timer (R9.1): stage 1 is paced
  * by the seal break (hold or button), stage 2's `stage2Next` button dispatches
@@ -90,26 +87,6 @@ export function Reveal({
   // up to CeremonyRoot, so `stageFor(state, local)` resolves `seal` while a
   // break is in progress and `marks` otherwise (design.md "Stage resolution").
   const { localView, setLocalView } = useLocalView();
-
-  // The containers for stages 2 and 3; focus moves to the heading inside the
-  // stage the reveal just reached.
-  const stage2Ref = useRef<HTMLDivElement>(null);
-  const stage3Ref = useRef<HTMLDivElement>(null);
-
-  // Track the previous stage so focus only moves on forward movement, not on a
-  // re-render at the same stage.
-  const prevStage = useRef<1 | 2 | 3>(stage);
-  useEffect(() => {
-    const previous = prevStage.current;
-    prevStage.current = stage;
-    if (stage <= previous) return;
-
-    // Focus the heading of the furthest stage now revealed. "Show everything"
-    // jumps straight to 3, so it lands on stage 3's heading.
-    const container = stage >= 3 ? stage3Ref.current : stage2Ref.current;
-    const heading = container?.querySelector<HTMLHeadingElement>("h2");
-    heading?.focus();
-  }, [stage]);
 
   // Report the seal-break's in-progress flag up to the local view so the
   // Ceremony Stage reads `seal` while holding and settles back to `marks`.
@@ -181,7 +158,7 @@ export function Reveal({
       </div>
 
       {stage >= 2 ? (
-        <div ref={stage2Ref} className={`${styles.stage} ${styles.fade}`}>
+        <div className={`${styles.stage} ${styles.fade}`}>
           <StagePanel>
             <InkLetter opened={opened} personaName={personaName} />
           </StagePanel>
@@ -189,7 +166,7 @@ export function Reveal({
       ) : null}
 
       {stage >= 3 ? (
-        <div ref={stage3Ref} className={`${styles.stage} ${styles.fade}`}>
+        <div className={`${styles.stage} ${styles.fade}`}>
           <ThenNowSequence entries={thenNowEntries}>
             <StagePanel>
               <FiguresThenNow opened={opened} record={record} />

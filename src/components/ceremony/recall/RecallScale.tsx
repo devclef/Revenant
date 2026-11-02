@@ -68,7 +68,8 @@ export type RecallScaleProps = {
   readOnly?: boolean;
   /**
    * Text placed before the value in the spoken value, for example "Your answer".
-   * Used only when the Mark is shown. It is not drawn on screen.
+   * Used only when the Mark is shown, in edit and read-only mode alike. It is
+   * not drawn on screen.
    */
   spokenPrefix?: string;
 };
@@ -206,8 +207,11 @@ export function RecallScale({
   const markPosition = positionInWindow(base, win);
   const readout = !noAnswer && shownValue !== null ? readoutText(shownValue) : "";
   const markText = hasMark ? `${readout} ${unitLabel}` : CEREMONY_COPY.recallNoMarkYet;
+  // The Mark is announced as the judge's answer, not as a position: with a
+  // prefix ("Your answer") the spoken value is the answer and its unit. The
+  // prefix applies in edit and read-only mode alike (R11, Mark wording).
   const spokenValue =
-    hasMark && readOnly && spokenPrefix !== undefined
+    hasMark && spokenPrefix !== undefined
       ? `${spokenPrefix}: ${markText}`
       : markText;
 
@@ -305,6 +309,17 @@ export function RecallScale({
     setLevel(0);
   }
 
+  // The plain control for the hold-still zoom (R11, every gesture has a
+  // control). It zooms one level around the current value, the same step the
+  // dwell takes, so a keyboard or pointer user who does not hold still still
+  // reaches each zoom level. Shown only while the judge can edit the Mark.
+  function lookCloser() {
+    if (level >= 2) return;
+    setLevel((level + 1) as ZoomLevel);
+    setAnchor(base);
+  }
+  const canLookCloser = !readOnly && hasMark && level < 2;
+
   const ariaValueNow = Math.round(positionOf(base) * 1000);
 
   return (
@@ -363,6 +378,14 @@ export function RecallScale({
           <span className={styles.endEnd}>{toPlainDecimal(win.max)}</span>
         </div>
       )}
+
+      {canLookCloser ? (
+        <div className={styles.zoomRow}>
+          <button type="button" className={styles.wholeScale} onClick={lookCloser}>
+            {CEREMONY_COPY.recallLookCloser}
+          </button>
+        </div>
+      ) : null}
 
       {level > 0 ? (
         <div className={styles.zoomRow}>

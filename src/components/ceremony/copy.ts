@@ -69,6 +69,9 @@ export const CEREMONY_COPY = {
   /** Hint shown while the scale is zoomed in. */
   recallZoomHint: "Hold still to look closer.",
 
+  /** The plain control that zooms in on the Mark without a pointer hold. */
+  recallLookCloser: "Look closer at the mark",
+
   /** The control that returns the scale to its full width. */
   recallWholeScale: "Show the whole scale",
 
