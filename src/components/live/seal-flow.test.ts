@@ -225,7 +225,8 @@ describe("a cancelled prompt offers Try again and keeps the letter (R15.7)", () 
     expect(h.api.seal).not.toHaveBeenCalled();
     expect(state.tag).toBe("cancelled");
     // "Try again" restarts from the Create_Press: the reducer goes back to the
-    // write step, where the typed letter and chosen series still live.
+    // write step. The letter, the chosen figures and the warning tick are held
+    // by SealPage (write-draft.ts), not by the flow, so they are still there.
     const afterRetry = sealReducer(state, { type: "RETRY" });
     expect(afterRetry.tag).toBe("write");
     expect(LIVE_COPY.tryAgain).toBe("Try again");

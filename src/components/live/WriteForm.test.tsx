@@ -31,7 +31,12 @@ function formProps(over: Partial<WriteFormProps> = {}): WriteFormProps {
     cryptoLoaded: true,
     onCreatePress: () => {},
     onConfirmPress: () => {},
-    onDraftChange: () => {},
+    text: "",
+    metricIds: [],
+    warningTicked: false,
+    onTextChange: () => {},
+    onToggleFigure: () => {},
+    onWarningChange: () => {},
     ...over,
   };
 }

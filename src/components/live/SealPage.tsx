@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef } from "react";
+import { useMemo, useReducer } from "react";
 
 import { DEMO_FIGURES } from "@/lib/figures/demo";
 import type { LoadedFigures } from "@/lib/figures";
@@ -12,7 +12,8 @@ import { SealFailure } from "./SealFailure";
 import type { AuthenticatorPort, SealDeps, SealDraft } from "./seal-runner";
 import { useCryptoModule } from "./useCryptoModule";
 import { useSealFlow } from "./useSealFlow";
-import { WriteForm, type WriteDraft } from "./WriteForm";
+import { WriteForm } from "./WriteForm";
+import { INITIAL_WRITE_DRAFT, reduceWriteDraft } from "./write-draft";
 
 /** The figures on offer, computed once from the demo figure file. */
 const PICKABLE = listPickableSeries(DEMO_FIGURES);
@@ -55,12 +56,13 @@ export interface SealPageProps {
 export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
   const crypto = useCryptoModule();
 
-  // The letter text and chosen figures as the form holds them now. Read at
-  // Confirm_Press time, so the draft is the one on screen at that moment.
-  const writeDraft = useRef<WriteDraft>({ text: "", metricIds: [] });
-  function onDraftChange(next: WriteDraft): void {
-    writeDraft.current = next;
-  }
+  // The letter text, chosen figures and warning tick. The page holds them, not
+  // WriteForm, so they survive the cancelled, failed and cannot_lock screens and
+  // Try again shows them again. No passkey or key material is kept here.
+  const [writeDraft, dispatchDraft] = useReducer(
+    reduceWriteDraft,
+    INITIAL_WRITE_DRAFT,
+  );
 
   // SealDeps for the runner, built once the crypto module is loaded. Null until
   // then, which keeps the flow's presses disabled.
@@ -75,11 +77,16 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
     };
   }, [crypto, deps?.port, deps?.api, deps?.nowMs, rpId]);
 
-  const draft: SealDraft = {
-    text: writeDraft.current.text,
-    metricIds: writeDraft.current.metricIds,
-    figures: deps?.figures ?? DEMO_FIGURES,
-  };
+  // The flow reads the draft at Confirm_Press; memoised so the handlers keep
+  // their identity while the form is unchanged.
+  const draft: SealDraft = useMemo(
+    () => ({
+      text: writeDraft.text,
+      metricIds: writeDraft.metricIds,
+      figures: deps?.figures ?? DEMO_FIGURES,
+    }),
+    [writeDraft.text, writeDraft.metricIds, deps?.figures],
+  );
 
   const flow = useSealFlow(sealDeps, draft);
   const { state } = flow;
@@ -116,9 +123,20 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
             series={PICKABLE}
             state={state}
             cryptoLoaded={crypto !== null}
+            text={writeDraft.text}
+            metricIds={writeDraft.metricIds}
+            warningTicked={writeDraft.warningTicked}
+            onTextChange={(text) =>
+              dispatchDraft({ type: "TEXT_CHANGED", text })
+            }
+            onToggleFigure={(metricId) =>
+              dispatchDraft({ type: "FIGURE_TOGGLED", metricId })
+            }
+            onWarningChange={(ticked) =>
+              dispatchDraft({ type: "WARNING_CHANGED", ticked })
+            }
             onCreatePress={flow.onCreatePress}
             onConfirmPress={flow.onConfirmPress}
-            onDraftChange={onDraftChange}
           />
         );
     }

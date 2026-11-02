@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
-
 import { DemoLabel } from "@/components/demo/DemoLabel";
 
 import type { PickableSeries } from "./catalogue-list";
@@ -13,12 +11,6 @@ import styles from "./live.module.css";
 import type { SealState } from "./seal-machine";
 import { StepStatus } from "./StepStatus";
 
-/** The letter text and chosen figures the form holds, lifted to the page. */
-export interface WriteDraft {
-  text: string;
-  metricIds: string[];
-}
-
 export interface WriteFormProps {
   /** The figures the visitor can pick from. */
   series: readonly PickableSeries[];
@@ -26,12 +18,22 @@ export interface WriteFormProps {
   state: SealState;
   /** True once useCryptoModule() has loaded the crypto module (R15.3). */
   cryptoLoaded: boolean;
+  /** The letter text, held by the page (controlled). */
+  text: string;
+  /** The chosen figure IDs, held by the page (controlled). */
+  metricIds: string[];
+  /** Whether the warning box is ticked, held by the page (controlled). */
+  warningTicked: boolean;
+  /** The visitor typed in the letter. */
+  onTextChange: (text: string) => void;
+  /** The visitor picked or unpicked a figure. */
+  onToggleFigure: (metricId: string) => void;
+  /** The visitor ticked or unticked the warning box. */
+  onWarningChange: (ticked: boolean) => void;
   /** The Create_Press: starts the first passkey prompt. */
   onCreatePress: () => void;
   /** The Confirm_Press: starts the second prompt and the seal. */
   onConfirmPress: () => void;
-  /** Reports the current letter text and chosen figures to the page. */
-  onDraftChange: (draft: WriteDraft) => void;
 }
 
 /** The message shown for each write problem that the form renders. */
@@ -57,19 +59,15 @@ export function WriteForm({
   series,
   state,
   cryptoLoaded,
+  text,
+  metricIds,
+  warningTicked,
+  onTextChange,
+  onToggleFigure,
+  onWarningChange,
   onCreatePress,
   onConfirmPress,
-  onDraftChange,
 }: WriteFormProps) {
-  const [text, setText] = useState("");
-  const [metricIds, setMetricIds] = useState<string[]>([]);
-  const [warningTicked, setWarningTicked] = useState(false);
-
-  // Report the draft to the page, so Confirm_Press reads the text on screen.
-  useEffect(() => {
-    onDraftChange({ text, metricIds });
-  }, [text, metricIds, onDraftChange]);
-
   const letterCount = countCodePoints(text);
   const problems = validateWrite({ text, metricIds, warningTicked });
   const atLimit = metricIds.length >= MAX_FIGURES;
@@ -80,16 +78,6 @@ export function WriteForm({
   }
   const letterProblem =
     problemText("letter_empty") || problemText("letter_too_long");
-
-  function toggleFigure(metricId: string): void {
-    setMetricIds((current) => {
-      if (current.includes(metricId)) {
-        return current.filter((id) => id !== metricId);
-      }
-      if (current.length >= MAX_FIGURES) return current;
-      return [...current, metricId];
-    });
-  }
 
   // In `created` the button confirms the passkey; everywhere else it creates
   // one. Create is blocked while the write input is invalid; Confirm is not,
@@ -126,7 +114,7 @@ export function WriteForm({
           rows={10}
           value={text}
           aria-describedby="live-letter-count live-letter-problem"
-          onChange={(event) => setText(event.target.value)}
+          onChange={(event) => onTextChange(event.target.value)}
         />
         <p id="live-letter-count" className={styles.count}>
           {LIVE_COPY.letterCount.replace("{count}", String(letterCount))}
@@ -140,7 +128,7 @@ export function WriteForm({
         series={series}
         selected={metricIds}
         atLimit={atLimit}
-        onToggle={toggleFigure}
+        onToggle={onToggleFigure}
       />
       <p id="live-figures-problem" className={styles.problem}>
         {problemText("figures_none")}
@@ -160,7 +148,7 @@ export function WriteForm({
             className={styles.checkbox}
             checked={warningTicked}
             aria-describedby="live-warning-problem"
-            onChange={(event) => setWarningTicked(event.target.checked)}
+            onChange={(event) => onWarningChange(event.target.checked)}
           />
           <span>{LIVE_COPY.warningLabel}</span>
         </label>
