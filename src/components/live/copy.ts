@@ -27,6 +27,7 @@ export const LIVE_COPY = {
   figuresHint:
     "Choose between 1 and 6. Each is sealed as published, with its period and source.",
   figureLatest: "Latest period: {period}",
+  fixtureLabel: "fixture data",
   passkeySteps:
     'Your device will ask for the passkey twice. Each time, you press a button first. The passkey will be named "Revenant demo" in your passkey manager.',
   crossDevice:

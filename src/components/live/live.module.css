@@ -1,0 +1,244 @@
+/*
+ * Styles for the live Seal_Page (spec 06, design.md "Seal_Page").
+ *
+ * The paper panel sets its own --ink and --ink-soft, so its text never inherits
+ * a colour from another surface. The values match the globals.css tokens for
+ * paper (#f4ecd8): --ink 13.17:1 and --ink-soft 9.58:1 on --paper.
+ *
+ * Colour carries no direction. Figures and changes get the same treatment. The
+ * wax-seal red is used only on the primary button and the warning border
+ * (neutrality.md, tone.md).
+ */
+
+.panel {
+  --ink: #1f1b16;
+  --ink-soft: #3a332a;
+  position: relative;
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  color: var(--ink);
+  background-color: var(--paper);
+  border: 1px solid var(--gold-leaf);
+  border-radius: 4px;
+  font-family: var(--font-serif);
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
+.heading {
+  margin: 0.75rem 0 0.5rem;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+.intro,
+.explain p,
+.warning p {
+  margin: 0 0 1rem;
+  color: var(--ink);
+}
+
+.field {
+  margin: 1.5rem 0;
+}
+
+.label,
+.legend {
+  display: block;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.hint {
+  margin: 0.25rem 0 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+
+.textarea {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 10rem;
+  padding: 0.75rem;
+  font-family: var(--font-serif);
+  /* 16px or more stops mobile browsers zooming on focus. */
+  font-size: 1rem;
+  line-height: 1.5;
+  color: var(--ink);
+  background-color: var(--paper);
+  border: 1px solid var(--ink-soft);
+  border-radius: 3px;
+  resize: vertical;
+}
+
+.count {
+  margin: 0.375rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: var(--ink-soft);
+}
+
+.problem {
+  margin: 0.375rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  color: var(--ink);
+}
+
+.problem:empty {
+  display: none;
+}
+
+.figures {
+  min-width: 0;
+  margin: 1.5rem 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  padding-bottom: 0.25rem;
+}
+
+.figureList {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.figureItem {
+  border: 1px solid var(--ink-soft);
+  border-radius: 3px;
+  background-color: var(--paper-deep);
+}
+
+.figureLabel {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  row-gap: 0.125rem;
+  column-gap: 0.75rem;
+  align-items: start;
+  min-height: 44px;
+  padding: 0.75rem;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  color: var(--ink);
+}
+
+.checkbox {
+  grid-row: 1 / span 4;
+  width: 1.375rem;
+  height: 1.375rem;
+  min-width: 1.375rem;
+  margin: 0.125rem 0 0;
+  accent-color: var(--ink-soft);
+}
+
+.figureName {
+  grid-column: 2;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.figureMeta {
+  grid-column: 2;
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
+
+.fixture {
+  grid-column: 2;
+  justify-self: start;
+  margin-top: 0.25rem;
+  padding: 0.125rem 0.5rem;
+  font-size: 0.8125rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  border: 1px solid var(--ink-soft);
+  border-radius: 3px;
+}
+
+.explain {
+  margin: 1.5rem 0;
+  font-size: 1rem;
+}
+
+.warning {
+  margin: 1.5rem 0;
+  padding: 1rem;
+  border: 1px solid var(--seal);
+  border-radius: 3px;
+  background-color: var(--paper-deep);
+}
+
+.warning p {
+  font-weight: 600;
+}
+
+.warningLabel {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  min-height: 44px;
+  font-family: var(--font-sans);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.warningLabel .checkbox {
+  margin-top: 0.125rem;
+}
+
+.actions {
+  margin-top: 1.5rem;
+}
+
+.primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.75rem 1.5rem;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--paper);
+  background-color: var(--seal);
+  border: 1px solid var(--seal);
+  border-radius: 3px;
+  cursor: pointer;
+}
+
+.primary:disabled {
+  color: var(--ink-soft);
+  background-color: var(--paper-deep);
+  border: 1px dashed var(--ink-soft);
+  cursor: not-allowed;
+}
+
+.primary:focus-visible,
+.textarea:focus-visible,
+.figureLabel:focus-within,
+.warningLabel:focus-within {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.status {
+  margin: 0.75rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  color: var(--ink-soft);
+}
