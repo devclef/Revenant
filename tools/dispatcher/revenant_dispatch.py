@@ -30,6 +30,7 @@ import sys
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Callable
 
@@ -50,6 +51,11 @@ REQUIRED_CHECKS = ("ci-gate", "policy")
 POLICY_SIZE_ERROR = "changed lines is over the"
 MARKER = "revenant-dispatch"
 MAX_ANNOTATIONS = 30
+CI_WORKFLOW = "ci"  # the workflow name in ci.yml; its jobs hold the real failure logs
+LOG_TAIL_LINES = 60
+LOG_MAX_CHARS = 3000
+# A CI re-run gets this long to report before the same failure is treated as final.
+CI_RETRY_WAIT = timedelta(minutes=10)
 
 L_READY, L_PROGRESS, L_REVIEW, L_BLOCKED = (
     "status:ready", "status:in-progress", "status:in-review", "status:blocked")
@@ -243,6 +249,9 @@ def qa_spec(pr: dict, issue: dict) -> str:
         "- Write the verdict in exactly the JSON shape given in qa.md and commit it.",
         "- File ownership and size are enforced by the `policy` CI check, which has "
         "already passed. Don't raise path-ownership findings.",
+        "- A ticket item marked manual (for example a manual Lighthouse run, or a "
+        "\"manual\" check) is a note, not a blocker. Report it as a minor finding "
+        "saying the owner must do it; it never makes the verdict fail.",
         "",
         "## Acceptance criteria",
         "- `.qa/verdict.json` exists, is valid JSON, and has `verdict` of `pass` or `fail`.",
@@ -352,18 +361,107 @@ def format_annotations(annotations: list[dict], fallback: str = "") -> str:
 
 
 def ci_failure_comment(failed: list[dict], sha: str) -> str:
-    """Feedback for the fix agent. Names every failed check with its annotations.
-    check.sh covers ci-gate only; policy is checked server-side, so say so."""
+    """Feedback for the fix agent. Names every failed check. For ci-gate it quotes the
+    failing job logs (the gate only says it exited 1). check.sh covers ci-gate only;
+    policy is checked server-side, so say so."""
     names = ", ".join(f"`{f['name']}`" for f in failed)
     lines = [f"**CI failed** ({names} on {sha[:7]})."]
     for f in failed:
-        lines += ["", f"`{f['name']}` failed:", f["annotations"]]
+        if "logs" in f:
+            lines += ["", f"`{f['name']}` failed. The end of the failing job log:", "",
+                      "````text", f["logs"].replace("````", "``` `"), "````"]
+        else:
+            lines += ["", f"`{f['name']}` failed:", f["annotations"]]
     if any(f["name"] == CI_CHECK for f in failed):
         lines += ["", "Run `bash scripts/check.sh` and fix the failing step."]
     if any(f["name"] != CI_CHECK for f in failed):
         lines += ["", "`bash scripts/check.sh` does not run the other checks; "
                       "fix what the annotations above say."]
     return "\n".join(lines)
+
+
+_ANSI_RE = re.compile(r"\x1b\[[0-9;?]*[A-Za-z]")
+_JOB_STEP_PREFIX_RE = re.compile(r"^[^\t]*\t[^\t]*\t")  # "job<TAB>step<TAB>" in run-log downloads
+_TIMESTAMP_RE = re.compile(r"^\d{4}-\d\d-\d\dT[\d:.]+Z ?")
+
+
+def log_tail(text: str) -> str:
+    """The failing end of a job log: every ##[error] or FAIL line (newest 10), then the last
+    LOG_TAIL_LINES lines. Timestamps, colour codes and the job/step prefix are removed.
+    The error lines are kept whole; the oldest tail lines are dropped to fit LOG_MAX_CHARS."""
+    lines = []
+    for raw in (text or "").splitlines():
+        line = _TIMESTAMP_RE.sub("", _JOB_STEP_PREFIX_RE.sub("", _ANSI_RE.sub("", raw), count=1)).rstrip()
+        if line.strip():
+            lines.append(line)
+    errors = [l for l in lines if "##[error]" in l or l.lstrip().startswith("FAIL")][-10:]
+    seen: set[str] = set()
+    head = []
+    for line in errors:
+        if line not in seen:
+            seen.add(line)
+            head.append(line)
+    tail = [l for l in lines[-LOG_TAIL_LINES:] if l not in seen]
+    # Keep the error lines whole and drop the oldest tail lines until the text fits.
+    while tail and len("\n".join(head + tail)) > LOG_MAX_CHARS:
+        tail.pop(0)
+    body = "\n".join(head + tail) or "(the log was empty)"
+    if len(body) > LOG_MAX_CHARS:
+        body = body[-LOG_MAX_CHARS:]
+    return body
+
+
+def failed_steps(job: dict) -> str:
+    names = [s.get("name", "?") for s in job.get("steps", []) if s.get("conclusion") == "failure"]
+    return ", ".join(f"`{n}`" for n in names) or "not recorded"
+
+
+def fix_attempts(comments: list[dict]) -> int:
+    """Fix runs that count against MAX_FIX_ATTEMPTS: fix runs started, minus those that
+    ended with no new commits. A run that ends empty leaves a dev-result marker with
+    commits: false, written by the dispatcher on the issue."""
+    started, empty = [], set()
+    for c in comments:
+        if not c.get("_trusted"):
+            continue
+        for m in _MARKER_RE.finditer(c.get("body") or ""):
+            try:
+                data = json.loads(m.group(1))
+            except ValueError:
+                continue
+            if data.get("kind") == "dev" and data.get("fix") is True:
+                started.append(data.get("task_id"))
+            elif data.get("kind") == "dev-result" and data.get("commits") is False:
+                empty.add(data.get("task_id"))
+    return sum(1 for t in started if t not in empty)
+
+
+def marker_comments(comments: list[dict], kind: str, sha: str) -> list[dict]:
+    """Trusted comments carrying a marker of this kind for this commit."""
+    out = []
+    for c in comments:
+        if not c.get("_trusted"):
+            continue
+        for m in _MARKER_RE.finditer(c.get("body") or ""):
+            try:
+                data = json.loads(m.group(1))
+            except ValueError:
+                continue
+            if data.get("kind") == kind and data.get("sha") == sha:
+                out.append(c)
+                break
+    return out
+
+
+def _now() -> datetime:
+    return datetime.now(timezone.utc)
+
+
+def parse_github_time(text: str | None) -> datetime | None:
+    try:
+        return datetime.strptime(text or "", "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
 
 
 def http_reason(exc: Exception) -> str:
@@ -388,6 +486,13 @@ def branch_for(issue_number: int, role: str) -> str:
 
 # ── GitHub ───────────────────────────────────────────────────────────────────
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    """Return the redirect response itself instead of following it."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: ARG002
+        return None
+
+
 class GitHub:
     def __init__(self, token: str, repo: str = REPO):
         self.token, self.repo = token, repo
@@ -396,12 +501,7 @@ class GitHub:
     def call(self, method: str, path: str, body: Any = None) -> Any:
         url = path if path.startswith("https://") else f"https://api.github.com{path}"
         data = json.dumps(body).encode() if body is not None else None
-        req = urllib.request.Request(url, data=data, method=method, headers={
-            "Authorization": f"Bearer {self.token}",
-            "Accept": "application/vnd.github+json",
-            "X-GitHub-Api-Version": "2022-11-28",
-            "User-Agent": "revenant-dispatcher",
-        })
+        req = urllib.request.Request(url, data=data, method=method, headers=self._headers())
         try:
             with urllib.request.urlopen(req, timeout=30) as resp:
                 raw = resp.read()
@@ -409,6 +509,32 @@ class GitHub:
         except urllib.error.HTTPError as exc:
             detail = exc.read().decode(errors="replace")[:300]
             raise RuntimeError(f"GitHub {method} {path} -> {exc.code}: {detail}") from None
+
+    def _headers(self) -> dict[str, str]:
+        return {
+            "Authorization": f"Bearer {self.token}",
+            "Accept": "application/vnd.github+json",
+            "X-GitHub-Api-Version": "2022-11-28",
+            "User-Agent": "revenant-dispatcher",
+        }
+
+    def text(self, path: str) -> str:
+        """Plain-text body (job logs). The API answers 302 to a signed download URL. That URL
+        must not get the token: the storage host rejects it, so the redirect is followed by hand."""
+        url = path if path.startswith("https://") else f"https://api.github.com{path}"
+        opener = urllib.request.build_opener(_NoRedirect)
+        try:
+            opener.open(urllib.request.Request(url, headers=self._headers()), timeout=60)
+            raise RuntimeError(f"GitHub GET {path} -> no redirect to the log")
+        except urllib.error.HTTPError as exc:
+            location = exc.headers.get("Location")
+            if exc.code not in (301, 302, 307, 308) or not location:
+                raise RuntimeError(f"GitHub GET {path} -> {exc.code}: log not available") from None
+        try:
+            with urllib.request.urlopen(urllib.request.Request(location), timeout=60) as resp:
+                return resp.read().decode(errors="replace")
+        except urllib.error.HTTPError as exc:
+            raise RuntimeError(f"log download -> {exc.code}: log not available") from None
 
     def r(self, path: str) -> str:
         return f"/repos/{self.repo}{path}"
@@ -467,7 +593,8 @@ class GitHub:
         return "pending" if "pending" in states else "success"
 
     def failed_checks(self, sha: str) -> list[dict]:
-        """Required checks that failed on a commit, with their annotations."""
+        """Required checks that failed on a commit. ci-gate also carries the failing job
+        logs, because its own annotation is only "exit code 1"."""
         out = []
         for name in REQUIRED_CHECKS:
             runs = self.call("GET", self.r(f"/commits/{sha}/check-runs?check_name={name}")).get("check_runs", [])
@@ -476,8 +603,39 @@ class GitHub:
             latest = max(runs, key=lambda c: c.get("started_at") or "")
             anns = self.call("GET", self.r(f"/check-runs/{latest['id']}/annotations")) or []
             fallback = (latest.get("output") or {}).get("title") or ""
-            out.append({"name": name, "annotations": format_annotations(anns, fallback)})
+            entry = {"name": name, "annotations": format_annotations(anns, fallback)}
+            if name == CI_CHECK:
+                try:
+                    entry["logs"] = self.ci_failure_logs(sha)
+                except RuntimeError as exc:
+                    entry["logs"] = f"(the failing job logs could not be read: {http_reason(exc)})"
+            out.append(entry)
         return out
+
+    def ci_failure_logs(self, sha: str) -> str:
+        """Failing jobs of the ci workflow on a commit: each job's failing steps and the
+        tail of its log. The gate job itself is skipped; it only restates its needs."""
+        sections = []
+        for run in self.ci_runs(sha, "failure"):
+            jobs = self.call("GET", self.r(f"/actions/runs/{run['id']}/jobs?per_page=100")).get("jobs", [])
+            for job in jobs:
+                if job.get("conclusion") != "failure" or job.get("name") == CI_CHECK:
+                    continue
+                log = log_tail(self.text(self.r(f"/actions/jobs/{job['id']}/logs")))
+                sections.append(f"Job `{job['name']}`, failing step: {failed_steps(job)}\n{log}")
+        return "\n\n".join(sections) or "(no failed job was found for this commit)"
+
+    def ci_runs(self, sha: str, conclusion: str) -> list[dict]:
+        runs = self.call("GET", self.r(f"/actions/runs?head_sha={sha}&per_page=100")).get("workflow_runs", [])
+        return [r for r in runs if r.get("name") == CI_WORKFLOW and r.get("conclusion") == conclusion]
+
+    def rerun_failed_ci(self, sha: str) -> bool:
+        """Re-run only the failed jobs of the ci workflow on a commit. False if there is none."""
+        runs = self.ci_runs(sha, "failure")
+        if not runs:
+            return False
+        self.call("POST", self.r(f"/actions/runs/{runs[0]['id']}/rerun-failed-jobs"))
+        return True
 
 
 # ── Git (dispatcher-owned clones, never the owner's checkout) ────────────────
@@ -656,9 +814,12 @@ class Tick:
                 self.notify(f"Revenant #{n} blocked: run {state}")
                 continue
             branch = branch_for(n, role)
+            pr = next((p for p in prs if closes_issue(p.get("body")) == n), None)
+            if marker.get("fix") and pr is not None and self._no_new_commits(marker["task_id"], pr):
+                self.fix_made_no_commits(issue, pr, marker)
+                continue
             git(DEV_CLONE, "push", "--force-with-lease", "origin",
                 f"kirocrew/task/{marker['task_id']}:refs/heads/{branch}", token=self.token)
-            pr = next((p for p in prs if closes_issue(p.get("body")) == n), None)
             if pr is None:
                 pr = self.gh.call("POST", self.gh.r("/pulls"), {
                     "title": issue["title"], "head": branch, "base": "main",
@@ -672,6 +833,34 @@ class Tick:
                 self.gh.set_status(pr["number"], L_NEEDS_QA, L_CHANGES, L_QA_PASSED)
             self.gh.set_status(n, L_REVIEW, L_PROGRESS)
             self.say(f"#{n}: run passed, PR #{pr['number']} needs QA")
+
+    def _no_new_commits(self, task_id: str, pr: dict) -> bool:
+        """True when the run's branch is still at the PR head, so the run added nothing.
+        If git can't tell, return False: the normal path pushes and QA decides."""
+        head = self.gh.call("GET", self.gh.r(f"/pulls/{pr['number']}"))["head"]["sha"]
+        try:
+            run_sha = git(DEV_CLONE, "rev-parse", f"kirocrew/task/{task_id}", token=self.token)
+        except RuntimeError:
+            return False
+        return run_sha == head
+
+    def fix_made_no_commits(self, issue: dict, pr: dict, marker: dict) -> None:
+        """A fix run that committed nothing. It is not an attempt (the dev-result marker
+        says so). Nothing changed, so repeating the same feedback would only loop:
+        - after QA feedback, the same review would come back, so flag it now;
+        - after CI feedback, start_qa re-runs CI once on the commit, then flags it."""
+        n = issue["number"]
+        self.gh.comment(n, f"Fix run `{marker['task_id']}` for PR #{pr['number']} made no commits. "
+                           "It does not count as a fix attempt.\n\n"
+                           + make_marker({"kind": "dev-result", "task_id": marker["task_id"], "commits": False}))
+        self.gh.set_status(n, L_REVIEW, L_PROGRESS)
+        feedback = latest_marker(self.gh.comments(pr["number"]), "feedback")
+        if feedback and feedback.get("source") == "ci":
+            self.gh.set_status(pr["number"], L_NEEDS_QA, L_CHANGES)
+            self.say(f"#{n}: fix run made no commits; PR #{pr['number']} back to CI")
+        else:
+            self.block_pr(pr, "The fix run made no commits in response to QA feedback, so the same "
+                              "review would come back. Needs a human.")
 
     # 2 ─ QA runs finished → verdict
     def finish_qa_runs(self, prs: list[dict], runs: dict) -> None:
@@ -764,6 +953,38 @@ class Tick:
                 return True
         return False
 
+    def _ci_failure_already_sent(self, pr_number: int, sha: str) -> bool:
+        """The newest feedback on this PR is a CI failure for this same commit."""
+        feedback = latest_marker(self.gh.comments(pr_number), "feedback")
+        return bool(feedback) and feedback.get("source") == "ci" and feedback.get("sha") == sha
+
+    def _retry_ci_or_block(self, pr: dict, sha: str) -> None:
+        """CI failed on a commit we already reported. Re-run the failed jobs once. If the
+        same commit still fails after that re-run, the failure is not going away: flag it."""
+        n = pr["number"]
+        retries = marker_comments(self.gh.comments(n), "ci-retry", sha)
+        if not retries:
+            try:
+                rerun = self.gh.rerun_failed_ci(sha)
+            except RuntimeError as exc:
+                self.block_pr(pr, f"CI failed on {sha[:7]} and the dispatcher could not re-run it: "
+                                  f"{http_reason(exc)}. Needs a human.")
+                return
+            if not rerun:
+                self.block_pr(pr, f"CI failed on {sha[:7]} but no failed ci run was found to re-run. "
+                                  "Needs a human.")
+                return
+            self.gh.comment(n, f"CI failed on {sha[:7]} again. Re-ran the failed jobs once; "
+                               "nothing changed in the code, so the failure is reported as is.\n\n"
+                               + make_marker({"kind": "ci-retry", "sha": sha}))
+            self.say(f"PR #{n}: CI re-run on {sha[:7]}")
+            return
+        posted = parse_github_time(retries[-1].get("created_at"))
+        if posted is not None and _now() - posted < CI_RETRY_WAIT:
+            return  # the re-run has not reported yet
+        self.block_pr(pr, f"CI failed on {sha[:7]} again after a re-run, with no new commit. "
+                          "Needs a human. The failing log is in the CI feedback above.")
+
     def _start_qa_one(self, pr: dict) -> bool:
         issue_n = closes_issue(pr.get("body"))
         if issue_n is None:
@@ -774,6 +995,9 @@ class Tick:
         if ci == "pending":
             return False
         if ci == "failure":
+            if self._ci_failure_already_sent(pr["number"], sha):
+                self._retry_ci_or_block(pr, sha)
+                return False
             failed = self.gh.failed_checks(sha)
             if not failed:
                 return False  # a newer run started in between; look again next tick
@@ -817,8 +1041,7 @@ class Tick:
                 continue
             try:
                 comments = self.gh.comments(issue_n)
-                attempts = sum(1 for c in comments if c.get("_trusted") and '"kind": "dev"' in (c.get("body") or "")
-                               and '"fix": true' in (c.get("body") or ""))
+                attempts = fix_attempts(comments)
                 if attempts >= MAX_FIX_ATTEMPTS:
                     self.gh.set_status(issue_n, L_BLOCKED, L_REVIEW)
                     self.gh.set_status(pr["number"], L_BLOCKED, L_CHANGES)

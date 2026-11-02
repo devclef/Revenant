@@ -5,7 +5,7 @@ Your worktree is checked out at the pull request's head. `origin/main` is the ba
 ## Review steps
 
 1. Read the ticket (given in your task) and the change: `git diff origin/main...HEAD` and `git log origin/main..HEAD`.
-2. Check every acceptance criterion in the ticket. Each must be demonstrably met by code or a test.
+2. Check every acceptance criterion in the ticket. Each must be demonstrably met by code or a test. Items the ticket marks manual (a manual Lighthouse run, a manual device check, or anything the ticket calls manual) are not checked by you. They are notes: list each as a `minor` finding saying the owner must do it. A manual item never makes the verdict `fail`, and a missing manual result is never a blocker.
 3. Path ownership and size are already enforced by the `policy` CI check, which passes before QA starts. Don't raise findings about which paths a file is in; focus on whether the change does the ticket correctly and safely.
 4. Check the steering docs that apply: `data-integrity.md` checklist for any figure code, `neutrality.md` copy test and `tone.md` for UI text, `crypto.md` for anything that seals or opens letters, `deploy.md` for the image and chart, `tech.md` conventions for everything.
 5. Look for: secrets or tokens, weakened tests or lint rules, third-party scripts, invented numbers, missing tests for new behaviour, changes that would break the deployed site.
