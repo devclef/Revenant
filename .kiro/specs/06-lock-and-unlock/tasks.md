@@ -154,7 +154,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
   - Validation: `bash scripts/check.sh`; `npx vitest run src/components/live`
   - _Requirements: R10.3, R15.6, R15.9, R16.5, R22.7_
 
-- [ ] 8. Letter_Page: unlock with passkey or backup key, Opening_Flow additions
+- [x] 8. Letter_Page: unlock with passkey or backup key, Opening_Flow additions
   - Agent: `frontend-dev` · Depends on: 7 · Estimated size: ~1,250 changed lines plus ~800 test lines
   - Before this task: tasks 6 and 7 are on `main`, and so is spec 05 task 9.
   - Scope: `src/app/l/[id]/page.tsx`, `src/app/l/[id]/not-found.tsx`, `src/components/live/LiveLetter.tsx`, `UnlockView.tsx`, `copy.ts`, `live.module.css`, `src/components/reveal/opening-machine.ts`, `useOpeningFlow.ts`, `api.ts`, `unlock.ts`, `OpeningFlow.tsx`, `StillSealed.tsx`, `copy.ts` (only if a string is needed), `src/components/ceremony/stages.ts`, `src/components/ceremony/envelope/EnvelopeView.tsx`, and the `*.test.ts(x)` for each
