@@ -70,7 +70,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
   - Validation: `bash scripts/check.sh`; `npx vitest run src/lib/crypto src/lib/seal-format`
   - _Requirements: R1.5, R7, R8, R9, R10, R11, R22.2_
 
-- [ ] 3. Integration test of the whole server and crypto path
+- [x] 3. Integration test of the whole server and crypto path
   - Agent: `crypto-dev` · Depends on: 1, 2 · Estimated size: ~120 changed lines plus ~300 test lines
   - Before this task: tasks 1 and 2 are on `main`.
   - Scope: `src/test/integration/live-helpers.ts`, `src/test/integration/live-flow.test.ts`
