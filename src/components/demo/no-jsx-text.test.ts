@@ -36,6 +36,7 @@ const srcRoot = resolve(here, "..", "..");
 const scannedDirs = [
   resolve(srcRoot, "components", "demo"),
   resolve(srcRoot, "app", "demo"),
+  resolve(srcRoot, "components", "live"),
 ];
 const ceremonyDir = resolve(srcRoot, "components", "ceremony");
 

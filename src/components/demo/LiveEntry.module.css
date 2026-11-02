@@ -1,0 +1,51 @@
+/*
+ * LiveEntry: the Demo_Index link to the live demo. It sits on the dark desk,
+ * so every text colour is a desk token (--desk-ink, --desk-ink-soft) set on the
+ * desk ancestor. It sets its own colour, so nothing inherits from a paper
+ * surface. Contrast on the desk, the lit pool and the brightest desk value is
+ * checked in src/components/live/contrast.test.ts.
+ */
+
+.entry {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  width: 100%;
+  max-width: 40rem;
+  margin: 0 auto;
+  padding-top: 1rem;
+  border-top: 1px solid var(--desk-ink-soft);
+  box-sizing: border-box;
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--desk-ink);
+}
+
+.body {
+  margin: 0;
+  font-family: var(--font-sans);
+  color: var(--desk-ink-soft);
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 0.5rem 0;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  color: var(--desk-ink);
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--desk-ink);
+  outline-offset: 4px;
+}

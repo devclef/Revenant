@@ -110,6 +110,8 @@
 
 .figureList {
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  min-width: 0;
   gap: 0.5rem;
   margin: 0.75rem 0 0;
   padding: 0;
@@ -117,6 +119,7 @@
 }
 
 .figureItem {
+  min-width: 0;
   border: 1px solid var(--ink-soft);
   border-radius: 3px;
   background-color: var(--paper-deep);
@@ -124,7 +127,8 @@
 
 .figureLabel {
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: auto minmax(0, 1fr);
+  min-width: 0;
   row-gap: 0.125rem;
   column-gap: 0.75rem;
   align-items: start;
@@ -200,6 +204,10 @@
   margin-top: 0.125rem;
 }
 
+.warningLabel span {
+  min-width: 0;
+}
+
 .actions {
   margin-top: 1.5rem;
 }
@@ -208,6 +216,7 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  max-width: 100%;
   min-width: 44px;
   min-height: 44px;
   padding: 0.75rem 1.5rem;
@@ -241,4 +250,24 @@
   font-family: var(--font-sans);
   font-size: 0.9375rem;
   color: var(--ink-soft);
+}
+
+.intro {
+  margin: 0 0 1rem;
+  color: var(--ink);
+}
+
+.backLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  color: var(--ink);
+  text-decoration: underline;
+}
+
+.backLink:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
