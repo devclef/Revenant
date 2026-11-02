@@ -84,7 +84,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
   - Validation: `bash scripts/check.sh`; `npx vitest run src/test/integration/live-flow.test.ts`
   - _Requirements: R6.1, R6.2, R6.6, R22.3_
 
-- [ ] 4. Same-figure change option in computeChange (prerequisite for task 9)
+- [x] 4. Same-figure change option in computeChange (prerequisite for task 9)
   - Agent: `data-dev` (owns `src/lib/figures/**`; confirmed in `.github/agents.json`) · Depends on: none · Estimated size: ~60 changed lines plus tests
   - Before this task: only `main`. This task is outside R24 and has its own issue. It can run any time before task 9.
   - Scope: `src/lib/figures/change.ts`, `src/lib/figures/change.test.ts`, `src/lib/figures/change.property.test.ts`
