@@ -98,7 +98,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
   - Validation: `bash scripts/check.sh`; `npx vitest run src/lib/figures`
   - _Requirements: R18.5_
 
-- [ ] 5. Seal_Page part 1: page, write step, figure picker, recall subjects, payload builder, Demo_Index entry
+- [x] 5. Seal_Page part 1: page, write step, figure picker, recall subjects, payload builder, Demo_Index entry
   - Agent: `frontend-dev` · Depends on: none in this spec (may run in parallel with 1 and 2) · Estimated size: ~1,150 changed lines plus ~900 test lines
   - Before this task: spec 05 task 9 is on `main`. Re-read the files under `src/components/ceremony` first, because their names may have moved. The owner has added the `/demo/live` and `/l/[id]` rows (175 kB each) to `scripts/check-js-budget.mjs` (see Owner follow-ups).
   - Scope: `src/app/demo/live/page.tsx`, `src/components/live/constants.ts`, `copy.ts`, `recall-subjects.ts`, `catalogue-list.ts`, `form.ts`, `build-payload.ts`, `crypto-module.ts`, `useCryptoModule.ts`, `SealPage.tsx`, `WriteForm.tsx`, `FigurePicker.tsx`, `live.module.css`, `src/components/demo/LiveEntry.tsx`, `src/app/demo/page.tsx`, `src/components/demo/copy.ts`, the scan tests in `src/components/reveal` and `src/components/demo` (add `src/components/live` to their file walks, additions only), and the `*.test.ts(x)` for every new file including `src/components/live/contrast.test.ts`
