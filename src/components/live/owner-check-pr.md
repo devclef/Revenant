@@ -16,16 +16,16 @@ The owner check list is in `owner-check.md` in this folder. The owner ticks it o
 
 Throwaway Postgres, `npm run db:migrate`, `npm run seal-personas`, then the app on a local port. WebAuthn was stubbed as in `design.md`. Each step was captured at 1280 px and at 360 px.
 
-| Step | Stage | Screenshots |
-|---|---|---|
-| 02 | Write | `02-write.png`, `02-write-360.png` |
-| 07 | Sealed | `07-sealed.png`, `07-sealed-360.png` |
-| 09 | Unlock (seal intact) | `09-unlock.png`, `09-unlock-360.png` |
-| 10 | Recall | `10-recall.png`, `10-recall-360.png` |
-| 11 | Reveal | `11-reveal.png`, `11-reveal-360.png` |
-| 13 | Cannot lock (no PRF) | `13-unsupported.png`, `13-unsupported-360.png` |
+| Step | Stage | 1280 px | 360 px |
+|---|---|---|---|
+| 02 | Write | ![Step 02 write at 1280 px](owner-check-shots/02-write.png) | ![Step 02 write at 360 px](owner-check-shots/02-write-360.png) |
+| 07 | Sealed | ![Step 07 sealed at 1280 px](owner-check-shots/07-sealed.png) | ![Step 07 sealed at 360 px](owner-check-shots/07-sealed-360.png) |
+| 09 | Unlock (seal intact) | ![Step 09 unlock at 1280 px](owner-check-shots/09-unlock.png) | ![Step 09 unlock at 360 px](owner-check-shots/09-unlock-360.png) |
+| 10 | Recall | ![Step 10 recall at 1280 px](owner-check-shots/10-recall.png) | ![Step 10 recall at 360 px](owner-check-shots/10-recall-360.png) |
+| 11 | Reveal | ![Step 11 reveal at 1280 px](owner-check-shots/11-reveal.png) | ![Step 11 reveal at 360 px](owner-check-shots/11-reveal-360.png) |
+| 13 | Cannot lock (no PRF) | ![Step 13 cannot lock at 1280 px](owner-check-shots/13-unsupported.png) | ![Step 13 cannot lock at 360 px](owner-check-shots/13-unsupported-360.png) |
 
-Screenshots are in `dev-shots/issue-135/` under the task worktree's parent folder, not committed.
+Screenshots are committed in `owner-check-shots/` next to this file.
 
 ## Findings
 
