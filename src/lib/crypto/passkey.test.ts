@@ -5,6 +5,7 @@
 // was already called once, which is the first-async-step rule.
 
 import { describe, expect, it } from "vitest";
+import fc from "fast-check";
 import type { AuthenticatorPort } from "./authenticator-port";
 import {
   CHALLENGE_BYTES,
@@ -373,6 +374,36 @@ describe("assertPasskey", () => {
       expect(result).toEqual({ ok: false, reason: "wrong_domain" });
     }
     expect(fake.calls.length).toBe(callsBefore);
+  });
+
+  // Feature: 06-lock-and-unlock, Property 10: a page hostname other than the
+  // rpId returns wrong_domain and never reaches get (fast-check numRuns: 100).
+  it("Property 10: any other hostname returns wrong_domain with zero get calls", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.string().filter((host) => host !== RP_ID),
+        async (host) => {
+          const fake = createFakeAuthenticator();
+          const created = await createPasskey(fake, { rpId: RP_ID });
+          if (!created.ok) throw new Error("setup");
+          const callsBefore = fake.calls.length;
+
+          const result = await assertPasskey(fake, {
+            rpId: RP_ID,
+            credentialId: created.credentialId,
+            prfSalt: created.prfSalt,
+            pageHostname: host,
+          });
+
+          expect(result).toEqual({ ok: false, reason: "wrong_domain" });
+          const getCalls = fake.calls
+            .slice(callsBefore)
+            .filter((call) => call.method === "get");
+          expect(getCalls.length).toBe(0);
+        },
+      ),
+      { numRuns: 100 },
+    );
   });
 
   it("reports unsupported without calling get when the port is unavailable", async () => {
