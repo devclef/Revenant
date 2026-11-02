@@ -191,7 +191,7 @@ export function OpeningFlow({
         >
           {flow.live?.demo === true ? <DemoLabel /> : null}
           <div className={styles.view}>
-            {selectView(state, flow, personaName, persona, mode, retryAtZero, KeyStep, {
+            {selectView(state, flow, letterId, personaName, persona, mode, retryAtZero, KeyStep, {
               keyText,
               onKeyTextChange: setKeyText,
             })}
@@ -212,6 +212,7 @@ type KeyEntry = {
 function selectView(
   state: FlowState,
   flow: ReturnType<typeof useOpeningFlow>,
+  letterId: string,
   personaName: string,
   persona: OpeningFlowProps["persona"],
   mode: "persona" | "live",
@@ -345,6 +346,7 @@ function selectView(
             opened={state.opened}
             record={state.record}
             personaName={personaName}
+            letterId={letterId}
             stage={state.stage}
             onAdvance={flow.advance}
             onShowAll={flow.showAll}
