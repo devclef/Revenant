@@ -149,6 +149,11 @@ describe("OpeningFlow live mode: the key step", () => {
     expect(markup).toContain('data-ceremony="envelope"');
     expect(markup).not.toContain(esc(LIVE_COPY.unlockPasskey));
   });
+  it("shows the live not-found copy, not the demo copy, for not_placed (live route)", () => {
+    const markup = renderLive({ tag: "not_placed" });
+    expect(markup).toContain(esc(LIVE_COPY.letterNotFound));
+    expect(markup).not.toContain(esc(REVEAL_COPY.notPlaced));
+  });
   it("shows the verifying scene while unlocking, with no key control", () => {
     const markup = renderLive({
       tag: "unlocking",

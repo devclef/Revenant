@@ -190,7 +190,7 @@ export function OpeningFlow({
         >
           {flow.live?.demo === true ? <DemoLabel /> : null}
           <div className={styles.view}>
-            {selectView(state, flow, personaName, persona, retryAtZero, KeyStep, {
+            {selectView(state, flow, personaName, persona, mode, retryAtZero, KeyStep, {
               keyText,
               onKeyTextChange: setKeyText,
             })}
@@ -213,6 +213,7 @@ function selectView(
   flow: ReturnType<typeof useOpeningFlow>,
   personaName: string,
   persona: OpeningFlowProps["persona"],
+  mode: "persona" | "live",
   retryAtZero: () => void,
   KeyStep: KeyStepComponent | null,
   keyEntry: KeyEntry,
@@ -349,7 +350,12 @@ function selectView(
       );
 
     case "not_placed":
-      return <FlowError kind="notPlaced" onRetry={flow.retry} />;
+      return (
+        <FlowError
+          kind={mode === "live" ? "letterNotFound" : "notPlaced"}
+          onRetry={flow.retry}
+        />
+      );
 
     case "unreachable":
       return <FlowError kind="unreachable" onRetry={flow.retry} />;
