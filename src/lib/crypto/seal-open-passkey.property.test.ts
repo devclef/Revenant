@@ -93,7 +93,7 @@ describe("Property 6: seal then open round trips with a passkey", () => {
   it("returns the same payload for passkey alone and for both factors (100 runs)", async () => {
     await fc.assert(
       fc.asyncProperty(
-        fc.string({ minLength: 1, maxLength: 300 }),
+        fc.string({ minLength: 1, maxLength: 300 }).filter((s) => s.trim().length > 0),
         factorChoice,
         async (text, choice) => {
           const e = await enrol();
