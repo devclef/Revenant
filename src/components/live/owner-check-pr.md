@@ -18,12 +18,12 @@ Throwaway Postgres, `npm run db:migrate`, `npm run seal-personas`, then the app 
 
 | Step | Stage | 1280 px | 360 px |
 |---|---|---|---|
-| 02 | Write | ![Step 02 write at 1280 px](owner-check-shots/02-write.png) | ![Step 02 write at 360 px](owner-check-shots/02-write-360.png) |
-| 07 | Sealed | ![Step 07 sealed at 1280 px](owner-check-shots/07-sealed.png) | ![Step 07 sealed at 360 px](owner-check-shots/07-sealed-360.png) |
-| 09 | Unlock (seal intact) | ![Step 09 unlock at 1280 px](owner-check-shots/09-unlock.png) | ![Step 09 unlock at 360 px](owner-check-shots/09-unlock-360.png) |
-| 10 | Recall | ![Step 10 recall at 1280 px](owner-check-shots/10-recall.png) | ![Step 10 recall at 360 px](owner-check-shots/10-recall-360.png) |
-| 11 | Reveal | ![Step 11 reveal at 1280 px](owner-check-shots/11-reveal.png) | ![Step 11 reveal at 360 px](owner-check-shots/11-reveal-360.png) |
-| 13 | Cannot lock (no PRF) | ![Step 13 cannot lock at 1280 px](owner-check-shots/13-unsupported.png) | ![Step 13 cannot lock at 360 px](owner-check-shots/13-unsupported-360.png) |
+| 02 | Write | <img src="owner-check-shots/02-write.png" alt="Step 02 write at 1280 px" width="320"> | <img src="owner-check-shots/02-write-360.png" alt="Step 02 write at 360 px" width="320"> |
+| 07 | Sealed | <img src="owner-check-shots/07-sealed.png" alt="Step 07 sealed at 1280 px" width="320"> | <img src="owner-check-shots/07-sealed-360.png" alt="Step 07 sealed at 360 px" width="320"> |
+| 09 | Unlock (seal intact) | <img src="owner-check-shots/09-unlock.png" alt="Step 09 unlock at 1280 px" width="320"> | <img src="owner-check-shots/09-unlock-360.png" alt="Step 09 unlock at 360 px" width="320"> |
+| 10 | Recall | <img src="owner-check-shots/10-recall.png" alt="Step 10 recall at 1280 px" width="320"> | <img src="owner-check-shots/10-recall-360.png" alt="Step 10 recall at 360 px" width="320"> |
+| 11 | Reveal | <img src="owner-check-shots/11-reveal.png" alt="Step 11 reveal at 1280 px" width="320"> | <img src="owner-check-shots/11-reveal-360.png" alt="Step 11 reveal at 360 px" width="320"> |
+| 13 | Cannot lock (no PRF) | <img src="owner-check-shots/13-unsupported.png" alt="Step 13 cannot lock at 1280 px" width="320"> | <img src="owner-check-shots/13-unsupported-360.png" alt="Step 13 cannot lock at 360 px" width="320"> |
 
 Screenshots are committed in `owner-check-shots/` next to this file.
 
