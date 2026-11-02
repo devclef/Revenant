@@ -163,7 +163,7 @@ Follow `design.md` in this folder for every file name, constant, interface and a
   - Validation: `bash scripts/check.sh`
   - _Requirements: R1.3, R4, R11.1, R11.7, R12.1, R16, R17.3_
 
-- [ ] 9. Close, Skip across sequences and the accessibility review
+- [x] 9. Close, Skip across sequences and the accessibility review
   - Agent: `frontend-dev` · Depends on: 8 · Estimated size: ~1,150 changed lines
   - Before this task: Blocked by #49 (spec 03 task 8, the reveal's letter and figures stages).
   - Scope: `src/components/ceremony/close/**`, `src/components/ceremony/skip.tsx`, `CeremonyRoot.tsx`, `copy.ts`, `src/components/reveal/Reveal.tsx`, `src/components/reveal/OpeningFlow.tsx`, and the `*.test.ts(x)` for each
