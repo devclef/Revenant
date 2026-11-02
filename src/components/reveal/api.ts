@@ -67,12 +67,14 @@ const BASE_INIT = {
 const letterSealedSchema = z.object({
   status: z.literal("sealed"),
   opensAt: z.string(),
+  demo: z.boolean().optional(),
 });
 
 const letterOpenableSchema = z.object({
   status: z.literal("openable"),
   envelope: z.unknown(),
   envelopeHash: z.string(),
+  demo: z.boolean().optional(),
 });
 
 const letterBodySchema = z.discriminatedUnion("status", [
@@ -92,8 +94,8 @@ const secretForbiddenSchema = z.object({
 
 /** The outcome of reading a letter's public status. */
 export type GetLetterResult =
-  | { outcome: "sealed"; opensAt: string }
-  | { outcome: "openable"; envelope: unknown; envelopeHash: string }
+  | { outcome: "sealed"; opensAt: string; demo?: true }
+  | { outcome: "openable"; envelope: unknown; envelopeHash: string; demo?: true }
   | { outcome: "not_placed" }
   | { outcome: "unreachable" };
 
@@ -130,13 +132,17 @@ export async function getLetter(id: string): Promise<GetLetterResult> {
     return { outcome: "unreachable" };
   }
 
+  // `demo: true` is passed through only when the route sent it. A real letter's
+  // body has no demo flag, so its result is unchanged.
+  const demo = parsed.data.demo === true ? { demo: true as const } : {};
   if (parsed.data.status === "sealed") {
-    return { outcome: "sealed", opensAt: parsed.data.opensAt };
+    return { outcome: "sealed", opensAt: parsed.data.opensAt, ...demo };
   }
   return {
     outcome: "openable",
     envelope: parsed.data.envelope,
     envelopeHash: parsed.data.envelopeHash,
+    ...demo,
   };
 }
 
