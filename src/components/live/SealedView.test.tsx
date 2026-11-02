@@ -175,6 +175,14 @@ describe("SealedView — backup-key reminder", () => {
       LIVE_COPY.keyReminder,
     );
   });
+
+  it("never renders the key itself after a backup seal, only the reminder", () => {
+    const html = renderHtml({ state: sealed({ factors: "backup" }) });
+    expect(html).not.toContain("data-live-key");
+    expect(html).not.toContain("keyGroup");
+    expect(html).not.toMatch(/[A-Z0-9]{4}-[A-Z0-9]{4}/);
+    expect(html).toContain(LIVE_COPY.keyReminder);
+  });
 });
 
 describe("SealedView — shows no letter text or figure (R15.13)", () => {

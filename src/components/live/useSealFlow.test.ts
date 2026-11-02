@@ -237,6 +237,25 @@ describe("useSealFlow backup-key fallback", () => {
     expect(createSpy.mock.calls.length + getSpy.mock.calls.length).toBe(promptsBefore);
   });
 
+  it("a backup-only seal posts a header with one backup wrap and no passkey fields", async () => {
+    const { deps, createSpy, getSpy, api, generateSpy } = await fallbackDeps({ getPrf: "short" });
+    const flow = mount(deps, draft());
+    await reachCannotLock(flow, createSpy, getSpy);
+    await pressUntil(() => flow.onFallbackStart(), () => generateSpy.mock.calls.length > 0);
+    await pressUntil(() => flow.onFallbackSealPress(), () => api.seal.mock.calls.length > 0);
+    await waitUntil(() => api.seal.mock.calls.length > 0);
+
+    const calls = api.seal.mock.calls as unknown as [
+      { envelope: { wrappedDeks: { factor: string }[]; rpId?: unknown; credentialId?: unknown; prfSalt?: unknown } },
+    ][];
+    const body = calls[0]?.[0];
+    if (body === undefined) throw new Error("no seal request was posted");
+    expect(body.envelope.wrappedDeks.map((w) => w.factor)).toEqual(["backup"]);
+    expect(body.envelope).not.toHaveProperty("rpId");
+    expect(body.envelope).not.toHaveProperty("credentialId");
+    expect(body.envelope).not.toHaveProperty("prfSalt");
+  });
+
   it("writes nothing to the console while the backup key is generated and sealed", async () => {
     const { deps, createSpy, getSpy, api, generateSpy } = await fallbackDeps({ getPrf: "short" });
     const calls: unknown[][] = [];
