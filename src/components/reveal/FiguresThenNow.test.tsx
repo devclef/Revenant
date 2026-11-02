@@ -45,6 +45,16 @@ import type { FigureV1, MetricDefinitionV1, PayloadV1 } from "@/lib/seal-format"
  * missing-now branch. Every figure here is a FIXTURE figure, matching the demo.
  */
 
+// The reveal tests read the fixture through a mocked DEMO_FIGURES, so they do
+// not depend on the real figure file (spec 04, task 11). The factory loads the
+// fixture against the real catalogue, as demo/index.ts does for the fixture half.
+vi.mock("@/lib/figures/demo", async () => {
+  const { loadFigureFile } = await import("@/lib/figures/load");
+  const { CATALOGUE } = await import("@/lib/figures/catalogue");
+  const fixture = await import("@/lib/figures/demo/us-fuel.fixture.json");
+  return { DEMO_FIGURES: loadFigureFile(fixture.default, CATALOGUE) };
+});
+
 // --- fixtures ----------------------------------------------------------------
 
 // The latest frozen "now" figures in DEMO_FIGURES, as thenAndNow returns them.
