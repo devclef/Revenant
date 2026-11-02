@@ -39,7 +39,6 @@ export const LIVE_COPY = {
   createButton: "Create your passkey",
   confirmButton: "Confirm your passkey",
   preparing: "Getting ready.",
-  notYet: "Sealing opens soon.",
   stepCreating: "Waiting for your device. Create the passkey when it asks.",
   stepCreated: "Your passkey is created. Press the button to confirm it.",
   stepConfirming: "Waiting for your device. Confirm the passkey when it asks.",

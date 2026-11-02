@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
+import { DemoLabel } from "@/components/demo/DemoLabel";
+
 import { COUNTDOWN_TICK_MS } from "./constants";
 import { LIVE_COPY } from "./copy";
 import { formatLocalDateTime } from "./format";
@@ -93,6 +95,7 @@ export function SealedView({ state, appOrigin, nowMs = Date.now }: SealedViewPro
 
   return (
     <div className={styles.panel} data-live-sealed={state.factors}>
+      <DemoLabel />
       <h1 className={styles.heading}>{LIVE_COPY.sealedTitle}</h1>
       <p className={styles.intro}>{LIVE_COPY.sealedBody}</p>
 

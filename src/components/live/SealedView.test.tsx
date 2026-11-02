@@ -11,6 +11,8 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { DEMO_COPY } from "@/components/demo/copy";
+
 import { LIVE_COPY } from "./copy";
 import { formatLocalDateTime } from "./format";
 import { SealedView, type SealedState, type SealedViewProps } from "./SealedView";
@@ -57,6 +59,16 @@ function renderText(overrides: Partial<SealedViewProps> = {}): string {
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">");
 }
+
+describe("SealedView — Demo label", () => {
+  it("renders the Demo label before the sealed heading", () => {
+    const html = renderHtml();
+    expect(html).toContain(DEMO_COPY.demoLabel);
+    expect(html.indexOf(DEMO_COPY.demoLabel)).toBeLessThan(
+      html.indexOf(LIVE_COPY.sealedTitle),
+    );
+  });
+});
 
 describe("SealedView — sealed statement and opening time", () => {
   it("shows the sealed title and body", () => {

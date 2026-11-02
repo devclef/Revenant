@@ -45,6 +45,20 @@ export const PROBLEM_COPY: Partial<Record<WriteProblem, string>> = {
 };
 
 /**
+ * Whether the create/confirm button may be pressed in this state. `write` needs
+ * valid input; `created` needs nothing more; every other state is mid-flow or
+ * terminal, so the button stays disabled.
+ */
+export function buttonLive(
+  state: SealState,
+  problems: readonly WriteProblem[],
+): boolean {
+  if (state.tag === "created") return true;
+  if (state.tag === "write") return problems.length === 0;
+  return false;
+}
+
+/**
  * The write step of the live Seal_Page. Holds the form state (letter text,
  * chosen figures, warning checkbox) as React state and reports the draft up to
  * the page. Nothing here reaches the network: typing and picking only update
@@ -80,15 +94,14 @@ export function WriteForm({
     problemText("letter_empty") || problemText("letter_too_long");
 
   // In `created` the button confirms the passkey; everywhere else it creates
-  // one. Create is blocked while the write input is invalid; Confirm is not,
-  // because the input was already valid when the passkey was created.
+  // one. The button is only live in `write` (Create, blocked while the input is
+  // invalid) and `created` (Confirm, not blocked by the input, which was valid
+  // when the passkey was created). In every other state it is disabled.
   const inCreated = state.tag === "created";
   const buttonLabel = inCreated
     ? LIVE_COPY.confirmButton
     : LIVE_COPY.createButton;
-  const buttonDisabled = inCreated
-    ? !cryptoLoaded
-    : !cryptoLoaded || problems.length > 0;
+  const buttonDisabled = !cryptoLoaded || !buttonLive(state, problems);
   const onButtonPress = inCreated ? onConfirmPress : onCreatePress;
 
   return (
