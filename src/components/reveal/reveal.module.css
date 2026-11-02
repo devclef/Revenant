@@ -72,6 +72,8 @@
   border-radius: 2px;
   margin: 0 0 1.5rem;
   padding: 1rem 1.25rem;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .noAnswer {
@@ -103,6 +105,9 @@
   border-radius: 2px;
   padding: 0.4rem 0.6rem;
   font-variant-numeric: tabular-nums;
+  box-sizing: border-box;
+  max-width: 100%;
+  min-width: 0;
 }
 
 .unit {

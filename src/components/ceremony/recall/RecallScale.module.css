@@ -97,6 +97,23 @@
   white-space: nowrap;
 }
 
+/* The end labels anchor to the track edges so they never hang past the fieldset. */
+.label:first-child {
+  transform: none;
+}
+
+.label:last-child {
+  transform: translateX(-100%);
+}
+
+/* Narrow screens keep every other decade so the labels do not overlap. */
+@media (max-width: 480px) {
+  .label:nth-child(even):not(:last-child),
+  .label:nth-child(7) {
+    display: none;
+  }
+}
+
 .endStart {
   position: absolute;
   left: 0;
