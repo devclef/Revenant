@@ -1,4 +1,8 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { OpeningFlow } from "@/components/reveal/OpeningFlow";
+import { takeBackupKeyFromLocation } from "@/lib/cards";
 import { LIVE_COPY } from "./copy";
 
 /**
@@ -14,11 +18,26 @@ import { LIVE_COPY } from "./copy";
  * through its dynamic import.
  */
 export function LiveLetter({ letterId }: { letterId: string }) {
+  // The backup key from the `#k=` fragment (R21.6). It is read and removed
+  // from the address bar in the mount effect, before the flow renders, so no
+  // request starts while the key is still in the URL. `undefined` means the
+  // effect has not run yet, and the flow waits.
+  const [backupKey, setBackupKey] = useState<string | null | undefined>(undefined);
+
+  useEffect(() => {
+    setBackupKey(takeBackupKeyFromLocation(window));
+  }, []);
+
+  if (backupKey === undefined) {
+    return null;
+  }
+
   return (
     <OpeningFlow
       mode="live"
       letterId={letterId}
       personaName={LIVE_COPY.regionLabel}
+      initialBackupKey={backupKey ?? undefined}
     />
   );
 }

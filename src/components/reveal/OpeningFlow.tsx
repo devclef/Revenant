@@ -133,6 +133,11 @@ export type OpeningFlowProps = {
   mode?: "persona" | "live";
   /** Live mode only: the authenticator port. Defaults to the browser's. */
   port?: AuthenticatorPort;
+  /**
+   * Live mode only: the backup key read from the `#k=` fragment. It pre-fills
+   * the key field. The reader still submits it by hand (R21.6).
+   */
+  initialBackupKey?: string;
 };
 
 /**
@@ -154,6 +159,7 @@ export function OpeningFlow({
   persona,
   mode = "persona",
   port,
+  initialBackupKey,
 }: OpeningFlowProps) {
   // Live mode reads the key from the reader (keySource "user"). Persona mode
   // passes no options, so the hook behaves exactly as before.
@@ -166,7 +172,7 @@ export function OpeningFlow({
   // The typed backup key lives here, not in the key step, so it survives the
   // `unlocking` view (which unmounts the key step) and a wrong-key return to
   // `awaiting_key` shows the same text again.
-  const [keyText, setKeyText] = useState("");
+  const [keyText, setKeyText] = useState(initialBackupKey ?? "");
 
   // The still-sealed countdown reaches zero once per page load: one automatic
   // re-check (R17.4). `onceOnly` makes the second zero a no-op; the view then

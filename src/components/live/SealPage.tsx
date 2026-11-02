@@ -85,8 +85,9 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
       text: writeDraft.text,
       metricIds: writeDraft.metricIds,
       figures: deps?.figures ?? DEMO_FIGURES,
+      backupCard: writeDraft.backupCardTicked,
     }),
-    [writeDraft.text, writeDraft.metricIds, deps?.figures],
+    [writeDraft.text, writeDraft.metricIds, writeDraft.backupCardTicked, deps?.figures],
   );
 
   const flow = useSealFlow(sealDeps, draft);
@@ -110,6 +111,7 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
             state={state}
             appOrigin={appOrigin}
             nowMs={deps?.nowMs ?? Date.now}
+            getBackupKeyText={flow.getBackupKeyText}
           />
         );
       case "cannot_lock":
@@ -122,17 +124,19 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
             onFallbackStart={flow.onFallbackStart}
           />
         );
-      case "fallback_key":
+      case "fallback_key": {
         // The key is generated on FALLBACK_START, so it is present here. The
         // null guard only covers a state that should never reach this branch.
-        if (flow.backupKeyText === null) return null;
+        const fallbackKeyText = flow.getBackupKeyText();
+        if (fallbackKeyText === null) return null;
         return (
           <BackupFallback
-            keyText={flow.backupKeyText}
+            keyText={fallbackKeyText}
             onSealPress={flow.onFallbackSealPress}
             onDecline={flow.onFallbackDecline}
           />
         );
+      }
       default:
         // write, creating, created, confirming, preparing, sealing: the write
         // form knows which of its controls to show for each step.
@@ -144,6 +148,7 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
             text={writeDraft.text}
             metricIds={writeDraft.metricIds}
             warningTicked={writeDraft.warningTicked}
+            backupCardTicked={writeDraft.backupCardTicked}
             onTextChange={(text) =>
               dispatchDraft({ type: "TEXT_CHANGED", text })
             }
@@ -152,6 +157,9 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
             }
             onWarningChange={(ticked) =>
               dispatchDraft({ type: "WARNING_CHANGED", ticked })
+            }
+            onBackupCardChange={(ticked) =>
+              dispatchDraft({ type: "BACKUP_CARD_CHANGED", ticked })
             }
             onCreatePress={flow.onCreatePress}
             onConfirmPress={flow.onConfirmPress}

@@ -196,3 +196,36 @@ describe("SealedView — shows no letter text or figure (R15.13)", () => {
     expect(html).not.toContain(sampleFigure);
   });
 });
+
+describe("SealedView — backup key card offer (R21.3, R21.4)", () => {
+  const KEY_TEXT = "3ABC-DEFG-HJKM-NPQR-STVW-XYZ0-12A";
+
+  it("offers no card for a passkey-only letter, even when a key is held", () => {
+    const html = renderHtml({ state: sealed({ factors: "passkey" }), getBackupKeyText: () => KEY_TEXT });
+    expect(html).not.toContain("data-live-backup-offer");
+    expect(html).not.toContain("data-live-backup-card");
+  });
+
+  it("offers the card for a backup-only letter while the key is held", () => {
+    const html = renderHtml({ state: sealed({ factors: "backup" }), getBackupKeyText: () => KEY_TEXT });
+    expect(html).toContain("data-live-backup-offer");
+    expect(html).toContain(LIVE_COPY.backupCardShow);
+  });
+
+  it("offers the card for a letter sealed with both wraps while the key is held", () => {
+    const html = renderHtml({ state: sealed({ factors: "both" }), getBackupKeyText: () => KEY_TEXT });
+    expect(html).toContain("data-live-backup-offer");
+  });
+
+  it("offers no card when the key is no longer held", () => {
+    const html = renderHtml({ state: sealed({ factors: "backup" }), getBackupKeyText: () => null });
+    expect(html).not.toContain("data-live-backup-offer");
+  });
+
+  it("shows the card markup only after the judge asks for it, so the offer alone shows no key", () => {
+    const html = renderHtml({ state: sealed({ factors: "both" }), getBackupKeyText: () => KEY_TEXT });
+    expect(html).not.toContain("data-live-backup-card");
+    expect(html).not.toContain("data-live-key");
+    expect(html).not.toContain(KEY_TEXT);
+  });
+});

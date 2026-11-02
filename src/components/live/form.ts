@@ -27,7 +27,8 @@ export function countCodePoints(s: string): number {
 /**
  * Check a write against the live Seal_Page rules. An empty array means the
  * write is valid. The problems come in this fixed order: letter, figures, then
- * the passkey warning (R12.3, R13.2, R15.11).
+ * the passkey warning (R12.3, R13.2, R15.11). The warning is required only when
+ * no backup key card is chosen: a backup key card is the second way in (R21.2).
  *
  * A letter is empty when it has no character other than whitespace.
  */
@@ -35,6 +36,8 @@ export function validateWrite(input: {
   text: string;
   metricIds: readonly string[];
   warningTicked: boolean;
+  /** The optional backup key card box (R21.1). Defaults to unticked. */
+  backupCardTicked?: boolean;
 }): WriteProblem[] {
   const problems: WriteProblem[] = [];
 
@@ -50,7 +53,7 @@ export function validateWrite(input: {
     problems.push("figures_too_many");
   }
 
-  if (!input.warningTicked) {
+  if (!input.warningTicked && input.backupCardTicked !== true) {
     problems.push("warning_unticked");
   }
 

@@ -30,8 +30,12 @@ export interface SealFlow {
   onFallbackSealPress: () => void;
   onFallbackDecline: () => void;
   onRetry: () => void;
-  /** The backup key as printed on the card, shown only in fallback_key. */
-  backupKeyText: string | null;
+  /**
+   * Reads the backup key as printed on the card, or null when no key is held.
+   * The text lives in a ref, not in React state; call this during render. The
+   * flow re-renders when a key is set or cleared, so the read is current.
+   */
+  getBackupKeyText: () => string | null;
 }
 
 /**
@@ -50,15 +54,28 @@ export function useSealFlow(deps: SealDeps | null, draft: SealDraft): SealFlow {
   // The backup key bytes, set at FALLBACK_START and cleared when the fallback
   // ends (declined, sealed or failed) or the flow retries.
   const backupKey = useRef<BackupKey | null>(null);
-  // The printed form of the same key. React needs it in state to render the
-  // card, and it is cleared with the bytes.
-  const [backupKeyText, setBackupKeyText] = useState<string | null>(null);
+  // The printed form of the same key. It is held in a ref, not in state, so
+  // the key text never sits in React state. Only a boolean flag is in state,
+  // and it changes only to make React re-render when a key is set or cleared.
+  const backupKeyText = useRef<string | null>(null);
+  const [, setBackupKeyHeld] = useState(false);
 
-  /** Drops the backup key from the ref and from the rendered state. */
+  /** Stores a generated key in the refs and flags the re-render. */
+  const holdBackupKey = useCallback((bytes: BackupKey, text: string) => {
+    backupKey.current = bytes;
+    backupKeyText.current = text;
+    setBackupKeyHeld(true);
+  }, []);
+
+  /** Drops the backup key and its printed text from the refs and the flag. */
   const clearBackupKey = useCallback(() => {
     backupKey.current = null;
-    setBackupKeyText(null);
+    backupKeyText.current = null;
+    setBackupKeyHeld(false);
   }, []);
+
+  /** Reads the printed key at render time. Stable identity. */
+  const getBackupKeyText = useCallback((): string | null => backupKeyText.current, []);
 
   const send = useCallback((event: SealEvent) => {
     phase.current = sealReducer(phase.current, event);
@@ -103,13 +120,26 @@ export function useSealFlow(deps: SealDeps | null, draft: SealDraft): SealFlow {
         }
         confirmed.current = step.confirmed;
         send({ type: "CONFIRMED" });
+        // The optional backup wrap (R21.1). Generated here, at the seal step,
+        // only when the visitor ticked the card box. It stays in the ref and
+        // the printed text so the backup key card can show it after sealing.
+        let backupKeyForSeal: BackupKey | undefined;
+        if (draft.backupCard === true) {
+          const bytes = deps.crypto.generateBackupKey();
+          holdBackupKey(bytes, deps.crypto.formatBackupKey(bytes));
+          backupKeyForSeal = bytes;
+        }
         const outcome = await sealWithPasskey(deps, {
           draft,
           confirmed: step.confirmed,
+          ...(backupKeyForSeal !== undefined ? { backupKey: backupKeyForSeal } : {}),
           onPrepared: () => send({ type: "PREPARED" }),
         });
+        // A failed seal keeps nothing: the key is dropped with the attempt.
+        if (!outcome.ok) clearBackupKey();
         send(outcome.event);
       } catch {
+        clearBackupKey();
         send({ type: "FAILED", kind: "server", passkeyCreated: true });
       } finally {
         // Terminal either way: the next attempt starts from a new passkey.
@@ -119,7 +149,7 @@ export function useSealFlow(deps: SealDeps | null, draft: SealDraft): SealFlow {
       }
     };
     void run();
-  }, [deps, draft, send]);
+  }, [clearBackupKey, deps, draft, holdBackupKey, send]);
 
   /**
    * Starts the backup-key fallback. The key is generated here, from the loaded
@@ -128,10 +158,9 @@ export function useSealFlow(deps: SealDeps | null, draft: SealDraft): SealFlow {
   const onFallbackStart = useCallback(() => {
     if (deps === null || phase.current.tag !== "cannot_lock") return;
     const bytes = deps.crypto.generateBackupKey();
-    backupKey.current = bytes;
-    setBackupKeyText(deps.crypto.formatBackupKey(bytes));
+    holdBackupKey(bytes, deps.crypto.formatBackupKey(bytes));
     send({ type: "FALLBACK_START" });
-  }, [deps, send]);
+  }, [deps, holdBackupKey, send]);
 
   /** Declines the fallback. Drops the key and seals nothing; no request is sent. */
   const onFallbackDecline = useCallback(() => {
@@ -150,18 +179,21 @@ export function useSealFlow(deps: SealDeps | null, draft: SealDraft): SealFlow {
     send({ type: "FALLBACK_SEAL_PRESS" });
 
     const run = async (): Promise<void> => {
+      let sealed = false;
       try {
         const outcome = await sealWithBackupKey(deps, {
           draft,
           backupKey: key,
           onPrepared: () => send({ type: "PREPARED" }),
         });
+        sealed = outcome.ok;
         send(outcome.event);
       } catch {
         send({ type: "FAILED", kind: "server", passkeyCreated: false });
       } finally {
-        // Sealing has ended, so the key is no longer needed in memory.
-        clearBackupKey();
+        // A failed seal keeps nothing. A sealed letter keeps the key, so the
+        // backup key card can show it until the judge leaves the page (R21.3).
+        if (!sealed) clearBackupKey();
         inFlight.current = false;
       }
     };
@@ -184,6 +216,6 @@ export function useSealFlow(deps: SealDeps | null, draft: SealDraft): SealFlow {
     onFallbackSealPress,
     onFallbackDecline,
     onRetry,
-    backupKeyText,
+    getBackupKeyText,
   };
 }

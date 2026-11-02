@@ -1,6 +1,6 @@
 /**
  * The write step's form state for the live Seal_Page: the letter text, the
- * chosen figures and the warning tick. SealPage holds it, so it survives the
+ * chosen figures, the warning tick and the backup key card tick. SealPage holds it, so it survives the
  * cancelled, failed and cannot_lock screens and Try again restores it
  * (spec 06-lock-and-unlock, R15.7). It holds no passkey, PRF or backup key
  * material.
@@ -14,18 +14,22 @@ export interface WriteDraft {
   text: string;
   metricIds: string[];
   warningTicked: boolean;
+  /** Whether the visitor also asks for a backup key card (R21.1). */
+  backupCardTicked: boolean;
 }
 
 export const INITIAL_WRITE_DRAFT: WriteDraft = {
   text: "",
   metricIds: [],
   warningTicked: false,
+  backupCardTicked: false,
 };
 
 export type WriteDraftEvent =
   | { type: "TEXT_CHANGED"; text: string }
   | { type: "FIGURE_TOGGLED"; metricId: string }
-  | { type: "WARNING_CHANGED"; ticked: boolean };
+  | { type: "WARNING_CHANGED"; ticked: boolean }
+  | { type: "BACKUP_CARD_CHANGED"; ticked: boolean };
 
 /**
  * Applies one form event. Picking a figure adds it, unless it is already
@@ -40,6 +44,8 @@ export function reduceWriteDraft(
       return { ...state, text: event.text };
     case "WARNING_CHANGED":
       return { ...state, warningTicked: event.ticked };
+    case "BACKUP_CARD_CHANGED":
+      return { ...state, backupCardTicked: event.ticked };
     case "FIGURE_TOGGLED": {
       const { metricId } = event;
       if (state.metricIds.includes(metricId)) {

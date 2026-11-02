@@ -34,9 +34,11 @@ function formProps(over: Partial<WriteFormProps> = {}): WriteFormProps {
     text: "",
     metricIds: [],
     warningTicked: false,
+    backupCardTicked: false,
     onTextChange: () => {},
     onToggleFigure: () => {},
     onWarningChange: () => {},
+    onBackupCardChange: () => {},
     ...over,
   };
 }
@@ -97,6 +99,37 @@ describe("WriteForm", () => {
   it("starts with the warning box unticked", () => {
     expect(html).toContain('id="live-warning"');
     expect(html).not.toMatch(/<input[^>]*id="live-warning"[^>]*checked/);
+  });
+
+  it("renders the backup key card box unticked, with its copy and hint", () => {
+    expect(html).toContain('id="live-backup-card"');
+    expect(html).not.toMatch(/<input[^>]*id="live-backup-card"[^>]*checked/);
+    expect(html).toContain(esc(LIVE_COPY.backupCardOption));
+    expect(html).toContain('id="live-backup-card-hint"');
+    expect(html).toContain(esc(LIVE_COPY.backupCardOptionHint));
+  });
+
+  it("shows the backup key card box ticked when the page holds it ticked", () => {
+    const ticked = renderWriteForm({ backupCardTicked: true });
+    expect(ticked).toMatch(/<input[^>]*id="live-backup-card"[^>]*checked/);
+  });
+
+  it("shows no warning problem when the backup key card is ticked", () => {
+    const withCard = renderWriteForm({
+      text: "A letter",
+      metricIds: [SERIES[0]!.metricId],
+      backupCardTicked: true,
+    });
+    expect(withCard).not.toContain(esc(LIVE_COPY.warningUnticked));
+  });
+
+  it("shows the warning problem when neither the warning nor the backup card is ticked", () => {
+    const without = renderWriteForm({
+      text: "A letter",
+      metricIds: [SERIES[0]!.metricId],
+      backupCardTicked: false,
+    });
+    expect(without).toContain(esc(LIVE_COPY.warningUnticked));
   });
 
   it("shows the lost-passkey warning in plain words", () => {

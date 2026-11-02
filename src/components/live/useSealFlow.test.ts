@@ -7,6 +7,8 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -271,5 +273,90 @@ describe("useSealFlow backup-key fallback", () => {
       for (const spy of spies) spy.mockRestore();
     }
     expect(calls).toEqual([]);
+  });
+});
+
+/** A draft with the backup key card box ticked (R21.1). */
+function draftWithCard(): SealDraft {
+  return { ...draft(), backupCard: true };
+}
+
+describe("useSealFlow backup key card at the seal step (R21.1)", () => {
+  it("generates no backup key on Create_Press, and generates one at the seal step when ticked", async () => {
+    const { deps, createSpy, getSpy, api, generateSpy } = await fallbackDeps();
+    const flow = mount(deps, draftWithCard());
+    flow.onCreatePress();
+    await waitUntil(() => createSpy.mock.calls.length > 0);
+    expect(generateSpy).not.toHaveBeenCalled();
+    await pressUntil(() => flow.onConfirmPress(), () => getSpy.mock.calls.length > 0);
+    await waitUntil(() => api.seal.mock.calls.length > 0);
+    expect(generateSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("seals with both wraps, backup first, when the card box is ticked", async () => {
+    const { deps, createSpy, getSpy, api } = await fallbackDeps();
+    const flow = mount(deps, draftWithCard());
+    flow.onCreatePress();
+    await waitUntil(() => createSpy.mock.calls.length > 0);
+    await pressUntil(() => flow.onConfirmPress(), () => getSpy.mock.calls.length > 0);
+    await waitUntil(() => api.seal.mock.calls.length > 0);
+
+    const calls = api.seal.mock.calls as unknown as [
+      { envelope: { wrappedDeks: { factor: string }[] } },
+    ][];
+    const body = calls[0]?.[0];
+    if (body === undefined) throw new Error("no seal request was posted");
+    expect(body.envelope.wrappedDeks.map((w) => w.factor)).toEqual(["backup", "passkey"]);
+  });
+
+  it("generates no backup key and seals the passkey wrap alone when the card box is unticked", async () => {
+    const { deps, createSpy, getSpy, api, generateSpy } = await fallbackDeps();
+    const flow = mount(deps, draft());
+    flow.onCreatePress();
+    await waitUntil(() => createSpy.mock.calls.length > 0);
+    await pressUntil(() => flow.onConfirmPress(), () => getSpy.mock.calls.length > 0);
+    await waitUntil(() => api.seal.mock.calls.length > 0);
+
+    expect(generateSpy).not.toHaveBeenCalled();
+    const calls = api.seal.mock.calls as unknown as [
+      { envelope: { wrappedDeks: { factor: string }[] } },
+    ][];
+    const body = calls[0]?.[0];
+    if (body === undefined) throw new Error("no seal request was posted");
+    expect(body.envelope.wrappedDeks.map((w) => w.factor)).toEqual(["passkey"]);
+  });
+});
+
+describe("useSealFlow backup key text is held in a ref, not in state (R21.3)", () => {
+  it("returns the printed key from the getter once the fallback starts", async () => {
+    const { deps, createSpy, getSpy, generateSpy } = await fallbackDeps({ getPrf: "short" });
+    const flow = mount(deps, draft());
+    expect(flow.getBackupKeyText()).toBeNull();
+    await reachCannotLock(flow, createSpy, getSpy);
+    await pressUntil(() => flow.onFallbackStart(), () => generateSpy.mock.calls.length > 0);
+    const text = flow.getBackupKeyText();
+    expect(text).toMatch(/^[0-9A-Z]{4}(-[0-9A-Z]{4}){5}-[0-9A-Z]{3}$/);
+  });
+
+  it("clears the ref when the fallback is declined", async () => {
+    const { deps, createSpy, getSpy, generateSpy } = await fallbackDeps({ getPrf: "short" });
+    const flow = mount(deps, draft());
+    await reachCannotLock(flow, createSpy, getSpy);
+    await pressUntil(() => flow.onFallbackStart(), () => generateSpy.mock.calls.length > 0);
+    expect(flow.getBackupKeyText()).not.toBeNull();
+    flow.onFallbackDecline();
+    expect(flow.getBackupKeyText()).toBeNull();
+  });
+
+  it("does not expose the key text as a state value on the flow", async () => {
+    const { deps } = await fallbackDeps();
+    const flow = mount(deps, draft());
+    expect(flow).not.toHaveProperty("backupKeyText");
+  });
+
+  it("the hook source keeps the key text out of useState", () => {
+    const source = readFileSync(resolve(__dirname, "useSealFlow.ts"), "utf8");
+    expect(source).not.toMatch(/useState<string/);
+    expect(source).toMatch(/const backupKeyText = useRef<string \| null>\(null\)/);
   });
 });

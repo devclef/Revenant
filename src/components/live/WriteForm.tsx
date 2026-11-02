@@ -24,12 +24,16 @@ export interface WriteFormProps {
   metricIds: string[];
   /** Whether the warning box is ticked, held by the page (controlled). */
   warningTicked: boolean;
+  /** Whether the backup key card box is ticked, held by the page (controlled). */
+  backupCardTicked: boolean;
   /** The visitor typed in the letter. */
   onTextChange: (text: string) => void;
   /** The visitor picked or unpicked a figure. */
   onToggleFigure: (metricId: string) => void;
   /** The visitor ticked or unticked the warning box. */
   onWarningChange: (ticked: boolean) => void;
+  /** The visitor ticked or unticked the backup key card box. */
+  onBackupCardChange: (ticked: boolean) => void;
   /** The Create_Press: starts the first passkey prompt. */
   onCreatePress: () => void;
   /** The Confirm_Press: starts the second prompt and the seal. */
@@ -76,14 +80,16 @@ export function WriteForm({
   text,
   metricIds,
   warningTicked,
+  backupCardTicked,
   onTextChange,
   onToggleFigure,
   onWarningChange,
+  onBackupCardChange,
   onCreatePress,
   onConfirmPress,
 }: WriteFormProps) {
   const letterCount = countCodePoints(text);
-  const problems = validateWrite({ text, metricIds, warningTicked });
+  const problems = validateWrite({ text, metricIds, warningTicked, backupCardTicked });
   const atLimit = metricIds.length >= MAX_FIGURES;
 
   /** The message for a problem, or "" when validateWrite does not report it. */
@@ -167,6 +173,23 @@ export function WriteForm({
         </label>
         <p id="live-warning-problem" className={styles.problem}>
           {problemText("warning_unticked")}
+        </p>
+      </div>
+
+      <div className={styles.warning}>
+        <label className={styles.warningLabel}>
+          <input
+            id="live-backup-card"
+            type="checkbox"
+            className={styles.checkbox}
+            checked={backupCardTicked}
+            aria-describedby="live-backup-card-hint"
+            onChange={(event) => onBackupCardChange(event.target.checked)}
+          />
+          <span>{LIVE_COPY.backupCardOption}</span>
+        </label>
+        <p id="live-backup-card-hint" className={styles.hint}>
+          {LIVE_COPY.backupCardOptionHint}
         </p>
       </div>
 

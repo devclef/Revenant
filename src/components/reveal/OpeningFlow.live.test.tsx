@@ -204,7 +204,7 @@ describe("OpeningFlow live mode: the typed key is owned by the parent", () => {
   it("holds the key text in OpeningFlow, which stays mounted through unlocking", () => {
     const here = dirname(fileURLToPath(import.meta.url));
     const source = readFileSync(resolve(here, "OpeningFlow.tsx"), "utf8");
-    expect(source).toMatch(/const \[keyText, setKeyText\] = useState\(""\);/);
+    expect(source).toMatch(/const \[keyText, setKeyText\] = useState\(initialBackupKey \?\? ""\);/);
     expect(source).toMatch(/keyText=\{keyEntry\.keyText\}/);
     expect(source).toMatch(/onKeyTextChange=\{keyEntry\.onKeyTextChange\}/);
   });

@@ -356,3 +356,47 @@ describe("sealWithBackupKey", () => {
     });
   });
 });
+
+describe("sealWithPasskey with the optional backup wrap (R21.1)", () => {
+  /** Runs the passkey steps, then seals with a generated backup key. */
+  async function runWithBackup(h: Harness & { draft: SealDraft }) {
+    const crypto = await import("@/lib/crypto");
+    const backupKey = crypto.generateBackupKey();
+    const created = await pressCreate(h.deps);
+    if (!created.ok) throw new Error("create failed");
+    const confirmed = await pressConfirm(h.deps, created.created);
+    if (!confirmed.ok) throw new Error("confirm failed");
+    const outcome = await sealWithPasskey(h.deps, {
+      draft: h.draft,
+      confirmed: confirmed.confirmed as Confirmed,
+      backupKey,
+    });
+    return { outcome, backupKey };
+  }
+
+  it("seals both wraps: factors is both, and the header has a backup wrap and a passkey wrap", async () => {
+    const h = await makeHarness();
+    const { outcome } = await runWithBackup(h);
+    expect(outcome.ok).toBe(true);
+    if (outcome.ok) expect(outcome.event).toMatchObject({ type: "SEALED", factors: "both" });
+    const body = h.api.seal.mock.calls[0]?.[0] as {
+      envelope: { wrappedDeks: { factor: string }[]; rpId?: unknown };
+    };
+    expect(body.envelope.wrappedDeks.map((w) => w.factor)).toEqual(["backup", "passkey"]);
+    expect(body.envelope).toHaveProperty("rpId");
+  });
+
+  it("does not zero the backup key, so the backup key card can still show it", async () => {
+    const h = await makeHarness();
+    const { backupKey } = await runWithBackup(h);
+    expect(backupKey.some((byte) => byte !== 0)).toBe(true);
+  });
+
+  it("without a backup key the passkey seal keeps one passkey wrap and factors passkey", async () => {
+    const h = await makeHarness();
+    const { outcome } = await runFlow(h);
+    if (outcome?.ok) expect(outcome.event).toMatchObject({ factors: "passkey" });
+    const body = h.api.seal.mock.calls[0]?.[0] as { envelope: { wrappedDeks: { factor: string }[] } };
+    expect(body.envelope.wrappedDeks.map((w) => w.factor)).toEqual(["passkey"]);
+  });
+});

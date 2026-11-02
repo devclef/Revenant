@@ -51,10 +51,14 @@ describe("/l/[id] page", () => {
     });
     expect(notFound).not.toHaveBeenCalled();
     const markup = renderToStaticMarkup(element);
-    // The loading scene is the first state of the live flow.
-    expect(markup).toContain(
+    // LiveLetter renders nothing on the server. It reads the backup key from
+    // the fragment in its mount effect and renders the flow after that, so the
+    // loading scene is absent from the static markup (R21.6).
+    expect(markup).not.toContain(
       REVEAL_COPY.loading.replace(/'/g, "&#x27;"),
     );
+    // The desk is still rendered around it.
+    expect(markup).toContain("data-desk");
     // No passkey control before the Server_Secret is released (R17.2).
     expect(markup).not.toContain(LIVE_COPY.unlockPasskey);
   });

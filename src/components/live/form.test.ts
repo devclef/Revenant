@@ -83,6 +83,16 @@ describe("validateWrite", () => {
     ]);
   });
 
+  it("does not require the warning when the backup key card is ticked (R21.2)", () => {
+    expect(validateWrite({ ...VALID, warningTicked: false, backupCardTicked: true })).toEqual([]);
+  });
+
+  it("still requires the warning when the backup key card is unticked", () => {
+    expect(validateWrite({ ...VALID, warningTicked: false, backupCardTicked: false })).toEqual([
+      "warning_unticked",
+    ]);
+  });
+
   it("reports every problem in the fixed order when everything fails", () => {
     expect(
       validateWrite({ text: "", metricIds: [], warningTicked: false }),

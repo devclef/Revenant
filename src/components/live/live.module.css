@@ -481,6 +481,15 @@
   word-break: break-all;
 }
 
+/* The backup key card and the control that opens it, below the letter card. */
+.backupCard {
+  margin-top: 2rem;
+}
+
+.backupOffer {
+  margin-top: 2rem;
+}
+
 /* Controls and the rest of the sealed page are hidden when the card is printed. */
 @media print {
   .noPrint {
@@ -495,6 +504,10 @@
   }
 
   .keepsakes {
+    margin-top: 0;
+  }
+
+  .backupCard {
     margin-top: 0;
   }
 
