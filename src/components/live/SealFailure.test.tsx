@@ -77,11 +77,18 @@ describe("SealFailure — cannot_lock", () => {
     expect(renderHtml(base)).toContain('href="/demo"');
   });
 
-  it("renders the backup-key fallback control present and disabled", () => {
+  it("renders the backup-key fallback control disabled when no handler is given", () => {
     const html = renderHtml(base);
 
     expect(html).toContain(LIVE_COPY.fallbackButton);
     expect(html).toMatch(/<button[^>]*\bdisabled\b[^>]*>[^<]*Seal with a backup key/);
+  });
+
+  it("renders the backup-key fallback control enabled when a handler is given", () => {
+    const html = renderHtml(base, { onFallbackStart: () => undefined });
+
+    expect(html).toContain(LIVE_COPY.fallbackButton);
+    expect(html).toMatch(/<button(?:(?!disabled)[^>])*>[^<]*Seal with a backup key/);
   });
 
   it("hides the deletion note when no passkey was created", () => {

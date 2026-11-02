@@ -15,6 +15,7 @@ import { catalogueMetric, makeFigures } from "./test-figures";
 import {
   pressConfirm,
   pressCreate,
+  sealWithBackupKey,
   sealWithPasskey,
   type SealDeps,
   type SealDraft,
@@ -262,5 +263,96 @@ describe("failures after prepare", () => {
     const { outcome } = await runFlow(h);
     expect(outcome).toEqual({ ok: false, event: { type: "CANNOT_LOCK", passkeyCreated: true } });
     expect(h.api.seal).not.toHaveBeenCalled();
+  });
+});
+
+describe("sealWithBackupKey", () => {
+  async function runBackup(h: Harness & { draft: SealDraft }) {
+    const crypto = await import("@/lib/crypto");
+    const backupKey = crypto.generateBackupKey();
+    const outcome = await sealWithBackupKey(h.deps, { draft: h.draft, backupKey });
+    return { outcome, backupKey };
+  }
+
+  it("seals with a backup wrap only: factors is backup and no passkey is created", async () => {
+    const h = await makeHarness();
+    const { outcome } = await runBackup(h);
+    expect(outcome).toEqual({
+      ok: true,
+      event: {
+        type: "SEALED",
+        letterId: SEALED.ok ? SEALED.letterId : "",
+        sealedAt: SEALED.ok ? SEALED.sealedAt : "",
+        opensAt: SEALED.ok ? SEALED.opensAt : "",
+        offsetMs: 0,
+        factors: "backup",
+      },
+    });
+    expect(h.log).toEqual(["prepare", "seal"]);
+  });
+
+  it("sends a header with one backup Backup_Wrap and no rpId, credentialId or prfSalt", async () => {
+    const h = await makeHarness();
+    await runBackup(h);
+    const body = h.api.seal.mock.calls[0]?.[0] as {
+      envelope: {
+        wrappedDeks: { factor: string }[];
+        rpId?: unknown;
+        credentialId?: unknown;
+        prfSalt?: unknown;
+      };
+    };
+    expect(body.envelope.wrappedDeks.map((w) => w.factor)).toEqual(["backup"]);
+    expect(body.envelope).not.toHaveProperty("rpId");
+    expect(body.envelope).not.toHaveProperty("credentialId");
+    expect(body.envelope).not.toHaveProperty("prfSalt");
+  });
+
+  it("does not zero the backup key, so the card can still show it", async () => {
+    const h = await makeHarness();
+    const { backupKey } = await runBackup(h);
+    expect(Array.from(backupKey).some((b) => b !== 0)).toBe(true);
+  });
+
+  it("calls onPrepared once the prepare request has answered", async () => {
+    const h = await makeHarness();
+    const crypto = await import("@/lib/crypto");
+    const onPrepared = vi.fn(() => h.log.push("onPrepared"));
+    await sealWithBackupKey(h.deps, {
+      draft: h.draft,
+      backupKey: crypto.generateBackupKey(),
+      onPrepared,
+    });
+    expect(h.log).toEqual(["prepare", "onPrepared", "seal"]);
+    expect(onPrepared).toHaveBeenCalledTimes(1);
+  });
+
+  it("a prepare failure reports passkeyCreated false and makes no seal call", async () => {
+    const h = await makeHarness({ prepare: { ok: false, kind: "network" } });
+    const { outcome } = await runBackup(h);
+    expect(outcome).toEqual({
+      ok: false,
+      event: { type: "FAILED", kind: "network", passkeyCreated: false },
+    });
+    expect(h.api.seal).not.toHaveBeenCalled();
+  });
+
+  it("a missing then figure reports missing_then with passkeyCreated false and no seal", async () => {
+    const h = await makeHarness({ metricIds: ["us-diesel"] });
+    const { outcome } = await runBackup(h);
+    expect(outcome).toEqual({
+      ok: false,
+      event: { type: "FAILED", kind: "missing_then", metricId: "us-diesel", passkeyCreated: false },
+    });
+    expect(h.api.seal).not.toHaveBeenCalled();
+  });
+
+  it("a seal route clock mismatch reports clock with passkeyCreated false", async () => {
+    const h = await makeHarness({ seal: { ok: false, kind: "clock" } });
+    const { outcome } = await runBackup(h);
+    expect(outcome).toEqual({
+      ok: false,
+      event: { type: "FAILED", kind: "clock", passkeyCreated: false },
+    });
   });
 });
