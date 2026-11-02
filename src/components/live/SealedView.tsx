@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 
 import { DemoLabel } from "@/components/demo/DemoLabel";
 
+import { BackupKeyCard } from "./BackupKeyCard";
 import { COUNTDOWN_TICK_MS } from "./constants";
 import { LIVE_COPY } from "./copy";
 import { formatLocalDateTime } from "./format";
@@ -58,10 +59,21 @@ export interface SealedViewProps {
   appOrigin: string;
   /** The clock used for the countdown. Defaults to Date.now; a test fixes it. */
   nowMs?: () => number;
+  /**
+   * The printed backup key, held by the seal flow until the judge leaves the
+   * page. Null for a passkey-only letter, or when the key is no longer held.
+   */
+  backupKeyText?: string | null;
 }
 
-export function SealedView({ state, appOrigin, nowMs = Date.now }: SealedViewProps) {
+export function SealedView({
+  state,
+  appOrigin,
+  nowMs = Date.now,
+  backupKeyText = null,
+}: SealedViewProps) {
   const opensAtMs = Date.parse(state.opensAt);
+  const [showBackupCard, setShowBackupCard] = useState(false);
   const nowRef = useRef(nowMs);
   nowRef.current = nowMs;
 
@@ -92,6 +104,9 @@ export function SealedView({ state, appOrigin, nowMs = Date.now }: SealedViewPro
   const linkText = `${appOrigin}/l/${state.letterId}`;
   const relativeHref = `/l/${state.letterId}`;
   const showKeyReminder = state.factors === "backup" || state.factors === "both";
+  // The card is offered only for a letter with a Backup_Wrap, and only while
+  // the printed key is still held. A passkey-only letter has no key to show.
+  const offerBackupCard = showKeyReminder && backupKeyText !== null && backupKeyText.length > 0;
 
   function onCopyLink(): void {
     void navigator.clipboard?.writeText(linkText);
@@ -148,6 +163,29 @@ export function SealedView({ state, appOrigin, nowMs = Date.now }: SealedViewPro
       </div>
 
       <SealedKeepsakes letterId={state.letterId} appOrigin={appOrigin} opensAt={state.opensAt} />
+
+      {offerBackupCard && backupKeyText !== null ? (
+        showBackupCard ? (
+          <div className={styles.backupCard}>
+            <BackupKeyCard
+              letterId={state.letterId}
+              appOrigin={appOrigin}
+              keyText={backupKeyText}
+            />
+          </div>
+        ) : (
+          <div className={`${styles.backupOffer} ${styles.noPrint}`}>
+            <button
+              type="button"
+              className={styles.secondary}
+              onClick={() => setShowBackupCard(true)}
+              data-live-backup-offer
+            >
+              {LIVE_COPY.backupCardShow}
+            </button>
+          </div>
+        )
+      ) : null}
     </div>
   );
 }

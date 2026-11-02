@@ -134,4 +134,7 @@ export const LIVE_COPY = {
   backupCardTitle: "Backup key card",
   backupCardWhat: "This card opens your letter on its own after the opening date.",
   backupCardKeep: "Keep it somewhere safe, like a house key.",
+  backupCardShow: "Show my backup key card",
+  backupCardKeyLabel: "Your backup key",
+  backupCardQrHint: "Scan this code to open the letter link with your backup key.",
 } as const;

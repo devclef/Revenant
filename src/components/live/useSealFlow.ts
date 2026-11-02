@@ -164,18 +164,21 @@ export function useSealFlow(deps: SealDeps | null, draft: SealDraft): SealFlow {
     send({ type: "FALLBACK_SEAL_PRESS" });
 
     const run = async (): Promise<void> => {
+      let sealed = false;
       try {
         const outcome = await sealWithBackupKey(deps, {
           draft,
           backupKey: key,
           onPrepared: () => send({ type: "PREPARED" }),
         });
+        sealed = outcome.ok;
         send(outcome.event);
       } catch {
         send({ type: "FAILED", kind: "server", passkeyCreated: false });
       } finally {
-        // Sealing has ended, so the key is no longer needed in memory.
-        clearBackupKey();
+        // A failed seal keeps nothing. A sealed letter keeps the key, so the
+        // backup key card can show it until the judge leaves the page (R21.3).
+        if (!sealed) clearBackupKey();
         inFlight.current = false;
       }
     };
