@@ -174,7 +174,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
   - Validation: `bash scripts/check.sh`; `npx vitest run src/components/live src/components/reveal src/components/ceremony src/app/l`
   - _Requirements: R17, R19, R22.7, R24.5, R24.8_
 
-- [ ] 9. Live_Letter reveal variant
+- [x] 9. Live_Letter reveal variant
   - Agent: `frontend-dev` · Depends on: 8, 4 · Estimated size: ~650 changed lines plus ~400 test lines
   - Before this task: tasks 8 and 4 are on `main`. The R18.5 acceptance below must not ship before task 4 is merged; if task 4 is not on `main`, stop and ask the owner.
   - Scope: `src/components/reveal/Reveal.tsx`, `SealedLetter.tsx`, `FiguresThenNow.tsx`, `OpeningFlow.tsx`, `src/components/live/LiveLockNote.tsx`, `copy.ts`, `live.module.css`, and the `*.test.ts(x)` for each
