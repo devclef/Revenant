@@ -8,8 +8,10 @@
  * Colours come from globals.css tokens only. The card is a ParchmentSurface
  * with tone="deep" and sets --ink itself, so the desk's cream text never
  * reaches the paper. Contrast on --paper-deep (globals.css record): --ink
- * 13.17:1, --ink-soft 9.58:1, --seal 7.92:1, all above the 4.5:1 WCAG 2.2 AA
- * floor. No green/red or directional colour (neutrality.md); no figures here.
+ * 13.17:1, --ink-soft 9.58:1, all above the 4.5:1 WCAG 2.2 AA floor. The link
+ * text and focus ring are --ink, underlined, so no control is red or green.
+ * Wax red appears only on the WaxSeal (C5). No green/red or directional colour
+ * (neutrality.md); no figures here.
  */
 
 .envelope {
@@ -21,7 +23,7 @@
 }
 
 .envelope:focus-visible {
-  outline: 2px solid var(--seal);
+  outline: 2px solid var(--ink);
   outline-offset: 4px;
 }
 
@@ -83,7 +85,7 @@
   align-self: flex-start;
   margin-top: 0.25rem;
   font-family: var(--font-sans);
-  color: var(--seal);
+  color: var(--ink);
   text-decoration: underline;
   text-underline-offset: 0.15em;
 }
