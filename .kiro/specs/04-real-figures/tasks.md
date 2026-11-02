@@ -133,7 +133,7 @@ All Source_Files are downloaded from the publishers' public pages without a key 
   - Validation: `bash scripts/check.sh`
   - _Requirements: R10.1–R10.6, R10.8, R12.1, R12.5_
 
-- [ ] 9. `DEMO_FIGURES` drops the fixture and the no-fixture checks
+- [x] 9. `DEMO_FIGURES` drops the fixture and the no-fixture checks
   - Agent: `data-dev` · Depends on: 8, 11 · Estimated size: ~450 changed lines
   - Before this task: Blocked by #49 (spec 03 task 8, the reveal's figures stage), so that the reveal and its tests are on `main` when this task runs. Task 11 has moved every reveal and ceremony test that needs fixture figures off `DEMO_FIGURES`. Before starting, run `grep -rln "DEMO_FIGURES" src/components --include=*.test.tsx`; each file it lists must either mock `@/lib/figures/demo` or use only real catalogue metric IDs. If one reads `fixture-us-*` data through the real `DEMO_FIGURES`, stop and ask the owner (it belongs to frontend-dev and this task cannot edit it).
   - Scope: `src/lib/figures/demo/index.ts`, `src/lib/figures/demo/index.test.ts`, `src/lib/figures/then-now.test.ts`, `src/lib/figures/demo/personas-consistency.test.ts`, `src/lib/figures/demo/no-fixture.test.ts`
