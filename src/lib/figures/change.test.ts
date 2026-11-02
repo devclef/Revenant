@@ -191,3 +191,66 @@ describe("computeChange", () => {
     expect(now).toEqual(nowBefore);
   });
 });
+
+describe("computeChange allowSamePeriod branches", () => {
+  it("default call with equal period ends gives no_newer_figure", () => {
+    const then = official({ value: "2.00", period: "2024-09" });
+    const now = official({ value: "2.00", period: "2024-09" });
+
+    expect(computeChange(then, now)).toEqual({
+      comparable: false,
+      reason: "no_newer_figure",
+    });
+    expect(computeChange(then, now, { allowSamePeriod: false })).toEqual({
+      comparable: false,
+      reason: "no_newer_figure",
+    });
+  });
+
+  it("allowSamePeriod with the same figure for then and now gives difference 0 and the same formula", () => {
+    const figure = official({ value: "2.00", period: "2024-09" });
+
+    const result = computeChange(figure, figure, { allowSamePeriod: true });
+
+    expect(result.comparable).toBe(true);
+    if (!result.comparable) return;
+    expect(result.formula).toBe(CHANGE_FORMULA_ID);
+    expect(result.formula).toBe("then-now-change-v1");
+    expect(result.difference).toBe("0");
+    expect(result.then).toEqual({ value: "2.00", period: "2024-09" });
+    expect(result.now).toEqual({ value: "2.00", period: "2024-09" });
+  });
+
+  it("allowSamePeriod with nowEnd earlier than thenEnd gives no_newer_figure", () => {
+    const then = official({ value: "2.00", period: "2026-09" });
+    const now = official({ value: "5.00", period: "2024-09" });
+
+    expect(computeChange(then, now, { allowSamePeriod: true })).toEqual({
+      comparable: false,
+      reason: "no_newer_figure",
+    });
+  });
+
+  it("allowSamePeriod with equal periods but different values gives no_newer_figure", () => {
+    const then = official({ value: "2.00", period: "2024-09" });
+    const now = official({ value: "2.50", period: "2024-09" });
+
+    expect(computeChange(then, now, { allowSamePeriod: true })).toEqual({
+      comparable: false,
+      reason: "no_newer_figure",
+    });
+  });
+
+  it("allowSamePeriod with a later now period still gives the normal comparable result", () => {
+    const then = official({ value: "2.00", period: "2024-09" });
+    const now = official({ value: "5.00", period: "2026-09" });
+
+    const result = computeChange(then, now, { allowSamePeriod: true });
+
+    expect(result.comparable).toBe(true);
+    if (!result.comparable) return;
+    expect(result.formula).toBe(CHANGE_FORMULA_ID);
+    expect(result.difference).toBe("3");
+    expect(result.percent).toEqual({ value: "150", exact: true });
+  });
+});
