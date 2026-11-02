@@ -91,6 +91,19 @@ async function waitUntil(condition: () => boolean): Promise<void> {
   for (let i = 0; i < 500 && !condition(); i++) await flush();
 }
 
+/**
+ * Repeats a press after each macrotask until `done` holds. The hook refuses a
+ * press while the previous step is still in flight, so under load the first
+ * press can land too early. Retrying makes the test wait for the step, not for
+ * a fixed number of ticks.
+ */
+async function pressUntil(press: () => void, done: () => boolean): Promise<void> {
+  for (let i = 0; i < 500 && !done(); i++) {
+    press();
+    await flush();
+  }
+}
+
 describe("useSealFlow double-press guard", () => {
   it("a second Create_Press before the first resolves starts one passkey prompt", async () => {
     const { deps, createSpy } = await buildDeps();
@@ -105,8 +118,8 @@ describe("useSealFlow double-press guard", () => {
     const { deps, createSpy, getSpy, api } = await buildDeps();
     const flow = mount(deps, draft());
     flow.onCreatePress();
-    await flush();
-    flow.onConfirmPress();
+    await waitUntil(() => createSpy.mock.calls.length > 0);
+    await pressUntil(() => flow.onConfirmPress(), () => getSpy.mock.calls.length > 0);
     flow.onConfirmPress();
     await waitUntil(() => api.seal.mock.calls.length > 0);
     expect(createSpy).toHaveBeenCalledTimes(1);
@@ -136,10 +149,14 @@ describe("useSealFlow double-press guard", () => {
     const { deps, createSpy } = await buildDeps({ failure: "cancel_create" });
     const flow = mount(deps, draft());
     flow.onCreatePress();
-    await flush();
-    flow.onRetry();
-    flow.onCreatePress();
-    await flush();
+    await waitUntil(() => createSpy.mock.calls.length > 0);
+    await pressUntil(
+      () => {
+        flow.onRetry();
+        flow.onCreatePress();
+      },
+      () => createSpy.mock.calls.length >= 2,
+    );
     expect(createSpy).toHaveBeenCalledTimes(2);
   });
 
