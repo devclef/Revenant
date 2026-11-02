@@ -1,5 +1,6 @@
 import { ParchmentSurface } from "@/components/ui";
 import { DemoLabel } from "@/components/demo/DemoLabel";
+import { LiveEntry } from "@/components/demo/LiveEntry";
 import { PersonaCard } from "@/components/demo/PersonaCard";
 import { DEMO_COPY } from "@/components/demo/copy";
 import { DeskScene } from "@/components/ceremony/desk/DeskScene";
@@ -57,6 +58,8 @@ export default function DemoIndexPage() {
               ))}
             </ul>
           )}
+
+          <LiveEntry />
         </div>
       </DeskScene>
     </MotionProvider>

@@ -31,6 +31,8 @@ const here = dirname(fileURLToPath(import.meta.url));
 const revealDir = here;
 // src/components/reveal -> src/components/ceremony
 const ceremonyDir = resolve(here, "..", "ceremony");
+// The live demo Seal_Page (spec 06) is flat, so `tsxFilesIn` covers it.
+const liveDir = resolve(here, "..", "live");
 
 function tsxFilesIn(dir: string): string[] {
   let names: string[];
@@ -78,7 +80,11 @@ function tsxFilesUnder(dir: string): string[] {
 
 const ceremonyFiles = tsxFilesUnder(ceremonyDir);
 
-const scannedFiles = [...tsxFilesIn(revealDir), ...ceremonyFiles].sort();
+const scannedFiles = [
+  ...tsxFilesIn(revealDir),
+  ...tsxFilesIn(liveDir),
+  ...ceremonyFiles,
+].sort();
 
 const hasLetter = /[A-Za-z]/;
 

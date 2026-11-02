@@ -56,6 +56,19 @@ export const DEMO_COPY = {
 
   /** The link back to the demo letters index from the not-found page. */
   backToDemo: "Back to the demo letters",
+
+  /** Heading of the live demo entry on the Demo_Index page (R12.1). */
+  liveEntryHeading: "Seal your own letter",
+
+  /**
+   * Body of the live demo entry. It says the lock is 30 seconds because this is
+   * a demo, and that the passkey is the reader's own.
+   */
+  liveEntryBody:
+    "Write a short letter and seal it with your own passkey. The lock lasts 30 seconds, so you can open it here.",
+
+  /** The link to the live demo Seal_Page. */
+  liveEntryLink: "Go to the live demo",
 } as const;
 
 export type DemoCopy = typeof DEMO_COPY;
