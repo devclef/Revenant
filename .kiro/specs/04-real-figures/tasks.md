@@ -161,7 +161,7 @@ All Source_Files are downloaded from the publishers' public pages without a key 
   - Validation: `bash scripts/check.sh`
   - _Requirements: R11.2_
 
-- [ ] 11. Reveal and ceremony tests load the fixture themselves
+- [x] 11. Reveal and ceremony tests load the fixture themselves
   - Agent: `frontend-dev` · Depends on: 8 · Estimated size: ~40 changed lines
   - Before this task: none. This task merges before task 9. It is numbered 11 so that the issues already opened for tasks 9 and 10 keep their numbers.
   - Scope: `src/components/reveal/FiguresThenNow.test.tsx`, `src/components/reveal/change-neutral.property.test.tsx`, `src/components/reveal/fixture-label.test.tsx`, `src/components/ceremony/figures/ThenNowMounted.test.tsx`
