@@ -42,13 +42,16 @@
 // `Math.random` and `Date.now` are never called in render, and this module
 // imports no `@/lib/crypto` (the ceremony source scan enforces both).
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { CEREMONY_COPY } from "./copy";
 import { LiveRegion, LiveRegionProvider } from "./LiveRegion";
 import { LocalViewProvider, useLocalView } from "./local-view";
 import { useMotion } from "./motion";
 import { useSequence } from "./skip";
+import { SoundToggle } from "./sound/SoundToggle";
+import { SoundEnabledContext } from "./sound/SoundEnabledContext";
+import { soundCues } from "./sound/cues";
 import { stageFor } from "./stages";
 import type { FlowState } from "../reveal/opening-machine";
 import styles from "./ceremony.module.css";
@@ -118,6 +121,11 @@ function CeremonyRegion({
   const { hasActive, skipAll } = useSequence();
   const { localView } = useLocalView();
 
+  // The sound toggle's state (R14.1). Off by default and in memory only. The
+  // Seal_Break reads it through SoundEnabledContext below. The toggle itself
+  // keeps its own copy, and both change on the same press.
+  const [soundOn, setSoundOn] = useState(false);
+
   // The Stage for the current state at the live local view (design.md "Stage
   // resolution"). On the server and first render `localView` is
   // `DEFAULT_LOCAL_VIEW`, so the static markup reports the settled Stage
@@ -172,20 +180,31 @@ function CeremonyRegion({
       data-ceremony-motion={motionAttr}
       className={className ? `${styles.ceremony} ${className}` : styles.ceremony}
     >
-      <LiveRegion message={liveLine} />
-      <button
-        type="button"
-        className={controlClass}
-        onClick={() => setCalm(motionAttr !== "calm")}
-      >
-        {calmLabel}
-      </button>
-      {hasActive ? (
-        <button type="button" className={controlClass} onClick={skipAll}>
-          {CEREMONY_COPY.skip}
+      <SoundEnabledContext.Provider value={soundOn}>
+        <LiveRegion message={liveLine} />
+        <button
+          type="button"
+          className={controlClass}
+          onClick={() => setCalm(motionAttr !== "calm")}
+        >
+          {calmLabel}
         </button>
-      ) : null}
-      {children}
+        <SoundToggle
+          onChange={(next) => {
+            setSoundOn(next);
+            soundCues.onToggle(next);
+          }}
+        />
+        <p className={`${styles.desk} ${styles.soundNote}`}>
+          {CEREMONY_COPY.soundNote}
+        </p>
+        {hasActive ? (
+          <button type="button" className={controlClass} onClick={skipAll}>
+            {CEREMONY_COPY.skip}
+          </button>
+        ) : null}
+        {children}
+      </SoundEnabledContext.Provider>
     </div>
   );
 }
