@@ -18,8 +18,8 @@ import type { FigureV1, MetricDefinitionV1, PayloadV1 } from "@/lib/seal-format"
  *
  * For each committed persona, the sealed "then" figures are the figures
  * `thenAndNow(metricId, written_as_of, DEMO_FIGURES).then`, the same lookup the
- * sealing script uses. The "now" figures come from DEMO_FIGURES inside the
- * component. Nothing here reads a fixture file, mocks the figure module, or
+ * sealing script uses. The "now" figures are `thenAndNow(...).now` from the
+ * same file. Nothing here reads a fixture file, mocks the figure module, or
  * makes a network request. Rendered with `renderToStaticMarkup`, as the other
  * reveal tests are.
  *
@@ -29,7 +29,14 @@ import type { FigureV1, MetricDefinitionV1, PayloadV1 } from "@/lib/seal-format"
  *   is real;
  * - each then figure carries "historical record, retrieved {date}" with the
  *   UTC calendar date of its retrieved_at;
- * - the period, unit and region of each then and now figure shown are present.
+ * - each then and each now figure shows its own label, period, unit and region
+ *   inside its own group, so a value on one figure cannot pass because another
+ *   figure shows it.
+ *
+ * Each figure renders as one group that ends with its closing `</details>` tag
+ * (see FigureLine). Splitting the markup on that tag gives one group per
+ * figure, in render order: then, then now (when a now figure exists), then the
+ * next metric.
  */
 
 // No network of any kind in stage 3. A guard fails the test if render reaches
@@ -67,20 +74,67 @@ function metricFor(metricId: string): MetricDefinitionV1 {
   return series.metric;
 }
 
-function openedFor(persona: (typeof PERSONAS)[number]): {
+// The unit a figure is shown in: the series' display rescale unit when one is
+// set, otherwise the figure's own unit.
+function shownUnit(figure: Readonly<FigureV1>): string {
+  const rescale = DEMO_FIGURES.series.get(figure.metric_id)?.display_rescale;
+  return rescale === undefined ? figure.unit : rescale.unit;
+}
+
+// The UTC calendar date of an ISO instant, formatted in the reveal's long form.
+function utcLongDate(retrievedAt: string): string {
+  return UTC_LONG_DATE.format(
+    new Date(`${retrievedAt.slice(0, 10)}T00:00:00.000Z`),
+  );
+}
+
+type ExpectedGroup = {
+  label: string;
+  period: string;
+  unit: string;
+  region: string;
+};
+
+function openedFor(
+  persona: (typeof PERSONAS)[number],
+): {
   opened: Opened;
-  thenFigures: Readonly<FigureV1>[];
+  expected: ExpectedGroup[];
 } {
   const metrics = persona.metrics.map((m) => metricFor(m.metric_id));
   const thenFigures: Readonly<FigureV1>[] = [];
+  const expected: ExpectedGroup[] = [];
+
   for (const m of persona.metrics) {
-    const { then } = thenAndNow(m.metric_id, persona.written_as_of, DEMO_FIGURES);
+    const { then, now } = thenAndNow(
+      m.metric_id,
+      persona.written_as_of,
+      DEMO_FIGURES,
+    );
     if (!then.found) {
       throw new Error(
         `test setup: no then figure for ${persona.key} ${m.metric_id}`,
       );
     }
     thenFigures.push(then.figure);
+
+    // Then group: the label carries the UTC calendar date of retrieved_at.
+    expected.push({
+      label: `historical record, retrieved ${utcLongDate(then.figure.retrieved_at)}`,
+      period: formatPeriod(then.figure.period, then.figure.region),
+      unit: shownUnit(then.figure),
+      region: then.figure.region,
+    });
+
+    // Now group, when the now figure exists. Its label is "retrieved {date}".
+    if (now.found) {
+      expected.push({
+        label: `retrieved ${utcLongDate(now.figure.retrieved_at)}`,
+        period: formatPeriod(now.figure.period, now.figure.region),
+        unit: shownUnit(now.figure),
+        region: now.figure.region,
+      });
+    }
   }
 
   const payload = {
@@ -102,7 +156,16 @@ function openedFor(persona: (typeof PERSONAS)[number]): {
     payload,
   };
 
-  return { opened, thenFigures };
+  return { opened, expected };
+}
+
+// Splits the rendered markup into one group per figure. Each figure's stamp or
+// line ends with its closing `</details>`, so the markup up to and including
+// each such tag is one group. The text after the last tag holds no figure and
+// is dropped.
+function figureGroups(markup: string): string[] {
+  const parts = markup.split("</details>");
+  return parts.slice(0, -1).map((part) => `${part}</details>`);
 }
 
 describe("FiguresThenNow with the committed personas and real figures", () => {
@@ -112,10 +175,11 @@ describe("FiguresThenNow with the committed personas and real figures", () => {
 
   for (const persona of PERSONAS) {
     describe(`persona ${persona.key}`, () => {
-      const { opened, thenFigures } = openedFor(persona);
+      const { opened, expected } = openedFor(persona);
       const markup = renderToStaticMarkup(
         createElement(FiguresThenNow, { opened }),
       );
+      const groups = figureGroups(markup);
 
       it("shows no fixture label", () => {
         expect(markup).not.toContain(REVEAL_COPY.labelFixtureData);
@@ -125,24 +189,19 @@ describe("FiguresThenNow with the committed personas and real figures", () => {
         expect(markup).not.toContain(htmlText(REVEAL_COPY.fixtureNote));
       });
 
-      it("labels each then figure as a historical record with its UTC retrieved date", () => {
-        for (const figure of thenFigures) {
-          // The UTC calendar date is the first ten characters of retrieved_at.
-          const utcDay = new Date(`${figure.retrieved_at.slice(0, 10)}T00:00:00.000Z`);
-          const retrievedDate = UTC_LONG_DATE.format(utcDay);
-          const label = `historical record, retrieved ${retrievedDate}`;
-          expect(markup).toContain(htmlText(label));
-        }
+      it("renders one group per then and per now figure", () => {
+        expect(groups).toHaveLength(expected.length);
       });
 
-      it("shows the period, unit and region of each then figure", () => {
-        for (const figure of thenFigures) {
-          const rescale = DEMO_FIGURES.series.get(figure.metric_id)?.display_rescale;
-          const unit = rescale === undefined ? figure.unit : rescale.unit;
-          expect(markup).toContain(htmlText(formatPeriod(figure.period, figure.region)));
-          expect(markup).toContain(htmlText(unit));
-          expect(markup).toContain(htmlText(figure.region));
-        }
+      it("shows the label, period, unit and region of each figure in its own group", () => {
+        expected.forEach((want, index) => {
+          const group = groups[index];
+          expect(group, `group ${index} (${want.label})`).toBeDefined();
+          expect(group).toContain(htmlText(want.label));
+          expect(group).toContain(htmlText(want.period));
+          expect(group).toContain(htmlText(want.unit));
+          expect(group).toContain(htmlText(want.region));
+        });
       });
     });
   }
