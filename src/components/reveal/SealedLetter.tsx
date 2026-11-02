@@ -1,6 +1,7 @@
 import type { Opened } from "./opening-machine";
 import { formatCalendarDate, formatUtcDate } from "@/components/demo/dates";
 import { formatLocalDateTime } from "@/components/live/format";
+import { WaxSeal } from "@/components/ceremony/envelope/WaxSeal";
 import { LIVE_COPY, REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
 
@@ -44,12 +45,18 @@ export type SealedLetterProps = {
    * (spec 06, R18.2).
    */
   variant?: "persona" | "live";
+  /**
+   * The live letter's id. In live mode it is the seal's pattern key, so each
+   * live letter gets its own seal look. Ignored by the persona variant.
+   */
+  letterId?: string;
 };
 
 export function SealedLetter({
   opened,
   personaName,
   variant = "persona",
+  letterId,
 }: SealedLetterProps) {
   const { payload, header } = opened;
 
@@ -57,6 +64,8 @@ export function SealedLetter({
     return (
       <section className={styles.sealedLetter}>
         <h2 tabIndex={-1}>{REVEAL_COPY.stage2Title}</h2>
+
+        {letterId === undefined ? null : <WaxSeal patternKey={letterId} size={48} />}
 
         <p className={styles.period}>
           {LIVE_COPY.sealedOn.replace(
