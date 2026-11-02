@@ -131,6 +131,7 @@ export function RecallStep({
                   value={draft.noAnswer ? null : draftNumber(draft.text)}
                   noAnswer={draft.noAnswer}
                   onEdit={onEdit}
+                  spokenPrefix={REVEAL_COPY.yourAnswer}
                 />
               ) : null}
 

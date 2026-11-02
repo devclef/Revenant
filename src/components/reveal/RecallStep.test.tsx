@@ -251,7 +251,7 @@ describe("RecallStep recall scale", () => {
       "q-fuel": { text: "3.5", noAnswer: false },
     };
     const [fuel] = fieldsetsOf(render(drafts, [], false));
-    expect(fuel).toContain('aria-valuetext="3.5 USD per gallon"');
+    expect(fuel).toContain('aria-valuetext="Your answer: 3.5 USD per gallon"');
     expect(fuel).toContain('data-readout="readout">3.5<');
   });
 

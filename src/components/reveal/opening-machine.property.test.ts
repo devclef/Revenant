@@ -652,3 +652,91 @@ describe("Property 17: views never render letter content before the reveal", () 
     );
   });
 });
+
+// --- Property 2: the remaining Ceremony render clauses -----------------------
+//
+// Property 2 (spec 05): nothing from a later Stage is in the document early.
+// The recall, letter and figure clauses sit in the Property 17 block above. This
+// block adds the seal and envelope clauses and the Mark clause:
+//   - no split seal (`data-broken="true"` or the flake custom properties) and no
+//     open flap (envelope state `open`) before reveal stage 2;
+//   - no Mark (the judge's answer line) before the `recall` Stage.
+
+/** The stages before the seal breaks: anything that is not reveal stage 2 or 3. */
+function isBeforeStage2(state: FlowState): boolean {
+  return !(state.tag === "reveal" && (state.stage === 2 || state.stage === 3));
+}
+
+/** The Flow states before the `recall` Stage: no judge's answer yet. */
+const PRE_RECALL_TAGS = new Set([
+  "loading",
+  "sealed",
+  "openable",
+  "verifying",
+  "verified",
+  "not_placed",
+  "unreachable",
+  "verification_failed",
+  "open_failed",
+]);
+
+/** The judge's-answer prefix of the Mark copy, without its value placeholder. */
+const MARK_PREFIX = CEREMONY_COPY.markAnswer.split("{")[0]?.trim() ?? "";
+
+describe("Property 2: no split seal, open flap or Mark before its Stage", () => {
+  beforeEach(() => {
+    vi.stubGlobal(
+      "fetch",
+      vi.fn(() => {
+        throw new Error("a rendered view tried to fetch");
+      }),
+    );
+    for (const handler of Object.values(handlers)) {
+      handler.mockClear();
+    }
+  });
+
+  afterEach(() => {
+    vi.unstubAllGlobals();
+  });
+
+  it("draws no split seal and no open flap before reveal stage 2", () => {
+    const early = RENDER_CASES.filter((c) => isBeforeStage2(c.state));
+    expect(early.length).toBeGreaterThan(0);
+    fc.assert(
+      fc.property(fc.constantFrom(...early), ({ state }) => {
+        const html = render(state);
+        expect(
+          html.includes('data-broken="true"'),
+          `${state.tag} must not draw a split seal`,
+        ).toBe(false);
+        expect(
+          html.includes("--flake-x"),
+          `${state.tag} must not draw seal flakes`,
+        ).toBe(false);
+        expect(
+          html.includes('data-envelope-state="open"'),
+          `${state.tag} must not open the flap`,
+        ).toBe(false);
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  it("draws no Mark in any state before the recall Stage", () => {
+    const preRecall = RENDER_CASES.filter((c) =>
+      PRE_RECALL_TAGS.has(c.state.tag),
+    );
+    expect(preRecall.length).toBeGreaterThan(0);
+    fc.assert(
+      fc.property(fc.constantFrom(...preRecall), ({ state }) => {
+        const html = render(state);
+        expect(
+          html.includes(MARK_PREFIX),
+          `${state.tag} must not draw the judge's answer Mark`,
+        ).toBe(false);
+      }),
+      { numRuns: 100 },
+    );
+  });
+});

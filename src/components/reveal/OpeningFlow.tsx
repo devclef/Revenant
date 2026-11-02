@@ -34,17 +34,16 @@
  * - `reveal`             -> `Reveal` (the staged reveal, stage 1 onward).
  * - every error tag      -> `FlowError` with the matching kind.
  *
- * Focus (R9.6, accessibility): when the view changes, focus moves to the new
- * view's region so a keyboard or screen-reader user lands on the fresh content
- * instead of staying on a control that no longer exists. The region is now
- * `CeremonyRoot` (design.md "OpeningFlow changes"): it keeps the same
- * `tabIndex={-1}`, `role="region"` and `aria-label` as the old plain root
- * `div`, owns the focus-on-`state.tag` effect, and additionally carries
- * `data-ceremony` (the Stage) and `data-ceremony-motion` (`full` or `calm`),
- * announcing each new Stage in a polite live region. `StillSealed` and
- * `RecallStep` render their own `<h1>`; the wrapper region is the reliable
- * focus target for every view, including the inline loading and verifying
- * statements and the ones without a heading element.
+ * Focus (R9.6, accessibility): when the view or the Stage changes, focus moves
+ * to the newest Stage heading (`<h1>`/`<h2>`) in the region, so a keyboard or
+ * screen-reader user lands on the fresh content instead of a control that no
+ * longer exists. A view with no heading (the loading and verifying statements,
+ * the envelope) takes focus on the region itself. The region is `CeremonyRoot`
+ * (design.md "OpeningFlow changes"): it keeps the same `tabIndex={-1}`,
+ * `role="region"` and `aria-label` as the old plain root `div`, owns the focus
+ * effect, and additionally carries `data-ceremony` (the Stage) and
+ * `data-ceremony-motion` (`full` or `calm`), announcing each new Stage in a
+ * polite live region.
  *
  * Motion and skip contexts (design.md "Final state first"): the tree is wrapped
  * in `MotionProvider` and `SkipProvider` so `useMotion` and `useSequence`
@@ -116,7 +115,7 @@ export function OpeningFlow({
   const { state } = flow;
 
   // The root is `CeremonyRoot`: it keeps the region role, the persona label and
-  // the -1 tab stop, owns the focus-on-`state.tag` effect, and derives
+  // the -1 tab stop, owns the focus effect (the Stage heading), and derives
   // `data-ceremony` / `data-ceremony-motion` plus the live-region announcement
   // from the current flow state. `MotionProvider` and `SkipProvider` wrap it so
   // `useMotion` and `useSequence` resolve for the root and the views; both

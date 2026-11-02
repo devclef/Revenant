@@ -16,6 +16,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { MotionProvider } from "../motion";
+import { SkipProvider } from "../skip";
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import type { Opened } from "@/components/reveal/opening-machine";
 import type { PayloadV1 } from "@/lib/seal-format";
@@ -51,7 +52,11 @@ function render(): string {
     createElement(
       MotionProvider,
       null,
-      createElement(InkLetter, { opened: OPENED, personaName: PERSONA_NAME }),
+      createElement(
+        SkipProvider,
+        null,
+        createElement(InkLetter, { opened: OPENED, personaName: PERSONA_NAME }),
+      ),
     ),
   );
 }

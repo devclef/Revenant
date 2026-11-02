@@ -252,7 +252,10 @@
 .passageSheet {
   position: absolute;
   inset: 0;
-  border: 1px solid var(--ink);
+  /* A paper edge, not a frame: a hairline under the sheet, no box around an
+     empty sheet. The gold is decorative only (neutrality and contrast rules). */
+  border: 0;
+  box-shadow: 0 1px 0 var(--gold-leaf);
   background-color: var(--paper);
   transform-origin: left center;
   transform: rotateY(0deg);
@@ -329,6 +332,14 @@
 }
 
 .sequence[data-step="done"] [data-change] {
+  animation: none;
+}
+
+/* Skip and Calm settle at data-step="done": the Stamps and the counter digits
+   stop their drop and roll at once and rest in place, so every Stamp and
+   counter value is shown (R11.4). Their rest styles are the final state. */
+.sequence[data-step="done"] .drop,
+.sequence[data-step="done"] .roll {
   animation: none;
 }
 
