@@ -124,7 +124,7 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
             onFallbackStart={flow.onFallbackStart}
           />
         );
-      case "fallback_key":
+      case "fallback_key": {
         // The key is generated on FALLBACK_START, so it is present here. The
         // null guard only covers a state that should never reach this branch.
         const fallbackKeyText = flow.getBackupKeyText();
@@ -136,6 +136,7 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
             onDecline={flow.onFallbackDecline}
           />
         );
+      }
       default:
         // write, creating, created, confirming, preparing, sealing: the write
         // form knows which of its controls to show for each step.
