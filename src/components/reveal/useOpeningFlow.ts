@@ -71,7 +71,7 @@ import {
   type BackupKeyBytes,
   type PasskeyHeader,
   type UnlockControls,
-} from "./unlock";
+} from "@/components/live/unlock";
 
 /** The 16 ID bytes of a letter. */
 const LETTER_ID_BYTES = 16;

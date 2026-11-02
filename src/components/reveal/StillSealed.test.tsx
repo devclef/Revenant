@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { REVEAL_COPY } from "./copy";
 import { StillSealed, preciseRemainingText } from "./StillSealed";
-import { onceOnly } from "./unlock";
+import { onceOnly } from "@/components/live/unlock";
 
 /**
  * Tests for the still-sealed view's live options (spec 06 task 8, R17.4). The

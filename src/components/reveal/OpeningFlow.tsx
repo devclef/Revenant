@@ -72,7 +72,7 @@ import {
 import type { EnvelopePersona } from "@/components/ceremony/envelope/Envelope";
 import { DemoLabel } from "@/components/demo/DemoLabel";
 import { useOpeningFlow } from "./useOpeningFlow";
-import { onceOnly, type AuthenticatorPort } from "./unlock";
+import { onceOnly, type AuthenticatorPort } from "@/components/live/unlock";
 import { RecallStep } from "./RecallStep";
 import { Reveal } from "./Reveal";
 import { FlowError, type FlowErrorKind } from "./FlowError";

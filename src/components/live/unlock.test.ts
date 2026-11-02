@@ -1,4 +1,4 @@
-// Unit tests for the unlock helpers (reveal/unlock.ts, design.md
+// Unit tests for the unlock helpers (live/unlock.ts, design.md
 // "Opening_Flow additions" and "The first-async-step rule").
 //
 // This file is under src/components, so it may not import the crypto barrel

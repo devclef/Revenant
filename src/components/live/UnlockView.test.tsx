@@ -6,7 +6,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 
 import type { KeyNotice, UnlockInfo } from "@/components/reveal/opening-machine";
-import type { UnlockControls } from "@/components/reveal/unlock";
+import type { UnlockControls } from "./unlock";
 import { LIVE_COPY } from "./copy";
 import { UnlockView } from "./UnlockView";
 

@@ -23,7 +23,7 @@
 
 import type { CryptoModule } from "@/components/live/crypto-module";
 import { decodeBase64url, parseEnvelope } from "@/lib/seal-format";
-import type { KeyNotice, OpenFailedKind, UnlockInfo } from "./opening-machine";
+import type { KeyNotice, OpenFailedKind, UnlockInfo } from "@/components/reveal/opening-machine";
 
 /** The authenticator port the crypto barrel uses. Taken from `assertPasskey`. */
 export type AuthenticatorPort = Parameters<CryptoModule["assertPasskey"]>[0];
