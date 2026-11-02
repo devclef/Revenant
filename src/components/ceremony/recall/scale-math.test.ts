@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import { buildRecallRecord, type Draft } from "@/lib/recall/record";
-import type { RecallQuestionV1 } from "@/lib/recall/generate";
 import {
   SCALE_MAX_VALUE,
   SCALE_MIN_VALUE,
@@ -27,8 +26,14 @@ import {
 const NUM_RUNS = 100;
 const NUMBER_PATTERN = /^[0-9]+(\.[0-9]+)?$/;
 
+/**
+ * The question type the record builder takes. Derived from its signature so
+ * this file never names the generate module (the reveal import boundary).
+ */
+type RecallQuestion = Parameters<typeof buildRecallRecord>[0][number];
+
 /** A number question with the given id, as the record builder expects. */
-function question(id: string): RecallQuestionV1 {
+function question(id: string): RecallQuestion {
   return {
     id,
     answer_type: "number",
