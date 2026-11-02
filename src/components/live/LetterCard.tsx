@@ -3,7 +3,7 @@
 import { useId, useMemo } from "react";
 
 import { DemoLabel } from "@/components/demo/DemoLabel";
-import { encodeQr, qrToSvg } from "@/lib/cards";
+import { encodeQr, qrPath } from "@/lib/cards";
 
 import { LIVE_COPY } from "./copy";
 import { formatLocalDateTime } from "./format";
@@ -29,7 +29,7 @@ export interface LetterCardProps {
 export function LetterCard({ letterId, appOrigin, opensAt }: LetterCardProps) {
   const headingId = useId();
   const linkText = letterLinkText(appOrigin, letterId);
-  const qrSvg = useMemo(() => qrToSvg(encodeQr(linkText, "M")), [linkText]);
+  const qr = useMemo(() => qrPath(encodeQr(linkText, "M")), [linkText]);
 
   return (
     <section className={styles.card} aria-labelledby={headingId} data-live-letter-card>
@@ -37,7 +37,16 @@ export function LetterCard({ letterId, appOrigin, opensAt }: LetterCardProps) {
       <h2 id={headingId} className={styles.cardTitle}>
         {LIVE_COPY.letterCardTitle}
       </h2>
-      <div className={styles.cardQr} aria-hidden="true" data-live-card-qr dangerouslySetInnerHTML={{ __html: qrSvg }} />
+      <div className={styles.cardQr} aria-hidden="true" data-live-card-qr>
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox={`0 0 ${qr.side} ${qr.side}`}
+          shapeRendering="crispEdges"
+          role="img"
+        >
+          <path fill="#000" d={qr.d} />
+        </svg>
+      </div>
       <p className={styles.cardOpens}>
         {LIVE_COPY.letterCardOpens.replace("{time}", formatLocalDateTime(opensAt))}
       </p>
