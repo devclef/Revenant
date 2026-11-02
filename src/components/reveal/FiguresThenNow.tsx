@@ -63,6 +63,12 @@ export type FiguresThenNowProps = {
    * Mark on that metric's Number_Line. Without it, no entry has a Mark.
    */
   record?: RecallRecordV1;
+  /**
+   * Live letters only (spec 06, R18). When true, a then and a now figure with
+   * the same period end and value are comparable and show a change of zero.
+   * Default false: the persona path is unchanged.
+   */
+  allowSamePeriod?: boolean;
 };
 
 // The copy for a missing "now" figure, by the reason thenAndNow reports. A
@@ -96,7 +102,11 @@ function markValueFor(
     : undefined;
 }
 
-export function FiguresThenNow({ opened, record }: FiguresThenNowProps) {
+export function FiguresThenNow({
+  opened,
+  record,
+  allowSamePeriod = false,
+}: FiguresThenNowProps) {
   const { payload, header } = opened;
 
   // The reference date for "now" is the UTC calendar date the letter was
@@ -140,7 +150,10 @@ export function FiguresThenNow({ opened, record }: FiguresThenNowProps) {
       ? undefined
       : missingNowCopy(result.now.reason);
 
-    const change = now === undefined ? undefined : computeChange(then, now);
+    const change =
+      now === undefined
+        ? undefined
+        : computeChange(then, now, { allowSamePeriod });
 
     if (isFixtureFigure(then)) anyFixture = true;
     if (now !== undefined && isFixtureFigure(now)) anyFixture = true;

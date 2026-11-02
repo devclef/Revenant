@@ -75,6 +75,7 @@ import { useOpeningFlow } from "./useOpeningFlow";
 import { onceOnly, type AuthenticatorPort } from "@/components/live/unlock";
 import { RecallStep } from "./RecallStep";
 import { Reveal } from "./Reveal";
+import { LiveLockNote } from "@/components/live/LiveLockNote";
 import { FlowError, type FlowErrorKind } from "./FlowError";
 import type { FlowState, OpenFailedKind } from "./opening-machine";
 import { REVEAL_COPY } from "./copy";
@@ -190,7 +191,7 @@ export function OpeningFlow({
         >
           {flow.live?.demo === true ? <DemoLabel /> : null}
           <div className={styles.view}>
-            {selectView(state, flow, personaName, persona, mode, retryAtZero, KeyStep, {
+            {selectView(state, flow, letterId, personaName, persona, mode, retryAtZero, KeyStep, {
               keyText,
               onKeyTextChange: setKeyText,
             })}
@@ -211,6 +212,7 @@ type KeyEntry = {
 function selectView(
   state: FlowState,
   flow: ReturnType<typeof useOpeningFlow>,
+  letterId: string,
   personaName: string,
   persona: OpeningFlowProps["persona"],
   mode: "persona" | "live",
@@ -339,14 +341,23 @@ function selectView(
 
     case "reveal":
       return (
-        <Reveal
-          opened={state.opened}
-          record={state.record}
-          personaName={personaName}
-          stage={state.stage}
-          onAdvance={flow.advance}
-          onShowAll={flow.showAll}
-        />
+        <>
+          <Reveal
+            opened={state.opened}
+            record={state.record}
+            personaName={personaName}
+            letterId={letterId}
+            stage={state.stage}
+            onAdvance={flow.advance}
+            onShowAll={flow.showAll}
+            variant={mode}
+          />
+          {mode === "live" && state.stage === 3 ? (
+            <div className={styles.fade}>
+              <LiveLockNote />
+            </div>
+          ) : null}
+        </>
       );
 
     case "not_placed":

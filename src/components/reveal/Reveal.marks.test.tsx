@@ -2,9 +2,10 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { Reveal } from "./Reveal";
+import { Reveal, type RevealProps } from "./Reveal";
 import { REVEAL_COPY } from "./copy";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
+import { WaxSeal } from "@/components/ceremony/envelope/WaxSeal";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { SkipProvider } from "@/components/ceremony/skip";
 import { LiveRegionProvider } from "@/components/ceremony/LiveRegion";
@@ -70,7 +71,10 @@ const OPENED: Opened = {
   } satisfies PayloadV1,
 };
 
-function renderMarks(record: RecallRecordV1): string {
+function renderMarks(
+  record: RecallRecordV1,
+  extra: Partial<RevealProps> = {},
+): string {
   return renderToStaticMarkup(
     createElement(
       MotionProvider,
@@ -91,6 +95,7 @@ function renderMarks(record: RecallRecordV1): string {
               stage: 1,
               onAdvance: () => {},
               onShowAll: () => {},
+              ...extra,
             }),
           ),
         ),
@@ -136,5 +141,42 @@ describe("reveal marks stage: read-only recall scales", () => {
   it("keeps the existing 'Your answer' text list next to the scales", () => {
     const html = renderMarks(RECORD);
     expect(html).toContain(`${REVEAL_COPY.yourAnswer}: 2.50`);
+  });
+});
+
+/**
+ * The seal body for one pattern key: everything from the `width` attribute on,
+ * so the class list `SealBreak` adds does not hide the pattern being compared.
+ */
+function sealMarkup(patternKey: string): string {
+  const markup = renderToStaticMarkup(
+    createElement(WaxSeal, { patternKey, size: 64 }),
+  );
+  return markup.slice(markup.indexOf("width="));
+}
+
+describe("reveal seal pattern key (spec 06, R18.2)", () => {
+  const RECORD: RecallRecordV1 = {
+    version: 1,
+    answers: [],
+  };
+  const LIVE_LETTER_ID = "live-letter-seal-key";
+
+  it("seals a live letter with its letterId, not the persona name", () => {
+    // Guard: the two keys must draw different seals, or the test proves nothing.
+    expect(sealMarkup(LIVE_LETTER_ID)).not.toBe(sealMarkup("Maya"));
+
+    const html = renderMarks(RECORD, {
+      variant: "live",
+      letterId: LIVE_LETTER_ID,
+    });
+    expect(html).toContain(sealMarkup(LIVE_LETTER_ID));
+    expect(html).not.toContain(sealMarkup("Maya"));
+  });
+
+  it("keeps the persona name as the seal key when the variant is persona", () => {
+    const html = renderMarks(RECORD, { letterId: LIVE_LETTER_ID });
+    expect(html).toContain(sealMarkup("Maya"));
+    expect(html).not.toContain(sealMarkup(LIVE_LETTER_ID));
   });
 });

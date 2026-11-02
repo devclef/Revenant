@@ -67,21 +67,33 @@ export type RevealProps = {
   record: RecallRecordV1;
   /** The persona's display name, passed to `SealedLetter` for its demo label. */
   personaName: string;
+  /**
+   * The live letter's id. In live mode it seeds the wax seal's pattern and is
+   * passed to `SealedLetter`; the persona path ignores it (spec 06, R18.2).
+   */
+  letterId?: string;
   /** The highest stage currently revealed (1, 2 or 3). */
   stage: 1 | 2 | 3;
   /** Dispatches `ADVANCE`, revealing the next hidden stage. */
   onAdvance: () => void;
   /** Dispatches `SHOW_ALL`, revealing every remaining stage at once. */
   onShowAll: () => void;
+  /**
+   * `"persona"` (default) or `"live"`. Live letters use the live stage 2 line
+   * and let a same-figure pair show a zero change (spec 06, R18.2).
+   */
+  variant?: "persona" | "live";
 };
 
 export function Reveal({
   opened,
   record,
   personaName,
+  letterId,
   stage,
   onAdvance,
   onShowAll,
+  variant = "persona",
 }: RevealProps) {
   // The local-view context lets stage 1's SealBreak report its `sealing` flag
   // up to CeremonyRoot, so `stageFor(state, local)` resolves `seal` while a
@@ -148,7 +160,7 @@ export function Reveal({
           {recordedScales}
           {stage === 1 ? (
             <SealBreak
-              patternKey={personaName}
+              patternKey={variant === "live" ? (letterId ?? personaName) : personaName}
               onAdvance={onAdvance}
               onShowAll={onShowAll}
               onSealingChange={onSealingChange}
@@ -160,7 +172,12 @@ export function Reveal({
       {stage >= 2 ? (
         <div className={`${styles.stage} ${styles.fade}`}>
           <StagePanel>
-            <InkLetter opened={opened} personaName={personaName} />
+            <InkLetter
+              opened={opened}
+              personaName={personaName}
+              variant={variant}
+              letterId={letterId}
+            />
           </StagePanel>
         </div>
       ) : null}
@@ -169,7 +186,11 @@ export function Reveal({
         <div className={`${styles.stage} ${styles.fade}`}>
           <ThenNowSequence entries={thenNowEntries}>
             <StagePanel>
-              <FiguresThenNow opened={opened} record={record} />
+              <FiguresThenNow
+                opened={opened}
+                record={record}
+                allowSamePeriod={variant === "live"}
+              />
             </StagePanel>
           </ThenNowSequence>
         </div>

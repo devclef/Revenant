@@ -254,3 +254,26 @@ export const REVEAL_COPY = {
 } as const;
 
 export type RevealCopy = typeof REVEAL_COPY;
+
+/**
+ * Live_Letter strings for the reveal (spec 06, R18). A live letter is the
+ * reader's own letter, not a demo persona, so none of the demo wording
+ * ("Written as of", "Prepared later as a demo", "Sealed for the demo on")
+ * appears in live mode.
+ */
+export const LIVE_COPY = {
+  /** The seal line for a live letter. `{sealedAt}` is the local seal time. */
+  sealedOn: "Sealed on {sealedAt}",
+
+  /**
+   * The fixed note after stage 3 of a live reveal (R18.6). It says nothing
+   * about whether any number changed.
+   */
+  lockNote:
+    "This letter was locked for 30 seconds. For a longer comparison, open a persona letter.",
+
+  /** The link text in the lock note. It leads to `/demo`. */
+  lockNoteLink: "Open a persona letter",
+} as const;
+
+export type LiveCopy = typeof LIVE_COPY;
