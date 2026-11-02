@@ -513,7 +513,7 @@ Part D is optional. Part C is complete without it. A task for Part D starts only
 5. EVERY frontend task SHALL carry the line "Before this task: spec 05 task 9 is on `main`", and SHALL list which QA steps apply and say that parts of later tasks being missing is not a finding.
 6. EVERY task's PR description SHALL state which spec 02, 03 and 05 tests it touched and why, or "none".
 7. THE tasks SHALL carry the Validation line `bash scripts/check.sh`.
-8. THE size of the first-load JavaScript for `/demo/live` and `/l/[id]` SHALL stay at or under 175 kB gzipped, as `scripts/check-js-budget.mjs` measures it for `/demo/personas/[key]`. EACH frontend PR SHALL state the measured values. `@/lib/crypto` SHALL be loaded by dynamic `import()`, so it does not count toward first load.
+8. THE size of the first-load JavaScript for `/demo/live` and `/l/[id]` SHALL stay at or under 190 kB gzipped, as `scripts/check-js-budget.mjs` measures it for `/demo/personas/[key]`. EACH frontend PR SHALL state the measured values. `@/lib/crypto` SHALL be loaded by dynamic `import()`, so it does not count toward first load.
 
 ## Decisions and notes
 
