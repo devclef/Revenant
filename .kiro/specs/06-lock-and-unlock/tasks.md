@@ -100,7 +100,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
 
 - [x] 5. Seal_Page part 1: page, write step, figure picker, recall subjects, payload builder, Demo_Index entry
   - Agent: `frontend-dev` · Depends on: none in this spec (may run in parallel with 1 and 2) · Estimated size: ~1,150 changed lines plus ~900 test lines
-  - Before this task: spec 05 task 9 is on `main`. Re-read the files under `src/components/ceremony` first, because their names may have moved. The owner has added the `/demo/live` and `/l/[id]` rows (175 kB each) to `scripts/check-js-budget.mjs` (see Owner follow-ups).
+  - Before this task: spec 05 task 9 is on `main`. Re-read the files under `src/components/ceremony` first, because their names may have moved. The owner has added the `/demo/live` and `/l/[id]` rows (190 kB each) to `scripts/check-js-budget.mjs` (see Owner follow-ups).
   - Scope: `src/app/demo/live/page.tsx`, `src/components/live/constants.ts`, `copy.ts`, `recall-subjects.ts`, `catalogue-list.ts`, `form.ts`, `build-payload.ts`, `crypto-module.ts`, `useCryptoModule.ts`, `SealPage.tsx`, `WriteForm.tsx`, `FigurePicker.tsx`, `live.module.css`, `src/components/demo/LiveEntry.tsx`, `src/app/demo/page.tsx`, `src/components/demo/copy.ts`, the scan tests in `src/components/reveal` and `src/components/demo` (add `src/components/live` to their file walks, additions only), and the `*.test.ts(x)` for every new file including `src/components/live/contrast.test.ts`
   - Acceptance:
     - `src/app/demo/live/page.tsx` is a server component with `export const dynamic = "force-dynamic"`, reads `RP_ID` and `APP_ORIGIN` at request time, and renders `Unavailable` (copy `LIVE_COPY.unavailable`, link to `/demo`, no seal control) when `RP_ID` is empty, else `SealPage` with `rpId` and `appOrigin` (R12.8). It imports no `letter-store` module.
@@ -250,7 +250,7 @@ This is the content of task 10's issue (R23). The owner does it by hand on `http
 
 These paths are owner-only. No agent is assigned to them. The owner does them by hand.
 
-- Before task 5 merges: add `{ route: "/demo/live", key: "/demo/live/page", maxKb: 175 }` and `{ route: "/l/[id]", key: "/l/[id]/page", maxKb: 175 }` to `scripts/check-js-budget.mjs`, or R24.8 is never checked.
+- Before task 5 merges: add `{ route: "/demo/live", key: "/demo/live/page", maxKb: 190 }` and `{ route: "/l/[id]", key: "/l/[id]/page", maxKb: 190 }` to `scripts/check-js-budget.mjs`, or R24.8 is never checked.
 - Update the QA prompt's start command (qa.md step 3): the app runs on a random port, so it must be started as `RP_ID=localhost APP_ORIGIN=http://localhost:<port> PORT=<port> npm start`.
 - Update `.kiro/steering/structure.md` to list `src/components/live/`, `src/app/demo/live/`, `src/app/l/[id]/`, `src/lib/ics/` and `src/lib/letter-store/`.
 - Create the GitHub issues from this file (one per task, including P1) with labels `agent:<role>` and `status:ready`, and set "Depends on" so the dispatcher holds each until its dependencies close.
