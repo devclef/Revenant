@@ -190,7 +190,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
   - Validation: `bash scripts/check.sh`; `npx vitest run src/components/reveal src/components/live`
   - _Requirements: R12.5, R18, R19, R24.5_
 
-- [ ] 10. Owner check checklist and QA run
+- [x] 10. Owner check checklist and QA run
   - Agent: `frontend-dev` · Depends on: 9 · Estimated size: under 100 changed lines
   - Before this task: tasks 8 and 9 are on `main`.
   - Scope: none for source files. This task posts the section "Owner check on the live site" below as a checklist in its issue and runs the QA steps. Any fix needed is a small change inside the Scope paths of tasks 5 to 9; state each in the PR.
