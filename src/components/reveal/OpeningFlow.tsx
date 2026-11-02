@@ -60,21 +60,54 @@
  * inline user-facing literal.
  */
 
+import { useEffect, useMemo, useState } from "react";
 import { CeremonyRoot } from "@/components/ceremony/CeremonyRoot";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { SkipProvider } from "@/components/ceremony/skip";
 import {
   EnvelopeView,
+  type EnvelopeViewProps,
   type EnvelopeViewVariant,
 } from "@/components/ceremony/envelope/EnvelopeView";
 import type { EnvelopePersona } from "@/components/ceremony/envelope/Envelope";
+import { DemoLabel } from "@/components/demo/DemoLabel";
 import { useOpeningFlow } from "./useOpeningFlow";
+import { onceOnly, type AuthenticatorPort } from "./unlock";
 import { RecallStep } from "./RecallStep";
 import { Reveal } from "./Reveal";
 import { FlowError, type FlowErrorKind } from "./FlowError";
 import type { FlowState, OpenFailedKind } from "./opening-machine";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
+
+/** The key step's component type, from its own module. */
+type KeyStepComponent = typeof import("@/components/live/UnlockView").UnlockView;
+
+/**
+ * Load the key step on demand. Only live letters reach `awaiting_key`, so the
+ * chunk stays out of the persona route's first-load JavaScript (its 175 kB
+ * budget). A plain `import()` is used rather than `next/dynamic`, which would
+ * add its own runtime to every demo page.
+ */
+function useKeyStep(awaitingKey: boolean): KeyStepComponent | null {
+  const [keyStep, setKeyStep] = useState<KeyStepComponent | null>(null);
+  useEffect(() => {
+    if (!awaitingKey || keyStep !== null) return;
+    let cancelled = false;
+    void import("@/components/live/UnlockView").then(
+      (mod) => {
+        if (!cancelled) setKeyStep(() => mod.UnlockView);
+      },
+      () => {
+        // A failed load leaves the key step hidden. No secret is involved.
+      },
+    );
+    return () => {
+      cancelled = true;
+    };
+  }, [awaitingKey, keyStep]);
+  return keyStep;
+}
 
 export type OpeningFlowProps = {
   /**
@@ -91,6 +124,14 @@ export type OpeningFlowProps = {
    * supplies the letter id, which always comes from `letterId` (R16.5).
    */
   persona?: { key: string; written_as_of: string; opens_at: string };
+  /**
+   * `"persona"` (default) is the demo persona route: the fixed demo key and no
+   * passkey control. `"live"` is a Live_Letter: the reader unlocks with a
+   * passkey or a backup key (spec 06, R17).
+   */
+  mode?: "persona" | "live";
+  /** Live mode only: the authenticator port. Defaults to the browser's. */
+  port?: AuthenticatorPort;
 };
 
 /**
@@ -110,9 +151,22 @@ export function OpeningFlow({
   letterId,
   personaName,
   persona,
+  mode = "persona",
+  port,
 }: OpeningFlowProps) {
-  const flow = useOpeningFlow(letterId);
-  const { state } = flow;
+  // Live mode reads the key from the reader (keySource "user"). Persona mode
+  // passes no options, so the hook behaves exactly as before.
+  const flow = useOpeningFlow(
+    letterId,
+    mode === "live" ? { keySource: "user", port } : undefined,
+  );
+  const { state, retry } = flow;
+  const KeyStep = useKeyStep(state.tag === "awaiting_key");
+
+  // The still-sealed countdown reaches zero once per page load: one automatic
+  // re-check (R17.4). `onceOnly` makes the second zero a no-op; the view then
+  // shows "Try again" (StillSealed). The memo keeps the guard for this mount.
+  const retryAtZero = useMemo(() => onceOnly(retry), [retry]);
 
   // The root is `CeremonyRoot`: it keeps the region role, the persona label and
   // the -1 tab stop, owns the focus effect (the Stage heading), and derives
@@ -130,8 +184,9 @@ export function OpeningFlow({
           persona={persona}
           className={styles.flow}
         >
+          {flow.live?.demo === true ? <DemoLabel /> : null}
           <div className={styles.view}>
-            {selectView(state, flow, personaName, persona)}
+            {selectView(state, flow, personaName, persona, retryAtZero, KeyStep)}
           </div>
         </CeremonyRoot>
       </SkipProvider>
@@ -144,7 +199,9 @@ function selectView(
   state: FlowState,
   flow: ReturnType<typeof useOpeningFlow>,
   personaName: string,
-  persona?: OpeningFlowProps["persona"],
+  persona: OpeningFlowProps["persona"],
+  retryAtZero: () => void,
+  KeyStep: KeyStepComponent | null,
 ): React.ReactNode {
   // The envelope's per-letter inputs: the persona list fields plus the demo
   // flag. These are always demo persona letters, so `demo` is true whenever a
@@ -154,13 +211,21 @@ function selectView(
   const envelopePersona: EnvelopePersona | undefined =
     persona === undefined ? undefined : { ...persona, demo: true };
 
+  // `live` is set only when the hook runs in user key-source mode. A live
+  // letter has no persona, so its envelope gets the opening instant directly.
+  const live = flow.live;
+
   /** Render the shared EnvelopeView for one of the envelope-group variants. */
-  const envelopeView = (variant: EnvelopeViewVariant): React.ReactNode => (
+  const envelopeView = (
+    variant: EnvelopeViewVariant,
+    extra?: Partial<EnvelopeViewProps>,
+  ): React.ReactNode => (
     <EnvelopeView
       variant={variant}
       persona={envelopePersona}
       onBegin={flow.begin}
       onRetry={flow.retry}
+      {...extra}
     />
   );
 
@@ -170,14 +235,39 @@ function selectView(
 
     case "sealed":
       // The still-sealed opening date and countdown come from EnvelopeView's
-      // reused StillSealed, which reads them from the persona list field
-      // `opens_at` (the same letter's opening instant the server released).
-      // With no persona (spec 03 renders) the closed envelope stands alone.
-      return envelopeView("sealed");
+      // reused StillSealed. A persona reads `opens_at` from the list. A live
+      // letter passes its opening instant with the precise countdown and the
+      // single automatic re-check at zero. With no persona (spec 03 renders)
+      // the closed envelope stands alone.
+      return live === undefined
+        ? envelopeView("sealed")
+        : envelopeView("sealed", {
+            sealedOpensAt: state.opensAt,
+            stillSealed: { precise: true, onZero: retryAtZero },
+          });
 
     case "openable":
       // `openable` is a brief transition into checking the seal; it shows the
       // same "Checking the seal." scene as `verifying`.
+      return envelopeView("verifying");
+
+    case "awaiting_key":
+      // The reader's key step: the passkey control, the key field or both,
+      // from the released envelope's wraps (R17.2, R17.10).
+      if (live === undefined) return null;
+      return envelopeView("unlock", {
+        children:
+          KeyStep === null ? null : (
+            <KeyStep
+              unlock={state.unlock}
+              notice={state.notice}
+              controls={live.unlock}
+            />
+          ),
+      });
+
+    case "unlocking":
+      // The key has been given and the letter is being checked.
       return envelopeView("verifying");
 
     case "verifying":

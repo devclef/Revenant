@@ -44,12 +44,15 @@
 // The only clock is StillSealed's display-only countdown, which lives in the
 // reveal tree, not here.
 
-import type { ReactElement } from "react";
+import type { ReactElement, ReactNode } from "react";
 
 import { ParchmentSurface } from "@/components/ui";
 
 import { REVEAL_COPY } from "@/components/reveal/copy";
-import { StillSealed } from "@/components/reveal/StillSealed";
+import {
+  StillSealed,
+  type StillSealedProps,
+} from "@/components/reveal/StillSealed";
 import { ENVELOPE_TARGET } from "../constants";
 import { Envelope, type EnvelopePersona, type EnvelopeState } from "./Envelope";
 import styles from "./EnvelopeView.module.css";
@@ -64,7 +67,8 @@ export type EnvelopeViewVariant =
   | "openable"
   | "verifying"
   | "sealed"
-  | "verified";
+  | "verified"
+  | "unlock";
 
 export type EnvelopeViewProps = {
   /** Which pre-reveal scene to render. */
@@ -85,6 +89,18 @@ export type EnvelopeViewProps = {
   onBegin?: () => void;
   /** Sends START (retry) once the still-sealed countdown reaches zero. */
   onRetry?: () => void;
+  /**
+   * The opening instant for the still-sealed view when there is no `persona`
+   * (a live letter). The persona's `opens_at` wins when both are present.
+   */
+  sealedOpensAt?: string;
+  /**
+   * Extra StillSealed options for the `sealed` variant: `precise` and `onZero`
+   * (live letters). Absent, the persona countdown is unchanged.
+   */
+  stillSealed?: Pick<StillSealedProps, "precise" | "onZero">;
+  /** The `unlock` variant's content, placed under the envelope (the key step). */
+  children?: ReactNode;
 };
 
 /**
@@ -125,6 +141,9 @@ export function EnvelopeView({
   envelopeState = "closed",
   onBegin,
   onRetry,
+  sealedOpensAt,
+  stillSealed,
+  children,
 }: EnvelopeViewProps): ReactElement {
   switch (variant) {
     case "loading":
@@ -152,23 +171,38 @@ export function EnvelopeView({
       );
     }
 
-    case "sealed":
+    case "sealed": {
       // Still-sealed: the opening date and countdown, nothing about contents
       // (R7.2). Reuse StillSealed (reveal/) inside the envelope's front panel so
       // the wording and the display-only clock live in one place, outside the
-      // ceremony render (Property 21). With no persona there is no opening date,
-      // so the closed envelope stands alone. The real flow always has a persona.
+      // ceremony render (Property 21). With no opening instant (no persona and
+      // no `sealedOpensAt`) the closed envelope stands alone.
+      // The opening instant is the persona's `opens_at`, or `sealedOpensAt` for
+      // a live letter (no persona).
+      const opensAt = persona?.opens_at ?? sealedOpensAt;
       return (
         <ParchmentSurface as="section" className={styles.envelopeStage}>
           <EnvelopeFrame state="closed" persona={persona} />
-          {persona === undefined ? null : (
+          {opensAt === undefined ? null : (
             <div className={styles.panel}>
               <StillSealed
-                opensAt={persona.opens_at}
+                opensAt={opensAt}
                 onRetry={onRetry ?? (() => {})}
+                {...stillSealed}
               />
             </div>
           )}
+        </ParchmentSurface>
+      );
+    }
+
+    case "unlock":
+      // The key step (R17.2): the envelope stays closed and the children (the
+      // passkey control, the key field and any notice) sit beneath it.
+      return (
+        <ParchmentSurface as="section" className={styles.envelopeStage}>
+          <EnvelopeFrame state="closed" persona={persona} />
+          {children}
         </ParchmentSurface>
       );
 
