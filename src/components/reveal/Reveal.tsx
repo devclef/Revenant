@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef } from "react";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV1 } from "@/lib/recall";
 import { RememberedAnswers } from "./RememberedAnswers";
-import { SealedLetter } from "./SealedLetter";
+import { InkLetter } from "@/components/ceremony/letter/InkLetter";
 import { FiguresThenNow } from "./FiguresThenNow";
 import { StagePanel } from "./StagePanel";
 import { ThenNowSequence } from "@/components/ceremony/figures/ThenNowSequence";
@@ -143,7 +143,7 @@ export function Reveal({
       {stage >= 2 ? (
         <div ref={stage2Ref} className={`${styles.stage} ${styles.fade}`}>
           <StagePanel>
-            <SealedLetter opened={opened} personaName={personaName} />
+            <InkLetter opened={opened} personaName={personaName} />
           </StagePanel>
         </div>
       ) : null}

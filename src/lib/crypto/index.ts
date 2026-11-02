@@ -23,6 +23,22 @@ export { PUBLIC_DEMO_BACKUP_KEY } from "./demo-key";
 export { sealLetter } from "./seal";
 export { openLetter } from "./open";
 
+// Passkey module: create, confirm and assert a passkey, and the browser port.
+// The test fake under ./testing is deliberately never exported here.
+export {
+  createPasskey,
+  confirmPasskey,
+  assertPasskey,
+  PASSKEY_USER_NAME,
+} from "./passkey";
+export type {
+  CreatePasskeyResult,
+  ConfirmPasskeyResult,
+  AssertPasskeyResult,
+} from "./passkey";
+export { browserAuthenticatorPort } from "./authenticator-port";
+export type { AuthenticatorPort } from "./authenticator-port";
+
 // Encrypted opening records (the reader's recall answers).
 export {
   encryptOpeningRecord,
@@ -36,10 +52,11 @@ export type {
   BackupKeyError,
   ParsedBackupKey,
   BackupKeyBytes,
+  SealErrorDetail,
 } from "./errors";
 
 // Input/result shapes for seal, open and opening records.
-export type { SealInput, SealResult } from "./seal";
+export type { SealInput, SealResult, PasskeyFactor } from "./seal";
 export { SealError } from "./seal";
 export type { OpenInput } from "./open";
 export type { OpeningRecord } from "./opening-records";

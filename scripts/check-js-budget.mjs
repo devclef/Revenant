@@ -20,6 +20,8 @@ const BUDGETS = [
   { route: "/", key: "/page", maxKb: 130 },
   { route: "/demo", key: "/demo/page", maxKb: 130 },
   { route: "/demo/personas/[key]", key: "/demo/personas/[key]/page", maxKb: 175 },
+  { route: "/demo/live", key: "/demo/live/page", maxKb: 175 },
+  { route: "/l/[id]", key: "/l/[id]/page", maxKb: 175 },
 ];
 
 function fail(message) {
@@ -51,11 +53,23 @@ function gzippedBytes(file) {
   return size;
 }
 
+// A route is checked only once its page file exists under src/app. Until then
+// the build cannot emit it, so it is skipped with a visible line. Once the page
+// exists, a missing manifest entry is a failure: the route must be built.
+function pageFileFor(key) {
+  return join("src", "app", `${key.replace(/\/page$/, "")}/page.tsx`);
+}
+
 let failed = false;
 for (const { route, key, maxKb } of BUDGETS) {
+  const pageFile = pageFileFor(key);
+  if (!existsSync(pageFile)) {
+    console.log(`skip ${route}: page not built yet (${pageFile} does not exist)`);
+    continue;
+  }
   const files = pages[key];
   if (!Array.isArray(files)) {
-    console.error(`FAIL ${route}: no entry "${key}" in the build manifest.`);
+    console.error(`FAIL ${route}: ${pageFile} exists but "${key}" is missing from the build manifest.`);
     failed = true;
     continue;
   }

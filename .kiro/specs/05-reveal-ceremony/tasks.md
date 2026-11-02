@@ -115,7 +115,7 @@ Follow `design.md` in this folder for every file name, constant, interface and a
   - Validation: `bash scripts/check.sh`
   - _Requirements: R10.5, R10.6, R11.2, R11.4, R12.5–R12.8, R14.4, R17.3_
 
-- [ ] 6. Letter ink
+- [x] 6. Letter ink
   - Agent: `frontend-dev` · Depends on: 5 · Estimated size: ~600 changed lines
   - Before this task: Blocked by #49 (spec 03 task 8, the reveal's letter and figures stages).
   - Scope: `src/components/ceremony/letter/**`, `src/components/ceremony/copy.ts`, `src/components/reveal/SealedLetter.tsx`, `src/components/reveal/Reveal.tsx`, and the `*.test.ts(x)` for each new file

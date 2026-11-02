@@ -71,7 +71,7 @@ export function SealedLetter({ opened, personaName }: SealedLetterProps) {
 
       <p className={styles.period}>{sealedForDemoOn}</p>
 
-      <p className={styles.letter}>{payload.letter_text}</p>
+      <p className={styles.letter} data-ink-text>{payload.letter_text}</p>
     </section>
   );
 }
