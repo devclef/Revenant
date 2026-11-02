@@ -14,7 +14,7 @@ export type SealState =
   | { tag: "confirming" }
   | { tag: "preparing" }
   | { tag: "sealing" }
-  | { tag: "fallback_key" }
+  | { tag: "fallback_key"; passkeyCreated: boolean }
   | {
       tag: "sealed";
       letterId: string;
@@ -45,7 +45,7 @@ export type SealEvent =
   | { type: "FAILED"; kind: SealFailureKind; metricId?: string; passkeyCreated: boolean }
   | { type: "CANCELLED" }
   | { type: "RETRY" }
-  // Fallback events exist here; their transitions arrive with task 7.
+  // Backup-key fallback, entered from cannot_lock.
   | { type: "FALLBACK_START" }
   | { type: "FALLBACK_SEAL_PRESS" }
   | { type: "FALLBACK_DECLINE" };
@@ -127,11 +127,29 @@ export function sealReducer(state: SealState, event: SealEvent): SealState {
       }
 
     case "cannot_lock":
+      switch (event.type) {
+        case "RETRY":
+          return { tag: "write" };
+        case "FALLBACK_START":
+          return { tag: "fallback_key", passkeyCreated: state.passkeyCreated };
+        default:
+          return state;
+      }
+
     case "cancelled":
     case "failed":
       return event.type === "RETRY" ? { tag: "write" } : state;
 
     case "fallback_key":
+      switch (event.type) {
+        case "FALLBACK_SEAL_PRESS":
+          return { tag: "preparing" };
+        case "FALLBACK_DECLINE":
+          return { tag: "cannot_lock", passkeyCreated: state.passkeyCreated };
+        default:
+          return state;
+      }
+
     case "sealed":
       return state;
   }
