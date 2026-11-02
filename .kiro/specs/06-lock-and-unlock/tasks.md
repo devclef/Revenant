@@ -119,7 +119,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
   - Validation: `bash scripts/check.sh`; `npx vitest run src/components/live src/components/demo`
   - _Requirements: R12, R13, R14, R19, R24.4, R24.5_
 
-- [ ] 6. Seal_Page part 2a: Sealing_Flow with the two presses, failure screens, sealed state and countdown
+- [x] 6. Seal_Page part 2a: Sealing_Flow with the two presses, failure screens, sealed state and countdown
   - Agent: `frontend-dev` · Depends on: 1, 2, 5 · Estimated size: ~1,100 changed lines plus ~800 test lines
   - Before this task: tasks 1, 2 and 5 are on `main`, and so is spec 05 task 9.
   - Scope: `src/components/live/seal-machine.ts`, `seal-runner.ts`, `api.ts`, `clock.ts`, `format.ts`, `useSealFlow.ts`, `StepStatus.tsx`, `SealFailure.tsx`, `SealedView.tsx`, `SealPage.tsx`, `WriteForm.tsx`, `copy.ts`, `live.module.css`, and the `*.test.ts(x)` for each new file
