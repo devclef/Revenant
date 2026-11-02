@@ -57,6 +57,8 @@ export function stageFor(state: FlowState, local: LocalView): Stage {
     case "loading":
     case "sealed":
     case "openable":
+    case "awaiting_key":
+    case "unlocking":
     case "verifying":
       return "envelope";
 
