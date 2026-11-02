@@ -338,6 +338,46 @@ def run_state(run: dict | None) -> str:
     return "failed"
 
 
+# Crew resumes a run after a gateway restart as a new run named "<id>~2", "<id>~3", and so on.
+# The resumed copy keeps the original's workspace and git branch (kirocrew/task/<id>).
+_RESUMED_RE = re.compile(r"^(?P<base>.+)~(?P<n>[1-9][0-9]*)$")
+
+
+def base_task_id(task_id: str) -> str:
+    """The original run ID, with any resume suffix removed."""
+    m = _RESUMED_RE.match(task_id or "")
+    return m.group("base") if m else (task_id or "")
+
+
+def resolve_run(runs: dict[str, dict], task_id: str) -> tuple[dict | None, bool]:
+    """The newest Task Runner run for a dispatched run: the original, or its newest resumed
+    copy. Returns (run, resumed). run is None when neither is known."""
+    base = base_task_id(task_id)
+    best, best_n, best_id = None, 0, base
+    for rid, run in runs.items():
+        if base_task_id(rid) != base:
+            continue
+        m = _RESUMED_RE.match(rid)
+        n = int(m.group("n")) if m else 1
+        if best is None or n > best_n:
+            best, best_n, best_id = run, n, rid
+    return best, best_id != base
+
+
+def resumed_agent_problem(run: dict | None, resumed: bool, role: str) -> str | None:
+    """A resumed copy must still run as the role that owns the issue. After a restart Crew
+    once resumed a run as the plain kirocrew agent, without the role prompt and hooks, so
+    its work is not the role's work. A copy that reports another agent, or no agent at all,
+    is a failed run. Returns the reason, or None when the copy is fine or not resumed."""
+    if not resumed or run is None:
+        return None
+    agent = run.get("agent")
+    if agent == role:
+        return None
+    shown = f"`{agent}`" if agent else "with no agent reported"
+    return f"was resumed {shown}, not `{role}`"
+
+
 def check_state(runs: list[dict]) -> str:
     """State of one named check from its check runs (newest wins)."""
     if not runs:
@@ -803,15 +843,18 @@ class Tick:
             marker = latest_marker(self.gh.comments(issue["number"]), "dev")
             if not marker:
                 continue
-            state = run_state(runs.get(marker["task_id"]))
+            run, resumed = resolve_run(runs, marker["task_id"])
+            state = run_state(run)
             if state == "running":
                 continue
             n, role = issue["number"], marker["role"]
-            if state != "passed":
+            problem = resumed_agent_problem(run, resumed, role)
+            if state != "passed" or problem:
+                detail = problem or f"ended as **{state}**"
                 self.gh.set_status(n, L_BLOCKED, L_PROGRESS)
-                self.gh.comment(n, f"The `{role}` run `{marker['task_id']}` ended as **{state}**. "
-                                   "A human needs to look at it in the Crew dashboard.")
-                self.notify(f"Revenant #{n} blocked: run {state}")
+                self.gh.comment(n, f"The `{role}` run `{marker['task_id']}` {detail}. "
+                                   "A human needs to look at it in the Crew dashboard. No PR was opened from it.")
+                self.notify(f"Revenant #{n} blocked: run {detail}")
                 continue
             branch = branch_for(n, role)
             pr = next((p for p in prs if closes_issue(p.get("body")) == n), None)
@@ -819,7 +862,7 @@ class Tick:
                 self.fix_made_no_commits(issue, pr, marker)
                 continue
             git(DEV_CLONE, "push", "--force-with-lease", "origin",
-                f"kirocrew/task/{marker['task_id']}:refs/heads/{branch}", token=self.token)
+                f"kirocrew/task/{base_task_id(marker['task_id'])}:refs/heads/{branch}", token=self.token)
             if pr is None:
                 pr = self.gh.call("POST", self.gh.r("/pulls"), {
                     "title": issue["title"], "head": branch, "base": "main",
@@ -839,7 +882,7 @@ class Tick:
         If git can't tell, return False: the normal path pushes and QA decides."""
         head = self.gh.call("GET", self.gh.r(f"/pulls/{pr['number']}"))["head"]["sha"]
         try:
-            run_sha = git(DEV_CLONE, "rev-parse", f"kirocrew/task/{task_id}", token=self.token)
+            run_sha = git(DEV_CLONE, "rev-parse", f"kirocrew/task/{base_task_id(task_id)}", token=self.token)
         except RuntimeError:
             return False
         return run_sha == head
@@ -870,10 +913,17 @@ class Tick:
             marker = latest_marker(self.gh.comments(pr["number"]), "qa")
             if not marker:
                 continue
-            state = run_state(runs.get(marker["task_id"]))
+            run, resumed = resolve_run(runs, marker["task_id"])
+            state = run_state(run)
             if state == "running":
                 continue
             n = pr["number"]
+            problem = resumed_agent_problem(run, resumed, "qa")
+            if problem:
+                self.block_pr(pr, f"The QA run `{marker['task_id']}` {problem}. Its verdict is not used. "
+                                  "A human needs to look at it in the Crew dashboard.")
+                self.say(f"PR #{n}: blocked, QA resumed as another agent")
+                continue
             head = self.gh.call("GET", self.gh.r(f"/pulls/{n}"))["head"]["sha"]
             if head != marker.get("sha"):
                 # The PR changed while QA was reviewing; that verdict is stale.
@@ -882,7 +932,7 @@ class Tick:
                 continue
             # A QA run that wrote a verdict counts, even if Task Runner marked a
             # later step failed: the verdict file is the QA agent's answer.
-            text = read_verdict(marker["task_id"], n)
+            text = read_verdict(base_task_id(marker["task_id"]), n)
             if text is None:
                 verdict = {"verdict": "fail", "findings": [],
                            "summary": f"QA run ended as {state} without writing .qa/verdict.json."}

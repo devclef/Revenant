@@ -824,5 +824,92 @@ class QASpecManual(unittest.TestCase):
         self.assertIn("never makes the verdict `fail`", prompt)
 
 
+class ResumedRuns(unittest.TestCase):
+    """A run Crew resumed after a restart is followed to its newest copy, and that copy
+    must still be the role's agent. Git refs always use the original ID."""
+
+    def test_base_task_id(self):
+        self.assertEqual(d.base_task_id("TASK_1_2"), "TASK_1_2")
+        self.assertEqual(d.base_task_id("TASK_1_2~2"), "TASK_1_2")
+        self.assertEqual(d.base_task_id("TASK_1_2~12"), "TASK_1_2")
+        self.assertEqual(d.base_task_id("TASK_1_2~0"), "TASK_1_2~0")
+
+    def test_resolve_original_only(self):
+        run, resumed = d.resolve_run({"T1": {"status": "completed"}}, "T1")
+        self.assertEqual(run, {"status": "completed"})
+        self.assertFalse(resumed)
+
+    def test_resolve_follows_resumed_copy(self):
+        runs = {"T1": {"status": "failed"}, "T1~2": {"status": "completed", "agent": "frontend-dev"}}
+        run, resumed = d.resolve_run(runs, "T1")
+        self.assertIs(run, runs["T1~2"])
+        self.assertTrue(resumed)
+
+    def test_resolve_picks_newest_copy(self):
+        runs = {"T1": {"status": "failed"}, "T1~3": {"status": "running"}, "T1~2": {"status": "failed"}}
+        run, _ = d.resolve_run(runs, "T1")
+        self.assertIs(run, runs["T1~3"])
+
+    def test_resolve_unknown_run(self):
+        self.assertEqual(d.resolve_run({"OTHER~2": {}}, "T1"), (None, False))
+
+    def test_agent_problem(self):
+        self.assertIsNone(d.resumed_agent_problem({"agent": "frontend-dev"}, False, "frontend-dev"))
+        self.assertIsNone(d.resumed_agent_problem({"agent": "frontend-dev"}, True, "frontend-dev"))
+        self.assertIn("`kirocrew`, not `frontend-dev`",
+                      d.resumed_agent_problem({"agent": "kirocrew"}, True, "frontend-dev"))
+        self.assertIn("no agent reported",
+                      d.resumed_agent_problem({"status": "completed"}, True, "frontend-dev"))
+
+    def test_resumed_as_wrong_agent_blocks_and_opens_no_pr(self):
+        from unittest import mock
+        gh = RecGH()
+        gh.comments_by[105] = [{"body": d.make_marker({"kind": "dev", "task_id": "T1",
+                                                       "role": "frontend-dev"}), "_trusted": True}]
+        runs = {"T1": {"status": "failed"}, "T1~2": {"status": "completed", "agent": "kirocrew"}}
+        tick, _ = make_tick(gh)
+        with mock.patch.object(d, "git") as git_mock:
+            tick.finish_dev_runs([issue(105, ["status:in-progress", "agent:frontend-dev"])], [], runs)
+        git_mock.assert_not_called()
+        self.assertIn(("status", 105, "status:blocked", ("status:in-progress",)), gh.events)
+        note = gh.has("comment", 105)[0][2]
+        self.assertIn("was resumed `kirocrew`, not `frontend-dev`", note)
+        self.assertIn("No PR was opened", note)
+
+    def test_resumed_as_right_agent_pushes_base_branch(self):
+        from unittest import mock
+        gh = RecGH()
+        gh.comments_by[105] = [{"body": d.make_marker({"kind": "dev", "task_id": "T1",
+                                                       "role": "frontend-dev"}), "_trusted": True}]
+        runs = {"T1": {"status": "failed"}, "T1~2": {"status": "completed", "agent": "frontend-dev"}}
+        tick, _ = make_tick(gh)
+        pushes = []
+
+        def fake_git(cwd, *args, token=None):
+            if args[0] == "push":
+                pushes.append(args[-1])
+            return ""
+
+        with mock.patch.object(d, "git", fake_git):
+            tick.finish_dev_runs([issue(105, ["status:in-progress", "agent:frontend-dev"])],
+                                 [pr_item(5, "status:in-review")], runs)
+        self.assertEqual(len(pushes), 1)
+        self.assertTrue(pushes[0].startswith("kirocrew/task/T1:"), pushes[0])
+        self.assertNotIn("~2", pushes[0])
+        self.assertIn(("status", 105, "status:in-review", ("status:in-progress",)), gh.events)
+
+    def test_qa_resumed_as_wrong_agent_blocks_without_verdict(self):
+        from unittest import mock
+        gh = RecGH(pulls={})
+        gh.comments_by[5] = [{"body": d.make_marker({"kind": "qa", "task_id": "Q1", "sha": "sha5"}),
+                              "_trusted": True}]
+        runs = {"Q1~2": {"status": "completed", "agent": "kirocrew"}}
+        tick, _ = make_tick(gh)
+        with mock.patch.object(d, "read_verdict") as verdict:
+            tick.finish_qa_runs([pr_item(5, "status:qa-running")], runs)
+        verdict.assert_not_called()
+        self.assertIn(("status", 5, "status:blocked", ("status:qa-running",)), gh.events)
+
+
 if __name__ == "__main__":
     unittest.main()
