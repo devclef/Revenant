@@ -111,7 +111,7 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
             state={state}
             appOrigin={appOrigin}
             nowMs={deps?.nowMs ?? Date.now}
-            backupKeyText={flow.backupKeyText}
+            getBackupKeyText={flow.getBackupKeyText}
           />
         );
       case "cannot_lock":
@@ -127,10 +127,11 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
       case "fallback_key":
         // The key is generated on FALLBACK_START, so it is present here. The
         // null guard only covers a state that should never reach this branch.
-        if (flow.backupKeyText === null) return null;
+        const fallbackKeyText = flow.getBackupKeyText();
+        if (fallbackKeyText === null) return null;
         return (
           <BackupFallback
-            keyText={flow.backupKeyText}
+            keyText={fallbackKeyText}
             onSealPress={flow.onFallbackSealPress}
             onDecline={flow.onFallbackDecline}
           />

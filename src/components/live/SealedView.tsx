@@ -60,17 +60,18 @@ export interface SealedViewProps {
   /** The clock used for the countdown. Defaults to Date.now; a test fixes it. */
   nowMs?: () => number;
   /**
-   * The printed backup key, held by the seal flow until the judge leaves the
-   * page. Null for a passkey-only letter, or when the key is no longer held.
+   * Reads the printed backup key from the seal flow. It is called during render,
+   * so the key is never passed as state. Returns null for a passkey-only letter,
+   * or when the key is no longer held.
    */
-  backupKeyText?: string | null;
+  getBackupKeyText?: () => string | null;
 }
 
 export function SealedView({
   state,
   appOrigin,
   nowMs = Date.now,
-  backupKeyText = null,
+  getBackupKeyText = () => null,
 }: SealedViewProps) {
   const opensAtMs = Date.parse(state.opensAt);
   const [showBackupCard, setShowBackupCard] = useState(false);
@@ -106,6 +107,7 @@ export function SealedView({
   const showKeyReminder = state.factors === "backup" || state.factors === "both";
   // The card is offered only for a letter with a Backup_Wrap, and only while
   // the printed key is still held. A passkey-only letter has no key to show.
+  const backupKeyText = getBackupKeyText();
   const offerBackupCard = showKeyReminder && backupKeyText !== null && backupKeyText.length > 0;
 
   function onCopyLink(): void {

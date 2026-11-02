@@ -7,6 +7,8 @@
  */
 
 import { describe, it, expect, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 
@@ -322,5 +324,39 @@ describe("useSealFlow backup key card at the seal step (R21.1)", () => {
     const body = calls[0]?.[0];
     if (body === undefined) throw new Error("no seal request was posted");
     expect(body.envelope.wrappedDeks.map((w) => w.factor)).toEqual(["passkey"]);
+  });
+});
+
+describe("useSealFlow backup key text is held in a ref, not in state (R21.3)", () => {
+  it("returns the printed key from the getter once the fallback starts", async () => {
+    const { deps, createSpy, getSpy, generateSpy } = await fallbackDeps({ getPrf: "short" });
+    const flow = mount(deps, draft());
+    expect(flow.getBackupKeyText()).toBeNull();
+    await reachCannotLock(flow, createSpy, getSpy);
+    await pressUntil(() => flow.onFallbackStart(), () => generateSpy.mock.calls.length > 0);
+    const text = flow.getBackupKeyText();
+    expect(text).toMatch(/^[0-9A-Z]{4}(-[0-9A-Z]{4}){5}-[0-9A-Z]{3}$/);
+  });
+
+  it("clears the ref when the fallback is declined", async () => {
+    const { deps, createSpy, getSpy, generateSpy } = await fallbackDeps({ getPrf: "short" });
+    const flow = mount(deps, draft());
+    await reachCannotLock(flow, createSpy, getSpy);
+    await pressUntil(() => flow.onFallbackStart(), () => generateSpy.mock.calls.length > 0);
+    expect(flow.getBackupKeyText()).not.toBeNull();
+    flow.onFallbackDecline();
+    expect(flow.getBackupKeyText()).toBeNull();
+  });
+
+  it("does not expose the key text as a state value on the flow", async () => {
+    const { deps } = await fallbackDeps();
+    const flow = mount(deps, draft());
+    expect(flow).not.toHaveProperty("backupKeyText");
+  });
+
+  it("the hook source keeps the key text out of useState", () => {
+    const source = readFileSync(resolve(__dirname, "useSealFlow.ts"), "utf8");
+    expect(source).not.toMatch(/useState<string/);
+    expect(source).toMatch(/const backupKeyText = useRef<string \| null>\(null\)/);
   });
 });
