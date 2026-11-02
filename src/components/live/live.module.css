@@ -420,3 +420,93 @@
   outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
+
+/*
+ * Keepsakes on the sealed state (task 11, design Part D): the printable letter
+ * card and the calendar download. The card is a paper surface that sets its own
+ * ink, so its text never inherits a colour from the panel around it.
+ */
+.keepsakes {
+  margin-top: 2rem;
+}
+
+.card {
+  --ink: #1f1b16;
+  --ink-soft: #3a332a;
+  margin: 0;
+  padding: clamp(1rem, 3vw, 1.5rem);
+  color: var(--ink);
+  background-color: var(--paper);
+  border: 1px solid var(--ink-soft);
+  border-radius: 4px;
+  font-family: var(--font-serif);
+  font-size: 1rem;
+  line-height: 1.6;
+}
+
+.cardTitle {
+  margin: 0.75rem 0 0.75rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--ink);
+}
+
+/* White behind the code so it scans on a dark-toned paper; the quiet zone is part of the symbol. */
+.cardQr {
+  width: min(100%, 14rem);
+  margin: 0 0 1rem;
+  padding: 0.5rem;
+  background-color: #ffffff;
+  line-height: 0;
+}
+
+.cardQr svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.cardOpens {
+  margin: 0 0 0.5rem;
+  color: var(--ink);
+}
+
+.cardLink {
+  margin: 0 0 1rem;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
+/* Controls and the rest of the sealed page are hidden when the card is printed. */
+@media print {
+  .noPrint {
+    display: none !important;
+  }
+
+  .panel {
+    max-width: none;
+    padding: 0;
+    background-color: #ffffff;
+    box-shadow: none;
+  }
+
+  .keepsakes {
+    margin-top: 0;
+  }
+
+  .card {
+    --ink: #000000;
+    --ink-soft: #000000;
+    color: #000000;
+    background-color: #ffffff;
+    border: none;
+  }
+
+  .card * {
+    color: #000000;
+  }
+}

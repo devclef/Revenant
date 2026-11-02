@@ -10,6 +10,7 @@ import { LIVE_COPY } from "./copy";
 import { formatLocalDateTime } from "./format";
 import { remainingSeconds } from "./clock";
 import styles from "./live.module.css";
+import { SealedKeepsakes } from "./SealedKeepsakes";
 import type { SealState } from "./seal-machine";
 
 /**
@@ -31,7 +32,10 @@ import type { SealState } from "./seal-machine";
  *    path `/l/${letterId}`, never built from APP_ORIGIN, enabled only once the
  *    countdown reaches zero (R16.3–R16.5);
  *  - the keep-the-link note (keepLink);
- *  - and, for a backup or both seal, the backup-key reminder (keyReminder).
+ *  - and, for a backup or both seal, the backup-key reminder (keyReminder);
+ *  - and the keepsakes (SealedKeepsakes): the printable letter card and the
+ *    calendar download (spec 06, task 11). Their controls are outside the
+ *    `.noPrint` group, so a print shows the card and nothing else.
  *
  * It renders NO letter text and NO figure (R15.13).
  *
@@ -95,51 +99,55 @@ export function SealedView({ state, appOrigin, nowMs = Date.now }: SealedViewPro
 
   return (
     <div className={styles.panel} data-live-sealed={state.factors}>
-      <DemoLabel />
-      <h1 className={styles.heading}>{LIVE_COPY.sealedTitle}</h1>
-      <p className={styles.intro}>{LIVE_COPY.sealedBody}</p>
+      <div className={styles.noPrint}>
+        <DemoLabel />
+        <h1 className={styles.heading}>{LIVE_COPY.sealedTitle}</h1>
+        <p className={styles.intro}>{LIVE_COPY.sealedBody}</p>
 
-      <p className={styles.intro}>
-        {LIVE_COPY.opensAt.replace("{time}", formatLocalDateTime(state.opensAt))}
-      </p>
+        <p className={styles.intro}>
+          {LIVE_COPY.opensAt.replace("{time}", formatLocalDateTime(state.opensAt))}
+        </p>
 
-      <p className={styles.status} role="status" data-live-countdown={done ? "done" : "ticking"}>
-        {done
-          ? LIVE_COPY.countdownDone
-          : LIVE_COPY.countdown.replace("{seconds}", String(seconds))}
-      </p>
+        <p className={styles.status} role="status" data-live-countdown={done ? "done" : "ticking"}>
+          {done
+            ? LIVE_COPY.countdownDone
+            : LIVE_COPY.countdown.replace("{seconds}", String(seconds))}
+        </p>
 
-      <p className={styles.hint}>{LIVE_COPY.linkLabel}</p>
-      <p className={styles.intro}>
-        <span className={styles.linkText} data-live-link>
-          {linkText}
-        </span>
-      </p>
-      <div className={styles.actions}>
-        <button type="button" className={styles.primary} onClick={onCopyLink}>
-          {LIVE_COPY.copyLink}
-        </button>
-      </div>
-
-      <div className={styles.actions}>
-        {done ? (
-          <Link href={relativeHref} className={styles.primary} data-live-goto>
-            {LIVE_COPY.goToLetter}
-          </Link>
-        ) : (
-          <span
-            className={`${styles.primary} ${styles.primaryDisabled}`}
-            aria-disabled="true"
-            data-live-goto
-            data-disabled="true"
-          >
-            {LIVE_COPY.goToLetter}
+        <p className={styles.hint}>{LIVE_COPY.linkLabel}</p>
+        <p className={styles.intro}>
+          <span className={styles.linkText} data-live-link>
+            {linkText}
           </span>
-        )}
+        </p>
+        <div className={styles.actions}>
+          <button type="button" className={styles.primary} onClick={onCopyLink}>
+            {LIVE_COPY.copyLink}
+          </button>
+        </div>
+
+        <div className={styles.actions}>
+          {done ? (
+            <Link href={relativeHref} className={styles.primary} data-live-goto>
+              {LIVE_COPY.goToLetter}
+            </Link>
+          ) : (
+            <span
+              className={`${styles.primary} ${styles.primaryDisabled}`}
+              aria-disabled="true"
+              data-live-goto
+              data-disabled="true"
+            >
+              {LIVE_COPY.goToLetter}
+            </span>
+          )}
+        </div>
+
+        <p className={styles.hint}>{LIVE_COPY.keepLink}</p>
+        {showKeyReminder ? <p className={styles.intro}>{LIVE_COPY.keyReminder}</p> : null}
       </div>
 
-      <p className={styles.hint}>{LIVE_COPY.keepLink}</p>
-      {showKeyReminder ? <p className={styles.intro}>{LIVE_COPY.keyReminder}</p> : null}
+      <SealedKeepsakes letterId={state.letterId} appOrigin={appOrigin} opensAt={state.opensAt} />
     </div>
   );
 }
