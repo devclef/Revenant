@@ -7,6 +7,8 @@ import type { LoadedFigures } from "@/lib/figures";
 
 import { realSealApi, type SealApi } from "./api";
 import { listPickableSeries } from "./catalogue-list";
+import { SealedView } from "./SealedView";
+import { SealFailure } from "./SealFailure";
 import type { AuthenticatorPort, SealDeps, SealDraft } from "./seal-runner";
 import { useCryptoModule } from "./useCryptoModule";
 import { useSealFlow } from "./useSealFlow";
@@ -88,18 +90,37 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
       data-app-origin={appOrigin}
       data-live-step={state.tag}
     >
-      {/*
-        The failure and sealed views arrive in later steps (tasks 6 and 7).
-        Until then every state renders the write form, so the page still works.
-      */}
-      <WriteForm
-        series={PICKABLE}
-        state={state}
-        cryptoLoaded={crypto !== null}
-        onCreatePress={flow.onCreatePress}
-        onConfirmPress={flow.onConfirmPress}
-        onDraftChange={onDraftChange}
-      />
+      {renderState()}
     </div>
   );
+
+  function renderState() {
+    switch (state.tag) {
+      case "sealed":
+        return (
+          <SealedView
+            state={state}
+            appOrigin={appOrigin}
+            nowMs={deps?.nowMs ?? Date.now}
+          />
+        );
+      case "cannot_lock":
+      case "cancelled":
+      case "failed":
+        return <SealFailure state={state} onRetry={flow.onRetry} />;
+      default:
+        // write, creating, created, confirming, preparing, sealing: the write
+        // form knows which of its controls to show for each step.
+        return (
+          <WriteForm
+            series={PICKABLE}
+            state={state}
+            cryptoLoaded={crypto !== null}
+            onCreatePress={flow.onCreatePress}
+            onConfirmPress={flow.onConfirmPress}
+            onDraftChange={onDraftChange}
+          />
+        );
+    }
+  }
 }
