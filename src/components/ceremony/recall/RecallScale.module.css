@@ -1,0 +1,157 @@
+/*
+ * Recall_Scale (RecallScale.tsx). The scale sits on a paper panel, so it sets
+ * --ink itself and never inherits text colour from the desk. The marker's hit
+ * area is 44 x 44 px. The track has touch-action: none so a drag never scrolls
+ * the page.
+ */
+
+.scale {
+  color: var(--ink);
+  position: relative;
+  margin: 2.25rem 0 1rem;
+}
+
+.track {
+  position: relative;
+  height: 3rem;
+  touch-action: none;
+  cursor: ew-resize;
+  user-select: none;
+}
+
+.rail {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 1px;
+  background: var(--ink);
+  opacity: 0.5;
+}
+
+.mark {
+  position: absolute;
+  left: calc(var(--pos-mark) * 100%);
+  top: 50%;
+  width: 44px;
+  height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 50%;
+  cursor: grab;
+  background: transparent;
+}
+
+.mark::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  border-radius: 50%;
+  background: var(--ink);
+}
+
+.mark[aria-disabled="true"] {
+  cursor: default;
+}
+
+.mark:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.markFaded {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.readout {
+  position: absolute;
+  left: calc(var(--pos-mark) * 100%);
+  bottom: 100%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink);
+}
+
+.unit {
+  margin-left: 0.25rem;
+  font-size: 0.875rem;
+}
+
+.labels {
+  position: relative;
+  height: 1.25rem;
+  font-size: 0.75rem;
+  color: var(--ink);
+  opacity: 0.8;
+}
+
+.label {
+  position: absolute;
+  left: calc(var(--pos-label) * 100%);
+  transform: translateX(-50%);
+  white-space: nowrap;
+}
+
+/* The end labels anchor to the track edges so they never hang past the fieldset. */
+.label:first-child {
+  transform: none;
+}
+
+.label:last-child {
+  transform: translateX(-100%);
+}
+
+/* Narrow screens keep every other decade so the labels do not overlap. */
+@media (max-width: 480px) {
+  .label:nth-child(even):not(:last-child),
+  .label:nth-child(7) {
+    display: none;
+  }
+}
+
+.endStart {
+  position: absolute;
+  left: 0;
+}
+
+.endEnd {
+  position: absolute;
+  right: 0;
+}
+
+.zoomRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-top: 0.5rem;
+  color: var(--ink);
+}
+
+.zoomHint {
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.wholeScale {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 0.75rem;
+  font: inherit;
+  color: var(--ink);
+  background: transparent;
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  cursor: pointer;
+}
+
+.wholeScale:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}

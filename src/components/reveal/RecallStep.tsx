@@ -2,6 +2,7 @@
 
 import type { FormEvent } from "react";
 import { ParchmentSurface } from "@/components/ui";
+import { RecallScale } from "@/components/ceremony/recall/RecallScale";
 import type { Draft } from "@/lib/recall";
 import type { Opened } from "./opening-machine";
 import { REVEAL_COPY } from "./copy";
@@ -61,6 +62,17 @@ export type RecallStepProps = {
 /** The empty draft used for a question the judge has not touched yet. */
 const EMPTY_DRAFT: Draft = { text: "", noAnswer: false };
 
+/**
+ * The number the scale marks for a draft's text, or null when the text is not a
+ * plain decimal (the same shape `numberAnswer` accepts, after trimming). A
+ * half-typed or invalid entry leaves the Mark off the scale.
+ */
+export function draftNumber(text: string): number | null {
+  const trimmed = text.trim();
+  if (!/^[0-9]+(\.[0-9]+)?$/.test(trimmed)) return null;
+  return Number(trimmed);
+}
+
 export function RecallStep({
   opened,
   drafts,
@@ -110,6 +122,17 @@ export function RecallStep({
           return (
             <fieldset key={question.id} className={styles.fieldset}>
               <legend className={styles.legend}>{question.text}</legend>
+
+              {question.answer_type === "number" && unit !== undefined ? (
+                <RecallScale
+                  id={question.id}
+                  label={question.text}
+                  unitLabel={unit}
+                  value={draft.noAnswer ? null : draftNumber(draft.text)}
+                  noAnswer={draft.noAnswer}
+                  onEdit={onEdit}
+                />
+              ) : null}
 
               <div className={styles.inputRow}>
                 <input
