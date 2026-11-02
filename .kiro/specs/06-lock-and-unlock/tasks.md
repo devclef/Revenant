@@ -216,7 +216,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
   - Validation: `bash scripts/check.sh`; `npx vitest run src/lib/cards src/lib/ics src/components/live`
   - _Requirements: R20, R19_
 
-- [ ] 12. Backup key card, #k= fragment and optional backup key beside the passkey (optional)
+- [x] 12. Backup key card, #k= fragment and optional backup key beside the passkey (optional)
   - Agent: `frontend-dev` · Depends on: 11 · Estimated size: ~700 changed lines plus ~400 test lines
   - Before this task: task 11 is on `main`. This task is optional.
   - Scope: `src/lib/cards/fragment.ts`, `src/lib/cards/index.ts`, `src/components/live/BackupKeyCard.tsx`, `WriteForm.tsx`, `seal-runner.ts`, `useSealFlow.ts`, `SealedView.tsx`, `LiveLetter.tsx`, `UnlockView.tsx`, `copy.ts`, `live.module.css`, and the `*.test.ts(x)` for each
