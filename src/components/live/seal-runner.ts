@@ -125,6 +125,9 @@ export function pressConfirm(deps: SealDeps, created: Created): Promise<ConfirmS
     .then(mapConfirm);
 }
 
+/** The backup key type the crypto module's `sealLetter` accepts (16 bytes, branded). */
+export type BackupKey = NonNullable<Parameters<CryptoModule["sealLetter"]>[0]["backupKey"]>;
+
 export interface SealRunInput {
   draft: SealDraft;
   confirmed: Confirmed;
@@ -133,12 +136,17 @@ export interface SealRunInput {
    * `preparing` to `sealing`.
    */
   onPrepared?: () => void;
-  /**
-   * The backup key for the Backup_Wrap. Unused until the Backup_Fallback task
-   * lands; the passkey-only flow never reads it.
-   */
-  backupKey?: Uint8Array;
 }
+
+export interface BackupSealRunInput {
+  draft: SealDraft;
+  /** The backup key shown to the judge. It is read here, never zeroed, so the card can show it. */
+  backupKey: BackupKey;
+  onPrepared?: () => void;
+}
+
+/** Which factor locks the letter. The passkey carries its PRF output; the backup key is the caller's. */
+type Lock = { kind: "passkey"; confirmed: Confirmed } | { kind: "backup"; backupKey: BackupKey };
 
 function decodeOrNull(value: string): Uint8Array | null {
   try {
@@ -150,11 +158,16 @@ function decodeOrNull(value: string): Uint8Array | null {
 
 /**
  * R15.1 steps 3 to 8, in order, stopping at the first failure. Steps 1 and 2
- * (the two prompts) have already passed when this runs.
+ * (the two passkey prompts) have already passed when this runs for a passkey.
+ * The backup flow has no prompts, so it starts at step 3 directly.
  */
-export async function sealWithPasskey(deps: SealDeps, input: SealRunInput): Promise<SealOutcome> {
-  const { confirmed, draft } = input;
-  const prfOutput = confirmed.prfOutput;
+async function runSeal(
+  deps: SealDeps,
+  draft: SealDraft,
+  lock: Lock,
+  onPrepared: (() => void) | undefined,
+): Promise<SealOutcome> {
+  const passkeyCreated = lock.kind === "passkey";
   let serverSecret: Uint8Array | null = null;
 
   try {
@@ -163,14 +176,14 @@ export async function sealWithPasskey(deps: SealDeps, input: SealRunInput): Prom
     const arrivedMs = deps.now();
     if (!prepared.ok) {
       const kind: SealFailureKind = prepared.kind === "busy" ? "busy" : prepared.kind === "network" ? "network" : "server";
-      return { ok: false, event: failure(kind, true) };
+      return { ok: false, event: failure(kind, passkeyCreated) };
     }
-    input.onPrepared?.();
+    onPrepared?.();
 
     const letterId = decodeOrNull(prepared.letterId);
     serverSecret = decodeOrNull(prepared.serverSecret);
     if (letterId === null || serverSecret === null) {
-      return { ok: false, event: failure("server", true) };
+      return { ok: false, event: failure("server", passkeyCreated) };
     }
 
     // Step 4: sealedAt and opensAt from the server clock and the offset.
@@ -188,31 +201,38 @@ export async function sealWithPasskey(deps: SealDeps, input: SealRunInput): Prom
       figures: draft.figures,
     });
     if (!built.ok) {
-      return { ok: false, event: failure("missing_then", true, built.metricId) };
+      return { ok: false, event: failure("missing_then", passkeyCreated, built.metricId) };
     }
     const payload: PayloadV1 = built.payload;
 
     // Step 6: seal. The wrap check (R8.5) runs inside sealLetter.
+    const factor: Pick<Parameters<CryptoModule["sealLetter"]>[0], "passkey" | "backupKey"> =
+      lock.kind === "passkey"
+        ? {
+            passkey: {
+              prfOutput: lock.confirmed.prfOutput,
+              credentialId: lock.confirmed.credentialId,
+              prfSalt: lock.confirmed.prfSalt,
+              rpId: deps.rpId,
+            },
+          }
+        : { backupKey: lock.backupKey };
+
     let sealed: Awaited<ReturnType<CryptoModule["sealLetter"]>>;
     try {
       sealed = await deps.crypto.sealLetter({
         payload,
         letterId,
         serverSecret,
-        passkey: {
-          prfOutput,
-          credentialId: confirmed.credentialId,
-          prfSalt: confirmed.prfSalt,
-          rpId: deps.rpId,
-        },
+        ...factor,
         sealedAt: times.sealedAt,
         opensAt: times.opensAt,
       });
     } catch (error) {
       if (error instanceof deps.crypto.SealError && error.error.kind === "wrap_failed") {
-        return { ok: false, event: { type: "CANNOT_LOCK", passkeyCreated: true } };
+        return { ok: false, event: { type: "CANNOT_LOCK", passkeyCreated } };
       }
-      return { ok: false, event: failure("server", true) };
+      return { ok: false, event: failure("server", passkeyCreated) };
     }
 
     // Step 7: post the envelope.
@@ -230,7 +250,7 @@ export async function sealWithPasskey(deps: SealDeps, input: SealRunInput): Prom
             : posted.kind === "network"
               ? "network"
               : "server";
-      return { ok: false, event: failure(kind, true) };
+      return { ok: false, event: failure(kind, passkeyCreated) };
     }
 
     return {
@@ -241,13 +261,28 @@ export async function sealWithPasskey(deps: SealDeps, input: SealRunInput): Prom
         sealedAt: posted.sealedAt,
         opensAt: posted.opensAt,
         offsetMs: times.offsetMs,
-        factors: "passkey",
+        factors: lock.kind === "passkey" ? "passkey" : "backup",
       },
     };
   } finally {
-    // Step 8: discard the time-lock secret and the PRF output. The crypto module
-    // zeroes its own copy; these are the caller's copies.
+    // Step 8: discard the time-lock secret and, for a passkey, the PRF output.
+    // The crypto module zeroes its own copy; these are the caller's copies.
+    // The backup key is not zeroed: the Backup_Fallback card still shows it.
     serverSecret?.fill(0);
-    prfOutput.fill(0);
+    if (lock.kind === "passkey") lock.confirmed.prfOutput.fill(0);
   }
+}
+
+/** Seals with the passkey wrap. Both passkey prompts have already passed. */
+export function sealWithPasskey(deps: SealDeps, input: SealRunInput): Promise<SealOutcome> {
+  return runSeal(deps, input.draft, { kind: "passkey", confirmed: input.confirmed }, input.onPrepared);
+}
+
+/**
+ * Seals with the Backup_Wrap only: no passkey factor, no rpId, credentialId or
+ * prfSalt in the header. The header's factors are "backup" and a failure
+ * reports passkeyCreated false, because no passkey was made on this path.
+ */
+export function sealWithBackupKey(deps: SealDeps, input: BackupSealRunInput): Promise<SealOutcome> {
+  return runSeal(deps, input.draft, { kind: "backup", backupKey: input.backupKey }, input.onPrepared);
 }
