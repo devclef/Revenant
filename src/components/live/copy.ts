@@ -70,6 +70,8 @@ export const LIVE_COPY = {
   tryAgain: "Try again",
   failedBody:
     "Your letter was not sealed. Check your connection and try again.",
+  failedServerBody:
+    "The server could not finish. Nothing was sealed, and your letter is still here. Try again.",
   clockBody:
     "Your device clock differs from Revenant's clock by more than the demo allows. Nothing was sealed. Check your device time and try again.",
   busyBody: "Demo 2 is busy right now. Nothing was sealed. Try again later.",

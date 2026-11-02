@@ -133,9 +133,25 @@ describe("SealFailure — failed", () => {
     };
   }
 
-  it("shows the network/server body for network and server kinds", () => {
+  it("shows the network body for the network kind", () => {
     expect(renderText(failed("network"))).toContain(LIVE_COPY.failedBody);
-    expect(renderText(failed("server"))).toContain(LIVE_COPY.failedBody);
+  });
+
+  it("shows the separate server body for the server kind", () => {
+    expect(renderText(failed("server"))).toContain(LIVE_COPY.failedServerBody);
+    expect(renderText(failed("server"))).not.toContain(LIVE_COPY.failedBody);
+  });
+
+  it("gives the server and network bodies different wording", () => {
+    expect(LIVE_COPY.failedServerBody).not.toBe(LIVE_COPY.failedBody);
+    expect(renderText(failed("network"))).not.toContain(LIVE_COPY.failedServerBody);
+  });
+
+  it("does not say the letter was sealed in either network or server body", () => {
+    for (const body of [LIVE_COPY.failedBody, LIVE_COPY.failedServerBody]) {
+      expect(body.toLowerCase()).not.toMatch(/your letter (was|is) sealed/);
+    }
+    expect(LIVE_COPY.failedServerBody).toContain("Nothing was sealed");
   });
 
   it("shows the clock body for the clock kind", () => {

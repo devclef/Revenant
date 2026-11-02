@@ -68,8 +68,9 @@ function failedBody(
         seriesName(state.metricId ?? ""),
       );
     case "network":
-    case "server":
       return LIVE_COPY.failedBody;
+    case "server":
+      return LIVE_COPY.failedServerBody;
   }
 }
 

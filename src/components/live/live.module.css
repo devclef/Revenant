@@ -211,6 +211,14 @@
   margin-top: 1.5rem;
 }
 
+/* The full /l/<id> link must wrap inside a 360 px viewport, never clip. */
+.linkText {
+  display: block;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
 .primary {
   display: inline-flex;
   align-items: center;
@@ -230,6 +238,19 @@
 }
 
 .primary:disabled {
+  color: var(--ink-soft);
+  background-color: var(--paper-deep);
+  border: 1px dashed var(--ink-soft);
+  cursor: not-allowed;
+}
+
+/*
+ * The span stands in for the go-to-letter link while the countdown runs. It is
+ * not interactive, so it reads as faded and shows a not-allowed cursor. No
+ * colour is used, so the state carries no judgement.
+ */
+.primaryDisabled {
+  opacity: 0.75;
   color: var(--ink-soft);
   background-color: var(--paper-deep);
   border: 1px dashed var(--ink-soft);

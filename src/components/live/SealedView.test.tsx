@@ -111,6 +111,11 @@ describe("SealedView — letter link", () => {
     expect(renderText()).toContain(LIVE_COPY.copyLink);
   });
 
+  it("puts the wrap class on the element that holds the link text", () => {
+    const html = renderHtml();
+    expect(html).toMatch(/<span[^>]*class="[^"]*linkText[^"]*"[^>]*data-live-link/);
+  });
+
   it("shows the keep-link note", () => {
     expect(renderText()).toContain(LIVE_COPY.keepLink);
   });
@@ -131,6 +136,18 @@ describe("SealedView — Go to your letter", () => {
     // The disabled affordance is still shown with the go-to-letter label.
     expect(html).toContain('aria-disabled="true"');
     expect(renderText()).toContain(LIVE_COPY.goToLetter);
+  });
+
+  it("marks the disabled control with data-disabled and a visibly disabled class", () => {
+    const html = renderHtml();
+    expect(html).toMatch(/<span[^>]*data-disabled="true"[^>]*>/);
+    expect(html).toMatch(/<span[^>]*class="[^"]*primaryDisabled[^"]*"[^>]*data-disabled/);
+  });
+
+  it("does not mark the link as disabled once the countdown is done", () => {
+    const html = renderHtml({ state: sealed({ opensAt: new Date(NOW_MS - 1_000).toISOString() }) });
+    expect(html).not.toContain("data-disabled");
+    expect(html).not.toContain("primaryDisabled");
   });
 
   it("becomes a real link once the countdown reaches zero", () => {

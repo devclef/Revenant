@@ -111,7 +111,9 @@ export function SealedView({ state, appOrigin, nowMs = Date.now }: SealedViewPro
 
       <p className={styles.hint}>{LIVE_COPY.linkLabel}</p>
       <p className={styles.intro}>
-        <span data-live-link>{linkText}</span>
+        <span className={styles.linkText} data-live-link>
+          {linkText}
+        </span>
       </p>
       <div className={styles.actions}>
         <button type="button" className={styles.primary} onClick={onCopyLink}>
@@ -126,7 +128,7 @@ export function SealedView({ state, appOrigin, nowMs = Date.now }: SealedViewPro
           </Link>
         ) : (
           <span
-            className={styles.primary}
+            className={`${styles.primary} ${styles.primaryDisabled}`}
             aria-disabled="true"
             data-live-goto
             data-disabled="true"
