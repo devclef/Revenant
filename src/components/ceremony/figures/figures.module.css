@@ -332,6 +332,14 @@
   animation: none;
 }
 
+/* Skip and Calm settle at data-step="done": the Stamps and the counter digits
+   stop their drop and roll at once and rest in place, so every Stamp and
+   counter value is shown (R11.4). Their rest styles are the final state. */
+.sequence[data-step="done"] .drop,
+.sequence[data-step="done"] .roll {
+  animation: none;
+}
+
 @keyframes changeFadeIn {
   from {
     opacity: 0;

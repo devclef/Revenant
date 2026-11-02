@@ -192,8 +192,10 @@ export function ThenNowSequence({ entries, children }: ThenNowSequenceProps) {
     return register(finish);
   }, [step, register, finish]);
 
-  // Report the Step through the local view so the Stage follows it (R3.1).
-  useEffect(() => {
+  // Report the Step through the local view so the Stage follows it (R3.1). A
+  // layout effect, so the Stage (and Close, which shows at `done`) updates
+  // before the browser paints the Step.
+  useLayoutEffect(() => {
     setLocalView({ step });
   }, [step, setLocalView]);
 

@@ -12,7 +12,8 @@
 // - In full motion, a layout effect (before first paint) measures the letter's
 //   line boxes and animates only `mask-*` properties, one line after another.
 // - A visible skip control is shown while the ink runs. It settles the letter
-//   at once, and focus moves to the letter's heading.
+//   at once, and focus moves to the letter's heading. While the ink runs it is
+//   also a registered sequence, so the shared Skip control ends it too (R11.4).
 // - If a line height can't be read, or the motion mode is light or calm, the
 //   text is shown with no animation and no skip control (planInkRun).
 //
@@ -25,6 +26,7 @@ import { SealedLetter, type SealedLetterProps } from "@/components/reveal/Sealed
 
 import { CEREMONY_COPY } from "../copy";
 import { useMotion } from "../motion";
+import { useSequence } from "../skip";
 import { planInkRun, startInkSession, type InkSession } from "./inkSession";
 import styles from "./InkLetter.module.css";
 
@@ -34,8 +36,16 @@ export function InkLetter(props: InkLetterProps) {
   const { mode } = useMotion();
   const rootRef = useRef<HTMLDivElement>(null);
   const sessionRef = useRef<InkSession | undefined>(undefined);
+  const unregisterRef = useRef<(() => void) | undefined>(undefined);
   const [inkRunning, setInkRunning] = useState(false);
   const { opened, personaName } = props;
+  const { register } = useSequence();
+
+  // Stop tracking the run with the shared Skip control. Idempotent.
+  const unregister = () => {
+    unregisterRef.current?.();
+    unregisterRef.current = undefined;
+  };
 
   useLayoutEffect(() => {
     const root = rootRef.current;
@@ -53,25 +63,29 @@ export function InkLetter(props: InkLetterProps) {
 
     const session = startInkSession(text, start, () => {
       sessionRef.current = undefined;
+      unregister();
       setInkRunning(false);
     });
     if (session === undefined) return undefined;
 
     sessionRef.current = session;
+    // The shared Skip control settles the run the same way the local button does.
+    unregisterRef.current = register(() => session.skip());
     setInkRunning(true);
     return () => {
       session.cancel();
+      unregister();
       sessionRef.current = undefined;
       setInkRunning(false);
     };
-  }, [mode, opened, personaName]);
+  }, [mode, opened, personaName, register]);
 
   function skipInk() {
     const session = sessionRef.current;
     if (session === undefined) return;
+    // `session.skip()` runs onSettled, which clears the ref, unregisters and
+    // hides the control.
     session.skip();
-    sessionRef.current = undefined;
-    setInkRunning(false);
     // The control is removed once the ink settles, so move focus to the
     // letter's heading rather than leaving it on nothing.
     rootRef.current?.querySelector<HTMLElement>("h2")?.focus();

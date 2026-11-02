@@ -8,6 +8,7 @@ import { InkLetter } from "@/components/ceremony/letter/InkLetter";
 import { FiguresThenNow } from "./FiguresThenNow";
 import { StagePanel } from "./StagePanel";
 import { ThenNowSequence } from "@/components/ceremony/figures/ThenNowSequence";
+import { Close } from "@/components/ceremony/close/Close";
 import { SealBreak } from "@/components/ceremony/seal/SealBreak";
 import { RecallScale } from "@/components/ceremony/recall/RecallScale";
 import { useLocalView } from "@/components/ceremony/local-view";
@@ -88,7 +89,7 @@ export function Reveal({
   // The local-view context lets stage 1's SealBreak report its `sealing` flag
   // up to CeremonyRoot, so `stageFor(state, local)` resolves `seal` while a
   // break is in progress and `marks` otherwise (design.md "Stage resolution").
-  const { setLocalView } = useLocalView();
+  const { localView, setLocalView } = useLocalView();
 
   // The containers for stages 2 and 3; focus moves to the heading inside the
   // stage the reveal just reached.
@@ -194,6 +195,15 @@ export function Reveal({
               <FiguresThenNow opened={opened} record={record} />
             </StagePanel>
           </ThenNowSequence>
+        </div>
+      ) : null}
+
+      {/* Close (R12.9) shows once the stage 3 Steps are done. The sequence
+          reports `done` when its last Step settles or Skip ends it, so Close
+          never appears while the then or now figures are still moving. */}
+      {stage >= 3 && localView.step === "done" ? (
+        <div className={`${styles.stage} ${styles.fade}`}>
+          <Close />
         </div>
       ) : null}
 
