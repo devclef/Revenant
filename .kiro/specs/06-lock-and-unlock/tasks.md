@@ -139,7 +139,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
   - Validation: `bash scripts/check.sh`; `npx vitest run src/components/live`
   - _Requirements: R15.1–R15.8, R15.10–R15.14, R16, R19, R22.7, R22.8, R24.5, R24.8_
 
-- [ ] 7. Seal_Page part 2b: Backup_Fallback
+- [x] 7. Seal_Page part 2b: Backup_Fallback
   - Agent: `frontend-dev` · Depends on: 6 · Estimated size: ~750 changed lines plus ~400 test lines
   - Before this task: task 6 is on `main`.
   - Scope: `src/components/live/BackupFallback.tsx`, `seal-runner.ts`, `seal-machine.ts`, `useSealFlow.ts`, `SealFailure.tsx`, `SealedView.tsx`, `SealPage.tsx`, `copy.ts`, `live.module.css`, and the `*.test.ts(x)` for each
