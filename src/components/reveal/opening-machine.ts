@@ -64,6 +64,26 @@ export type OpenFailedKind =
   | "invalid_input";
 
 /**
+ * Which unlock factors a letter accepts (design.md "Opening_Flow additions").
+ * `passkey` is set when the envelope has a passkey wrap, with the header's
+ * `rpId`. `backup` is set when it has a backup wrap. Both may be set.
+ */
+export type UnlockInfo = { passkey: { rpId: string } | null; backup: boolean };
+
+/**
+ * A notice shown on the key step. Each value maps to one plain-words message in
+ * the copy. None of them carries a secret or a letter field.
+ */
+export type KeyNotice =
+  | "cancelled"
+  | "no_prf"
+  | "failed"
+  | "wrong_domain"
+  | "mistyped_key"
+  | "wrong_passkey"
+  | "wrong_backup";
+
+/**
  * The Opening_Flow state. Each tag is a distinct screen; the views pick one by
  * `state.tag`. Error states carry no `Opened`, so their views cannot render any
  * payload field.
@@ -72,6 +92,19 @@ export type FlowState =
   | { tag: "loading" }
   | { tag: "sealed"; opensAt: string }
   | { tag: "openable"; envelope: unknown; envelopeHash: string }
+  | {
+      tag: "awaiting_key";
+      envelope: unknown;
+      envelopeHash: string;
+      unlock: UnlockInfo;
+      notice: KeyNotice | null;
+    }
+  | {
+      tag: "unlocking";
+      envelope: unknown;
+      envelopeHash: string;
+      unlock: UnlockInfo;
+    }
   | { tag: "verifying" }
   | { tag: "verified"; opened: Opened }
   | {
@@ -149,7 +182,11 @@ export type FlowEvent =
   | { type: "POST_FAILED" }
   | { type: "RETRY_POST" }
   | { type: "ADVANCE" }
-  | { type: "SHOW_ALL" };
+  | { type: "SHOW_ALL" }
+  | { type: "NEEDS_KEY"; unlock: UnlockInfo }
+  | { type: "KEY_NOTICE"; notice: KeyNotice }
+  | { type: "UNLOCK" }
+  | { type: "KEY_REJECTED"; factor: "passkey" | "backup" };
 
 /** A fresh draft for a question that has not been touched yet. */
 function emptyDraft(): Draft {
@@ -215,6 +252,58 @@ export function reduce(state: FlowState, event: FlowEvent): FlowState {
           return { tag: "verifying" };
         case "UNREACHABLE":
           return { tag: "unreachable" };
+        case "NEEDS_KEY":
+          // A passkey or backup key is needed. No secret is held in this state.
+          return {
+            tag: "awaiting_key",
+            envelope: state.envelope,
+            envelopeHash: state.envelopeHash,
+            unlock: event.unlock,
+            notice: null,
+          };
+        case "OPEN_FAILED":
+          // The header will not parse in user mode.
+          return { tag: "open_failed", kind: event.kind };
+        default:
+          return state;
+      }
+    }
+
+    case "awaiting_key": {
+      switch (event.type) {
+        case "KEY_NOTICE":
+          return { ...state, notice: event.notice };
+        case "UNLOCK":
+          return {
+            tag: "unlocking",
+            envelope: state.envelope,
+            envelopeHash: state.envelopeHash,
+            unlock: state.unlock,
+          };
+        default:
+          return state;
+      }
+    }
+
+    case "unlocking": {
+      switch (event.type) {
+        case "OPENED":
+          return { tag: "verified", opened: event.opened };
+        case "VERIFICATION_FAILED":
+          return { tag: "verification_failed" };
+        case "OPEN_FAILED":
+          return { tag: "open_failed", kind: event.kind };
+        case "KEY_REJECTED":
+          // A wrong key returns to the key step with a notice. Nothing opened
+          // is held here.
+          return {
+            tag: "awaiting_key",
+            envelope: state.envelope,
+            envelopeHash: state.envelopeHash,
+            unlock: state.unlock,
+            notice:
+              event.factor === "passkey" ? "wrong_passkey" : "wrong_backup",
+          };
         default:
           return state;
       }

@@ -33,6 +33,10 @@
 .sealed,
 .intact,
 .error {
+  /* Paper panels set their own ink, so text never inherits the desk's cream
+     colour (same rule as .stagePanel, issue #119). */
+  --ink: #1f1b16;
+  color: var(--ink);
   text-align: left;
 }
 

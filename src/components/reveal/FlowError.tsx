@@ -4,6 +4,7 @@ import Link from "next/link";
 import { ParchmentSurface } from "@/components/ui";
 import { DEMO_COPY } from "@/components/demo/copy";
 import { REVEAL_COPY } from "./copy";
+import { LIVE_COPY } from "@/components/live/copy";
 import styles from "./reveal.module.css";
 
 /**
@@ -16,6 +17,7 @@ import styles from "./reveal.module.css";
  *
  * The eight kinds map one to one onto a copy string:
  *   notPlaced          -> the demo letter has not been placed yet (404).
+ *   letterNotFound     -> the live link matches no letter (404, live mode).
  *   unreachable        -> network, 5xx or malformed response.
  *   verificationFailed -> the sealed hash did not match.
  *   wrongKey           -> the demo key did not open the letter.
@@ -39,6 +41,7 @@ import styles from "./reveal.module.css";
 /** The error kinds this view can render, one per copy string. */
 export type FlowErrorKind =
   | "notPlaced"
+  | "letterNotFound"
   | "unreachable"
   | "verificationFailed"
   | "wrongKey"
@@ -50,6 +53,7 @@ export type FlowErrorKind =
 /** The message shown for each kind. */
 const MESSAGE: Record<FlowErrorKind, string> = {
   notPlaced: REVEAL_COPY.notPlaced,
+  letterNotFound: LIVE_COPY.letterNotFound,
   unreachable: REVEAL_COPY.unreachable,
   verificationFailed: REVEAL_COPY.verificationFailed,
   wrongKey: REVEAL_COPY.wrongKey,

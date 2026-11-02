@@ -41,6 +41,8 @@ export const REVEAL_COPY = {
    */
   sealedRemaining:
     "Time remaining: {days} days, {hours} hours and {minutes} minutes.",
+  sealedRemainingSeconds:
+    "Time remaining: {minutes} minutes and {seconds} seconds.",
 
   /** The control that retries after the countdown reaches zero. */
   sealedRetry: "Try again",

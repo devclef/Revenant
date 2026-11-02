@@ -150,6 +150,35 @@ describe("getLetter", () => {
     });
   });
 
+  it("passes demo: true through on a sealed body only when the route sent it", async () => {
+    arm({
+      kind: "json",
+      status: 200,
+      body: { status: "sealed", opensAt: "2024-06-01T00:00:00.000Z", demo: true },
+    });
+    const result = await getLetter("id");
+    expect(result).toEqual({
+      outcome: "sealed",
+      opensAt: "2024-06-01T00:00:00.000Z",
+      demo: true,
+    });
+  });
+
+  it("omits demo from a real letter's openable result when the route did not send it", async () => {
+    arm({
+      kind: "json",
+      status: 200,
+      body: { status: "openable", envelope: { formatVersion: 1 }, envelopeHash: "ab" },
+    });
+    const result = await getLetter("id");
+    expect(result).toEqual({
+      outcome: "openable",
+      envelope: { formatVersion: 1 },
+      envelopeHash: "ab",
+    });
+    expect("demo" in result).toBe(false);
+  });
+
   it("maps a 200 openable body to openable with envelope and hash", async () => {
     arm({
       kind: "json",

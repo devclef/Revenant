@@ -106,6 +106,8 @@ export const LIVE_COPY = {
   backupHint: "Paste the key from your backup card.",
   backupSubmit: "Unlock with this key",
   noticeCancelled: "Nothing was opened. Press the button to try again.",
+  noticeFailed:
+    "Your device did not finish. Nothing was opened. Try again.",
   noticeNoPrf:
     'This device could not produce the key for this passkey. Your letter is unchanged. Try a device that has the passkey, or your computer\'s "use a phone" option.',
   noticeWrongDomain:
@@ -114,8 +116,6 @@ export const LIVE_COPY = {
     "This is probably not the passkey that sealed this letter. Try another.",
   noticeMistyped: "That key does not look right. Check it and try again.",
   noticeWrongBackup: "That key does not match this letter.",
-  sealedRemainingSeconds:
-    "Time remaining: {minutes} minutes and {seconds} seconds.",
   sealedOn: "Sealed on {sealedAt}",
   lockNote:
     "This letter was locked for 30 seconds. For a longer comparison, open a persona letter.",

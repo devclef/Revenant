@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import { FlowError, type FlowErrorKind } from "./FlowError";
 import { REVEAL_COPY } from "./copy";
+import { LIVE_COPY } from "@/components/live/copy";
 import { DEMO_COPY } from "@/components/demo/copy";
 
 /**
@@ -23,6 +24,7 @@ import { DEMO_COPY } from "@/components/demo/copy";
 
 const ALL_KINDS: FlowErrorKind[] = [
   "notPlaced",
+  "letterNotFound",
   "unreachable",
   "verificationFailed",
   "wrongKey",
@@ -35,6 +37,7 @@ const ALL_KINDS: FlowErrorKind[] = [
 /** The copy each kind must render. */
 const MESSAGE: Record<FlowErrorKind, string> = {
   notPlaced: REVEAL_COPY.notPlaced,
+  letterNotFound: LIVE_COPY.letterNotFound,
   unreachable: REVEAL_COPY.unreachable,
   verificationFailed: REVEAL_COPY.verificationFailed,
   wrongKey: REVEAL_COPY.wrongKey,

@@ -337,3 +337,48 @@
   outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
+
+/*
+ * The key step on the Letter_Page (UnlockView). It sets its own ink, so its text
+ * does not inherit a colour from the envelope surface around it.
+ */
+.unlock {
+  --ink: #1f1b16;
+  --ink-soft: #3a332a;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.75rem;
+  width: 100%;
+  max-width: 28rem;
+  margin: 0 auto;
+  color: var(--ink);
+  font-family: var(--font-serif);
+  font-size: 1.0625rem;
+  line-height: 1.5;
+  text-align: left;
+}
+
+.unlock .heading {
+  margin: 0;
+}
+
+/* One line, so a pasted key reads as one string. 16px stops mobile zoom. */
+.keyField {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: var(--ink);
+  background-color: var(--paper);
+  border: 1px solid var(--ink-soft);
+  border-radius: 3px;
+}
+
+.keyField:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}

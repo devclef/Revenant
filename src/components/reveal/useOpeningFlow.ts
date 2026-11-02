@@ -50,7 +50,8 @@
  * dynamic import inside an effect, which the boundary test requires.
  */
 
-import { useCallback, useEffect, useReducer, useRef } from "react";
+import { useCallback, useEffect, useReducer, useRef, useState } from "react";
+import type { CryptoModule } from "@/components/live/crypto-module";
 import { decodeBase64url, parseEnvelope } from "@/lib/seal-format";
 import { buildRecallRecord, type RecallRecordV1 } from "@/lib/recall";
 import {
@@ -61,9 +62,43 @@ import {
   type OpenFailedKind,
 } from "./opening-machine";
 import { getLetter, getSecret, postOpening } from "./api";
+import {
+  noticeForAssertFailure,
+  readBackupKeyField,
+  readUnlockEnvelope,
+  startPasskeyAssertion,
+  type AuthenticatorPort,
+  type BackupKeyBytes,
+  type PasskeyHeader,
+  type UnlockControls,
+} from "@/components/live/unlock";
 
 /** The 16 ID bytes of a letter. */
 const LETTER_ID_BYTES = 16;
+
+/**
+ * Options for `useOpeningFlow`. The default `keySource` is `"demo"`, which runs
+ * the fixed demo key with no user input and is exactly the behaviour on main.
+ * `"user"` is the live letter: the reader unlocks with a passkey or a backup
+ * key. `port` overrides the browser authenticator (tests pass a fake).
+ */
+export type OpeningFlowOptions = {
+  keySource?: "demo" | "user";
+  port?: AuthenticatorPort;
+};
+
+/** Live-letter controls. Defined only in `"user"` mode. */
+export type LiveFlow = {
+  /** True when the letter is a demo letter (the route sent `demo: true`). */
+  demo: boolean;
+  /** The key-step controls. */
+  unlock: UnlockControls;
+};
+
+/** The one unlock factor the reader has supplied for the next `unlocking` run. */
+type UnlockFactor =
+  | { kind: "passkey"; prfOutput: Uint8Array }
+  | { kind: "backup"; backupKey: BackupKeyBytes };
 
 /** What the hook returns: the current state plus the handlers the views call. */
 export type OpeningFlow = {
@@ -85,6 +120,8 @@ export type OpeningFlow = {
   advance: () => void;
   /** Reveal pacing: show every stage at once. */
   showAll: () => void;
+  /** Live-letter controls. `undefined` in demo mode. */
+  live?: LiveFlow;
 };
 
 /**
@@ -94,8 +131,24 @@ export type OpeningFlow = {
  *   AAD when encrypting the recall record. The same value the persona list
  *   carried; this hook never reads it from the URL or anywhere else.
  */
-export function useOpeningFlow(letterId: string): OpeningFlow {
+export function useOpeningFlow(
+  letterId: string,
+  options: OpeningFlowOptions = {},
+): OpeningFlow {
   const [state, dispatch] = useReducer(reduce, INITIAL_STATE);
+  const keySource = options.keySource ?? "demo";
+  const port = options.port;
+
+  // Live-letter state (user mode only). `demo` comes from the letter route;
+  // `cryptoReady` turns the key controls on once the barrel has loaded.
+  const [demo, setDemo] = useState(false);
+  const [cryptoReady, setCryptoReady] = useState(false);
+  // Memory-only refs (R7.10): the released secret, the passkey header bytes,
+  // the loaded barrel and the one factor for the next unlock. None is in state.
+  const cryptoRef = useRef<CryptoModule | null>(null);
+  const secretRef = useRef<Uint8Array | null>(null);
+  const passkeyHeaderRef = useRef<PasskeyHeader | null>(null);
+  const factorRef = useRef<UnlockFactor | null>(null);
 
   // Dropped on unmount so a late async result is never dispatched into a
   // torn-down component (and so nothing runs after the user leaves).
@@ -125,13 +178,19 @@ export function useOpeningFlow(letterId: string): OpeningFlow {
   const attempt = useRef(0);
   const prevTag = useRef<FlowState["tag"] | null>(null);
   const started = useRef<Set<string>>(new Set());
+  // Counts entries into `unlocking`, so a second unlock (after a wrong key) is a
+  // new occurrence and its effect runs again.
+  const unlockCount = useRef(0);
 
   if (state.tag === "loading" && prevTag.current !== "loading") {
     attempt.current += 1;
   }
+  if (state.tag === "unlocking" && prevTag.current !== "unlocking") {
+    unlockCount.current += 1;
+  }
   prevTag.current = state.tag;
 
-  const occurrence = `${attempt.current}:${state.tag}`;
+  const occurrence = `${attempt.current}:${unlockCount.current}:${state.tag}`;
   const claimOccurrence = (): boolean => {
     if (started.current.has(occurrence)) {
       return false;
@@ -147,6 +206,9 @@ export function useOpeningFlow(letterId: string): OpeningFlow {
     }
     void (async () => {
       const result = await getLetter(letterId);
+      if (keySource === "user" && "demo" in result && result.demo === true) {
+        if (mounted.current) setDemo(true);
+      }
       switch (result.outcome) {
         case "sealed":
           safeDispatch({ type: "LETTER_SEALED", opensAt: result.opensAt });
@@ -174,12 +236,27 @@ export function useOpeningFlow(letterId: string): OpeningFlow {
     if (state.tag !== "openable" || !claimOccurrence()) {
       return;
     }
+    const envelope = state.envelope;
     void (async () => {
       const result = await getSecret(letterId);
       switch (result.outcome) {
-        case "ok":
+        case "ok": {
+          if (keySource === "user") {
+            // Live letter: the secret is released, so read the wraps and wait
+            // for the reader's key. No secret goes into state.
+            const unlock = readUnlockEnvelope(envelope, result.serverSecret);
+            if (!unlock.ok) {
+              safeDispatch({ type: "OPEN_FAILED", kind: unlock.kind });
+              break;
+            }
+            secretRef.current = unlock.serverSecret;
+            passkeyHeaderRef.current = unlock.passkeyHeader;
+            safeDispatch({ type: "NEEDS_KEY", unlock: unlock.unlock });
+            break;
+          }
           safeDispatch({ type: "SECRET_OK" });
           break;
+        }
         case "forbidden":
           safeDispatch({ type: "SECRET_FORBIDDEN", opensAt: result.opensAt });
           break;
@@ -289,6 +366,96 @@ export function useOpeningFlow(letterId: string): OpeningFlow {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [verifyState, occurrence]);
 
+  // --- awaiting_key: preload the crypto barrel (user mode) ------------------
+  //
+  // The passkey prompt must start in the same tick as its click, so the barrel
+  // is loaded before the reader can press anything. The controls stay disabled
+  // until `cryptoReady` (R15.3, R17.2). Demo mode never reaches this effect.
+  const awaitingKey = state.tag === "awaiting_key";
+  useEffect(() => {
+    if (keySource !== "user" || !awaitingKey || cryptoRef.current !== null) {
+      return;
+    }
+    void import("@/lib/crypto").then(
+      (module) => {
+        cryptoRef.current = module;
+        if (mounted.current) setCryptoReady(true);
+      },
+      () => {
+        // A failed load leaves the controls disabled. No payload is involved.
+      },
+    );
+  }, [keySource, awaitingKey]);
+
+  // --- unlocking: open with the factor the reader supplied (user mode) ------
+  const unlockState = state.tag === "unlocking" ? state : null;
+  useEffect(() => {
+    if (keySource !== "user" || unlockState === null || !claimOccurrence()) {
+      return;
+    }
+    const factor = factorRef.current;
+    factorRef.current = null;
+    const secret = secretRef.current;
+    const { envelope, envelopeHash } = unlockState;
+    void (async () => {
+      if (factor === null || secret === null) {
+        safeDispatch({ type: "OPEN_FAILED", kind: "invalid_input" });
+        return;
+      }
+      const parsed = parseEnvelope(envelope);
+      if (!parsed.ok) {
+        const kind: OpenFailedKind =
+          parsed.error === "unsupported_format"
+            ? "unsupported_format"
+            : "invalid_payload";
+        safeDispatch({ type: "OPEN_FAILED", kind });
+        return;
+      }
+      const header = parsed.value;
+
+      const crypto = await import("@/lib/crypto");
+      const result = await crypto.openLetter(
+        factor.kind === "passkey"
+          ? {
+              envelope,
+              envelopeHash,
+              serverSecret: secret.slice(),
+              passkey: { prfOutput: factor.prfOutput },
+            }
+          : {
+              envelope,
+              envelopeHash,
+              serverSecret: secret.slice(),
+              backupKey: factor.backupKey,
+            },
+      );
+
+      if (!result.ok) {
+        if (result.error.kind === "verification_failed") {
+          safeDispatch({ type: "VERIFICATION_FAILED" });
+          return;
+        }
+        if (result.error.kind === "wrong_key") {
+          safeDispatch({ type: "KEY_REJECTED", factor: factor.kind });
+          return;
+        }
+        safeDispatch({ type: "OPEN_FAILED", kind: result.error.kind });
+        return;
+      }
+
+      safeDispatch({
+        type: "OPENED",
+        opened: {
+          letterId,
+          header: { sealedAt: header.sealedAt, opensAt: header.opensAt },
+          payload: result.payload,
+          openingKey: result.openingKey,
+        },
+      });
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [unlockState, occurrence]);
+
   // --- submitting: post the sealed record -----------------------------------
   useEffect(() => {
     if (state.tag !== "submitting" || !claimOccurrence()) {
@@ -329,6 +496,62 @@ export function useOpeningFlow(letterId: string): OpeningFlow {
   );
   const advance = useCallback(() => safeDispatch({ type: "ADVANCE" }), [safeDispatch]);
   const showAll = useCallback(() => safeDispatch({ type: "SHOW_ALL" }), [safeDispatch]);
+
+  // Passkey prompt. Everything before the port call is synchronous, and
+  // `startPasskeyAssertion` is called without `await`, so the port's `get` runs
+  // in the same tick as the click (the first-async-step rule).
+  const passkeyUnlock = useCallback(() => {
+    const crypto = cryptoRef.current;
+    const header = passkeyHeaderRef.current;
+    if (crypto === null || header === null) {
+      return;
+    }
+    const selectedPort = port ?? crypto.browserAuthenticatorPort;
+    startPasskeyAssertion(crypto, selectedPort, header).then(
+      (result) => {
+        if (result.ok) {
+          factorRef.current = { kind: "passkey", prfOutput: result.prfOutput };
+          safeDispatch({ type: "UNLOCK" });
+        } else {
+          safeDispatch({
+            type: "KEY_NOTICE",
+            notice: noticeForAssertFailure(result.reason),
+          });
+        }
+      },
+      () => safeDispatch({ type: "KEY_NOTICE", notice: "failed" }),
+    );
+  }, [port, safeDispatch]);
+
+  // Backup key field. Parsed locally; a mistyped key sends no request.
+  const backupUnlock = useCallback(
+    (text: string) => {
+      const crypto = cryptoRef.current;
+      if (crypto === null) {
+        return;
+      }
+      const read = readBackupKeyField(crypto, text);
+      if (read.ok) {
+        factorRef.current = { kind: "backup", backupKey: read.key };
+        safeDispatch({ type: "UNLOCK" });
+      } else {
+        safeDispatch({ type: "KEY_NOTICE", notice: read.notice });
+      }
+    },
+    [safeDispatch],
+  );
+
+  const live: LiveFlow | undefined =
+    keySource === "user"
+      ? {
+          demo,
+          unlock: {
+            ready: cryptoReady,
+            passkey: passkeyUnlock,
+            backup: backupUnlock,
+          },
+        }
+      : undefined;
 
   // Submit validates then encrypts (R3.4, R8.3, R8.4). It reads the live state
   // through a ref so the single stable callback always sees the current drafts.
@@ -372,5 +595,6 @@ export function useOpeningFlow(letterId: string): OpeningFlow {
     retryPost,
     advance,
     showAll,
+    live,
   };
 }

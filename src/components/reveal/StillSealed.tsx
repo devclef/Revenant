@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ParchmentSurface } from "@/components/ui";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
@@ -50,15 +50,55 @@ function remainingFrom(opensAtMs: number, nowMs: number): Remaining {
   };
 }
 
+/**
+ * Whole seconds between `now` and `opensAt`, clamped at zero, rounded up so the
+ * countdown never shows zero before the instant. Same rule as `remainingSeconds`
+ * in `live/clock.ts` (display only).
+ */
+function remainingSecondsFrom(opensAtMs: number, nowMs: number): number {
+  return Math.max(0, Math.ceil((opensAtMs - nowMs) / 1000));
+}
+
+/**
+ * The precise countdown line for a live letter: minutes and seconds left. Pure,
+ * so the formatting is testable without a clock.
+ */
+export function preciseRemainingText(opensAtMs: number, nowMs: number): string {
+  const total = remainingSecondsFrom(opensAtMs, nowMs);
+  return REVEAL_COPY.sealedRemainingSeconds
+    .replace("{minutes}", String(Math.floor(total / 60)))
+    .replace("{seconds}", String(total % 60));
+}
+
 export type StillSealedProps = {
   /** The UTC `Z` instant the letter opens. */
   opensAt: string;
   /** Dispatches `START` to retry once the countdown reaches zero. */
   onRetry: () => void;
+  /**
+   * Live letters only. Ticks every second and shows minutes and seconds, not
+   * days and hours. Absent, the view is the persona countdown, unchanged.
+   */
+  precise?: boolean;
+  /**
+   * Called once when the countdown moves from above zero to zero while this
+   * view is mounted. Not called when the view mounts already at zero. The
+   * Letter_Page uses it for its single automatic re-check (R17.4).
+   */
+  onZero?: () => void;
 };
 
-export function StillSealed({ opensAt, onRetry }: StillSealedProps) {
+export function StillSealed({
+  opensAt,
+  onRetry,
+  precise = false,
+  onZero,
+}: StillSealedProps) {
   const opensAtMs = new Date(opensAt).getTime();
+  const onZeroRef = useRef(onZero);
+  useEffect(() => {
+    onZeroRef.current = onZero;
+  }, [onZero]);
 
   // Display-only countdown. Seeded to `opensAt` so the first server-rendered
   // frame shows a stable value, then ticked from the browser clock on the
@@ -67,20 +107,35 @@ export function StillSealed({ opensAt, onRetry }: StillSealedProps) {
   const [nowMs, setNowMs] = useState(opensAtMs);
 
   useEffect(() => {
-    setNowMs(Date.now());
-    const timer = setInterval(() => setNowMs(Date.now()), 60000);
+    // Whether the countdown was above zero when this view mounted. Only then
+    // may `onZero` fire, and only once.
+    const startedAbove = Date.now() < opensAtMs;
+    let zeroSent = false;
+    const tick = () => {
+      const now = Date.now();
+      setNowMs(now);
+      if (precise && startedAbove && !zeroSent && now >= opensAtMs) {
+        zeroSent = true;
+        clearInterval(timer);
+        onZeroRef.current?.();
+      }
+    };
+    const timer = setInterval(tick, precise ? 1000 : 60000);
+    tick();
     return () => clearInterval(timer);
-  }, []);
+  }, [opensAtMs, precise]);
 
   const remaining = remainingFrom(opensAtMs, nowMs);
   const atZero = nowMs >= opensAtMs;
 
   const dateText = UTC_DATE.format(new Date(opensAtMs));
   const bodyText = REVEAL_COPY.sealedBody.replace("{date}", dateText);
-  const remainingText = REVEAL_COPY.sealedRemaining
-    .replace("{days}", String(remaining.days))
-    .replace("{hours}", String(remaining.hours))
-    .replace("{minutes}", String(remaining.minutes));
+  const remainingText = precise
+    ? preciseRemainingText(opensAtMs, nowMs)
+    : REVEAL_COPY.sealedRemaining
+        .replace("{days}", String(remaining.days))
+        .replace("{hours}", String(remaining.hours))
+        .replace("{minutes}", String(remaining.minutes));
 
   return (
     <ParchmentSurface as="section" className={styles.sealed}>

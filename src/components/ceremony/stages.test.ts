@@ -71,6 +71,19 @@ const nonRevealStateArbs: fc.Arbitrary<FlowState>[] = [
   fc.constant<FlowState>({ tag: "loading" }),
   fc.constant<FlowState>({ tag: "sealed", opensAt: "2024-11-05T00:00:00.000Z" }),
   fc.constant<FlowState>({ tag: "openable", envelope: {}, envelopeHash: "h" }),
+  fc.constant<FlowState>({
+    tag: "awaiting_key",
+    envelope: {},
+    envelopeHash: "h",
+    unlock: { passkey: null, backup: true },
+    notice: null,
+  }),
+  fc.constant<FlowState>({
+    tag: "unlocking",
+    envelope: {},
+    envelopeHash: "h",
+    unlock: { passkey: null, backup: true },
+  }),
   fc.constant<FlowState>({ tag: "verifying" }),
   fc.constant<FlowState>({ tag: "verified", opened: OPENED_STUB }),
   fc.constant<FlowState>({
@@ -128,6 +141,8 @@ function expectedStage(state: FlowState, local: LocalView): Stage {
     case "loading":
     case "sealed":
     case "openable":
+    case "awaiting_key":
+    case "unlocking":
     case "verifying":
       return "envelope";
     case "verified":
