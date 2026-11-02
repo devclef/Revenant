@@ -50,7 +50,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
   - Validation: `bash scripts/check.sh`; `npx vitest run src/lib/letter-store src/app/api/letters src/test/integration/live-letters.test.ts`
   - _Requirements: R1, R2, R3, R4, R5, R6.1–R6.5, R22.4–R22.6, R24.3_
 
-- [ ] 2. Authenticator_Port, Passkey_Module, fake, and passkey support in sealLetter and openLetter
+- [x] 2. Authenticator_Port, Passkey_Module, fake, and passkey support in sealLetter and openLetter
   - Agent: `crypto-dev` (owns `src/lib/crypto/**` and `src/lib/seal-format/**`) · Depends on: none · Estimated size: ~1,000 changed lines plus ~1,300 test lines
   - Before this task: only `main`. Runs in parallel with task 1. This task does not touch `src/lib/seal-format/index.ts`, which task 1 edits; it reaches `isRpId` by deep import.
   - Scope: `src/lib/crypto/authenticator-port.ts`, `src/lib/crypto/passkey.ts`, `src/lib/crypto/testing/fake-authenticator.ts`, `src/lib/crypto/kdf.ts`, `src/lib/crypto/seal.ts`, `src/lib/crypto/open.ts`, `src/lib/crypto/errors.ts`, `src/lib/crypto/index.ts`, `src/lib/seal-format/v1/header.ts`, and the tests `src/lib/crypto/passkey.test.ts`, `authenticator-port.test.ts`, `seal-passkey.test.ts`, `open-passkey.test.ts`, `seal-open-passkey.property.test.ts`, `no-fake-import.test.ts`, `no-leak.test.ts`
