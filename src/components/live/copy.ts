@@ -122,4 +122,16 @@ export const LIVE_COPY = {
   lockNoteLink: "Open a persona letter",
   letterNotFound:
     "This link does not match a letter. Check the link and try again.",
+  letterCardTitle: "Letter card",
+  letterCardOpens: "Opens {time}",
+  printCard: "Print or save as PDF",
+  downloadIcs: "Add to your calendar",
+  icsSummary: "Your letter opens",
+  icsDescription: "Open your Revenant letter: {link}",
+  backupCardOption: "Also make a backup key card",
+  backupCardOptionHint:
+    "A backup key opens the letter on its own after the opening date. Keep it like a house key.",
+  backupCardTitle: "Backup key card",
+  backupCardWhat: "This card opens your letter on its own after the opening date.",
+  backupCardKeep: "Keep it somewhere safe, like a house key.",
 } as const;
