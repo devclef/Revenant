@@ -346,6 +346,7 @@ function selectView(
           stage={state.stage}
           onAdvance={flow.advance}
           onShowAll={flow.showAll}
+          variant={mode}
         />
       );
 

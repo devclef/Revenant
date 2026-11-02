@@ -1,6 +1,7 @@
 import type { Opened } from "./opening-machine";
 import { formatCalendarDate, formatUtcDate } from "@/components/demo/dates";
-import { REVEAL_COPY } from "./copy";
+import { formatLocalDateTime } from "@/components/live/format";
+import { LIVE_COPY, REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
 
 /**
@@ -37,10 +38,37 @@ export type SealedLetterProps = {
   opened: Opened;
   /** The persona's display name, used only to fill `demoLetterLabel`'s `{name}` (R10.3). */
   personaName: string;
+  /**
+   * `"persona"` (default) is the demo letter with its demo labels. `"live"` is
+   * a Live_Letter: one local seal line and the letter text, no demo wording
+   * (spec 06, R18.2).
+   */
+  variant?: "persona" | "live";
 };
 
-export function SealedLetter({ opened, personaName }: SealedLetterProps) {
+export function SealedLetter({
+  opened,
+  personaName,
+  variant = "persona",
+}: SealedLetterProps) {
   const { payload, header } = opened;
+
+  if (variant === "live") {
+    return (
+      <section className={styles.sealedLetter}>
+        <h2 tabIndex={-1}>{REVEAL_COPY.stage2Title}</h2>
+
+        <p className={styles.period}>
+          {LIVE_COPY.sealedOn.replace(
+            "{sealedAt}",
+            formatLocalDateTime(header.sealedAt),
+          )}
+        </p>
+
+        <p className={styles.letter} data-ink-text>{payload.letter_text}</p>
+      </section>
+    );
+  }
 
   const writtenAsOf =
     payload.written_as_of === undefined
