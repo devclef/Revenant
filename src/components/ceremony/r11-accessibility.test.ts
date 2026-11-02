@@ -160,3 +160,29 @@ describe("the Mark is announced as the judge's answer, not a position", () => {
     expect(CEREMONY_COPY.markAnswer.toLowerCase()).not.toContain("position");
   });
 });
+
+describe("decorative layers are hidden from assistive technology", () => {
+  // Every Ceremony module that draws an inline svg must mark it aria-hidden, or
+  // give it role="img" with a label of its own. A source scan keeps a
+  // later decorative svg from being read out as an unlabelled graphic.
+  const files = [
+    "envelope/Envelope.tsx",
+    "envelope/WaxSeal.tsx",
+    "seal/SealBreak.tsx",
+  ];
+  for (const file of files) {
+    it(`${file} marks its decorative svg aria-hidden`, () => {
+      const source = readFileSync(join(here, file), "utf8");
+      expect(source).toContain("<svg");
+      // Each <svg ...> opening tag must be followed (within its attributes)
+      // by aria-hidden="true".
+      // A real opening tag has attributes after the name, so `<svg>` in a
+      // comment does not count.
+      const openings = source.match(/<svg\s[^>]*>/g) ?? [];
+      expect(openings.length).toBeGreaterThan(0);
+      for (const opening of openings) {
+        expect(opening).toMatch(/aria-hidden="true"|role="img"/);
+      }
+    });
+  }
+});
