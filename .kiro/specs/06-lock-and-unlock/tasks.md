@@ -202,7 +202,7 @@ Follow `design.md` in this folder for every file name, constant, interface, tabl
   - Validation: `bash scripts/check.sh`; `npm run build` then `node scripts/check-js-budget.mjs`
   - _Requirements: R22.9, R23_
 
-- [ ] 11. Letter card with QR encoder, and .ics file (optional)
+- [x] 11. Letter card with QR encoder, and .ics file (optional)
   - Agent: `frontend-dev` · Depends on: 10 · Estimated size: ~1,250 changed lines plus ~800 test lines
   - Before this task: task 10 is on `main`. This task is optional. The demo is complete without it.
   - Scope: `src/lib/cards/qr/tables.ts`, `gf256.ts`, `reed-solomon.ts`, `encode.ts`, `matrix.ts`, `mask.ts`, `src/lib/cards/qr/__fixtures__/vectors.json`, `src/lib/cards/qr-svg.ts`, `src/lib/cards/index.ts`, `src/lib/ics/build-ics.ts`, `src/lib/ics/index.ts`, `src/components/live/LetterCard.tsx`, `SealedKeepsakes.tsx`, `SealedView.tsx`, `copy.ts`, `live.module.css`, and the `*.test.ts(x)` for each
