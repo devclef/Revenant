@@ -4,10 +4,21 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DEMO_COPY } from "@/components/demo/copy";
 
+// Each card is a DeskEnvelopeLink, which needs the app router. The router is
+// stubbed here. The page supplies its own MotionProvider around the desk.
+const routerStub = vi.hoisted(() => ({
+  prefetch: () => undefined,
+  push: () => undefined,
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => routerStub,
+}));
+
 /**
  * Markup tests for the Demo_Index page at `/demo` (R6.4, R6.5, R6.8). Rendered
- * with `renderToStaticMarkup` and `createElement` — no DOM library and no JSX,
- * so the page's full output is a string we can scan.
+ * with `renderToStaticMarkup` and `createElement`, with no DOM library and no
+ * JSX, so the page's full output is a string we can scan.
  *
  * The page reads the frozen `PERSONAS` list from `@/lib/personas`. To drive
  * the list-length acceptance criteria (one card per entry in list order; an
@@ -34,7 +45,7 @@ const TWO_PERSONAS = [
   },
 ] as const;
 
-/** Mock `@/lib/personas` with a chosen list, then import the page fresh. */
+/** Mock `@/lib/personas` with a chosen list, then render the page fresh. */
 async function renderWithPersonas(
   personas: ReadonlyArray<(typeof TWO_PERSONAS)[number]>,
 ): Promise<string> {
@@ -69,12 +80,10 @@ describe("Demo_Index page markup", () => {
     expect(introAt).toBeLessThan(firstCardAt);
   });
 
-  it("renders one card per persona, in list order", async () => {
+  it("renders exactly the Persona_List, one card per entry, in order", async () => {
     const html = await renderWithPersonas(TWO_PERSONAS);
     // One "Pick up the letter" link per persona.
-    const sealLinks = html.match(
-      new RegExp(DEMO_COPY.openLetter, "g"),
-    );
+    const sealLinks = html.match(new RegExp(DEMO_COPY.openLetter, "g"));
     expect(sealLinks).not.toBeNull();
     expect(sealLinks).toHaveLength(TWO_PERSONAS.length);
 
@@ -91,6 +100,18 @@ describe("Demo_Index page markup", () => {
     );
   });
 
+  it("puts the cards on the desk, inside the desk plane (R13.1)", async () => {
+    const html = await renderWithPersonas(TWO_PERSONAS);
+    const deskAt = html.indexOf("data-desk=");
+    const planeAt = html.indexOf("data-desk-plane");
+    const firstCardAt = html.indexOf(`href="/demo/personas/${TWO_PERSONAS[0].key}"`);
+    const lastCardAt = html.indexOf(`href="/demo/personas/${TWO_PERSONAS[1].key}"`);
+    expect(deskAt).toBeGreaterThanOrEqual(0);
+    expect(planeAt).toBeGreaterThan(deskAt);
+    expect(firstCardAt).toBeGreaterThan(planeAt);
+    expect(lastCardAt).toBeGreaterThan(planeAt);
+  });
+
   it("does not render the empty-state text when the list is non-empty", async () => {
     const html = await renderWithPersonas(TWO_PERSONAS);
     expect(html).not.toContain(DEMO_COPY.indexEmpty);
@@ -104,9 +125,10 @@ describe("Demo_Index page markup", () => {
     expect(empty).not.toContain("Break the seal");
   });
 
-  it("renders indexEmpty and no cards for an empty list (R6.8)", async () => {
+  it("shows the empty state on the desk with no envelopes (R6.8)", async () => {
     const html = await renderWithPersonas([]);
     expect(html).toContain(DEMO_COPY.indexEmpty);
+    expect(html).toContain("data-desk=");
     // No persona cards: no "Pick up the letter" link appears.
     expect(html).not.toContain(DEMO_COPY.openLetter);
     expect(html).not.toContain('href="/demo/personas/');

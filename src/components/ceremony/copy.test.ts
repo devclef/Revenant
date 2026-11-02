@@ -172,6 +172,12 @@ describe("CEREMONY_COPY tone and neutrality", () => {
     }
   });
 
+  it("has the desk and tilt-permission strings, all non-empty", () => {
+    expect(CEREMONY_COPY.deskEmpty.trim().length).toBeGreaterThan(0);
+    expect(CEREMONY_COPY.tiltEnable).toBe("Let the light follow your phone");
+    expect(CEREMONY_COPY.tiltPermissionNote.trim().length).toBeGreaterThan(0);
+  });
+
   it("has a stageLive entry for every Stage (none missing)", () => {
     const liveKeys = Object.keys(CEREMONY_COPY.stageLive).sort();
     expect(liveKeys).toEqual([...ALL_STAGES].sort());

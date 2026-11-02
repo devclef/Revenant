@@ -1,5 +1,6 @@
-import Link from "next/link";
 import { ParchmentSurface } from "@/components/ui";
+import { DeskEnvelopeLink } from "@/components/ceremony/desk/DeskEnvelopeLink";
+import { WaxSeal } from "@/components/ceremony/envelope/WaxSeal";
 import { DEMO_COPY } from "./copy";
 import { formatCalendarDate, formatUtcDate } from "./dates";
 import styles from "./PersonaCard.module.css";
@@ -26,13 +27,18 @@ export type PersonaCardProps = {
 };
 
 /**
- * A single persona entry on the Demo_Index page (R6.2, R6.7). Pure
- * presentational server component: no "use client", no state, no data access.
+ * A single persona on the Demo_Index page (R6.2, R6.7), drawn as a sealed
+ * envelope on the desk. The whole envelope is one real anchor to the persona's
+ * letter (DeskEnvelopeLink), so it works without JavaScript and gets the desk
+ * camera move in full motion. The wax seal is seeded by `personaKey` only.
+ *
+ * Requires a MotionProvider above it, because DeskEnvelopeLink reads the
+ * motion mode. The Demo_Index page provides one through DeskScene.
  *
  * All label prefixes come from copy.ts and all dates from dates.ts, so no
- * user-facing literal lives here (R15.1). Styling is co-located and uses only
- * globals.css ink tokens -- AA contrast, no directional or judgement colour
- * (neutrality.md).
+ * user-facing literal lives here (R15.1). The paper panel sets its own ink
+ * colour, so the desk's text colour never leaks onto it. No directional or
+ * judgement colour anywhere (neutrality.md).
  */
 export function PersonaCard({
   personaKey,
@@ -42,24 +48,30 @@ export function PersonaCard({
   opens_at,
 }: PersonaCardProps) {
   return (
-    <ParchmentSurface as="article" tone="deep" className={styles.card}>
-      <h2 className={styles.name}>{display_name}</h2>
-      <p className={styles.region}>{region}</p>
-      <dl className={styles.dates}>
-        <div className={styles.dateRow}>
-          <dt className={styles.dateLabel}>{DEMO_COPY.writtenAsOfPrefix}</dt>
-          <dd className={styles.dateValue}>
-            {formatCalendarDate(written_as_of)}
-          </dd>
-        </div>
-        <div className={styles.dateRow}>
-          <dt className={styles.dateLabel}>{DEMO_COPY.opensPrefix}</dt>
-          <dd className={styles.dateValue}>{formatUtcDate(opens_at)}</dd>
-        </div>
-      </dl>
-      <Link className={styles.openLetter} href={`/demo/personas/${personaKey}`}>
-        {DEMO_COPY.openLetter}
-      </Link>
-    </ParchmentSurface>
+    <DeskEnvelopeLink
+      href={`/demo/personas/${personaKey}`}
+      className={styles.envelope}
+    >
+      <ParchmentSurface tone="deep" className={styles.card}>
+        <span className={styles.seal} aria-hidden="true">
+          <WaxSeal patternKey={personaKey} size={48} />
+        </span>
+        <h2 className={styles.name}>{display_name}</h2>
+        <p className={styles.region}>{region}</p>
+        <dl className={styles.dates}>
+          <div className={styles.dateRow}>
+            <dt className={styles.dateLabel}>{DEMO_COPY.writtenAsOfPrefix}</dt>
+            <dd className={styles.dateValue}>
+              {formatCalendarDate(written_as_of)}
+            </dd>
+          </div>
+          <div className={styles.dateRow}>
+            <dt className={styles.dateLabel}>{DEMO_COPY.opensPrefix}</dt>
+            <dd className={styles.dateValue}>{formatUtcDate(opens_at)}</dd>
+          </div>
+        </dl>
+        <span className={styles.openLetter}>{DEMO_COPY.openLetter}</span>
+      </ParchmentSurface>
+    </DeskEnvelopeLink>
   );
 }
