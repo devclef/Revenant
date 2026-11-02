@@ -1,0 +1,832 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Revenant · spec 07 prototype · judge journey</title>
+<!--
+  Spec 07 design prototype. Standalone: no network, no build, no dependencies.
+  Open the file in a browser. Not product code.
+
+  Data: the four figures are the real EIA weekly records committed in
+  src/lib/figures/real/fuel-figures.json (series EMM_EPMR_PTE_NUS_DPG and
+  EMD_EPD2D_PTE_NUS_DPG, retrieved 2026-11-01T16:39:37Z). The letter text is
+  content/personas/letters/us-maya.txt. The seal check is mocked with a timer.
+  Copy is the existing copy from src/components/reveal/copy.ts and
+  src/components/ceremony/copy.ts unless marked NEW.
+
+  Query options: ?check=slow (seal check takes 4 s), ?check=fail (check fails).
+-->
+<style>
+@font-face { font-family: "Inter"; src: url("../../src/app/fonts/Inter-Variable.woff2") format("woff2"); font-weight: 100 900; font-display: swap; }
+@font-face { font-family: "EB Garamond"; src: url("../../src/app/fonts/EBGaramond-Variable.woff2") format("woff2"); font-weight: 400 800; font-display: swap; }
+
+/* ---- Tokens. Ratios in the comments are WCAG contrast, computed by hand. ---- */
+:root {
+  --bg: #0b0912;          /* near-black, faint violet */
+  --text: #f5f3ff;        /* on --bg 18.6:1, on --purple 7.9:1 */
+  --muted: #bdb4dc;       /* on --bg 9.6:1. Never on --purple */
+  --purple: #5a22d6;      /* the big block. White text only */
+  --on-purple-soft: #e4dcff; /* on --purple 6.1:1 */
+  --glow: #8b5cff;        /* decorative light only, never text */
+  --orange: #ff7b1c;      /* the one accent. On --bg 7.6:1. Never as text on --purple (2.9:1) */
+  --on-orange: #1a0c00;   /* button text on orange 7.4:1 */
+  --paper: #f6ead4;       /* warm paper, the letter only */
+  --ink: #1f1b16;         /* on --paper 14.6:1 */
+  --ink-soft: #4a4036;    /* on --paper 8.2:1 */
+  --soil-top: #1d1524;
+  --soil-bottom: #0d0a10;
+  --ease: cubic-bezier(0.2, 0, 0, 1);
+  --sans: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --serif: "EB Garamond", Georgia, "Times New Roman", serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font-family: var(--sans); }
+body { min-height: 100vh; overflow-x: hidden; }
+a { color: inherit; }
+button { font: inherit; }
+:focus-visible { outline: 3px solid var(--text); outline-offset: 3px; border-radius: 6px; }
+[hidden] { display: none !important; }
+[tabindex="-1"]:focus:not(:focus-visible) { outline: none; }
+.visually-hidden { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+
+/* ---- Calm mode: no decorative motion anywhere ---- */
+[data-motion="calm"] *, [data-motion="calm"] *::before, [data-motion="calm"] *::after {
+  transition-duration: 1ms !important; animation: none !important;
+}
+
+/* ---- Top bar: Demo label and the honesty line, visible at 360x640 ---- */
+.topbar {
+  position: relative; z-index: 5; display: flex; flex-wrap: wrap; gap: .5rem 1rem;
+  align-items: center; justify-content: space-between; padding: .75rem clamp(1rem, 3vw, 2.5rem);
+}
+.demo { display: flex; gap: .6rem; align-items: baseline; font-size: .82rem; color: var(--muted); max-width: 46rem; line-height: 1.35; }
+.demo-pill { flex: none; font-weight: 800; letter-spacing: .12em; font-size: .72rem; color: var(--bg); background: var(--text); padding: .2rem .5rem; border-radius: 999px; }
+.controls { display: flex; gap: .5rem; align-items: center; }
+.quiet-btn, .quiet-link {
+  min-height: 44px; padding: 0 .9rem; border-radius: 999px; border: 1.5px solid #6d6488;
+  background: transparent; color: var(--text); font-size: .85rem; font-weight: 600; cursor: pointer;
+  display: inline-flex; align-items: center; text-decoration: none;
+}
+.quiet-btn:hover, .quiet-link:hover { border-color: var(--text); }
+
+/* ---- Backdrop: light, soil, ghost. Fixed, decorative, aria-hidden ---- */
+.backdrop { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; }
+.light {
+  position: absolute; width: 120vmax; height: 120vmax; left: 50%; top: 68vh;
+  margin: -60vmax 0 0 -60vmax; border-radius: 50%;
+  background: radial-gradient(circle, rgba(139,92,255,.55) 0%, rgba(90,34,214,.28) 22%, rgba(90,34,214,.08) 42%, transparent 60%);
+  opacity: 0; transform: translateX(-28vw) scale(.6);
+  transition: opacity 900ms var(--ease), transform 1100ms var(--ease);
+}
+.lit .light { opacity: 1; transform: none; }
+.soil {
+  position: absolute; left: -2vw; right: -2vw; top: 64vh; height: 14vh;
+  background:
+    radial-gradient(circle at 30% 40%, rgba(255,255,255,.05) 1px, transparent 1.6px) 0 0 / 9px 9px,
+    radial-gradient(circle at 70% 60%, rgba(139,92,255,.10) 1px, transparent 1.8px) 0 0 / 13px 13px,
+    linear-gradient(var(--soil-top), var(--soil-bottom));
+  clip-path: polygon(0 18%, 6% 12%, 14% 16%, 23% 9%, 31% 14%, 40% 8%, 49% 13%, 57% 7%, 66% 12%, 74% 9%, 83% 15%, 91% 10%, 100% 14%, 100% 100%, 0 100%);
+  z-index: 2;
+}
+.pit { /* the ghost rises out of here; its bottom edge sits inside the soil */
+  position: absolute; left: 50%; width: clamp(150px, 26vh, 300px); height: calc(clamp(150px, 26vh, 300px) * 1.2);
+  bottom: 33vh; transform: translateX(-50%); clip-path: inset(-60% -60% 0 -60%); z-index: 1;
+}
+.ghost {
+  position: absolute; inset: 0; transform: translateY(105%);
+  transition: transform 1500ms cubic-bezier(.16, .84, .3, 1), opacity 1100ms var(--ease);
+  filter: drop-shadow(0 0 28px rgba(139,92,255,.6));
+}
+.risen .ghost { transform: translateY(0); }
+.ghost svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.held-slot { position: absolute; left: 29%; top: 57%; width: 42%; z-index: 1; }
+.hands { z-index: 2; }
+.eyes { transition: transform 120ms linear; }
+.shake .soil, .shake .pit { animation: shake 480ms linear 1; }
+@keyframes shake {
+  0%, 100% { translate: 0 0; } 15% { translate: -2px 1px; } 35% { translate: 2px -1px; }
+  55% { translate: -2px 0; } 75% { translate: 1px 1px; }
+}
+/* after the hand-over the ghost waits behind the content, then leaves */
+.handed .pit { opacity: .9; }
+.leaving .ghost { transform: translateY(-75vh); opacity: 0; transition: transform 1100ms cubic-bezier(.4, 0, .6, 1), opacity 1000ms ease-in; }
+.withheld .ghost { opacity: .45; }
+@media (max-width: 899px) { .handed .pit, .handed .soil { opacity: .1; transition: opacity 400ms var(--ease); } }
+
+@media (min-width: 900px) {
+  .light { left: 72%; top: 70vh; }
+  .soil { left: 46vw; top: 74vh; }
+  .pit { left: 72%; bottom: 23vh; width: clamp(200px, 36vh, 340px); height: calc(clamp(200px, 36vh, 340px) * 1.2); }
+}
+
+/* ---- Content layer ---- */
+main { position: relative; z-index: 3; padding: 0 clamp(1rem, 3vw, 2.5rem) 4rem; }
+.hero { min-height: calc(100vh - 110px); display: flex; flex-direction: column; }
+@media (min-width: 900px) { .hero { min-height: calc(100vh - 70px); } }
+.headline {
+  margin: .4rem 0 0; font-weight: 900; letter-spacing: -0.035em; line-height: .92;
+  font-size: clamp(2.35rem, 8.4vw, 7.6rem); max-width: 11.5ch; text-wrap: balance;
+  transition: opacity 400ms var(--ease), transform 500ms var(--ease);
+}
+.accent { color: var(--orange); }
+.hero-spacer { flex: 1 1 auto; min-height: 34vh; }
+.hero-foot { padding-bottom: 2rem; max-width: 30rem; }
+.status { margin: 0 0 1rem; font-size: 1.05rem; line-height: 1.45; color: var(--text); min-height: 3em; }
+.cta {
+  min-height: 56px; padding: 0 1.6rem; border: 0; border-radius: 999px; cursor: pointer;
+  background: var(--orange); color: var(--on-orange); font-weight: 800; font-size: 1.1rem; letter-spacing: -.01em;
+  display: inline-flex; align-items: center; gap: .6rem; text-decoration: none;
+  box-shadow: 0 10px 40px -10px rgba(255,123,28,.7);
+  animation: cta-in 420ms var(--ease) both;
+}
+.cta:hover { filter: brightness(1.06); }
+.cta:focus-visible { outline-color: var(--text); }
+@keyframes cta-in { from { opacity: 0; transform: translateY(8px); } }
+.handed .hero .headline { opacity: 0; transform: translateY(-20px); }
+@media (min-width: 900px) {
+  .hero-spacer { min-height: 0; }
+  .hero-foot { padding-bottom: 14vh; }
+}
+
+/* ---- Envelope ---- */
+.env-wrap { width: 100%; transform-origin: 0 0; }
+.env { position: relative; width: 100%; aspect-ratio: 1.6; transform-style: preserve-3d; transition: transform 520ms var(--ease); }
+.env.flipped { transform: rotateY(180deg); }
+.face { position: absolute; inset: 0; border-radius: 6px; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.front { background: linear-gradient(160deg, #fbf3e3, #ecdcc0); color: var(--ink); padding: 8% 9%; display: flex; flex-direction: column; justify-content: flex-end; box-shadow: 0 18px 40px -18px rgba(0,0,0,.8); }
+.env-wrap { container-type: inline-size; }
+.front .to { font-family: var(--serif); font-size: 7cqw; line-height: 1; }
+.front .opens { font-size: 3.6cqw; color: var(--ink-soft); margin-top: .3em; }
+.back { transform: rotateY(180deg); background: #d9c6a3; box-shadow: 0 18px 40px -18px rgba(0,0,0,.8); }
+.letter-peek {
+  position: absolute; left: 7%; right: 7%; top: 6%; height: 86%; background: var(--paper); border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(0,0,0,.06); transition: transform 600ms var(--ease); z-index: 1;
+  background-image: repeating-linear-gradient(transparent 0 10%, rgba(31,27,22,.10) 10% calc(10% + 1px));
+}
+.pocket { position: absolute; inset: 0; z-index: 2; border-radius: 6px; background: linear-gradient(#efe0c4, #e3cfac); clip-path: polygon(0 0, 50% 56%, 100% 0, 100% 100%, 0 100%); }
+.flap {
+  position: absolute; left: 0; right: 0; top: 0; height: 62%; z-index: 3; transform-origin: 50% 0;
+  background: linear-gradient(#e9d7b6, #dcc59d); clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transition: transform 450ms var(--ease);
+}
+.opened .flap { transform: scaleY(-1); z-index: 0; }
+.sliding .letter-peek { transform: translateY(-72%); z-index: 2; }
+.seal {
+  position: absolute; z-index: 4; width: 26%; aspect-ratio: 1; left: 37%; top: calc(62% - 13cqw);
+  touch-action: none; user-select: none; -webkit-user-select: none; cursor: pointer;
+}
+.seal svg { width: 100%; height: 100%; overflow: visible; display: block; }
+.seal .half { transition: transform 520ms cubic-bezier(.5, 0, .9, .5), opacity 520ms ease-in; }
+.broken .seal .half-l { transform: translate(-30%, 90%) rotate(-28deg); opacity: 0; }
+.broken .seal .half-r { transform: translate(30%, 95%) rotate(24deg); opacity: 0; }
+.crack { fill: none; stroke: #4a1a00; stroke-width: 2.2; stroke-linecap: round; }
+.seal-ring { transition: stroke-dashoffset 60ms linear; }
+
+/* ---- Stage: recall, marks, seal (left column on wide screens) ---- */
+.desk { max-width: 34rem; padding-top: 1rem; }
+.env-slot { width: min(100%, 22rem); margin: 0 0 1.75rem; }
+.kicker { font-size: .8rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--muted); margin: 0 0 .6rem; }
+.q-title { font-weight: 900; letter-spacing: -.025em; line-height: 1.02; font-size: clamp(1.9rem, 5.2vw, 3.1rem); margin: 0 0 1.25rem; }
+.intro-line { color: var(--muted); margin: 0 0 1.5rem; line-height: 1.5; max-width: 32rem; }
+.answer-row { display: flex; align-items: baseline; gap: .75rem; flex-wrap: wrap; }
+.answer-input {
+  width: 6.5ch; font: 900 clamp(2.6rem, 9vw, 4.4rem)/1 var(--sans); letter-spacing: -.03em; color: var(--text);
+  background: transparent; border: 0; border-bottom: 3px solid var(--muted); padding: .1em 0; font-variant-numeric: tabular-nums;
+}
+.answer-input:focus-visible { outline: none; border-bottom-color: var(--orange); }
+.answer-input:disabled { opacity: .4; }
+.unit { font-size: 1.05rem; color: var(--muted); }
+.no-answer { display: inline-flex; align-items: center; gap: .55rem; margin: 1.1rem 0 0; min-height: 44px; cursor: pointer; color: var(--text); }
+.no-answer input { width: 22px; height: 22px; accent-color: var(--orange); }
+.field-error { display: block; margin-top: .6rem; color: var(--text); background: #2a1f3d; border-left: 4px solid var(--orange); padding: .5rem .75rem; border-radius: 4px; }
+.row { display: flex; gap: .75rem; flex-wrap: wrap; margin-top: 1.6rem; align-items: center; }
+.text-btn { min-height: 44px; background: none; border: 0; color: var(--text); text-decoration: underline; text-underline-offset: 4px; cursor: pointer; padding: 0 .4rem; font-weight: 600; }
+.remembered { list-style: none; padding: 0; margin: 0 0 1.5rem; display: grid; gap: .6rem; }
+.remembered li { display: flex; justify-content: space-between; gap: 1rem; border-bottom: 1px solid #3a3150; padding: .5rem 0; }
+.remembered .v { font-weight: 800; font-variant-numeric: tabular-nums; }
+.hold-hint { color: var(--muted); margin: 0 0 1rem; }
+
+/* ---- Reveal: the purple block ---- */
+.reveal { max-width: 82rem; margin: 0 auto; padding-top: .5rem; }
+.strip { display: flex; gap: .5rem 1.5rem; flex-wrap: wrap; align-items: baseline; margin: 0 0 1rem; color: var(--muted); font-size: .95rem; }
+.strip strong { color: var(--text); }
+.block {
+  background: var(--purple); border-radius: clamp(24px, 4vw, 48px); padding: clamp(1rem, 3.5vw, 3rem);
+  display: grid; gap: clamp(1rem, 3vw, 2.5rem); grid-template-columns: minmax(0, 1fr);
+  box-shadow: 0 40px 120px -40px rgba(139,92,255,.6);
+}
+@media (min-width: 1000px) { .block.with-figures { grid-template-columns: minmax(0, 1fr) minmax(0, 1.05fr); align-items: start; } }
+.paper {
+  background: var(--paper); color: var(--ink); border-radius: 18px; padding: clamp(1.2rem, 3vw, 2.4rem);
+  transform-origin: 50% 0; animation: unfold 520ms var(--ease) both; max-width: 44rem;
+}
+@keyframes unfold { from { transform: perspective(900px) rotateX(-60deg) scaleY(.4); opacity: 0; } }
+.paper h2 { font: 900 1.05rem/1.2 var(--sans); letter-spacing: .1em; text-transform: uppercase; margin: 0 0 .8rem; color: var(--ink); }
+.paper .labels { font-size: .9rem; color: var(--ink-soft); line-height: 1.45; margin: 0 0 1.2rem; display: grid; gap: .15rem; }
+.letter-text { font-family: var(--serif); font-size: clamp(1.08rem, 1.6vw, 1.28rem); line-height: 1.55; white-space: pre-wrap; margin: 0; }
+.block-controls { display: flex; gap: .75rem; flex-wrap: wrap; align-items: center; }
+.block .text-btn { color: var(--text); }
+.figures h2 { font-weight: 900; font-size: clamp(1.6rem, 3.4vw, 2.6rem); letter-spacing: -.025em; margin: 0 0 1.2rem; line-height: 1; }
+.fig { border-top: 1px solid rgba(255,255,255,.25); padding: 1.2rem 0 1.6rem; }
+.fig-name { font-weight: 800; font-size: 1.1rem; margin: 0 0 .9rem; }
+.pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+.cell { opacity: 1; }
+.cell .lbl { font-size: .78rem; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; color: var(--on-purple-soft); }
+.big { font-weight: 900; font-size: clamp(2.6rem, 6.4vw, 5.6rem); letter-spacing: -.04em; line-height: .95; font-variant-numeric: tabular-nums; margin: .15rem 0 .25rem; }
+.meta { font-size: .9rem; line-height: 1.45; color: var(--on-purple-soft); }
+details.src { margin-top: .4rem; font-size: .85rem; color: var(--on-purple-soft); }
+details.src summary { cursor: pointer; min-height: 24px; text-decoration: underline; text-underline-offset: 3px; color: var(--text); }
+.line { position: relative; height: 64px; margin: 1.2rem 0 .4rem; }
+.axis { position: absolute; left: 0; right: 0; top: 30px; height: 2px; background: rgba(255,255,255,.55); }
+.pin { position: absolute; top: 22px; width: 18px; height: 18px; margin-left: -9px; border-radius: 50%; background: var(--text); }
+.pin.then { left: calc(var(--pos-then) * 100%); }
+.pin.now { left: calc(var(--pos-now) * 100%); }
+.pin-lbl { position: absolute; top: 44px; transform: translateX(-50%); font-size: .75rem; font-weight: 700; color: var(--on-purple-soft); white-space: nowrap; }
+.mark { position: absolute; top: 16px; left: calc(var(--pos-mark) * 100%); width: 30px; height: 30px; margin-left: -15px; border-radius: 50%; border: 3px solid var(--text); background: transparent; }
+.mark-lbl { position: absolute; top: -6px; transform: translateX(-50%); font-size: .75rem; font-weight: 800; white-space: nowrap; }
+.change { font-weight: 800; font-size: 1.15rem; margin: .8rem 0 .2rem; font-variant-numeric: tabular-nums; }
+.formula { font-size: .9rem; color: var(--on-purple-soft); font-variant-numeric: tabular-nums; }
+/* the numbers' entrance: same motion for every figure and every direction */
+.seq .cell.then-c, .seq .cell.now-c, .seq .line, .seq .change, .seq .formula { opacity: 0; transform: translateY(14px); }
+.seq.s1 .cell.then-c { opacity: 1; transform: none; transition: opacity 320ms var(--ease), transform 320ms var(--ease); }
+.seq.s2 .cell.now-c, .seq.s2 .line { opacity: 1; transform: none; transition: opacity 320ms var(--ease), transform 320ms var(--ease); }
+.seq.s3 .change, .seq.s3 .formula { opacity: 1; transform: none; transition: opacity 320ms var(--ease), transform 320ms var(--ease); }
+
+.close { max-width: 40rem; margin: 3.5rem auto 0; text-align: center; animation: cta-in 600ms var(--ease) both; }
+.close h2 { font-weight: 900; font-size: clamp(1.8rem, 4.4vw, 3rem); letter-spacing: -.03em; margin: 0 0 .6rem; }
+.close p { color: var(--muted); line-height: 1.5; margin: 0 0 1.6rem; }
+
+/* ---- Prototype-only panel ---- */
+.proto { position: relative; margin: 2rem clamp(1rem, 3vw, 2.5rem); z-index: 50; font: 12px/1.4 ui-monospace, Menlo, monospace; color: #ddd; }
+.proto details { background: rgba(20,18,28,.94); border: 1px dashed #777; border-radius: 8px; padding: .4rem .6rem; max-width: 18rem; }
+.proto summary { cursor: pointer; }
+.proto label, .proto button, .proto select { display: block; margin: .35rem 0; font: inherit; }
+.proto .t { color: #ffb37a; }
+</style>
+</head>
+<body>
+<div id="app" data-stage="intro" data-motion="full">
+
+  <header class="topbar">
+    <div class="demo">
+      <span class="demo-pill">DEMO</span>
+      <span>Maya is fictional. Her letter was written as of 12 May 2024 and prepared later as a demo. No passkey needed.</span>
+    </div>
+    <div class="controls">
+      <button class="quiet-btn" id="skipBtn" hidden>Skip</button>
+      <button class="quiet-btn" id="calmBtn" aria-pressed="false">Turn off motion</button>
+    </div>
+  </header>
+
+  <div class="backdrop" aria-hidden="true">
+    <div class="light"></div>
+    <div class="pit">
+      <div class="ghost" id="ghost">
+        <svg viewBox="0 0 200 240" id="ghostSvg">
+          <defs>
+            <linearGradient id="hem" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#f5f3ff"/>
+              <stop offset=".72" stop-color="#f5f3ff"/>
+              <stop offset="1" stop-color="#f5f3ff" stop-opacity="0"/>
+            </linearGradient>
+          </defs>
+          <!-- Original drawing: a draped figure with shoulders and a hood. Not Kiro's mark. -->
+          <path fill="url(#hem)" d="M100 8 C 62 8 44 38 44 76 L 44 112 C 44 124 30 138 24 160 C 18 184 20 214 16 240 L 184 240 C 180 214 182 184 176 160 C 170 138 156 124 156 112 L 156 76 C 156 38 138 8 100 8 Z"/>
+          <path d="M62 40 C 72 22 128 22 138 40 L 142 104 C 128 96 72 96 58 104 Z" fill="#e9e4fb"/>
+          <path d="M70 190 C 68 210 66 226 64 240 M130 190 C 132 210 134 226 136 240" fill="none" stroke="#b9a8ee" stroke-opacity=".35" stroke-width="2"/>
+          <g class="eyes" id="eyes">
+            <ellipse cx="82" cy="70" rx="7" ry="10.5" fill="#0b0912"/>
+            <ellipse cx="118" cy="70" rx="7" ry="10.5" fill="#0b0912"/>
+          </g>
+        </svg>
+        <div class="held-slot" id="heldSlot">
+          <div class="env-wrap" id="env">
+            <div class="env" id="envInner">
+              <div class="face front">
+                <div class="to">Maya</div>
+                <div class="opens">Opens 5 November 2024</div>
+              </div>
+              <div class="face back">
+                <div class="letter-peek"></div>
+                <div class="pocket"></div>
+                <div class="flap"></div>
+                <div class="seal" id="seal" aria-hidden="true">
+                  <svg viewBox="0 0 100 100">
+                    <defs>
+                      <clipPath id="clipL"><polygon points="0,0 52,0 46,22 56,40 44,58 54,76 48,100 0,100"/></clipPath>
+                      <clipPath id="clipR"><polygon points="52,0 100,0 100,100 48,100 54,76 44,58 56,40 46,22"/></clipPath>
+                      <g id="sealArt">
+                        <path fill="#ff7b1c" d="M50 4 C 62 3 70 9 79 13 C 88 18 95 28 96 40 C 98 52 94 60 95 70 C 93 82 84 90 72 94 C 62 98 54 96 44 97 C 32 97 22 92 14 84 C 6 76 3 64 4 52 C 5 40 4 32 11 22 C 18 12 30 6 50 4 Z"/>
+                        <circle cx="50" cy="50" r="31" fill="none" stroke="#c4560a" stroke-width="3"/>
+                        <circle cx="50" cy="50" r="24" fill="#f06c10"/>
+                        <text x="50" y="62" text-anchor="middle" font-family="Inter, system-ui, sans-serif" font-weight="900" font-size="34" fill="#a8460a">R</text>
+                      </g>
+                    </defs>
+                    <g class="half half-l" clip-path="url(#clipL)"><use href="#sealArt"/></g>
+                    <g class="half half-r" clip-path="url(#clipR)"><use href="#sealArt"/></g>
+                    <g id="cracks">
+                      <path class="crack" pathLength="1" d="M50 50 L 46 32 L 50 18"/>
+                      <path class="crack" pathLength="1" d="M50 50 L 66 44 L 82 46"/>
+                      <path class="crack" pathLength="1" d="M50 50 L 56 66 L 52 84"/>
+                      <path class="crack" pathLength="1" d="M50 50 L 34 56 L 18 52"/>
+                      <path class="crack" pathLength="1" d="M50 50 L 62 30 L 74 22"/>
+                      <path class="crack" pathLength="1" d="M50 50 L 38 70 L 28 80"/>
+                      <path class="crack" pathLength="1" d="M50 50 L 68 62 L 80 74"/>
+                    </g>
+                    <circle class="seal-ring" id="holdRing" cx="50" cy="50" r="49" fill="none" stroke="#f5f3ff" stroke-width="3" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1" transform="rotate(-90 50 50)"/>
+                  </svg>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <svg viewBox="0 0 200 240" class="hands">
+          <ellipse cx="62" cy="168" rx="14" ry="11" fill="#f5f3ff" stroke="#cfc4f5"/>
+          <ellipse cx="138" cy="168" rx="14" ry="11" fill="#f5f3ff" stroke="#cfc4f5"/>
+        </svg>
+      </div>
+    </div>
+    <div class="soil"></div>
+  </div>
+
+  <main>
+    <section class="hero" id="hero" aria-labelledby="h-hero">
+      <h1 class="headline" id="h-hero" tabindex="-1">Your past self returns with the <span class="accent">receipts.</span></h1>
+      <div class="hero-spacer"></div>
+      <div class="hero-foot">
+        <p class="status" id="status" role="status">Bringing the letter into the light.</p>
+        <button class="cta" id="pickupBtn" hidden>Pick up the letter</button>
+        <p id="failLinks" hidden><a class="quiet-link" href="#">Go back to the demo letters</a></p>
+      </div>
+    </section>
+
+    <section class="desk" id="desk" hidden>
+      <div class="env-slot" id="envSlot"></div>
+      <div id="panel"></div>
+    </section>
+
+    <section class="reveal" id="reveal" hidden></section>
+  </main>
+
+  <div class="visually-hidden" aria-live="polite" id="live"></div>
+
+  <aside class="proto" aria-label="Prototype controls">
+    <details>
+      <summary>Prototype controls (not product)</summary>
+      <div>Seal check: <span id="checkMode"></span></div>
+      <div>Pick-up button shown at: <span class="t" id="tCta">…</span></div>
+      <div>Seal break took: <span class="t" id="tSeal">…</span></div>
+      <div>Numbers took: <span class="t" id="tNums">…</span></div>
+      <label>Jump to
+        <select id="jump">
+          <option value="">(choose)</option>
+          <option>recall</option><option>marks</option><option>letter</option><option>figures</option><option>close</option>
+        </select>
+      </label>
+      <button id="restart">Restart</button>
+      <div>?check=slow · ?check=fail</div>
+    </details>
+  </aside>
+</div>
+
+<script>
+"use strict";
+// ---------------- Data (real records, see header comment) ----------------
+const LETTER = `Dear future me,
+
+It is a Sunday evening in May, and the windows are open for the first time this year. The lilac next door is out. I wanted to write this down before the week starts again.
+
+Work is steady. The early shifts at the clinic are hard on the alarm clock, but I like the quiet drive in, when the roads are empty and the sky is still grey. I fill the tank on Thursdays at the station by the bridge. I have started keeping the receipts in the glove box, though I never look at them.
+
+On Saturdays I ride along with Jess in her van for the bakery deliveries. She drives, I carry the trays, and we eat the broken scones on the way home. She says she wants a second van by next spring. I hope she gets it.
+
+Mom's knee is better. We are planning to drive out to the lake this summer, all of us, if the car holds up. I keep saying I will learn to fix the small things on it myself. Maybe by the time you read this, I will have.
+
+The bills are paid this month, with a little left over. I would like to put some aside for an evening class in the fall. I have not decided which one yet.
+
+I don't know what you will remember of this spring. I think you will remember the lilac.
+
+Love,
+Maya`;
+const SRC = "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices";
+const FIGURES = [
+  { id: "q-gas", name: "Regular gasoline", subject: "a gallon of regular gasoline", unit: "USD per gallon", region: "U.S.",
+    then: { value: "3.643", period: "May 6, 2024" }, now: { value: "4.269", period: "October 26, 2026" },
+    series: "EMM_EPMR_PTE_NUS_DPG", url: "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMM_EPMR_PTE_NUS_DPG&f=W" },
+  { id: "q-diesel", name: "Diesel", subject: "a gallon of diesel", unit: "USD per gallon", region: "U.S.",
+    then: { value: "3.894", period: "May 6, 2024" }, now: { value: "6.352", period: "October 26, 2026" },
+    series: "EMD_EPD2D_PTE_NUS_DPG", url: "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMD_EPD2D_PTE_NUS_DPG&f=W" },
+];
+const RETRIEVED = "November 1, 2026";
+
+// ---------------- Copy (existing strings unless marked NEW) ----------------
+const COPY = {
+  loading: "Bringing the letter into the light.",
+  verifying: "Checking the seal.",
+  sealIntact: "The seal is intact. Nothing here has changed since it was sealed.",
+  pickUp: "Pick up the letter",
+  verificationFailed: "This letter failed verification. Its contents may have changed since sealing, so they can't be trusted. Nothing from it is shown. Go back to the demo letters.",
+  recallIntro: "This letter was written as of 12 May 2024. Before you read it, tell us how you remember that time.",
+  questionOf: "Question {n} of {total}",            // NEW
+  next: "Next question",                           // NEW
+  back: "Previous question",                       // NEW
+  noAnswer: "No answer",
+  answerInvalid: "Enter a number, such as 3.50, or mark this question as no answer.",
+  submit: "Record my answers",
+  submitting: "Recording your answers.",
+  stage1Title: "What you remembered",
+  sealInstruction: "Press and hold the seal to break it, or use the button below.",
+  sealButton: "Break the seal",
+  sealHolds: "The seal holds. Press and hold a little longer to break it.",
+  sealBroken: "The seal is broken. The letter is open.",
+  showAll: "Show everything",
+  stage2Title: "What was written then",
+  writtenAsOf: "Written as of 12 May 2024",
+  demoLetterLabel: "A demo letter. Maya is fictional, and this letter was prepared later than its written as of date.",
+  sealedForDemo: "Sealed for the demo on [sealedAt from the opened letter]",
+  stage2Next: "See the numbers",
+  stage3Title: "The numbers, then and now",
+  then: "Then", now: "Now", yourAnswer: "Your answer",
+  historical: "historical record, retrieved {date}", retrieved: "retrieved {date}",
+  source: "Source", series: "Series", check: "Check this figure at the source",
+  formula: "Formula",
+  closeTitle: "That is the whole letter",
+  closeBody: "Nothing has been added to what you remembered, what was written, or the record.",
+  closeLink: "Seal your own letter",               // NEW (replaces "Back to the desk")
+  calmOn: "Turn off motion", calmOff: "Turn motion back on", skip: "Skip",
+};
+
+// ---------------- Timing constants (one place, no data input) ----------------
+const T = {
+  LIGHT_AT: 250, SHAKE_AT: 750, RISE_AT: 900, RISE_MS: 1500,    // intro: CTA no earlier than 2.4 s
+  CHECKING_AT: 300,
+  PICKUP_MOVE_MS: 600, TURN_MS: 520,
+  HOLD_MS: 1000, SETTLE_MS: 300, SHORT_MS: 450,
+  FLAP_AT: 250, SLIDE_AT: 550, REVEAL_AT: 1150,                 // seal break: about 1.2 s after the hold
+  NUM_NOW_AT: 450, NUM_CHANGE_AT: 900, NUM_DONE_AT: 1250,
+};
+const params = new URLSearchParams(location.search);
+const CHECK = params.get("check") === "slow" ? { ms: 4000, ok: true } : params.get("check") === "fail" ? { ms: 1200, ok: false } : { ms: 900, ok: true };
+
+// ---------------- State ----------------
+const $ = (id) => document.getElementById(id);
+const app = $("app");
+const S = { stage: "intro", verified: false, introDone: false, answers: {}, drafts: {}, q: 0, invalid: false, broken: false, calm: false, seq: null };
+const prefersReduced = matchMedia("(prefers-reduced-motion: reduce)");
+S.calm = prefersReduced.matches;
+const STAGE_LIVE = { intro: "The letter is being brought out.", intact: "The seal is intact.", recall: "Tell us how you remember it.",
+  marks: "Your answers are placed.", seal: "The seal is ready to break.", letter: "The letter is open.",
+  figures: "The figures from then and now are shown.", close: "That is the whole letter.", error: "Something went wrong." };
+
+function setStage(stage) {
+  S.stage = stage; app.dataset.stage = stage;
+  $("live").textContent = STAGE_LIVE[stage] || "";
+}
+function setMotion() {
+  app.dataset.motion = S.calm ? "calm" : "full";
+  $("calmBtn").textContent = S.calm ? COPY.calmOff : COPY.calmOn;
+  $("calmBtn").setAttribute("aria-pressed", String(S.calm));
+}
+
+// A running sequence: timers plus a finish() that puts the end state in place. Skip calls finish().
+function runSeq(steps, finish) {
+  endSeq();
+  if (S.calm) { finish(); return; }
+  const timers = steps.map(([at, fn]) => setTimeout(fn, at));
+  S.seq = { timers, finish };
+  $("skipBtn").hidden = false;
+}
+function endSeq(callFinish) {
+  const seq = S.seq; S.seq = null; $("skipBtn").hidden = true;
+  if (!seq) return;
+  seq.timers.forEach(clearTimeout);
+  if (callFinish) {
+    document.getAnimations().forEach((a) => { try { a.finish(); } catch (_) {} });
+    seq.finish();
+  }
+}
+function seqDone() { S.seq = null; $("skipBtn").hidden = true; }
+function focusHeading(el) { if (!el) return; el.setAttribute("tabindex", "-1"); el.focus({ preventScroll: false }); }
+
+// ---------------- 1. Intro: dark, light finds the soil, ground shakes, ghost rises ----------------
+function intro() {
+  setStage("intro");
+  $("status").textContent = COPY.loading;
+  $("checkMode").textContent = CHECK.ok ? `passes after ${CHECK.ms} ms` : "fails";
+  setTimeout(() => { if (!S.verified) $("status").textContent = COPY.verifying; }, T.CHECKING_AT);
+  setTimeout(onCheck, CHECK.ms);   // the real flow: loading -> openable -> verifying -> verified
+  const finish = () => { app.classList.add("lit", "risen"); app.classList.remove("shake"); S.introDone = true; seqDone(); maybeCta(); };
+  runSeq([
+    [T.LIGHT_AT, () => app.classList.add("lit")],
+    [T.SHAKE_AT, () => app.classList.add("shake")],
+    [T.RISE_AT, () => app.classList.add("risen")],
+    [T.RISE_AT + T.RISE_MS, finish],
+  ], finish);
+}
+function onCheck() {
+  if (!CHECK.ok) {
+    setStage("error"); app.classList.add("withheld");
+    $("status").textContent = COPY.verificationFailed; $("failLinks").hidden = false; return;
+  }
+  S.verified = true; $("status").textContent = COPY.sealIntact; maybeCta();
+}
+function maybeCta() {
+  if (!(S.verified && S.introDone) || S.stage !== "intro") return;
+  setStage("intact");
+  $("pickupBtn").hidden = false;
+  $("tCta").textContent = (performance.now() / 1000).toFixed(2) + " s after navigation start";
+}
+
+// ---------------- 2. Pick up: the envelope leaves the ghost's hands and turns ----------------
+function flipMove(el, parent) {
+  const a = el.getBoundingClientRect();
+  parent.appendChild(el);
+  if (S.calm) return;
+  const b = el.getBoundingClientRect();
+  el.animate([{ transform: `translate(${a.left - b.left}px, ${a.top - b.top}px) scale(${a.width / b.width})` }, { transform: "none" }],
+    { duration: T.PICKUP_MOVE_MS, easing: "cubic-bezier(0.2, 0, 0, 1)" });
+}
+function pickUp() {
+  endSeq(true);
+  $("pickupBtn").hidden = true;
+  app.classList.add("handed");
+  $("desk").hidden = false;
+  flipMove($("env"), $("envSlot"));
+  setTimeout(() => { $("hero").hidden = true; }, S.calm ? 0 : 400);
+  setTimeout(() => $("envInner").classList.add("flipped"), S.calm ? 0 : T.PICKUP_MOVE_MS - 120);
+  setStage("recall");
+  renderQuestion();
+}
+
+// ---------------- 3. Recall: one question at a time, type a number ----------------
+function renderQuestion() {
+  const f = FIGURES[S.q], d = S.drafts[f.id] || { text: "", noAnswer: false };
+  const last = S.q === FIGURES.length - 1;
+  $("panel").innerHTML = `
+    <p class="kicker">${COPY.questionOf.replace("{n}", S.q + 1).replace("{total}", FIGURES.length)}</p>
+    ${S.q === 0 ? `<p class="intro-line">${COPY.recallIntro}</p>` : ""}
+    <form id="qForm" novalidate>
+      <fieldset style="border:0;padding:0;margin:0">
+        <legend class="q-title" id="qTitle" tabindex="-1">What do you think ${f.subject} cost then?</legend>
+        <div class="answer-row">
+          <input class="answer-input" id="qInput" type="text" inputmode="decimal" autocomplete="off" aria-describedby="qUnit${S.invalid ? " qErr" : ""}" ${S.invalid ? 'aria-invalid="true"' : ""} ${d.noAnswer ? "disabled" : ""}>
+          <span class="unit" id="qUnit">in ${f.unit}</span>
+        </div>
+        <label class="no-answer"><input type="checkbox" id="qNo" ${d.noAnswer ? "checked" : ""}> ${COPY.noAnswer}</label>
+        ${S.invalid ? `<span class="field-error" id="qErr" role="alert">${COPY.answerInvalid}</span>` : ""}
+      </fieldset>
+      <div class="row">
+        <button class="cta" type="submit" id="qNext">${last ? COPY.submit : COPY.next}</button>
+        ${S.q > 0 ? `<button class="text-btn" type="button" id="qBack">${COPY.back}</button>` : ""}
+      </div>
+    </form>`;
+  const input = $("qInput");
+  input.value = d.text;
+  input.addEventListener("input", () => { S.drafts[f.id] = { ...(S.drafts[f.id] || {}), text: input.value, noAnswer: false }; });
+  $("qNo").addEventListener("change", (e) => { S.drafts[f.id] = { text: input.value, noAnswer: e.target.checked }; input.disabled = e.target.checked; S.invalid = false; });
+  $("qForm").addEventListener("submit", (e) => { e.preventDefault(); nextQuestion(); });
+  if ($("qBack")) $("qBack").addEventListener("click", () => { S.q -= 1; S.invalid = false; renderQuestion(); });
+  setTimeout(() => (S.q === 0 && !S.invalid ? focusHeading($("qTitle")) : input.disabled ? $("qNo").focus() : input.focus()), S.calm ? 0 : 50);
+}
+const NUMBER_RULE = /^[0-9]+(\.[0-9]+)?$/;  // the same rule buildRecallRecord applies (spec 03 R3.3)
+function nextQuestion() {
+  const f = FIGURES[S.q], d = S.drafts[f.id] || { text: "", noAnswer: false };
+  if (!d.noAnswer && !NUMBER_RULE.test(d.text.trim())) { S.invalid = true; renderQuestion(); return; }
+  S.invalid = false;
+  S.answers[f.id] = d.noAnswer ? null : d.text.trim();
+  if (S.q < FIGURES.length - 1) { S.q += 1; renderQuestion(); return; }
+  $("qNext").disabled = true; $("qNext").textContent = COPY.submitting;
+  setTimeout(renderMarks, 450);  // mock POST /api/openings
+}
+
+// ---------------- 4. Marks and the seal: press and hold, or the button ----------------
+function rememberedList() {
+  return `<ul class="remembered">${FIGURES.map((f) => `<li><span>${f.subject[0].toUpperCase() + f.subject.slice(1)}</span>
+    <span class="v">${S.answers[f.id] === null || S.answers[f.id] === undefined ? COPY.noAnswer : `${S.answers[f.id]} <span class="unit">${f.unit}</span>`}</span></li>`).join("")}</ul>`;
+}
+function renderMarks() {
+  setStage("marks");
+  $("panel").innerHTML = `
+    <h2 class="q-title" id="mTitle" tabindex="-1">${COPY.stage1Title}</h2>
+    ${rememberedList()}
+    <p class="hold-hint">${COPY.sealInstruction}</p>
+    <div class="row" style="margin-top:0">
+      <button class="cta" id="breakBtn">${COPY.sealButton}</button>
+      <button class="text-btn" id="allBtn">${COPY.showAll}</button>
+    </div>`;
+  $("breakBtn").addEventListener("click", () => breakSeal(true));
+  $("allBtn").addEventListener("click", showAll);
+  focusHeading($("mTitle"));
+  armHold();
+}
+let hold = null;
+function setCracks(p) {
+  const paths = $("cracks").children, n = paths.length;
+  for (let i = 0; i < n; i++) { const frac = Math.min(1, Math.max(0, p * n - i)); paths[i].style.strokeDasharray = "1"; paths[i].style.strokeDashoffset = String(1 - frac); }
+  $("holdRing").style.strokeDashoffset = String(1 - p);
+}
+setCracks(0);
+function armHold() {
+  const seal = $("seal");
+  seal.onpointerdown = (e) => {
+    if (S.broken || S.stage !== "marks" && S.stage !== "seal") return;
+    try { seal.setPointerCapture(e.pointerId); } catch (_) {}
+    setStage("seal");
+    hold = { start: performance.now() };
+    const tick = () => {
+      if (!hold) return;
+      const p = Math.min(1, (performance.now() - hold.start) / T.HOLD_MS);
+      setCracks(p);
+      if (p >= 1) { hold = null; breakSeal(false); return; }
+      hold.raf = requestAnimationFrame(tick);
+    };
+    tick();
+  };
+  const release = () => {
+    if (!hold) return;
+    cancelAnimationFrame(hold.raf);
+    const from = Math.min(1, (performance.now() - hold.start) / T.HOLD_MS); hold = null;
+    const t0 = performance.now();
+    const back = () => { const k = Math.min(1, (performance.now() - t0) / T.SETTLE_MS); setCracks(from * (1 - k)); if (k < 1) requestAnimationFrame(back); };
+    back(); setStage("marks"); $("live").textContent = COPY.sealHolds;
+  };
+  seal.onpointerup = release; seal.onpointercancel = release;
+}
+
+// ---------------- 5. The break: the ghost leaves, the flap lifts, the letter slides out ----------------
+let tBreak = 0;
+function breakSeal(fromButton) {
+  if (S.broken) return;           // a second completion sends nothing
+  S.broken = true; tBreak = performance.now();
+  setStage("seal");
+  const finish = () => {
+    setCracks(1); app.classList.add("broken", "leaving"); $("env").classList.add("opened", "sliding");
+    seqDone(); showLetter();
+    $("tSeal").textContent = ((performance.now() - tBreak) / 1000).toFixed(2) + " s after the hold or button";
+  };
+  const shortCracks = fromButton && !S.calm;
+  runSeq([
+    ...(shortCracks ? [[0, () => animateCracks()]] : []),
+    [shortCracks ? T.SHORT_MS : 0, () => { app.classList.add("broken", "leaving"); }],
+    [(shortCracks ? T.SHORT_MS : 0) + T.FLAP_AT, () => $("env").classList.add("opened")],
+    [(shortCracks ? T.SHORT_MS : 0) + T.SLIDE_AT, () => $("env").classList.add("sliding")],
+    [(shortCracks ? T.SHORT_MS : 0) + T.REVEAL_AT, finish],
+  ], finish);
+}
+function animateCracks() {
+  const t0 = performance.now();
+  const step = () => { const p = Math.min(1, (performance.now() - t0) / T.SHORT_MS); setCracks(p); if (p < 1) requestAnimationFrame(step); };
+  step();
+}
+
+// ---------------- 6. The letter on paper inside the purple block, then the numbers ----------------
+function showLetter() {
+  $("live").textContent = COPY.sealBroken;
+  $("desk").hidden = true;
+  $("reveal").hidden = false;
+  setStage("letter");
+  $("reveal").innerHTML = `
+    <div class="strip"><strong>${COPY.stage1Title}:</strong>${FIGURES.map((f) => `<span>${f.name} · ${S.answers[f.id] == null ? COPY.noAnswer : `${COPY.yourAnswer} ${S.answers[f.id]} ${f.unit}`}</span>`).join("")}</div>
+    <div class="block" id="block">
+      <article class="paper" aria-labelledby="lTitle">
+        <h2 id="lTitle" tabindex="-1">${COPY.stage2Title}</h2>
+        <div class="labels"><span>${COPY.writtenAsOf}</span><span>${COPY.demoLetterLabel}</span><span>${COPY.sealedForDemo}</span></div>
+        <p class="letter-text"></p>
+      </article>
+      <div class="block-controls" id="bControls">
+        <button class="cta" id="numsBtn">${COPY.stage2Next}</button>
+        <button class="text-btn" id="allBtn2">${COPY.showAll}</button>
+      </div>
+    </div>
+    <div id="closeSlot"></div>`;
+  $("reveal").querySelector(".letter-text").textContent = LETTER;  // plain text, never markup
+  $("numsBtn").addEventListener("click", showFigures);
+  $("allBtn2").addEventListener("click", showAll);
+  focusHeading($("lTitle"));
+}
+
+// Number line: the range comes only from then and now. The Mark never moves the range.
+function positions(t, n, m) {
+  const lo = Math.min(t, n), hi = Math.max(t, n), span = hi - lo;
+  const pad = Math.max(span * 0.25, Math.max(Math.abs(t), Math.abs(n)) * 0.05);
+  const a = lo - pad, b = hi + pad, at = (v) => Math.min(1, Math.max(0, (v - a) / (b - a)));
+  return { then: at(t), now: at(n), mark: m == null ? null : at(m) };
+}
+// Exact decimal change on thousandths (the real app uses lib/figures/change.ts).
+function change(tStr, nStr) {
+  const t = Math.round(Number(tStr) * 1000), n = Math.round(Number(nStr) * 1000), d = n - t;
+  const sign = d > 0 ? "+" : d < 0 ? "\u2212" : "";
+  const abs = Math.abs(d), diff = `${Math.floor(abs / 1000)}.${String(abs % 1000).padStart(3, "0")}`;
+  const pct = Math.round((Math.abs(d) / t) * 1000) / 10;
+  return { text: `${sign}${diff}`, pct: `${sign}${pct.toFixed(1)}%` };
+}
+function figureHtml(f) {
+  const ans = S.answers[f.id];
+  const p = positions(Number(f.then.value), Number(f.now.value), ans == null ? null : Number(ans));
+  const c = change(f.then.value, f.now.value);
+  const style = `--pos-then:${p.then};--pos-now:${p.now}${p.mark == null ? "" : `;--pos-mark:${p.mark}`}`;
+  const cell = (kind, fig, label) => `
+    <div class="cell ${kind}-c">
+      <div class="lbl">${kind === "then" ? COPY.then : COPY.now}</div>
+      <div class="big">${fig.value}</div>
+      <div class="meta">${f.unit} · ${fig.period} · ${f.region}<br>${label}</div>
+      <details class="src"><summary>${COPY.source}</summary>${SRC}<br>${COPY.series} ${f.series}<br><a href="${f.url}" rel="noreferrer">${COPY.check}</a></details>
+    </div>`;
+  return `
+    <section class="fig" aria-label="${f.name}">
+      <h3 class="fig-name">${f.name}, ${f.region}</h3>
+      <div class="pair">
+        ${cell("then", f.then, COPY.historical.replace("{date}", RETRIEVED))}
+        ${cell("now", f.now, COPY.retrieved.replace("{date}", RETRIEVED))}
+      </div>
+      <div class="line" style="${style}" aria-hidden="true">
+        <div class="axis"></div>
+        <div class="pin then"></div><div class="pin-lbl" style="left:clamp(1.5rem, calc(var(--pos-then)*100%), calc(100% - 1.5rem))">${COPY.then}</div>
+        <div class="pin now"></div><div class="pin-lbl" style="left:clamp(1.5rem, calc(var(--pos-now)*100%), calc(100% - 1.5rem))">${COPY.now}</div>
+        ${p.mark == null ? "" : `<div class="mark"></div><div class="mark-lbl" style="left:clamp(2.6rem, calc(var(--pos-mark)*100%), calc(100% - 2.6rem))">${COPY.yourAnswer}</div>`}
+      </div>
+      ${ans == null ? "" : `<p class="visually-hidden">${COPY.yourAnswer}: ${ans} ${f.unit}</p>`}
+      <p class="change">${c.text} ${f.unit} (${c.pct}) · ${f.then.period} to ${f.now.period}</p>
+      <p class="formula">${COPY.formula}: (${f.now.value} \u2212 ${f.then.value}) \u00f7 ${f.then.value} \u00d7 100</p>
+    </section>`;
+}
+let tNums = 0;
+function showFigures() {
+  if (S.stage === "figures" || S.stage === "close") return;
+  tNums = performance.now();
+  $("bControls").remove();
+  const block = $("block");
+  block.classList.add("with-figures");
+  const col = document.createElement("div");
+  col.className = "figures seq"; col.id = "figs";
+  col.innerHTML = `<h2 id="fTitle" tabindex="-1">${COPY.stage3Title}</h2>${FIGURES.map(figureHtml).join("")}`;
+  block.appendChild(col);
+  setStage("figures");
+  focusHeading($("fTitle"));
+  const finish = () => { col.classList.add("s1", "s2", "s3"); seqDone(); showClose(); $("tNums").textContent = ((performance.now() - tNums) / 1000).toFixed(2) + " s"; };
+  runSeq([
+    [30, () => col.classList.add("s1")],
+    [T.NUM_NOW_AT, () => col.classList.add("s2")],
+    [T.NUM_CHANGE_AT, () => col.classList.add("s3")],
+    [T.NUM_DONE_AT, finish],
+  ], finish);
+}
+
+// ---------------- 7. The quiet ending ----------------
+function showClose() {
+  setStage("close");
+  $("closeSlot").innerHTML = `
+    <section class="close" aria-labelledby="cTitle">
+      <h2 id="cTitle">${COPY.closeTitle}</h2>
+      <p>${COPY.closeBody}</p>
+      <a class="cta" href="/demo/live">${COPY.closeLink}</a>
+    </section>`;
+}
+
+function showAll() {
+  endSeq(false);
+  if (!S.broken) { S.broken = true; setCracks(1); app.classList.add("broken", "leaving"); $("env").classList.add("opened", "sliding"); }
+  if (S.stage !== "letter") showLetter();
+  const wasCalm = S.calm; S.calm = true; showFigures(); S.calm = wasCalm;
+}
+
+// ---------------- Eyes follow the pointer (decoration; off in calm, idle on touch) ----------------
+let eyeRaf = 0, px = 0, py = 0;
+addEventListener("pointermove", (e) => {
+  if (e.pointerType === "touch") return;
+  px = e.clientX; py = e.clientY;
+  if (eyeRaf) return;
+  eyeRaf = requestAnimationFrame(() => {
+    eyeRaf = 0;
+    if (S.calm) { $("eyes").style.transform = ""; return; }
+    const r = $("ghostSvg").getBoundingClientRect();
+    const cx = r.left + r.width * 0.5, cy = r.top + r.height * (70 / 240);
+    const dx = px - cx, dy = py - cy, d = Math.hypot(dx, dy) || 1, k = Math.min(1, d / 320);
+    $("eyes").style.transform = `translate(${(dx / d) * 5 * k}px, ${(dy / d) * 3.5 * k}px)`;
+  });
+});
+
+// ---------------- Controls ----------------
+$("calmBtn").addEventListener("click", () => { S.calm = !S.calm; if (S.calm) endSeq(true); setMotion(); });
+$("skipBtn").addEventListener("click", () => endSeq(true));
+$("pickupBtn").addEventListener("click", pickUp);
+$("restart").addEventListener("click", () => location.reload());
+$("jump").addEventListener("change", (e) => {
+  const to = e.target.value; if (!to) return;
+  const wasCalm = S.calm; S.calm = true; endSeq(true);
+  if (!S.introDone) { app.classList.add("lit", "risen"); S.introDone = true; }
+  S.verified = true;
+  if (S.stage === "intro" || S.stage === "intact") pickUp();
+  if (to !== "recall") {
+    FIGURES.forEach((f, i) => { if (S.answers[f.id] === undefined) S.answers[f.id] = i === 0 ? "3.20" : "3.90"; });
+    if (to === "marks") renderMarks();
+    else { breakSeal(true); if (to === "figures" || to === "close") showFigures(); }
+  }
+  S.calm = wasCalm; setMotion(); e.target.value = "";
+});
+setMotion();
+intro();
+</script>
+</body>
+</html>
