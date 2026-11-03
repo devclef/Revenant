@@ -99,7 +99,7 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - Validation: `bash scripts/check.sh`
   - _Requirements: R1.1–R1.9, R1.12, R2.1, R2.2, R2.3, R2.5, R2.6, R2.9, R3.1–R3.6, R3.18, R4.6, R4.7, R5.1–R5.16, R5.18, R5.19, R6.1, R6.3, R6.9, R6.12, R6.14, R6.15, R6.17, R6.18, R8.1–R8.9, R8.11–R8.14, R9.1–R9.16, R10.1–R10.3, R18.1–R18.3, R18.8, R18.10, R19.4, R19.5, R22.5, R23.1–R23.4, R24.1, R24.3, R24.5, R24.8, R26.3.1, R26.4, R26.9, R26.11_
 
-- [ ] 3. Soil_Canvas
+- [x] 3. Soil_Canvas
   - Agent: `frontend-dev` · Depends on: 2 · Estimated size: ~1,400 changed lines
   - Before this task: task 2 is on `main`.
   - Scope: `src/components/ceremony/scene/soil-canvas.ts`, `scene/soil-model.ts`, `scene/rng.ts`, `scene/SoilCanvasLoader.tsx`, `scene/SceneBackdrop.tsx`, `scene/layout.ts`, `scene/scene.module.css`, `src/components/ceremony/constants.ts`, `ASSETS.md`, `source-scan.test.ts` (folder list and the seeded-RNG allowance, additions only), and the `*.test.ts(x)` for each file above
