@@ -257,7 +257,7 @@ export function EnvelopeView({
               </button>
             </PickUpGate>
           </div>
-          <EnvelopeFrame state={envelopeState} persona={persona} />
+          {frame(envelopeState)}
         </ParchmentSurface>
       );
   }

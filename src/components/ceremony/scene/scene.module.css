@@ -140,6 +140,34 @@
   color: var(--muted);
 }
 
+/* Narrow Top_Bar fit (R8.1, T0 <= 96 px). Below 900 px the wordmark+chip and
+   the Calm+Skip controls must share one row, with the notice on its own second
+   row. The default control width tipped brand+controls onto two rows (so the
+   bar became three rows and overran 96 px with Skip shown), so the narrow
+   controls are compact: smaller font, tighter padding, no wrap between them. */
+@media (max-width: 899.98px) {
+  .wordmark {
+    font-size: 0.92rem;
+    letter-spacing: 0.08em;
+  }
+
+  .controls {
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+  }
+
+  .control {
+    padding: 0 0.5rem;
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
+  .notice {
+    font-size: 0.72rem;
+    line-height: 1.2;
+  }
+}
+
 /* The backdrop. One aria-hidden layer under the content; the pointer passes
    through it. Fixed to the window, so the Soil stays where the design puts it. */
 .backdrop {
@@ -377,10 +405,11 @@
   pointer-events: none;
 }
 
-/* The held Envelope's placement in the Ghost's slot (design.md "The Envelope":
-   HELD_LEFT 18 %, HELD_WIDTH 64 %, HELD_TOP 48 % wide / 47 % narrow of the
-   Ghost_Box). It covers no eye or hem (R5.2). Shares are of the slot, which is
-   the Ghost_Box, so the envelope scales with the Ghost at both layouts. */
+/* The held Envelope's placement in the Ghost's slot (design.md "Held in the
+   Ghost's subtree": left 18 %, width 64 %, top 48 % at or above 900 px, 47 %
+   below). The envelope spans SVG y 115-203 (wide) / 113-211 (narrow), clearing
+   the eyes (lowest y 112) and the hem (highest y 212), so it covers neither
+   (R5.2). */
 .heldEnvelope {
   position: absolute;
   left: 18%;
@@ -388,15 +417,9 @@
   width: 64%;
 }
 
-/* Below 900 px the Ghost_Box is narrow (min(31vh, 200px)), so 64 % of it is too
-   tight for the date lines. The held envelope widens and uses the narrow front
-   (each date on two lines, no demo note) so the dates stay readable (R8.8, the
-   C2 fix). It still clears the eyes (top 44 %, below the eye row at 38 %). */
 @media (max-width: 899.98px) {
   .heldEnvelope {
-    left: 6%;
-    top: 44%;
-    width: 88%;
+    top: 47%;
   }
 }
 
