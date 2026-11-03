@@ -55,7 +55,7 @@ describe("Ghost markup", () => {
 describe("Ghost box size (CSS)", () => {
   it("uses GHOST_WIDE at or above 900 px and GHOST_NARROW below, at 1.2 height ratio", () => {
     expect(css).toMatch(/--ghost-w:\s*min\(50vh,\s*560px\)/);
-    expect(css).toMatch(/@media \(max-width: 899\.98px\)[\s\S]*?--ghost-w:\s*min\(31vh,\s*200px\)/);
+    expect(css).toMatch(/@media \(max-width: 899\.98px\)[\s\S]*?--ghost-w:\s*min\(26vh,\s*170px\)/);
     // Height is 1.2 times the width: aspect 5 : 6.
     expect(css).toMatch(/aspect-ratio:\s*5 \/ 6/);
   });
