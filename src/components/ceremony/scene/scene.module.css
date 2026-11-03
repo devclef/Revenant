@@ -1,0 +1,254 @@
+/*
+ * Feature: 07-judge-journey
+ *
+ * Scene_Frame, Top_Bar, backdrop, Soil_Fallback and headline (design.md "The
+ * Scene_Frame", "SceneBackdrop and the Soil", "SceneShell, TopBar").
+ *
+ * Narrow values are the base rules. The wide layout (at or above 900 px) is in
+ * one min-width block below. Every geometry value here equals its constant in
+ * constants.ts; scene-frame.test.ts checks them. Colours come from
+ * tokens.module.css only (R3.8).
+ *
+ * No time value appears here. Motion belongs to later tasks.
+ */
+
+/* The Scene. Sets the frame variables every child reads. */
+.scene {
+  --frame-w: min(100vw, 1440px);
+  --frame-l: calc((100vw - var(--frame-w)) / 2);
+  --pad: clamp(1rem, 3vw, 2.5rem);
+  --soil-top: 69vh;
+  --soil-band: 8vh;
+  --ghost-x: 50vw;
+  position: relative;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* The page content. Shares its side padding with the Top_Bar, so the wordmark
+   and the headline start on the same line (R8.14). */
+.main {
+  position: relative;
+  z-index: 1;
+  padding-top: 6rem;
+  padding-inline: calc(var(--frame-l) + var(--pad));
+}
+
+/* The Top_Bar. Fixed to the top of the window (R8.1). */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.5rem;
+  padding: 0.35rem calc(var(--frame-l) + var(--pad));
+  background: var(--bg);
+}
+
+.brand {
+  order: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wordmark {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.chip {
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--muted);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.controls {
+  order: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.control {
+  min-height: 36px;
+  padding: 0 0.7rem;
+  border: 1px solid var(--muted);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.control:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The notice. On its own full-width row below 900 px, so it is never cut off. */
+.notice {
+  order: 3;
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.25;
+  color: var(--muted);
+}
+
+/* The backdrop. One aria-hidden layer under the content; the pointer passes
+   through it. Fixed to the window, so the Soil stays where the design puts it. */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* The light. Its centre is the Ghost's x and the Soil's top. */
+.light {
+  position: absolute;
+  left: var(--ghost-x);
+  top: var(--soil-top);
+  width: 130vmax;
+  height: 130vmax;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--purple), transparent);
+  opacity: 0.55;
+}
+
+/* The pit: the Ghost's placement, centred on the light's x (task 3 fills it). */
+.pit {
+  position: absolute;
+  left: var(--ghost-x);
+  top: var(--soil-top);
+  transform: translateX(-50%);
+}
+
+/* The Soil_Fallback strip. Full window width. Its top edge is a jag. Each point
+   sits between 2 % and 11 % of the strip height, and never above 12 px, so the
+   jag stays inside the 14 px band at every size (R6.3). */
+.soilStrip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--soil-top);
+  height: var(--soil-band);
+  clip-path: polygon(
+    0% 100%,
+    0% min(7%, 12px),
+    6% min(3%, 12px),
+    11% min(9%, 12px),
+    17% min(4%, 12px),
+    24% min(10%, 12px),
+    31% min(2%, 12px),
+    38% min(8%, 12px),
+    45% min(5%, 12px),
+    52% min(11%, 12px),
+    59% min(3%, 12px),
+    66% min(9%, 12px),
+    73% min(4%, 12px),
+    80% min(10%, 12px),
+    87% min(2%, 12px),
+    93% min(7%, 12px),
+    100% min(5%, 12px),
+    100% 100%
+  );
+  background:
+    radial-gradient(ellipse 30% 90% at var(--ghost-x) 0%, var(--soil-lit), transparent),
+    radial-gradient(var(--clod) 1px, transparent 1.5px) 0 0 / 14px 14px,
+    linear-gradient(to bottom, var(--soil-mid), var(--soil-deep));
+}
+
+/* Fades the bottom quarter of the strip into the page background. */
+.soilStrip::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 25%;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+}
+
+/* The headline. The only h1 on the scene (R3.18, data-scene-ceiling). */
+.headline {
+  margin: 0;
+  max-width: 11.5ch;
+  font-size: clamp(2.35rem, 8.4vw, 7.6rem);
+  font-weight: 900;
+  line-height: 0.95;
+  color: var(--text);
+}
+
+/* "the receipts." stays on one line (R3.18). */
+.nowrap {
+  white-space: nowrap;
+}
+
+/* The Accent: "receipts." only, never on a figure (R3.10). */
+.accent {
+  color: var(--accent);
+}
+
+/* Wide layout, at or above 900 px. */
+@media (min-width: 900px) {
+  .scene {
+    --soil-top: 74vh;
+    --soil-band: 14vh;
+    --ghost-x: calc(var(--frame-l) + var(--frame-w) * 0.72);
+  }
+
+  .main {
+    padding-top: 5rem;
+  }
+
+  .topbar {
+    gap: 0 1rem;
+    padding-block: 0.75rem;
+  }
+
+  .brand {
+    order: 0;
+  }
+
+  .wordmark {
+    font-size: 1.1rem;
+  }
+
+  .controls {
+    order: 0;
+    margin-left: 0;
+  }
+
+  .control {
+    min-height: 44px;
+    font-size: 0.85rem;
+  }
+
+  .notice {
+    order: 0;
+    flex-basis: auto;
+    margin-left: auto;
+    font-size: 0.8rem;
+    text-align: right;
+  }
+}

@@ -236,3 +236,60 @@ describe("Skip context — provider boundary", () => {
     );
   });
 });
+
+// --- nested SkipProvider (spec 07, the pass-through rule) ----------------------
+//
+// A SkipProvider inside another one renders its children and defers to the
+// parent, as MotionProvider and LocalViewProvider already do. The Top_Bar and
+// the Ceremony therefore share one set of registered sequences, so Skip in the
+// Top_Bar ends a sequence that the Ceremony registered.
+
+describe("a nested SkipProvider defers to its parent", () => {
+  it("hands its children the parent's context value (the same object)", () => {
+    let outer: SkipContextValue | null = null;
+    let inner: SkipContextValue | null = null;
+    function InnerProbe() {
+      inner = useSequence();
+      return null;
+    }
+    function OuterProbe() {
+      outer = useSequence();
+      return createElement(SkipProvider, null, createElement(InnerProbe));
+    }
+    renderToStaticMarkup(createElement(SkipProvider, null, createElement(OuterProbe)));
+    expect(outer).not.toBeNull();
+    expect(inner).not.toBeNull();
+    expect(inner).toBe(outer);
+  });
+
+  it("renders the nested provider's children and nothing else", () => {
+    const markup = renderToStaticMarkup(
+      createElement(
+        SkipProvider,
+        null,
+        createElement(SkipProvider, null, createElement("p", null, "INNER_CHILD")),
+      ),
+    );
+    expect(markup).toBe("<p>INNER_CHILD</p>");
+  });
+
+  it("lets a sequence registered through the nested provider be ended by the outer skipAll", () => {
+    let outer: SkipContextValue | null = null;
+    let inner: SkipContextValue | null = null;
+    function InnerProbe() {
+      inner = useSequence();
+      return null;
+    }
+    function OuterProbe() {
+      outer = useSequence();
+      return createElement(SkipProvider, null, createElement(InnerProbe));
+    }
+    renderToStaticMarkup(createElement(SkipProvider, null, createElement(OuterProbe)));
+    if (inner === null || outer === null) throw new Error("probes did not run");
+    const seen: string[] = [];
+    const unregister = (inner as SkipContextValue).register(() => seen.push("ended"));
+    (outer as SkipContextValue).skipAll();
+    expect(seen).toEqual(["ended"]);
+    unregister();
+  });
+});

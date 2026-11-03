@@ -107,6 +107,7 @@ vi.mock("./skip", () => ({
 
 // Imported after the mocks are declared (vi.mock is hoisted, so this is safe).
 import { OpeningFlow } from "../reveal/OpeningFlow";
+import { CeremonyRoot, type CeremonyRootProps } from "./CeremonyRoot";
 
 // --- fixtures ----------------------------------------------------------------
 
@@ -444,5 +445,61 @@ describe("CeremonyRoot controls use the desk control style (R11.2, R11.4)", () =
     expect(css).toMatch(
       /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.deskControl\s*\{\s*transition:\s*none;/,
     );
+  });
+});
+
+// --- the controls prop (spec 07, R8.3) ----------------------------------------
+//
+// `controls="region"` (the default) renders Calm and Skip inside the region, as
+// before. `controls="topbar"` renders neither, because the Top_Bar holds them.
+// The region contract is the same in both modes.
+
+function rootMarkup(extra: { controls?: "topbar" | "region" } = {}): string {
+  const props: CeremonyRootProps = {
+    state: { tag: "loading" },
+    personaName: "Maya",
+    children: createElement("p", null, "BODY"),
+    ...extra,
+  };
+  return renderToStaticMarkup(createElement(CeremonyRoot, props));
+}
+
+describe("CeremonyRoot controls prop", () => {
+  it("renders Calm inside the region by default", () => {
+    expect(rootMarkup()).toContain(CEREMONY_COPY.calmOn);
+  });
+
+  it("renders Calm inside the region with controls set to region", () => {
+    expect(rootMarkup({ controls: "region" })).toContain(CEREMONY_COPY.calmOn);
+  });
+
+  it("renders no Calm and no Skip with controls set to topbar, even while a sequence runs", () => {
+    setHasActive(true);
+    try {
+      const markup = rootMarkup({ controls: "topbar" });
+      expect(markup).not.toContain(CEREMONY_COPY.calmOn);
+      expect(markup).not.toContain(CEREMONY_COPY.calmOff);
+      expect(markup).not.toContain(`>${CEREMONY_COPY.skip}<`);
+    } finally {
+      setHasActive(false);
+    }
+  });
+
+  it("keeps the region contract with controls set to topbar", () => {
+    const markup = rootMarkup({ controls: "topbar" });
+    expect(markup).toContain('role="region"');
+    expect(markup).toContain('aria-label="Maya"');
+    expect(markup).toContain('tabindex="-1"');
+    expect(markup.match(/data-ceremony="/g)?.length).toBe(1);
+    expect(markup.match(/data-ceremony-motion="/g)?.length).toBe(1);
+  });
+
+  it("shows Skip inside the region with controls set to region while a sequence runs", () => {
+    setHasActive(true);
+    try {
+      expect(rootMarkup({ controls: "region" })).toContain(`>${CEREMONY_COPY.skip}<`);
+    } finally {
+      setHasActive(false);
+    }
   });
 });

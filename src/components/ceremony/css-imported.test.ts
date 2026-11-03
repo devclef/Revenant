@@ -13,10 +13,7 @@ const REPO = resolve(SRC, "..");
  * must be removed as soon as a non-test file imports the module, which the
  * test below enforces.
  */
-const NOT_IMPORTED_YET: Record<string, string> = {
-  "src/components/ceremony/scene/tokens.module.css":
-    "Scene colour tokens. SceneShell imports them in spec 07 task 2.",
-};
+const NOT_IMPORTED_YET: Record<string, string> = {};
 
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {

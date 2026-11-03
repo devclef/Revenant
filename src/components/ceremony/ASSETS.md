@@ -19,6 +19,9 @@ Rules for every entry:
 
 | Path | How it was made or where it came from | Licence | Date |
 | --- | --- | --- | --- |
+| src/components/ceremony/scene/SoilStrip.tsx | Component. CSS gradients and a clip-path jag, written by hand. No image or font. | original | 2026-11-03 |
 
-There are no asset files yet. The ceremony draws the desk, the candle light and
-every texture with CSS gradients and inline SVG, so no file is on record.
+Rows whose path is outside `assets/` name a component file in the repository,
+which `assets.test.ts` checks. No asset file is under `assets/`. The ceremony
+draws the desk, the candle light and every texture with CSS gradients and inline
+SVG.

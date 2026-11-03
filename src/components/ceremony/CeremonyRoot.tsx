@@ -69,6 +69,12 @@ export type CeremonyRootProps = {
   persona?: { key: string; written_as_of: string; opens_at: string };
   /** Extra class for the region (the reveal layout class). */
   className?: string;
+  /**
+   * Where the Calm and Skip controls render. `"region"` (the default, live
+   * mode) renders them inside the region. `"topbar"` (persona mode) renders
+   * neither, because the Top_Bar holds them (spec 07, R8.3).
+   */
+  controls?: "topbar" | "region";
   /** The one view for the current Stage, rendered inside the region. */
   children: ReactNode;
 };
@@ -115,6 +121,7 @@ function CeremonyRegion({
   state,
   personaName,
   className,
+  controls = "region",
   children,
 }: CeremonyRootProps) {
   const { mode, setCalm } = useMotion();
@@ -170,6 +177,10 @@ function CeremonyRegion({
   // border, and it is declared after `.desk` so it wins.
   const controlClass = `${styles.desk} ${styles.deskControl}`;
 
+  // Calm and Skip render here only in `region` mode. In `topbar` mode the
+  // Top_Bar renders them (spec 07, R8.3), so the page has one of each.
+  const showRegionControls = controls === "region";
+
   return (
     <div
       ref={regionRef}
@@ -182,13 +193,15 @@ function CeremonyRegion({
     >
       <SoundEnabledContext.Provider value={soundOn}>
         <LiveRegion message={liveLine} />
-        <button
-          type="button"
-          className={controlClass}
-          onClick={() => setCalm(motionAttr !== "calm")}
-        >
-          {calmLabel}
-        </button>
+        {showRegionControls ? (
+          <button
+            type="button"
+            className={controlClass}
+            onClick={() => setCalm(motionAttr !== "calm")}
+          >
+            {calmLabel}
+          </button>
+        ) : null}
         <SoundToggle
           onChange={(next) => {
             setSoundOn(next);
@@ -198,7 +211,7 @@ function CeremonyRegion({
         <p className={`${styles.desk} ${styles.soundNote}`}>
           {CEREMONY_COPY.soundNote}
         </p>
-        {hasActive ? (
+        {showRegionControls && hasActive ? (
           <button type="button" className={controlClass} onClick={skipAll}>
             {CEREMONY_COPY.skip}
           </button>

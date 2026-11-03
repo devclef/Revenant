@@ -71,6 +71,16 @@ const SkipContext = createContext<SkipContextValue | null>(null);
  * Skip control update when the set changes).
  */
 export function SkipProvider({ children }: { children: ReactNode }) {
+  // One Skip control per page: a nested provider defers to the parent, so the
+  // Top_Bar and the Ceremony share one set of registered sequences (spec 07).
+  const parent = useContext(SkipContext);
+  if (parent !== null) {
+    return <>{children}</>;
+  }
+  return <RootSkipProvider>{children}</RootSkipProvider>;
+}
+
+function RootSkipProvider({ children }: { children: ReactNode }) {
   // The registered skip callbacks, keyed by a monotonic id. Kept in a ref so
   // that registering or unregistering a sequence does not itself trigger a
   // re-render of the sequence that registered. The derived `count` drives the

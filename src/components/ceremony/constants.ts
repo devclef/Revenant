@@ -103,6 +103,7 @@ export const SEAL_WIDTH_NARROW = 0.32;
 export const SEAL_HIT_MIN_PX = 60; // before scale; at least 48 at 0.8 (R10.16)
 export const COLUMN_GAP_UNDER_SOIL_PX = 4;
 export const DUST_CEILING_GAP_PX = 8; // R6.16
+export const EDGE_BAND_PX = 14; // R6.3: the soil's top-edge jag stays inside this band
 
 // --- Landing light (R7.1, R6.10) (spec 07) ---
 export const LANDING_LIGHT_AT_MS = 250;
