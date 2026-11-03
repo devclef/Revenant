@@ -195,10 +195,13 @@ vi.mock("./skip", () => ({
 // Imported after the mocks (vi.mock is hoisted).
 import { OpeningFlow } from "../reveal/OpeningFlow";
 
-function render(state: FlowState): string {
+function render(
+  state: FlowState,
+  mode: "persona" | "live" = "persona",
+): string {
   currentState = state;
   return renderToStaticMarkup(
-    createElement(OpeningFlow, { letterId: "letter-1", personaName: "Maya" }),
+    createElement(OpeningFlow, { letterId: "letter-1", personaName: "Maya", mode }),
   );
 }
 
@@ -300,7 +303,9 @@ describe("Property 19: every running sequence has a visible Skip (R6.3)", () => 
         (state, mode, running) => {
           currentMode = mode;
           sequenceRunning = running;
-          const html = render(state);
+          // Live mode keeps Skip inside the region; persona mode moves it to the
+          // Top_Bar (spec 07, R8.3), which this file does not render.
+          const html = render(state, "live");
           expect(
             countButtons(html, CEREMONY_COPY.skip),
             `${state.tag} in ${mode} with ${running ? "a" : "no"} running sequence`,

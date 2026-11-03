@@ -165,10 +165,10 @@ const RECORD: RecallRecordV1 = {
   answers: [{ question_id: "q-fuel", kind: "number", value: "3.50" }],
 };
 
-function render(state: FlowState): string {
+function render(state: FlowState, mode: "persona" | "live" = "persona"): string {
   setFlowState(state);
   return renderToStaticMarkup(
-    createElement(OpeningFlow, { letterId: "letter-1", personaName: "Maya" }),
+    createElement(OpeningFlow, { letterId: "letter-1", personaName: "Maya", mode }),
   );
 }
 
@@ -353,7 +353,8 @@ describe("CeremonyRoot live region", () => {
 
 describe("CeremonyRoot Calm control", () => {
   it.skipIf(!CEREMONY_ROOT_PRESENT)("renders a Calm control labelled from CEREMONY_COPY", () => {
-    const html = render({ tag: "loading" });
+    // Live mode keeps the region's own controls; persona mode puts them in the Top_Bar.
+    const html = render({ tag: "loading" }, "live");
     // In full motion the control offers to turn motion off.
     expect(html).toContain(esc(CEREMONY_COPY.calmOn));
   });
@@ -398,7 +399,7 @@ describe("CeremonyRoot desk-token controls render once per state", () => {
         it(`${name}, ${mode} motion, skip ${active ? "active" : "idle"}: each control once`, () => {
           setMotionMode(mode);
           setHasActive(active);
-          const html = render(state);
+          const html = render(state, "live");
           const calmLabel =
             mode === "calm" ? CEREMONY_COPY.calmOff : CEREMONY_COPY.calmOn;
           expect(countButtons(html, calmLabel)).toBe(1);
@@ -411,7 +412,7 @@ describe("CeremonyRoot desk-token controls render once per state", () => {
   it("gives both controls the desk-control class", () => {
     setMotionMode("full");
     setHasActive(true);
-    const html = render({ tag: "loading" });
+    const html = render({ tag: "loading" }, "live");
     const buttons = html.match(/<button[^>]*>[^<]*<\/button>/g) ?? [];
     const controls = buttons.filter(
       (b) =>
@@ -433,9 +434,18 @@ describe("CeremonyRoot render is I/O-free", () => {
   });
 });
 
+describe("CeremonyRoot persona mode leaves the region without its own controls (R8.3)", () => {
+  it("renders no Calm or Skip inside the region in persona mode", () => {
+    setHasActive(true);
+    const html = render({ tag: "loading" });
+    expect(countButtons(html, CEREMONY_COPY.calmOn)).toBe(0);
+    expect(countButtons(html, CEREMONY_COPY.skip)).toBe(0);
+  });
+});
+
 describe("CeremonyRoot controls use the desk control style (R11.2, R11.4)", () => {
   it("gives the Calm control the desk-control class from ceremony.module.css", () => {
-    const html = render({ tag: "loading" });
+    const html = render({ tag: "loading" }, "live");
     expect(html).toMatch(/<button type="button" class="[^"]+"/);
   });
 
