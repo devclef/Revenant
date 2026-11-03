@@ -52,6 +52,59 @@ If you run out of time before finishing the browser walk, list the steps you did
 
 **Other pages.** For each changed page (at most 3), take `<nn>-<page>` at 1280×800 and `<nn>-<page>-360` at 360×640, both at the top of the page.
 
+### Spec 07 (judge journey) tickets
+
+For a ticket from spec 07, these rules replace the "Demo pages" screenshot table, and checks S1a to S1d and S5a to S5b replace C1 and C5. C2, C3, C4, C6, C7, C8 and C9 still apply.
+
+Find the ticket's QA steps in `.kiro/specs/07-judge-journey/design.md` with the grep pattern `^\| 07 \| (NN|MM) \|`, using the step numbers the ticket names.
+
+#### Stages
+
+`scene` (/), `index` (/demo), and on `/demo/personas/us-maya`: `emerging`, `sealed`, `intact`, `recall`, `marks`, `seal`, `letter`, `figures`, `close`, `error`. The page root's `data-ceremony` must equal the shot's Stage when you take it.
+
+#### Shots
+
+Take only the shots the ticket lists. Name each `<stage>-<width>x<height>.png`. A shot of a Stage from a later task in its old look is expected and is not a finding.
+
+| Shot | State |
+|---|---|
+| `scene-1280x800`, `scene-360x640` | `/`, top of page, light up |
+| `index-1280x800`, `index-360x640` | `/demo`, top of page |
+| `emerging-1280x800`, `emerging-360x640` | Step 03: letter request delayed 4 s, within 2 s of the click |
+| `sealed-1280x800`, `sealed-360x640` | Step 04: sealed stub |
+| `intact-1280x800`, `intact-360x640` | Step 05: "Pick up the letter" shown |
+| `recall-1280x800`, `recall-360x640` | Step 06: question 1 |
+| `marks-1280x800`, `marks-360x640` | Step 08: both answers recorded |
+| `seal-1280x800`, `seal-360x640` | Step 09: hold for 700 ms |
+| `letter-1280x800`, `letter-360x640` | Step 11: 2.3 s after "Break the seal", first paragraph in view |
+| `figures-1280x800`, `figures-360x640` | Step 12: animations paused |
+| `close-1280x800`, `close-360x640` | Step 13: first figure in view, then scroll the close into view for a second look (no extra shot) |
+| `error-1280x800`, `error-360x640` | Step 14: 404 stub |
+
+#### Checks for every spec 07 shot
+
+| ID | Question | Pass |
+|---|---|---|
+| S1a | Is every text that sits straight on the near-black background white or light grey-lilac, with no dark or faded text on it? | Yes |
+| S1b | Is every text that sits straight on the purple block pure white? | Yes |
+| S1c | Is every text on the cream letter paper or the envelope dark ink? | Yes |
+| S1d | Did the F2 box check return no hits (no text, button or field over the soil strip)? | Yes |
+| S5a | Is orange used only for the word "receipts.", the main buttons, the wax seal, focus rings outside the purple block, the "Your answer" values and the Mark? | Yes |
+| S5b | Is any figure value, change, formula, period, Source control, arrow or Number_Line pin shown in orange, red or green? | No |
+| F1 | On `recall` and `marks` shots, did the F1 box check pass for every listed name at this size? | Yes |
+| T1 | On 360×640 persona shots, is the Top_Bar at most 96 px tall with the whole notice visible (step 25 when the ticket names it)? | Yes |
+| G1 | In `intact`, `recall` and `marks`, did the G1 check return no hits at every size the ticket names (step 21)? | Yes |
+| G2 | Did the Ghost's centre x in `recall`, `marks` and `seal` differ from its `intact` value by more than 1 px at any size in step 22? | No |
+| G3 | At every size in step 23, are the headline's left edge, the left margin and the right margin all within 1 px of each other, with the Soil running from the window's left edge to its right edge? | Yes |
+| D1 | Did the D1 check report any drawing above the ceiling in step 24? | No |
+| E1 | Does every Envelope_Front date render on exactly one line (E1 reports 1 for each)? | Yes |
+
+Record the measured values from G1, G2, G3, D1 and T0 in the verdict notes for each size and Stage.
+
+A failed S, F, T, G, D or E check is a blocker unless the causing file is outside the diff and the ticket's Scope, as for C checks. `readable` is false when S1a, S1b, S1c or C2 fails.
+
+If a frontend-dev PR changes `src/app/page.tsx`, `src/app/layout.tsx` or `src/app/globals.css`, fail it and name the file (R1.13).
+
 ### Judge each screenshot right after taking it
 
 Open the file once. Then, before taking the next shot, write its entry for the `screenshots` list (see Verdict). Check every item below. When you are unsure whether something passes, it fails.
@@ -81,7 +134,7 @@ Any other failed check is a blocker. If the causing file is in the diff or in th
 ### Ticket checks
 
 - Every line in the ticket that starts with "QA check:" is required. Check each one in the browser and add a blocker finding for each that fails.
-- If the ticket names "QA steps", read only those rows of the spec's `design.md` "QA browser steps" table. Find them with the grep tool, pattern `^\| (05|08) \|` with the step numbers the ticket names, and read just those lines. Do their checks with `browser_snapshot` or `browser_evaluate`. Take no extra screenshots for them.
+- If the ticket names "QA steps", read only those rows of the spec's `design.md` "QA browser steps" table. Find them with the grep tool, pattern `^\| (05|07|08) \|` with the step numbers the ticket names, and read just those lines. Do their checks with `browser_snapshot` or `browser_evaluate`. Take no extra screenshots for them.
 - For the demo pages also check: the recall questions come before anything else, and the reveal order is memory, then letter, then numbers.
 
 ### Clean up, even on failure

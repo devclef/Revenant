@@ -34,6 +34,29 @@ const CLASS_TOKEN_RE =
   /(?:^|[\s"'`._-])(red|green|arrow|arrows|up|down|positive|negative|rise|fall|gain|loss)(?=$|[\s"'`._-])/i;
 const CHANGE_CONTEXT_RE = /change|delta|diff|rise|fall|trend/i;
 
+// Spec 07 (judge journey), design.md "Patterns for tools/hooks/tone-check.mjs".
+// T1: scoring words checked in every file this hook scans (Scoring_Words_Always).
+const SCORING_ALWAYS_RE = /\b(accuracy|score|off by)\b/i;
+// T2: "close", "right" and "wrong" only in the Scene copy modules, inside string
+// literals (Scoring_Words_Scene). Never src/components/live/copy.ts.
+const SCENE_COPY_FILES = new Set([
+  "src/components/ceremony/copy.ts",
+  "src/components/reveal/copy.ts",
+  "src/components/ceremony/scene/copy.ts",
+  "src/components/demo/copy.ts",
+]);
+const SCORING_SCENE_RE = /\b(close|right|wrong)\b/i;
+// T3: the Accent class next to a figure, change, formula, period, source or
+// direction class on one className line.
+const FIGURE_CLASS = "(?:big|now\\w*|change\\w*|formula\\w*|meta|period\\w*|src|source\\w*|pin\\w*|axis|direction\\w*)";
+const ACCENT_ON_FIGURE_TSX_RE = new RegExp(
+  `className=[^>\\n]*styles\\.${FIGURE_CLASS}\\b[^>\\n]*styles\\.accent\\w*|className=[^>\\n]*styles\\.accent\\w*[^>\\n]*styles\\.${FIGURE_CLASS}\\b`,
+);
+// T4: a figure, change, formula, source or direction rule in a CSS module that
+// uses the Accent or the wax colour.
+const ACCENT_ON_FIGURE_CSS_RE =
+  /\.(big|nowLine|change\w*|formula\w*|meta|src|pin\w*|axis|direction\w*)\b[^{]*\{[^}]*var\(--(accent|wax)\)/gs;
+
 function argValue(name) {
   const i = process.argv.indexOf(name);
   return i >= 0 ? process.argv[i + 1] : undefined;
@@ -56,6 +79,7 @@ function isRelevant(rel) {
   const parts = rel.split("/");
   const name = basename(rel);
   if (/\.test\.[a-z]+$/.test(name) || /\.spec\.[a-z]+$/.test(name)) return false;
+  if (name.endsWith(".module.css")) return parts[0] === "src" && parts[1] === "components";
   if (!TEXT_EXT.has(extname(rel))) return false;
   if (rel.startsWith("src/app/") && extname(rel) === ".tsx") return true;
   if (parts[0] === "src" && parts[1] === "components") return true;
@@ -105,8 +129,20 @@ function visibleText(line, isCode) {
   return out.join(" ");
 }
 
+// T4 runs on CSS modules only; no other rule applies to them.
+function scanCss(rel, text) {
+  const hits = [];
+  for (const m of text.matchAll(ACCENT_ON_FIGURE_CSS_RE)) {
+    const n = text.slice(0, m.index).split("\n").length;
+    hits.push(`${rel}:${n}: ".${m[1]}" uses var(--${m[2]}) (spec 07 R3.10: orange is never on a figure, change or direction)`);
+  }
+  return hits;
+}
+
 function scan(rel, text) {
+  if (rel.endsWith(".module.css")) return scanCss(rel, text);
   const isCode = extname(rel) === ".tsx" || extname(rel) === ".ts";
+  const sceneCopy = SCENE_COPY_FILES.has(rel);
   const hits = [];
   let inBlockComment = false;
   text.split("\n").forEach((raw, i) => {
@@ -133,6 +169,20 @@ function scan(rel, text) {
     const w = seen.match(WORD_RE);
     if (w) {
       hits.push(`${rel}:${n}: judgemental word "${w[1]}" (neutrality.md: describe the change, do not rate it)`);
+    }
+    const sw = seen.match(SCORING_ALWAYS_RE);
+    if (sw) {
+      hits.push(`${rel}:${n}: scoring word "${sw[1]}" (spec 07 R24.6: the gap between memory and record is never scored)`);
+    }
+    if (sceneCopy) {
+      const literals = [...line.matchAll(/(["'`])((?:\\.|(?!\1).)*)\1/g)].map((m) => m[2]).join(" ");
+      const ss = literals.match(SCORING_SCENE_RE);
+      if (ss) {
+        hits.push(`${rel}:${n}: scoring word "${ss[1]}" in Scene copy (spec 07 R24.7)`);
+      }
+    }
+    if (extname(rel) === ".tsx" && ACCENT_ON_FIGURE_TSX_RE.test(line)) {
+      hits.push(`${rel}:${n}: accent class on a figure, change or direction element (spec 07 R3.10)`);
     }
     if (isCode && /class(Name)?\s*=|styles\.|clsx|classNames/.test(line)) {
       const cls = line.match(CLASS_TOKEN_RE);

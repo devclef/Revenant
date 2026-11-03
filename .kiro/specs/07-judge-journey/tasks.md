@@ -1,0 +1,368 @@
+# Implementation Plan: 07 Judge journey
+
+## Overview
+
+Spec 07 replaces the spec 05 "One Desk" look with the Scene: a near-black page, purple light on a strip of soil, a sheet ghost that rises holding the letter, and one orange accent. It is a skin on the working flow. Work is split by role: frontend-dev (tasks 1 to 6 and 8 to 10) and platform-dev (tasks 7 and 11).
+
+Each task is one GitHub issue (template `.github/ISSUE_TEMPLATE/agent-task.md`) worked by one role agent, and leaves `main` passing the CI gate. Each PR stays under `max_changed_lines` (5,000) as `.github/agents.json` counts it (test files, `package-lock.json` and `drizzle/meta/**` excluded; deletions count) and inside its role's paths plus `shared` (`package.json`, `package-lock.json`, `.env.example`) (R28.2, R28.11).
+
+Follow `design.md` in this folder for every file name, constant, interface, geometry value and algorithm, and `requirements.md` for the rules. The language is TypeScript (strict). Follow `tone.md`, `neutrality.md`, `data-integrity.md` and `tech.md` in `.kiro/steering/`. The prototype `docs/design/07-judge-journey.html` is the reference for look and pacing; where it and `design.md` differ, `design.md` wins (design.md, "Deviations from the prototype").
+
+"Depends on" lists only spec 07 task numbers. "Before this task" lists work from other specs that must be on `main` first, as spec 05 does with "Blocked by #49". Tasks 5, 6 and 10 carry "Blocked by #134", the issue for spec 06 task 9 (Live_Letter reveal variant). The tasks form a straight chain (see the graph at the end), so only one spec 07 frontend-dev PR is open at a time. Task 11 (platform-dev, `globals.css`) is the only exception: it may run any time after task 1.
+
+## Rules for every task
+
+- **Branch and PR.** The dispatcher creates the branch `agent/<role>/issue-N` and the PR "Closes #N". Do not push to `main`. Do not merge. Do not amend commits after a hook failure; make a new commit.
+- **Stay inside Scope.** Change only the files listed under the task's Scope, plus new `*.test.ts(x)` files next to the code they test. Paths that match your role's globs but are not in your Scope are not yours either. Check your own diff before you finish.
+- **Hard boundaries (R1.1, R1.2, R1.6).** Do not add, edit or delete anything under `src/app/api/`, `src/lib/crypto/`, `src/lib/seal-format/`, `src/lib/letter-store/`, `src/lib/db/` or `src/lib/recall/`, and add no migration. Do not change `opening-machine.ts`, `useOpeningFlow.ts`, `src/components/reveal/api.ts` or `src/lib/security-headers.ts`. `opening-machine.test.ts` and `opening-machine.property.test.ts` pass with no edit.
+- **Events (R1.4, R1.5).** Send only events that already exist: `START`, `BEGIN`, `EDIT_DRAFT`, `TOGGLE_NO_ANSWER`, a submit through the existing handler, `RETRY_POST`, `ADVANCE`, `SHOW_ALL`, and the spec 06 unlock events on `/l/[id]`. If a control would need a new event, leave the control out and raise it with the owner in the issue.
+- **The three landing files (R1.11, R1.12).** Frontend-dev tasks must not touch `src/app/page.tsx`, `src/app/layout.tsx` or `src/app/globals.css`. They match `frontend-dev`'s globs (`src/app/**/*.tsx`, `src/app/**/*.css`), so the PR check will not catch it. Check your diff for them and remove any change before you open the PR. QA fails a frontend-dev PR that changes one of them (R1.13). Only tasks 7 and 11 (platform-dev) edit `page.tsx` and `globals.css`; nobody edits `layout.tsx`.
+- **Owner-only paths (R1.10).** Never edit `scripts/check.sh`, `scripts/check-js-budget.mjs`, `.github/**`, `tools/**`, `.kiro/**`, `docs/**` or `src/lib/security-headers.ts`.
+- **No new dependency** in `package.json`, no animation library, no WebGL, and no browser test framework (R1.3, R6.6, R26.2). If you think you need one, stop and ask the owner.
+- **Privacy (R1.7, R1.8, R1.9).** No third-party request, script or analytics. Write nothing to `localStorage`, `sessionStorage`, IndexedDB, cookies, the URL path, the query or the fragment. Calm and sound settings live in memory only. No module statically imports `src/lib/crypto`.
+- **Final state first.** Every view renders its settled final state on the server and on the first client render. Motion is CSS the server markup already carries (the Emergence) or a Web Animation started in a layout effect on the client in full motion only (design.md, "Architecture").
+- **Calm, Skip and controls.** Each sequence ships with its Skip path, its Calm_Mode path and its button equivalent (R19.2, R19.3, R19.9). Under Calm every decorative motion is off and a Stage changes by a cut or a fade of at most 150 ms.
+- **Animation properties (R21.4).** CSS animations, transitions and Web Animations change only `transform` and `opacity`. The Soil_Canvas's own pixels are the only exception.
+- **Colours (R3.7, R3.8).** Every Scene colour comes from `src/components/ceremony/scene/tokens.module.css`. No colour literal anywhere else, including canvas code. Orange (the Accent) only where R3.9 allows it; never on a figure value, change, formula, period, source control or direction (R3.10). Text on purple is `--on-purple` only (R3.17).
+- **Constants (R18.1).** Every duration, delay, easing and layout value this spec adds is a plain literal in `src/components/ceremony/constants.ts`, with the names and values in design.md "Constants". The CSS repeats them and `constants-css.test.ts` checks they match.
+- **Copy (R24).** Every user-facing string, including `aria-label`s and live-region lines, lives in a copy module in its feature folder, with the exact text in design.md "Copy". No sentence over 25 words, no exclamation mark, no pun, no scoring word (R24.6, R24.7).
+- **Assets (R23).** Original work only, inline SVG or CSS, each with an `ASSETS.md` entry (path or component, how it was made, licence "original", date added). No font file, no AI-generated asset.
+- **Tests.** Vitest in the `node` environment with `renderToStaticMarkup`, `fetch` stubbed, no `DATABASE_URL` (R26.1, R26.2). Property tests use fast-check with `numRuns` of at least 100 and the tag `// Feature: 07-judge-journey, Property N: <title>`. The design's properties named in a task are required in that task. Existing data, neutrality, accessibility and contrast tests stay; change one only where a value it asserts changes in this spec (R26.6). Spec 03 tests pass in `npm test` unless the task names the test and why (R26.7).
+- **Later Stages are not findings (R27.6, R28.10).** A shot of a Stage that a later task rebuilds, still in its old look, is expected and is not a QA finding.
+- **The flow works after the merge (R28.9).** After your PR merges, `/` to `/demo/personas/us-maya` through to the `close` Stage, `/demo`, `/demo/live` and `/l/[id]` all work end to end, with `bash scripts/check.sh` passing.
+- **The PR description states (R21.2, R28.13):**
+  - the five budgets from `node scripts/check-js-budget.mjs` after `npm run build` on the head commit, in kB: `/`, `/demo`, `/demo/personas/[key]`, `/demo/live`, `/l/[id]` (limits 130, 130, 190, 190, 190; R21.1);
+  - every spec 03, 05 and 06 test it changed or retired, by file and test name, with the reason for each, or "none";
+  - every asset it added, with its size in bytes and its `ASSETS.md` entry, or "none";
+  - the QA shots listed in the task, taken with the QA steps listed in the task, and the recorded values of each "QA check:" line.
+- **QA steps** are numbered as in design.md "QA browser steps" (rows starting `| 07 |`). QA finds them with the grep pattern `^\| 07 \|`. Shots are named `<stage>-<width>x<height>` (R27.2) and taken while the page root's `data-ceremony` equals that Stage (R27.3). If a stub cannot be installed, or the canvas does not load on the QA machine, that is a minor finding (design.md, "QA browser steps").
+- If `design.md` and the code on `main` disagree, or a name has moved, re-read the code, keep the design's behaviour, and say what you changed in the PR description. If something is unclear, stop and ask the owner in the issue. Do not guess.
+
+## Tasks
+
+- [ ] 1. Scene tokens, contrast test and measured budgets
+  - Agent: `frontend-dev` · Depends on: none · Estimated size: ~700 changed lines
+  - Before this task: only `main`, with the owner's commits of `tone.md` and `product.md` (R25.1, R25.10) and the spec 07 section of `.kiro/agents/prompts/qa.md` (R25.5).
+  - Scope: `src/components/ceremony/scene/tokens.module.css`, `src/components/ceremony/contrast.test.ts`, `src/components/ceremony/ASSETS.md` (header only, if needed), and new `*.test.ts` files under `src/components/ceremony/scene/`
+  - Design sections: "Colour tokens (`scene/tokens.module.css`)", "Measured starting point", Property 9.
+  - Acceptance:
+    - `scene/tokens.module.css` defines every token in design.md "Colour tokens" with exactly the values listed (`--bg` `#0b0912`, `--text` `#f5f3ff`, `--muted` `#bdb4dc`, `--purple` `#8F46FF`, `--on-purple` `#ffffff`, `--accent` `#ff7b1c`, `--on-accent` `#1a0c00`, `--paper` `#f6ead4`, `--ink` `#1f1b16`, and the rest of the table) (R3.7).
+    - No component uses the tokens yet; nothing on any page changes. Every Stage keeps its current look (R28.10).
+    - The contrast test reads `tokens.module.css` and checks every pair of R4.1 with the WCAG 2.2 formula, compositing partly transparent tokens over the surface beneath (R4.2). Normal text at 4.5:1, large text, control boundaries and focus rings at 3:1 (R4.3, R4.4). It names the pair and the ratio on failure.
+    - Any text token on `--purple` other than `--on-purple` fails by name, including `--accent`, `--text` and near-black (R4.5, R3.17). The Accent as a focus ring inside the Letter_Block fails by name (R4.9, R3.15). The white ring on purple and the Accent ring on `--bg` are checked at 3:1 (R3.14).
+    - The crease colour (`--ink` at 8 % over `--paper`) is composited and `--ink` on it is checked (R13.2). `--env-ink` on the darkest `--dirt` over `--env` is computed and asserted to fail, so later tasks must keep Envelope text off the dirt band (R4.7).
+    - Every spec 05 pair and threshold already in `contrast.test.ts` stays unchanged. The desk pairs stay until task 9 (R4.8).
+    - Measure the five budgets on the head commit and state them in the PR description (R21.2, R25.3). This sets the starting values for later tasks; it changes no budget.
+    - This task does not edit `.kiro/steering/tone.md` or `.kiro/steering/product.md` (R25.3).
+    - Tests: Property 9 (every Scene token pair clears its threshold), the Scene part. The Envelope dirt-band geometry clause of Property 9 is added in task 2 with the Envelope.
+  - Spec 05 tests retired: none. Spec 05 tests changed: `contrast.test.ts` (Scene pairs added; existing assertions kept).
+  - QA shots: none (this task changes no Stage).
+  - QA steps: none. The QA agent reads the diff against R3.7, R3.8 and R4 and runs the tests.
+  - Validation: `bash scripts/check.sh`
+  - _Requirements: R3.7, R3.8, R3.13, R3.14, R3.15, R3.17, R4.1, R4.2, R4.3, R4.4, R4.5, R4.7, R4.8, R4.9, R13.2, R21.1, R21.2, R25.3_
+
+- [ ] 2. Scene_Frame, Ghost and the Emergence on the persona page
+  - Agent: `frontend-dev` · Depends on: 1 · Estimated size: ~2,600 changed lines
+  - Before this task: task 1 is on `main`.
+  - Scope: `src/components/ceremony/scene/scene.module.css`, `scene/copy.ts`, `scene/SceneShell.tsx`, `scene/TopBar.tsx`, `scene/SceneBackdrop.tsx`, `scene/SceneHeadline.tsx`, `scene/SoilStrip.tsx`, `scene/Ghost.tsx`, `scene/eyes.ts`, `scene/useEmergence.ts`, `scene/layout.ts`, `src/components/ceremony/constants.ts`, `stages.ts`, `local-view.tsx`, `skip.tsx`, `CeremonyRoot.tsx`, `copy.ts`, `ceremony.module.css`, `ASSETS.md`, `src/components/ceremony/envelope/Envelope.tsx`, `envelope/EnvelopeFront.tsx`, `envelope/EnvelopeView.tsx`, `envelope/Envelope.module.css`, `envelope/EnvelopeView.module.css`, `src/components/reveal/OpeningFlow.tsx`, `src/app/demo/personas/[key]/page.tsx`, the scan tests under `src/components/ceremony` (add `scene/` to their file walks, additions only), and the `*.test.ts(x)` for each file above including `src/app/demo/personas/[key]/page.test.tsx` and `src/components/ceremony/constants-css.test.ts`
+  - Design sections: "The Scene on each route", "Providers and the Top_Bar", "The Emergence is CSS first", "The Pick_Up_Button gate", "Stage resolution", "Motion modes", "`SceneShell`, `TopBar` and the landing page", "The Scene_Frame", "`SceneBackdrop` and the Soil" (Geometry and Soil_Fallback only), "The Ghost", "What makes the Ghost ours", "The Envelope" (front, shape and dirt), "Pick up and the status line", "Copy", "Constants".
+  - Acceptance:
+    - **Constants.** `constants.ts` gains the Layout, Emergence, Idle_Bob and eyes, and landing-light constants of design.md "Constants" with exactly those values. `constants-css.test.ts` parses the CSS modules and checks each CSS-side value equals its constant (R18.1).
+    - **Stages.** `stages.ts` has the `Stage` type, the `LocalView` with `emergence`, and `stageFor` per design.md "Stage resolution": `loading`, `openable`, `verifying` give `emerging`; `sealed` gives `sealed`; `verified` gives `intact`; errors give `error`; the spec 06 unlock states keep `envelope` (R2.1, R2.5). Spec 05's `step` and `desk` stay until tasks 6 and 8. `DEFAULT_LOCAL_VIEW.emergence` is `"done"`.
+    - **Providers.** `SkipProvider` gains the nested pass-through that `MotionProvider` and `LocalViewProvider` already have. `CeremonyRoot` gains `controls: "topbar" | "region"`; with `"topbar"` it renders no Calm or Skip, with `"region"` it renders them as today. The region contract (`role="region"`, `aria-label`, `tabIndex={-1}`, focus effect, live region) is unchanged. `data-ceremony` and `data-ceremony-motion` (`full` or `calm`) are on exactly one element per page (R2.1, R2.6).
+    - **Scene_Frame.** Top_Bar and `main` share `padding-inline: calc(var(--frame-l) + var(--pad))` with `--frame-w: min(100vw, 1440px)`. At or above 900 px the light and the Ghost's pit sit at `GHOST_X_IN_FRAME` (72 %) of the frame; below 900 px at 50 % of the window. The Soil, glow and light run the full window width (R5.16, R6.17, R6.18, R8.14).
+    - **Top_Bar.** Fixed to the top. Wordmark "revenant" and the Demo chip on the left. On the persona page: notice, Calm, Skip in that order on one row at or above 900 px; below 900 px a first row (wordmark and chip left, Calm and Skip right) and the notice on its own full-width second row with no truncation (R8.1 to R8.6). The notice reads "{name} is fictional. This letter was prepared later as a demo." (R8.4). Skip shows only while a sequence is registered, is in the Tab order and works with Enter and Space. Narrow styling as design.md lists. `data-wordmark` and `data-topbar-last` are set for QA.
+    - **Backdrop.** `SceneBackdrop` renders inside one `aria-hidden`, `pointer-events: none` container: the light, `SoilStrip` (the Soil_Fallback, `data-soil-strip`) and, on the persona page, the Ghost (R6.9, R19.5). Soil geometry: 14vh from 74vh at or above 900 px, 8vh from 69vh below, plain `--bg` below the strip, top-edge jag inside the 14 px band, no mound or grave-like shape (R6.1, R6.3, R6.14). No canvas yet; the Soil_Fallback is the only Soil until task 3.
+    - **Ghost.** `Ghost.tsx` draws exactly the geometry in design.md "The Ghost" (head arc, body, zigzag hem, gradient fill, folds, eyes, glow), with no hood, hands, arms or mouth. The `svg` is `aria-hidden`, `focusable="false"`, has no title, and carries `data-ghost-box` (R5.1, R5.3, R5.9). Ghost_Box width `GHOST_WIDE` at or above 900 px and `GHOST_NARROW` below, height 1.2 × width (R5.15). It is recorded in `ASSETS.md`. No file, path data or description of Kiro's logo or mascot is added (R5.4).
+    - **Eyes.** `eyes.ts` exports `eyeOffset` per design.md "Eye follow". Only `mouse` and `pen` pointers move the eyes; touch and keyboard leave them idle; `pointerleave` returns them; no listener in Calm (R5.5 to R5.8).
+    - **Emergence and Idle_Bob.** The shake, rise and bob are the CSS animations in design.md "The Emergence is CSS first", gated on `prefers-reduced-motion: no-preference` and `[data-ceremony-motion="full"]`. The shake is 2 px, 500 ms, once, with no sound or vibration (R9.5, R9.15, R18.8, R22.5). The rise starts before hydration and runs alongside the real seal check (R9.6, R9.7). The bob is 3 px over 3,600 ms, `transform` only, and stops within 200 ms when Calm turns on (R5.10 to R5.14). Under Calm or reduced motion the Ghost shows its end pose from the first render (R9.14).
+    - **Pick_Up_Button gate.** `useEmergence` reads the rise with `getAnimations()`, sets `emergence: "running"` and registers a Skip sequence while it runs, and sets `"done"` when it finishes or Skip finishes it. The button renders only when `state.tag === "verified" && emergence === "done"` (R9.8 to R9.11). In this task the button keeps its current label and behaviour; task 4 adds "Pick up the letter" and the turn.
+    - **Envelope front.** `Envelope.tsx` is redrawn (aspect 1.45 wide, 1.3 narrow, torn bottom edge, dirt in the bottom 22 %, `aria-hidden` decoration) and held in the Ghost's `.heldSlot` (R10.1, R10.2, R5.2). `EnvelopeFront` takes `layout: "narrow" | "wide" | "responsive"`: wide shows "Written as of {date}", "Opens {date}" and "Prepared later as a demo."; narrow shows only the two date items, label and date on separate lines; dates in `data-date` elements with `white-space: nowrap`; no persona name; every front text at least 12 px and above the dirt band (R8.7, R8.8, R8.11, R8.12, R4.6, R4.7).
+    - **Hero and status line.** The `SceneHeadline` h1 ("Your past self returns with the receipts.", "the receipts." in one nowrap span, "receipts." in the Accent, `data-scene-ceiling`), then one `<p role="status">`: "Bringing the letter into the light." in `loading`, "Checking the seal." in `openable` and `verifying`, the `sealIntact` statement before the button in `verified` (R3.18, R9.1 to R9.4, R10.3). `sealed` shows `StillSealed` only (R9.13). Errors show the existing `FlowError` and its action, with the Ghost at 45 % opacity and no button (R9.12). The status line and button sit above the Soil or below the strip, never on it (R9.16, R6.15).
+    - **Persona page.** `src/app/demo/personas/[key]/page.tsx` renders `SceneShell variant="persona"` in place of `DeskScene`. `OpeningFlow` renders the Scene backdrop next to the content column in persona mode and passes `controls="topbar"`. The persona page still passes the Persona_List fields as before.
+    - **Copy.** `scene/copy.ts` holds `headlineLead`, `headlineAccent`, `openLetter`, `wordmark`, `demoChip`, `personaNotice` and `landing.paragraphs` and `landing.demoLink` (the three paragraphs and link text of `src/app/page.tsx`, verbatim, for task 7 to import; `page.tsx` itself is not edited here). `ceremony/copy.ts` gains the `stageLive` lines for the new Stages and changes `error` to "The letter could not be opened. You can try again." (R24.8). R24.5 strings stay unchanged.
+    - Tests: Property 1 (the Pick_Up_Button is never rendered before `verified`, fast-check, at least 100 runs); Property 6 (every Flow state and local view maps to exactly one Stage, fast-check, for the names this task adds); Property 10 (the Envelope is held by the Ghost and covers no eye or hem, for `emerging`, `sealed` and `intact` and the held-slot geometry in both layouts); Property 13 (the eyes never pass their maximum offset, fast-check); Property 18 (the Envelope looks the same for every letter, fast-check, front part); Property 19 (server and client render the same markup, fast-check); Property 20 (persona part: the Ghost and the Soil strip render on the persona page); Property 21 (the narrow Envelope_Front holds only the two date lines); Property 9's Envelope clause (no front text box reaches the dirt band at the smallest and largest Envelope sizes, both layouts); Property 23 for every string this task adds or changes.
+  - Spec 05 tests retired: none. Spec 05 tests changed: `stages.test.ts`, `ceremony-gates.property.test.tsx`, `CeremonyRoot.test.tsx`, `skip.test.tsx` (new Stage names and local view, `controls` prop, nested Skip provider); `envelope/Envelope.test.tsx`, `envelope/EnvelopeView.test.tsx` (new front, status line, hero layout); `copy.test.ts` (the changed error line, R24.8); `src/app/demo/personas/[key]/page.test.tsx` (Scene markup in place of the desk). State each in the PR with its reason.
+  - QA shots: `emerging-1280x800`, `emerging-360x640`, `sealed-1280x800`, `sealed-360x640`, `intact-1280x800`, `intact-360x640`, `error-1280x800`, `error-360x640`.
+  - QA steps: 03, 04, 05, 14, 15, 16 (Calm only up to `intact`), 20 (03 to 05 and 14 at 360×640), 21 (`intact` only), 22 (`intact` centre x against `expected` only), 23, 25.
+  - QA check: Top_Bar height measured with T0 at 360×640 is at most 96 px, both with the one-line notice and with the long two-line notice, and the whole notice is visible with no ellipsis (R8.1, R8.4).
+  - QA check: F2 returns no hits in `emerging`, `sealed`, `intact` and `error` at both sizes; no text, button or field sits on the Soil strip (R6.15).
+  - QA check: G1 returns 0 intersections in `intact` at 360×640, 1024×768, 1280×720, 1280×800, 1440×900, 1920×1080 and 2560×1440, including every `h1` line box (R5.19).
+  - QA check: in `intact` the Ghost_Box centre x from G2 is within 1 px of 922, 1037, 1277 and 1597 at 1280×800, 1440×900, 1920×1080 and 2560×1440 (R5.16).
+  - QA check: G3 at 1280×800, 1440×900, 1920×1080 and 2560×1440: the wordmark's and the headline's left edges within 1 px; left and right margins 38, 40, 280 and 600 px within 1 px; the Soil from 0 to the window width (R8.14, R6.18).
+  - QA check: E1 reports one line for every Envelope_Front date at both sizes (R8.8), and the Envelope covers no part of either eye or the hem (R5.2).
+  - QA check: in step 03 the page shows no Pick_Up_Button while the letter request is delayed; in step 15 Skip puts the Ghost at its end pose at once (R9.8, R9.11).
+  - QA check: "the receipts." sits together on the headline's last line at both sizes (R3.18).
+  - Validation: `bash scripts/check.sh`
+  - _Requirements: R1.1–R1.9, R1.12, R2.1, R2.2, R2.3, R2.5, R2.6, R2.9, R3.1–R3.6, R3.18, R4.6, R4.7, R5.1–R5.16, R5.18, R5.19, R6.1, R6.3, R6.9, R6.12, R6.14, R6.15, R6.17, R6.18, R8.1–R8.9, R8.11–R8.14, R9.1–R9.16, R10.1–R10.3, R18.1–R18.3, R18.8, R18.10, R19.4, R19.5, R22.5, R23.1–R23.4, R24.1, R24.3, R24.5, R24.8, R26.3.1, R26.4, R26.9, R26.11_
+
+- [ ] 3. Soil_Canvas
+  - Agent: `frontend-dev` · Depends on: 2 · Estimated size: ~1,400 changed lines
+  - Before this task: task 2 is on `main`.
+  - Scope: `src/components/ceremony/scene/soil-canvas.ts`, `scene/soil-model.ts`, `scene/rng.ts`, `scene/SoilCanvasLoader.tsx`, `scene/SceneBackdrop.tsx`, `scene/layout.ts`, `scene/scene.module.css`, `src/components/ceremony/constants.ts`, `ASSETS.md`, `source-scan.test.ts` (folder list and the seeded-RNG allowance, additions only), and the `*.test.ts(x)` for each file above
+  - Design sections: "`SceneBackdrop` and the Soil" ("Soil_Canvas", steps 1 to 9 and the bullets after them), "Motion modes", "Constants" (Soil_Canvas block), "Error Handling".
+  - Acceptance:
+    - `rng.ts` exports mulberry32. `soil-model.ts` is pure and computes the light falloff, base, pebbles, back and front clump rows, dust and clods from `SOIL_SEED` and the two derived seeds, exactly as design.md steps 1 to 7 say. `soil-canvas.ts` draws the model and runs the frame loop (step 9).
+    - Exactly one 2D canvas per page, with `data-soil-canvas`, `aria-hidden`, not focusable (R6.4, R6.9). It covers the full window width (R6.18). The light x is `frameL + 0.72 × frameW` at or above 900 px and `w / 2` below, and does not change between Stages (R6.17).
+    - Colours come from the tokens, read once with `getComputedStyle` from the canvas element; no colour literal in the module (R3.8).
+    - At most `DUST_MAX_PARTICLES` (36) dust dots and at most `DUST_MAX_FPS` (30) frames a second; device pixel ratio capped at 2; resize debounced to 150 ms and redrawn from the seed (R6.5). No soil shape rises more than `EDGE_BAND_PX` above the soil top (R6.3).
+    - Dust ceiling: no dust dot or clod is drawn above `max(Top_Bar bottom, headline bottom while it shows) + 8 px`, minus the scene layer's `translateY`. It is recomputed on resize and after the headline goes (R6.16).
+    - Clods fly only on the rise in full motion (R6.2). The loop pauses when the page is hidden and stops on unmount, on Calm and in `light` mode. Calm stops dust and clods within 200 ms and shows the Soil_Fallback (R6.11).
+    - `SoilCanvasLoader` calls `import("./soil-canvas")` in an effect after mount, in `full` mode only. In `calm`, in `light` mode and with scripts disabled it never calls it (R6.7, R21.9). The chunk is not in any route's first-load JavaScript (R6.4, R21.8).
+    - If the import rejects or `getContext("2d")` returns null, no canvas renders, the Soil_Fallback stays, and nothing is shown to the judge; the Emergence and the flow keep working (R6.8).
+    - Nothing flashes more than three times a second, and the light's brightness changes by at most `LIGHT_MAX_LUMINANCE_CHANGE_PER_S` (R6.10).
+    - No `Math.random`, `Date.now` or clock read affects markup (R6.12). The source scan allows the seeded RNG in `soil-canvas.ts` and `soil-model.ts` only, and fails on any WebGL context or animation library.
+    - The PR states the canvas chunk size and its effect on each route's first-load JavaScript, in kB (R6.13).
+    - Tests: Property 11 (the Soil_Canvas draws the same thing from the seed, fast-check, at least 100 runs, with a recording fake 2D context, covering sizes 320×480 to 2560×1600, ratios 1 to 4, the edge band, the dust count, the ceiling for any bar bottom, headline bottom and `translateY`, the light x and the full width); Property 22's loader clause (no `import()` in `calm` or `light`).
+  - Spec 05 tests retired: none. Spec 05 tests changed: `source-scan.test.ts` (folder list and allowance, additions only).
+  - QA shots: `emerging-1280x800`, `emerging-360x640`, `intact-1280x800`, `intact-360x640`.
+  - QA steps: 03, 05, 16 (no canvas element in Calm), 24 (`intact` only).
+  - QA check: D1 reports no drawing above the ceiling in `intact` at 360×640 and 1280×800; record `ceiling` and `highest` (R6.16).
+  - QA check: with Calm on there is no `[data-soil-canvas]` element and the Soil_Fallback shows (R6.7, R6.11).
+  - QA check: F2 still returns no hits in `emerging` and `intact` at both sizes (R6.15).
+  - QA check: the canvas runs from the window's left edge to its right edge at 1920×1080 (R6.18).
+  - Validation: `bash scripts/check.sh`
+  - _Requirements: R3.8, R6.2–R6.13, R6.16, R6.17, R6.18, R19.2, R19.5, R21.8, R21.9_
+
+- [ ] 4. Pick up, the Envelope turn and the Recall_Pager
+  - Agent: `frontend-dev` · Depends on: 3 · Estimated size: ~2,700 changed lines
+  - Before this task: task 3 is on `main`.
+  - Scope: `src/components/ceremony/envelope/Envelope.tsx`, `envelope/EnvelopeView.tsx`, `envelope/WaxSeal.tsx`, `envelope/WaxSeal.module.css`, `envelope/Envelope.module.css`, `envelope/seal-pattern.ts` (delete), `src/components/ceremony/recall/RecallPager.tsx`, `recall/RecallPager.module.css`, `recall/RecallScale.module.css`, `src/components/ceremony/scene/SceneBackdrop.tsx`, `scene/Ghost.tsx`, `scene/layout.ts`, `scene/scene.module.css`, `src/components/ceremony/constants.ts`, `CeremonyRoot.tsx`, `ASSETS.md`, `src/components/reveal/OpeningFlow.tsx`, `src/components/reveal/RecallStep.tsx`, `src/components/reveal/copy.ts`, `src/components/reveal/reveal.module.css`, `src/components/demo/copy.ts`, `src/components/demo/PersonaCard.tsx`, and the `*.test.ts(x)` for each file above including `src/components/reveal/RecallStep.test.tsx`, `src/components/demo/PersonaCard.test.tsx`, `src/components/demo/copy.test.ts` and `src/app/demo/page.test.tsx`
+  - Design sections: "The Ghost" (poses, "Placement in the Scene_Frame"), "The Envelope" ("Held in the Ghost's subtree", states), "The wax seal", "The seal is pressable where the Ghost holds it" (narrow layout paragraph), "Pick up and the status line", "Recall_Pager", "Copy".
+  - Acceptance:
+    - **Pick_Up_Button.** An Accent `<button>` "Pick up the letter" (`pickUp` in `reveal/copy.ts`), at least 56 px tall. It calls `flow.begin`, guarded once per `verified`, so a double click sends one `BEGIN` (R10.4 to R10.6, R19.6).
+    - **Lift and turn.** In full motion the Ghost lifts to the `handed` pose over `GHOST_LIFT_MS` 400 and the Envelope turns over in its hands from `ENVELOPE_TURN_AT_MS` 400 for `ENVELOPE_TURN_MS` 520, ending by 920 ms (R10.7, R10.8). In Calm the back shows in the same render (R10.9). The Envelope stays inside the Ghost's `.bob` subtree, seal side out, through `recall` and `marks`, and never moves to the column (R10.13, R10.14).
+    - **No sideways move.** The Ghost's classes, `left` and every horizontal translate are identical in `intact`, `recall` and `marks`, in both layouts. Only the vertical lift and, below 900 px, the scene lift and the pit's 0.8 scale about its own centre x change (R5.17, R10.15). The light does not move sideways (R6.17).
+    - **Narrow scene lift.** Below 900 px in `recall` and `marks`, `layout.ts` computes the lift `y` and the column start as design.md says; the layer gets `translateY(y)` over `PICKUP_MOVE_MS` 600 and the pit `scale(0.8)`, transform only (R10.15, R21.4). The dust ceiling is recomputed after the lift (R6.16). If a box cannot be read, the lift is 0.
+    - **Wax seal.** `WaxSeal.tsx` draws the one orange seal with the pressed ghost per design.md "The wax seal", the same for every persona, with no religious, national or political symbol, two halves that sit together, `aria-hidden` (R10.10 to R10.12). `seal-pattern.ts` is deleted. `ASSETS.md` records the seal.
+    - **Recall_Pager.** `RecallStep` keeps its props and renders `RecallPager`, with the markup order in design.md "Recall_Pager". One question at a time in payload order, with question text and unit and no figure value, period, source or hint (R11.1). The counter reads "Question {n} of {total} · as of {date}" on a persona letter, with "as of {date}" in one nowrap span and the date in the spec 03 R6.3 format, and "Question {n} of {total}" on a Live_Letter (R11.5). "Next question" on every question but the last, "Previous question" on every question but the first, the submit control on the last only, and only submit when there is one question (R11.5).
+    - Enter on a question that is not the last moves forward and sends nothing; Enter on the last calls the existing submit handler (R11.3, R11.4). Paging changes only the view-local index and sends no Flow event; returning shows the draft exactly as entered (R11.8). Focus moves to the shown field on entering `recall`, after Next, Previous, Enter and an invalid submit; to "No answer" if the field is disabled. `CeremonyRoot`'s focus effect focuses `[data-stage-focus]` when present (R11.2, R19.4).
+    - The Recall_Scale stays directly under the field, with every spec 05 R4 rule; typing moves the Mark and moving the Mark updates the field (R11.6). "No answer" sends `TOGGLE_NO_ANSWER` for that question only (R11.7).
+    - An invalid submit shows the first invalid question in payload order with the existing inline message, drafts kept, nothing sent (R11.10). While submitting, the submit control, retry and Enter-to-submit are disabled (R11.11). `OpeningFlow` renders `RecallStep` with `key="recall"` for `recall`, `submitting` and `submit_failed`, not wrapped in a fragment, so the index survives a failed post; the existing alert and retry render inside the pager (R11.12).
+    - Sizes: question heading weight 750 at the body-heading size in design.md; the typed number weight 900 and the largest text in the Stage; the answer row does not wrap below 900 px (R11.16). The `data-fit` names `question`, `answer` and `advance` are set (R11.13, R11.14).
+    - **Demo_Index card link.** `demo/copy.ts` `openLetter` becomes "Open the letter" (was "Pick up the letter"). `PersonaCard` uses it. "Pick up the letter" no longer appears on a card or on `/demo` (R16.3).
+    - `RecallStep` builds no record; `buildRecallRecord` runs on the final drafts as before (R11.9, R1.3).
+    - Tests: Property 3 (paging never changes the Recall_Record, fast-check, at least 100 runs, 1 to 8 questions); Property 14 (the Recall_Pager shows one question with the right controls, fast-check, 1 to 20 questions, persona and Live_Letter counters); Property 18's seal clause (the wax seal markup is identical for every persona key, fast-check); Property 10 extended to `recall` and `marks`, including the identical horizontal placement in `intact`, `recall` and `marks` in both layouts (R26.10, R26.12); Property 6 extended for `recall`; Property 23 for the strings this task adds.
+  - Spec 05 tests retired: `envelope/seal-pattern.test.ts` (`seal-pattern.ts` removed; one seal for all, R10.10 replaces spec 05 R8.4); `envelope/seal-glyphs.test.ts` (the glyph set is removed with the per-key pattern, R10.10).
+  - Spec 03 and 05 tests changed: `envelope/WaxSeal.test.tsx` (one seal); `reveal/RecallStep.test.tsx` (pager; spec 03 R8.1 and R8.4 are replaced by R11.1 and R11.10, name both in the PR); `demo/PersonaCard.test.tsx`, `demo/copy.test.ts` and `src/app/demo/page.test.tsx` (link text "Open the letter", "Pick up the letter" absent; spec 05 R2.1 and R2.2 replaced); `OpeningFlow.test.tsx` recall clauses only if they count form controls.
+  - QA shots: `intact-1280x800`, `intact-360x640`, `recall-1280x800`, `recall-360x640`, `index-1280x800`, `index-360x640`.
+  - QA steps: 02, 05, 06, 07, 16 (through `recall`), 20 (05 to 07 at 360×640), 21 (`intact` and both `recall` questions), 22 (`intact` and `recall`), 24 (`recall`).
+  - QA check: no sideways move. G2 in `recall` differs from its `intact` value by at most 1 px at 1280×800, 1440×900, 1920×1080 and 2560×1440; record each value and difference (R5.17).
+  - QA check: recall fit. F1 with `question`, `answer` and `advance` passes for both questions at 1280×800 and 360×640, and the counter line with its date is fully in view (R11.13).
+  - QA check: F2 returns no hits in `recall` at both sizes (R6.15).
+  - QA check: G1 returns 0 intersections in `recall` (both questions) at every R5.19 size (R5.19).
+  - QA check: D1 reports no drawing above the ceiling in `recall` at 360×640 and 1280×800 (R6.16).
+  - QA check: focus is on the number field after Pick up, after Enter and after Previous; Previous shows `3.20` again in the first field (R11.2, R11.8).
+  - QA check: the counter's "as of {date}" does not break inside the date at 360×640 (R11.5).
+  - QA check: the `/demo` cards read "Open the letter" (R16.3).
+  - Validation: `bash scripts/check.sh`
+  - _Requirements: R5.2, R5.17, R6.16, R6.17, R10.4–R10.16, R11.1–R11.16, R16.3, R19.3, R19.4, R19.6, R19.9, R21.4, R24.1, R24.3, R26.3.3, R26.10, R26.12_
+
+- [ ] 5. Seal_Break, the Ghost leaving and the letter
+  - Agent: `frontend-dev` · Depends on: 4 · Estimated size: ~3,200 changed lines
+  - Before this task: Blocked by #134 (spec 06 task 9, Live_Letter reveal variant), because this task edits `src/components/reveal/Reveal.tsx` (R28.8). Task 4 is on `main`.
+  - Scope: `src/components/ceremony/seal/useSealBreak.ts`, `seal/HeldSeal.tsx`, `seal/SealBreak.tsx`, `seal/SealBreak.module.css`, `src/components/ceremony/letter/LetterBlock.tsx`, `letter/LetterBlock.module.css`, `letter/InkLetter.tsx`, `letter/InkLetter.module.css`, `letter/inkMask.ts`, `letter/inkPlan.ts`, `letter/inkSession.ts` (the five ink files deleted), `src/components/ceremony/envelope/Envelope.tsx`, `envelope/WaxSeal.tsx`, `envelope/Envelope.module.css`, `envelope/WaxSeal.module.css`, `src/components/ceremony/scene/SceneBackdrop.tsx`, `scene/Ghost.tsx`, `scene/scene.module.css`, `src/components/ceremony/constants.ts`, `CeremonyRoot.tsx`, `copy.ts`, `skip.tsx`, `src/components/reveal/OpeningFlow.tsx`, `src/components/reveal/Reveal.tsx`, `src/components/reveal/SealedLetter.tsx`, `src/components/reveal/reveal.module.css`, and the `*.test.ts(x)` for each file above
+  - Design sections: "The seal is pressable where the Ghost holds it", "The wax seal" (halves, cracks, hold ring), "The dissolve on break", "Marks, seal and letter" (including "The break sequence"), "Sound toggle placement", "Constants" (Break and letter block; "Kept, changed and retired spec 05 constants" for task 5), "Timing bounds as sums".
+  - Acceptance:
+    - **Hold.** `useSealBreak` lifts the hold logic out of spec 05 `SealBreak.tsx` and owns the `HoldState` from `hold.ts` (unchanged). `HeldSeal` is the pointer target on the held Envelope's back: a `::before` box at least `SEAL_HIT_MIN_PX` (60 px) square, at least 48 px at the narrow 0.8 scale, `touch-action: none`, `data-seal-target`, `setPointerCapture` inside a `try` with window listeners as fallback (R10.16, R12.11, R19.6). `OpeningFlow` calls `useSealBreak` once in reveal stage 1 and passes the same controller to `SceneBackdrop` and `Reveal`.
+    - A hold of `SEAL_HOLD_MS` 1,500 or the "Break the seal" button sends exactly one `ADVANCE`; a second completion sends nothing (R12.2, R12.3, R18.7). An early release settles the cracks back over `SEAL_SETTLE_MS` 300, sends nothing, announces "The seal holds." and leaves the Ghost in place (R12.5). The cracks are spec 05's nine fixed paths from `cracks.ts`, unchanged (R12.1). The local view's `sealing` is true while holding, so the Stage reads `seal` (R2.1).
+    - **Marks column.** Reveal stage 1 shows the "What you remembered" heading, the answers with the judge's value in the Accent (or "No answer"), the read-only scales, the instruction, "Break the seal" and "Show everything", and the sound toggle with its note under them (design.md "Sound toggle placement"). Below 900 px rows stack and values are nowrap. `data-fit` names `marks-heading`, `marks-answers` and `break` are set (R12.12).
+    - **Button.** In full motion "Break the seal" plays the cracks over `SEAL_SHORT_MS` 450 with `sealing: true`, then sends `ADVANCE`; in Calm it sends `ADVANCE` at once.
+    - **Break sequence.** From `ADVANCE` in full motion: seal halves fall over `SEAL_SPLIT_MS` 520; the Ghost leaves (`translateY(-55vh) scale(0.92)` over 1,100 ms, opacity to 0 over 900 ms) and is unmounted; the light and Soil dim to 0.18 over 500 ms; the flap lifts at 250 ms; the letter slides out at 550 ms; the paper unfolds at 1,150 ms for 520 ms (R12.6, R12.7). The Ghost stays at its holding position until the break completes (R12.4). The bob stops on the break. The steps are one Skip sequence; Skip finishes them all and leaves no Ghost (R12.9). "Show everything" sends one `SHOW_ALL` and shows the split seal, the letter at its end state and no Ghost with no motion (R12.8). In Calm the Ghost unmounts in the `ADVANCE` render and the letter shows at its end state (R12.10).
+    - **Letter.** `LetterBlock` is the one rounded purple block holding one paper panel with two decorative, `aria-hidden` creases (R13.1, R13.2). The paper holds "What was written then", the spec 03 R10 labels or the spec 06 R18.2 labels for a Live_Letter, and the text as one text node in EB Garamond with `white-space: pre-wrap` (R13.3, R13.6). No ink effect: no mask, clip or fade on the text; the unfold is a Web Animation with `fill: "backwards"` started in a layout effect in full motion only, so the static render is the final state (R13.4, R13.5). Nothing is placed against a line of the text (R13.7). "See the numbers" and "Show everything" sit below the block on the dark; only they move to stage 3 (R13.8, R13.9). Focus rings are white inside the block and the Accent outside it (R3.15).
+    - **Ink retired.** `InkLetter` and its helpers are deleted; `SealedLetter` loses `data-ink-text` and keeps its labels and markup otherwise. The `inkSkip` copy key and the ink constants are removed (R18.6, R26.6).
+    - **Constants.** `SEAL_SETTLE_MS` 300, `SEAL_SHORT_MS` 450, `SEAL_SPLIT_MS` 520, `FLAP_LIFT_MS` 450 and `LETTER_SLIDE_MS` 600 change; `FLAKE_COUNT` and the ink constants are retired; the break and letter constants are added (design.md "Constants"). Hold end to readable is 1,670 ms and button to readable 2,120 ms, both under 3,000 ms (R18.4).
+    - If a Web Animation throws, the runner jumps to the final state and `ADVANCE` is still sent once (design.md "Error Handling").
+    - Sound and vibration stay exactly as spec 05 R14; no new cue (R22.1, R22.4).
+    - Tests: Property 7 (timing bounds hold as sums of constants, including the CSS-equals-constant checks and no ink constant); Property 17 (the letter is shown verbatim with nothing against it, fast-check, at least 100 runs, 1 to 5,000 code points); Property 22's break clause (in Calm the break plan is empty and the Ghost unmounts in the `ADVANCE` render); Property 10 extended to `seal` (Envelope in the Ghost's subtree, same horizontal placement as `intact`); Property 6 extended for `marks`, `seal` and `letter`; Property 23 for the strings this task adds or retires. The spec 05 hold and crack properties stay unchanged.
+  - Spec 05 tests retired: `letter/InkLetter.test.tsx`, `letter/InkLetter.skip.test.ts`, `letter/inkMask.test.ts`, `letter/inkPlan.test.ts`, `letter/inkSession.test.ts` (ink code removed; R13.4 retires spec 05 R7.2 and R7.3; R26.6).
+  - Spec 05 tests changed: `seal/SealBreak.test.tsx` (hold moves to `useSealBreak`); `reveal/Reveal.marks.test.tsx` (marks column); `reveal/SealedLetter.test.tsx` (no `data-ink-text`; Property 18 of spec 03 still holds); `constants.test.ts` and `timings.property.test.ts` (changed values only, R18.9). `seal/hold.test.ts` and `seal/cracks.test.ts` pass unchanged.
+  - QA shots: `marks-1280x800`, `marks-360x640`, `seal-1280x800`, `seal-360x640`, `letter-1280x800`, `letter-360x640`.
+  - QA steps: 08, 09, 10, 11, 16 (through `letter`), 17, 20 (08 to 11 at 360×640), 21 (`marks`), 22 (`marks` and `seal`).
+  - QA check: marks fit. F1 with `marks-heading`, `marks-answers` and `break` passes at 1280×800 and 360×640; the seal is in view and `document.elementFromPoint` at its centre returns the seal target or its child (R12.11, R12.12).
+  - QA check: no sideways move. G2 in `marks` and `seal` differs from its `intact` value by at most 1 px at 1280×800, 1440×900, 1920×1080 and 2560×1440 (R5.17).
+  - QA check: G1 returns 0 intersections in `marks` at every R5.19 size (R5.19).
+  - QA check: F2 returns no hits in `marks` and `letter` at both sizes (R6.15).
+  - QA check: in step 10 an early release leaves no "What was written then" heading in the document (R12.5, R2.8).
+  - QA check: in step 11 the letter text is fully visible on the paper within 3 s of "Break the seal", with no Ghost element and no mask or fade on the text (R13.4, R18.4).
+  - QA check: in step 17 "Show everything" shows no Ghost and the letter at its end state (R12.8).
+  - Validation: `bash scripts/check.sh`
+  - _Requirements: R2.1, R2.7, R2.8, R3.15, R5.17, R10.16, R12.1–R12.12, R13.1–R13.9, R18.4, R18.6, R18.7, R18.9, R19.2, R19.3, R19.6, R19.9, R22.1, R22.4, R26.6_
+
+- [ ] 6. Figures and the close
+  - Agent: `frontend-dev` · Depends on: 5 · Estimated size: ~3,400 changed lines
+  - Before this task: Blocked by #134 (spec 06 task 9, Live_Letter reveal variant), because this task edits `src/components/reveal/Reveal.tsx` (R28.8). Task 5 is on `main`.
+  - Scope: `src/components/ceremony/figures/FiguresFadeUp.tsx`, `figures/NumberLine.tsx`, `figures/figures.module.css`, `figures/Stamp.tsx`, `figures/Counter.tsx`, `figures/Passage.tsx`, `figures/ThenNowSequence.tsx` (the four deleted), `src/components/ceremony/close/Close.tsx`, `close/close.module.css`, `src/components/ceremony/stages.ts`, `local-view.tsx`, `constants.ts`, `copy.ts`, `src/components/reveal/OpeningFlow.tsx`, `src/components/reveal/Reveal.tsx`, `src/components/reveal/FigureEntry.tsx`, `src/components/reveal/FiguresThenNow.tsx`, `src/components/reveal/reveal.module.css`, `src/components/reveal/change-neutral.property.test.tsx`, `src/app/demo/personas/[key]/page.tsx`, and the `*.test.ts(x)` for each file above including `src/app/demo/personas/[key]/page.test.tsx`
+  - Design sections: "Figures (`FigureEntry.tsx`, `FiguresThenNow.tsx`, `figures/FiguresFadeUp.tsx`)", "Close (`close/Close.tsx`)", "Demo_2_On plumbing", "Stage resolution" (task 6 migration), "Constants" (Figures block; retired task 6 constants).
+  - Acceptance:
+    - **Layout.** At or above 900 px the reveal is a grid with the Letter_Block left and the figures column right; below 900 px the figures sit under the block. Figures always sit on `--bg`, never in the block (R14.1). The PR states whether the then value fits its column at 900 px.
+    - **Figure_Entry.** A comparable entry renders the nine items of R14.3 in order, with the markup in design.md: name and region; "Your answer: {value} {unit}" in the Accent or "No answer"; the then value in `.big` (weight 900); the then meta line with period, region and "historical record, retrieved {date}" or "fixture data"; the `NumberLine` (pins `--text`, axis `--line`, Mark ring `--accent`); the now line, bold at body size, with period, region and retrieved date; `ChangeLine` unchanged with both periods; the formula as text; the Source `details` with source, series ID and `source_url` (R14.3, R14.11). Not comparable or unavailable entries keep their spec 03 rendering with the then value and period and no line, Mark or change (R14.5). Exactly one `FixtureNote` while any figure is a fixture (R14.6). Payload order (R14.2). The same type styles for a rise, a fall and a zero change (R14.12, R3.16). The Number_Line keeps spec 05 R12.2 to R12.4 (R14.4).
+    - `FiguresThenNow`, `FigureLine` and `FixtureNote` keep their names and props (R14.9). A Live_Letter keeps the spec 06 R18.5 and R18.6 zero change and note (R14.10).
+    - The Accent is only on the "Your answer" value and the Mark; never on a figure value, change, formula, period, source control, pin, axis or direction (R3.9, R3.10, R3.12).
+    - **Fade-up.** `FiguresFadeUp` gives entry `i` one Web Animation (opacity and `translateY(14px)`) over `FIG_FADE_MS` 450 with delay `FIG_START_DELAY_MS + FIG_STAGGER_MS × min(i, MAX_FIGURES − 1)`, and one clock animation on the column of 780 ms whatever the count (R14.7, R14.8). When it finishes, or Skip finishes it, the local view becomes `figures: "settled"` and the Close mounts. In Calm and after "Show everything" it is `settled` in the same render and no animation is created. The static render is the final state at full opacity (R14.9). `MAX_FIGURES` 6 in `ceremony/constants.ts` equals the spec 06 value (test). "See the numbers" to settled is under 4,000 ms (R18.5).
+    - **Stages.** `stages.ts` replaces spec 05's `step` with `figures: "running" | "settled"` and removes `then`, `passage` and `now`. Stage 3 maps to `figures` while running and `close` once settled (R2.1).
+    - **Retired.** `Stamp`, `Counter`, `Passage` and `ThenNowSequence` are deleted with their constants and the copy keys `closeTitle`, `closeBody`, `closeBack`, `passageLive` and `figuresLive`.
+    - **Close.** `CloseProps` per design.md. Persona close, in this order: the `h2` "The space between the two is yours to read."; only while `demo2On`, the Accent link to `/demo/live` "Seal your own. It opens 30 seconds after you seal it."; the smaller note "That is the whole letter. Nothing has been added to what you remembered, what was written, or the record."; "Start over", a plain `<a>` to `/demo/personas/{key}` for the same persona (R15.1, R15.7, R15.11). It is absent until the figures are settled (R15.2), reads no figure or answer (R15.3), sends no event (R15.5), and its links are at least 44 px tall and keyboard reachable with the focus ring (R15.4, R19.6). `kind: "live"` keeps the spec 06 R18.6 note and link with no wording change (R15.6, R17.11).
+    - **Demo_2_On.** The persona page sets `export const dynamic = "force-dynamic"`, computes `demo2On = (process.env.RP_ID ?? "").trim() !== ""` at request time, and passes only the boolean through `OpeningFlow` to the close. `RP_ID` never reaches the client. No file in R1.1, no middleware, no `security-headers.ts` and no landing file changes, and the seal cap is not checked (R15.8 to R15.10).
+    - No text, number, timing, colour, class, motion or order depends on the distance between an answer and a figure, and nothing computes or shows a difference, closeness or grade (R20.5, R20.7).
+    - Tests: Property 2 (nothing depends on the distance between an answer and a figure, fast-check, at least 100 runs); Property 4 (the figures sequence takes the same time for 1 to 6 figures, fast-check); Property 5 (a rise and its mirror fall render the same markup, fast-check, extending `change-neutral.property.test.tsx`, not duplicating it); Property 8 (the Accent is never on a figure, change or direction element, fast-check); Property 12 (Demo_2_On false means no `/demo/live` link, fast-check and example, and `RP_ID` not in the markup); Property 15 (Figure_Entries keep payload order and the R14.3 item order, fast-check); Property 16 (the static render is the final state, fast-check); Property 6 extended for `figures` and `close`; Property 23 for the strings this task adds.
+  - Spec 05 tests retired: `figures/Stamp.test.tsx`, `figures/Counter.test.tsx`, `figures/Passage.test.tsx`, `figures/ThenNowSequence.test.tsx`, `figures/ThenNowMounted.test.tsx` (stamps, counter, passage and Steps removed; R14.7 replaces spec 05 R12.5 and R10.6).
+  - Spec 03 and 05 tests changed: `figures/skip-final-state.test.ts` (Skip over the fade-up); `close/Close.test.tsx` (new close); `reveal/FigureEntry.test.tsx` (R14.3 order); `reveal/change-neutral.property.test.tsx` (mirror extended, existing assertions kept); `figures/NumberLine.test.tsx` (restyled pins); `stages.test.ts` (figures local view); `src/app/demo/personas/[key]/page.test.tsx` (Demo_2_On cases). `FiguresThenNow.test.tsx` and `fixture-label.test.tsx` pass unchanged.
+  - QA shots: `figures-1280x800`, `figures-360x640`, `close-1280x800`, `close-360x640`.
+  - QA steps: 12, 13, 16 (stage 3 in Calm), 17, 18, 19, 20 (12 and 13 at 360×640).
+  - QA check: at 1280×800 the figures sit beside the Letter_Block and at 360×640 below it, on the dark surface (R14.1).
+  - QA check: each figure shows its value, unit, period, region, label, the formula as text and a Source control; every figure number has its period next to it (R14.3, R14.11).
+  - QA check: no figure value, change, formula, period, Source control, pin or arrow is orange, red or green (R3.10, R3.16).
+  - QA check: the close items appear in R15.1 order; with `RP_ID` unset (step 19) the `/demo/live` link is absent and the other three remain (R15.7).
+  - QA check: "Start over" does a full load and the Ghost rises again from `emerging` (R15.11).
+  - QA check: in Calm the close shows at once on reaching stage 3 (R19.2).
+  - Validation: `bash scripts/check.sh`
+  - _Requirements: R2.1, R2.7, R2.8, R3.9–R3.12, R3.16, R14.1–R14.12, R15.1–R15.12, R18.5, R20.1–R20.7, R26.3.2, R26.3.4, R26.3.5, R26.5, R26.8_
+
+- [ ] 7. The landing page `/`
+  - Agent: `platform-dev` (owns `src/app/page.tsx`, `src/app/globals.css`, `src/test/**`) · Depends on: 6 · Estimated size: ~500 changed lines
+  - Before this task: task 6 is on `main`. Task 2 has put the landing text in `src/components/ceremony/scene/copy.ts`.
+  - Scope: `src/app/page.tsx`, `src/app/globals.css` (only if task 11 has not landed), and the new test `src/test/landing.test.tsx`. Do not edit `src/app/page.test.tsx` (it is not a platform-dev path); it must pass unchanged. Do not edit `src/app/layout.tsx` or anything under `src/components/`; import from `@/components/ceremony/scene` as it is. If a Scene component needs a change for the landing, stop and ask the owner.
+  - Design sections: "`SceneShell`, `TopBar` and the landing page", "No JavaScript on `/`", "`SceneBackdrop` and the Soil", "Copy".
+  - Acceptance:
+    - `src/app/page.tsx` is a server component rendering `SceneShell variant="landing"` with `SceneBackdrop ghost={false}`, the hero (`SceneHeadline`, then the button) and the explanation section, as design.md shows. The root carries `data-ceremony="scene"` (R2.1).
+    - Exactly one `h1`, "Your past self returns with the receipts.", weight 900, the largest text on the page, "receipts." in the Accent and "the receipts." on its last line at every width (R7.2, R3.18).
+    - When `PERSONAS` has at least one persona, exactly one Accent button, a `next/link` to `/demo/personas/{key}` of the first persona, reading "Open {name}'s letter" with the display name (R7.3, R7.4). With an empty list, no button, and the Scene, headline, explanation and `/demo` link still render (R7.5).
+    - The three explanation paragraphs and the `/demo` link come after the Scene in document order, verbatim from `SCENE_COPY.landing`, on the plain background below the Soil strip at every width (R7.6, R7.13). The headline and button sit above the Soil or below the strip (R7.13).
+    - Full motion: dark first, then the light comes up after `LANDING_LIGHT_AT_MS` over `LIGHT_MOVE_MS`. With scripts disabled, Calm or low-power mode, the light is up and the Soil_Fallback in place from first paint, using the constant `<noscript>` style in design.md (R7.1). `src/lib/security-headers.ts` has no diff (R1.6).
+    - No Ghost, visible or hidden (R7.12). No Opening_Flow, no `/api/letters` or `/api/openings` request, no database read, no `src/lib/crypto` import, static or dynamic (R7.7). The Soil_Canvas loads only by dynamic `import()` (R7.9).
+    - The headline is in the server HTML and is the LCP element (R7.8, R21.3). The PR records a manual Lighthouse mobile and desktop run on `/` (LCP at most 2.5 s, CLS under 0.1) and states the LCP element.
+    - `/` first-load JavaScript is at most 130 kB. If it measures more, state the number in the PR and wait for the owner (R7.10).
+    - If task 11 has not landed, `globals.css` sets `html, body { background: #0b0912 }` here (R7.11).
+    - Tests in `src/test/landing.test.tsx`: Property 20's landing part (no Ghost element and no `data-ghost` marker on `/`); one `h1` with the exact text; one button to the first persona with "Open {name}'s letter"; no button with an empty list (mock `@/lib/personas`); a source scan that `page.tsx` imports nothing from `src/lib/crypto`, `useOpeningFlow` or an API module. `src/app/page.test.tsx` passes unchanged.
+  - Spec 03 and 05 tests retired: none. Changed: none.
+  - QA shots: `scene-1280x800`, `scene-360x640`.
+  - QA steps: 01.
+  - QA check: one `h1` with the exact text, one Accent button "Open Maya's letter", no Ghost element (R7.2, R7.3, R7.12).
+  - QA check: F2 returns no hits on `/` at both sizes; the explanation and the `/demo` link sit below the Soil strip (R6.15, R7.13).
+  - QA check: with scripts disabled the light is up at first paint with no fade (R7.1).
+  - QA check: the diff touches no file under `src/components/` and not `src/app/layout.tsx` (R1.11).
+  - Validation: `bash scripts/check.sh`
+  - _Requirements: R1.6, R1.7, R1.11, R2.1, R3.18, R7.1–R7.13, R21.3, R26.9_
+
+- [ ] 8. `/demo` on the Scene
+  - Agent: `frontend-dev` · Depends on: 7 · Estimated size: ~1,600 changed lines
+  - Before this task: task 7 is on `main`.
+  - Scope: `src/app/demo/page.tsx`, `src/app/demo/page.module.css`, `src/app/demo/page.test.tsx`, `src/components/demo/PersonaCard.tsx`, `src/components/demo/PersonaCard.module.css`, `src/components/demo/PersonaCard.test.tsx`, `src/components/demo/LiveEntry.module.css`, `src/components/demo/DemoLabel.module.css`, `src/components/demo/copy.ts`, `src/components/ceremony/scene/SceneShell.tsx`, `scene/TopBar.tsx`, `scene/scene.module.css`, `src/components/ceremony/stages.ts`, `constants.ts`, `copy.ts`, `src/components/ceremony/desk/DeskEnvelopeLink.tsx` (deleted), `src/components/ceremony/envelope/Envelope.tsx` (only to drop `ENVELOPE_TARGET`), and the `*.test.ts(x)` for each file above
+  - Design sections: "`SceneShell`, `TopBar` and the landing page" (`index` variant), "Stage resolution" (task 8 migration), "Constants" (retired task 8 constants), "Copy" (retired keys).
+  - Acceptance:
+    - `/demo` renders `SceneShell variant="index"` with the Top_Bar and the Scene backdrop (no Ghost). The root carries `data-ceremony="index"`, and the `desk` Stage name is removed from `stages.ts` (R2.1, R16.1).
+    - The server markup keeps the spec 03 R6 content in order: Demo label, heading, intro note, then one card per persona or the empty state. Each card shows display name, region, written-as-of date, opening date (spec 03 R6.3 format) and the open link "Open the letter", and nothing from the sealed payload. With scripts disabled, in Calm or low-power mode it shows the Soil_Fallback and the same content (R16.1, R16.2, R16.3).
+    - A card link navigates to `/demo/personas/{key}` with no passkey or key (R16.4). The live demo entry stays, links to `/demo/live`, sits outside the persona list and shows with or without personas (R16.5).
+    - The same structure for 1 to 6 personas, no horizontal scrolling at 360 px, no placeholder cards with one persona, the empty state on the Scene with no Envelope with none (R16.6, R16.7, R16.9).
+    - The Demo label and intro note are in view at 360×640 and meet AA on the Scene (R16.8, R8.10). No text sits on the Soil (R6.15).
+    - The desk-to-envelope move is retired: `DeskEnvelopeLink`, `CAMERA_MOVE_MS`, `DESK_TO_ENVELOPE_MS` and `ENVELOPE_TARGET` are removed, and the `stageLive.desk` and `tiltEnable` copy keys go. The rest of `desk/**` stays until task 9, because `/l/[id]` still uses it.
+    - `/demo` first-load JavaScript is at most 130 kB (R21.1).
+    - Tests: the spec 03 test "exactly the personas in the Persona_List, in order" passes unchanged; a test that the root carries `data-ceremony="index"` (R26.4); a test that no card or index text reads "Pick up the letter"; the Demo label and intro-note token pairs are in the Scene contrast test.
+  - Spec 05 tests retired: `desk/DeskEnvelopeLink.test.tsx` and `envelope/envelope-width.test.ts` (the desk-to-envelope move and `ENVELOPE_TARGET` removed; the Scene replaces spec 05 R8.7 on `/demo`); `desk/demo-label-contrast.test.ts` (the Demo label on the desk is replaced by the Top_Bar chip; its pair moves into the Scene contrast test).
+  - Spec 03 and 05 tests changed: `src/app/demo/page.test.tsx` and `demo/PersonaCard.test.tsx` only where the Scene wrapper changes the markup they check; keep their assertions.
+  - QA shots: `index-1280x800`, `index-360x640`.
+  - QA steps: 02.
+  - QA check: at 360×640 the Demo chip and the full intro statement are in view without scrolling (R8.10, R16.8).
+  - QA check: F2 returns no hits on `/demo` at both sizes (R6.15).
+  - QA check: no horizontal scrolling at 360 px; every card is reachable by vertical scrolling (R16.6).
+  - QA check: the live demo entry links to `/demo/live` and sits outside the persona list (R16.5).
+  - Validation: `bash scripts/check.sh`
+  - _Requirements: R2.1, R6.15, R8.10, R16.1–R16.9, R21.1, R26.4_
+
+- [ ] 9. `/demo/live` and `/l/[id]` restyle, desk retired
+  - Agent: `frontend-dev` · Depends on: 8 · Estimated size: ~3,000 changed lines
+  - Before this task: task 8 is on `main`.
+  - Scope: `src/app/demo/live/page.tsx`, `src/app/l/[id]/page.tsx`, `src/app/l/[id]/not-found.tsx`, `src/components/live/*.module.css`, `src/components/live/*.tsx` (class names and markup wrappers only), `src/components/reveal/OpeningFlow.tsx`, `src/components/reveal/reveal.module.css`, `src/components/ceremony/CeremonyRoot.tsx`, `ceremony.module.css`, `contrast.test.ts`, `constants.ts`, `copy.ts`, `src/components/ceremony/envelope/EnvelopeView.tsx`, `envelope/Envelope.module.css`, `src/components/ceremony/desk/**` (deleted), and the `*.test.ts(x)` for each file above including `src/app/l/[id]/page.test.tsx` and `src/app/demo/live/page.test.tsx`
+  - Design sections: "The Scene on each route" (`/l/[id]`), "Providers and the Top_Bar" (`controls="region"`), "The Envelope" (inline on `/l/[id]`), "Colour tokens", "Constants" (retired task 9 constants), "Testing Strategy" (task 9 rows).
+  - Acceptance:
+    - **No wording change (R17.3).** This task changes the wording of no spec 06 copy string on either page, including every string in `src/components/live/copy.ts`. `copy.ts` under `src/components/live/` has no diff.
+    - The restyle changes only colour tokens, type tokens, surfaces and button styles, all from `scene/tokens.module.css` (R17.1). The step order, states, events, transitions, every `src/lib/crypto` call and its arguments, every request (URL, method, body, options) and the meaning of every string stay as spec 06 defines them (R17.2).
+    - `/l/[id]` renders no Ghost and no Soil, visible or hidden (R17.10). It uses the same Stage components as the persona page in the new look, with the Envelope inline at the top of the column at `min(84vw, 22rem)`, the same seal, hit target and front, and `CeremonyRoot controls="region"` (R17.9). The spec 06 unlock states keep `data-ceremony="envelope"` (R2.5). The Live_Letter reveal wording, "Sealed on {date and time}", the 30-second note and its `/demo` link stay, and "Written as of", "Prepared later as a demo" and "Sealed for the demo on" stay absent (R17.11).
+    - The passkey and backup key warnings (spec 06 R15.6, R15.9, R15.11) stay plain: no faded, dirt, glow or animation effect on their text, the same look in Calm, visible in the same view as the control they guard before it can be pressed, never collapsed or delayed, and at least 4.5:1 on their surface with their pair in the contrast test (R17.6, R17.7, R17.8).
+    - Text on purple is `--on-purple`; the Accent is used only where R3.9 allows (R3.9, R3.17).
+    - **Desk retired.** `desk/**` (DeskScene, DeskDecor, dust, tilt, useLight, decor-loader), the desk tokens in `ceremony.module.css` and the candle, parallax and tilt constants are removed. The desk token pairs are removed from `contrast.test.ts` together with the desk tokens and code, in this task and no earlier (R4.8). Every other pair and threshold stays.
+    - `/demo/live` and `/l/[id]` first-load JavaScript is at most 190 kB each (R21.1).
+    - Tests: Property 20's `/l/[id]` part (no Ghost and no Soil markup on `/l/[id]` or in `OpeningFlow` live mode); Property 9 updated for the removed desk pairs and the added warning pairs; a test that `src/components/live/copy.ts` is unchanged in meaning (the existing `copy.test.ts` passes unchanged). Every spec 06 test passes with none removed, skipped or loosened; a token value assertion changes only by replacing the old value with the new value of the same token (R17.4, R17.5).
+  - Spec 05 tests retired: `desk/DeskScene.test.tsx`, `desk/DeskDecor.test.tsx`, `desk/decor-loader.test.ts`, `desk/dust.test.ts`, `desk/tilt.test.ts`, `desk/useLight.test.ts` (desk, candle, dust on the desk, tilt and parallax removed when `/l/[id]` leaves the desk; spec 05 R8.1, R8.6, R8.9 and R11.5 replaced).
+  - Spec 05 and 06 tests changed: `contrast.test.ts` (desk pairs removed with the desk code, R4.8; warning pairs added); `src/app/l/[id]/page.test.tsx` (no desk, no Ghost); spec 06 tests only where a token value changes (R17.5). Name each in the PR.
+  - QA shots: none of the twelve Stages. Take the QA "other pages" shots of `/demo/live` and `/l/[id]` at 1280×800 and 360×640, using the stubbed WebAuthn and fetch from spec 06 design.md "QA browser steps" (steps 02, 07, 09, 10, 11 and 13 of that table).
+  - QA steps: the spec 06 steps above; spec 07 step 16 (Calm) on `/l/[id]`.
+  - QA check: `/l/[id]` has no Ghost element, no `[data-ghost-box]` and no `[data-soil-strip]` or canvas (R17.10).
+  - QA check: every passkey and backup key warning is visible next to the control it guards before that control can be pressed, with no effect on its text, in full motion and in Calm (R17.6, R17.7).
+  - QA check: every text on a purple surface is pure white; no orange on purple (R3.11, R3.17).
+  - QA check: the diff of `src/components/live/copy.ts` is empty (R17.3).
+  - Validation: `bash scripts/check.sh`
+  - _Requirements: R2.5, R3.9, R3.11, R3.17, R4.8, R17.1–R17.11, R21.1, R26.9_
+
+- [ ] 10. Whole-journey review
+  - Agent: `frontend-dev` · Depends on: 9 · Estimated size: ~1,200 changed lines
+  - Before this task: Blocked by #134 (spec 06 task 9, Live_Letter reveal variant). Task 9 is on `main`.
+  - Scope: fixes inside the Scope paths of tasks 2 to 6, 8 and 9 (never the platform-dev files of tasks 7 and 11), the scan tests under `src/components/ceremony`, `src/components/reveal` and `src/components/demo` (folder lists, additions only), and the `*.test.ts(x)` for any file changed. State each fix in the PR with the task whose Scope it falls in.
+  - Design sections: "Motion modes", "Correctness Properties" (all), "Testing Strategy", "QA browser steps".
+  - Acceptance:
+    - Review every Stage and control on `/`, `/demo`, `/demo/personas/[key]`, `/demo/live` and `/l/[id]` against R19: Calm_Mode starts no shake, rise, bob, eye movement, canvas, clods, dust, dissolve, flap, slide, unfold or fade over 150 ms, keeps every Stage in order, and switches within 150 ms without losing answers (R19.2, R19.8); every gesture has a control that needs no drag, hold, precision or timing (R19.3); focus moves to the new Stage's heading, or the pager's field, and the live region announces each Stage once (R19.4); decorative layers are hidden and the Mark is announced as the judge's answer with value and unit (R19.5); targets at least 24 by 24, and 44 by 44 for the Pick_Up_Button, seal, "See the numbers" and close links (R19.6); Skip ends the running sequence and never skips a recall question before the record is stored (R19.9).
+    - 320 px width and 200 % text lose no content on every Scene page: no horizontal scroll, nothing clipped or overlapping, every control and every figure with its period usable (R19.7).
+    - The five budgets are at or under R21.1. The image and texture files of a Scene route total at most 150 kB, at most 40 kB before first paint, with no `data:` or `blob:` image and no CSS asset inlined as a `data:` URI in the production build (R21.5 to R21.7). Animations change only `transform` and `opacity` (R21.4); a CSS scan checks every `@keyframes` and `transition` in the Scene folders.
+    - The PR records manual Lighthouse mobile runs for `/`, `/demo` and the persona page: LCP at most 2.5 s with the headline as the LCP element, CLS under 0.1, interaction latency under 200 ms (R21.3). Manual items are QA notes, not blockers (docs/agent-loop.md).
+    - Sound and vibration: off by default, behind the toggle, in memory only, no new cue; a test confirms no spec 07 code calls the sound code or `navigator.vibrate` (R22.1 to R22.6).
+    - Copy: every string of the R24.3 table matches character for character, the R24.5 strings are unchanged, and the scan tests cover every folder this spec adds or changes (R24.2 to R24.7).
+    - Tests: Property 22 in full (Calm starts no motion and requests no chunk; `light` requests no soil chunk); Property 23 in full (copy is exact, the Scoring_Words_Always banned in every copy module, the Scoring_Words_Scene banned only in the Scene_Copy_Modules and not checked in `src/components/live/copy.ts`, string values only); every property of design.md "Correctness Properties" passes, each with `numRuns` of at least 100 where the design says fast-check.
+  - Spec 03, 05 and 06 tests changed or retired: only as fixes require; name each with its reason.
+  - QA shots: all 24: `scene`, `index`, `emerging`, `sealed`, `intact`, `recall`, `marks`, `seal`, `letter`, `figures`, `close` and `error`, each at `-1280x800` and `-360x640`. This is the full pass; it should find nothing missing.
+  - QA steps: all of 01 to 25.
+  - QA check: F1 and F2 pass at every shot where they apply, at both sizes (R27.7).
+  - QA check: G1 returns 0 intersections at every R5.19 size in `intact`, `recall` and `marks`, including the `h1` line boxes (R5.19, R27.8).
+  - QA check: G2 shows no sideways move over 1 px from `intact` to `recall`, `marks` and `seal` at 1280×800, 1440×900, 1920×1080 and 2560×1440, with `intact` within 1 px of 922, 1037, 1277 and 1597 (R5.16, R5.17, R27.9).
+  - QA check: G3 at 1920×1080 gives 280 px on both sides within 1 px, the wordmark and headline aligned within 1 px, and the Soil at full window width (R8.14, R6.18, R27.10).
+  - QA check: D1 reports no drawing above the ceiling in `intact` and `recall` at both sizes (R6.16).
+  - QA check: T0 at 360×640 is at most 96 px in both cases (R8.1).
+  - QA check: E1 reports one line for each Envelope_Front date (R8.8).
+  - QA check: in Calm (step 16) there is no canvas and every Stage still appears in order (R19.2).
+  - Validation: `bash scripts/check.sh`
+  - _Requirements: R19.1–R19.9, R21.1–R21.9, R22.1–R22.6, R24.2–R24.7, R26.1, R26.2, R26.7, R27.1–R27.10_
+
+- [ ] 11. Dark background on `html` and `body`
+  - Agent: `platform-dev` · Depends on: 1 · Estimated size: ~20 changed lines
+  - Before this task: task 1 is on `main`. This task may run any time after task 1, beside the frontend-dev chain; it shares no file with it.
+  - Scope: `src/app/globals.css`
+  - Acceptance:
+    - `globals.css` sets `html, body { background: #0b0912 }`, so iOS overscroll shows no paper-coloured strip (R7.11).
+    - Nothing else in `globals.css` changes. Every page still works; Stages keep their current look apart from the overscroll area (R28.10).
+    - Tests: none new. Existing tests pass.
+  - Spec 03 and 05 tests retired: none. Changed: none.
+  - QA shots: none (this task changes no Stage).
+  - QA steps: none. The QA agent reads the diff and checks that `/`, `/demo` and `/demo/personas/us-maya` still load.
+  - QA check: the diff changes only `src/app/globals.css`, and only the `html, body` background (R28.7).
+  - Validation: `bash scripts/check.sh`
+  - _Requirements: R7.11, R28.7_
+
+## Notes
+
+- **Order and merging.** Tasks 1 to 6 and 8 to 10 are a straight chain. Tasks 2 to 10 edit shared files (`OpeningFlow.tsx`, `Reveal.tsx`, the copy modules, `scene/`), so only one spec 07 PR is open at a time. Task 7 (platform-dev) sits in the chain because the landing uses the Scene components that tasks 2 to 6 finish. Task 11 (platform-dev) edits only `globals.css` and may run any time after task 1.
+- **Spec 06 task 9.** Tasks 5, 6 and 10 carry "Blocked by #134" in "Before this task", not in "Depends on", because "Depends on" holds only spec 07 task numbers. The dispatcher does not assign a task while #134 is open (R28.6, R28.8).
+- **Landing tests.** `src/app/page.test.tsx` is not a platform-dev path, so task 7 puts its new tests in `src/test/landing.test.tsx` and leaves `page.test.tsx` unchanged; it still passes because the `/demo` link stays.
+- **Desk code.** The desk stays on `main` until the last route that uses it moves: the desk link and `ENVELOPE_TARGET` go in task 8, the rest of `desk/**` and the desk contrast pairs in task 9 (R4.8).
+- **Before task 1.** The owner commits the spec 07 section of `.kiro/agents/prompts/qa.md`, the `structure.md` change, the `tone-check.mjs` patterns and the IDE hook from design.md "Drafts for the owner" (R25.4 to R25.9). The owner changes `scripts/check-js-budget.mjs` only if `/` measures over 130 kB (R7.10).
+- **No optional tasks.** Every task is required. The design's properties are required tests in the task that names them.
+
+## Task Dependency Graph
+
+Dependencies: 1 → 2 → 3 → 4 → 5 → 6 → 7 → 8 → 9 → 10, a straight chain; 11 after 1. Tasks 5, 6 and 10 are also blocked by #134 (spec 06 task 9).
+
+```json
+{
+  "waves": [
+    { "id": 0, "tasks": ["1"] },
+    { "id": 1, "tasks": ["2", "11"] },
+    { "id": 2, "tasks": ["3"] },
+    { "id": 3, "tasks": ["4"] },
+    { "id": 4, "tasks": ["5"] },
+    { "id": 5, "tasks": ["6"] },
+    { "id": 6, "tasks": ["7"] },
+    { "id": 7, "tasks": ["8"] },
+    { "id": 8, "tasks": ["9"] },
+    { "id": 9, "tasks": ["10"] }
+  ]
+}
+```

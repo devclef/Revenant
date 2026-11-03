@@ -1,0 +1,14 @@
+{
+  "version": "v1",
+  "hooks": [
+    {
+      "name": "Ceremony truth, tone and neutrality check",
+      "trigger": "PostFileSave",
+      "matcher": "^src/components/ceremony/",
+      "action": {
+        "type": "agent",
+        "prompt": "A file under src/components/ceremony/ was saved. Read only that file and check it against .kiro/steering/tone.md, neutrality.md and data-integrity.md. Report each issue as one line: file:line, then the rule it breaks. Check for: (1) scoring or grading language in user-facing strings only, meaning copy strings, JSX text and accessible names, never identifiers, class names, Stage names such as close, or comments: the words accuracy, score and off by in any saved file, and the words close, right and wrong only when the saved file is a copy module named copy.ts; (2) a figure number rendered without its period next to it; (3) anything placed against a line of the letter text, such as an annotation, highlight, marker, underline or link; (4) any use of Kiro's logo or mascot, including its name in an asset or path data copied from it; (5) the orange accent (--accent, --wax or an accent class) on a figure value, change, formula, period, source control or anything that shows a direction. If there are no issues, reply that the file passed. Do not create, edit or delete any file."
+      }
+    }
+  ]
+}
