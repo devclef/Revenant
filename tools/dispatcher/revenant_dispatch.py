@@ -44,7 +44,7 @@ DEV_CLONE = HOME / "dev"
 QA_CLONE = HOME / "qa"
 ROLES = ("platform-dev", "frontend-dev", "data-dev", "crypto-dev")
 MAX_DEV_RUNS = int(os.environ.get("REVENANT_MAX_DEV_RUNS", "1"))  # all Task Runner runs, dev + fix + QA
-MAX_FIX_ATTEMPTS = 2
+MAX_FIX_ATTEMPTS = 3
 CI_CHECK = "ci-gate"
 REQUIRED_CHECKS = ("ci-gate", "policy")
 # Text of the size error in pr_policy.evaluate; only a human can split a ticket.
@@ -159,11 +159,11 @@ def strip_validation(body: str | None) -> str:
 
 
 FRONTEND_BROWSER_STEP = (
-    "The last step also includes the browser check from "
-    ".kiro/agents/prompts/frontend-dev.md ('Look at your work'): build, start the app, "
-    "screenshot each changed page at desktop and 360 px into your shots folder, and fix "
-    "anything unreadable or unstyled before finishing. This is part of the last step, "
-    "not a separate step."
+    "The last step also includes the layout check from "
+    ".kiro/agents/prompts/frontend-dev.md ('Look at your work'): build and start the app, "
+    "run `npm run layout-check -- --url <app>`, fix every BLOCKER it reports and re-run it "
+    "until it passes, then paste its summary in your final message. This is part of the "
+    "last step, not a separate step."
 )
 
 

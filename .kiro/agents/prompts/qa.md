@@ -54,54 +54,24 @@ If you run out of time before finishing the browser walk, list the steps you did
 
 ### Spec 07 (judge journey) tickets
 
-For a ticket from spec 07, these rules replace the "Demo pages" screenshot table, and checks S1a to S1d and S5a to S5b replace C1 and C5. C2, C3, C4, C6, C7, C8 and C9 still apply.
+For a ticket from spec 07, the layout is checked by one script, `tools/qa/layout-check.mjs`, not by measuring in the browser by hand. It replaces the "Demo pages" screenshot table and the box checks (F, G, D, E, T) that used to be listed here. Its results are the layout findings. The readability and copy checks below still apply to the screenshots.
 
-Find the ticket's QA steps in `.kiro/specs/07-judge-journey/design.md` with the grep pattern `^\| 07 \| (NN|MM) \|`, using the step numbers the ticket names.
+Layout checks in spec 07 tickets: any QA check line about layout (fit, in view, F1, F2, G1, G2, G3, D1, E1, T0) is covered by `npm run layout-check`. The script's BLOCKER or polish call wins over the ticket's wording. A layout line that the script calls polish is not a blocker, even if the ticket describes it as a must.
 
-#### Stages
+If the script says `playwright-core` is not installed, run `npm ci` once in the worktree and run the script again. If the script still can't run, say in the verdict summary that the layout check did not run and make it a minor finding. Never write a verdict that implies the layout was checked when the script did not run.
 
-`scene` (/), `index` (/demo), and on `/demo/personas/us-maya`: `emerging`, `sealed`, `intact`, `recall`, `marks`, `seal`, `letter`, `figures`, `close`, `error`. The page root's `data-ceremony` must equal the shot's Stage when you take it.
+1. Setup as in steps 1 to 3 above: Postgres, migrations, `npm run seal-personas`, build, start. Note the port.
+2. Run `npm run layout-check -- --url http://localhost:<port>` in the worktree. It takes about a minute. It walks the persona journey and the landing page at 1280x800 and 360x640, saves screenshots to `layout-check-shots/<size>/<stage>.png`, and prints one line per result. Pass `--sizes` only when the ticket names other sizes.
+3. Use the script's output as the layout findings:
+   - Each BLOCKER line is a blocker finding for this PR, when the stage it names is one the ticket changes. On a stage the ticket doesn't touch, it is a minor finding for this ticket instead.
+   - Each polish line is a minor finding.
+   - Each note line says a stage this build does not have yet, or one the walk could not reach. It is never a finding.
+   - `Result: FAIL` means at least one blocker. `Result: PASS` means none.
+   - Put the script's Blockers, Polish and Not reached counts and its Result line in the verdict summary.
+4. Look at the screenshots of the stages the ticket changes and check the screenshot rules below. The script does not judge them.
+5. A ticket's own "QA check:" lines still apply, as before.
 
-#### Shots
-
-Take only the shots the ticket lists. Name each `<stage>-<width>x<height>.png`. A shot of a Stage from a later task in its old look is expected and is not a finding.
-
-| Shot | State |
-|---|---|
-| `scene-1280x800`, `scene-360x640` | `/`, top of page, light up |
-| `index-1280x800`, `index-360x640` | `/demo`, top of page |
-| `emerging-1280x800`, `emerging-360x640` | Step 03: letter request delayed 4 s, within 2 s of the click |
-| `sealed-1280x800`, `sealed-360x640` | Step 04: sealed stub |
-| `intact-1280x800`, `intact-360x640` | Step 05: "Pick up the letter" shown |
-| `recall-1280x800`, `recall-360x640` | Step 06: question 1 |
-| `marks-1280x800`, `marks-360x640` | Step 08: both answers recorded |
-| `seal-1280x800`, `seal-360x640` | Step 09: hold for 700 ms |
-| `letter-1280x800`, `letter-360x640` | Step 11: 2.3 s after "Break the seal", first paragraph in view |
-| `figures-1280x800`, `figures-360x640` | Step 12: animations paused |
-| `close-1280x800`, `close-360x640` | Step 13: first figure in view, then scroll the close into view for a second look (no extra shot) |
-| `error-1280x800`, `error-360x640` | Step 14: 404 stub |
-
-#### Checks for every spec 07 shot
-
-| ID | Question | Pass |
-|---|---|---|
-| S1a | Is every text that sits straight on the near-black background white or light grey-lilac, with no dark or faded text on it? | Yes |
-| S1b | Is every text that sits straight on the purple block pure white? | Yes |
-| S1c | Is every text on the cream letter paper or the envelope dark ink? | Yes |
-| S1d | Did the F2 box check return no hits (no text, button or field over the soil strip)? | Yes |
-| S5a | Is orange used only for the word "receipts.", the main buttons, the wax seal, focus rings outside the purple block, the "Your answer" values and the Mark? | Yes |
-| S5b | Is any figure value, change, formula, period, Source control, arrow or Number_Line pin shown in orange, red or green? | No |
-| F1 | On `recall` and `marks` shots, did the F1 box check pass for every listed name at this size? | Yes |
-| T1 | On 360×640 persona shots, is the Top_Bar at most 96 px tall with the whole notice visible (step 25 when the ticket names it)? | Yes |
-| G1 | In `intact`, `recall` and `marks`, did the G1 check return no hits at every size the ticket names (step 21)? | Yes |
-| G2 | Did the Ghost's centre x in `recall`, `marks` and `seal` differ from its `intact` value by more than 1 px at any size in step 22? | No |
-| G3 | At every size in step 23, are the headline's left edge, the left margin and the right margin all within 1 px of each other, with the Soil running from the window's left edge to its right edge? | Yes |
-| D1 | Did the D1 check report any drawing above the ceiling in step 24? | No |
-| E1 | Does every Envelope_Front date render on exactly one line (E1 reports 1 for each)? | Yes |
-
-Record the measured values from G1, G2, G3, D1 and T0 in the verdict notes for each size and Stage.
-
-A failed S, F, T, G, D or E check is a blocker unless the causing file is outside the diff and the ticket's Scope, as for C checks. `readable` is false when S1a, S1b, S1c or C2 fails.
+Screenshot rules for every spec 07 shot: C1 (readable text, dark ink on cream paper, white on purple), C2 (every figure shows its value, unit, period and region), C3 (each change shows its formula), C4 (buttons styled to match the page), C5 and S5b (no red or green on figures, changes, arrows or controls), C6 (no religious, national or political symbol), C7 (the Demo label is readable on the top of a demo page), C8 (no stray outline around a whole region), C9 (no judgement words or exclamation marks in product copy). The persona letter body is exempt from C9.
 
 If a frontend-dev PR changes `src/app/page.tsx`, `src/app/layout.tsx` or `src/app/globals.css`, fail it and name the file (R1.13).
 

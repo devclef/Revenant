@@ -157,13 +157,13 @@ class Specs(unittest.TestCase):
 
     def test_frontend_steps_include_browser_check(self):
         spec = d.dev_spec(issue(3, []), "frontend-dev")
-        self.assertIn("The last step also includes the browser check from "
-                      ".kiro/agents/prompts/frontend-dev.md ('Look at your work'): build, start the app, "
-                      "screenshot each changed page at desktop and 360 px into your shots folder, and fix "
-                      "anything unreadable or unstyled before finishing. This is part of the last step, "
-                      "not a separate step.", spec)
+        self.assertIn("The last step also includes the layout check from "
+                      ".kiro/agents/prompts/frontend-dev.md ('Look at your work'): build and start the app, "
+                      "run `npm run layout-check -- --url <app>`, fix every BLOCKER it reports and re-run it "
+                      "until it passes, then paste its summary in your final message. This is part of the "
+                      "last step, not a separate step.", spec)
         steps = spec.split("## Steps", 1)[1].split("## Reading the spec", 1)[0]
-        self.assertIn("browser check", steps)
+        self.assertIn("layout check", steps)
 
     def test_other_roles_do_not_get_browser_check(self):
         self.assertNotIn("browser check", d.dev_spec(issue(3, []), "data-dev"))
