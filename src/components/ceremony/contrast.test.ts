@@ -190,3 +190,219 @@ describe("Property 22: desk and paper text and focus rings clear AA / 3:1", () =
     });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Spec 07 (judge journey), R4 and Property 9: Scene token pairs.
+//
+// The Scene's colours live in scene/tokens.module.css. This block reads them,
+// composites partly transparent tokens over the surface beneath them (R4.2),
+// and checks each R4.1 pair. Normal text needs 4.5:1. Large text, control
+// boundaries and focus rings need 3:1 (R4.3, R4.4). A failure names the pair
+// and its ratio. The rule checks (R4.5 text on purple, R4.9 Accent ring inside
+// the Letter_Block) and the dirt pair (R4.7) are asserted to fail by name.
+// The desk pairs above stay untouched until task 9 (R4.8).
+
+type Rgb = [number, number, number];
+interface Colour {
+  rgb: Rgb;
+  alpha: number;
+}
+interface PairResult {
+  pair: string;
+  ratio: number;
+  threshold: number;
+  ok: boolean;
+}
+
+const tokensCssPath = resolve(here, "scene", "tokens.module.css");
+
+/** A 6-digit hex or an rgba() value, as tokens.module.css writes them. */
+const COLOUR_VALUE = String.raw`(#[0-9a-fA-F]{6}|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[0-9.]+\s*\))`;
+
+/** Read a Scene colour token. Accepts hex (opaque) and rgba() (with alpha). */
+function readColourToken(css: string, token: string, file: string): Colour {
+  const match = css.match(
+    new RegExp(String.raw`(?<![\w-])${token}\s*:\s*` + COLOUR_VALUE),
+  );
+  if (!match) {
+    throw new Error(`token ${token} not found as a hex or rgba colour in ${file}`);
+  }
+  const value = match[1];
+  if (value.startsWith("#")) {
+    return { rgb: hexToRgb(value), alpha: 1 };
+  }
+  const parts = value
+    .slice(value.indexOf("(") + 1, -1)
+    .split(",")
+    .map((p) => Number(p.trim()));
+  return { rgb: [parts[0], parts[1], parts[2]], alpha: parts[3] };
+}
+
+/** 6-digit hex to 0..255 channels. */
+function hexToRgb(hex: string): Rgb {
+  const n = hex.replace("#", "");
+  return [
+    parseInt(n.slice(0, 2), 16),
+    parseInt(n.slice(2, 4), 16),
+    parseInt(n.slice(4, 6), 16),
+  ];
+}
+
+/** Composite a (possibly transparent) colour over an opaque surface. */
+function composite(top: Colour, below: Colour): Rgb {
+  if (below.alpha !== 1) {
+    throw new Error("the surface beneath a composite must be opaque");
+  }
+  return top.rgb.map(
+    (c, i) => top.alpha * c + (1 - top.alpha) * below.rgb[i],
+  ) as Rgb;
+}
+
+/** WCAG relative luminance of 0..255 channels. */
+function luminanceOf(rgb: Rgb): number {
+  const [r, g, b] = rgb.map((c) => linearise(c / 255));
+  return 0.2126 * r + 0.7152 * g + 0.0722 * b;
+}
+
+/** WCAG contrast ratio between two 0..255 colours (order-independent). */
+function ratioOf(a: Rgb, b: Rgb): number {
+  const la = luminanceOf(a);
+  const lb = luminanceOf(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+function checkPair(pair: string, fg: Rgb, bg: Rgb, threshold: number): PairResult {
+  const ratio = ratioOf(fg, bg);
+  return { pair, ratio, threshold, ok: ratio >= threshold };
+}
+
+function describeResult(r: PairResult): string {
+  return `${r.pair} is ${r.ratio.toFixed(2)}:1, below the ${r.threshold}:1 it needs`;
+}
+
+/**
+ * R4.5: text on purple uses --on-purple only, whatever the ratio. Any other
+ * token that sits on --purple (the Accent, --text, near-black) throws by name.
+ */
+function assertTextOnPurple(token: string, purple: Rgb, colourOf: (t: string) => Rgb): void {
+  if (token !== "--on-purple") {
+    throw new Error(
+      `text token ${token} on --purple fails: only --on-purple may sit on purple (R4.5, R3.17)`,
+    );
+  }
+  const r = checkPair(`${token} on --purple`, colourOf(token), purple, WCAG_AA_NORMAL);
+  if (!r.ok) throw new Error(describeResult(r));
+}
+
+/**
+ * R4.9 and R3.15: a focus ring inside the Letter_Block is white (--on-purple),
+ * never the Accent. The Accent ring throws by name; any other ring is checked
+ * at 3:1 against --purple.
+ */
+function assertLetterBlockFocusRing(token: string, purple: Rgb, colourOf: (t: string) => Rgb): void {
+  if (token === "--accent") {
+    throw new Error(
+      `focus ring ${token} inside the Letter_Block fails: the ring there must be --on-purple (R4.9, R3.15)`,
+    );
+  }
+  const r = checkPair(
+    `focus ring ${token} inside the Letter_Block (on --purple)`,
+    colourOf(token),
+    purple,
+    FOCUS_RING_MIN,
+  );
+  if (!r.ok) throw new Error(describeResult(r));
+}
+
+describe("Spec 07 R4 and Property 9: Scene token pairs", () => {
+  const tokensCss = readFileSync(tokensCssPath, "utf8");
+  const scene = (token: string): Colour =>
+    readColourToken(tokensCss, token, "tokens.module.css");
+  const sceneRgb = (token: string): Rgb => scene(token).rgb;
+
+  // The crease: --ink at 8 % over --paper (R13.2, design "Creases").
+  const creaseRgb = composite({ ...scene("--ink"), alpha: 0.08 }, scene("--paper"));
+  // --dirt is one translucent colour, so its darkest point is its composite
+  // over --env (R4.7).
+  const darkestDirtRgb = composite(scene("--dirt"), scene("--env"));
+
+  // Normal text (4.5:1). Pairs from R4.1 and the spec 07 surfaces.
+  const normalPairs: Array<{ pair: string; fg: Rgb; bg: Rgb }> = [
+    { pair: "--text on --bg", fg: sceneRgb("--text"), bg: sceneRgb("--bg") },
+    { pair: "--muted on --bg", fg: sceneRgb("--muted"), bg: sceneRgb("--bg") },
+    { pair: "--on-purple on --purple", fg: sceneRgb("--on-purple"), bg: sceneRgb("--purple") },
+    { pair: "--accent on --bg", fg: sceneRgb("--accent"), bg: sceneRgb("--bg") },
+    { pair: "--on-accent on --accent", fg: sceneRgb("--on-accent"), bg: sceneRgb("--accent") },
+    { pair: "--text on --error-surface", fg: sceneRgb("--text"), bg: sceneRgb("--error-surface") },
+    { pair: "--ink on --paper", fg: sceneRgb("--ink"), bg: sceneRgb("--paper") },
+    { pair: "--ink-soft on --paper", fg: sceneRgb("--ink-soft"), bg: sceneRgb("--paper") },
+    { pair: "--ink on the crease (--ink at 8% over --paper)", fg: sceneRgb("--ink"), bg: creaseRgb },
+    { pair: "--env-ink on --env", fg: sceneRgb("--env-ink"), bg: sceneRgb("--env") },
+  ];
+
+  for (const { pair, fg, bg } of normalPairs) {
+    it(`${pair} clears ${WCAG_AA_NORMAL}:1 (R4.3)`, () => {
+      const r = checkPair(pair, fg, bg, WCAG_AA_NORMAL);
+      expect(r.ok, describeResult(r)).toBe(true);
+    });
+  }
+
+  // Control boundaries and focus rings (3:1). The white ring inside the
+  // Letter_Block, the Accent ring on --bg, and the --line control border.
+  const ringPairs: Array<{ pair: string; fg: Rgb; bg: Rgb }> = [
+    {
+      pair: "focus ring --on-purple on --purple (inside the Letter_Block)",
+      fg: sceneRgb("--on-purple"),
+      bg: sceneRgb("--purple"),
+    },
+    {
+      pair: "focus ring --accent on --bg (outside the Letter_Block)",
+      fg: sceneRgb("--accent"),
+      bg: sceneRgb("--bg"),
+    },
+    { pair: "control border --line on --bg", fg: sceneRgb("--line"), bg: sceneRgb("--bg") },
+  ];
+
+  for (const { pair, fg, bg } of ringPairs) {
+    it(`${pair} clears ${FOCUS_RING_MIN}:1 (R4.4, R3.14)`, () => {
+      const r = checkPair(pair, fg, bg, FOCUS_RING_MIN);
+      expect(r.ok, describeResult(r)).toBe(true);
+    });
+  }
+
+  // R4.5: any text token other than --on-purple on purple fails by name.
+  for (const token of ["--accent", "--text", "--bg"]) {
+    it(`${token} as text on --purple fails by name (R4.5)`, () => {
+      expect(() => assertTextOnPurple(token, sceneRgb("--purple"), sceneRgb)).toThrow(token);
+    });
+  }
+  it("--on-purple as text on --purple passes (R4.5)", () => {
+    expect(() => assertTextOnPurple("--on-purple", sceneRgb("--purple"), sceneRgb)).not.toThrow();
+  });
+
+  // R4.9: the Accent focus ring inside the Letter_Block fails by name.
+  it("the Accent focus ring inside the Letter_Block fails by name (R4.9)", () => {
+    expect(() => assertLetterBlockFocusRing("--accent", sceneRgb("--purple"), sceneRgb)).toThrow(
+      /focus ring --accent inside the Letter_Block/,
+    );
+  });
+  it("the white focus ring inside the Letter_Block passes (R4.9)", () => {
+    expect(() =>
+      assertLetterBlockFocusRing("--on-purple", sceneRgb("--purple"), sceneRgb),
+    ).not.toThrow();
+  });
+
+  // R4.7: --env-ink on the darkest dirt over --env is computed and must fail.
+  // No Envelope_Front text may sit on the dirt band (design, Envelope "Dirt and text").
+  it("--env-ink on the darkest --dirt over --env fails 4.5:1 by name (R4.7)", () => {
+    const r = checkPair(
+      "--env-ink on the darkest --dirt over --env",
+      sceneRgb("--env-ink"),
+      darkestDirtRgb,
+      WCAG_AA_NORMAL,
+    );
+    expect(r.ok, describeResult(r)).toBe(false);
+    expect(r.pair).toContain("--env-ink on the darkest --dirt");
+    expect(r.ratio).toBeLessThan(WCAG_AA_NORMAL);
+  });
+});
