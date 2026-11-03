@@ -53,9 +53,30 @@ import {
   StillSealed,
   type StillSealedProps,
 } from "@/components/reveal/StillSealed";
+import type { FlowState } from "@/components/reveal/opening-machine";
+
 import { ENVELOPE_TARGET } from "../constants";
+import { useLocalView } from "../local-view";
+import { showPickUp } from "../stages";
 import { Envelope, type EnvelopePersona, type EnvelopeState } from "./Envelope";
 import styles from "./EnvelopeView.module.css";
+
+/**
+ * Renders its children only when the Pick_Up_Button gate is open: the flow tag
+ * is `verified` and the Emergence is `"done"` (design.md "The Pick_Up_Button
+ * gate", R9.8 to R9.10). Reads the local view, so it must sit under the
+ * Ceremony's LocalViewProvider.
+ */
+function PickUpGate({
+  tag,
+  children,
+}: {
+  tag: FlowState["tag"];
+  children: ReactNode;
+}): ReactElement | null {
+  const { localView } = useLocalView();
+  return showPickUp(tag, localView) ? <>{children}</> : null;
+}
 
 /**
  * Which pre-reveal scene to show. These are exactly the flow tags the design's
@@ -214,9 +235,11 @@ export function EnvelopeView({
         <ParchmentSurface as="section" className={styles.intactStage}>
           <EnvelopeFrame state={envelopeState} persona={persona} />
           <p className={styles.statement}>{REVEAL_COPY.sealIntact}</p>
-          <button type="button" className={styles.button} onClick={onBegin}>
-            {REVEAL_COPY.begin}
-          </button>
+          <PickUpGate tag="verified">
+            <button type="button" className={styles.button} onClick={onBegin}>
+              {REVEAL_COPY.begin}
+            </button>
+          </PickUpGate>
         </ParchmentSurface>
       );
   }

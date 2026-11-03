@@ -135,7 +135,7 @@
   opacity: 0.55;
 }
 
-/* The pit: the Ghost's placement, centred on the light's x (task 3 fills it). */
+/* The pit: the Ghost's placement, centred on the light's x. */
 .pit {
   position: absolute;
   left: var(--ghost-x);
@@ -250,5 +250,155 @@
     margin-left: auto;
     font-size: 0.8rem;
     text-align: right;
+  }
+}
+
+/*
+ * The Ghost and the Emergence (design.md "The Ghost", "The Emergence is CSS
+ * first"). Every ms value and the easing equal their constants in constants.ts;
+ * constants-css.test.ts checks them. Animations change transform only.
+ *
+ * Gate: each animation runs only with motion allowed by the device and by the
+ * page's motion mode. The end pose is the base style, so without the gate the
+ * Ghost rests risen from the first render (R9.14).
+ */
+
+/* The Ghost_Box width and the risen pose, in the wide layout. */
+.ghostPlace {
+  --ghost-w: min(50vh, 560px);
+  --ghost-risen: -7%;
+  position: absolute;
+  left: 50%;
+  bottom: -3vh;
+  width: var(--ghost-w);
+  transform: translateX(-50%);
+  /* Clips the bottom edge at the Soil line, so the hem rises out of the Soil.
+     The top, left and right stay open. */
+  clip-path: inset(-100% -100% 0 -100%);
+}
+
+/* The narrow layout (below 900 px). */
+@media (max-width: 899.98px) {
+  .ghostPlace {
+    --ghost-w: min(31vh, 200px);
+    --ghost-risen: -3%;
+  }
+}
+
+/* The Ghost_Box: 1.2 times as tall as it is wide (aspect 5 : 6). Its base
+   transform is the risen pose. */
+.ghost {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 5 / 6;
+  transform: translateY(var(--ghost-risen));
+}
+
+.bob {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* The glow: two drop shadows in --ghost-glow (26 px and 4 px blur). */
+.ghostGlow {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  filter:
+    drop-shadow(0 0 26px var(--ghost-glow))
+    drop-shadow(0 0 4px var(--ghost-glow));
+}
+
+.ghostSvg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.ghostFold {
+  fill: none;
+  stroke: var(--ghost-fold);
+  stroke-width: 2;
+  stroke-opacity: 0.35;
+}
+
+.ghostEye {
+  fill: var(--bg);
+}
+
+/* The slot an Envelope is held in. Placement is set by the Envelope tasks. */
+.heldSlot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* The rise from below the Soil to the risen pose. Starts 900 ms after the
+   first style, runs 1500 ms, and holds its end pose (backwards fill). */
+@keyframes rise {
+  from {
+    transform: translateY(105%);
+  }
+  to {
+    transform: translateY(var(--ghost-risen));
+  }
+}
+
+/* The Idle_Bob: 3 px over 3600 ms, from the end of the rise on. */
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* The shake of the pit: 2 px, once. Keeps the pit's own -50% centring. */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(-50%);
+  }
+  25% {
+    transform: translateX(calc(-50% - 2px));
+  }
+  75% {
+    transform: translateX(calc(-50% + 2px));
+  }
+}
+
+/* The shake of the Soil strip: 2 px, once. */
+@keyframes shakeSoil {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-ceremony-motion="full"] .pit {
+    animation: shake 500ms linear 750ms 1;
+  }
+
+  [data-ceremony-motion="full"] .soilStrip {
+    animation: shakeSoil 500ms linear 750ms 1;
+  }
+
+  [data-ceremony-motion="full"] .ghost {
+    animation: rise 1500ms cubic-bezier(0.16, 0.84, 0.3, 1) 900ms backwards;
+  }
+
+  [data-ceremony-motion="full"] .bob {
+    animation: bob 3600ms ease-in-out calc(900ms + 1500ms) infinite;
   }
 }
