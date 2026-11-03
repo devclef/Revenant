@@ -1085,16 +1085,26 @@ Every string in the R24.3 table matches character for character, including the c
 
 | Task | File | Change |
 |---|---|---|
+| 1 | `css-imported.test.ts` | New `NOT_IMPORTED_YET` list, with `scene/tokens.module.css` on it until SceneShell imports it (task 2) |
 | 2 | `stages.test.ts`, `ceremony-gates.property.test.tsx`, `CeremonyRoot.test.tsx`, `skip.test.tsx` | New Stage names and local view; `controls` prop; nested Skip provider |
+| 2 | `css-imported.test.ts` | `NOT_IMPORTED_YET` emptied; the list stays as an empty array |
+| 2 | `assets.test.ts` | Rows outside `assets/` may name an existing component file (no byte budget); Ghost, Soil_Fallback and Envelope tear rows |
 | 2 | `envelope/Envelope.test.tsx`, `envelope/EnvelopeView.test.tsx`, `copy.test.ts` (ceremony) | New front, status line, hero layout; the changed error line (R24.8) |
 | 4 | `envelope/WaxSeal.test.tsx`, `reveal/RecallStep.test.tsx`, `demo/PersonaCard.test.tsx`, `demo/copy.test.ts` | One seal; pager; "Open the letter" |
 | 5 | `seal/SealBreak.test.tsx`, `reveal/Reveal.marks.test.tsx`, `reveal/SealedLetter.test.tsx`, `constants.test.ts`, `timings.property.test.ts` | Hold moves to `useSealBreak`; no flakes; no `data-ink-text`; changed values (R18.9) |
+| 5 | `ceremony-gates.property.test.tsx` | `planInkRun` clause removed with `letter/inkSession.ts` |
 | 6 | `figures/skip-final-state.test.ts`, `close/Close.test.tsx`, `reveal/FigureEntry.test.tsx`, `reveal/change-neutral.property.test.tsx`, `figures/NumberLine.test.tsx` | Skip over the fade-up; new close; R14.3 order; mirror extended; restyled pins |
+| 6 | `timings.property.test.ts`, `ceremony-gates.property.test.tsx` | Counter, Passage and ThenNowSequence plans removed with their files; the `ThenNowSequence.tsx` reference removed |
+| 8 | `constants.test.ts` | `CAMERA_MOVE_MS` assertion removed with the constant |
 | 9 | `contrast.test.ts` | Desk token pairs removed together with the desk tokens and desk code, in task 9 and no earlier (R4.8) |
+| 9 | `ceremony-gates.property.test.tsx` | `desk/decor-loader` clause removed with the desk |
+| 9 | `reveal/reveal-token-pairs.test.ts` | Its `--desk` pairs removed with the desk tokens (the test throws if `--desk` is missing) |
+| 9 | `src/components/live/contrast.test.ts` (spec 06) | Its five `--desk` pairs removed with the desk tokens (R4.8); the warning pairs are the replacement |
+
 
 ### Spec 05 tests kept unchanged
 
-`seal/hold.test.ts`, `seal/cracks.test.ts`, `recall/scale-math.test.ts`, `recall/RecallScale.test.tsx`, `figures/number-line.test.ts`, `sound/*.test.ts(x)`, `motion.test.tsx`, `LiveRegion.test.tsx`, `region-outline.test.ts`, `r11-accessibility.test.ts`, `css-imported.test.ts`, `assets.test.ts` (folder list extended), `source-scan.test.ts` (folder list extended), and every `opening-machine` test.
+`seal/hold.test.ts`, `seal/cracks.test.ts`, `recall/scale-math.test.ts`, `recall/RecallScale.test.tsx`, `figures/number-line.test.ts`, `sound/*.test.ts(x)`, `motion.test.tsx`, `LiveRegion.test.tsx`, `region-outline.test.ts`, `r11-accessibility.test.ts`, `source-scan.test.ts` (folder list extended), and every `opening-machine` test.
 
 ### Browser checks
 
