@@ -325,7 +325,7 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - Validation: `bash scripts/check.sh`
   - _Requirements: R19.1–R19.9, R21.1–R21.9, R22.1–R22.6, R24.2–R24.7, R26.1, R26.2, R26.7, R27.1–R27.10_
 
-- [ ] 11. Dark background on `html` and `body`
+- [x] 11. Dark background on `html` and `body`
   - Agent: `platform-dev` · Depends on: 1 · Estimated size: ~20 changed lines
   - Before this task: task 1 is on `main`. This task may run any time after task 1, beside the frontend-dev chain; it shares no file with it.
   - Scope: `src/app/globals.css`
