@@ -46,12 +46,14 @@ describe("narrow intact stage rules (scene.module.css)", () => {
     expect(declaration(narrowIntactBlock(), "min-height")).toBe("calc(100vh - 6rem)");
   });
 
-  it("pushes the region to the foot of the column with margin-top: auto", () => {
-    expect(declaration(narrowIntactBlock(), "margin-top")).toBe("auto");
+  it("pins the region below the Soil strip instead of the flow layout", () => {
+    expect(declaration(narrowIntactBlock(), "position")).toBe("absolute");
   });
 
-  it("lowers the region past the foot by a negative margin-bottom of 2.75rem", () => {
-    expect(declaration(narrowIntactBlock(), "margin-bottom")).toBe("-2.75rem");
+  it("places the region top at the Soil strip bottom (soil-top + soil-band), less the main padding", () => {
+    expect(declaration(narrowIntactBlock(), "top")).toBe(
+      "calc(var(--soil-top) + var(--soil-band) + 0.25rem - 6rem)",
+    );
   });
 
   it("does not change the wide layout: the only intact rule there is the headline size", () => {

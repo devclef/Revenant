@@ -56,24 +56,36 @@
   padding-top: 2.5rem;
 }
 
-/* Narrow intact stage (below 900 px). The seal card must not cover the Ghost's
-   eyes or the held Envelope, and no text may sit on the Ghost_Body_Box (G1).
-   The Ghost's eyes and Envelope end near y 414 at 360x640, and the body box
-   ends near y 432. So the Ceremony region is pushed to the foot of the column:
-   the column fills the window below the Top_Bar, the region sits at its bottom
-   (margin-top: auto), and its negative margin-bottom lowers the region's box
-   past the foot so the card keeps a gap above the window bottom. Only the
+/* Narrow intact stage (below 900 px). The seal card must clear two things at
+   once: the Ghost above (its eyes and held Envelope end near y 414 and the body
+   box near y 432 at 360x640, so no text may sit on the Ghost_Body_Box, G1) and
+   the Soil strip below (its top is at --soil-top = 69vh = 442 px at 360x640).
+   Those leave no gap between them, so the card cannot sit in the band above the
+   strip without covering the Ghost. It belongs on the plain background BELOW
+   the strip, where design.md "Pick up and the status line" places the flow's
+   status line and button.
+
+   The region's backdrop is fixed to the window (position: fixed), so taking
+   the region out of flow does not disturb the Soil strip, Ghost or canvas. We
+   pin the region to the Scene (its positioned ancestor, which starts at the
+   top of the window) with its top at the Soil strip bottom
+   (--soil-top + --soil-band) plus a small gap, so the seal card and its Begin
+   button sit clear of the strip (F2) and clear of the Ghost (G1) at every
+   narrow height, since both soil anchors are in vh. The region spans the
+   column (left/right 0), which already carries the side padding. Only the
    intact stage has this rule, so recall and marks keep their own layout. The
    :has() selector needs a browser that supports it; older browsers keep the
-   flow layout and still show the card. */
+   flow layout and still show the card below the strip. */
 @media (max-width: 899.98px) {
   .personaColumn:has(> [data-ceremony="intact"]) {
     min-height: calc(100vh - 6rem);
   }
 
   .personaColumn > [data-ceremony="intact"] {
-    margin-top: auto;
-    margin-bottom: -2.75rem;
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(var(--soil-top) + var(--soil-band) + 0.25rem - 6rem);
   }
 }
 
