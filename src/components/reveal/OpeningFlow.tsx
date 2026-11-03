@@ -82,7 +82,6 @@ import { Reveal } from "./Reveal";
 import { LiveLockNote } from "@/components/live/LiveLockNote";
 import { FlowError, type FlowErrorKind } from "./FlowError";
 import type { FlowState, OpenFailedKind } from "./opening-machine";
-import { REVEAL_COPY } from "./copy";
 import { createBeginGuard } from "./begin-guard";
 import styles from "./reveal.module.css";
 
@@ -300,6 +299,10 @@ function selectView(
   const envelopePersona: EnvelopePersona | undefined =
     persona === undefined ? undefined : { ...persona, demo: true };
 
+  // The persona's written-as-of date, shown in the recall counter (R11.5). A
+  // Live_Letter has no persona, so it gets no "as of" part.
+  const writtenAsOf = mode === "persona" ? persona?.written_as_of : undefined;
+
   // `live` is set only when the hook runs in user key-source mode. A live
   // letter has no persona, so its envelope gets the opening instant directly.
   const live = flow.live;
@@ -369,8 +372,12 @@ function selectView(
       return envelopeView("verified");
 
     case "recall":
+      // One RecallStep for recall, submitting and submit_failed, with the same
+      // key, so the pager (and its question index) stays mounted across a failed
+      // post (R11.12). The as-of date is shown on a persona letter only.
       return (
         <RecallStep
+          key="recall"
           opened={state.opened}
           drafts={state.drafts}
           invalid={state.invalid}
@@ -378,12 +385,14 @@ function selectView(
           onEdit={flow.editDraft}
           onToggleNoAnswer={flow.toggleNoAnswer}
           onSubmit={flow.submit}
+          writtenAsOf={writtenAsOf}
         />
       );
 
     case "submitting":
       return (
         <RecallStep
+          key="recall"
           opened={state.opened}
           drafts={state.drafts}
           invalid={[]}
@@ -391,25 +400,24 @@ function selectView(
           onEdit={flow.editDraft}
           onToggleNoAnswer={flow.toggleNoAnswer}
           onSubmit={flow.submit}
+          writtenAsOf={writtenAsOf}
         />
       );
 
     case "submit_failed":
       return (
-        <>
-          <RecallStep
-            opened={state.opened}
-            drafts={state.drafts}
-            invalid={[]}
-            submitting={false}
-            onEdit={flow.editDraft}
-            onToggleNoAnswer={flow.toggleNoAnswer}
-            onSubmit={flow.retryPost}
-          />
-          <p role="alert" className={styles.fieldError}>
-            {REVEAL_COPY.submitFailed}
-          </p>
-        </>
+        <RecallStep
+          key="recall"
+          opened={state.opened}
+          drafts={state.drafts}
+          invalid={[]}
+          submitting={false}
+          onEdit={flow.editDraft}
+          onToggleNoAnswer={flow.toggleNoAnswer}
+          onSubmit={flow.retryPost}
+          failed={true}
+          writtenAsOf={writtenAsOf}
+        />
       );
 
     case "reveal":

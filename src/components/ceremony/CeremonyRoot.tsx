@@ -163,6 +163,13 @@ function CeremonyRegion({
   useEffect(() => {
     const region = regionRef.current;
     if (region === null) return;
+    // A view can name its own focus target (spec 07 R11.2): the recall field.
+    // It wins over the newest heading.
+    const stageFocus = region.querySelector<HTMLElement>("[data-stage-focus]");
+    if (stageFocus !== null) {
+      stageFocus.focus();
+      return;
+    }
     const headings = Array.from(region.querySelectorAll<HTMLElement>("h1, h2"));
     const index = stageHeadingIndex(headings.map((heading) => heading.tagName.toLowerCase()));
     const target = index < 0 ? region : headings[index];

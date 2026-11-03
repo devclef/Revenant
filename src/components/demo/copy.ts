@@ -36,7 +36,7 @@ export const DEMO_COPY = {
   opensPrefix: "Opens",
 
   /** The link that opens a persona's sealed letter (R6.7). */
-  openLetter: "Pick up the letter",
+  openLetter: "Open the letter",
 
   /**
    * Empty-state text when the Persona_List is empty (R6.8). It names an

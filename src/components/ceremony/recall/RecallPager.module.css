@@ -1,0 +1,160 @@
+/*
+ * Styles for the Recall_Pager (design.md "Recall_Pager", spec 07 R11). Only the
+ * colour tokens from globals.css are used. The surface is a ParchmentSurface,
+ * which sets --ink itself, so every text colour here is set on purpose.
+ * The Accent (--accent) marks the reader's own control, the submit or Next
+ * button; it never marks a figure, a change or a direction (tone.md).
+ */
+
+.counter {
+  margin: 0 0 0.6rem;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.form {
+  margin: 0;
+}
+
+/* The question text is a body-level heading, not a display heading (R11.16). */
+.qTitle {
+  font-family: var(--font-serif);
+  font-weight: 750;
+  font-size: clamp(1.3rem, 2.4vw, 1.9rem);
+  line-height: 1.2;
+  margin: 0 0 0.6rem;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.fieldset {
+  border: 1px solid var(--gold-leaf); /* decorative rule only */
+  border-radius: 2px;
+  margin: 0 0 1rem;
+  padding: 1rem 1.25rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.6rem;
+}
+
+.intro {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+.unit {
+  color: var(--ink-soft);
+}
+
+/* The typed number and the Next or submit control share one row (R11.13). */
+.answerRow {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 0.6rem;
+  max-width: 100%;
+}
+
+/* The typed number is the largest text in the Stage (R11.16). */
+.input {
+  font: inherit;
+  font-size: clamp(3rem, 7vw, 5.2rem);
+  font-weight: 900;
+  line-height: 1.05;
+  width: 4.2ch;
+  min-width: 0;
+  box-sizing: border-box;
+  color: var(--ink);
+  background-color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  padding: 0.2rem 0.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+.cta {
+  font: inherit;
+  font-weight: 700;
+  white-space: nowrap;
+  color: var(--on-accent);
+  background-color: var(--accent);
+  border: 0;
+  border-radius: 2px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 1.1rem;
+  cursor: pointer;
+}
+
+.cta:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.link {
+  font: inherit;
+  color: var(--ink);
+  background-color: var(--paper-deep);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0.5rem 1rem;
+  cursor: pointer;
+}
+
+.noAnswer {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--ink);
+}
+
+.fieldError {
+  display: block;
+  color: var(--seal); /* AA label colour, never the only signal */
+}
+
+.input:focus-visible,
+.cta:focus-visible,
+.link:focus-visible,
+.noAnswer input:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* Below 900 px the intro moves under the answer controls, so the field and the
+   button stay above the fold (R11.15). The number and the button shrink to fit. */
+@media (max-width: 899px) {
+  .intro {
+    order: 11;
+  }
+
+  .input {
+    font-size: 2.4rem;
+  }
+
+  .cta {
+    font-size: 1rem;
+  }
+
+  .qTitle {
+    font-size: 1.25rem;
+  }
+}

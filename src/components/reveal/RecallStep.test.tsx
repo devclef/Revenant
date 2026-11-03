@@ -5,31 +5,30 @@ import { describe, expect, it } from "vitest";
 import { RecallStep } from "./RecallStep";
 import { REVEAL_COPY } from "./copy";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
+import { formatCalendarDate } from "@/components/demo/dates";
+import { RecallPager } from "@/components/ceremony/recall/RecallPager";
 import type { Opened } from "./opening-machine";
 import type { Draft } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
 
-/** The spoken text a slider with no Mark gives (RecallScale's empty state). */
-const CEREMONY_NO_MARK = CEREMONY_COPY.recallNoMarkYet;
-
 /**
- * Markup tests for the recall step (R8.1-R8.4, R16.4, neutrality.md). Rendered
- * with `renderToStaticMarkup` and `createElement` — no DOM library and no JSX,
- * so the step's full output is a string we can scan. The component is pure: it
- * renders from the props it is given and nothing else, so a fixed `Opened` and
- * drafts drive every assertion.
+ * Markup tests for the recall step, now the Recall_Pager (spec 07 R11).
  *
- * The step shows BEFORE anything inside the letter is revealed. It must show
- * the sealed question text, a decimal input with the figure's unit and a
- * "No answer" control — and must leak no sealed figure value, period, source
- * or comparison (neutrality.md: no hint of which way a figure moved).
+ * Spec 07 (R11.1, R11.10) replaces spec 03 R8.1 and R8.4 here. The step shows
+ * one question at a time, in payload order, not a fieldset per question. The
+ * step still shows the sealed question text and the figure's unit, one
+ * decimal input, a "No answer" control and the inline error for an invalid
+ * answer. It still leaks no sealed figure value, period, source or comparison
+ * (neutrality.md).
+ *
+ * Rendered with `renderToStaticMarkup` and `createElement`, so the output is a
+ * string. The pager's first question is shown; `initialIndex` picks another.
+ * Paging itself (Enter, Next, invalid jumps) is tested in
+ * `RecallPager.property.test.tsx` through the pure rules in `recall-pager.ts`.
  */
 
-/**
- * A fixed opened letter with two number questions and one text question. The
- * figure values, periods and sources below are deliberately present in the
- * payload so the tests can prove the recall step renders NONE of them.
- */
+const WRITTEN_AS_OF = "2024-10-01";
+
 const OPENED: Opened = {
   letterId: "letter-1",
   header: {
@@ -52,7 +51,7 @@ const OPENED: Opened = {
       {
         id: "milk",
         display_name: "Milk",
-        unit: "USD per gallon",
+        unit: "USD per litre",
         region: "U.S. city average",
         source: "U.S. BLS",
         series_id: "APU0000709112",
@@ -82,206 +81,242 @@ const OPENED: Opened = {
       {
         id: "q-milk",
         answer_type: "number",
-        text: "What do you think a gallon of milk cost then?",
+        text: "What did a litre of milk cost then?",
         metric_id: "milk",
       },
       {
         id: "q-note",
         answer_type: "text",
-        text: "What were you spending most on then?",
+        text: "What do you remember most about that autumn?",
+        metric_id: "fuel",
       },
     ],
-  } satisfies PayloadV1,
+  } as unknown as PayloadV1,
 };
 
-const NOOP = () => {};
+const NO_DRAFTS: Readonly<Record<string, Draft>> = {};
 
-function render(
-  drafts: Record<string, Draft>,
-  invalid: string[],
-  submitting: boolean,
-): string {
+type Props = Partial<Parameters<typeof RecallStep>[0]> & {
+  initialIndex?: number;
+  writtenAsOf?: string;
+};
+
+/** Render the recall step. `initialIndex` picks the shown question. */
+function render(props: Props = {}): string {
+  const { initialIndex, ...stepProps } = props;
+  const base = {
+    opened: OPENED,
+    drafts: NO_DRAFTS,
+    invalid: [] as string[],
+    submitting: false,
+    onEdit: () => {},
+    onToggleNoAnswer: () => {},
+    onSubmit: () => {},
+    ...stepProps,
+  };
+  if (initialIndex === undefined) {
+    return renderToStaticMarkup(createElement(RecallStep, base));
+  }
+  // The pager is rendered directly to choose a question; the step adds only its surface.
   return renderToStaticMarkup(
-    createElement(RecallStep, {
-      opened: OPENED,
-      drafts,
-      invalid,
-      submitting,
-      onEdit: NOOP,
-      onToggleNoAnswer: NOOP,
-      onSubmit: NOOP,
+    createElement(RecallPager, {
+      payload: OPENED.payload,
+      drafts: base.drafts,
+      invalid: base.invalid,
+      submitting: base.submitting,
+      failed: stepProps.failed,
+      writtenAsOf: stepProps.writtenAsOf,
+      onEdit: base.onEdit,
+      onToggleNoAnswer: base.onToggleNoAnswer,
+      onSubmit: base.onSubmit,
+      initialIndex,
     }),
   );
 }
 
-const EMPTY_DRAFTS: Record<string, Draft> = {
-  "q-fuel": { text: "", noAnswer: false },
-  "q-milk": { text: "", noAnswer: false },
-  "q-note": { text: "", noAnswer: false },
-};
+/** Count occurrences of `needle` in `html`. */
+function count(html: string, needle: string): number {
+  return html.split(needle).length - 1;
+}
 
-describe("RecallStep markup", () => {
+describe("RecallStep shows one question at a time (R11.1)", () => {
   it("is a form with noValidate so the browser's own validation never fires", () => {
-    const html = render(EMPTY_DRAFTS, [], false);
-    expect(html).toContain("<form");
-    // renderToStaticMarkup keeps React's prop name `noValidate` (camelCase) and
-    // serialises the boolean as `noValidate=""`.
-    expect(html).toContain('noValidate=""');
+    expect(render()).toContain("noValidate");
   });
 
-  it("renders one fieldset per sealed question, legend = question text verbatim", () => {
-    const html = render(EMPTY_DRAFTS, [], false);
-    const fieldsets = html.match(/<fieldset/g) ?? [];
-    expect(fieldsets).toHaveLength(OPENED.payload.recall_questions.length);
-    for (const question of OPENED.payload.recall_questions) {
-      expect(html).toContain(`<legend`);
-      expect(html).toContain(question.text);
-    }
+  it("shows the first question only, with its text as the heading", () => {
+    const html = render();
+    expect(html).toContain(OPENED.payload.recall_questions[0].text);
+    expect(html).not.toContain(OPENED.payload.recall_questions[1].text);
+    expect(html).not.toContain(OPENED.payload.recall_questions[2].text);
+    expect(count(html, "<fieldset")).toBe(1);
   });
 
-  it("renders a decimal input (inputMode=decimal) for every question", () => {
-    const html = render(EMPTY_DRAFTS, [], false);
-    const decimalInputs = html.match(/inputMode="decimal"/g) ?? [];
-    expect(decimalInputs).toHaveLength(OPENED.payload.recall_questions.length);
+  it("shows the second question on index 1, not the first", () => {
+    const html = render({ initialIndex: 1 });
+    expect(html).toContain(OPENED.payload.recall_questions[1].text);
+    expect(html).not.toContain(OPENED.payload.recall_questions[0].text);
   });
 
-  it("shows each number question's unit from the sealed metric (R8.2)", () => {
-    const html = render(EMPTY_DRAFTS, [], false);
-    // Both number questions ask about a USD-per-gallon metric, so the unit
-    // label appears for each. The text question has no unit.
-    const unitLabel = REVEAL_COPY.unitLabel.replace("{unit}", "USD per gallon");
-    const labels = html.split(unitLabel).length - 1;
-    expect(labels).toBe(2);
+  it("shows the figure's unit for a number question (R8.2)", () => {
+    const html = render();
+    expect(html).toContain(REVEAL_COPY.unitLabel.replace("{unit}", "USD per gallon"));
   });
 
-  it('renders a "No answer" checkbox for every question (R8.3)', () => {
-    const html = render(EMPTY_DRAFTS, [], false);
-    const checkboxes = html.match(/type="checkbox"/g) ?? [];
-    expect(checkboxes).toHaveLength(OPENED.payload.recall_questions.length);
+  it("shows no unit for a text question", () => {
+    const html = render({ initialIndex: 2 });
+    expect(html).not.toContain("in USD");
+    expect(html).not.toContain("in USD per litre");
+  });
+
+  it("renders one decimal input for the shown question", () => {
+    expect(count(render(), 'inputMode="decimal"')).toBe(1);
+  });
+
+  it("renders a No answer checkbox for the shown question (R11.7)", () => {
+    const html = render();
+    expect(count(html, 'type="checkbox"')).toBe(1);
     expect(html).toContain(REVEAL_COPY.noAnswer);
   });
 
   it("disables the number input when its draft is marked No answer", () => {
-    const drafts: Record<string, Draft> = {
-      ...EMPTY_DRAFTS,
-      "q-fuel": { text: "", noAnswer: true },
-    };
-    const html = render(drafts, [], false);
-    // Exactly one of the text inputs is disabled (the No-answer one).
-    const disabled = html.match(/<input[^>]*disabled/g) ?? [];
-    expect(disabled).toHaveLength(1);
+    const html = render({
+      drafts: { "q-fuel": { text: "3.50", noAnswer: true } },
+    });
+    const input = html.match(/<input[^>]*id="recall-q-fuel"[^>]*>/)?.[0] ?? "";
+    expect(input).toContain("disabled");
+    expect(html).toContain('checked=""');
   });
 
-  it("shows the inline error only for an invalid question (R8.4)", () => {
-    const withError = render(EMPTY_DRAFTS, ["q-fuel"], false);
-    expect(withError).toContain(REVEAL_COPY.answerInvalid);
-    expect(withError).toContain('role="alert"');
-
-    const noError = render(EMPTY_DRAFTS, [], false);
-    expect(noError).not.toContain(REVEAL_COPY.answerInvalid);
+  it("shows the typed text in the input as entered", () => {
+    const html = render({ drafts: { "q-fuel": { text: "3.50", noAnswer: false } } });
+    expect(html).toContain('value="3.50"');
   });
 
-  it("disables the submit control while submitting and shows the posting copy (R8.9)", () => {
-    const html = render(EMPTY_DRAFTS, [], true);
+  it("shows the inline error only when the shown question is invalid (R11.10)", () => {
+    const shownInvalid = render({ invalid: ["q-fuel"] });
+    expect(shownInvalid).toContain(REVEAL_COPY.answerInvalid);
+    expect(shownInvalid).toContain('aria-invalid="true"');
+
+    const otherInvalid = render({ invalid: ["q-milk"] });
+    expect(otherInvalid).not.toContain(REVEAL_COPY.answerInvalid);
+  });
+
+  it("disables the submit control while submitting on the last question (R11.11)", () => {
+    const html = render({ initialIndex: 2, submitting: true });
     expect(html).toContain(REVEAL_COPY.submitting);
-    expect(html).toContain("disabled");
+    expect(html).toMatch(/<button[^>]*disabled[^>]*>/);
   });
 
-  it("enables the submit control when not submitting and shows the submit copy", () => {
-    const html = render(EMPTY_DRAFTS, [], false);
+  it("enables the submit control when not submitting on the last question", () => {
+    const html = render({ initialIndex: 2 });
     expect(html).toContain(REVEAL_COPY.submit);
-    // The submit button is not disabled: the only disabled control possible
-    // here would be a No-answer input, and none is toggled.
-    expect(html).not.toContain("disabled");
+    expect(html).not.toMatch(/<button[^>]*disabled[^>]*>/);
+  });
+
+  it("shows the submit-failed message with the answers kept on a failed post (R11.12)", () => {
+    const html = render({ initialIndex: 2, failed: true });
+    // The apostrophe in the copy is HTML-escaped in the markup, so check the first sentence.
+    expect(html).toContain("Your answers could not be recorded. Nothing has been revealed yet.");
+    expect(html).toContain('role="alert"');
   });
 
   it("renders no sealed figure value, period, source or comparison (R16.4, neutrality.md)", () => {
-    const html = render(EMPTY_DRAFTS, [], false);
-    const forbidden = [
-      "3.412", // the sealed figure value
-      "2024-10", // the figure's period
-      "U.S. EIA", // the figure's source
-      "EMM_EPMR_PTE_NUS_DPG", // the series id
-      "LETTER_BODY_SECRET", // the letter text
-      "https://www.eia.gov/fixture", // the source url
-      "%", // a change / comparison
-      "then and now",
-    ];
-    for (const needle of forbidden) {
-      expect(
-        html,
-        `recall step must not leak "${needle}"`,
-      ).not.toContain(needle);
+    const html = render();
+    for (const needle of [
+      "3.412",
+      "2024-10",
+      "EMM_EPMR_PTE_NUS_DPG",
+      "APU0000709112",
+      "U.S. EIA",
+      "U.S. BLS",
+      "eia.gov",
+      "LETTER_BODY_SECRET",
+      "retrieved",
+      "rose",
+      "fell",
+    ]) {
+      expect(html, `recall must not leak "${needle}"`).not.toContain(needle);
     }
   });
 });
 
-/**
- * The recall scale inside each fieldset (issue #102). A number question gets one
- * slider above its input; the text question gets none. Each slider's Mark,
- * readout and disabled state follow that question's draft.
- */
-describe("RecallStep recall scale", () => {
-  // Split the markup into one chunk per fieldset, in payload order.
-  function fieldsetsOf(html: string): string[] {
-    return html.split("<fieldset").slice(1);
-  }
-
-  it("puts one slider inside each number question's fieldset and none in the text question", () => {
-    const html = render(EMPTY_DRAFTS, [], false);
-    const fieldsets = fieldsetsOf(html);
-    expect(fieldsets).toHaveLength(OPENED.payload.recall_questions.length);
-    // q-fuel and q-milk are number questions; q-note is a text question.
-    expect(fieldsets[0]).toContain('role="slider"');
-    expect(fieldsets[1]).toContain('role="slider"');
-    expect(fieldsets[2]).not.toContain('role="slider"');
-    expect(html.match(/role="slider"/g) ?? []).toHaveLength(2);
+describe("RecallStep counter and controls (R11.5)", () => {
+  it("shows the persona counter with the as-of date in a nowrap span", () => {
+    const html = render({ writtenAsOf: WRITTEN_AS_OF });
+    const asOf = formatCalendarDate(WRITTEN_AS_OF);
+    expect(html).toContain(
+      `Question 1 of 3${REVEAL_COPY.questionCounterSeparator}<span class="`,
+    );
+    expect(html).toContain(`>as of ${asOf}</span>`);
+    expect(html).toContain("nowrap");
   });
 
-  it("labels each slider with its question text and the figure's unit", () => {
-    const html = render(EMPTY_DRAFTS, [], false);
-    const [fuel] = fieldsetsOf(html);
-    expect(fuel).toContain(`aria-label="${OPENED.payload.recall_questions[0].text}"`);
-    expect(fuel).toContain(`aria-valuetext="${CEREMONY_NO_MARK}"`);
+  it("shows the Live_Letter counter with no as-of part", () => {
+    const html = render();
+    expect(html).toContain("Question 1 of 3");
+    expect(html).not.toContain("as of");
   });
 
-  it("marks the typed number on the slider and shows it as the readout", () => {
-    const drafts: Record<string, Draft> = {
-      ...EMPTY_DRAFTS,
-      "q-fuel": { text: "3.5", noAnswer: false },
+  it("shows Next question on every question but the last, and no Previous on the first", () => {
+    const first = render();
+    expect(first).toContain(REVEAL_COPY.nextQuestion);
+    expect(first).not.toContain(REVEAL_COPY.previousQuestion);
+    expect(first).not.toContain(REVEAL_COPY.submit);
+  });
+
+  it("shows Previous question and the submit control on the last question", () => {
+    const last = render({ initialIndex: 2 });
+    expect(last).toContain(REVEAL_COPY.previousQuestion);
+    expect(last).toContain(REVEAL_COPY.submit);
+    expect(last).not.toContain(REVEAL_COPY.nextQuestion);
+  });
+
+  it("shows only the submit control when there is one question", () => {
+    const single: Opened = {
+      ...OPENED,
+      payload: {
+        ...OPENED.payload,
+        recall_questions: [OPENED.payload.recall_questions[0]],
+      } as PayloadV1,
     };
-    const [fuel] = fieldsetsOf(render(drafts, [], false));
-    expect(fuel).toContain('aria-valuetext="Your answer: 3.5 USD per gallon"');
-    expect(fuel).toContain('data-readout="readout">3.5<');
+    const html = renderToStaticMarkup(
+      createElement(RecallPager, {
+        payload: single.payload,
+        drafts: NO_DRAFTS,
+        invalid: [],
+        submitting: false,
+        onEdit: () => {},
+        onToggleNoAnswer: () => {},
+        onSubmit: () => {},
+      }),
+    );
+    expect(html).toContain(REVEAL_COPY.submit);
+    expect(html).not.toContain(REVEAL_COPY.nextQuestion);
+    expect(html).not.toContain(REVEAL_COPY.previousQuestion);
+  });
+});
+
+describe("RecallStep recall scale (spec 05 R4)", () => {
+  it("puts a slider under the shown number question", () => {
+    expect(render()).toContain(CEREMONY_COPY.recallNoMarkYet);
   });
 
-  it("shows no Mark while the typed text is not a plain decimal", () => {
-    const drafts: Record<string, Draft> = {
-      ...EMPTY_DRAFTS,
-      "q-fuel": { text: "3,50", noAnswer: false },
-    };
-    const [fuel] = fieldsetsOf(render(drafts, [], false));
-    expect(fuel).toContain(`aria-valuetext="${CEREMONY_NO_MARK}"`);
-    expect(fuel).not.toContain("data-readout");
+  it("puts no slider on a text question", () => {
+    const html = render({ initialIndex: 2 });
+    expect(html).not.toContain(CEREMONY_COPY.recallNoMarkYet);
+  });
+});
+
+describe("RecallStep hint and intro", () => {
+  it("shows the persona intro with its written-as-of date on the first question", () => {
+    const html = render({ writtenAsOf: WRITTEN_AS_OF });
+    expect(html).toContain(
+      REVEAL_COPY.recallIntro.replace("{date}", formatCalendarDate(WRITTEN_AS_OF)),
+    );
   });
 
-  it("disables the slider and removes its Mark when the question is No answer", () => {
-    const drafts: Record<string, Draft> = {
-      ...EMPTY_DRAFTS,
-      "q-fuel": { text: "3.5", noAnswer: true },
-    };
-    const [fuel, milk] = fieldsetsOf(render(drafts, [], false));
-    expect(fuel).toContain('aria-disabled="true"');
-    expect(fuel).toContain('tabindex="-1"');
-    expect(fuel).not.toContain("data-readout");
-    // The other question's slider stays live.
-    expect(milk).not.toContain('aria-disabled="true"');
-    expect(milk).toContain('tabindex="0"');
-  });
-
-  it("leaves the slider enabled when the question is not No answer", () => {
-    const html = render(EMPTY_DRAFTS, [], false);
-    expect(html).not.toContain('aria-disabled="true"');
-    expect(html).not.toContain('aria-readonly="true"');
+  it("shows the recall hint on a Live_Letter's first question", () => {
+    expect(render()).toContain(REVEAL_COPY.recallHint);
   });
 });
