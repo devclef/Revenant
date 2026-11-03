@@ -1,19 +1,19 @@
 // Feature: 05-reveal-ceremony
 //
-// Envelope: one inline-SVG envelope drawn in a fixed viewBox, in one of three
-// states — `closed` (front, with a postmark), `turned` (back, flap down, the
-// WaxSeal on the flap) and `open` (flap up, the letter showing). It is the
-// paper object the Ceremony turns over and opens (design.md "Envelope and
-// seal", R3.6, R3.7, R8.4).
+// Envelope: one inline-SVG envelope with a front and a back face, drawn in a
+// fixed viewBox. `closed` shows the front (with a postmark), `turned` turns the
+// back to the reader (flap down, the one WaxSeal on the flap) and `open` shows
+// the flap lifted with the letter. It is the paper object the Ceremony turns
+// over and opens (design.md "The Envelope", R3.6, R3.7, R10.8).
 //
 // R3.6 — the envelope is the same for every letter. The SVG, its viewBox, its
 // size and every fold are fixed literals here. Nothing in the geometry or the
 // markup reads the letter's length, its figures, its metrics or its units. The
-// only things that vary between two letters are the three persona date lines
-// (which are text the reader must see) and the seal's decorative pattern (keyed
-// only by the persona key, inside WaxSeal). A property test renders this at
-// many letter lengths and figure counts and asserts the markup is byte-identical
-// once the persona list fields are fixed.
+// only thing that varies between two letters is the persona date lines (text
+// the reader must see). The wax seal is one fixed design for every letter
+// (R10.10). A property test renders this at many letter lengths and figure
+// counts and asserts the markup is byte-identical once the persona list fields
+// are fixed.
 //
 // R3.7 — the front shows only the persona list dates: "Written as of {date}"
 // and "Opens {date}", plus "Prepared later as a demo." when `demo`. It NEVER
@@ -28,11 +28,12 @@
 // and its markup is identical on the server and the client for a given set of
 // props (Property 21). It needs no "use client".
 
-import type { ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 
 import { formatCalendarDate, formatUtcDate } from "@/components/demo/dates";
 
 import { CEREMONY_COPY } from "../copy";
+import { ENVELOPE_TURN_AT_MS, ENVELOPE_TURN_MS } from "../constants";
 import { WaxSeal } from "./WaxSeal";
 import styles from "./Envelope.module.css";
 
@@ -44,7 +45,7 @@ export type EnvelopeState = "closed" | "turned" | "open";
  * None of these is the letter's content, its figures or a sealed-on date.
  */
 export type EnvelopePersona = {
-  /** Seeds the seal's decorative pattern only (R8.4). */
+  /** The persona key. Not drawn: the wax seal is the same for every letter (R10.10). */
   key: string;
   /** The written-as-of calendar date, `YYYY-MM-DD` (R3.7). */
   written_as_of: string;
@@ -269,10 +270,12 @@ const SEAL_Y_OPEN = BODY_Y - 44 + 8;
 /**
  * The envelope.
  *
- * `closed` draws the front with its postmark; `turned` the back with the flap
- * folded down and the WaxSeal on it; `open` the body with the flap lifted and
- * the letter sheet showing. The date lines sit over the front as HTML text and
- * only appear on `closed`, because they belong to the face a reader reads first.
+ * The envelope has a front face and a back face in one turning object. `closed`
+ * shows the front with its postmark; `turned` turns the back to the reader with
+ * the flap down and the WaxSeal on it; `open` shows the flap lifted and the
+ * letter sheet. The turn is CSS, timed from the constants (R10.8). The date
+ * lines sit over the front as HTML text and only appear on `closed`, because
+ * they belong to the face a reader reads first.
  */
 export function Envelope({
   state,
@@ -309,9 +312,25 @@ export function Envelope({
       ? CEREMONY_COPY.envelopeDemoNote
       : undefined;
 
-  // The seal's pattern key: the persona key when present, else a fixed default
-  // so spec 03 renders (no persona) still draw a stable seal (R8.4).
-  const patternKey = persona?.key ?? "revenant-default-seal";
+  // The seal is the same for every letter (R10.10), so nothing here reads the
+  // persona beyond its date lines.
+  const turning = state !== "closed";
+  const turnerClass = [
+    styles.turner,
+    turning ? styles.turned : undefined,
+    turning ? styles.turning : undefined,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  // The turn starts at ENVELOPE_TURN_AT_MS and lasts ENVELOPE_TURN_MS, ending
+  // by 920 ms (R10.8). Calm and reduced motion drop the animation in CSS and
+  // keep the end pose, so the back shows in the same render (R10.9).
+  const turnStyle: CSSProperties | undefined = turning
+    ? {
+        animationDelay: `${ENVELOPE_TURN_AT_MS}ms`,
+        animationDuration: `${ENVELOPE_TURN_MS}ms`,
+      }
+    : undefined;
 
   return (
     <div
@@ -319,31 +338,41 @@ export function Envelope({
       data-envelope-state={state}
       data-envelope-layout={layout}
     >
-      <svg
-        className={styles.art}
-        viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-        aria-hidden="true"
-        focusable="false"
-        preserveAspectRatio="xMidYMid meet"
-      >
-        {state === "closed" ? <Front /> : null}
-        {state === "turned" ? <Back /> : null}
-        {state === "open" ? <Open /> : null}
-        <TornEdge />
-        <Dirt />
+      <div className={turnerClass} style={turnStyle} data-envelope-turner>
+        {/* The front face: the postmark and the torn edge. It holds no seal. */}
+        <svg
+          className={`${styles.art} ${styles.faceFront}`}
+          viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+          aria-hidden="true"
+          focusable="false"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          <Front />
+          <TornEdge />
+          <Dirt />
+        </svg>
 
-        {/* The wax seal rides on the flap for turned and open. The front has no
-            seal: it is the face shown to the world. */}
-        {state === "turned" || state === "open" ? (
+        {/* The back face: the pocket, the flap and the one wax seal. It is
+            turned to the reader from `recall` on (R10.8). */}
+        <svg
+          className={`${styles.art} ${styles.faceBack}`}
+          viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
+          aria-hidden="true"
+          focusable="false"
+          preserveAspectRatio="xMidYMid meet"
+        >
+          {state === "open" ? <Open /> : <Back />}
+          <TornEdge />
+          <Dirt />
           <g
             transform={`translate(${SEAL_X} ${
               state === "open" ? SEAL_Y_OPEN : SEAL_Y_TURNED
             })`}
           >
-            <WaxSeal patternKey={patternKey} size={SEAL_SIZE} />
+            <WaxSeal size={SEAL_SIZE} />
           </g>
-        ) : null}
-      </svg>
+        </svg>
+      </div>
 
       {/* The date lines, as selectable HTML text over the front. They show only
           on the closed front (R3.7), and never a sealed-on date. */}

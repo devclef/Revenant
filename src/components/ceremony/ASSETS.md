@@ -24,6 +24,7 @@ Rules for every entry:
 | src/components/ceremony/scene/soil-model.ts | Module. Pure soil geometry from the seeded RNG (light falloff, base, pebbles, clumps, dust, clods). No image or font. | original | 2026-11-03 |
 | src/components/ceremony/scene/Ghost.tsx | Component. One inline SVG path for the head, body and hem, a CSS gradient fill, folds and eyes, written by hand. A plain sheet ghost, not Kiro's logo or mascot. No image or font. | original | 2026-11-03 |
 | src/components/ceremony/envelope/Envelope.tsx | Component. Inline SVG and CSS for the envelope front and torn bottom edge, written by hand. No image or font. | original | 2026-11-03 |
+| src/components/ceremony/envelope/WaxSeal.tsx | Component. One inline SVG wax seal: an irregular blob, a ring, an inner disc, a pressed ghost silhouette and two eyes, drawn by hand in two clipped halves. Same for every persona. No image or font. | original | 2026-11-03 |
 
 Rows whose path is outside `assets/` name a component file in the repository,
 which `assets.test.ts` checks. No asset file is under `assets/`. The ceremony

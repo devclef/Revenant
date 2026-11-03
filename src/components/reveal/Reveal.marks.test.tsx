@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { Reveal, type RevealProps } from "./Reveal";
 import { REVEAL_COPY } from "./copy";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
-import { WaxSeal } from "@/components/ceremony/envelope/WaxSeal";
+import { WaxSeal, normaliseWaxSealIds } from "@/components/ceremony/envelope/WaxSeal";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { SkipProvider } from "@/components/ceremony/skip";
 import { LiveRegionProvider } from "@/components/ceremony/LiveRegion";
@@ -72,6 +72,13 @@ const OPENED: Opened = {
 };
 
 function renderMarks(
+  record: RecallRecordV1,
+  extra: Partial<RevealProps> = {},
+): string {
+  return normaliseWaxSealIds(renderMarksRaw(record, extra));
+}
+
+function renderMarksRaw(
   record: RecallRecordV1,
   extra: Partial<RevealProps> = {},
 ): string {
@@ -152,7 +159,7 @@ function sealMarkup(patternKey: string): string {
   const markup = renderToStaticMarkup(
     createElement(WaxSeal, { patternKey, size: 64 }),
   );
-  return markup.slice(markup.indexOf("width="));
+  return normaliseWaxSealIds(markup.slice(markup.indexOf("width=")));
 }
 
 describe("reveal seal pattern key (spec 06, R18.2)", () => {
@@ -162,21 +169,18 @@ describe("reveal seal pattern key (spec 06, R18.2)", () => {
   };
   const LIVE_LETTER_ID = "live-letter-seal-key";
 
-  it("seals a live letter with its letterId, not the persona name", () => {
-    // Guard: the two keys must draw different seals, or the test proves nothing.
-    expect(sealMarkup(LIVE_LETTER_ID)).not.toBe(sealMarkup("Maya"));
-
+  it("draws the one seal for a live letter, the same as for a persona (R10.10)", () => {
     const html = renderMarks(RECORD, {
       variant: "live",
       letterId: LIVE_LETTER_ID,
     });
     expect(html).toContain(sealMarkup(LIVE_LETTER_ID));
-    expect(html).not.toContain(sealMarkup("Maya"));
+    expect(html).toContain(sealMarkup("Maya"));
   });
 
-  it("keeps the persona name as the seal key when the variant is persona", () => {
+  it("keeps the one seal when the variant is persona (R10.10)", () => {
     const html = renderMarks(RECORD, { letterId: LIVE_LETTER_ID });
     expect(html).toContain(sealMarkup("Maya"));
-    expect(html).not.toContain(sealMarkup(LIVE_LETTER_ID));
+    expect(html).toContain(sealMarkup(LIVE_LETTER_ID));
   });
 });

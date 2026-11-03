@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { SealedLetter } from "./SealedLetter";
 import { LIVE_COPY, REVEAL_COPY } from "./copy";
 import { formatLocalDateTime } from "@/components/live/format";
-import { WaxSeal } from "@/components/ceremony/envelope/WaxSeal";
+import { WaxSeal, normaliseWaxSealIds } from "@/components/ceremony/envelope/WaxSeal";
 import type { Opened } from "./opening-machine";
 import type { PayloadV1 } from "@/lib/seal-format";
 
@@ -35,34 +35,37 @@ const OPENED: Opened = {
 };
 
 function render(variant?: "persona" | "live"): string {
-  return renderToStaticMarkup(
-    createElement(SealedLetter, { opened: OPENED, personaName: "Maya", variant }),
+  return normaliseWaxSealIds(
+    renderToStaticMarkup(
+      createElement(SealedLetter, { opened: OPENED, personaName: "Maya", variant }),
+    ),
   );
 }
 
 /** The seal markup for one pattern key, so tests can match it in the page. */
 function sealMarkup(patternKey: string): string {
-  return renderToStaticMarkup(createElement(WaxSeal, { patternKey, size: 48 }));
+  return normaliseWaxSealIds(
+    renderToStaticMarkup(createElement(WaxSeal, { patternKey, size: 48 })),
+  );
 }
 
 const LIVE_LETTER_ID = "live-letter-seal-key";
 const PERSONA_NAME = "Maya";
 
 describe("SealedLetter, live variant (R18.2)", () => {
-  it("seals with the pattern key from letterId, not personaName", () => {
-    // Guard: the two keys must draw different seals, or the test proves nothing.
-    expect(sealMarkup(LIVE_LETTER_ID)).not.toBe(sealMarkup(PERSONA_NAME));
-
-    const html = renderToStaticMarkup(
-      createElement(SealedLetter, {
-        opened: OPENED,
-        personaName: PERSONA_NAME,
-        variant: "live",
-        letterId: LIVE_LETTER_ID,
-      }),
+  it("draws the one seal for a live letter, the same markup as a persona (R10.10)", () => {
+    const html = normaliseWaxSealIds(
+      renderToStaticMarkup(
+        createElement(SealedLetter, {
+          opened: OPENED,
+          personaName: PERSONA_NAME,
+          variant: "live",
+          letterId: LIVE_LETTER_ID,
+        }),
+      ),
     );
     expect(html).toContain(sealMarkup(LIVE_LETTER_ID));
-    expect(html).not.toContain(sealMarkup(PERSONA_NAME));
+    expect(html).toContain(sealMarkup(PERSONA_NAME));
   });
 
   it("renders no seal in live mode when letterId is absent", () => {

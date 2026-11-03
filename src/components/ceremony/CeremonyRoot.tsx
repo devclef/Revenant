@@ -52,7 +52,9 @@ import { useSequence } from "./skip";
 import { SoundToggle } from "./sound/SoundToggle";
 import { SoundEnabledContext } from "./sound/SoundEnabledContext";
 import { soundCues } from "./sound/cues";
-import { emergingStatus, stageFor } from "./stages";
+import { StageContext } from "./stage-context";
+import { emergingStatus, ghostHanded, stageFor } from "./stages";
+import { PICKUP_MOVE_MS } from "./constants";
 import type { FlowState } from "../reveal/opening-machine";
 import styles from "./ceremony.module.css";
 
@@ -161,6 +163,13 @@ function CeremonyRegion({
   useEffect(() => {
     const region = regionRef.current;
     if (region === null) return;
+    // A view can name its own focus target (spec 07 R11.2): the recall field.
+    // It wins over the newest heading.
+    const stageFocus = region.querySelector<HTMLElement>("[data-stage-focus]");
+    if (stageFocus !== null) {
+      stageFocus.focus();
+      return;
+    }
     const headings = Array.from(region.querySelectorAll<HTMLElement>("h1, h2"));
     const index = stageHeadingIndex(headings.map((heading) => heading.tagName.toLowerCase()));
     const target = index < 0 ? region : headings[index];
@@ -170,6 +179,18 @@ function CeremonyRegion({
     }
     target.focus();
   }, [state.tag, stage]);
+
+  // The dust ceiling depends on the backdrop's lift. Once the pick-up move has
+  // finished, a resize tells the Soil_Canvas to read the ceiling again (its own
+  // resize handler re-reads it, design.md "SceneBackdrop and the Soil", R6.16).
+  const handed = ghostHanded(stage);
+  useEffect(() => {
+    if (!handed) return;
+    const timer = setTimeout(() => {
+      window.dispatchEvent(new Event("resize"));
+    }, PICKUP_MOVE_MS);
+    return () => clearTimeout(timer);
+  }, [handed]);
 
   // The Calm control toggles motion off/on; its label flips with the mode.
   const calmLabel =
@@ -196,6 +217,7 @@ function CeremonyRegion({
       className={className ? `${styles.ceremony} ${className}` : styles.ceremony}
     >
       <SoundEnabledContext.Provider value={soundOn}>
+        <StageContext.Provider value={stage}>
         <LiveRegion message={liveLine} />
         {showRegionControls ? (
           <button
@@ -230,6 +252,7 @@ function CeremonyRegion({
           </button>
         ) : null}
         {children}
+        </StageContext.Provider>
       </SoundEnabledContext.Provider>
     </div>
   );

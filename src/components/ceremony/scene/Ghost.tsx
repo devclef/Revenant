@@ -27,6 +27,8 @@ import {
 
 import { EYE_TRANSITION_MS } from "../constants";
 import { useMotion } from "../motion";
+import { ghostHanded } from "../stages";
+import { useStage } from "../stage-context";
 import { eyeOffset, followsPointer, type EyeOffset } from "./eyes";
 import { useEmergence } from "./useEmergence";
 import styles from "./scene.module.css";
@@ -105,11 +107,14 @@ export function Ghost({ children }: { children?: ReactNode }) {
 
   // In Calm the eyes show the centre whatever the last pointer offset was.
   const eyes = calm ? NO_OFFSET : pointerOffset;
+  // The pose is set by the Stage, never by the placement. Only the vertical
+  // lift changes; the classes and horizontal values stay the same.
+  const pose = ghostHanded(useStage()) ? "handed" : "risen";
 
   return (
-    <div className={styles.pit}>
+    <div className={styles.pit} data-pose={pose} data-ghost-pit>
       <div className={styles.ghostPlace}>
-        <div ref={riseRef} className={styles.ghost}>
+        <div ref={riseRef} className={styles.ghost} data-pose={pose}>
           <div className={styles.bob}>
             <div className={styles.ghostGlow}>
               <svg

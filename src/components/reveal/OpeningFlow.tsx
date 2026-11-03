@@ -60,7 +60,7 @@
  * inline user-facing literal.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Ghost } from "@/components/ceremony/scene/Ghost";
 import { SceneBackdrop } from "@/components/ceremony/scene/SceneBackdrop";
 import { CeremonyRoot } from "@/components/ceremony/CeremonyRoot";
@@ -82,7 +82,7 @@ import { Reveal } from "./Reveal";
 import { LiveLockNote } from "@/components/live/LiveLockNote";
 import { FlowError, type FlowErrorKind } from "./FlowError";
 import type { FlowState, OpenFailedKind } from "./opening-machine";
-import { REVEAL_COPY } from "./copy";
+import { createBeginGuard } from "./begin-guard";
 import styles from "./reveal.module.css";
 
 /**
@@ -209,6 +209,17 @@ export function OpeningFlow({
   );
   const { state, retry } = flow;
   const KeyStep = useKeyStep(state.tag === "awaiting_key");
+
+  // The Pick_Up_Button sends BEGIN once per `verified` (R10.6). The latest
+  // `begin` is read through a ref, so the guard keeps its state across renders.
+  const latestBegin = useRef(flow.begin);
+  useEffect(() => {
+    latestBegin.current = flow.begin;
+  }, [flow.begin]);
+  const [beginGuard] = useState(() => createBeginGuard(() => latestBegin.current()));
+  useEffect(() => {
+    if (state.tag !== "verified") beginGuard.reset();
+  }, [state.tag, beginGuard]);
   // The typed backup key lives here, not in the key step, so it survives the
   // `unlocking` view (which unmounts the key step) and a wrong-key return to
   // `awaiting_key` shows the same text again.
@@ -253,7 +264,7 @@ export function OpeningFlow({
             {selectView(state, flow, letterId, personaName, persona, mode, retryAtZero, KeyStep, {
               keyText,
               onKeyTextChange: setKeyText,
-            })}
+            }, beginGuard.begin)}
           </div>
         </CeremonyRoot>
       </SkipProvider>
@@ -278,6 +289,7 @@ function selectView(
   retryAtZero: () => void,
   KeyStep: KeyStepComponent | null,
   keyEntry: KeyEntry,
+  begin: () => void,
 ): React.ReactNode {
   // The envelope's per-letter inputs: the persona list fields plus the demo
   // flag. These are always demo persona letters, so `demo` is true whenever a
@@ -286,6 +298,10 @@ function selectView(
   // patternKey is seeded from `persona.key` inside the Envelope/WaxSeal (R8.4).
   const envelopePersona: EnvelopePersona | undefined =
     persona === undefined ? undefined : { ...persona, demo: true };
+
+  // The persona's written-as-of date, shown in the recall counter (R11.5). A
+  // Live_Letter has no persona, so it gets no "as of" part.
+  const writtenAsOf = mode === "persona" ? persona?.written_as_of : undefined;
 
   // `live` is set only when the hook runs in user key-source mode. A live
   // letter has no persona, so its envelope gets the opening instant directly.
@@ -300,7 +316,7 @@ function selectView(
       variant={variant}
       persona={envelopePersona}
       held={mode === "persona"}
-      onBegin={flow.begin}
+      onBegin={begin}
       onRetry={flow.retry}
       {...extra}
     />
@@ -356,8 +372,12 @@ function selectView(
       return envelopeView("verified");
 
     case "recall":
+      // One RecallStep for recall, submitting and submit_failed, with the same
+      // key, so the pager (and its question index) stays mounted across a failed
+      // post (R11.12). The as-of date is shown on a persona letter only.
       return (
         <RecallStep
+          key="recall"
           opened={state.opened}
           drafts={state.drafts}
           invalid={state.invalid}
@@ -365,12 +385,14 @@ function selectView(
           onEdit={flow.editDraft}
           onToggleNoAnswer={flow.toggleNoAnswer}
           onSubmit={flow.submit}
+          writtenAsOf={writtenAsOf}
         />
       );
 
     case "submitting":
       return (
         <RecallStep
+          key="recall"
           opened={state.opened}
           drafts={state.drafts}
           invalid={[]}
@@ -378,25 +400,24 @@ function selectView(
           onEdit={flow.editDraft}
           onToggleNoAnswer={flow.toggleNoAnswer}
           onSubmit={flow.submit}
+          writtenAsOf={writtenAsOf}
         />
       );
 
     case "submit_failed":
       return (
-        <>
-          <RecallStep
-            opened={state.opened}
-            drafts={state.drafts}
-            invalid={[]}
-            submitting={false}
-            onEdit={flow.editDraft}
-            onToggleNoAnswer={flow.toggleNoAnswer}
-            onSubmit={flow.retryPost}
-          />
-          <p role="alert" className={styles.fieldError}>
-            {REVEAL_COPY.submitFailed}
-          </p>
-        </>
+        <RecallStep
+          key="recall"
+          opened={state.opened}
+          drafts={state.drafts}
+          invalid={[]}
+          submitting={false}
+          onEdit={flow.editDraft}
+          onToggleNoAnswer={flow.toggleNoAnswer}
+          onSubmit={flow.retryPost}
+          failed={true}
+          writtenAsOf={writtenAsOf}
+        />
       );
 
     case "reveal":

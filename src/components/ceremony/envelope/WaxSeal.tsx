@@ -1,253 +1,109 @@
-// Feature: 05-reveal-ceremony
+// Feature: 07-judge-journey
 //
-// WaxSeal: a standalone inline-SVG wax disc for the envelope flap (design.md
-// "Envelope and seal", R8.4, R10.1). It is pure and presentational: given a
-// `patternKey` it draws one wax disc whose rim style, centre glyph and rotation
-// come only from `sealPattern(key)`. The same key always gives the same markup,
-// on the server and the client alike (Property 4, Property 21).
+// WaxSeal: the one orange wax seal on the Envelope's back (design.md "The wax
+// seal", R10.10, R10.11, R10.12). It replaces spec 05's per-persona seal
+// pattern. Every letter gets the same seal: an irregular round blob with a
+// ring, an inner disc and a pressed ghost silhouette, drawn in code.
 //
-// Neutrality (R10.1): every seal is filled with the single --seal-wax token,
-// whatever the key. No colour here depends on a value or a direction. The
-// pattern is decoration only and reads nothing but the key — no letter text, no
-// figure, no metric, no unit.
+// Neutrality (neutrality.md, R10.11): the seal carries no religious, national
+// or political symbol. It is one colour, one shape and one ghost, whatever the
+// persona or the figures. It takes no props that could vary its look, so the
+// markup cannot depend on a letter.
 //
-// It draws no crack overlay itself; cracks belong to the seal/ task. WaxSeal is
-// a self-contained disc that the Envelope places on its flap. Being pure
-// presentational, it needs no "use client".
+// The two halves are drawn twice, clipped by a left and a right polygon along a
+// jagged seam. At rest they sit together (R10.12). The seal is decoration, so it
+// is `aria-hidden`; the "Break the seal" button is the accessible control.
+//
+// Pure presentation with no state, so it needs no "use client".
 
-import type { ReactElement, ReactNode } from "react";
+import { useId, type CSSProperties, type ReactElement } from "react";
 
-import { sealPattern } from "./seal-pattern";
 import styles from "./WaxSeal.module.css";
 
+/** A clip id unique to one seal and one half, safe inside url(#...). */
+function clipId(reactId: string, half: "left" | "right"): string {
+  return `wax-seal-${reactId.replace(/[^A-Za-z0-9_-]/g, "")}-${half}`;
+}
+
 /**
- * The wax disc is drawn in a fixed, square 100×100 user space and scaled to the
- * caller's `size`. Every coordinate below is in this space, so the markup never
- * depends on the rendered pixel size.
+ * Replaces each seal's per-instance clip ids with a fixed placeholder, so
+ * tests can compare seal markup from different render trees. Not used by the
+ * page itself.
  */
+export function normaliseWaxSealIds(html: string): string {
+  return html.replace(/wax-seal-[A-Za-z0-9_-]*-(left|right)/g, "wax-seal-$1");
+}
+
+/** The seal is drawn in a fixed 100 x 100 user space and scaled to `size`. */
 const VIEWBOX = 100;
-const CENTER = VIEWBOX / 2;
-const DISC_RADIUS = 46;
 
-/**
- * Eight rim styles, indexed 0..7 (RIM_COUNT). Each is a fully-formed SVG
- * fragment drawn inside the disc, concentric with it, and is the same for every
- * seal that lands on that rim index. The rim is the pressed border just inside
- * the wax edge: plain, double, beaded, notched, and so on. Nothing here is
- * computed from data.
- */
-const RIM_STYLES: readonly ReactNode[] = [
-  // 0 — plain ring
-  <circle key="r0" cx={CENTER} cy={CENTER} r={38} />,
-  // 1 — double ring
-  <g key="r1">
-    <circle cx={CENTER} cy={CENTER} r={39} />
-    <circle cx={CENTER} cy={CENTER} r={33} />
-  </g>,
-  // 2 — beaded ring: twelve small pressed dots around the rim
-  <g key="r2">
-    {Array.from({ length: 12 }, (_, i) => {
-      const a = (i / 12) * Math.PI * 2;
-      return (
-        <circle
-          key={i}
-          cx={CENTER + Math.cos(a) * 37}
-          cy={CENTER + Math.sin(a) * 37}
-          r={2.4}
-          stroke="none"
-          fill="var(--seal-rim, #5c1713)"
-        />
-      );
-    })}
-  </g>,
-  // 3 — notched ring: short radial ticks
-  <g key="r3">
-    <circle cx={CENTER} cy={CENTER} r={38} />
-    {Array.from({ length: 16 }, (_, i) => {
-      const a = (i / 16) * Math.PI * 2;
-      return (
-        <line
-          key={i}
-          x1={CENTER + Math.cos(a) * 34}
-          y1={CENTER + Math.sin(a) * 34}
-          x2={CENTER + Math.cos(a) * 40}
-          y2={CENTER + Math.sin(a) * 40}
-        />
-      );
-    })}
-  </g>,
-  // 4 — rope ring: a dashed circle reads as a twisted cord
-  <circle
-    key="r4"
-    cx={CENTER}
-    cy={CENTER}
-    r={38}
-    strokeDasharray="4 3"
-  />,
-  // 5 — twin thin rings close together
-  <g key="r5">
-    <circle cx={CENTER} cy={CENTER} r={40} strokeWidth={1.5} />
-    <circle cx={CENTER} cy={CENTER} r={37} strokeWidth={1.5} />
-  </g>,
-  // 6 — scalloped rim: eight small arcs read as a pressed scallop
-  <g key="r6">
-    {Array.from({ length: 8 }, (_, i) => {
-      const a = (i / 8) * Math.PI * 2;
-      return (
-        <circle
-          key={i}
-          cx={CENTER + Math.cos(a) * 38}
-          cy={CENTER + Math.sin(a) * 38}
-          r={4}
-        />
-      );
-    })}
-  </g>,
-  // 7 — thick single band
-  <circle key="r7" cx={CENTER} cy={CENTER} r={37} strokeWidth={4} />,
-];
+/** The irregular wax blob, filled with the wax colour. */
+const WAX_PATH =
+  "M50 4 C74 3 96 22 96 40 C97 56 95 70 85 84 C76 94 60 98 44 97 " +
+  "C30 96 18 92 14 84 C6 72 3 62 4 52 C4 36 8 28 11 22 C22 10 34 5 50 4 Z";
 
-/**
- * Twelve centre glyphs, indexed 0..11 (GLYPH_COUNT): rings, dots, leaves and
- * simple geometric marks drawn in this repo. Each is drawn at the disc centre
- * and is the same for every seal on that glyph index. Decorative only. No star,
- * cross or crescent shapes: those carry religious or political meaning, so the
- * glyph list must not use them (issue #119).
- */
-export const GLYPHS: readonly ReactNode[] = [
-  // 0 — small ring
-  <circle key="g0" cx={CENTER} cy={CENTER} r={10} />,
-  // 1 — ring with a dot
-  <g key="g1">
-    <circle cx={CENTER} cy={CENTER} r={11} />
-    <circle cx={CENTER} cy={CENTER} r={2.5} stroke="none" fill="var(--seal-rim, #5c1713)" />
-  </g>,
-  // 2 — four dots around a centre dot
-  <g key="g2" stroke="none" fill="var(--seal-rim, #5c1713)">
-    <circle cx={CENTER} cy={CENTER - 9} r={2.4} />
-    <circle cx={CENTER + 9} cy={CENTER} r={2.4} />
-    <circle cx={CENTER} cy={CENTER + 9} r={2.4} />
-    <circle cx={CENTER - 9} cy={CENTER} r={2.4} />
-    <circle cx={CENTER} cy={CENTER} r={2.4} />
-  </g>,
-  // 3 — five dots on a ring
-  <g key="g3" stroke="none" fill="var(--seal-rim, #5c1713)">
-    {Array.from({ length: 5 }, (_, i) => {
-      const a = (i / 5) * Math.PI * 2 - Math.PI / 2;
-      return (
-        <circle
-          key={i}
-          cx={CENTER + Math.cos(a) * 11}
-          cy={CENTER + Math.sin(a) * 11}
-          r={2.4}
-        />
-      );
-    })}
-  </g>,
-  // 4 — six dots on a ring
-  <g key="g4" stroke="none" fill="var(--seal-rim, #5c1713)">
-    {Array.from({ length: 6 }, (_, i) => {
-      const a = (i / 6) * Math.PI * 2;
-      return (
-        <circle
-          key={i}
-          cx={CENTER + Math.cos(a) * 11}
-          cy={CENTER + Math.sin(a) * 11}
-          r={2.4}
-        />
-      );
-    })}
-  </g>,
-  // 5 — single leaf
-  <path
-    key="g5"
-    d="M50 38 C58 44 58 56 50 62 C42 56 42 44 50 38 Z M50 40 L50 60"
-  />,
-  // 6 — two leaves, mirrored
-  <path
-    key="g6"
-    d="M50 50 C44 44 44 38 50 36 C56 38 56 44 50 50 Z M50 50 C56 56 56 62 50 64 C44 62 44 56 50 50 Z"
-  />,
-  // 7 — three-leaf sprig
-  <path
-    key="g7"
-    d="M50 50 C44 46 44 40 50 38 C56 40 56 46 50 50 Z M50 50 C52 57 48 62 44 62 C44 57 46 52 50 50 Z M50 50 C48 57 52 62 56 62 C56 57 54 52 50 50 Z"
-  />,
-  // 8 — concentric rings
-  <g key="g8">
-    <circle cx={CENTER} cy={CENTER} r={12} />
-    <circle cx={CENTER} cy={CENTER} r={6} />
-  </g>,
-  // 9 — eight dots on a ring
-  <g key="g9" stroke="none" fill="var(--seal-rim, #5c1713)">
-    {Array.from({ length: 8 }, (_, i) => {
-      const a = (i / 8) * Math.PI * 2;
-      return (
-        <circle
-          key={i}
-          cx={CENTER + Math.cos(a) * 12}
-          cy={CENTER + Math.sin(a) * 12}
-          r={2}
-        />
-      );
-    })}
-  </g>,
-  // 10 — diamond
-  <path key="g10" d="M50 37 L62 50 L50 63 L38 50 Z" />,
-  // 11 — ring with a small leaf
-  <g key="g11">
-    <circle cx={CENTER} cy={CENTER} r={11} />
-    <path d="M50 42 C54 45 54 55 50 58 C46 55 46 45 50 42 Z" />
-  </g>,
-];
+/** The pressed ghost: a head arc, straight sides and a zigzag hem. */
+const GHOST_PATH =
+  "M38 50 A12 12 0 0 1 62 50 L63 70 L59 66 L55 71 L51 66 L47 71 L43 66 " +
+  "L39 71 L37 66 Z";
 
-/**
- * A short shape name for each centre glyph, in GLYPHS order. The glyph test
- * scans this list and fails on any star, cross or crescent name. Keep the two
- * lists the same length and in the same order.
- */
-export const GLYPH_SHAPES: readonly string[] = [
-  "ring",
-  "ring with a dot",
-  "four dots around a centre dot",
-  "dots on a ring of five",
-  "dots on a ring of six",
-  "leaf",
-  "two leaves",
-  "three-leaf sprig",
-  "concentric rings",
-  "eight dots on a ring",
-  "diamond",
-  "ring with a leaf",
-];
+/** The left half: everything left of the jagged seam (x about 44 to 50). */
+const LEFT_HALF = "0,0 46,0 44,24 50,48 45,74 49,100 0,100";
+/** The right half: everything right of the same seam. */
+const RIGHT_HALF = "46,0 100,0 100,100 49,100 45,74 50,48 44,24";
+
+/** Every colour comes from a token, with a literal fallback. No colour carries meaning. */
+const FILL_WAX: CSSProperties = { fill: "var(--wax, #ff7b1c)" };
+const STROKE_RIM: CSSProperties = { stroke: "var(--wax-rim, #d4600c)" };
+const FILL_INNER: CSSProperties = { fill: "var(--wax-inner, #f26f12)" };
+const FILL_PRESS: CSSProperties = { fill: "var(--wax-press, #c4560a)" };
+const FILL_EYE: CSSProperties = { fill: "var(--wax-eye, #ff8d3a)" };
+
+/** The seal artwork, drawn once per half and clipped to that half. */
+function SealArt(): ReactElement {
+  return (
+    <>
+      <path d={WAX_PATH} style={FILL_WAX} />
+      <circle
+        cx={50}
+        cy={50}
+        r={33}
+        fill="none"
+        strokeWidth={3}
+        style={STROKE_RIM}
+      />
+      <circle cx={50} cy={50} r={27} style={FILL_INNER} />
+      <path d={GHOST_PATH} style={FILL_PRESS} />
+      <ellipse cx={45.5} cy={51} rx={2.2} ry={3.2} style={FILL_EYE} />
+      <ellipse cx={54.5} cy={51} rx={2.2} ry={3.2} style={FILL_EYE} />
+    </>
+  );
+}
 
 export type WaxSealProps = {
-  /** The persona key that seeds the decorative pattern. Only input to the look. */
-  patternKey: string;
-  /** Rendered size in CSS pixels (square). Does not change the markup's shape. */
+  /**
+   * Deprecated and ignored. The seal is the same for every persona (R10.10).
+   * Kept only so the callers outside this ticket still compile; their own
+   * tasks remove it.
+   */
+  patternKey?: string;
+  /** Rendered size in CSS pixels (square). Does not change the markup. */
   size?: number;
   /** Optional extra class on the root <svg>. */
   className?: string;
 };
 
 /**
- * A single wax seal disc, seeded only by `patternKey`.
- *
- * The disc is filled with --seal-wax (one colour for every key). The rim style,
- * centre glyph and rotation are picked by sealPattern(patternKey). The whole
- * seal is rotated by the pattern's rotation; the disc itself is radially
- * symmetric, so rotation only turns the rim and glyph. Markup is identical
- * across renders for a given key and depends on no letter content.
+ * The single orange wax seal. The markup is the same for every call: nothing
+ * in it depends on a persona, a letter or a figure.
  */
-export function WaxSeal({
-  patternKey,
-  size = 64,
-  className,
-}: WaxSealProps): ReactElement {
-  const { rim, glyph, rotationDeg } = sealPattern(patternKey);
+export function WaxSeal({ size = 64, className }: WaxSealProps): ReactElement {
+  // Each seal gets its own clip ids from useId, so two seals on one page never
+  // share an id. React's id has characters that are awkward in url(#...), so
+  // keep only letters, digits, underscores and hyphens.
+  const leftId = clipId(useId(), "left");
+  const rightId = clipId(useId(), "right");
 
-  // The .seal class carries the --seal-wax / --seal-rim tokens. Joined in a
-  // fixed order so the markup stays identical across renders for a given key.
   const rootClass = [styles.seal, className].filter(Boolean).join(" ");
 
   return (
@@ -256,31 +112,22 @@ export function WaxSeal({
       width={size}
       height={size}
       viewBox={`0 0 ${VIEWBOX} ${VIEWBOX}`}
-      role="img"
-      aria-label="A wax seal."
+      aria-hidden="true"
       focusable="false"
     >
-      {/* The wax disc: one colour for every key (R10.1). */}
-      <circle
-        cx={CENTER}
-        cy={CENTER}
-        r={DISC_RADIUS}
-        fill="var(--seal-wax, #7a1f1a)"
-        stroke="none"
-      />
-      {/* Rim and glyph, turned together by the seeded rotation. The disc is
-          symmetric, so rotation never changes the silhouette. The pressed marks
-          are drawn in the darker rim ink; none of this carries meaning. */}
-      <g
-        transform={`rotate(${rotationDeg} ${CENTER} ${CENTER})`}
-        fill="none"
-        stroke="var(--seal-rim, #5c1713)"
-        strokeWidth={2}
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      >
-        {RIM_STYLES[rim]}
-        {GLYPHS[glyph]}
+      <defs>
+        <clipPath id={leftId}>
+          <polygon points={LEFT_HALF} />
+        </clipPath>
+        <clipPath id={rightId}>
+          <polygon points={RIGHT_HALF} />
+        </clipPath>
+      </defs>
+      <g className={styles.half} clipPath={`url(#${leftId})`}>
+        <SealArt />
+      </g>
+      <g className={styles.half} clipPath={`url(#${rightId})`}>
+        <SealArt />
       </g>
     </svg>
   );

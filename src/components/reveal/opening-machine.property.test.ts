@@ -558,22 +558,26 @@ describe("Property 17: views never render letter content before the reveal", () 
   });
 
   it("renders recall question text only in recall/submitting/submit_failed/reveal", () => {
+    // Spec 07 R11.1: the Recall_Pager shows one question at a time, the first in
+    // payload order. Reveal still lists every question (RememberedAnswers).
+    const RECALL_TAGS = ["recall", "submitting", "submit_failed"];
     fc.assert(
       fc.property(
         fc.constantFrom(...RENDER_CASES),
-        ({ state, revealsQuestion }) => {
+        ({ state }) => {
           const html = render(state);
-          for (const text of QUESTION_TEXTS) {
-            if (revealsQuestion) {
-              // RememberedAnswers (reveal) and RecallStep render every question.
+          QUESTION_TEXTS.forEach((text, position) => {
+            // Reveal lists every question; the recall states show the first only.
+            if (state.tag === "reveal") {
               expect(html).toContain(text);
-            } else {
-              expect(
-                html.includes(text),
-                `${state.tag} must not render question "${text}"`,
-              ).toBe(false);
+              return;
             }
-          }
+            const shown = RECALL_TAGS.includes(state.tag) && position === 0;
+            expect(
+              html.includes(text),
+              `${state.tag} must ${shown ? "" : "not "}render question "${text}"`,
+            ).toBe(shown);
+          });
         },
       ),
       { numRuns: 100 },

@@ -32,9 +32,8 @@
 //
 // R3.6 / R3.7: the envelope's size, folds and markup never read the letter. Its
 // only per-letter inputs are the persona list fields (two dates and the demo
-// flag) and the seal pattern key. With no persona it shows no dates and the
-// Envelope falls back to one fixed default seal pattern key, so the spec 03
-// renders are unchanged.
+// flag). With no persona it shows no dates and the
+// Envelope draws the same fixed seal, so the spec 03 renders are unchanged.
 //
 // R15.1: every user-facing string comes from a copy module (REVEAL_COPY here,
 // and StillSealed's own strings also come from reveal/copy.ts). This component
@@ -95,9 +94,8 @@ export type EnvelopeViewProps = {
   /** Which pre-reveal scene to render. */
   variant: EnvelopeViewVariant;
   /**
-   * The persona list fields that feed the envelope's dates and seal pattern.
-   * Optional: with no persona the envelope uses its default pattern key and
-   * shows no dates (spec 03 renders).
+   * The persona list fields that feed the envelope's dates.
+   * Optional: with no persona the envelope shows no dates (spec 03 renders).
    */
   persona?: EnvelopePersona;
   /**
@@ -258,8 +256,8 @@ export function EnvelopeView({
               {REVEAL_COPY.sealIntact}
             </p>
             <PickUpGate tag="verified">
-              <button type="button" className={styles.button} onClick={onBegin}>
-                {REVEAL_COPY.begin}
+              <button type="button" className={styles.pickUp} onClick={onBegin}>
+                {REVEAL_COPY.pickUp}
               </button>
             </PickUpGate>
           </div>

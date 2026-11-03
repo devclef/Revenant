@@ -331,21 +331,26 @@ describe("OpeningFlow view selection", () => {
   it("shows SealIntact (the statement + Begin) for verified, with no sealed content (R7.5)", () => {
     const html = render({ tag: "verified", opened: OPENED });
     expect(html).toContain(REVEAL_COPY.sealIntact);
-    expect(html).toContain(REVEAL_COPY.begin);
+    expect(html).toContain(REVEAL_COPY.pickUp);
     for (const needle of SEALED_PAYLOAD_STRINGS) {
       expect(html, `verified must not leak "${needle}"`).not.toContain(needle);
     }
   });
 
-  it("shows RecallStep for recall, with the question but no sealed figure (R16.4)", () => {
+  it("shows RecallStep for recall, with the first question but no sealed figure (R16.4)", () => {
     const html = render({
       tag: "recall",
       opened: OPENED,
       drafts: DRAFTS,
       invalid: [],
     });
-    expect(html).toContain(REVEAL_COPY.recallTitle);
+    // The Recall_Pager shows the first question only (spec 07 R11.1).
     expect(html).toContain(OPENED.payload.recall_questions[0].text);
+    expect(html).toContain(
+      REVEAL_COPY.questionCounter
+        .replace("{n}", "1")
+        .replace("{total}", String(OPENED.payload.recall_questions.length)),
+    );
     for (const needle of SEALED_PAYLOAD_STRINGS) {
       expect(html, `recall must not leak "${needle}"`).not.toContain(needle);
     }

@@ -1,11 +1,9 @@
 "use client";
 
-import type { FormEvent } from "react";
 import { ParchmentSurface } from "@/components/ui";
-import { RecallScale } from "@/components/ceremony/recall/RecallScale";
+import { RecallPager } from "@/components/ceremony/recall/RecallPager";
 import type { Draft } from "@/lib/recall";
 import type { Opened } from "./opening-machine";
-import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
 
 /**
@@ -16,27 +14,13 @@ import styles from "./reveal.module.css";
  * view never shows a sealed figure, a period, a source or any hint of which way
  * a figure moved (neutrality.md).
  *
- * The form is a `<form noValidate>` so the browser's own validation never fires;
- * validation and the inline errors are driven entirely by the reducer's
- * `invalid` list (R8.4), which the effect runner fills from `buildRecallRecord`.
- * Each question is one `<fieldset>`:
- * - the `<legend>` is the sealed question text, verbatim (R2.9);
- * - a text input with `inputMode="decimal"` for the remembered number;
- * - the figure's unit shown beside the input (R8.2);
- * - a "No answer" checkbox (R8.3); when it is checked the number input is
- *   disabled, matching `buildRecallRecord`, which ignores the text for a
- *   "no answer" question;
- * - an inline error under the fieldset when the question is in `invalid`,
- *   wired with `aria-describedby`/`aria-invalid` so it is announced.
+ * Spec 07 (R11.1, R11.10) replaces spec 03 R8.1 and R8.4 here: the step shows
+ * one question at a time through `RecallPager`, not a fieldset per question.
+ * The pager keeps the same drafts, validation message and submit rules.
  *
- * The submit control is disabled while a record is being posted — the view is
- * rendered for both `submitting` and `submit_failed`, and `submitting` is true
- * in the first and false in the second, so a retry stays possible (R8.9, R8.7).
- *
- * Every string comes from copy.ts (R15.1). This component holds no state, reads
- * no clock, logs nothing and touches no storage: it renders the drafts it is
- * given and calls back on every edit, toggle and submit. All state lives in the
- * reducer.
+ * This component builds no record and holds no state. It renders the pager with
+ * the drafts it is given and passes every edit, toggle and submit back to the
+ * reducer. All state lives in the reducer (and the pager's view-local index).
  */
 
 export type RecallStepProps = {
@@ -44,7 +28,7 @@ export type RecallStepProps = {
   opened: Opened;
   /** The judge's in-progress answers, keyed by question ID. */
   drafts: Readonly<Record<string, Draft>>;
-  /** The question IDs that failed validation on the last submit (R8.4). */
+  /** The question IDs that failed validation on the last submit (R8.4, R11.10). */
   invalid: readonly string[];
   /**
    * True while the encrypted record is being posted (the `submitting` state),
@@ -57,21 +41,20 @@ export type RecallStepProps = {
   onToggleNoAnswer: (id: string, noAnswer: boolean) => void;
   /** Dispatches a submit attempt. The reducer/effect runner validate. */
   onSubmit: () => void;
+  /** True in `submit_failed`: shows the submit-failed message (R8.7, R11.12). */
+  failed?: boolean;
+  /**
+   * The persona's written-as-of date (`YYYY-MM-DD`). Set only on a persona
+   * letter, so the counter shows it (R11.5). Absent on a Live_Letter.
+   */
+  writtenAsOf?: string;
 };
 
-/** The empty draft used for a question the judge has not touched yet. */
-const EMPTY_DRAFT: Draft = { text: "", noAnswer: false };
-
 /**
- * The number the scale marks for a draft's text, or null when the text is not a
- * plain decimal (the same shape `numberAnswer` accepts, after trimming). A
- * half-typed or invalid entry leaves the Mark off the scale.
+ * The number the scale marks for a draft's text. Kept here so existing callers
+ * import it from the recall step as before; the rule lives in `recall-pager`.
  */
-export function draftNumber(text: string): number | null {
-  const trimmed = text.trim();
-  if (!/^[0-9]+(\.[0-9]+)?$/.test(trimmed)) return null;
-  return Number(trimmed);
-}
+export { draftNumber } from "@/components/ceremony/recall/recall-pager";
 
 export function RecallStep({
   opened,
@@ -81,106 +64,22 @@ export function RecallStep({
   onEdit,
   onToggleNoAnswer,
   onSubmit,
+  failed = false,
+  writtenAsOf,
 }: RecallStepProps) {
-  const { payload } = opened;
-
-  // Resolve each metric's unit once, so a number question can show the unit of
-  // the figure it asks about (R8.2). The unit comes from the sealed metric
-  // definition, never re-fetched.
-  const unitByMetricId = new Map<string, string>();
-  for (const metric of payload.metrics) {
-    unitByMetricId.set(metric.id, metric.unit);
-  }
-
-  const invalidSet = new Set(invalid);
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    onSubmit();
-  }
-
   return (
     <ParchmentSurface as="section" className={styles.recall}>
-      <h1>{REVEAL_COPY.recallTitle}</h1>
-      <p className={styles.recallHint}>{REVEAL_COPY.recallHint}</p>
-
-      <form noValidate onSubmit={handleSubmit}>
-        {payload.recall_questions.map((question) => {
-          const draft = drafts[question.id] ?? EMPTY_DRAFT;
-          const isInvalid = invalidSet.has(question.id);
-          const inputId = `recall-${question.id}`;
-          const errorId = `recall-${question.id}-error`;
-          const unit =
-            question.answer_type === "number"
-              ? unitByMetricId.get(question.metric_id)
-              : undefined;
-          const unitText =
-            unit === undefined
-              ? undefined
-              : REVEAL_COPY.unitLabel.replace("{unit}", unit);
-
-          return (
-            <fieldset key={question.id} className={styles.fieldset}>
-              <legend className={styles.legend}>{question.text}</legend>
-
-              {question.answer_type === "number" && unit !== undefined ? (
-                <RecallScale
-                  id={question.id}
-                  label={question.text}
-                  unitLabel={unit}
-                  value={draft.noAnswer ? null : draftNumber(draft.text)}
-                  noAnswer={draft.noAnswer}
-                  onEdit={onEdit}
-                  spokenPrefix={REVEAL_COPY.yourAnswer}
-                />
-              ) : null}
-
-              <div className={styles.inputRow}>
-                <input
-                  id={inputId}
-                  className={styles.input}
-                  type="text"
-                  inputMode="decimal"
-                  autoComplete="off"
-                  value={draft.text}
-                  disabled={draft.noAnswer}
-                  aria-invalid={isInvalid}
-                  aria-describedby={isInvalid ? errorId : undefined}
-                  onChange={(event) => onEdit(question.id, event.target.value)}
-                />
-                {unitText === undefined ? null : (
-                  <span className={styles.unit}>{unitText}</span>
-                )}
-              </div>
-
-              <label className={styles.noAnswer}>
-                <input
-                  type="checkbox"
-                  checked={draft.noAnswer}
-                  onChange={(event) =>
-                    onToggleNoAnswer(question.id, event.target.checked)
-                  }
-                />
-                {REVEAL_COPY.noAnswer}
-              </label>
-
-              {isInvalid ? (
-                <span id={errorId} role="alert" className={styles.fieldError}>
-                  {REVEAL_COPY.answerInvalid}
-                </span>
-              ) : null}
-            </fieldset>
-          );
-        })}
-
-        <button
-          type="submit"
-          className={styles.button}
-          disabled={submitting}
-        >
-          {submitting ? REVEAL_COPY.submitting : REVEAL_COPY.submit}
-        </button>
-      </form>
+      <RecallPager
+        payload={opened.payload}
+        drafts={drafts}
+        invalid={invalid}
+        submitting={submitting}
+        failed={failed}
+        writtenAsOf={writtenAsOf}
+        onEdit={onEdit}
+        onToggleNoAnswer={onToggleNoAnswer}
+        onSubmit={onSubmit}
+      />
     </ParchmentSurface>
   );
 }

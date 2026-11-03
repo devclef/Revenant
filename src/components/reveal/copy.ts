@@ -58,6 +58,9 @@ export const REVEAL_COPY = {
   /** The control that moves from the verification statement to recall. */
   begin: "Begin",
 
+  /** The Pick_Up_Button on the persona page: moves from intact to recall (R10.4). */
+  pickUp: "Pick up the letter",
+
   // --- Errors ---
 
   /** The letter record has not been placed yet (404). */
@@ -109,6 +112,27 @@ export const REVEAL_COPY = {
 
   /** Label shown beside a recall input. `{unit}` is the figure's unit (R8.2). */
   unitLabel: "in {unit}",
+
+  /**
+   * The counter line for one question (R11.5). `{n}` counts from 1 and `{total}`
+   * is the number of recall questions in the payload.
+   */
+  questionCounter: "Question {n} of {total}",
+
+  /**
+   * The as-of part of the counter on a persona letter (R11.5). `{date}` is the
+   * written-as-of date in the spec 03 R6.3 format. It sits in a nowrap span.
+   */
+  questionCounterAsOf: "as of {date}",
+
+  /** The separator between the counter and its as-of part (R11.5). */
+  questionCounterSeparator: " · ",
+
+  /** Moves to the next question. Shown on every question but the last (R11.5). */
+  nextQuestion: "Next question",
+
+  /** Moves to the previous question. Shown on every question but the first (R11.5). */
+  previousQuestion: "Previous question",
 
   /** The "no answer" checkbox label (R8.3). */
   noAnswer: "No answer",
