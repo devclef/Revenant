@@ -4,7 +4,7 @@ import { useCallback } from "react";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV1 } from "@/lib/recall";
 import { RememberedAnswers } from "./RememberedAnswers";
-import { InkLetter } from "@/components/ceremony/letter/InkLetter";
+import { LetterBlock } from "@/components/ceremony/letter/LetterBlock";
 import { FiguresThenNow } from "./FiguresThenNow";
 import { StagePanel } from "./StagePanel";
 import { ThenNowSequence } from "@/components/ceremony/figures/ThenNowSequence";
@@ -53,8 +53,9 @@ const INERT_SEAL: SealController = {
  *   `sealing` flag up through the local-view context, so the Ceremony Stage
  *   reads `seal` while a break is in progress and `marks` otherwise (design.md
  *   "Stage resolution").
- * - Stage 2 (`SealedLetter`) is shown once `stage >= 2`: what was written then.
- *   Its "See the numbers" button (`stage2Next`) dispatches `ADVANCE`.
+ * - Stage 2 (`LetterBlock`, which wraps `SealedLetter`) is shown once
+ *   `stage >= 2`: what was written then. Its "See the numbers" button
+ *   (`stage2Next`) dispatches `ADVANCE`.
  * - Stage 3 (`FiguresThenNow`) is shown once `stage >= 3`: the figures then and
  *   now. "Show everything" (`SHOW_ALL`) takes the stage straight to 3, so all
  *   three render at once; at stage 1 `SealBreak` renders the seal already split
@@ -196,14 +197,12 @@ export function Reveal({
 
       {stage >= 2 ? (
         <div className={`${styles.stage} ${styles.fade}`}>
-          <StagePanel>
-            <InkLetter
-              opened={opened}
-              personaName={personaName}
-              variant={variant}
-              letterId={letterId}
-            />
-          </StagePanel>
+          <LetterBlock
+            opened={opened}
+            personaName={personaName}
+            variant={variant}
+            letterId={letterId}
+          />
         </div>
       ) : null}
 

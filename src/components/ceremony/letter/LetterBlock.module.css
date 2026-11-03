@@ -1,0 +1,43 @@
+/* Feature: 07-judge-journey (spec task 5, R13)
+ *
+ * The letter stage. One purple block holds one paper panel. The paper sets its
+ * own text colour (--ink), so no text here inherits the desk's cream ink.
+ * Nothing in this file applies a mask, clip or fade to the letter text (R13.4).
+ * The colour tokens fall back to their literal values so this block renders the
+ * same when the scene tokens are not loaded. */
+
+.letterBlock {
+  position: relative;
+  background-color: var(--purple, #8f46ff);
+  border-radius: clamp(24px, 4vw, 48px);
+  padding: clamp(0.9rem, 3vw, 2.4rem);
+}
+
+.paper {
+  --ink: #1f1b16;
+  position: relative;
+  color: var(--ink);
+  background-color: var(--paper, #f6ead4);
+  border-radius: 4px;
+  padding: clamp(1rem, 3vw, 2rem);
+  text-align: left;
+  transform-origin: top center;
+}
+
+/* Two creases, one third and two thirds across the paper. The colour is --ink
+ * at 8 % over the paper (R13.2): about 13.5 : 1 contrast for the text. */
+.crease {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 2px;
+  margin-left: -1px;
+  background-color: rgba(31, 27, 22, 0.08);
+  pointer-events: none;
+}
+
+/* Focus inside the block is white (--on-purple), the Accent everywhere else. */
+.letterBlock :focus-visible {
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}

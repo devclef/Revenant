@@ -35,11 +35,6 @@ const EXEMPT: ReadonlyArray<{ file: string; value: string; reason: string }> = [
       "Calm cut or fade cap, at most 150 ms (R19.2). A limit, not a constant; CALM_FADE_MS is 120.",
   },
   {
-    file: "letter/InkLetter.module.css",
-    value: "150ms",
-    reason: "Calm cut or fade cap, at most 150 ms (R19.2). A limit, not a constant.",
-  },
-  {
     file: "envelope/EnvelopeView.module.css",
     value: "150ms",
     reason: "Calm cut or fade cap, at most 150 ms (R19.2). A limit, not a constant.",

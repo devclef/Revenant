@@ -29,7 +29,6 @@ import type { RecallRecordV1, Draft } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
 import { CEREMONY_COPY } from "./copy";
 import { planSealBreak } from "./seal/SealBreak";
-import { planInkRun } from "./letter/inkSession";
 import {
   loadDeskDecor,
   type DeskDecorImporters,
@@ -325,13 +324,12 @@ describe("Property 19: every running sequence has a visible Skip (R6.3)", () => 
     );
   });
 
-  it("registers the three running sequences with useSequence", () => {
-    // Non-vacuous: the Seal_Break, the ink reveal and the then/now Steps each
-    // call useSequence, so each one is covered by the Skip check above.
+  it("registers the running sequences with useSequence", () => {
+    // Non-vacuous: the Seal_Break and the then/now Steps each call
+    // useSequence, so each one is covered by the Skip check above.
     const sources = ceremonySources();
     for (const name of [
       join("seal", "SealBreak.tsx"),
-      join("letter", "InkLetter.tsx"),
       join("figures", "ThenNowSequence.tsx"),
     ]) {
       const file = sources.find((s) => relative(HERE, s.path) === name);
@@ -346,26 +344,6 @@ describe("Property 19: every running sequence has a visible Skip (R6.3)", () => 
 // --- Property 20 -------------------------------------------------------------
 
 describe("Property 20: Calm_Mode starts no animation (R11.2, R11.3)", () => {
-  it("plans no ink run in calm or light motion, whatever the box and line height", () => {
-    fc.assert(
-      fc.property(
-        fc.constantFrom<"calm" | "light">("calm", "light"),
-        fc.constantFrom("16px", "24px", "normal"),
-        fc.integer({ min: 0, max: 4000 }),
-        (mode, computedLineHeight, boxHeightPx) => {
-          expect(
-            planInkRun({ mode, computedLineHeight, boxHeightPx }),
-          ).toBeUndefined();
-        },
-      ),
-      { numRuns: 100 },
-    );
-    // Non-vacuous: full motion does plan a run for a box with lines in it.
-    expect(
-      planInkRun({ mode: "full", computedLineHeight: "24px", boxHeightPx: 480 }),
-    ).toBeDefined();
-  });
-
   it("plans an empty Seal_Break in calm, and four steps in full motion", () => {
     expect(planSealBreak({ calm: true }).steps).toHaveLength(0);
     expect(planSealBreak({ calm: false }).steps).toHaveLength(4);
@@ -437,7 +415,7 @@ describe("Property 20: Calm_Mode starts no animation (R11.2, R11.3)", () => {
     );
   });
 
-  it("shows the letter text in calm at stage 2, the settled ink", () => {
+  it("shows the letter text in calm at stage 2, unchanged", () => {
     fc.assert(
       fc.property(
         fc.constantFrom<FlowState>({

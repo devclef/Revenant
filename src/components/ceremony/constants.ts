@@ -21,13 +21,6 @@ export const FLAP_LIFT_MS = 450;
 export const LETTER_SLIDE_MS = 600;
 export const FLAKE_COUNT = 14;
 
-// --- Ink (R7.2) ---
-export const INK_LINE_DELAY_MS = 220; // per visual line
-export const INK_LINE_FADE_MS = 600;
-export const INK_TOTAL_MAX_MS = 8000;
-// delay actually used: min(INK_LINE_DELAY_MS, floor((INK_TOTAL_MAX_MS - INK_LINE_FADE_MS) / max(lines, 1)))
-// It depends only on the number of lines, and the last line ends by 8 s.
-
 // --- Then and now (R12.5, R10.6) ---
 export const STAMP_DROP_MS = 520;
 export const COUNTER_ROLL_MS = 1100;

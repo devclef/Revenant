@@ -1,0 +1,75 @@
+"use client";
+
+// Feature: 07-judge-journey (spec task 5, R13)
+//
+// The letter stage (stage 2). One rounded purple block holds one paper panel.
+// The paper carries the stage heading, the labels and `SealedLetter`'s
+// paragraph, so the letter text is one text node in the EB Garamond face.
+//
+// - No mask, clip or fade touches the text (R13.4). The only motion is the
+//   paper's unfold: a Web Animation with `fill: "backwards"`, started in a
+//   layout effect in full motion only. Light and calm modes start nothing, so
+//   the static render is the final state.
+// - Two `aria-hidden` creases sit at one third and two thirds of the paper.
+// - `LetterBlock` adds nothing next to the text: no annotation, highlight or
+//   link (R13.7).
+//
+// Every string comes from the reveal copy through `SealedLetter`.
+
+import { useLayoutEffect, useRef } from "react";
+
+import { SealedLetter, type SealedLetterProps } from "@/components/reveal/SealedLetter";
+
+import { EASE_STANDARD, UNFOLD_AT_MS, UNFOLD_MS } from "../constants";
+import { useMotion } from "../motion";
+import styles from "./LetterBlock.module.css";
+
+export type LetterBlockProps = SealedLetterProps;
+
+/** The paper's unfold: from a folded pose to flat, opacity 0 to 1. */
+const UNFOLD_FROM = {
+  transform: "perspective(900px) rotateX(-70deg) scaleY(0.35)",
+  opacity: 0,
+};
+const UNFOLD_TO = {
+  transform: "perspective(900px) rotateX(0deg) scaleY(1)",
+  opacity: 1,
+};
+
+export function LetterBlock(props: LetterBlockProps) {
+  const { mode } = useMotion();
+  const paperRef = useRef<HTMLDivElement>(null);
+
+  useLayoutEffect(() => {
+    // Light and calm modes start no animation (R11.2, Property 22).
+    if (mode !== "full") return undefined;
+    const paper = paperRef.current;
+    if (paper === null || typeof paper.animate !== "function") return undefined;
+
+    let animation: Animation | undefined;
+    try {
+      animation = paper.animate([UNFOLD_FROM, UNFOLD_TO], {
+        duration: UNFOLD_MS,
+        delay: UNFOLD_AT_MS,
+        easing: EASE_STANDARD,
+        fill: "backwards",
+      });
+    } catch {
+      // A throwing Web Animations call leaves the paper at its final pose.
+      return undefined;
+    }
+    return () => {
+      animation?.cancel();
+    };
+  }, [mode]);
+
+  return (
+    <div className={styles.letterBlock}>
+      <div ref={paperRef} className={styles.paper}>
+        <span className={styles.crease} style={{ left: "33.3%" }} aria-hidden="true" />
+        <span className={styles.crease} style={{ left: "66.6%" }} aria-hidden="true" />
+        <SealedLetter {...props} />
+      </div>
+    </div>
+  );
+}
