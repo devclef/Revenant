@@ -31,6 +31,15 @@
   margin: 0;
 }
 
+/* Below 900 px the Ghost is centred low, so the column may be comfortably wide
+   above it: the tight 46vw cap is only needed at >=900 px where the Ghost sits
+   at 72 % of the frame. A wider narrow column keeps the card text readable. */
+@media (max-width: 899.98px) {
+  .flowPersona {
+    max-width: min(22rem, 92vw);
+  }
+}
+
 .view {
   margin: 0 auto;
 }

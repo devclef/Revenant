@@ -245,9 +245,15 @@ export function EnvelopeView({
       // The seal-is-intact statement, shown BEFORE any recall question, and the
       // control that sends BEGIN. The envelope stays closed; it turns over only
       // after BEGIN (R7.5, product.md "Recall first").
+      //
+      // With an in-column envelope (`/demo`, `/l/[id]`) the statement and button
+      // overlay the space above the envelope frame (`.intactTop`, absolute). On
+      // the persona page the Ghost holds the envelope and the column draws none,
+      // so they flow normally inside the card — otherwise the absolute box has
+      // no height and the text spills onto the dark background (S1a).
       return (
         <ParchmentSurface as="section" className={styles.intactStage}>
-          <div className={styles.intactTop}>
+          <div className={held ? styles.intactFlow : styles.intactTop}>
             <p className={styles.statement} role="status">
               {REVEAL_COPY.sealIntact}
             </p>

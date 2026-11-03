@@ -43,6 +43,16 @@
   gap: 0.6rem;
 }
 
+/* Persona page (the Ghost holds the envelope, no in-column frame): the statement
+   and button flow inside the card so it grows to contain them and the text never
+   spills onto the dark background. */
+.intactFlow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
 /* --- The envelope's resting frame (ENVELOPE_TARGET) --- */
 
 .frame {
