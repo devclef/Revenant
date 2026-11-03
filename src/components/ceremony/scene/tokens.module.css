@@ -1,0 +1,60 @@
+/*
+ * Scene colour tokens (design.md "Colour tokens", R3.7, R3.8).
+ *
+ * This is the only place Scene colours are defined. Components read them with
+ * var(--token). Ratios are WCAG 2.2 and are checked by contrast.test.ts.
+ *
+ * Nothing imports this file yet. SceneShell imports it in spec 07 task 2.
+ */
+:root {
+  /* Page and text on --bg */
+  --bg: #0b0912;
+  --text: #f5f3ff;
+  --muted: #bdb4dc;
+  --line: #6d6488;
+
+  /* Light, Letter_Block and the purple surface */
+  --purple: #8f46ff;
+  --on-purple: #ffffff;
+
+  /* Orange means "you": buttons, wax, focus ring off purple */
+  --accent: #ff7b1c;
+  --on-accent: #1a0c00;
+
+  /* Letter paper */
+  --paper: #f6ead4;
+  --ink: #1f1b16;
+  --ink-soft: #4a4036;
+
+  /* Envelope paper */
+  --env: #f1e4c8;
+  --env-ink: #3b3127;
+
+  /* Inline error box */
+  --error-surface: #241b33;
+
+  /* Ghost fill (decoration) */
+  --ghost-top: #ffffff;
+  --ghost-mid: #f3eeff;
+  --ghost-hem: #cdb8ff;
+  --ghost-fold: #b9a2f5;
+  --ghost-glow: rgba(143, 70, 255, 0.75);
+
+  /* Seal (decoration) */
+  --wax: #ff7b1c;
+  --wax-rim: #d4600c;
+  --wax-inner: #f26f12;
+  --wax-press: #c4560a;
+  --wax-eye: #ff8d3a;
+  --crack: #4a1a00;
+
+  /* Soil (decoration) */
+  --soil-deep: #0d0a10;
+  --soil-mid: #211829;
+  --soil-lit: #b080ff;
+  --clod: #2a1f33;
+  --dust: #d6beff;
+
+  /* Envelope dirt (decoration) */
+  --dirt: rgba(70, 48, 34, 0.55);
+}
