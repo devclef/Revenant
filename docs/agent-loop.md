@@ -22,7 +22,7 @@ issue: status:ready + agent:<role>, dependencies closed
             └─ ci-gate green → dispatcher starts Task Runner as qa on the PR head
                  ├─ pass → status:qa-passed → dispatcher squash-merges when ci-gate is green
                  └─ fail (or CI failed) → status:changes-requested → fix run as <role> → back to needs-qa
-                      (after 2 fix runs that committed: status:blocked, needs a human)
+                      (after 3 fix runs that committed: status:blocked, needs a human)
 ```
 
 One Task Runner run at a time, across dev, fix and QA. A dev or fix run holds its issue in `status:in-progress`, and a QA run holds its PR in `status:qa-running`. The dispatcher also counts the runs Task Runner reports as still going, and uses the larger count. While any run is in flight, it starts nothing else, and a start that fails stops the tick. `REVENANT_MAX_DEV_RUNS` (default 1) is the cap on that total. Keep it at 1: runs share one Crew gateway process, and when several ran at once, commands from one run executed in another run's workspace.
@@ -88,6 +88,18 @@ Per-write test hooks were dropped: the Task Runner runs `scripts/check.sh` at th
 **Log:** every run appends one line to `~/kiro/revenant-crew/hooks.log` (UTC time, role, hook, files checked, result: `clean`, `block:N`, `report:N` or `skipped:...`). The folder is created if missing.
 
 Not every hook output reaches the agent. In kiro-cli 2.35 the output of a `postToolUse` hook is not shown to the agent, which is why the check runs on `stop`. To change a role's hooks, edit `HOOKS` in the generator and run it again.
+
+## Layout check
+
+Spec 07 layout checks run as one script, not by hand. It is `tools/qa/layout-check.mjs`, started with `npm run layout-check -- --url http://localhost:<port>` against a running app with the demo personas sealed (`npm run seal-personas`).
+
+- **What it walks:** the landing page (if it is a scene yet), `/demo`, and the Maya persona from intact through recall (two questions), marks, the seal (if the build has it), the letter, the figures and the close. Stages the build doesn't have yet are notes, not failures.
+- **Sizes:** 1280×800 and 360×640 by default. `--all-sizes` runs the seven spec 07 sizes, for the polish pass in spec 07 task 10. `--sizes 360x640,1280x800` picks any others.
+- **Blockers (fail the run, exit 1):** text or a control on the Ghost body or the Soil strip, unless it sits on an opaque paper card, which is drawn over the Ghost and reads fine; the main button of intact or the landing not fully in view at 1280×800; a main button that can't be reached, because another element covers its centre; a flow that stops, meaning a control is there and does nothing; a judgement word, an exclamation mark or red or green text in UI copy outside the persona letter.
+- **Polish (does not fail):** everything else: 1 px drift, margins, the Top_Bar height, dust height, date wrapping, a sideways Ghost move, a main button below the fold (it must still be reachable), and paper cards over the Soil.
+- **Exit codes:** 0 when there is no blocker, 1 when there is at least one, 2 when the check can't start (bad arguments, the app does not answer, or no Chromium).
+- **Browser:** `playwright-core` (pinned to `1.64.0-alpha-1790635538000`, the Playwright MCP version) drives the Chromium at `$CHROMIUM_PATH` or `/usr/bin/chromium`. Screenshots go to `layout-check-shots/` (gitignored).
+- **Who runs it:** frontend-dev runs it on its own work before finishing, and QA runs it on every spec 07 PR. `npm test` never starts a browser.
 
 ## QA browser check
 

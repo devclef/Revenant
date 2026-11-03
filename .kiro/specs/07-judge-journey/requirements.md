@@ -584,7 +584,7 @@ Accepted by the owner on 2 November 2026. These spec 03 and spec 05 rules are re
 **User story:** As the owner, I want this spec's rules checked in CI, with properties that show judges how Kiro specs drive tests.
 
 1. THE tests SHALL run in `npm test` and SHALL pass with no network access and with `DATABASE_URL` unset. THE tests SHALL stub every `fetch` call. IF a test makes an unstubbed network request or opens a database connection, THEN that test SHALL fail.
-2. THE tests SHALL render components with `renderToStaticMarkup`, as the spec 05 tests do. No browser test framework SHALL be added to `package.json`.
+2. THE tests SHALL render components with `renderToStaticMarkup`, as the spec 05 tests do. `npm test` SHALL NOT launch a browser. `playwright-core` MAY be a devDependency, pinned exactly to `1.64.0-alpha-1790635538000` (the Playwright MCP version), and is used only by `tools/qa/layout-check.mjs`, which is run by hand or by QA and never by `npm test`.
 3. THE tests SHALL include these fast-check properties. EACH property SHALL set `numRuns` to at least 100:
    1. FOR ANY order of check completion and Emergence end, and FOR ANY delay between them, the Pick_Up_Button SHALL be absent from the rendered markup in every Flow state other than `verified`.
    2. FOR ALL new components, FOR ANY answer and figure pair, with Marks mirrored as in R20.2, the rendered text, timing, colour, class, motion, order and sound SHALL be the same whatever the distance between the answer and the figure, except for the parts R20.5 allows.

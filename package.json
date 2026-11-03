@@ -13,6 +13,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "node scripts/migrate.mjs",
     "seal-personas": "node dist/seal-personas.mjs",
+    "layout-check": "node tools/qa/layout-check.mjs",
     "prefetch": "node scripts/prefetch-figures.mjs"
   },
   "dependencies": {
@@ -35,6 +36,7 @@
     "@types/react-dom": "19.3.0",
     "eslint": "9.39.5",
     "eslint-config-next": "15.5.28",
+    "playwright-core": "1.64.0-alpha-1790635538000",
     "typescript": "5.9.3",
     "vitest": "5.0.5"
   },

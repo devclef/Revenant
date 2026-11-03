@@ -417,7 +417,7 @@
 /* The narrow layout (below 900 px). */
 @media (max-width: 899.98px) {
   .ghostPlace {
-    --ghost-w: min(31vh, 200px);
+    --ghost-w: min(26vh, 170px);
     --ghost-risen: -3%;
   }
 }

@@ -30,3 +30,6 @@ npm-debug.log*
 
 # Python bytecode (tools/)
 __pycache__/
+
+# Layout check screenshots (npm run layout-check)
+layout-check-shots/
