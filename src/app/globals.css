@@ -54,6 +54,12 @@
   box-sizing: border-box;
 }
 
+/* Dark page colour behind the content so iOS overscroll shows dark, not paper (R7.11). */
+html,
+body {
+  background: #0b0912;
+}
+
 html,
 body {
   margin: 0;
