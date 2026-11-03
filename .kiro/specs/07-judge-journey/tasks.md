@@ -40,7 +40,7 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
 
 ## Tasks
 
-- [ ] 1. Scene tokens, contrast test and measured budgets
+- [x] 1. Scene tokens, contrast test and measured budgets
   - Agent: `frontend-dev` · Depends on: none · Estimated size: ~700 changed lines
   - Before this task: only `main`, with the owner's commits of `tone.md` and `product.md` (R25.1, R25.10) and the spec 07 section of `.kiro/agents/prompts/qa.md` (R25.5).
   - Scope: `src/components/ceremony/scene/tokens.module.css`, `src/components/ceremony/contrast.test.ts`, `src/components/ceremony/css-imported.test.ts`, `src/components/ceremony/ASSETS.md` (header only, if needed), and new `*.test.ts` files under `src/components/ceremony/scene/`
