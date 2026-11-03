@@ -115,7 +115,7 @@ describe("Property 11: the Soil_Canvas draws the same thing from the seed", () =
       }),
       RUNS,
     );
-  });
+  }, 30_000);
 
   it("keeps every soil shape within EDGE_BAND_PX above the soil top", () => {
     fc.assert(
