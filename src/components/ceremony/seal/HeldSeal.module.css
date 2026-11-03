@@ -1,0 +1,23 @@
+/* HeldSeal: the pointer target over the wax seal (design.md "HeldSeal").
+ * The hit box is a ::before square at least --seal-hit-min (SEAL_HIT_MIN_PX,
+ * 60 px) wide, centred on the seal. It is never smaller than the seal itself. */
+
+.target {
+  position: relative;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+  cursor: pointer;
+}
+
+.target::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: max(100%, var(--seal-hit-min));
+  height: max(100%, var(--seal-hit-min));
+  transform: translate(-50%, -50%);
+  /* The box takes the pointer; the seal drawn inside it is decoration. */
+  background: transparent;
+}

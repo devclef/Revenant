@@ -85,7 +85,7 @@ describe("SealedLetter, live variant (R18.2)", () => {
 
   it("keeps the letter text in the plain-text element", () => {
     const html = render("live");
-    expect(html).toContain("data-ink-text");
+    expect(html).not.toContain("data-ink-text");
     expect(html).toContain("A live letter, written by its reader.");
     expect(html).toContain("Second line.");
   });

@@ -30,10 +30,6 @@ const revealCss = readFileSync(
   "utf8",
 );
 const deskCss = readFileSync(join(here, "ceremony.module.css"), "utf8");
-const inkCss = readFileSync(
-  join(here, "letter", "InkLetter.module.css"),
-  "utf8",
-);
 const recallCss = readFileSync(
   join(here, "recall", "RecallScale.module.css"),
   "utf8",
@@ -86,7 +82,6 @@ describe("every control's target is at least 24 by 24 px (WCAG 2.5.8)", () => {
   const controls: Array<[string, string, string]> = [
     ["reveal.module.css", revealCss, "button"],
     ["ceremony.module.css", deskCss, "deskControl"],
-    ["InkLetter.module.css", inkCss, "skip"],
     ["RecallScale.module.css", recallCss, "wholeScale"],
   ];
 

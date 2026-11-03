@@ -1,0 +1,234 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
+import fc from "fast-check";
+import { describe, expect, it } from "vitest";
+
+import { LetterBlock } from "./LetterBlock";
+import { MotionProvider } from "../motion";
+import { REVEAL_COPY, LIVE_COPY } from "@/components/reveal/copy";
+import type { Opened } from "@/components/reveal/opening-machine";
+import type { PayloadV1 } from "@/lib/seal-format";
+
+/**
+ * Spec 07 task 5: the letter stage (`LetterBlock`, R13).
+ *
+ * Property 17 (fast-check, at least 100 runs, 1 to 5,000 code points): the
+ * letter text appears exactly once, as the only child text of one paragraph,
+ * with the labels before it and no element inside the paragraph. No style
+ * touches `mask`, `clip` or the text's opacity.
+ *
+ * Property 23 (strings, for this block): the strings the block renders carry
+ * no "!", no Scoring_Words_Always word, no Scene_Copy scoring word, and no
+ * sentence over 25 words.
+ */
+
+const HERE = __dirname;
+const REVEAL_DIR = join(HERE, "..", "..", "reveal");
+
+const PERSONA_NAME = "Maya";
+
+function openedWith(letterText: string): Opened {
+  const payload: PayloadV1 = {
+    format_version: 1,
+    letter_text: letterText,
+    written_as_of: "2024-10-15",
+    metrics: [
+      {
+        id: "fuel",
+        display_name: "Regular gasoline",
+        unit: "USD per gallon",
+        region: "U.S. city average",
+        source: "U.S. EIA",
+        series_id: "EMM_EPMR_PTE_NUS_DPG",
+      },
+    ],
+    figures: [
+      {
+        kind: "official",
+        metric_id: "fuel",
+        value: "3.412",
+        unit: "USD per gallon",
+        region: "U.S. city average",
+        period: "2024-10",
+        source: "U.S. EIA",
+        series_id: "EMM_EPMR_PTE_NUS_DPG",
+        retrieved_at: "2024-10-30T14:02:11Z",
+        source_url: "https://www.eia.gov/fixture",
+      },
+    ],
+    recall_questions: [
+      {
+        id: "q-fuel",
+        answer_type: "number",
+        text: "What do you think a gallon of regular gasoline cost then?",
+        metric_id: "fuel",
+      },
+    ],
+  };
+  return {
+    letterId: "letter-1",
+    header: {
+      sealedAt: "2024-10-01T00:00:00.000Z",
+      opensAt: "2024-11-05T00:00:00.000Z",
+    },
+    openingKey: {} as unknown as CryptoKey,
+    payload,
+  };
+}
+
+function render(letterText: string): string {
+  return renderToStaticMarkup(
+    createElement(
+      MotionProvider,
+      null,
+      createElement(LetterBlock, {
+        opened: openedWith(letterText),
+        personaName: PERSONA_NAME,
+      }),
+    ),
+  );
+}
+
+/** A stylesheet with its comments removed, so prose cannot match a rule. */
+function withoutComments(css: string): string {
+  return css.replace(/\/\*[\s\S]*?\*\//g, "");
+}
+
+/** The letter as renderToStaticMarkup writes it as a bare text child. */
+function escapedText(letterText: string): string {
+  const encoded = renderToStaticMarkup(createElement("p", null, letterText));
+  return encoded.slice("<p>".length, -"</p>".length);
+}
+
+/** The declaration block of the first rule whose selector is exactly `.name`. */
+function blockOf(css: string, name: string): string {
+  const match = new RegExp(`\\.${name}\\s*\\{([^}]*)\\}`).exec(css);
+  if (match === null) throw new Error(`no rule for .${name}`);
+  return match[1] ?? "";
+}
+
+// Code points from the whole Unicode range, plus the characters that the
+// markup has to escape or that break lines.
+// The surrogate block (0xD800 to 0xDFFF) is skipped: it is not a code point.
+const codePoint = fc.oneof(
+  fc.integer({ min: 0x00, max: 0xd7ff }),
+  fc.integer({ min: 0xe000, max: 0x10ffff }),
+  fc.constantFrom(0x0a, 0x0d, 0x09, 0x20, 0x3c, 0x3e, 0x26, 0x22, 0x27),
+);
+const letterText = fc
+  .array(codePoint, { minLength: 1, maxLength: 5000 })
+  .map((points) => String.fromCodePoint(...points));
+
+describe("Property 17: the letter is shown verbatim with nothing against it (R13.3, R13.4, R13.7)", () => {
+  it("shows any 1 to 5,000 code point letter once, as the only text of one paragraph", () => {
+    fc.assert(
+      fc.property(letterText, (text) => {
+        const html = render(text);
+        const inner = escapedText(text);
+
+        // Exactly one paragraph holds the text, and it holds nothing else.
+        const plainParagraphs = [...html.matchAll(/<p[^>]*>([^<]*)<\/p>/g)].map(
+          (match) => match[1],
+        );
+        expect(plainParagraphs.filter((content) => content === inner)).toHaveLength(1);
+
+        // The labels come before the letter paragraph.
+        const heading = html.indexOf(REVEAL_COPY.stage2Title);
+        const paragraph = html.indexOf(`>${inner}</p>`);
+        expect(heading).toBeGreaterThanOrEqual(0);
+        expect(paragraph).toBeGreaterThan(heading);
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  it("applies no mask, clip or opacity to the letter (R13.4)", () => {
+    const blockCss = readFileSync(join(HERE, "LetterBlock.module.css"), "utf8");
+    const revealCss = readFileSync(join(REVEAL_DIR, "reveal.module.css"), "utf8");
+    expect(withoutComments(blockCss)).not.toMatch(/mask|clip|opacity/);
+    const letterRule = blockOf(withoutComments(revealCss), "letter");
+    expect(letterRule).not.toMatch(/mask|clip|opacity/);
+  });
+
+  it("is built from one purple block holding one paper panel with two creases", () => {
+    const html = render("A short letter.");
+    expect(html.match(/aria-hidden="true"/g)).toHaveLength(4);
+    expect(html).not.toContain("data-ink-text");
+  });
+
+  it("keeps every crease in the paper margin, never behind a line of text (R13.7)", () => {
+    const html = render("A short letter.");
+    // Four crease marks: each position appears at the top and the bottom edge.
+    expect(html.match(/aria-hidden="true"/g)).toHaveLength(4);
+    const creaseTags = [...html.matchAll(/<span[^>]*aria-hidden="true"[^>]*>/g)].map(
+      (match) => match[0],
+    );
+    expect(creaseTags.filter((tag) => tag.includes("33.3%"))).toHaveLength(2);
+    expect(creaseTags.filter((tag) => tag.includes("66.6%"))).toHaveLength(2);
+
+    const css = withoutComments(readFileSync(join(HERE, "LetterBlock.module.css"), "utf8"));
+    // A crease spans only the padding band: no rule stretches it from top to bottom.
+    expect(blockOf(css, "crease")).not.toMatch(/top:\s*0;\s*bottom:\s*0/);
+    expect(blockOf(css, "crease")).toMatch(/height:\s*var\(--paper-pad\)/);
+    expect(blockOf(css, "creaseTop")).toMatch(/top:\s*0/);
+    expect(blockOf(css, "creaseBottom")).toMatch(/bottom:\s*0/);
+    expect(blockOf(css, "paper")).toMatch(/padding:\s*var\(--paper-pad\)/);
+  });
+
+  it("keeps the letter as one text node with white-space: pre-wrap", () => {
+    const revealCss = withoutComments(readFileSync(join(REVEAL_DIR, "reveal.module.css"), "utf8"));
+    expect(blockOf(revealCss, "letter")).toMatch(/white-space:\s*pre-wrap/);
+    const html = render("Line one.\nLine two.");
+    expect(html.match(/<p[^>]*>Line one\.\nLine two\.<\/p>/)).not.toBeNull();
+  });
+
+  it("unfolds only in full motion, through a Web Animation with fill backwards", () => {
+    const source = readFileSync(join(HERE, "LetterBlock.tsx"), "utf8");
+    expect(source).toContain('mode !== "full"');
+    expect(source).toContain('fill: "backwards"');
+    expect(source).toContain("UNFOLD_AT_MS");
+    expect(source).toContain("UNFOLD_MS");
+  });
+});
+
+// --- Property 23: strings for LetterBlock --------------------------------------
+
+const SCORING_WORDS_ALWAYS = ["accuracy", "score", "off by"];
+const SCORING_WORDS_SCENE = ["close", "right", "wrong"];
+const MAX_SENTENCE_WORDS = 25;
+
+const BLOCK_STRINGS: Record<string, string> = {
+  stage2Title: REVEAL_COPY.stage2Title,
+  stage2Next: REVEAL_COPY.stage2Next,
+  showAll: REVEAL_COPY.showAll,
+  writtenAsOfPrefix: REVEAL_COPY.writtenAsOfPrefix,
+  demoLetterLabel: REVEAL_COPY.demoLetterLabel,
+  sealedForDemoOn: REVEAL_COPY.sealedForDemoOn,
+  liveSealedOn: LIVE_COPY.sealedOn,
+};
+
+describe("Property 23: strings for LetterBlock (copy checks)", () => {
+  for (const [name, value] of Object.entries(BLOCK_STRINGS)) {
+    it(`${name} has no "!", no scoring word, and no sentence over 25 words`, () => {
+      expect(value, name).not.toContain("!");
+      for (const word of SCORING_WORDS_ALWAYS) {
+        expect(new RegExp(`\\b${word}\\b`, "i").test(value), `${name}: ${word}`).toBe(false);
+      }
+      for (const word of SCORING_WORDS_SCENE) {
+        expect(new RegExp(`\\b${word}\\b`, "i").test(value), `${name}: ${word}`).toBe(false);
+      }
+      for (const sentence of value.split(/[.?]\s*/)) {
+        const words = sentence.trim().split(/\s+/).filter((w) => w.length > 0);
+        expect(words.length, `${name}: "${sentence}"`).toBeLessThanOrEqual(MAX_SENTENCE_WORDS);
+      }
+    });
+  }
+
+  it("renders the stage heading and the demo label as they are in copy", () => {
+    const html = render("Body.");
+    expect(html).toContain(REVEAL_COPY.stage2Title);
+    expect(html).toContain(REVEAL_COPY.demoLetterLabel.replace("{name}", PERSONA_NAME));
+  });
+});

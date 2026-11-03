@@ -1,52 +1,35 @@
 "use client";
 
-// Feature: 05-reveal-ceremony
+// Feature: 05-reveal-ceremony, 07-judge-journey
 //
 // SealBreak: the Seal_Break view (design.md "Seal_Break", R6, Property 5,
 // Property 14, Property 19, Property 20, Property 21). The wax seal is the
-// pointer target; under it sit the instruction line and a real "Break the seal"
-// button (R6.3, Property 19). Pressing and holding the seal for SEAL_HOLD_MS
-// breaks it; releasing early lets the cracks recede over SEAL_SETTLE_MS and
-// nothing is sent (R6.4). The button plays the short version over SEAL_SHORT_MS
-// then sends ADVANCE (R6.3). On break in full motion the wax splits into
-// FLAKE_COUNT flakes, the flap lifts and the letter slides out; ADVANCE is sent
-// the moment the split starts, so stage 2's text is already in the document
-// under the slide.
+// pointer target, through HeldSeal. Under it sit the instruction line and a real
+// "Break the seal" button (R6.3, Property 19).
 //
-// The clock is the pure `hold.ts` model: `SealBreak` owns a rAF loop that feeds
-// it `performance.now()` timestamps and keeps the view state. `onAdvance()` is
-// called only when `isBreak(prev, next)` is true, so the advance fires exactly
-// once and never again once broken (R6.5, Property 5). A drag counts as
-// holding: pointer movement never resets or pauses the clock.
+// The hold logic lives in `useSealBreak` (task 5). `OpeningFlow` calls that hook
+// once and passes the controller here. This view reads the controller's
+// `broken` and `progress`, calls its `press`, `breakNow`, `showAll` and `skip`,
+// and hands its context values (live region, Calm_Mode, sound, the sealing flag)
+// to the controller through `connect`.
 //
 // Final state first (R17.3, Property 21): the server render and the FIRST
-// client render always show the INTACT seal — no cracks, no split, no flakes
-// (Property 2: nothing from a later Stage is in the document early). The break
-// motion is started by user events (press, or the button) after mount, so the
-// static markup is deterministic: this module calls no Math.random and no
-// Date.now in render. `performance.now()` is read only inside event handlers
-// and the rAF loop, never during render.
+// client render show the INTACT seal, with no cracks, split or flakes. The
+// static markup is deterministic: no Math.random and no Date.now in render.
 //
 // Calm_Mode (Property 20): `planSealBreak({ calm: true })` returns an empty
-// plan. In Calm_Mode a break shows the split seal at once and sends ADVANCE
-// with no animation; the hold clock still runs (so a reader can still break the
-// seal by holding), but there is no decorative motion.
+// plan. In Calm_Mode a break shows the split seal at once and sends ADVANCE with
+// no animation.
 //
-// R15.1: every user-facing string comes from CEREMONY_COPY; no inline literal
-// copy lives here. R10.1: nothing drawn here depends on a value or a direction;
-// every seal breaks the same way and only its decorative WaxSeal pattern
-// differs. Sound and vibration (R14.2) are optional: the break plays its cue and
-// vibrates only while the sound toggle is on (SoundEnabledContext), and the
-// sound module loads only after the first turn-on (sound/cues.ts).
+// R15.1: every user-facing string comes from CEREMONY_COPY. R10.1: nothing drawn
+// here depends on a value or a direction. Sound and vibration (R14.2) play only
+// while the sound toggle is on (SoundEnabledContext).
 
 import {
-  useCallback,
   useContext,
   useEffect,
   useRef,
-  useState,
   type CSSProperties,
-  type PointerEvent as ReactPointerEvent,
   type ReactElement,
 } from "react";
 
@@ -55,7 +38,9 @@ import { REVEAL_COPY } from "@/components/reveal/copy";
 import {
   EASE_STANDARD,
   EASE_STAMP,
+  FLAP_AT_MS,
   FLAP_LIFT_MS,
+  LETTER_SLIDE_AT_MS,
   LETTER_SLIDE_MS,
   SEAL_SETTLE_MS,
   SEAL_SHORT_MS,
@@ -65,7 +50,6 @@ import { useLiveRegion } from "../LiveRegion";
 import { useMotion } from "../motion";
 import { useSequence } from "../skip";
 import { SoundEnabledContext } from "../sound/SoundEnabledContext";
-import { soundCues } from "../sound/cues";
 import { WaxSeal } from "../envelope/WaxSeal";
 import {
   CRACK_PATHS,
@@ -74,14 +58,8 @@ import {
   TOTAL_LENGTH,
   cracksForProgress,
 } from "./cracks";
-import {
-  IDLE,
-  isBreak,
-  onPress,
-  onRelease,
-  onTick,
-  type HoldState,
-} from "./hold";
+import { HeldSeal } from "./HeldSeal";
+import type { SealController } from "./useSealBreak";
 import styles from "./SealBreak.module.css";
 
 /** The WaxSeal's fixed 100×100 user space, shared by the crack overlay. */
@@ -90,29 +68,20 @@ const VIEWBOX = SEAL_CENTER * 2;
 export type SealBreakProps = {
   /** The persona key that seeds the WaxSeal's decorative pattern (R8.4). */
   patternKey: string;
+  /** The seal controller from `useSealBreak`, owned by OpeningFlow. */
+  seal: SealController;
   /**
    * Force Calm_Mode. Optional: when omitted the view reads `useMotion().mode`,
    * so a `calm` device mode (reduced motion or the Calm control) stills the
    * break the same way. Passing `calm` explicitly is for tests.
    */
   calm?: boolean;
-  /**
-   * Sends the flow's ADVANCE — the stage 1 → 2 move. Called exactly once, the
-   * moment the seal breaks (on the split's start in full motion, or at once in
-   * Calm_Mode), and never again (R6.5, Property 5).
-   */
-  onAdvance: () => void;
-  /**
-   * Sends the flow's SHOW_ALL ("Show everything"): the seal renders split
-   * (R6.8). Optional; when present the view treats SHOW_ALL like a break that
-   * settles to the split state at once.
-   */
-  onShowAll?: () => void;
+  /** Show the "Show everything" control (R6.8). */
+  showAll?: boolean;
   /**
    * Report the local view's `sealing` flag up to CeremonyRoot so
    * `stageFor(state, local)` resolves `seal` while a break is in progress and
-   * `marks` otherwise (design.md "Stage resolution"). Called with `true` when a
-   * hold begins and `false` when it settles back or the break completes.
+   * `marks` otherwise (design.md "Stage resolution").
    */
   onSealingChange?: (sealing: boolean) => void;
 };
@@ -175,7 +144,9 @@ export function planSealBreak(opts: { calm: boolean }): SealBreakPlan {
 const TIMING_VARS = {
   "--seal-split-ms": `${SEAL_SPLIT_MS}ms`,
   "--seal-settle-ms": `${SEAL_SETTLE_MS}ms`,
+  "--flap-at-ms": `${FLAP_AT_MS}ms`,
   "--flap-lift-ms": `${FLAP_LIFT_MS}ms`,
+  "--letter-slide-at-ms": `${LETTER_SLIDE_AT_MS}ms`,
   "--letter-slide-ms": `${LETTER_SLIDE_MS}ms`,
 } as CSSProperties;
 
@@ -197,18 +168,18 @@ function flakeStyle(index: number): CSSProperties {
 
 /**
  * SealBreak renders the seal, the instruction line and the "Break the seal"
- * button, and drives the pure hold model with a rAF loop.
+ * button. The hold itself is the controller's job.
  *
  * The seal is `aria-hidden` and not focusable — the button is the accessible
  * control (R6.3, Property 19). The crack overlay and the flakes are drawn in
  * the seal's fixed 100×100 user space, laid exactly over the disc. The overlay
- * tracks the hold's `progress`; the flakes appear only once the seal is broken.
+ * tracks the controller's `progress`; the flakes appear only once broken.
  */
 export function SealBreak({
   patternKey,
+  seal,
   calm: calmProp,
-  onAdvance,
-  onShowAll,
+  showAll = false,
   onSealingChange,
 }: SealBreakProps): ReactElement {
   const { mode } = useMotion();
@@ -216,235 +187,37 @@ export function SealBreak({
 
   const { register } = useSequence();
   const { announce } = useLiveRegion();
-  // Whether the sound toggle is on (R14.2). Read from the context, so the cue
-  // plays only while the reader has turned sound on.
+  // Whether the sound toggle is on (R14.2).
   const soundOn = useContext(SoundEnabledContext);
 
-  // The hold state drives the crack overlay. The FIRST render (server and
-  // client) is always IDLE — the intact seal — so the static markup is the
-  // settled, pre-break state (Property 2, Property 21).
-  const [hold, setHold] = useState<HoldState>(IDLE);
+  const { broken, progress, breakNow, showAll: showAllSeal, skip } = seal;
 
-  // Whether the seal has broken and the split/flap/letter motion should show.
-  const [broken, setBroken] = useState(false);
+  // The crack overlay root. The button's short draw animates its paths.
+  const overlayRef = useRef<SVGSVGElement | null>(null);
 
-  // Refs the rAF loop and the handlers read without re-subscribing. `holdRef`
-  // mirrors `hold` so the loop always ticks the current state; `advancedRef`
-  // guards onAdvance to exactly once (R6.5, Property 5).
-  const holdRef = useRef<HoldState>(IDLE);
-  const rafRef = useRef<number | null>(null);
-  const capturedElRef = useRef<HTMLElement | null>(null);
-  const capturedPointerRef = useRef<number | null>(null);
-  const advancedRef = useRef(false);
-
-  // Latest callbacks, read from refs so the rAF loop and window listeners never
-  // close over a stale prop.
-  const onAdvanceRef = useRef(onAdvance);
-  const onSealingChangeRef = useRef(onSealingChange);
-  const announceRef = useRef(announce);
-  const soundOnRef = useRef(soundOn);
+  // Hand the context values the controller cannot read itself to it. Runs after
+  // each render, so the controller always has the latest values at press time.
   useEffect(() => {
-    onAdvanceRef.current = onAdvance;
-    onSealingChangeRef.current = onSealingChange;
-    announceRef.current = announce;
-    soundOnRef.current = soundOn;
-  }, [onAdvance, onSealingChange, announce, soundOn]);
-
-  const setHoldBoth = useCallback((next: HoldState) => {
-    holdRef.current = next;
-    setHold(next);
-  }, []);
-
-  const stopRaf = useCallback(() => {
-    if (rafRef.current !== null) {
-      cancelAnimationFrame(rafRef.current);
-      rafRef.current = null;
-    }
-  }, []);
-
-  // Fire ADVANCE at most once (R6.5, Property 5), and show the split.
-  const doBreak = useCallback(() => {
-    stopRaf();
-    setBroken(true);
-    setHoldBoth({ phase: "broken", progress: 1 });
-    onSealingChangeRef.current?.(false);
-    announceRef.current(CEREMONY_COPY.sealBroken);
-    if (!advancedRef.current) {
-      advancedRef.current = true;
-      // The break cue and vibration fire with the single ADVANCE, so they play
-      // exactly once per break and only while sound is on (R14.2).
-      void soundCues.sealBreak(soundOnRef.current);
-      // ADVANCE is sent when the split STARTS, so stage 2's text is already in
-      // the document under the slide (design.md "The view").
-      onAdvanceRef.current();
-    }
-  }, [setHoldBoth, stopRaf]);
-
-  // The rAF loop: advance the clock, apply isBreak exactly once, and settle.
-  const loop = useCallback(() => {
-    const now = performance.now();
-    const prev = holdRef.current;
-    const next = onTick(prev, now);
-
-    if (isBreak(prev, next)) {
-      doBreak();
-      return;
-    }
-
-    setHoldBoth(next);
-
-    if (next.phase === "holding" || next.phase === "settling") {
-      rafRef.current = requestAnimationFrame(loop);
-      return;
-    }
-
-    // Settled back to idle after an early release: nothing was sent (R6.4).
-    rafRef.current = null;
-    if (next.phase === "idle") {
-      onSealingChangeRef.current?.(false);
-    }
-  }, [doBreak, setHoldBoth]);
-
-  const startLoop = useCallback(() => {
-    if (rafRef.current === null) {
-      rafRef.current = requestAnimationFrame(loop);
-    }
-  }, [loop]);
-
-  // --- Pointer hold on the seal ---
-
-  const releaseCapture = useCallback(() => {
-    const el = capturedElRef.current;
-    const id = capturedPointerRef.current;
-    if (el !== null && id !== null) {
-      try {
-        el.releasePointerCapture(id);
-      } catch {
-        // Already released or never captured — nothing to do.
-      }
-    }
-    capturedElRef.current = null;
-    capturedPointerRef.current = null;
-  }, []);
-
-  // The live window release/cancel listener, kept in a ref so the same function
-  // is added and removed, and so the pointer-down handler does not have to
-  // close over `endHold` (which would create a use-before-define cycle).
-  const windowUpRef = useRef<(() => void) | null>(null);
-
-  const removeWindowListeners = useCallback(() => {
-    const handler = windowUpRef.current;
-    if (handler !== null) {
-      window.removeEventListener("pointerup", handler);
-      window.removeEventListener("pointercancel", handler);
-      windowUpRef.current = null;
-    }
-  }, []);
-
-  const endHold = useCallback(() => {
-    // A release while holding settles the cracks back over SEAL_SETTLE_MS and
-    // sends nothing (R6.4). If the hold already reached full progress the model
-    // returns `broken` and the next tick breaks it.
-    const now = performance.now();
-    const next = onRelease(holdRef.current, now);
-    setHoldBoth(next);
-    releaseCapture();
-    removeWindowListeners();
-    if (next.phase === "settling") {
-      announceRef.current(CEREMONY_COPY.sealHolds);
-      startLoop();
-    } else if (next.phase === "broken") {
-      doBreak();
-    }
-  }, [doBreak, releaseCapture, removeWindowListeners, setHoldBoth, startLoop]);
-
-  const onSealPointerDown = useCallback(
-    (event: ReactPointerEvent<HTMLElement>) => {
-      if (broken || advancedRef.current) return;
-      const now = performance.now();
-      setHoldBoth(onPress(holdRef.current, now));
-      onSealingChangeRef.current?.(true);
-
-      // Keep the pointer stream on the seal even if the finger drifts off it (a
-      // drag counts as holding). setPointerCapture can throw; on a throw we fall
-      // back to window listeners so the hold still ends on release.
-      const el = event.currentTarget;
-      try {
-        el.setPointerCapture(event.pointerId);
-        capturedElRef.current = el;
-        capturedPointerRef.current = event.pointerId;
-      } catch {
-        capturedElRef.current = null;
-        capturedPointerRef.current = null;
-      }
-      const handler = () => endHold();
-      windowUpRef.current = handler;
-      window.addEventListener("pointerup", handler);
-      window.addEventListener("pointercancel", handler);
-      startLoop();
-    },
-    [broken, endHold, setHoldBoth, startLoop],
-  );
-
-  // --- The button and Skip ---
-
-  // The button breaks the seal: in full motion it plays the short version over
-  // SEAL_SHORT_MS then sends ADVANCE; in Calm_Mode it shows the split at once
-  // and sends ADVANCE (design.md "The view"). Either way the break is immediate
-  // in state terms (ADVANCE on split start); the short-version timing is the
-  // decorative crack draw the stylesheet runs, so the button simply breaks.
-  const onButton = useCallback(() => {
-    if (broken || advancedRef.current) return;
-    doBreak();
-  }, [broken, doBreak]);
-
-  // Skip jumps to the end state and sends ADVANCE once if it has not been sent
-  // (R6.7). "Show everything" renders the seal split and sends SHOW_ALL (R6.8).
-  const onShowAllClick = useCallback(() => {
-    if (!broken) {
-      setBroken(true);
-      setHoldBoth({ phase: "broken", progress: 1 });
-    }
-    onShowAll?.();
-  }, [broken, onShowAll, setHoldBoth]);
+    seal.connect({ announce, calm, soundOn, onSealingChange });
+  });
 
   // Register this sequence so CeremonyRoot shows Skip while a break is possible
   // (Property 19). Skipping goes to the end state and sends ADVANCE once.
-  useEffect(() => {
-    const skip = () => {
-      stopRaf();
-      if (!broken) {
-        doBreak();
-      }
-    };
-    const unregister = register(skip);
-    return unregister;
-  }, [register, broken, doBreak, stopRaf]);
+  useEffect(() => register(() => skip()), [register, skip]);
 
-  // Tidy the rAF loop and any window listeners on unmount.
-  useEffect(() => {
-    return () => {
-      stopRaf();
-      removeWindowListeners();
-    };
-  }, [removeWindowListeners, stopRaf]);
+  const onButton = () => breakNow(overlayRef.current);
 
-  // The crack overlay tracks the hold's progress; a broken seal shows every
-  // crack fully drawn. The pure model is the only input, so the overlay reads
-  // the same on the server and the client for a given progress (Property 6,
-  // Property 21). The contact point is never an input.
-  const progress = broken ? 1 : hold.progress;
+  // The crack overlay tracks the controller's progress. The pure model is the
+  // only input, so the overlay reads the same on the server and the client for
+  // a given progress (Property 6, Property 21).
   const cracks = cracksForProgress(progress);
 
   return (
     <section className={styles.stage} style={TIMING_VARS} data-broken={broken}>
-      <span
-        className={styles.sealTarget}
-        aria-hidden="true"
-        onPointerDown={onSealPointerDown}
-      >
+      <HeldSeal controller={seal} className={styles.sealTarget}>
         <WaxSeal patternKey={patternKey} className={styles.seal} />
         <svg
+          ref={overlayRef}
           className={styles.crackOverlay}
           viewBox={`0 0 ${VIEWBOX} ${VIEWBOX}`}
           aria-hidden="true"
@@ -471,17 +244,13 @@ export function SealBreak({
             ))}
           </span>
         ) : null}
-      </span>
+      </HeldSeal>
       <p className={styles.instruction}>{CEREMONY_COPY.sealInstruction}</p>
       <button type="button" className={styles.button} onClick={onButton}>
         {CEREMONY_COPY.sealButton}
       </button>
-      {onShowAll ? (
-        <button
-          type="button"
-          className={styles.button}
-          onClick={onShowAllClick}
-        >
+      {showAll ? (
+        <button type="button" className={styles.button} onClick={() => showAllSeal()}>
           {REVEAL_COPY.showAll}
         </button>
       ) : null}

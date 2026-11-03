@@ -405,7 +405,7 @@ describe("OpeningFlow view selection", () => {
       stage: 1,
     });
     expect(html).toContain(REVEAL_COPY.stage1Title);
-    expect(html).toContain(`${REVEAL_COPY.yourAnswer}: 3.50`);
+    expect(html).toContain(">3.50</span>");
     // Stage 1 is the `marks` Stage: the remembered answers above the unbroken
     // seal, its instruction line and the "Break the seal" button (owned by
     // SealBreak). It replaces the old stage1Next ("Read the letter") control.

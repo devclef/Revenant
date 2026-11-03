@@ -11,6 +11,9 @@ import { LiveRegionProvider } from "@/components/ceremony/LiveRegion";
 import { LocalViewProvider } from "@/components/ceremony/local-view";
 import styles from "./reveal.module.css";
 import surfaceStyles from "@/components/ui/ParchmentSurface.module.css";
+import blockStyles from "@/components/ceremony/letter/LetterBlock.module.css";
+import { readFileSync as readCss } from "node:fs";
+import { join as joinPath } from "node:path";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV1 } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
@@ -145,15 +148,42 @@ function isInsidePanel(html: string, heading: string): boolean {
   );
 }
 
+/**
+ * True when `heading` sits inside the letter block's paper panel (stage 2,
+ * LetterBlock). The nearest preceding `<div>` with the paper class must be that
+ * panel, and no `</div>` may close between its opening tag and the heading.
+ */
+function isInsideLetterPaper(html: string, heading: string): boolean {
+  const at = html.indexOf(escapeHtml(heading));
+  if (at < 0) return false;
+  const before = html.slice(0, at);
+  const divOpen = /<div class="([^"]*)"/g;
+  let paperIndex = -1;
+  let match: RegExpExecArray | null;
+  while ((match = divOpen.exec(before)) !== null) {
+    if (match[1].includes(blockStyles.paper)) paperIndex = match.index;
+  }
+  if (paperIndex < 0) return false;
+  return !before.slice(paperIndex).includes("</div>");
+}
+
 describe("reveal stages sit on a ParchmentSurface panel", () => {
   it("wraps stage 1 (What you remembered and the seal break) in a panel", () => {
     const html = renderReveal(1);
     expect(isInsidePanel(html, REVEAL_COPY.stage1Title)).toBe(true);
   });
 
-  it("wraps stage 2 (What was written then) in a panel", () => {
+  it("wraps stage 2 (What was written then) in the letter block's paper panel", () => {
     const html = renderReveal(2);
-    expect(isInsidePanel(html, REVEAL_COPY.stage2Title)).toBe(true);
+    expect(isInsideLetterPaper(html, REVEAL_COPY.stage2Title)).toBe(true);
+  });
+
+  it("sets --ink on the letter paper, so the letter does not inherit the desk's cream ink", () => {
+    const css = readCss(
+      joinPath(__dirname, "..", "ceremony", "letter", "LetterBlock.module.css"),
+      "utf8",
+    );
+    expect(css).toMatch(/\.paper\s*\{[^}]*--ink:/);
   });
 
   it("wraps stage 3 (The numbers, then and now) in a panel", () => {
@@ -163,8 +193,11 @@ describe("reveal stages sit on a ParchmentSurface panel", () => {
 
   it("gives every stage in the markup its own panel", () => {
     const html = renderReveal(3);
+    // Stages 1 and 3 use StagePanel; stage 2 uses the letter block's paper.
     const panels = html.split(styles.stagePanel).length - 1;
-    expect(panels).toBe(3);
+    const paper = html.split(blockStyles.paper).length - 1;
+    expect(panels).toBe(2);
+    expect(paper).toBe(1);
   });
 });
 

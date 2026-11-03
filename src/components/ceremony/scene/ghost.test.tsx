@@ -86,13 +86,28 @@ describe("Emergence and Idle_Bob (CSS gates)", () => {
   });
 
   it("animates transform only", () => {
-    const keyframeBodies = css.match(/@keyframes [\s\S]*?\n\}\n/g) ?? [];
+    // The rise and the bob animate transform only (R5.12). The break exit
+    // (ghostLeave, ghostFade) is the one place opacity animates (R12.6), so it is
+    // checked on its own below.
+    const keyframeBodies = (css.match(/@keyframes [\s\S]*?\n\}\n/g) ?? []).filter(
+      (body) => !body.startsWith("@keyframes ghost"),
+    );
     expect(keyframeBodies.length).toBeGreaterThan(0);
     for (const body of keyframeBodies) {
       const properties = [...body.matchAll(/([a-z-]+):/g)].map((m) => m[1]);
       for (const property of properties) {
         expect(["transform"]).toContain(property);
       }
+    }
+  });
+
+  it("animates the break exit with transform and opacity only", () => {
+    const exit = (css.match(/@keyframes ghost[\s\S]*?\n\}\n/g) ?? []).join("\n");
+    expect(exit).toContain("@keyframes ghostLeave");
+    expect(exit).toContain("@keyframes ghostFade");
+    const properties = [...exit.matchAll(/([a-z-]+):/g)].map((m) => m[1]);
+    for (const property of properties) {
+      expect(["transform", "opacity"]).toContain(property);
     }
   });
 

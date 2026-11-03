@@ -60,9 +60,11 @@
  * inline user-facing literal.
  */
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Ghost } from "@/components/ceremony/scene/Ghost";
 import { SceneBackdrop } from "@/components/ceremony/scene/SceneBackdrop";
+import { ghostPresent } from "@/components/ceremony/scene/ghost-presence";
+import { GHOST_LEAVE_MS } from "@/components/ceremony/constants";
 import { CeremonyRoot } from "@/components/ceremony/CeremonyRoot";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { SkipProvider } from "@/components/ceremony/skip";
@@ -74,6 +76,7 @@ import {
 import type { EnvelopePersona } from "@/components/ceremony/envelope/Envelope";
 import { Envelope } from "@/components/ceremony/envelope/Envelope";
 import heldStyles from "@/components/ceremony/scene/scene.module.css";
+import { useSealBreak, type SealController } from "@/components/ceremony/seal/useSealBreak";
 import { DemoLabel } from "@/components/demo/DemoLabel";
 import { useOpeningFlow } from "./useOpeningFlow";
 import { onceOnly, type AuthenticatorPort } from "@/components/live/unlock";
@@ -210,6 +213,32 @@ export function OpeningFlow({
   const { state, retry } = flow;
   const KeyStep = useKeyStep(state.tag === "awaiting_key");
 
+  // True from a completed full-motion break until the Ghost has left (R12.6).
+  // Calm, Skip and Show everything never set it, so the Ghost unmounts in the
+  // same render as their ADVANCE or SHOW_ALL.
+  const [ghostLeaving, setGhostLeaving] = useState(false);
+  useEffect(() => {
+    if (!ghostLeaving) return undefined;
+    const timer = setTimeout(() => setGhostLeaving(false), GHOST_LEAVE_MS);
+    return () => clearTimeout(timer);
+  }, [ghostLeaving]);
+  const leftGhost = useCallback(() => setGhostLeaving(false), []);
+
+  // The break's ADVANCE. `animated` is true only for a full-motion break, which
+  // starts the Ghost's leave before the reveal stage moves on.
+  const { advance } = flow;
+  const onBreakAdvance = useCallback(
+    (animated: boolean) => {
+      if (animated) setGhostLeaving(true);
+      advance();
+    },
+    [advance],
+  );
+
+  // The Seal_Break controller (task 5). Called once here, in reveal stage 1, and
+  // passed to Reveal's SealBreak. Its ADVANCE and SHOW_ALL go through the flow.
+  const seal = useSealBreak({ onAdvance: onBreakAdvance, onShowAll: flow.showAll });
+
   // The Pick_Up_Button sends BEGIN once per `verified` (R10.6). The latest
   // `begin` is read through a ref, so the guard keeps its state across renders.
   const latestBegin = useRef(flow.begin);
@@ -249,22 +278,31 @@ export function OpeningFlow({
         >
           {flow.live?.demo === true ? <DemoLabel /> : null}
           {mode === "persona" ? (
-            <SceneBackdrop>
-              <Ghost>
-                {persona === undefined ? null : (
-                  <HeldEnvelope
-                    persona={{ ...persona, demo: true }}
-                    tag={state.tag}
-                  />
-                )}
-              </Ghost>
+            <SceneBackdrop
+              dimmed={state.tag === "reveal" && state.stage >= 2}
+              animateDim={ghostLeaving}
+            >
+              {ghostPresent({
+                tag: state.tag,
+                stage: state.tag === "reveal" ? state.stage : null,
+                leaving: ghostLeaving,
+              }) ? (
+                <Ghost leaving={ghostLeaving} onLeft={leftGhost}>
+                  {persona === undefined ? null : (
+                    <HeldEnvelope
+                      persona={{ ...persona, demo: true }}
+                      tag={state.tag}
+                    />
+                  )}
+                </Ghost>
+              ) : null}
             </SceneBackdrop>
           ) : null}
           <div className={styles.view}>
             {selectView(state, flow, letterId, personaName, persona, mode, retryAtZero, KeyStep, {
               keyText,
               onKeyTextChange: setKeyText,
-            }, beginGuard.begin)}
+            }, beginGuard.begin, seal)}
           </div>
         </CeremonyRoot>
       </SkipProvider>
@@ -290,6 +328,7 @@ function selectView(
   KeyStep: KeyStepComponent | null,
   keyEntry: KeyEntry,
   begin: () => void,
+  seal: SealController,
 ): React.ReactNode {
   // The envelope's per-letter inputs: the persona list fields plus the demo
   // flag. These are always demo persona letters, so `demo` is true whenever a
@@ -431,6 +470,7 @@ function selectView(
             stage={state.stage}
             onAdvance={flow.advance}
             onShowAll={flow.showAll}
+            seal={seal}
             variant={mode}
           />
           {mode === "live" && state.stage === 3 ? (

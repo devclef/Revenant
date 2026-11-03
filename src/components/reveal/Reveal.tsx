@@ -1,15 +1,20 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useContext, useState } from "react";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV1 } from "@/lib/recall";
-import { RememberedAnswers } from "./RememberedAnswers";
-import { InkLetter } from "@/components/ceremony/letter/InkLetter";
+import { LetterBlock } from "@/components/ceremony/letter/LetterBlock";
+import { CEREMONY_COPY } from "@/components/ceremony/copy";
+import { SoundToggle } from "@/components/ceremony/sound/SoundToggle";
+import { SoundEnabledContext } from "@/components/ceremony/sound/SoundEnabledContext";
+import { soundCues } from "@/components/ceremony/sound/cues";
 import { FiguresThenNow } from "./FiguresThenNow";
 import { StagePanel } from "./StagePanel";
 import { ThenNowSequence } from "@/components/ceremony/figures/ThenNowSequence";
 import { Close } from "@/components/ceremony/close/Close";
 import { SealBreak } from "@/components/ceremony/seal/SealBreak";
+import type { SealController } from "@/components/ceremony/seal/useSealBreak";
+import { IDLE } from "@/components/ceremony/seal/hold";
 import { RecallScale } from "@/components/ceremony/recall/RecallScale";
 import { useLocalView } from "@/components/ceremony/local-view";
 import { REVEAL_COPY } from "./copy";
@@ -19,24 +24,43 @@ import styles from "./reveal.module.css";
 const NO_EDIT = () => undefined;
 
 /**
+ * Used when no controller is passed (static renders in the tests). The seal
+ * shows intact and its controls do nothing. OpeningFlow always passes the real
+ * controller from `useSealBreak`.
+ */
+const INERT_SEAL: SealController = {
+  hold: IDLE,
+  broken: false,
+  progress: 0,
+  press: () => undefined,
+  breakNow: () => undefined,
+  showAll: () => undefined,
+  skip: () => undefined,
+  connect: () => undefined,
+};
+
+/**
  * The staged reveal (design.md "Reveal", R9.1, R9.4). The reveal is shown only
  * after the encrypted recall record has been stored; the reducer enters the
  * `reveal` state only on `POST_OK`, always at stage 1. This component renders
  * the stages the current `stage` has reached and the controls that let the
  * judge move forward, one part at a time.
  *
- * - Stage 1 is the `marks` Stage (design.md "Seal_Break"): the existing
- *   `RememberedAnswers` as plain text — what the judge just remembered — above
- *   the unbroken wax seal, its instruction line and the "Break the seal"
- *   button, all owned by `SealBreak`. It holds nothing from inside the letter
+ * - Stage 1 is the `marks` Stage (design.md "Seal_Break"): the marks column.
+ *   It shows the "What you remembered" heading, each answer with the judge's
+ *   value in the Accent (or "No answer"), the read-only recall scales, then the
+ *   seal, its instruction line and the "Break the seal" and "Show everything"
+ *   buttons, all owned by `SealBreak`, with the sound toggle and its note under
+ *   them on the persona page. It holds nothing from inside the letter
  *   (R9.2, R9.3). Pressing and holding the seal for `SEAL_HOLD_MS`, or pressing
  *   the button, breaks the seal and sends `ADVANCE` exactly once (via
  *   `SealBreak`'s `onAdvance`), which reveals stage 2. `SealBreak` reports its
  *   `sealing` flag up through the local-view context, so the Ceremony Stage
  *   reads `seal` while a break is in progress and `marks` otherwise (design.md
  *   "Stage resolution").
- * - Stage 2 (`SealedLetter`) is shown once `stage >= 2`: what was written then.
- *   Its "See the numbers" button (`stage2Next`) dispatches `ADVANCE`.
+ * - Stage 2 (`LetterBlock`, which wraps `SealedLetter`) is shown once
+ *   `stage >= 2`: what was written then. Its "See the numbers" button
+ *   (`stage2Next`) dispatches `ADVANCE`.
  * - Stage 3 (`FiguresThenNow`) is shown once `stage >= 3`: the figures then and
  *   now. "Show everything" (`SHOW_ALL`) takes the stage straight to 3, so all
  *   three render at once; at stage 1 `SealBreak` renders the seal already split
@@ -79,6 +103,12 @@ export type RevealProps = {
   /** Dispatches `SHOW_ALL`, revealing every remaining stage at once. */
   onShowAll: () => void;
   /**
+   * The Seal_Break controller from OpeningFlow's `useSealBreak` (called once
+   * there). Stage 1's SealBreak reads and drives it. Optional: without it the
+   * seal shows intact and its controls do nothing.
+   */
+  seal?: SealController;
+  /**
    * `"persona"` (default) or `"live"`. Live letters use the live stage 2 line
    * and let a same-figure pair show a zero change (spec 06, R18.2).
    */
@@ -93,12 +123,22 @@ export function Reveal({
   stage,
   onAdvance,
   onShowAll,
+  seal,
   variant = "persona",
 }: RevealProps) {
   // The local-view context lets stage 1's SealBreak report its `sealing` flag
   // up to CeremonyRoot, so `stageFor(state, local)` resolves `seal` while a
   // break is in progress and `marks` otherwise (design.md "Stage resolution").
   const { localView, setLocalView } = useLocalView();
+
+  // The persona page's sound toggle sits in the marks column (design.md "Sound
+  // toggle placement"). CeremonyRoot renders its own toggle only in `region`
+  // mode, which the live pages use. So the persona marks hold their own sound
+  // state and pass it to the Seal_Break; live pages keep the inherited state.
+  const inheritedSound = useContext(SoundEnabledContext);
+  const [marksSound, setMarksSound] = useState(false);
+  const personaMarks = variant === "persona";
+  const soundOn = personaMarks ? marksSound : inheritedSound;
 
   // Report the seal-break's in-progress flag up to the local view so the
   // Ceremony Stage reads `seal` while holding and settles back to `marks`.
@@ -149,36 +189,105 @@ export function Reveal({
     ];
   });
 
+  // Each sealed question with the judge's value in the Accent fill, or "No
+  // answer". The unit comes from the sealed metric, never re-fetched (R8.2).
+  const marksRows = opened.payload.recall_questions.map((question) => {
+    const answer = answerByQuestionId.get(question.id);
+    const unit =
+      question.answer_type === "number"
+        ? unitByMetricId.get(question.metric_id)
+        : undefined;
+    const unitText =
+      unit === undefined ? undefined : REVEAL_COPY.unitLabel.replace("{unit}", unit);
+    const hasNumber = answer !== undefined && answer.kind === "number";
+    return (
+      <div key={question.id} className={styles.marksRow}>
+        <dt className={styles.marksQuestion}>
+          {question.text}
+          {unitText === undefined ? null : (
+            <span className={styles.unit}> {unitText}</span>
+          )}
+        </dt>
+        <dd className={styles.marksAnswer}>
+          {hasNumber ? (
+            <span className={styles.marksValue}>{answer.value}</span>
+          ) : (
+            REVEAL_COPY.noAnswer
+          )}
+        </dd>
+      </div>
+    );
+  });
+
   // Stage 2 still shows its own next control; "Show everything" sits beside it.
   const stage2HasHidden = stage === 2;
+
+  // Show everything jumps from stage 1 straight to stage 3 (R12.8). The seal
+  // stays on the split seal in that case, and the letter mounts still. Both are
+  // read from the stage change itself, so a Skip or ADVANCE break still hides
+  // the seal and unfolds the letter.
+  const [lastStage, setLastStage] = useState(stage);
+  const [jumpedToEnd, setJumpedToEnd] = useState(false);
+  if (stage !== lastStage) {
+    setLastStage(stage);
+    setJumpedToEnd(stage === 3 && lastStage === 1);
+  }
+  const showSeal = stage === 1 || jumpedToEnd;
 
   return (
     <section className={styles.reveal}>
       <div className={`${styles.stage} ${styles.fade}`}>
         <StagePanel>
-          <RememberedAnswers opened={opened} record={record} />
-          {recordedScales}
-          {stage === 1 ? (
-            <SealBreak
-              patternKey={variant === "live" ? (letterId ?? personaName) : personaName}
-              onAdvance={onAdvance}
-              onShowAll={onShowAll}
-              onSealingChange={onSealingChange}
-            />
-          ) : null}
+          <SoundEnabledContext.Provider value={soundOn}>
+            <div className={styles.marks}>
+              <h2 className={styles.marksHeading} data-fit="marks-heading">
+                {REVEAL_COPY.stage1Title}
+              </h2>
+              <dl className={styles.marksAnswers} data-fit="marks-answers">
+                {marksRows}
+              </dl>
+              {recordedScales}
+              {showSeal ? (
+                <>
+                  <div className={styles.marksBreak} data-fit="break">
+                    <SealBreak
+                      patternKey={
+                        variant === "live" ? (letterId ?? personaName) : personaName
+                      }
+                      seal={seal ?? INERT_SEAL}
+                      showAll
+                      onSealingChange={onSealingChange}
+                    />
+                  </div>
+                  {personaMarks ? (
+                    <div className={styles.marksSound}>
+                      <SoundToggle
+                        onChange={(next) => {
+                          setMarksSound(next);
+                          soundCues.onToggle(next);
+                        }}
+                      />
+                      <p className={styles.marksSoundNote}>
+                        {CEREMONY_COPY.soundNote}
+                      </p>
+                    </div>
+                  ) : null}
+                </>
+              ) : null}
+            </div>
+          </SoundEnabledContext.Provider>
         </StagePanel>
       </div>
 
       {stage >= 2 ? (
         <div className={`${styles.stage} ${styles.fade}`}>
-          <StagePanel>
-            <InkLetter
-              opened={opened}
-              personaName={personaName}
-              variant={variant}
-              letterId={letterId}
-            />
-          </StagePanel>
+          <LetterBlock
+            opened={opened}
+            personaName={personaName}
+            variant={variant}
+            letterId={letterId}
+            still={jumpedToEnd}
+          />
         </div>
       ) : null}
 

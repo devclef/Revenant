@@ -108,6 +108,11 @@ describe("SealedLetter markup", () => {
     expect(html).toContain(inner);
   });
 
+  it("carries no ink marker: the letter is shown whole, never masked", () => {
+    const html = render(OPENED);
+    expect(html).not.toContain("data-ink-text");
+  });
+
   it("preserves the letter's line breaks and spacing via pre-wrap", () => {
     const html = render(OPENED);
     // The newlines and the double spaces survive into the markup untouched.

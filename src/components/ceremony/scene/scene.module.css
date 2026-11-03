@@ -242,6 +242,24 @@
   transform: translateX(-50%);
 }
 
+/*
+ * The reveal dim (design.md "The dissolve on break", R12.7). The light and the
+ * Soil fade to --reveal-dim-opacity. Only a full-motion break eases the change
+ * over --reveal-dim-ms (data-dim-animated). Show everything, Skip and Calm dim
+ * at once. The values come from constants.ts through the inline variables.
+ */
+.backdrop[data-dimmed="true"] .light,
+.backdrop[data-dimmed="true"] .soilStrip,
+.backdrop[data-dimmed="true"] .soilLayer {
+  opacity: var(--reveal-dim-opacity, 0.18);
+}
+
+.backdrop[data-dim-animated="true"] .light,
+.backdrop[data-dim-animated="true"] .soilStrip,
+.backdrop[data-dim-animated="true"] .soilLayer {
+  transition: opacity var(--reveal-dim-ms, 500ms) ease;
+}
+
 /* The Soil_Canvas layer. It covers the backdrop, and the one canvas inside it
    is sized to the window by soil-canvas.ts. The pointer passes through. */
 .soilLayer {
@@ -498,6 +516,43 @@
   }
   to {
     transform: translateY(var(--ghost-risen));
+  }
+}
+
+/*
+ * The Ghost leave (design.md "The dissolve on break", R12.6). Set by the
+ * data-leaving attribute only after a full-motion break. The Ghost moves up
+ * and scales over --ghost-leave-ms and fades over --ghost-fade-ms. The bob
+ * stops at once. The values come from constants.ts through inline variables.
+ */
+@keyframes ghostLeave {
+  from {
+    transform: translateY(var(--ghost-risen));
+  }
+  to {
+    transform: translateY(-55vh) scale(0.92);
+  }
+}
+
+@keyframes ghostFade {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-ceremony-motion="full"] .ghost[data-leaving="true"] {
+    animation:
+      ghostLeave var(--ghost-leave-ms, 1100ms) var(--ghost-leave-ease, cubic-bezier(0.4, 0, 0.6, 1)) forwards,
+      ghostFade var(--ghost-fade-ms, 900ms) ease-in forwards;
+  }
+
+  /* The bob stops on the break (R5.10, design.md "Idle_Bob"). */
+  [data-ceremony-motion="full"] .ghost[data-leaving="true"] .bob {
+    animation: none;
   }
 }
 

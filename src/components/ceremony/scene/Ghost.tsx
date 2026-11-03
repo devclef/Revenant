@@ -22,11 +22,13 @@ import {
   useId,
   useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
 
-import { EYE_TRANSITION_MS } from "../constants";
+import { EASE_LEAVE, EYE_TRANSITION_MS, GHOST_FADE_MS, GHOST_LEAVE_MS } from "../constants";
 import { useMotion } from "../motion";
+import { useMaybeSequence } from "../skip-optional";
 import { ghostHanded } from "../stages";
 import { useStage } from "../stage-context";
 import { eyeOffset, followsPointer, type EyeOffset } from "./eyes";
@@ -50,13 +52,45 @@ const FOLDS_PATH = "M58 150 L56 222 M142 150 L144 222";
 
 const NO_OFFSET: EyeOffset = { dx: 0, dy: 0 };
 
+/** The leave timings as CSS variables, from constants.ts (R12.6). */
+const LEAVE_VARS = {
+  "--ghost-leave-ms": `${GHOST_LEAVE_MS}ms`,
+  "--ghost-fade-ms": `${GHOST_FADE_MS}ms`,
+  "--ghost-leave-ease": EASE_LEAVE,
+} as CSSProperties;
+
+export type GhostProps = {
+  /** The held Envelope, rendered in the bob's slot. */
+  children?: ReactNode;
+  /**
+   * True while the Ghost leaves after a completed break (design.md "The
+   * dissolve on break"). The rise and bob stop, and the Ghost moves up and
+   * fades. The parent unmounts the Ghost after `GHOST_LEAVE_MS`.
+   */
+  leaving?: boolean;
+  /**
+   * Called when the leave ends early because Skip ran. The parent then
+   * unmounts the Ghost at once, so Skip leaves no Ghost (R12.9).
+   */
+  onLeft?: () => void;
+};
+
 /**
  * The Ghost. `children` render in the held slot, inside the bob, so an
  * Envelope held by the Ghost moves with it (R5.2).
  */
-export function Ghost({ children }: { children?: ReactNode }) {
+export function Ghost({ children, leaving = false, onLeft }: GhostProps) {
   const { mode } = useMotion();
   const calm = mode === "calm";
+  const sequence = useMaybeSequence();
+  const register = sequence?.register;
+
+  // Skip during the leave ends it at once. The registration lasts only while
+  // the leave runs, so Skip never waits on a Ghost that is already gone.
+  useEffect(() => {
+    if (!leaving || register === undefined) return undefined;
+    return register(() => onLeft?.());
+  }, [leaving, onLeft, register]);
 
   const riseRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
@@ -114,7 +148,13 @@ export function Ghost({ children }: { children?: ReactNode }) {
   return (
     <div className={styles.pit} data-pose={pose} data-ghost-pit>
       <div className={styles.ghostPlace}>
-        <div ref={riseRef} className={styles.ghost} data-pose={pose}>
+        <div
+          ref={riseRef}
+          className={styles.ghost}
+          data-pose={pose}
+          data-leaving={leaving ? "true" : undefined}
+          style={LEAVE_VARS}
+        >
           <div className={styles.bob}>
             <div className={styles.ghostGlow}>
               <svg

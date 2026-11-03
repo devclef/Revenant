@@ -14,19 +14,12 @@ export const CALM_FADE_MS = 120; // R11.2: at most 150
 
 // --- Seal_Break (R6) ---
 export const SEAL_HOLD_MS = 1500; // R6.2: press and hold this long to break
-export const SEAL_SETTLE_MS = 450; // R6.4: cracks recede on early release
-export const SEAL_SHORT_MS = 600; // R6.3: the button's non-gesture version
-export const SEAL_SPLIT_MS = 900; // split and flakes
-export const FLAP_LIFT_MS = 700;
-export const LETTER_SLIDE_MS = 800;
+export const SEAL_SETTLE_MS = 300; // R6.4: cracks recede on early release
+export const SEAL_SHORT_MS = 450; // R6.3: the button's non-gesture version
+export const SEAL_SPLIT_MS = 520; // the two seal halves fall apart
+export const FLAP_LIFT_MS = 450;
+export const LETTER_SLIDE_MS = 600;
 export const FLAKE_COUNT = 14;
-
-// --- Ink (R7.2) ---
-export const INK_LINE_DELAY_MS = 220; // per visual line
-export const INK_LINE_FADE_MS = 600;
-export const INK_TOTAL_MAX_MS = 8000;
-// delay actually used: min(INK_LINE_DELAY_MS, floor((INK_TOTAL_MAX_MS - INK_LINE_FADE_MS) / max(lines, 1)))
-// It depends only on the number of lines, and the last line ends by 8 s.
 
 // --- Then and now (R12.5, R10.6) ---
 export const STAMP_DROP_MS = 520;
@@ -141,3 +134,14 @@ export const EYE_MAX_X = 5;
 export const EYE_MAX_Y = 4;
 export const EYE_FOLLOW_RADIUS_PX = 320;
 export const EYE_TRANSITION_MS = 120;
+
+// --- Break and letter (R12.6, R12.7, R18.4) (spec 07 task 5) ---
+export const GHOST_LEAVE_MS = 1100;
+export const GHOST_FADE_MS = 900;
+export const EASE_LEAVE = "cubic-bezier(0.4, 0, 0.6, 1)";
+export const FLAP_AT_MS = 250;
+export const LETTER_SLIDE_AT_MS = 550;
+export const UNFOLD_AT_MS = 1150;
+export const UNFOLD_MS = 520;
+export const REVEAL_DIM_OPACITY = 0.18;
+export const REVEAL_DIM_MS = 500;

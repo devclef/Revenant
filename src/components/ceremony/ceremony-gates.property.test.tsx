@@ -29,7 +29,6 @@ import type { RecallRecordV1, Draft } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
 import { CEREMONY_COPY } from "./copy";
 import { planSealBreak } from "./seal/SealBreak";
-import { planInkRun } from "./letter/inkSession";
 import {
   loadDeskDecor,
   type DeskDecorImporters,
@@ -237,19 +236,28 @@ function ceremonySources(): Array<{ path: string; text: string }> {
 
 describe("Property 19: every gesture has a plain control (R11.1, R11.4)", () => {
   it("gives every pointer-gesture file a key handler or a button in the same file", () => {
-    const gestureFiles = ceremonySources().filter((file) =>
+    const sources = ceremonySources();
+    const gestureFiles = sources.filter((file) =>
       file.text.includes("onPointerDown"),
     );
-    // Non-vacuous: the two known gesture views must be among them.
+    // Non-vacuous: the two known gesture views must be among them. The seal's
+    // pointer target is HeldSeal (task 5); its plain control is the button in
+    // the sibling SealBreak, which is checked below.
     const names = gestureFiles.map((file) => relative(HERE, file.path));
     expect(names).toContain(join("recall", "RecallScale.tsx"));
-    expect(names).toContain(join("seal", "SealBreak.tsx"));
+    expect(names).toContain(join("seal", "HeldSeal.tsx"));
 
+    const sealBreak = sources.find(
+      (file) => relative(HERE, file.path) === join("seal", "SealBreak.tsx"),
+    );
     for (const file of gestureFiles) {
       const hasKeyHandler = file.text.includes("onKeyDown");
       const hasButton = file.text.includes("<button");
+      const pairedButton =
+        relative(HERE, file.path) === join("seal", "HeldSeal.tsx") &&
+        (sealBreak?.text.includes("<button") ?? false);
       expect(
-        hasKeyHandler || hasButton,
+        hasKeyHandler || hasButton || pairedButton,
         `${relative(HERE, file.path)} has a pointer gesture with no plain control`,
       ).toBe(true);
     }
@@ -316,13 +324,12 @@ describe("Property 19: every running sequence has a visible Skip (R6.3)", () => 
     );
   });
 
-  it("registers the three running sequences with useSequence", () => {
-    // Non-vacuous: the Seal_Break, the ink reveal and the then/now Steps each
-    // call useSequence, so each one is covered by the Skip check above.
+  it("registers the running sequences with useSequence", () => {
+    // Non-vacuous: the Seal_Break and the then/now Steps each call
+    // useSequence, so each one is covered by the Skip check above.
     const sources = ceremonySources();
     for (const name of [
       join("seal", "SealBreak.tsx"),
-      join("letter", "InkLetter.tsx"),
       join("figures", "ThenNowSequence.tsx"),
     ]) {
       const file = sources.find((s) => relative(HERE, s.path) === name);
@@ -337,26 +344,6 @@ describe("Property 19: every running sequence has a visible Skip (R6.3)", () => 
 // --- Property 20 -------------------------------------------------------------
 
 describe("Property 20: Calm_Mode starts no animation (R11.2, R11.3)", () => {
-  it("plans no ink run in calm or light motion, whatever the box and line height", () => {
-    fc.assert(
-      fc.property(
-        fc.constantFrom<"calm" | "light">("calm", "light"),
-        fc.constantFrom("16px", "24px", "normal"),
-        fc.integer({ min: 0, max: 4000 }),
-        (mode, computedLineHeight, boxHeightPx) => {
-          expect(
-            planInkRun({ mode, computedLineHeight, boxHeightPx }),
-          ).toBeUndefined();
-        },
-      ),
-      { numRuns: 100 },
-    );
-    // Non-vacuous: full motion does plan a run for a box with lines in it.
-    expect(
-      planInkRun({ mode: "full", computedLineHeight: "24px", boxHeightPx: 480 }),
-    ).toBeDefined();
-  });
-
   it("plans an empty Seal_Break in calm, and four steps in full motion", () => {
     expect(planSealBreak({ calm: true }).steps).toHaveLength(0);
     expect(planSealBreak({ calm: false }).steps).toHaveLength(4);
@@ -428,7 +415,7 @@ describe("Property 20: Calm_Mode starts no animation (R11.2, R11.3)", () => {
     );
   });
 
-  it("shows the letter text in calm at stage 2, the settled ink", () => {
+  it("shows the letter text in calm at stage 2, unchanged", () => {
     fc.assert(
       fc.property(
         fc.constantFrom<FlowState>({

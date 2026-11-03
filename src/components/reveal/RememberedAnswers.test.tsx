@@ -211,7 +211,7 @@ describe("Reveal stage 1 is the marks Stage", () => {
     for (const question of OPENED.payload.recall_questions) {
       expect(html).toContain(question.text);
     }
-    expect(html).toContain(`${REVEAL_COPY.yourAnswer}: 2.50`);
+    expect(html).toContain(">2.50</span>");
   });
 
   it("shows the seal instruction and the 'Break the seal' button, not a 'Read the letter' button", () => {
