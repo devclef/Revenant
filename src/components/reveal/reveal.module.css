@@ -24,6 +24,13 @@
   padding: 2rem 1.25rem 4rem;
 }
 
+/* Persona page only (spec 07, R5.18): the content column is left-aligned and
+   at most CONTENT_COLUMN_MAX wide, so it stays clear of the Ghost_Body_Box. */
+.flowPersona {
+  max-width: min(34rem, 46vw);
+  margin: 0;
+}
+
 .view {
   margin: 0 auto;
 }

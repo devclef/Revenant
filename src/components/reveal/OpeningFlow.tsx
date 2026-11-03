@@ -195,7 +195,7 @@ export function OpeningFlow({
           state={state}
           personaName={personaName}
           persona={persona}
-          className={styles.flow}
+          className={mode === "persona" ? `${styles.flow} ${styles.flowPersona}` : styles.flow}
           controls={mode === "persona" ? "topbar" : "region"}
         >
           {flow.live?.demo === true ? <DemoLabel /> : null}
