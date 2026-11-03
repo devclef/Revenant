@@ -233,15 +233,17 @@ export function EnvelopeView({
       // after BEGIN (R7.5, product.md "Recall first").
       return (
         <ParchmentSurface as="section" className={styles.intactStage}>
+          <div className={styles.intactTop}>
+            <p className={styles.statement} role="status">
+              {REVEAL_COPY.sealIntact}
+            </p>
+            <PickUpGate tag="verified">
+              <button type="button" className={styles.button} onClick={onBegin}>
+                {REVEAL_COPY.begin}
+              </button>
+            </PickUpGate>
+          </div>
           <EnvelopeFrame state={envelopeState} persona={persona} />
-          <p className={styles.statement} role="status">
-            {REVEAL_COPY.sealIntact}
-          </p>
-          <PickUpGate tag="verified">
-            <button type="button" className={styles.button} onClick={onBegin}>
-              {REVEAL_COPY.begin}
-            </button>
-          </PickUpGate>
         </ParchmentSurface>
       );
   }

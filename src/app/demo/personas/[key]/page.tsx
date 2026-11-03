@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { DemoLabel } from "@/components/demo/DemoLabel";
 import { OpeningFlow } from "@/components/reveal/OpeningFlow";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { PERSONAS } from "@/lib/personas";
@@ -63,7 +62,6 @@ export default async function PersonaLetterPage({
 
   return (
     <SceneShell variant="persona" personaName={persona.display_name}>
-      <DemoLabel />
       <OpeningFlow
         letterId={persona.letter_id}
         personaName={persona.display_name}
