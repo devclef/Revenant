@@ -159,7 +159,7 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - Validation: `bash scripts/check.sh`
   - _Requirements: R5.2, R5.17, R6.16, R6.17, R10.4–R10.16, R11.1–R11.16, R16.3, R19.3, R19.4, R19.6, R19.9, R21.4, R24.1, R24.3, R26.3.3, R26.10, R26.12_
 
-- [ ] 5. Seal_Break, the Ghost leaving and the letter
+- [x] 5. Seal_Break, the Ghost leaving and the letter
   - Agent: `frontend-dev` · Depends on: 4 · Estimated size: ~3,200 changed lines
   - Before this task: Blocked by #134 (spec 06 task 9, Live_Letter reveal variant), because this task edits `src/components/reveal/Reveal.tsx` (R28.8). Task 4 is on `main`.
   - Scope: `src/components/ceremony/ceremony-gates.property.test.tsx`, `src/components/ceremony/timings.property.test.ts`, `src/components/ceremony/seal/useSealBreak.ts`, `seal/HeldSeal.tsx`, `seal/SealBreak.tsx`, `seal/SealBreak.module.css`, `src/components/ceremony/letter/LetterBlock.tsx`, `letter/LetterBlock.module.css`, `letter/InkLetter.tsx`, `letter/InkLetter.module.css`, `letter/inkMask.ts`, `letter/inkPlan.ts`, `letter/inkSession.ts` (the five ink files deleted), `src/components/ceremony/envelope/Envelope.tsx`, `envelope/WaxSeal.tsx`, `envelope/Envelope.module.css`, `envelope/WaxSeal.module.css`, `src/components/ceremony/scene/SceneBackdrop.tsx`, `scene/Ghost.tsx`, `scene/scene.module.css`, `src/components/ceremony/constants.ts`, `CeremonyRoot.tsx`, `copy.ts`, `skip.tsx`, `src/components/reveal/OpeningFlow.tsx`, `src/components/reveal/Reveal.tsx`, `src/components/reveal/SealedLetter.tsx`, `src/components/reveal/reveal.module.css`, and the `*.test.ts(x)` for each file above
