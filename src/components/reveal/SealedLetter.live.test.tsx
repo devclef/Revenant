@@ -49,10 +49,7 @@ const LIVE_LETTER_ID = "live-letter-seal-key";
 const PERSONA_NAME = "Maya";
 
 describe("SealedLetter, live variant (R18.2)", () => {
-  it("seals with the pattern key from letterId, not personaName", () => {
-    // Guard: the two keys must draw different seals, or the test proves nothing.
-    expect(sealMarkup(LIVE_LETTER_ID)).not.toBe(sealMarkup(PERSONA_NAME));
-
+  it("draws the one seal for a live letter, the same markup as a persona (R10.10)", () => {
     const html = renderToStaticMarkup(
       createElement(SealedLetter, {
         opened: OPENED,
@@ -62,7 +59,7 @@ describe("SealedLetter, live variant (R18.2)", () => {
       }),
     );
     expect(html).toContain(sealMarkup(LIVE_LETTER_ID));
-    expect(html).not.toContain(sealMarkup(PERSONA_NAME));
+    expect(html).toContain(sealMarkup(PERSONA_NAME));
   });
 
   it("renders no seal in live mode when letterId is absent", () => {

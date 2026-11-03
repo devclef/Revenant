@@ -16,7 +16,7 @@
 //
 // Pure presentation with no state, so it needs no "use client".
 
-import { useId, type CSSProperties, type ReactElement } from "react";
+import type { CSSProperties, ReactElement } from "react";
 
 import styles from "./WaxSeal.module.css";
 
@@ -84,10 +84,11 @@ export type WaxSealProps = {
  * in it depends on a persona, a letter or a figure.
  */
 export function WaxSeal({ size = 64, className }: WaxSealProps): ReactElement {
-  // Each seal gets its own clip ids, so two seals on one page cannot clash.
-  const id = useId();
-  const leftId = `${id}-left`;
-  const rightId = `${id}-right`;
+  // Fixed clip ids keep the markup identical on every render, server and
+  // client alike. Two clip paths with the same polygons are harmless if a page
+  // ever repeats the seal, and the Envelope draws one seal per page.
+  const leftId = "wax-seal-left";
+  const rightId = "wax-seal-right";
 
   const rootClass = [styles.seal, className].filter(Boolean).join(" ");
 
