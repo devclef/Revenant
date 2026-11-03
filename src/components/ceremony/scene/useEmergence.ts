@@ -21,6 +21,26 @@ import { useLocalView } from "../local-view";
 import { useSequence } from "../skip";
 
 /**
+ * Whether a CSS animation's name is the Emergence rise.
+ *
+ * The rise keyframes are declared `rise` in `scene.module.css`, but CSS Modules
+ * rewrites the keyframe name to a scoped, hashed form at build time (seen in the
+ * browser as `scene_rise__<hash>`), so a plain `=== "rise"` never matches the
+ * built name and the gate stays open from the first frame (the earlier bug).
+ *
+ * We match the keyframe's own name regardless of the scope prefix and hash
+ * suffix the bundler adds: `rise` bounded by a start/`_` on the left and an
+ * end/`_` on the right. That accepts the un-hashed `"rise"` (tests and a global
+ * build) and the hashed `"scene_rise__<hash>"`, while never matching `bob`,
+ * `shake` or `shakeSoil`.
+ */
+const RISE_NAME = /(?:^|_)rise(?:_|$)/;
+
+export function isRiseName(animationName: string): boolean {
+  return RISE_NAME.test(animationName);
+}
+
+/**
  * The running or pending rise animation among an element's animations, if any.
  * A finished animation does not count. Pure, so the lookup is testable without
  * a DOM.
@@ -29,7 +49,7 @@ export function findRise(animations: readonly Animation[]): Animation | undefine
   return animations.find(
     (animation) =>
       animation.playState !== "finished" &&
-      (animation as CSSAnimation).animationName === "rise",
+      isRiseName((animation as CSSAnimation).animationName),
   );
 }
 

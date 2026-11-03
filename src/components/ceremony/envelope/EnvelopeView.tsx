@@ -122,6 +122,16 @@ export type EnvelopeViewProps = {
   stillSealed?: Pick<StillSealedProps, "precise" | "onZero">;
   /** The `unlock` variant's content, placed under the envelope (the key step). */
   children?: ReactNode;
+  /**
+   * The persona page holds the Envelope in the Ghost's slot (design.md "The
+   * Envelope", mermaid persona branch; it "never moves to the content column
+   * on the persona page", R10.13). When `held` is true the Stage renders only
+   * its statement, StillSealed panel or Begin control in the content column and
+   * draws NO in-column envelope frame, so the column stays clear of the Soil
+   * strip and the Ghost body (R6.15, R5.19). Defaults to false (the `/demo` and
+   * `/l/[id]` column, which draws the envelope inline).
+   */
+  held?: boolean;
 };
 
 /**
@@ -165,7 +175,13 @@ export function EnvelopeView({
   sealedOpensAt,
   stillSealed,
   children,
+  held = false,
 }: EnvelopeViewProps): ReactElement {
+  // On the persona page the Ghost holds the Envelope, so the column draws no
+  // envelope frame; elsewhere (the /demo and /l/[id] column) it draws inline.
+  const frame = (state: EnvelopeState) =>
+    held ? null : <EnvelopeFrame state={state} persona={persona} />;
+
   switch (variant) {
     case "loading":
     case "openable":
@@ -180,7 +196,7 @@ export function EnvelopeView({
           : undefined;
       return (
         <ParchmentSurface as="section" className={styles.envelopeStage}>
-          <EnvelopeFrame state="closed" persona={persona} />
+          {frame("closed")}
           {statement === undefined ? null : (
             <p className={styles.statement} role="status">
               {statement}
@@ -201,7 +217,7 @@ export function EnvelopeView({
       const opensAt = persona?.opens_at ?? sealedOpensAt;
       return (
         <ParchmentSurface as="section" className={styles.envelopeStage}>
-          <EnvelopeFrame state="closed" persona={persona} />
+          {frame("closed")}
           {opensAt === undefined ? null : (
             <div className={styles.panel}>
               <StillSealed
@@ -220,7 +236,7 @@ export function EnvelopeView({
       // passkey control, the key field and any notice) sit beneath it.
       return (
         <ParchmentSurface as="section" className={styles.envelopeStage}>
-          <EnvelopeFrame state="closed" persona={persona} />
+          {frame("closed")}
           {children}
         </ParchmentSurface>
       );

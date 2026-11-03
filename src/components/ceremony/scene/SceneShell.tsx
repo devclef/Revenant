@@ -19,6 +19,7 @@ import type { ReactNode } from "react";
 import styles from "./scene.module.css";
 import "./tokens.css";
 import { TopBar } from "./TopBar";
+import { SceneHeadline } from "./SceneHeadline";
 
 export type SceneShellProps =
   | { variant: "landing"; children: ReactNode }
@@ -56,7 +57,16 @@ function SceneFrame(props: SceneShellProps) {
       ) : (
         <TopBar />
       )}
-      <main className={styles.main}>{props.children}</main>
+      <main className={styles.main}>
+        {props.variant === "persona" ? (
+          <div className={styles.personaColumn}>
+            <SceneHeadline />
+            {props.children}
+          </div>
+        ) : (
+          props.children
+        )}
+      </main>
     </div>
   );
 }

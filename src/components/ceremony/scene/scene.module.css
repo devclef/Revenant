@@ -20,6 +20,7 @@
   --soil-top: 69vh;
   --soil-band: 8vh;
   --ghost-x: 50vw;
+  --content-column-max: min(34rem, 46vw);
   position: relative;
   min-height: 100vh;
   background: var(--bg);
@@ -33,6 +34,33 @@
   z-index: 1;
   padding-top: 6rem;
   padding-inline: calc(var(--frame-l) + var(--pad));
+}
+
+/* The persona Content_Column (spec 07 task 2, design.md "Pick up and the
+   status line", R5.18, R5.19, R6.15, R9.16).
+
+   Below 900 px the Ghost sits centred at 50 % of the window with its body
+   over the middle of the viewport, so the column is full width but its content
+   is pushed clear: the headline sits in the top band above the Ghost body, and
+   the flow's status line and button are held below the Soil strip on the plain
+   background. At or above 900 px the Ghost is at 72 % of the frame, so the
+   column is left-aligned and capped at CONTENT_COLUMN_MAX, clear of the
+   Ghost_Body_Box, and its foot stays above the Soil strip. */
+.personaColumn {
+  position: relative;
+  /* Narrow: full width, nothing capped sideways; the Ghost is centred and the
+     column content is placed vertically (headline top band, flow below strip).
+     A top gap clears the fixed Top_Bar even with the two-line notice (R8.4). */
+  display: flex;
+  flex-direction: column;
+  padding-top: 2.5rem;
+}
+
+/* The headline never crosses into the Ghost column. Narrow: it is smaller and
+   capped so its box clears the centred Ghost body (R5.19). */
+.personaColumn .headline {
+  max-width: 9ch;
+  font-size: clamp(2rem, 6.6vw, 3rem);
 }
 
 /* The Top_Bar. Fixed to the top of the window (R8.1). */
@@ -221,6 +249,20 @@
     padding-top: 5rem;
   }
 
+  /* Wide: the column is left-aligned and at most CONTENT_COLUMN_MAX wide, so
+     it stays clear of the Ghost at 72 % of the frame (R5.18). Its foot reserves
+     the lower band so the status line and button sit above the Soil strip
+     (design.md "Pick up and the status line", R6.15, R9.16). */
+  .personaColumn {
+    max-width: var(--content-column-max);
+    padding-bottom: calc(26vh + 2rem);
+  }
+
+  .personaColumn .headline {
+    max-width: 11.5ch;
+    font-size: clamp(2.35rem, 6vw, 5.4rem);
+  }
+
   .topbar {
     gap: 0 1rem;
     padding-block: 0.75rem;
@@ -333,6 +375,29 @@
   position: absolute;
   inset: 0;
   pointer-events: none;
+}
+
+/* The held Envelope's placement in the Ghost's slot (design.md "The Envelope":
+   HELD_LEFT 18 %, HELD_WIDTH 64 %, HELD_TOP 48 % wide / 47 % narrow of the
+   Ghost_Box). It covers no eye or hem (R5.2). Shares are of the slot, which is
+   the Ghost_Box, so the envelope scales with the Ghost at both layouts. */
+.heldEnvelope {
+  position: absolute;
+  left: 18%;
+  top: 48%;
+  width: 64%;
+}
+
+/* Below 900 px the Ghost_Box is narrow (min(31vh, 200px)), so 64 % of it is too
+   tight for the date lines. The held envelope widens and uses the narrow front
+   (each date on two lines, no demo note) so the dates stay readable (R8.8, the
+   C2 fix). It still clears the eyes (top 44 %, below the eye row at 38 %). */
+@media (max-width: 899.98px) {
+  .heldEnvelope {
+    left: 6%;
+    top: 44%;
+    width: 88%;
+  }
 }
 
 /* The rise from below the Soil to the risen pose. Starts 900 ms after the
