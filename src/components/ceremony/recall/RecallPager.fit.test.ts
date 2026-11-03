@@ -1,0 +1,82 @@
+// Feature: 07-judge-journey (spec 07 task 4, issue #166)
+//
+// Fit checks for the Recall_Pager card. The data-fit hooks name the elements the
+// browser check measures at 1280 x 800 and 360 x 640: the counter, the question,
+// the answer row (typed number plus Next control) and the advance control. These
+// tests pin the source hooks and the CSS rules that keep the answer row above
+// the fold on desktop and inside the card's padding at 360 px.
+
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+import { describe, expect, it } from "vitest";
+
+const here = __dirname;
+const css = readFileSync(resolve(here, "RecallPager.module.css"), "utf8");
+const source = readFileSync(resolve(here, "RecallPager.tsx"), "utf8");
+
+/** The body of one top-level rule, or "" when the rule is absent. */
+function ruleBody(selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = css.match(new RegExp(`(?:^|\\n)${escaped}\\s*\\{([^}]*)\\}`));
+  return m?.[1] ?? "";
+}
+
+/** The body of the narrow (max-width: 899px) media block, or "" when absent. */
+function narrowBlock(): string {
+  const m = css.match(/@media \(max-width: 899px\) \{([\s\S]*)\}\s*$/);
+  return m?.[1] ?? "";
+}
+
+/** The body of one rule nested inside the narrow media block. */
+function narrowRuleBody(selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = narrowBlock().match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`));
+  return m?.[1] ?? "";
+}
+
+describe("Recall_Pager fit hooks", () => {
+  it("names the counter, question, answer row and advance control", () => {
+    expect(source).toContain('data-fit="counter"');
+    expect(source).toContain('data-fit="question"');
+    expect(source).toContain('data-fit="answer"');
+    expect(source).toContain('data-fit="advance"');
+  });
+
+  it("keeps the counter date in one nowrap span", () => {
+    expect(source).toContain('<span className={styles.nowrap}>{asOfText}</span>');
+    expect(ruleBody(".nowrap")).toMatch(/white-space:\s*nowrap/);
+  });
+});
+
+describe("Recall_Pager card fits above the fold at 1280 x 800", () => {
+  it("caps the typed number at 3.6rem so the answer row sits higher", () => {
+    const font = ruleBody(".input").match(/font-size:\s*clamp\(([^)]*)\)/);
+    expect(font).not.toBeNull();
+    const parts = font![1].split(",").map((part) => part.trim());
+    expect(parts[2]).toBe("3.6rem");
+  });
+
+  it("tightens the fieldset padding and the vertical gaps", () => {
+    expect(ruleBody(".fieldset")).toMatch(/padding:\s*0\.75rem 1\.25rem/);
+    expect(ruleBody(".fieldset")).toMatch(/margin:\s*0 0 0\.75rem/);
+    expect(ruleBody(".body")).toMatch(/gap:\s*0\.5rem/);
+    expect(ruleBody(".qTitle")).toMatch(/margin:\s*0 0 0\.5rem/);
+    expect(ruleBody(".counter")).toMatch(/margin:\s*0 0 0\.5rem/);
+  });
+});
+
+describe("Recall_Pager card fits inside its padding at 360 x 640", () => {
+  it("lets the answer row wrap on narrow screens", () => {
+    expect(narrowRuleBody(".answerRow")).toMatch(/flex-wrap:\s*wrap/);
+  });
+
+  it("keeps the 'No answer yet' label inside the card width", () => {
+    expect(ruleBody(".noAnswer")).toMatch(/display:\s*inline-flex/);
+    expect(narrowRuleBody(".noAnswer")).toMatch(/max-width:\s*100%/);
+  });
+
+  it("keeps the card and its controls within the width", () => {
+    expect(ruleBody(".fieldset")).toMatch(/max-width:\s*100%/);
+    expect(ruleBody(".answerRow")).toMatch(/max-width:\s*100%/);
+  });
+});
