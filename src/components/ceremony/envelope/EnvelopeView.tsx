@@ -57,7 +57,7 @@ import type { FlowState } from "@/components/reveal/opening-machine";
 
 import { ENVELOPE_TARGET } from "../constants";
 import { useLocalView } from "../local-view";
-import { showPickUp } from "../stages";
+import { emergingStatus, showPickUp } from "../stages";
 import { Envelope, type EnvelopePersona, type EnvelopeState } from "./Envelope";
 import styles from "./EnvelopeView.module.css";
 
@@ -175,11 +175,9 @@ export function EnvelopeView({
       // `role="status"` region so a screen-reader reader hears it. `openable`
       // is a brief transition with no statement of its own.
       const statement =
-        variant === "verifying"
-          ? REVEAL_COPY.verifying
-          : variant === "loading"
-            ? REVEAL_COPY.loading
-            : undefined;
+        variant === "verifying" || variant === "loading"
+          ? emergingStatus(variant === "loading" ? "loading" : "verifying")
+          : undefined;
       return (
         <ParchmentSurface as="section" className={styles.envelopeStage}>
           <EnvelopeFrame state="closed" persona={persona} />

@@ -10,7 +10,21 @@
 //
 // Plain readonly constants only. No JSX lives here.
 
+import { REVEAL_COPY } from "@/components/reveal/copy";
+
 export const SCENE_COPY = {
+  /**
+   * The one emerging status (spec 07 task 2). The envelope's visible statement
+   * and the Stage's role=status line both use these strings. They are the same
+   * sentences as REVEAL_COPY, referenced here so the scene copy is the source.
+   */
+  emergingStatus: {
+    /** While the letter is fetched and verified. */
+    loading: REVEAL_COPY.loading,
+    /** While the seal is checked (openable and verifying). */
+    verifying: REVEAL_COPY.verifying,
+  },
+
   /** The first part of the headline. The Accent word follows it. */
   headlineLead: "Your past self returns with the",
 

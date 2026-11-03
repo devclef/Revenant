@@ -7,18 +7,19 @@
 // data-driven value: the Stage depends only on the flow tag, the reveal stage
 // number and the local view.
 
-import { REVEAL_COPY } from "../reveal/copy";
+import { SCENE_COPY } from "./scene/copy";
 import type { FlowState } from "../reveal/opening-machine";
 
 /**
- * The one line for the emerging Stage (spec 07 task 2). The visible statement in
- * EnvelopeView and the Stage's role=status line both read this string, so a
- * reader who hears the status hears the same words they see. `loading` gives
- * "Bringing the letter into the light."; `openable` and `verifying` (the same
- * scene) give "Checking the seal.".
+ * The one line for the emerging Stage (spec 07 task 2). EnvelopeView's visible
+ * statement and the Stage's role=status line both read this string, so the
+ * words a reader sees are the words announced. `loading` gives the loading
+ * line; `openable` and `verifying` (the same scene) give the checking line.
  */
 export function emergingStatus(tag: FlowState["tag"]): string {
-  return tag === "loading" ? REVEAL_COPY.loading : REVEAL_COPY.verifying;
+  return tag === "loading"
+    ? SCENE_COPY.emergingStatus.loading
+    : SCENE_COPY.emergingStatus.verifying;
 }
 
 /**
