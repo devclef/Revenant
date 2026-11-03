@@ -206,15 +206,24 @@ function CeremonyRegion({
             {calmLabel}
           </button>
         ) : null}
-        <SoundToggle
-          onChange={(next) => {
-            setSoundOn(next);
-            soundCues.onToggle(next);
-          }}
-        />
-        <p className={`${styles.desk} ${styles.soundNote}`}>
-          {CEREMONY_COPY.soundNote}
-        </p>
+        {/* The sound toggle and its note render in the region only. On the
+            persona page (`topbar`) they do not belong to the pre-reveal Stages:
+            design.md "Sound toggle placement" moves them into the `marks`
+            column (spec 07 task 5). Rendering them here would also fill the
+            narrow band above the Soil strip and push the status card onto it. */}
+        {showRegionControls ? (
+          <>
+            <SoundToggle
+              onChange={(next) => {
+                setSoundOn(next);
+                soundCues.onToggle(next);
+              }}
+            />
+            <p className={`${styles.desk} ${styles.soundNote}`}>
+              {CEREMONY_COPY.soundNote}
+            </p>
+          </>
+        ) : null}
         {showRegionControls && hasActive ? (
           <button type="button" className={controlClass} onClick={skipAll}>
             {CEREMONY_COPY.skip}
