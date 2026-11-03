@@ -34,7 +34,7 @@ The gap between memory and record is the product. Revenant does not interpret th
 
 - **Data integrity.** See `data-integrity.md`. Every number has a source, period, unit and region. Nothing is invented or estimated. Sealed data never changes.
 - **Neutrality.** See `neutrality.md`. Revenant never takes a political side. It only shows people their own words and real data.
-- **Tone.** See `tone.md`. A ghost of your past self: wax seals, faded ink. Spooky but respectful, never cheesy.
+- **Tone.** See `tone.md`. A ghost of your past self rising out of the dark with your letter: purple light, one orange seal. Spooky but respectful, never cheesy.
 - **Privacy.** The operator cannot read letters, personal numbers or recall answers. See `tech.md` and `crypto.md`.
 
 ## Out of scope (unless decided otherwise)
