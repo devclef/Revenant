@@ -36,7 +36,7 @@ const ceremonyRoot = join(srcRoot, "components", "ceremony");
 // Modules allowed to own non-determinism. A later task adds an animated dust
 // layer that seeds its particles in an effect; its module may call Math.random.
 // Listed by basename; it need not exist yet.
-const RANDOM_ALLOW_LIST: ReadonlySet<string> = new Set(["dust.ts"]);
+const RANDOM_ALLOW_LIST: ReadonlySet<string> = new Set(["dust.ts", "rng.ts"]);
 
 const isTestName = (name: string): boolean => /\.(test|spec)\.tsx?$/.test(name);
 const isSource = (name: string): boolean =>
@@ -227,4 +227,108 @@ describe("ceremony tree imports @/lib/crypto only dynamically", () => {
       extractDynamicSpecifiers(dynamicCode).some((s) => CRYPTO_SPEC.test(s)),
     ).toBe(true);
   });
+});
+
+// ---------------------------------------------------------------------------
+// Scan 3 (spec 07 task 4, R6.1, R6.12): the scene folders use no WebGL and no
+// animation library. The Soil_Canvas is a 2D canvas drawn in code; a WebGL
+// context or a third-party animation engine would add weight and a second
+// render path the design does not allow.
+// ---------------------------------------------------------------------------
+
+/** The ceremony folders the WebGL and animation-library scan covers. */
+const SCENE_FOLDERS: ReadonlyArray<string> = [
+  "scene",
+  "desk",
+  "envelope",
+  "letter",
+  "recall",
+  "figures",
+  "seal",
+  "close",
+  "sound",
+];
+
+/** Packages that bring their own renderer or animation engine. */
+const ANIMATION_PACKAGES: ReadonlyArray<string> = [
+  "three",
+  "pixi.js",
+  "gsap",
+  "framer-motion",
+  "motion",
+  "animejs",
+  "lottie-web",
+  "@lottiefiles/dotlottie-react",
+  "@react-spring/web",
+  "popmotion",
+  "regl",
+  "@babylonjs/core",
+  "babylonjs",
+];
+
+const WEBGL_CONTEXT = /\.getContext\s*\(\s*["'](?:webgl2?|experimental-webgl)["']/;
+
+/** Every module specifier that the source imports, statically or dynamically. */
+function allSpecifiers(code: string): string[] {
+  const out: string[] = [];
+  const re = /(?:from\s*|import\s*\(\s*|import\s+|require\s*\(\s*)["']([^"']+)["']/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(code)) !== null) {
+    out.push(m[1]);
+  }
+  return out;
+}
+
+/** Returns the rule hits for one source text. Comments are blanked, strings kept. */
+function animationHits(source: string): string[] {
+  const code = stripCommentsOnly(source);
+  const hits: string[] = [];
+  if (WEBGL_CONTEXT.test(code)) {
+    hits.push("WebGL context");
+  }
+  for (const spec of allSpecifiers(code)) {
+    for (const pkg of ANIMATION_PACKAGES) {
+      if (spec === pkg || spec.startsWith(`${pkg}/`)) {
+        hits.push(`imports "${pkg}"`);
+      }
+    }
+  }
+  return hits;
+}
+
+describe("scene folders use no WebGL and no animation library (spec 07 task 4)", () => {
+  it("every listed scene folder exists and has source files", () => {
+    for (const folder of SCENE_FOLDERS) {
+      const dir = join(ceremonyRoot, folder);
+      expect(existsSync(dir), `${folder} exists`).toBe(true);
+      expect(collectSourceFiles(dir).length, `${folder} has sources`).toBeGreaterThan(0);
+    }
+  });
+
+  it("no scene-folder source uses a WebGL context or an animation library", () => {
+    const violations: string[] = [];
+    for (const folder of SCENE_FOLDERS) {
+      for (const file of collectSourceFiles(join(ceremonyRoot, folder))) {
+        for (const hit of animationHits(readFileSync(file, "utf8"))) {
+          violations.push(`${relFromSrc(file)}: ${hit}`);
+        }
+      }
+    }
+    expect(violations, violations.join("\n")).toEqual([]);
+  });
+
+  it("flags a WebGL context and an animation import (the scan is not vacuous)", () => {
+    const webgl = `const c = canvas.getContext(${JSON.stringify("webgl")});`;
+    const lib = `import { gsap } from ${JSON.stringify("gsap")};`;
+    const sub = `import x from ${JSON.stringify("three/examples/jsm/x.js")};`;
+    expect(animationHits(webgl)).toEqual(["WebGL context"]);
+    expect(animationHits(lib)).toEqual([`imports "gsap"`]);
+    expect(animationHits(sub)).toEqual([`imports "three"`]);
+  });
+
+  it("does not flag a 2D context or a comment that names a library", () => {
+    const src = `// gsap and webgl are not used here\nconst c = canvas.getContext("2d");`;
+    expect(animationHits(src)).toEqual([]);
+  });
+
 });

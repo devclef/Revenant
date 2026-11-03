@@ -199,6 +199,21 @@
   transform: translateX(-50%);
 }
 
+/* The Soil_Canvas layer. It covers the backdrop, and the one canvas inside it
+   is sized to the window by soil-canvas.ts. The pointer passes through. */
+.soilLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.soilLayer > canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+}
+
 /* The Soil_Fallback strip. Full window width. Its top edge is a jag. Each point
    sits between 2 % and 11 % of the strip height, and never above 12 px, so the
    jag stays inside the 14 px band at every size (R6.3). */
