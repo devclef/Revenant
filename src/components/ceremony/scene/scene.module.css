@@ -7,7 +7,7 @@
  * Narrow values are the base rules. The wide layout (at or above 900 px) is in
  * one min-width block below. Every geometry value here equals its constant in
  * constants.ts; scene-frame.test.ts checks them. Colours come from
- * tokens.module.css only (R3.8).
+ * tokens.css only (R3.8).
  *
  * No time value appears here. Motion belongs to later tasks.
  */

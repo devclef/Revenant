@@ -81,7 +81,7 @@ describe("Envelope — markup cannot vary with the letter payload (Property 3)",
     // envelope never reads a letter by checking its label is the fixed one.
     for (const state of STATES) {
       const html = renderEnvelope(state, PERSONA);
-      expect(html).toContain('aria-label="An envelope."');
+      expect(html).toContain('aria-hidden="true"');
       expect(html).toContain('viewBox="0 0 300 188"');
     }
   });

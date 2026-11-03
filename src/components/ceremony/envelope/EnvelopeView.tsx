@@ -234,7 +234,9 @@ export function EnvelopeView({
       return (
         <ParchmentSurface as="section" className={styles.intactStage}>
           <EnvelopeFrame state={envelopeState} persona={persona} />
-          <p className={styles.statement}>{REVEAL_COPY.sealIntact}</p>
+          <p className={styles.statement} role="status">
+            {REVEAL_COPY.sealIntact}
+          </p>
           <PickUpGate tag="verified">
             <button type="button" className={styles.button} onClick={onBegin}>
               {REVEAL_COPY.begin}

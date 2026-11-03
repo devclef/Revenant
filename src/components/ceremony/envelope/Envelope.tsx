@@ -54,9 +54,19 @@ export type EnvelopePersona = {
   demo: boolean;
 };
 
+/**
+ * The front's layout (spec 07 task 4). `wide` shows the written-as-of and
+ * opening lines and the demo note. `narrow` shows only the two date lines, each
+ * on its own line. `responsive` shows the wide content and lets CSS hide the
+ * demo note at small widths.
+ */
+export type EnvelopeLayout = "narrow" | "wide" | "responsive";
+
 export type EnvelopeProps = {
   /** Which face and fold to draw. */
   state: EnvelopeState;
+  /** The front's layout. Defaults to `responsive`. */
+  layout?: EnvelopeLayout;
   /** The persona list fields. Optional, so spec 03 renders show no dates. */
   persona?: EnvelopePersona;
   /** Optional extra class on the root <svg>. */
@@ -71,6 +81,9 @@ export type EnvelopeProps = {
  */
 const VIEW_W = 300;
 const VIEW_H = 188;
+
+/** The top of the dirt band: the bottom 22 percent of the envelope. */
+const DIRT_TOP = VIEW_H * 0.78;
 
 /** The paper body of the envelope: the same rectangle in every state. */
 const BODY_X = 6;
@@ -189,6 +202,62 @@ function Open(): ReactElement {
   );
 }
 
+/**
+ * The torn bottom edge: a zigzag along the bottom of the body, drawn over the
+ * body in every state. Identical for every letter.
+ */
+function TornEdge(): ReactElement {
+  const y = BODY_Y + BODY_H;
+  const steps = 12;
+  const stepW = BODY_W / steps;
+  let d = `M${BODY_X} ${y}`;
+  for (let i = 0; i < steps; i += 1) {
+    const x = BODY_X + stepW * (i + 0.5);
+    const depth = i % 2 === 0 ? 4 : 1.5;
+    d += ` L${x.toFixed(2)} ${(y - depth).toFixed(2)}`;
+    d += ` L${(BODY_X + stepW * (i + 1)).toFixed(2)} ${y}`;
+  }
+  return <path className={styles.tear} d={d} aria-hidden="true" />;
+}
+
+/**
+ * The dirt in the bottom 22 percent of the envelope. Flecks sit at fixed
+ * positions, so they are the same on every letter. Front text sits above this
+ * band.
+ */
+const DIRT_FLECKS: ReadonlyArray<readonly [number, number, number]> = [
+  [22, 166, 3.2],
+  [48, 178, 2.4],
+  [74, 160, 2.8],
+  [101, 176, 3.6],
+  [133, 163, 2.2],
+  [160, 179, 3.0],
+  [188, 167, 2.6],
+  [215, 177, 3.4],
+  [243, 162, 2.4],
+  [270, 174, 3.0],
+  [36, 150, 1.8],
+  [118, 152, 1.6],
+  [200, 150, 1.9],
+];
+
+function Dirt(): ReactElement {
+  return (
+    <g className={styles.dirt} aria-hidden="true">
+      <rect
+        x={0}
+        y={DIRT_TOP}
+        width={VIEW_W}
+        height={VIEW_H - DIRT_TOP}
+        className={styles.dirtBand}
+      />
+      {DIRT_FLECKS.map(([cx, cy, r]) => (
+        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={r} />
+      ))}
+    </g>
+  );
+}
+
 /** The seal's resting place on the flap, in viewBox units. */
 const SEAL_SIZE = 64;
 const SEAL_X = VIEW_W / 2 - SEAL_SIZE / 2;
@@ -207,10 +276,17 @@ const SEAL_Y_OPEN = BODY_Y - 44 + 8;
  */
 export function Envelope({
   state,
+  layout = "responsive",
   persona,
   className,
 }: EnvelopeProps): ReactElement {
-  const rootClass = [styles.envelope, className].filter(Boolean).join(" ");
+  const rootClass = [
+    styles.envelope,
+    layout === "narrow" ? styles.narrow : styles.wide,
+    className,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
   // Date lines come straight from the persona list fields through the copy
   // templates. No sealed-on date is ever shown (R3.7).
@@ -238,18 +314,23 @@ export function Envelope({
   const patternKey = persona?.key ?? "revenant-default-seal";
 
   return (
-    <div className={rootClass} data-envelope-state={state}>
+    <div
+      className={rootClass}
+      data-envelope-state={state}
+      data-envelope-layout={layout}
+    >
       <svg
         className={styles.art}
         viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}
-        role="img"
-        aria-label="An envelope."
+        aria-hidden="true"
         focusable="false"
         preserveAspectRatio="xMidYMid meet"
       >
         {state === "closed" ? <Front /> : null}
         {state === "turned" ? <Back /> : null}
         {state === "open" ? <Open /> : null}
+        <TornEdge />
+        <Dirt />
 
         {/* The wax seal rides on the flap for turned and open. The front has no
             seal: it is the face shown to the world. */}
@@ -268,10 +349,16 @@ export function Envelope({
           on the closed front (R3.7), and never a sealed-on date. */}
       {state === "closed" && persona !== undefined ? (
         <div className={styles.lines}>
-          <p className={styles.line}>{writtenAsOf}</p>
-          <p className={styles.line}>{opens}</p>
-          {demoNote === undefined ? null : (
-            <p className={styles.demoNote}>{demoNote}</p>
+          <p className={`${styles.line} ${styles.date}`} data-date>
+            {writtenAsOf}
+          </p>
+          <p className={`${styles.line} ${styles.date}`} data-date>
+            {opens}
+          </p>
+          {demoNote === undefined || layout === "narrow" ? null : (
+            <p className={styles.demoNote} data-demo-note>
+              {demoNote}
+            </p>
           )}
         </div>
       ) : null}

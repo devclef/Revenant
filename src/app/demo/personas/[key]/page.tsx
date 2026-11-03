@@ -1,8 +1,7 @@
 import { notFound } from "next/navigation";
 import { DemoLabel } from "@/components/demo/DemoLabel";
 import { OpeningFlow } from "@/components/reveal/OpeningFlow";
-import { DeskScene } from "@/components/ceremony/desk/DeskScene";
-import { MotionProvider } from "@/components/ceremony/motion";
+import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { PERSONAS } from "@/lib/personas";
 
 /**
@@ -63,19 +62,17 @@ export default async function PersonaLetterPage({
   }
 
   return (
-    <MotionProvider>
-      <DeskScene>
-        <DemoLabel />
-        <OpeningFlow
-          letterId={persona.letter_id}
-          personaName={persona.display_name}
-          persona={{
-            key: persona.key,
-            written_as_of: persona.written_as_of,
-            opens_at: persona.opens_at,
-          }}
-        />
-      </DeskScene>
-    </MotionProvider>
+    <SceneShell variant="persona" personaName={persona.display_name}>
+      <DemoLabel />
+      <OpeningFlow
+        letterId={persona.letter_id}
+        personaName={persona.display_name}
+        persona={{
+          key: persona.key,
+          written_as_of: persona.written_as_of,
+          opens_at: persona.opens_at,
+        }}
+      />
+    </SceneShell>
   );
 }

@@ -17,7 +17,7 @@ import { SkipProvider } from "../skip";
 import type { ReactNode } from "react";
 
 import styles from "./scene.module.css";
-import "./tokens.module.css";
+import "./tokens.css";
 import { TopBar } from "./TopBar";
 
 export type SceneShellProps =

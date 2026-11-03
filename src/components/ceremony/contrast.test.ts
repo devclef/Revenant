@@ -194,7 +194,7 @@ describe("Property 22: desk and paper text and focus rings clear AA / 3:1", () =
 // ---------------------------------------------------------------------------
 // Spec 07 (judge journey), R4 and Property 9: Scene token pairs.
 //
-// The Scene's colours live in scene/tokens.module.css. This block reads them,
+// The Scene's colours live in scene/tokens.css. This block reads them,
 // composites partly transparent tokens over the surface beneath them (R4.2),
 // and checks each R4.1 pair. Normal text needs 4.5:1. Large text, control
 // boundaries and focus rings need 3:1 (R4.3, R4.4). A failure names the pair
@@ -214,9 +214,9 @@ interface PairResult {
   ok: boolean;
 }
 
-const tokensCssPath = resolve(here, "scene", "tokens.module.css");
+const tokensCssPath = resolve(here, "scene", "tokens.css");
 
-/** A 6-digit hex or an rgba() value, as tokens.module.css writes them. */
+/** A 6-digit hex or an rgba() value, as tokens.css writes them. */
 const COLOUR_VALUE = String.raw`(#[0-9a-fA-F]{6}|rgba\(\s*\d+\s*,\s*\d+\s*,\s*\d+\s*,\s*[0-9.]+\s*\))`;
 
 /** Read a Scene colour token. Accepts hex (opaque) and rgba() (with alpha). */
@@ -317,7 +317,7 @@ function assertLetterBlockFocusRing(token: string, purple: Rgb, colourOf: (t: st
 describe("Spec 07 R4 and Property 9: Scene token pairs", () => {
   const tokensCss = readFileSync(tokensCssPath, "utf8");
   const scene = (token: string): Colour =>
-    readColourToken(tokensCss, token, "tokens.module.css");
+    readColourToken(tokensCss, token, "tokens.css");
   const sceneRgb = (token: string): Rgb => scene(token).rgb;
 
   // The crease: --ink at 8 % over --paper (R13.2, design "Creases").

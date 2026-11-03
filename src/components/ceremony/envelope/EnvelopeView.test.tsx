@@ -59,7 +59,7 @@ const render = (props: EnvelopeViewProps): string =>
   );
 
 /** The closed envelope's fixed SVG label — present whenever the paper is drawn. */
-const ENVELOPE_LABEL = 'aria-label="An envelope."';
+const ENVELOPE_LABEL = 'aria-hidden="true"';
 
 describe("EnvelopeView — the envelope Stage covers loading / openable / verifying", () => {
   const statementVariants: readonly EnvelopeViewVariant[] = [

@@ -61,6 +61,8 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { Ghost } from "@/components/ceremony/scene/Ghost";
+import { SceneBackdrop } from "@/components/ceremony/scene/SceneBackdrop";
 import { CeremonyRoot } from "@/components/ceremony/CeremonyRoot";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { SkipProvider } from "@/components/ceremony/skip";
@@ -196,6 +198,11 @@ export function OpeningFlow({
           className={styles.flow}
         >
           {flow.live?.demo === true ? <DemoLabel /> : null}
+          {mode === "persona" ? (
+            <SceneBackdrop>
+              <Ghost />
+            </SceneBackdrop>
+          ) : null}
           <div className={styles.view}>
             {selectView(state, flow, letterId, personaName, persona, mode, retryAtZero, KeyStep, {
               keyText,
