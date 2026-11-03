@@ -41,7 +41,7 @@ export function TopBar({ personaName }: TopBarProps) {
 
   // The last control in the bar: Skip when it shows, otherwise Calm.
   return (
-    <header className={styles.topbar}>
+    <header className={styles.topbar} data-topbar>
       <div className={styles.brand}>
         <p className={styles.wordmark} data-wordmark>
           {SCENE_COPY.wordmark}

@@ -56,6 +56,39 @@
   padding-top: 2.5rem;
 }
 
+/* Narrow intact stage (below 900 px). The seal card must clear two things at
+   once: the Ghost above (its eyes and held Envelope end near y 414 and the body
+   box near y 432 at 360x640, so no text may sit on the Ghost_Body_Box, G1) and
+   the Soil strip below (its top is at --soil-top = 69vh = 442 px at 360x640).
+   Those leave no gap between them, so the card cannot sit in the band above the
+   strip without covering the Ghost. It belongs on the plain background BELOW
+   the strip, where design.md "Pick up and the status line" places the flow's
+   status line and button.
+
+   The region's backdrop is fixed to the window (position: fixed), so taking
+   the region out of flow does not disturb the Soil strip, Ghost or canvas. We
+   pin the region to the Scene (its positioned ancestor, which starts at the
+   top of the window) with its top at the Soil strip bottom
+   (--soil-top + --soil-band) plus a small gap, so the seal card and its Begin
+   button sit clear of the strip (F2) and clear of the Ghost (G1) at every
+   narrow height, since both soil anchors are in vh. The region spans the
+   column (left/right 0), which already carries the side padding. Only the
+   intact stage has this rule, so recall and marks keep their own layout. The
+   :has() selector needs a browser that supports it; older browsers keep the
+   flow layout and still show the card below the strip. */
+@media (max-width: 899.98px) {
+  .personaColumn:has(> [data-ceremony="intact"]) {
+    min-height: calc(100vh - 6rem);
+  }
+
+  .personaColumn > [data-ceremony="intact"] {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: calc(var(--soil-top) + var(--soil-band) + 0.25rem - 6rem);
+  }
+}
+
 /* The headline never crosses into the Ghost column. Narrow: it is smaller and
    capped so its box clears the centred Ghost body (R5.19). */
 .personaColumn .headline {
@@ -199,6 +232,21 @@
   transform: translateX(-50%);
 }
 
+/* The Soil_Canvas layer. It covers the backdrop, and the one canvas inside it
+   is sized to the window by soil-canvas.ts. The pointer passes through. */
+.soilLayer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.soilLayer > canvas {
+  position: absolute;
+  left: 0;
+  top: 0;
+  display: block;
+}
+
 /* The Soil_Fallback strip. Full window width. Its top edge is a jag. Each point
    sits between 2 % and 11 % of the strip height, and never above 12 px, so the
    jag stays inside the 14 px band at every size (R6.3). */
@@ -289,6 +337,15 @@
   .personaColumn .headline {
     max-width: 11.5ch;
     font-size: clamp(2.35rem, 6vw, 5.4rem);
+  }
+
+  /* Intact stage only: a smaller, wider headline keeps the seal card's bottom
+     edge above the Soil strip at 1280 x 800 (soilTopPx = 592). At 1280 px the
+     headline is 3.5rem on 13ch, so the card ends near y 575. Other stages keep
+     the headline above. */
+  .personaColumn:has(> [data-ceremony="intact"]) .headline {
+    max-width: 13ch;
+    font-size: clamp(2.5rem, 4.4vw, 3.5rem);
   }
 
   .topbar {

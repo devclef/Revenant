@@ -45,8 +45,6 @@ export const CANDLE_FLICKER_AMPLITUDE = 0.04; // max change in the light layer's
 export const CANDLE_FLICKER_MIN_PERIOD_MS = 900; // smooth, no steps; at most about 1.1 changes a second
 export const PARALLAX_MAX_DEG = 2;
 export const PARALLAX_MAX_PX = 12;
-export const DUST_MAX_PARTICLES = 36;
-export const DUST_MAX_FPS = 30;
 export const LOW_POWER_CORES = 4;
 export const LOW_POWER_FRAME_MS = 24;
 export const LOW_POWER_PROBE_MS = 1000;
@@ -103,13 +101,25 @@ export const SEAL_WIDTH_NARROW = 0.32;
 export const SEAL_HIT_MIN_PX = 60; // before scale; at least 48 at 0.8 (R10.16)
 export const COLUMN_GAP_UNDER_SOIL_PX = 4;
 export const DUST_CEILING_GAP_PX = 8; // R6.16
+// --- Soil_Canvas (R6.3, R6.5) (spec 07) ---
+export const DUST_MAX_PARTICLES = 36;
+export const DUST_MAX_FPS = 30;
 export const EDGE_BAND_PX = 14; // R6.3: the soil's top-edge jag stays inside this band
+export const LIGHT_MAX_LUMINANCE_CHANGE_PER_S = 0.1;
+export const SOIL_SEED = 0x07a11e;
+export const DUST_SEED = 0x077149; // SOIL_SEED ^ 0xd057, the dust stream
+export const CLOD_SEED = 0x076013; // SOIL_SEED ^ 0xc10d, the clod stream
+export const CLOD_COUNT = 16;
+export const CLOD_LIFE_MS = 1600;
+export const CLOD_GRAVITY_PX_S2 = 620;
+export const SOIL_DPR_MAX = 2;
+export const SOIL_RESIZE_DEBOUNCE_MS = 150;
+export const DUST_SPREAD = 0.2; // share of width either side of the light
 
 // --- Landing light (R7.1, R6.10) (spec 07) ---
 export const LANDING_LIGHT_AT_MS = 250;
 export const LIGHT_FADE_MS = 900;
 export const LIGHT_MOVE_MS = 1100;
-export const LIGHT_MAX_LUMINANCE_CHANGE_PER_S = 0.1;
 
 // --- Emergence (R9.5, R9.6, R18.2, R18.8) (spec 07) ---
 export const SHAKE_AT_MS = 750;
