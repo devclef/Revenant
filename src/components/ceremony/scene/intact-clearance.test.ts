@@ -54,8 +54,33 @@ describe("narrow intact stage rules (scene.module.css)", () => {
     expect(declaration(narrowIntactBlock(), "margin-bottom")).toBe("-2.75rem");
   });
 
-  it("does not change the wide layout: the intact rules sit in the max-width block only", () => {
+  it("does not change the wide layout: the only intact rule there is the headline size", () => {
     const wide = css.slice(css.indexOf("@media (min-width: 900px)"));
-    expect(wide).not.toContain('[data-ceremony="intact"]');
+    const selectors = (wide.match(/[^{}]*\[data-ceremony="intact"\][^{}]*\{/g) ?? []).map((m) => m.trim());
+    expect(selectors).toEqual(['.personaColumn:has(> [data-ceremony="intact"]) .headline {']);
+  });
+});
+
+describe("wide intact headline rule (scene.module.css)", () => {
+  // At 1280 x 800 the seal card must end above soilTopPx (592). The headline
+  // size on the intact stage is what brings the card up; these values are the
+  // ones the browser check measured (card bottom near y 575).
+  function intactHeadlineRule(): string {
+    const wide = css.slice(css.indexOf("@media (min-width: 900px)"));
+    const start = wide.indexOf('.personaColumn:has(> [data-ceremony="intact"]) .headline');
+    expect(start).toBeGreaterThan(-1);
+    return wide.slice(start, wide.indexOf("}", start));
+  }
+
+  it("applies only to the intact stage, through :has() on the persona column", () => {
+    expect(intactHeadlineRule()).toContain('.personaColumn:has(> [data-ceremony="intact"]) .headline');
+  });
+
+  it("caps the intact headline at 13ch so it wraps to three lines", () => {
+    expect(declaration(intactHeadlineRule(), "max-width")).toBe("13ch");
+  });
+
+  it("sizes the intact headline at most 3.5rem so the card clears the soil strip", () => {
+    expect(declaration(intactHeadlineRule(), "font-size")).toBe("clamp(2.5rem, 4.4vw, 3.5rem)");
   });
 });

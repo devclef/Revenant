@@ -327,6 +327,15 @@
     font-size: clamp(2.35rem, 6vw, 5.4rem);
   }
 
+  /* Intact stage only: a smaller, wider headline keeps the seal card's bottom
+     edge above the Soil strip at 1280 x 800 (soilTopPx = 592). At 1280 px the
+     headline is 3.5rem on 13ch, so the card ends near y 575. Other stages keep
+     the headline above. */
+  .personaColumn:has(> [data-ceremony="intact"]) .headline {
+    max-width: 13ch;
+    font-size: clamp(2.5rem, 4.4vw, 3.5rem);
+  }
+
   .topbar {
     gap: 0 1rem;
     padding-block: 0.75rem;
