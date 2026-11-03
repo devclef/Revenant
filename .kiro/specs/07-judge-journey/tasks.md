@@ -127,7 +127,7 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - Validation: `bash scripts/check.sh`
   - _Requirements: R3.8, R6.2–R6.13, R6.16, R6.17, R6.18, R19.2, R19.5, R21.8, R21.9_
 
-- [ ] 4. Pick up, the Envelope turn and the Recall_Pager
+- [x] 4. Pick up, the Envelope turn and the Recall_Pager
   - Agent: `frontend-dev` · Depends on: 3 · Estimated size: ~2,700 changed lines
   - Before this task: task 3 is on `main`.
   - Scope: `src/components/ceremony/envelope/Envelope.tsx`, `envelope/EnvelopeView.tsx`, `envelope/WaxSeal.tsx`, `envelope/WaxSeal.module.css`, `envelope/Envelope.module.css`, `envelope/seal-pattern.ts` (delete), `src/components/ceremony/recall/RecallPager.tsx`, `recall/RecallPager.module.css`, `recall/RecallScale.module.css`, `src/components/ceremony/scene/SceneBackdrop.tsx`, `scene/Ghost.tsx`, `scene/layout.ts`, `scene/scene.module.css`, `src/components/ceremony/constants.ts`, `CeremonyRoot.tsx`, `ASSETS.md`, `src/components/reveal/OpeningFlow.tsx`, `src/components/reveal/RecallStep.tsx`, `src/components/reveal/copy.ts`, `src/components/reveal/reveal.module.css`, `src/components/demo/copy.ts`, `src/components/demo/PersonaCard.tsx`, and the `*.test.ts(x)` for each file above including `src/components/reveal/RecallStep.test.tsx`, `src/components/demo/PersonaCard.test.tsx`, `src/components/demo/copy.test.ts` and `src/app/demo/page.test.tsx`
