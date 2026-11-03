@@ -25,24 +25,22 @@ import fc from "fast-check";
 import {
   CHANGE_FADE_MS,
   COUNTER_ROLL_MS,
+  FLAP_AT_MS,
+  FLAP_LIFT_MS,
+  GHOST_LEAVE_MS,
+  LETTER_SLIDE_AT_MS,
+  LETTER_SLIDE_MS,
+  SEAL_HOLD_MS,
+  SEAL_SHORT_MS,
+  SEAL_SPLIT_MS,
+  UNFOLD_AT_MS,
+  UNFOLD_MS,
   EASE_LINEAR,
   EASE_STAMP,
   EASE_STANDARD,
   PASSAGE_MS,
   STAMP_DROP_MS,
   STEP_HOLD_MS,
-} from "./constants";
-import {
-  FLAP_AT_MS,
-  FLAP_LIFT_MS,
-  LETTER_SLIDE_AT_MS,
-  LETTER_SLIDE_MS,
-  GHOST_LEAVE_MS,
-  SEAL_SHORT_MS,
-  SEAL_SPLIT_MS,
-  UNFOLD_AT_MS,
-  UNFOLD_MS,
-  SEAL_HOLD_MS,
 } from "./constants";
 import { Counter, COUNTER_ROLL_STEPS } from "./figures/Counter";
 import { Passage } from "./figures/Passage";
