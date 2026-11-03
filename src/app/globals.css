@@ -69,7 +69,6 @@ body {
 html {
   /* The layout sets --font-serif / --font-sans via next/font/local on <html>;
      these :root values above are only fallbacks before those resolve. */
-  background-color: var(--paper);
   color: var(--ink);
   -webkit-text-size-adjust: 100%;
 }
@@ -79,7 +78,6 @@ body {
   font-size: 1.0625rem;
   line-height: 1.7;
   color: var(--ink);
-  background-color: var(--paper);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
