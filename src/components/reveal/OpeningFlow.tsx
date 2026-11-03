@@ -60,7 +60,7 @@
  * inline user-facing literal.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Ghost } from "@/components/ceremony/scene/Ghost";
 import { SceneBackdrop } from "@/components/ceremony/scene/SceneBackdrop";
 import { CeremonyRoot } from "@/components/ceremony/CeremonyRoot";
@@ -83,6 +83,7 @@ import { LiveLockNote } from "@/components/live/LiveLockNote";
 import { FlowError, type FlowErrorKind } from "./FlowError";
 import type { FlowState, OpenFailedKind } from "./opening-machine";
 import { REVEAL_COPY } from "./copy";
+import { createBeginGuard } from "./begin-guard";
 import styles from "./reveal.module.css";
 
 /**
@@ -209,6 +210,17 @@ export function OpeningFlow({
   );
   const { state, retry } = flow;
   const KeyStep = useKeyStep(state.tag === "awaiting_key");
+
+  // The Pick_Up_Button sends BEGIN once per `verified` (R10.6). The latest
+  // `begin` is read through a ref, so the guard keeps its state across renders.
+  const latestBegin = useRef(flow.begin);
+  useEffect(() => {
+    latestBegin.current = flow.begin;
+  }, [flow.begin]);
+  const [beginGuard] = useState(() => createBeginGuard(() => latestBegin.current()));
+  useEffect(() => {
+    if (state.tag !== "verified") beginGuard.reset();
+  }, [state.tag, beginGuard]);
   // The typed backup key lives here, not in the key step, so it survives the
   // `unlocking` view (which unmounts the key step) and a wrong-key return to
   // `awaiting_key` shows the same text again.
@@ -253,7 +265,7 @@ export function OpeningFlow({
             {selectView(state, flow, letterId, personaName, persona, mode, retryAtZero, KeyStep, {
               keyText,
               onKeyTextChange: setKeyText,
-            })}
+            }, beginGuard.begin)}
           </div>
         </CeremonyRoot>
       </SkipProvider>
@@ -278,6 +290,7 @@ function selectView(
   retryAtZero: () => void,
   KeyStep: KeyStepComponent | null,
   keyEntry: KeyEntry,
+  begin: () => void,
 ): React.ReactNode {
   // The envelope's per-letter inputs: the persona list fields plus the demo
   // flag. These are always demo persona letters, so `demo` is true whenever a
@@ -300,7 +313,7 @@ function selectView(
       variant={variant}
       persona={envelopePersona}
       held={mode === "persona"}
-      onBegin={flow.begin}
+      onBegin={begin}
       onRetry={flow.retry}
       {...extra}
     />

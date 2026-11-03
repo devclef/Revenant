@@ -147,10 +147,10 @@ describe("EnvelopeView — sealed shows the date and countdown, nothing about co
 describe("EnvelopeView — verified is the intact Stage, before any recall or letter (Property 2)", () => {
   const html = render({ variant: "verified", persona: PERSONA, onBegin: () => {} });
 
-  it("shows the seal-is-intact statement and a Begin control", () => {
+  it("shows the seal-is-intact statement and the Pick up the letter control", () => {
     expect(html).toContain(REVEAL_COPY.sealIntact);
-    expect(html).toContain(REVEAL_COPY.begin);
-    expect(html).toMatch(/<button[^>]*>Begin<\/button>/);
+    expect(html).toContain(REVEAL_COPY.pickUp);
+    expect(html).toMatch(/<button[^>]*>Pick up the letter<\/button>/);
   });
 
   it("precedes every later Stage: no Mark, no recall question, no letter (Property 2)", () => {

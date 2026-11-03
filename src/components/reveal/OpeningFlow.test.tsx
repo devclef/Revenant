@@ -331,7 +331,7 @@ describe("OpeningFlow view selection", () => {
   it("shows SealIntact (the statement + Begin) for verified, with no sealed content (R7.5)", () => {
     const html = render({ tag: "verified", opened: OPENED });
     expect(html).toContain(REVEAL_COPY.sealIntact);
-    expect(html).toContain(REVEAL_COPY.begin);
+    expect(html).toContain(REVEAL_COPY.pickUp);
     for (const needle of SEALED_PAYLOAD_STRINGS) {
       expect(html, `verified must not leak "${needle}"`).not.toContain(needle);
     }

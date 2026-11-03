@@ -69,7 +69,7 @@ describe("Property 1: the Pick_Up_Button is never rendered before verified", () 
             createElement(EnvelopeView, { variant }),
           ),
         );
-        const hasButton = html.includes(REVEAL_COPY.begin);
+        const hasButton = html.includes(REVEAL_COPY.pickUp);
         expect(hasButton).toBe(t === "verified");
       }),
       { numRuns: 100 },

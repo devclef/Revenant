@@ -58,6 +58,9 @@ export const REVEAL_COPY = {
   /** The control that moves from the verification statement to recall. */
   begin: "Begin",
 
+  /** The Pick_Up_Button on the persona page: moves from intact to recall (R10.4). */
+  pickUp: "Pick up the letter",
+
   // --- Errors ---
 
   /** The letter record has not been placed yet (404). */

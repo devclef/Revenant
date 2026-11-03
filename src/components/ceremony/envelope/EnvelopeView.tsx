@@ -256,8 +256,8 @@ export function EnvelopeView({
               {REVEAL_COPY.sealIntact}
             </p>
             <PickUpGate tag="verified">
-              <button type="button" className={styles.button} onClick={onBegin}>
-                {REVEAL_COPY.begin}
+              <button type="button" className={styles.pickUp} onClick={onBegin}>
+                {REVEAL_COPY.pickUp}
               </button>
             </PickUpGate>
           </div>
