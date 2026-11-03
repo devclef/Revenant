@@ -133,7 +133,7 @@
     calc(-50% + var(--flake-y, 0px))
   );
   animation-name: seal-flake-fall;
-  animation-duration: var(--seal-split-ms, 900ms);
+  animation-duration: var(--seal-split-ms, 520ms);
   animation-timing-function: cubic-bezier(0.2, 0, 0, 1); /* EASE_STANDARD */
   animation-delay: var(--flake-delay, 0ms);
   animation-fill-mode: both;
@@ -195,7 +195,7 @@
 .flap {
   transform-origin: 50% 100%;
   animation-name: seal-flap-lift;
-  animation-duration: var(--flap-lift-ms, 700ms);
+  animation-duration: var(--flap-lift-ms, 450ms);
   animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1); /* EASE_STAMP */
   animation-fill-mode: both;
 }
@@ -211,7 +211,7 @@
 
 .letter {
   animation-name: seal-letter-slide;
-  animation-duration: var(--letter-slide-ms, 800ms);
+  animation-duration: var(--letter-slide-ms, 600ms);
   animation-timing-function: cubic-bezier(0.2, 0, 0, 1); /* EASE_STANDARD */
   animation-fill-mode: both;
 }

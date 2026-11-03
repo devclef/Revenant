@@ -152,6 +152,13 @@ describe("CSS durations and easings equal their constants (R18.1)", () => {
     }
   });
 
+  it("gives each seal-break CSS fallback its constant (R18.1)", () => {
+    const css = readFileSync(resolve(here, "seal/SealBreak.module.css"), "utf8");
+    expect(css).toContain(`var(--seal-split-ms, ${C.SEAL_SPLIT_MS}ms)`);
+    expect(css).toContain(`var(--flap-lift-ms, ${C.FLAP_LIFT_MS}ms)`);
+    expect(css).toContain(`var(--letter-slide-ms, ${C.LETTER_SLIDE_MS}ms)`);
+  });
+
   it("holds the new Emergence and Idle_Bob values at their design.md numbers", () => {
     expect(C.RISE_AT_MS).toBe(900);
     expect(C.RISE_MS).toBe(1500);

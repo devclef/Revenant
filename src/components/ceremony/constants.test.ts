@@ -17,8 +17,22 @@ import {
   CALM_FADE_MS,
   CAMERA_MOVE_MS,
   CANDLE_FLICKER_AMPLITUDE,
+  EASE_LEAVE,
+  FLAP_AT_MS,
+  FLAP_LIFT_MS,
+  GHOST_FADE_MS,
+  GHOST_LEAVE_MS,
+  LETTER_SLIDE_AT_MS,
+  LETTER_SLIDE_MS,
   POSITION_PROPERTIES,
+  REVEAL_DIM_MS,
+  REVEAL_DIM_OPACITY,
   SEAL_HOLD_MS,
+  SEAL_SETTLE_MS,
+  SEAL_SHORT_MS,
+  SEAL_SPLIT_MS,
+  UNFOLD_AT_MS,
+  UNFOLD_MS,
 } from "./constants";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -48,6 +62,26 @@ describe("ceremony/constants", () => {
     expect(CALM_FADE_MS).toBe(120);
     expect(SEAL_HOLD_MS).toBe(1500);
     expect(CANDLE_FLICKER_AMPLITUDE).toBe(0.04);
+  });
+
+  it("holds the seal-break values from design.md 'Kept, changed and retired' (R6, R12)", () => {
+    expect(SEAL_SETTLE_MS).toBe(300);
+    expect(SEAL_SHORT_MS).toBe(450);
+    expect(SEAL_SPLIT_MS).toBe(520);
+    expect(FLAP_LIFT_MS).toBe(450);
+    expect(LETTER_SLIDE_MS).toBe(600);
+  });
+
+  it("holds the break and letter values from design.md 'Constants' (R12.6, R12.7)", () => {
+    expect(GHOST_LEAVE_MS).toBe(1100);
+    expect(GHOST_FADE_MS).toBe(900);
+    expect(EASE_LEAVE).toBe("cubic-bezier(0.4, 0, 0.6, 1)");
+    expect(FLAP_AT_MS).toBe(250);
+    expect(LETTER_SLIDE_AT_MS).toBe(550);
+    expect(UNFOLD_AT_MS).toBe(1150);
+    expect(UNFOLD_MS).toBe(520);
+    expect(REVEAL_DIM_OPACITY).toBe(0.18);
+    expect(REVEAL_DIM_MS).toBe(500);
   });
 
   it("constants.ts has no `import` statement (no import, no value from data)", () => {

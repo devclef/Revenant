@@ -32,6 +32,18 @@ import {
   STAMP_DROP_MS,
   STEP_HOLD_MS,
 } from "./constants";
+import {
+  FLAP_AT_MS,
+  FLAP_LIFT_MS,
+  LETTER_SLIDE_AT_MS,
+  LETTER_SLIDE_MS,
+  GHOST_LEAVE_MS,
+  SEAL_SHORT_MS,
+  SEAL_SPLIT_MS,
+  UNFOLD_AT_MS,
+  UNFOLD_MS,
+  SEAL_HOLD_MS,
+} from "./constants";
 import { Counter, COUNTER_ROLL_STEPS } from "./figures/Counter";
 import { Passage } from "./figures/Passage";
 import { planThenNow, type ThenNowEntry } from "./figures/ThenNowSequence";
@@ -168,5 +180,40 @@ describe("Property 14: timings come from constants, never data (R10.5, R10.6, R1
       }),
       { numRuns: 100 },
     );
+  });
+});
+
+// Feature: 07-judge-journey, Property 7
+//
+// Property: the break timing bounds are sums of constants, and each sum stays
+// inside its limit (design.md "Timing bounds as sums (R18)"). Hold end to the
+// readable letter is 1670 ms; button to the readable letter is 2120 ms; both
+// are under 3000 ms (R18.4). Every break step ends inside the readable time, so
+// the letter is never read while a step is still moving.
+
+describe("Property 7: break timing bounds hold as sums of constants (R18.4)", () => {
+  const HOLD_TO_READABLE_MS = UNFOLD_AT_MS + UNFOLD_MS;
+  const BUTTON_TO_READABLE_MS = SEAL_SHORT_MS + UNFOLD_AT_MS + UNFOLD_MS;
+
+  it("hold end to readable is UNFOLD_AT_MS + UNFOLD_MS, 1670 ms, under 3000 ms", () => {
+    expect(HOLD_TO_READABLE_MS).toBe(1670);
+    expect(HOLD_TO_READABLE_MS).toBeLessThan(3000);
+  });
+
+  it("button to readable is SEAL_SHORT_MS + UNFOLD_AT_MS + UNFOLD_MS, 2120 ms, under 3000 ms", () => {
+    expect(BUTTON_TO_READABLE_MS).toBe(2120);
+    expect(BUTTON_TO_READABLE_MS).toBeLessThan(3000);
+  });
+
+  it("every break step ends at or before the unfold starts or the readable time", () => {
+    expect(FLAP_AT_MS + FLAP_LIFT_MS).toBeLessThanOrEqual(UNFOLD_AT_MS);
+    expect(LETTER_SLIDE_AT_MS + LETTER_SLIDE_MS).toBeLessThanOrEqual(UNFOLD_AT_MS);
+    expect(GHOST_LEAVE_MS).toBeLessThanOrEqual(UNFOLD_AT_MS);
+    expect(SEAL_SPLIT_MS).toBeLessThanOrEqual(UNFOLD_AT_MS);
+    expect(UNFOLD_AT_MS + UNFOLD_MS).toBeLessThanOrEqual(HOLD_TO_READABLE_MS);
+  });
+
+  it("the hold itself stays the design's SEAL_HOLD_MS", () => {
+    expect(SEAL_HOLD_MS).toBe(1500);
   });
 });
