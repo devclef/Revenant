@@ -40,10 +40,13 @@
   max-width: 100%;
 }
 
+/* Stretch, not flex-start: the Recall_Scale track is absolutely positioned, so a
+   shrink-to-fit scale collapses to 0 px and its centred "No answer yet" readout
+   spills past the paper card's left edge at 360 px. */
 .body {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: stretch;
   gap: 0.5rem;
 }
 

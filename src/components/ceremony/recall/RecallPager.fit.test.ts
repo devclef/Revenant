@@ -79,4 +79,12 @@ describe("Recall_Pager card fits inside its padding at 360 x 640", () => {
     expect(ruleBody(".fieldset")).toMatch(/max-width:\s*100%/);
     expect(ruleBody(".answerRow")).toMatch(/max-width:\s*100%/);
   });
+
+  it("stretches the body column so the scale takes the card width", () => {
+    // A flex-start column shrinks the absolutely positioned scale to 0 px, and the
+    // centred "No answer yet" readout then sits about 33 px in, past the card's
+    // left edge at 36 px. Stretching keeps the readout inside the card.
+    expect(ruleBody(".body")).toMatch(/align-items:\s*stretch/);
+    expect(ruleBody(".body")).not.toMatch(/align-items:\s*flex-start/);
+  });
 });
