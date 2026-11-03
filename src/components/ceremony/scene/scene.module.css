@@ -72,16 +72,26 @@
    (--soil-top + --soil-band) plus a small gap, so the seal card and its Begin
    button sit clear of the strip (F2) and clear of the Ghost (G1) at every
    narrow height, since both soil anchors are in vh. The region spans the
-   column (left/right 0), which already carries the side padding. Only the
-   intact stage has this rule, so recall and marks keep their own layout. The
-   :has() selector needs a browser that supports it; older browsers keep the
-   flow layout and still show the card below the strip. */
+   column (left/right 0), which already carries the side padding. The same rule
+   covers intact and the handed stages (recall, marks, seal): the backdrop no
+   longer lifts, so the narrow Ghost stays risen and low, and for every placed
+   Stage the Soil strip is the one thing the status card and the recall card
+   must clear. Pinning the region below the strip clears the Ghost at the same
+   time (G1, F1, F2). The desktop (>=900 px) layout is untouched. The :has()
+   selector needs a browser that supports it; older browsers keep the flow
+   layout and still show the card below the strip. */
 @media (max-width: 899.98px) {
-  .personaColumn:has(> [data-ceremony="intact"]) {
+  .personaColumn:has(> [data-ceremony="intact"]),
+  .personaColumn:has(> [data-ceremony="recall"]),
+  .personaColumn:has(> [data-ceremony="marks"]),
+  .personaColumn:has(> [data-ceremony="seal"]) {
     min-height: calc(100vh - 6rem);
   }
 
-  .personaColumn > [data-ceremony="intact"] {
+  .personaColumn > [data-ceremony="intact"],
+  .personaColumn > [data-ceremony="recall"],
+  .personaColumn > [data-ceremony="marks"],
+  .personaColumn > [data-ceremony="seal"] {
     position: absolute;
     left: 0;
     right: 0;
