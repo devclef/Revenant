@@ -145,11 +145,69 @@ describe("reveal marks stage: read-only recall scales", () => {
     expect(html.match(/data-readout="readout"/g) ?? []).toHaveLength(1);
   });
 
-  it("keeps the existing 'Your answer' text list next to the scales", () => {
+  it("shows the judge's value in the Accent, in its own answers list", () => {
     const html = renderMarks(RECORD);
-    expect(html).toContain(`${REVEAL_COPY.yourAnswer}: 2.50`);
+    const answers = sliceBetween(html, 'data-fit="marks-answers"', "</dl>");
+    expect(answers).toContain(">2.50</span>");
+    expect(answers).toMatch(/class="[^"]*marksValue[^"]*"/);
+    // The Accent value is the only answer in the list drawn with the Accent.
+    expect(answers.match(/class="[^"]*marksValue[^"]*"/g) ?? []).toHaveLength(1);
+  });
+
+  it("shows 'No answer' for a question recorded without a number", () => {
+    const html = renderMarks(RECORD);
+    const answers = sliceBetween(html, 'data-fit="marks-answers"', "</dl>");
+    expect(answers.match(new RegExp(REVEAL_COPY.noAnswer, "g")) ?? []).toHaveLength(2);
   });
 });
+
+describe("reveal marks stage: column markers and order", () => {
+  const RECORD: RecallRecordV1 = {
+    version: 1,
+    answers: [
+      { question_id: "q-fuel", kind: "number", value: "2.50" },
+      { question_id: "q-milk", kind: "no_answer" },
+      { question_id: "q-note", kind: "no_answer" },
+    ],
+  };
+
+  it("renders the three data-fit markers for the heading, the answers and the break", () => {
+    const html = renderMarks(RECORD);
+    expect(html.match(/data-fit="marks-heading"/g) ?? []).toHaveLength(1);
+    expect(html.match(/data-fit="marks-answers"/g) ?? []).toHaveLength(1);
+    expect(html.match(/data-fit="break"/g) ?? []).toHaveLength(1);
+  });
+
+  it("puts the heading, answers, scales, the break region, instruction, Show everything, then the sound note, in that order", () => {
+    const html = renderMarks(RECORD);
+    const order = [
+      html.indexOf('data-fit="marks-heading"'),
+      html.indexOf('data-fit="marks-answers"'),
+      html.indexOf('role="slider"'),
+      html.indexOf('data-fit="break"'),
+      html.indexOf(CEREMONY_COPY.sealInstruction),
+      html.indexOf(REVEAL_COPY.showAll),
+      html.indexOf(CEREMONY_COPY.soundNote),
+    ];
+    for (const index of order) expect(index).toBeGreaterThanOrEqual(0);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+  });
+
+  it("shows the sound toggle and its note only on the persona page", () => {
+    const persona = renderMarks(RECORD);
+    expect(persona).toContain(CEREMONY_COPY.soundNote);
+    const live = renderMarks(RECORD, { variant: "live", letterId: "live-marks" });
+    expect(live).not.toContain(CEREMONY_COPY.soundNote);
+  });
+});
+
+/** The text between two markers, used to scope an assertion to one part. */
+function sliceBetween(html: string, start: string, end: string): string {
+  const from = html.indexOf(start);
+  if (from < 0) return "";
+  const to = html.indexOf(end, from);
+  return to < 0 ? html.slice(from) : html.slice(from, to);
+}
 
 /**
  * The seal body for one pattern key: everything from the `width` attribute on,

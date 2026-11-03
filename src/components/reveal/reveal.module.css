@@ -171,10 +171,90 @@
   gap: 0.75rem;
 }
 
-/* --- Reveal, stage 1 (remembered answers) --- */
+/* --- Reveal, stage 1 (marks column) --- */
 
 .remembered {
   text-align: left;
+}
+
+.marks {
+  text-align: left;
+}
+
+.marksHeading {
+  font-family: var(--font-serif);
+  color: var(--ink);
+}
+
+.marksAnswers {
+  margin: 0 0 1.25rem;
+}
+
+/* One question and its answer. No ordering or colour hints at which way a
+   figure moved (neutrality.md). Wide: the answer sits at the row's end. */
+.marksRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 1rem;
+  margin: 0 0 0.9rem;
+}
+
+.marksQuestion {
+  margin: 0;
+  font-family: var(--font-serif);
+  color: var(--ink);
+}
+
+.marksAnswer {
+  margin: 0;
+  flex-shrink: 0;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The judge's own answer: the Accent fill marks "you" (tone.md). The value is
+   ink on the Accent, about 6.5 : 1, because orange text on paper fails AA. */
+.marksValue {
+  display: inline-block;
+  padding: 0.1rem 0.5rem;
+  border-radius: 2px;
+  background-color: var(--accent);
+  color: var(--ink);
+  white-space: nowrap;
+}
+
+.marksBreak {
+  margin: 1.5rem 0 0;
+}
+
+.marksSound {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin: 1.25rem 0 0;
+}
+
+/* Plain ink on the paper panel. The desk text tokens are cream and would be
+   unreadable here. */
+.marksSoundNote {
+  margin: 0;
+  color: var(--ink-soft);
+}
+
+/* Below 900 px each row stacks the label above its value, and the value does
+   not wrap. Rows use 0.92 rem so the column fits a 360 px screen. */
+@media (max-width: 899.98px) {
+  .marksRow {
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.92rem;
+  }
+
+  .marksAnswer {
+    white-space: nowrap;
+  }
 }
 
 /* One question-and-answer pair. No layout difference between questions, and no

@@ -1,10 +1,13 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useContext, useState } from "react";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV1 } from "@/lib/recall";
-import { RememberedAnswers } from "./RememberedAnswers";
 import { LetterBlock } from "@/components/ceremony/letter/LetterBlock";
+import { CEREMONY_COPY } from "@/components/ceremony/copy";
+import { SoundToggle } from "@/components/ceremony/sound/SoundToggle";
+import { SoundEnabledContext } from "@/components/ceremony/sound/SoundEnabledContext";
+import { soundCues } from "@/components/ceremony/sound/cues";
 import { FiguresThenNow } from "./FiguresThenNow";
 import { StagePanel } from "./StagePanel";
 import { ThenNowSequence } from "@/components/ceremony/figures/ThenNowSequence";
@@ -43,10 +46,12 @@ const INERT_SEAL: SealController = {
  * the stages the current `stage` has reached and the controls that let the
  * judge move forward, one part at a time.
  *
- * - Stage 1 is the `marks` Stage (design.md "Seal_Break"): the existing
- *   `RememberedAnswers` as plain text — what the judge just remembered — above
- *   the unbroken wax seal, its instruction line and the "Break the seal"
- *   button, all owned by `SealBreak`. It holds nothing from inside the letter
+ * - Stage 1 is the `marks` Stage (design.md "Seal_Break"): the marks column.
+ *   It shows the "What you remembered" heading, each answer with the judge's
+ *   value in the Accent (or "No answer"), the read-only recall scales, then the
+ *   seal, its instruction line and the "Break the seal" and "Show everything"
+ *   buttons, all owned by `SealBreak`, with the sound toggle and its note under
+ *   them on the persona page. It holds nothing from inside the letter
  *   (R9.2, R9.3). Pressing and holding the seal for `SEAL_HOLD_MS`, or pressing
  *   the button, breaks the seal and sends `ADVANCE` exactly once (via
  *   `SealBreak`'s `onAdvance`), which reveals stage 2. `SealBreak` reports its
@@ -126,6 +131,15 @@ export function Reveal({
   // break is in progress and `marks` otherwise (design.md "Stage resolution").
   const { localView, setLocalView } = useLocalView();
 
+  // The persona page's sound toggle sits in the marks column (design.md "Sound
+  // toggle placement"). CeremonyRoot renders its own toggle only in `region`
+  // mode, which the live pages use. So the persona marks hold their own sound
+  // state and pass it to the Seal_Break; live pages keep the inherited state.
+  const inheritedSound = useContext(SoundEnabledContext);
+  const [marksSound, setMarksSound] = useState(false);
+  const personaMarks = variant === "persona";
+  const soundOn = personaMarks ? marksSound : inheritedSound;
+
   // Report the seal-break's in-progress flag up to the local view so the
   // Ceremony Stage reads `seal` while holding and settles back to `marks`.
   const onSealingChange = useCallback(
@@ -175,6 +189,36 @@ export function Reveal({
     ];
   });
 
+  // Each sealed question with the judge's value in the Accent fill, or "No
+  // answer". The unit comes from the sealed metric, never re-fetched (R8.2).
+  const marksRows = opened.payload.recall_questions.map((question) => {
+    const answer = answerByQuestionId.get(question.id);
+    const unit =
+      question.answer_type === "number"
+        ? unitByMetricId.get(question.metric_id)
+        : undefined;
+    const unitText =
+      unit === undefined ? undefined : REVEAL_COPY.unitLabel.replace("{unit}", unit);
+    const hasNumber = answer !== undefined && answer.kind === "number";
+    return (
+      <div key={question.id} className={styles.marksRow}>
+        <dt className={styles.marksQuestion}>
+          {question.text}
+          {unitText === undefined ? null : (
+            <span className={styles.unit}> {unitText}</span>
+          )}
+        </dt>
+        <dd className={styles.marksAnswer}>
+          {hasNumber ? (
+            <span className={styles.marksValue}>{answer.value}</span>
+          ) : (
+            REVEAL_COPY.noAnswer
+          )}
+        </dd>
+      </div>
+    );
+  });
+
   // Stage 2 still shows its own next control; "Show everything" sits beside it.
   const stage2HasHidden = stage === 2;
 
@@ -182,16 +226,44 @@ export function Reveal({
     <section className={styles.reveal}>
       <div className={`${styles.stage} ${styles.fade}`}>
         <StagePanel>
-          <RememberedAnswers opened={opened} record={record} />
-          {recordedScales}
-          {stage === 1 ? (
-            <SealBreak
-              patternKey={variant === "live" ? (letterId ?? personaName) : personaName}
-              seal={seal ?? INERT_SEAL}
-              showAll
-              onSealingChange={onSealingChange}
-            />
-          ) : null}
+          <SoundEnabledContext.Provider value={soundOn}>
+            <div className={styles.marks}>
+              <h2 className={styles.marksHeading} data-fit="marks-heading">
+                {REVEAL_COPY.stage1Title}
+              </h2>
+              <dl className={styles.marksAnswers} data-fit="marks-answers">
+                {marksRows}
+              </dl>
+              {recordedScales}
+              {stage === 1 ? (
+                <>
+                  <div className={styles.marksBreak} data-fit="break">
+                    <SealBreak
+                      patternKey={
+                        variant === "live" ? (letterId ?? personaName) : personaName
+                      }
+                      seal={seal ?? INERT_SEAL}
+                      showAll
+                      onSealingChange={onSealingChange}
+                    />
+                  </div>
+                  {personaMarks ? (
+                    <div className={styles.marksSound}>
+                      <SoundToggle
+                        onChange={(next) => {
+                          setMarksSound(next);
+                          soundCues.onToggle(next);
+                        }}
+                      />
+                      <p className={styles.marksSoundNote}>
+                        {CEREMONY_COPY.soundNote}
+                      </p>
+                    </div>
+                  ) : null}
+                </>
+              ) : null}
+            </div>
+          </SoundEnabledContext.Provider>
         </StagePanel>
       </div>
 
