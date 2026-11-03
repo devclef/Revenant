@@ -52,7 +52,7 @@ import { useSequence } from "./skip";
 import { SoundToggle } from "./sound/SoundToggle";
 import { SoundEnabledContext } from "./sound/SoundEnabledContext";
 import { soundCues } from "./sound/cues";
-import { stageFor } from "./stages";
+import { emergingStatus, stageFor } from "./stages";
 import type { FlowState } from "../reveal/opening-machine";
 import styles from "./ceremony.module.css";
 
@@ -69,6 +69,12 @@ export type CeremonyRootProps = {
   persona?: { key: string; written_as_of: string; opens_at: string };
   /** Extra class for the region (the reveal layout class). */
   className?: string;
+  /**
+   * Where the Calm and Skip controls render. `"region"` (the default, live
+   * mode) renders them inside the region. `"topbar"` (persona mode) renders
+   * neither, because the Top_Bar holds them (spec 07, R8.3).
+   */
+  controls?: "topbar" | "region";
   /** The one view for the current Stage, rendered inside the region. */
   children: ReactNode;
 };
@@ -115,6 +121,7 @@ function CeremonyRegion({
   state,
   personaName,
   className,
+  controls = "region",
   children,
 }: CeremonyRootProps) {
   const { mode, setCalm } = useMotion();
@@ -139,7 +146,11 @@ function CeremonyRegion({
   const motionAttr = mode === "calm" ? "calm" : "full";
 
   // The live line for this Stage (R3.1). One short, neutral sentence.
-  const liveLine = CEREMONY_COPY.stageLive[stage];
+  // The emerging line is the same string the envelope shows (emergingStatus).
+  const liveLine =
+    stage === "emerging"
+      ? emergingStatus(state.tag)
+      : CEREMONY_COPY.stageLive[stage];
 
   // Move focus when the view or the Stage changes (R9.6, R11, the Stage heading
   // rule). The target is the newest heading in the region, so each Stage lands
@@ -170,6 +181,10 @@ function CeremonyRegion({
   // border, and it is declared after `.desk` so it wins.
   const controlClass = `${styles.desk} ${styles.deskControl}`;
 
+  // Calm and Skip render here only in `region` mode. In `topbar` mode the
+  // Top_Bar renders them (spec 07, R8.3), so the page has one of each.
+  const showRegionControls = controls === "region";
+
   return (
     <div
       ref={regionRef}
@@ -182,23 +197,34 @@ function CeremonyRegion({
     >
       <SoundEnabledContext.Provider value={soundOn}>
         <LiveRegion message={liveLine} />
-        <button
-          type="button"
-          className={controlClass}
-          onClick={() => setCalm(motionAttr !== "calm")}
-        >
-          {calmLabel}
-        </button>
-        <SoundToggle
-          onChange={(next) => {
-            setSoundOn(next);
-            soundCues.onToggle(next);
-          }}
-        />
-        <p className={`${styles.desk} ${styles.soundNote}`}>
-          {CEREMONY_COPY.soundNote}
-        </p>
-        {hasActive ? (
+        {showRegionControls ? (
+          <button
+            type="button"
+            className={controlClass}
+            onClick={() => setCalm(motionAttr !== "calm")}
+          >
+            {calmLabel}
+          </button>
+        ) : null}
+        {/* The sound toggle and its note render in the region only. On the
+            persona page (`topbar`) they do not belong to the pre-reveal Stages:
+            design.md "Sound toggle placement" moves them into the `marks`
+            column (spec 07 task 5). Rendering them here would also fill the
+            narrow band above the Soil strip and push the status card onto it. */}
+        {showRegionControls ? (
+          <>
+            <SoundToggle
+              onChange={(next) => {
+                setSoundOn(next);
+                soundCues.onToggle(next);
+              }}
+            />
+            <p className={`${styles.desk} ${styles.soundNote}`}>
+              {CEREMONY_COPY.soundNote}
+            </p>
+          </>
+        ) : null}
+        {showRegionControls && hasActive ? (
           <button type="button" className={controlClass} onClick={skipAll}>
             {CEREMONY_COPY.skip}
           </button>

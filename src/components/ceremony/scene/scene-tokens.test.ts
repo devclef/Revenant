@@ -1,7 +1,7 @@
 // Feature: 07-judge-journey, Property 9 (design.md), R4.1 to R4.9.
 //
 // Every Scene token pair clears its contrast threshold. This test reads
-// scene/tokens.module.css directly, so it tracks the real values. It composites
+// scene/tokens.css directly, so it tracks the real values. It composites
 // partly transparent tokens over the surface beneath them (R4.2), then checks
 // each pair with the WCAG 2.2 relative-luminance formula:
 //   - normal text and the --env-ink pair: 4.5 : 1 (R4.3),
@@ -21,7 +21,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 const here = dirname(fileURLToPath(import.meta.url));
-const tokensCss = readFileSync(resolve(here, "tokens.module.css"), "utf8");
+const tokensCss = readFileSync(resolve(here, "tokens.css"), "utf8");
 
 const NORMAL = 4.5;
 const LARGE_OR_CONTROL = 3;
@@ -40,7 +40,7 @@ function readToken(token: string): Colour {
     new RegExp(String.raw`(?<![\w-])${token}\s*:\s*` + COLOUR_VALUE),
   );
   if (!match) {
-    throw new Error(`token ${token} not found as a hex or rgba colour in tokens.module.css`);
+    throw new Error(`token ${token} not found as a hex or rgba colour in tokens.css`);
   }
   const value = match[1];
   if (value.startsWith("#")) {
@@ -113,7 +113,7 @@ const PAIRS: Pair[] = [
 ];
 
 describe("Property 9: every Scene token pair clears its threshold", () => {
-  it("parses every token from tokens.module.css", () => {
+  it("parses every token from tokens.css", () => {
     for (const { pair, fg, bg } of PAIRS) {
       expect(fg, pair).toHaveLength(3);
       expect(bg, pair).toHaveLength(3);

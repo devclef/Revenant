@@ -31,6 +31,7 @@ import { describe, expect, it } from "vitest";
 
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import { ENVELOPE_TARGET } from "../constants";
+import { LocalViewProvider } from "../local-view";
 import { EnvelopeView } from "./EnvelopeView";
 import type {
   EnvelopeViewProps,
@@ -49,10 +50,16 @@ const PERSONA: EnvelopePersona = {
 };
 
 const render = (props: EnvelopeViewProps): string =>
-  renderToStaticMarkup(createElement(EnvelopeView, props));
+  renderToStaticMarkup(
+    createElement(
+      LocalViewProvider,
+      null,
+      createElement(EnvelopeView, props),
+    ),
+  );
 
 /** The closed envelope's fixed SVG label — present whenever the paper is drawn. */
-const ENVELOPE_LABEL = 'aria-label="An envelope."';
+const ENVELOPE_LABEL = 'aria-hidden="true"';
 
 describe("EnvelopeView — the envelope Stage covers loading / openable / verifying", () => {
   const statementVariants: readonly EnvelopeViewVariant[] = [

@@ -138,6 +138,10 @@ export const CEREMONY_COPY = {
   stageLive: {
     /** The desk, before anything is picked up. */
     desk: "The desk is in front of you.",
+    // The emerging Stage has no entry here. Its line comes from
+    // stages.emergingStatus, the same REVEAL_COPY string the envelope shows.
+    /** The letter, still sealed and not yet open. */
+    sealed: "The letter is still sealed.",
     /** The sealed envelope resting on the desk. */
     envelope: "The envelope is on the desk.",
     /** The intact seal, before it is broken. */
@@ -159,7 +163,7 @@ export const CEREMONY_COPY = {
     /** The closing stage. */
     close: "That is the whole letter.",
     /** An error state. */
-    error: "Something went wrong. You can try again.",
+    error: "The letter could not be opened. You can try again.",
   },
 } as const;
 

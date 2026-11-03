@@ -19,25 +19,53 @@
  */
 
 .envelope {
-  /* A paper object sized by its container, kept to the envelope aspect so the
-     fixed viewBox never distorts. */
+  /* A paper object sized by its container. The wide front is 1.45:1 and the
+     narrow front 1.3:1 (spec 07 task 4); the SVG keeps its own fixed viewBox
+     and letterboxes inside this box, so it never distorts. */
   position: relative;
   width: 100%;
   /* Never wider than the paper panel around it, even at 360 px. */
   max-width: 100%;
   min-width: 0;
-  aspect-ratio: 300 / 188;
+  aspect-ratio: 1.45 / 1;
   /* Fall back to the paper tokens from globals.css. */
   --env-paper: var(--paper, #f4ecd8);
   --env-paper-deep: var(--paper-deep, #e8dcc0);
   --env-fold: var(--paper-shadowed, #d9cba9);
   --env-ink: var(--ink, #2a2016);
+  --env-soil: var(--soil, #5a4632);
+}
+
+.wide {
+  aspect-ratio: 1.45 / 1;
+}
+
+.narrow {
+  aspect-ratio: 1.3 / 1;
 }
 
 .art {
   display: block;
   width: 100%;
   height: 100%;
+}
+
+/* The torn bottom edge: a fold-coloured stroke along the body's bottom. */
+.tear {
+  fill: none;
+  stroke: var(--env-fold);
+  stroke-width: 1.5;
+}
+
+/* The dirt in the bottom 22 percent: a soil-coloured band with flecks. */
+.dirtBand {
+  fill: var(--env-soil);
+  opacity: 0.18;
+}
+
+.dirt circle {
+  fill: var(--env-soil);
+  opacity: 0.35;
 }
 
 /* The paper body, shared by every state. */
@@ -98,7 +126,8 @@
   position: absolute;
   left: 8%;
   right: 8%;
-  bottom: 12%;
+  /* Sits above the dirt band, which is the bottom 22 percent. */
+  bottom: 46%;
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
@@ -111,9 +140,24 @@
   line-height: 1.3;
 }
 
+/* Each date is one line: it never wraps (spec 07 task 4). */
+.date {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: clip;
+}
+
 .demoNote {
   margin: 0.15rem 0 0;
   font-size: clamp(0.75rem, 2.1vw, 0.9rem);
   /* A slightly quieter ink, still a paper text token that clears AA. */
   color: var(--gold-text, #7a5a1e);
+}
+
+/* The responsive front drops the demo note at small widths, so the dates keep
+   the room above the dirt band. */
+@media (max-width: 480px) {
+  .wide [data-demo-note] {
+    display: none;
+  }
 }

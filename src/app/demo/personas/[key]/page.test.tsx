@@ -85,14 +85,14 @@ afterEach(() => {
 });
 
 describe("persona letter route", () => {
-  it("renders DemoLabel and OpeningFlow for a known key", async () => {
+  it("renders the Top_Bar Demo chip and OpeningFlow for a known key", async () => {
     const Page = await loadPage([PERSONA]);
     const element = await Page({ params: Promise.resolve({ key: PERSONA.key }) });
     const html = renderToStaticMarkup(element);
 
-    // The "Demo" label is present (DemoLabel renders the demo badge text).
-    const { DEMO_COPY } = await import("@/components/demo/copy");
-    expect(html).toContain(DEMO_COPY.demoLabel);
+    // The "Demo" chip is in the Top_Bar (the only Demo label on the page).
+    const { SCENE_COPY } = await import("@/components/ceremony/scene/copy");
+    expect(html).toContain(SCENE_COPY.demoChip);
 
     // OpeningFlow was rendered.
     expect(html).toContain("data-opening-flow");

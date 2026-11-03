@@ -1,0 +1,492 @@
+/*
+ * Feature: 07-judge-journey
+ *
+ * Scene_Frame, Top_Bar, backdrop, Soil_Fallback and headline (design.md "The
+ * Scene_Frame", "SceneBackdrop and the Soil", "SceneShell, TopBar").
+ *
+ * Narrow values are the base rules. The wide layout (at or above 900 px) is in
+ * one min-width block below. Every geometry value here equals its constant in
+ * constants.ts; scene-frame.test.ts checks them. Colours come from
+ * tokens.css only (R3.8).
+ *
+ * No time value appears here. Motion belongs to later tasks.
+ */
+
+/* The Scene. Sets the frame variables every child reads. */
+.scene {
+  --frame-w: min(100vw, 1440px);
+  --frame-l: calc((100vw - var(--frame-w)) / 2);
+  --pad: clamp(1rem, 3vw, 2.5rem);
+  --soil-top: 69vh;
+  --soil-band: 8vh;
+  --ghost-x: 50vw;
+  --content-column-max: min(34rem, 46vw);
+  position: relative;
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* The page content. Shares its side padding with the Top_Bar, so the wordmark
+   and the headline start on the same line (R8.14). */
+.main {
+  position: relative;
+  z-index: 1;
+  padding-top: 6rem;
+  padding-inline: calc(var(--frame-l) + var(--pad));
+}
+
+/* The persona Content_Column (spec 07 task 2, design.md "Pick up and the
+   status line", R5.18, R5.19, R6.15, R9.16).
+
+   Below 900 px the Ghost sits centred at 50 % of the window with its body
+   over the middle of the viewport, so the column is full width but its content
+   is pushed clear: the headline sits in the top band above the Ghost body, and
+   the flow's status line and button are held below the Soil strip on the plain
+   background. At or above 900 px the Ghost is at 72 % of the frame, so the
+   column is left-aligned and capped at CONTENT_COLUMN_MAX, clear of the
+   Ghost_Body_Box, and its foot stays above the Soil strip. */
+.personaColumn {
+  position: relative;
+  /* Narrow: full width, nothing capped sideways; the Ghost is centred and the
+     column content is placed vertically (headline top band, flow below strip).
+     A top gap clears the fixed Top_Bar even with the two-line notice (R8.4). */
+  display: flex;
+  flex-direction: column;
+  padding-top: 2.5rem;
+}
+
+/* The headline never crosses into the Ghost column. Narrow: it is smaller and
+   capped so its box clears the centred Ghost body (R5.19). */
+.personaColumn .headline {
+  max-width: 9ch;
+  font-size: clamp(2rem, 6.6vw, 3rem);
+}
+
+/* The Top_Bar. Fixed to the top of the window (R8.1). */
+.topbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.2rem 0.5rem;
+  padding: 0.35rem calc(var(--frame-l) + var(--pad));
+  background: var(--bg);
+}
+
+.brand {
+  order: 1;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.wordmark {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.chip {
+  padding: 0.1rem 0.45rem;
+  border: 1px solid var(--muted);
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+
+.controls {
+  order: 2;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.control {
+  min-height: 36px;
+  padding: 0 0.7rem;
+  border: 1px solid var(--muted);
+  border-radius: 999px;
+  background: var(--bg);
+  color: var(--text);
+  font: inherit;
+  font-size: 0.78rem;
+  cursor: pointer;
+}
+
+.control:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The notice. On its own full-width row below 900 px, so it is never cut off. */
+.notice {
+  order: 3;
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 0.74rem;
+  line-height: 1.25;
+  color: var(--muted);
+}
+
+/* Narrow Top_Bar fit (R8.1, T0 <= 96 px). Below 900 px the wordmark+chip and
+   the Calm+Skip controls must share one row, with the notice on its own second
+   row. The default control width tipped brand+controls onto two rows (so the
+   bar became three rows and overran 96 px with Skip shown), so the narrow
+   controls are compact: smaller font, tighter padding, no wrap between them. */
+@media (max-width: 899.98px) {
+  .wordmark {
+    font-size: 0.92rem;
+    letter-spacing: 0.08em;
+  }
+
+  .controls {
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+  }
+
+  .control {
+    padding: 0 0.5rem;
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
+  .notice {
+    font-size: 0.72rem;
+    line-height: 1.2;
+  }
+}
+
+/* The backdrop. One aria-hidden layer under the content; the pointer passes
+   through it. Fixed to the window, so the Soil stays where the design puts it. */
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* The light. Its centre is the Ghost's x and the Soil's top. */
+.light {
+  position: absolute;
+  left: var(--ghost-x);
+  top: var(--soil-top);
+  width: 130vmax;
+  height: 130vmax;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(closest-side, var(--purple), transparent);
+  opacity: 0.55;
+}
+
+/* The pit: the Ghost's placement, centred on the light's x. */
+.pit {
+  position: absolute;
+  left: var(--ghost-x);
+  top: var(--soil-top);
+  transform: translateX(-50%);
+}
+
+/* The Soil_Fallback strip. Full window width. Its top edge is a jag. Each point
+   sits between 2 % and 11 % of the strip height, and never above 12 px, so the
+   jag stays inside the 14 px band at every size (R6.3). */
+.soilStrip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--soil-top);
+  height: var(--soil-band);
+  clip-path: polygon(
+    0% 100%,
+    0% min(7%, 12px),
+    6% min(3%, 12px),
+    11% min(9%, 12px),
+    17% min(4%, 12px),
+    24% min(10%, 12px),
+    31% min(2%, 12px),
+    38% min(8%, 12px),
+    45% min(5%, 12px),
+    52% min(11%, 12px),
+    59% min(3%, 12px),
+    66% min(9%, 12px),
+    73% min(4%, 12px),
+    80% min(10%, 12px),
+    87% min(2%, 12px),
+    93% min(7%, 12px),
+    100% min(5%, 12px),
+    100% 100%
+  );
+  background:
+    radial-gradient(ellipse 30% 90% at var(--ghost-x) 0%, var(--soil-lit), transparent),
+    radial-gradient(var(--clod) 1px, transparent 1.5px) 0 0 / 14px 14px,
+    linear-gradient(to bottom, var(--soil-mid), var(--soil-deep));
+}
+
+/* Fades the bottom quarter of the strip into the page background. */
+.soilStrip::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 25%;
+  background: linear-gradient(to bottom, transparent, var(--bg));
+}
+
+/* The headline. The only h1 on the scene (R3.18, data-scene-ceiling). */
+.headline {
+  margin: 0;
+  max-width: 11.5ch;
+  font-size: clamp(2.35rem, 8.4vw, 7.6rem);
+  font-weight: 900;
+  line-height: 0.95;
+  color: var(--text);
+}
+
+/* "the receipts." stays on one line (R3.18). */
+.nowrap {
+  white-space: nowrap;
+}
+
+/* The Accent: "receipts." only, never on a figure (R3.10). */
+.accent {
+  color: var(--accent);
+}
+
+/* Wide layout, at or above 900 px. */
+@media (min-width: 900px) {
+  .scene {
+    --soil-top: 74vh;
+    --soil-band: 14vh;
+    --ghost-x: calc(var(--frame-l) + var(--frame-w) * 0.72);
+  }
+
+  .main {
+    padding-top: 5rem;
+  }
+
+  /* Wide: the column is left-aligned and at most CONTENT_COLUMN_MAX wide, so
+     it stays clear of the Ghost at 72 % of the frame (R5.18). Its foot reserves
+     the lower band so the status line and button sit above the Soil strip
+     (design.md "Pick up and the status line", R6.15, R9.16). */
+  .personaColumn {
+    max-width: var(--content-column-max);
+    padding-bottom: calc(26vh + 2rem);
+  }
+
+  .personaColumn .headline {
+    max-width: 11.5ch;
+    font-size: clamp(2.35rem, 6vw, 5.4rem);
+  }
+
+  .topbar {
+    gap: 0 1rem;
+    padding-block: 0.75rem;
+  }
+
+  .brand {
+    order: 0;
+  }
+
+  .wordmark {
+    font-size: 1.1rem;
+  }
+
+  .controls {
+    order: 0;
+    margin-left: 0;
+  }
+
+  .control {
+    min-height: 44px;
+    font-size: 0.85rem;
+  }
+
+  .notice {
+    order: 0;
+    flex-basis: auto;
+    margin-left: auto;
+    font-size: 0.8rem;
+    text-align: right;
+  }
+}
+
+/*
+ * The Ghost and the Emergence (design.md "The Ghost", "The Emergence is CSS
+ * first"). Every ms value and the easing equal their constants in constants.ts;
+ * constants-css.test.ts checks them. Animations change transform only.
+ *
+ * Gate: each animation runs only with motion allowed by the device and by the
+ * page's motion mode. The end pose is the base style, so without the gate the
+ * Ghost rests risen from the first render (R9.14).
+ */
+
+/* The Ghost_Box width and the risen pose, in the wide layout. */
+.ghostPlace {
+  --ghost-w: min(50vh, 560px);
+  --ghost-risen: -7%;
+  position: absolute;
+  left: 50%;
+  bottom: -3vh;
+  width: var(--ghost-w);
+  transform: translateX(-50%);
+  /* Clips the bottom edge at the Soil line, so the hem rises out of the Soil.
+     The top, left and right stay open. */
+  clip-path: inset(-100% -100% 0 -100%);
+}
+
+/* The narrow layout (below 900 px). */
+@media (max-width: 899.98px) {
+  .ghostPlace {
+    --ghost-w: min(31vh, 200px);
+    --ghost-risen: -3%;
+  }
+}
+
+/* The Ghost_Box: 1.2 times as tall as it is wide (aspect 5 : 6). Its base
+   transform is the risen pose. */
+.ghost {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 5 / 6;
+  transform: translateY(var(--ghost-risen));
+}
+
+.bob {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+/* The glow: two drop shadows in --ghost-glow (26 px and 4 px blur). */
+.ghostGlow {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  filter:
+    drop-shadow(0 0 26px var(--ghost-glow))
+    drop-shadow(0 0 4px var(--ghost-glow));
+}
+
+.ghostSvg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.ghostFold {
+  fill: none;
+  stroke: var(--ghost-fold);
+  stroke-width: 2;
+  stroke-opacity: 0.35;
+}
+
+.ghostEye {
+  fill: var(--bg);
+}
+
+/* The slot an Envelope is held in. Placement is set by the Envelope tasks. */
+.heldSlot {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* The held Envelope's placement in the Ghost's slot (design.md "Held in the
+   Ghost's subtree": left 18 %, width 64 %, top 48 % at or above 900 px, 47 %
+   below). The envelope spans SVG y 115-203 (wide) / 113-211 (narrow), clearing
+   the eyes (lowest y 112) and the hem (highest y 212), so it covers neither
+   (R5.2). */
+.heldEnvelope {
+  position: absolute;
+  left: 18%;
+  top: 48%;
+  width: 64%;
+}
+
+@media (max-width: 899.98px) {
+  .heldEnvelope {
+    top: 47%;
+  }
+}
+
+/* The rise from below the Soil to the risen pose. Starts 900 ms after the
+   first style, runs 1500 ms, and holds its end pose (backwards fill). */
+@keyframes rise {
+  from {
+    transform: translateY(105%);
+  }
+  to {
+    transform: translateY(var(--ghost-risen));
+  }
+}
+
+/* The Idle_Bob: 3 px over 3600 ms, from the end of the rise on. */
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-3px);
+  }
+}
+
+/* The shake of the pit: 2 px, once. Keeps the pit's own -50% centring. */
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(-50%);
+  }
+  25% {
+    transform: translateX(calc(-50% - 2px));
+  }
+  75% {
+    transform: translateX(calc(-50% + 2px));
+  }
+}
+
+/* The shake of the Soil strip: 2 px, once. */
+@keyframes shakeSoil {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-2px);
+  }
+  75% {
+    transform: translateX(2px);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-ceremony-motion="full"] .pit {
+    animation: shake 500ms linear 750ms 1;
+  }
+
+  [data-ceremony-motion="full"] .soilStrip {
+    animation: shakeSoil 500ms linear 750ms 1;
+  }
+
+  [data-ceremony-motion="full"] .ghost {
+    animation: rise 1500ms cubic-bezier(0.16, 0.84, 0.3, 1) 900ms backwards;
+  }
+
+  [data-ceremony-motion="full"] .bob {
+    animation: bob 3600ms ease-in-out calc(900ms + 1500ms) infinite;
+  }
+}

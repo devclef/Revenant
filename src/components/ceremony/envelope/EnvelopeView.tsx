@@ -53,9 +53,30 @@ import {
   StillSealed,
   type StillSealedProps,
 } from "@/components/reveal/StillSealed";
+import type { FlowState } from "@/components/reveal/opening-machine";
+
 import { ENVELOPE_TARGET } from "../constants";
+import { useLocalView } from "../local-view";
+import { emergingStatus, showPickUp } from "../stages";
 import { Envelope, type EnvelopePersona, type EnvelopeState } from "./Envelope";
 import styles from "./EnvelopeView.module.css";
+
+/**
+ * Renders its children only when the Pick_Up_Button gate is open: the flow tag
+ * is `verified` and the Emergence is `"done"` (design.md "The Pick_Up_Button
+ * gate", R9.8 to R9.10). Reads the local view, so it must sit under the
+ * Ceremony's LocalViewProvider.
+ */
+function PickUpGate({
+  tag,
+  children,
+}: {
+  tag: FlowState["tag"];
+  children: ReactNode;
+}): ReactElement | null {
+  const { localView } = useLocalView();
+  return showPickUp(tag, localView) ? <>{children}</> : null;
+}
 
 /**
  * Which pre-reveal scene to show. These are exactly the flow tags the design's
@@ -101,6 +122,16 @@ export type EnvelopeViewProps = {
   stillSealed?: Pick<StillSealedProps, "precise" | "onZero">;
   /** The `unlock` variant's content, placed under the envelope (the key step). */
   children?: ReactNode;
+  /**
+   * The persona page holds the Envelope in the Ghost's slot (design.md "The
+   * Envelope", mermaid persona branch; it "never moves to the content column
+   * on the persona page", R10.13). When `held` is true the Stage renders only
+   * its statement, StillSealed panel or Begin control in the content column and
+   * draws NO in-column envelope frame, so the column stays clear of the Soil
+   * strip and the Ghost body (R6.15, R5.19). Defaults to false (the `/demo` and
+   * `/l/[id]` column, which draws the envelope inline).
+   */
+  held?: boolean;
 };
 
 /**
@@ -144,7 +175,13 @@ export function EnvelopeView({
   sealedOpensAt,
   stillSealed,
   children,
+  held = false,
 }: EnvelopeViewProps): ReactElement {
+  // On the persona page the Ghost holds the Envelope, so the column draws no
+  // envelope frame; elsewhere (the /demo and /l/[id] column) it draws inline.
+  const frame = (state: EnvelopeState) =>
+    held ? null : <EnvelopeFrame state={state} persona={persona} />;
+
   switch (variant) {
     case "loading":
     case "openable":
@@ -154,14 +191,12 @@ export function EnvelopeView({
       // `role="status"` region so a screen-reader reader hears it. `openable`
       // is a brief transition with no statement of its own.
       const statement =
-        variant === "verifying"
-          ? REVEAL_COPY.verifying
-          : variant === "loading"
-            ? REVEAL_COPY.loading
-            : undefined;
+        variant === "verifying" || variant === "loading"
+          ? emergingStatus(variant === "loading" ? "loading" : "verifying")
+          : undefined;
       return (
         <ParchmentSurface as="section" className={styles.envelopeStage}>
-          <EnvelopeFrame state="closed" persona={persona} />
+          {frame("closed")}
           {statement === undefined ? null : (
             <p className={styles.statement} role="status">
               {statement}
@@ -182,7 +217,7 @@ export function EnvelopeView({
       const opensAt = persona?.opens_at ?? sealedOpensAt;
       return (
         <ParchmentSurface as="section" className={styles.envelopeStage}>
-          <EnvelopeFrame state="closed" persona={persona} />
+          {frame("closed")}
           {opensAt === undefined ? null : (
             <div className={styles.panel}>
               <StillSealed
@@ -201,7 +236,7 @@ export function EnvelopeView({
       // passkey control, the key field and any notice) sit beneath it.
       return (
         <ParchmentSurface as="section" className={styles.envelopeStage}>
-          <EnvelopeFrame state="closed" persona={persona} />
+          {frame("closed")}
           {children}
         </ParchmentSurface>
       );
@@ -210,13 +245,25 @@ export function EnvelopeView({
       // The seal-is-intact statement, shown BEFORE any recall question, and the
       // control that sends BEGIN. The envelope stays closed; it turns over only
       // after BEGIN (R7.5, product.md "Recall first").
+      //
+      // With an in-column envelope (`/demo`, `/l/[id]`) the statement and button
+      // overlay the space above the envelope frame (`.intactTop`, absolute). On
+      // the persona page the Ghost holds the envelope and the column draws none,
+      // so they flow normally inside the card — otherwise the absolute box has
+      // no height and the text spills onto the dark background (S1a).
       return (
         <ParchmentSurface as="section" className={styles.intactStage}>
-          <EnvelopeFrame state={envelopeState} persona={persona} />
-          <p className={styles.statement}>{REVEAL_COPY.sealIntact}</p>
-          <button type="button" className={styles.button} onClick={onBegin}>
-            {REVEAL_COPY.begin}
-          </button>
+          <div className={held ? styles.intactFlow : styles.intactTop}>
+            <p className={styles.statement} role="status">
+              {REVEAL_COPY.sealIntact}
+            </p>
+            <PickUpGate tag="verified">
+              <button type="button" className={styles.button} onClick={onBegin}>
+                {REVEAL_COPY.begin}
+              </button>
+            </PickUpGate>
+          </div>
+          {frame(envelopeState)}
         </ParchmentSurface>
       );
   }

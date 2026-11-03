@@ -523,8 +523,8 @@ describe("OpeningFlow Ceremony root attributes (R3.1, R3.2, R17.3)", () => {
     () => {
       const html = render({ tag: "loading" });
       expect(html).toContain('role="region"');
-      // loading resolves to the envelope Stage (design.md Stage-resolution).
-      expect(attr(html, "data-ceremony")).toBe("envelope");
+      // loading resolves to the emerging Stage (spec 07 Stage resolution).
+      expect(attr(html, "data-ceremony")).toBe("emerging");
     },
   );
 
@@ -568,4 +568,36 @@ describe("OpeningFlow Ceremony root attributes (R3.1, R3.2, R17.3)", () => {
       expect(revealHtml).toContain(CEREMONY_COPY.sealButton);
     },
   );
+});
+
+// --- controls placement (spec 07 task 2, R8.3) -----------------------------
+//
+// On the persona route the Top_Bar holds Calm and Skip, so the region must not
+// render them again. A Live_Letter keeps them inside the region. Counting the
+// button text, not the copy, keeps the check on the rendered controls.
+
+function countCalmButtons(html: string): number {
+  return html.split(`>${CEREMONY_COPY.calmOn}<`).length - 1;
+}
+
+describe("OpeningFlow controls placement (spec 07 task 2)", () => {
+  it("passes controls=topbar in persona mode, so the region renders no Calm control", () => {
+    setMotionMode("full");
+    const html = render({ tag: "loading" });
+    expect(countCalmButtons(html)).toBe(0);
+    expect(html).not.toContain(`>${CEREMONY_COPY.skip}<`);
+  });
+
+  it("keeps Calm inside the region in live mode", () => {
+    setMotionMode("full");
+    setState({ tag: "loading" });
+    const html = renderToStaticMarkup(
+      createElement(OpeningFlow, {
+        letterId: "letter-1",
+        personaName: "Maya",
+        mode: "live",
+      }),
+    );
+    expect(countCalmButtons(html)).toBe(1);
+  });
 });

@@ -123,7 +123,9 @@ describe("OpeningFlow live mode: the Demo label", () => {
   it("shows the Demo label first for a demo letter (R17.11)", () => {
     const markup = renderLive({ tag: "loading" }, { demo: true });
     const label = markup.indexOf(esc(DEMO_COPY.demoLabel));
-    const firstView = markup.indexOf(esc(REVEAL_COPY.loading));
+    // The emerging line now also sits in the Stage's live region, which renders
+    // before the view. The view's own statement is the last occurrence.
+    const firstView = markup.lastIndexOf(esc(REVEAL_COPY.loading));
     expect(label).toBeGreaterThan(-1);
     expect(firstView).toBeGreaterThan(-1);
     expect(label).toBeLessThan(firstView);

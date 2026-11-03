@@ -7,7 +7,20 @@
 // data-driven value: the Stage depends only on the flow tag, the reveal stage
 // number and the local view.
 
+import { SCENE_COPY } from "./scene/copy";
 import type { FlowState } from "../reveal/opening-machine";
+
+/**
+ * The one line for the emerging Stage (spec 07 task 2). EnvelopeView's visible
+ * statement and the Stage's role=status line both read this string, so the
+ * words a reader sees are the words announced. `loading` gives the loading
+ * line; `openable` and `verifying` (the same scene) give the checking line.
+ */
+export function emergingStatus(tag: FlowState["tag"]): string {
+  return tag === "loading"
+    ? SCENE_COPY.emergingStatus.loading
+    : SCENE_COPY.emergingStatus.verifying;
+}
 
 /**
  * The visual Stages of the ceremony. Each names a distinct scene on the desk.
@@ -16,6 +29,8 @@ import type { FlowState } from "../reveal/opening-machine";
  */
 export type Stage =
   | "desk"
+  | "emerging"
+  | "sealed"
   | "envelope"
   | "intact"
   | "recall"
@@ -32,20 +47,27 @@ export type Stage =
  * View-local animation state, held by the running views and reported up to
  * `CeremonyRoot` so `data-ceremony` can name the Stage. It is not flow state.
  *
+ * - `emergence`: the CSS Emergence on the persona page (spec 07); `"done"`
+ *   once it has finished or Skip has finished it.
  * - `sealing`: a Seal_Break is in progress (stage 1 only).
  * - `step`: the stage 3 Step; `"done"` is the final, settled state.
  */
 export type LocalView = {
+  emergence: "running" | "done";
   sealing: boolean;
   step: "then" | "passage" | "now" | "done";
 };
 
 /**
  * The default local view. A static render reports the final, settled state:
- * no seal break in progress, and stage 3 at `"done"` so it resolves to
- * `close` (design.md "Final state first").
+ * the Emergence has finished, no seal break is in progress, and stage 3 is at
+ * `"done"` so it resolves to `close` (design.md "Final state first").
  */
-export const DEFAULT_LOCAL_VIEW: LocalView = { sealing: false, step: "done" };
+export const DEFAULT_LOCAL_VIEW: LocalView = {
+  emergence: "done",
+  sealing: false,
+  step: "done",
+};
 
 /**
  * Resolve the Stage for a `(flow state, local view)` pair, exactly per the
@@ -55,11 +77,15 @@ export const DEFAULT_LOCAL_VIEW: LocalView = { sealing: false, step: "done" };
 export function stageFor(state: FlowState, local: LocalView): Stage {
   switch (state.tag) {
     case "loading":
-    case "sealed":
     case "openable":
+    case "verifying":
+      return "emerging";
+
+    case "sealed":
+      return "sealed";
+
     case "awaiting_key":
     case "unlocking":
-    case "verifying":
       return "envelope";
 
     case "verified":
@@ -87,4 +113,13 @@ export function stageFor(state: FlowState, local: LocalView): Stage {
     case "open_failed":
       return "error";
   }
+}
+
+/**
+ * Whether the Pick_Up_Button renders (design.md "The Pick_Up_Button gate", R9.8
+ * to R9.10). Only the `verified` tag shows it, and only once the Emergence is
+ * `"done"`, so the button never appears while the Ghost is still rising.
+ */
+export function showPickUp(tag: FlowState["tag"], local: LocalView): boolean {
+  return tag === "verified" && local.emergence === "done";
 }

@@ -25,6 +25,34 @@
   gap: 1.25rem;
 }
 
+/* The verified stage's statement and Begin control sit in the space above the
+   envelope's frame offset, so they stay clear of the Soil strip. The frame keeps
+   its ENVELOPE_TARGET top offset, so the envelope does not move. */
+.intactStage {
+  position: relative;
+}
+
+.intactTop {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+/* Persona page (the Ghost holds the envelope, no in-column frame): the statement
+   and button flow inside the card so it grows to contain them and the text never
+   spills onto the dark background. */
+.intactFlow {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
 /* --- The envelope's resting frame (ENVELOPE_TARGET) --- */
 
 .frame {

@@ -37,6 +37,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CEREMONY_COPY } from "./copy";
+import { REVEAL_COPY } from "../reveal/copy";
 import type { FlowState, Opened } from "../reveal/opening-machine";
 import type { Draft, RecallRecordV1 } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
@@ -107,6 +108,7 @@ vi.mock("./skip", () => ({
 
 // Imported after the mocks are declared (vi.mock is hoisted, so this is safe).
 import { OpeningFlow } from "../reveal/OpeningFlow";
+import { CeremonyRoot, type CeremonyRootProps } from "./CeremonyRoot";
 
 // --- fixtures ----------------------------------------------------------------
 
@@ -164,10 +166,10 @@ const RECORD: RecallRecordV1 = {
   answers: [{ question_id: "q-fuel", kind: "number", value: "3.50" }],
 };
 
-function render(state: FlowState): string {
+function render(state: FlowState, mode: "persona" | "live" = "persona"): string {
   setFlowState(state);
   return renderToStaticMarkup(
-    createElement(OpeningFlow, { letterId: "letter-1", personaName: "Maya" }),
+    createElement(OpeningFlow, { letterId: "letter-1", personaName: "Maya", mode }),
   );
 }
 
@@ -263,19 +265,19 @@ describe("CeremonyRoot data-ceremony is the Stage for the state (R3.1)", () => {
   // The default local view is { sealing: false, step: "done" }, so a static
   // render of reveal stage 3 reports `close`, its final state (design.md).
   const cases: Array<{ name: string; state: FlowState; stage: string }> = [
-    // loading -> envelope (the "loading" shorthand for the envelope Stage).
-    { name: "loading", state: { tag: "loading" }, stage: "envelope" },
+    // loading -> emerging (spec 07: the letter is being brought out).
+    { name: "loading", state: { tag: "loading" }, stage: "emerging" },
     {
       name: "sealed",
       state: { tag: "sealed", opensAt: "2099-01-01T00:00:00.000Z" },
-      stage: "envelope",
+      stage: "sealed",
     },
     {
       name: "openable",
       state: { tag: "openable", envelope: {}, envelopeHash: "h" },
-      stage: "envelope",
+      stage: "emerging",
     },
-    { name: "verifying", state: { tag: "verifying" }, stage: "envelope" },
+    { name: "verifying", state: { tag: "verifying" }, stage: "emerging" },
     // verified -> intact.
     {
       name: "verified",
@@ -344,15 +346,22 @@ describe("CeremonyRoot live region", () => {
     expect(html).toContain('aria-live="polite"');
   });
 
-  it.skipIf(!CEREMONY_ROOT_PRESENT)("announces the envelope line while loading", () => {
+  it.skipIf(!CEREMONY_ROOT_PRESENT)("announces the emerging line while loading", () => {
     const html = render({ tag: "loading" });
-    expect(html).toContain(esc(CEREMONY_COPY.stageLive.envelope));
+    expect(html).toContain(esc(REVEAL_COPY.loading));
+    expect(html).not.toContain("being brought out");
+  });
+
+  it.skipIf(!CEREMONY_ROOT_PRESENT)("announces the same emerging line the envelope shows while verifying", () => {
+    const html = render({ tag: "verifying" });
+    expect(html).toContain(esc(REVEAL_COPY.verifying));
   });
 });
 
 describe("CeremonyRoot Calm control", () => {
   it.skipIf(!CEREMONY_ROOT_PRESENT)("renders a Calm control labelled from CEREMONY_COPY", () => {
-    const html = render({ tag: "loading" });
+    // Live mode keeps the region's own controls; persona mode puts them in the Top_Bar.
+    const html = render({ tag: "loading" }, "live");
     // In full motion the control offers to turn motion off.
     expect(html).toContain(esc(CEREMONY_COPY.calmOn));
   });
@@ -397,7 +406,7 @@ describe("CeremonyRoot desk-token controls render once per state", () => {
         it(`${name}, ${mode} motion, skip ${active ? "active" : "idle"}: each control once`, () => {
           setMotionMode(mode);
           setHasActive(active);
-          const html = render(state);
+          const html = render(state, "live");
           const calmLabel =
             mode === "calm" ? CEREMONY_COPY.calmOff : CEREMONY_COPY.calmOn;
           expect(countButtons(html, calmLabel)).toBe(1);
@@ -410,7 +419,7 @@ describe("CeremonyRoot desk-token controls render once per state", () => {
   it("gives both controls the desk-control class", () => {
     setMotionMode("full");
     setHasActive(true);
-    const html = render({ tag: "loading" });
+    const html = render({ tag: "loading" }, "live");
     const buttons = html.match(/<button[^>]*>[^<]*<\/button>/g) ?? [];
     const controls = buttons.filter(
       (b) =>
@@ -432,9 +441,18 @@ describe("CeremonyRoot render is I/O-free", () => {
   });
 });
 
+describe("CeremonyRoot persona mode leaves the region without its own controls (R8.3)", () => {
+  it("renders no Calm or Skip inside the region in persona mode", () => {
+    setHasActive(true);
+    const html = render({ tag: "loading" });
+    expect(countButtons(html, CEREMONY_COPY.calmOn)).toBe(0);
+    expect(countButtons(html, CEREMONY_COPY.skip)).toBe(0);
+  });
+});
+
 describe("CeremonyRoot controls use the desk control style (R11.2, R11.4)", () => {
   it("gives the Calm control the desk-control class from ceremony.module.css", () => {
-    const html = render({ tag: "loading" });
+    const html = render({ tag: "loading" }, "live");
     expect(html).toMatch(/<button type="button" class="[^"]+"/);
   });
 
@@ -444,5 +462,61 @@ describe("CeremonyRoot controls use the desk control style (R11.2, R11.4)", () =
     expect(css).toMatch(
       /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.deskControl\s*\{\s*transition:\s*none;/,
     );
+  });
+});
+
+// --- the controls prop (spec 07, R8.3) ----------------------------------------
+//
+// `controls="region"` (the default) renders Calm and Skip inside the region, as
+// before. `controls="topbar"` renders neither, because the Top_Bar holds them.
+// The region contract is the same in both modes.
+
+function rootMarkup(extra: { controls?: "topbar" | "region" } = {}): string {
+  const props: CeremonyRootProps = {
+    state: { tag: "loading" },
+    personaName: "Maya",
+    children: createElement("p", null, "BODY"),
+    ...extra,
+  };
+  return renderToStaticMarkup(createElement(CeremonyRoot, props));
+}
+
+describe("CeremonyRoot controls prop", () => {
+  it("renders Calm inside the region by default", () => {
+    expect(rootMarkup()).toContain(CEREMONY_COPY.calmOn);
+  });
+
+  it("renders Calm inside the region with controls set to region", () => {
+    expect(rootMarkup({ controls: "region" })).toContain(CEREMONY_COPY.calmOn);
+  });
+
+  it("renders no Calm and no Skip with controls set to topbar, even while a sequence runs", () => {
+    setHasActive(true);
+    try {
+      const markup = rootMarkup({ controls: "topbar" });
+      expect(markup).not.toContain(CEREMONY_COPY.calmOn);
+      expect(markup).not.toContain(CEREMONY_COPY.calmOff);
+      expect(markup).not.toContain(`>${CEREMONY_COPY.skip}<`);
+    } finally {
+      setHasActive(false);
+    }
+  });
+
+  it("keeps the region contract with controls set to topbar", () => {
+    const markup = rootMarkup({ controls: "topbar" });
+    expect(markup).toContain('role="region"');
+    expect(markup).toContain('aria-label="Maya"');
+    expect(markup).toContain('tabindex="-1"');
+    expect(markup.match(/data-ceremony="/g)?.length).toBe(1);
+    expect(markup.match(/data-ceremony-motion="/g)?.length).toBe(1);
+  });
+
+  it("shows Skip inside the region with controls set to region while a sequence runs", () => {
+    setHasActive(true);
+    try {
+      expect(rootMarkup({ controls: "region" })).toContain(`>${CEREMONY_COPY.skip}<`);
+    } finally {
+      setHasActive(false);
+    }
   });
 });

@@ -24,6 +24,22 @@
   padding: 2rem 1.25rem 4rem;
 }
 
+/* Persona page only (spec 07, R5.18): the content column is left-aligned and
+   at most CONTENT_COLUMN_MAX wide, so it stays clear of the Ghost_Body_Box. */
+.flowPersona {
+  max-width: min(34rem, 46vw);
+  margin: 0;
+}
+
+/* Below 900 px the Ghost is centred low, so the column may be comfortably wide
+   above it: the tight 46vw cap is only needed at >=900 px where the Ghost sits
+   at 72 % of the frame. A wider narrow column keeps the card text readable. */
+@media (max-width: 899.98px) {
+  .flowPersona {
+    max-width: min(22rem, 92vw);
+  }
+}
+
 .view {
   margin: 0 auto;
 }

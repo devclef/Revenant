@@ -61,6 +61,8 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { Ghost } from "@/components/ceremony/scene/Ghost";
+import { SceneBackdrop } from "@/components/ceremony/scene/SceneBackdrop";
 import { CeremonyRoot } from "@/components/ceremony/CeremonyRoot";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { SkipProvider } from "@/components/ceremony/skip";
@@ -70,6 +72,8 @@ import {
   type EnvelopeViewVariant,
 } from "@/components/ceremony/envelope/EnvelopeView";
 import type { EnvelopePersona } from "@/components/ceremony/envelope/Envelope";
+import { Envelope } from "@/components/ceremony/envelope/Envelope";
+import heldStyles from "@/components/ceremony/scene/scene.module.css";
 import { DemoLabel } from "@/components/demo/DemoLabel";
 import { useOpeningFlow } from "./useOpeningFlow";
 import { onceOnly, type AuthenticatorPort } from "@/components/live/unlock";
@@ -80,6 +84,42 @@ import { FlowError, type FlowErrorKind } from "./FlowError";
 import type { FlowState, OpenFailedKind } from "./opening-machine";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
+
+/**
+ * The Envelope held in the Ghost's slot on the persona page (design.md "The
+ * Envelope": it sits in the Ghost's held slot through `emerging`, `sealed`,
+ * `intact`, `recall`, `marks` and `seal`, and never moves to the content
+ * column, R10.13). It rests `closed` through the pre-reveal Stages; the later
+ * Stages (task 4+) drive it to `turned`/`open`. It carries the persona's two
+ * date lines so they stay readable above the dirt band (R8.8) and are never
+ * clipped by the content column (the C2 fix).
+ */
+function HeldEnvelope({
+  persona,
+  tag,
+}: {
+  persona: EnvelopePersona;
+  tag: FlowState["tag"];
+}) {
+  // The envelope is not held while the reader is away from the pre-reveal and
+  // reveal Stages (submitting the recall, a failed open). Those Stages show no
+  // Ghost envelope.
+  const held = new Set<FlowState["tag"]>([
+    "loading",
+    "openable",
+    "verifying",
+    "awaiting_key",
+    "unlocking",
+    "sealed",
+    "verified",
+  ]);
+  if (!held.has(tag)) return null;
+  return (
+    <div className={heldStyles.heldEnvelope}>
+      <Envelope state="closed" layout="responsive" persona={persona} />
+    </div>
+  );
+}
 
 /** The key step's component type, from its own module. */
 type KeyStepComponent = typeof import("@/components/live/UnlockView").UnlockView;
@@ -193,9 +233,22 @@ export function OpeningFlow({
           state={state}
           personaName={personaName}
           persona={persona}
-          className={styles.flow}
+          className={mode === "persona" ? `${styles.flow} ${styles.flowPersona}` : styles.flow}
+          controls={mode === "persona" ? "topbar" : "region"}
         >
           {flow.live?.demo === true ? <DemoLabel /> : null}
+          {mode === "persona" ? (
+            <SceneBackdrop>
+              <Ghost>
+                {persona === undefined ? null : (
+                  <HeldEnvelope
+                    persona={{ ...persona, demo: true }}
+                    tag={state.tag}
+                  />
+                )}
+              </Ghost>
+            </SceneBackdrop>
+          ) : null}
           <div className={styles.view}>
             {selectView(state, flow, letterId, personaName, persona, mode, retryAtZero, KeyStep, {
               keyText,
@@ -246,6 +299,7 @@ function selectView(
     <EnvelopeView
       variant={variant}
       persona={envelopePersona}
+      held={mode === "persona"}
       onBegin={flow.begin}
       onRetry={flow.retry}
       {...extra}

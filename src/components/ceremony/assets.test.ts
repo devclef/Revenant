@@ -30,6 +30,8 @@ import { describe, expect, it } from "vitest";
 const here = dirname(fileURLToPath(import.meta.url));
 const assetsDir = resolve(here, "assets");
 const assetsMdPath = resolve(here, "ASSETS.md");
+/** The repository root, three levels up from src/components/ceremony. */
+const REPO_ROOT = resolve(here, "..", "..", "..");
 
 /** The only licences an asset row may carry (R15.1). */
 const ALLOWED_LICENCES = ["original", "CC0"] as const;
@@ -135,16 +137,24 @@ describe("Feature 05-reveal-ceremony, Property 23: ceremony assets are recorded,
     ).toBeLessThanOrEqual(MAX_BYTES);
   });
 
-  it("lists only allowed licences and files that exist in ASSETS.md", () => {
+  it("lists only allowed licences, and every row names a real file (assets/ rows on disk, component rows in the repository)", () => {
     for (const entry of entries) {
       expect(
         ALLOWED_LICENCES as readonly string[],
         `ASSETS.md row for "${entry.path}" has disallowed licence "${entry.licence}" (R15.1)`,
       ).toContain(entry.licence);
-      const relPosix = entry.path
-        .replace(/\\/g, "/")
-        .replace(/^\.?\//, "")
-        .replace(/^src\/components\/ceremony\/assets\//, "");
+      const norm = entry.path.replace(/\\/g, "/").replace(/^\.?\//, "");
+      if (!norm.startsWith("src/components/ceremony/assets/")) {
+        // A component row (R23.2, "path or component name"): it names a file
+        // in the repository. It is not an asset file, so the on-disk check
+        // under assets/ and the byte budget do not apply to it.
+        expect(
+          existsSync(resolve(REPO_ROOT, norm)),
+          `ASSETS.md row "${entry.path}" names no existing repository file (R23.2)`,
+        ).toBe(true);
+        continue;
+      }
+      const relPosix = norm.replace(/^src\/components\/ceremony\/assets\//, "");
       const onDisk = assetFiles.some(
         (f) => relative(assetsDir, f).replace(/\\/g, "/") === relPosix,
       );
