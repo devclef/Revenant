@@ -34,6 +34,8 @@ vi.mock("../skip", () => ({
 }));
 
 // Imported after the mocks (vi.mock is hoisted, so this is safe).
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { SceneBackdrop } from "./SceneBackdrop";
 import { SceneHeadline, splitHeadlineLead } from "./SceneHeadline";
 import { SceneShell, type SceneShellProps } from "./SceneShell";
@@ -172,5 +174,50 @@ describe("SceneHeadline (R3.18)", () => {
       article: "the",
     });
     expect(render(createElement(SceneHeadline))).toContain("Your past self returns with");
+  });
+});
+
+// --- Top_Bar narrow layout and single Calm (spec 07 task 2) ----------------
+//
+// The 96 px height at 360 x 640 is measured in the browser check. These tests
+// pin the CSS rules that the measurement depends on: the notice takes its own
+// full row below 900 px, and only the wide layout lets it share a row.
+
+const sceneCss = readFileSync(resolve(__dirname, "scene.module.css"), "utf8");
+
+/** The body of the first rule with this selector, in the CSS module. */
+function ruleBodyOf(selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = sceneCss.match(new RegExp(`(?:^|\\n)${escaped}\\s*\\{([^}]*)\\}`));
+  return m?.[1] ?? "";
+}
+
+describe("Top_Bar narrow layout (spec 07 task 2)", () => {
+  it("gives the notice its own full-width row below 900 px", () => {
+    const base = ruleBodyOf(".notice");
+    expect(base).toMatch(/flex-basis:\s*100%/);
+    expect(base).toMatch(/order:\s*3/);
+  });
+
+  it("lets the notice share the row on the wide layout", () => {
+    const wide = sceneCss.slice(sceneCss.indexOf("@media (min-width: 900px)"));
+    const notice = wide.match(/\.notice\s*\{([^}]*)\}/)?.[1] ?? "";
+    expect(notice).toMatch(/flex-basis:\s*auto/);
+  });
+
+  it("wraps the bar and keeps the controls at the 36 px touch minimum below 900 px", () => {
+    expect(ruleBodyOf(".topbar")).toMatch(/flex-wrap:\s*wrap/);
+    expect(ruleBodyOf(".control")).toMatch(/min-height:\s*36px/);
+  });
+
+  it("renders one Calm control on the persona page, held by the Top_Bar", () => {
+    const html = render(
+      shellElement({
+        variant: "persona",
+        personaName: "Maya",
+        children: child,
+      }),
+    );
+    expect(html.split(`>${CEREMONY_COPY.calmOn}<`).length - 1).toBe(1);
   });
 });
