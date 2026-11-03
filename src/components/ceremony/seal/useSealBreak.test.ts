@@ -352,3 +352,35 @@ describe("useSealBreak: the sound cue (R14.2)", () => {
     expect(m.onAdvance).toHaveBeenCalledTimes(1);
   });
 });
+
+describe("useSealBreak: the animated flag for the Ghost's leave (R12.6, R12.9, R12.10)", () => {
+  it("sends ADVANCE with animated true when a full-motion hold completes", () => {
+    const m = mount();
+    m.ctl().press(pointerTarget(), 1);
+    runFrames(SEAL_HOLD_MS);
+    expect(m.onAdvance).toHaveBeenCalledWith(true);
+  });
+
+  it("sends ADVANCE with animated false in Calm, so the Ghost unmounts at once", () => {
+    const m = mount({ calm: true });
+    m.ctl().breakNow(null);
+    expect(m.onAdvance).toHaveBeenCalledTimes(1);
+    expect(m.onAdvance).toHaveBeenCalledWith(false);
+  });
+
+  it("sends ADVANCE with animated false on Skip, which leaves no Ghost", () => {
+    const m = mount();
+    m.ctl().press(pointerTarget(), 1);
+    runFrames(SEAL_HOLD_MS / 2);
+    m.ctl().skip();
+    expect(m.onAdvance).toHaveBeenCalledTimes(1);
+    expect(m.onAdvance).toHaveBeenCalledWith(false);
+  });
+
+  it("sends no ADVANCE on Show everything, which sends SHOW_ALL only", () => {
+    const m = mount();
+    m.ctl().showAll();
+    expect(m.onAdvance).not.toHaveBeenCalled();
+    expect(m.onShowAll).toHaveBeenCalledTimes(1);
+  });
+});

@@ -13,8 +13,9 @@
 // width-capped and reserves the lower band in CSS. The Ghost pose (risen vs
 // handed) is still set per Stage in Ghost.tsx; only the big layer lift is gone.
 
-import { useEffect, type ReactNode } from "react";
+import { useEffect, type CSSProperties, type ReactNode } from "react";
 
+import { REVEAL_DIM_MS, REVEAL_DIM_OPACITY } from "../constants";
 import { useStage } from "../stage-context";
 import { ghostHanded } from "../stages";
 import styles from "./scene.module.css";
@@ -31,7 +32,28 @@ function clearColumnPadding(column: HTMLElement | null) {
   column.style.removeProperty("padding-top");
 }
 
-export function SceneBackdrop({ children }: { children?: ReactNode }) {
+/** The dim values as CSS variables, from constants.ts (design.md "The dissolve on break"). */
+const DIM_VARS = {
+  "--reveal-dim-opacity": String(REVEAL_DIM_OPACITY),
+  "--reveal-dim-ms": `${REVEAL_DIM_MS}ms`,
+} as CSSProperties;
+
+export type SceneBackdropProps = {
+  children?: ReactNode;
+  /** True once the reveal stages show: the light and the Soil dim (R12.7). */
+  dimmed?: boolean;
+  /**
+   * True only for the render of a full-motion break, so the dim eases over
+   * REVEAL_DIM_MS. Show everything, Skip and Calm dim at once with no motion.
+   */
+  animateDim?: boolean;
+};
+
+export function SceneBackdrop({
+  children,
+  dimmed = false,
+  animateDim = false,
+}: SceneBackdropProps) {
   // The Stage still drives the Ghost pose (risen vs handed) in Ghost.tsx, but
   // the backdrop no longer translates as a whole. Below 900 px the handed
   // stages (recall, marks, seal) are placed by CSS: scene.module.css pins their
@@ -51,7 +73,13 @@ export function SceneBackdrop({ children }: { children?: ReactNode }) {
   }, [handed]);
 
   return (
-    <div className={styles.backdrop} aria-hidden="true">
+    <div
+      className={styles.backdrop}
+      aria-hidden="true"
+      data-dimmed={dimmed ? "true" : undefined}
+      data-dim-animated={dimmed && animateDim ? "true" : undefined}
+      style={DIM_VARS}
+    >
       <div className={styles.light} />
       <SoilStrip />
       <SoilCanvasLoader />

@@ -47,8 +47,13 @@ export type SealHost = {
 
 /** The hook's inputs: the flow's ADVANCE and SHOW_ALL senders. */
 export type UseSealBreakOptions = {
-  /** Sends ADVANCE. Called exactly once per controller (R6.5). */
-  onAdvance: () => void;
+  /**
+   * Sends ADVANCE. Called exactly once per controller (R6.5). The argument is
+   * `true` only when the break played in full motion, so the Ghost leaves
+   * with an exit. Calm, Skip and a Web Animation that threw pass `false`, and
+   * the Ghost unmounts at once (R12.6, R12.9, R12.10).
+   */
+  onAdvance: (animated: boolean) => void;
   /** Sends SHOW_ALL ("Show everything"). Optional. */
   onShowAll?: () => void;
 };
@@ -149,20 +154,23 @@ export function useSealBreak({ onAdvance, onShowAll }: UseSealBreakOptions): Sea
   }, []);
 
   // Break the seal: show the split, send ADVANCE at most once (R6.5).
-  const doBreak = useCallback(() => {
-    stopRaf();
-    cancelShort();
-    setHold({ phase: "broken", progress: 1 });
-    const host = hostRef.current;
-    host.onSealingChange?.(false);
-    host.announce(CEREMONY_COPY.sealBroken);
-    if (!advancedRef.current) {
-      advancedRef.current = true;
-      // The break cue plays once per break and only while sound is on (R14.2).
-      void soundCues.sealBreak(host.soundOn);
-      onAdvanceRef.current();
-    }
-  }, [cancelShort, setHold, stopRaf]);
+  const doBreak = useCallback(
+    (animated: boolean) => {
+      stopRaf();
+      cancelShort();
+      setHold({ phase: "broken", progress: 1 });
+      const host = hostRef.current;
+      host.onSealingChange?.(false);
+      host.announce(CEREMONY_COPY.sealBroken);
+      if (!advancedRef.current) {
+        advancedRef.current = true;
+        // The break cue plays once per break and only while sound is on (R14.2).
+        void soundCues.sealBreak(host.soundOn);
+        onAdvanceRef.current(animated);
+      }
+    },
+    [cancelShort, setHold, stopRaf],
+  );
 
   // The rAF loop: advance the clock, apply isBreak exactly once, and settle.
   const loop = useCallback(() => {
@@ -171,7 +179,7 @@ export function useSealBreak({ onAdvance, onShowAll }: UseSealBreakOptions): Sea
     const next = onTick(prev, now);
 
     if (isBreak(prev, next)) {
-      doBreak();
+      doBreak(!hostRef.current.calm);
       return;
     }
 
@@ -207,7 +215,7 @@ export function useSealBreak({ onAdvance, onShowAll }: UseSealBreakOptions): Sea
       hostRef.current.announce(CEREMONY_COPY.sealHolds);
       startLoop();
     } else if (next.phase === "broken") {
-      doBreak();
+      doBreak(!hostRef.current.calm);
     }
   }, [doBreak, releaseCapture, removeWindowListeners, setHold, startLoop]);
 
@@ -245,7 +253,7 @@ export function useSealBreak({ onAdvance, onShowAll }: UseSealBreakOptions): Sea
       const host = hostRef.current;
       if (host.calm) {
         // Calm_Mode: the split shows at once and ADVANCE is sent with no motion.
-        doBreak();
+        doBreak(false);
         return;
       }
       // Full motion: the short crack draw runs, then the break completes.
@@ -255,7 +263,7 @@ export function useSealBreak({ onAdvance, onShowAll }: UseSealBreakOptions): Sea
         shortTimerRef.current = null;
         // A cancelled draw (Skip or Show everything) has already broken the seal.
         if (holdRef.current.phase === "broken") return;
-        doBreak();
+        doBreak(true);
       };
       if (root === undefined || root === null) {
         shortTimerRef.current = setTimeout(finish, SEAL_SHORT_MS);
@@ -283,7 +291,7 @@ export function useSealBreak({ onAdvance, onShowAll }: UseSealBreakOptions): Sea
       } catch {
         // A Web Animation threw. Send ADVANCE once at once so the reader is not stuck.
         cancelShort();
-        doBreak();
+        doBreak(false);
       }
     },
     [cancelShort, doBreak],
@@ -302,7 +310,8 @@ export function useSealBreak({ onAdvance, onShowAll }: UseSealBreakOptions): Sea
     stopRaf();
     cancelShort();
     if (holdRef.current.phase !== "broken") {
-      doBreak();
+      // Skip jumps straight to the end state, so the Ghost does not leave.
+      doBreak(false);
     }
   }, [cancelShort, doBreak, stopRaf]);
 

@@ -196,6 +196,7 @@
   transform-origin: 50% 100%;
   animation-name: seal-flap-lift;
   animation-duration: var(--flap-lift-ms, 450ms);
+  animation-delay: var(--flap-at-ms, 250ms);
   animation-timing-function: cubic-bezier(0.3, 0, 0.2, 1); /* EASE_STAMP */
   animation-fill-mode: both;
 }
@@ -212,6 +213,7 @@
 .letter {
   animation-name: seal-letter-slide;
   animation-duration: var(--letter-slide-ms, 600ms);
+  animation-delay: var(--letter-slide-at-ms, 550ms);
   animation-timing-function: cubic-bezier(0.2, 0, 0, 1); /* EASE_STANDARD */
   animation-fill-mode: both;
 }

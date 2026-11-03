@@ -38,7 +38,9 @@ import { REVEAL_COPY } from "@/components/reveal/copy";
 import {
   EASE_STANDARD,
   EASE_STAMP,
+  FLAP_AT_MS,
   FLAP_LIFT_MS,
+  LETTER_SLIDE_AT_MS,
   LETTER_SLIDE_MS,
   SEAL_SETTLE_MS,
   SEAL_SHORT_MS,
@@ -142,7 +144,9 @@ export function planSealBreak(opts: { calm: boolean }): SealBreakPlan {
 const TIMING_VARS = {
   "--seal-split-ms": `${SEAL_SPLIT_MS}ms`,
   "--seal-settle-ms": `${SEAL_SETTLE_MS}ms`,
+  "--flap-at-ms": `${FLAP_AT_MS}ms`,
   "--flap-lift-ms": `${FLAP_LIFT_MS}ms`,
+  "--letter-slide-at-ms": `${LETTER_SLIDE_AT_MS}ms`,
   "--letter-slide-ms": `${LETTER_SLIDE_MS}ms`,
 } as CSSProperties;
 

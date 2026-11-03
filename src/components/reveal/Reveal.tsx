@@ -222,6 +222,18 @@ export function Reveal({
   // Stage 2 still shows its own next control; "Show everything" sits beside it.
   const stage2HasHidden = stage === 2;
 
+  // Show everything jumps from stage 1 straight to stage 3 (R12.8). The seal
+  // stays on the split seal in that case, and the letter mounts still. Both are
+  // read from the stage change itself, so a Skip or ADVANCE break still hides
+  // the seal and unfolds the letter.
+  const [lastStage, setLastStage] = useState(stage);
+  const [jumpedToEnd, setJumpedToEnd] = useState(false);
+  if (stage !== lastStage) {
+    setLastStage(stage);
+    setJumpedToEnd(stage === 3 && lastStage === 1);
+  }
+  const showSeal = stage === 1 || jumpedToEnd;
+
   return (
     <section className={styles.reveal}>
       <div className={`${styles.stage} ${styles.fade}`}>
@@ -235,7 +247,7 @@ export function Reveal({
                 {marksRows}
               </dl>
               {recordedScales}
-              {stage === 1 ? (
+              {showSeal ? (
                 <>
                   <div className={styles.marksBreak} data-fit="break">
                     <SealBreak
@@ -274,6 +286,7 @@ export function Reveal({
             personaName={personaName}
             variant={variant}
             letterId={letterId}
+            still={jumpedToEnd}
           />
         </div>
       ) : null}
