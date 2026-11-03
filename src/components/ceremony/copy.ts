@@ -138,8 +138,8 @@ export const CEREMONY_COPY = {
   stageLive: {
     /** The desk, before anything is picked up. */
     desk: "The desk is in front of you.",
-    /** The letter rising out of the dark, while the seal is checked. */
-    emerging: "The letter is being brought out.",
+    // The emerging Stage has no entry here. Its line comes from
+    // stages.emergingStatus, the same REVEAL_COPY string the envelope shows.
     /** The letter, still sealed and not yet open. */
     sealed: "The letter is still sealed.",
     /** The sealed envelope resting on the desk. */

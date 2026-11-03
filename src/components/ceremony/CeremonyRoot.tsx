@@ -52,7 +52,7 @@ import { useSequence } from "./skip";
 import { SoundToggle } from "./sound/SoundToggle";
 import { SoundEnabledContext } from "./sound/SoundEnabledContext";
 import { soundCues } from "./sound/cues";
-import { stageFor } from "./stages";
+import { emergingStatus, stageFor } from "./stages";
 import type { FlowState } from "../reveal/opening-machine";
 import styles from "./ceremony.module.css";
 
@@ -146,7 +146,11 @@ function CeremonyRegion({
   const motionAttr = mode === "calm" ? "calm" : "full";
 
   // The live line for this Stage (R3.1). One short, neutral sentence.
-  const liveLine = CEREMONY_COPY.stageLive[stage];
+  // The emerging line is the same string the envelope shows (emergingStatus).
+  const liveLine =
+    stage === "emerging"
+      ? emergingStatus(state.tag)
+      : CEREMONY_COPY.stageLive[stage];
 
   // Move focus when the view or the Stage changes (R9.6, R11, the Stage heading
   // rule). The target is the newest heading in the region, so each Stage lands

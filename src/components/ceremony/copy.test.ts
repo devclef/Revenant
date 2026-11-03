@@ -180,11 +180,13 @@ describe("CEREMONY_COPY tone and neutrality", () => {
     expect(CEREMONY_COPY.tiltPermissionNote.trim().length).toBeGreaterThan(0);
   });
 
-  it("has a stageLive entry for every Stage (none missing)", () => {
+  it("has a stageLive entry for every Stage except emerging (none missing)", () => {
+    // The emerging line comes from stages.emergingStatus (see stages.test.ts).
+    const liveStages = ALL_STAGES.filter((stage) => stage !== "emerging");
     const liveKeys = Object.keys(CEREMONY_COPY.stageLive).sort();
-    expect(liveKeys).toEqual([...ALL_STAGES].sort());
+    expect(liveKeys).toEqual([...liveStages].sort());
 
-    for (const stage of ALL_STAGES) {
+    for (const stage of liveStages) {
       const line = (CEREMONY_COPY.stageLive as Record<string, string>)[stage];
       expect(line, `stageLive.${stage} must be a non-empty string`).toBeTypeOf(
         "string",
@@ -200,9 +202,6 @@ describe("CEREMONY_COPY tone and neutrality", () => {
   // design.md text character for character, including the changed error line
   // (R24.8).
   it("gives the new Stage lines and the changed error line their exact text (Property 23)", () => {
-    expect(CEREMONY_COPY.stageLive.emerging).toBe(
-      "The letter is being brought out.",
-    );
     expect(CEREMONY_COPY.stageLive.sealed).toBe("The letter is still sealed.");
     expect(CEREMONY_COPY.stageLive.error).toBe(
       "The letter could not be opened. You can try again.",

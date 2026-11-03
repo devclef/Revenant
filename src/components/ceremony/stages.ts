@@ -7,7 +7,19 @@
 // data-driven value: the Stage depends only on the flow tag, the reveal stage
 // number and the local view.
 
+import { REVEAL_COPY } from "../reveal/copy";
 import type { FlowState } from "../reveal/opening-machine";
+
+/**
+ * The one line for the emerging Stage (spec 07 task 2). The visible statement in
+ * EnvelopeView and the Stage's role=status line both read this string, so a
+ * reader who hears the status hears the same words they see. `loading` gives
+ * "Bringing the letter into the light."; `openable` and `verifying` (the same
+ * scene) give "Checking the seal.".
+ */
+export function emergingStatus(tag: FlowState["tag"]): string {
+  return tag === "loading" ? REVEAL_COPY.loading : REVEAL_COPY.verifying;
+}
 
 /**
  * The visual Stages of the ceremony. Each names a distinct scene on the desk.

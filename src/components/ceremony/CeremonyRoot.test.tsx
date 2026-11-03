@@ -37,6 +37,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { CEREMONY_COPY } from "./copy";
+import { REVEAL_COPY } from "../reveal/copy";
 import type { FlowState, Opened } from "../reveal/opening-machine";
 import type { Draft, RecallRecordV1 } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
@@ -347,7 +348,13 @@ describe("CeremonyRoot live region", () => {
 
   it.skipIf(!CEREMONY_ROOT_PRESENT)("announces the emerging line while loading", () => {
     const html = render({ tag: "loading" });
-    expect(html).toContain(esc(CEREMONY_COPY.stageLive.emerging));
+    expect(html).toContain(esc(REVEAL_COPY.loading));
+    expect(html).not.toContain("being brought out");
+  });
+
+  it.skipIf(!CEREMONY_ROOT_PRESENT)("announces the same emerging line the envelope shows while verifying", () => {
+    const html = render({ tag: "verifying" });
+    expect(html).toContain(esc(REVEAL_COPY.verifying));
   });
 });
 
