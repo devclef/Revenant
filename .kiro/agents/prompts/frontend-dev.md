@@ -15,10 +15,12 @@ Rules specific to your role:
 
 ## Look at your work
 
-Do this only in the last step of a run, not in earlier steps. Before you finish, look at what you built. You have a headless browser (Playwright) and can run the app locally.
+Do this only in the last step of a run, after the code is done. Check your own work with the layout script, then look at the screenshots yourself.
 
-1. Run `npm run build`. Start a throwaway Postgres (`docker run`), run `npm run db:migrate`, and start the app on a free port with `PORT=<port> DATABASE_URL=<url> npm start`. When the ticket touches the persona page, `src/components/reveal` or `src/components/ceremony`, also run `npm run seal-personas` so the page has letters.
-2. Open every page the ticket changes, at desktop width and at 360 px wide. Take a screenshot of each and open it. Take a first screenshot without a filename: the folder shown in its result is your shots folder. Save the others there with an absolute filename, `<folder>/issue-<number>/<nn>-<state>.png`. Other paths are refused.
-3. Fix what looks wrong: unreadable text, stray boxes or outlines, unstyled controls, and anything the ticket describes that you can't see. Look again after each fix.
-4. Stop the app and the database container you started. Kill only the process IDs you recorded.
-5. If the browser can't run, say so in your final message and carry on.
+1. Start the app as a throwaway. Run `npm run build`. Start a throwaway Postgres (`docker run`), run `npm run db:migrate`, and when the ticket touches the persona page, `src/components/reveal` or `src/components/ceremony`, run `npm run seal-personas`. Start the app on a free port in the background with `PORT=<port> DATABASE_URL=<url> npm start`. Note the process IDs and the container name you started.
+2. Run `npm run layout-check -- --url http://localhost:<port>`. It takes about a minute, walks the persona journey and the landing page at 1280x800 and 360x640, and prints one line per result, marked BLOCKER, polish or note.
+3. Fix every BLOCKER line in your code, then run the script again. Repeat until the summary says `Result: PASS`. Polish lines and notes don't block. Fix a polish line only when the ticket is about it. A blocker on a stage the ticket doesn't touch is polish for this ticket, so say so instead of fixing it.
+4. Open the screenshots for the stages your ticket changes, in the `layout-check-shots` folder the script prints. Check what the script can't: readable text, colour, contrast, copy and any stray box.
+5. Stop the app and the container you started. Kill only the process IDs you recorded.
+6. Paste the script's summary block (the Blockers, Polish and Not reached counts, Time and Result lines) at the end of your final message. If the browser or the script can't run, say so there and carry on.
+

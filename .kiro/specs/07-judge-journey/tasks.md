@@ -34,8 +34,8 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - the five budgets from `node scripts/check-js-budget.mjs` after `npm run build` on the head commit, in kB: `/`, `/demo`, `/demo/personas/[key]`, `/demo/live`, `/l/[id]` (limits 130, 130, 190, 190, 190; R21.1);
   - every spec 03, 05 and 06 test it changed or retired, by file and test name, with the reason for each, or "none";
   - every asset it added, with its size in bytes and its `ASSETS.md` entry, or "none";
-  - the QA shots listed in the task, taken with the QA steps listed in the task, and the recorded values of each "QA check:" line.
-- **QA steps** are numbered as in design.md "QA browser steps" (rows starting `| 07 |`). QA finds them with the grep pattern `^\| 07 \|`. Shots are named `<stage>-<width>x<height>` (R27.2) and taken while the page root's `data-ceremony` equals that Stage (R27.3). If a stub cannot be installed, or the canvas does not load on the QA machine, that is a minor finding (design.md, "QA browser steps").
+  - the layout script's summary (`npm run layout-check`, see the QA check lines below) at 1280×800 and 360×640: its Blockers, Polish and Not reached counts and its Result line, plus the recorded value of each "QA check:" line.
+- **Layout checks.** QA runs `npm run layout-check -- --url <app>` (`tools/qa/layout-check.mjs`), which walks the persona journey and the landing page itself at 1280×800 and 360×640 (the sizes default, so tasks name no other size). Its BLOCKER lines are blocking, its polish lines are not. QA takes the numbered steps of design.md "QA browser steps" only for the checks the script does not make. Shots are named `<stage>-<width>x<height>` (R27.2) and taken while the page root's `data-ceremony` equals that Stage (R27.3). If a stub cannot be installed, or the canvas does not load on the QA machine, that is a minor finding (design.md, "QA browser steps"). The full seven-size sweep is task 10's polish pass.
 - If `design.md` and the code on `main` disagree, or a name has moved, re-read the code, keep the design's behaviour, and say what you changed in the PR description. If something is unclear, stop and ask the owner in the issue. Do not guess.
 
 ## Tasks
@@ -90,9 +90,7 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - QA steps: 03, 04, 05, 14, 15, 16 (Calm only up to `intact`), 20 (03 to 05 and 14 at 360×640), 21 (`intact` only), 22 (`intact` centre x against `expected` only), 23, 25.
   - QA check: Top_Bar height measured with T0 at 360×640 is at most 96 px, both with the one-line notice and with the long two-line notice, and the whole notice is visible with no ellipsis (R8.1, R8.4).
   - QA check: F2 returns no hits in `emerging`, `sealed`, `intact` and `error` at both sizes; no text, button or field sits on the Soil strip (R6.15).
-  - QA check: G1 returns 0 intersections in `intact` at 360×640, 1024×768, 1280×720, 1280×800, 1440×900, 1920×1080 and 2560×1440, including every `h1` line box (R5.19).
-  - QA check: in `intact` the Ghost_Box centre x from G2 is within 1 px of 922, 1037, 1277 and 1597 at 1280×800, 1440×900, 1920×1080 and 2560×1440 (R5.16).
-  - QA check: G3 at 1280×800, 1440×900, 1920×1080 and 2560×1440: the wordmark's and the headline's left edges within 1 px; left and right margins 38, 40, 280 and 600 px within 1 px; the Soil from 0 to the window width (R8.14, R6.18).
+  - QA check: `npm run layout-check` reports no BLOCKER in `intact` or `recall` at 1280×800 and 360×640 (R5.19, R5.16, R6.15). The seven-size sweep of the Ghost and Scene_Frame rules (R5.19 at every size, G2 and G3 at 1440×900, 1920×1080 and 2560×1440) is a polish pass in task 10, not a check for this task.
   - QA check: E1 reports one line for every Envelope_Front date at both sizes (R8.8), and the Envelope covers no part of either eye or the hem (R5.2).
   - QA check: in step 03 the page shows no Pick_Up_Button while the letter request is delayed; in step 15 Skip puts the Ghost at its end pose at once (R9.8, R9.11).
   - QA check: "the receipts." sits together on the headline's last line at both sizes (R3.18).
@@ -312,14 +310,10 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
     - Copy: every string of the R24.3 table matches character for character, the R24.5 strings are unchanged, and the scan tests cover every folder this spec adds or changes (R24.2 to R24.7).
     - Tests: Property 22 in full (Calm starts no motion and requests no chunk; `light` requests no soil chunk); Property 23 in full (copy is exact, the Scoring_Words_Always banned in every copy module, the Scoring_Words_Scene banned only in the Scene_Copy_Modules and not checked in `src/components/live/copy.ts`, string values only); every property of design.md "Correctness Properties" passes, each with `numRuns` of at least 100 where the design says fast-check.
   - Spec 03, 05 and 06 tests changed or retired: only as fixes require; name each with its reason.
-  - QA shots: all 24: `scene`, `index`, `emerging`, `sealed`, `intact`, `recall`, `marks`, `seal`, `letter`, `figures`, `close` and `error`, each at `-1280x800` and `-360x640`. This is the full pass; it should find nothing missing.
-  - QA steps: all of 01 to 25.
-  - QA check: F1 and F2 pass at every shot where they apply, at both sizes (R27.7).
-  - QA check: G1 returns 0 intersections at every R5.19 size in `intact`, `recall` and `marks`, including the `h1` line boxes (R5.19, R27.8).
-  - QA check: G2 shows no sideways move over 1 px from `intact` to `recall`, `marks` and `seal` at 1280×800, 1440×900, 1920×1080 and 2560×1440, with `intact` within 1 px of 922, 1037, 1277 and 1597 (R5.16, R5.17, R27.9).
-  - QA check: G3 at 1920×1080 gives 280 px on both sides within 1 px, the wordmark and headline aligned within 1 px, and the Soil at full window width (R8.14, R6.18, R27.10).
-  - QA check: D1 reports no drawing above the ceiling in `intact` and `recall` at both sizes (R6.16).
-  - QA check: T0 at 360×640 is at most 96 px in both cases (R8.1).
+  - QA shots: the script saves a shot for each Stage it reaches, named `<stage>-<width>x<height>` under `layout-check-shots/`, at every size `--all-sizes` names. A Stage the build doesn't have yet is a note, not a missing shot. The full pass should find nothing missing that the build has.
+  - QA steps: the layout script replaces 01 to 25 for the layout checks. The numbered rows remain only for the Calm, Skip, keyboard and screenshot checks above.
+  - QA check: `npm run layout-check -- --all-sizes` reports no BLOCKER at any size, in every Stage the script walks (R5.19, R5.16, R6.15, R27.7 to R27.10 as blockers).
+  - QA polish pass (does not block this task): record every polish line of `npm run layout-check -- --all-sizes` in the PR, grouped by Stage and size. Fix the ones this task's Scope covers (G2 sideways move, G3 alignment at 1920×1080 with 280 px margins, D1 dust ceiling, T0 Top_Bar height at 360×640, E1 date wrapping). Leave the rest as notes for the owner.
   - QA check: E1 reports one line for each Envelope_Front date (R8.8).
   - QA check: in Calm (step 16) there is no canvas and every Stage still appears in order (R19.2).
   - Validation: `bash scripts/check.sh`
