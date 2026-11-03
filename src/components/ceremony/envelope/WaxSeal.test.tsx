@@ -40,6 +40,23 @@ describe("WaxSeal — one seal for every persona (Property 18, R10.10)", () => {
 });
 
 describe("WaxSeal — one seal, two halves together (R10.12)", () => {
+  it("gives two seals on one page different clip ids", () => {
+    const html = renderToStaticMarkup(
+      createElement(
+        "div",
+        null,
+        createElement(WaxSeal, { size: 48 }),
+        createElement(WaxSeal, { size: 48 }),
+      ),
+    );
+    const ids = [...html.matchAll(/<clipPath id="([^"]+)"/g)].map((m) => m[1]);
+    expect(ids).toHaveLength(4);
+    expect(new Set(ids).size).toBe(4);
+    for (const id of ids) {
+      expect(id).toMatch(/^[A-Za-z0-9_-]+$/);
+    }
+  });
+
   it("draws the artwork twice, once clipped to each half", () => {
     const html = renderSeal();
     const clips = html.match(/<clipPath /g) ?? [];

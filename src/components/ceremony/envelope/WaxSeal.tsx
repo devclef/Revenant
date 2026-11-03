@@ -16,9 +16,23 @@
 //
 // Pure presentation with no state, so it needs no "use client".
 
-import type { CSSProperties, ReactElement } from "react";
+import { useId, type CSSProperties, type ReactElement } from "react";
 
 import styles from "./WaxSeal.module.css";
+
+/** A clip id unique to one seal and one half, safe inside url(#...). */
+function clipId(reactId: string, half: "left" | "right"): string {
+  return `wax-seal-${reactId.replace(/[^A-Za-z0-9_-]/g, "")}-${half}`;
+}
+
+/**
+ * Replaces each seal's per-instance clip ids with a fixed placeholder, so
+ * tests can compare seal markup from different render trees. Not used by the
+ * page itself.
+ */
+export function normaliseWaxSealIds(html: string): string {
+  return html.replace(/wax-seal-[A-Za-z0-9_-]*-(left|right)/g, "wax-seal-$1");
+}
 
 /** The seal is drawn in a fixed 100 x 100 user space and scaled to `size`. */
 const VIEWBOX = 100;
@@ -84,11 +98,11 @@ export type WaxSealProps = {
  * in it depends on a persona, a letter or a figure.
  */
 export function WaxSeal({ size = 64, className }: WaxSealProps): ReactElement {
-  // Fixed clip ids keep the markup identical on every render, server and
-  // client alike. Two clip paths with the same polygons are harmless if a page
-  // ever repeats the seal, and the Envelope draws one seal per page.
-  const leftId = "wax-seal-left";
-  const rightId = "wax-seal-right";
+  // Each seal gets its own clip ids from useId, so two seals on one page never
+  // share an id. React's id has characters that are awkward in url(#...), so
+  // keep only letters, digits, underscores and hyphens.
+  const leftId = clipId(useId(), "left");
+  const rightId = clipId(useId(), "right");
 
   const rootClass = [styles.seal, className].filter(Boolean).join(" ");
 

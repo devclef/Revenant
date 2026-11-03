@@ -4,7 +4,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { DeskEnvelopeLink } from "@/components/ceremony/desk/DeskEnvelopeLink";
 import { MotionProvider } from "@/components/ceremony/motion";
-import { WaxSeal } from "@/components/ceremony/envelope/WaxSeal";
+import { WaxSeal, normaliseWaxSealIds } from "@/components/ceremony/envelope/WaxSeal";
 
 import { PersonaCard, type PersonaCardProps } from "./PersonaCard";
 import { DEMO_COPY } from "./copy";
@@ -45,8 +45,10 @@ const PROPS = {
  * inside a MotionProvider, as it does on the Demo_Index page through DeskScene.
  */
 const render = (props: PersonaCardProps = PROPS) =>
-  renderToStaticMarkup(
-    createElement(MotionProvider, null, createElement(PersonaCard, props)),
+  normaliseWaxSealIds(
+    renderToStaticMarkup(
+      createElement(MotionProvider, null, createElement(PersonaCard, props)),
+    ),
   );
 
 /** A minimal view of a React element, enough to walk an unrendered tree. */
@@ -161,8 +163,10 @@ describe("PersonaCard markup", () => {
 
   it("the WaxSeal markup is the one for personaKey, and it is hidden from assistive tech", () => {
     const html = render();
-    const sealSvg = renderToStaticMarkup(
-      createElement(WaxSeal, { patternKey: PROPS.personaKey, size: 48 }),
+    const sealSvg = normaliseWaxSealIds(
+      renderToStaticMarkup(
+        createElement(WaxSeal, { patternKey: PROPS.personaKey, size: 48 }),
+      ),
     );
     expect(html).toContain(sealSvg);
     // The seal is decorative: the link already carries the persona's name.
