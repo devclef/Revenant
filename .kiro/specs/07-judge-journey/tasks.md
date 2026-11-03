@@ -62,7 +62,7 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - Validation: `bash scripts/check.sh`
   - _Requirements: R3.7, R3.8, R3.13, R3.14, R3.15, R3.17, R4.1, R4.2, R4.3, R4.4, R4.5, R4.7, R4.8, R4.9, R13.2, R21.1, R21.2, R25.3_
 
-- [ ] 2. Scene_Frame, Ghost and the Emergence on the persona page
+- [x] 2. Scene_Frame, Ghost and the Emergence on the persona page
   - Agent: `frontend-dev` · Depends on: 1 · Estimated size: ~2,600 changed lines
   - Before this task: task 1 is on `main`.
   - Scope: `src/components/ceremony/ceremony-gates.property.test.tsx`, `src/components/ceremony/scene/scene.module.css`, `scene/copy.ts`, `scene/SceneShell.tsx`, `scene/TopBar.tsx`, `scene/SceneBackdrop.tsx`, `scene/SceneHeadline.tsx`, `scene/SoilStrip.tsx`, `scene/Ghost.tsx`, `scene/eyes.ts`, `scene/useEmergence.ts`, `scene/layout.ts`, `src/components/ceremony/constants.ts`, `stages.ts`, `local-view.tsx`, `skip.tsx`, `CeremonyRoot.tsx`, `copy.ts`, `ceremony.module.css`, `ASSETS.md`, `src/components/ceremony/envelope/Envelope.tsx`, `envelope/EnvelopeFront.tsx`, `envelope/EnvelopeView.tsx`, `envelope/Envelope.module.css`, `envelope/EnvelopeView.module.css`, `src/components/reveal/OpeningFlow.tsx`, `src/app/demo/personas/[key]/page.tsx`, `src/components/ceremony/css-imported.test.ts`, `src/components/ceremony/assets.test.ts`, the scan tests under `src/components/ceremony` (add `scene/` to their file walks, additions only), and the `*.test.ts(x)` for each file above including `src/app/demo/personas/[key]/page.test.tsx` and `src/components/ceremony/constants-css.test.ts`
