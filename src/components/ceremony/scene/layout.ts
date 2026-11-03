@@ -61,6 +61,23 @@ export function narrowPickUpLift(boxes: PickUpBoxes | null): PickUpLift {
   return { y, columnStart };
 }
 
+/**
+ * The top padding of the persona column's content, in px, so the headline starts
+ * at `columnStart` under the lifted Soil strip (R5.19, R10.15). `columnStart` is
+ * measured from the Top_Bar's bottom, so the padding is that point less the
+ * column's own top. Null when the lift is the 0-lift fallback or a value is not
+ * finite: the column then keeps its CSS padding.
+ */
+export function narrowColumnPadding(
+  boxes: PickUpBoxes | null,
+  lift: PickUpLift,
+  columnTop: number,
+): number | null {
+  if (boxes === null || lift === NO_PICKUP_LIFT) return null;
+  if (!Number.isFinite(columnTop)) return null;
+  return boxes.topBarBottom + lift.columnStart - columnTop;
+}
+
 /** True at or above the one R14.1 breakpoint (900 px). */
 export function isWideLayout(viewportWidth: number): boolean {
   return viewportWidth >= SCENE_BREAKPOINT_PX;

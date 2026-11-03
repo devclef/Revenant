@@ -17,6 +17,7 @@ import { useStage } from "../stage-context";
 import { ghostHanded } from "../stages";
 import {
   isWideLayout,
+  narrowColumnPadding,
   narrowPickUpLift,
   NO_PICKUP_LIFT,
   soilBottomPx,
@@ -42,19 +43,17 @@ function readPickUpBoxes(doc: Document, width: number, height: number): PickUpBo
 }
 
 /**
- * Sets the top of the persona column's content so its headline starts under the
- * lifted Soil strip (`columnStart`, measured from the Top_Bar's bottom). The
- * column is in the flow and is not lifted, so its own top is read here. With
- * no lift, the column keeps its CSS padding.
+ * Sets the persona column's top padding so its headline starts under the lifted
+ * Soil strip (see `narrowColumnPadding`). The column is in the flow and is not
+ * lifted, so its own top is read here. Without a padding, the CSS padding stays.
  */
-function applyColumnStart(column: HTMLElement | null, lift: PickUpLift, boxes: PickUpBoxes | null) {
+function applyColumnPadding(column: HTMLElement | null, lift: PickUpLift, boxes: PickUpBoxes | null) {
   if (column === null) return;
-  if (boxes === null || lift === NO_PICKUP_LIFT) {
+  const padding = narrowColumnPadding(boxes, lift, column.getBoundingClientRect().top);
+  if (padding === null) {
     column.style.removeProperty("padding-top");
     return;
   }
-  const columnTop = column.getBoundingClientRect().top;
-  const padding = boxes.topBarBottom + lift.columnStart - columnTop;
   column.style.setProperty("padding-top", `${padding}px`);
 }
 
@@ -66,13 +65,13 @@ export function SceneBackdrop({ children }: { children?: ReactNode }) {
     const column = document.querySelector<HTMLElement>("[data-persona-column]");
     if (!handed || isWideLayout(window.innerWidth)) {
       setLift(NO_PICKUP_LIFT);
-      applyColumnStart(column, NO_PICKUP_LIFT, null);
+      applyColumnPadding(column, NO_PICKUP_LIFT, null);
       return;
     }
     const boxes = readPickUpBoxes(document, window.innerWidth, window.innerHeight);
     const next = narrowPickUpLift(boxes);
     setLift(next);
-    applyColumnStart(column, next, boxes);
+    applyColumnPadding(column, next, boxes);
     // Measured once when the Ghost becomes handed. Later stages keep the lift.
   }, [handed]);
 
