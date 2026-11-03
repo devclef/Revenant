@@ -10,7 +10,10 @@
 //   paper's unfold: a Web Animation with `fill: "backwards"`, started in a
 //   layout effect in full motion only. Light and calm modes start nothing, so
 //   the static render is the final state.
-// - Two `aria-hidden` creases sit at one third and two thirds of the paper.
+// - Four `aria-hidden` crease marks sit at one third and two thirds of the
+//   paper, one at the top edge and one at the bottom edge. Each mark is only as
+//   tall as the paper's padding, so no crease runs behind a line of the letter
+//   (R13.7).
 // - `LetterBlock` adds nothing next to the text: no annotation, highlight or
 //   link (R13.7).
 //
@@ -43,6 +46,14 @@ const UNFOLD_TO = {
   transform: "perspective(900px) rotateX(0deg) scaleY(1)",
   opacity: 1,
 };
+
+/** The creases: two positions, each at the top and the bottom edge of the paper. */
+const CREASES = [
+  { left: "33.3%", edge: "top" },
+  { left: "33.3%", edge: "bottom" },
+  { left: "66.6%", edge: "top" },
+  { left: "66.6%", edge: "bottom" },
+] as const;
 
 export function LetterBlock(props: LetterBlockProps) {
   const { still = false, ...letterProps } = props;
@@ -97,8 +108,14 @@ export function LetterBlock(props: LetterBlockProps) {
   return (
     <div className={styles.letterBlock}>
       <div ref={paperRef} className={styles.paper}>
-        <span className={styles.crease} style={{ left: "33.3%" }} aria-hidden="true" />
-        <span className={styles.crease} style={{ left: "66.6%" }} aria-hidden="true" />
+        {CREASES.map(({ left, edge }) => (
+          <span
+            key={`${edge}-${left}`}
+            className={`${styles.crease} ${edge === "top" ? styles.creaseTop : styles.creaseBottom}`}
+            style={{ left }}
+            aria-hidden="true"
+          />
+        ))}
         <SealedLetter {...letterProps} />
       </div>
     </div>

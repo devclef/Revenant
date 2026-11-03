@@ -154,8 +154,34 @@ describe("Property 17: the letter is shown verbatim with nothing against it (R13
 
   it("is built from one purple block holding one paper panel with two creases", () => {
     const html = render("A short letter.");
-    expect(html.match(/aria-hidden="true"/g)).toHaveLength(2);
+    expect(html.match(/aria-hidden="true"/g)).toHaveLength(4);
     expect(html).not.toContain("data-ink-text");
+  });
+
+  it("keeps every crease in the paper margin, never behind a line of text (R13.7)", () => {
+    const html = render("A short letter.");
+    // Four crease marks: each position appears at the top and the bottom edge.
+    expect(html.match(/aria-hidden="true"/g)).toHaveLength(4);
+    const creaseTags = [...html.matchAll(/<span[^>]*aria-hidden="true"[^>]*>/g)].map(
+      (match) => match[0],
+    );
+    expect(creaseTags.filter((tag) => tag.includes("33.3%"))).toHaveLength(2);
+    expect(creaseTags.filter((tag) => tag.includes("66.6%"))).toHaveLength(2);
+
+    const css = withoutComments(readFileSync(join(HERE, "LetterBlock.module.css"), "utf8"));
+    // A crease spans only the padding band: no rule stretches it from top to bottom.
+    expect(blockOf(css, "crease")).not.toMatch(/top:\s*0;\s*bottom:\s*0/);
+    expect(blockOf(css, "crease")).toMatch(/height:\s*var\(--paper-pad\)/);
+    expect(blockOf(css, "creaseTop")).toMatch(/top:\s*0/);
+    expect(blockOf(css, "creaseBottom")).toMatch(/bottom:\s*0/);
+    expect(blockOf(css, "paper")).toMatch(/padding:\s*var\(--paper-pad\)/);
+  });
+
+  it("keeps the letter as one text node with white-space: pre-wrap", () => {
+    const revealCss = withoutComments(readFileSync(join(REVEAL_DIR, "reveal.module.css"), "utf8"));
+    expect(blockOf(revealCss, "letter")).toMatch(/white-space:\s*pre-wrap/);
+    const html = render("Line one.\nLine two.");
+    expect(html.match(/<p[^>]*>Line one\.\nLine two\.<\/p>/)).not.toBeNull();
   });
 
   it("unfolds only in full motion, through a Web Animation with fill backwards", () => {
