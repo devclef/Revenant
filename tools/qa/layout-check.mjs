@@ -39,7 +39,6 @@
 
 import { existsSync, mkdirSync } from "node:fs";
 import { join, resolve } from "node:path";
-import { chromium } from "playwright-core";
 
 const DEFAULT_SIZES = ["1280x800", "360x640"];
 const ALL_SIZES = ["360x640", "1024x768", "1280x720", "1280x800", "1440x900", "1920x1080", "2560x1440"];
@@ -770,6 +769,14 @@ function printUsage() {
 
 async function main() {
   const started = Date.now();
+  // Loaded here, not at the top, so a missing package gets a plain message and exit 2 instead of a stack trace.
+  let chromium;
+  try {
+    ({ chromium } = await import("playwright-core"));
+  } catch {
+    console.error("layout-check: playwright-core is not installed in this checkout. Run `npm ci` once, then run the check again.");
+    return 2;
+  }
   let opts;
   try {
     opts = parseArgs(process.argv.slice(2));

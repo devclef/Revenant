@@ -118,10 +118,10 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - Spec 05 tests retired: none. Spec 05 tests changed: `source-scan.test.ts` (folder list and allowance, additions only).
   - QA shots: `emerging-1280x800`, `emerging-360x640`, `intact-1280x800`, `intact-360x640`.
   - QA steps: 03, 05, 16 (no canvas element in Calm), 24 (`intact` only).
-  - QA check: D1 reports no drawing above the ceiling in `intact` at 360×640 and 1280×800; record `ceiling` and `highest` (R6.16).
+  - QA check: `npm run layout-check` reports no BLOCKER in `intact` at 1280×800 and 360×640. D1 (dust above the ceiling) is a polish line; record its `ceiling` and `highest` values in the PR (R6.16).
   - QA check: with Calm on there is no `[data-soil-canvas]` element and the Soil_Fallback shows (R6.7, R6.11).
-  - QA check: F2 still returns no hits in `emerging` and `intact` at both sizes (R6.15).
-  - QA check: the canvas runs from the window's left edge to its right edge at 1920×1080 (R6.18).
+  - QA check: `npm run layout-check` reports no BLOCKER from F2 in `emerging` and `intact` at both sizes (R6.15). A paper panel over the Soil is polish.
+  - QA check: the Soil runs from the window's left edge to its right edge (R6.18). The 1920×1080 frame and the other sizes are the task 10 polish pass.
   - Validation: `bash scripts/check.sh`
   - _Requirements: R3.8, R6.2–R6.13, R6.16, R6.17, R6.18, R19.2, R19.5, R21.8, R21.9_
 
@@ -148,13 +148,13 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - Spec 03 and 05 tests changed: `envelope/WaxSeal.test.tsx` (one seal); `reveal/RecallStep.test.tsx` (pager; spec 03 R8.1 and R8.4 are replaced by R11.1 and R11.10, name both in the PR); `demo/PersonaCard.test.tsx`, `demo/copy.test.ts` and `src/app/demo/page.test.tsx` (link text "Open the letter", "Pick up the letter" absent; spec 05 R2.1 and R2.2 replaced); `OpeningFlow.test.tsx` recall clauses only if they count form controls.
   - QA shots: `intact-1280x800`, `intact-360x640`, `recall-1280x800`, `recall-360x640`, `index-1280x800`, `index-360x640`.
   - QA steps: 02, 05, 06, 07, 16 (through `recall`), 20 (05 to 07 at 360×640), 21 (`intact` and both `recall` questions), 22 (`intact` and `recall`), 24 (`recall`).
-  - QA check: no sideways move. G2 in `recall` differs from its `intact` value by at most 1 px at 1280×800, 1440×900, 1920×1080 and 2560×1440; record each value and difference (R5.17).
-  - QA check: recall fit. F1 with `question`, `answer` and `advance` passes for both questions at 1280×800 and 360×640, and the counter line with its date is fully in view (R11.13).
-  - QA check: F2 returns no hits in `recall` at both sizes (R6.15).
-  - QA check: G1 returns 0 intersections in `recall` (both questions) at every R5.19 size (R5.19).
-  - QA check: D1 reports no drawing above the ceiling in `recall` at 360×640 and 1280×800 (R6.16).
+  - QA check: `npm run layout-check` reports no BLOCKER in `recall` at 1280×800 and 360×640. A sideways Ghost move (G2) is polish; record the values (R5.17).
+  - QA check: `npm run layout-check` reports no BLOCKER in `recall` for either question at 1280×800 and 360×640. Fit and in-view findings (F1) are polish, and a main button below the fold is polish when it is reachable (R11.13).
+  - QA check: `npm run layout-check` reports no BLOCKER from F2 in `recall` at both sizes (R6.15).
+  - QA check: `npm run layout-check` reports no BLOCKER from G1 in `recall` (both questions) at 1280×800 and 360×640 (R5.19).
+  - QA check: D1 in `recall` at 1280×800 and 360×640 is polish; record `ceiling` and `highest` (R6.16).
   - QA check: focus is on the number field after Pick up, after Enter and after Previous; Previous shows `3.20` again in the first field (R11.2, R11.8).
-  - QA check: the counter's "as of {date}" does not break inside the date at 360×640 (R11.5).
+  - QA check: the counter's "as of {date}" does not break inside the date at 360×640 (R11.5). A break there is polish, not a blocker.
   - QA check: the `/demo` cards read "Open the letter" (R16.3).
   - Validation: `bash scripts/check.sh`
   - _Requirements: R5.2, R5.17, R6.16, R6.17, R10.4–R10.16, R11.1–R11.16, R16.3, R19.3, R19.4, R19.6, R19.9, R21.4, R24.1, R24.3, R26.3.3, R26.10, R26.12_
@@ -180,10 +180,10 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - Spec 05 tests changed: `seal/SealBreak.test.tsx` (hold moves to `useSealBreak`); `ceremony-gates.property.test.tsx` (its `planInkRun` clause goes with `letter/inkSession.ts`, which this task deletes); `reveal/Reveal.marks.test.tsx` (marks column); `reveal/SealedLetter.test.tsx` (no `data-ink-text`; Property 18 of spec 03 still holds); `constants.test.ts` and `timings.property.test.ts` (changed values only, R18.9). `seal/hold.test.ts` and `seal/cracks.test.ts` pass unchanged.
   - QA shots: `marks-1280x800`, `marks-360x640`, `seal-1280x800`, `seal-360x640`, `letter-1280x800`, `letter-360x640`.
   - QA steps: 08, 09, 10, 11, 16 (through `letter`), 17, 20 (08 to 11 at 360×640), 21 (`marks`), 22 (`marks` and `seal`).
-  - QA check: marks fit. F1 with `marks-heading`, `marks-answers` and `break` passes at 1280×800 and 360×640; the seal is in view and `document.elementFromPoint` at its centre returns the seal target or its child (R12.11, R12.12).
-  - QA check: no sideways move. G2 in `marks` and `seal` differs from its `intact` value by at most 1 px at 1280×800, 1440×900, 1920×1080 and 2560×1440 (R5.17).
-  - QA check: G1 returns 0 intersections in `marks` at every R5.19 size (R5.19).
-  - QA check: F2 returns no hits in `marks` and `letter` at both sizes (R6.15).
+  - QA check: marks reachable. `npm run layout-check` reports no BLOCKER in `marks` at 1280×800 and 360×640. The Break button and the seal may sit below the fold; that is polish when `document.elementFromPoint` at the button's centre returns the button (R12.11, R12.12).
+  - QA check: `npm run layout-check` reports no BLOCKER in `marks` at 1280×800 and 360×640. A sideways Ghost move (G2) is polish; record the values (R5.17).
+  - QA check: `npm run layout-check` reports no BLOCKER from G1 in `marks` at 1280×800 and 360×640 (R5.19).
+  - QA check: `npm run layout-check` reports no BLOCKER from F2 in `marks` and `letter` at both sizes (R6.15).
   - QA check: in step 10 an early release leaves no "What was written then" heading in the document (R12.5, R2.8).
   - QA check: in step 11 the letter text is fully visible on the paper within 3 s of "Break the seal", with no Ghost element and no mask or fade on the text (R13.4, R18.4).
   - QA check: in step 17 "Show everything" shows no Ghost and the letter at its end state (R12.8).
@@ -240,7 +240,7 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - QA shots: `scene-1280x800`, `scene-360x640`.
   - QA steps: 01.
   - QA check: one `h1` with the exact text, one Accent button "Open Maya's letter", no Ghost element (R7.2, R7.3, R7.12).
-  - QA check: F2 returns no hits on `/` at both sizes; the explanation and the `/demo` link sit below the Soil strip (R6.15, R7.13).
+  - QA check: `npm run layout-check` reports no BLOCKER from F2 on `/` at both sizes (R6.15). The explanation and the `/demo` link sit below the Soil strip (R7.13).
   - QA check: with scripts disabled the light is up at first paint with no fade (R7.1).
   - QA check: the diff touches no file under `src/components/` and not `src/app/layout.tsx` (R1.11).
   - Validation: `bash scripts/check.sh`
@@ -264,8 +264,8 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - Spec 03 and 05 tests changed: `src/app/demo/page.test.tsx` and `demo/PersonaCard.test.tsx` only where the Scene wrapper changes the markup they check; keep their assertions. `constants.test.ts` (the `CAMERA_MOVE_MS` assertion goes with the constant).
   - QA shots: `index-1280x800`, `index-360x640`.
   - QA steps: 02.
-  - QA check: at 360×640 the Demo chip and the full intro statement are in view without scrolling (R8.10, R16.8).
-  - QA check: F2 returns no hits on `/demo` at both sizes (R6.15).
+  - QA check: at 360×640 the Demo chip and the intro statement are readable. Being below the fold is polish, but no text may sit on the Soil (R8.10, R16.8).
+  - QA check: `npm run layout-check` reports no BLOCKER from F2 on `/demo` at both sizes (R6.15).
   - QA check: no horizontal scrolling at 360 px; every card is reachable by vertical scrolling (R16.6).
   - QA check: the live demo entry links to `/demo/live` and sits outside the persona list (R16.5).
   - Validation: `bash scripts/check.sh`

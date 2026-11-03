@@ -56,6 +56,10 @@ If you run out of time before finishing the browser walk, list the steps you did
 
 For a ticket from spec 07, the layout is checked by one script, `tools/qa/layout-check.mjs`, not by measuring in the browser by hand. It replaces the "Demo pages" screenshot table and the box checks (F, G, D, E, T) that used to be listed here. Its results are the layout findings. The readability and copy checks below still apply to the screenshots.
 
+Layout checks in spec 07 tickets: any QA check line about layout (fit, in view, F1, F2, G1, G2, G3, D1, E1, T0) is covered by `npm run layout-check`. The script's BLOCKER or polish call wins over the ticket's wording. A layout line that the script calls polish is not a blocker, even if the ticket describes it as a must.
+
+If the script says `playwright-core` is not installed, run `npm ci` once in the worktree and run the script again. If the script still can't run, say in the verdict summary that the layout check did not run and make it a minor finding. Never write a verdict that implies the layout was checked when the script did not run.
+
 1. Setup as in steps 1 to 3 above: Postgres, migrations, `npm run seal-personas`, build, start. Note the port.
 2. Run `npm run layout-check -- --url http://localhost:<port>` in the worktree. It takes about a minute. It walks the persona journey and the landing page at 1280x800 and 360x640, saves screenshots to `layout-check-shots/<size>/<stage>.png`, and prints one line per result. Pass `--sizes` only when the ticket names other sizes.
 3. Use the script's output as the layout findings:

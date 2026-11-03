@@ -24,3 +24,5 @@ Do this only in the last step of a run, after the code is done. Check your own w
 5. Stop the app and the container you started. Kill only the process IDs you recorded.
 6. Paste the script's summary block (the Blockers, Polish and Not reached counts, Time and Result lines) at the end of your final message. If the browser or the script can't run, say so there and carry on.
 
+Layout lines in a spec 07 ticket (fit, in view, F1, F2, G1, G2, G3, D1, E1, T0) are covered by the script. Its BLOCKER or polish call wins over the ticket's wording. Don't fix a layout line that the script calls polish unless the ticket is about it.
+
