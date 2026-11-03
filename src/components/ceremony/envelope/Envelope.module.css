@@ -161,3 +161,64 @@
     display: none;
   }
 }
+
+/*
+ * The turning object (R10.8, R10.9). The front and back faces sit one on top of
+ * the other and turn together about the vertical axis. The timing comes from
+ * constants.ts (ENVELOPE_TURN_AT_MS, ENVELOPE_TURN_MS) and is set inline.
+ */
+.envelope {
+  perspective: 1400px;
+}
+
+.turner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  transform-style: preserve-3d;
+  transform: rotateY(0deg);
+}
+
+/* The turned pose: the back faces the reader. Calm keeps this pose with no motion. */
+.turned {
+  transform: rotateY(180deg);
+}
+
+/* The turn itself, played once from the front to the back. */
+.turning {
+  animation-name: envelopeTurn;
+  animation-timing-function: ease-in-out;
+  animation-fill-mode: both;
+}
+
+@keyframes envelopeTurn {
+  from {
+    transform: rotateY(0deg);
+  }
+  to {
+    transform: rotateY(180deg);
+  }
+}
+
+/* Calm and reduced motion: no turn is animated; the end pose shows at once. */
+:global([data-ceremony-motion="calm"]) .turning {
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .turning {
+    animation: none;
+  }
+}
+
+.faceFront,
+.faceBack {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+}
+
+.faceBack {
+  transform: rotateY(180deg);
+}

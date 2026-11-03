@@ -99,6 +99,8 @@ export const ENVELOPE_DIRT_BAND = 0.22; // share of face height
 export const SEAL_WIDTH_WIDE = 0.27; // share of envelope width
 export const SEAL_WIDTH_NARROW = 0.32;
 export const SEAL_HIT_MIN_PX = 60; // before scale; at least 48 at 0.8 (R10.16)
+export const ENVELOPE_TURN_AT_MS = 400; // R10.8: the turn starts once the Ghost lifts
+export const ENVELOPE_TURN_MS = 520; // R10.8: the turn ends by 920 ms, inside 1,200 ms
 export const COLUMN_GAP_UNDER_SOIL_PX = 4;
 export const DUST_CEILING_GAP_PX = 8; // R6.16
 // --- Soil_Canvas (R6.3, R6.5) (spec 07) ---
