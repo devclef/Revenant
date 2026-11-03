@@ -523,8 +523,8 @@ describe("OpeningFlow Ceremony root attributes (R3.1, R3.2, R17.3)", () => {
     () => {
       const html = render({ tag: "loading" });
       expect(html).toContain('role="region"');
-      // loading resolves to the envelope Stage (design.md Stage-resolution).
-      expect(attr(html, "data-ceremony")).toBe("envelope");
+      // loading resolves to the emerging Stage (spec 07 Stage resolution).
+      expect(attr(html, "data-ceremony")).toBe("emerging");
     },
   );
 

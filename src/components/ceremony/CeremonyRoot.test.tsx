@@ -263,19 +263,19 @@ describe("CeremonyRoot data-ceremony is the Stage for the state (R3.1)", () => {
   // The default local view is { sealing: false, step: "done" }, so a static
   // render of reveal stage 3 reports `close`, its final state (design.md).
   const cases: Array<{ name: string; state: FlowState; stage: string }> = [
-    // loading -> envelope (the "loading" shorthand for the envelope Stage).
-    { name: "loading", state: { tag: "loading" }, stage: "envelope" },
+    // loading -> emerging (spec 07: the letter is being brought out).
+    { name: "loading", state: { tag: "loading" }, stage: "emerging" },
     {
       name: "sealed",
       state: { tag: "sealed", opensAt: "2099-01-01T00:00:00.000Z" },
-      stage: "envelope",
+      stage: "sealed",
     },
     {
       name: "openable",
       state: { tag: "openable", envelope: {}, envelopeHash: "h" },
-      stage: "envelope",
+      stage: "emerging",
     },
-    { name: "verifying", state: { tag: "verifying" }, stage: "envelope" },
+    { name: "verifying", state: { tag: "verifying" }, stage: "emerging" },
     // verified -> intact.
     {
       name: "verified",
@@ -344,9 +344,9 @@ describe("CeremonyRoot live region", () => {
     expect(html).toContain('aria-live="polite"');
   });
 
-  it.skipIf(!CEREMONY_ROOT_PRESENT)("announces the envelope line while loading", () => {
+  it.skipIf(!CEREMONY_ROOT_PRESENT)("announces the emerging line while loading", () => {
     const html = render({ tag: "loading" });
-    expect(html).toContain(esc(CEREMONY_COPY.stageLive.envelope));
+    expect(html).toContain(esc(CEREMONY_COPY.stageLive.emerging));
   });
 });
 

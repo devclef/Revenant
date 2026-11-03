@@ -1,4 +1,5 @@
 // Feature: 05-reveal-ceremony, Property 1: Every Flow state maps to exactly one Stage
+// Feature: 07-judge-journey, Property 6: every Flow state and local view maps to exactly one Stage
 //
 // `stageFor` (stages.ts) is the executable form of the R3.1 "Stage resolution"
 // table in design.md. This test pins that table across the whole input space:
@@ -8,16 +9,18 @@
 //
 // The oracle is deliberately NOT a copy of `stageFor`'s control flow: it reads
 // the table row by row, so a change to either side is caught. It covers:
-//   - loading / sealed / openable / verifying -> envelope (any local view);
+//   - loading / openable / verifying -> emerging (any local view, spec 07);
+//   - sealed -> sealed (any local view, spec 07);
 //   - verified -> intact (any local view);
 //   - recall / submitting / submit_failed -> recall (any local view);
+//   - awaiting_key / unlocking -> envelope (spec 06, /l/[id] only);
 //   - reveal stage 1 -> "seal" when sealing is true, else "marks";
 //   - reveal stage 2 -> "letter" (any local view);
 //   - reveal stage 3 -> the step ("then" / "passage" / "now"), and "close"
 //     when step is "done" (the default local view maps stage 3 to "close");
 //   - not_placed / unreachable / verification_failed / open_failed -> error.
 //
-// Validates R3.1.
+// Validates R3.1 (spec 05) and R2.1 to R2.5 (spec 07).
 
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
@@ -124,9 +127,10 @@ const stateArb: fc.Arbitrary<FlowState> = fc.oneof(
   revealStateArb,
 );
 
-// Arbitrary LocalView: both axes vary freely so "any local view" rows are
-// genuinely exercised with sealing true/false and every step value.
+// Arbitrary LocalView: every axis varies freely so "any local view" rows are
+// genuinely exercised with emergence, sealing and every step value.
 const localViewArb: fc.Arbitrary<LocalView> = fc.record({
+  emergence: fc.constantFrom<LocalView["emergence"]>("running", "done"),
   sealing: fc.boolean(),
   step: fc.constantFrom<LocalView["step"]>("then", "passage", "now", "done"),
 });
@@ -139,11 +143,13 @@ const localViewArb: fc.Arbitrary<LocalView> = fc.record({
 function expectedStage(state: FlowState, local: LocalView): Stage {
   switch (state.tag) {
     case "loading":
-    case "sealed":
     case "openable":
+    case "verifying":
+      return "emerging";
+    case "sealed":
+      return "sealed";
     case "awaiting_key":
     case "unlocking":
-    case "verifying":
       return "envelope";
     case "verified":
       return "intact";
@@ -166,18 +172,25 @@ function expectedStage(state: FlowState, local: LocalView): Stage {
 
 // --- the property ------------------------------------------------------------
 
-describe("Property 1: every Flow state maps to exactly one Stage (R3.1)", () => {
-  it("stageFor returns exactly the Stage named by the R3.1 table, for every state and local view", () => {
+describe("Property 6: every Flow state and local view maps to exactly one Stage (spec 07, R2.1 to R2.5)", () => {
+  // Feature: 07-judge-journey, Property 6: every Flow state and local view maps to exactly one Stage
+  it("stageFor returns exactly the Stage named by the table, the same way twice, for every state and local view", () => {
     fc.assert(
       fc.property(stateArb, localViewArb, (state, local) => {
-        expect(stageFor(state, local)).toBe(expectedStage(state, local));
+        const first = stageFor(state, local);
+        expect(first).toBe(expectedStage(state, local));
+        expect(stageFor(state, local)).toBe(first);
       }),
       { numRuns: 100 },
     );
   });
 
   it("maps the default local view's stage-3 reveal to close (R3.1 'Final state first')", () => {
-    expect(DEFAULT_LOCAL_VIEW).toEqual({ sealing: false, step: "done" });
+    expect(DEFAULT_LOCAL_VIEW).toEqual({
+      emergence: "done",
+      sealing: false,
+      step: "done",
+    });
     const stage3: FlowState = {
       tag: "reveal",
       opened: OPENED_STUB,
@@ -185,5 +198,18 @@ describe("Property 1: every Flow state maps to exactly one Stage (R3.1)", () => 
       stage: 3,
     };
     expect(stageFor(stage3, DEFAULT_LOCAL_VIEW)).toBe("close");
+  });
+
+  it("maps the emerging and sealed flow states to their own Stages, whatever the local view", () => {
+    fc.assert(
+      fc.property(localViewArb, (local) => {
+        expect(stageFor({ tag: "loading" }, local)).toBe("emerging");
+        expect(stageFor({ tag: "verifying" }, local)).toBe("emerging");
+        expect(
+          stageFor({ tag: "sealed", opensAt: "2024-11-05T00:00:00.000Z" }, local),
+        ).toBe("sealed");
+      }),
+      { numRuns: 100 },
+    );
   });
 });

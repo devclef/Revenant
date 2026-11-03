@@ -71,3 +71,58 @@ export const LINE_PAD_ZERO = 1; // in the figure's unit, only when then = now = 
 
 // --- Neutrality (R10.3) ---
 export const POSITION_PROPERTIES = ["--pos-mark", "--pos-then", "--pos-now"] as const;
+
+// --- Layout (R5.15 to R5.18, R6.14, R8.1, R14.1) (spec 07) ---
+export const SCENE_BREAKPOINT_PX = 900; // the one R14.1 breakpoint
+export const TOP_BAR_MAX_PX = 96; // at 360 x 640 (measured 65.2, or 80.0 with a two-line notice)
+export const SOIL_TOP_WIDE_VH = 74;
+export const SOIL_TOP_NARROW_VH = 69;
+export const SOIL_BAND_WIDE_VH = 14; // 112 px at 1280 x 800
+export const SOIL_BAND_NARROW_VH = 8; // 51.2 px at 360 x 640
+export const SCENE_FRAME_MAX_PX = 1440; // Scene_Frame width is min(100vw, 1440px) (R8.14)
+export const GHOST_X_IN_FRAME = 0.72; // Ghost_Box centre and light x, share of the Scene_Frame, every Stage (R5.16, R6.17)
+export const GHOST_X_NARROW = 0.5; // share of the window below 900 px
+export const GHOST_WIDE = "min(50vh, 560px)"; // Ghost_Box width at or above 900 px (R5.15)
+export const GHOST_NARROW = "min(31vh, 200px)";
+export const GHOST_HEIGHT_RATIO = 1.2; // Ghost_Box height / width
+export const CONTENT_COLUMN_MAX = "min(34rem, 46vw)"; // R5.18
+export const GHOST_RISEN_WIDE = -0.07; // translateY, share of ghost height
+export const GHOST_RISEN_NARROW = -0.03;
+export const GHOST_HANDED = -0.12;
+export const NARROW_GHOST_SCALE = 0.8; // R10.15
+export const HELD_LEFT = 0.18;
+export const HELD_WIDTH = 0.64;
+export const HELD_TOP_WIDE = 0.48;
+export const HELD_TOP_NARROW = 0.47;
+export const ENVELOPE_ASPECT_WIDE = 1.45;
+export const ENVELOPE_ASPECT_NARROW = 1.3;
+export const ENVELOPE_FRONT_MIN_PX = 12; // R8.12
+export const ENVELOPE_DIRT_BAND = 0.22; // share of face height
+export const SEAL_WIDTH_WIDE = 0.27; // share of envelope width
+export const SEAL_WIDTH_NARROW = 0.32;
+export const SEAL_HIT_MIN_PX = 60; // before scale; at least 48 at 0.8 (R10.16)
+export const COLUMN_GAP_UNDER_SOIL_PX = 4;
+export const DUST_CEILING_GAP_PX = 8; // R6.16
+
+// --- Landing light (R7.1, R6.10) (spec 07) ---
+export const LANDING_LIGHT_AT_MS = 250;
+export const LIGHT_FADE_MS = 900;
+export const LIGHT_MOVE_MS = 1100;
+export const LIGHT_MAX_LUMINANCE_CHANGE_PER_S = 0.1;
+
+// --- Emergence (R9.5, R9.6, R18.2, R18.8) (spec 07) ---
+export const SHAKE_AT_MS = 750;
+export const SHAKE_MS = 500;
+export const SHAKE_PX = 2;
+export const RISE_AT_MS = 900;
+export const RISE_MS = 1500;
+export const EASE_RISE = "cubic-bezier(0.16, 0.84, 0.3, 1)";
+
+// --- Idle_Bob and eyes (R5.5, R5.10, R5.11, R18.10) (spec 07) ---
+export const BOB_PX = 3;
+export const BOB_PERIOD_MS = 3600;
+export const EYE_MAX_OFFSET = 5; // SVG units, length of the offset
+export const EYE_MAX_X = 5;
+export const EYE_MAX_Y = 4;
+export const EYE_FOLLOW_RADIUS_PX = 320;
+export const EYE_TRANSITION_MS = 120;
