@@ -59,7 +59,7 @@ function SceneFrame(props: SceneShellProps) {
       )}
       <main className={styles.main}>
         {props.variant === "persona" ? (
-          <div className={styles.personaColumn}>
+          <div className={styles.personaColumn} data-persona-column>
             <SceneHeadline />
             {props.children}
           </div>
