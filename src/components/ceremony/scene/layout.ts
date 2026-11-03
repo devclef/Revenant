@@ -81,3 +81,13 @@ export function soilJagMaxPx(bandPx: number): number {
 
 /** The jag band the design allows above the soil, in pixels (R6.3). */
 export const SOIL_EDGE_BAND_PX = EDGE_BAND_PX;
+
+/**
+ * The x of the Soil_Canvas light, in pixels from the window's left edge. It is
+ * the same rule as `ghostCentreX`, under the name the Soil_Canvas uses: at or
+ * above 900 px `frameL + 0.72 × frameW`, below it `w / 2`. It never depends on
+ * the Stage, so the base is not redrawn when the Stage changes.
+ */
+export function lightX(viewportWidth: number): number {
+  return ghostCentreX(viewportWidth);
+}

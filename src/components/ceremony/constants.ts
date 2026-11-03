@@ -105,6 +105,17 @@ export const COLUMN_GAP_UNDER_SOIL_PX = 4;
 export const DUST_CEILING_GAP_PX = 8; // R6.16
 export const EDGE_BAND_PX = 14; // R6.3: the soil's top-edge jag stays inside this band
 
+// --- Soil_Canvas (R6.3, R6.5) (spec 07) ---
+export const SOIL_SEED = 0x07a11e;
+export const DUST_SEED = 0x077149; // SOIL_SEED ^ 0xd057, the dust stream
+export const CLOD_SEED = 0x076013; // SOIL_SEED ^ 0xc10d, the clod stream
+export const CLOD_COUNT = 16;
+export const CLOD_LIFE_MS = 1600;
+export const CLOD_GRAVITY_PX_S2 = 620;
+export const SOIL_DPR_MAX = 2;
+export const SOIL_RESIZE_DEBOUNCE_MS = 150;
+export const DUST_SPREAD = 0.2; // share of width either side of the light
+
 // --- Landing light (R7.1, R6.10) (spec 07) ---
 export const LANDING_LIGHT_AT_MS = 250;
 export const LIGHT_FADE_MS = 900;
