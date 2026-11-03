@@ -10,6 +10,8 @@ import { StagePanel } from "./StagePanel";
 import { ThenNowSequence } from "@/components/ceremony/figures/ThenNowSequence";
 import { Close } from "@/components/ceremony/close/Close";
 import { SealBreak } from "@/components/ceremony/seal/SealBreak";
+import type { SealController } from "@/components/ceremony/seal/useSealBreak";
+import { IDLE } from "@/components/ceremony/seal/hold";
 import { RecallScale } from "@/components/ceremony/recall/RecallScale";
 import { useLocalView } from "@/components/ceremony/local-view";
 import { REVEAL_COPY } from "./copy";
@@ -17,6 +19,22 @@ import styles from "./reveal.module.css";
 
 /** The marks stage's scales are read-only, so they never send an edit. */
 const NO_EDIT = () => undefined;
+
+/**
+ * Used when no controller is passed (static renders in the tests). The seal
+ * shows intact and its controls do nothing. OpeningFlow always passes the real
+ * controller from `useSealBreak`.
+ */
+const INERT_SEAL: SealController = {
+  hold: IDLE,
+  broken: false,
+  progress: 0,
+  press: () => undefined,
+  breakNow: () => undefined,
+  showAll: () => undefined,
+  skip: () => undefined,
+  connect: () => undefined,
+};
 
 /**
  * The staged reveal (design.md "Reveal", R9.1, R9.4). The reveal is shown only
@@ -79,6 +97,12 @@ export type RevealProps = {
   /** Dispatches `SHOW_ALL`, revealing every remaining stage at once. */
   onShowAll: () => void;
   /**
+   * The Seal_Break controller from OpeningFlow's `useSealBreak` (called once
+   * there). Stage 1's SealBreak reads and drives it. Optional: without it the
+   * seal shows intact and its controls do nothing.
+   */
+  seal?: SealController;
+  /**
    * `"persona"` (default) or `"live"`. Live letters use the live stage 2 line
    * and let a same-figure pair show a zero change (spec 06, R18.2).
    */
@@ -93,6 +117,7 @@ export function Reveal({
   stage,
   onAdvance,
   onShowAll,
+  seal,
   variant = "persona",
 }: RevealProps) {
   // The local-view context lets stage 1's SealBreak report its `sealing` flag
@@ -161,8 +186,8 @@ export function Reveal({
           {stage === 1 ? (
             <SealBreak
               patternKey={variant === "live" ? (letterId ?? personaName) : personaName}
-              onAdvance={onAdvance}
-              onShowAll={onShowAll}
+              seal={seal ?? INERT_SEAL}
+              showAll
               onSealingChange={onSealingChange}
             />
           ) : null}

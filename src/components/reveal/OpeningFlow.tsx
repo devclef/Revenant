@@ -74,6 +74,7 @@ import {
 import type { EnvelopePersona } from "@/components/ceremony/envelope/Envelope";
 import { Envelope } from "@/components/ceremony/envelope/Envelope";
 import heldStyles from "@/components/ceremony/scene/scene.module.css";
+import { useSealBreak, type SealController } from "@/components/ceremony/seal/useSealBreak";
 import { DemoLabel } from "@/components/demo/DemoLabel";
 import { useOpeningFlow } from "./useOpeningFlow";
 import { onceOnly, type AuthenticatorPort } from "@/components/live/unlock";
@@ -210,6 +211,10 @@ export function OpeningFlow({
   const { state, retry } = flow;
   const KeyStep = useKeyStep(state.tag === "awaiting_key");
 
+  // The Seal_Break controller (task 5). Called once here, in reveal stage 1, and
+  // passed to Reveal's SealBreak. Its ADVANCE and SHOW_ALL go through the flow.
+  const seal = useSealBreak({ onAdvance: flow.advance, onShowAll: flow.showAll });
+
   // The Pick_Up_Button sends BEGIN once per `verified` (R10.6). The latest
   // `begin` is read through a ref, so the guard keeps its state across renders.
   const latestBegin = useRef(flow.begin);
@@ -264,7 +269,7 @@ export function OpeningFlow({
             {selectView(state, flow, letterId, personaName, persona, mode, retryAtZero, KeyStep, {
               keyText,
               onKeyTextChange: setKeyText,
-            }, beginGuard.begin)}
+            }, beginGuard.begin, seal)}
           </div>
         </CeremonyRoot>
       </SkipProvider>
@@ -290,6 +295,7 @@ function selectView(
   KeyStep: KeyStepComponent | null,
   keyEntry: KeyEntry,
   begin: () => void,
+  seal: SealController,
 ): React.ReactNode {
   // The envelope's per-letter inputs: the persona list fields plus the demo
   // flag. These are always demo persona letters, so `demo` is true whenever a
@@ -431,6 +437,7 @@ function selectView(
             stage={state.stage}
             onAdvance={flow.advance}
             onShowAll={flow.showAll}
+            seal={seal}
             variant={mode}
           />
           {mode === "live" && state.stage === 3 ? (

@@ -237,19 +237,28 @@ function ceremonySources(): Array<{ path: string; text: string }> {
 
 describe("Property 19: every gesture has a plain control (R11.1, R11.4)", () => {
   it("gives every pointer-gesture file a key handler or a button in the same file", () => {
-    const gestureFiles = ceremonySources().filter((file) =>
+    const sources = ceremonySources();
+    const gestureFiles = sources.filter((file) =>
       file.text.includes("onPointerDown"),
     );
-    // Non-vacuous: the two known gesture views must be among them.
+    // Non-vacuous: the two known gesture views must be among them. The seal's
+    // pointer target is HeldSeal (task 5); its plain control is the button in
+    // the sibling SealBreak, which is checked below.
     const names = gestureFiles.map((file) => relative(HERE, file.path));
     expect(names).toContain(join("recall", "RecallScale.tsx"));
-    expect(names).toContain(join("seal", "SealBreak.tsx"));
+    expect(names).toContain(join("seal", "HeldSeal.tsx"));
 
+    const sealBreak = sources.find(
+      (file) => relative(HERE, file.path) === join("seal", "SealBreak.tsx"),
+    );
     for (const file of gestureFiles) {
       const hasKeyHandler = file.text.includes("onKeyDown");
       const hasButton = file.text.includes("<button");
+      const pairedButton =
+        relative(HERE, file.path) === join("seal", "HeldSeal.tsx") &&
+        (sealBreak?.text.includes("<button") ?? false);
       expect(
-        hasKeyHandler || hasButton,
+        hasKeyHandler || hasButton || pairedButton,
         `${relative(HERE, file.path)} has a pointer gesture with no plain control`,
       ).toBe(true);
     }
