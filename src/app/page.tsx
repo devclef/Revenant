@@ -19,11 +19,19 @@ import { LandingBackdrop } from "@/lib/landing-backdrop";
  * background below the Soil strip. Every word comes from SCENE_COPY.
  */
 
-/** Light already up, with scripts disabled (R7.1). Constant; no user data. */
-const LANDING_NOSCRIPT_STYLE = "[data-scene-light]{animation:none}";
+/**
+ * With scripts disabled (R7.1) the light is already up: it has no animation to
+ * wait for. The light is the first child of the aria-hidden backdrop div (the
+ * CSS-module class is hashed, so no data attribute can be relied on). This rule
+ * only turns off animation on that layer; it never hides it. Constant; no user data.
+ */
+const LANDING_NOSCRIPT_STYLE = '[aria-hidden="true"]>div:first-child{animation:none}';
 
 /** The Accent button: orange means "you" (tone.md). Text is --on-accent. */
 const CTA_STYLE: CSSProperties = {
+  // Above the backdrop layer (z-index 0), so no dust or light paints over the label.
+  position: "relative",
+  zIndex: 2,
   display: "inline-flex",
   alignItems: "center",
   minHeight: "56px",
@@ -71,6 +79,10 @@ export default function Home() {
       </noscript>
 
       <SceneShell variant="landing">
+        {/*
+          SceneBackdrop is rendered with no children and no props. That is the
+          ghost={false} outcome: the landing page has no Ghost.
+        */}
         <LandingBackdrop />
         <section>
           <SceneHeadline />
