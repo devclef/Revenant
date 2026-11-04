@@ -7,8 +7,6 @@
 // This module must contain no import statement.
 
 // --- Stage motion (ms) ---
-export const CAMERA_MOVE_MS = 700;
-export const DESK_TO_ENVELOPE_MS = 450; // R8.7
 export const STAGE_FADE_MS = 400;
 export const CALM_FADE_MS = 120; // R11.2: at most 150
 

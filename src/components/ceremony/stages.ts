@@ -24,11 +24,8 @@ export function emergingStatus(tag: FlowState["tag"]): string {
 
 /**
  * The visual Stages of the ceremony. Each names a distinct scene on the desk.
- * `/demo` sets `desk` on its own root and has no Flow, so `stageFor` never
- * returns `desk` itself.
  */
 export type Stage =
-  | "desk"
   | "emerging"
   | "sealed"
   | "envelope"

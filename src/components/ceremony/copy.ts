@@ -114,8 +114,6 @@ export const CEREMONY_COPY = {
    * screen-reader reader hears where the Ceremony is without any motion.
    */
   stageLive: {
-    /** The desk, before anything is picked up. */
-    desk: "The desk is in front of you.",
     // The emerging Stage has no entry here. Its line comes from
     // stages.emergingStatus, the same REVEAL_COPY string the envelope shows.
     /** The letter, still sealed and not yet open. */

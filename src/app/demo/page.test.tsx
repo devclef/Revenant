@@ -4,8 +4,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DEMO_COPY } from "@/components/demo/copy";
 
-// Each card is a DeskEnvelopeLink, which needs the app router. The router is
-// stubbed here. The page supplies its own MotionProvider around the desk.
+// Each card is a next/link, which reads the app router. The router is
+// stubbed here.
 const routerStub = vi.hoisted(() => ({
   prefetch: () => undefined,
   push: () => undefined,

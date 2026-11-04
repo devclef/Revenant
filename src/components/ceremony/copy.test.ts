@@ -105,7 +105,6 @@ const splitSentences = (text: string): string[] =>
  * from the union the live region must cover.
  */
 const ALL_STAGES = [
-  "desk",
   "emerging",
   "sealed",
   "envelope",
