@@ -130,6 +130,11 @@ export type EnvelopeViewProps = {
    * `/l/[id]` column, which draws the envelope inline).
    */
   held?: boolean;
+  /**
+   * The inline frame's width (live letter column: min(84vw, 22rem)). Defaults
+   * to the resting width min(84vw, 26rem), so the persona geometry is unchanged.
+   */
+  frameWidth?: string;
 };
 
 /**
@@ -140,15 +145,17 @@ export type EnvelopeViewProps = {
 function EnvelopeFrame({
   state,
   persona,
+  width,
 }: {
   state: EnvelopeState;
   persona?: EnvelopePersona;
+  width: string;
 }): ReactElement {
   return (
     <div
       className={styles.frame}
       style={{
-        width: "min(84vw, 26rem)",
+        width,
         marginTop: "max(6rem, 14vh)",
       }}
     >
@@ -174,11 +181,14 @@ export function EnvelopeView({
   stillSealed,
   children,
   held = false,
+  frameWidth = "min(84vw, 26rem)",
 }: EnvelopeViewProps): ReactElement {
   // On the persona page the Ghost holds the Envelope, so the column draws no
   // envelope frame; elsewhere (the /demo and /l/[id] column) it draws inline.
   const frame = (state: EnvelopeState) =>
-    held ? null : <EnvelopeFrame state={state} persona={persona} />;
+    held ? null : (
+      <EnvelopeFrame state={state} persona={persona} width={frameWidth} />
+    );
 
   switch (variant) {
     case "loading":

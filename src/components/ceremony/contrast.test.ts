@@ -1,20 +1,20 @@
 // Feature: 05-reveal-ceremony, Property 22
 //
-// Property 22 (design.md): desk text and focus rings clear AA on every desk
-// surface. The Ceremony draws its text from desk tokens in ceremony.module.css
-// (R1.7: the Ceremony never edits globals.css) and from the reveal's paper
-// text tokens in src/app/globals.css. tone.md and data-integrity.md require
-// body text, numbers and labels to clear WCAG 2.2 AA (>=4.5:1 for normal text),
-// and focus rings to clear 3:1, on every surface they sit on.
+// Property 22 (design.md): paper text and focus rings clear WCAG 2.2 AA on
+// every paper surface. The desk pairs were removed with the desk (spec 07
+// task 9, R4.8). The Ceremony draws its paper text from the reveal's paper
+// text tokens in src/app/globals.css (R1.7: the Ceremony never edits
+// globals.css) and its deepest paper shading from ceremony.module.css.
+// tone.md and data-integrity.md require body text, numbers and labels to
+// clear WCAG 2.2 AA (>=4.5:1 for normal text), and focus rings to clear 3:1,
+// on every surface they sit on.
 //
 // This test reads the real hex values out of the CSS files (so it tracks the
 // tokens, not a copy of them), computes the sRGB relative-luminance contrast
 // ratio with the WCAG formula, and asserts:
-//   - every desk text token (--desk-ink, --desk-ink-soft, --desk-gold) on the
-//     unlit desk (--desk) and the brightest lit desk (--desk-lit-max) is >=4.5,
 //   - every reveal text token (--ink, --ink-soft, --seal, --gold-text) on each
 //     paper surface (--paper, --paper-deep, --paper-shadowed) is >=4.5,
-//   - the focus rings (--ink on paper, --desk-ink on the desk) are >=3.
+//   - the focus ring (--ink on paper) is >=3.
 //
 // No colour here depends on any value or direction (neutrality.md, R10.1): a
 // rise and a fall use the same tokens, so this test treats them identically.
@@ -37,10 +37,6 @@ const PAPER_TEXT_TOKENS = ["--ink", "--ink-soft", "--seal", "--gold-text"] as co
 /** Paper surfaces: two from globals.css, the deepest shading from the Ceremony. */
 const GLOBALS_SURFACE_TOKENS = ["--paper", "--paper-deep"] as const;
 const CEREMONY_SURFACE_TOKENS = ["--paper-shadowed"] as const;
-/** Desk text tokens, from ceremony.module.css. */
-const DESK_TEXT_TOKENS = ["--desk-ink", "--desk-ink-soft", "--desk-gold"] as const;
-/** Desk surfaces: the unlit desk and the brightest the candle lifts it to. */
-const DESK_SURFACE_TOKENS = ["--desk", "--desk-lit-max"] as const;
 
 const WCAG_AA_NORMAL = 4.5;
 const FOCUS_RING_MIN = 3;
@@ -91,7 +87,7 @@ function contrastRatio(a: string, b: string): number {
   return (light + 0.05) / (dark + 0.05);
 }
 
-describe("Property 22: desk and paper text and focus rings clear AA / 3:1", () => {
+describe("Property 22: paper text and focus rings clear AA / 3:1", () => {
   const globalsCss = readFileSync(globalsCssPath, "utf8");
   const ceremonyCss = readFileSync(ceremonyCssPath, "utf8");
 
@@ -118,14 +114,6 @@ describe("Property 22: desk and paper text and focus rings clear AA / 3:1", () =
     string
   >;
 
-  const deskText = Object.fromEntries(
-    DESK_TEXT_TOKENS.map((t) => [t, readHexToken(ceremonyCss, t, "ceremony.module.css")]),
-  ) as Record<(typeof DESK_TEXT_TOKENS)[number], string>;
-
-  const deskSurface = Object.fromEntries(
-    DESK_SURFACE_TOKENS.map((s) => [s, readHexToken(ceremonyCss, s, "ceremony.module.css")]),
-  ) as Record<(typeof DESK_SURFACE_TOKENS)[number], string>;
-
   it("parsed every token it needs from the CSS files", () => {
     // Guard: the loops below are only meaningful if the parse found real
     // values. A failed parse throws above, but assert the shape too so a
@@ -134,13 +122,9 @@ describe("Property 22: desk and paper text and focus rings clear AA / 3:1", () =
     expect(Object.keys(paperSurface)).toHaveLength(
       GLOBALS_SURFACE_TOKENS.length + CEREMONY_SURFACE_TOKENS.length,
     );
-    expect(Object.keys(deskText)).toHaveLength(DESK_TEXT_TOKENS.length);
-    expect(Object.keys(deskSurface)).toHaveLength(DESK_SURFACE_TOKENS.length);
     for (const hex of [
       ...Object.values(paperText),
       ...Object.values(paperSurface),
-      ...Object.values(deskText),
-      ...Object.values(deskSurface),
     ]) {
       expect(hex).toMatch(/^#[0-9a-f]{6}$/);
     }
@@ -150,16 +134,6 @@ describe("Property 22: desk and paper text and focus rings clear AA / 3:1", () =
   it("computes the reference 21:1 for black on white", () => {
     expect(contrastRatio("#000000", "#ffffff")).toBeCloseTo(21, 2);
   });
-
-  // Desk text on the unlit desk and the brightest lit desk.
-  for (const token of DESK_TEXT_TOKENS) {
-    for (const surfaceToken of DESK_SURFACE_TOKENS) {
-      it(`${token} on ${surfaceToken} is at least ${WCAG_AA_NORMAL}:1`, () => {
-        const ratio = contrastRatio(deskText[token], deskSurface[surfaceToken]);
-        expect(ratio).toBeGreaterThanOrEqual(WCAG_AA_NORMAL);
-      });
-    }
-  }
 
   // Reveal (paper) text on every paper surface, including the deepest shading.
   const PAPER_SURFACE_TOKENS = [
@@ -175,17 +149,10 @@ describe("Property 22: desk and paper text and focus rings clear AA / 3:1", () =
     }
   }
 
-  // Focus rings (R11.8): --ink on every paper surface, --desk-ink on every
-  // desk surface, each at least 3:1.
+  // Focus rings (R11.8): --ink on every paper surface, at least 3:1.
   for (const surfaceToken of PAPER_SURFACE_TOKENS) {
     it(`focus ring (--ink) on ${surfaceToken} is at least ${FOCUS_RING_MIN}:1`, () => {
       const ratio = contrastRatio(paperText["--ink"], paperSurface[surfaceToken]);
-      expect(ratio).toBeGreaterThanOrEqual(FOCUS_RING_MIN);
-    });
-  }
-  for (const surfaceToken of DESK_SURFACE_TOKENS) {
-    it(`focus ring (--desk-ink) on ${surfaceToken} is at least ${FOCUS_RING_MIN}:1`, () => {
-      const ratio = contrastRatio(deskText["--desk-ink"], deskSurface[surfaceToken]);
       expect(ratio).toBeGreaterThanOrEqual(FOCUS_RING_MIN);
     });
   }
@@ -200,7 +167,7 @@ describe("Property 22: desk and paper text and focus rings clear AA / 3:1", () =
 // boundaries and focus rings need 3:1 (R4.3, R4.4). A failure names the pair
 // and its ratio. The rule checks (R4.5 text on purple, R4.9 Accent ring inside
 // the Letter_Block) and the dirt pair (R4.7) are asserted to fail by name.
-// The desk pairs above stay untouched until task 9 (R4.8).
+// The desk pairs above were removed in spec 07 task 9 (R4.8).
 
 type Rgb = [number, number, number];
 interface Colour {

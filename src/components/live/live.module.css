@@ -1,20 +1,22 @@
 /*
  * Styles for the live Seal_Page (spec 06, design.md "Seal_Page").
  *
- * The paper panel sets its own --ink and --ink-soft, so its text never inherits
- * a colour from another surface. The values match the globals.css tokens for
- * paper (#f4ecd8): --ink 13.17:1 and --ink-soft 9.58:1 on --paper.
+ * Colours and type come from the scene tokens in
+ * src/components/ceremony/scene/tokens.css, which LiveLetter and SealPage load
+ * (spec 07 R17.1). The paper panel reads --paper and --ink from there, so its
+ * text inherits the same ink on every paper surface of the page.
+ *
+ * The primary button uses the Accent (--accent) with --on-accent text. Orange
+ * means "you", and the main button is one of the places R3.9 allows it.
  *
  * Colour carries no direction. Figures and changes get the same treatment. The
- * wax-seal red is used only on the primary button and the warning border
+ * wax-seal red (--seal, globals.css) is used only on the warning border
  * (neutrality.md, tone.md).
  */
 
 /* Live reveal lock note (R18.6). A paper surface that sets its own colours,
    so its text never inherits the desk's cream ink. Ink on paper is 13.17:1. */
 .lockNote {
-  --ink: #1f1b16;
-  --ink-soft: #3a332a;
   margin: 2rem 0 0;
   padding: 1rem 1.25rem;
   color: var(--ink);
@@ -49,8 +51,6 @@
 }
 
 .panel {
-  --ink: #1f1b16;
-  --ink-soft: #3a332a;
   position: relative;
   max-width: 40rem;
   margin: 0 auto;
@@ -223,8 +223,15 @@
   background-color: var(--paper-deep);
 }
 
+/*
+ * The passkey and backup key warnings (spec 07 R17.6 and R17.7). Their text
+ * has no opacity, animation, glow, text shadow or filter, and no Calm_Mode or
+ * reduced-motion rule touches them. They sit in the same view as the control
+ * they guard, before it can be pressed.
+ */
 .warning p {
   font-weight: 600;
+  color: var(--ink);
 }
 
 .warningLabel {
@@ -268,9 +275,9 @@
   font-family: var(--font-sans);
   font-size: 1rem;
   font-weight: 600;
-  color: var(--paper);
-  background-color: var(--seal);
-  border: 1px solid var(--seal);
+  color: var(--on-accent);
+  background-color: var(--accent);
+  border: 1px solid var(--accent);
   border-radius: 3px;
   cursor: pointer;
 }
@@ -381,8 +388,6 @@
  * does not inherit a colour from the envelope surface around it.
  */
 .unlock {
-  --ink: #1f1b16;
-  --ink-soft: #3a332a;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -431,8 +436,6 @@
 }
 
 .card {
-  --ink: #1f1b16;
-  --ink-soft: #3a332a;
   margin: 0;
   padding: clamp(1rem, 3vw, 1.5rem);
   color: var(--ink);
@@ -522,4 +525,12 @@
   .card * {
     color: #000000;
   }
+}
+
+/* The Live_Letter column on `/l/[id]`: one centred column, the envelope inline
+   at its top (the width is set on the envelope frame in OpeningFlow). */
+.letterColumn {
+  width: 100%;
+  max-width: 40rem;
+  margin: 0 auto;
 }

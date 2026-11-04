@@ -22,7 +22,6 @@ import {
   FIG_TOTAL_MS,
   MAX_FIGURES,
   CALM_FADE_MS,
-  CANDLE_FLICKER_AMPLITUDE,
   EASE_LEAVE,
   FLAP_AT_MS,
   FLAP_LIFT_MS,
@@ -66,7 +65,6 @@ describe("ceremony/constants", () => {
   it("the design-pinned numeric constants equal their design.md values", () => {
     expect(CALM_FADE_MS).toBe(120);
     expect(SEAL_HOLD_MS).toBe(1500);
-    expect(CANDLE_FLICKER_AMPLITUDE).toBe(0.04);
   });
 
   it("holds the seal-break values from design.md 'Kept, changed and retired' (R6, R12)", () => {

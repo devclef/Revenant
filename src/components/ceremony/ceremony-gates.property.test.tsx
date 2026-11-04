@@ -6,8 +6,9 @@
 //   - Property 19: every gesture has a plain control, and every running
 //     sequence renders a visible Skip (R11.1, R11.4, R6.3).
 //   - Property 20: Calm_Mode starts no animation. Every plan that takes a
-//     motion mode returns an empty plan, dust and tilt are never imported, and
-//     each view renders its settled final state (R11.2, R11.3, R13.3).
+//     motion mode returns an empty plan, and each view renders its settled
+//     final state (R11.2, R11.3). The desk decor clause went with the desk
+//     (spec 07 task 9).
 //   - Property 21: the same render on the server and the client. Rendering
 //     twice with `Math.random` and `Date.now` stubbed to different values gives
 //     identical markup (R17.3, R8.4).
@@ -29,10 +30,6 @@ import type { RecallRecordV1, Draft } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
 import { CEREMONY_COPY } from "./copy";
 import { planSealBreak } from "./seal/SealBreak";
-import {
-  loadDeskDecor,
-  type DeskDecorImporters,
-} from "./desk/decor-loader";
 import type { FlowState, Opened } from "../reveal/opening-machine";
 
 // --- fixtures ----------------------------------------------------------------
@@ -349,49 +346,6 @@ describe("Property 20: Calm_Mode starts no animation (R11.2, R11.3)", () => {
     expect(planSealBreak({ calm: false }).steps).toHaveLength(4);
   });
 
-  it("never loads dust or tilt outside full motion", async () => {
-    const dust = vi.fn(() => Promise.resolve({} as never));
-    const tilt = vi.fn(() => Promise.resolve({} as never));
-    const importers = {
-      dust,
-      tilt,
-    } as unknown as DeskDecorImporters;
-
-    await fc.assert(
-      fc.asyncProperty(
-        fc.constantFrom<"calm" | "light">("calm", "light"),
-        async (mode) => {
-          dust.mockClear();
-          tilt.mockClear();
-          const modules = await loadDeskDecor(mode, importers);
-          expect(modules).toBeNull();
-          expect(dust).not.toHaveBeenCalled();
-          expect(tilt).not.toHaveBeenCalled();
-        },
-      ),
-      { numRuns: 100 },
-    );
-
-    // Non-vacuous: full motion does load both modules.
-    await loadDeskDecor("full", importers);
-    expect(dust).toHaveBeenCalledTimes(1);
-    expect(tilt).toHaveBeenCalledTimes(1);
-  });
-
-  it("imports dust and tilt only dynamically, from the decor loader", () => {
-    const importPattern = /from\s+["'][^"']*\/(dust|tilt)["']/;
-    const dynamicPattern = /import\(\s*["'][^"']*\/?(dust|tilt)["']\s*\)/;
-    const staticImporters = ceremonySources()
-      .filter((file) => importPattern.test(file.text))
-      .map((file) => relative(HERE, file.path));
-    expect(staticImporters).toEqual([]);
-
-    const loader = ceremonySources().find(
-      (file) => relative(HERE, file.path) === join("desk", "decor-loader.ts"),
-    );
-    expect(loader?.text ?? "").toMatch(dynamicPattern);
-  });
-
   it("settles the figures in calm: stage 3 is close, never figures", () => {
     fc.assert(
       fc.property(
@@ -431,6 +385,23 @@ describe("Property 20: Calm_Mode starts no animation (R11.2, R11.3)", () => {
       ),
       { numRuns: 100 },
     );
+  });
+});
+
+describe("Property 20: the /l/[id] live flow has no Ghost and no Soil (spec 07 task 2)", () => {
+  it("renders no Ghost, no Soil strip and no canvas in any live Stage", () => {
+    const states: FlowState[] = [
+      { tag: "loading" },
+      { tag: "verified", opened: OPENED },
+      { tag: "reveal", opened: OPENED, record: RECORD, stage: 1 },
+      { tag: "reveal", opened: OPENED, record: RECORD, stage: 3 },
+    ];
+    for (const state of states) {
+      const html = render(state, "live");
+      expect(html).not.toContain("data-ghost-box");
+      expect(html).not.toContain("data-soil-strip");
+      expect(html).not.toContain("<canvas");
+    }
   });
 });
 

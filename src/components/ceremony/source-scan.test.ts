@@ -239,7 +239,6 @@ describe("ceremony tree imports @/lib/crypto only dynamically", () => {
 /** The ceremony folders the WebGL and animation-library scan covers. */
 const SCENE_FOLDERS: ReadonlyArray<string> = [
   "scene",
-  "desk",
   "envelope",
   "letter",
   "recall",

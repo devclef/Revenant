@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import "@/components/ceremony/scene/tokens.css";
 import { OpeningFlow } from "@/components/reveal/OpeningFlow";
 import { takeBackupKeyFromLocation } from "@/lib/cards";
 import { LIVE_COPY } from "./copy";
+import styles from "./live.module.css";
 
 /**
  * The Live_Letter view on the Letter_Page (spec 06, design.md "Letter_Page").
@@ -33,11 +35,13 @@ export function LiveLetter({ letterId }: { letterId: string }) {
   }
 
   return (
-    <OpeningFlow
-      mode="live"
-      letterId={letterId}
-      personaName={LIVE_COPY.regionLabel}
-      initialBackupKey={backupKey ?? undefined}
-    />
+    <div className={styles.letterColumn}>
+      <OpeningFlow
+        mode="live"
+        letterId={letterId}
+        personaName={LIVE_COPY.regionLabel}
+        initialBackupKey={backupKey ?? undefined}
+      />
+    </div>
   );
 }

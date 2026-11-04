@@ -214,7 +214,7 @@ function CeremonyRegion({
       aria-label={personaName}
       data-ceremony={stage}
       data-ceremony-motion={motionAttr}
-      className={className ? `${styles.ceremony} ${className}` : styles.ceremony}
+      className={`${styles.desk} ${className ? `${styles.ceremony} ${className}` : styles.ceremony}`}
     >
       <SoundEnabledContext.Provider value={soundOn}>
         <StageContext.Provider value={stage}>
