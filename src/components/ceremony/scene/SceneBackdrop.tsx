@@ -1,3 +1,5 @@
+"use client";
+
 // Feature: 07-judge-journey
 //
 // The backdrop (design.md "SceneBackdrop and the Soil", R6.9, R19.5). One
