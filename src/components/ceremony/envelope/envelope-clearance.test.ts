@@ -5,7 +5,7 @@
 //
 // The model reads the date-line rules from Envelope.module.css (the `.lines`
 // bottom offset and the `.line` / `.demoNote` font clamps) and the aspect and
-// dirt-band constants from ../constants. Sizes follow ENVELOPE_TARGET,
+// dirt-band constants from ../constants. Sizes follow the resting width,
 // `min(84vw, 26rem)`: the smallest width is at a 360 px viewport and the largest
 // is the 26 rem cap. Font clamps use the browser root size of 16 px. The line
 // height of the demo note is not set in CSS, so it takes a 1.5 body value here,
@@ -29,7 +29,7 @@ const css = readFileSync(resolve(__dirname, "Envelope.module.css"), "utf8");
 
 const REM_PX = 16;
 const SMALLEST_VIEWPORT_PX = 360;
-const LARGEST_WIDTH_REM = 26; // ENVELOPE_TARGET: min(84vw, 26rem)
+const LARGEST_WIDTH_REM = 26; // resting width cap: min(84vw, 26rem)
 const SHARE_OF_VIEWPORT = 0.84;
 const DATE_LINE_HEIGHT = 1.3; // `.line` in Envelope.module.css
 const DEMO_NOTE_LINE_HEIGHT = 1.5; // not set in CSS: the body default

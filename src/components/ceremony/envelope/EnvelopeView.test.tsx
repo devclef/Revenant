@@ -21,7 +21,7 @@
 //     (Property 2's envelope clauses: the envelope scene precedes every later
 //     Stage). The envelope stays `closed` until BEGIN; it only turns over when
 //     a later Stage drives `envelopeState`.
-//   - R8.7: every scene draws the envelope at ENVELOPE_TARGET — the geometry
+//   - R8.7: every scene draws the envelope at the resting geometry — the
 //     literals from constants.ts appear in the rendered inline style.
 //   - With no persona: the default seal pattern and no dates (spec 03 renders).
 
@@ -30,7 +30,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { REVEAL_COPY } from "@/components/reveal/copy";
-import { ENVELOPE_TARGET } from "../constants";
 import { LocalViewProvider } from "../local-view";
 import { EnvelopeView } from "./EnvelopeView";
 import type {
@@ -38,6 +37,10 @@ import type {
   EnvelopeViewVariant,
 } from "./EnvelopeView";
 import type { EnvelopePersona } from "./Envelope";
+
+/** The resting geometry EnvelopeView draws the envelope at (R8.7). */
+const RESTING_WIDTH = "min(84vw, 26rem)";
+const RESTING_TOP = "max(6rem, 14vh)";
 
 /** A fixed persona: the only per-letter fields EnvelopeView feeds the envelope. */
 const PERSONA: EnvelopePersona = {
@@ -199,7 +202,7 @@ describe("EnvelopeView — verified is the intact Stage, before any recall or le
   });
 });
 
-describe("EnvelopeView — every scene draws the envelope at ENVELOPE_TARGET (R8.7)", () => {
+describe("EnvelopeView — every scene draws the envelope at the resting geometry (R8.7)", () => {
   const variants: readonly EnvelopeViewVariant[] = [
     "loading",
     "openable",
@@ -208,19 +211,19 @@ describe("EnvelopeView — every scene draws the envelope at ENVELOPE_TARGET (R8
     "verified",
   ] as const;
 
-  it("sets the frame width and top offset from the constants", () => {
+  it("sets the frame width and top offset to the resting geometry", () => {
     for (const variant of variants) {
       const html = render({ variant, persona: PERSONA });
-      // The geometry literals from constants.ts appear in the rendered inline
-      // style, so the resting frame matches the /demo camera move's last frame.
+      // The resting geometry literals appear in the rendered inline style, so
+      // the frame matches the /demo camera move's last frame.
       expect(
         html,
-        `variant ${variant} must set the ENVELOPE_TARGET width`,
-      ).toContain(ENVELOPE_TARGET.width);
+        `variant ${variant} must set the resting width min(84vw, 26rem)`,
+      ).toContain(RESTING_WIDTH);
       expect(
         html,
-        `variant ${variant} must set the ENVELOPE_TARGET top offset`,
-      ).toContain(ENVELOPE_TARGET.top);
+        `variant ${variant} must set the resting top max(6rem, 14vh)`,
+      ).toContain(RESTING_TOP);
     }
   });
 });

@@ -7,8 +7,9 @@
  * Every envelope, whatever a letter's figures did, is drawn the same way
  * (neutrality.md, R10.1).
  *
- * The envelope rests at the one fixed geometry ENVELOPE_TARGET (R8.7): the
- * component sets the width and the top offset inline from the constants, and
+ * The envelope rests at the one fixed geometry (R8.7): the
+ * component sets the width and the top offset inline (min(84vw, 26rem) and
+ * max(6rem, 14vh)), and
  * this module centres the frame horizontally and holds the envelope's aspect so
  * the first paint on the persona page matches the last frame of the /demo
  * camera move. No geometry here reads letter content (R3.6).
@@ -27,7 +28,7 @@
 
 /* The verified stage's statement and Begin control sit in the space above the
    envelope's frame offset, so they stay clear of the Soil strip. The frame keeps
-   its ENVELOPE_TARGET top offset, so the envelope does not move. */
+   its resting top offset, so the envelope does not move. */
 .intactStage {
   position: relative;
 }
@@ -53,10 +54,10 @@
   gap: 0.6rem;
 }
 
-/* --- The envelope's resting frame (ENVELOPE_TARGET) --- */
+/* --- The envelope's resting frame (R8.7) --- */
 
 .frame {
-  /* width and margin-top come inline from ENVELOPE_TARGET; this centres it. */
+  /* width and margin-top come inline from EnvelopeView; this centres it. */
   margin-left: auto;
   margin-right: auto;
   /* The frame stays inside its paper panel. If the inline width is wider than
