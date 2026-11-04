@@ -37,11 +37,28 @@ const CTA_STYLE: CSSProperties = {
   textDecoration: "none",
 };
 
-/** Explanation paragraphs and the demo link, on the plain background. */
+/**
+ * The hero sits above the backdrop. The backdrop is a positioned layer
+ * (z-index 0) inside the same <main>, so without its own stacking order the
+ * dust, light and Soil strip paint over the headline and the Accent button
+ * (tone.md: dust never sits on text, C1).
+ */
+const HERO_STYLE: CSSProperties = {
+  position: "relative",
+  zIndex: 1,
+};
+
+/**
+ * Explanation paragraphs and the demo link, on a solid --bg surface stacked
+ * above the fixed backdrop, so the Soil strip never draws over this text when
+ * the page is scrolled (C1).
+ */
 const EXPLAIN_STYLE: CSSProperties = {
-  maxWidth: "40rem",
-  margin: "0 auto",
-  padding: "3rem 1.25rem 4rem",
+  position: "relative",
+  zIndex: 2,
+  background: "var(--bg)",
+  padding: "3rem 0 4rem",
+  paddingInline: "max(1.25rem, calc((100% - 40rem) / 2))",
   color: "var(--text)",
   fontSize: "1.05rem",
   lineHeight: 1.6,
@@ -72,7 +89,7 @@ export default function Home() {
 
       <SceneShell variant="landing">
         <LandingBackdrop />
-        <section>
+        <section style={HERO_STYLE}>
           <SceneHeadline />
           {first !== undefined && openLabel !== null ? (
             <Link href={`/demo/personas/${first.key}`} style={CTA_STYLE}>
