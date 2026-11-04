@@ -190,7 +190,7 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - Validation: `bash scripts/check.sh`
   - _Requirements: R2.1, R2.7, R2.8, R3.15, R5.17, R10.16, R12.1–R12.12, R13.1–R13.9, R18.4, R18.6, R18.7, R18.9, R19.2, R19.3, R19.6, R19.9, R22.1, R22.4, R26.6_
 
-- [ ] 6. Figures and the close
+- [x] 6. Figures and the close
   - Agent: `frontend-dev` · Depends on: 5 · Estimated size: ~3,400 changed lines
   - Before this task: Blocked by #134 (spec 06 task 9, Live_Letter reveal variant), because this task edits `src/components/reveal/Reveal.tsx` (R28.8). Task 5 is on `main`.
   - Scope: `src/components/ceremony/ceremony-gates.property.test.tsx`, `src/components/ceremony/timings.property.test.ts`, `src/components/ceremony/figures/FiguresFadeUp.tsx`, `figures/NumberLine.tsx`, `figures/figures.module.css`, `figures/Stamp.tsx`, `figures/Counter.tsx`, `figures/Passage.tsx`, `figures/ThenNowSequence.tsx` (the four deleted), `src/components/ceremony/close/Close.tsx`, `close/close.module.css`, `src/components/ceremony/stages.ts`, `local-view.tsx`, `constants.ts`, `copy.ts`, `src/components/reveal/OpeningFlow.tsx`, `src/components/reveal/Reveal.tsx`, `src/components/reveal/FigureEntry.tsx`, `src/components/reveal/FiguresThenNow.tsx`, `src/components/reveal/reveal.module.css`, `src/components/reveal/change-neutral.property.test.tsx`, `src/app/demo/personas/[key]/page.tsx`, and the `*.test.ts(x)` for each file above including `src/app/demo/personas/[key]/page.test.tsx`
