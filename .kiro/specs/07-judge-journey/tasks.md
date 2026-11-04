@@ -246,7 +246,7 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - Validation: `bash scripts/check.sh`
   - _Requirements: R1.6, R1.7, R1.11, R2.1, R3.18, R7.1–R7.13, R21.3, R26.9_
 
-- [ ] 8. `/demo` on the Scene
+- [x] 8. `/demo` on the Scene
   - Agent: `frontend-dev` · Depends on: 7 · Estimated size: ~1,600 changed lines
   - Before this task: task 7 is on `main`.
   - Scope: `src/components/ceremony/constants.test.ts`, `src/app/demo/page.tsx`, `src/app/demo/page.module.css`, `src/app/demo/page.test.tsx`, `src/components/demo/PersonaCard.tsx`, `src/components/demo/PersonaCard.module.css`, `src/components/demo/PersonaCard.test.tsx`, `src/components/demo/LiveEntry.module.css`, `src/components/demo/DemoLabel.module.css`, `src/components/demo/copy.ts`, `src/components/ceremony/scene/SceneShell.tsx`, `scene/TopBar.tsx`, `scene/scene.module.css`, `src/components/ceremony/stages.ts`, `constants.ts`, `copy.ts`, `src/components/ceremony/desk/DeskEnvelopeLink.tsx` (deleted), `src/components/ceremony/envelope/Envelope.tsx` (only to drop `ENVELOPE_TARGET`), and the `*.test.ts(x)` for each file above
