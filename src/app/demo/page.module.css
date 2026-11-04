@@ -1,22 +1,36 @@
 /*
- * Demo_Index page layout on the dark desk. The page sits inside DeskScene, so
- * the heading and intro note use the desk tokens (--desk-ink, --desk-ink-soft),
- * which are defined on the desk ancestor. Paper panels (the empty state) set
- * their own --ink, so desk text never reaches them.
+ * Demo_Index page layout on the Scene (SceneShell variant="index"). The Scene
+ * background is --bg and its text is --text, with --muted for secondary text.
+ * The child components (DemoLabel, LiveEntry) read the desk token names, so
+ * this page maps those names onto the Scene tokens. The mapping is local to
+ * the page: paper panels (the empty state) set their own --ink, so Scene text
+ * never reaches them.
  *
- * The list is an unstyled column of envelopes with even spacing. DemoLabel and
- * the intro note come first in document order, so they show on a narrow 360 by
- * 640 viewport (R6.4, R6.5).
+ * Text uses --text and --muted on --bg. Both are light tokens on the near-black
+ * background and clear the WCAG 2.2 AA floor. The label rule uses --line as a
+ * decorative border.
+ *
+ * The page keeps its width inside a 360 px viewport: border-box sizing and
+ * width capped to the viewport, so nothing scrolls sideways (no horizontal
+ * scroll at 360 px).
  */
 
 .page {
+  --desk-ink: var(--text);
+  --desk-ink-soft: var(--muted);
+  --demo-label-ink: var(--text);
+  --demo-label-rule: var(--line);
+
   display: flex;
   flex-direction: column;
   gap: clamp(1rem, 3vw, 1.5rem);
+  width: 100%;
   max-width: 40rem;
   margin-inline: auto;
   padding: clamp(1.25rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem);
   box-sizing: border-box;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 /* The label is an inline badge. Keep it at its own width, not the column width. */
@@ -26,13 +40,13 @@
 
 .heading {
   font-family: var(--font-serif);
-  color: var(--desk-ink);
+  color: var(--text);
   margin: 0;
 }
 
 .introNote {
   font-family: var(--font-sans);
-  color: var(--desk-ink-soft);
+  color: var(--muted);
   margin: 0;
 }
 
@@ -44,12 +58,15 @@
   flex-direction: column;
   align-items: center;
   gap: clamp(1rem, 3vw, 1.75rem);
+  width: 100%;
+  min-width: 0;
 }
 
 .listItem {
   margin: 0;
   padding: 0;
   width: 100%;
+  min-width: 0;
   display: flex;
   justify-content: center;
 }

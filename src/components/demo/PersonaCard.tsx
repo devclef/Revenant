@@ -28,7 +28,7 @@ export type PersonaCardProps = {
 
 /**
  * A single persona on the Demo_Index page (R6.2, R6.7), drawn as a sealed
- * envelope. The whole envelope is one real anchor to the persona's letter
+ * envelope on the Scene. The whole envelope is one real anchor to the persona's letter
  * (next/link), so it works without JavaScript. The wax seal is seeded by
  * `personaKey` only.
  *

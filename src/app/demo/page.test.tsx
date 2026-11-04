@@ -100,16 +100,25 @@ describe("Demo_Index page markup", () => {
     );
   });
 
-  it("puts the cards on the desk, inside the desk plane (R13.1)", async () => {
+  it("puts the cards inside the index Scene's main, after the Top_Bar (R13.1)", async () => {
     const html = await renderWithPersonas(TWO_PERSONAS);
-    const deskAt = html.indexOf("data-desk=");
-    const planeAt = html.indexOf("data-desk-plane");
+    const sceneAt = html.indexOf('data-ceremony="index"');
+    const topBarAt = html.indexOf("data-topbar");
+    const mainAt = html.indexOf("<main");
     const firstCardAt = html.indexOf(`href="/demo/personas/${TWO_PERSONAS[0].key}"`);
     const lastCardAt = html.indexOf(`href="/demo/personas/${TWO_PERSONAS[1].key}"`);
-    expect(deskAt).toBeGreaterThanOrEqual(0);
-    expect(planeAt).toBeGreaterThan(deskAt);
-    expect(firstCardAt).toBeGreaterThan(planeAt);
-    expect(lastCardAt).toBeGreaterThan(planeAt);
+    expect(sceneAt).toBeGreaterThanOrEqual(0);
+    expect(topBarAt).toBeGreaterThan(sceneAt);
+    expect(mainAt).toBeGreaterThan(topBarAt);
+    expect(firstCardAt).toBeGreaterThan(mainAt);
+    expect(lastCardAt).toBeGreaterThan(mainAt);
+  });
+
+  it("never shows 'Pick up the letter' on the index or on any card (R6.7)", async () => {
+    const withCards = await renderWithPersonas(TWO_PERSONAS);
+    expect(withCards).not.toContain("Pick up the letter");
+    const empty = await renderWithPersonas([]);
+    expect(empty).not.toContain("Pick up the letter");
   });
 
   it("does not render the empty-state text when the list is non-empty", async () => {
@@ -128,7 +137,7 @@ describe("Demo_Index page markup", () => {
   it("shows the empty state on the desk with no envelopes (R6.8)", async () => {
     const html = await renderWithPersonas([]);
     expect(html).toContain(DEMO_COPY.indexEmpty);
-    expect(html).toContain("data-desk=");
+    expect(html).toContain('data-ceremony="index"');
     // No persona cards: no "Open the letter" link appears.
     expect(html).not.toContain(DEMO_COPY.openLetter);
     expect(html).not.toContain('href="/demo/personas/');

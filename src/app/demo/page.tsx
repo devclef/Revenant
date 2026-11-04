@@ -3,65 +3,61 @@ import { DemoLabel } from "@/components/demo/DemoLabel";
 import { LiveEntry } from "@/components/demo/LiveEntry";
 import { PersonaCard } from "@/components/demo/PersonaCard";
 import { DEMO_COPY } from "@/components/demo/copy";
-import { DeskScene } from "@/components/ceremony/desk/DeskScene";
-import { MotionProvider } from "@/components/ceremony/motion";
+import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { PERSONAS } from "@/lib/personas";
 import styles from "./page.module.css";
 
 /**
  * Demo_Index page at `/demo`. A server component with no database access. It
  * reads the frozen PERSONAS list (validated once at import) and lays it out on
- * the dark desk, the same surface the persona letter sits on.
+ * the Scene (`SceneShell variant="index"`): the dark background, the Top_Bar and
+ * the Soil backdrop, with no Ghost.
  *
- * Desk order (R6.4, R6.5): the "Demo" label, the heading and the intro note come
- * before the first envelope, so they show without scrolling on a 360 by 640
- * viewport. Each persona is one PersonaCard (a desk envelope), in list order. A
- * card receives only list fields (R5.3, R6.2, R16.5), never anything from inside
- * the sealed letter. The persona's `key` is passed as `personaKey` because React
- * reserves `key`.
+ * Order on the page: the "Demo" label, the heading, the intro note, then one
+ * PersonaCard per persona in list order, or the empty state when the list is
+ * empty. The live demo entry (`/demo/live`) sits after the list, with or without
+ * personas. A card receives only list fields (R5.3, R6.2, R16.5), never anything
+ * from inside the sealed letter. The persona's `key` is passed as `personaKey`
+ * because React reserves `key`.
  *
- * The page renders one MotionProvider around DeskScene, the single motion owner
- * for this visit, as the persona page does. The first render is the settled desk
- * with no JavaScript, so the static desk and the same cards show with scripts
- * disabled.
+ * SceneShell supplies the motion provider, so this page needs no provider of
+ * its own. The first render is the settled Scene with no JavaScript, so the
+ * static page and the same cards show with scripts disabled.
  *
- * When PERSONAS is empty the desk shows the `indexEmpty` state with no envelopes
- * (R6.8). All user-facing words come from copy.ts (R15.1).
+ * All user-facing words come from copy.ts (R15.1).
  */
 export default function DemoIndexPage() {
   return (
-    <MotionProvider>
-      <DeskScene>
-        <div className={styles.page}>
-          <div className={styles.label}>
-            <DemoLabel />
-          </div>
-          <h1 className={styles.heading}>{DEMO_COPY.heading}</h1>
-          <p className={styles.introNote}>{DEMO_COPY.introNote}</p>
-
-          {PERSONAS.length === 0 ? (
-            <ParchmentSurface as="section">
-              <p className={styles.empty}>{DEMO_COPY.indexEmpty}</p>
-            </ParchmentSurface>
-          ) : (
-            <ul className={styles.list}>
-              {PERSONAS.map((persona) => (
-                <li className={styles.listItem} key={persona.key}>
-                  <PersonaCard
-                    personaKey={persona.key}
-                    display_name={persona.display_name}
-                    region={persona.region}
-                    written_as_of={persona.written_as_of}
-                    opens_at={persona.opens_at}
-                  />
-                </li>
-              ))}
-            </ul>
-          )}
-
-          <LiveEntry />
+    <SceneShell variant="index">
+      <div className={styles.page}>
+        <div className={styles.label}>
+          <DemoLabel />
         </div>
-      </DeskScene>
-    </MotionProvider>
+        <h1 className={styles.heading}>{DEMO_COPY.heading}</h1>
+        <p className={styles.introNote}>{DEMO_COPY.introNote}</p>
+
+        {PERSONAS.length === 0 ? (
+          <ParchmentSurface as="section">
+            <p className={styles.empty}>{DEMO_COPY.indexEmpty}</p>
+          </ParchmentSurface>
+        ) : (
+          <ul className={styles.list}>
+            {PERSONAS.map((persona) => (
+              <li className={styles.listItem} key={persona.key}>
+                <PersonaCard
+                  personaKey={persona.key}
+                  display_name={persona.display_name}
+                  region={persona.region}
+                  written_as_of={persona.written_as_of}
+                  opens_at={persona.opens_at}
+                />
+              </li>
+            ))}
+          </ul>
+        )}
+
+        <LiveEntry />
+      </div>
+    </SceneShell>
   );
 }

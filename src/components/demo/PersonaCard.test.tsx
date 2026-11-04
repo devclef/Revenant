@@ -102,6 +102,10 @@ describe("PersonaCard markup", () => {
     expect(html).not.toContain("Break the seal");
   });
 
+  it('never says \"Pick up the letter\" on the card (R6.7)', () => {
+    expect(render()).not.toContain("Pick up the letter");
+  });
+
   it("renders the raw ISO/calendar inputs nowhere — only the formatted dates", () => {
     const html = render();
     // The unformatted source values must not leak into the visible card.
