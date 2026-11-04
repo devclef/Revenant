@@ -28,12 +28,11 @@
   max-width: 100%;
   min-width: 0;
   aspect-ratio: 1.45 / 1;
-  /* Fall back to the paper tokens from globals.css. */
-  --env-paper: var(--paper, #f4ecd8);
-  --env-paper-deep: var(--paper-deep, #e8dcc0);
-  --env-fold: var(--paper-shadowed, #d9cba9);
-  --env-ink: var(--ink, #2a2016);
-  --env-soil: var(--soil, #5a4632);
+  /* The envelope paper, its ink and its decoration come from the scene tokens (tokens.css). */
+  --env-paper: var(--env);
+  --env-paper-deep: var(--env);
+  --env-fold: var(--ink-soft);
+  --env-soil: var(--soil-mid);
 }
 
 .wide {
@@ -157,8 +156,8 @@
 .demoNote {
   margin: 0.15rem 0 0;
   font-size: clamp(0.75rem, 2.1vw, 0.9rem);
-  /* A slightly quieter ink, still a paper text token that clears AA. */
-  color: var(--gold-text, #7a5a1e);
+  /* A slightly quieter ink, still a scene text token that clears AA. */
+  color: var(--ink-soft);
 }
 
 /* The responsive front drops the demo note at small widths, so the dates keep

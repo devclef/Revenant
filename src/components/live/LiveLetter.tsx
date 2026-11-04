@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import "@/components/ceremony/scene/tokens.css";
 import { OpeningFlow } from "@/components/reveal/OpeningFlow";
 import { takeBackupKeyFromLocation } from "@/lib/cards";
 import { LIVE_COPY } from "./copy";

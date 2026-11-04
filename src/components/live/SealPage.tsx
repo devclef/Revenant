@@ -2,6 +2,7 @@
 
 import { useMemo, useReducer } from "react";
 
+import "@/components/ceremony/scene/tokens.css";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
 import type { LoadedFigures } from "@/lib/figures";
 
