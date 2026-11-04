@@ -76,6 +76,22 @@ describe("SceneShell root attributes (R2.6)", () => {
     expect(html).toContain('data-ceremony-motion="calm"');
   });
 
+  it("marks the index root data-ceremony=\"index\" (R26.4)", () => {
+    const html = render(shellElement({ variant: "index", children: child }));
+    expect(html.match(/data-ceremony="/g)?.length).toBe(1);
+    expect(html).toContain('data-ceremony="index"');
+    expect(html).not.toContain('data-ceremony="scene"');
+  });
+
+  it("gives the index variant the Soil backdrop and the Top_Bar, but no Ghost", () => {
+    const html = render(shellElement({ variant: "index", children: child }));
+    expect(html).toContain("data-soil-strip");
+    expect(html).toContain("data-topbar");
+    expect(html).not.toContain("data-persona-column");
+    expect(html).not.toContain("is fictional");
+    expect(html.indexOf("data-soil-strip")).toBeLessThan(html.indexOf("CHILD_CONTENT"));
+  });
+
   it("adds no data-ceremony on the persona root (the Ceremony region carries it)", () => {
     const html = render(
       shellElement({ variant: "persona", personaName: "Maya", children: child }),

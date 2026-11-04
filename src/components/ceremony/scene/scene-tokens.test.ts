@@ -108,6 +108,12 @@ const PAIRS: Pair[] = [
   { pair: "--env-ink on --env", fg: opaque("--env-ink"), bg: opaque("--env"), threshold: NORMAL },
   // Control boundaries and focus rings (3 : 1).
   { pair: "control border --line on --bg", fg: opaque("--line"), bg: opaque("--bg"), threshold: LARGE_OR_CONTROL },
+  // The /demo index on the Scene (spec 07 task 2). The Demo label takes --text
+  // as its ink and --muted as its rule; the intro note takes --muted. Both sit
+  // on the Scene surface (--bg).
+  { pair: "Demo label ink --text on --bg", fg: opaque("--text"), bg: opaque("--bg"), threshold: NORMAL },
+  { pair: "index intro note --muted on --bg", fg: opaque("--muted"), bg: opaque("--bg"), threshold: NORMAL },
+  { pair: "Demo label rule --muted on --bg", fg: opaque("--muted"), bg: opaque("--bg"), threshold: LARGE_OR_CONTROL },
   { pair: "focus ring --accent on --bg", fg: opaque("--accent"), bg: opaque("--bg"), threshold: LARGE_OR_CONTROL },
   { pair: "focus ring --on-purple on --purple (inside the Letter_Block)", fg: opaque("--on-purple"), bg: opaque("--purple"), threshold: LARGE_OR_CONTROL },
 ];
