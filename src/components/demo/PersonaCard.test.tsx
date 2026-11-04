@@ -2,8 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
-import { DeskEnvelopeLink } from "@/components/ceremony/desk/DeskEnvelopeLink";
-import { MotionProvider } from "@/components/ceremony/motion";
+import Link from "next/link";
 import { WaxSeal, normaliseWaxSealIds } from "@/components/ceremony/envelope/WaxSeal";
 
 import { PersonaCard, type PersonaCardProps } from "./PersonaCard";
@@ -40,15 +39,9 @@ const PROPS = {
   opens_at: "2024-11-05T00:00:00.000Z",
 } as const;
 
-/**
- * The card reads the motion mode through DeskEnvelopeLink, so it renders
- * inside a MotionProvider, as it does on the Demo_Index page through DeskScene.
- */
 const render = (props: PersonaCardProps = PROPS) =>
   normaliseWaxSealIds(
-    renderToStaticMarkup(
-      createElement(MotionProvider, null, createElement(PersonaCard, props)),
-    ),
+    renderToStaticMarkup(createElement(PersonaCard, props)),
   );
 
 /** A minimal view of a React element, enough to walk an unrendered tree. */
@@ -109,6 +102,10 @@ describe("PersonaCard markup", () => {
     expect(html).not.toContain("Break the seal");
   });
 
+  it('never says \"Pick up the letter\" on the card (R6.7)', () => {
+    expect(render()).not.toContain("Pick up the letter");
+  });
+
   it("renders the raw ISO/calendar inputs nowhere — only the formatted dates", () => {
     const html = render();
     // The unformatted source values must not leak into the visible card.
@@ -142,9 +139,9 @@ describe("PersonaCard markup", () => {
     }
   });
 
-  it("is one desk envelope: the anchor is a DeskEnvelopeLink to the persona letter", () => {
+  it("is one envelope: the anchor is a next/link to the persona letter", () => {
     const root = tree();
-    expect(root.type).toBe(DeskEnvelopeLink);
+    expect(root.type).toBe(Link);
     expect(root.props.href).toBe(`/demo/personas/${PROPS.personaKey}`);
   });
 

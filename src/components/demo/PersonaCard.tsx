@@ -1,5 +1,5 @@
 import { ParchmentSurface } from "@/components/ui";
-import { DeskEnvelopeLink } from "@/components/ceremony/desk/DeskEnvelopeLink";
+import Link from "next/link";
 import { WaxSeal } from "@/components/ceremony/envelope/WaxSeal";
 import { DEMO_COPY } from "./copy";
 import { formatCalendarDate, formatUtcDate } from "./dates";
@@ -28,12 +28,9 @@ export type PersonaCardProps = {
 
 /**
  * A single persona on the Demo_Index page (R6.2, R6.7), drawn as a sealed
- * envelope on the desk. The whole envelope is one real anchor to the persona's
- * letter (DeskEnvelopeLink), so it works without JavaScript and gets the desk
- * camera move in full motion. The wax seal is seeded by `personaKey` only.
- *
- * Requires a MotionProvider above it, because DeskEnvelopeLink reads the
- * motion mode. The Demo_Index page provides one through DeskScene.
+ * envelope on the Scene. The whole envelope is one real anchor to the persona's letter
+ * (next/link), so it works without JavaScript. The wax seal is seeded by
+ * `personaKey` only.
  *
  * All label prefixes come from copy.ts and all dates from dates.ts, so no
  * user-facing literal lives here (R15.1). The paper panel sets its own ink
@@ -48,10 +45,7 @@ export function PersonaCard({
   opens_at,
 }: PersonaCardProps) {
   return (
-    <DeskEnvelopeLink
-      href={`/demo/personas/${personaKey}`}
-      className={styles.envelope}
-    >
+    <Link href={`/demo/personas/${personaKey}`} className={styles.envelope}>
       <ParchmentSurface tone="deep" className={styles.card}>
         <span className={styles.seal} aria-hidden="true">
           <WaxSeal patternKey={personaKey} size={48} />
@@ -72,6 +66,6 @@ export function PersonaCard({
         </dl>
         <span className={styles.openLetter}>{DEMO_COPY.openLetter}</span>
       </ParchmentSurface>
-    </DeskEnvelopeLink>
+    </Link>
   );
 }

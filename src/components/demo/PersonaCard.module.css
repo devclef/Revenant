@@ -1,9 +1,8 @@
 /*
- * PersonaCard styling: one desk envelope. The anchor (.envelope) is the
- * envelope the camera move carries, so it is sized to match the envelope
- * target on the persona page: width min(84vw, 26rem), the same as
- * ENVELOPE_TARGET in ceremony/constants.ts. No placeholder envelopes and no
- * fixed heights, so 1 to 6 cards flow in the list at any width.
+ * PersonaCard styling: one envelope on the /demo index Scene. The anchor
+ * (.envelope) is a block link, width min(84vw, 26rem), so it fits inside a 360
+ * px viewport with no sideways scroll. No placeholder envelopes and no fixed
+ * heights, so 1 to 6 cards flow in the list at any width.
  *
  * Colours come from globals.css tokens only. The card is a ParchmentSurface
  * with tone="deep" and sets --ink itself, so the desk's cream text never

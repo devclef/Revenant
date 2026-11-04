@@ -22,7 +22,6 @@ import {
   FIG_TOTAL_MS,
   MAX_FIGURES,
   CALM_FADE_MS,
-  CAMERA_MOVE_MS,
   CANDLE_FLICKER_AMPLITUDE,
   EASE_LEAVE,
   FLAP_AT_MS,
@@ -65,7 +64,6 @@ describe("ceremony/constants", () => {
   });
 
   it("the design-pinned numeric constants equal their design.md values", () => {
-    expect(CAMERA_MOVE_MS).toBe(700);
     expect(CALM_FADE_MS).toBe(120);
     expect(SEAL_HOLD_MS).toBe(1500);
     expect(CANDLE_FLICKER_AMPLITUDE).toBe(0.04);

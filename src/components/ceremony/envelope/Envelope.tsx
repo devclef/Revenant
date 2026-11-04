@@ -76,7 +76,7 @@ export type EnvelopeProps = {
 
 /**
  * The envelope is drawn in a fixed 300×188 user space (a 1.6 aspect, matching
- * ENVELOPE_TARGET) and scaled to its container by CSS. Every coordinate below
+ * the resting geometry in EnvelopeView) and scaled to its container by CSS. Every coordinate below
  * is a literal in this space, so the markup never depends on rendered pixels or
  * on anything about the letter.
  */

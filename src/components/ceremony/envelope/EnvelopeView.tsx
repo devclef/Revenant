@@ -7,9 +7,10 @@
 // row `EnvelopeView: loading / sealed / openable / verifying / verified`).
 //
 // It renders exactly one scene for the flow tag it is given, drawing the
-// envelope at the one fixed resting geometry `ENVELOPE_TARGET` (R8.7) so the
-// first paint on the persona page matches the last frame of the /demo camera
-// move. One component owns every pre-reveal envelope scene:
+// envelope at the one fixed resting geometry (R8.7: width min(84vw, 26rem), top
+// max(6rem, 14vh)) so the first paint on the persona page matches the last
+// frame of the /demo camera move. One component owns every pre-reveal envelope
+// scene:
 //
 //   - `loading` / `openable` / `verifying`  the envelope Stage. The envelope
 //     rests closed on the desk; a short statement sits beside it. On
@@ -54,7 +55,6 @@ import {
 } from "@/components/reveal/StillSealed";
 import type { FlowState } from "@/components/reveal/opening-machine";
 
-import { ENVELOPE_TARGET } from "../constants";
 import { useLocalView } from "../local-view";
 import { emergingStatus, showPickUp } from "../stages";
 import { Envelope, type EnvelopePersona, type EnvelopeState } from "./Envelope";
@@ -133,9 +133,9 @@ export type EnvelopeViewProps = {
 };
 
 /**
- * The envelope's resting frame, drawn at exactly ENVELOPE_TARGET (R8.7). The
- * frame fixes the width and the top offset from the shared constants; the
- * Envelope keeps its own aspect ratio, so the SVG scales without distortion.
+ * The envelope's resting frame (R8.7): width min(84vw, 26rem), top
+ * max(6rem, 14vh). The Envelope keeps its own aspect ratio (1.6), so the SVG
+ * scales without distortion.
  */
 function EnvelopeFrame({
   state,
@@ -148,8 +148,8 @@ function EnvelopeFrame({
     <div
       className={styles.frame}
       style={{
-        width: ENVELOPE_TARGET.width,
-        marginTop: ENVELOPE_TARGET.top,
+        width: "min(84vw, 26rem)",
+        marginTop: "max(6rem, 14vh)",
       }}
     >
       <Envelope state={state} persona={persona} />
@@ -159,7 +159,7 @@ function EnvelopeFrame({
 
 /**
  * EnvelopeView renders one pre-reveal scene for its `variant`, always drawing
- * the envelope at ENVELOPE_TARGET. The statement variants put a short line
+ * the envelope at the resting geometry in EnvelopeFrame. The statement variants put a short line
  * beside the envelope (the verifying/loading line in a polite `role="status"`
  * region); `sealed` shows the reused StillSealed view; `verified` shows the
  * seal-is-intact statement and the Begin control.

@@ -7,8 +7,6 @@
 // This module must contain no import statement.
 
 // --- Stage motion (ms) ---
-export const CAMERA_MOVE_MS = 700;
-export const DESK_TO_ENVELOPE_MS = 450; // R8.7
 export const STAGE_FADE_MS = 400;
 export const CALM_FADE_MS = 120; // R11.2: at most 150
 
@@ -42,9 +40,6 @@ export const PARALLAX_MAX_PX = 12;
 export const LOW_POWER_CORES = 4;
 export const LOW_POWER_FRAME_MS = 24;
 export const LOW_POWER_PROBE_MS = 1000;
-
-// --- Envelope geometry shared by /demo and the persona page (R8.7) ---
-export const ENVELOPE_TARGET = { width: "min(84vw, 26rem)", aspect: 1.6, top: "max(6rem, 14vh)" } as const;
 
 // --- Recall_Scale (R4) ---
 export const SCALE_MIN_EXP = -2; // 0.01
