@@ -77,6 +77,8 @@ describe("/l/[id] page", () => {
     expect(markup).not.toContain("data-ghost-box");
     expect(markup).not.toContain("data-soil-strip");
     expect(markup).not.toContain("<canvas");
+    // The envelope sits inline at the top of the column at 22rem (live only).
+    expect(markup).toContain("min(84vw, 22rem)");
     expect(markup).not.toContain("Written as of");
     expect(markup).not.toContain("Prepared later as a demo");
     expect(markup).not.toContain("Sealed for the demo on");

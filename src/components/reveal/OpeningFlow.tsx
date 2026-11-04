@@ -362,6 +362,7 @@ function selectView(
       variant={variant}
       persona={envelopePersona}
       held={mode === "persona"}
+      frameWidth={mode === "live" ? "min(84vw, 22rem)" : undefined}
       onBegin={begin}
       onRetry={flow.retry}
       {...extra}

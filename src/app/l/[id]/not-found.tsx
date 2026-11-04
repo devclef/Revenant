@@ -2,6 +2,7 @@ import Link from "next/link";
 import { PageShell, ParchmentSurface } from "@/components/ui";
 import { DEMO_COPY } from "@/components/demo/copy";
 import { LIVE_COPY } from "@/components/live/copy";
+import styles from "./not-found.module.css";
 
 /**
  * Not-found page for `/l/[id]`, shown when the page calls `notFound()` because
@@ -15,10 +16,12 @@ import { LIVE_COPY } from "@/components/live/copy";
 export default function LetterNotFound() {
   return (
     <PageShell>
-      <ParchmentSurface as="section">
-        <p>{LIVE_COPY.letterNotFound}</p>
-        <Link href="/demo">{DEMO_COPY.backToDemo}</Link>
-      </ParchmentSurface>
+      <div className={styles.column}>
+        <ParchmentSurface as="section">
+          <p>{LIVE_COPY.letterNotFound}</p>
+          <Link href="/demo">{DEMO_COPY.backToDemo}</Link>
+        </ParchmentSurface>
+      </div>
     </PageShell>
   );
 }

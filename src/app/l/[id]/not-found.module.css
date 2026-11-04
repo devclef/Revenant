@@ -1,0 +1,10 @@
+/* Not-found page for `/l/[id]` (styling only; the words live in live/copy). */
+.column {
+  width: 100%;
+  max-width: 40rem;
+  margin: 0 auto;
+}
+
+.column a {
+  color: inherit;
+}

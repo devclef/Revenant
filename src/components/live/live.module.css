@@ -523,3 +523,11 @@
     color: #000000;
   }
 }
+
+/* The Live_Letter column on `/l/[id]`: one centred column, the envelope inline
+   at its top (the width is set on the envelope frame in OpeningFlow). */
+.letterColumn {
+  width: 100%;
+  max-width: 40rem;
+  margin: 0 auto;
+}
