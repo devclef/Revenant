@@ -139,7 +139,6 @@ const EXPECTED_REVEAL_TSX = [
 // coverage of the ceremony flow (including the nested desk/ component).
 const EXPECTED_CEREMONY_TSX = [
   "CeremonyRoot.tsx",
-  "DeskScene.tsx",
   "LiveRegion.tsx",
 ] as const;
 
@@ -161,7 +160,7 @@ describe("no literal JSX text nodes in reveal components (R15.1)", () => {
     expect(ceremonyFiles.length).toBeGreaterThan(0);
   });
 
-  it("covers the ceremony components (including the nested desk/ one)", () => {
+  it("covers the ceremony components", () => {
     const names = new Set(scannedFiles.map((f) => basename(f)));
     for (const expected of EXPECTED_CEREMONY_TSX) {
       expect(

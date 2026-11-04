@@ -57,8 +57,6 @@ describe("/l/[id] page", () => {
     expect(markup).not.toContain(
       REVEAL_COPY.loading.replace(/'/g, "&#x27;"),
     );
-    // The desk is still rendered around it.
-    expect(markup).toContain("data-desk");
     // No passkey control before the Server_Secret is released (R17.2).
     expect(markup).not.toContain(LIVE_COPY.unlockPasskey);
   });

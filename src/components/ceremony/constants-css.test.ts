@@ -49,11 +49,6 @@ const EXEMPT: ReadonlyArray<{ file: string; value: string; reason: string }> = [
     value: "0ms",
     reason: "No motion: the Calm state sets a zero duration.",
   },
-  {
-    file: "desk/DeskScene.module.css",
-    value: "1800ms",
-    reason: "Spec 05 desk stage, retired in spec 07 task 8.",
-  },
 ];
 
 /** Normalise an easing or duration literal for comparison. */

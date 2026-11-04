@@ -6,8 +6,8 @@
 // that defines it, and its contrast ratio is computed against every surface a
 // reveal stage can sit on:
 //   - the two ParchmentSurface paper variants (--paper, --paper-deep), which
-//     each stage panel uses (StagePanel), and
-//   - the ceremony desk (--desk), where the desk text tokens are drawn.
+//     each stage panel uses (StagePanel).
+// The desk text pairs were removed with the desk (spec 07 task 9, R4.8).
 //
 // Threshold: 4.5:1 for every text pair. That is the AA bar for normal text and
 // is stricter than the 3:1 bar for large text, so headings pass too.
@@ -22,7 +22,6 @@ import { describe, expect, it } from "vitest";
 const here = dirname(fileURLToPath(import.meta.url));
 const revealCssPath = resolve(here, "reveal.module.css");
 const globalsCssPath = resolve(here, "..", "..", "app", "globals.css");
-const ceremonyCssPath = resolve(here, "..", "ceremony", "ceremony.module.css");
 const sceneTokensPath = resolve(here, "..", "ceremony", "scene", "tokens.css");
 
 const WCAG_AA_NORMAL = 4.5;
@@ -76,7 +75,6 @@ function contrastRatio(a: string, b: string): number {
 describe("reveal text token pairs meet WCAG 2.2 AA", () => {
   const revealCss = readFileSync(revealCssPath, "utf8");
   const globalsCss = readFileSync(globalsCssPath, "utf8");
-  const ceremonyCss = readFileSync(ceremonyCssPath, "utf8");
 
   // Spec 07 R14: the figures sit on the dark desk and use the scene tokens
   // (scene/tokens.css). They are checked against --bg below, not the paper.
@@ -110,17 +108,6 @@ describe("reveal text token pairs meet WCAG 2.2 AA", () => {
         expect(contrastRatio(text, paper[surface])).toBeGreaterThanOrEqual(WCAG_AA_NORMAL);
       });
     }
-  }
-
-  // Desk text tokens, drawn on the ceremony desk that the reveal sits on.
-  const deskTextTokens = ["--desk-ink", "--desk-ink-soft", "--desk-gold"] as const;
-  const desk = readHexToken(ceremonyCss, "--desk", "ceremony.module.css");
-
-  for (const token of deskTextTokens) {
-    it(`${token} on --desk is at least ${WCAG_AA_NORMAL}:1`, () => {
-      const text = readHexToken(ceremonyCss, token, "ceremony.module.css");
-      expect(contrastRatio(text, desk)).toBeGreaterThanOrEqual(WCAG_AA_NORMAL);
-    });
   }
 
   // Desk text tokens used by the spec 07 figures, drawn on the scene --bg.

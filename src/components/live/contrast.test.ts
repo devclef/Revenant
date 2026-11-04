@@ -1,10 +1,9 @@
 // Feature: 06-lock-and-unlock, Task 5 (R19.6, WCAG 2.2 AA contrast)
 //
-// The live demo draws its text on two surfaces:
-//   * the paper panel of the Seal_Page and Unavailable state, which sets its own
-//     --ink and --ink-soft (live.module.css `.panel`) on the paper tokens;
-//   * the dark desk of the Demo_Index page, where LiveEntry uses the desk tokens
-//     (ceremony.module.css) on the desk and its lit pool.
+// The live demo draws its text on the paper panel of the Seal_Page and
+// Unavailable state, which sets its own --ink and --ink-soft (live.module.css
+// `.panel`) on the paper tokens. The desk pairs were removed with the desk
+// (spec 07 task 9, R4.8).
 //
 // Every text/surface pair is read from the real CSS files, so the test tracks
 // the tokens rather than a copy of them. Each pair must reach WCAG 2.2 AA
@@ -21,10 +20,6 @@ const here = dirname(fileURLToPath(import.meta.url));
 // src/components/live -> src
 const srcRoot = resolve(here, "..", "..");
 const globalsCss = readFileSync(resolve(srcRoot, "app", "globals.css"), "utf8");
-const ceremonyCss = readFileSync(
-  resolve(srcRoot, "components", "ceremony", "ceremony.module.css"),
-  "utf8",
-);
 const liveCss = readFileSync(resolve(here, "live.module.css"), "utf8");
 
 const WCAG_AA_NORMAL = 4.5;
@@ -85,13 +80,6 @@ const seal = readHexToken(globalsCss, "--seal");
 const panelInk = readHexInBlock(liveCss, ".panel", "--ink");
 const panelInkSoft = readHexInBlock(liveCss, ".panel", "--ink-soft");
 
-// Desk tokens from ceremony.module.css.
-const desk = readHexToken(ceremonyCss, "--desk");
-const deskLit = readHexToken(ceremonyCss, "--desk-lit");
-const deskLitMax = readHexToken(ceremonyCss, "--desk-lit-max");
-const deskInk = readHexToken(ceremonyCss, "--desk-ink");
-const deskInkSoft = readHexToken(ceremonyCss, "--desk-ink-soft");
-
 /** Each pair names the element that uses it, so a failure points at the rule. */
 const PAPER_PAIRS: ReadonlyArray<readonly [string, string, string]> = [
   ["panel ink (heading, labels, figure names)", panelInk, paper],
@@ -101,29 +89,9 @@ const PAPER_PAIRS: ReadonlyArray<readonly [string, string, string]> = [
   ["primary button text (paper on wax seal)", paper, seal],
 ];
 
-const DESK_PAIRS: ReadonlyArray<readonly [string, string, string]> = [
-  ["desk ink (LiveEntry heading and link) on desk", deskInk, desk],
-  ["desk ink on the lit pool", deskInk, deskLit],
-  ["desk ink on the brightest desk value", deskInk, deskLitMax],
-  ["desk ink-soft (LiveEntry body) on desk", deskInkSoft, desk],
-  ["desk ink-soft on the lit pool", deskInkSoft, deskLit],
-  ["desk ink-soft on the brightest desk value", deskInkSoft, deskLitMax],
-];
-
 describe("live demo tokens were read from the real CSS", () => {
   it("parsed every token as a 6-digit hex value", () => {
-    for (const hex of [
-      paper,
-      paperDeep,
-      seal,
-      panelInk,
-      panelInkSoft,
-      desk,
-      deskLit,
-      deskLitMax,
-      deskInk,
-      deskInkSoft,
-    ]) {
+    for (const hex of [paper, paperDeep, seal, panelInk, panelInkSoft]) {
       expect(hex).toMatch(/^#[0-9a-f]{6}$/);
     }
   });
@@ -135,14 +103,6 @@ describe("live demo tokens were read from the real CSS", () => {
 
 describe("paper panel text meets WCAG 2.2 AA (R19.6)", () => {
   it.each(PAPER_PAIRS)("%s is at least 4.5:1", (_label, text, surface) => {
-    expect(contrastRatio(text, surface)).toBeGreaterThanOrEqual(
-      WCAG_AA_NORMAL,
-    );
-  });
-});
-
-describe("desk text meets WCAG 2.2 AA (R19.6)", () => {
-  it.each(DESK_PAIRS)("%s is at least 4.5:1", (_label, text, surface) => {
     expect(contrastRatio(text, surface)).toBeGreaterThanOrEqual(
       WCAG_AA_NORMAL,
     );

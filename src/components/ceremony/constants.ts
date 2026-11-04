@@ -32,11 +32,7 @@ export const EASE_STANDARD = "cubic-bezier(0.2, 0, 0, 1)";
 export const EASE_STAMP = "cubic-bezier(0.3, 0, 0.2, 1)";
 export const EASE_LINEAR = "linear";
 
-// --- Candle and desk (R11.5, R8.6, R13.6) ---
-export const CANDLE_FLICKER_AMPLITUDE = 0.04; // max change in the light layer's opacity
-export const CANDLE_FLICKER_MIN_PERIOD_MS = 900; // smooth, no steps; at most about 1.1 changes a second
-export const PARALLAX_MAX_DEG = 2;
-export const PARALLAX_MAX_PX = 12;
+// --- Low-power probe (R13.6) ---
 export const LOW_POWER_CORES = 4;
 export const LOW_POWER_FRAME_MS = 24;
 export const LOW_POWER_PROBE_MS = 1000;

@@ -1,5 +1,5 @@
 /*
- * Shared Ceremony styles: desk colour tokens, focus rings and the rules every
+ * Shared Ceremony styles: focus rings and the rules every
  * Stage shares (R1.7).
  *
  * R1.7: the Ceremony never edits src/app/globals.css. All of its colours,
@@ -20,21 +20,9 @@
  * rules; there is no green/red and no directional semantics anywhere.
  */
 
-/* --- Desk colour tokens (R1.7) --- */
+/* --- Paper shading token (R1.7) --- */
 
 .desk {
-  /* Surfaces: the unlit desk, the lit pool under the candle, and the
-     brightest the candle ever lifts it to (the 4% light swing stays within
-     --desk-lit..--desk-lit-max). */
-  --desk: #17100b;
-  --desk-lit: #3b2a1b;
-  --desk-lit-max: #4a3522;
-
-  /* Text on the desk. All three clear AA on every desk surface above. */
-  --desk-ink: #f1e6cf;
-  --desk-ink-soft: #d9c9a8;
-  --desk-gold: #d9b866;
-
   /* The darkest shading under text on a paper panel sitting on the desk (the
      envelope, the letter, the stamps). Paper panels keep the globals.css
      text tokens; --paper-shadowed is their deepest shaded surface, on which
@@ -43,9 +31,6 @@
      lives here, not in globals.css, because the Ceremony never edits
      globals.css (R1.7). */
   --paper-shadowed: #d9cba9;
-
-  color: var(--desk-ink);
-  background-color: var(--desk);
 }
 
 /* --- Focus rings (R11.8) --- */

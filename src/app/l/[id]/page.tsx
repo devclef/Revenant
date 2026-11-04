@@ -1,5 +1,4 @@
 import { notFound } from "next/navigation";
-import { DeskScene } from "@/components/ceremony/desk/DeskScene";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { LiveLetter } from "@/components/live/LiveLetter";
 import { isLetterId } from "@/lib/seal-format";
@@ -9,8 +8,9 @@ import { isLetterId } from "@/lib/seal-format";
  * "Letter_Page").
  *
  * A server component. It awaits `params`, and calls `notFound()` unless the
- * segment is a letter ID (`isLetterId`). It renders the desk, the motion
- * provider and `LiveLetter`, which runs the opening flow in live mode.
+ * segment is a letter ID (`isLetterId`). It renders the motion provider and
+ * `LiveLetter`, which runs the opening flow in live mode. The desk scene was
+ * retired with spec 07 task 9.
  *
  * It imports no crypto module and no database module. The letter ID comes only
  * from this URL segment, after its shape is checked. The client flow fetches
@@ -28,9 +28,7 @@ export default async function LetterPage({
 
   return (
     <MotionProvider>
-      <DeskScene>
-        <LiveLetter letterId={id} />
-      </DeskScene>
+      <LiveLetter letterId={id} />
     </MotionProvider>
   );
 }
