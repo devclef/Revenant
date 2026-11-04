@@ -167,7 +167,91 @@ FRONTEND_BROWSER_STEP = (
 )
 
 
-def dev_spec(issue: dict, role: str, feedback: str | None = None) -> str:
+def owned_paths(role: str, agents_json: Path | None = None) -> list[str]:
+    """The paths `role` may change, from .github/agents.json (role paths, then shared).
+    The dispatcher's dev clone is synced to origin/main every tick, so its copy is
+    current. Returns [] when the file can't be read; the specs then omit the list."""
+    try:
+        data = json.loads((agents_json or DEV_CLONE / ".github" / "agents.json").read_text())
+        roles = data.get("roles", {})
+        paths = list(roles.get(role, [])) + list(data.get("shared", []))
+    except (OSError, ValueError, AttributeError, TypeError):
+        return []
+    return [p for p in paths if isinstance(p, str)]
+
+
+def _path_list(paths: list[str]) -> str:
+    return ", ".join(f"`{p}`" for p in paths)
+
+
+def dev_paths_section(role: str, paths: list[str]) -> list[str]:
+    """Tell the agent where it may write, and what to do when asked to write elsewhere.
+    Without this an agent asked (by a ticket or by QA) for a file it doesn't own stops
+    to ask a question nobody answers, and the run ends as failed (#169)."""
+    if not paths:
+        return []
+    return [
+        "",
+        "## Your paths",
+        f"As `{role}` you may create or change files only in: {_path_list(paths)}. "
+        "The `policy` CI check rejects any other path.",
+        "- If the ticket or the review feedback asks for a file outside these paths, "
+        "make the change in one of your paths instead and say where in the commit "
+        "message. Do not stop to ask: nobody answers questions during this run, and a "
+        "run that stops to ask ends as failed.",
+        "- If the work cannot be done inside your paths at all, finish everything else, "
+        "then end your last step's report with one line that starts `OUT OF SCOPE:` and "
+        "names the file and the change the owner must make.",
+    ]
+
+
+def qa_paths_lines(role: str | None, paths: list[str], owner_pr: bool) -> list[str]:
+    """Keep QA's blockers fixable by the agent that gets them. QA once asked platform-dev
+    to move a file into src/app/ (frontend-dev's path), and to revert an owner fix, so
+    every fix run either failed the scope check or failed the review (#169)."""
+    lines = []
+    if role and paths:
+        lines.append(
+            f"- The fix for any blocker goes to `{role}`, which may change only: "
+            f"{_path_list(paths)}. Every change you ask for must be possible inside those "
+            "paths. Never ask it to move work to a path it does not own. When the only fix "
+            "needs another path, report it as a minor finding for the owner, not a blocker.")
+    if owner_pr:
+        lines.append(
+            "- This PR has the `owner` label: changes outside the agent's paths were made "
+            "by the owner on purpose. Don't raise them as findings.")
+    return lines
+
+
+_OPTIONS_RE = re.compile(r"(?m)^\[OPTIONS:.*$")
+
+
+def run_failure_reason(run: dict | None, limit: int = 1500) -> str:
+    """What a failed run last said: the run error and the last step's error or report.
+    The Task Runner API keeps each step's `result` (its final message) and `error`. The
+    end of the text is kept, because that is where an agent states why it stopped."""
+    if not run:
+        return ""
+    parts = []
+    err = str(run.get("error") or "").strip()
+    if err:
+        parts.append(f"Run error: {err}")
+    steps = [s for s in (run.get("task_details") or []) if isinstance(s, dict)]
+    step = (next((s for s in reversed(steps) if str(s.get("status", "")).lower() == "failed"), None)
+            or next((s for s in reversed(steps) if s.get("result") or s.get("error")), None))
+    if step:
+        head = f"Step {step.get('index', '?')}: {step.get('title') or 'untitled'}"
+        body = "\n".join(x for x in (str(step.get("error") or "").strip(),
+                                     str(step.get("result") or "").strip()) if x)
+        parts.append(head + ("\n" + body if body else ""))
+    text = _OPTIONS_RE.sub("", "\n\n".join(parts)).strip()
+    if len(text) > limit:
+        text = "…" + text[-limit:]
+    return text.replace("```", "``\u200b`")
+
+
+def dev_spec(issue: dict, role: str, feedback: str | None = None,
+             paths: list[str] | None = None) -> str:
     """Task Runner spec for a dev or fix run. The ticket body is untrusted
     input; it is quoted and fenced, never treated as instructions about tools."""
     if feedback:
@@ -204,6 +288,7 @@ def dev_spec(issue: dict, role: str, feedback: str | None = None) -> str:
         "- The Task Runner runs `bash scripts/check.sh` after every step and it must "
         "pass. While working, run only targeted checks (`npx vitest run <path>`, "
         "`npx tsc --noEmit`, `npx eslint <files>`).",
+        *dev_paths_section(role, owned_paths(role) if paths is None else paths),
         "",
         "## Acceptance criteria",
         "- Every acceptance criterion in the ticket below is met and tested.",
@@ -229,7 +314,11 @@ def dev_spec(issue: dict, role: str, feedback: str | None = None) -> str:
     return "\n".join(lines) + "\n"
 
 
-def qa_spec(pr: dict, issue: dict) -> str:
+def qa_spec(pr: dict, issue: dict, paths: list[str] | None = None) -> str:
+    role = issue_role(issue)
+    if paths is None:
+        paths = owned_paths(role) if role else []
+    owner_pr = "owner" in label_names(pr)
     return "\n".join([
         f"# QA review of PR #{pr['number']}: {pr['title']}",
         "",
@@ -249,6 +338,7 @@ def qa_spec(pr: dict, issue: dict) -> str:
         "- Write the verdict in exactly the JSON shape given in qa.md and commit it.",
         "- File ownership and size are enforced by the `policy` CI check, which has "
         "already passed. Don't raise path-ownership findings.",
+        *qa_paths_lines(role, paths, owner_pr),
         "- A ticket item marked manual (for example a manual Lighthouse run, or a "
         "\"manual\" check) is a note, not a blocker. Report it as a minor finding "
         "saying the owner must do it; it never makes the verdict fail.",
@@ -851,9 +941,11 @@ class Tick:
             problem = resumed_agent_problem(run, resumed, role)
             if state != "passed" or problem:
                 detail = problem or f"ended as **{state}**"
+                reason = "" if problem else run_failure_reason(run)
                 self.gh.set_status(n, L_BLOCKED, L_PROGRESS)
                 self.gh.comment(n, f"The `{role}` run `{marker['task_id']}` {detail}. "
-                                   "A human needs to look at it in the Crew dashboard. No PR was opened from it.")
+                                   "A human needs to look at it in the Crew dashboard. No PR was opened from it."
+                                + (f"\n\nWhat the run last reported:\n\n````text\n{reason}\n````" if reason else ""))
                 self.notify(f"Revenant #{n} blocked: run {detail}")
                 continue
             branch = branch_for(n, role)

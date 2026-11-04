@@ -913,3 +913,91 @@ class ResumedRuns(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ScopeAwareSpecs(unittest.TestCase):
+    """#169: QA asked platform-dev for paths it doesn't own, and the agent stopped to ask
+    a question nobody answers. Both specs now carry the role's owned paths."""
+
+    AGENTS = Path(__file__).resolve().parents[3] / ".github/agents.json"
+
+    def test_owned_paths_reads_role_and_shared(self):
+        paths = d.owned_paths("platform-dev", self.AGENTS)
+        self.assertIn("src/app/page.tsx", paths)
+        self.assertIn("src/lib/*.ts", paths)
+        self.assertIn("package.json", paths)
+        self.assertNotIn("src/components/**", paths)
+
+    def test_owned_paths_unreadable_or_unknown(self):
+        self.assertEqual(d.owned_paths("platform-dev", Path("/nonexistent/agents.json")), [])
+        self.assertEqual(d.owned_paths("nobody", self.AGENTS),
+                         [p for p in OWNERSHIP["shared"]])
+
+    def test_dev_spec_lists_paths_and_says_not_to_stop(self):
+        spec = d.dev_spec(issue(3, []), "platform-dev", "- blocker", paths=["src/app/page.tsx", "src/lib/*.ts"])
+        self.assertIn("## Your paths", spec)
+        self.assertIn("`src/app/page.tsx`, `src/lib/*.ts`", spec)
+        self.assertIn("Do not stop to ask", spec)
+        self.assertIn("OUT OF SCOPE:", spec)
+        self.assertEqual(spec.count("````"), 4)  # ticket and feedback fences only
+
+    def test_dev_spec_without_paths_omits_section(self):
+        self.assertNotIn("## Your paths", d.dev_spec(issue(3, []), "data-dev", paths=[]))
+
+    def test_qa_spec_keeps_fixes_inside_the_role_paths(self):
+        spec = d.qa_spec({"number": 7, "title": "t", "labels": []},
+                         issue(3, ["agent:platform-dev"]), paths=["src/lib/*.ts"])
+        self.assertIn("The fix for any blocker goes to `platform-dev`", spec)
+        self.assertIn("`src/lib/*.ts`", spec)
+        self.assertIn("Never ask it to move work to a path it does not own", spec)
+        self.assertNotIn("`owner` label", spec)
+
+    def test_qa_spec_owner_label(self):
+        spec = d.qa_spec({"number": 7, "title": "t", "labels": [{"name": "owner"}]},
+                         issue(3, ["agent:platform-dev"]), paths=["src/lib/*.ts"])
+        self.assertIn("This PR has the `owner` label", spec)
+
+    def test_qa_spec_without_role_or_paths(self):
+        spec = d.qa_spec({"number": 7, "title": "t"}, issue(3, []), paths=[])
+        self.assertNotIn("The fix for any blocker", spec)
+
+
+class FailureReason(unittest.TestCase):
+    def test_empty(self):
+        self.assertEqual(d.run_failure_reason(None), "")
+        self.assertEqual(d.run_failure_reason({"status": "failed"}), "")
+
+    def test_prefers_failed_step_and_drops_options(self):
+        run = {"error": "Task 8 failed", "task_details": [
+            {"index": 7, "title": "Move wrapper", "status": "failed",
+             "result": "I need your decision on where it should live.\n\n[OPTIONS: a | b]"},
+            {"index": 8, "title": "Tests", "status": "pending", "result": ""},
+        ]}
+        out = d.run_failure_reason(run)
+        self.assertIn("Run error: Task 8 failed", out)
+        self.assertIn("Step 7: Move wrapper", out)
+        self.assertIn("where it should live", out)
+        self.assertNotIn("[OPTIONS", out)
+
+    def test_falls_back_to_last_step_with_text_and_keeps_the_tail(self):
+        run = {"task_details": [{"index": 1, "title": "a", "status": "completed", "result": "x" * 5000 + "END"}]}
+        out = d.run_failure_reason(run, limit=100)
+        self.assertTrue(out.endswith("END"))
+        self.assertLessEqual(len(out), 101)
+
+    def test_fences_cannot_be_closed(self):
+        run = {"task_details": [{"index": 1, "title": "a", "status": "failed", "result": "````\nhi"}]}
+        self.assertNotIn("```", d.run_failure_reason(run))
+
+    def test_blocked_comment_quotes_the_reason(self):
+        gh = RecGH()
+        gh.comments_by[105] = [{"body": d.make_marker({"kind": "dev", "task_id": "T1", "role": "platform-dev"}),
+                                "_trusted": True}]
+        tick, _ = make_tick(gh)
+        runs = {"T1": {"status": "failed", "task_details": [
+            {"index": 2, "title": "Wrapper", "status": "failed", "result": "OUT OF SCOPE: src/components/x.tsx"}]}}
+        tick.finish_dev_runs([issue(105, ["status:in-progress", "agent:platform-dev"])], [], runs)
+        note = gh.has("comment", 105)[0][2]
+        self.assertIn("ended as **failed**", note)
+        self.assertIn("OUT OF SCOPE: src/components/x.tsx", note)
+        self.assertIn(("status", 105, "status:blocked", ("status:in-progress",)), gh.events)
