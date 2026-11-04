@@ -120,7 +120,47 @@ describe("landing page `/`", () => {
   it("includes the no-script light style as a noscript block", () => {
     const html = render([MAYA]);
     expect(html).toContain("<noscript>");
-    expect(html).toContain("[data-scene-light]{animation:none}");
+    expect(html).toContain('[aria-hidden="true"]>div:first-child{animation:none}');
+  });
+
+  it("references only a selector that the rendered markup actually matches", () => {
+    const html = render([MAYA]);
+    const noscript = /<noscript>\s*<style>(.*?)<\/style>\s*<\/noscript>/s.exec(html);
+    expect(noscript).not.toBeNull();
+    const css = decode(noscript?.[1] ?? "");
+    const selectors = [...css.matchAll(/([^{}]+)\{[^}]*\}/g)].map((m) =>
+      m[1].trim(),
+    );
+    expect(selectors).toEqual(['[aria-hidden="true"]>div:first-child']);
+    // The backdrop is the one aria-hidden layer; its first child is the light.
+    const backdrop = /aria-hidden="true"[^>]*><div[^>]*><\/div>/.exec(html);
+    expect(backdrop).not.toBeNull();
+    expect(html).not.toContain("data-scene-light");
+  });
+
+  it("stacks the Accent button above the backdrop layer", () => {
+    const html = decode(render([MAYA]));
+    // Attribute order is not fixed, so find the anchor tag and read its style.
+    const tag = (html.match(/<a [^>]*>/g) ?? []).find((t) =>
+      t.includes('href="/demo/personas/us-maya"'),
+    );
+    expect(tag).toBeDefined();
+    const style = /style="([^"]*)"/.exec(tag ?? "")?.[1] ?? "";
+    expect(style).toMatch(/(^|;)position:relative(;|$)/);
+    const buttonZ = /(?:^|;)z-index:(\d+)/.exec(style);
+    expect(buttonZ).not.toBeNull();
+
+    // The backdrop's z-index is in the CSS module, not inline, so read it there.
+    const moduleCss = readFileSync(
+      new URL("../components/ceremony/scene/scene.module.css", import.meta.url),
+      "utf8",
+    );
+    const backdropRule = /\.backdrop\s*\{([^}]*)\}/.exec(moduleCss);
+    expect(backdropRule).not.toBeNull();
+    const backdropZ = /z-index:\s*(\d+)/.exec(backdropRule?.[1] ?? "");
+    expect(backdropZ).not.toBeNull();
+
+    expect(Number(buttonZ?.[1])).toBeGreaterThan(Number(backdropZ?.[1]));
   });
 
   it("imports nothing from crypto, the opening flow, the API, or the database", () => {
