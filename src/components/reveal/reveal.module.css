@@ -410,3 +410,136 @@
     animation: none;
   }
 }
+
+/* --- Spec 07 R14: letter and figures grid (one breakpoint, 900 px) --- */
+
+.letterFigures {
+  display: grid;
+  gap: 2.5rem;
+  min-width: 0;
+}
+
+.letterCol,
+.figuresCol {
+  min-width: 0;
+}
+
+/* At or above 900 px: the Letter_Block on the left, the figures on the right.
+   Below 900 px the figures stack under the Letter_Block. */
+@media (min-width: 900px) {
+  .letterFigures {
+    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    align-items: start;
+  }
+}
+
+/* The figures column sits on the dark desk, never inside the Letter_Block
+   (R14.1). Text on it uses the desk tokens (tone.md, R4). */
+.figuresCol {
+  color: var(--text);
+  background-color: var(--bg);
+}
+
+/* --- Spec 07 R14.3: one Figure_Entry on the desk --- */
+
+.fig {
+  margin: 0 0 2.5rem;
+  color: var(--text);
+  text-align: left;
+  font-variant-numeric: tabular-nums;
+}
+
+.figName {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* The judge's own answer. Accent marks "you" (R3.9); it is on the value only. */
+.youLine {
+  margin: 0;
+  color: var(--text);
+}
+
+.youValue {
+  color: var(--accent);
+  font-weight: 700;
+}
+
+.thenLbl {
+  margin-top: 0.75rem;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+/* The then value: the largest and heaviest type of the entry (R14.3 item 3). */
+.big {
+  font-weight: 900;
+  font-size: clamp(3.4rem, 8.5vw, 7rem);
+  line-height: 1;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.meta {
+  margin: 0.5rem 0 0;
+  color: var(--muted);
+}
+
+/* The now value: body size, bold, the same treatment for a rise and a fall. */
+.nowLine {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  color: var(--text);
+}
+
+.nowLine strong {
+  font-weight: 800;
+  color: var(--text);
+}
+
+.src {
+  margin-top: 1rem;
+  color: var(--muted);
+}
+
+.src summary {
+  color: var(--text);
+  cursor: pointer;
+}
+
+/* The desk-side figure classes shared with the spec 03 rendering (FigureLine,
+   ChangeLine, FixtureNote) are re-coloured for the desk inside the figures
+   section. Only the section scope changes; paper surfaces keep their ink. */
+.figuresThenNow {
+  color: var(--text);
+}
+
+.figuresThenNow .figure,
+.figuresThenNow .change,
+.figuresThenNow .then,
+.figuresThenNow .now,
+.figuresThenNow .fixtureNote,
+.figuresThenNow .metricName,
+.figuresThenNow .formula {
+  color: var(--text);
+}
+
+.figuresThenNow .period,
+.figuresThenNow .region {
+  color: var(--muted);
+}
+
+.figuresThenNow .fixtureLabel {
+  color: var(--text);
+  border-color: var(--text);
+}
+
+.figuresThenNow .source,
+.figuresThenNow .source summary {
+  color: var(--text);
+}

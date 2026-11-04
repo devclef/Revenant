@@ -329,8 +329,8 @@ function renderEntry(
   const change = comparable(computeChange(then, now));
   const props: FigureEntryProps =
     mark === undefined
-      ? { then, now, change }
-      : { then, now, change, markValue: mark };
+      ? { name: then.metric_id, then, now, change }
+      : { name: then.metric_id, then, now, change, markValue: mark };
   return renderToStaticMarkup(createElement(FigureEntry, props));
 }
 
@@ -402,8 +402,10 @@ describe("Property 12: a Mark outside the range sits at an edge that looks the s
           expect(highMark?.value).toBe(1);
 
           // Only the Position_Property value and the Mark's text differ.
+          // The Mark's value appears in the Number_Line's hidden text and in
+          // the "Your answer" line; both are replaced by the same token.
           const skeleton = (html: string, mark: string): string =>
-            skeletonOf(html.split(markAnswerText(mark, then.unit)).join("MARK"));
+            skeletonOf(html.split(`${mark} ${then.unit}`).join("MARK"));
           expect(skeleton(lowHtml, low)).toBe(skeleton(highHtml, high));
         },
       ),
@@ -668,16 +670,22 @@ describe("Property 15: the static render is the final state (R9.1, R9.7, R9.8, R
           const plain = html.replace(/<!-- -->/g, "");
 
           // Every shown figure's FigureLine, unchanged, with its own period.
-          expect(html).toContain(figureLineMarkup(comparableThen, "then"));
-          expect(html).toContain(figureLineMarkup(GAS_NOW, "now"));
+          // A comparable entry draws its R14.3 items: the then value in the big
+          // type and the now value on the Now line, each with its unit.
+          expect(html).toContain('data-role="then"');
+          expect(plain).toContain(
+            `${formatValue(GAS_NOW.value, GAS_NOW.region)} ${GAS_NOW.unit}`,
+          );
           expect(html).toContain(figureLineMarkup(dieselBadUnit(), "then"));
           expect(html).toContain(figureLineMarkup(DIESEL_NOW, "now"));
           expect(html).toContain(figureLineMarkup(missingFigure(), "then"));
 
           // Stamp face and source name for the comparable entry.
+          // The then value sits in the big type; its unit sits on the meta line.
           expect(plain).toContain(
-            `${formatValue(comparableThen.value, comparableThen.region)} ${comparableThen.unit}`,
+            `data-role="then">${formatValue(comparableThen.value, comparableThen.region)}<`,
           );
+          expect(plain).toContain(`<span>${comparableThen.unit}</span>`);
           expect(plain).toContain(GAS_NOW.source);
 
           // The change line for the comparable pair names its direction.

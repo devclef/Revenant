@@ -1,42 +1,34 @@
 /*
- * Styles for the comparable-figure entries: the pressed Stamps and the
- * Number_Line (design.md "Number_Line geometry", "Stamps and counter").
+ * Styles for the Number_Line of a comparable figure (design.md "Number_Line
+ * geometry", spec 07 R14.4).
  *
- * Paper surfaces. Every element here sets --ink itself, so no text inherits a
- * colour from the desk (tone.md, Property 22). The tokens come from
- * globals.css.
+ * The Number_Line sits on the dark desk (--bg), beside the Letter_Block, so
+ * every graphic uses a desk token and is checked against --bg (WCAG 2.2 AA,
+ * 3:1 for graphical objects; see NumberLine.test.tsx):
+ *
+ * - the axis is --line;
+ * - the then and now pins are --text;
+ * - the Mark is a ring in --accent, the one place on a figure that carries the
+ *   Accent (orange means "you", spec 07 R3.9).
  *
  * Neutrality (neutrality.md, R10.1): no colour or direction depends on a value.
  * A rise and a fall use identical rules. Positions are the only values that
  * vary, and they reach the markup through the --pos-* custom properties only.
  */
 
-/* --- Paper panel: one comparable entry (its then and now stamps, the
-   Number_Line and the change line) sits on a paper surface. The panel sets
-   its own text colour, so no text inherits the dark desk ink (tone.md). --- */
-
-.paperPanel {
-  box-sizing: border-box;
-  padding: 1rem 1.25rem;
-  background-color: var(--paper);
-  color: var(--ink);
-}
-
 /* --- Number_Line: a plain axis, two pins and an optional Mark --- */
 
-/* The Number_Line is only rendered inside the paper panel (FigureEntry), never
-   on the dark desk. Its graphics use the ink token and are checked against the
-   paper surface (WCAG 2.2 AA, 3:1 for graphical objects; see
-   NumberLine.test.tsx). The pair is named here once. */
 .numberLine {
-  --figure-line: var(--ink);
-  --figure-surface: var(--paper);
+  --figure-line: var(--line);
+  --figure-pin: var(--text);
+  --figure-mark: var(--accent);
+  --figure-surface: var(--bg);
   position: relative;
   box-sizing: border-box;
   width: 100%;
   height: 0;
   margin: 2.5rem 0;
-  color: var(--figure-line);
+  color: var(--text);
 }
 
 .axis {
@@ -47,14 +39,14 @@
   border-top: 2px solid var(--figure-line);
 }
 
-/* The pin above the axis drops from the then Stamp; the pin below it rises to
-   the now Stamp. Only the left edge carries a position variable. */
+/* The pin above the axis drops from the then figure; the pin below it rises to
+   the now figure. Only the left edge carries a position variable. */
 .pinThen,
 .pinNow {
   position: absolute;
   width: 0;
   height: 1.5rem;
-  border-left: 2px solid var(--figure-line);
+  border-left: 2px solid var(--figure-pin);
 }
 
 .pinThen {
@@ -67,8 +59,8 @@
   top: 0;
 }
 
-/* The Mark: a small ink stroke on the axis at --pos-mark. Its wrapper holds
-   the hidden text, so only this wrapper is positioned by the variable. */
+/* The Mark: a ring in --accent centred on the axis at --pos-mark. Its wrapper
+   holds the hidden text, so only this wrapper is positioned by the variable. */
 .markWrap {
   position: absolute;
   top: 0;
@@ -79,11 +71,14 @@
 
 .markStroke {
   position: absolute;
-  top: -0.6rem;
-  left: 0;
-  width: 0;
-  height: 1.2rem;
-  border-left: 3px solid var(--figure-line);
+  top: -0.5rem;
+  left: -0.5rem;
+  box-sizing: border-box;
+  width: 1rem;
+  height: 1rem;
+  border: 3px solid var(--figure-mark);
+  border-radius: 50%;
+  background-color: transparent;
 }
 
 /* Hidden from sight, read by screen readers (R11.9). */

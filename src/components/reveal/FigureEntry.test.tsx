@@ -6,16 +6,14 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { FigureEntry, type FigureEntryProps } from "./FigureEntry";
-import { FigureLine } from "./FigureLine";
 import { REVEAL_COPY } from "./copy";
-import { computeChange, type DisplayRescale } from "@/lib/figures";
+import { computeChange, formatPeriod, type DisplayRescale } from "@/lib/figures";
 import type { FigureV1 } from "@/lib/seal-format";
 
 /**
- * Markup tests for FigureEntry (05-reveal-ceremony task 4, design.md
- * "Number_Line geometry", "Stamps and counter", R9.1, R9.2, R9.3, R9.8, R12.1,
- * R12.2). Rendered with `renderToStaticMarkup` and `createElement`, matching the
- * other reveal tests. No DOM library, no JSX.
+ * Markup tests for FigureEntry (spec 07 R14.3 item order, R14.1 desk surface,
+ * R14.12 type styles). Rendered with `renderToStaticMarkup` and `createElement`,
+ * matching the other reveal tests. No DOM library, no JSX.
  */
 
 const THEN: Readonly<FigureV1> = {
@@ -46,6 +44,7 @@ function comparable(then: Readonly<FigureV1>, now: Readonly<FigureV1>) {
 
 function render(overrides: Partial<FigureEntryProps> = {}): string {
   const props: FigureEntryProps = {
+    name: "Regular gasoline",
     then: THEN,
     now: NOW,
     change: comparable(THEN, NOW),
@@ -54,65 +53,87 @@ function render(overrides: Partial<FigureEntryProps> = {}): string {
   return renderToStaticMarkup(createElement(FigureEntry, props));
 }
 
-describe("FigureEntry renders the two stamps, the line and the change (R9.1)", () => {
-  it("renders the then and now FigureLines unchanged, inside their stamps", () => {
-    const html = render();
-    const thenLine = renderToStaticMarkup(
-      createElement(FigureLine, { figure: THEN, role: "then" }),
-    );
-    const nowLine = renderToStaticMarkup(
-      createElement(FigureLine, { figure: NOW, role: "now" }),
-    );
-    expect(html).toContain(thenLine);
-    expect(html).toContain(nowLine);
+// Remove React's text-node separators so text checks read the visible string.
+const plain = (html: string): string => html.replace(/<!-- -->/g, "");
+
+describe("FigureEntry draws the R14.3 items in order (spec 07 R14.3)", () => {
+  it("shows the name and region first, then the answer line", () => {
+    const html = plain(render({ markValue: "3.50" }));
+    const name = html.indexOf("Regular gasoline · U.S. city average");
+    const answer = html.indexOf("Your answer: ");
+    expect(name).toBeGreaterThan(-1);
+    expect(answer).toBeGreaterThan(name);
   });
 
-  it("draws the then stamp before the now stamp (R9.3 order)", () => {
-    const html = render();
-    const thenAt = html.indexOf('data-role="then"');
-    const nowAt = html.indexOf('data-role="now"');
-    expect(thenAt).toBeGreaterThan(-1);
-    expect(nowAt).toBeGreaterThan(thenAt);
+  it("orders the nine items: name, answer, then value, meta, line, now, change, formula, source", () => {
+    const html = plain(render({ markValue: "3.50" }));
+    const at = (needle: string): number => {
+      const index = html.indexOf(needle);
+      expect(index, needle).toBeGreaterThan(-1);
+      return index;
+    };
+    const order = [
+      at("Regular gasoline · U.S. city average"),
+      at("Your answer: "),
+      at(REVEAL_COPY.then),
+      at(`data-role="then">3.412<`),
+      at(REVEAL_COPY.labelHistoricalRecord.replace("{date}", "30 October 2024")),
+      at('class="_numberLine'),
+      at(`data-role="now"`),
+      at(REVEAL_COPY.periodRange),
+      at(REVEAL_COPY.formulaLabel),
+      at(REVEAL_COPY.sourceSummary),
+    ];
+    expect(order).toEqual([...order].sort((a, b) => a - b));
   });
 
-  it("includes the one neutral change line and its formula", () => {
+  it("the then value sits in the big type with no direction in its class", () => {
     const html = render();
-    expect(html).toContain(REVEAL_COPY.formulaLabel);
-    expect(html).toContain(REVEAL_COPY.periodRange);
+    expect(html).toMatch(/class="[^"]*big[^"]*" data-role="then">3\.412</);
   });
 
-  it("labels the then and now rows with the reveal copy", () => {
+  it("the now line shows the now value and both periods with the retrieved date", () => {
+    const html = plain(render());
+    expect(html).toContain("Now: ");
+    expect(html).toContain("3.9 USD per gallon");
+    expect(html).toContain(formatPeriod("2026-10", NOW.region));
+    expect(html).toContain("retrieved 27 October 2026");
+  });
+
+  it("shows the source, the series ID and the source_url in the source control", () => {
     const html = render();
-    expect(html).toContain(REVEAL_COPY.then);
-    expect(html).toContain(REVEAL_COPY.now);
+    expect(html).toContain("U.S. EIA");
+    expect(html).toContain(`${REVEAL_COPY.seriesLabel}: EMM_EPMR_PTE_NUS_DPG`);
+    expect(html).toContain("https://www.eia.gov/series");
   });
 });
 
 describe("FigureEntry draws the Mark only when there is an answer (R12.1)", () => {
-  it("draws no Mark element for No answer", () => {
+  it("shows No answer and no Mark for an unanswered figure", () => {
     const html = render({ markValue: undefined });
+    expect(html).toContain(REVEAL_COPY.noAnswer);
     expect(html).not.toContain("Your answer");
     expect(html).not.toMatch(/class="[^"]*markWrap/);
   });
 
-  it("draws the Mark with the typed answer in its hidden text", () => {
-    const html = render({ markValue: "3.50" });
+  it("shows the typed answer on the Your answer line and in the Mark's hidden text", () => {
+    const html = plain(render({ markValue: "3.50" }));
+    expect(html).toContain("Your answer: ");
+    expect(html).toContain("3.50 USD per gallon");
     expect(html).toContain("Your answer: 3.50 USD per gallon");
     expect(html).toMatch(/class="[^"]*markWrap/);
   });
 
-  it("leaves both stamps' markup the same whether or not there is a Mark (R12.2)", () => {
-    const withoutMark = render({ markValue: undefined });
-    const withMark = render({ markValue: "9.99" });
-    const stampOf = (html: string, role: "then" | "now"): string => {
-      const start = html.indexOf(`data-role="${role}"`);
-      const open = html.lastIndexOf("<div", start);
-      // Each stamp holds one FigureLine <div> and ends with its closing </div>.
-      const lineEnd = html.indexOf("</details></div>", start);
-      return html.slice(open, lineEnd + "</details></div>".length);
-    };
-    expect(stampOf(withMark, "then")).toBe(stampOf(withoutMark, "then"));
-    expect(stampOf(withMark, "now")).toBe(stampOf(withoutMark, "now"));
+  it("the figure items other than the answer line are identical with or without a Mark", () => {
+    const strip = (html: string): string =>
+      plain(html)
+        .replace(/<p class="[^"]*youLine[^"]*">[\s\S]*?<\/p>/, "")
+        .replace(/--pos-mark:[^;"]+;?/, "")
+        .replace(/;"/g, '"')
+        .replace(/<span class="[^"]*markWrap[^"]*">[\s\S]*?<\/span><\/span>/, "");
+    expect(strip(render({ markValue: "9.99" }))).toBe(
+      strip(render({ markValue: undefined })),
+    );
   });
 });
 
@@ -127,44 +148,37 @@ describe("FigureEntry shows the figures in the display rescale (R11.10)", () => 
   });
 });
 
-describe("FigureEntry sits on its own paper surface (tone.md, Property 22)", () => {
+describe("FigureEntry sits on the dark desk, never on paper (spec 07 R14.1)", () => {
   const here = dirname(fileURLToPath(import.meta.url));
-  const figuresCss = readFileSync(
-    resolve(here, "..", "ceremony", "figures", "figures.module.css"),
-    "utf8",
-  );
+  const revealCss = readFileSync(resolve(here, "reveal.module.css"), "utf8");
 
-  // The rule body for `.paperPanel`, read from the CSS module so the test
-  // tracks the real declarations.
-  function paperPanelRule(): string {
-    const match = figuresCss.match(/\.paperPanel\s*\{([^}]*)\}/);
-    if (!match) throw new Error("test setup: .paperPanel rule not found");
-    return match[1];
+  // Every declaration body whose selector list names `selector`, so a grouped
+  // rule (".letterCol, .figuresCol { ... }") is found too.
+  function ruleBody(selector: string): string {
+    const bodies = [...revealCss.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^}]*)\}/g)]
+      .filter(([, selectors]) =>
+        selectors.split(",").some((sel) => sel.trim() === selector),
+      )
+      .map(([, , body]) => body);
+    if (bodies.length === 0) throw new Error(`test setup: ${selector} rule not found`);
+    return bodies.join("\n");
   }
 
-  it("wraps the comparable entry in a paper panel class", () => {
+  it("the figures column sets the desk surface and desk text, not paper", () => {
+    const rule = ruleBody(".figuresCol");
+    expect(rule).toMatch(/background-color:\s*var\(--bg\)/);
+    expect(rule).toMatch(/color:\s*var\(--text\)/);
+    expect(rule).not.toMatch(/--paper|--ink/);
+  });
+
+  it("the figure entry sets desk text tokens only", () => {
+    const rule = ruleBody(".fig");
+    expect(rule).toMatch(/color:\s*var\(--text\)/);
+    expect(rule).not.toMatch(/--paper|--ink/);
+  });
+
+  it("wraps the comparable entry in its figure section", () => {
     const html = render();
-    expect(html).toMatch(/class=\"[^\"]*paperPanel[^\"]*\"/);
-  });
-
-  it("the panel sets its own text colour and paper background", () => {
-    const rule = paperPanelRule();
-    expect(rule).toMatch(/color:\s*var\(--ink\)/);
-    expect(rule).toMatch(/background-color:\s*var\(--paper\)/);
-  });
-
-  it("the panel's text colour is the paper ink token, not a desk token", () => {
-    const rule = paperPanelRule();
-    expect(rule).not.toMatch(/--desk/);
-  });
-
-  it("keeps the then and now labels, change line and formula inside the panel", () => {
-    const html = render();
-    const start = html.indexOf("paperPanel");
-    const panelOpen = html.lastIndexOf("<div", start);
-    const inside = html.slice(panelOpen);
-    expect(inside).toContain(REVEAL_COPY.then);
-    expect(inside).toContain(REVEAL_COPY.now);
-    expect(inside).toContain(REVEAL_COPY.formulaLabel);
+    expect(html).toMatch(/<section class="[^"]*fig[^"]*"/);
   });
 });

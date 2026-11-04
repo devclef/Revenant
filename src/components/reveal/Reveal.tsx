@@ -290,28 +290,30 @@ export function Reveal({
       </div>
 
       {stage >= 2 ? (
-        <div className={`${styles.stage} ${styles.fade}`}>
-          <LetterBlock
-            opened={opened}
-            personaName={personaName}
-            variant={variant}
-            letterId={letterId}
-            still={jumpedToEnd}
-          />
-        </div>
-      ) : null}
+        <div className={styles.letterFigures}>
+          <div className={`${styles.stage} ${styles.fade} ${styles.letterCol}`}>
+            <LetterBlock
+              opened={opened}
+              personaName={personaName}
+              variant={variant}
+              letterId={letterId}
+              still={jumpedToEnd}
+            />
+          </div>
 
-      {stage >= 3 ? (
-        <div className={`${styles.stage} ${styles.fade}`}>
-          <FiguresFadeUp count={figureCount}>
-            <StagePanel>
-              <FiguresThenNow
-                opened={opened}
-                record={record}
-                allowSamePeriod={variant === "live"}
-              />
-            </StagePanel>
-          </FiguresFadeUp>
+          {stage >= 3 ? (
+            <div
+              className={`${styles.stage} ${styles.fade} ${styles.figuresCol}`}
+            >
+              <FiguresFadeUp count={figureCount}>
+                <FiguresThenNow
+                  opened={opened}
+                  record={record}
+                  allowSamePeriod={variant === "live"}
+                />
+              </FiguresFadeUp>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
