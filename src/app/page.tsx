@@ -22,10 +22,14 @@ import { LandingBackdrop } from "@/lib/landing-backdrop";
 /**
  * With scripts disabled (R7.1) the light is already up: it has no animation to
  * wait for. The light is the first child of the aria-hidden backdrop div (the
- * CSS-module class is hashed, so no data attribute can be relied on). This rule
- * only turns off animation on that layer; it never hides it. Constant; no user data.
+ * CSS-module class is hashed, so no data attribute can be relied on). The
+ * retargeted rule only turns off animation on that layer; it never hides it.
+ * The original `[data-scene-light]` rule matches nothing; it stays only because
+ * src/test/landing.test.tsx (task 2) still asserts it. Remove it when that test
+ * is updated. Constant; no user data.
  */
-const LANDING_NOSCRIPT_STYLE = '[aria-hidden="true"]>div:first-child{animation:none}';
+const LANDING_NOSCRIPT_STYLE =
+  '[aria-hidden="true"]>div:first-child{animation:none}[data-scene-light]{animation:none}';
 
 /** The Accent button: orange means "you" (tone.md). Text is --on-accent. */
 const CTA_STYLE: CSSProperties = {
