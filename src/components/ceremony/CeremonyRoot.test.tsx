@@ -262,7 +262,7 @@ describe("CeremonyRoot region and attributes", () => {
 });
 
 describe("CeremonyRoot data-ceremony is the Stage for the state (R3.1)", () => {
-  // The default local view is { sealing: false, step: "done" }, so a static
+  // The default local view is { sealing: false, figures: "settled" }, so a static
   // render of reveal stage 3 reports `close`, its final state (design.md).
   const cases: Array<{ name: string; state: FlowState; stage: string }> = [
     // loading -> emerging (spec 07: the letter is being brought out).
@@ -290,7 +290,7 @@ describe("CeremonyRoot data-ceremony is the Stage for the state (R3.1)", () => {
       state: { tag: "recall", opened: OPENED, drafts: DRAFTS, invalid: [] },
       stage: "recall",
     },
-    // reveal stage 3 with the default local view ({ step: "done" }) -> close.
+    // reveal stage 3 with the default local view ({ figures: "settled" }) -> close.
     {
       name: "reveal stage 3 default",
       state: { tag: "reveal", opened: OPENED, record: RECORD, stage: 3 },

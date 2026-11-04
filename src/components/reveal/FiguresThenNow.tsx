@@ -179,7 +179,11 @@ export function FiguresThenNow({
       {anyFixture ? <FixtureNote /> : null}
 
       {entries.map((entry) => (
-        <div key={entry.key} className={styles.figureGroup}>
+        <div
+          key={entry.key}
+          className={styles.figureGroup}
+          data-figure-entry=""
+        >
           <h3 className={styles.metricName}>{entry.name}</h3>
 
           {entry.now === undefined ? (

@@ -4,18 +4,19 @@
 //
 // The local-view context (design.md "The flow is the source of truth" and
 // "Stage resolution"). A running Ceremony view holds only animation state —
-// whether a Seal_Break is in progress, and the stage 3 Step — and reports it
+// whether a Seal_Break is in progress, and whether the stage 3 figures have
+// settled — and reports it
 // up to `CeremonyRoot` through this small context, so `data-ceremony` can name
 // the exact Stage via `stageFor(state, localView)`.
 //
 // The context value is the current `LocalView` plus a setter. The setter merges
 // a partial update into the current view, so a view touches only the field it
-// owns (`SealBreak` sets `{ sealing }`; the stage 3 sequence sets `{ step }`),
+// owns (`SealBreak` sets `{ sealing }`; the figures fade-up sets `{ figures }`),
 // and the other field keeps its settled default.
 //
 // Final state first (design.md "Final state first", R17.3): the provider's
-// initial value is always `DEFAULT_LOCAL_VIEW` ({ sealing: false, step:
-// "done" }), so the server render and the FIRST client render report the
+// initial value is always `DEFAULT_LOCAL_VIEW` ({ sealing: false, figures:
+// "settled" }), so the server render and the FIRST client render report the
 // settled state — `marks` for a static stage-1 reveal, `close` for a static
 // stage-3 reveal — and hydration never mismatches. A view only ever moves the
 // local view in an event handler or effect after mount, never during render.

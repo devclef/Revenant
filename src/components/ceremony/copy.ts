@@ -1,7 +1,7 @@
 /**
  * User-facing strings for the reveal Ceremony: the motion and sound controls,
  * the skip control, the envelope stage, the seal break, the recall scale, the
- * passage between then and now, the close stage, the tilt prompt, and one short
+ * tilt prompt, and one short
  * line per Stage for the polite live region.
  *
  * Every word a reader or screen reader hears in the Ceremony comes from here;
@@ -76,26 +76,6 @@ export const CEREMONY_COPY = {
   /** Shown on the scale before the reader has given an answer. */
   recallNoMarkYet: "No answer yet",
 
-  // --- Passage and figures ---
-
-  /** Live: time passes between the then and now figures. */
-  passageLive: "Time passes between then and now.",
-
-  /** Live: the figures have settled into place. */
-  figuresLive: "The figures are in place.",
-
-  // --- Close stage ---
-
-  /** Heading for the closing stage. */
-  closeTitle: "That is the whole letter",
-
-  /** Body for the closing stage. */
-  closeBody:
-    "Nothing has been added to what you remembered, what was written, or the record.",
-
-  /** The control that returns to the desk. */
-  closeBack: "Back to the desk",
-
   // --- Tilt and sound ---
 
   /** The control that asks for device-motion permission for the light tilt. */
@@ -152,12 +132,8 @@ export const CEREMONY_COPY = {
     seal: "The seal is ready to break.",
     /** The open letter. */
     letter: "The letter is open.",
-    /** The then figures. */
-    then: "The figures from then are shown.",
-    /** The passage of time between then and now. */
-    passage: "Time passes between then and now.",
-    /** The now figures. */
-    now: "The figures from now are shown.",
+    /** The figures stage, while the figures fade in. */
+    figures: "The figures are coming in.",
     /** The closing stage. */
     close: "That is the whole letter.",
     /** An error state. */

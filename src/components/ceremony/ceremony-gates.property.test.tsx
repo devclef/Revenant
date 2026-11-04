@@ -325,12 +325,12 @@ describe("Property 19: every running sequence has a visible Skip (R6.3)", () => 
   });
 
   it("registers the running sequences with useSequence", () => {
-    // Non-vacuous: the Seal_Break and the then/now Steps each call
+    // Non-vacuous: the Seal_Break and the figures fade-up each call
     // useSequence, so each one is covered by the Skip check above.
     const sources = ceremonySources();
     for (const name of [
       join("seal", "SealBreak.tsx"),
-      join("figures", "ThenNowSequence.tsx"),
+      join("figures", "FiguresFadeUp.tsx"),
     ]) {
       const file = sources.find((s) => relative(HERE, s.path) === name);
       expect(file, `${name} exists`).toBeDefined();
@@ -392,7 +392,7 @@ describe("Property 20: Calm_Mode starts no animation (R11.2, R11.3)", () => {
     expect(loader?.text ?? "").toMatch(dynamicPattern);
   });
 
-  it("settles the then/now sequence in calm: data-step is done, never then", () => {
+  it("settles the figures in calm: stage 3 is close, never figures", () => {
     fc.assert(
       fc.property(
         fc.constantFrom<FlowState>({
@@ -404,8 +404,8 @@ describe("Property 20: Calm_Mode starts no animation (R11.2, R11.3)", () => {
         (state) => {
           currentMode = "calm";
           const html = render(state);
-          expect(html).toContain('data-step="done"');
-          expect(html).not.toContain('data-step="then"');
+          expect(html).toContain('data-ceremony="close"');
+          expect(html).not.toContain('data-ceremony="figures"');
           // The final state's labels and numbers are all on the page.
           expect(html).toContain("3.412");
           expect(html).toContain("July 2024");

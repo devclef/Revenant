@@ -114,9 +114,7 @@ const ALL_STAGES = [
   "marks",
   "seal",
   "letter",
-  "then",
-  "passage",
-  "now",
+  "figures",
   "close",
   "error",
 ] as const satisfies ReadonlyArray<Stage>;
@@ -212,5 +210,26 @@ describe("CEREMONY_COPY tone and neutrality", () => {
     expect(CEREMONY_COPY.skip).toBe("Skip");
     expect(CEREMONY_COPY.sealButton).toBe("Break the seal");
     expect(CEREMONY_COPY.envelopeOpens).toBe("Opens {date}");
+  });
+
+  // Property 23 (spec 07 task 6): the figures stage line is added here, and the
+  // retired strings are gone from the Ceremony copy.
+  it("gives the figures stage line its exact text and drops the retired then, passage and now lines (Property 23)", () => {
+    expect(CEREMONY_COPY.stageLive.figures).toBe("The figures are coming in.");
+    expect(CEREMONY_COPY.stageLive).not.toHaveProperty("then");
+    expect(CEREMONY_COPY.stageLive).not.toHaveProperty("passage");
+    expect(CEREMONY_COPY.stageLive).not.toHaveProperty("now");
+    expect(CEREMONY_COPY).not.toHaveProperty("passageLive");
+    expect(CEREMONY_COPY).not.toHaveProperty("figuresLive");
+    expect(CEREMONY_COPY).not.toHaveProperty("closeTitle");
+    expect(CEREMONY_COPY).not.toHaveProperty("closeBody");
+    expect(CEREMONY_COPY).not.toHaveProperty("closeBack");
+  });
+
+  it("the figures stage line has no '!', no scoring word and no sentence over 25 words (Property 23)", () => {
+    const line = CEREMONY_COPY.stageLive.figures;
+    expect(line).not.toContain("!");
+    expect(line.split(/[.!?]+/).every((sentence) => sentence.trim().split(/\s+/).length <= 25)).toBe(true);
+    expect(line).not.toMatch(/\b(close|right|wrong|accuracy|score|off by)\b/i);
   });
 });

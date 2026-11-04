@@ -4,7 +4,7 @@ import { rescaleForDisplay } from "@/lib/figures";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { NumberLine } from "@/components/ceremony/figures/NumberLine";
 import figureStyles from "@/components/ceremony/figures/figures.module.css";
-import { Stamp } from "@/components/ceremony/figures/Stamp";
+import { FigureLine } from "./FigureLine";
 import { ChangeLine } from "./ChangeLine";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
@@ -64,7 +64,9 @@ export function FigureEntry({ then, now, change, rescale, markValue }: FigureEnt
     <MotionProvider>
       <div className={figureStyles.paperPanel}>
         <p className={styles.then}>{REVEAL_COPY.then}</p>
-        <Stamp figure={then} role="then" displayRescale={rescale} />
+        <div data-role="then">
+          <FigureLine figure={then} role="then" displayRescale={rescale} />
+        </div>
 
         <NumberLine
           thenValue={toDisplay(then.value)}
@@ -74,7 +76,9 @@ export function FigureEntry({ then, now, change, rescale, markValue }: FigureEnt
         />
 
         <p className={styles.now}>{REVEAL_COPY.now}</p>
-        <Stamp figure={now} role="now" displayRescale={rescale} />
+        <div data-role="now">
+          <FigureLine figure={now} role="now" displayRescale={rescale} />
+        </div>
 
         <ChangeLine result={change} region={then.region} then={then} now={now} />
       </div>

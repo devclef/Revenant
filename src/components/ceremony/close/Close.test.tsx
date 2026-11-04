@@ -8,7 +8,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { CEREMONY_COPY } from "../copy";
+import { CLOSE_COPY } from "./copy";
 import { Close, CLOSE_HREF } from "./Close";
 
 const markup = renderToStaticMarkup(createElement(Close));
@@ -19,23 +19,23 @@ const textOf = (html: string): string => html.replace(/<[^>]+>/g, "");
 describe("Close", () => {
   it("shows the close heading from CEREMONY_COPY as an h2", () => {
     expect(markup).toContain(`<h2`);
-    expect(markup).toContain(CEREMONY_COPY.closeTitle);
+    expect(markup).toContain(CLOSE_COPY.title);
   });
 
   it("shows the one line of body copy from CEREMONY_COPY", () => {
     expect(markup).toContain(`<p`);
-    expect(markup).toContain(CEREMONY_COPY.closeBody);
+    expect(markup).toContain(CLOSE_COPY.body);
   });
 
   it("links back to the desk at /demo with the back label", () => {
     expect(CLOSE_HREF).toBe("/demo");
     expect(markup).toMatch(/<a[^>]*href="\/demo"[^>]*>/);
-    expect(markup).toContain(CEREMONY_COPY.closeBack);
+    expect(markup).toContain(CLOSE_COPY.back);
   });
 
   it("shows only the heading, the copy and the link text (no summary, score or comment)", () => {
     expect(textOf(markup)).toBe(
-      `${CEREMONY_COPY.closeTitle}${CEREMONY_COPY.closeBody}${CEREMONY_COPY.closeBack}`,
+      `${CLOSE_COPY.title}${CLOSE_COPY.body}${CLOSE_COPY.back}`,
     );
   });
 
