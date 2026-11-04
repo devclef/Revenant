@@ -37,25 +37,11 @@ const scannedDirs = [
   resolve(srcRoot, "components", "demo"),
   resolve(srcRoot, "app", "demo"),
   resolve(srcRoot, "components", "live"),
+  // Spec 07 changed the letter route (`/l/[id]`, task 9); its pages are scanned
+  // with the same rule (R24.2).
+  resolve(srcRoot, "app", "l"),
 ];
 const ceremonyDir = resolve(srcRoot, "components", "ceremony");
-
-function tsxFilesIn(dir: string): string[] {
-  let names: string[];
-  try {
-    names = readdirSync(dir);
-  } catch {
-    // A directory that does not exist contributes no files; the non-empty
-    // assertion below still guards against every directory going missing.
-    return [];
-  }
-  return names
-    .filter((name) => name.endsWith(".tsx"))
-    .filter((name) => !/\.(test|spec)\.tsx$/.test(name))
-    .map((name) => resolve(dir, name))
-    .filter((path) => statSync(path).isFile())
-    .sort();
-}
 
 // Recursively collect non-test `.tsx` under `dir` (covers the nested
 // ceremony/desk/ component).
@@ -87,7 +73,9 @@ function tsxFilesUnder(dir: string): string[] {
 
 const ceremonyFiles = tsxFilesUnder(ceremonyDir);
 
-const scannedFiles = [...scannedDirs.flatMap(tsxFilesIn), ...ceremonyFiles];
+// The app routes nest (`demo/personas/[key]`, `l/[id]`), so they are walked
+// recursively. The component folders are flat and walk the same way.
+const scannedFiles = [...scannedDirs.flatMap(tsxFilesUnder), ...ceremonyFiles];
 
 const hasLetter = /[A-Za-z]/;
 

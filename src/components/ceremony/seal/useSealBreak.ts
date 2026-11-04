@@ -222,6 +222,10 @@ export function useSealBreak({ onAdvance, onShowAll }: UseSealBreakOptions): Sea
   const press = useCallback(
     (target: Element | null, pointerId: number) => {
       if (holdRef.current.phase === "broken" || advancedRef.current) return;
+      // Calm_Mode: a hold would draw the cracks over its length, which is
+      // decorative motion. The button breaks the seal at once instead (R19.2,
+      // R19.3), so a press starts nothing.
+      if (hostRef.current.calm) return;
       setHold(onPress(holdRef.current, performance.now()));
       hostRef.current.onSealingChange?.(true);
 

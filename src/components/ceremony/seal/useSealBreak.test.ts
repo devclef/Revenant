@@ -280,6 +280,18 @@ describe("useSealBreak: the button path (R6.3)", () => {
     expect(timers.size).toBe(0);
   });
 
+  it("in Calm_Mode a press starts no hold and draws no cracks; the button still breaks at once", () => {
+    const m = mount({ calm: true });
+    m.ctl().press(pointerTarget(), 1);
+    expect(m.host.onSealingChange).not.toHaveBeenCalledWith(true);
+    runFrames(SEAL_HOLD_MS);
+    expect(m.onAdvance).not.toHaveBeenCalled();
+    expect(m.ctl().broken).toBe(false);
+    expect(m.ctl().progress).toBe(0);
+    m.ctl().breakNow(null);
+    expect(m.onAdvance).toHaveBeenCalledTimes(1);
+  });
+
   it("runs the short draw on the root's paths with Web Animations, and sends ADVANCE when they finish", async () => {
     const m = mount();
     const cancel = vi.fn();

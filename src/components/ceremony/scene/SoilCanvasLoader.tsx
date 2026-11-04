@@ -12,7 +12,12 @@ import { useEffect, useRef } from "react";
 
 import styles from "./scene.module.css";
 import { useMotion } from "../motion";
-import { parseTranslateY, startSoilCanvas, type SoilCanvasHandle } from "./soil-canvas-start";
+import {
+  parseTranslateY,
+  soilCanvasMayLoad,
+  startSoilCanvas,
+  type SoilCanvasHandle,
+} from "./soil-canvas-start";
 import type { CeilingInputs } from "./soil-canvas";
 
 /**
@@ -44,12 +49,14 @@ function readCeilingInputs(container: HTMLElement): CeilingInputs {
 }
 
 export function SoilCanvasLoader() {
-  const { mode } = useMotion();
+  const { mode, ready } = useMotion();
   const ref = useRef<HTMLDivElement>(null);
 
+  // Waits for `ready`: on the first commit the mode is still the server's
+  // `full`, and a light or calm device must not request the chunk then.
   useEffect(() => {
     const container = ref.current;
-    if (container === null || mode !== "full") {
+    if (container === null || !soilCanvasMayLoad({ mode, ready })) {
       return;
     }
     let cancelled = false;
@@ -71,7 +78,7 @@ export function SoilCanvasLoader() {
       handle?.destroy();
       handle = null;
     };
-  }, [mode]);
+  }, [mode, ready]);
 
   return <div ref={ref} className={styles.soilLayer} data-soil-layer />;
 }

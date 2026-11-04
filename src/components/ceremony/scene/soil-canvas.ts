@@ -64,6 +64,14 @@ const CLOD_BOUNCE_BELOW_TOP_PX = 8;
 const CLOD_CEILING_REBOUND = 0.3;
 /** The wrap line sits this far above the soil top (R6.5). */
 const DUST_WRAP_ABOVE_TOP_PX = 4;
+/** Radius of a clod dot, px. */
+const CLOD_RADIUS_PX = 2.2;
+/**
+ * Clear space between a dot's drawn edge and the ceiling, px. The layout check
+ * (D1) reads the highest drawn pixel, so a dot's edge, not its centre, must sit
+ * on or below the ceiling.
+ */
+const DOT_CEILING_CLEAR_PX = 1;
 
 /** Dust ceiling: `max(Top_Bar bottom, headline bottom) + 8 px − translateY` (R6.16). */
 export function dustCeiling(c: CeilingInputs): number {
@@ -229,6 +237,15 @@ export function shouldDrawClods(mode: MotionMode, elapsedMs: number): boolean {
 }
 
 /**
+ * The centre y at which a dot of radius `r` is drawn. The centre never goes
+ * above `ceiling + r + DOT_CEILING_CLEAR_PX`, so the dot's edge stays below the
+ * ceiling (R6.16).
+ */
+export function dotCentreY(y: number, r: number, ceiling: number): number {
+  return Math.max(y, ceiling + r + DOT_CEILING_CLEAR_PX);
+}
+
+/**
  * Draws the moving layer over the base: dust, then clods. `elapsedMs` counts
  * from mount. Nothing is drawn above the ceiling.
  */
@@ -246,7 +263,7 @@ export function drawMotion(
     const pt = dustPoint(p, g, ceiling, elapsedS);
     ctx.fillStyle = css(c.dust, p.alpha);
     ctx.beginPath();
-    ctx.arc(pt.x, pt.y, p.r, 0, Math.PI * 2);
+    ctx.arc(pt.x, dotCentreY(pt.y, p.r, ceiling), p.r, 0, Math.PI * 2);
     ctx.fill();
   }
   if (!clodsOn) {
@@ -260,7 +277,7 @@ export function drawMotion(
     }
     ctx.fillStyle = css(c.clod, pt.alpha);
     ctx.beginPath();
-    ctx.arc(pt.x, pt.y, 2.2, 0, Math.PI * 2);
+    ctx.arc(pt.x, dotCentreY(pt.y, CLOD_RADIUS_PX, ceiling), CLOD_RADIUS_PX, 0, Math.PI * 2);
     ctx.fill();
   }
 }

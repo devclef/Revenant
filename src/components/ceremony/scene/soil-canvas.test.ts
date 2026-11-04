@@ -16,6 +16,7 @@ import {
   drawBase,
   drawMotion,
   dustCeiling,
+  dotCentreY,
   dustPoint,
   parseHexColour,
   readColours,
@@ -176,6 +177,30 @@ describe("Property 11: the Soil_Canvas draws the same thing from the seed", () =
       }),
       RUNS,
     );
+  });
+
+  it("draws every dust and clod edge on or below the ceiling, so none shows above it (D1, R6.16)", () => {
+    fc.assert(
+      fc.property(viewport, ceilingInputs, fc.integer({ min: 0, max: 3000 }), ({ w, h }, inputs, ms) => {
+        const g = soilGeometry(w, h);
+        const model = buildSoilModel(g);
+        const ceiling = dustCeiling(inputs);
+        const frame = recordingContext();
+        drawMotion(frame.ctx, g, model, COLOURS, ceiling, ms, true);
+        const arcs = frame.log.filter((e) => e.op === "arc");
+        expect(arcs.length).toBeGreaterThan(0);
+        for (const arc of arcs) {
+          const [, y, r] = arc.args as number[];
+          expect(y - r).toBeGreaterThanOrEqual(ceiling);
+        }
+      }),
+      RUNS,
+    );
+  });
+
+  it("keeps a dot's centre where it is when the dot is already below the ceiling", () => {
+    expect(dotCentreY(10, 2, 20)).toBe(23);
+    expect(dotCentreY(40, 2, 20)).toBe(40);
   });
 
   it("places the light at frameL + 0.72 × frameW from 900 px up, and at w / 2 below", () => {
