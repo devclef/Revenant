@@ -148,3 +148,34 @@ describe("passkey and backup key warnings stay plain (R17.6, R17.7)", () => {
     }
   });
 });
+
+describe("the rendered colours are the tokens the pairs were read from", () => {
+  const liveDir = here;
+  const sealPage = readFileSync(resolve(liveDir, "SealPage.tsx"), "utf8");
+  const liveLetter = readFileSync(resolve(liveDir, "LiveLetter.tsx"), "utf8");
+  const envelopeCss = readFileSync(
+    resolve(srcRoot, "components", "ceremony", "envelope", "Envelope.module.css"),
+    "utf8",
+  );
+
+  it("loads tokens.css on both the Seal_Page and the Letter_Page", () => {
+    const IMPORT = 'import "@/components/ceremony/scene/tokens.css";';
+    expect(sealPage).toContain(IMPORT);
+    expect(liveLetter).toContain(IMPORT);
+  });
+
+  it("sets no colour literal in live.module.css except the print and QR surfaces", () => {
+    // The print block forces black and white for the printed card, and the QR
+    // quiet zone is white by design. Every other colour comes from a token.
+    const withoutPrint = liveCss.replace(/@media print\s*\{[\s\S]*?\n\}\n/, "");
+    const literals = [...withoutPrint.matchAll(/#[0-9a-fA-F]{6}\b/g)].map((m) =>
+      m[0].toLowerCase(),
+    );
+    expect(literals.every((hex) => hex === "#ffffff")).toBe(true);
+  });
+
+  it("gives the envelope text its scene ink from tokens.css", () => {
+    expect(envelopeCss).toContain("color: var(--env-ink);");
+    expect(readHexToken(tokensCss, "--env-ink")).toMatch(/^#[0-9a-f]{6}$/);
+  });
+});
