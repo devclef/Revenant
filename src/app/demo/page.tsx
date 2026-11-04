@@ -34,7 +34,9 @@ export default function DemoIndexPage() {
           <DemoLabel />
         </div>
         <h1 className={styles.heading}>{DEMO_COPY.heading}</h1>
-        <p className={styles.introNote}>{DEMO_COPY.introNote}</p>
+        <p className={styles.introNote} data-dust-ceiling>
+          {DEMO_COPY.introNote}
+        </p>
 
         {PERSONAS.length === 0 ? (
           <ParchmentSurface as="section">

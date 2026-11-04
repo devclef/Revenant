@@ -121,6 +121,14 @@ describe("Demo_Index page markup", () => {
     expect(empty).not.toContain("Pick up the letter");
   });
 
+  it("marks the intro note as the dust ceiling, so dust stays below it on the index", async () => {
+    const html = await renderWithPersonas(TWO_PERSONAS);
+    const markerAt = html.indexOf("data-dust-ceiling");
+    expect(markerAt).toBeGreaterThanOrEqual(0);
+    expect(html.indexOf(DEMO_COPY.introNote)).toBeGreaterThan(markerAt);
+    expect(html.indexOf(DEMO_COPY.introNote)).toBeLessThan(html.indexOf(TWO_PERSONAS[0].display_name));
+  });
+
   it("does not render the empty-state text when the list is non-empty", async () => {
     const html = await renderWithPersonas(TWO_PERSONAS);
     expect(html).not.toContain(DEMO_COPY.indexEmpty);

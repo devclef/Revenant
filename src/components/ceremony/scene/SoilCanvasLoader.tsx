@@ -15,17 +15,30 @@ import { useMotion } from "../motion";
 import { parseTranslateY, startSoilCanvas, type SoilCanvasHandle } from "./soil-canvas-start";
 import type { CeilingInputs } from "./soil-canvas";
 
-/** Reads the Top_Bar and headline bounds, and the backdrop's lift. */
+/**
+ * The lowest bottom of the text the dust must stay below: the headline, or the
+ * index intro note (`data-dust-ceiling`), whichever sits lower. Null when
+ * neither shows.
+ */
+function textBottom(doc: Document): number | null {
+  let bottom: number | null = null;
+  for (const el of doc.querySelectorAll("[data-scene-ceiling], [data-dust-ceiling]")) {
+    const rect = el.getBoundingClientRect();
+    if (rect.height === 0) continue;
+    bottom = bottom === null ? rect.bottom : Math.max(bottom, rect.bottom);
+  }
+  return bottom;
+}
+
+/** Reads the Top_Bar and text bounds, and the backdrop's lift. */
 function readCeilingInputs(container: HTMLElement): CeilingInputs {
   const doc = container.ownerDocument;
   const bar = doc.querySelector("[data-topbar]");
-  const headline = doc.querySelector("[data-scene-ceiling]");
-  const headlineRect = headline === null ? null : headline.getBoundingClientRect();
   const backdrop = container.parentElement;
   const transform = backdrop === null ? "none" : window.getComputedStyle(backdrop).transform;
   return {
     barBottom: bar === null ? 0 : bar.getBoundingClientRect().bottom,
-    headlineBottom: headlineRect === null || headlineRect.height === 0 ? null : headlineRect.bottom,
+    headlineBottom: textBottom(doc),
     translateY: parseTranslateY(transform),
   };
 }
