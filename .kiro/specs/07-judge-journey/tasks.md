@@ -271,7 +271,7 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - Validation: `bash scripts/check.sh`
   - _Requirements: R2.1, R6.15, R8.10, R16.1–R16.9, R21.1, R26.4_
 
-- [ ] 9. `/demo/live` and `/l/[id]` restyle, desk retired
+- [x] 9. `/demo/live` and `/l/[id]` restyle, desk retired
   - Agent: `frontend-dev` · Depends on: 8 · Estimated size: ~3,000 changed lines
   - Before this task: task 8 is on `main`.
   - Scope: `src/components/ceremony/ceremony-gates.property.test.tsx`, `src/components/reveal/reveal-token-pairs.test.ts`, `src/components/live/contrast.test.ts`, `src/app/demo/live/page.tsx`, `src/app/l/[id]/page.tsx`, `src/app/l/[id]/not-found.tsx`, `src/components/live/*.module.css`, `src/components/live/*.tsx` (class names and markup wrappers only), `src/components/reveal/OpeningFlow.tsx`, `src/components/reveal/reveal.module.css`, `src/components/ceremony/CeremonyRoot.tsx`, `ceremony.module.css`, `contrast.test.ts`, `constants.ts`, `copy.ts`, `src/components/ceremony/envelope/EnvelopeView.tsx`, `envelope/Envelope.module.css`, `src/components/ceremony/desk/**` (deleted), and the `*.test.ts(x)` for each file above including `src/app/l/[id]/page.test.tsx` and `src/app/demo/live/page.test.tsx`
