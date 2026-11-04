@@ -718,6 +718,19 @@ class FixAttempts(unittest.TestCase):
                     self.c({"kind": "dev", "task_id": "y", "role": "frontend-dev"})]
         self.assertEqual(d.fix_attempts(comments), 0)
 
+    def test_reset_marker_starts_the_count_again(self):
+        comments = [self.c({"kind": "dev", "task_id": "a", "fix": True}),
+                    self.c({"kind": "dev", "task_id": "b", "fix": True}),
+                    self.c({"kind": "dev", "task_id": "c", "fix": True}),
+                    self.c({"kind": "fix-reset"}),
+                    self.c({"kind": "dev", "task_id": "d", "fix": True})]
+        self.assertEqual(d.fix_attempts(comments), 1)
+
+    def test_untrusted_reset_marker_is_ignored(self):
+        comments = [self.c({"kind": "dev", "task_id": "a", "fix": True}),
+                    self.c({"kind": "fix-reset"}, trusted=False)]
+        self.assertEqual(d.fix_attempts(comments), 1)
+
 
 class CIFeedbackLogs(unittest.TestCase):
     def test_ci_gate_feedback_quotes_the_log_not_exit_code_alone(self):

@@ -549,7 +549,11 @@ def failed_steps(job: dict) -> str:
 def fix_attempts(comments: list[dict]) -> int:
     """Fix runs that count against MAX_FIX_ATTEMPTS: fix runs started, minus those that
     ended with no new commits. A run that ends empty leaves a dev-result marker with
-    commits: false, written by the dispatcher on the issue."""
+    commits: false, written by the dispatcher on the issue.
+
+    A trusted fix-reset marker (posted by the owner after stepping in, for
+    example after pushing a fix to the PR) starts the count again: only fix
+    runs started after the latest reset count. Comments arrive oldest first."""
     started, empty = [], set()
     for c in comments:
         if not c.get("_trusted"):
@@ -559,7 +563,9 @@ def fix_attempts(comments: list[dict]) -> int:
                 data = json.loads(m.group(1))
             except ValueError:
                 continue
-            if data.get("kind") == "dev" and data.get("fix") is True:
+            if data.get("kind") == "fix-reset":
+                started = []
+            elif data.get("kind") == "dev" and data.get("fix") is True:
                 started.append(data.get("task_id"))
             elif data.get("kind") == "dev-result" and data.get("commits") is False:
                 empty.add(data.get("task_id"))
