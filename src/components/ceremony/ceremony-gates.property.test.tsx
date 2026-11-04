@@ -388,6 +388,23 @@ describe("Property 20: Calm_Mode starts no animation (R11.2, R11.3)", () => {
   });
 });
 
+describe("Property 20: the /l/[id] live flow has no Ghost and no Soil (spec 07 task 2)", () => {
+  it("renders no Ghost, no Soil strip and no canvas in any live Stage", () => {
+    const states: FlowState[] = [
+      { tag: "loading" },
+      { tag: "verified", opened: OPENED },
+      { tag: "reveal", opened: OPENED, record: RECORD, stage: 1 },
+      { tag: "reveal", opened: OPENED, record: RECORD, stage: 3 },
+    ];
+    for (const state of states) {
+      const html = render(state, "live");
+      expect(html).not.toContain("data-ghost-box");
+      expect(html).not.toContain("data-soil-strip");
+      expect(html).not.toContain("<canvas");
+    }
+  });
+});
+
 // --- Property 21 -------------------------------------------------------------
 
 /** Render with `Math.random` and `Date.now` pinned to the given values. */

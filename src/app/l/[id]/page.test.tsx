@@ -6,6 +6,7 @@ import { fileURLToPath } from "node:url";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { LIVE_COPY } from "@/components/live/copy";
+import { OpeningFlow } from "@/components/reveal/OpeningFlow";
 import { REVEAL_COPY } from "@/components/reveal/copy";
 
 /**
@@ -59,6 +60,26 @@ describe("/l/[id] page", () => {
     );
     // No passkey control before the Server_Secret is released (R17.2).
     expect(markup).not.toContain(LIVE_COPY.unlockPasskey);
+  });
+
+  it("renders no Ghost and no Soil on the live flow (spec 07 task 2)", () => {
+    // The live flow is the same OpeningFlow the persona page uses, minus the
+    // persona-only scene. Its loading view is the server markup: the Ghost, the
+    // Soil strip and the Soil canvas must all be absent.
+    const markup = renderToStaticMarkup(
+      createElement(OpeningFlow, {
+        letterId: VALID_ID,
+        personaName: LIVE_COPY.regionLabel,
+        mode: "live",
+      }),
+    );
+    expect(markup).toContain('data-ceremony="');
+    expect(markup).not.toContain("data-ghost-box");
+    expect(markup).not.toContain("data-soil-strip");
+    expect(markup).not.toContain("<canvas");
+    expect(markup).not.toContain("Written as of");
+    expect(markup).not.toContain("Prepared later as a demo");
+    expect(markup).not.toContain("Sealed for the demo on");
   });
 
   it("imports no crypto module and no database module (R17.1)", () => {
