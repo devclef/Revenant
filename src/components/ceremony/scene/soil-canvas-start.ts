@@ -30,6 +30,16 @@ export interface StartSoilCanvasOptions {
 }
 
 /**
+ * Whether the Soil_Canvas may be loaded at all: the device motion is resolved
+ * and the mode is `full`. A loader checks this before it calls `load`, so a
+ * first render (still `full`, not yet resolved) requests no chunk on a device
+ * that turns out to be `light` or `calm`.
+ */
+export function soilCanvasMayLoad(state: { mode: MotionMode; ready: boolean }): boolean {
+  return state.ready && state.mode === "full";
+}
+
+/**
  * Resolves to the mounted handle, or null when the canvas is not used: the mode
  * is not `full`, the import rejected, or the canvas could not get a context.
  */

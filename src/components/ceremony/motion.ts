@@ -55,6 +55,13 @@ export type MotionContextValue = {
    * returns to the device-resolved mode. State only, no persistence (R1.5).
    */
   setCalm: (on: boolean) => void;
+  /**
+   * False until the device signals have been read after mount (the cheap
+   * signals at once, the frame probe after its second). Until then `mode` is
+   * still the server's `full`, so a loader that must not run in `light` or
+   * `calm` waits for this flag. Always true under a parent provider.
+   */
+  ready: boolean;
 };
 
 /**
@@ -207,6 +214,9 @@ function RootMotionProvider({ children }: { children: ReactNode }) {
   // first render is `full` and matches the server (R17.3).
   const [reducedMotion, setReducedMotion] = useState(false);
   const [lowPower, setLowPower] = useState(false);
+  // True once the device signals are read. Child effects run before this
+  // provider's layout effect, so they see `full` with `ready` false.
+  const [ready, setReady] = useState(false);
 
   const setCalm = useCallback((on: boolean) => {
     setCalmControl(on);
@@ -221,7 +231,8 @@ function RootMotionProvider({ children }: { children: ReactNode }) {
         ? window.matchMedia("(prefers-reduced-motion: reduce)")
         : null;
 
-    setReducedMotion(prefersReducedMotion());
+    const reduced = prefersReducedMotion();
+    setReducedMotion(reduced);
 
     const onMediaChange = (event: MediaQueryListEvent) => {
       if (active) {
@@ -236,11 +247,16 @@ function RootMotionProvider({ children }: { children: ReactNode }) {
     // `decideLowPower` is the single source of truth for the OR of the signals.
     if (decideLowPower({ fewCores: fewCores(), saveData: saveDataRequested(), slowFrame: false })) {
       setLowPower(true);
-    } else if (!prefersReducedMotion()) {
+      setReady(true);
+    } else if (reduced) {
+      setReady(true);
+    } else {
       void probeFrameRate().then((slow) => {
-        if (active && decideLowPower({ fewCores: false, saveData: false, slowFrame: slow })) {
+        if (!active) return;
+        if (decideLowPower({ fewCores: false, saveData: false, slowFrame: slow })) {
           setLowPower(true);
         }
+        setReady(true);
       });
     }
 
@@ -256,8 +272,8 @@ function RootMotionProvider({ children }: { children: ReactNode }) {
   );
 
   const value = useMemo<MotionContextValue>(
-    () => ({ mode, setCalm }),
-    [mode, setCalm],
+    () => ({ mode, setCalm, ready }),
+    [mode, setCalm, ready],
   );
 
   return createElement(MotionContext.Provider, { value }, children);
