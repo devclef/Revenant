@@ -16,8 +16,8 @@
 //   - awaiting_key / unlocking -> envelope (spec 06, /l/[id] only);
 //   - reveal stage 1 -> "seal" when sealing is true, else "marks";
 //   - reveal stage 2 -> "letter" (any local view);
-//   - reveal stage 3 -> the step ("then" / "passage" / "now"), and "close"
-//     when step is "done" (the default local view maps stage 3 to "close");
+//   - reveal stage 3 -> "figures" while figures is "running", and "close"
+//     once it is "settled" (the default local view maps stage 3 to "close");
 //   - not_placed / unreachable / verification_failed / open_failed -> error.
 //
 // Validates R3.1 (spec 05) and R2.1 to R2.5 (spec 07).
@@ -128,11 +128,11 @@ const stateArb: fc.Arbitrary<FlowState> = fc.oneof(
 );
 
 // Arbitrary LocalView: every axis varies freely so "any local view" rows are
-// genuinely exercised with emergence, sealing and every step value.
+// genuinely exercised with emergence, sealing and every figures value.
 const localViewArb: fc.Arbitrary<LocalView> = fc.record({
   emergence: fc.constantFrom<LocalView["emergence"]>("running", "done"),
   sealing: fc.boolean(),
-  step: fc.constantFrom<LocalView["step"]>("then", "passage", "now", "done"),
+  figures: fc.constantFrom<LocalView["figures"]>("running", "settled"),
 });
 
 // --- the oracle --------------------------------------------------------------
@@ -161,7 +161,7 @@ function expectedStage(state: FlowState, local: LocalView): Stage {
       if (state.stage === 1) return local.sealing ? "seal" : "marks";
       if (state.stage === 2) return "letter";
       // stage 3
-      return local.step === "done" ? "close" : local.step;
+      return local.figures === "settled" ? "close" : "figures";
     case "not_placed":
     case "unreachable":
     case "verification_failed":
@@ -189,7 +189,7 @@ describe("Property 6: every Flow state and local view maps to exactly one Stage 
     expect(DEFAULT_LOCAL_VIEW).toEqual({
       emergence: "done",
       sealing: false,
-      step: "done",
+      figures: "settled",
     });
     const stage3: FlowState = {
       tag: "reveal",

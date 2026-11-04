@@ -13,7 +13,14 @@ import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { MAX_FIGURES as LIVE_MAX_FIGURES } from "../live/constants";
 import {
+  FIG_CLOCK_MS,
+  FIG_FADE_MS,
+  FIG_START_DELAY_MS,
+  FIG_STAGGER_MS,
+  FIG_TOTAL_MS,
+  MAX_FIGURES,
   CALM_FADE_MS,
   CAMERA_MOVE_MS,
   CANDLE_FLICKER_AMPLITUDE,
@@ -92,5 +99,16 @@ describe("ceremony/constants", () => {
       .replace(/\/\*[\s\S]*?\*\//g, "")
       .replace(/^\s*\/\/.*$/gm, "");
     expect(/(^|\n)\s*import\s/.test(code)).toBe(false);
+  });
+
+  it("the figures constants match design.md and the spec 06 MAX_FIGURES (R14.7, R14.8)", () => {
+    expect(FIG_FADE_MS).toBe(450);
+    expect(FIG_STAGGER_MS).toBe(60);
+    expect(FIG_START_DELAY_MS).toBe(30);
+    expect(MAX_FIGURES).toBe(6);
+    expect(MAX_FIGURES).toBe(LIVE_MAX_FIGURES);
+    expect(FIG_TOTAL_MS).toBe(FIG_FADE_MS + FIG_STAGGER_MS * (MAX_FIGURES - 1));
+    expect(FIG_CLOCK_MS).toBe(FIG_START_DELAY_MS + FIG_TOTAL_MS);
+    expect(FIG_CLOCK_MS).toBe(780);
   });
 });

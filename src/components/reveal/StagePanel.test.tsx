@@ -186,17 +186,19 @@ describe("reveal stages sit on a ParchmentSurface panel", () => {
     expect(css).toMatch(/\.paper\s*\{[^}]*--ink:/);
   });
 
-  it("wraps stage 3 (The numbers, then and now) in a panel", () => {
+  it("keeps stage 3 (The numbers, then and now) on the dark desk, outside a panel", () => {
+    // Spec 07 R14.1: the figures sit on --bg beside the Letter_Block.
     const html = renderReveal(3);
-    expect(isInsidePanel(html, REVEAL_COPY.stage3Title)).toBe(true);
+    expect(isInsidePanel(html, REVEAL_COPY.stage3Title)).toBe(false);
   });
 
   it("gives every stage in the markup its own panel", () => {
     const html = renderReveal(3);
-    // Stages 1 and 3 use StagePanel; stage 2 uses the letter block's paper.
+    // Stage 1 uses StagePanel; stage 2 uses the letter block's paper; stage 3
+    // sits on the desk (spec 07 R14.1).
     const panels = html.split(styles.stagePanel).length - 1;
     const paper = html.split(blockStyles.paper).length - 1;
-    expect(panels).toBe(2);
+    expect(panels).toBe(1);
     expect(paper).toBe(1);
   });
 });

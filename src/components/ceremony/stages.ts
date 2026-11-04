@@ -37,9 +37,7 @@ export type Stage =
   | "marks"
   | "seal"
   | "letter"
-  | "then"
-  | "passage"
-  | "now"
+  | "figures"
   | "close"
   | "error";
 
@@ -50,23 +48,24 @@ export type Stage =
  * - `emergence`: the CSS Emergence on the persona page (spec 07); `"done"`
  *   once it has finished or Skip has finished it.
  * - `sealing`: a Seal_Break is in progress (stage 1 only).
- * - `step`: the stage 3 Step; `"done"` is the final, settled state.
+ * - `figures`: the stage 3 figures fade-up; `"settled"` is the final state
+ *   and the Close mounts from it.
  */
 export type LocalView = {
   emergence: "running" | "done";
   sealing: boolean;
-  step: "then" | "passage" | "now" | "done";
+  figures: "running" | "settled";
 };
 
 /**
  * The default local view. A static render reports the final, settled state:
- * the Emergence has finished, no seal break is in progress, and stage 3 is at
- * `"done"` so it resolves to `close` (design.md "Final state first").
+ * the Emergence has finished, no seal break is in progress, and the figures
+ * are settled so stage 3 resolves to `close` (design.md "Final state first").
  */
 export const DEFAULT_LOCAL_VIEW: LocalView = {
   emergence: "done",
   sealing: false,
-  step: "done",
+  figures: "settled",
 };
 
 /**
@@ -103,7 +102,7 @@ export function stageFor(state: FlowState, local: LocalView): Stage {
         case 2:
           return "letter";
         case 3:
-          return local.step === "done" ? "close" : local.step;
+          return local.figures === "settled" ? "close" : "figures";
       }
     }
 

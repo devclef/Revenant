@@ -21,12 +21,13 @@ export const FLAP_LIFT_MS = 450;
 export const LETTER_SLIDE_MS = 600;
 export const FLAKE_COUNT = 14;
 
-// --- Then and now (R12.5, R10.6) ---
-export const STAMP_DROP_MS = 520;
-export const COUNTER_ROLL_MS = 1100;
-export const STEP_HOLD_MS = 600; // pause after the then Step
-export const PASSAGE_MS = 2400; // the time-passing transition, any span
-export const CHANGE_FADE_MS = 400;
+// --- Figures (R14.7, R14.8, R18.5) (spec 07 task 6) ---
+export const FIG_FADE_MS = 450;
+export const FIG_STAGGER_MS = 60; // at most 100 (R14.7)
+export const FIG_START_DELAY_MS = 30;
+export const MAX_FIGURES = 6; // equals the spec 06 MAX_FIGURES; constants.test.ts checks it
+export const FIG_TOTAL_MS = 750; // FIG_FADE_MS + FIG_STAGGER_MS * (MAX_FIGURES - 1)
+export const FIG_CLOCK_MS = 780; // FIG_START_DELAY_MS + FIG_TOTAL_MS: the column clock, any count
 
 // --- Easing ---
 export const EASE_STANDARD = "cubic-bezier(0.2, 0, 0, 1)";

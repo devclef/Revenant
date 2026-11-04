@@ -179,8 +179,14 @@ export function FiguresThenNow({
       {anyFixture ? <FixtureNote /> : null}
 
       {entries.map((entry) => (
-        <div key={entry.key} className={styles.figureGroup}>
-          <h3 className={styles.metricName}>{entry.name}</h3>
+        <div
+          key={entry.key}
+          className={styles.figureGroup}
+          data-figure-entry=""
+        >
+          {entry.now === undefined ? (
+            <h3 className={styles.metricName}>{entry.name}</h3>
+          ) : null}
 
           {entry.now === undefined ? (
             // No now figure: show the sealed then figure and say, plainly, why
@@ -195,9 +201,10 @@ export function FiguresThenNow({
               <p className={styles.period}>{entry.nowMissing}</p>
             </>
           ) : entry.change !== undefined && entry.change.comparable ? (
-            // Comparable: the then and now stamps, the Number_Line with the
-            // Mark, and the one neutral change line (FigureEntry, R9.1, R12.1).
+            // Comparable: the nine R14.3 items, with the name at the top
+            // (FigureEntry, R14.3, R12.1).
             <FigureEntry
+              name={entry.name}
               then={entry.then}
               now={entry.now}
               change={entry.change}
@@ -208,6 +215,7 @@ export function FiguresThenNow({
             // Not comparable: both figures with their own periods, plus the one
             // neutral reason sentence for the first failing check.
             <>
+              <h3 className={styles.metricName}>{entry.name}</h3>
               <p className={styles.then}>{REVEAL_COPY.then}</p>
               <FigureLine
                 figure={entry.then}

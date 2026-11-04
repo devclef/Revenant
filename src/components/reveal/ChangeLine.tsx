@@ -67,7 +67,7 @@ export function ChangeLine({ result, region, then, now }: ChangeLineProps) {
   // periods the change spans (data-integrity.md).
   return (
     // data-change marks the change and formula lines so the stage 3 Steps can
-    // fade them in from the plan (ThenNowSequence, figures.module.css).
+    // fade them in from the plan (FiguresFadeUp, figures.module.css).
     <div className={styles.change} data-change="">
       <p>
         {fixture ? (

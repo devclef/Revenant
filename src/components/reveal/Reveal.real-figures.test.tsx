@@ -89,6 +89,7 @@ function utcLongDate(retrievedAt: string): string {
 }
 
 type ExpectedGroup = {
+  kind: "then" | "now";
   label: string;
   period: string;
   unit: string;
@@ -120,6 +121,7 @@ function openedFor(
 
     // Then group: the label carries the UTC calendar date of retrieved_at.
     expected.push({
+      kind: "then",
       label: `historical record, retrieved ${utcLongDate(then.figure.retrieved_at)}`,
       period: formatPeriod(then.figure.period, then.figure.region),
       unit: shownUnit(then.figure),
@@ -129,6 +131,7 @@ function openedFor(
     // Now group, when the now figure exists. Its label is "retrieved {date}".
     if (now.found) {
       expected.push({
+        kind: "now",
         label: `retrieved ${utcLongDate(now.figure.retrieved_at)}`,
         period: formatPeriod(now.figure.period, now.figure.region),
         unit: shownUnit(now.figure),
@@ -189,18 +192,29 @@ describe("FiguresThenNow with the committed personas and real figures", () => {
         expect(markup).not.toContain(htmlText(REVEAL_COPY.fixtureNote));
       });
 
-      it("renders one group per then and per now figure", () => {
-        expect(groups).toHaveLength(expected.length);
+      // Spec 07 R14.3: one Figure_Entry per metric, holding its then and now
+      // figures, so the groups count the then figures only.
+      it("renders one Figure_Entry per metric", () => {
+        const thenCount = expected.filter((want) => want.kind === "then").length;
+        expect(groups).toHaveLength(thenCount);
       });
 
       it("shows the label, period, unit and region of each figure in its own group", () => {
-        expected.forEach((want, index) => {
-          const group = groups[index];
-          expect(group, `group ${index} (${want.label})`).toBeDefined();
-          expect(group).toContain(htmlText(want.label));
-          expect(group).toContain(htmlText(want.period));
-          expect(group).toContain(htmlText(want.unit));
-          expect(group).toContain(htmlText(want.region));
+        expected.forEach((want) => {
+          expect(
+            groups.some((group) => group.includes(htmlText(want.label))),
+            want.label,
+          ).toBe(true);
+          expect(
+            groups.some(
+              (group) =>
+                group.includes(htmlText(want.label)) &&
+                group.includes(htmlText(want.period)) &&
+                group.includes(htmlText(want.unit)) &&
+                group.includes(htmlText(want.region)),
+            ),
+            want.label,
+          ).toBe(true);
         });
       });
     });

@@ -10,8 +10,8 @@ import { SoundEnabledContext } from "@/components/ceremony/sound/SoundEnabledCon
 import { soundCues } from "@/components/ceremony/sound/cues";
 import { FiguresThenNow } from "./FiguresThenNow";
 import { StagePanel } from "./StagePanel";
-import { ThenNowSequence } from "@/components/ceremony/figures/ThenNowSequence";
-import { Close } from "@/components/ceremony/close/Close";
+import { FiguresFadeUp } from "@/components/ceremony/figures/FiguresFadeUp";
+import { Close, type CloseProps } from "@/components/ceremony/close/Close";
 import { SealBreak } from "@/components/ceremony/seal/SealBreak";
 import type { SealController } from "@/components/ceremony/seal/useSealBreak";
 import { IDLE } from "@/components/ceremony/seal/hold";
@@ -113,6 +113,12 @@ export type RevealProps = {
    * and let a same-figure pair show a zero change (spec 06, R18.2).
    */
   variant?: "persona" | "live";
+  /**
+   * What the close shows (design.md "Close"). OpeningFlow passes it; it holds
+   * only the persona key and the Demo_2_On boolean, never RP_ID. Without it no
+   * close is rendered.
+   */
+  close?: CloseProps;
 };
 
 export function Reveal({
@@ -125,11 +131,24 @@ export function Reveal({
   onShowAll,
   seal,
   variant = "persona",
+  close,
 }: RevealProps) {
   // The local-view context lets stage 1's SealBreak report its `sealing` flag
   // up to CeremonyRoot, so `stageFor(state, local)` resolves `seal` while a
   // break is in progress and `marks` otherwise (design.md "Stage resolution").
   const { localView, setLocalView } = useLocalView();
+
+  // "See the numbers" starts the figures fade-up. The fade runs in FiguresFadeUp.
+  const onSeeNumbers = useCallback(() => {
+    setLocalView({ figures: "running" });
+    onAdvance();
+  }, [setLocalView, onAdvance]);
+
+  // "Show everything" settles the figures in the same render, with no fade.
+  const onShowEverything = useCallback(() => {
+    setLocalView({ figures: "settled" });
+    onShowAll();
+  }, [setLocalView, onShowAll]);
 
   // The persona page's sound toggle sits in the marks column (design.md "Sound
   // toggle placement"). CeremonyRoot renders its own toggle only in `region`
@@ -149,11 +168,9 @@ export function Reveal({
     [setLocalView],
   );
 
-  // One entry per sealed figure, in payload order. The stage 3 Steps are timed
-  // by the number of entries only, never by their values (R10.5).
-  const thenNowEntries = opened.payload.figures.map((figure, index) => ({
-    key: `${figure.metric_id}-${index}`,
-  }));
+  // The figures fade-up is timed by the number of sealed figures only, never by
+  // their values (R14.7, R14.8).
+  const figureCount = opened.payload.figures.length;
 
   // The marks stage shows each number answer on a read-only scale, with the Mark
   // at the recorded value. A question with no stored number shows no Mark. The
@@ -280,37 +297,39 @@ export function Reveal({
       </div>
 
       {stage >= 2 ? (
-        <div className={`${styles.stage} ${styles.fade}`}>
-          <LetterBlock
-            opened={opened}
-            personaName={personaName}
-            variant={variant}
-            letterId={letterId}
-            still={jumpedToEnd}
-          />
+        <div className={styles.letterFigures}>
+          <div className={`${styles.stage} ${styles.fade} ${styles.letterCol}`}>
+            <LetterBlock
+              opened={opened}
+              personaName={personaName}
+              variant={variant}
+              letterId={letterId}
+              still={jumpedToEnd}
+            />
+          </div>
+
+          {stage >= 3 ? (
+            <div
+              className={`${styles.stage} ${styles.fade} ${styles.figuresCol}`}
+            >
+              <FiguresFadeUp count={figureCount}>
+                <FiguresThenNow
+                  opened={opened}
+                  record={record}
+                  allowSamePeriod={variant === "live"}
+                />
+              </FiguresFadeUp>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
-      {stage >= 3 ? (
+      {/* Close (R12.9) shows once the figures have settled. FiguresFadeUp
+          reports `settled` when its clock ends or Skip ends it, so Close never
+          appears while the figures are still fading in. */}
+      {stage >= 3 && localView.figures === "settled" && close !== undefined ? (
         <div className={`${styles.stage} ${styles.fade}`}>
-          <ThenNowSequence entries={thenNowEntries}>
-            <StagePanel>
-              <FiguresThenNow
-                opened={opened}
-                record={record}
-                allowSamePeriod={variant === "live"}
-              />
-            </StagePanel>
-          </ThenNowSequence>
-        </div>
-      ) : null}
-
-      {/* Close (R12.9) shows once the stage 3 Steps are done. The sequence
-          reports `done` when its last Step settles or Skip ends it, so Close
-          never appears while the then or now figures are still moving. */}
-      {stage >= 3 && localView.step === "done" ? (
-        <div className={`${styles.stage} ${styles.fade}`}>
-          <Close />
+          <Close {...close} />
         </div>
       ) : null}
 
@@ -319,14 +338,14 @@ export function Reveal({
           <button
             type="button"
             className={styles.button}
-            onClick={onAdvance}
+            onClick={onSeeNumbers}
           >
             {REVEAL_COPY.stage2Next}
           </button>
           <button
             type="button"
             className={styles.button}
-            onClick={onShowAll}
+            onClick={onShowEverything}
           >
             {REVEAL_COPY.showAll}
           </button>

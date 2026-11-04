@@ -48,6 +48,13 @@ import { PERSONAS } from "@/lib/personas";
  */
 export const dynamicParams = true;
 
+/**
+ * Read per request, never at build time (spec 07 task 6, design.md
+ * "Demo_2_On plumbing"). The same read and trim as `demo/live/page.tsx`. Only
+ * this boolean is passed down; RP_ID itself never reaches the client (R15.9).
+ */
+export const dynamic = "force-dynamic";
+
 export default async function PersonaLetterPage({
   params,
 }: {
@@ -60,6 +67,8 @@ export default async function PersonaLetterPage({
     notFound();
   }
 
+  const demo2On = (process.env.RP_ID ?? "").trim() !== "";
+
   return (
     <SceneShell variant="persona" personaName={persona.display_name}>
       <OpeningFlow
@@ -70,6 +79,7 @@ export default async function PersonaLetterPage({
           written_as_of: persona.written_as_of,
           opens_at: persona.opens_at,
         }}
+        demo2On={demo2On}
       />
     </SceneShell>
   );

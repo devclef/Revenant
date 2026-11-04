@@ -42,7 +42,7 @@ const tag = fc.constantFrom(...TAGS);
 const local = fc.record({
   emergence: fc.constantFrom<LocalView["emergence"]>("running", "done"),
   sealing: fc.boolean(),
-  step: fc.constantFrom<LocalView["step"]>("then", "passage", "now", "done"),
+  figures: fc.constantFrom<LocalView["figures"]>("running", "settled"),
 });
 
 describe("Property 1: the Pick_Up_Button is never rendered before verified", () => {

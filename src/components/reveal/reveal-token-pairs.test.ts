@@ -23,6 +23,7 @@ const here = dirname(fileURLToPath(import.meta.url));
 const revealCssPath = resolve(here, "reveal.module.css");
 const globalsCssPath = resolve(here, "..", "..", "app", "globals.css");
 const ceremonyCssPath = resolve(here, "..", "ceremony", "ceremony.module.css");
+const sceneTokensPath = resolve(here, "..", "ceremony", "scene", "tokens.css");
 
 const WCAG_AA_NORMAL = 4.5;
 
@@ -77,7 +78,14 @@ describe("reveal text token pairs meet WCAG 2.2 AA", () => {
   const globalsCss = readFileSync(globalsCssPath, "utf8");
   const ceremonyCss = readFileSync(ceremonyCssPath, "utf8");
 
-  const textTokens = textTokensUsed(revealCss);
+  // Spec 07 R14: the figures sit on the dark desk and use the scene tokens
+  // (scene/tokens.css). They are checked against --bg below, not the paper.
+  const sceneTokensCss = readFileSync(sceneTokensPath, "utf8");
+  const SCENE_TEXT_TOKENS = ["--text", "--muted", "--accent"] as const;
+  const allTextTokens = textTokensUsed(revealCss);
+  const textTokens = allTextTokens.filter(
+    (token) => !(SCENE_TEXT_TOKENS as readonly string[]).includes(token),
+  );
 
   // Guard: the scan must find the reveal's text colours. An empty list would
   // let every pair loop below pass by iterating nothing.
@@ -112,6 +120,16 @@ describe("reveal text token pairs meet WCAG 2.2 AA", () => {
     it(`${token} on --desk is at least ${WCAG_AA_NORMAL}:1`, () => {
       const text = readHexToken(ceremonyCss, token, "ceremony.module.css");
       expect(contrastRatio(text, desk)).toBeGreaterThanOrEqual(WCAG_AA_NORMAL);
+    });
+  }
+
+  // Desk text tokens used by the spec 07 figures, drawn on the scene --bg.
+  const sceneBg = readHexToken(sceneTokensCss, "--bg", "scene/tokens.css");
+  for (const token of SCENE_TEXT_TOKENS) {
+    if (!allTextTokens.includes(token)) continue;
+    it(`${token} on the scene --bg is at least ${WCAG_AA_NORMAL}:1`, () => {
+      const text = readHexToken(sceneTokensCss, token, "scene/tokens.css");
+      expect(contrastRatio(text, sceneBg)).toBeGreaterThanOrEqual(WCAG_AA_NORMAL);
     });
   }
 

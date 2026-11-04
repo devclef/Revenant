@@ -5,7 +5,7 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { readFileSync } from "node:fs";
-import { dirname, join, resolve } from "node:path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
@@ -100,14 +100,18 @@ describe("an out-of-range Mark looks the same at both edges (R12.3, Property 12)
   });
 });
 
-// --- Contrast of the axis, pins and Mark stroke on the paper panel ---
-// The graphics are drawn in --figure-line on --figure-surface (figures.module.css).
-// This reads the real hex values from globals.css and checks the WCAG 2.2
-// relative-luminance ratio. Graphical objects need 3:1 (AA, non-text).
-
+// --- Contrast of the axis, pins and Mark ring on the dark desk ---
 const here = dirname(fileURLToPath(import.meta.url));
 const figuresCss = readFileSync(join(here, "figures.module.css"), "utf8");
-const globalsCss = readFileSync(resolve(here, "..", "..", "..", "app", "globals.css"), "utf8");
+// Spec 07 R14.4: the axis is --line, the pins are --text and the Mark ring is
+// --accent, all drawn on the scene --bg (scene/tokens.css). This reads the real
+// hex values and checks the WCAG 2.2 relative-luminance ratio. Graphical objects
+// need 3:1 (AA, non-text).
+
+const sceneTokensCss = readFileSync(
+  join(here, "..", "scene", "tokens.css"),
+  "utf8",
+);
 
 const GRAPHIC_MIN = 3;
 
@@ -140,16 +144,22 @@ const contrast = (a: string, b: string): number => {
   return (hi + 0.05) / (lo + 0.05);
 };
 
-describe("the Number_Line graphics clear 3:1 on the paper panel (WCAG 2.2 AA)", () => {
-  it("names the line and surface tokens on the Number_Line", () => {
-    expect(figuresCss).toMatch(/--figure-line:\s*var\(--ink\)/);
-    expect(figuresCss).toMatch(/--figure-surface:\s*var\(--paper\)/);
+describe("the Number_Line graphics clear 3:1 on the dark desk (WCAG 2.2 AA)", () => {
+  it("names the line, pin, mark and surface tokens on the Number_Line", () => {
+    expect(figuresCss).toMatch(/--figure-line:\s*var\(--line\)/);
+    expect(figuresCss).toMatch(/--figure-pin:\s*var\(--text\)/);
+    expect(figuresCss).toMatch(/--figure-mark:\s*var\(--accent\)/);
+    expect(figuresCss).toMatch(/--figure-surface:\s*var\(--bg\)/);
   });
 
-  it("draws the axis, both pins and the Mark stroke in --figure-line", () => {
-    for (const name of ["axis", "pinThen", "pinNow", "markStroke"]) {
-      expect(declarationsFor(figuresCss, name), name).toMatch(/var\(--figure-line\)/);
+  it("draws the axis in --line, the pins in --text and the Mark ring in --accent", () => {
+    expect(declarationsFor(figuresCss, "axis")).toMatch(/var\(--figure-line\)/);
+    for (const name of ["pinThen", "pinNow"]) {
+      expect(declarationsFor(figuresCss, name), name).toMatch(/var\(--figure-pin\)/);
     }
+    expect(declarationsFor(figuresCss, "markStroke"), "markStroke").toMatch(
+      /var\(--figure-mark\)/,
+    );
   });
 
   it("uses no hard-coded colour for the graphics", () => {
@@ -158,20 +168,21 @@ describe("the Number_Line graphics clear 3:1 on the paper panel (WCAG 2.2 AA)", 
     }
   });
 
-  it("sits on a paper surface, never the dark desk", () => {
-    expect(figuresCss).toMatch(/--figure-surface:\s*var\(--paper\)/);
-    expect(figuresCss).not.toMatch(/--figure-surface:[^;]*--desk/);
+  it("sits on the dark desk, never a paper surface", () => {
+    expect(figuresCss).not.toMatch(/--figure-surface:[^;]*--paper/);
+    expect(figuresCss).not.toMatch(/--paper/);
   });
 
-  it("the --ink line clears 3:1 on --paper and on the shaded --paper-deep", () => {
-    const line = readToken(globalsCss, "--ink");
-    for (const surfaceToken of ["--paper", "--paper-deep"]) {
-      const surface = readToken(globalsCss, surfaceToken);
-      expect(contrast(line, surface), surfaceToken).toBeGreaterThanOrEqual(GRAPHIC_MIN);
+  it("the --line axis, --text pin and --accent Mark clear 3:1 on --bg", () => {
+    const bg = readToken(sceneTokensCss, "--bg");
+    for (const token of ["--line", "--text", "--accent"]) {
+      expect(contrast(readToken(sceneTokensCss, token), bg), token).toBeGreaterThanOrEqual(
+        GRAPHIC_MIN,
+      );
     }
   });
 
-  it("the Stamp drop stops under prefers-reduced-motion (checked in Stamp.test.tsx)", () => {
+  it("the Stamp drop stop under prefers-reduced-motion is kept", () => {
     expect(figuresCss).toMatch(
       /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.drop\s*\{\s*animation:\s*none;?\s*\}\s*\}/,
     );
