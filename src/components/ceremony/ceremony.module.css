@@ -23,6 +23,19 @@
 /* --- Paper shading token (R1.7) --- */
 
 .desk {
+  /* Dark surfaces and their text come from the scene tokens (scene/tokens.css),
+     so the desk, the controls and the DEMO label share one palette. Every
+     text token here sits on --bg and clears AA there. */
+  --desk: var(--bg);
+  --desk-lit: var(--bg);
+  --desk-lit-max: var(--bg);
+  --desk-ink: var(--text);
+  --desk-ink-soft: var(--muted);
+  --demo-label-ink: var(--text);
+  --demo-label-rule: var(--line);
+  color: var(--desk-ink);
+  background-color: var(--desk);
+
   /* The darkest shading under text on a paper panel sitting on the desk (the
      envelope, the letter, the stamps). Paper panels keep the globals.css
      text tokens; --paper-shadowed is their deepest shaded surface, on which

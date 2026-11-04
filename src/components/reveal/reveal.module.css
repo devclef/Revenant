@@ -396,7 +396,7 @@
    outline, no judgement colour. */
 .sealedLetter h2:focus,
 .figuresThenNow h2:focus {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--text);
   outline-offset: 2px;
 }
 
@@ -516,6 +516,12 @@
    ChangeLine, FixtureNote) are re-coloured for the desk inside the figures
    section. Only the section scope changes; paper surfaces keep their ink. */
 .figuresThenNow {
+  color: var(--text);
+}
+
+/* The stage heading sits on the dark desk, so it takes the scene text colour
+   rather than the global paper ink. */
+.figuresThenNow h2 {
   color: var(--text);
 }
 
