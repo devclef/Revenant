@@ -296,7 +296,7 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - Validation: `bash scripts/check.sh`
   - _Requirements: R2.5, R3.9, R3.11, R3.17, R4.8, R17.1–R17.11, R21.1, R26.9_
 
-- [ ] 10. Whole-journey review
+- [x] 10. Whole-journey review
   - Agent: `frontend-dev` · Depends on: 9 · Estimated size: ~1,200 changed lines
   - Before this task: Blocked by #134 (spec 06 task 9, Live_Letter reveal variant). Task 9 is on `main`.
   - Scope: fixes inside the Scope paths of tasks 2 to 6, 8 and 9 (never the platform-dev files of tasks 7 and 11), the scan tests under `src/components/ceremony`, `src/components/reveal` and `src/components/demo` (folder lists, additions only), and the `*.test.ts(x)` for any file changed. State each fix in the PR with the task whose Scope it falls in.
