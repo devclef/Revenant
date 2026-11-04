@@ -232,4 +232,28 @@ describe("CEREMONY_COPY tone and neutrality", () => {
     expect(line.split(/[.!?]+/).every((sentence) => sentence.trim().split(/\s+/).length <= 25)).toBe(true);
     expect(line).not.toMatch(/\b(close|right|wrong|accuracy|score|off by)\b/i);
   });
+
+  // Property 23 (spec 07 task 6): the Close strings, exact and checked.
+  it("gives the Close strings their exact text (Property 23)", () => {
+    expect(CEREMONY_COPY.closeLine).toBe("The space between the two is yours to read.");
+    expect(CEREMONY_COPY.closeLink).toBe("Seal your own. It opens 30 seconds after you seal it.");
+    expect(CEREMONY_COPY.closeNote).toBe(
+      "That is the whole letter. Nothing has been added to what you remembered, what was written, or the record.",
+    );
+    expect(CEREMONY_COPY.startOver).toBe("Start over");
+  });
+
+  it("the Close strings have no '!', no scoring word and no sentence over 25 words (Property 23)", () => {
+    const strings = [
+      CEREMONY_COPY.closeLine,
+      CEREMONY_COPY.closeLink,
+      CEREMONY_COPY.closeNote,
+      CEREMONY_COPY.startOver,
+    ];
+    for (const s of strings) {
+      expect(s).not.toContain("!");
+      expect(s).not.toMatch(/\b(close|right|wrong|accuracy|score|off by)\b/i);
+      expect(s.split(/[.!?]+/).every((sentence) => sentence.trim().split(/\s+/).filter(Boolean).length <= 25)).toBe(true);
+    }
+  });
 });

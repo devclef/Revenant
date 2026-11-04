@@ -51,15 +51,18 @@ async function loadPage(personas: ReadonlyArray<typeof PERSONA>) {
     OpeningFlow: ({
       letterId,
       personaName,
+      demo2On,
     }: {
       letterId: string;
       personaName: string;
+      demo2On?: boolean;
     }) =>
       createElement(
         "div",
         { "data-opening-flow": true },
         createElement("span", { "data-letter-id": true }, letterId),
         createElement("span", { "data-persona-name": true }, personaName),
+        createElement("span", { "data-demo2-on": String(demo2On ?? false) }),
       ),
   }));
   const mod = await import("./page");
@@ -138,5 +141,50 @@ describe("persona letter route", () => {
     await Page({ params: Promise.resolve({ key: "missing" }) }).catch(() => {});
 
     expect(fetch).not.toHaveBeenCalled();
+  });
+});
+
+describe("persona letter route: Demo_2_On (spec 07 task 6, R15.8, R15.9)", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("is force-dynamic so RP_ID is read per request", async () => {
+    vi.resetModules();
+    vi.doMock("@/lib/personas", () => ({ PERSONAS: [PERSONA] }));
+    const mod = await import("./page");
+    expect(mod.dynamic).toBe("force-dynamic");
+  });
+
+  it.each([
+    ["unset", undefined],
+    ["empty", ""],
+    ["whitespace only", "   "],
+  ])("treats RP_ID %s as Demo_2_On false", async (_label, value) => {
+    vi.stubEnv("RP_ID", value as string);
+    const Page = await loadPage([PERSONA]);
+    const html = renderToStaticMarkup(
+      await Page({ params: Promise.resolve({ key: PERSONA.key }) }),
+    );
+    expect(html).toContain('data-demo2-on="false"');
+  });
+
+  it("treats a non-blank RP_ID as Demo_2_On true", async () => {
+    vi.stubEnv("RP_ID", "localhost");
+    const Page = await loadPage([PERSONA]);
+    const html = renderToStaticMarkup(
+      await Page({ params: Promise.resolve({ key: PERSONA.key }) }),
+    );
+    expect(html).toContain('data-demo2-on="true"');
+  });
+
+  it("never puts the RP_ID value in the rendered markup", async () => {
+    const rpId = "revenant-secret-rp.example";
+    vi.stubEnv("RP_ID", rpId);
+    const Page = await loadPage([PERSONA]);
+    const html = renderToStaticMarkup(
+      await Page({ params: Promise.resolve({ key: PERSONA.key }) }),
+    );
+    expect(html).not.toContain(rpId);
   });
 });

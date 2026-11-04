@@ -82,7 +82,6 @@ import { useOpeningFlow } from "./useOpeningFlow";
 import { onceOnly, type AuthenticatorPort } from "@/components/live/unlock";
 import { RecallStep } from "./RecallStep";
 import { Reveal } from "./Reveal";
-import { LiveLockNote } from "@/components/live/LiveLockNote";
 import { FlowError, type FlowErrorKind } from "./FlowError";
 import type { FlowState, OpenFailedKind } from "./opening-machine";
 import { createBeginGuard } from "./begin-guard";
@@ -181,6 +180,12 @@ export type OpeningFlowProps = {
    * the key field. The reader still submits it by hand (R21.6).
    */
   initialBackupKey?: string;
+  /**
+   * Persona mode only: the Demo_2_On boolean the persona page computes from
+   * RP_ID at request time (design.md "Demo_2_On plumbing"). Only this boolean
+   * reaches the client; RP_ID itself never does (R15.9). Default false.
+   */
+  demo2On?: boolean;
 };
 
 /**
@@ -203,6 +208,7 @@ export function OpeningFlow({
   mode = "persona",
   port,
   initialBackupKey,
+  demo2On = false,
 }: OpeningFlowProps) {
   // Live mode reads the key from the reader (keySource "user"). Persona mode
   // passes no options, so the hook behaves exactly as before.
@@ -302,7 +308,7 @@ export function OpeningFlow({
             {selectView(state, flow, letterId, personaName, persona, mode, retryAtZero, KeyStep, {
               keyText,
               onKeyTextChange: setKeyText,
-            }, beginGuard.begin, seal)}
+            }, beginGuard.begin, seal, demo2On)}
           </div>
         </CeremonyRoot>
       </SkipProvider>
@@ -329,6 +335,7 @@ function selectView(
   keyEntry: KeyEntry,
   begin: () => void,
   seal: SealController,
+  demo2On: boolean,
 ): React.ReactNode {
   // The envelope's per-letter inputs: the persona list fields plus the demo
   // flag. These are always demo persona letters, so `demo` is true whenever a
@@ -460,25 +467,29 @@ function selectView(
       );
 
     case "reveal":
+      // The close (design.md "Close"): the live note for a Live_Letter, or the
+      // persona close with Demo_2_On and the persona key. Reveal shows it only
+      // once the figures have settled. A persona with no list entry gets no
+      // close, so "Start over" never points at an empty key.
       return (
-        <>
-          <Reveal
-            opened={state.opened}
-            record={state.record}
-            personaName={personaName}
-            letterId={letterId}
-            stage={state.stage}
-            onAdvance={flow.advance}
-            onShowAll={flow.showAll}
-            seal={seal}
-            variant={mode}
-          />
-          {mode === "live" && state.stage === 3 ? (
-            <div className={styles.fade}>
-              <LiveLockNote />
-            </div>
-          ) : null}
-        </>
+        <Reveal
+          opened={state.opened}
+          record={state.record}
+          personaName={personaName}
+          letterId={letterId}
+          stage={state.stage}
+          onAdvance={flow.advance}
+          onShowAll={flow.showAll}
+          seal={seal}
+          variant={mode}
+          close={
+            mode === "live"
+              ? { kind: "live" }
+              : persona === undefined
+                ? undefined
+                : { kind: "persona", personaKey: persona.key, demo2On }
+          }
+        />
       );
 
     case "not_placed":

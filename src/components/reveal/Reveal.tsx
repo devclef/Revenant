@@ -11,7 +11,7 @@ import { soundCues } from "@/components/ceremony/sound/cues";
 import { FiguresThenNow } from "./FiguresThenNow";
 import { StagePanel } from "./StagePanel";
 import { FiguresFadeUp } from "@/components/ceremony/figures/FiguresFadeUp";
-import { Close } from "@/components/ceremony/close/Close";
+import { Close, type CloseProps } from "@/components/ceremony/close/Close";
 import { SealBreak } from "@/components/ceremony/seal/SealBreak";
 import type { SealController } from "@/components/ceremony/seal/useSealBreak";
 import { IDLE } from "@/components/ceremony/seal/hold";
@@ -113,6 +113,12 @@ export type RevealProps = {
    * and let a same-figure pair show a zero change (spec 06, R18.2).
    */
   variant?: "persona" | "live";
+  /**
+   * What the close shows (design.md "Close"). OpeningFlow passes it; it holds
+   * only the persona key and the Demo_2_On boolean, never RP_ID. Without it no
+   * close is rendered.
+   */
+  close?: CloseProps;
 };
 
 export function Reveal({
@@ -125,6 +131,7 @@ export function Reveal({
   onShowAll,
   seal,
   variant = "persona",
+  close,
 }: RevealProps) {
   // The local-view context lets stage 1's SealBreak report its `sealing` flag
   // up to CeremonyRoot, so `stageFor(state, local)` resolves `seal` while a
@@ -320,9 +327,9 @@ export function Reveal({
       {/* Close (R12.9) shows once the figures have settled. FiguresFadeUp
           reports `settled` when its clock ends or Skip ends it, so Close never
           appears while the figures are still fading in. */}
-      {stage >= 3 && localView.figures === "settled" ? (
+      {stage >= 3 && localView.figures === "settled" && close !== undefined ? (
         <div className={`${styles.stage} ${styles.fade}`}>
-          <Close />
+          <Close {...close} />
         </div>
       ) : null}
 

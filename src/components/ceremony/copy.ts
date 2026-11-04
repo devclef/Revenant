@@ -139,6 +139,17 @@ export const CEREMONY_COPY = {
     /** An error state. */
     error: "The letter could not be opened. You can try again.",
   },
+
+  // --- Close (spec 07 task 6, design.md "Close") ---
+  /** The persona close's heading. */
+  closeLine: "The space between the two is yours to read.",
+  /** The Accent link to /demo/live, shown only while Demo_2_On is true. */
+  closeLink: "Seal your own. It opens 30 seconds after you seal it.",
+  /** The smaller note under the link. */
+  closeNote:
+    "That is the whole letter. Nothing has been added to what you remembered, what was written, or the record.",
+  /** The link back to the same persona, for a fresh opening. */
+  startOver: "Start over",
 } as const;
 
 export type CeremonyCopy = typeof CEREMONY_COPY;
