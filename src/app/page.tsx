@@ -1,11 +1,12 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 
-import { SceneBackdrop } from "@/components/ceremony/scene/SceneBackdrop";
 import { SceneHeadline } from "@/components/ceremony/scene/SceneHeadline";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { SCENE_COPY } from "@/components/ceremony/scene/copy";
 import { PERSONAS } from "@/lib/personas";
+
+import { LandingBackdrop } from "@/lib/landing-backdrop";
 
 /**
  * Landing page `/` (design.md "SceneShell, TopBar and the landing page",
@@ -46,6 +47,16 @@ const EXPLAIN_STYLE: CSSProperties = {
   lineHeight: 1.6,
 };
 
+/**
+ * The /demo link on the dark --bg surface. The global `a` rule is wax-seal red,
+ * so the colour is set here: --text (#f5f3ff) is white on --bg (#0b0912), well
+ * above WCAG 2.2 AA. The underline takes the same colour (currentColor), so it
+ * is not red either.
+ */
+const DEMO_LINK_STYLE: CSSProperties = {
+  color: "var(--text)",
+};
+
 export default function Home() {
   const first = PERSONAS[0];
   const openLabel =
@@ -60,7 +71,7 @@ export default function Home() {
       </noscript>
 
       <SceneShell variant="landing">
-        <SceneBackdrop />
+        <LandingBackdrop />
         <section>
           <SceneHeadline />
           {first !== undefined && openLabel !== null ? (
@@ -76,7 +87,9 @@ export default function Home() {
           <p key={paragraph}>{paragraph}</p>
         ))}
         <p>
-          <Link href="/demo">{SCENE_COPY.landing.demoLink}</Link>
+          <Link href="/demo" style={DEMO_LINK_STYLE}>
+            {SCENE_COPY.landing.demoLink}
+          </Link>
         </p>
       </section>
     </>

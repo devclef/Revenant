@@ -113,6 +113,8 @@ describe("landing page `/`", () => {
     const anchor = /<a[^>]*href="\/demo"[^>]*>(.*?)<\/a>/s.exec(html);
     expect(anchor).not.toBeNull();
     expect(textOf(anchor?.[1] ?? "")).toBe("Open the demo letters");
+    const sceneAt = html.indexOf('data-ceremony="scene"');
+    expect(anchor?.index ?? -1).toBeGreaterThan(sceneAt);
   });
 
   it("includes the no-script light style as a noscript block", () => {
@@ -122,18 +124,30 @@ describe("landing page `/`", () => {
   });
 
   it("imports nothing from crypto, the opening flow, the API, or the database", () => {
-    const source = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
-    const specifiers = [...source.matchAll(/from\s+["']([^"']+)["']/g)].map(
-      (match) => match[1],
-    );
-    expect(specifiers.length).toBeGreaterThan(0);
-    for (const specifier of specifiers) {
-      expect(specifier).not.toMatch(/crypto/);
-      expect(specifier).not.toMatch(/useOpeningFlow/);
-      expect(specifier).not.toMatch(/\/api\//);
-      expect(specifier).not.toMatch(/\bdb\b|drizzle|letter-store/);
-      expect(specifier).not.toMatch(/ghost/i);
+    const files = [
+      new URL("../app/page.tsx", import.meta.url),
+      new URL("../lib/landing-backdrop.ts", import.meta.url),
+    ];
+    for (const file of files) {
+      const source = readFileSync(file, "utf8");
+      const specifiers = [...source.matchAll(/from\s+["']([^"']+)["']/g)].map(
+        (match) => match[1],
+      );
+      expect(specifiers.length).toBeGreaterThan(0);
+      for (const specifier of specifiers) {
+        expect(specifier).not.toMatch(/crypto/);
+        expect(specifier).not.toMatch(/useOpeningFlow/);
+        expect(specifier).not.toMatch(/\/api\//);
+        expect(specifier).not.toMatch(/\bdb\b|drizzle|letter-store/);
+        expect(specifier).not.toMatch(/ghost/i);
+      }
     }
-    expect(source).not.toMatch(/^["']use client["'];?\s*$/m);
+    const page = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
+    expect(page).not.toMatch(/^["']use client["'];?\s*$/m);
+    const wrapper = readFileSync(
+      new URL("../lib/landing-backdrop.ts", import.meta.url),
+      "utf8",
+    );
+    expect(wrapper.trimStart().startsWith('"use client";')).toBe(true);
   });
 });
