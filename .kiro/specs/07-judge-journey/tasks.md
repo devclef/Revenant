@@ -220,7 +220,7 @@ Follow `design.md` in this folder for every file name, constant, interface, geom
   - Validation: `bash scripts/check.sh`
   - _Requirements: R2.1, R2.7, R2.8, R3.9–R3.12, R3.16, R14.1–R14.12, R15.1–R15.12, R18.5, R20.1–R20.7, R26.3.2, R26.3.4, R26.3.5, R26.5, R26.8_
 
-- [ ] 7. The landing page `/`
+- [x] 7. The landing page `/`
   - Agent: `platform-dev` (owns `src/app/page.tsx`, `src/app/globals.css`, `src/test/**`) · Depends on: 6 · Estimated size: ~500 changed lines
   - Before this task: task 6 is on `main`. Task 2 has put the landing text in `src/components/ceremony/scene/copy.ts`.
   - Scope: `src/app/page.tsx`, `src/app/globals.css` (only if task 11 has not landed), and the new test `src/test/landing.test.tsx`. Do not edit `src/app/page.test.tsx` (it is not a platform-dev path); it must pass unchanged. Do not edit `src/app/layout.tsx` or anything under `src/components/`; import from `@/components/ceremony/scene` as it is. If a Scene component needs a change for the landing, stop and ask the owner.
