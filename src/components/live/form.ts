@@ -32,13 +32,24 @@ export function countCodePoints(s: string): number {
  *
  * A letter is empty when it has no character other than whitespace.
  */
+/**
+ * The most figures a visitor may choose from the series offered: the smaller of
+ * MAX_FIGURES and the offered count (spec 08, R10.7). Today that is 4.
+ */
+export function figureLimit(offeredCount: number): number {
+  return Math.min(MAX_FIGURES, Math.max(0, Math.floor(offeredCount)));
+}
+
 export function validateWrite(input: {
   text: string;
   metricIds: readonly string[];
   warningTicked: boolean;
   /** The optional backup key card box (R21.1). Defaults to unticked. */
   backupCardTicked?: boolean;
+  /** The figure maximum for this picker. Defaults to MAX_FIGURES. */
+  maxFigures?: number;
 }): WriteProblem[] {
+  const maxFigures = input.maxFigures ?? MAX_FIGURES;
   const problems: WriteProblem[] = [];
 
   if (input.text.trim().length === 0) {
@@ -49,7 +60,7 @@ export function validateWrite(input: {
 
   if (input.metricIds.length < MIN_FIGURES) {
     problems.push("figures_none");
-  } else if (input.metricIds.length > MAX_FIGURES) {
+  } else if (input.metricIds.length > maxFigures) {
     problems.push("figures_too_many");
   }
 

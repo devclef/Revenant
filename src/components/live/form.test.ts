@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { MAX_LETTER_CODE_POINTS } from "./constants";
-import { countCodePoints, validateWrite } from "./form";
+import { countCodePoints, figureLimit, validateWrite } from "./form";
 
 const VALID = {
   text: "Dear future me, the rent was high.",
@@ -74,6 +74,14 @@ describe("validateWrite", () => {
   it("reports figures_too_many for seven figures", () => {
     expect(
       validateWrite({ ...VALID, metricIds: ["a", "b", "c", "d", "e", "f", "g"] }),
+    ).toEqual(["figures_too_many"]);
+  });
+
+  it("reports figures_too_many past the offered maximum of 4, not 6", () => {
+    const four = ["a", "b", "c", "d"];
+    expect(validateWrite({ ...VALID, metricIds: four, maxFigures: figureLimit(4) })).toEqual([]);
+    expect(
+      validateWrite({ ...VALID, metricIds: [...four, "e"], maxFigures: figureLimit(4) }),
     ).toEqual(["figures_too_many"]);
   });
 
