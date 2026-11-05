@@ -16,11 +16,13 @@ import { CATALOGUE } from "@/lib/figures";
 import type { FigureFile } from "@/lib/figures/types";
 
 import { SourceError } from "./errors";
+import { FETCH_TIMEOUT_MS } from "./fetcher";
 import type { FreshSeries } from "./refresh";
 import { validateFreshSeries } from "./validate";
 
-/** How long one series may take before the job abandons it (R20.6). */
-export const FETCH_TIMEOUT_MS = 30_000;
+// The 30 s limit lives in fetcher.ts, the one place that defines downloads.
+// Re-exported here because the Fetch_Job is documented to export it.
+export { FETCH_TIMEOUT_MS };
 
 type CatalogueMetric = (typeof CATALOGUE)[number]["metric"];
 

@@ -16,8 +16,12 @@ export type { FetchResult, Fetcher } from "./types";
 /** The only hosts a download may reach, before and after redirects (R2.5). */
 export const ALLOWED_HOSTS = ["www.eia.gov", "energy.ec.europa.eu"] as const;
 
-/** How long a single download may run before it is abandoned (R2). */
-const TIMEOUT_MS = 60_000;
+/**
+ * How long a single download may run before it is abandoned. The Fetch_Job
+ * (spec 08, R20.6) uses this same 30 s limit, and it is the default here.
+ * `fetch-job.ts` re-exports it.
+ */
+export const FETCH_TIMEOUT_MS = 30_000;
 
 /** The largest body we will read. Anything larger is treated as unreadable. */
 const MAX_BODY_BYTES = 20 * 1024 * 1024;
@@ -29,13 +33,14 @@ function isAllowedHost(host: string): boolean {
 
 /**
  * The real downloader: global `fetch`, following redirects, with a timeout of
- * `timeoutMs` (default 60 s). It sets no headers, sends no credentials or
- * cookies, and reads no environment variable. Tests pass their own `Fetcher`
- * instead (R2.6); the suite only drives this one with a stubbed global `fetch`.
+ * `timeoutMs` (default `FETCH_TIMEOUT_MS`, 30 s). It sets no headers, sends no
+ * credentials or cookies, and reads no environment variable. Tests pass their
+ * own `Fetcher` instead (R2.6); the suite only drives this one with a stubbed
+ * global `fetch`.
  */
 export const defaultFetcher = async (
   url: string,
-  timeoutMs: number = TIMEOUT_MS,
+  timeoutMs: number = FETCH_TIMEOUT_MS,
 ): Promise<FetchResult> => {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);
