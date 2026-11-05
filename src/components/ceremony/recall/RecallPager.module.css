@@ -150,11 +150,20 @@
   }
 
   .input {
-    font-size: 2.4rem;
+    font-size: 1.75rem;
   }
 
   .cta {
-    font-size: 1rem;
+    font-size: 0.9rem;
+    padding: 0 0.75rem;
+  }
+
+  .counter {
+    font-size: 0.85rem;
+  }
+
+  .fieldset {
+    padding: 0.5rem 1rem;
   }
 
   /* At 360 px the answer row may wrap, so the Next control stays inside the
@@ -169,6 +178,6 @@
   }
 
   .qTitle {
-    font-size: 1.25rem;
+    font-size: 1.15rem;
   }
 }
