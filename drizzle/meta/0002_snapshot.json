@@ -1,0 +1,624 @@
+{
+  "id": "72538f07-bdb7-4cd8-b85b-217d0239e240",
+  "prevId": "9ffad066-58c8-4a1a-a7a2-0a54e8af6194",
+  "version": "7",
+  "dialect": "postgresql",
+  "tables": {
+    "public.figure_fetch_runs": {
+      "name": "figure_fetch_runs",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "figure_fetch_runs_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "run_started_at": {
+          "name": "run_started_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "metric_id": {
+          "name": "metric_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "added": {
+          "name": "added",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "revisions": {
+          "name": "revisions",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "reason": {
+          "name": "reason",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "figure_fetch_runs_success_idx": {
+          "name": "figure_fetch_runs_success_idx",
+          "columns": [
+            {
+              "expression": "metric_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "run_started_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "where": "\"figure_fetch_runs\".\"outcome\" <> 'failed'",
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "figure_fetch_runs_once": {
+          "name": "figure_fetch_runs_once",
+          "nullsNotDistinct": false,
+          "columns": [
+            "run_started_at",
+            "metric_id"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "figure_fetch_runs_added_nonneg": {
+          "name": "figure_fetch_runs_added_nonneg",
+          "value": "\"figure_fetch_runs\".\"added\" >= 0"
+        },
+        "figure_fetch_runs_revisions_range": {
+          "name": "figure_fetch_runs_revisions_range",
+          "value": "\"figure_fetch_runs\".\"revisions\" >= 0 AND \"figure_fetch_runs\".\"revisions\" <= \"figure_fetch_runs\".\"added\""
+        },
+        "figure_fetch_runs_reason_len": {
+          "name": "figure_fetch_runs_reason_len",
+          "value": "char_length(\"figure_fetch_runs\".\"reason\") <= 200"
+        },
+        "figure_fetch_runs_outcome": {
+          "name": "figure_fetch_runs_outcome",
+          "value": "\"figure_fetch_runs\".\"outcome\" IN ('stored', 'no_new_period', 'failed')"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.figures": {
+      "name": "figures",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "bigint",
+          "primaryKey": true,
+          "notNull": true,
+          "identity": {
+            "type": "always",
+            "name": "figures_id_seq",
+            "schema": "public",
+            "increment": "1",
+            "startWith": "1",
+            "minValue": "1",
+            "maxValue": "9223372036854775807",
+            "cache": "1",
+            "cycle": false
+          }
+        },
+        "metric_id": {
+          "name": "metric_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "'official'"
+        },
+        "value": {
+          "name": "value",
+          "type": "numeric",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "unit": {
+          "name": "unit",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "region": {
+          "name": "region",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "period": {
+          "name": "period",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source": {
+          "name": "source",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "series_id": {
+          "name": "series_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "source_url": {
+          "name": "source_url",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "retrieved_at": {
+          "name": "retrieved_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {
+        "figures_series_latest_idx": {
+          "name": "figures_series_latest_idx",
+          "columns": [
+            {
+              "expression": "source",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "series_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "unit",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "region",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            },
+            {
+              "expression": "period",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            },
+            {
+              "expression": "retrieved_at",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            },
+            {
+              "expression": "id",
+              "isExpression": false,
+              "asc": false,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {
+        "figures_series_period_retrieved_unique": {
+          "name": "figures_series_period_retrieved_unique",
+          "nullsNotDistinct": false,
+          "columns": [
+            "source",
+            "series_id",
+            "unit",
+            "region",
+            "period",
+            "retrieved_at"
+          ]
+        }
+      },
+      "policies": {},
+      "checkConstraints": {
+        "figures_kind": {
+          "name": "figures_kind",
+          "value": "\"figures\".\"kind\" = 'official'"
+        },
+        "figures_period_format": {
+          "name": "figures_period_format",
+          "value": "\"figures\".\"period\" ~ '^\\d{4}-\\d{2}(-\\d{2})?$'"
+        },
+        "figures_source_url_https": {
+          "name": "figures_source_url_https",
+          "value": "\"figures\".\"source_url\" ~ '^https://'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.demo_letter_drafts": {
+      "name": "demo_letter_drafts",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "server_secret": {
+          "name": "server_secret",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "demo_letter_drafts_created_at_idx": {
+          "name": "demo_letter_drafts_created_at_idx",
+          "columns": [
+            {
+              "expression": "created_at",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "demo_letter_drafts_id_format": {
+          "name": "demo_letter_drafts_id_format",
+          "value": "\"demo_letter_drafts\".\"id\" ~ '^[A-Za-z0-9_-]{21}[AQgw]$'"
+        },
+        "demo_letter_drafts_server_secret_len": {
+          "name": "demo_letter_drafts_server_secret_len",
+          "value": "octet_length(\"demo_letter_drafts\".\"server_secret\") = 32"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.demo_letters": {
+      "name": "demo_letters",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "envelope": {
+          "name": "envelope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "envelope_hash": {
+          "name": "envelope_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sealed_at": {
+          "name": "sealed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "opens_at": {
+          "name": "opens_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server_secret": {
+          "name": "server_secret",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "kind": {
+          "name": "kind",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "demo_letters_id_format": {
+          "name": "demo_letters_id_format",
+          "value": "\"demo_letters\".\"id\" ~ '^[A-Za-z0-9_-]{21}[AQgw]$'"
+        },
+        "demo_letters_envelope_hash_format": {
+          "name": "demo_letters_envelope_hash_format",
+          "value": "\"demo_letters\".\"envelope_hash\" ~ '^[0-9a-f]{64}$'"
+        },
+        "demo_letters_server_secret_len": {
+          "name": "demo_letters_server_secret_len",
+          "value": "octet_length(\"demo_letters\".\"server_secret\") = 32"
+        },
+        "demo_letters_kind": {
+          "name": "demo_letters_kind",
+          "value": "\"demo_letters\".\"kind\" IN ('persona', 'live')"
+        },
+        "demo_letters_live_lock": {
+          "name": "demo_letters_live_lock",
+          "value": "\"demo_letters\".\"kind\" <> 'live' OR \"demo_letters\".\"opens_at\" = \"demo_letters\".\"sealed_at\" + interval '30 seconds'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.letters": {
+      "name": "letters",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true
+        },
+        "envelope": {
+          "name": "envelope",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "envelope_hash": {
+          "name": "envelope_hash",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "sealed_at": {
+          "name": "sealed_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "opens_at": {
+          "name": "opens_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "server_secret": {
+          "name": "server_secret",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "letters_id_format": {
+          "name": "letters_id_format",
+          "value": "\"letters\".\"id\" ~ '^[A-Za-z0-9_-]{21}[AQgw]$'"
+        },
+        "letters_envelope_hash_format": {
+          "name": "letters_envelope_hash_format",
+          "value": "\"letters\".\"envelope_hash\" ~ '^[0-9a-f]{64}$'"
+        },
+        "letters_server_secret_len": {
+          "name": "letters_server_secret_len",
+          "value": "octet_length(\"letters\".\"server_secret\") = 32"
+        },
+        "letters_opens_at_min_lock": {
+          "name": "letters_opens_at_min_lock",
+          "value": "(\"letters\".\"opens_at\" AT TIME ZONE 'UTC') >= (\"letters\".\"sealed_at\" AT TIME ZONE 'UTC') + interval '3 months'"
+        }
+      },
+      "isRLSEnabled": false
+    },
+    "public.openings": {
+      "name": "openings",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "letter_id": {
+          "name": "letter_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "demo_letter_id": {
+          "name": "demo_letter_id",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false
+        },
+        "ciphertext": {
+          "name": "ciphertext",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "nonce": {
+          "name": "nonce",
+          "type": "bytea",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "opened_at": {
+          "name": "opened_at",
+          "type": "timestamp with time zone",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {
+        "openings_letter_id_idx": {
+          "name": "openings_letter_id_idx",
+          "columns": [
+            {
+              "expression": "letter_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        },
+        "openings_demo_letter_id_idx": {
+          "name": "openings_demo_letter_id_idx",
+          "columns": [
+            {
+              "expression": "demo_letter_id",
+              "isExpression": false,
+              "asc": true,
+              "nulls": "last"
+            }
+          ],
+          "isUnique": false,
+          "concurrently": false,
+          "method": "btree",
+          "with": {}
+        }
+      },
+      "foreignKeys": {
+        "openings_letter_id_letters_id_fk": {
+          "name": "openings_letter_id_letters_id_fk",
+          "tableFrom": "openings",
+          "tableTo": "letters",
+          "columnsFrom": [
+            "letter_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        },
+        "openings_demo_letter_id_demo_letters_id_fk": {
+          "name": "openings_demo_letter_id_demo_letters_id_fk",
+          "tableFrom": "openings",
+          "tableTo": "demo_letters",
+          "columnsFrom": [
+            "demo_letter_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "no action",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "policies": {},
+      "checkConstraints": {
+        "openings_ciphertext_len": {
+          "name": "openings_ciphertext_len",
+          "value": "octet_length(\"openings\".\"ciphertext\") BETWEEN 1 AND 65536"
+        },
+        "openings_nonce_len": {
+          "name": "openings_nonce_len",
+          "value": "octet_length(\"openings\".\"nonce\") = 12"
+        },
+        "openings_exactly_one_letter": {
+          "name": "openings_exactly_one_letter",
+          "value": "num_nonnulls(\"openings\".\"letter_id\", \"openings\".\"demo_letter_id\") = 1"
+        }
+      },
+      "isRLSEnabled": false
+    }
+  },
+  "enums": {},
+  "schemas": {},
+  "sequences": {},
+  "roles": {},
+  "policies": {},
+  "views": {},
+  "_meta": {
+    "columns": {},
+    "schemas": {},
+    "tables": {}
+  }
+}

@@ -10,7 +10,12 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SourceError } from "./errors";
-import { ALLOWED_HOSTS, defaultFetcher, download } from "./fetcher";
+import {
+  ALLOWED_HOSTS,
+  FETCH_TIMEOUT_MS,
+  defaultFetcher,
+  download,
+} from "./fetcher";
 import type { FetchResult, Fetcher } from "./types";
 
 const PUBLISHER = "eia" as const;
@@ -290,7 +295,7 @@ describe("defaultFetcher timeout (no network)", () => {
     return state;
   }
 
-  it("aborts after 60 000 ms when no timeout is given", async () => {
+  it("aborts after FETCH_TIMEOUT_MS (30 000 ms) when no timeout is given", async () => {
     vi.useFakeTimers();
     const state = hangingFetch();
 
@@ -300,7 +305,7 @@ describe("defaultFetcher timeout (no network)", () => {
       () => (settled = true),
     );
 
-    await vi.advanceTimersByTimeAsync(59_999);
+    await vi.advanceTimersByTimeAsync(FETCH_TIMEOUT_MS - 1);
     expect(state.calls).toBe(1);
     expect(settled).toBe(false);
 

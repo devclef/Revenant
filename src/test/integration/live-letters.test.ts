@@ -314,9 +314,17 @@ describeDb("live letters (integration)", () => {
     it("applies every migration twice without error, and the second run changes nothing", async () => {
       const db = await createScratchDatabase(SHARED_URL);
       try {
+        // The journal is the source of truth for how many migrations exist, so
+        // adding a migration never breaks this count.
+        const expected = (
+          JSON.parse(readFileSync("drizzle/meta/_journal.json", "utf8")) as {
+            entries: unknown[];
+          }
+        ).entries.length;
+
         await migrateDatabase(db.url, "./drizzle");
         const first = await migrationCount(db.url);
-        expect(first).toBe(2);
+        expect(first).toBe(expected);
 
         await migrateDatabase(db.url, "./drizzle");
         expect(await migrationCount(db.url)).toBe(first);
