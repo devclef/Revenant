@@ -48,6 +48,8 @@ Use `browser_take_screenshot` for the viewport only. Never pass `fullPage`. Take
 
 If a state can't be reached, say so in the entry for that shot and set `failed_checks` to `["unreachable"]`.
 
+**Settled captures.** Take `06-letter`, `07-numbers` and any close Stage only after the figures have settled. Wait at least 1.5 s after clicking "See the numbers", or use the calm state (`08-calm`). Don't judge a figure that is still fading or moving: wait and shoot again.
+
 If you run out of time before finishing the browser walk, list the steps you didn't run as one minor finding; an unfinished walk is never a blocker.
 
 **Other pages.** For each changed page (at most 3), take `<nn>-<page>` at 1280×800 and `<nn>-<page>-360` at 360×640, both at the top of the page.
@@ -71,7 +73,7 @@ If the script says `playwright-core` is not installed, run `npm ci` once in the 
 4. Look at the screenshots of the stages the ticket changes and check the screenshot rules below. The script does not judge them.
 5. A ticket's own "QA check:" lines still apply, as before.
 
-Screenshot rules for every spec 07 shot: C1 (readable text, dark ink on cream paper, white on purple), C2 (every figure shows its value, unit, period and region), C3 (each change shows its formula), C4 (buttons styled to match the page), C5 and S5b (no red or green on figures, changes, arrows or controls), C6 (no religious, national or political symbol), C7 (the Demo label is readable on the top of a demo page), C8 (no stray outline around a whole region), C9 (no judgement words or exclamation marks in product copy). The persona letter body is exempt from C9.
+Screenshot rules for every spec 07 shot: C1 (text readable on its surface, as set out in the C1 row below), C2 (every figure shows its value, unit, period and region), C3 (each change shows its formula), C4 (buttons styled to match the page), C5 and S5b (no red or green on figures, changes, arrows or controls), C6 (no religious, national or political symbol), C7 (the Demo label is readable on the top of a demo page), C8 (no stray outline around a whole region), C9 (no judgement words or exclamation marks in product copy). The persona letter body is exempt from C9.
 
 If a frontend-dev PR changes `src/app/page.tsx`, `src/app/layout.tsx` or `src/app/globals.css`, fail it and name the file (R1.13).
 
@@ -81,7 +83,7 @@ Open the file once. Then, before taking the next shot, write its entry for the `
 
 | ID | Check (source) |
 |---|---|
-| `C1` | All text is easy to read. Paper is the cream panel: text on it must be dark ink. The desk is the near-black brown background: text on it must be cream or gold. Dark, grey or faded text straight on the desk, with no paper panel behind it, fails. (`tone.md`, frontend-dev surface rule) |
+| `C1` | All text meets WCAG 2.2 AA on the surface behind it. On the near-black background (`--bg`), text uses `--text`, or `--muted` for secondary lines such as periods, regions and sources. Both pass AA in the Scene contrast test (`scene-tokens.test.ts`), so they are not a failure. Text on purple is pure white (`--on-purple`). The Letter_Block paper uses dark ink (`--ink`). Grey `--muted` text is allowed. Text that fails AA, or is still dim after motion has settled, fails. (`tone.md`, `scene-tokens.test.ts`) |
 | `C2` | Every figure's value, unit, period, region and its label ("fixture data" or "historical record, retrieved …") can be read. (`data-integrity.md`) |
 | `C3` | Each change shows a formula a person can read, for example `(5.00 − 2.00) ÷ 2.00 × 100`. A code such as `then-now-change-v1` fails. (`data-integrity.md`) |
 | `C4` | Every button and toggle is styled to match the page. A default browser button (light grey box, thin border, small system font) fails, including "Turn off motion" and "Skip". |
@@ -98,6 +100,8 @@ Open the file once. Then, before taking the next shot, write its entry for the `
 - Leave that check out of `failed_checks`, and don't let it set `readable` to `false`.
 
 Any other failed check is a blocker. If the causing file is in the diff or in the ticket's Scope, the check is a blocker even if main looks the same.
+
+**Figure contrast against main.** Before you fail C1 on a figure, take the same Stage from `origin/main` and compare. Serve the main build from a checkout outside the PR worktree (for example under the qa-shots folder), and don't change the repo to do it. If main looks the same, record the figure as a minor note with `file` set to the causing file, and leave C1 out of `failed_checks`. Fail it only when the PR makes the figure harder to read than on main.
 
 `readable` is `false` when `C1` or `C2` fails. A Stage from a later task may still have its plain spec 03 look, which is expected and not a finding, but it must stay readable: readable on `main` and unreadable now is a blocker.
 

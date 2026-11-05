@@ -3,7 +3,8 @@
   "shared": [
     "package.json",
     "package-lock.json",
-    ".env.example"
+    ".env.example",
+    "src/test/integration/**"
   ],
   "roles": {
     "platform-dev": [
@@ -66,10 +67,12 @@
   },
   "exclude_from_size": [
     "package-lock.json",
-      "package-lock.json",
-      "drizzle/meta/**",
-      "**/*.test.ts",
-      "**/*.test.tsx"
+    "drizzle/meta/**",
+    "scripts/fetch-figures.mjs",
+    "scripts/seal-personas.mjs",
+    "dist/**",
+    "**/*.test.ts",
+    "**/*.test.tsx"
   ],
   "max_changed_lines": 5000
 }

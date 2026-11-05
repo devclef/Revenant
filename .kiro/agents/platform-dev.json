@@ -63,6 +63,7 @@
           "src/middleware.test.ts",
           "src/middleware.ts",
           "src/test/**",
+          "src/test/integration/**",
           "tsconfig.json"
         ],
         "effect": "allow"

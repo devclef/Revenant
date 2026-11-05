@@ -9,6 +9,12 @@ out/
 build/
 dist/
 
+# Bundled script build outputs (esbuild). The *.build.mjs scripts emit these;
+# `npm run build` regenerates them, so they are never committed. Keep the
+# hand-written source scripts (*.build.mjs, migrate.mjs, prefetch-*.mjs) tracked.
+scripts/fetch-figures.mjs
+scripts/seal-personas.mjs
+
 # Environment files (keep the example checked in)
 .env
 .env.*
