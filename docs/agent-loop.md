@@ -20,7 +20,8 @@ issue: status:ready + agent:<role>, dependencies closed
   └─ dispatcher claims it: assigns, status:in-progress, starts Task Runner as <role>
        └─ run finishes: dispatcher pushes agent/<role>/issue-N, opens PR "Closes #N", label needs-qa
             └─ ci-gate green → dispatcher starts Task Runner as qa on the PR head
-                 ├─ pass → status:qa-passed → dispatcher squash-merges when ci-gate is green
+                 ├─ pass → status:qa-passed → dispatcher squash-merges when ci-gate is green,
+                 │         then closes issue #N as completed and drops its status label
                  └─ fail (or CI failed) → status:changes-requested → fix run as <role> → back to needs-qa
                       (after 3 fix runs that committed: status:blocked, needs a human)
 ```
@@ -31,6 +32,7 @@ One Task Runner run at a time, across dev, fix and QA. A dev or fix run holds it
 
 - **CI feedback** quotes the failing job logs: each failing job's failing steps and the last lines of its log, with every `##[error]` or `FAIL` line kept. It no longer relies on the gate's "exit code 1".
 - **Same commit, same failure:** if CI fails again on a commit the dispatcher already sent back, it re-runs the failed CI jobs once. If that commit still fails 10 minutes after the re-run, the PR is blocked for a human. Nothing is posted twice.
+- **Closing the issue after a merge:** the dispatcher closes the issue the PR names in `Closes #N` itself, as completed, and removes `status:in-review`. GitHub's own auto-close is not relied on: it silently skipped #190 and #203, which left them open in review and held back the tickets that depend on them. If closing fails, the merge stands and a notification asks a human to close the issue.
 - **GitHub hiccups:** a 5xx, 429, timeout or dropped connection never blocks an item. Reads, label changes and deletes are retried twice within the call. Anything still failing (or a comment, PR or merge, which are never sent twice) is logged, and the next tick tries again. Labels are added before old ones are removed, so a half-finished update never leaves an item without a status.
 - **Fix runs that commit nothing** do not count toward the two attempts. A run that ends at the PR head gets a `dev-result` marker with `commits: false`. After CI feedback, the PR goes back to CI (and so to the re-run rule above). After QA feedback, the PR is blocked, because the same review would come back.
 - **Manual ticket items** (a manual Lighthouse run, for example) are QA notes. They are minor findings and never fail a verdict.

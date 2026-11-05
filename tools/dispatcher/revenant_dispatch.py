@@ -1130,6 +1130,30 @@ class Tick:
             raise
         self.say(f"PR #{pr['number']}: merged")
         self.notify(f"Revenant PR #{pr['number']} merged: {pr['title']}")
+        try:
+            self._close_merged_issue(pr)
+        except RuntimeError as exc:
+            # The merge stands; only the issue bookkeeping failed. The PR is closed now, so
+            # no later tick revisits it: tell a human instead of blocking anything.
+            self.say(f"PR #{pr['number']}: could not close its issue: {http_reason(exc)}")
+            self.notify(f"Revenant PR #{pr['number']} merged, but its issue was not closed: "
+                        f"{http_reason(exc)}. Close it as completed by hand.")
+
+    def _close_merged_issue(self, pr: dict) -> None:
+        """Close the issue a merged PR names with "Closes #n". GitHub's own auto-close
+        sometimes never fires, which leaves the issue open in status:in-review and holds
+        back every ticket that depends on it. Closed as completed, so spec_sync ticks it."""
+        n = closes_issue(pr.get("body"))
+        if n is None:
+            return
+        issue = self.gh.call("GET", self.gh.r(f"/issues/{n}"))
+        if issue.get("state") != "closed":
+            self.gh.call("PATCH", self.gh.r(f"/issues/{n}"),
+                         {"state": "closed", "state_reason": "completed"})
+            self.say(f"issue #{n}: closed after PR #{pr['number']} merged")
+        for lbl in (L_REVIEW, L_PROGRESS):
+            if lbl in label_names(issue):
+                self.gh.remove_label(n, lbl)
 
     # 4 ─ start QA when CI is green; CI failure goes straight back to the agent
     def start_qa(self, prs: list[dict], issues: list[dict]) -> bool:

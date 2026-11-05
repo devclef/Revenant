@@ -329,7 +329,9 @@ class RecGH:
             n = int(path.rsplit("/", 1)[1])
             return {"head": {"sha": f"sha{n}", "ref": f"b{n}"}}
         if method == "GET" and "/issues/" in path:
-            return issue(int(path.rsplit("/", 1)[1]), [])
+            n = int(path.rsplit("/", 1)[1])
+            return {**issue(n, list(getattr(self, "issue_labels", {}).get(n, []))),
+                    "state": getattr(self, "issue_state", {}).get(n, "open")}
 
     def ci_state(self, sha):
         return "failure" if self.failed else "success"
@@ -430,6 +432,58 @@ class MergeReady(unittest.TestCase):
         self.assertEqual(gh.has("comment"), [])
         self.assertEqual(gh.has("status"), [])
         self.assertEqual(notes, [])
+
+    def test_merge_closes_open_issue_as_completed(self):
+        gh = RecGH()
+        gh.issue_labels = {101: ["status:in-review", "agent:data-dev"]}
+        tick, _ = make_tick(gh)
+        tick.merge_ready([pr_item(1, "status:qa-passed")])
+        put = gh.events.index(("PUT", "/pulls/1/merge"))
+        patch = gh.events.index(("PATCH", "/issues/101"))
+        self.assertLess(put, patch)
+        self.assertIn(("label-", 101, "status:in-review"), gh.events)
+        self.assertNotIn(("label-", 101, "status:in-progress"), gh.events)
+
+    def test_merge_sends_completed_state_reason(self):
+        gh = RecGH()
+        sent = []
+        real = gh.call
+        gh.call = lambda m, p, b=None: sent.append((m, p, b)) or real(m, p, b)
+        tick, _ = make_tick(gh)
+        tick.merge_ready([pr_item(1, "status:qa-passed")])
+        self.assertIn(("PATCH", "/issues/101", {"state": "closed", "state_reason": "completed"}), sent)
+
+    def test_merge_leaves_already_closed_issue_alone(self):
+        gh = RecGH()
+        gh.issue_state = {101: "closed"}
+        gh.issue_labels = {101: ["status:in-review"]}
+        tick, _ = make_tick(gh)
+        tick.merge_ready([pr_item(1, "status:qa-passed")])
+        self.assertNotIn(("PATCH", "/issues/101"), gh.events)
+        self.assertIn(("label-", 101, "status:in-review"), gh.events)
+
+    def test_close_failure_after_merge_notifies_without_blocking(self):
+        gh = RecGH()
+        real = gh.call
+
+        def call(m, p, b=None):
+            if m == "PATCH":
+                raise RuntimeError("GitHub PATCH /issues/101 -> 403: forbidden")
+            return real(m, p, b)
+
+        gh.call = call
+        tick, notes = make_tick(gh)
+        tick.merge_ready([pr_item(1, "status:qa-passed")])
+        self.assertEqual(gh.has("status"), [])
+        self.assertEqual(gh.has("comment"), [])
+        self.assertTrue(any("not closed" in n for n in notes))
+
+    def test_merge_without_closes_line_touches_no_issue(self):
+        gh = RecGH()
+        tick, _ = make_tick(gh)
+        pr = {**pr_item(1, "status:qa-passed"), "body": "No link"}
+        tick.merge_ready([pr])
+        self.assertFalse([e for e in gh.events if e[0] in ("PATCH",) or "/issues/" in str(e[1])])
 
 
 class StartFixes(unittest.TestCase):
