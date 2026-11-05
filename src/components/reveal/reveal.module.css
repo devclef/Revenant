@@ -561,3 +561,55 @@
 .figuresThenNow .source summary {
   color: var(--text);
 }
+
+/* --- Spec 08 R14.3: the opening Fingerprint block --- */
+
+/*
+ * The Fingerprint sits under the Letter_Block in the letter Stage, on the dark
+ * desk surface (--bg), not inside the paper panel. So every line of text takes
+ * the desk tokens (--text / --muted), never the paper ink, and the demo label
+ * is re-coloured for the desk the same way the figures column does it. It
+ * carries no judgement colour: a letter that passed and one that would fail are
+ * never shown together, and a failed check never reaches this block (R14.6).
+ */
+.fingerprint {
+  margin: 1.5rem 0 0;
+  color: var(--text);
+  text-align: left;
+}
+
+.fingerprintTitle {
+  margin: 0 0 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* The 16 groups, in a monospace face, two lines of 8 (the two spans each sit on
+   their own line). Tabular, wide-spaced hex so a reader can compare it against
+   the letter card by eye. */
+.fingerprintGroups {
+  margin: 0 0 0.5rem;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+.fingerprintLine {
+  display: block;
+}
+
+.fingerprintStatement {
+  margin: 0;
+  color: var(--text);
+}
+
+/* The "demo letter" label uses the shared bordered label, re-coloured for the
+   desk so it reads on --bg (the paper-ink .fixtureLabel would be invisible). */
+.fingerprint .fixtureLabel {
+  color: var(--text);
+  border-color: var(--text);
+}

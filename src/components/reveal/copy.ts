@@ -186,6 +186,27 @@ export const REVEAL_COPY = {
   /** The control that advances from the letter to the figures (R9.4). */
   stage2Next: "See the numbers",
 
+  // --- The opening Fingerprint (R14.3, R14.8) ---
+
+  /** The heading above the opening Fingerprint block. An h3, so the focus rule is unchanged. */
+  fingerprintTitle: "Fingerprint at sealing",
+
+  /** The statement shown with the Fingerprint once the seal check has passed (R14.3). */
+  fingerprintPassed: "The seal check passed.",
+
+  /**
+   * The card sentence shown after `fingerprintPassed` on a live or real letter
+   * (R14.3): the same Fingerprint is printed on the reader's letter card.
+   */
+  fingerprintPassedCard:
+    "It matches the fingerprint printed on your letter card.",
+
+  /**
+   * The label shown after `fingerprintPassed` on a persona letter (R14.8). A
+   * persona letter has no card, so no card wording is shown next to it.
+   */
+  fingerprintDemo: "demo letter",
+
   // --- Reveal, stage 3: the figures then and now ---
 
   /** Heading for stage 3 of the reveal: the figures then and now. */

@@ -10,6 +10,7 @@ import { SoundToggle } from "@/components/ceremony/sound/SoundToggle";
 import { SoundEnabledContext } from "@/components/ceremony/sound/SoundEnabledContext";
 import { soundCues } from "@/components/ceremony/sound/cues";
 import { FiguresThenNow } from "./FiguresThenNow";
+import { Fingerprint } from "./Fingerprint";
 import { StagePanel } from "./StagePanel";
 import { FiguresFadeUp } from "@/components/ceremony/figures/FiguresFadeUp";
 import { Close, type CloseProps } from "@/components/ceremony/close/Close";
@@ -309,6 +310,16 @@ export function Reveal({
               variant={variant}
               letterId={letterId}
               still={jumpedToEnd}
+            />
+            {/* The opening Fingerprint sits under the Letter_Block, on the desk
+                surface, before "See the numbers" (design.md, R14.3). It shows
+                the verified envelope hash from `Opened.envelopeHash`; the
+                letter kind decides the demo label or the card sentence (R14.8).
+                A failed check never reaches the Reveal, so this is always the
+                passed state (R14.6). */}
+            <Fingerprint
+              envelopeHash={opened.envelopeHash}
+              letterKind={letterKind}
             />
           </div>
 
