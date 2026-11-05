@@ -162,3 +162,8 @@ export const LINE_LABEL_ROW_EM = 2.6; // row pitch, so a two-line answer label f
 export const LINE_LABEL_ROWS = 3; // always reserved, whatever the positions
 export const LINE_LABEL_TOP_REM = 1.25; // the first row sits below the lower pin
 export const LABEL_CHAR_PX = 8; // estimate per character at 0.8rem, before measuring
+
+// --- R6 ticks (spec 08, the marks card and the tick labels) ---
+export const TICK_GAP_PX = 4; // smallest gap between two tick label boxes
+export const TRACK_MIN_PX = 260; // track width used before measurement
+export const TICK_CHAR_PX = 7.5; // estimated width of one tick label character at 0.75rem

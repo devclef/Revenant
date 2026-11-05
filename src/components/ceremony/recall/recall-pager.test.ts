@@ -1,6 +1,5 @@
 import { describe, expect, it } from "vitest";
 import {
-  draftNumber,
   firstInvalidIndex,
   isLastIndex,
   nextIndex,
@@ -36,21 +35,21 @@ describe("paging moves one question at a time and stops at the ends", () => {
 
 describe("a form submit decides what happens", () => {
   it("advances on a question that is not the last, and sends nothing (R11.3)", () => {
-    expect(submitAction(0, 3, false)).toBe("advance");
-    expect(submitAction(1, 3, false)).toBe("advance");
+    expect(submitAction(0, 3, false, true)).toBe("advance");
+    expect(submitAction(1, 3, false, true)).toBe("advance");
   });
 
   it("calls the submit handler on the last question (R11.4)", () => {
-    expect(submitAction(2, 3, false)).toBe("submit");
+    expect(submitAction(2, 3, false, true)).toBe("submit");
   });
 
   it("submits a single question straight away", () => {
-    expect(submitAction(0, 1, false)).toBe("submit");
+    expect(submitAction(0, 1, false, true)).toBe("submit");
   });
 
   it("does nothing while a post is in flight, on any question (R11.11)", () => {
-    expect(submitAction(0, 3, true)).toBe("ignore");
-    expect(submitAction(2, 3, true)).toBe("ignore");
+    expect(submitAction(0, 3, true, true)).toBe("ignore");
+    expect(submitAction(2, 3, true, true)).toBe("ignore");
   });
 });
 
@@ -71,16 +70,13 @@ describe("an invalid submit jumps to the first invalid question in payload order
   });
 });
 
-describe("draftNumber reads a plain decimal only (spec 05 R4)", () => {
-  it("reads a plain decimal, trimmed", () => {
-    expect(draftNumber(" 3.50 ")).toBe(3.5);
-    expect(draftNumber("12")).toBe(12);
+describe("a form submit does nothing while the question is not ready (R32.13)", () => {
+  it("ignores Enter on a question that is not the last, and on the last", () => {
+    expect(submitAction(0, 3, false, false)).toBe("ignore");
+    expect(submitAction(2, 3, false, false)).toBe("ignore");
   });
 
-  it("returns null for anything that is not a plain decimal", () => {
-    expect(draftNumber("")).toBeNull();
-    expect(draftNumber("abc")).toBeNull();
-    expect(draftNumber("-1")).toBeNull();
-    expect(draftNumber("1,5")).toBeNull();
+  it("ignores a single question that is not ready", () => {
+    expect(submitAction(0, 1, false, false)).toBe("ignore");
   });
 });

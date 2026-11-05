@@ -22,18 +22,30 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { RecallScale } from "./RecallScale";
+import { CEREMONY_COPY } from "../copy";
+import { formatParsedValue } from "./parse-number";
+import {
+  canAdvance,
+  draftTextFor,
+  initialField,
+  pickReading,
+  resolvedValue,
+  setFromScale,
+  typeText,
+  type FieldState,
+} from "./recall-field";
 import { formatCalendarDate } from "@/components/demo/dates";
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import type { Draft } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
 import {
-  draftNumber,
   firstInvalidIndex,
   isLastIndex,
   nextIndex,
   previousIndex,
   submitAction,
 } from "./recall-pager";
+import { scaleRangeFor, unitHelperFor } from "./unit-ranges";
 import styles from "./RecallPager.module.css";
 
 export type RecallPagerProps = {
@@ -89,6 +101,10 @@ export function RecallPager({
   const [index, setIndex] = useState(() =>
     total === 0 ? 0 : Math.min(Math.max(initialIndex, 0), total - 1),
   );
+  // The number field's state per question (recall-field.ts). Each one starts
+  // from the draft the first time the judge reaches it, then keeps what was
+  // typed through Previous and Next.
+  const [fields, setFields] = useState<Record<string, FieldState>>({});
   // Bumped on every paging action and invalid submit. The focus effect reads it,
   // so a view-local move focuses the shown field without a Flow event.
   const [focusRequest, setFocusRequest] = useState(0);
@@ -128,9 +144,30 @@ export function RecallPager({
     setFocusRequest((request) => request + 1);
   }
 
+  function fieldFor(id: string): FieldState {
+    const existing = fields[id];
+    if (existing !== undefined) return existing;
+    return initialField(drafts[id] ?? EMPTY_DRAFT);
+  }
+
+  // A number question is ready when its field resolves to a value, or the
+  // judge ticked "no answer" (R32.13). Other questions are always ready.
+  function isReady(target: (typeof questions)[number]): boolean {
+    if (target.answer_type !== "number") return true;
+    return canAdvance(fieldFor(target.id), drafts[target.id]?.noAnswer ?? false);
+  }
+
+  // Store the field, and send the draft only when its canonical text changed.
+  // An ambiguous, unreadable or empty field sends "" (R32.5, R32.7).
+  function applyField(id: string, next: FieldState) {
+    setFields((previous) => ({ ...previous, [id]: next }));
+    const text = draftTextFor(next);
+    if (text !== (drafts[id] ?? EMPTY_DRAFT).text) onEdit(id, text);
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const action = submitAction(index, total, submitting);
+    const action = submitAction(index, total, submitting, isReady(question));
     if (action === "ignore") return;
     if (action === "advance") {
       goTo(nextIndex(index, total));
@@ -149,6 +186,22 @@ export function RecallPager({
 
   const draft = drafts[question.id] ?? EMPTY_DRAFT;
   const isInvalid = invalid.includes(question.id);
+  const isNumber = question.answer_type === "number";
+  const field = isNumber ? fieldFor(question.id) : null;
+  const ready = isReady(question);
+  const resolved = field === null ? null : resolvedValue(field);
+  const reading =
+    field !== null && field.parse.kind === "ambiguous" ? field.parse : null;
+  const unreadable =
+    field !== null &&
+    field.parse.kind === "rejected" &&
+    field.parse.reason !== "empty";
+  // The Mark follows the field's value. An ambiguous field with no pick keeps
+  // the Mark where it was (R32.5).
+  const markValue =
+    field === null || draft.noAnswer || field.mark === null
+      ? null
+      : Number(field.mark);
   const isLast = isLastIndex(index, total);
   const isFirst = index === 0;
   const unit =
@@ -161,8 +214,13 @@ export function RecallPager({
   const headingId = `recall-${question.id}-title`;
   const inputId = `recall-${question.id}`;
   const unitId = `recall-${question.id}-unit`;
+  const helpId = `recall-${question.id}-unit-help`;
+  const parsedId = `recall-${question.id}-parsed`;
+  const readingsId = `recall-${question.id}-readings`;
+  const unreadableId = `recall-${question.id}-unreadable`;
   const errorId = `recall-${question.id}-error`;
   const noAnswerId = `recall-${question.id}-no-answer`;
+  const unitHelp = unit === undefined ? null : unitHelperFor(unit);
 
   const counterBase = fill(REVEAL_COPY.questionCounter, {
     n: index + 1,
@@ -187,10 +245,32 @@ export function RecallPager({
 
   const submitLabel = submitting ? REVEAL_COPY.submitting : REVEAL_COPY.submit;
 
-  const describedBy =
-    [unitText === undefined ? null : unitId, isInvalid ? errorId : null]
-      .filter((id): id is string => id !== null)
-      .join(" ");
+  const describedBy = [
+    unitText === undefined ? null : unitId,
+    unitHelp === null ? null : helpId,
+    resolved === null ? null : parsedId,
+    reading === null ? null : readingsId,
+    unreadable ? unreadableId : null,
+    isInvalid ? errorId : null,
+  ]
+    .filter((id): id is string => id !== null)
+    .join(" ");
+
+  // The two readings, decimal first. Each label is written in words, with the
+  // judge's own digits (R32.4). "000" is left out of the grouping reading.
+  const readingLabels =
+    reading === null
+      ? null
+      : {
+          decimal: fill(CEREMONY_COPY.readingDecimal, {
+            head: reading.head,
+            tail: reading.tail,
+          }),
+          grouping: fill(CEREMONY_COPY.readingGrouping, {
+            head: reading.head,
+            rest: reading.tail.replace(/^0+/, ""),
+          }).replace(/\s+$/, ""),
+        };
 
   return (
     <>
@@ -221,6 +301,12 @@ export function RecallPager({
               </span>
             )}
 
+            {unitHelp === null ? null : (
+              <p id={helpId} className={styles.unitHelp}>
+                {unitHelp}
+              </p>
+            )}
+
             <div className={styles.answerRow} data-fit="answer">
               <input
                 ref={inputRef}
@@ -229,22 +315,75 @@ export function RecallPager({
                 type="text"
                 inputMode="decimal"
                 autoComplete="off"
-                value={draft.text}
+                value={field === null ? draft.text : field.typed}
                 disabled={draft.noAnswer}
                 data-stage-focus=""
-                aria-invalid={isInvalid}
+                aria-invalid={isInvalid || unreadable}
                 aria-describedby={describedBy === "" ? undefined : describedBy}
-                onChange={(event) => onEdit(question.id, event.target.value)}
+                onChange={(event) =>
+                  field === null
+                    ? onEdit(question.id, event.target.value)
+                    : applyField(
+                        question.id,
+                        typeText(field, event.target.value),
+                      )
+                }
               />
               <button
                 type="submit"
                 className={styles.cta}
                 data-fit="advance"
-                disabled={submitting}
+                disabled={submitting || !ready}
               >
                 {isLast ? submitLabel : REVEAL_COPY.nextQuestion}
               </button>
             </div>
+
+            {resolved === null ? null : (
+              <p id={parsedId} className={styles.parsed} aria-live="polite">
+                {fill(CEREMONY_COPY.parsedValue, {
+                  value: formatParsedValue(resolved),
+                })}
+              </p>
+            )}
+
+            {reading === null || readingLabels === null ? null : (
+              <fieldset id={readingsId} className={styles.readings} data-fit="readings">
+                <legend>{CEREMONY_COPY.readingLegend}</legend>
+                <label className={styles.readingOption}>
+                  <input
+                    type="radio"
+                    name={`recall-${question.id}-reading`}
+                    value="decimal"
+                    checked={field?.pick === "decimal"}
+                    onChange={() =>
+                      field !== null &&
+                      applyField(question.id, pickReading(field, "decimal"))
+                    }
+                  />
+                  {readingLabels.decimal}
+                </label>
+                <label className={styles.readingOption}>
+                  <input
+                    type="radio"
+                    name={`recall-${question.id}-reading`}
+                    value="grouping"
+                    checked={field?.pick === "grouping"}
+                    onChange={() =>
+                      field !== null &&
+                      applyField(question.id, pickReading(field, "grouping"))
+                    }
+                  />
+                  {readingLabels.grouping}
+                </label>
+              </fieldset>
+            )}
+
+            {unreadable ? (
+              <p id={unreadableId} className={styles.fieldError}>
+                {CEREMONY_COPY.numberUnreadable}
+              </p>
+            ) : null}
 
             {isInvalid ? (
               <span id={errorId} role="alert" className={styles.fieldError}>
@@ -264,14 +403,17 @@ export function RecallPager({
               </div>
             )}
 
-            {question.answer_type === "number" && unit !== undefined ? (
+            {isNumber && unit !== undefined ? (
               <RecallScale
                 id={question.id}
                 label={question.text}
                 unitLabel={unit}
-                value={draft.noAnswer ? null : draftNumber(draft.text)}
+                range={scaleRangeFor(unit)}
+                value={markValue}
                 noAnswer={draft.noAnswer}
-                onEdit={onEdit}
+                onEdit={(id, text) =>
+                  applyField(id, setFromScale(fieldFor(id), text))
+                }
                 spokenPrefix={REVEAL_COPY.yourAnswer}
               />
             ) : null}

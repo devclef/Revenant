@@ -5,6 +5,8 @@
 // are linear. Every string this module produces comes from `toPlainDecimal`,
 // so it always matches the record's number pattern (R3.3).
 
+import type { ScaleRange } from "./unit-ranges";
+
 /** Smallest value on the track. */
 export const SCALE_MIN_VALUE = 0.01;
 /** Largest value on the track. */
@@ -215,4 +217,67 @@ export function snapToStep(value: number, window: ZoomWindow): number {
   const snapped = window.min + steps * window.step;
   const bounded = Math.min(Math.max(snapped, window.min), window.max);
   return clampValue(Number(bounded.toPrecision(12)));
+}
+
+// --- Range-taking forms (spec 08 R7) ---
+//
+// The forms above keep the Fallback_Range (0.01 to 100,000, log). These take
+// the range of a sealed unit from `unit-ranges.ts`. A linear range rounds to
+// three significant figures, then snaps to its step, so "3.47" and "1,710"
+// come out the same as on the log track.
+
+/** The snap step of a linear range: 10^(floor(log10(max)) − 3). 0.01 for max 10, 1 for max 3,000. */
+export function linearStepFor(range: ScaleRange): number {
+  return pow10(decadeOf(range.max) - SCALE_SIG_FIGS);
+}
+
+/** The value at position `x` on `range`, clamped to [0, 1] and to the range. */
+export function valueAtIn(x: number, range: ScaleRange): number {
+  const t = clamp01(x);
+  if (range.scale === "log") {
+    const lo = Math.log10(range.min);
+    const hi = Math.log10(range.max);
+    return roundSig(Math.pow(10, lo + (hi - lo) * t), SCALE_SIG_FIGS);
+  }
+  const raw = roundSig(range.min + t * (range.max - range.min), SCALE_SIG_FIGS);
+  const step = linearStepFor(range);
+  const snapped = Math.round(raw / step) * step;
+  const bounded = Math.min(Math.max(snapped, range.min), range.max);
+  return Number(bounded.toPrecision(12));
+}
+
+/**
+ * The position in [0, 1] of `value` on `range`. A value below the minimum sits
+ * at 0 and a value above the maximum at 1. NaN sits at 0.
+ */
+export function positionOfIn(value: number, range: ScaleRange): number {
+  if (Number.isNaN(value)) return 0;
+  const v = Math.min(Math.max(value, range.min), range.max);
+  if (range.scale === "log") {
+    const lo = Math.log10(range.min);
+    const hi = Math.log10(range.max);
+    return clamp01((Math.log10(v) - lo) / (hi - lo));
+  }
+  return clamp01((v - range.min) / (range.max - range.min));
+}
+
+/**
+ * A value on `range` written as a plain decimal string, rounded to three
+ * significant figures. Output matches `^[0-9]+(\.[0-9]+)?$` and is at most 40
+ * characters. 0 is always "0". Any other value outside [min, max] throws a
+ * RangeError.
+ */
+export function toPlainDecimalIn(value: number, range: ScaleRange): string {
+  if (value === 0) return "0";
+  if (!Number.isFinite(value) || value < range.min || value > range.max) {
+    throw new RangeError(`toPlainDecimalIn: ${value} is outside the range`);
+  }
+
+  const rounded = roundSig(value, SCALE_SIG_FIGS);
+  const decimals = Math.max(0, SCALE_SIG_FIGS - 1 - decadeOf(rounded));
+  let text = rounded.toFixed(decimals);
+  if (text.includes(".")) {
+    text = text.replace(/0+$/, "").replace(/\.$/, "");
+  }
+  return text;
 }

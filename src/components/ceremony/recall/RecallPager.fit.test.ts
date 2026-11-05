@@ -48,6 +48,23 @@ describe("Recall_Pager fit hooks", () => {
   });
 });
 
+describe("Recall_Pager reading group keeps the field and Next in view", () => {
+  it("names the reading group after the answer row, so it cannot push them down", () => {
+    const answer = source.indexOf('data-fit="answer"');
+    const readings = source.indexOf('data-fit="readings"');
+    const advance = source.indexOf('data-fit="advance"');
+    expect(answer).toBeGreaterThan(-1);
+    expect(readings).toBeGreaterThan(-1);
+    expect(advance).toBeGreaterThan(-1);
+    // The answer row (field and Next) comes first in the markup; the readings follow it.
+    expect(readings).toBeGreaterThan(advance);
+  });
+
+  it("caps the reading group at the card width at every size", () => {
+    expect(ruleBody(".readings")).toMatch(/max-width:\s*100%/);
+  });
+});
+
 describe("Recall_Pager card fits above the fold at 1280 x 800", () => {
   it("caps the typed number at 3.6rem so the answer row sits higher", () => {
     const font = ruleBody(".input").match(/font-size:\s*clamp\(([^)]*)\)/);
@@ -74,7 +91,7 @@ describe("Recall_Pager card fits inside its padding at 360 x 640", () => {
   it("lets the typed number shrink inside the nowrap row", () => {
     // The input is the flex item that absorbs the width, so it needs min-width 0.
     expect(ruleBody(".input")).toMatch(/min-width:\s*0/);
-    expect(ruleBody(".input")).toMatch(/width:\s*4\.2ch/);
+    expect(ruleBody(".input")).toMatch(/width:\s*6\.5ch/);
     expect(ruleBody(".cta")).toMatch(/white-space:\s*nowrap/);
   });
 
@@ -109,5 +126,23 @@ describe("Recall_Pager card fits inside its padding at 360 x 640", () => {
     // left edge at 36 px. Stretching keeps the readout inside the card.
     expect(ruleBody(".body")).toMatch(/align-items:\s*stretch/);
     expect(ruleBody(".body")).not.toMatch(/align-items:\s*flex-start/);
+  });
+});
+
+describe("Recall_Pager number field shows a typed value such as 1.585 at 360 x 640", () => {
+  it("gives the field at least the width of a five-character value", () => {
+    // "1.585" is five characters. The field width is in ch (the width of "0" at its
+    // font size), so the width must be at least 5ch plus the 0.4rem padding on each side.
+    const width = ruleBody(".input").match(/width:\s*([\d.]+)ch/);
+    expect(width).not.toBeNull();
+    expect(Number(width![1])).toBeGreaterThanOrEqual(5);
+  });
+
+  it("does not shrink the field below its base width at narrow sizes", () => {
+    expect(narrowRuleBody(".input")).not.toMatch(/\bwidth:/);
+  });
+
+  it("keeps the read-as line and the parser source untouched by this rule", () => {
+    expect(source).toContain('className={styles.parsed}');
   });
 });

@@ -15,13 +15,10 @@ import { Close, type CloseProps } from "@/components/ceremony/close/Close";
 import { SealBreak } from "@/components/ceremony/seal/SealBreak";
 import type { SealController } from "@/components/ceremony/seal/useSealBreak";
 import { IDLE } from "@/components/ceremony/seal/hold";
-import { RecallScale } from "@/components/ceremony/recall/RecallScale";
+import { RecordedScale } from "@/components/ceremony/recall/RecordedScale";
 import { useLocalView } from "@/components/ceremony/local-view";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
-
-/** The marks stage's scales are read-only, so they never send an edit. */
-const NO_EDIT = () => undefined;
 
 /**
  * Used when no controller is passed (static renders in the tests). The seal
@@ -172,9 +169,10 @@ export function Reveal({
   // their values (R14.7, R14.8).
   const figureCount = opened.payload.figures.length;
 
-  // The marks stage shows each number answer on a read-only scale, with the Mark
-  // at the recorded value. A question with no stored number shows no Mark. The
-  // unit comes from the sealed metric; the answer comes from the stored record.
+  // The marks stage shows each number answer as a recorded scale (R6): the Mark
+  // at the recorded value, and nothing a judge can drag or press. A question with
+  // no stored number shows no Mark. The unit comes from the sealed metric; the
+  // answer comes from the stored record.
   const unitByMetricId = new Map<string, string>();
   for (const metric of opened.payload.metrics) {
     unitByMetricId.set(metric.id, metric.unit);
@@ -190,18 +188,14 @@ export function Reveal({
     if (unit === undefined) return [];
     const answer = answerByQuestionId.get(question.id);
     const recordedValue =
-      answer !== undefined && answer.kind === "number" ? Number(answer.value) : null;
+      answer !== undefined && answer.kind === "number" ? answer.value : null;
     return [
-      <RecallScale
+      <RecordedScale
         key={question.id}
         id={question.id}
         label={question.text}
         unitLabel={unit}
         value={recordedValue}
-        noAnswer={recordedValue === null}
-        onEdit={NO_EDIT}
-        readOnly
-        spokenPrefix={REVEAL_COPY.yourAnswer}
       />,
     ];
   });

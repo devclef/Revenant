@@ -32,6 +32,8 @@ export function isLastIndex(index: number, total: number): boolean {
 /**
  * What a form submit does (Enter in a field or the submit control).
  * - While a post is in flight, nothing happens (R11.11).
+ * - While the question is not ready (its next control is disabled, R32.13),
+ *   nothing happens, so Enter cannot get round the disabled control.
  * - On a question that is not the last, the pager advances and sends nothing (R11.3).
  * - On the last question, the existing submit handler runs (R11.4).
  */
@@ -39,8 +41,9 @@ export function submitAction(
   index: number,
   total: number,
   submitting: boolean,
+  ready: boolean,
 ): SubmitAction {
-  if (submitting) return "ignore";
+  if (submitting || !ready) return "ignore";
   return isLastIndex(index, total) ? "submit" : "advance";
 }
 
@@ -54,15 +57,4 @@ export function firstInvalidIndex(
 ): number {
   const invalidSet = new Set(invalid);
   return ids.findIndex((id) => invalidSet.has(id));
-}
-
-/**
- * The number the scale marks for a draft's text, or null when the text is not a
- * plain decimal (the same shape `numberAnswer` accepts, after trimming). A
- * half-typed or invalid entry leaves the Mark off the scale.
- */
-export function draftNumber(text: string): number | null {
-  const trimmed = text.trim();
-  if (!/^[0-9]+(\.[0-9]+)?$/.test(trimmed)) return null;
-  return Number(trimmed);
 }

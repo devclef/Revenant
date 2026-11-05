@@ -118,7 +118,7 @@ describe("Property 3: paging never changes the Recall_Record (fast-check)", () =
               if (op.action === "prev") index = previousIndex(index);
               if (op.action === "enter") {
                 index =
-                  submitAction(index, n, false) === "advance"
+                  submitAction(index, n, false, true) === "advance"
                     ? nextIndex(index, n)
                     : index;
               }
@@ -321,5 +321,36 @@ describe("Property 23: the new strings are exact and clear of scoring words (exa
       expect(SCORING_ALWAYS.test(text), `"${text}" scoring word`).toBe(false);
       expect(SCORING_SCENE.test(text), `"${text}" scene scoring word`).toBe(false);
     }
+  });
+});
+
+describe("R32.13: a question that is not ready never advances or submits", () => {
+  it("submitAction is ignore for every index, total and submitting state when ready is false", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 0, max: 20 }),
+        fc.integer({ min: 1, max: 21 }),
+        fc.boolean(),
+        (index, total, submitting) => {
+          expect(submitAction(index, total, submitting, false)).toBe("ignore");
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  it("submitAction still advances or submits for a ready question", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 0, max: 20 }),
+        fc.integer({ min: 1, max: 21 }),
+        (index, total) => {
+          fc.pre(index < total);
+          const action = submitAction(index, total, false, true);
+          expect(action).toBe(index === total - 1 ? "submit" : "advance");
+        },
+      ),
+      { numRuns: 100 },
+    );
   });
 });

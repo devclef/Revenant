@@ -50,12 +50,6 @@ export type RecallStepProps = {
   writtenAsOf?: string;
 };
 
-/**
- * The number the scale marks for a draft's text. Kept here so existing callers
- * import it from the recall step as before; the rule lives in `recall-pager`.
- */
-export { draftNumber } from "@/components/ceremony/recall/recall-pager";
-
 export function RecallStep({
   opened,
   drafts,

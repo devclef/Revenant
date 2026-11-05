@@ -111,7 +111,7 @@ function renderMarksRaw(
   );
 }
 
-describe("reveal marks stage: read-only recall scales", () => {
+describe("reveal marks stage: recorded scales (spec 08 R6)", () => {
   const RECORD: RecallRecordV1 = {
     version: 1,
     answers: [
@@ -121,28 +121,25 @@ describe("reveal marks stage: read-only recall scales", () => {
     ],
   };
 
-  it("renders one read-only slider per number question, and none for the text question", () => {
+  it("renders one recorded scale per number question, with no slider and no tab stop", () => {
     const html = renderMarks(RECORD);
-    const sliders = html.match(/role="slider"/g) ?? [];
-    expect(sliders).toHaveLength(2);
-    expect(html.match(/aria-readonly="true"/g) ?? []).toHaveLength(2);
-    expect(html.match(/tabindex="-1"/g) ?? []).toHaveLength(2);
+    expect(html).not.toContain('role="slider"');
+    expect(html.match(/role="img"/g) ?? []).toHaveLength(2);
+    expect(html).not.toContain("tabindex");
   });
 
-  it("places the Mark at the recorded value and says 'Your answer' with the unit", () => {
+  it("places the Mark at the recorded value and names the value with its unit", () => {
     const html = renderMarks(RECORD);
-    expect(html).toContain(
-      `aria-valuetext="${REVEAL_COPY.yourAnswer}: 2.5 USD per gallon"`,
-    );
-    expect(html).toContain('data-readout="readout">2.5<');
+    expect(html).toContain(": 2.50 USD per gallon\"");
+    expect(html).toContain(">2.50<");
   });
 
-  it("shows no Mark for a question recorded as no answer, and it stays disabled", () => {
+  it("shows no Mark for a question recorded as no answer, and says No answer", () => {
     const html = renderMarks(RECORD);
-    expect(html).toContain(`aria-valuetext="${CEREMONY_COPY.recallNoMarkYet}"`);
-    expect(html).toContain('aria-disabled="true"');
-    // Only the answered question carries a readout.
-    expect(html.match(/data-readout="readout"/g) ?? []).toHaveLength(1);
+    expect(html).toContain(`: ${CEREMONY_COPY.lineNoAnswer}"`);
+    expect(html).toContain(CEREMONY_COPY.lineNoAnswer);
+    // Only the answered question carries a Mark readout.
+    expect(html.match(/recordedMark/g) ?? []).toHaveLength(1);
   });
 
   it("shows the judge's value in the Accent, in its own answers list", () => {
@@ -183,7 +180,7 @@ describe("reveal marks stage: column markers and order", () => {
     const order = [
       html.indexOf('data-fit="marks-heading"'),
       html.indexOf('data-fit="marks-answers"'),
-      html.indexOf('role="slider"'),
+      html.indexOf('role="img"'),
       html.indexOf('data-fit="break"'),
       html.indexOf(CEREMONY_COPY.sealInstruction),
       html.indexOf(REVEAL_COPY.showAll),

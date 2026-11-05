@@ -23,6 +23,7 @@ import { describe, expect, it } from "vitest";
 import { stageHeadingIndex } from "./CeremonyRoot";
 import { CEREMONY_COPY } from "./copy";
 import { RecallScale } from "./recall/RecallScale";
+import { scaleRangeFor } from "./recall/unit-ranges";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const revealCss = readFileSync(
@@ -104,6 +105,7 @@ describe("the recall scale has a plain control for the hold-still zoom", () => {
     id: "q1",
     label: "What did a gallon of gas cost?",
     unitLabel: "USD per gallon",
+    range: scaleRangeFor("USD per gallon"),
     onEdit: () => undefined,
   };
 
@@ -112,18 +114,6 @@ describe("the recall scale has a plain control for the hold-still zoom", () => {
       createElement(RecallScale, { ...baseProps, value: 3.4, noAnswer: false }),
     );
     expect(markup).toContain(CEREMONY_COPY.recallLookCloser);
-  });
-
-  it("does not offer Look closer in read-only (marks) mode", () => {
-    const markup = renderToStaticMarkup(
-      createElement(RecallScale, {
-        ...baseProps,
-        value: 3.4,
-        noAnswer: false,
-        readOnly: true,
-      }),
-    );
-    expect(markup).not.toContain(CEREMONY_COPY.recallLookCloser);
   });
 
   it("does not offer Look closer when there is no answer to zoom on", () => {
@@ -141,6 +131,7 @@ describe("the Mark is announced as the judge's answer, not a position", () => {
         id: "q1",
         label: "Gas",
         unitLabel: "USD per gallon",
+        range: scaleRangeFor("USD per gallon"),
         value: 3.4,
         noAnswer: false,
         onEdit: () => undefined,
