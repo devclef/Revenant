@@ -2,7 +2,7 @@
 // file-mode part, and the example cases in tasks.md task 14), plus the Sweden
 // and SEK guard for the file-mode body (R23.1).
 
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import fc from "fast-check";
 
 import { CATALOGUE } from "@/lib/figures/catalogue";
@@ -22,7 +22,7 @@ const CACHE_CONTROL = "public, max-age=600, stale-while-revalidate=3600";
 const STATUS_TIME = "2026-11-05T06:30:00Z";
 
 async function getBody(): Promise<FiguresResponseV1> {
-  const response = GET();
+  const response = await GET();
   expect(response.status).toBe(200);
   const parsed = parseFiguresResponse(await response.json());
   if (!parsed.ok) throw new Error("body rejected by parseFiguresResponse");
@@ -59,9 +59,15 @@ afterEach(() => {
   vi.unstubAllEnvs();
 });
 
+// The file-mode tests below pin FIGURES_SOURCE=file. The default is db, which
+// reads Postgres; db mode has its own tests in db-response.test.ts.
+beforeEach(() => {
+  vi.stubEnv("FIGURES_SOURCE", "file");
+});
+
 describe("GET /api/figures (file mode)", () => {
-  it("answers 200 with the Cache-Control header", () => {
-    const response = GET();
+  it("answers 200 with the Cache-Control header", async () => {
+    const response = await GET();
 
     expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe(CACHE_CONTROL);
@@ -122,7 +128,7 @@ describe("GET /api/figures (file mode)", () => {
 describe("Sweden and SEK guard on the file-mode body (R23.1)", () => {
   it("contains no Sweden region and no SEK unit anywhere in the body", async () => {
     const text = JSON.stringify(
-      await GET().json(),
+      await (await GET()).json(),
     );
 
     expect(text).not.toMatch(/sweden/i);
@@ -266,8 +272,18 @@ describe("figuresSourceMode (FIGURES_SOURCE)", () => {
   it("the route reports source_mode from FIGURES_SOURCE", async () => {
     vi.stubEnv("FIGURES_SOURCE", "file");
     expect((await getBody()).source_mode).toBe("file");
+  });
 
+  it("with FIGURES_SOURCE unset the route reads the database, and answers 500 with no DATABASE_URL", async () => {
     vi.stubEnv("FIGURES_SOURCE", "");
-    expect((await getBody()).source_mode).toBe("db");
+    vi.stubEnv("DATABASE_URL", "");
+
+    const response = await GET();
+    const text = await response.text();
+
+    expect(response.status).toBe(500);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+    expect(JSON.parse(text)).toEqual({ error: "figures_unavailable" });
+    expect(text).not.toMatch(/postgres/i);
   });
 });

@@ -1,13 +1,8 @@
-import { NextResponse } from "next/server";
+import type { NextResponse } from "next/server";
 
-import { CATALOGUE } from "@/lib/figures/catalogue";
-import { DEMO_FIGURES } from "@/lib/figures/demo";
-import fetchStatus from "@/lib/figures/real/fetch-status.json";
-
-import {
-  buildFiguresResponse,
-  figuresSourceMode,
-} from "./build-response";
+import { figuresSourceMode } from "./build-response";
+import { getFigureReadStore } from "./db-store";
+import { respondFigures } from "./respond";
 
 /**
  * GET /api/figures (spec 08-judge-polish, Property 23).
@@ -17,9 +12,9 @@ import {
  * and names no letter. It reads no query parameter, so `?metric=` and any
  * other query string are ignored.
  *
- * FIGURES_SOURCE is read per request. This task ships file mode only: `db`
- * mode answers from the same bundled figures until the database backend lands
- * (spec 08, task 16), and the body's `source_mode` still reports `db` then.
+ * FIGURES_SOURCE is read per request. `db` (the default) answers from the
+ * `figures` and `figure_fetch_runs` tables. `file` answers from the bundled
+ * `fuel-figures.json` and `fetch-status.json`, the Fallback_Refresh backend.
  */
 
 // Read FIGURES_SOURCE at request time, not at build time.
@@ -27,19 +22,9 @@ export const dynamic = "force-dynamic";
 
 // Takes no request argument: the handler never reads the URL, so no query
 // string can change the body.
-export function GET(): NextResponse {
-  const body = buildFiguresResponse({
-    loaded: DEMO_FIGURES,
-    catalogue: CATALOGUE,
-    fetchStatus,
-    sourceMode: figuresSourceMode(process.env.FIGURES_SOURCE),
-    generatedAt: new Date().toISOString().replace(/\.\d{3}Z$/, "Z"),
-  });
-
-  return NextResponse.json(body, {
-    status: 200,
-    headers: {
-      "Cache-Control": "public, max-age=600, stale-while-revalidate=3600",
-    },
+export async function GET(): Promise<NextResponse> {
+  return respondFigures(figuresSourceMode(process.env.FIGURES_SOURCE), {
+    readStore: getFigureReadStore,
+    now: () => new Date(),
   });
 }
