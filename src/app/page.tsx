@@ -1,12 +1,17 @@
 import type { CSSProperties } from "react";
 import Link from "next/link";
 
+import { Ghost } from "@/components/ceremony/scene/Ghost";
 import { SceneHeadline } from "@/components/ceremony/scene/SceneHeadline";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { SCENE_COPY } from "@/components/ceremony/scene/copy";
+import styles from "@/components/ceremony/scene/scene.module.css";
 import { PERSONAS } from "@/lib/personas";
 
-import { LandingBackdrop } from "@/lib/landing-backdrop";
+import {
+  LANDING_NOSCRIPT_STYLE,
+  LandingBackdrop,
+} from "@/lib/landing-backdrop";
 
 /**
  * Landing page `/` (design.md "SceneShell, TopBar and the landing page",
@@ -19,15 +24,16 @@ import { LandingBackdrop } from "@/lib/landing-backdrop";
  * background below the Soil strip. Every word comes from SCENE_COPY.
  */
 
-/** Light already up, with scripts disabled (R7.1). Constant; no user data. */
-const LANDING_NOSCRIPT_STYLE = "[data-scene-light]{animation:none}";
-
-/** The Accent button: orange means "you" (tone.md). Text is --on-accent. */
+/**
+ * The Accent button: orange means "you" (tone.md). Text is --on-accent. The top
+ * margin is not set here: the `.landingColumn .landingCta` rule in
+ * scene.module.css sets it, so the narrow layout keeps the button below the
+ * Soil strip (an inline margin would override that rule).
+ */
 const CTA_STYLE: CSSProperties = {
   display: "inline-flex",
   alignItems: "center",
   minHeight: "56px",
-  marginTop: "2rem",
   padding: "0 1.5rem",
   borderRadius: "4px",
   background: "var(--accent)",
@@ -88,11 +94,17 @@ export default function Home() {
       </noscript>
 
       <SceneShell variant="landing">
-        <LandingBackdrop />
+        <LandingBackdrop>
+          <Ghost gradientId="ghost-body-landing" />
+        </LandingBackdrop>
         <section style={HERO_STYLE}>
           <SceneHeadline />
           {first !== undefined && openLabel !== null ? (
-            <Link href={`/demo/personas/${first.key}`} style={CTA_STYLE}>
+            <Link
+              href={`/demo/personas/${first.key}`}
+              className={styles.landingCta}
+              style={CTA_STYLE}
+            >
               {openLabel}
             </Link>
           ) : null}

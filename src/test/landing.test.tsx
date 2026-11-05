@@ -1,4 +1,6 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join, relative, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -47,12 +49,6 @@ function decode(html: string): string {
 describe("landing page `/`", () => {
   beforeEach(() => {
     state.personas = [];
-  });
-
-  it("renders no Ghost element and no data-ghost marker (Property 20, landing part)", () => {
-    const html = render([MAYA]);
-    expect(html).not.toContain("data-ghost");
-    expect(html.toLowerCase()).not.toContain("ghost");
   });
 
   it("renders exactly one h1 with the exact headline text", () => {
@@ -120,7 +116,7 @@ describe("landing page `/`", () => {
   it("includes the no-script light style as a noscript block", () => {
     const html = render([MAYA]);
     expect(html).toContain("<noscript>");
-    expect(html).toContain("[data-scene-light]{animation:none}");
+    expect(html).toContain("[data-ghost-rise],[data-ghost-bob]{animation:none}");
   });
 
   it("imports nothing from crypto, the opening flow, the API, or the database", () => {
@@ -139,7 +135,6 @@ describe("landing page `/`", () => {
         expect(specifier).not.toMatch(/useOpeningFlow/);
         expect(specifier).not.toMatch(/\/api\//);
         expect(specifier).not.toMatch(/\bdb\b|drizzle|letter-store/);
-        expect(specifier).not.toMatch(/ghost/i);
       }
     }
     const page = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
@@ -149,5 +144,121 @@ describe("landing page `/`", () => {
       "utf8",
     );
     expect(wrapper.trimStart().startsWith('"use client";')).toBe(true);
+  });
+});
+
+// R9.15: the Landing_Ghost is server-rendered in the backdrop, holds no
+// Envelope, and the landing page's import graph stays clear of the Persona
+// Ghost and the eye module.
+const SRC_DIR = resolve(dirname(fileURLToPath(import.meta.url)), "..");
+const SCENE_DIR = join(SRC_DIR, "components", "ceremony", "scene");
+
+// `import ... from "x"`, `import "x"` and `import("x")`.
+const IMPORT_PATTERN =
+  /\bfrom\s+["']([^"']+)["']|\bimport\s*\(\s*["']([^"']+)["']\s*\)|\bimport\s+["']([^"']+)["']/g;
+
+/**
+ * Resolves a specifier to a source file under src/. Returns null for packages,
+ * CSS and anything that does not resolve to a .ts or .tsx file.
+ */
+function resolveSpecifier(from: string, specifier: string): string | null {
+  let base: string;
+  if (specifier.startsWith("@/")) {
+    base = join(SRC_DIR, specifier.slice(2));
+  } else if (specifier.startsWith(".")) {
+    base = resolve(dirname(from), specifier);
+  } else {
+    return null;
+  }
+  const candidates = [
+    `${base}.ts`,
+    `${base}.tsx`,
+    join(base, "index.ts"),
+    join(base, "index.tsx"),
+  ];
+  return candidates.find((candidate) => existsSync(candidate)) ?? null;
+}
+
+/** Every source file reachable from `entry` by static or dynamic import. */
+function importGraph(entry: string): Set<string> {
+  const seen = new Set<string>();
+  const queue = [entry];
+  for (let file = queue.pop(); file !== undefined; file = queue.pop()) {
+    if (seen.has(file)) continue;
+    seen.add(file);
+    const source = readFileSync(file, "utf8");
+    for (const match of source.matchAll(IMPORT_PATTERN)) {
+      const specifier = match[1] ?? match[2] ?? match[3] ?? "";
+      const target = resolveSpecifier(file, specifier);
+      if (target !== null) queue.push(target);
+    }
+  }
+  return seen;
+}
+
+/**
+ * The markup of the element that carries `marker`, from its opening tag to its
+ * matching closing tag. Counts nested divs so the Accent link is judged against
+ * the real pit boundary, not a guessed end string.
+ */
+function elementAround(html: string, marker: string): string {
+  const markerAt = html.indexOf(marker);
+  expect(markerAt).toBeGreaterThanOrEqual(0);
+  const start = html.lastIndexOf("<div", markerAt);
+  let depth = 0;
+  let cursor = start;
+  while (cursor < html.length) {
+    const open = html.indexOf("<div", cursor);
+    const close = html.indexOf("</div>", cursor);
+    if (close < 0) break;
+    if (open >= 0 && open < close) {
+      depth += 1;
+      cursor = open + 4;
+    } else {
+      depth -= 1;
+      cursor = close + 6;
+      if (depth === 0) return html.slice(start, cursor);
+    }
+  }
+  throw new Error(`no closing tag for the element with ${marker}`);
+}
+
+describe("landing Ghost in the server HTML (R9.15)", () => {
+  beforeEach(() => {
+    state.personas = [MAYA];
+  });
+
+  it("server-renders the Landing_Ghost pit in the static HTML", () => {
+    const html = renderToStaticMarkup(createElement(Home));
+    expect(html.match(/data-ghost-pit/g)).toHaveLength(1);
+  });
+
+  it("holds no Envelope: no data-envelope in the pit, and the Accent link sits outside it", () => {
+    const html = decode(renderToStaticMarkup(createElement(Home)));
+    const pit = elementAround(html, "data-ghost-pit");
+    expect(pit).not.toContain("data-envelope");
+    expect(pit).not.toContain('href="/demo/personas/us-maya"');
+    const pitStart = html.indexOf(pit);
+    const pitEnd = pitStart + pit.length;
+    const linkAt = html.indexOf('href="/demo/personas/us-maya"');
+    expect(linkAt).toBeGreaterThanOrEqual(0);
+    expect(linkAt < pitStart || linkAt >= pitEnd).toBe(true);
+  });
+
+  it("reaches neither eyes.ts nor PersonaGhost.tsx from src/app/page.tsx", () => {
+    const graph = importGraph(join(SRC_DIR, "app", "page.tsx"));
+    // Guard against a walker that finds nothing: the Ghost is a real import.
+    expect(graph.has(join(SCENE_DIR, "Ghost.tsx"))).toBe(true);
+    const reached = [...graph].map((file) => relative(SRC_DIR, file));
+    expect(reached).not.toContain(join("components", "ceremony", "scene", "eyes.ts"));
+    expect(reached).not.toContain(
+      join("components", "ceremony", "scene", "PersonaGhost.tsx"),
+    );
+  });
+
+  it("names data-ghost-rise in the noscript rule", () => {
+    const html = renderToStaticMarkup(createElement(Home));
+    const noscript = /<noscript>(.*?)<\/noscript>/s.exec(html)?.[1] ?? "";
+    expect(noscript).toContain("[data-ghost-rise]");
   });
 });
