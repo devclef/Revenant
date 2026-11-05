@@ -209,7 +209,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
 
 ### Group 3: copy, labels, dates and metadata
 
-- [ ] 6. Period formats, number locales per region, and US and EU only in the figure modules
+- [x] 6. Period formats, number locales per region, and US and EU only in the figure modules
   - Agent: `data-dev` · Depends on: none · Estimated size: ~300 changed lines
   - Before this task: only `main`. This task shares no file with tasks 1 to 5 and may run beside them.
   - Scope: `src/lib/figures/format-change.ts`, `src/lib/figures/locale.ts`, `src/lib/figures/catalogue.ts` (header comment only), and the `*.test.ts` for each file above, including `format-change.test.ts`, `locale.test.ts`, and a new guard test under `src/lib/figures/`
