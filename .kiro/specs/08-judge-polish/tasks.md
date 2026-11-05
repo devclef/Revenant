@@ -293,7 +293,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
   - Validation: `bash scripts/check.sh`
   - _Requirements: R10.7, R11.1–R11.4, R16.1–R16.7, R17.1–R17.6, R30.2_
 
-- [ ] 10. Site metadata, the title template and the favicon
+- [x] 10. Site metadata, the title template and the favicon
   - Agent: `platform-dev` · Depends on: 5, 9 · Estimated size: ~250 changed lines
   - Before this task: tasks 5 and 9 are on `main`. (Task 5 is added because both tasks add new `*.test.ts(x)` files under `src/test/`.)
   - Scope: `src/lib/page-metadata.ts` (new), `src/app/layout.tsx` (`generateMetadata` only; the footer comes in task 12), `public/icon.svg` (new), and new `*.test.ts(x)` files under `src/test/` or next to `src/lib/page-metadata.ts`
