@@ -90,7 +90,8 @@ describe("Emergence and Idle_Bob (CSS gates)", () => {
     // (ghostLeave, ghostFade) is the one place opacity animates (R12.6), so it is
     // checked on its own below.
     const keyframeBodies = (css.match(/@keyframes [\s\S]*?\n\}\n/g) ?? []).filter(
-      (body) => !body.startsWith("@keyframes ghost"),
+      // heroSettle (spec 08 R8.3) fades the Hero's opacity by design; it is checked in animation-scan.test.ts.
+      (body) => !body.startsWith("@keyframes ghost") && !body.startsWith("@keyframes heroSettle"),
     );
     expect(keyframeBodies.length).toBeGreaterThan(0);
     for (const body of keyframeBodies) {

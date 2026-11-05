@@ -213,3 +213,129 @@ describe("Property 6: every Flow state and local view maps to exactly one Stage 
     );
   });
 });
+
+// Feature: 08-judge-polish, Property 10: The focus rule
+//
+// `focusTargetFor`, `afterFirstStep`, `afterGhost` and `shouldRescueFocus` are
+// the executable form of spec 08 design.md "Focus after \"See the numbers\"",
+// "The Hero after the First_Step" and "The reveal layout after the Ghost
+// leaves". These are example tests, one per table row, plus the Property 10
+// sweep over every pair of Stages.
+
+import {
+  afterFirstStep,
+  afterGhost,
+  focusTargetFor,
+  shouldRescueFocus,
+  type FocusTarget,
+} from "./stages";
+
+const ALL_STAGES: Stage[] = [
+  "emerging",
+  "sealed",
+  "envelope",
+  "intact",
+  "recall",
+  "marks",
+  "seal",
+  "letter",
+  "figures",
+  "close",
+  "error",
+];
+
+describe("focusTargetFor (spec 08 focus table)", () => {
+  it("returns figures-heading for letter to figures (See the numbers)", () => {
+    expect(focusTargetFor("letter", "figures")).toEqual({ kind: "figures-heading" });
+  });
+
+  it("returns figures-heading for letter, marks and seal to close (Show everything)", () => {
+    expect(focusTargetFor("letter", "close")).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("marks", "close")).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("seal", "close")).toEqual({ kind: "figures-heading" });
+  });
+
+  it("returns none for the settle from figures to close", () => {
+    expect(focusTargetFor("figures", "close")).toEqual({ kind: "none" });
+  });
+
+  it("returns default for the same Stage and for a null previous (first mount)", () => {
+    for (const stage of ALL_STAGES) {
+      expect(focusTargetFor(stage, stage)).toEqual({ kind: "default" });
+      expect(focusTargetFor(null, stage)).toEqual({ kind: "default" });
+    }
+  });
+
+  it("returns default for every other pair", () => {
+    expect(focusTargetFor("intact", "recall")).toEqual({ kind: "default" });
+    expect(focusTargetFor("recall", "marks")).toEqual({ kind: "default" });
+    expect(focusTargetFor("marks", "seal")).toEqual({ kind: "default" });
+    expect(focusTargetFor("seal", "letter")).toEqual({ kind: "default" });
+    expect(focusTargetFor("letter", "letter")).toEqual({ kind: "default" });
+    expect(focusTargetFor("figures", "letter")).toEqual({ kind: "default" });
+  });
+
+  it("follows Property 10 for every pair of Stages", () => {
+    for (const prev of [null, ...ALL_STAGES] as (Stage | null)[]) {
+      for (const next of ALL_STAGES) {
+        let expected: FocusTarget = { kind: "default" };
+        if (next === "figures" && prev === "letter") {
+          expected = { kind: "figures-heading" };
+        } else if (
+          next === "close" &&
+          (prev === "letter" || prev === "marks" || prev === "seal")
+        ) {
+          expected = { kind: "figures-heading" };
+        } else if (prev === "figures" && next === "close") {
+          expected = { kind: "none" };
+        }
+        expect(focusTargetFor(prev, next)).toEqual(expected);
+      }
+    }
+  });
+});
+
+describe("afterFirstStep (spec 08 hero table)", () => {
+  it("is true for recall, marks, seal, letter, figures and close", () => {
+    for (const stage of ["recall", "marks", "seal", "letter", "figures", "close"] as Stage[]) {
+      expect(afterFirstStep(stage)).toBe(true);
+    }
+  });
+
+  it("is false for emerging, sealed, envelope, intact and error", () => {
+    for (const stage of ["emerging", "sealed", "envelope", "intact", "error"] as Stage[]) {
+      expect(afterFirstStep(stage)).toBe(false);
+    }
+  });
+});
+
+describe("afterGhost (spec 08 reveal layout table)", () => {
+  it("is true for letter, figures and close", () => {
+    expect(afterGhost("letter")).toBe(true);
+    expect(afterGhost("figures")).toBe(true);
+    expect(afterGhost("close")).toBe(true);
+  });
+
+  it("is false before the Ghost leaves", () => {
+    for (const stage of ["emerging", "sealed", "envelope", "intact", "recall", "marks", "seal", "error"] as Stage[]) {
+      expect(afterGhost(stage)).toBe(false);
+    }
+  });
+});
+
+describe("shouldRescueFocus (spec 08 removed-focus fallback)", () => {
+  it("rescues only when focus is on body and the target is none", () => {
+    expect(shouldRescueFocus(true, { kind: "none" })).toBe(true);
+  });
+
+  it("does not rescue when focus is on an element", () => {
+    expect(shouldRescueFocus(false, { kind: "none" })).toBe(false);
+  });
+
+  it("does not rescue for a target that already moves focus", () => {
+    expect(shouldRescueFocus(true, { kind: "figures-heading" })).toBe(false);
+    expect(shouldRescueFocus(true, { kind: "default" })).toBe(false);
+    expect(shouldRescueFocus(false, { kind: "figures-heading" })).toBe(false);
+    expect(shouldRescueFocus(false, { kind: "default" })).toBe(false);
+  });
+});

@@ -88,8 +88,19 @@ export const GHOST_LIFT_MS = 400; // R10.7: the Ghost lifts to the handed pose
 export const ENVELOPE_TURN_AT_MS = 400; // R10.8: the turn starts once the Ghost lifts
 export const ENVELOPE_TURN_MS = 520; // R10.8: the turn ends by 920 ms, inside 1,200 ms
 export const PICKUP_MOVE_MS = 600; // R10.15: the narrow scene lift and pit scale
+// --- Focus after "See the numbers" (spec 08, R2.2) ---
+export const FOCUS_SCROLL_CHECK_MS = 900; // one re-check of the Figures_Heading position
 export const COLUMN_GAP_UNDER_SOIL_PX = 4;
 export const DUST_CEILING_GAP_PX = 8; // R6.16
+// --- Reveal layout (spec 08, R3) ---
+export const REVEAL_SIDE_BY_SIDE_PX = 1200; // the R3.1 breakpoint for letter beside figures
+export const LETTER_TEXT_MAX_EM = 34; // Letter_Text max-width
+export const LETTER_NARROW_PX = 600; // below this, tighter Letter_Block and paper padding
+// --- Hero after the First_Step (spec 08, R8) ---
+export const HERO_SETTLE_MS = 240; // opacity only, at most 400 (R8.3)
+export const HERO_AFTER_WIDE = "clamp(1.75rem, 2.6vw, 2.25rem)"; // at or above 900 px (R8.1)
+export const HERO_AFTER_NARROW = "clamp(1.375rem, 5vw, 1.75rem)"; // below 900 px (R8.1)
+export const NARROW_HANDED_LIFT_VH = 18; // below 900 px in recall, marks and seal (R8.2)
 // --- Soil_Canvas (R6.3, R6.5) (spec 07) ---
 export const DUST_MAX_PARTICLES = 36;
 export const DUST_MAX_FPS = 30;

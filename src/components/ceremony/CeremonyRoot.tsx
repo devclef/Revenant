@@ -47,14 +47,21 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { CEREMONY_COPY } from "./copy";
 import { LiveRegion, LiveRegionProvider } from "./LiveRegion";
 import { LocalViewProvider, useLocalView } from "./local-view";
-import { useMotion } from "./motion";
+import { useMotion, type MotionMode } from "./motion";
 import { useSequence } from "./skip";
 import { SoundToggle } from "./sound/SoundToggle";
 import { SoundEnabledContext } from "./sound/SoundEnabledContext";
 import { soundCues } from "./sound/cues";
 import { StageContext } from "./stage-context";
-import { emergingStatus, ghostHanded, stageFor } from "./stages";
-import { PICKUP_MOVE_MS } from "./constants";
+import {
+  emergingStatus,
+  focusTargetFor,
+  ghostHanded,
+  shouldRescueFocus,
+  stageFor,
+  type Stage,
+} from "./stages";
+import { FOCUS_SCROLL_CHECK_MS, PICKUP_MOVE_MS } from "./constants";
 import type { FlowState } from "../reveal/opening-machine";
 import styles from "./ceremony.module.css";
 
@@ -93,6 +100,67 @@ export function stageHeadingIndex(tagNames: readonly string[]): number {
     if (tag === "h1" || tag === "h2") return index;
   }
   return -1;
+}
+
+/**
+ * The default focus rule (spec 07, R9.6): `[data-stage-focus]` when a view names
+ * its own target, else the newest `h1`/`h2`, else the region itself. A view
+ * without a heading (the envelope, the loading statement) takes the region.
+ */
+function focusStageDefault(region: HTMLElement): void {
+  // A view can name its own focus target (spec 07 R11.2): the recall field.
+  // It wins over the newest heading.
+  const stageFocus = region.querySelector<HTMLElement>("[data-stage-focus]");
+  if (stageFocus !== null) {
+    stageFocus.focus();
+    return;
+  }
+  const headings = Array.from(region.querySelectorAll<HTMLElement>("h1, h2"));
+  const index = stageHeadingIndex(headings.map((heading) => heading.tagName.toLowerCase()));
+  const target = index < 0 ? region : headings[index];
+  if (target === undefined) return;
+  if (target !== region && !target.hasAttribute("tabindex")) {
+    target.tabIndex = -1;
+  }
+  target.focus();
+}
+
+/**
+ * Focus the Figures_Heading after "See the numbers" or "Show everything" (spec 08,
+ * R2.1 to R2.3). Focus moves with `preventScroll`, then the heading scrolls to
+ * the top of the view. The scroll is `smooth` only in full motion without
+ * reduced motion. One timer, `FOCUS_SCROLL_CHECK_MS` later, re-checks the
+ * heading against the Top_Bar's bottom and the viewport's bottom and jumps once
+ * with `auto` if it is hidden. The returned cleanup clears that timer, so the
+ * next Stage change cancels it.
+ */
+function focusFiguresHeading(
+  region: HTMLElement,
+  mode: MotionMode,
+): (() => void) | undefined {
+  const heading = region.querySelector<HTMLElement>("[data-figures-heading]");
+  if (heading === null) {
+    focusStageDefault(region);
+    return undefined;
+  }
+  heading.focus({ preventScroll: true });
+  const reduced =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  heading.scrollIntoView({
+    block: "start",
+    behavior: mode === "full" && !reduced ? "smooth" : "auto",
+  });
+  const timer = setTimeout(() => {
+    if (!heading.isConnected) return;
+    const topBar = document.querySelector<HTMLElement>("[data-topbar]");
+    const topBarBottom = topBar === null ? 0 : topBar.getBoundingClientRect().bottom;
+    const top = heading.getBoundingClientRect().top;
+    if (top < topBarBottom || top >= window.innerHeight) {
+      heading.scrollIntoView({ block: "start", behavior: "auto" });
+    }
+  }, FOCUS_SCROLL_CHECK_MS);
+  return () => clearTimeout(timer);
 }
 
 /**
@@ -154,30 +222,44 @@ function CeremonyRegion({
       ? emergingStatus(state.tag)
       : CEREMONY_COPY.stageLive[stage];
 
-  // Move focus when the view or the Stage changes (R9.6, R11, the Stage heading
-  // rule). The target is the newest heading in the region, so each Stage lands
-  // the reader on its own `<h1>`/`<h2>`. A view without a heading (the envelope,
-  // the loading statement) takes the region itself. Runs after mount only, so
-  // server and first render match. The effect reads the DOM only.
+  // Move focus when the view or the Stage changes (R9.6, R11, spec 08 focus
+  // table). `focusTargetFor` reads the previous Stage and the next one:
+  //  - figures-heading: the Figures_Heading, with a scroll and one re-check;
+  //  - none: move nothing, except rescue focus when its element was removed
+  //    in the same commit (`shouldRescueFocus`);
+  //  - default: the spec 07 rule (`focusStageDefault`).
+  // Runs after mount only, so server and first render match. The effect reads
+  // the DOM only, and its cleanup clears the scroll re-check on the next Stage
+  // change or on unmount.
   const regionRef = useRef<HTMLDivElement>(null);
+  const previousStageRef = useRef<Stage | null>(null);
+  // The motion mode is read by the focus effect without making the effect run
+  // again on a Calm toggle (a toggle must not move focus).
+  const motionRef = useRef(mode);
   useEffect(() => {
+    motionRef.current = mode;
+  }, [mode]);
+  useEffect(() => {
+    const prev = previousStageRef.current;
+    previousStageRef.current = stage;
     const region = regionRef.current;
-    if (region === null) return;
-    // A view can name its own focus target (spec 07 R11.2): the recall field.
-    // It wins over the newest heading.
-    const stageFocus = region.querySelector<HTMLElement>("[data-stage-focus]");
-    if (stageFocus !== null) {
-      stageFocus.focus();
-      return;
+    if (region === null) return undefined;
+    const target = focusTargetFor(prev, stage);
+    if (target.kind === "figures-heading") {
+      return focusFiguresHeading(region, motionRef.current);
     }
-    const headings = Array.from(region.querySelectorAll<HTMLElement>("h1, h2"));
-    const index = stageHeadingIndex(headings.map((heading) => heading.tagName.toLowerCase()));
-    const target = index < 0 ? region : headings[index];
-    if (target === undefined) return;
-    if (target !== region && !target.hasAttribute("tabindex")) {
-      target.tabIndex = -1;
+    if (target.kind === "none") {
+      const active = document.activeElement;
+      const activeIsBody = active === null || active === document.body;
+      if (shouldRescueFocus(activeIsBody, target)) {
+        region
+          .querySelector<HTMLElement>("[data-figures-heading]")
+          ?.focus({ preventScroll: true });
+      }
+      return undefined;
     }
-    target.focus();
+    focusStageDefault(region);
+    return undefined;
   }, [state.tag, stage]);
 
   // The dust ceiling depends on the backdrop's lift. Once the pick-up move has

@@ -97,6 +97,28 @@
     right: 0;
     top: calc(var(--soil-top) + var(--soil-band) + 0.25rem - 6rem);
   }
+
+  /* Narrow handed lift (spec 08 R8.2). In recall, marks and seal the backdrop
+     (Soil, light, Ghost) moves up 18 vh, and the pinned region's top moves up
+     by the same 18 vh, so the card keeps its place under the Soil. Both sides
+     are in vh, so no JavaScript measures them. The 600 ms transform transition
+     comes from the full-motion rule below. */
+  .scene:has([data-ceremony="recall"], [data-ceremony="marks"], [data-ceremony="seal"]) .backdrop {
+    transform: translateY(-18vh);
+  }
+
+  .personaColumn > [data-ceremony="recall"],
+  .personaColumn > [data-ceremony="marks"],
+  .personaColumn > [data-ceremony="seal"] {
+    top: calc(var(--soil-top) + var(--soil-band) + 0.25rem - 6rem - 18vh);
+  }
+
+  /* Hero after the First_Step, narrow (spec 08 R8.1). Below 900 px the Hero
+     is HERO_AFTER_NARROW, smaller than in emerging, sealed and intact. */
+  .personaColumn:has(> :is([data-ceremony="recall"], [data-ceremony="marks"], [data-ceremony="seal"], [data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"])) .headline {
+    max-width: none;
+    font-size: clamp(1.375rem, 5vw, 1.75rem);
+  }
 }
 
 /* The headline never crosses into the Ghost column. Narrow: it is smaller and
@@ -362,6 +384,13 @@
     padding-bottom: calc(26vh + 2rem);
   }
 
+  /* Spec 08 R3.2: after the Ghost leaves (letter, figures, close) the column
+     cap is lifted, so the reveal can use the width beside the Ghost. */
+  .personaColumn:has(> :is([data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"])) {
+    max-width: none;
+    padding-bottom: 4rem;
+  }
+
   .personaColumn .headline {
     max-width: 11.5ch;
     font-size: clamp(2.35rem, 6vw, 5.4rem);
@@ -374,6 +403,12 @@
   .personaColumn:has(> [data-ceremony="intact"]) .headline {
     max-width: 13ch;
     font-size: clamp(2.5rem, 4.4vw, 3.5rem);
+  }
+
+  /* Hero after the First_Step, wide (spec 08 R8.1). HERO_AFTER_WIDE. */
+  .personaColumn:has(> :is([data-ceremony="recall"], [data-ceremony="marks"], [data-ceremony="seal"], [data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"])) .headline {
+    max-width: 20ch;
+    font-size: clamp(1.75rem, 2.6vw, 2.25rem);
   }
 
   .topbar {
@@ -644,5 +679,27 @@
 
   [data-ceremony-motion="full"] .backdrop {
     transition: transform 600ms ease;
+  }
+}
+
+/*
+ * The Hero settle (spec 08 R8.3, R8.4). The Hero size changes in one frame.
+ * In full motion only, the same selector fades the headline in from 0.4 to 1
+ * over HERO_SETTLE_MS. Its animation-name stays the same through every later
+ * Stage, so it plays once, at the move from intact to recall. Opacity only.
+ * Calm and reduced motion show the final size with no animation.
+ */
+@keyframes heroSettle {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  [data-ceremony-motion="full"] .personaColumn:has(> :is([data-ceremony="recall"], [data-ceremony="marks"], [data-ceremony="seal"], [data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"])) .headline {
+    animation: heroSettle 240ms ease-out;
   }
 }

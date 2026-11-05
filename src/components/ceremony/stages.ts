@@ -129,3 +129,70 @@ export function showPickUp(tag: FlowState["tag"], local: LocalView): boolean {
 export function ghostHanded(stage: Stage): boolean {
   return stage === "recall" || stage === "marks" || stage === "seal";
 }
+
+/**
+ * Where keyboard focus moves after a Stage change (spec 08 design.md, "Focus
+ * after \"See the numbers\"").
+ *
+ * - `none`: move nothing (the settle from `figures` to `close`).
+ * - `figures-heading`: focus the Figures_Heading, `[data-figures-heading]`.
+ * - `default`: the spec 07 rule (`[data-stage-focus]`, else the newest heading,
+ *   else the region).
+ */
+export type FocusTarget =
+  | { kind: "none" }
+  | { kind: "figures-heading" }
+  | { kind: "default" };
+
+/**
+ * The focus target for a Stage change, from the previous Stage and the next
+ * one. The pair alone tells the cause apart, so no third argument is needed.
+ * `prev` is `null` on first mount.
+ */
+export function focusTargetFor(prev: Stage | null, next: Stage): FocusTarget {
+  if (prev === "figures" && next === "close") return { kind: "none" };
+  if (prev === "letter" && next === "figures") return { kind: "figures-heading" };
+  if (
+    (prev === "letter" || prev === "marks" || prev === "seal") &&
+    next === "close"
+  ) {
+    return { kind: "figures-heading" };
+  }
+  return { kind: "default" };
+}
+
+/**
+ * Whether a Stage is at or after `recall`, so the persona hero takes its
+ * smaller size (spec 08 design.md, "The Hero after the First_Step").
+ */
+export function afterFirstStep(stage: Stage): boolean {
+  return (
+    stage === "recall" ||
+    stage === "marks" ||
+    stage === "seal" ||
+    stage === "letter" ||
+    stage === "figures" ||
+    stage === "close"
+  );
+}
+
+/**
+ * Whether the Ghost is unmounted in a Stage, so the Content_Column can lift its
+ * cap (spec 08 design.md, "The reveal layout after the Ghost leaves").
+ */
+export function afterGhost(stage: Stage): boolean {
+  return stage === "letter" || stage === "figures" || stage === "close";
+}
+
+/**
+ * Whether the focus effect must rescue focus to the Figures_Heading. The only
+ * case is a removed focus: the element was taken away in the same commit, so
+ * `document.activeElement` is `body`, and the target is `none`, which would
+ * otherwise leave focus nowhere (spec 08 design.md, `focusTargetFor` notes).
+ */
+export function shouldRescueFocus(
+  activeIsBody: boolean,
+  target: FocusTarget,
+): boolean {
+  return activeIsBody && target.kind === "none";
+}

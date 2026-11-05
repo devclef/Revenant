@@ -129,3 +129,28 @@ describe("R21.4: Scene animations change only transform and opacity", () => {
     expect(names).toEqual(expect.arrayContaining(["rise", "bob", "shake", "shakeSoil", "ghostLeave", "ghostFade"]));
   });
 });
+
+describe("R8.3: the Hero settle is opacity only, behind the motion gate", () => {
+  const css = sceneSources()
+    .filter((s) => s.name.endsWith(".css"))
+    .map((s) => s.text)
+    .join("\n");
+
+  it("defines heroSettle with opacity keyframes only", () => {
+    const block = keyframeBlocks(css).find((b) => b.name === "heroSettle");
+    expect(block, "heroSettle keyframes must exist").toBeDefined();
+    const props = declaredProperties(block?.body ?? "");
+    for (const prop of props) {
+      expect(ALLOWED_PROPERTIES.has(prop), `heroSettle animates "${prop}" (R8.3)`).toBe(true);
+    }
+    expect(props).toEqual(["opacity", "opacity"]);
+  });
+
+  it("sets heroSettle only inside the full-motion, no-preference gate", () => {
+    const gate = css.match(/@media \(prefers-reduced-motion: no-preference\) \{[\s\S]*?\n\}/g) ?? [];
+    const gated = gate.some(
+      (g) => g.includes('[data-ceremony-motion="full"]') && g.includes("animation: heroSettle"),
+    );
+    expect(gated, "heroSettle must sit behind the full-motion gate (R8.4)").toBe(true);
+  });
+});
