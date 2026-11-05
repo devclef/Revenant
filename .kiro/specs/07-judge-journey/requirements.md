@@ -494,7 +494,7 @@ Accepted by the owner on 2 November 2026. These spec 03 and spec 05 rules are re
 
 **User story:** As a judge on a mid-range phone, I want the scene to start fast and stay smooth.
 
-1. WHEN `scripts/check-js-budget.mjs` runs after `npm run build`, THE gzipped first-load JavaScript it reports for each route SHALL be at or under these limits, where 1 kB = 1,000 bytes: `/` 130 kB, `/demo` 130 kB, `/demo/personas/[key]` 190 kB, `/demo/live` 190 kB, `/l/[id]` 190 kB.
+1. WHEN `scripts/check-js-budget.mjs` runs after `npm run build`, THE gzipped first-load JavaScript it reports for each route SHALL be at or under these limits, where 1 kB = 1,000 bytes: `/` 160 kB, `/demo` 160 kB, `/demo/personas/[key]` 260 kB, `/demo/live` 260 kB, `/l/[id]` 260 kB. These limits were raised for the hackathon build and the Next 16 bump (PR #181); on Next 16 the script reads the route chunk lists from `.next/server/app`.
 2. WHEN a task's PR is opened or updated, ITS description SHALL state the value from criterion 1 for each of the five routes, in kB as `scripts/check-js-budget.mjs` reports it after `npm run build` on the PR's head commit.
 3. WHEN `/`, `/demo` or `/demo/personas/[key]` loads, THE largest contentful paint element SHALL be the page's headline text. That headline SHALL be in the server-rendered HTML. It SHALL NOT be an image, a canvas or an SVG, and it SHALL NOT wait for client JavaScript or texture files before it renders.
 4. THE CSS animations, CSS transitions and Web Animations API animations on every page in this spec SHALL change only the `transform` and `opacity` properties. The only exception SHALL be the pixels the Soil_Canvas draws inside its own canvas.
