@@ -76,7 +76,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
 
 ### Group 1: reveal fixes and layout checks
 
-- [ ] 1. Focus after "See the numbers", the reveal layout and the Hero after the First_Step
+- [x] 1. Focus after "See the numbers", the reveal layout and the Hero after the First_Step
   - Agent: `frontend-dev` · Depends on: none · Estimated size: ~1,300 changed lines
   - Before this task: `main` with spec 07 complete. Owner_Patch a (`tools/qa/layout-check.mjs`) is already on `main`, so the N1, W1, X1 and R1 checks exist when tasks 1 to 3 are QA'd.
   - Scope: `src/components/ceremony/stages.ts`, `src/components/ceremony/CeremonyRoot.tsx`, `src/components/ceremony/constants.ts`, `src/components/ceremony/constants-css.test.ts`, `src/components/ceremony/scene/scene.module.css`, `src/components/ceremony/letter/LetterBlock.tsx`, `src/components/ceremony/letter/LetterBlock.module.css`, `src/components/reveal/Reveal.tsx`, `src/components/reveal/FiguresThenNow.tsx` (the `data-figures-heading` attribute only), `src/components/reveal/reveal.module.css`, `src/components/ceremony/scene/animation-scan.test.ts` (additions only), and the `*.test.ts(x)` for each file above, including `src/components/ceremony/CeremonyRoot.test.tsx` and `src/components/ceremony/stages.test.ts`
