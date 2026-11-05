@@ -43,6 +43,15 @@ if [[ -f package.json ]]; then
       echo "(no '$s' script yet; skipped)"
     fi
   done
+  # next build rewrites next-env.d.ts when a Next upgrade changes its template.
+  # A stale copy on main makes every agent's build dirty a platform-dev file,
+  # which then fails the policy check on unrelated PRs. Catch it in CI instead.
+  if [[ -n "${CI:-}" ]] && [[ -f next-env.d.ts ]] && ! git diff --quiet -- next-env.d.ts 2>/dev/null; then
+    step "next-env.d.ts is up to date"
+    git --no-pager diff -- next-env.d.ts >&2
+    echo "next build rewrote next-env.d.ts. Commit the regenerated file." >&2
+    exit 1
+  fi
   if [[ -f scripts/check-js-budget.mjs ]]; then
     step "JS budget"
     node scripts/check-js-budget.mjs
