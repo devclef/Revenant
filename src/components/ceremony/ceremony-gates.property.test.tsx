@@ -28,6 +28,7 @@ import fc from "fast-check";
 
 import type { RecallRecordV1, Draft } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
+import { formatPeriod } from "@/lib/figures";
 import { CEREMONY_COPY } from "./copy";
 import { planSealBreak } from "./seal/SealBreak";
 import type { FlowState, Opened } from "../reveal/opening-machine";
@@ -362,7 +363,7 @@ describe("Property 20: Calm_Mode starts no animation (R11.2, R11.3)", () => {
           expect(html).not.toContain('data-ceremony="figures"');
           // The final state's labels and numbers are all on the page.
           expect(html).toContain("3.412");
-          expect(html).toContain("July 2024");
+          expect(html).toContain(formatPeriod("2024-07", "U.S. city average"));
         },
       ),
       { numRuns: 100 },

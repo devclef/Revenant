@@ -42,6 +42,7 @@ import fc from "fast-check";
 import type { RecallRecordV1, Draft } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
+import { formatPeriod } from "@/lib/figures";
 import {
   INITIAL_STATE,
   reduce,
@@ -97,7 +98,7 @@ const PAYLOAD = {
       value: "3.412",
       unit: "USD per gallon",
       region: "U.S. city average",
-      // Chosen so the figure's period ("July 2024") never collides with the
+      // Chosen so the figure's period (2024-07) never collides with the
       // seal date ("1 October 2024") or opening date ("5 November 2024"), so the
       // stage-3 period assertion below distinguishes the figure stage cleanly.
       period: "2024-07",
@@ -149,8 +150,8 @@ const SEALED_PAYLOAD_STRINGS = [
 
 /**
  * The figure strings that DO render verbatim in the stage-3 markup. The period
- * is omitted on purpose: `FigureLine` formats "2024-07" to "July 2024"
- * (format-change.ts `formatPeriod`), so the raw period never appears anywhere.
+ * is omitted on purpose: `FigureLine` formats "2024-07" with `formatPeriod`
+ * (from "@/lib/figures"), so the raw period never appears anywhere.
  * Its formatted form is asserted via STAGE3_FIGURE_RENDERED instead.
  */
 const STAGE3_VERBATIM_STRINGS = [
@@ -160,8 +161,8 @@ const STAGE3_VERBATIM_STRINGS = [
   "https://www.eia.gov/fixture",
 ] as const;
 
-/** The sealed period as stage 3 renders it ("2024-07" -> "July 2024"). */
-const STAGE3_FIGURE_RENDERED = "July 2024";
+/** The sealed period as stage 3 renders it, via the same `formatPeriod` FigureLine uses. */
+const STAGE3_FIGURE_RENDERED = formatPeriod("2024-07", "U.S. city average");
 
 const QUESTION_TEXTS = QUESTIONS.map((q) => q.text);
 
@@ -617,7 +618,7 @@ describe("Property 17: views never render letter content before the reveal", () 
     // The figure value, source, series and url belong to reveal stage 3
     // (FiguresThenNow): they appear only in a reveal at stage 3 and nowhere
     // earlier. The raw period "2024-07" is never shown even at stage 3, because
-    // FigureLine reformats it to "July 2024"; the formatted form is asserted at
+    // FigureLine reformats it with formatPeriod; the formatted form is asserted at
     // stage 3 and the raw form is asserted absent everywhere.
     fc.assert(
       fc.property(
