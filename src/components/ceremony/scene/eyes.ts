@@ -5,12 +5,10 @@
 // Nothing here touches the DOM, so the rule is testable without a browser.
 
 import { EYE_FOLLOW_RADIUS_PX, EYE_MAX_X, EYE_MAX_Y } from "../constants";
+import type { EyeOffset } from "./ghost-geometry";
 
 /** A point in CSS pixels, in the viewport's coordinate space. */
 export type EyePoint = { x: number; y: number };
-
-/** The eyes' offset in SVG user units (the Ghost's 200 x 240 viewBox). */
-export type EyeOffset = { dx: number; dy: number };
 
 /**
  * The eyes' offset for a pointer at `pointer`, with the eyes centred at
