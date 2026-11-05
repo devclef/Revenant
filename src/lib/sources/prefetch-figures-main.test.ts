@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/ban-ts-comment -- @ts-nocheck is needed here, see the next line */
+// @ts-nocheck: the Docker builder stage does not copy scripts/prefetch-*, so the import below is unresolved there (R6.7). Vitest still runs this file.
 // Tests for the Prefetch_Script entry (spec 04-real-figures, task 5; design.md
 // "Script entry"). They drive `main(deps)` with every dependency injected —
 // read, write, rename, exists, exit, log, errorLog, the clock, and a stub

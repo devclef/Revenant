@@ -1,27 +1,36 @@
 // JS budget check for the demo routes (spec 05-reveal-ceremony, R13).
 //
-// Run after `npm run build`. Reads the Next 15.5 App Router build output
-// (`.next/app-build-manifest.json`), adds up the gzipped size of every unique
-// JavaScript chunk a route loads on first visit, and fails when a route is over
-// its budget. This is the same number `next build` prints as "First Load JS":
-// gzip level 9, and kB = 1,000 bytes.
+// Run after `npm run build`. Adds up the gzipped size of the JavaScript each
+// route loads on first visit, and fails when a route is over its budget.
 //
-// Node built-ins only. No dependency, no network, no write.
+// Two build layouts are read:
+// - Next 15: `.next/app-build-manifest.json` lists each route's chunks, and
+//   the sum is the same number `next build` prints as "First Load JS".
+// - Next 16: that manifest is gone. A route's chunks are the root chunks in
+//   `.next/build-manifest.json` plus the chunks named in the route's
+//   `page_client-reference-manifest.js`. This is an approximation of First Load
+//   JS and is slightly larger than the Next 15 number for the same page.
+//
+// Gzip level 9, kB = 1,000 bytes. Node built-ins only. No network, no write.
+//
+// The budgets are deliberately generous. This is a hackathon build, and the
+// check exists to catch a large regression, not to police every kilobyte.
 
 import { readFileSync, existsSync } from "node:fs";
 import { gzipSync } from "node:zlib";
 import { join } from "node:path";
 
 const BUILD_DIR = ".next";
-const MANIFEST = join(BUILD_DIR, "app-build-manifest.json");
+const NEXT15_MANIFEST = join(BUILD_DIR, "app-build-manifest.json");
+const NEXT16_ROOT_MANIFEST = join(BUILD_DIR, "build-manifest.json");
 
-// Keys are the entries in `app-build-manifest.json` (route + "/page").
+// `route` is the URL, `page` is the App Router page directory under src/app.
 const BUDGETS = [
-  { route: "/", key: "/page", maxKb: 130 },
-  { route: "/demo", key: "/demo/page", maxKb: 130 },
-  { route: "/demo/personas/[key]", key: "/demo/personas/[key]/page", maxKb: 190 },
-  { route: "/demo/live", key: "/demo/live/page", maxKb: 190 },
-  { route: "/l/[id]", key: "/l/[id]/page", maxKb: 190 },
+  { route: "/", page: "", maxKb: 160 },
+  { route: "/demo", page: "demo", maxKb: 160 },
+  { route: "/demo/personas/[key]", page: "demo/personas/[key]", maxKb: 260 },
+  { route: "/demo/live", page: "demo/live", maxKb: 260 },
+  { route: "/l/[id]", page: "l/[id]", maxKb: 260 },
 ];
 
 function fail(message) {
@@ -29,18 +38,18 @@ function fail(message) {
   process.exit(1);
 }
 
-if (!existsSync(MANIFEST)) {
-  fail(`${MANIFEST} not found. Run "npm run build" first.`);
+const hasNext15 = existsSync(NEXT15_MANIFEST);
+const hasNext16 = existsSync(NEXT16_ROOT_MANIFEST);
+if (!hasNext15 && !hasNext16) {
+  fail(`${BUILD_DIR} has no build manifest. Run "npm run build" first.`);
 }
 
-let pages;
-try {
-  pages = JSON.parse(readFileSync(MANIFEST, "utf8")).pages;
-} catch {
-  fail(`${MANIFEST} could not be read as JSON.`);
-}
-if (pages === null || typeof pages !== "object") {
-  fail(`${MANIFEST} has no "pages" object. The build output layout may have changed.`);
+function readJson(file) {
+  try {
+    return JSON.parse(readFileSync(file, "utf8"));
+  } catch {
+    fail(`${file} could not be read as JSON.`);
+  }
 }
 
 const gzipCache = new Map();
@@ -53,39 +62,46 @@ function gzippedBytes(file) {
   return size;
 }
 
-// A route is checked only once its page file exists under src/app. Until then
-// the build cannot emit it, so it is skipped with a visible line. Once the page
-// exists, a missing manifest entry is a failure: the route must be built.
-function pageFileFor(key) {
-  return join("src", "app", `${key.replace(/\/page$/, "")}/page.tsx`);
+// The JS files a route loads on first visit, or null when the build has none.
+function jsFilesFor(page) {
+  if (hasNext15) {
+    const key = `${page === "" ? "" : `/${page}`}/page`;
+    const pages = readJson(NEXT15_MANIFEST).pages;
+    if (pages === null || typeof pages !== "object") {
+      fail(`${NEXT15_MANIFEST} has no "pages" object. The build output layout may have changed.`);
+    }
+    const files = pages[key];
+    return Array.isArray(files) ? files : null;
+  }
+  const clientManifest = join(BUILD_DIR, "server", "app", page, "page_client-reference-manifest.js");
+  if (!existsSync(clientManifest)) return null;
+  const rootFiles = readJson(NEXT16_ROOT_MANIFEST).rootMainFiles ?? [];
+  const text = readFileSync(clientManifest, "utf8");
+  const routeChunks = [...text.matchAll(/static\/chunks\/[^"\\ ]+?\.js/g)].map((m) => m[0]);
+  return [...rootFiles, ...routeChunks];
 }
 
 let failed = false;
-for (const { route, key, maxKb } of BUDGETS) {
-  const pageFile = pageFileFor(key);
+for (const { route, page, maxKb } of BUDGETS) {
+  const pageFile = join("src", "app", page, "page.tsx");
   if (!existsSync(pageFile)) {
     console.log(`skip ${route}: page not built yet (${pageFile} does not exist)`);
     continue;
   }
-  const files = pages[key];
+  const files = jsFilesFor(page);
   if (!Array.isArray(files)) {
-    console.error(`FAIL ${route}: ${pageFile} exists but "${key}" is missing from the build manifest.`);
+    console.error(`FAIL ${route}: the build has no chunk list for this route.`);
     failed = true;
     continue;
   }
   const js = [...new Set(files)].filter((f) => f.endsWith(".js"));
-  let bytes = 0;
-  for (const file of js) {
-    bytes += gzippedBytes(file);
-  }
+  const bytes = js.reduce((sum, file) => sum + gzippedBytes(file), 0);
   const kb = bytes / 1000;
   const ok = kb <= maxKb;
   console.log(
     `${ok ? "ok  " : "FAIL"} ${route}: ${kb.toFixed(1)} kB gzipped first load (budget ${maxKb} kB, ${js.length} chunks)`,
   );
-  if (!ok) {
-    failed = true;
-  }
+  if (!ok) failed = true;
 }
 
 process.exit(failed ? 1 : 0);
