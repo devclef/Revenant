@@ -150,7 +150,7 @@
   }
 
   .input {
-    font-size: 1.75rem;
+    font-size: 1.5rem;
   }
 
   .cta {
@@ -163,13 +163,19 @@
   }
 
   .fieldset {
-    padding: 0.5rem 1rem;
+    padding: 0.3rem 0.75rem;
+    margin-bottom: 0.5rem;
   }
 
-  /* At 360 px the answer row may wrap, so the Next control stays inside the
-     card's padding instead of pushing past the right edge (R11.15). */
+  .body {
+    gap: 0.35rem;
+  }
+
+  /* Below 900 px the typed number and Next stay on one row (R11.13). A wrapped
+     Next control would fall below 640 px at 360 x 640 (R11.15). The number
+     shrinks to fit (min-width 0), and the Next label stays whole. */
   .answerRow {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
   }
 
   .noAnswer {
@@ -177,7 +183,10 @@
     flex-wrap: wrap;
   }
 
+  /* Question text is a body heading, smaller than the intact headline at every
+     width (R8.1). Three lines at 360 px is the most the card can spare. */
   .qTitle {
-    font-size: 1.15rem;
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
   }
 }

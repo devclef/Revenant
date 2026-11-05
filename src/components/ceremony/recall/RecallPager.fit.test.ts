@@ -66,8 +66,24 @@ describe("Recall_Pager card fits above the fold at 1280 x 800", () => {
 });
 
 describe("Recall_Pager card fits inside its padding at 360 x 640", () => {
-  it("lets the answer row wrap on narrow screens", () => {
-    expect(narrowRuleBody(".answerRow")).toMatch(/flex-wrap:\s*wrap/);
+  it("keeps the typed number and Next on one row on narrow screens (R11.13)", () => {
+    // A wrapped Next control lands at 660 px and below 640 px at 360 x 640.
+    expect(narrowRuleBody(".answerRow")).toMatch(/flex-wrap:\s*nowrap/);
+  });
+
+  it("shrinks the question, fieldset and typed number below 900 px", () => {
+    expect(narrowRuleBody(".qTitle")).toMatch(/font-size:\s*1rem/);
+    expect(narrowRuleBody(".qTitle")).toMatch(/margin-bottom:\s*0\.25rem/);
+    expect(narrowRuleBody(".fieldset")).toMatch(/padding:\s*0\.3rem 0\.75rem/);
+    expect(narrowRuleBody(".input")).toMatch(/font-size:\s*1\.5rem/);
+  });
+
+  it("keeps the narrow question heading smaller than the intact desktop size", () => {
+    // The desktop question clamps to at least 1.3rem, so the narrow 1rem stays below it.
+    const desktop = ruleBody(".qTitle").match(/font-size:\s*clamp\(([\d.]+)rem/);
+    expect(desktop).not.toBeNull();
+    const narrow = Number(narrowRuleBody(".qTitle").match(/font-size:\s*([\d.]+)rem/)?.[1]);
+    expect(narrow).toBeLessThan(Number(desktop![1]));
   });
 
   it("keeps the 'No answer yet' label inside the card width", () => {
