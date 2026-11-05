@@ -30,7 +30,7 @@
 
 import type { CSSProperties, ReactElement } from "react";
 
-import { formatCalendarDate, formatUtcDate } from "@/components/demo/dates";
+import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-date";
 
 import { CEREMONY_COPY } from "../copy";
 import { ENVELOPE_TURN_AT_MS, ENVELOPE_TURN_MS } from "../constants";
@@ -305,7 +305,7 @@ export function Envelope({
       ? undefined
       : CEREMONY_COPY.envelopeOpens.replace(
           "{date}",
-          formatUtcDate(persona.opens_at),
+          formatLetterDate(persona.opens_at, { kind: "utc" }),
         );
   const demoNote =
     persona !== undefined && persona.demo

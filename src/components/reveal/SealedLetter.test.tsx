@@ -6,7 +6,10 @@ import { describe, expect, it } from "vitest";
 
 import { SealedLetter } from "./SealedLetter";
 import { REVEAL_COPY } from "./copy";
-import { formatCalendarDate, formatUtcDate } from "@/components/demo/dates";
+import {
+  formatCalendarDate,
+  formatLetterDate,
+} from "@/components/ui/letter-date";
 import type { Opened } from "./opening-machine";
 import type { PayloadV1 } from "@/lib/seal-format";
 
@@ -155,11 +158,13 @@ describe("SealedLetter markup", () => {
     expect(html).toContain(
       REVEAL_COPY.sealedForDemoOn.replace(
         "{sealedAt}",
-        formatUtcDate(OPENED.header.sealedAt),
+        formatLetterDate(OPENED.header.sealedAt, { kind: "utc" }),
       ),
     );
     // The seal date comes from the header, never the opening date.
-    expect(html).not.toContain(formatUtcDate(OPENED.header.opensAt));
+    expect(html).not.toContain(
+      formatLetterDate(OPENED.header.opensAt, { kind: "utc" }),
+    );
   });
 
   it("adds no commentary beyond the four stage-2 elements", () => {

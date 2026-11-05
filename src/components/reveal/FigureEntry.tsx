@@ -6,7 +6,7 @@ import {
   isFixtureFigure,
   rescaleForDisplay,
 } from "@/lib/figures";
-import { formatUtcDate } from "@/components/demo/dates";
+import { formatLetterDate } from "@/components/ui/letter-date";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { FIG_VALUE_SIZE } from "@/components/ceremony/constants";
 import { NumberLine } from "@/components/ceremony/figures/NumberLine";
@@ -103,11 +103,14 @@ export function FigureEntry({
     ? REVEAL_COPY.labelFixtureData
     : REVEAL_COPY.labelHistoricalRecord.replace(
         "{date}",
-        formatUtcDate(then.retrieved_at),
+        formatLetterDate(then.retrieved_at, { kind: "utc" }),
       );
   const nowLabel = nowFixture
     ? REVEAL_COPY.labelFixtureData
-    : REVEAL_COPY.labelRetrieved.replace("{date}", formatUtcDate(now.retrieved_at));
+    : REVEAL_COPY.labelRetrieved.replace(
+        "{date}",
+        formatLetterDate(now.retrieved_at, { kind: "utc" }),
+      );
 
   const rescaledNote =
     rescale === undefined

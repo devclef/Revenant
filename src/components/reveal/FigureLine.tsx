@@ -6,7 +6,7 @@ import {
   isFixtureFigure,
   rescaleForDisplay,
 } from "@/lib/figures";
-import { formatUtcDate } from "@/components/demo/dates";
+import { formatLetterDate } from "@/components/ui/letter-date";
 import { FIG_VALUE_SIZE } from "@/components/ceremony/constants";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
@@ -24,9 +24,10 @@ import styles from "./reveal.module.css";
  * - A non-fixture "then" figure shows "historical record, retrieved {date}"
  *   (R13.2); a non-fixture "now" figure shows "retrieved {date}".
  *
- * `{date}` is `retrieved_at` formatted with `formatUtcDate` into the en-GB
- * long form (e.g. "30 October 2024"). The formatter is UTC-pinned, so the
- * date never shifts under the viewer's timezone (data-integrity.md).
+ * `{date}` is `retrieved_at` formatted with `formatLetterDate` in UTC into the
+ * en-GB long form (e.g. "30 October 2024"). A `retrieved_at` is an instant of
+ * Revenant's fetch, so it always uses UTC and never shifts under the viewer's
+ * timezone (data-integrity.md).
  *
  * When the series carries a `display_rescale`, the value is shown rescaled
  * (exact, display-only) in the rescaled unit, with the plain note saying what
@@ -63,9 +64,9 @@ export function FigureLine({ figure, role, displayRescale }: FigureLineProps) {
   if (fixture) {
     label = REVEAL_COPY.labelFixtureData;
   } else {
-    // retrieved_at is a UTC instant; formatUtcDate renders it as the en-GB
-    // long form (e.g. "30 October 2024"), UTC-pinned so it never shifts.
-    const retrievedDate = formatUtcDate(figure.retrieved_at);
+    // retrieved_at is a UTC instant; formatLetterDate in UTC renders it as the
+    // en-GB long form (e.g. "30 October 2024"), so it never shifts.
+    const retrievedDate = formatLetterDate(figure.retrieved_at, { kind: "utc" });
     label =
       role === "then"
         ? REVEAL_COPY.labelHistoricalRecord.replace("{date}", retrievedDate)

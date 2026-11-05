@@ -5,7 +5,7 @@ import fc from "fast-check";
 
 import { FigureLine } from "./FigureLine";
 import { REVEAL_COPY } from "./copy";
-import { formatUtcDate } from "@/components/demo/dates";
+import { formatLetterDate } from "@/components/ui/letter-date";
 import {
   formatValue,
   formatPeriod,
@@ -136,7 +136,7 @@ describe("FigureLine markup", () => {
     const html = render(OFFICIAL_THEN, "then");
     const expected = REVEAL_COPY.labelHistoricalRecord.replace(
       "{date}",
-      formatUtcDate(OFFICIAL_THEN.retrieved_at),
+      formatLetterDate(OFFICIAL_THEN.retrieved_at, { kind: "utc" }),
     );
     expect(html).toContain(expected);
     expect(html).toContain("30 October 2024");
@@ -148,7 +148,7 @@ describe("FigureLine markup", () => {
     const html = render(OFFICIAL_NOW, "now");
     const expected = REVEAL_COPY.labelRetrieved.replace(
       "{date}",
-      formatUtcDate(OFFICIAL_NOW.retrieved_at),
+      formatLetterDate(OFFICIAL_NOW.retrieved_at, { kind: "utc" }),
     );
     expect(html).toContain(expected);
     expect(html).toContain("30 October 2026");

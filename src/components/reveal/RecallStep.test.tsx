@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { RecallStep } from "./RecallStep";
 import { REVEAL_COPY } from "./copy";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
-import { formatCalendarDate } from "@/components/demo/dates";
+import { formatCalendarDate } from "@/components/ui/letter-date";
 import { RecallPager } from "@/components/ceremony/recall/RecallPager";
 import type { Opened } from "./opening-machine";
 import type { Draft } from "@/lib/recall";
