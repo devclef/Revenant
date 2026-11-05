@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "next dev",
-    "build": "next build && node scripts/seal-personas.build.mjs",
+    "build": "next build && node scripts/seal-personas.build.mjs && node scripts/fetch-figures.build.mjs",
     "start": "next start",
     "lint": "eslint . --ignore-pattern \"dist/**\"",
     "typecheck": "tsc --noEmit",
@@ -14,7 +14,9 @@
     "db:migrate": "node scripts/migrate.mjs",
     "seal-personas": "node dist/seal-personas.mjs",
     "layout-check": "node tools/qa/layout-check.mjs",
-    "prefetch": "node scripts/prefetch-figures.mjs"
+    "prefetch": "node scripts/prefetch-figures.mjs",
+    "fetch-figures": "node scripts/fetch-figures.mjs",
+    "freshness-check": "node scripts/fetch-figures-freshness.mjs"
   },
   "dependencies": {
     "drizzle-orm": "0.45.4",
