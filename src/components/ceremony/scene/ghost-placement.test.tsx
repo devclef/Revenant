@@ -18,7 +18,7 @@ import { SkipProvider } from "../skip";
 import { StageContext } from "../stage-context";
 import type { Stage } from "../stages";
 import { ghostHanded } from "../stages";
-import { Ghost } from "./Ghost";
+import { PersonaGhost } from "./PersonaGhost";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const css = readFileSync(join(here, "scene.module.css"), "utf8");
@@ -36,7 +36,7 @@ function ghostAt(stage: Stage): string {
         createElement(
           LocalViewProvider,
           null,
-          createElement(StageContext.Provider, { value: stage }, createElement(Ghost)),
+          createElement(StageContext.Provider, { value: stage }, createElement(PersonaGhost)),
         ),
       ),
     ),

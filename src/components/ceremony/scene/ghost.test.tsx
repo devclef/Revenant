@@ -11,12 +11,18 @@ import { LocalViewProvider } from "../local-view";
 import { MotionProvider } from "../motion";
 import { SkipProvider } from "../skip";
 import { Ghost } from "./Ghost";
+import { PersonaGhost } from "./PersonaGhost";
 import { findRise } from "./useEmergence";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const css = readFileSync(join(here, "scene.module.css"), "utf8");
+const ghostSource = readFileSync(join(here, "Ghost.tsx"), "utf8");
 
-const renderGhost = () =>
+/** The drawing alone. Ghost is hook-free, so it needs no providers. */
+const renderGhost = () => renderToStaticMarkup(createElement(Ghost));
+
+/** The persona Ghost, with the providers its hooks read. */
+const renderPersonaGhost = () =>
   renderToStaticMarkup(
     createElement(
       MotionProvider,
@@ -24,7 +30,7 @@ const renderGhost = () =>
       createElement(
         SkipProvider,
         null,
-        createElement(LocalViewProvider, null, createElement(Ghost)),
+        createElement(LocalViewProvider, null, createElement(PersonaGhost)),
       ),
     ),
   );
@@ -50,7 +56,51 @@ describe("Ghost markup", () => {
     expect(html.match(/<ellipse/g)?.length).toBe(2);
     expect(html).toContain("translate(0px, 0px)");
   });
+
+  it("renders the data-ghost-* attributes on the pit, rise and bob layers", () => {
+    const html = renderGhost();
+    expect(html).toContain("data-ghost-pit");
+    expect(html).toContain("data-ghost-rise");
+    expect(html).toContain("data-ghost-bob");
+  });
+
+  it("moves the eyes by the offset it is given", () => {
+    const html = renderToStaticMarkup(createElement(Ghost, { eyes: { dx: 3, dy: -2 } }));
+    expect(html).toContain("translate(3px, -2px)");
+  });
 });
+
+describe("Ghost is a server-safe drawing (split from PersonaGhost)", () => {
+  it("has no 'use client' directive", () => {
+    expect(ghostSource).not.toMatch(/^\s*["']use client["']/m);
+  });
+
+  it("calls no hooks", () => {
+    // A hook call is `use` followed by a capital letter and an open paren.
+    expect(ghostSource).not.toMatch(/\buse[A-Z]\w*\s*\(/);
+  });
+
+  it("imports neither eyes.ts nor PersonaGhost.tsx", () => {
+    expect(ghostSource).not.toMatch(/from\s+["'][^"']*\/eyes["']/);
+    expect(ghostSource).not.toMatch(/from\s+["'][^"']*PersonaGhost["']/);
+  });
+});
+
+describe("PersonaGhost markup and Emergence", () => {
+  it("renders the data-ghost-* attributes through the persona wrapper", () => {
+    const html = renderPersonaGhost();
+    expect(html).toContain("data-ghost-pit");
+    expect(html).toContain("data-ghost-rise");
+    expect(html).toContain("data-ghost-bob");
+    expect(html).toContain("data-ghost-box");
+  });
+
+  it("keeps the Emergence hook's rise lookup on the rise element", () => {
+    const rise = { playState: "running", animationName: "rise" } as unknown as Animation;
+    expect(findRise([rise])).toBe(rise);
+  });
+});
+
 
 describe("Ghost box size (CSS)", () => {
   it("uses GHOST_WIDE at or above 900 px and GHOST_NARROW below, at 1.2 height ratio", () => {

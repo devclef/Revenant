@@ -69,6 +69,10 @@ function SceneFrame(props: SceneShellProps) {
             <SceneHeadline />
             {props.children}
           </div>
+        ) : props.variant === "landing" ? (
+          <div className={styles.landingColumn} data-landing-column>
+            {props.children}
+          </div>
         ) : (
           props.children
         )}
