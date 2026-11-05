@@ -91,7 +91,7 @@ describe("Recall_Pager card fits inside its padding at 360 x 640", () => {
   it("lets the typed number shrink inside the nowrap row", () => {
     // The input is the flex item that absorbs the width, so it needs min-width 0.
     expect(ruleBody(".input")).toMatch(/min-width:\s*0/);
-    expect(ruleBody(".input")).toMatch(/width:\s*4\.2ch/);
+    expect(ruleBody(".input")).toMatch(/width:\s*6\.5ch/);
     expect(ruleBody(".cta")).toMatch(/white-space:\s*nowrap/);
   });
 
@@ -126,5 +126,23 @@ describe("Recall_Pager card fits inside its padding at 360 x 640", () => {
     // left edge at 36 px. Stretching keeps the readout inside the card.
     expect(ruleBody(".body")).toMatch(/align-items:\s*stretch/);
     expect(ruleBody(".body")).not.toMatch(/align-items:\s*flex-start/);
+  });
+});
+
+describe("Recall_Pager number field shows a typed value such as 1.585 at 360 x 640", () => {
+  it("gives the field at least the width of a five-character value", () => {
+    // "1.585" is five characters. The field width is in ch (the width of "0" at its
+    // font size), so the width must be at least 5ch plus the 0.4rem padding on each side.
+    const width = ruleBody(".input").match(/width:\s*([\d.]+)ch/);
+    expect(width).not.toBeNull();
+    expect(Number(width![1])).toBeGreaterThanOrEqual(5);
+  });
+
+  it("does not shrink the field below its base width at narrow sizes", () => {
+    expect(narrowRuleBody(".input")).not.toMatch(/\bwidth:/);
+  });
+
+  it("keeps the read-as line and the parser source untouched by this rule", () => {
+    expect(source).toContain('className={styles.parsed}');
   });
 });
