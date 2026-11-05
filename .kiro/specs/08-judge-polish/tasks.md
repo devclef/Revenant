@@ -377,7 +377,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
 
 ### Group 4: daily fetch and freshness alert
 
-- [ ] 14. The Figures_API in file mode, fetch status, a fallback-ready prefetch, and the local now pick
+- [x] 14. The Figures_API in file mode, fetch status, a fallback-ready prefetch, and the local now pick
   - Agent: `data-dev` · Depends on: 6 · Estimated size: ~900 changed lines
   - Before this task: task 6 is on `main`. This task lands first in group 4 so the 16 November fallback needs no code.
   - Scope: `src/app/api/figures/route.ts` (new), `src/lib/figures/now.ts` (new), `src/lib/figures/real/fetch-status.json` (new), `src/lib/figures/index.ts` (exports), `src/lib/sources/prefetch.ts`, `src/lib/sources/refresh.ts`, `src/lib/sources/fetcher.ts` (optional `timeoutMs`), `scripts/prefetch-figures-main.ts`, `scripts/prefetch-figures.mjs`, and the `*.test.ts` for each file above
