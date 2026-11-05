@@ -19,6 +19,7 @@
 import { CATALOGUE, loadFigureFile } from "@/lib/figures";
 import type { FigureV1 } from "@/lib/seal-format";
 
+import { validateFreshSeries } from "./validate";
 import type { SourceFigure } from "./types";
 
 // `loadFigureFile` is part of this module's documented `@/lib/figures` surface
@@ -129,6 +130,48 @@ export function formatReportLine(line: ReportLine): string {
 
 // --- Merge and serialise (implemented in tasks 3 and 4) ----------------------
 
+/** True when `a` was retrieved strictly later than `b` (string order of UTC time). */
+function retrievedAfter(a: FigureV1, b: FigureV1): boolean {
+  const at = a.kind === "official" ? a.retrieved_at : "";
+  const bt = b.kind === "official" ? b.retrieved_at : "";
+  return at > bt;
+}
+
+/**
+ * Build one official figure from the catalogue metric and a fresh series'
+ * download provenance. Used for new periods and for Revision_Rows alike.
+ */
+function officialFigure(
+  series: CatalogueSeriesLike,
+  period: string,
+  value: string,
+  freshSeries: FreshSeries,
+): FigureV1 {
+  return {
+    kind: "official",
+    metric_id: series.metric.id,
+    value,
+    unit: series.metric.unit,
+    region: series.metric.region,
+    period,
+    source: series.metric.source,
+    series_id: series.metric.series_id,
+    retrieved_at: freshSeries.downloadedAt,
+    source_url: freshSeries.sourceUrl,
+  };
+}
+
+/** The part of a Catalogue entry {@link officialFigure} reads. */
+type CatalogueSeriesLike = {
+  metric: {
+    id: string;
+    unit: string;
+    region: string;
+    source: string;
+    series_id: string;
+  };
+};
+
 /**
  * Merge freshly-downloaded series into the existing figures, append-only, with
  * backfill refusal (design.md "Append-only merge with backfill refusal", D5).
@@ -161,20 +204,29 @@ export function mergeRefresh(
     `${metricId}|${period}`;
 
   // Index existing figures by key so revision and missing-from-source checks
-  // are O(1), and keep them grouped per metric for the per-series pass.
-  const existingByKey = new Map<string, FigureV1>();
+  // are O(1), and keep them grouped per metric for the per-series pass. A
+  // period may hold several rows (Revision_Rows); the newest-`retrieved_at` row
+  // is the one a fresh value is compared with.
+  const newestByKey = new Map<string, FigureV1>();
   const existingByMetric = new Map<string, FigureV1[]>();
   for (const fig of existing) {
-    existingByKey.set(key(fig.metric_id, fig.period), fig);
+    const k = key(fig.metric_id, fig.period);
+    const current = newestByKey.get(k);
+    if (current === undefined || retrievedAfter(fig, current)) {
+      newestByKey.set(k, fig);
+    }
     const group = existingByMetric.get(fig.metric_id);
     if (group) group.push(fig);
     else existingByMetric.set(fig.metric_id, [fig]);
   }
 
   // Index the fresh series by metric id. A catalogue series with no fresh
-  // series simply has no new points.
+  // series simply has no new points. A series that fails the shared per-series
+  // validation is left out entirely, so none of its points are stored (R20.6).
   const freshByMetric = new Map<string, FreshSeries>();
-  for (const series of fresh) freshByMetric.set(series.metricId, series);
+  for (const series of fresh) {
+    if (validateFreshSeries(series).ok) freshByMetric.set(series.metricId, series);
+  }
 
   const report: Report = {
     perSeries: [],
@@ -212,11 +264,12 @@ export function mergeRefresh(
     if (freshSeries) {
       for (const point of freshSeries.points) {
         freshPeriods.add(point.period);
-        const existingFig = existingByKey.get(key(metricId, point.period));
+        const existingFig = newestByKey.get(key(metricId, point.period));
 
         if (existingFig) {
-          // Present already: a revision only when the value differs. Keep the
-          // existing figure untouched either way.
+          // Present already: a changed value is appended as a Revision_Row with
+          // its own retrieved_at. Every stored row stays exactly as it was
+          // (R20.17). An equal value adds nothing.
           if (existingFig.value !== point.value) {
             report.revisions.push({
               metricId,
@@ -224,6 +277,9 @@ export function mergeRefresh(
               committed: existingFig.value,
               source: point.value,
             });
+            added.push(
+              officialFigure(series, point.period, point.value, freshSeries),
+            );
           }
           continue;
         }
@@ -238,18 +294,9 @@ export function mergeRefresh(
         // A genuinely new period at or after `latest` (or the first run, where
         // `latest` is none): add it as an official figure built from the
         // catalogue metric and the fresh series' download provenance.
-        added.push({
-          kind: "official",
-          metric_id: metricId,
-          value: point.value,
-          unit: series.metric.unit,
-          region: series.metric.region,
-          period: point.period,
-          source: series.metric.source,
-          series_id: series.metric.series_id,
-          retrieved_at: freshSeries.downloadedAt,
-          source_url: freshSeries.sourceUrl,
-        });
+        added.push(
+          officialFigure(series, point.period, point.value, freshSeries),
+        );
         seriesAddedCount += 1;
         if (seriesFirstAdded === null) seriesFirstAdded = point.period;
         seriesLastAdded = point.period;
@@ -260,7 +307,7 @@ export function mergeRefresh(
     // A period present in `existing` whose fresh point was a gap (never in
     // `freshSeries.points`) falls here, not under revision.
     for (const fig of existingGroup) {
-      if (!freshPeriods.has(fig.period)) {
+      if (freshSeries && !freshPeriods.has(fig.period)) {
         report.missingFromSource.push({ metricId, period: fig.period });
       }
     }
@@ -337,6 +384,11 @@ export function serialiseFigureFile(figures: readonly FigureV1[]): string {
     if (a.metric_id !== b.metric_id)
       return a.metric_id < b.metric_id ? -1 : 1;
     if (a.period !== b.period) return a.period < b.period ? -1 : 1;
+    // Revision_Rows share a period; the older retrieved_at sorts first, so the
+    // newest row is last (the order the loader and then-now rely on).
+    const at = a.kind === "official" ? a.retrieved_at : "";
+    const bt = b.kind === "official" ? b.retrieved_at : "";
+    if (at !== bt) return at < bt ? -1 : 1;
     return 0;
   });
 

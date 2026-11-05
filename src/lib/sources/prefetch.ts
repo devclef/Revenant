@@ -20,6 +20,7 @@ import type { FigureV1 } from "@/lib/seal-format";
 
 import { fetchEiaSeries } from "./eia";
 import type { EiaResult } from "./eia";
+import { SourceError } from "./errors";
 import { fetchBulletin } from "./oil-bulletin";
 import type { BulletinKey, BulletinResult } from "./oil-bulletin";
 import {
@@ -29,6 +30,11 @@ import {
   type Report,
 } from "./refresh";
 import type { AdapterDeps, Fetcher } from "./types";
+import { validateFreshSeries } from "./validate";
+
+// The per-series validation is shared with the Fetch_Job (spec 08, task 16).
+export { validateFreshSeries } from "./validate";
+export type { SeriesValidation } from "./validate";
 
 // --- Types -------------------------------------------------------------------
 
@@ -219,23 +225,18 @@ function parseExisting(existingJson: unknown | null): FigureV1[] {
  */
 function buildFresh(
   eiaResults: readonly EiaResult[],
-  bulletin: BulletinResult,
+  bulletin: BulletinResult | null,
 ): FreshSeries[] {
   const fresh: FreshSeries[] = [];
 
-  // Index the EIA downloads by series id. Every EIA_SERIES id is fetched by
-  // runPrefetch before this is called, so a miss is an internal wiring fault,
-  // not a data condition — it is never a PrefetchError kind.
+  // Index the EIA downloads by series id. A series whose download failed has no
+  // entry here; the caller already recorded it as failed, so it is skipped.
   const eiaBySeriesId = new Map<string, EiaResult>();
   for (const result of eiaResults) eiaBySeriesId.set(result.seriesId, result);
 
   for (const { metricId, seriesId } of EIA_SERIES) {
     const result = eiaBySeriesId.get(seriesId);
-    if (result === undefined) {
-      throw new Error(
-        `runPrefetch: no EIA download for series ${seriesId} (${metricId})`,
-      );
-    }
+    if (result === undefined) continue;
     fresh.push({
       metricId,
       points: result.result.points,
@@ -244,14 +245,17 @@ function buildFresh(
     });
   }
 
-  // Bulletin: one download carries both EU series, keyed by header key.
-  for (const { metricId, key } of BULLETIN_SERIES) {
-    fresh.push({
-      metricId,
-      points: bulletin.series[key].points,
-      downloadedAt: bulletin.downloadedAt,
-      sourceUrl: SOURCE_URL[metricId],
-    });
+  // Bulletin: one download carries both EU series, keyed by header key. A failed
+  // download (null) contributes nothing.
+  if (bulletin !== null) {
+    for (const { metricId, key } of BULLETIN_SERIES) {
+      fresh.push({
+        metricId,
+        points: bulletin.series[key].points,
+        downloadedAt: bulletin.downloadedAt,
+        sourceUrl: SOURCE_URL[metricId],
+      });
+    }
   }
 
   return fresh;
@@ -276,9 +280,16 @@ const COVERAGE_LATEST_START = "2023-06-07";
  * run found. The message states only the series id and the date; it makes no
  * judgement about any value (neutrality.md).
  */
-function checkCoverage(figures: readonly FigureV1[], report: Report): void {
+function checkCoverage(
+  figures: readonly FigureV1[],
+  report: Report,
+  failed: ReadonlySet<string>,
+): void {
   for (const series of CATALOGUE) {
     const metricId = series.metric.id;
+    // A series that failed this run is reported as failed; it is not a second,
+    // run-ending coverage error.
+    if (failed.has(metricId)) continue;
 
     let earliest: string | null = null;
     for (const fig of figures) {
@@ -302,6 +313,82 @@ function checkCoverage(figures: readonly FigureV1[], report: Report): void {
       );
     }
   }
+}
+
+// --- Run result and fetch status ---------------------------------------------
+
+/** One series that failed this run. `reason` is a fixed token, never a value. */
+export interface FailedSeries {
+  metricId: string;
+  reason: string;
+}
+
+/** What a run produced. Nothing here is written until the caller writes it. */
+export interface PrefetchOutcome {
+  /** The serialised figure file. */
+  text: string;
+  report: Report;
+  /** Series that failed this run. Their points were not stored. */
+  failed: FailedSeries[];
+  /** Catalogue ids of series that succeeded: new data or no new period. */
+  succeeded: string[];
+  /** Run start, UTC `YYYY-MM-DDTHH:MM:SSZ`. */
+  runStartedAt: string;
+}
+
+/** A UTC instant at whole-second precision, `YYYY-MM-DDTHH:MM:SSZ`. */
+function utcSecond(date: Date): string {
+  return date.toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
+/** The reason token for a failed download. Only a SourceError is a data-source failure. */
+function sourceReason(err: unknown): string {
+  if (err instanceof SourceError) return `source ${err.kind}`;
+  throw err;
+}
+
+/**
+ * Parse the committed `fetch-status.json` (`{ "<metric_id>": "<run start>" }`).
+ * Throws when the content is not an object of strings, so a corrupt status file
+ * stops the run before anything is written.
+ */
+export function parseFetchStatus(json: unknown): Record<string, string> {
+  if (typeof json !== "object" || json === null || Array.isArray(json)) {
+    throw new Error("fetch-status: content is not an object");
+  }
+  const status: Record<string, string> = {};
+  for (const [metricId, value] of Object.entries(json)) {
+    if (typeof value !== "string") {
+      throw new Error(`fetch-status: ${metricId} is not a string`);
+    }
+    status[metricId] = value;
+  }
+  return status;
+}
+
+/**
+ * The new `fetch-status.json` text. Each succeeded series gets `runStartedAt`;
+ * every other entry (a failed series) is kept as it was (spec 08, R20.18).
+ * Keys follow catalogue order, then any other key sorted; two-space indent and
+ * a final newline.
+ */
+export function updateFetchStatus(
+  existing: Readonly<Record<string, string>>,
+  succeeded: readonly string[],
+  runStartedAt: string,
+): string {
+  const next: Record<string, string> = { ...existing };
+  for (const metricId of succeeded) next[metricId] = runStartedAt;
+
+  const ordered: Record<string, string> = {};
+  for (const series of CATALOGUE) {
+    const metricId = series.metric.id;
+    if (metricId in next) ordered[metricId] = next[metricId];
+  }
+  for (const metricId of Object.keys(next).sort()) {
+    if (!(metricId in ordered)) ordered[metricId] = next[metricId];
+  }
+  return JSON.stringify(ordered, null, 2) + "\n";
 }
 
 // --- Run ---------------------------------------------------------------------
@@ -332,28 +419,49 @@ function checkCoverage(figures: readonly FigureV1[], report: Report): void {
 export async function runPrefetch(
   existingJson: unknown | null,
   deps?: PrefetchDeps,
-): Promise<{ text: string; report: Report }> {
+): Promise<PrefetchOutcome> {
+  // The run start is read before any download, so every series that succeeds
+  // in this run carries the same Last_Success_Time (spec 08, R20.18).
+  const runStartedAt = utcSecond((deps?.now ?? (() => new Date()))());
   const adapterDeps: AdapterDeps = { fetcher: deps?.fetcher, now: deps?.now };
+  const failed: FailedSeries[] = [];
 
-  // 1. Both Adapters, sequentially: a failure throws a SourceError naming the
-  //    one publisher it was reading (eia or oil-bulletin), never a mix.
+  // 1. Both Adapters, sequentially. A SourceError fails only the series it was
+  //    reading (one EIA series, or both Bulletin series); the others still run.
   const eiaResults: EiaResult[] = [];
-  for (const { seriesId } of EIA_SERIES) {
-    eiaResults.push(await fetchEiaSeries(seriesId, adapterDeps));
+  for (const { metricId, seriesId } of EIA_SERIES) {
+    try {
+      eiaResults.push(await fetchEiaSeries(seriesId, adapterDeps));
+    } catch (err) {
+      failed.push({ metricId, reason: sourceReason(err) });
+    }
   }
-  const bulletin: BulletinResult = await fetchBulletin(adapterDeps);
+  let bulletin: BulletinResult | null = null;
+  try {
+    bulletin = await fetchBulletin(adapterDeps);
+  } catch (err) {
+    const reason = sourceReason(err);
+    for (const { metricId } of BULLETIN_SERIES) {
+      failed.push({ metricId, reason });
+    }
+  }
 
-  // 2. Column-letter check (R4.4): throws `column_letter` on any difference,
-  //    before any merge or file is produced.
-  checkColumnLetters(bulletin.columns);
+  // 2. Column-letter check (R4.4): a wiring fault, so it ends the run before any
+  //    merge or file is produced.
+  if (bulletin !== null) checkColumnLetters(bulletin.columns);
 
-  // 3. Build the fresh series (points tagged with each download's time and the
-  //    series' reference URL) and parse the committed figures, if any.
+  // 3. Build the fresh series, then validate each one whole. A series that fails
+  //    validation is recorded as failed and contributes no points (R20.6).
   const existing = parseExisting(existingJson);
-  const fresh = buildFresh(eiaResults, bulletin);
+  const valid: FreshSeries[] = [];
+  for (const series of buildFresh(eiaResults, bulletin)) {
+    const verdict = validateFreshSeries(series);
+    if (verdict.ok) valid.push(series);
+    else failed.push({ metricId: series.metricId, reason: verdict.reason });
+  }
 
   // 4. Append-only merge. A backfill fails the whole run: nothing is written.
-  const merged = mergeRefresh(existing, fresh);
+  const merged = mergeRefresh(existing, valid);
   if (!merged.ok) {
     throw new PrefetchError(
       "backfill",
@@ -362,13 +470,17 @@ export async function runPrefetch(
     );
   }
 
-  // 5. Coverage check (R6.5): every series must reach back to COVERAGE window.
-  checkCoverage(merged.figures, merged.report);
+  // 5. Coverage check (R6.5) for every series that did not fail this run.
+  const failedIds = new Set(failed.map((f) => f.metricId));
+  checkCoverage(merged.figures, merged.report, failedIds);
 
   // 6. Serialise deterministically, then prove the text loads against the
   //    catalogue. A FigureDataError from loadFigureFile propagates unchanged.
   const text = serialiseFigureFile(merged.figures);
   loadFigureFile(JSON.parse(text), CATALOGUE);
 
-  return { text, report: merged.report };
+  const succeeded = CATALOGUE.map((s) => s.metric.id).filter(
+    (id) => !failedIds.has(id),
+  );
+  return { text, report: merged.report, failed, succeeded, runStartedAt };
 }

@@ -85,6 +85,8 @@ const GASOLINE = "us-gasoline-regular";
 // so these tests intercept both in memory without touching the committed file.
 const TARGET = "src/lib/figures/real/fuel-figures.json";
 const TEMP = "src/lib/figures/real/.fuel-figures.json.tmp";
+const STATUS = "src/lib/figures/real/fetch-status.json";
+const STATUS_TEMP = "src/lib/figures/real/.fetch-status.json.tmp";
 
 /** A fixed UTC clock so retrieved_at / downloadedAt are deterministic. */
 const FIXED_NOW = new Date("2026-11-01T12:00:00Z");
@@ -251,15 +253,19 @@ describe("main — a first run from no file", () => {
     const capture = newCapture();
     await main(memoryDeps({ store, capture, fetcher: recordedFetcher() }));
 
-    // Exactly one write, to the temp path, then one rename of temp over target.
-    expect(capture.writes).toHaveLength(1);
+    // Two writes: the figure file to its temp path, then the fetch status to its
+    // temp path. Each temp file is renamed over its target.
+    expect(capture.writes).toHaveLength(2);
     expect(capture.writes[0].file).toBe(TEMP);
-    expect(capture.renames).toEqual([{ from: TEMP, to: TARGET }]);
+    expect(capture.renames).toEqual([
+      { from: TEMP, to: TARGET },
+      { from: STATUS_TEMP, to: STATUS },
+    ]);
 
     // The target now holds exactly the bytes that were written to the temp.
     expect(store.get(TARGET)).toBe(capture.writes[0].text);
 
-    // Exit 0, no error line.
+    // Every series succeeded, so exit 0 and no error line.
     expect(capture.exitCode).toBe(0);
     expect(capture.errors).toHaveLength(0);
   });
@@ -497,5 +503,32 @@ describe("main — no printed or error line carries a banned direction word", ()
       for (const line of capture.logs) assertNoBannedWords(line);
       for (const line of capture.errors) assertNoBannedWords(line);
     }
+  });
+});
+
+// --- A failed series: exit 1, the others stored, status kept (spec 08, R21.2) --
+
+describe("main — one series fails", () => {
+  it("stores the other series, writes the status, prints one failure line per failed series and exits 1", async () => {
+    const store = new Map<string, string>();
+    const capture = newCapture();
+    await main(
+      memoryDeps({
+        store,
+        capture,
+        fetcher: recordedFetcher({ gasolineStatus: 500 }),
+      }),
+    );
+
+    expect(capture.exitCode).toBe(1);
+    expect(capture.errors).toEqual([
+      "prefetch failed: series us-gasoline-regular reason=source http_status",
+    ]);
+    // The figure file and the status file are both written.
+    expect(store.has(TARGET)).toBe(true);
+    const status = JSON.parse(store.get(STATUS) ?? "{}") as Record<string, string>;
+    expect(status["us-gasoline-regular"]).toBeUndefined();
+    expect(status["us-diesel"]).toBeDefined();
+    expect(status["eu-petrol-euro95"]).toBeDefined();
   });
 });

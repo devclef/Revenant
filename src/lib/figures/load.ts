@@ -237,7 +237,10 @@ export function loadFigureFile(
     }
   }
 
-  // 8. No duplicate period within a series.
+  // 8. No duplicate period within a series. A period may hold several rows
+  // only when their retrieved_at differs: each is a Revision_Row written by the
+  // prefetch (spec 08, R20.17). The same period and the same retrieved_at twice
+  // is still a duplicate.
   const seenPeriods = new Map<string, Set<string>>();
   for (let i = 0; i < file.figures.length; i++) {
     const fig = file.figures[i];
@@ -246,14 +249,17 @@ export function loadFigureFile(
       seen = new Set<string>();
       seenPeriods.set(fig.metric_id, seen);
     }
-    if (seen.has(fig.period)) {
+    const rowKey = `${fig.period}|${fig.kind === "official" ? fig.retrieved_at : ""}`;
+    if (seen.has(rowKey)) {
       throw new FigureDataError("duplicate_period", `figures.${i}.period`);
     }
-    seen.add(fig.period);
+    seen.add(rowKey);
   }
 
   // Group figures by series in catalogue-then-file order, sort each group by
   // period end ascending (file order never matters), and build LoadedSeries.
+  // Rows with the same period end by retrieved_at ascending, so the newest
+  // Revision_Row is the last element of its period.
   const seriesMap = new Map<string, LoadedSeries>();
   for (const ref of allSeries) {
     const metricId = ref.series.metric.id;
@@ -266,7 +272,10 @@ export function loadFigureFile(
     group.sort((a, b) => {
       const ea = periodEnd(a.period, type);
       const eb = periodEnd(b.period, type);
-      return ea < eb ? -1 : ea > eb ? 1 : 0;
+      if (ea !== eb) return ea < eb ? -1 : 1;
+      const at = a.kind === "official" ? a.retrieved_at : "";
+      const bt = b.kind === "official" ? b.retrieved_at : "";
+      return at < bt ? -1 : at > bt ? 1 : 0;
     });
 
     const loaded: LoadedSeries = {

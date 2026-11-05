@@ -49,3 +49,14 @@ export type { ChangeDisplay } from "./format-change";
 export { localeForRegion } from "./locale";
 
 export { rescaleForDisplay } from "./rescale";
+
+export {
+  figuresResponseV1Schema,
+  parseFiguresResponse,
+  pickNow,
+} from "./now";
+export type {
+  FiguresResponseV1,
+  ParseFiguresResponse,
+  PickNowResult,
+} from "./now";

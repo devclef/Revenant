@@ -28,14 +28,17 @@ function isAllowedHost(host: string): boolean {
 }
 
 /**
- * The real downloader: global `fetch`, following redirects, with a 60 s
- * timeout. It sets no headers, sends no credentials or cookies, and reads no
- * environment variable. Tests pass their own `Fetcher` instead (R2.6), so this
- * is never exercised by the suite.
+ * The real downloader: global `fetch`, following redirects, with a timeout of
+ * `timeoutMs` (default 60 s). It sets no headers, sends no credentials or
+ * cookies, and reads no environment variable. Tests pass their own `Fetcher`
+ * instead (R2.6); the suite only drives this one with a stubbed global `fetch`.
  */
-export const defaultFetcher: Fetcher = async (url: string): Promise<FetchResult> => {
+export const defaultFetcher = async (
+  url: string,
+  timeoutMs: number = TIMEOUT_MS,
+): Promise<FetchResult> => {
   const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(url, {
       redirect: "follow",

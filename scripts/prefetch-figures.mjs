@@ -38,4 +38,11 @@ await mkdir(dirname(outFile), { recursive: true });
 await writeFile(outFile, output.text, "utf8");
 
 const { main } = await import(pathToFileURL(outFile).href);
-await main();
+// main() ends the process itself (0 when every series succeeded, 1 when any
+// failed or the run stopped). This catch covers a failure outside main(), so
+// the launcher still exits 1 and never reports a clean run.
+await main().catch((err) => {
+  const detail = err instanceof Error ? err.message : String(err);
+  process.stderr.write(`prefetch failed: ${detail}\n`);
+  process.exit(1);
+});
