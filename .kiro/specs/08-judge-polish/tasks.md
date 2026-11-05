@@ -182,7 +182,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
   - Validation: `bash scripts/check.sh`
   - _Requirements: R9.1, R9.2, R9.4, R9.8, R9.11, R9.12, R9.13_
 
-- [ ] 5. The Landing_Ghost on `/`
+- [x] 5. The Landing_Ghost on `/`
   - Agent: `platform-dev` · Depends on: 4 · Estimated size: ~300 changed lines
   - Before this task: task 4 is on `main`.
   - Scope: `src/app/page.tsx`, `src/lib/landing-backdrop.ts`, `src/test/landing.test.tsx`, and new `*.test.ts(x)` files under `src/test/`
