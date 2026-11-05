@@ -1,5 +1,5 @@
 import type { Opened } from "./opening-machine";
-import { formatCalendarDate, formatUtcDate } from "@/components/demo/dates";
+import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-date";
 import { formatLocalDateTime } from "@/components/live/format";
 import { WaxSeal } from "@/components/ceremony/envelope/WaxSeal";
 import { LIVE_COPY, REVEAL_COPY } from "./copy";
@@ -91,7 +91,7 @@ export function SealedLetter({
 
   const sealedForDemoOn = REVEAL_COPY.sealedForDemoOn.replace(
     "{sealedAt}",
-    formatUtcDate(header.sealedAt),
+    formatLetterDate(header.sealedAt, { kind: "utc" }),
   );
 
   return (

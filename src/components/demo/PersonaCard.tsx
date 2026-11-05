@@ -2,7 +2,7 @@ import { ParchmentSurface } from "@/components/ui";
 import Link from "next/link";
 import { WaxSeal } from "@/components/ceremony/envelope/WaxSeal";
 import { DEMO_COPY } from "./copy";
-import { formatCalendarDate, formatUtcDate } from "./dates";
+import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-date";
 import styles from "./PersonaCard.module.css";
 
 /**
@@ -61,7 +61,9 @@ export function PersonaCard({
           </div>
           <div className={styles.dateRow}>
             <dt className={styles.dateLabel}>{DEMO_COPY.opensPrefix}</dt>
-            <dd className={styles.dateValue}>{formatUtcDate(opens_at)}</dd>
+            <dd className={styles.dateValue}>
+              {formatLetterDate(opens_at, { kind: "utc" })}
+            </dd>
           </div>
         </dl>
         <span className={styles.openLetter}>{DEMO_COPY.openLetter}</span>

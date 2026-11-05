@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { RecallStep } from "./RecallStep";
 import { REVEAL_COPY } from "./copy";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
-import { formatCalendarDate } from "@/components/demo/dates";
+import { formatCalendarDate } from "@/components/ui/letter-date";
 import { RecallPager } from "@/components/ceremony/recall/RecallPager";
 import type { Opened } from "./opening-machine";
 import type { Draft } from "@/lib/recall";
@@ -36,6 +36,8 @@ const OPENED: Opened = {
     opensAt: "2024-11-05T00:00:00.000Z",
   },
   openingKey: {} as unknown as CryptoKey,
+  envelopeHash:
+    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   payload: {
     format_version: 1,
     letter_text: "LETTER_BODY_SECRET the letter text must never appear here.",

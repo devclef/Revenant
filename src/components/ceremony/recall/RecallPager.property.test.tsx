@@ -15,7 +15,7 @@ import {
 } from "./recall-pager";
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import { DEMO_COPY } from "@/components/demo/copy";
-import { formatCalendarDate } from "@/components/demo/dates";
+import { formatCalendarDate } from "@/components/ui/letter-date";
 import {
   reduce,
   type FlowState,

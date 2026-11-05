@@ -50,6 +50,15 @@ export type Opened = {
   payload: PayloadV1;
   /** Non-extractable, memory only; used to encrypt the recall record. */
   openingKey: CryptoKey;
+  /**
+   * The verified envelope hash: the 64-character lowercase hex SHA-256 of the
+   * canonical envelope that `openLetter` checked before it returned `ok`
+   * (R14.5). It is always the verified hash, because a failed check never
+   * produces an `Opened`. The Reveal formats it into the opening Fingerprint
+   * (R14.3). The states, events and transitions of this reducer are unchanged
+   * by this field (R1.4); the effect runner sets it in the `OPENED` outcome.
+   */
+  envelopeHash: string;
 };
 
 /** The sealed recall record as bytes ready to post (base64url strings). */

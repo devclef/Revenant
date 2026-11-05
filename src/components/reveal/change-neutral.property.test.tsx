@@ -619,6 +619,8 @@ function renderThenNow(payload: PayloadV1, record?: RecallRecordV1): string {
     letterId: "letter-prop",
     header: { sealedAt: SEALED_AT, opensAt: "2026-11-05T00:00:00.000Z" },
     openingKey: {} as unknown as CryptoKey,
+    envelopeHash:
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     payload,
   };
   const props = record === undefined ? { opened } : { opened, record };

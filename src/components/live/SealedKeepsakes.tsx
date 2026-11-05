@@ -20,9 +20,11 @@ export interface SealedKeepsakesProps {
   appOrigin: string;
   /** The opening instant, an ISO 8601 string in UTC. */
   opensAt: string;
+  /** The sealing Fingerprint: 64 lowercase hex characters, shown on the card. */
+  envelopeHash: string;
 }
 
-export function SealedKeepsakes({ letterId, appOrigin, opensAt }: SealedKeepsakesProps) {
+export function SealedKeepsakes({ letterId, appOrigin, opensAt, envelopeHash }: SealedKeepsakesProps) {
   function onDownloadIcs(): void {
     const text = buildKeepsakeIcs({
       letterId,
@@ -35,7 +37,12 @@ export function SealedKeepsakes({ letterId, appOrigin, opensAt }: SealedKeepsake
 
   return (
     <div className={styles.keepsakes} data-live-keepsakes>
-      <LetterCard letterId={letterId} appOrigin={appOrigin} opensAt={opensAt} />
+      <LetterCard
+        letterId={letterId}
+        appOrigin={appOrigin}
+        opensAt={opensAt}
+        envelopeHash={envelopeHash}
+      />
       <div className={styles.noPrint}>
         <button type="button" className={styles.secondary} onClick={onDownloadIcs} data-live-ics>
           {LIVE_COPY.downloadIcs}

@@ -6,6 +6,8 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { formatFingerprint } from "@/lib/seal-format";
+
 import { LIVE_COPY } from "./copy";
 import { buildKeepsakeIcs } from "./keepsake-files";
 import styles from "./live.module.css";
@@ -16,10 +18,17 @@ const APP_ORIGIN = "https://revenant.devclef.se";
 const LETTER_ID = "abc123DEF456ghi789jk";
 const NOW_MS = Date.parse("2026-11-02T12:00:00.000Z");
 const OPENS_AT = "2026-11-02T13:00:00.000Z";
+const ENVELOPE_HASH =
+  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
 const keepsakesHtml = (): string =>
   renderToStaticMarkup(
-    createElement(SealedKeepsakes, { letterId: LETTER_ID, appOrigin: APP_ORIGIN, opensAt: OPENS_AT }),
+    createElement(SealedKeepsakes, {
+      letterId: LETTER_ID,
+      appOrigin: APP_ORIGIN,
+      opensAt: OPENS_AT,
+      envelopeHash: ENVELOPE_HASH,
+    }),
   );
 
 const sealedState: SealedState = {
@@ -29,6 +38,7 @@ const sealedState: SealedState = {
   opensAt: OPENS_AT,
   offsetMs: 0,
   factors: "passkey",
+  envelopeHash: ENVELOPE_HASH,
 };
 
 describe("SealedKeepsakes", () => {
@@ -47,6 +57,24 @@ describe("SealedKeepsakes", () => {
     expect(out).toContain(LIVE_COPY.letterCardTitle);
     expect(out).toContain(LIVE_COPY.downloadIcs);
     expect(out).toContain("data-live-ics");
+  });
+
+  it("prints the sealing Fingerprint as 16 groups under the link", () => {
+    const out = keepsakesHtml();
+    expect(out).toContain(LIVE_COPY.letterCardFingerprint);
+    expect(out).toContain(formatFingerprint(ENVELOPE_HASH) as string);
+    // The Fingerprint sits after the link text in the card.
+    const linkAt = out.indexOf(`${APP_ORIGIN}/l/${LETTER_ID}`);
+    const fpAt = out.indexOf("data-live-card-fingerprint");
+    expect(linkAt).toBeGreaterThan(-1);
+    expect(fpAt).toBeGreaterThan(linkAt);
+  });
+
+  it("offers Save the card as an image inside the print-hidden group", () => {
+    const out = keepsakesHtml();
+    expect(out).toContain(LIVE_COPY.saveCardImage);
+    const at = out.indexOf("data-live-save-image");
+    expect(out.lastIndexOf(styles.noPrint, at)).toBeGreaterThan(-1);
   });
 
   it("keeps the calendar button inside the print-hidden group", () => {

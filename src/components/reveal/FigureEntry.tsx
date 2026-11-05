@@ -6,7 +6,8 @@ import {
   isFixtureFigure,
   rescaleForDisplay,
 } from "@/lib/figures";
-import { formatUtcDate } from "@/components/demo/dates";
+import type { LetterKind } from "./FigureLine";
+import { formatLetterDate } from "@/components/ui/letter-date";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { FIG_VALUE_SIZE } from "@/components/ceremony/constants";
 import { NumberLine } from "@/components/ceremony/figures/NumberLine";
@@ -20,8 +21,11 @@ import styles from "./reveal.module.css";
  *
  * 1. the metric's name and region, small and uppercase;
  * 2. the then row: "Then:", the then value (.figValue), then the unit, the
- *    period, the region and the "historical record, retrieved {date}" label,
- *    or the "fixture data" label for a fixture figure;
+ *    period, the region and the provenance label — "historical record,
+ *    retrieved {date}" in a persona letter, "sealed with the letter, retrieved
+ *    {date}" in a Live_Letter or Real_Letter (R13.1, R13.2), "fixture data" for
+ *    a fixture figure (R13.3), or "self-reported" for a self-reported one
+ *    (R13.4);
  * 3. the now row: "Now:", the now value (.figValue), then the same items for
  *    the now figure;
  * 4. the Number_Line, with the then and now pins, the Mark (when answered) and
@@ -63,6 +67,12 @@ export type FigureEntryProps = {
   /** The series' display rescale, when one applies (display-only). */
   rescale?: Readonly<DisplayRescale>;
   /**
+   * The kind of letter this figure belongs to. Default `"persona"` keeps the
+   * persona path, and its tests, unchanged. It decides only the official
+   * non-fixture then label (R13.1, R13.2).
+   */
+  letterKind?: LetterKind;
+  /**
    * The judge's answer for this metric, as the decimal string they typed, or
    * `undefined` for "No answer" (or no answer to this metric at all).
    */
@@ -81,6 +91,7 @@ export function FigureEntry({
   now,
   change,
   rescale,
+  letterKind = "persona",
   markValue,
 }: FigureEntryProps) {
   // The drawing values use the same rescale as the printed values. Only
@@ -99,15 +110,24 @@ export function FigureEntry({
 
   const thenFixture = isFixtureFigure(then);
   const nowFixture = isFixtureFigure(now);
+  // Then label precedence: fixture (R13.3), self-reported (R13.4), then the
+  // official figure by letter kind (R13.1 persona, R13.2 live/real).
   const thenLabel = thenFixture
     ? REVEAL_COPY.labelFixtureData
-    : REVEAL_COPY.labelHistoricalRecord.replace(
-        "{date}",
-        formatUtcDate(then.retrieved_at),
-      );
+    : then.kind === "self-reported"
+      ? REVEAL_COPY.labelSelfReported
+      : (letterKind === "persona"
+          ? REVEAL_COPY.labelHistoricalRecord
+          : REVEAL_COPY.labelSealedWithLetter
+        ).replace("{date}", formatLetterDate(then.retrieved_at, { kind: "utc" }));
+  // The now figure always reads "retrieved {date}" whatever the letter kind;
+  // a fixture now reads "fixture data" (R13.3).
   const nowLabel = nowFixture
     ? REVEAL_COPY.labelFixtureData
-    : REVEAL_COPY.labelRetrieved.replace("{date}", formatUtcDate(now.retrieved_at));
+    : REVEAL_COPY.labelRetrieved.replace(
+        "{date}",
+        formatLetterDate(now.retrieved_at, { kind: "utc" }),
+      );
 
   const rescaledNote =
     rescale === undefined

@@ -22,6 +22,8 @@ export type SealState =
       opensAt: string;
       offsetMs: number;
       factors: "passkey" | "backup" | "both";
+      /** The sealing Fingerprint: 64 lowercase hex characters, shown on the card. */
+      envelopeHash: string;
     }
   | { tag: "cannot_lock"; passkeyCreated: boolean }
   | { tag: "cancelled" }
@@ -40,6 +42,8 @@ export type SealEvent =
       opensAt: string;
       offsetMs: number;
       factors: "passkey" | "backup" | "both";
+      /** The sealing Fingerprint: 64 lowercase hex characters, shown on the card. */
+      envelopeHash: string;
     }
   | { type: "CANNOT_LOCK"; passkeyCreated: boolean }
   | { type: "FAILED"; kind: SealFailureKind; metricId?: string; passkeyCreated: boolean }
@@ -117,6 +121,7 @@ export function sealReducer(state: SealState, event: SealEvent): SealState {
             opensAt: event.opensAt,
             offsetMs: event.offsetMs,
             factors: event.factors,
+            envelopeHash: event.envelopeHash,
           };
         case "CANNOT_LOCK":
           return { tag: "cannot_lock", passkeyCreated: event.passkeyCreated };

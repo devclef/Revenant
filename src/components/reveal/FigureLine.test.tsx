@@ -5,7 +5,7 @@ import fc from "fast-check";
 
 import { FigureLine } from "./FigureLine";
 import { REVEAL_COPY } from "./copy";
-import { formatUtcDate } from "@/components/demo/dates";
+import { formatLetterDate } from "@/components/ui/letter-date";
 import {
   formatValue,
   formatPeriod,
@@ -136,7 +136,7 @@ describe("FigureLine markup", () => {
     const html = render(OFFICIAL_THEN, "then");
     const expected = REVEAL_COPY.labelHistoricalRecord.replace(
       "{date}",
-      formatUtcDate(OFFICIAL_THEN.retrieved_at),
+      formatLetterDate(OFFICIAL_THEN.retrieved_at, { kind: "utc" }),
     );
     expect(html).toContain(expected);
     expect(html).toContain("30 October 2024");
@@ -148,7 +148,7 @@ describe("FigureLine markup", () => {
     const html = render(OFFICIAL_NOW, "now");
     const expected = REVEAL_COPY.labelRetrieved.replace(
       "{date}",
-      formatUtcDate(OFFICIAL_NOW.retrieved_at),
+      formatLetterDate(OFFICIAL_NOW.retrieved_at, { kind: "utc" }),
     );
     expect(html).toContain(expected);
     expect(html).toContain("30 October 2026");
@@ -213,6 +213,171 @@ describe("FigureLine markup", () => {
   it("omits the rescaled note when there is no display rescale", () => {
     const html = render(OFFICIAL_THEN, "then");
     expect(html).not.toContain("Published per");
+  });
+
+  it('shows "sealed with the letter, retrieved {date}" for a live/real then figure, never "historical record" (R13.2)', () => {
+    for (const letterKind of ["live", "real"] as const) {
+      const html = renderToStaticMarkup(
+        createElement(FigureLine, {
+          figure: OFFICIAL_THEN,
+          role: "then" as const,
+          letterKind,
+        }),
+      );
+      const expected = REVEAL_COPY.labelSealedWithLetter.replace(
+        "{date}",
+        formatLetterDate(OFFICIAL_THEN.retrieved_at, { kind: "utc" }),
+      );
+      expect(html).toContain(expected);
+      expect(html).toContain("30 October 2024");
+      expect(html).not.toContain("historical record");
+    }
+  });
+
+  it('shows "historical record" for a persona then figure, not "sealed with the letter" (R13.1)', () => {
+    const html = renderToStaticMarkup(
+      createElement(FigureLine, {
+        figure: OFFICIAL_THEN,
+        role: "then" as const,
+        letterKind: "persona" as const,
+      }),
+    );
+    expect(html).toContain("historical record");
+    expect(html).not.toContain("sealed with the letter");
+  });
+
+  it('shows "self-reported" for a self-reported figure, never "historical record" or "retrieved" (R13.4)', () => {
+    for (const letterKind of ["persona", "live", "real"] as const) {
+      const html = renderToStaticMarkup(
+        createElement(FigureLine, {
+          figure: SELF_REPORTED,
+          role: "then" as const,
+          letterKind,
+        }),
+      );
+      expect(html).toContain(REVEAL_COPY.labelSelfReported);
+      expect(html).not.toContain("historical record");
+      expect(html).not.toContain("retrieved");
+    }
+  });
+
+  it("the now figure always reads \"retrieved {date}\" whatever the letter kind", () => {
+    for (const letterKind of ["persona", "live", "real"] as const) {
+      const html = renderToStaticMarkup(
+        createElement(FigureLine, {
+          figure: OFFICIAL_NOW,
+          role: "now" as const,
+          letterKind,
+        }),
+      );
+      const expected = REVEAL_COPY.labelRetrieved.replace(
+        "{date}",
+        formatLetterDate(OFFICIAL_NOW.retrieved_at, { kind: "utc" }),
+      );
+      expect(html).toContain(expected);
+      expect(html).not.toContain("historical record");
+      expect(html).not.toContain("sealed with the letter");
+    }
+  });
+
+  it("Property 15: labels name what the figure is (R13.1-R13.4)", () => {
+    // For any letter kind, role and figure type, the then/now label is exactly
+    // the one R13 requires, and the forbidden phrases never leak.
+    const figureArb = fc.record({
+      figureKind: fc.constantFrom<"official" | "fixture" | "self-reported">(
+        "official",
+        "fixture",
+        "self-reported",
+      ),
+      role: fc.constantFrom<"then" | "now">("then", "now"),
+      letterKind: fc.constantFrom<"persona" | "live" | "real">(
+        "persona",
+        "live",
+        "real",
+      ),
+    });
+
+    const retrievedAt = "2024-10-30T14:02:11Z";
+    const retrievedDate = formatLetterDate(retrievedAt, { kind: "utc" });
+
+    fc.assert(
+      fc.property(figureArb, ({ figureKind, role, letterKind }) => {
+        // Self-reported figures are never a "now" figure in the product, so the
+        // interesting label case is the then role; skip the meaningless pair.
+        if (figureKind === "self-reported" && role === "now") return;
+
+        let figure: Readonly<FigureV1>;
+        if (figureKind === "self-reported") {
+          figure = {
+            kind: "self-reported",
+            metric_id: "rent",
+            value: "1800",
+            unit: "USD per month",
+            region: "U.S.",
+            period: "2024-10",
+            source: "self-reported",
+            series_id: "my-rent",
+            retrieved_at: retrievedAt,
+          };
+        } else {
+          figure = {
+            kind: "official",
+            metric_id: "fuel",
+            value: "3.412",
+            unit: "USD per gallon",
+            region: "U.S. city average",
+            period: "2024-10",
+            source: figureKind === "fixture" ? "FIXTURE source" : "U.S. EIA",
+            series_id:
+              figureKind === "fixture" ? "FIXTURE-fuel" : "EMM_EPMR_PTE",
+            retrieved_at: retrievedAt,
+            source_url: "https://example.org/series",
+          };
+        }
+
+        const html = renderToStaticMarkup(
+          createElement(FigureLine, { figure, role, letterKind }),
+        );
+
+        let expectedLabel: string;
+        if (figureKind === "fixture") {
+          // Fixture always wins, every letter kind, every role (R13.3).
+          expectedLabel = REVEAL_COPY.labelFixtureData;
+          expect(html).not.toContain("historical record");
+        } else if (figureKind === "self-reported") {
+          // Self-reported never "historical record" or "retrieved" (R13.4).
+          expectedLabel = REVEAL_COPY.labelSelfReported;
+          expect(html).not.toContain("historical record");
+          expect(html).not.toContain("retrieved");
+        } else if (role === "now") {
+          // A now figure always reads "retrieved {date}".
+          expectedLabel = REVEAL_COPY.labelRetrieved.replace(
+            "{date}",
+            retrievedDate,
+          );
+          expect(html).not.toContain("historical record");
+          expect(html).not.toContain("sealed with the letter");
+        } else if (letterKind === "persona") {
+          // A persona then figure is a historical record (R13.1).
+          expectedLabel = REVEAL_COPY.labelHistoricalRecord.replace(
+            "{date}",
+            retrievedDate,
+          );
+          expect(html).not.toContain("sealed with the letter");
+        } else {
+          // A live or real then figure was sealed with the letter (R13.2), and
+          // never says "historical record".
+          expectedLabel = REVEAL_COPY.labelSealedWithLetter.replace(
+            "{date}",
+            retrievedDate,
+          );
+          expect(html).not.toContain("historical record");
+        }
+
+        expect(html).toContain(expectedLabel);
+      }),
+      { numRuns: 100 },
+    );
   });
 
   it("Property 19: every rendered figure shows value, unit, period, region and reaches its source", () => {

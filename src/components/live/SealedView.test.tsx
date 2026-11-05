@@ -33,6 +33,8 @@ function sealed(overrides: Partial<SealedState> = {}): SealedState {
     opensAt: OPENS_AT,
     offsetMs: 0,
     factors: "passkey",
+    envelopeHash:
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     ...overrides,
   };
 }

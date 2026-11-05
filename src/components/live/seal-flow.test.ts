@@ -55,6 +55,7 @@ const SEALED: SealPostResult = {
   letterId: encodeBase64url(new Uint8Array(16)),
   sealedAt: "2026-11-02T10:00:00.000Z",
   opensAt: "2026-11-02T10:00:30.000Z",
+  envelopeHash: "a".repeat(64),
 };
 
 function goodDraft(): SealDraft {

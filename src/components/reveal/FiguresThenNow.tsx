@@ -6,7 +6,7 @@ import { thenAndNow } from "@/lib/figures/then-now";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV1 } from "@/lib/recall";
 import { FigureEntry } from "./FigureEntry";
-import { FigureLine } from "./FigureLine";
+import { FigureLine, type LetterKind } from "./FigureLine";
 import { FixtureNote } from "./FixtureNote";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
@@ -69,6 +69,13 @@ export type FiguresThenNowProps = {
    * Default false: the persona path is unchanged.
    */
   allowSamePeriod?: boolean;
+  /**
+   * The kind of opened letter, threaded to each figure so its then label reads
+   * "historical record" for a persona or "sealed with the letter" for a
+   * Live_Letter or Real_Letter (R13.1, R13.2). Default `"persona"` keeps the
+   * persona path, and its tests, unchanged.
+   */
+  letterKind?: LetterKind;
 };
 
 // The copy for a missing "now" figure, by the reason thenAndNow reports. A
@@ -106,6 +113,7 @@ export function FiguresThenNow({
   opened,
   record,
   allowSamePeriod = false,
+  letterKind = "persona",
 }: FiguresThenNowProps) {
   const { payload, header } = opened;
 
@@ -196,6 +204,7 @@ export function FiguresThenNow({
               <FigureLine
                 figure={entry.then}
                 role="then"
+                letterKind={letterKind}
                 displayRescale={entry.rescale}
               />
               <p className={styles.period}>{entry.nowMissing}</p>
@@ -209,6 +218,7 @@ export function FiguresThenNow({
               now={entry.now}
               change={entry.change}
               rescale={entry.rescale}
+              letterKind={letterKind}
               markValue={entry.markValue}
             />
           ) : (
@@ -220,12 +230,14 @@ export function FiguresThenNow({
               <FigureLine
                 figure={entry.then}
                 role="then"
+                letterKind={letterKind}
                 displayRescale={entry.rescale}
               />
               <p className={styles.now}>{REVEAL_COPY.now}</p>
               <FigureLine
                 figure={entry.now}
                 role="now"
+                letterKind={letterKind}
                 displayRescale={entry.rescale}
               />
               <p className={styles.period}>{REVEAL_COPY.notComparable}</p>

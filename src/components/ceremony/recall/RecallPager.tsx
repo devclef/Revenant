@@ -34,7 +34,7 @@ import {
   typeText,
   type FieldState,
 } from "./recall-field";
-import { formatCalendarDate } from "@/components/demo/dates";
+import { formatCalendarDate } from "@/components/ui/letter-date";
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import type { Draft } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";

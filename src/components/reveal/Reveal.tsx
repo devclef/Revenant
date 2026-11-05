@@ -2,6 +2,7 @@
 
 import { useCallback, useContext, useState } from "react";
 import type { Opened } from "./opening-machine";
+import type { LetterKind } from "./FigureLine";
 import type { RecallRecordV1 } from "@/lib/recall";
 import { LetterBlock } from "@/components/ceremony/letter/LetterBlock";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
@@ -9,6 +10,7 @@ import { SoundToggle } from "@/components/ceremony/sound/SoundToggle";
 import { SoundEnabledContext } from "@/components/ceremony/sound/SoundEnabledContext";
 import { soundCues } from "@/components/ceremony/sound/cues";
 import { FiguresThenNow } from "./FiguresThenNow";
+import { Fingerprint } from "./Fingerprint";
 import { StagePanel } from "./StagePanel";
 import { FiguresFadeUp } from "@/components/ceremony/figures/FiguresFadeUp";
 import { Close, type CloseProps } from "@/components/ceremony/close/Close";
@@ -111,6 +113,14 @@ export type RevealProps = {
    */
   variant?: "persona" | "live";
   /**
+   * The kind of opened letter, passed straight to `FiguresThenNow` so each then
+   * figure's label reads correctly (R13.1, R13.2). Default `"persona"` keeps
+   * the persona path unchanged. OpeningFlow derives it: persona mode is
+   * `"persona"`; live mode is `"live"` for a demo letter and `"real"`
+   * otherwise.
+   */
+  letterKind?: LetterKind;
+  /**
    * What the close shows (design.md "Close"). OpeningFlow passes it; it holds
    * only the persona key and the Demo_2_On boolean, never RP_ID. Without it no
    * close is rendered.
@@ -128,6 +138,7 @@ export function Reveal({
   onShowAll,
   seal,
   variant = "persona",
+  letterKind = "persona",
   close,
 }: RevealProps) {
   // The local-view context lets stage 1's SealBreak report its `sealing` flag
@@ -300,6 +311,16 @@ export function Reveal({
               letterId={letterId}
               still={jumpedToEnd}
             />
+            {/* The opening Fingerprint sits under the Letter_Block, on the desk
+                surface, before "See the numbers" (design.md, R14.3). It shows
+                the verified envelope hash from `Opened.envelopeHash`; the
+                letter kind decides the demo label or the card sentence (R14.8).
+                A failed check never reaches the Reveal, so this is always the
+                passed state (R14.6). */}
+            <Fingerprint
+              envelopeHash={opened.envelopeHash}
+              letterKind={letterKind}
+            />
           </div>
 
           {stage >= 3 ? (
@@ -311,6 +332,7 @@ export function Reveal({
                   opened={opened}
                   record={record}
                   allowSamePeriod={variant === "live"}
+                  letterKind={letterKind}
                 />
               </FiguresFadeUp>
             </div>

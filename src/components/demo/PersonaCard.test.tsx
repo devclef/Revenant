@@ -7,7 +7,10 @@ import { WaxSeal, normaliseWaxSealIds } from "@/components/ceremony/envelope/Wax
 
 import { PersonaCard, type PersonaCardProps } from "./PersonaCard";
 import { DEMO_COPY } from "./copy";
-import { formatCalendarDate, formatUtcDate } from "./dates";
+import {
+  formatCalendarDate,
+  formatLetterDate,
+} from "@/components/ui/letter-date";
 
 // `next/navigation`'s useRouter throws outside the app router, so the static
 // render needs a stub. The stub is hoisted so the mock factory can reach it.
@@ -72,7 +75,7 @@ describe("PersonaCard markup", () => {
     expect(html).toContain(PROPS.region);
   });
 
-  it('shows the "Written as of" line with the date formatted via dates.ts', () => {
+  it('shows the "Written as of" line with the date formatted via letter-date.ts', () => {
     const html = render();
     expect(html).toContain(DEMO_COPY.writtenAsOfPrefix);
     expect(html).toContain(formatCalendarDate(PROPS.written_as_of));
@@ -80,11 +83,13 @@ describe("PersonaCard markup", () => {
     expect(formatCalendarDate(PROPS.written_as_of)).toBe("12 May 2024");
   });
 
-  it('shows the "Opens" line with the date formatted via dates.ts', () => {
+  it('shows the "Opens" line with the date formatted via letter-date.ts', () => {
     const html = render();
     expect(html).toContain(DEMO_COPY.opensPrefix);
-    expect(html).toContain(formatUtcDate(PROPS.opens_at));
-    expect(formatUtcDate(PROPS.opens_at)).toBe("5 November 2024");
+    expect(html).toContain(formatLetterDate(PROPS.opens_at, { kind: "utc" }));
+    expect(formatLetterDate(PROPS.opens_at, { kind: "utc" })).toBe(
+      "5 November 2024",
+    );
   });
 
   it('renders an "Open the letter" link to /demo/personas/{key}', () => {

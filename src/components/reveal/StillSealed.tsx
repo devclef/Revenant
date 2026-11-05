@@ -2,6 +2,12 @@
 
 import { useEffect, useRef, useState } from "react";
 import { ParchmentSurface } from "@/components/ui";
+import {
+  browserTimeZone,
+  formatLetterDate,
+  letterZoneFor,
+  type LetterZone,
+} from "@/components/ui/letter-date";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
 
@@ -12,8 +18,10 @@ import styles from "./reveal.module.css";
  * time remaining, in Revenant's voice (tone.md: "an envelope on a mantelpiece").
  *
  * The opening instant (`opensAt`) is a UTC `Z` string from the server. The
- * displayed date is formatted in UTC so it reads the same for every viewer
- * (data-integrity.md: show the figure's own period, not the viewer's clock).
+ * displayed date comes from the one letter-date module in the letter's own zone
+ * (spec 08 R15.1): a persona countdown shows the date in UTC; a live letter
+ * (the `precise` countdown) shows it in the browser's own zone, the zone it was
+ * sealed in. Either way the date reads the same for every viewer in that zone.
  *
  * The countdown is a DISPLAY-ONLY convenience driven by the browser clock. The
  * client clock never decides whether the letter may open (crypto.md: "The
@@ -25,13 +33,6 @@ import styles from "./reveal.module.css";
  * All strings come from copy.ts (R15.1). This component renders no sealed
  * payload field -- it has none.
  */
-
-const UTC_DATE = new Intl.DateTimeFormat("en-GB", {
-  day: "numeric",
-  month: "long",
-  year: "numeric",
-  timeZone: "UTC",
-});
 
 /** The parts of the time remaining the countdown line shows. */
 type Remaining = { days: number; hours: number; minutes: number };
@@ -128,7 +129,12 @@ export function StillSealed({
   const remaining = remainingFrom(opensAtMs, nowMs);
   const atZero = nowMs >= opensAtMs;
 
-  const dateText = UTC_DATE.format(new Date(opensAtMs));
+  // A persona countdown shows the opening date in UTC; a live letter (precise)
+  // shows it in the browser's own zone, the zone it was sealed in (R15.1).
+  const zone: LetterZone = precise
+    ? letterZoneFor("live", opensAt, browserTimeZone())
+    : { kind: "utc" };
+  const dateText = formatLetterDate(opensAt, zone);
   const bodyText = REVEAL_COPY.sealedBody.replace("{date}", dateText);
   const remainingText = precise
     ? preciseRemainingText(opensAtMs, nowMs)

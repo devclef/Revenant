@@ -23,7 +23,10 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { formatCalendarDate, formatUtcDate } from "@/components/demo/dates";
+import {
+  formatCalendarDate,
+  formatLetterDate,
+} from "@/components/ui/letter-date";
 
 import { CEREMONY_COPY } from "../copy";
 import { Envelope } from "./Envelope";
@@ -96,7 +99,7 @@ describe("Envelope — front dates come from the persona list, never a sealed-on
     );
     const opens = CEREMONY_COPY.envelopeOpens.replace(
       "{date}",
-      formatUtcDate(PERSONA.opens_at),
+      formatLetterDate(PERSONA.opens_at, { kind: "utc" }),
     );
     expect(html).toContain(written);
     expect(html).toContain(opens);
@@ -182,7 +185,7 @@ describe("Envelope — every user-facing string comes from CEREMONY_COPY (R15.1)
       ),
       CEREMONY_COPY.envelopeOpens.replace(
         "{date}",
-        formatUtcDate(PERSONA.opens_at),
+        formatLetterDate(PERSONA.opens_at, { kind: "utc" }),
       ),
       CEREMONY_COPY.envelopeDemoNote,
     ];

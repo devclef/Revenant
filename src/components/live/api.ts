@@ -28,7 +28,7 @@ export type PrepareResult =
   | { ok: false; kind: "busy" | "not_configured" | "server" | "network" };
 
 export type SealPostResult =
-  | { ok: true; letterId: string; sealedAt: string; opensAt: string }
+  | { ok: true; letterId: string; sealedAt: string; opensAt: string; envelopeHash: string }
   | { ok: false; kind: "busy" | "clock" | "not_found" | "invalid" | "server" | "network" };
 
 export interface SealApi {
@@ -46,6 +46,9 @@ const sealBodySchema = z.object({
   letterId: z.string(),
   sealedAt: z.string(),
   opensAt: z.string(),
+  // The fingerprint (64 lowercase hex characters) the server stored. It equals
+  // the hash the browser sent, so the card and the Reveal show the same value.
+  envelopeHash: z.string().regex(/^[0-9a-f]{64}$/),
 });
 
 /** Reads the JSON body, or `undefined` when it is not JSON at all. */

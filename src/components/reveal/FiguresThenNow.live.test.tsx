@@ -65,6 +65,8 @@ const OPENED: Opened = {
   header: { sealedAt: SEALED_AT, opensAt: "2026-11-05T00:00:00.000Z" },
   payload: PAYLOAD,
   openingKey: {} as unknown as CryptoKey,
+  envelopeHash:
+    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 };
 
 function render(allowSamePeriod?: boolean): string {

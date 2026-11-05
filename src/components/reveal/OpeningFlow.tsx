@@ -483,6 +483,15 @@ function selectView(
           onShowAll={flow.showAll}
           seal={seal}
           variant={mode}
+          letterKind={
+            // persona route -> persona; live route -> live for a demo letter,
+            // real for a non-demo letter (design.md "Labels by letter kind").
+            mode === "persona"
+              ? "persona"
+              : live?.demo === true
+                ? "live"
+                : "real"
+          }
           close={
             mode === "live"
               ? { kind: "live" }

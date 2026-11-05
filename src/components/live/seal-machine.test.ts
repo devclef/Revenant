@@ -14,6 +14,11 @@ import {
 
 const KINDS: readonly SealFailureKind[] = ["network", "server", "clock", "busy", "missing_then"];
 
+// 64 lowercase hex characters, the shape of an envelope hash.
+const hexHashArb: fc.Arbitrary<string> = fc
+  .array(fc.constantFrom(..."0123456789abcdef".split("")), { minLength: 64, maxLength: 64 })
+  .map((chars) => chars.join(""));
+
 // The source states each press or result event is accepted in, written from
 // the state diagram, not from the reducer.
 const ACCEPTED_FROM: Partial<Record<SealEvent["type"], readonly SealState["tag"][]>> = {
@@ -41,6 +46,7 @@ const eventArb: fc.Arbitrary<SealEvent> = fc.oneof(
     opensAt: fc.string({ maxLength: 12 }),
     offsetMs: fc.integer({ min: -5_000, max: 5_000 }),
     factors: fc.constantFrom("passkey" as const, "backup" as const, "both" as const),
+    envelopeHash: hexHashArb,
   }),
   fc.record({
     type: fc.constant("CANNOT_LOCK" as const),
@@ -121,6 +127,7 @@ describe("sealReducer transitions", () => {
       opensAt: "2026-11-02T10:00:30.000Z",
       offsetMs: 0,
       factors: "passkey",
+      envelopeHash: "a".repeat(64),
     });
     expect(state).toEqual({
       tag: "sealed",
@@ -129,6 +136,7 @@ describe("sealReducer transitions", () => {
       opensAt: "2026-11-02T10:00:30.000Z",
       offsetMs: 0,
       factors: "passkey",
+      envelopeHash: "a".repeat(64),
     });
   });
 

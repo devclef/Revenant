@@ -186,6 +186,27 @@ export const REVEAL_COPY = {
   /** The control that advances from the letter to the figures (R9.4). */
   stage2Next: "See the numbers",
 
+  // --- The opening Fingerprint (R14.3, R14.8) ---
+
+  /** The heading above the opening Fingerprint block. An h3, so the focus rule is unchanged. */
+  fingerprintTitle: "Fingerprint at sealing",
+
+  /** The statement shown with the Fingerprint once the seal check has passed (R14.3). */
+  fingerprintPassed: "The seal check passed.",
+
+  /**
+   * The card sentence shown after `fingerprintPassed` on a live or real letter
+   * (R14.3): the same Fingerprint is printed on the reader's letter card.
+   */
+  fingerprintPassedCard:
+    "It matches the fingerprint printed on your letter card.",
+
+  /**
+   * The label shown after `fingerprintPassed` on a persona letter (R14.8). A
+   * persona letter has no card, so no card wording is shown next to it.
+   */
+  fingerprintDemo: "demo letter",
+
   // --- Reveal, stage 3: the figures then and now ---
 
   /** Heading for stage 3 of the reveal: the figures then and now. */
@@ -208,10 +229,24 @@ export const REVEAL_COPY = {
   labelFixtureData: "fixture data",
 
   /**
-   * The historical-record label on a non-fixture then figure (R13.2).
-   * `{date}` is the retrieved date in UTC.
+   * The historical-record label on a non-fixture then figure in a persona
+   * letter (R13.1). `{date}` is the retrieved date in UTC.
    */
   labelHistoricalRecord: "historical record, retrieved {date}",
+
+  /**
+   * The then label on a non-fixture official figure in a Live_Letter or
+   * Real_Letter (R13.2). `{date}` is the retrieved date in UTC. It never
+   * contains "historical record".
+   */
+  labelSealedWithLetter: "sealed with the letter, retrieved {date}",
+
+  /**
+   * The label on a self-reported figure (R13.4). It never contains "historical
+   * record" or "retrieved": a self-reported number is the reader's own, not a
+   * fetched record.
+   */
+  labelSelfReported: "self-reported",
 
   /** The retrieved label on a now figure. `{date}` is the retrieved date in UTC. */
   labelRetrieved: "retrieved {date}",

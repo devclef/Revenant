@@ -40,6 +40,7 @@ const SEALED = {
   letterId: "AAAAAAAAAAAAAAAAAAAAAA",
   sealedAt: "2026-11-02T10:00:01.000Z",
   opensAt: "2026-11-02T10:00:31.000Z",
+  envelopeHash: "a".repeat(64),
 };
 
 describe("realSealApi calls the global fetch at call time", () => {
@@ -150,6 +151,36 @@ describe("seal result mapping", () => {
 
   it("maps a 201 body missing opensAt to server", async () => {
     installFetch(() => json(201, { letterId: "L", sealedAt: "x" }));
+    expect(await realSealApi.seal({ letterId: "L", envelope: {}, envelopeHash: "h" })).toEqual({
+      ok: false,
+      kind: "server",
+    });
+  });
+
+  it("carries a 64-char hex envelopeHash from the body onto an ok result", async () => {
+    installFetch(() => json(201, SEALED));
+    const result = await realSealApi.seal({ letterId: "L", envelope: {}, envelopeHash: "h" });
+    expect(result).toEqual({ ok: true, ...SEALED });
+    if (result.ok) expect(result.envelopeHash).toBe("a".repeat(64));
+  });
+
+  it("maps a 201 body missing envelopeHash to server", async () => {
+    installFetch(() => json(201, { letterId: "L", sealedAt: "x", opensAt: "y" }));
+    expect(await realSealApi.seal({ letterId: "L", envelope: {}, envelopeHash: "h" })).toEqual({
+      ok: false,
+      kind: "server",
+    });
+  });
+
+  it("maps a 201 body whose envelopeHash is not 64 lowercase hex to server", async () => {
+    installFetch(() =>
+      json(201, { ...SEALED, envelopeHash: "A".repeat(64) }),
+    );
+    expect(await realSealApi.seal({ letterId: "L", envelope: {}, envelopeHash: "h" })).toEqual({
+      ok: false,
+      kind: "server",
+    });
+    installFetch(() => json(201, { ...SEALED, envelopeHash: "abc" }));
     expect(await realSealApi.seal({ letterId: "L", envelope: {}, envelopeHash: "h" })).toEqual({
       ok: false,
       kind: "server",

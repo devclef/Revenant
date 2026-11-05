@@ -164,7 +164,12 @@ export function SealedView({
         {showKeyReminder ? <p className={styles.intro}>{LIVE_COPY.keyReminder}</p> : null}
       </div>
 
-      <SealedKeepsakes letterId={state.letterId} appOrigin={appOrigin} opensAt={state.opensAt} />
+      <SealedKeepsakes
+        letterId={state.letterId}
+        appOrigin={appOrigin}
+        opensAt={state.opensAt}
+        envelopeHash={state.envelopeHash}
+      />
 
       {offerBackupCard && backupKeyText !== null ? (
         showBackupCard ? (
