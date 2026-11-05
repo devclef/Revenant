@@ -246,7 +246,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
   - Validation: `bash scripts/check.sh`
   - _Requirements: R14.1, R14.7, R24.7, R30.2_
 
-- [ ] 8. One letter-date module, labels by letter kind, and the Fingerprint on the card and at opening
+- [x] 8. One letter-date module, labels by letter kind, and the Fingerprint on the card and at opening
   - Agent: `frontend-dev` · Depends on: 4, 6, 7 · Estimated size: ~2,200 changed lines
   - Before this task: tasks 4, 6 and 7 are on `main`. (The design's table lists 6 and 7; task 4 is added because this task edits `OpeningFlow.tsx`, which task 4 changes, and the frontend-dev chain is straight.)
   - Scope: `src/components/ui/letter-date.ts` (new), `src/components/demo/dates.ts` (delete), `src/components/demo/PersonaCard.tsx`, `src/components/ceremony/envelope/Envelope.tsx`, `src/components/ceremony/recall/RecallPager.tsx` (date import only), `src/components/reveal/StillSealed.tsx`, `reveal/SealedLetter.tsx`, `reveal/FigureEntry.tsx`, `reveal/FigureLine.tsx`, `reveal/FiguresThenNow.tsx`, `reveal/Fingerprint.tsx` (new), `reveal/Reveal.tsx`, `reveal/OpeningFlow.tsx`, `reveal/opening-machine.ts` (the `Opened.envelopeHash` field only), `reveal/useOpeningFlow.ts` (set the field in its two `OPENED` dispatches only), `reveal/copy.ts`, `reveal/reveal.module.css`, `src/components/live/format.ts`, `live/LetterCard.tsx`, `live/SealedView.tsx`, `live/SealedKeepsakes.tsx`, `live/api.ts`, `live/seal-machine.ts`, `live/copy.ts`, `src/lib/cards/letter-card-svg.ts` (new), `src/lib/cards/index.ts`, `src/lib/ics/build-ics.ts` (only if its description writes a letter date), the source scan tests under `src/components` (additions only), and the `*.test.ts(x)` for each file above
