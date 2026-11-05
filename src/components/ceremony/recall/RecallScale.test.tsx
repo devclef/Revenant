@@ -31,6 +31,7 @@ import {
 } from "./scale-math";
 import { visibleTicks } from "./tick-layout";
 import { FALLBACK_RANGE, scaleRangeFor } from "./unit-ranges";
+import { TICK_CHAR_PX, TICK_GAP_PX, TRACK_MIN_PX } from "../constants";
 
 const NUM_RUNS = 100;
 const NUMBER_PATTERN = /^[0-9]+(\.[0-9]+)?$/;
@@ -70,6 +71,16 @@ function render(overrides: Partial<RecallScaleProps> = {}): string {
 /** The text of every tick label drawn under the track, in order. */
 function tickLabelsOf(markup: string): string[] {
   return [...markup.matchAll(/data-tick-label=""[^>]*>([^<]*)</g)].map((match) => match[1]);
+}
+
+/** A tick value as the label shows it: plain decimal with thousands grouped. */
+function groupedText(value: number): string {
+  return String(value).replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+}
+
+/** The label width the component measures: characters times the per-character estimate. */
+function labelWidthOf(value: number): number {
+  return groupedText(value).length * TICK_CHAR_PX;
 }
 
 /** The text of the readout element, or null when there is none. */
@@ -386,9 +397,12 @@ describe("the track uses the sealed unit's range", () => {
     expect(ticks).toEqual([0, 500, 1000, 1500, 2000, 2500, 3000]);
   });
 
-  it("the fallback range keeps the decade labels and no tick labels", () => {
+  it("the fallback range draws its decade labels from visibleTicks and no tick labels", () => {
     const markup = render({ value: 3.47 });
-    expect(tickLabelsOf(markup)).toEqual([]);
+    const expected = visibleTicks(FALLBACK_RANGE, TRACK_MIN_PX, labelWidthOf).map((tick) =>
+      groupedText(tick.value),
+    );
+    expect(tickLabelsOf(markup)).toEqual(expected);
     expect(markup).toContain("100,000");
   });
 
@@ -410,5 +424,50 @@ describe("the track uses the sealed unit's range", () => {
     expect(nextValueForKeyIn("PageUp", 9, usd)).toBe(10);
     expect(nextValueForKeyIn("Home", 3.47, usd)).toBe(0);
     expect(nextValueForKeyIn("End", 3.47, usd)).toBe(10);
+  });
+});
+
+// --- Log-track decade labels (visibleTicks, no CSS width rule) ---------------
+
+describe("the log track's decade labels come from visibleTicks", () => {
+  const visible = () => visibleTicks(FALLBACK_RANGE, TRACK_MIN_PX, labelWidthOf);
+
+  it("the drawn labels are the visibleTicks values, in order, at every track width", () => {
+    const markup = render({ value: 3.47 });
+    expect(tickLabelsOf(markup)).toEqual(visible().map((tick) => groupedText(tick.value)));
+    expect(markup).toContain(`--pos-label:${visible()[0].position}`);
+  });
+
+  it("keeps the first tick (0.01) and the last tick (100,000)", () => {
+    const ticks = visible();
+    expect(ticks[0].value).toBe(0.01);
+    expect(ticks[ticks.length - 1].value).toBe(100000);
+    const drawn = tickLabelsOf(render({ value: 3.47 }));
+    expect(drawn[0]).toBe("0.01");
+    expect(drawn[drawn.length - 1]).toBe("100,000");
+  });
+
+  it("no two drawn labels overlap or leave less than TICK_GAP_PX between them", () => {
+    const ticks = visible();
+    const boxes = ticks.map((tick) => {
+      const x = tick.position * TRACK_MIN_PX;
+      const w = labelWidthOf(tick.value);
+      if (tick.anchor === "start") return { left: x, right: x + w };
+      if (tick.anchor === "end") return { left: x - w, right: x };
+      return { left: x - w / 2, right: x + w / 2 };
+    });
+    for (const box of boxes) {
+      expect(box.left).toBeGreaterThanOrEqual(0);
+      expect(box.right).toBeLessThanOrEqual(TRACK_MIN_PX);
+    }
+    for (let i = 1; i < boxes.length; i += 1) {
+      expect(boxes[i].left - boxes[i - 1].right).toBeGreaterThanOrEqual(TICK_GAP_PX);
+    }
+  });
+
+  it("the stylesheet no longer hides decade labels with a 480px container rule", () => {
+    const css = readFileSync(join(here, "RecallScale.module.css"), "utf8");
+    expect(css).not.toMatch(/max-width:\s*480px/);
+    expect(css).not.toMatch(/@container\s+recallTrack/);
   });
 });

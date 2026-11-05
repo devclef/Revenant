@@ -49,9 +49,6 @@ import { FALLBACK_RANGE, type ScaleRange } from "./unit-ranges";
 /** How far (px) the pointer may wander and still count as holding still. */
 export const ZOOM_DWELL_SLOP_PX = 6;
 
-/** The eight faint decade marks, drawn at level 0 of the log track only (design.md). */
-const DECADE_VALUES = [0.01, 0.1, 1, 10, 100, 1000, 10000, 100000] as const;
-
 /** The track position the marker starts from when the answer is empty. */
 const EMPTY_BASE_POSITION = 0.5;
 
@@ -260,6 +257,11 @@ function groupThousands(plain: string): string {
   return plain.replace(/^\d+/, (digits) =>
     digits.replace(/\B(?=(\d{3})+(?!\d))/g, ","),
   );
+}
+
+/** The text of a log-track decade label: the plain decimal with thousands grouped. */
+function decadeText(value: number, range: ScaleRange): string {
+  return groupThousands(toPlainDecimalIn(value, range));
 }
 
 function tickAnchorClass(anchor: VisibleTick["anchor"]): string {
@@ -483,15 +485,18 @@ export function RecallScale({
         </div>
       ) : level === 0 ? (
         <div className={styles.labels} aria-hidden="true">
-          {DECADE_VALUES.map((decade) => (
-            <span
-              key={decade}
-              className={styles.label}
-              style={{ "--pos-label": String(positionOfIn(decade, range)) } as CSSProperties}
-            >
-              {groupThousands(toPlainDecimalIn(decade, range))}
-            </span>
-          ))}
+          {visibleTicks(FALLBACK_RANGE, TRACK_MIN_PX, (tick) => decadeText(tick, range).length * TICK_CHAR_PX).map(
+            (tick) => (
+              <span
+                key={tick.value}
+                data-tick-label=""
+                className={`${styles.tick} ${tickAnchorClass(tick.anchor)}`}
+                style={{ "--pos-label": String(tick.position) } as CSSProperties}
+              >
+                {decadeText(tick.value, range)}
+              </span>
+            ),
+          )}
         </div>
       ) : (
         <div className={styles.labels} aria-hidden="true">
