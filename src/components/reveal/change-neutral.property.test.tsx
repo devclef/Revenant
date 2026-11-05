@@ -245,6 +245,9 @@ describe("Property 20: a rise and a fall render the same markup (R11.8, R16.4)",
 const CONSTANT_STYLE_PROPERTIES = [
   "animation-duration",
   "animation-timing-function",
+  // The Figure_Entry value size: FIG_VALUE_SIZE, the same for the then and now
+  // values of every figure, so it is the same on a rise and on a fall.
+  "font-size",
   // The Counter's strip step count: COUNTER_ROLL_STEPS for every digit, so it
   // is the same on a rise and on a fall (Stamp renders it through Counter).
   "--counter-steps",
@@ -670,10 +673,10 @@ describe("Property 15: the static render is the final state (R9.1, R9.7, R9.8, R
           const plain = html.replace(/<!-- -->/g, "");
 
           // Every shown figure's FigureLine, unchanged, with its own period.
-          // A comparable entry draws its R14.3 items: the then value in the big
-          // type and the now value on the Now line, each with its unit.
+          // A comparable entry draws its R14.3 items: the then value as a
+          // .figValue span and the now value on the now row, each with its unit.
           expect(html).toContain('data-role="then"');
-          expect(plain).toContain(
+          expect(plain.replace(/<[^>]+>/g, "")).toContain(
             `${formatValue(GAS_NOW.value, GAS_NOW.region)} ${GAS_NOW.unit}`,
           );
           expect(html).toContain(figureLineMarkup(dieselBadUnit(), "then"));
@@ -681,7 +684,7 @@ describe("Property 15: the static render is the final state (R9.1, R9.7, R9.8, R
           expect(html).toContain(figureLineMarkup(missingFigure(), "then"));
 
           // Stamp face and source name for the comparable entry.
-          // The then value sits in the big type; its unit sits on the meta line.
+          // The then value is a .figValue span; its unit sits next to it.
           expect(plain).toContain(
             `data-role="then">${formatValue(comparableThen.value, comparableThen.region)}<`,
           );

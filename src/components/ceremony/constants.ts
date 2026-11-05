@@ -27,6 +27,11 @@ export const MAX_FIGURES = 6; // equals the spec 06 MAX_FIGURES; constants.test.
 export const FIG_TOTAL_MS = 750; // FIG_FADE_MS + FIG_STAGGER_MS * (MAX_FIGURES - 1)
 export const FIG_CLOCK_MS = 780; // FIG_START_DELAY_MS + FIG_TOTAL_MS: the column clock, any count
 
+// --- Figure_Entry values (spec 07 R14.3 item 3, R14.12) ---
+// The then and now values share this size and weight, so neither reads as the
+// main figure. Set inline by the reveal components (FigureEntry, FigureLine).
+export const FIG_VALUE_SIZE = "clamp(2.5rem, 6vw, 4.5rem)";
+
 // --- Easing ---
 export const EASE_STANDARD = "cubic-bezier(0.2, 0, 0, 1)";
 export const EASE_STAMP = "cubic-bezier(0.3, 0, 0.2, 1)";

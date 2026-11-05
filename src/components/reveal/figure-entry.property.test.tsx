@@ -114,7 +114,8 @@ describe("Property 2: nothing depends on the distance between an answer and a fi
           // be the same whichever answer the judge gave.
           const strip = (html: string): string =>
             plain(html)
-              .replace(/<p class="[^"]*youLine[^"]*">[\s\S]*?<\/p>/, "")
+              .replace(/<p class="[^"]*figAnswer[^"]*">[\s\S]*?<\/p>/, "")
+              .replace(/<span class="[^"]*markLabel[^"]*"[^>]*>[\s\S]*?<\/span>/, "")
               .replace(/<span class="[^"]*markWrap[^"]*">[\s\S]*?<\/span><\/span>/, "")
               .replace(/--pos-mark:[^;"]+;?/, "")
               .replace(/;"/g, '"');
@@ -214,11 +215,13 @@ describe("Property 8: Accent is never on a figure, change or direction element (
     // a figure element, so it is outside this figure check.
     // numberLine sets --figure-mark to the Accent; markStroke reads that
     // variable. Both belong to the Mark, not to a figure element.
+    // The Accent names exactly one figure class: numberLine, which sets the
+    // Mark's colour. The answer value is no longer Accent (spec 07 R14.12).
     const figureNames = names.filter((name) => name !== "marksValue");
-    expect(new Set(figureNames)).toEqual(new Set(["youValue", "numberLine"]));
+    expect(new Set(figureNames)).toEqual(new Set(["numberLine"]));
   });
 
-  it("the Accent appears in the markup only on the answer value and the Mark", () => {
+  it("the Accent appears in the markup only on the Mark", () => {
     fc.assert(
       fc.property(
         fc.record({
@@ -230,8 +233,8 @@ describe("Property 8: Accent is never on a figure, change or direction element (
           const then = figure(thousandths(thenScaled), THEN_PERIOD);
           const now = figure(thousandths(thenScaled + deltaScaled), NOW_PERIOD);
           const html = renderEntry(then, now, answered ? thousandths(thenScaled) : undefined);
-          const accentHits = (html.match(/class="[^"]*(youValue|markStroke)[^"]*"/g) ?? []).length;
-          expect(accentHits).toBe(answered ? 2 : 0);
+          const accentHits = (html.match(/class="[^"]*markStroke[^"]*"/g) ?? []).length;
+          expect(accentHits).toBe(answered ? 1 : 0);
         },
       ),
       { numRuns: 100 },
@@ -259,11 +262,11 @@ describe("Property 15: a Figure_Entry keeps the R14.3 item order (R14.3, R14.11)
           const at = (needle: string): number => html.indexOf(needle);
           const order = [
             at("Regular gasoline · U.S. city average"),
-            at(answered ? "Your answer: " : REVEAL_COPY.noAnswer),
             at(REVEAL_COPY.then),
             at('data-role="then"'),
             at(REVEAL_COPY.labelHistoricalRecord.replace("{date}", "30 October 2024")),
             at('data-role="now"'),
+            at(answered ? "Your answer: " : REVEAL_COPY.yourAnswer),
             at(REVEAL_COPY.periodRange),
             at(REVEAL_COPY.formulaLabel),
             at(REVEAL_COPY.sourceSummary),

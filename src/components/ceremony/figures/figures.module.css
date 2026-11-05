@@ -81,6 +81,15 @@
   background-color: transparent;
 }
 
+/* The judge's "Your answer" label on the line. Plain desk text, no Accent. */
+.markLabel {
+  position: absolute;
+  top: 1.25rem;
+  left: 0;
+  right: 0;
+  color: var(--text);
+}
+
 /* Hidden from sight, read by screen readers (R11.9). */
 .srOnly {
   position: absolute;

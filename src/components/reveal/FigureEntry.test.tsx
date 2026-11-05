@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 
 import { FigureEntry, type FigureEntryProps } from "./FigureEntry";
 import { REVEAL_COPY } from "./copy";
+import { FIG_VALUE_SIZE } from "@/components/ceremony/constants";
 import { computeChange, formatPeriod, type DisplayRescale } from "@/lib/figures";
 import type { FigureV1 } from "@/lib/seal-format";
 
@@ -65,7 +66,7 @@ describe("FigureEntry draws the R14.3 items in order (spec 07 R14.3)", () => {
     expect(answer).toBeGreaterThan(name);
   });
 
-  it("orders the nine items: name, answer, then value, meta, line, now, change, formula, source", () => {
+  it("orders the items: name, then row, now row, the answer, Number_Line, change, formula, source", () => {
     const html = plain(render({ markValue: "3.50" }));
     const at = (needle: string): number => {
       const index = html.indexOf(needle);
@@ -74,12 +75,13 @@ describe("FigureEntry draws the R14.3 items in order (spec 07 R14.3)", () => {
     };
     const order = [
       at("Regular gasoline · U.S. city average"),
-      at("Your answer: "),
-      at(REVEAL_COPY.then),
+      at(`${REVEAL_COPY.then}:`),
       at(`data-role="then">3.412<`),
       at(REVEAL_COPY.labelHistoricalRecord.replace("{date}", "30 October 2024")),
-      at('class="_numberLine'),
-      at(`data-role="now"`),
+      at(`${REVEAL_COPY.now}:`),
+      at(`data-role="now">3.9<`),
+      at("_numberLine"),
+      at("Your answer: 3.50 USD per gallon"),
       at(REVEAL_COPY.periodRange),
       at(REVEAL_COPY.formulaLabel),
       at(REVEAL_COPY.sourceSummary),
@@ -87,17 +89,20 @@ describe("FigureEntry draws the R14.3 items in order (spec 07 R14.3)", () => {
     expect(order).toEqual([...order].sort((a, b) => a - b));
   });
 
-  it("the then value sits in the big type with no direction in its class", () => {
+  it("the then and now values are .figValue spans at the same size, with no Accent or direction class", () => {
     const html = render();
-    expect(html).toMatch(/class="[^"]*big[^"]*" data-role="then">3\.412</);
+    expect(html).toMatch(/class="[^"]*figValue[^"]*"[^>]*data-role="then">3\.412</);
+    expect(html).toMatch(/class="[^"]*figValue[^"]*"[^>]*data-role="now">3\.9</);
+    expect(html).toContain(`font-size:${FIG_VALUE_SIZE}`);
+    expect(html).not.toMatch(/class="[^"]*(big|youLine|youValue|accent)[^"]*"/);
   });
 
-  it("the now line shows the now value and both periods with the retrieved date", () => {
-    const html = plain(render());
-    expect(html).toContain("Now: ");
-    expect(html).toContain("3.9 USD per gallon");
-    expect(html).toContain(formatPeriod("2026-10", NOW.region));
-    expect(html).toContain("retrieved 27 October 2026");
+
+  it("the now row shows the now value, unit, both periods and the retrieved date", () => {
+    const text = plain(render()).replace(/<[^>]+>/g, "");
+    expect(text).toContain("Now: 3.9 USD per gallon");
+    expect(text).toContain(formatPeriod("2026-10", NOW.region));
+    expect(text).toContain("retrieved 27 October 2026");
   });
 
   it("shows the source, the series ID and the source_url in the source control", () => {
@@ -109,25 +114,28 @@ describe("FigureEntry draws the R14.3 items in order (spec 07 R14.3)", () => {
 });
 
 describe("FigureEntry draws the Mark only when there is an answer (R12.1)", () => {
-  it("shows No answer and no Mark for an unanswered figure", () => {
+  it("shows No answer on the figAnswer line and no Mark for an unanswered figure", () => {
     const html = render({ markValue: undefined });
-    expect(html).toContain(REVEAL_COPY.noAnswer);
-    expect(html).not.toContain("Your answer");
+    expect(plain(html)).toContain(`${REVEAL_COPY.yourAnswer}: ${REVEAL_COPY.noAnswer}`);
+    expect(html.match(/Your answer/g) ?? []).toHaveLength(1);
+    expect(html).toMatch(/class="[^"]*figAnswer[^"]*"/);
+    expect(html).not.toMatch(/class="[^"]*markLabel/);
     expect(html).not.toMatch(/class="[^"]*markWrap/);
   });
 
-  it("shows the typed answer on the Your answer line and in the Mark's hidden text", () => {
+  it("shows the typed answer once as the Number_Line label and in the Mark's hidden text", () => {
     const html = plain(render({ markValue: "3.50" }));
-    expect(html).toContain("Your answer: ");
-    expect(html).toContain("3.50 USD per gallon");
     expect(html).toContain("Your answer: 3.50 USD per gallon");
+    expect(html).toMatch(/class="[^"]*markLabel[^"]*"/);
     expect(html).toMatch(/class="[^"]*markWrap/);
+    expect(html).not.toMatch(/class="[^"]*figAnswer/);
   });
 
-  it("the figure items other than the answer line are identical with or without a Mark", () => {
+  it("the figure items other than the answer are identical with or without a Mark", () => {
     const strip = (html: string): string =>
       plain(html)
-        .replace(/<p class="[^"]*youLine[^"]*">[\s\S]*?<\/p>/, "")
+        .replace(/<p class="[^"]*figAnswer[^"]*">[\s\S]*?<\/p>/, "")
+        .replace(/<span class="[^"]*markLabel[^"]*"[^>]*>[\s\S]*?<\/span>/, "")
         .replace(/--pos-mark:[^;"]+;?/, "")
         .replace(/;"/g, '"')
         .replace(/<span class="[^"]*markWrap[^"]*">[\s\S]*?<\/span><\/span>/, "");
@@ -135,6 +143,7 @@ describe("FigureEntry draws the Mark only when there is an answer (R12.1)", () =
       strip(render({ markValue: undefined })),
     );
   });
+
 });
 
 describe("FigureEntry shows the figures in the display rescale (R11.10)", () => {

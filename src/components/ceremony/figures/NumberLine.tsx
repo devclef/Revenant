@@ -36,9 +36,21 @@ export type NumberLineProps = {
   markValue?: string;
   /** The figure's unit, shown in the Mark's hidden text. */
   unit: string;
+  /**
+   * The visible "Your answer" label, drawn only with a Mark. Its meaning is
+   * already in the Mark's hidden text, so the label is hidden from screen
+   * readers.
+   */
+  label?: string;
 };
 
-export function NumberLine({ thenValue, nowValue, markValue, unit }: NumberLineProps) {
+export function NumberLine({
+  thenValue,
+  nowValue,
+  markValue,
+  unit,
+  label,
+}: NumberLineProps) {
   const geometry = numberLineGeometry(thenValue, nowValue, markValue);
 
   // Only the three position variables. Set --pos-mark only when there is a Mark.
@@ -64,6 +76,11 @@ export function NumberLine({ thenValue, nowValue, markValue, unit }: NumberLineP
         <span className={styles.markWrap}>
           <span className={styles.markStroke} aria-hidden="true" />
           <span className={styles.srOnly}>{markText}</span>
+        </span>
+      )}
+      {label === undefined ? null : (
+        <span className={styles.markLabel} aria-hidden="true">
+          {label}
         </span>
       )}
     </div>
