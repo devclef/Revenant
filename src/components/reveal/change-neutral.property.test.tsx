@@ -28,6 +28,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import fc from "fast-check";
 
 import { ChangeLine } from "./ChangeLine";
+import { maskLineLabels } from "./line-label-mask";
 import { FigureEntry, type FigureEntryProps } from "./FigureEntry";
 import { FigureLine } from "./FigureLine";
 import { FiguresThenNow } from "./FiguresThenNow";
@@ -257,6 +258,10 @@ const CONSTANT_STYLE_PROPERTIES = [
 const ALLOWED_STYLE_PROPERTIES: ReadonlySet<string> = new Set<string>([
   ...POSITION_PROPERTIES,
   ...CONSTANT_STYLE_PROPERTIES,
+  // Number_Line label offsets (spec 08 R5): px from placeLineLabels. They are
+  // positions of text, not figure values, and are masked out of the skeletons.
+  "left",
+  "top",
 ]);
 
 /** A decimal string with three fraction digits, from an integer count of thousandths. */
@@ -311,7 +316,8 @@ function expectNoDirectionClass(html: string): void {
  * token, and in text nodes every number becomes `#` and the words rose and fell
  * become `§`. Tags, classes and static copy are left as they are.
  */
-function skeletonOf(html: string): string {
+function skeletonOf(rawHtml: string): string {
+  const html = maskLineLabels(rawHtml);
   const withoutPositions = html.replace(
     /--pos-(then|now|mark):[^;"]+/g,
     "--pos-$1:§",

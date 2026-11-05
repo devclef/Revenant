@@ -120,13 +120,6 @@ export function FigureEntry({
   // constant so the reveal and the ceremony agree.
   const valueStyle = { fontSize: FIG_VALUE_SIZE };
 
-  // The judge's answer as the Number_Line label. Its typed value keeps the
-  // sealed unit, as before.
-  const answerLabel =
-    markValue === undefined
-      ? undefined
-      : `${REVEAL_COPY.yourAnswer}: ${markValue} ${then.unit}`;
-
   return (
     <MotionProvider>
       <section className={styles.fig} aria-label={`${name}, ${then.region}`}>
@@ -161,18 +154,15 @@ export function FigureEntry({
           <span className={styles.fixtureLabel}>{nowLabel}</span>
         </p>
 
-        {markValue === undefined ? (
-          <p className={styles.figAnswer}>
-            {REVEAL_COPY.yourAnswer}: {REVEAL_COPY.noAnswer}
-          </p>
-        ) : null}
-
         <NumberLine
           thenValue={toDisplay(then.value)}
           nowValue={toDisplay(now.value)}
+          thenShown={shownValue(then)}
+          nowShown={shownValue(now)}
+          thenPeriod={formatPeriod(then.period, then.region)}
+          nowPeriod={formatPeriod(now.period, now.region)}
           markValue={markForLine}
           unit={unit}
-          label={answerLabel}
         />
 
         <ChangeLine result={change} region={then.region} then={then} now={now} />

@@ -14,6 +14,7 @@ import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 
 import { FigureEntry, type FigureEntryProps } from "./FigureEntry";
+import { maskLineLabels } from "./line-label-mask";
 import { REVEAL_COPY } from "./copy";
 import {
   computeChange,
@@ -84,7 +85,8 @@ function positionsIn(html: string): number[] {
  * The direction-independent skeleton: positions become a token, numbers in text
  * become `#`, and the words rose and fell become `§`. Tags and classes remain.
  */
-function skeletonOf(html: string): string {
+function skeletonOf(rawHtml: string): string {
+  const html = maskLineLabels(rawHtml);
   const withoutPositions = html.replace(/--pos-(then|now|mark):[^;"]+/g, "--pos-$1:§");
   return withoutPositions.replace(/>([^<]*)</g, (_match, text: string) => {
     const normalised = text
@@ -113,7 +115,7 @@ describe("Property 2: nothing depends on the distance between an answer and a fi
           // Strip the answer line, the Mark and its position: what remains must
           // be the same whichever answer the judge gave.
           const strip = (html: string): string =>
-            plain(html)
+            maskLineLabels(plain(html))
               .replace(/<p class="[^"]*figAnswer[^"]*">[\s\S]*?<\/p>/, "")
               .replace(/<span class="[^"]*markLabel[^"]*"[^>]*>[\s\S]*?<\/span>/, "")
               .replace(/<span class="[^"]*markWrap[^"]*">[\s\S]*?<\/span><\/span>/, "")
@@ -266,7 +268,7 @@ describe("Property 15: a Figure_Entry keeps the R14.3 item order (R14.3, R14.11)
             at('data-role="then"'),
             at(REVEAL_COPY.labelHistoricalRecord.replace("{date}", "30 October 2024")),
             at('data-role="now"'),
-            at(answered ? "Your answer: " : REVEAL_COPY.yourAnswer),
+            at('data-line-label="answer"'),
             at(REVEAL_COPY.periodRange),
             at(REVEAL_COPY.formulaLabel),
             at(REVEAL_COPY.sourceSummary),

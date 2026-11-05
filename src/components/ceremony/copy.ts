@@ -107,6 +107,27 @@ export const CEREMONY_COPY = {
    */
   markAnswer: "Your answer: {value} {unit}",
 
+  // --- Number_Line labels (spec 08 R5) ---
+
+  /** Visible label under the then point. Read by screen readers only through numberLineAlt. */
+  lineThen: "Then",
+  /** Visible label under the now point. */
+  lineNow: "Now",
+  /** Visible label for the judge's answer, followed by the value and unit. */
+  lineAnswer: "Your answer",
+  /** Visible label when the judge gave no answer. */
+  lineNoAnswer: "No answer",
+  /**
+   * Text alternative for a Number_Line with an answer. `{then}`, `{now}` and
+   * `{answer}` are the displayed values; `{thenPeriod}` and `{nowPeriod}` are
+   * the figures' periods; `{unit}` is the figure's unit.
+   */
+  numberLineAlt:
+    "Then {then} {unit}, {thenPeriod}. Now {now} {unit}, {nowPeriod}. Your answer {answer} {unit}.",
+  /** Text alternative for a Number_Line with no answer. */
+  numberLineAltNoAnswer:
+    "Then {then} {unit}, {thenPeriod}. Now {now} {unit}, {nowPeriod}. No answer.",
+
   // --- Live region, one short line per Stage ---
 
   /**

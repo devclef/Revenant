@@ -6,6 +6,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { FigureEntry, type FigureEntryProps } from "./FigureEntry";
+import { maskLineLabels } from "./line-label-mask";
 import { REVEAL_COPY } from "./copy";
 import { FIG_VALUE_SIZE } from "@/components/ceremony/constants";
 import { computeChange, formatPeriod, type DisplayRescale } from "@/lib/figures";
@@ -61,7 +62,7 @@ describe("FigureEntry draws the R14.3 items in order (spec 07 R14.3)", () => {
   it("shows the name and region first, then the answer line", () => {
     const html = plain(render({ markValue: "3.50" }));
     const name = html.indexOf("Regular gasoline · U.S. city average");
-    const answer = html.indexOf("Your answer: ");
+    const answer = html.indexOf('data-line-label="answer"');
     expect(name).toBeGreaterThan(-1);
     expect(answer).toBeGreaterThan(name);
   });
@@ -81,7 +82,7 @@ describe("FigureEntry draws the R14.3 items in order (spec 07 R14.3)", () => {
       at(`${REVEAL_COPY.now}:`),
       at(`data-role="now">3.9<`),
       at("_numberLine"),
-      at("Your answer: 3.50 USD per gallon"),
+      at('data-line-label="answer"'),
       at(REVEAL_COPY.periodRange),
       at(REVEAL_COPY.formulaLabel),
       at(REVEAL_COPY.sourceSummary),
@@ -116,9 +117,9 @@ describe("FigureEntry draws the R14.3 items in order (spec 07 R14.3)", () => {
 describe("FigureEntry draws the Mark only when there is an answer (R12.1)", () => {
   it("shows No answer on the figAnswer line and no Mark for an unanswered figure", () => {
     const html = render({ markValue: undefined });
-    expect(plain(html)).toContain(`${REVEAL_COPY.yourAnswer}: ${REVEAL_COPY.noAnswer}`);
+    expect(plain(html)).toContain(REVEAL_COPY.noAnswer);
     expect(html.match(/Your answer/g) ?? []).toHaveLength(1);
-    expect(html).toMatch(/class="[^"]*figAnswer[^"]*"/);
+    expect(html).toMatch(/data-line-label="answer"/);
     expect(html).not.toMatch(/class="[^"]*markLabel/);
     expect(html).not.toMatch(/class="[^"]*markWrap/);
   });
@@ -126,14 +127,14 @@ describe("FigureEntry draws the Mark only when there is an answer (R12.1)", () =
   it("shows the typed answer once as the Number_Line label and in the Mark's hidden text", () => {
     const html = plain(render({ markValue: "3.50" }));
     expect(html).toContain("Your answer: 3.50 USD per gallon");
-    expect(html).toMatch(/class="[^"]*markLabel[^"]*"/);
+    expect(html).toContain(">3.50 USD per gallon</span>");
     expect(html).toMatch(/class="[^"]*markWrap/);
     expect(html).not.toMatch(/class="[^"]*figAnswer/);
   });
 
   it("the figure items other than the answer are identical with or without a Mark", () => {
     const strip = (html: string): string =>
-      plain(html)
+      maskLineLabels(plain(html))
         .replace(/<p class="[^"]*figAnswer[^"]*">[\s\S]*?<\/p>/, "")
         .replace(/<span class="[^"]*markLabel[^"]*"[^>]*>[\s\S]*?<\/span>/, "")
         .replace(/--pos-mark:[^;"]+;?/, "")

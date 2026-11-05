@@ -153,3 +153,12 @@ export const UNFOLD_AT_MS = 1150;
 export const UNFOLD_MS = 520;
 export const REVEAL_DIM_OPACITY = 0.18;
 export const REVEAL_DIM_MS = 500;
+
+// --- Number_Line labels (spec 08, R5) (spec 08 task 2) ---
+export const LINE_LABEL_GAP_PX = 6; // least gap between two labels in one row
+export const LINE_LABEL_MAX_PX = 200; // widest label; the answer value wraps inside it
+export const LINE_MIN_PX = 240; // the narrowest Number_Line the label domain covers
+export const LINE_LABEL_ROW_EM = 2.6; // row pitch, so a two-line answer label fits in one row
+export const LINE_LABEL_ROWS = 3; // always reserved, whatever the positions
+export const LINE_LABEL_TOP_REM = 1.25; // the first row sits below the lower pin
+export const LABEL_CHAR_PX = 8; // estimate per character at 0.8rem, before measuring

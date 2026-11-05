@@ -8,7 +8,10 @@ import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
+import fc from "fast-check";
 
+import { CEREMONY_COPY } from "../copy";
+import { maskLineLabels } from "../../reveal/line-label-mask";
 import { POSITION_PROPERTIES } from "../constants";
 import { NumberLine, type NumberLineProps } from "./NumberLine";
 import styles from "./figures.module.css";
@@ -16,7 +19,15 @@ import styles from "./figures.module.css";
 const render = (props: NumberLineProps): string =>
   renderToStaticMarkup(createElement(NumberLine, props));
 
-const base = { thenValue: "10", nowValue: "20", unit: "USD per gallon" };
+const base = {
+  thenValue: "10",
+  nowValue: "20",
+  thenShown: "10",
+  nowShown: "20",
+  thenPeriod: "Sep 2024",
+  nowPeriod: "Sep 2026",
+  unit: "USD per gallon",
+};
 
 // Pull every `--name:value` pair out of the rendered style attribute.
 const customProperties = (html: string): Array<[string, string]> => {
@@ -74,7 +85,8 @@ describe("the Mark's hidden text and the axis (R11.9, R12.4)", () => {
   it("keeps the axis, pins and stroke hidden from screen readers", () => {
     const html = render({ ...base, markValue: "15" });
     const hidden = html.match(/aria-hidden="true"/g) ?? [];
-    expect(hidden.length).toBe(4);
+    // The axis, two pins, the Mark stroke and the three visible labels.
+    expect(hidden.length).toBe(7);
   });
 
   it("shows no numbers of its own apart from the answer text", () => {
@@ -96,7 +108,7 @@ describe("an out-of-range Mark looks the same at both edges (R12.3, Property 12)
       html
         .replace(/--pos-mark:[^;"]+/, "--pos-mark:X")
         .replace(/Your answer: [^<]*</, "Your answer: V<");
-    expect(normalise(low)).toBe(normalise(high));
+    expect(normalise(maskLineLabels(low))).toBe(normalise(maskLineLabels(high)));
   });
 });
 
@@ -185,6 +197,93 @@ describe("the Number_Line graphics clear 3:1 on the dark desk (WCAG 2.2 AA)", ()
   it("the Stamp drop stop under prefers-reduced-motion is kept", () => {
     expect(figuresCss).toMatch(
       /@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.drop\s*\{\s*animation:\s*none;?\s*\}\s*\}/,
+    );
+  });
+});
+
+// --- Number_Line labels and text alternative (spec 08 R5, Property 12) ---
+
+describe("NumberLine labels (spec 08 R5.1, R5.2, R5.9)", () => {
+  it("draws visible Then and Now labels with data-line-label, hidden from screen readers", () => {
+    const html = render({ ...base, markValue: "15" });
+    expect(html).toContain(`data-line-label="then"`);
+    expect(html).toContain(`data-line-label="now"`);
+    expect(html).toContain(`>${CEREMONY_COPY.lineThen}</span>`);
+    expect(html).toContain(`>${CEREMONY_COPY.lineNow}</span>`);
+    expect(html).toContain(styles.lineLabelMuted);
+  });
+
+  it("draws the answer label with its value and unit in the accent class", () => {
+    const html = render({ ...base, markValue: "15.50" });
+    expect(html).toContain(`data-line-label="answer"`);
+    expect(html).toContain(`>${CEREMONY_COPY.lineAnswer}</span>`);
+    expect(html).toContain(`>15.50 USD per gallon</span>`);
+    expect(html).toContain(styles.lineLabelAccent);
+  });
+
+  it("reads No answer in the answer label when there is no Mark", () => {
+    const html = render(base);
+    expect(html).toContain(`data-line-label="answer"`);
+    expect(html).toContain(`>${CEREMONY_COPY.lineNoAnswer}</span>`);
+    expect(html.match(/Your answer/g) ?? []).toHaveLength(1);
+  });
+
+  it("gives every visible label an inline position in px", () => {
+    const html = render({ ...base, markValue: "15" });
+    const labels = html.match(/<span[^>]*data-line-label="[^"]*"[^>]*>/g) ?? [];
+    expect(labels).toHaveLength(3);
+    for (const label of labels) {
+      expect(label).toMatch(/left:[0-9.]+px/);
+    }
+  });
+});
+
+describe("NumberLine text alternative (spec 08 R5.8)", () => {
+  it("names all three points on the root image with an answer", () => {
+    const html = render({
+      ...base,
+      thenShown: "3.41",
+      nowShown: "3.90",
+      thenPeriod: "Sep 2024",
+      nowPeriod: "Sep 2026",
+      markValue: "3.50",
+    });
+    expect(html).toContain('role="img"');
+    expect(html).toContain(
+      'aria-label="Then 3.41 USD per gallon, Sep 2024. Now 3.90 USD per gallon, Sep 2026. Your answer 3.50 USD per gallon."',
+    );
+  });
+
+  it("names the no-answer case in the text alternative", () => {
+    const html = render({
+      ...base,
+      thenShown: "3.41",
+      nowShown: "3.90",
+      thenPeriod: "Sep 2024",
+      nowPeriod: "Sep 2026",
+    });
+    expect(html).toContain(
+      'aria-label="Then 3.41 USD per gallon, Sep 2024. Now 3.90 USD per gallon, Sep 2026. No answer."',
+    );
+  });
+});
+
+describe("Property 12: the text alternative and labels name the same points (R5.8, R12.3)", () => {
+  it("for any answer, the labels and the text alternative carry the same answer", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: -100000, max: 100000 }),
+        (answer) => {
+          const value = (answer / 100).toFixed(2);
+          const html = render({
+            ...base,
+            markValue: value,
+          });
+          expect(html).toContain(`>${value} USD per gallon</span>`);
+          expect(html).toContain(`Your answer ${value} USD per gallon.`);
+        },
+      ),
+      { numRuns: 100 },
     );
   });
 });
