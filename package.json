@@ -15,7 +15,7 @@
     "seal-personas": "node dist/seal-personas.mjs",
     "layout-check": "node tools/qa/layout-check.mjs",
     "prefetch": "node scripts/prefetch-figures.mjs",
-    "fetch-figures": "node scripts/fetch-figures.mjs",
+    "fetch-figures": "node dist/fetch-figures.mjs",
     "freshness-check": "node scripts/fetch-figures-freshness.mjs"
   },
   "dependencies": {
