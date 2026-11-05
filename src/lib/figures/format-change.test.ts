@@ -145,8 +145,8 @@ describe("formatChange", () => {
     // Direction word and the only connector words allowed in the sentence.
     expect(["rose", "fell", "unchanged"]).toContain(rose.direction);
     // Period text is month names and digits only — no interpretation words.
-    expect(rose.thenPeriod).toBe("September 2024");
-    expect(rose.nowPeriod).toBe("September 2026");
+    expect(rose.thenPeriod).toBe("Sept 2024");
+    expect(rose.nowPeriod).toBe("Sept 2026");
     // No judgement words leaked into any rendered part.
     for (const word of ["soared", "plunged", "surged", "crashed", "good", "bad"]) {
       expect(text.toLowerCase()).not.toContain(word);
@@ -215,13 +215,19 @@ describe("formatValue", () => {
 });
 
 describe("formatPeriod", () => {
-  it("renders a YYYY-MM period as month and year under UTC", () => {
-    expect(formatPeriod("2024-09", "U.S.")).toBe("September 2024");
-    expect(formatPeriod("2022-09", "Sweden")).toBe("September 2022");
+  it("renders a YYYY-MM period as a short month and year (en-GB, UTC)", () => {
+    expect(formatPeriod("2026-10", "U.S.")).toBe("Oct 2026");
+    // en-GB abbreviates September as "Sept" in current CLDR data.
+    expect(formatPeriod("2024-09", "U.S.")).toBe("Sept 2024");
   });
 
-  it("renders a YYYY-MM-DD period as a full date under UTC", () => {
-    expect(formatPeriod("2024-10-26", "U.S.")).toBe("October 26, 2024");
+  it("renders a YYYY-MM-DD period as a short date (en-GB, UTC)", () => {
+    expect(formatPeriod("2026-10-26", "U.S.")).toBe("26 Oct 2026");
+  });
+
+  it("ignores the region argument", () => {
+    expect(formatPeriod("2026-10-26", "EU")).toBe("26 Oct 2026");
+    expect(formatPeriod("2026-10", "Sweden")).toBe("Oct 2026");
   });
 
   it("returns an unrecognised period string verbatim", () => {

@@ -2,8 +2,9 @@
 //
 // These are metric definitions only, with no figures: the daily fetch job (a
 // later spec) supplies the values, and sealed letters carry their own. All four
-// were confirmed on 2026-10-31 against their publishers (see design.md). Sweden
-// fuel is deferred to the real-data spec, so there are no Sweden entries here.
+// were confirmed on 2026-10-31 against their publishers (see design.md). The
+// entries cover the U.S. (EIA) and the EU27 weighted average (Weekly Oil
+// Bulletin) only.
 //
 // display_name carries no change or judgement words: up and down get the same
 // treatment (neutrality.md). Every metric satisfies MetricDefinitionV1, which is

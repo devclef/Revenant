@@ -102,34 +102,38 @@ export function formatValue(
   return formatter.format(value);
 }
 
+/** The one locale every period renders in, whatever the figure's region. */
+const PERIOD_LOCALE = "en-GB";
+
 /**
- * Format a raw period string for display in the figure's region.
+ * Format a raw period string for display.
  *
- * - `"YYYY-MM"` becomes a month and year, e.g. `"September 2024"`.
- * - `"YYYY-MM-DD"` becomes a full date, e.g. `"October 26, 2026"`.
+ * - `"YYYY-MM"` becomes a short month and year, e.g. `"Oct 2026"`.
+ * - `"YYYY-MM-DD"` becomes a short date, e.g. `"26 Oct 2026"`.
  * - Anything else is returned exactly as stored.
  *
- * Uses `Intl.DateTimeFormat` with `timeZone: "UTC"` so the displayed month and
- * day match the stored period regardless of where the viewer is.
+ * Always formats with `en-GB` and `timeZone: "UTC"`, so the output is the same
+ * for every region and viewer timezone. `region` stays in the signature for
+ * callers, but it does not change the output (R15.2, R15.3).
  */
 export function formatPeriod(period: string, region: string): string {
-  const locale = localeForRegion(region);
+  void region;
 
   if (MONTH_RE.test(period)) {
     const date = new Date(`${period}-01T00:00:00Z`);
-    return new Intl.DateTimeFormat(locale, {
+    return new Intl.DateTimeFormat(PERIOD_LOCALE, {
       timeZone: "UTC",
       year: "numeric",
-      month: "long",
+      month: "short",
     }).format(date);
   }
 
   if (DATE_RE.test(period)) {
     const date = new Date(`${period}T00:00:00Z`);
-    return new Intl.DateTimeFormat(locale, {
+    return new Intl.DateTimeFormat(PERIOD_LOCALE, {
       timeZone: "UTC",
       year: "numeric",
-      month: "long",
+      month: "short",
       day: "numeric",
     }).format(date);
   }
