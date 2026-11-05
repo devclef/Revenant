@@ -26,7 +26,8 @@
   position: relative;
   box-sizing: border-box;
   width: 100%;
-  height: 0;
+  /* Room for the axis, the pins and three label rows (spec 08 R5.5). */
+  height: 7.5rem;
   margin: 2.5rem 0;
   color: var(--text);
 }
@@ -79,6 +80,34 @@
   border: 3px solid var(--figure-mark);
   border-radius: 50%;
   background-color: transparent;
+}
+
+/* The three labels below the axis (spec 08 R5). Each is positioned in px by
+   line-labels.ts through its left and top; the width is its own content, so
+   the measured width is the width drawn. Line height 1.2 keeps a two-line
+   answer label inside its 2.6em row. */
+.lineLabel {
+  position: absolute;
+  width: max-content;
+  max-width: 200px;
+  font-size: 0.8rem;
+  line-height: 1.2;
+  white-space: normal;
+}
+
+/* "Then" and "Now" share one token, whatever the direction (R5.2). */
+.lineLabelMuted {
+  color: var(--muted);
+}
+
+/* The judge's own answer (orange means "you", R3.9). */
+.lineLabelAccent {
+  color: var(--figure-mark);
+}
+
+.lineLabelLine {
+  display: block;
+  white-space: nowrap;
 }
 
 /* Hidden from sight, read by screen readers (R11.9). */

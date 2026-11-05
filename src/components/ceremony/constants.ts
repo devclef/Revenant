@@ -27,6 +27,11 @@ export const MAX_FIGURES = 6; // equals the spec 06 MAX_FIGURES; constants.test.
 export const FIG_TOTAL_MS = 750; // FIG_FADE_MS + FIG_STAGGER_MS * (MAX_FIGURES - 1)
 export const FIG_CLOCK_MS = 780; // FIG_START_DELAY_MS + FIG_TOTAL_MS: the column clock, any count
 
+// --- Figure_Entry values (spec 07 R14.3 item 3, R14.12) ---
+// The then and now values share this size and weight, so neither reads as the
+// main figure. Set inline by the reveal components (FigureEntry, FigureLine).
+export const FIG_VALUE_SIZE = "clamp(2.5rem, 6vw, 4.5rem)";
+
 // --- Easing ---
 export const EASE_STANDARD = "cubic-bezier(0.2, 0, 0, 1)";
 export const EASE_STAMP = "cubic-bezier(0.3, 0, 0.2, 1)";
@@ -148,3 +153,12 @@ export const UNFOLD_AT_MS = 1150;
 export const UNFOLD_MS = 520;
 export const REVEAL_DIM_OPACITY = 0.18;
 export const REVEAL_DIM_MS = 500;
+
+// --- Number_Line labels (spec 08, R5) (spec 08 task 2) ---
+export const LINE_LABEL_GAP_PX = 6; // least gap between two labels in one row
+export const LINE_LABEL_MAX_PX = 200; // widest label; the answer value wraps inside it
+export const LINE_MIN_PX = 240; // the narrowest Number_Line the label domain covers
+export const LINE_LABEL_ROW_EM = 2.6; // row pitch, so a two-line answer label fits in one row
+export const LINE_LABEL_ROWS = 3; // always reserved, whatever the positions
+export const LINE_LABEL_TOP_REM = 1.25; // the first row sits below the lower pin
+export const LABEL_CHAR_PX = 8; // estimate per character at 0.8rem, before measuring

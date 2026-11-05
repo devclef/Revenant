@@ -7,6 +7,7 @@ import {
   rescaleForDisplay,
 } from "@/lib/figures";
 import { formatUtcDate } from "@/components/demo/dates";
+import { FIG_VALUE_SIZE } from "@/components/ceremony/constants";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
 
@@ -97,9 +98,10 @@ export function FigureLine({ figure, role, displayRescale }: FigureLineProps) {
   return (
     <div className={styles.figure}>
       <span className={styles.fixtureLabel}>{label}</span>{" "}
-      <span>
-        {shownValue} {shownUnit}
+      <span className={styles.figValue} style={{ fontSize: FIG_VALUE_SIZE }}>
+        {shownValue}
       </span>{" "}
+      <span>{shownUnit}</span>{" "}
       <span className={styles.period}>{period}</span>{" "}
       <span className={styles.region}>{figure.region}</span>
       {rescaledNote === undefined ? null : (

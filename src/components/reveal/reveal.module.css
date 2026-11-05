@@ -485,47 +485,32 @@
   color: var(--muted);
 }
 
-/* The judge's own answer. Accent marks "you" (R3.9); it is on the value only. */
-.youLine {
-  margin: 0;
+/* One row of the entry: "Then" or "Now", the value, unit, period and region.
+   Desk text only; the row label and the items share one treatment. */
+.figRow {
+  margin: 0 0 0.5rem;
   color: var(--text);
 }
 
-.youValue {
-  color: var(--accent);
-  font-weight: 700;
-}
-
-.thenLbl {
-  margin-top: 0.75rem;
+.rowLabel {
   font-size: 0.85rem;
   color: var(--muted);
 }
 
-/* The then value: the largest and heaviest type of the entry (R14.3 item 3). */
-.big {
-  font-weight: 900;
-  font-size: clamp(3.4rem, 8.5vw, 7rem);
-  line-height: 1;
+/* A then or now value. Both rows use this class, so the two values have equal
+   weight and no direction is encoded (R14.12). The size is set inline from
+   FIG_VALUE_SIZE. No Accent here: Accent marks the judge's answer only. */
+.figValue {
+  font-weight: 800;
+  line-height: 1.1;
+  white-space: nowrap;
   color: var(--text);
   font-variant-numeric: tabular-nums;
 }
 
-.meta {
-  margin: 0.5rem 0 0;
-  color: var(--muted);
-}
-
-/* The now value: body size, bold, the same treatment for a rise and a fall. */
-.nowLine {
-  margin: 0;
-  font-size: 1rem;
-  font-weight: 800;
-  color: var(--text);
-}
-
-.nowLine strong {
-  font-weight: 800;
+/* "Your answer: No answer", shown only when no Mark is drawn. */
+.figAnswer {
+  margin: 0 0 0.5rem;
   color: var(--text);
 }
 

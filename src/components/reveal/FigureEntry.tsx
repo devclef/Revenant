@@ -8,6 +8,7 @@ import {
 } from "@/lib/figures";
 import { formatUtcDate } from "@/components/demo/dates";
 import { MotionProvider } from "@/components/ceremony/motion";
+import { FIG_VALUE_SIZE } from "@/components/ceremony/constants";
 import { NumberLine } from "@/components/ceremony/figures/NumberLine";
 import { ChangeLine } from "./ChangeLine";
 import { REVEAL_COPY } from "./copy";
@@ -15,25 +16,31 @@ import styles from "./reveal.module.css";
 
 /**
  * One comparable Figure_Entry of stage 3, drawn on the dark desk (spec 07,
- * R14.3). It renders nine items, top to bottom, in this order:
+ * R14.3). It renders these items, top to bottom, in this order:
  *
  * 1. the metric's name and region, small and uppercase;
- * 2. "Your answer: {value} {unit}" with the value in the Accent, or "No answer";
- * 3. the then value, in the heaviest and largest type of the entry;
- * 4. the then unit, period, region and the "historical record, retrieved
- *    {date}" label, or the "fixture data" label for a fixture figure;
- * 5. the Number_Line, with the then and now pins and the Mark (when answered);
- * 6. the now value on its own line, bold at body size, with the now period,
- *    region and retrieved date;
- * 7. the change line, with both periods (ChangeLine, unchanged);
- * 8. the formula as text (ChangeLine, unchanged);
- * 9. the source control, which shows the source, the series ID and the
+ * 2. the then row: "Then:", the then value (.figValue), then the unit, the
+ *    period, the region and the "historical record, retrieved {date}" label,
+ *    or the "fixture data" label for a fixture figure;
+ * 3. the now row: "Now:", the now value (.figValue), then the same items for
+ *    the now figure;
+ * 4. the Number_Line, with the then and now pins, the Mark (when answered) and
+ *    the "Your answer" label. The Number_Line is always drawn, so the label is
+ *    too: with an answer it reads "Your answer" over the value and unit; with
+ *    no answer it reads "Your answer" over "No answer". The Mark's own hidden
+ *    text is "Your answer: {value} {unit}";
+ * 5. the change line, with both periods (ChangeLine, unchanged);
+ * 6. the formula as text, with both inputs (ChangeLine, unchanged);
+ * 7. the source control, which shows the source, the series ID and the
  *    `source_url` link.
  *
- * Every figure number carries its own period (R14.11). The type styles say
- * nothing about direction: the then value is always `.big` and the now value is
- * always body-size `strong`, for a rise, a fall and a zero change (R14.12).
- * Accent appears only on the judge's own answer and on the Mark (Property 8).
+ * "Your answer" is visible once in every case, as that Number_Line label. No
+ * p.figAnswer element is rendered; the .figAnswer class is not used here.
+ *
+ * Every figure number carries its own period (R14.11). The then and now values
+ * are both `.figValue` at FIG_VALUE_SIZE, so they have equal weight, and the
+ * type styles say nothing about direction, for a rise, a fall and a zero change
+ * (R14.12). Accent appears only on the Mark (Property 8).
  *
  * The Number_Line's range comes from the then and now values only, so the Mark
  * never moves a figure (R12.2). The display rescale applies to every number
@@ -111,6 +118,10 @@ export function FigureEntry({
 
   const sourceUrl = sourceUrlOf(then);
 
+  // Both values share one size and weight (R14.12), set from the ceremony
+  // constant so the reveal and the ceremony agree.
+  const valueStyle = { fontSize: FIG_VALUE_SIZE };
+
   return (
     <MotionProvider>
       <section className={styles.fig} aria-label={`${name}, ${then.region}`}>
@@ -118,43 +129,43 @@ export function FigureEntry({
           {name} · {then.region}
         </h3>
 
-        {markValue === undefined ? (
-          <p className={styles.youLine}>{REVEAL_COPY.noAnswer}</p>
-        ) : (
-          <p className={styles.youLine}>
-            {REVEAL_COPY.yourAnswer}:{" "}
-            <span className={styles.youValue}>
-              {markValue} {then.unit}
-            </span>
-          </p>
-        )}
-
-        <div className={styles.thenLbl}>{REVEAL_COPY.then}</div>
-        <div className={styles.big} data-role="then">
-          {shownValue(then)}
-        </div>
-        <p className={styles.meta}>
-          <span>{unit}</span> · <span>{formatPeriod(then.period, then.region)}</span>{" "}
-          · <span>{then.region}</span> ·{" "}
+        <p className={styles.figRow}>
+          <span className={styles.rowLabel}>{REVEAL_COPY.then}:</span>{" "}
+          <span className={styles.figValue} style={valueStyle} data-role="then">
+            {shownValue(then)}
+          </span>{" "}
+          <span>{unit}</span>{" "}
+          <span>{formatPeriod(then.period, then.region)}</span>
+          {" · "}
+          <span>{then.region}</span>
+          {" · "}
           <span className={styles.fixtureLabel}>{thenLabel}</span>
           {rescaledNote === undefined ? null : <> · {rescaledNote}</>}
+        </p>
+
+        <p className={styles.figRow}>
+          <span className={styles.rowLabel}>{REVEAL_COPY.now}:</span>{" "}
+          <span className={styles.figValue} style={valueStyle} data-role="now">
+            {shownValue(now)}
+          </span>{" "}
+          <span>{unit}</span>{" "}
+          <span>{formatPeriod(now.period, now.region)}</span>
+          {" · "}
+          <span>{now.region}</span>
+          {" · "}
+          <span className={styles.fixtureLabel}>{nowLabel}</span>
         </p>
 
         <NumberLine
           thenValue={toDisplay(then.value)}
           nowValue={toDisplay(now.value)}
+          thenShown={shownValue(then)}
+          nowShown={shownValue(now)}
+          thenPeriod={formatPeriod(then.period, then.region)}
+          nowPeriod={formatPeriod(now.period, now.region)}
           markValue={markForLine}
           unit={unit}
         />
-
-        <p className={styles.nowLine} data-role="now">
-          {REVEAL_COPY.now}:{" "}
-          <strong>
-            {shownValue(now)} {unit}
-          </strong>{" "}
-          · {formatPeriod(now.period, now.region)} · {now.region} ·{" "}
-          <span className={styles.fixtureLabel}>{nowLabel}</span>
-        </p>
 
         <ChangeLine result={change} region={then.region} then={then} now={now} />
 
