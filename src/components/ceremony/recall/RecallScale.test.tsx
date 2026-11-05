@@ -15,6 +15,7 @@ import { CEREMONY_COPY } from "../copy";
 import {
   RecallScale,
   nextValueForKey,
+  nextValueForKeyIn,
   readoutText,
   trackDrag,
   valueOnTrack,
@@ -28,6 +29,8 @@ import {
   zoomWindow,
   type ZoomLevel,
 } from "./scale-math";
+import { visibleTicks } from "./tick-layout";
+import { FALLBACK_RANGE, scaleRangeFor } from "./unit-ranges";
 
 const NUM_RUNS = 100;
 const NUMBER_PATTERN = /^[0-9]+(\.[0-9]+)?$/;
@@ -55,12 +58,18 @@ function render(overrides: Partial<RecallScaleProps> = {}): string {
     id: "q1",
     label: "What do you think a gallon of gas cost then?",
     unitLabel: "USD per gallon",
+    range: FALLBACK_RANGE,
     value: 3.47,
     noAnswer: false,
     onEdit: () => undefined,
     ...overrides,
   };
   return renderToStaticMarkup(<RecallScale {...props} />);
+}
+
+/** The text of every tick label drawn under the track, in order. */
+function tickLabelsOf(markup: string): string[] {
+  return [...markup.matchAll(/data-tick-label=""[^>]*>([^<]*)</g)].map((match) => match[1]);
 }
 
 /** The text of the readout element, or null when there is none. */
@@ -185,6 +194,7 @@ describe("Property 10: the zoom reads nothing but the marker and the pointer", (
       | "noAnswer"
       | "onEdit"
       | "spokenPrefix"
+      | "range"
     >();
   });
 
@@ -336,5 +346,70 @@ describe("markup", () => {
     expect(mark).not.toBeNull();
     expect(mark![1]).toMatch(/width:\s*44px/);
     expect(mark![1]).toMatch(/height:\s*44px/);
+  });
+});
+
+// --- Unit ranges (spec 08 R7) -----------------------------------------------
+
+describe("the track uses the sealed unit's range", () => {
+  it("USD per gallon draws the linear 0 to 10 track with ticks 0, 2, 4, 6, 8 and 10", () => {
+    const markup = render({
+      unitLabel: "USD per gallon",
+      range: scaleRangeFor("USD per gallon"),
+      value: 3.47,
+    });
+    expect(tickLabelsOf(markup)).toEqual(["0", "2", "4", "6", "8", "10"]);
+    expect(markup).toContain("--pos-mark:0.347");
+    expect(markup).toContain("--pos-label:0.2");
+    expect(markup).toContain(CEREMONY_COPY.recallLookCloser);
+  });
+
+  it("EUR per 1,000 litres draws the linear 0 to 3,000 track with ticks every 500", () => {
+    const markup = render({
+      unitLabel: "EUR per 1,000 litres",
+      range: scaleRangeFor("EUR per 1,000 litres"),
+      value: 1710,
+    });
+    // The ticks are every 500 from 0 to 3,000. At the 260 px minimum track some
+    // are dropped (tick-layout keeps the ends and leaves a gap between labels).
+    const every500 = ["0", "500", "1,000", "1,500", "2,000", "2,500", "3,000"];
+    const drawn = tickLabelsOf(markup);
+    expect(drawn[0]).toBe("0");
+    expect(drawn[drawn.length - 1]).toBe("3,000");
+    expect(drawn.every((label) => every500.includes(label))).toBe(true);
+    expect(markup).toContain("--pos-mark:0.57");
+    expect(readoutOf(markup)).toBe("1710");
+  });
+
+  it("EUR per 1,000 litres draws all seven ticks on a wide track", () => {
+    const range = scaleRangeFor("EUR per 1,000 litres");
+    const ticks = visibleTicks(range, 960, () => 40).map((tick) => tick.value);
+    expect(ticks).toEqual([0, 500, 1000, 1500, 2000, 2500, 3000]);
+  });
+
+  it("the fallback range keeps the decade labels and no tick labels", () => {
+    const markup = render({ value: 3.47 });
+    expect(tickLabelsOf(markup)).toEqual([]);
+    expect(markup).toContain("100,000");
+  });
+
+  it("an off-range typed value sits at the nearer edge and keeps its typed text", () => {
+    const range = scaleRangeFor("USD per gallon");
+    const high = render({ range, value: 12.5 });
+    const low = render({ range, value: 0 });
+    expect(high).toContain("--pos-mark:1");
+    expect(readoutOf(high)).toBe("12.5");
+    expect(low).toContain("--pos-mark:0");
+    expect(readoutOf(low)).toBe("0");
+  });
+
+  it("linear keys step by the third significant figure and stay inside the range", () => {
+    const usd = scaleRangeFor("USD per gallon");
+    expect(nextValueForKeyIn("ArrowRight", 3.47, usd)).toBe(3.48);
+    expect(nextValueForKeyIn("ArrowLeft", 0.01, usd)).toBe(0.0099);
+    expect(nextValueForKeyIn("ArrowRight", 10, usd)).toBe(10);
+    expect(nextValueForKeyIn("PageUp", 9, usd)).toBe(10);
+    expect(nextValueForKeyIn("Home", 3.47, usd)).toBe(0);
+    expect(nextValueForKeyIn("End", 3.47, usd)).toBe(10);
   });
 });

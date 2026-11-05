@@ -45,7 +45,7 @@ import {
   previousIndex,
   submitAction,
 } from "./recall-pager";
-import { unitHelperFor } from "./unit-ranges";
+import { scaleRangeFor, unitHelperFor } from "./unit-ranges";
 import styles from "./RecallPager.module.css";
 
 export type RecallPagerProps = {
@@ -408,6 +408,7 @@ export function RecallPager({
                 id={question.id}
                 label={question.text}
                 unitLabel={unit}
+                range={scaleRangeFor(unit)}
                 value={markValue}
                 noAnswer={draft.noAnswer}
                 onEdit={(id, text) =>
