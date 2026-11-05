@@ -48,6 +48,23 @@ describe("Recall_Pager fit hooks", () => {
   });
 });
 
+describe("Recall_Pager reading group keeps the field and Next in view", () => {
+  it("names the reading group after the answer row, so it cannot push them down", () => {
+    const answer = source.indexOf('data-fit="answer"');
+    const readings = source.indexOf('data-fit="readings"');
+    const advance = source.indexOf('data-fit="advance"');
+    expect(answer).toBeGreaterThan(-1);
+    expect(readings).toBeGreaterThan(-1);
+    expect(advance).toBeGreaterThan(-1);
+    // The answer row (field and Next) comes first in the markup; the readings follow it.
+    expect(readings).toBeGreaterThan(advance);
+  });
+
+  it("caps the reading group at the card width at every size", () => {
+    expect(ruleBody(".readings")).toMatch(/max-width:\s*100%/);
+  });
+});
+
 describe("Recall_Pager card fits above the fold at 1280 x 800", () => {
   it("caps the typed number at 3.6rem so the answer row sits higher", () => {
     const font = ruleBody(".input").match(/font-size:\s*clamp\(([^)]*)\)/);

@@ -212,6 +212,7 @@
   padding: 0;
   border: 0;
   min-width: 0;
+  max-width: 100%;
   color: var(--ink);
 }
 

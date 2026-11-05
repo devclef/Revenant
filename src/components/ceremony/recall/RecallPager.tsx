@@ -348,7 +348,7 @@ export function RecallPager({
             )}
 
             {reading === null || readingLabels === null ? null : (
-              <fieldset id={readingsId} className={styles.readings}>
+              <fieldset id={readingsId} className={styles.readings} data-fit="readings">
                 <legend>{CEREMONY_COPY.readingLegend}</legend>
                 <label className={styles.readingOption}>
                   <input

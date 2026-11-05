@@ -202,6 +202,21 @@ describe("RecallStep shows one question at a time (R11.1)", () => {
     expect(otherInvalid).not.toContain(REVEAL_COPY.answerInvalid);
   });
 
+  it("disables the Next control when the shown field is empty (R32.13)", () => {
+    const html = render({ drafts: { "q-fuel": { text: "", noAnswer: false } } });
+    expect(html).toMatch(/<button[^>]*data-fit="advance"[^>]*disabled[^>]*>/);
+  });
+
+  it("disables the Next control when the shown field is unreadable (R32.13)", () => {
+    const html = render({ drafts: { "q-fuel": { text: "abc", noAnswer: false } } });
+    expect(html).toMatch(/<button[^>]*data-fit="advance"[^>]*disabled[^>]*>/);
+  });
+
+  it("enables the Next control when the shown field holds a readable number (R32.13)", () => {
+    const html = render({ drafts: { "q-fuel": { text: "3.50", noAnswer: false } } });
+    expect(html).not.toMatch(/<button[^>]*data-fit="advance"[^>]*disabled[^>]*>/);
+  });
+
   it("disables the submit control while submitting on the last question (R11.11)", () => {
     const html = render({ initialIndex: 2, submitting: true });
     expect(html).toContain(REVEAL_COPY.submitting);

@@ -323,3 +323,34 @@ describe("Property 23: the new strings are exact and clear of scoring words (exa
     }
   });
 });
+
+describe("R32.13: a question that is not ready never advances or submits", () => {
+  it("submitAction is ignore for every index, total and submitting state when ready is false", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 0, max: 20 }),
+        fc.integer({ min: 1, max: 21 }),
+        fc.boolean(),
+        (index, total, submitting) => {
+          expect(submitAction(index, total, submitting, false)).toBe("ignore");
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  it("submitAction still advances or submits for a ready question", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 0, max: 20 }),
+        fc.integer({ min: 1, max: 21 }),
+        (index, total) => {
+          fc.pre(index < total);
+          const action = submitAction(index, total, false, true);
+          expect(action).toBe(index === total - 1 ? "submit" : "advance");
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+});
