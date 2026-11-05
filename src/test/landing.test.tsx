@@ -114,7 +114,7 @@ describe("landing page `/`", () => {
   it("includes the no-script light style as a noscript block", () => {
     const html = render([MAYA]);
     expect(html).toContain("<noscript>");
-    expect(html).toContain("[data-scene-light]{animation:none}");
+    expect(html).toContain("[data-ghost-rise],[data-ghost-bob]{animation:none}");
   });
 
   it("imports nothing from crypto, the opening flow, the API, or the database", () => {

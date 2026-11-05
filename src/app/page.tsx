@@ -8,7 +8,10 @@ import { SCENE_COPY } from "@/components/ceremony/scene/copy";
 import styles from "@/components/ceremony/scene/scene.module.css";
 import { PERSONAS } from "@/lib/personas";
 
-import { LandingBackdrop } from "@/lib/landing-backdrop";
+import {
+  LANDING_NOSCRIPT_STYLE,
+  LandingBackdrop,
+} from "@/lib/landing-backdrop";
 
 /**
  * Landing page `/` (design.md "SceneShell, TopBar and the landing page",
@@ -20,9 +23,6 @@ import { LandingBackdrop } from "@/lib/landing-backdrop";
  * explanation and the `/demo` link come after the Scene, on the plain
  * background below the Soil strip. Every word comes from SCENE_COPY.
  */
-
-/** Light already up, with scripts disabled (R7.1). Constant; no user data. */
-const LANDING_NOSCRIPT_STYLE = "[data-scene-light]{animation:none}";
 
 /**
  * The Accent button: orange means "you" (tone.md). Text is --on-accent. The top
