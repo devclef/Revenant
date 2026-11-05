@@ -76,6 +76,9 @@ export const CEREMONY_COPY = {
   /** Shown on the scale before the reader has given an answer. */
   recallNoMarkYet: "No answer yet",
 
+  /** The Unit_Helper_Line for the euro-per-1,000-litres unit (spec 08 R7.8). */
+  unitHelperEurPer1000L: "1,000 here means 1 euro per litre.",
+
   // --- Tilt and sound ---
 
   /** The control that asks for device-motion permission for the light tilt. */
