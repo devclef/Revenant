@@ -40,3 +40,17 @@ export function computeSealTimes(args: {
 export function remainingSeconds(opensAtMs: number, nowMs: number, offsetMs: number): number {
   return Math.max(0, Math.ceil((opensAtMs - (nowMs + offsetMs)) / 1000));
 }
+
+/**
+ * Whether the "Go to your letter" control may be enabled (R16.3 to R16.5).
+ * True only once the countdown has ended: the corrected browser clock has
+ * reached opensAtMs. Any non-finite input (a bad opensAt, or a clock or offset
+ * that is NaN or infinite) gives false, so the control stays disabled. The
+ * server still decides whether the letter opens; this only decides the link.
+ */
+export function goToLetterReady(opensAtMs: number, nowMs: number, offsetMs: number): boolean {
+  if (!Number.isFinite(opensAtMs) || !Number.isFinite(nowMs) || !Number.isFinite(offsetMs)) {
+    return false;
+  }
+  return remainingSeconds(opensAtMs, nowMs, offsetMs) === 0;
+}
