@@ -104,7 +104,7 @@ describe("the two readings of an Ambiguous_Input (R32.4)", () => {
     expect(markup).not.toMatch(/type="radio"[^>]*checked/);
   });
 
-  it("drops a grouping tail of 000 and keeps the decimal one", () => {
+  it("writes the grouping reading of a 000 tail as just the thousands (R32.4)", () => {
     const markup = render("3,000");
     expect(markup).toContain("3 point 000");
     expect(markup).toContain(">3 thousand<");
