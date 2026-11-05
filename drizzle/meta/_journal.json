@@ -15,6 +15,13 @@
       "when": 1793568873270,
       "tag": "0001_live_letters",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1793896199699,
+      "tag": "0002_figures",
+      "breakpoints": true
     }
   ]
 }
