@@ -1,6 +1,6 @@
 // Entry point for the Fetch_Job (spec 08-judge-polish, task 16; design.md "The daily
-// figure fetch"). The CronJob runs it as `node dist/fetch-figures.mjs`, the bundle
-// that scripts/fetch-figures.build.mjs writes from this file (into the gitignored dist/).
+// figure fetch"). The CronJob runs it as `node scripts/fetch-figures.mjs`, the bundle
+// that scripts/fetch-figures.build.mjs writes from this file.
 //
 // It wires the real pieces into the pure `runFetchJob`: the Postgres store, the
 // publisher adapters, the bundled seed file and the clock. It sets
