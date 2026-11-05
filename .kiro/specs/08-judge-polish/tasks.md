@@ -269,7 +269,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
   - Validation: `bash scripts/check.sh`
   - _Requirements: R1.4, R13.1–R13.4, R14.1–R14.6, R14.8, R15.1, R15.5_
 
-- [ ] 9. Top_Bar on every page, a way back from `/demo/live`, the PRF_Hint, the backup key path and the picker maximum
+- [x] 9. Top_Bar on every page, a way back from `/demo/live`, the PRF_Hint, the backup key path and the picker maximum
   - Agent: `frontend-dev` · Depends on: 8 · Estimated size: ~1,800 changed lines
   - Before this task: task 8 is on `main`.
   - Scope: `src/components/ceremony/scene/TopBar.tsx`, `scene/SceneShell.tsx`, `scene/scene.module.css`, `src/app/demo/live/page.tsx`, `src/app/l/[id]/page.tsx`, `src/components/live/SealPage.tsx`, `live/prf-hint.ts` (new), `live/WriteForm.tsx`, `live/clock.ts`, `live/SealedView.tsx`, `live/BackupKeyCard.tsx`, `live/live.module.css`, `live/FigurePicker.tsx`, `live/form.ts`, `live/copy.ts`, `live/backup-path.e2e.test.ts` (new), and the `*.test.ts(x)` for each file above, including `src/app/demo/live/page.test.tsx`, `live/copy.test.ts`, `live/FigurePicker.test.tsx` and `live/form.test.ts`
