@@ -129,7 +129,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
   - Validation: `bash scripts/check.sh`
   - _Requirements: R3.5, R3.6, R4.1–R4.6, R5.1–R5.9, R30.2_
 
-- [ ] 3. Fixed Recall_Scale ranges, the marks card record and the recall number input
+- [x] 3. Fixed Recall_Scale ranges, the marks card record and the recall number input
   - Agent: `frontend-dev` · Depends on: 2 · Estimated size: ~2,600 changed lines
   - Before this task: task 2 is on `main`.
   - Scope: `src/components/ceremony/recall/unit-ranges.ts` (new), `recall/scale-math.ts`, `recall/tick-layout.ts` (new), `recall/parse-number.ts` (new), `recall/recall-field.ts` (new), `recall/recall-pager.ts`, `recall/RecallPager.tsx`, `recall/RecallPager.module.css`, `recall/RecallScale.tsx`, `recall/RecallScale.module.css`, `recall/RecordedScale.tsx` (new), `src/components/reveal/Reveal.tsx`, `src/components/reveal/copy.ts`, `src/components/ceremony/copy.ts`, `src/components/ceremony/constants.ts`, the source scan tests under `src/components/ceremony` (additions only), and the `*.test.ts(x)` for each file above, including `recall/RecallScale.test.tsx`, `recall/scale-math.test.ts`, `recall/recall-pager.test.ts`, `recall/RecallPager.property.test.tsx`, `recall/RecallPager.fit.test.ts`, `reveal/Reveal.marks.test.tsx` and `reveal/RecallStep.test.tsx`
@@ -418,7 +418,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
   - Validation: `bash scripts/check.sh`
   - _Requirements: R20.9, R20.10, R21.3, R21.4_
 
-- [ ] 16. The Fetch_Job, its tables, the Figures_API database mode, and the Freshness_Check script
+- [x] 16. The Fetch_Job, its tables, the Figures_API database mode, and the Freshness_Check script
   - Agent: `data-dev` · Depends on: 14 · Estimated size: ~3,300 changed lines
   - Before this task: task 14 is on `main`.
   - Gate: 16 November 2026, 23:59:59 UTC (R21.1). If this task is not merged, or no Fetch_Job run on `revenant.devclef.se` has exited 0 by then, the owner switches to the Fallback_Refresh (Owner_Patch h and `figures.source: file`). The task then still merges for the record if it is ready, but no reveal task waits for it. The PR states the date of the first successful run, or that the fallback is in use.
