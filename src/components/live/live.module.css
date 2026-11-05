@@ -484,6 +484,29 @@
   word-break: break-all;
 }
 
+/* The Fingerprint label and the 16 groups under the link (spec 08 R14.4). The
+   groups are monospace and wide-spaced so the reader can compare them against
+   the opening Fingerprint by eye. Plain ink, no judgement colour. */
+.cardFingerprintLabel {
+  margin: 0 0 0.25rem;
+  color: var(--ink-soft);
+  font-family: var(--font-sans);
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.cardFingerprint {
+  margin: 0 0 1rem;
+  color: var(--ink);
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  font-size: 0.9375rem;
+  letter-spacing: 0.04em;
+  overflow-wrap: anywhere;
+}
+
 /* The backup key card and the control that opens it, below the letter card. */
 .backupCard {
   margin-top: 2rem;

@@ -124,6 +124,8 @@ export const LIVE_COPY = {
     "This link does not match a letter. Check the link and try again.",
   letterCardTitle: "Letter card",
   letterCardOpens: "Opens {time}",
+  letterCardFingerprint: "Fingerprint at sealing",
+  saveCardImage: "Save the card as an image",
   printCard: "Print or save as PDF",
   downloadIcs: "Add to your calendar",
   icsSummary: "Your letter opens",

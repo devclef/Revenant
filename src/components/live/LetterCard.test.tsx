@@ -7,6 +7,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { DEMO_COPY } from "@/components/demo/copy";
+import { formatFingerprint } from "@/lib/seal-format";
 
 import { LIVE_COPY } from "./copy";
 import { formatLocalDateTime } from "./format";
@@ -16,10 +17,17 @@ import styles from "./live.module.css";
 const APP_ORIGIN = "https://revenant.devclef.se";
 const LETTER_ID = "abc123DEF456ghi789jk";
 const OPENS_AT = "2026-11-02T12:00:00.000Z";
+const ENVELOPE_HASH =
+  "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
 
 function html(): string {
   return renderToStaticMarkup(
-    createElement(LetterCard, { letterId: LETTER_ID, appOrigin: APP_ORIGIN, opensAt: OPENS_AT }),
+    createElement(LetterCard, {
+      letterId: LETTER_ID,
+      appOrigin: APP_ORIGIN,
+      opensAt: OPENS_AT,
+      envelopeHash: ENVELOPE_HASH,
+    }),
   );
 }
 
@@ -56,6 +64,24 @@ describe("LetterCard", () => {
     expect(out).toContain(LIVE_COPY.printCard);
     expect(out).toContain("data-live-print");
     expect(out).toContain(styles.noPrint);
+  });
+
+  it("prints the Fingerprint under the link, the same groups the Reveal shows", () => {
+    const out = html();
+    expect(out).toContain(LIVE_COPY.letterCardFingerprint);
+    const fingerprint = formatFingerprint(ENVELOPE_HASH) as string;
+    expect(out).toContain(fingerprint);
+    const linkAt = out.indexOf(`${APP_ORIGIN}/l/${LETTER_ID}`);
+    const fpAt = out.indexOf("data-live-card-fingerprint");
+    expect(fpAt).toBeGreaterThan(linkAt);
+  });
+
+  it("offers Save the card as an image inside the print-hidden group", () => {
+    const out = html();
+    expect(out).toContain(LIVE_COPY.saveCardImage);
+    expect(out).toContain("data-live-save-image");
+    const at = out.indexOf("data-live-save-image");
+    expect(out.lastIndexOf(styles.noPrint, at)).toBeGreaterThan(-1);
   });
 
   it("holds no key, fragment or sensitive text", () => {

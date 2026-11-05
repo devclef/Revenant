@@ -8,6 +8,11 @@ describe("cards index", () => {
     expect(cards.DEFAULT_QUIET_ZONE).toBe(4);
   });
 
+  it("exports the letter-card SVG builder and its XML escaper", () => {
+    expect(typeof cards.letterCardSvg).toBe("function");
+    expect(typeof cards.escapeXml).toBe("function");
+  });
+
   it("renders an encoded letter link end to end", () => {
     const svg = cards.qrToSvg(cards.encodeQr("https://revenant.devclef.se/l/abc"));
     expect(svg).toMatch(/^<svg /);

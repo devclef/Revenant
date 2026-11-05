@@ -36,6 +36,7 @@ const SEALED: SealPostResult = {
   letterId: encodeBase64url(new Uint8Array(16)),
   sealedAt: "2026-11-02T10:00:00.000Z",
   opensAt: "2026-11-02T10:00:30.000Z",
+  envelopeHash: "b".repeat(64),
 };
 
 function goodDraft(): SealDraft {
@@ -160,6 +161,9 @@ describe("the step order in R15.1", () => {
         letterId: SEALED.ok ? SEALED.letterId : "",
         factors: "passkey",
         offsetMs: 0,
+        // The SEALED event carries the Fingerprint the server echoed, so the
+        // card shows the same value the Reveal verifies (R14.4, Property 16).
+        envelopeHash: SEALED.ok ? SEALED.envelopeHash : "",
       });
     }
   });
@@ -286,6 +290,7 @@ describe("sealWithBackupKey", () => {
         opensAt: SEALED.ok ? SEALED.opensAt : "",
         offsetMs: 0,
         factors: "backup",
+        envelopeHash: SEALED.ok ? SEALED.envelopeHash : "",
       },
     });
     expect(h.log).toEqual(["prepare", "seal"]);

@@ -280,6 +280,10 @@ async function runSeal(
             : lock.backupKey !== undefined
               ? "both"
               : "passkey",
+        // The server echoes the hash it stored, and check (6) in the Seal_Route
+        // proved it equals the hash the browser sent, so the card's Fingerprint
+        // is the same value the Reveal verifies (R14.4, Property 16).
+        envelopeHash: posted.envelopeHash,
       },
     };
   } finally {
