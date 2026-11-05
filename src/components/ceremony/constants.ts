@@ -125,6 +125,8 @@ export const DUST_SPREAD = 0.2; // share of width either side of the light
 export const LANDING_LIGHT_AT_MS = 250;
 export const LIGHT_FADE_MS = 900;
 export const LIGHT_MOVE_MS = 1100;
+// The light is clipped to its top half plus this gap, so it shows nothing below the Soil line (scene.module.css .light).
+export const LIGHT_CLIP_GAP_PX = 12;
 
 // --- Emergence (R9.5, R9.6, R18.2, R18.8) (spec 07) ---
 export const SHAKE_AT_MS = 750;
