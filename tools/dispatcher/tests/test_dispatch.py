@@ -952,6 +952,8 @@ class ScopeAwareSpecs(unittest.TestCase):
         self.assertIn("`src/app/page.tsx`, `src/lib/*.ts`", spec)
         self.assertIn("Do not stop to ask", spec)
         self.assertIn("OUT OF SCOPE:", spec)
+        self.assertIn("git checkout origin/main -- <file>", spec)
+        self.assertIn("Never delete it", spec)
         self.assertEqual(spec.count("````"), 4)  # ticket and feedback fences only
 
     def test_dev_spec_without_paths_omits_section(self):
