@@ -557,3 +557,21 @@
   max-width: 40rem;
   margin: 0 auto;
 }
+
+/* The way back to the demo, above every Sealing_Flow state. It sits on the
+   desk, so it sets the desk text colour and meets AA on --bg. */
+.backToDemo {
+  margin: 0 0 1.5rem;
+  font-size: 0.9rem;
+}
+
+.backToDemo a {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.backToDemo a:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}

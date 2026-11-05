@@ -159,6 +159,25 @@
   color: var(--text);
 }
 
+/* The wordmark links home. It keeps the wordmark's look and shows a focus ring. */
+.wordmarkLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+.wordmarkLink:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+/* The plain shell (SceneShell variant "plain"): the desk surface, no backdrop,
+   no ceremony root. It sets its own text colour from the desk tokens. */
+.plain {
+  min-height: 100dvh;
+  background: var(--bg);
+  color: var(--text);
+}
+
 .chip {
   padding: 0.1rem 0.45rem;
   border: 1px solid var(--muted);

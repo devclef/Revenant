@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useReducer } from "react";
+import Link from "next/link";
 
 import "@/components/ceremony/scene/tokens.css";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
@@ -8,7 +9,9 @@ import type { LoadedFigures } from "@/lib/figures";
 
 import { realSealApi, type SealApi } from "./api";
 import { listPickableSeries } from "./catalogue-list";
+import { LIVE_COPY } from "./copy";
 import { BackupFallback } from "./BackupFallback";
+import styles from "./live.module.css";
 import { SealedView } from "./SealedView";
 import { SealFailure } from "./SealFailure";
 import type { AuthenticatorPort, SealDeps, SealDraft } from "./seal-runner";
@@ -100,6 +103,9 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
       data-app-origin={appOrigin}
       data-live-step={state.tag}
     >
+      <p className={styles.backToDemo}>
+        <Link href="/demo">{LIVE_COPY.backToDemo}</Link>
+      </p>
       {renderState()}
     </div>
   );

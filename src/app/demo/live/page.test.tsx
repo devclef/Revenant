@@ -3,6 +3,12 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { LIVE_COPY } from "@/components/live/copy";
+import pageShell from "@/components/ui/PageShell.module.css";
+import sceneStyles from "@/components/ceremony/scene/scene.module.css";
+import { SCENE_COPY } from "@/components/ceremony/scene/copy";
+
+const pageShellClass = pageShell.shell;
+const sceneClass = sceneStyles.scene;
 
 /**
  * Markup tests for `/demo/live` (spec 06, R12.8). The page reads RP_ID and
@@ -28,7 +34,8 @@ describe("/demo/live page", () => {
     expect(html).toContain(LIVE_COPY.unavailable);
     expect(html).toContain('href="/demo"');
     expect(html).not.toContain("data-rp-id");
-    expect(html).not.toContain("<button");
+    // The only button is the Top_Bar's Calm control. No seal control renders.
+    expect(html.match(/<button/g)?.length ?? 0).toBe(1);
   });
 
   it("renders the Seal_Page with rpId and appOrigin when RP_ID is set", async () => {
@@ -41,4 +48,25 @@ describe("/demo/live page", () => {
     expect(html).toContain(LIVE_COPY.heading);
     expect(html).not.toContain(LIVE_COPY.unavailable);
   });
+
+  it("sits on the plain Scene shell, not PageShell (spec 07 task 1)", async () => {
+    vi.stubEnv("RP_ID", "");
+    vi.stubEnv("APP_ORIGIN", "");
+    const html = await renderLivePage();
+    // The plain shell carries the scene token class and no PageShell class.
+    expect(html).not.toContain(pageShellClass);
+    expect(html).toContain(sceneClass);
+    // The plain shell has no ceremony root.
+    expect(html).not.toContain("data-ceremony=");
+  });
+
+  it("shows the Demo chip and a wordmark that links to /", async () => {
+    vi.stubEnv("RP_ID", "");
+    vi.stubEnv("APP_ORIGIN", "");
+    const html = await renderLivePage();
+    expect(html).toContain(SCENE_COPY.demoChip);
+    expect(html).toContain('href="/"');
+    expect(html).toContain("data-wordmark");
+  });
 });
+
