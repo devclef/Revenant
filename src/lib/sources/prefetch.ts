@@ -84,7 +84,7 @@ export class PrefetchError extends Error {
 // --- Source wiring -----------------------------------------------------------
 
 /** The two EIA series IDs this script downloads, paired with their metric id. */
-const EIA_SERIES: readonly { metricId: string; seriesId: string }[] = [
+export const EIA_SERIES: readonly { metricId: string; seriesId: string }[] = [
   { metricId: "us-gasoline-regular", seriesId: "EMM_EPMR_PTE_NUS_DPG" },
   { metricId: "us-diesel", seriesId: "EMD_EPD2D_PTE_NUS_DPG" },
 ] as const;
@@ -94,7 +94,7 @@ const EIA_SERIES: readonly { metricId: string; seriesId: string }[] = [
  * fresh-series build and the column-letter check know which of the two
  * {@link BulletinResult} series belongs to which catalogue entry.
  */
-const BULLETIN_SERIES: readonly { metricId: string; key: BulletinKey }[] = [
+export const BULLETIN_SERIES: readonly { metricId: string; key: BulletinKey }[] = [
   { metricId: "eu-petrol-euro95", key: "EU_price_with_tax_euro95" },
   { metricId: "eu-diesel", key: "EU_price_with_tax_diesel" },
 ] as const;
@@ -107,7 +107,7 @@ const BULLETIN_SERIES: readonly { metricId: string; key: BulletinKey }[] = [
  * the Weekly Oil Bulletin landing page. The fresh-series build tags each point
  * with the URL for its metric id.
  */
-const SOURCE_URL: Readonly<Record<string, string>> = {
+export const SOURCE_URL: Readonly<Record<string, string>> = {
   "us-gasoline-regular":
     "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMM_EPMR_PTE_NUS_DPG&f=W",
   "us-diesel":
