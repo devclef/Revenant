@@ -254,6 +254,8 @@
   border-radius: 50%;
   background: radial-gradient(closest-side, var(--purple), transparent);
   opacity: 0.55;
+  /* LIGHT_CLIP_GAP_PX in constants.ts. Only the top half plus the gap shows. */
+  clip-path: inset(0 0 calc(50% - 12px) 0);
 }
 
 /* The pit: the Ghost's placement, centred on the light's x. */
@@ -701,5 +703,31 @@
 @media (prefers-reduced-motion: no-preference) {
   [data-ceremony-motion="full"] .personaColumn:has(> :is([data-ceremony="recall"], [data-ceremony="marks"], [data-ceremony="seal"], [data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"])) .headline {
     animation: heroSettle 240ms ease-out;
+  }
+}
+
+/* The landing Content_Column (spec 07 task 7). Full width below 900 px. At or
+   above 900 px it takes the same cap as the persona column (CONTENT_COLUMN_MAX)
+   and a larger headline. */
+.landingColumn {
+  position: relative;
+}
+
+@media (min-width: 900px) {
+  .landingColumn {
+    max-width: min(34rem, 46vw);
+  }
+
+  .landingColumn .headline {
+    max-width: 12ch;
+    font-size: clamp(3rem, 6vw, 4.5rem);
+  }
+}
+
+/* The landing Accent button. Below 900 px it sits below the Soil strip
+   (--soil-top + --soil-band), so the strip never crosses the button. */
+@media (max-width: 899.98px) {
+  .landingColumn .landingCta {
+    margin-top: calc(var(--soil-top) + var(--soil-band) + 1.5rem - 6rem);
   }
 }

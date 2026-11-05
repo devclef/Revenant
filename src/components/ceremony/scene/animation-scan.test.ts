@@ -14,6 +14,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
+import { LIGHT_CLIP_GAP_PX } from "../constants";
+
 const here = dirname(fileURLToPath(import.meta.url));
 
 /** The only properties a Scene animation may change (R21.4). */
@@ -152,5 +154,49 @@ describe("R8.3: the Hero settle is opacity only, behind the motion gate", () => 
       (g) => g.includes('[data-ceremony-motion="full"]') && g.includes("animation: heroSettle"),
     );
     expect(gated, "heroSettle must sit behind the full-motion gate (R8.4)").toBe(true);
+  });
+});
+
+describe("R21.4: the Ghost hooks are plain attributes, animated only by allowed properties", () => {
+  const GHOST_HOOKS = ["data-ghost-pit", "data-ghost-rise", "data-ghost-bob", "data-ghost-box"];
+  const sources = sceneSources();
+  const css = sources
+    .filter((s) => s.name.endsWith(".css"))
+    .map((s) => s.text)
+    .join("\n");
+
+  it("renders every data-ghost-* hook in the shipped Ghost source", () => {
+    const ghost = sources.find((s) => s.name.endsWith("/Ghost.tsx"));
+    expect(ghost, "Ghost.tsx must exist in the Scene folder").toBeDefined();
+    for (const hook of GHOST_HOOKS) {
+      expect(ghost?.text ?? "", `Ghost.tsx renders ${hook}`).toContain(hook);
+    }
+  });
+
+  it("allows only transform and opacity in any CSS rule that targets a data-ghost hook", () => {
+    const rules = [...css.replace(/\/\*[\s\S]*?\*\//g, "").matchAll(/([^{}]+)\{([^{}]*)\}/g)];
+    for (const rule of rules) {
+      if (!rule[1].includes("data-ghost")) continue;
+      for (const m of rule[2].matchAll(/(?<![\w-])transition(?:-property)?\s*:\s*([^;]*)/g)) {
+        for (const prop of transitionProperties(m[1])) {
+          expect(ALLOWED_PROPERTIES.has(prop), `ghost rule "${rule[1].trim()}" transitions "${prop}" (R21.4)`).toBe(true);
+        }
+      }
+    }
+  });
+});
+
+describe("the light clip matches its constant (scene.module.css .light)", () => {
+  const css = sceneSources()
+    .filter((s) => s.name.endsWith(".css"))
+    .map((s) => s.text)
+    .join("\n")
+    .replace(/\/\*[\s\S]*?\*\//g, "");
+
+  it("sets the light clip-path to inset(0 0 calc(50% - LIGHT_CLIP_GAP_PX) 0)", () => {
+    const body = css.match(/\.light\s*\{([^}]*)\}/)?.[1] ?? "";
+    expect(body).toMatch(/clip-path:\s*inset\(0 0 calc\(50% - (\d+)px\) 0\)/);
+    const gap = Number(body.match(/calc\(50% - (\d+)px\)/)?.[1]);
+    expect(gap).toBe(LIGHT_CLIP_GAP_PX);
   });
 });

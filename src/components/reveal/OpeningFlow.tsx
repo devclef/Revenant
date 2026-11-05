@@ -61,7 +61,7 @@
  */
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Ghost } from "@/components/ceremony/scene/Ghost";
+import { PersonaGhost } from "@/components/ceremony/scene/PersonaGhost";
 import { SceneBackdrop } from "@/components/ceremony/scene/SceneBackdrop";
 import { ghostPresent } from "@/components/ceremony/scene/ghost-presence";
 import { GHOST_LEAVE_MS } from "@/components/ceremony/constants";
@@ -293,14 +293,14 @@ export function OpeningFlow({
                 stage: state.tag === "reveal" ? state.stage : null,
                 leaving: ghostLeaving,
               }) ? (
-                <Ghost leaving={ghostLeaving} onLeft={leftGhost}>
+                <PersonaGhost leaving={ghostLeaving} onLeft={leftGhost}>
                   {persona === undefined ? null : (
                     <HeldEnvelope
                       persona={{ ...persona, demo: true }}
                       tag={state.tag}
                     />
                   )}
-                </Ghost>
+                </PersonaGhost>
               ) : null}
             </SceneBackdrop>
           ) : null}

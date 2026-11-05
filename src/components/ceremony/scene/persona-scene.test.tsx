@@ -13,7 +13,7 @@ import { Envelope, type EnvelopePersona } from "../envelope/Envelope";
 import { LocalViewProvider } from "../local-view";
 import { MotionProvider } from "../motion";
 import { SkipProvider } from "../skip";
-import { Ghost } from "./Ghost";
+import { PersonaGhost } from "./PersonaGhost";
 import { SceneBackdrop } from "./SceneBackdrop";
 
 const persona: EnvelopePersona = {
@@ -37,7 +37,7 @@ function personaScene() {
           SceneBackdrop,
           null,
           createElement(
-            Ghost,
+            PersonaGhost,
             null,
             createElement(Envelope, { state: "closed", persona }),
           ),
