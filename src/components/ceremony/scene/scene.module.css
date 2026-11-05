@@ -99,18 +99,18 @@
   }
 
   /* Narrow handed lift (spec 08 R8.2). In recall, marks and seal the backdrop
-     (Soil, light, Ghost) moves up 14 vh, and the pinned region's top moves up
-     by the same 14 vh, so the card keeps its place under the Soil. Both sides
+     (Soil, light, Ghost) moves up 18 vh, and the pinned region's top moves up
+     by the same 18 vh, so the card keeps its place under the Soil. Both sides
      are in vh, so no JavaScript measures them. The 600 ms transform transition
      comes from the full-motion rule below. */
   .scene:has([data-ceremony="recall"], [data-ceremony="marks"], [data-ceremony="seal"]) .backdrop {
-    transform: translateY(-14vh);
+    transform: translateY(-18vh);
   }
 
   .personaColumn > [data-ceremony="recall"],
   .personaColumn > [data-ceremony="marks"],
   .personaColumn > [data-ceremony="seal"] {
-    top: calc(var(--soil-top) + var(--soil-band) + 0.25rem - 6rem - 14vh);
+    top: calc(var(--soil-top) + var(--soil-band) + 0.25rem - 6rem - 18vh);
   }
 
   /* Hero after the First_Step, narrow (spec 08 R8.1). Below 900 px the Hero

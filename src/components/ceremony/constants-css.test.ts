@@ -287,7 +287,7 @@ describe("Hero after the First_Step and the narrow handed lift (spec 08, R8)", (
     expect(C.HERO_SETTLE_MS).toBeLessThanOrEqual(400);
     expect(C.HERO_AFTER_WIDE).toBe("clamp(1.75rem, 2.6vw, 2.25rem)");
     expect(C.HERO_AFTER_NARROW).toBe("clamp(1.375rem, 5vw, 1.75rem)");
-    expect(C.NARROW_HANDED_LIFT_VH).toBe(14);
+    expect(C.NARROW_HANDED_LIFT_VH).toBe(18);
   });
 
   it("puts the after-size constants in the scene CSS", () => {

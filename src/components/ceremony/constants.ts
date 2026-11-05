@@ -100,7 +100,7 @@ export const LETTER_NARROW_PX = 600; // below this, tighter Letter_Block and pap
 export const HERO_SETTLE_MS = 240; // opacity only, at most 400 (R8.3)
 export const HERO_AFTER_WIDE = "clamp(1.75rem, 2.6vw, 2.25rem)"; // at or above 900 px (R8.1)
 export const HERO_AFTER_NARROW = "clamp(1.375rem, 5vw, 1.75rem)"; // below 900 px (R8.1)
-export const NARROW_HANDED_LIFT_VH = 14; // below 900 px in recall, marks and seal (R8.2)
+export const NARROW_HANDED_LIFT_VH = 18; // below 900 px in recall, marks and seal (R8.2)
 // --- Soil_Canvas (R6.3, R6.5) (spec 07) ---
 export const DUST_MAX_PARTICLES = 36;
 export const DUST_MAX_FPS = 30;
