@@ -25,9 +25,13 @@ tools/
 scripts/
 # ...except the migration entrypoint, which the runtime image invokes
 # (`node scripts/migrate.mjs`). Un-ignore just that one file.
-# The seal-personas sources are also needed by `npm run build` in the builder stage.
+# The seal-personas and fetch-figures sources are also needed by
+# `npm run build` in the builder stage (their *.build.mjs bundlers run there),
+# and fetch-figures-freshness.mjs is imported by a test that `next build`
+# type-checks, so these script sources must be in the build context.
 !scripts/migrate.mjs
 !scripts/seal-personas*
+!scripts/fetch-figures*
 deploy/
 
 # Test coverage
