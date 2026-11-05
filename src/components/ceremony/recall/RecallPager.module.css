@@ -172,8 +172,9 @@
   }
 
   /* Below 900 px the typed number and Next stay on one row (R11.13). A wrapped
-     Next control would fall below 640 px at 360 x 640 (R11.15). The number
-     shrinks to fit (min-width 0), and the Next label stays whole. */
+     Next control would fall below 640 px at 360 x 640 (R11.15). The input is
+     a flex item with min-width 0 (base .input rule), so it shrinks to fit, and
+     the Next label stays whole. */
   .answerRow {
     flex-wrap: nowrap;
   }

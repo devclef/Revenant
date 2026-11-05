@@ -71,6 +71,13 @@ describe("Recall_Pager card fits inside its padding at 360 x 640", () => {
     expect(narrowRuleBody(".answerRow")).toMatch(/flex-wrap:\s*nowrap/);
   });
 
+  it("lets the typed number shrink inside the nowrap row", () => {
+    // The input is the flex item that absorbs the width, so it needs min-width 0.
+    expect(ruleBody(".input")).toMatch(/min-width:\s*0/);
+    expect(ruleBody(".input")).toMatch(/width:\s*4\.2ch/);
+    expect(ruleBody(".cta")).toMatch(/white-space:\s*nowrap/);
+  });
+
   it("shrinks the question, fieldset and typed number below 900 px", () => {
     expect(narrowRuleBody(".qTitle")).toMatch(/font-size:\s*1rem/);
     expect(narrowRuleBody(".qTitle")).toMatch(/margin-bottom:\s*0\.25rem/);
