@@ -418,9 +418,18 @@ class MergeReady(unittest.TestCase):
     def test_other_error_blocks_with_reason(self):
         gh = RecGH()
         tick, _ = make_tick(gh)
-        gh.call = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("GitHub GET /x -> 500: oops"))
+        gh.call = lambda *a, **k: (_ for _ in ()).throw(RuntimeError("GitHub GET /x -> 422: oops"))
         tick.merge_ready([pr_item(1, "status:qa-passed")])
         self.assertIn("oops", gh.has("comment", 1)[0][2])
+
+    def test_transient_error_waits_for_next_tick(self):
+        gh = RecGH()
+        tick, notes = make_tick(gh)
+        gh.call = lambda *a, **k: (_ for _ in ()).throw(d.TransientError("GitHub GET /x -> 502: "))
+        tick.merge_ready([pr_item(1, "status:qa-passed")])
+        self.assertEqual(gh.has("comment"), [])
+        self.assertEqual(gh.has("status"), [])
+        self.assertEqual(notes, [])
 
 
 class StartFixes(unittest.TestCase):
@@ -494,7 +503,7 @@ class CIFeedback(unittest.TestCase):
     def test_qa_error_blocks_pr_and_stops(self):
         from unittest import mock
         gh = RecGH()
-        gh.add_labels = lambda *a: (_ for _ in ()).throw(RuntimeError("GitHub POST /x -> 500: down"))
+        gh.add_labels = lambda *a: (_ for _ in ()).throw(RuntimeError("GitHub POST /x -> 422: bad label"))
         tick, _ = make_tick(gh)
         with mock.patch.object(d, "checkout_base"), mock.patch.object(d, "qa_spec", lambda *a: "s"), \
                 mock.patch.object(d, "QA_CLONE", Path("/nonexistent-qa")):
@@ -502,6 +511,32 @@ class CIFeedback(unittest.TestCase):
         self.assertEqual(tick.crew.start.call_count, 1)
         self.assertIn(("status", 5, "status:blocked", ("needs-qa",)), gh.events)
         self.assertEqual(gh.has("status", 6), [])
+
+    def test_transient_qa_error_does_not_block_but_stops(self):
+        """#225: GitHub answered 500 with an empty body, and the PR was blocked with
+        "could not start QA: . Needs a human." A transient error waits for the next tick."""
+        from unittest import mock
+        gh = RecGH()
+        gh.add_labels = lambda *a: (_ for _ in ()).throw(d.TransientError("GitHub POST /x -> 500: "))
+        tick, notes = make_tick(gh)
+        with mock.patch.object(d, "checkout_base"), mock.patch.object(d, "qa_spec", lambda *a: "s"), \
+                mock.patch.object(d, "QA_CLONE", Path("/nonexistent-qa")):
+            stop = tick.start_qa([pr_item(5, "needs-qa"), pr_item(6, "needs-qa")], [])
+        self.assertTrue(stop)
+        self.assertEqual(tick.crew.start.call_count, 1)
+        self.assertEqual(gh.has("status"), [])
+        self.assertEqual(notes, [])
+        self.assertTrue(any("retrying next tick" in m for m in tick.log))
+
+    def test_transient_git_error_does_not_block_claim(self):
+        from unittest import mock
+        gh = RecGH(issues=[issue(7, ["status:ready", "agent:data-dev"])])
+        tick, notes = make_tick(gh)
+        boom = RuntimeError("git fetch failed: remote: Internal Server Error")
+        with mock.patch.object(d, "checkout_base", side_effect=boom):
+            tick.claim(gh.issue_list, [])
+        self.assertEqual(gh.has("status"), [])
+        self.assertEqual(notes, [])
 
     def test_ci_gate_only_mentions_check_sh_not_policy(self):
         body = d.ci_failure_comment([{"name": "ci-gate", "annotations": "- x"}], "abcdef123")
@@ -1016,3 +1051,102 @@ class FailureReason(unittest.TestCase):
         self.assertIn("ended as **failed**", note)
         self.assertIn("OUT OF SCOPE: src/components/x.tsx", note)
         self.assertIn(("status", 105, "status:blocked", ("status:in-progress",)), gh.events)
+
+
+class TransientGitHub(unittest.TestCase):
+    """GitHub.call retries safe requests on 5xx, 429 and network errors, never repeats
+    a comment, PR or merge, and raises TransientError when the failure doesn't clear."""
+
+    def setUp(self):
+        from unittest import mock
+        self.sleeps = []
+        p = mock.patch.object(d, "_sleep", self.sleeps.append)
+        p.start()
+        self.addCleanup(p.stop)
+        self.gh = d.GitHub("tok")
+
+    def _run(self, method, path, outcomes):
+        import io
+        import urllib.error
+        from unittest import mock
+        calls = []
+
+        class Resp:
+            def __init__(self, body):
+                self.body = body
+
+            def read(self):
+                return self.body
+
+            def __enter__(self):
+                return self
+
+            def __exit__(self, *a):
+                return False
+
+        def fake(req, timeout=30):
+            calls.append(req.get_method())
+            out = outcomes.pop(0)
+            if isinstance(out, int):
+                raise urllib.error.HTTPError(req.full_url, out, "x", {}, io.BytesIO(b""))
+            if isinstance(out, Exception):
+                raise out
+            return Resp(out)
+
+        with mock.patch.object(d.urllib.request, "urlopen", fake):
+            try:
+                return self.gh.call(method, path), calls
+            except RuntimeError as exc:
+                return exc, calls
+
+    def test_get_retries_5xx_then_succeeds(self):
+        res, calls = self._run("GET", "/repos/o/r/pulls/1", [500, 502, b'{"ok": 1}'])
+        self.assertEqual(res, {"ok": 1})
+        self.assertEqual(len(calls), 3)
+        self.assertEqual(self.sleeps, list(d.RETRY_DELAYS))
+
+    def test_delete_and_label_add_are_retried(self):
+        import urllib.error
+        res, calls = self._run("DELETE", "/repos/o/r/issues/1/labels/x", [500, b""])
+        self.assertIsNone(res)
+        self.assertEqual(len(calls), 2)
+        res, calls = self._run("POST", "/repos/o/r/issues/1/labels",
+                               [urllib.error.URLError("reset"), b"[]"])
+        self.assertEqual(res, [])
+        self.assertEqual(len(calls), 2)
+
+    def test_comment_and_merge_are_not_repeated(self):
+        for method, path in (("POST", "/repos/o/r/issues/1/comments"),
+                             ("PUT", "/repos/o/r/pulls/1/merge"),
+                             ("POST", "/repos/o/r/pulls")):
+            res, calls = self._run(method, path, [500, b"{}"])
+            self.assertIsInstance(res, d.TransientError)
+            self.assertEqual(len(calls), 1)
+
+    def test_still_failing_raises_transient_with_a_reason(self):
+        res, calls = self._run("GET", "/repos/o/r/pulls/1", [500, 500, 500])
+        self.assertIsInstance(res, d.TransientError)
+        self.assertEqual(len(calls), 3)
+        self.assertEqual(d.http_reason(res), "HTTP 500 with no message")
+
+    def test_4xx_is_not_transient_and_not_retried(self):
+        res, calls = self._run("GET", "/repos/o/r/pulls/1", [422])
+        self.assertNotIsInstance(res, d.TransientError)
+        self.assertFalse(d.is_transient(res))
+        self.assertEqual(len(calls), 1)
+
+    def test_is_transient_matches_git_and_http_text(self):
+        self.assertTrue(d.is_transient(RuntimeError("git push failed: remote: Internal Server Error")))
+        self.assertTrue(d.is_transient(RuntimeError("GitHub GET /x -> 503: Service Unavailable")))
+        self.assertFalse(d.is_transient(RuntimeError("GitHub PUT /x -> 405: Merge conflict")))
+        self.assertFalse(d.is_transient(RuntimeError("Task Runner refused the run: {}")))
+
+
+class SetStatusOrder(unittest.TestCase):
+    def test_adds_before_removing_and_never_removes_the_added_label(self):
+        gh = d.GitHub("tok")
+        events = []
+        gh.add_labels = lambda n, *l: events.append(("+",) + l)
+        gh.remove_label = lambda n, l: events.append(("-", l))
+        gh.set_status(1, "status:qa-passed", "status:qa-running", "status:qa-passed", "needs-qa")
+        self.assertEqual(events, [("+", "status:qa-passed"), ("-", "status:qa-running"), ("-", "needs-qa")])

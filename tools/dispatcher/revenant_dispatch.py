@@ -27,6 +27,7 @@ import re
 import shutil
 import subprocess
 import sys
+import time
 import urllib.error
 import urllib.request
 from dataclasses import dataclass, field
@@ -56,6 +57,9 @@ LOG_TAIL_LINES = 60
 LOG_MAX_CHARS = 3000
 # A CI re-run gets this long to report before the same failure is treated as final.
 CI_RETRY_WAIT = timedelta(minutes=10)
+# Seconds between retries of a safe GitHub request after a 5xx, 429 or network error.
+RETRY_DELAYS = (2, 5)
+_sleep = time.sleep  # replaced in tests
 
 L_READY, L_PROGRESS, L_REVIEW, L_BLOCKED = (
     "status:ready", "status:in-progress", "status:in-review", "status:blocked")
@@ -605,16 +609,35 @@ def parse_github_time(text: str | None) -> datetime | None:
 
 
 def http_reason(exc: Exception) -> str:
-    """The human part of a GitHub error: its JSON `message`, else the raw text."""
-    m = re.search(r"-> \d+: (.*)", str(exc), re.S)
-    raw = (m.group(1) if m else str(exc)).strip()
+    """The human part of a GitHub error: its JSON `message`, else the raw text.
+    Never empty: an error with no text names its type or HTTP status instead."""
+    m = re.search(r"-> (\d+): (.*)", str(exc), re.S)
+    raw = (m.group(2) if m else str(exc)).strip()
     try:
         msg = json.loads(raw).get("message")
         if msg:
             return str(msg).rstrip(".")
     except (ValueError, AttributeError):
         pass
+    if not raw:
+        return f"HTTP {m.group(1)} with no message" if m else type(exc).__name__
     return raw.rstrip(".")
+
+
+class TransientError(RuntimeError):
+    """GitHub or the network failed in a way that usually clears by itself
+    (HTTP 5xx, 429, a timeout, a dropped connection)."""
+
+
+_TRANSIENT_RE = re.compile(
+    r"-> (?:5\d\d|429)\b|Internal Server Error|Service Unavailable|Bad Gateway|"
+    r"Gateway Time-?out|timed out|Connection reset|Could not resolve host|"
+    r"unable to access 'https://github\.com", re.I)
+
+
+def is_transient(exc: BaseException) -> bool:
+    """True when retrying later is the right answer and blocking for a human is not."""
+    return isinstance(exc, TransientError) or bool(_TRANSIENT_RE.search(str(exc)))
 
 
 STATUS_LABELS = {L_READY, L_PROGRESS, L_REVIEW, L_NEEDS_QA, L_QA_RUNNING, L_QA_PASSED, L_CHANGES}
@@ -639,16 +662,29 @@ class GitHub:
         self._login: str | None = None
 
     def call(self, method: str, path: str, body: Any = None) -> Any:
+        """One GitHub API call. Safe requests (reads, deletes, label adds) are retried on
+        a 5xx, 429 or network error; a comment, PR or merge is never sent twice. A failure
+        that is still transient at the end raises TransientError."""
         url = path if path.startswith("https://") else f"https://api.github.com{path}"
         data = json.dumps(body).encode() if body is not None else None
-        req = urllib.request.Request(url, data=data, method=method, headers=self._headers())
-        try:
-            with urllib.request.urlopen(req, timeout=30) as resp:
-                raw = resp.read()
-                return json.loads(raw) if raw else None
-        except urllib.error.HTTPError as exc:
-            detail = exc.read().decode(errors="replace")[:300]
-            raise RuntimeError(f"GitHub {method} {path} -> {exc.code}: {detail}") from None
+        safe = method in ("GET", "DELETE") or (method == "POST" and path.endswith("/labels"))
+        delays = list(RETRY_DELAYS) if safe else []
+        while True:
+            req = urllib.request.Request(url, data=data, method=method, headers=self._headers())
+            try:
+                with urllib.request.urlopen(req, timeout=30) as resp:
+                    raw = resp.read()
+                    return json.loads(raw) if raw else None
+            except urllib.error.HTTPError as exc:
+                detail = exc.read().decode(errors="replace")[:300]
+                msg = f"GitHub {method} {path} -> {exc.code}: {detail}"
+                if exc.code < 500 and exc.code != 429:
+                    raise RuntimeError(msg) from None
+            except (urllib.error.URLError, TimeoutError, ConnectionError) as exc:
+                msg = f"GitHub {method} {path} -> network error: {getattr(exc, 'reason', exc)}"
+            if not delays:
+                raise TransientError(msg)
+            _sleep(delays.pop(0))
 
     def _headers(self) -> dict[str, str]:
         return {
@@ -718,9 +754,12 @@ class GitHub:
                 raise
 
     def set_status(self, number: int, add: str, *remove: str) -> None:
-        for lbl in remove:
-            self.remove_label(number, lbl)
+        """Add first, then remove: if a call fails partway, the item still carries a
+        status the next tick acts on, instead of having lost its old one."""
         self.add_labels(number, add)
+        for lbl in remove:
+            if lbl != add:
+                self.remove_label(number, lbl)
 
     def ci_state(self, sha: str) -> str:
         """success / failure / pending across the required checks on a commit."""
@@ -898,6 +937,15 @@ class Tick:
     def say(self, msg: str) -> None:
         self.log.append(msg)
 
+    def transient(self, where: str, exc: BaseException) -> bool:
+        """A GitHub or network error that usually clears by itself: log it and let the
+        next tick try again, instead of blocking the item for a human. GitHub 500s with
+        an empty body blocked #157 and #225 this way, and a 503 blocked #177."""
+        if not is_transient(exc):
+            return False
+        self.say(f"{where}: transient error, retrying next tick: {http_reason(exc)}")
+        return True
+
     def block(self, number: int, reason: str, names: set[str] | None = None) -> None:
         """Comment why, move the item from its current status to blocked, notify."""
         current = (names if names is not None else STATUS_LABELS) & STATUS_LABELS
@@ -1058,6 +1106,8 @@ class Tick:
             try:
                 self._merge_one(pr)
             except RuntimeError as exc:
+                if self.transient(f"PR #{pr['number']}: merge", exc):
+                    continue
                 self.block_pr(pr, f"The dispatcher could not process this PR: {http_reason(exc)}. "
                                   "Needs a human.")
 
@@ -1098,8 +1148,9 @@ class Tick:
                 if self._start_qa_one(pr):
                     return True
             except RuntimeError as exc:
-                self.block_pr(pr, f"The dispatcher could not start QA: {http_reason(exc)}. "
-                                  "Needs a human.")
+                if not self.transient(f"PR #{pr['number']}: QA start", exc):
+                    self.block_pr(pr, f"The dispatcher could not start QA: {http_reason(exc)}. "
+                                      "Needs a human.")
                 # The run may already be going without its label. Stop this tick, so
                 # no other run starts alongside it.
                 return True
@@ -1119,8 +1170,9 @@ class Tick:
             try:
                 rerun = self.gh.rerun_failed_ci(sha)
             except RuntimeError as exc:
-                self.block_pr(pr, f"CI failed on {sha[:7]} and the dispatcher could not re-run it: "
-                                  f"{http_reason(exc)}. Needs a human.")
+                if not self.transient(f"PR #{n}: CI re-run", exc):
+                    self.block_pr(pr, f"CI failed on {sha[:7]} and the dispatcher could not re-run it: "
+                                      f"{http_reason(exc)}. Needs a human.")
                 return
             if not rerun:
                 self.block_pr(pr, f"CI failed on {sha[:7]} but no failed ci run was found to re-run. "
@@ -1202,8 +1254,9 @@ class Tick:
                     continue
                 self._start_fix_one(pr, issue, role)
             except RuntimeError as exc:
-                self.block_pr(pr, f"The dispatcher could not start the fix run: {http_reason(exc)}. "
-                                  "Needs a human.")
+                if not self.transient(f"PR #{pr['number']}: fix start", exc):
+                    self.block_pr(pr, f"The dispatcher could not start the fix run: {http_reason(exc)}. "
+                                      "Needs a human.")
                 return True  # stop this tick; a run may be going without its label
             return True
         return False
@@ -1244,8 +1297,9 @@ class Tick:
             self.gh.comment(n, f"Claimed by `{role}`. Task Runner run `{task_id}` started.\n\n"
                             + make_marker({"kind": "dev", "task_id": task_id, "role": role}))
         except RuntimeError as exc:
-            self.block(n, f"The dispatcher could not start this issue: {http_reason(exc)}. "
-                          "Needs a human.", label_names(issue))
+            if not self.transient(f"#{n}: claim", exc):
+                self.block(n, f"The dispatcher could not start this issue: {http_reason(exc)}. "
+                              "Needs a human.", label_names(issue))
             return  # the cause may be shared; don't block the rest of the queue
         self.say(f"#{n}: claimed by {role}")
 
