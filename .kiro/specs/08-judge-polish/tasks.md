@@ -158,7 +158,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
 
 ### Group 2: landing Ghost
 
-- [ ] 4. Split the Ghost into a server-safe drawing and a persona client wrapper
+- [x] 4. Split the Ghost into a server-safe drawing and a persona client wrapper
   - Agent: `frontend-dev` · Depends on: 3 · Estimated size: ~900 changed lines
   - Before this task: task 3 is on `main`.
   - Scope: `src/components/ceremony/scene/Ghost.tsx`, `scene/PersonaGhost.tsx` (new), `scene/ghost-geometry.ts` (new), `scene/eyes.ts` (the `EyeOffset` type moves out), `scene/SceneBackdrop.tsx` (accepts `children`), `scene/SceneShell.tsx` (landing root keeps `data-ceremony-motion`; `.landingColumn` hook), `scene/scene.module.css`, `src/components/reveal/OpeningFlow.tsx` (imports `PersonaGhost`), `src/components/ceremony/scene/animation-scan.test.ts` (additions only), and the `*.test.ts(x)` for each file above, including `scene/ghost.test.tsx`, `scene/ghost-placement.test.tsx` and `scene/persona-scene.test.tsx`
