@@ -3,8 +3,9 @@
 // `download` is the one place that applies the allowed-host rule and maps every
 // HTTP and transport outcome onto a SourceError with a fixed, neutral message.
 // Every case here uses a stub Fetcher, so no test touches the network. The real
-// `defaultFetcher` is only inspected structurally (it must set no header,
-// credential or cookie), never invoked.
+// `defaultFetcher` is inspected structurally (it must set no header, credential
+// or cookie). Its timeout tests call it, with the global `fetch` replaced by a
+// stub that only settles on abort, so still no request leaves the process.
 
 import { afterEach, describe, expect, it, vi } from "vitest";
 
