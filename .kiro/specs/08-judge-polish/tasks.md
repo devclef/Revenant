@@ -103,7 +103,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
   - Validation: `bash scripts/check.sh`
   - _Requirements: R1.1–R1.8, R2.1–R2.6, R3.1–R3.4, R3.7, R8.1–R8.4, R27.1–R27.9, R29.6, R30.1, R30.3, R30.6–R30.8, R31.4_
 
-- [ ] 2. Figure_Entry at equal weight, one "Your answer", Number_Line labels
+- [x] 2. Figure_Entry at equal weight, one "Your answer", Number_Line labels
   - Agent: `frontend-dev` · Depends on: 1 · Estimated size: ~2,000 changed lines
   - Before this task: task 1 is on `main`.
   - Scope: `src/components/reveal/FigureEntry.tsx`, `src/components/reveal/FigureLine.tsx`, `src/components/reveal/FiguresThenNow.tsx`, `src/components/reveal/ChangeLine.tsx`, `src/components/reveal/reveal.module.css`, `src/components/ceremony/figures/line-labels.ts` (new), `src/components/ceremony/figures/NumberLine.tsx`, `src/components/ceremony/figures/number-line.ts` (only if a geometry export is needed; the range rule is unchanged), `src/components/ceremony/figures/figures.module.css`, `src/components/ceremony/constants.ts`, `src/components/ceremony/copy.ts`, and the `*.test.ts(x)` for each file above, including `reveal/FigureEntry.test.tsx`, `reveal/figure-entry.property.test.tsx`, `reveal/change-neutral.property.test.tsx` and `ceremony/figures/NumberLine.test.tsx`
