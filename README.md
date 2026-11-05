@@ -2,6 +2,16 @@
 
 *The wax seal, resurrected. Memory rewrites itself. Revenant doesn't.*
 
+<p align="center">
+  <a href="https://revenant.devclef.se/demo"><img src="https://img.shields.io/badge/Open%20the%20demo-revenant.devclef.se%2Fdemo-8F46FF?style=for-the-badge" alt="Open the demo at revenant.devclef.se/demo"></a>
+</p>
+
+<p align="center">
+  <b><a href="https://revenant.devclef.se/demo/personas/us-maya">Open Maya's pre-sealed letter</a></b> (two minutes, no passkey)
+  &nbsp;·&nbsp;
+  <b><a href="https://revenant.devclef.se/demo/live">Seal your own with a passkey</a></b> (30-second lock)
+</p>
+
 Built for Kiroween 2026, Resurrection category. Letters survived the move to digital, but the seal didn't. Revenant resurrects it with cryptography: no one else can read your letter, tampering is detectable, and no key can open it early. Then it adds what no wax seal ever could: it makes you testify before you read.
 
 <img src="docs/concept.png" srcset="docs/concept.png 1x, docs/concept@2x.png 2x" alt="Revenant design concept" width="800">
@@ -43,8 +53,8 @@ This is not a slide deck. It runs. The sealing-and-opening ceremony, the live pa
 
 - **The reveal ceremony** — the dark room, the light finding the soil, the ghost rising with your letter, the recall scale, the seal breaking, and the then-vs-now figures. It degrades gracefully: the first render is the settled scene with no JavaScript, and `prefers-reduced-motion` turns the whole sequence off.
 - **Browser-side crypto** — WebAuthn passkeys with the PRF extension, a double-wrapped content key, a per-letter server time lock, an optional backup key card, and an SHA-256 hash over the canonical envelope that's verified again at opening.
-- **The persona demo** at `/demo/personas` — a fictional author's letter, pre-sealed for a real US election window, openable by a judge in two minutes with no passkey.
-- **The live demo** at `/demo/live` — seal a letter with your own passkey and a 30-second lock, then unlock it. The passkey is real and shows up in your password manager, named so it's obviously a Revenant demo.
+- **The persona demo** at [`/demo/personas/us-maya`](https://revenant.devclef.se/demo/personas/us-maya) — a fictional author's letter, pre-sealed for a real US election window, openable by a judge in two minutes with no passkey.
+- **The live demo** at [`/demo/live`](https://revenant.devclef.se/demo/live) — seal a letter with your own passkey and a 30-second lock, then unlock it. The passkey is real and shows up in your password manager, named so it's obviously a Revenant demo.
 - **Real figures** — adapters for the US EIA and the European Commission Weekly Oil Bulletin, each returning figures with full provenance and never inventing, interpolating or currency-converting anything.
 - **The database** — PostgreSQL with `BEFORE UPDATE OR DELETE` triggers that make sealed rows physically immutable. Application code *cannot* change a sealed letter; the trigger raises an exception.
 
@@ -99,6 +109,56 @@ The Helm chart lives in `deploy/helm/revenant` and includes PostgreSQL. The imag
 ## Built by a coven of agents
 
 Here's the part we're genuinely proud of: **almost none of this code was written by a human sitting at a keyboard.** Revenant was built by a team of specialist AI agents orchestrated by [Kiro Crew](https://kiro.dev/docs/crew.md), running an autonomous build loop that ran for 227+ merged pull requests.
+
+```mermaid
+flowchart TB
+    subgraph HUMANS["Humans write the rules"]
+        direction LR
+        STEER["📜 Steering<br/>8 docs of non-negotiables"]
+        SPEC["🗂️ Specs<br/>features → tasks"]
+        STEER --> SPEC
+    end
+
+    ISSUE["🎫 GitHub issue<br/>status:ready<br/>agent:role"]
+
+    subgraph LOOP["Kiro Crew loop · dispatcher cron every 5 min"]
+        direction TB
+        DISPATCH{{"⏱️ Dispatcher<br/>claims the issue"}}
+        DEV["🛠️ Role agent builds<br/>platform · crypto · data · frontend"]
+        HOOKS["🪝 Hooks on stop<br/>tone-check · scope-check"]
+        PR["🔀 Pull request<br/>needs-qa"]
+        CI["⚙️ CI<br/>ci-gate · policy"]
+        QA["👁️ QA agent<br/>headless Chromium<br/>writes verdict.json"]
+        FIX["🔁 Fix run<br/>failing logs fed back"]
+        DISPATCH --> DEV --> HOOKS --> PR --> CI
+        CI -- green --> QA
+        CI -- red --> FIX
+        QA -- fail --> FIX
+        FIX --> PR
+    end
+
+    MERGE["✅ Squash-merge<br/>to main"]
+    SHIP["📦 Image on GHCR<br/>Helm chart → cluster"]
+    HUMAN["🙋 status:blocked<br/>a human steps in"]
+
+    SPEC -- "one task = one issue" --> ISSUE --> DISPATCH
+    QA -- pass --> MERGE --> SHIP
+    FIX -. "3 fix runs failed" .-> HUMAN
+
+    classDef human fill:#1a1a1f,stroke:#8F46FF,color:#ffffff
+    classDef loop fill:#8F46FF,stroke:#c9a7ff,color:#ffffff
+    classDef gate fill:#2a1650,stroke:#8F46FF,color:#ffffff
+    classDef win fill:#ff7a1a,stroke:#ffb27a,color:#0b0b0f
+    classDef stop fill:#0b0b0f,stroke:#ff7a1a,color:#ffffff,stroke-dasharray:4 3
+    class STEER,SPEC,ISSUE human
+    class DISPATCH,DEV,PR,QA,FIX loop
+    class HOOKS,CI gate
+    class MERGE,SHIP win
+    class HUMAN stop
+    style HUMANS fill:#0b0b0f,stroke:#444,color:#ffffff
+    style LOOP fill:#120a22,stroke:#8F46FF,color:#ffffff
+    linkStyle default stroke:#b98cff,stroke-width:2px
+```
 
 The setup works like a real engineering org:
 
