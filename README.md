@@ -1,24 +1,39 @@
 # Revenant
 
-*Memory rewrites itself. Revenant doesn't.*
+*The wax seal, resurrected. Memory rewrites itself. Revenant doesn't.*
 
-Built for the Kiroween 2026 hackathon, Resurrection category. The technology being resurrected is the sealed witness: the classroom time capsule a teacher mails back to you years later, except this one also remembers what things cost — and it makes you testify before it opens.
+Built for Kiroween 2026, Resurrection category. Letters survived the move to digital, but the seal didn't. Revenant resurrects it with cryptography: no one else can read your letter, tampering is detectable, and no key can open it early. Then it adds what no wax seal ever could: it makes you testify before you read.
 
 <img src="docs/concept.png" srcset="docs/concept.png 1x, docs/concept@2x.png 2x" alt="Revenant design concept" width="800">
 
 *Design concept. Figures and some wording in the mock are illustrative and not product data.*
 
-## The idea
+## What we resurrected
 
-Memory rewrites itself. Every time you recall something, you edit it a little, and the edits favour the story you'd rather be true. You can't cross-examine your own past — the only witness is a memory that's already been tampered with.
+Since 1735 the French Académie des sciences has kept *plis cachetés*: sealed envelopes that scientists and inventors deposit to prove what they knew, and when. Pasteur and Niépce left them. Around 18,000 have been deposited, each closed with wax and opened only at the author's request or after a hundred years. A classroom time capsule works the same way. When I was in school, my teacher had us each write a letter to our future selves. She kept them sealed for 15 years, then mailed them back to us. The seal carries the meaning: this was written then, by you, and nobody has touched it since.
 
-Revenant is a sealed witness against that. Seal what you believe and the metrics you care about. When the seal breaks, say what you remember *before* you see the receipts. The gap between your testimony and the record is the whole product. Revenant never tells you what that gap means — it just refuses to let your memory have the last word.
+Email, notes apps and cloud drives took the letter digital and left the seal behind. A file can be edited after the fact, read by whoever runs the server, and opened whenever you like. Revenant is the pli cacheté reinvented for the browser. Each part of the old seal has a modern replacement:
+
+| The wax seal | Revenant |
+|---|---|
+| Wax that shows whether it was broken | A SHA-256 hash of the canonical envelope, checked at sealing and again at opening, plus the AES-GCM tag over the contents |
+| The folded paper that hides the page | AES-GCM encryption in your own browser. The server only ever holds ciphertext |
+| The signet ring that made the seal yours | A passkey (WebAuthn PRF) unlocked by fingerprint, face or device PIN, with an optional backup key card |
+| The archivist who won't open it before its date | A server time lock. The server releases its half of the key only when its own UTC clock reaches the opening date |
+
+## What no wax seal could do
+
+A wax seal proves the letter wasn't changed. It can't stop you changing your memory of it.
+
+Every time you recall something, you edit it a little, and the edits favour the story you'd rather be true. You can't cross-examine your own past, because the only witness is a memory that has already been rewritten.
+
+So Revenant adds one step the Académie never needed. Before the seal breaks, you testify: you say what you remember, and your answer is recorded. Only then do you see what you wrote and what things cost. The gap between your testimony and the record is the whole product. Revenant never tells you what that gap means. It just doesn't let your memory have the last word.
 
 ## The ritual
 
-1. **Write.** Seal what you believe — a letter to your future self, plain text, up to 5,000 characters.
+1. **Write.** Write down what you believe: a letter to your future self, plain text, up to 5,000 characters.
 2. **Seal the figures.** Pick the metrics you care about from official sources for your region. Every figure keeps its value, source, period, unit and region.
-3. **Wait.** Choose an opening date at least three months away. Until then the letter is sealed and unreadable, even to you.
+3. **Press the seal.** Choose an opening date at least three months away and lock the letter with your passkey. From then on it is sealed and unreadable, even to you, and nothing inside can change.
 4. **Testify.** After the opening date you unlock the letter. Before a single word is shown, Revenant asks what you remember. Your testimony is recorded first.
 5. **See the receipts.** What you remembered, then what you actually wrote, then the numbers then and now with the plain change between them. No commentary. No "soared", no "finally". Just the record.
 
