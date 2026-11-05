@@ -50,3 +50,6 @@ export {
   DRAFT_LIFETIME_MS,
   LOCK_MAX_AHEAD_MS,
 } from "./live-constants";
+
+// Human-readable fingerprint of an envelope hash (16 groups of 4 hex characters).
+export { formatFingerprint, parseFingerprint } from "./fingerprint";

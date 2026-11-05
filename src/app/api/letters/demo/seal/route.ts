@@ -119,10 +119,13 @@ export async function POST(request: Request): Promise<Response> {
       envelope,
       envelopeHash: submittedHash,
     });
+    // The store writes the hash it recomputed, and check (6) proved that hash
+    // equals `submittedHash`, so `submittedHash` is the stored value.
     return json(201, {
       letterId: stored.letterId,
       sealedAt: stored.sealedAt.toISOString(),
       opensAt: stored.opensAt.toISOString(),
+      envelopeHash: submittedHash,
     });
   } catch (error) {
     if (error instanceof LetterStoreError) {
