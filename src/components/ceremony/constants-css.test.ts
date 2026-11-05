@@ -258,3 +258,77 @@ describe("Letter_Text computed widths (spec 08, R3.2, R3.3)", () => {
     expect(Math.abs(px - 284)).toBeLessThan(0.1);
   });
 });
+
+// Spec 08 R8 (Hero after the First_Step, narrow handed lift). The Hero sizes
+// are evaluated from the same clamp() strings the CSS uses, at every 10 px from
+// 320 to 2560 (R8.1). The "before" sizes are the stages' own rules in CSS.
+describe("Hero after the First_Step and the narrow handed lift (spec 08, R8)", () => {
+  const css = (rel: string) => stripComments(readFileSync(resolve(here, rel), "utf8"));
+  const scene = css("scene/scene.module.css");
+
+  /** Evaluates a clamp(min, preferred, max) with rem = 16 px and vw = the viewport width. */
+  function clampPx(expr: string, viewportPx: number): number {
+    const m = expr.match(/^clamp\((.+)\)$/);
+    if (m === null) throw new Error(`not a clamp(): ${expr}`);
+    const terms = m[1].split(",").map((t) => t.trim());
+    const toPx = (term: string): number => {
+      const n = parseFloat(term);
+      if (term.endsWith("rem")) return n * 16;
+      if (term.endsWith("vw")) return (n / 100) * viewportPx;
+      if (term.endsWith("px")) return n;
+      throw new Error(`unit not handled: ${term}`);
+    };
+    const [lo, mid, hi] = terms.map(toPx);
+    return Math.min(hi, Math.max(lo, mid));
+  }
+
+  it("holds the R8 values at their design.md numbers", () => {
+    expect(C.HERO_SETTLE_MS).toBe(240);
+    expect(C.HERO_SETTLE_MS).toBeLessThanOrEqual(400);
+    expect(C.HERO_AFTER_WIDE).toBe("clamp(1.75rem, 2.6vw, 2.25rem)");
+    expect(C.HERO_AFTER_NARROW).toBe("clamp(1.375rem, 5vw, 1.75rem)");
+    expect(C.NARROW_HANDED_LIFT_VH).toBe(14);
+  });
+
+  it("puts the after-size constants in the scene CSS", () => {
+    expect(scene).toContain(`font-size: ${C.HERO_AFTER_WIDE};`);
+    expect(scene).toContain(`font-size: ${C.HERO_AFTER_NARROW};`);
+  });
+
+  it("gates heroSettle behind full motion and runs it for HERO_SETTLE_MS", () => {
+    expect(scene).toContain(`animation: heroSettle ${C.HERO_SETTLE_MS}ms ease-out;`);
+    expect(scene).toMatch(
+      /@media \(prefers-reduced-motion: no-preference\) \{\s*\[data-ceremony-motion="full"\] \.personaColumn:has\(>[^{]*\.headline \{\s*animation: heroSettle/,
+    );
+  });
+
+  it("applies the narrow handed lift at NARROW_HANDED_LIFT_VH below 900 px only", () => {
+    expect(scene).toContain("@media (max-width: 899.98px)");
+    expect(scene).toContain(`transform: translateY(-${C.NARROW_HANDED_LIFT_VH}vh);`);
+    expect(scene).toContain(`- 6rem - ${C.NARROW_HANDED_LIFT_VH}vh);`);
+  });
+
+  it("keeps the Hero after-size strictly smaller than the before-sizes at every 10 px from 320 to 2560 (R8.1)", () => {
+    // The before-sizes are the rules the stages use in CSS. Narrow stages share
+    // the base rule; wide emerging uses the base wide rule, and wide intact its own.
+    expect(scene).toContain("font-size: clamp(2rem, 6.6vw, 3rem);");
+    expect(scene).toContain("font-size: clamp(2.35rem, 6vw, 5.4rem);");
+    expect(scene).toContain("font-size: clamp(2.5rem, 4.4vw, 3.5rem);");
+
+    for (let w = 320; w <= 2560; w += 10) {
+      const narrow = w < C.SCENE_BREAKPOINT_PX;
+      const after = narrow ? clampPx(C.HERO_AFTER_NARROW, w) : clampPx(C.HERO_AFTER_WIDE, w);
+      const before = narrow
+        ? [clampPx("clamp(2rem, 6.6vw, 3rem)", w)]
+        : [clampPx("clamp(2.35rem, 6vw, 5.4rem)", w), clampPx("clamp(2.5rem, 4.4vw, 3.5rem)", w)];
+      for (const b of before) {
+        expect(after, `Hero after-size at ${w} px must be below ${b} px (R8.1)`).toBeLessThan(b);
+      }
+    }
+  });
+
+  it("matches the design's worked sizes: 35.5 px after at 1366 px, 22 px at 360 px", () => {
+    expect(Math.abs(clampPx(C.HERO_AFTER_WIDE, 1366) - 35.5)).toBeLessThan(0.1);
+    expect(Math.abs(clampPx(C.HERO_AFTER_NARROW, 360) - 22)).toBeLessThan(0.1);
+  });
+});
