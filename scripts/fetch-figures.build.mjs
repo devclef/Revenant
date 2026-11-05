@@ -1,8 +1,9 @@
-// Bundles the Fetch_Job entry into scripts/fetch-figures.mjs with esbuild (spec
+// Bundles the Fetch_Job entry into dist/fetch-figures.mjs with esbuild (dist/ is
+// gitignored, so the generated file is never committed) (spec
 // 08-judge-polish, task 16; design.md "The daily figure fetch"). It follows the
 // same pattern as scripts/seal-personas.build.mjs: one self-contained ESM file, with
 // postgres, drizzle-orm, zod and the spreadsheet parser bundled in, so the CronJob
-// runs `node scripts/fetch-figures.mjs` from the app image with no extra install.
+// runs `node dist/fetch-figures.mjs` from the app image with no extra install.
 //
 // The metafile check fails the build if the output still imports anything that is
 // not a Node built-in, so "one file, no node_modules" is checked, not assumed.
@@ -14,7 +15,7 @@ import { build } from "esbuild";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const entry = resolve(root, "scripts/fetch-figures.ts");
-const outfile = resolve(root, "scripts/fetch-figures.mjs");
+const outfile = resolve(root, "dist/fetch-figures.mjs");
 
 const result = await build({
   entryPoints: [entry],
@@ -52,4 +53,4 @@ if (offenders.size > 0) {
   process.exit(1);
 }
 
-console.log("fetch-figures.build: wrote scripts/fetch-figures.mjs");
+console.log("fetch-figures.build: wrote dist/fetch-figures.mjs");
