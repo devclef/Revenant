@@ -38,6 +38,16 @@
   .flowPersona {
     max-width: min(22rem, 92vw);
   }
+
+  .flowPersona:is([data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"]) {
+    padding-inline: 0;
+  }
+}
+
+/* Spec 08 R3.2: once the Ghost has left (letter, figures, close) the column
+   cap no longer applies. The grid below sets the widths instead. */
+.flowPersona:is([data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"]) {
+  max-width: none;
 }
 
 .view {
@@ -306,6 +316,8 @@
   white-space: pre-wrap;
   font-family: var(--font-serif);
   color: var(--ink);
+  /* Spec 08 R3.2: LETTER_TEXT_MAX_EM. */
+  max-width: 34em;
 }
 
 /*
@@ -431,13 +443,21 @@
   min-width: 0;
 }
 
-/* At or above 900 px: the Letter_Block on the left, the figures on the right.
-   Below 900 px the figures stack under the Letter_Block. */
-@media (min-width: 900px) {
+/* At or above 1,200 px (REVEAL_SIDE_BY_SIDE_PX): the Letter_Block on the left,
+   the figures beside it. Below 1,200 px the figures stack under the
+   Letter_Block (spec 08, R3.1). */
+@media (min-width: 1200px) {
   .letterFigures {
-    grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+    grid-template-columns: minmax(0, 1.4fr) minmax(20rem, 1fr);
     align-items: start;
   }
+}
+
+/* Spec 08 R3.4: a long series ID (the Oil Bulletin name has no spaces) wraps
+   inside the source details instead of pushing the Stage sideways. */
+.source,
+.src {
+  overflow-wrap: anywhere;
 }
 
 /* The figures column sits on the dark desk, never inside the Letter_Block

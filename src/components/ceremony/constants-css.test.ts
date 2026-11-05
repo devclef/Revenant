@@ -157,3 +157,104 @@ describe("CSS durations and easings equal their constants (R18.1)", () => {
     expect(C.BOB_PX).toBe(3);
   });
 });
+
+// Spec 08 R3 (reveal layout). The CSS repeats these constants, and the width
+// table below reproduces the design's measured Letter_Text widths from the
+// same rules, so a change to either side fails here.
+describe("reveal layout constants and CSS (spec 08, R3)", () => {
+  const css = (rel: string) => stripComments(readFileSync(resolve(here, rel), "utf8"));
+  const reveal = css("../reveal/reveal.module.css");
+  const letterBlock = css("letter/LetterBlock.module.css");
+  const scene = css("scene/scene.module.css");
+
+  it("holds the R3 values at their design.md numbers", () => {
+    expect(C.REVEAL_SIDE_BY_SIDE_PX).toBe(1200);
+    expect(C.LETTER_TEXT_MAX_EM).toBe(34);
+    expect(C.LETTER_NARROW_PX).toBe(600);
+  });
+
+  it("puts the letter beside the figures at REVEAL_SIDE_BY_SIDE_PX with the design's grid", () => {
+    expect(reveal).toContain(`@media (min-width: ${C.REVEAL_SIDE_BY_SIDE_PX}px)`);
+    expect(reveal).toContain("grid-template-columns: minmax(0, 1.4fr) minmax(20rem, 1fr);");
+    expect(reveal).not.toContain("minmax(0, 1.05fr) minmax(0, 1fr)");
+  });
+
+  it("caps the Letter_Text at LETTER_TEXT_MAX_EM", () => {
+    expect(reveal).toMatch(new RegExp(`\\.letter \\{[^}]*max-width: ${C.LETTER_TEXT_MAX_EM}em;`));
+  });
+
+  it("tightens the Letter_Block and paper below LETTER_NARROW_PX", () => {
+    expect(letterBlock).toContain("@media (max-width: 599.98px)");
+    expect(C.LETTER_NARROW_PX).toBe(600);
+    expect(letterBlock).toMatch(/\.letterBlock \{\s*padding: 0\.5rem;/);
+    expect(letterBlock).toMatch(/\.paper \{\s*--paper-pad: 0\.875rem;/);
+  });
+
+  it("lets the long series ID wrap inside the source details", () => {
+    expect(reveal).toMatch(/\.source,\s*\.src \{\s*overflow-wrap: anywhere;/);
+  });
+
+  it("lifts the persona column cap once the Ghost has left", () => {
+    expect(scene).toContain(
+      '.personaColumn:has(> :is([data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"])) {',
+    );
+    expect(reveal).toContain(
+      '.flowPersona:is([data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"]) {',
+    );
+  });
+});
+
+// Computed-width table (design.md, spec 08 R3.2 and R3.3). Pure arithmetic
+// from the same CSS rules: the grid's fr split, the paddings as clamp() values
+// at 16 px root, and the 34em cap at the 17 px letter size.
+describe("Letter_Text computed widths (spec 08, R3.2, R3.3)", () => {
+  const LETTER_PX = 17;
+  const GAP_PX = 40; // 2.5rem
+  const clamp = (lo: number, mid: number, hi: number) => Math.min(hi, Math.max(lo, mid));
+
+  /** Side by side: the letter's share of the 1.4fr : 1fr split. */
+  const letterColumnPx = (contentPx: number) => ((contentPx - GAP_PX) * 1.4) / 2.4;
+  /** The figures column: the 1fr share. */
+  const figuresColumnPx = (contentPx: number) => (contentPx - GAP_PX) / 2.4;
+
+  /** Letter_Text width for a letter column at a viewport width. */
+  function letterTextPx(columnPx: number, viewportPx: number): number {
+    const narrow = viewportPx < C.LETTER_NARROW_PX;
+    const blockPad = narrow ? 8 : clamp(14.4, viewportPx * 0.03, 38.4); // 0.5rem | clamp(0.9rem, 3vw, 2.4rem)
+    const paperPad = narrow ? 14 : clamp(16, viewportPx * 0.03, 32); // 0.875rem | clamp(1rem, 3vw, 2rem)
+    return Math.min(columnPx - 2 * blockPad - 2 * paperPad, C.LETTER_TEXT_MAX_EM * LETTER_PX);
+  }
+
+  it("derives the figures column from the 1.4fr : 1fr split (502.5 px at 1366 wide)", () => {
+    expect(Math.abs(figuresColumnPx(1245.9) - 502.5)).toBeLessThan(0.1);
+    expect(letterColumnPx(1245.9)).toBeGreaterThan(figuresColumnPx(1245.9));
+  });
+
+  it.each([
+    { viewport: 1366, column: 703.5, text: 562.7, em: 33.1 },
+    { viewport: 1280, column: 655.2, text: 514.4, em: 30.3 },
+    { viewport: 1200, column: 611.3, text: 475.3, em: 28.0 },
+  ])(
+    "side by side at $viewport px: Letter_Text $text px, $em em, inside 28 to 40 em",
+    ({ viewport, column, text, em }) => {
+      expect(viewport).toBeGreaterThanOrEqual(C.REVEAL_SIDE_BY_SIDE_PX);
+      const px = letterTextPx(column, viewport);
+      expect(Math.abs(px - text)).toBeLessThan(0.1);
+      expect(Math.abs(px / LETTER_PX - em)).toBeLessThan(0.1);
+      expect(px / LETTER_PX).toBeGreaterThanOrEqual(28 - 0.05);
+      expect(px / LETTER_PX).toBeLessThanOrEqual(40);
+    },
+  );
+
+  it("caps stacked Letter_Text at 34 em on a wide stacked column (1000 px)", () => {
+    expect(letterTextPx(1000, 1000)).toBe(C.LETTER_TEXT_MAX_EM * LETTER_PX);
+  });
+
+  it("keeps at least 280 px of Letter_Text at 360 px wide (stacked, 328 px column)", () => {
+    // 328 px is the 360 px window less 16 px each side. The layout check
+    // measures the real column; this test pins the formula.
+    const px = letterTextPx(328, 360);
+    expect(px).toBeGreaterThanOrEqual(280);
+    expect(Math.abs(px - 284)).toBeLessThan(0.1);
+  });
+});

@@ -362,6 +362,13 @@
     padding-bottom: calc(26vh + 2rem);
   }
 
+  /* Spec 08 R3.2: after the Ghost leaves (letter, figures, close) the column
+     cap is lifted, so the reveal can use the width beside the Ghost. */
+  .personaColumn:has(> :is([data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"])) {
+    max-width: none;
+    padding-bottom: 4rem;
+  }
+
   .personaColumn .headline {
     max-width: 11.5ch;
     font-size: clamp(2.35rem, 6vw, 5.4rem);

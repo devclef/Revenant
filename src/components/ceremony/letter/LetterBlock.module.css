@@ -47,6 +47,18 @@
   bottom: 0;
 }
 
+/* Below LETTER_NARROW_PX (600 px) the block and paper padding tighten, so the
+   Letter_Text keeps at least 280 px at 360 px wide (spec 08, R3.3). */
+@media (max-width: 599.98px) {
+  .letterBlock {
+    padding: 0.5rem;
+  }
+
+  .paper {
+    --paper-pad: 0.875rem;
+  }
+}
+
 /* Focus inside the block is white (--on-purple), the Accent everywhere else. */
 .letterBlock :focus-visible {
   outline: 2px solid #ffffff;

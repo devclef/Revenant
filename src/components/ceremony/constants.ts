@@ -92,6 +92,10 @@ export const PICKUP_MOVE_MS = 600; // R10.15: the narrow scene lift and pit scal
 export const FOCUS_SCROLL_CHECK_MS = 900; // one re-check of the Figures_Heading position
 export const COLUMN_GAP_UNDER_SOIL_PX = 4;
 export const DUST_CEILING_GAP_PX = 8; // R6.16
+// --- Reveal layout (spec 08, R3) ---
+export const REVEAL_SIDE_BY_SIDE_PX = 1200; // the R3.1 breakpoint for letter beside figures
+export const LETTER_TEXT_MAX_EM = 34; // Letter_Text max-width
+export const LETTER_NARROW_PX = 600; // below this, tighter Letter_Block and paper padding
 // --- Soil_Canvas (R6.3, R6.5) (spec 07) ---
 export const DUST_MAX_PARTICLES = 36;
 export const DUST_MAX_FPS = 30;
