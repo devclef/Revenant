@@ -32,6 +32,8 @@ const OPENED: Opened = {
   },
   payload: PAYLOAD,
   openingKey: {} as unknown as CryptoKey,
+  envelopeHash:
+    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 };
 
 function render(variant?: "persona" | "live"): string {

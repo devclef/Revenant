@@ -29,6 +29,8 @@ const OPENED_STUB: Opened = {
   },
   payload: { recall_questions: [] } as never,
   openingKey: {} as never,
+  envelopeHash:
+    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 };
 
 const RECORD = { version: 1, answers: [] } as never;

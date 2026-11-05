@@ -119,6 +119,10 @@ const OPENED: Opened = {
   },
   payload: PAYLOAD,
   openingKey: {} as unknown as CryptoKey,
+  // The verified envelope hash the effect runner sets on OPENED (R14.5). The
+  // reducer threads it through unchanged, so the fixture only needs to carry it.
+  envelopeHash:
+    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 };
 
 const RECORD: RecallRecordV1 = {

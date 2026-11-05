@@ -160,6 +160,8 @@ const OPENED: Opened = {
     opensAt: "2026-11-05T00:00:00.000Z",
   },
   openingKey: {} as unknown as CryptoKey,
+  envelopeHash:
+    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   payload: PAYLOAD,
 };
 

@@ -208,10 +208,24 @@ export const REVEAL_COPY = {
   labelFixtureData: "fixture data",
 
   /**
-   * The historical-record label on a non-fixture then figure (R13.2).
-   * `{date}` is the retrieved date in UTC.
+   * The historical-record label on a non-fixture then figure in a persona
+   * letter (R13.1). `{date}` is the retrieved date in UTC.
    */
   labelHistoricalRecord: "historical record, retrieved {date}",
+
+  /**
+   * The then label on a non-fixture official figure in a Live_Letter or
+   * Real_Letter (R13.2). `{date}` is the retrieved date in UTC. It never
+   * contains "historical record".
+   */
+  labelSealedWithLetter: "sealed with the letter, retrieved {date}",
+
+  /**
+   * The label on a self-reported figure (R13.4). It never contains "historical
+   * record" or "retrieved": a self-reported number is the reader's own, not a
+   * fetched record.
+   */
+  labelSelfReported: "self-reported",
 
   /** The retrieved label on a now figure. `{date}` is the retrieved date in UTC. */
   labelRetrieved: "retrieved {date}",

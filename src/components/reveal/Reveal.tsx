@@ -2,6 +2,7 @@
 
 import { useCallback, useContext, useState } from "react";
 import type { Opened } from "./opening-machine";
+import type { LetterKind } from "./FigureLine";
 import type { RecallRecordV1 } from "@/lib/recall";
 import { LetterBlock } from "@/components/ceremony/letter/LetterBlock";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
@@ -111,6 +112,14 @@ export type RevealProps = {
    */
   variant?: "persona" | "live";
   /**
+   * The kind of opened letter, passed straight to `FiguresThenNow` so each then
+   * figure's label reads correctly (R13.1, R13.2). Default `"persona"` keeps
+   * the persona path unchanged. OpeningFlow derives it: persona mode is
+   * `"persona"`; live mode is `"live"` for a demo letter and `"real"`
+   * otherwise.
+   */
+  letterKind?: LetterKind;
+  /**
    * What the close shows (design.md "Close"). OpeningFlow passes it; it holds
    * only the persona key and the Demo_2_On boolean, never RP_ID. Without it no
    * close is rendered.
@@ -128,6 +137,7 @@ export function Reveal({
   onShowAll,
   seal,
   variant = "persona",
+  letterKind = "persona",
   close,
 }: RevealProps) {
   // The local-view context lets stage 1's SealBreak report its `sealing` flag
@@ -311,6 +321,7 @@ export function Reveal({
                   opened={opened}
                   record={record}
                   allowSamePeriod={variant === "live"}
+                  letterKind={letterKind}
                 />
               </FiguresFadeUp>
             </div>

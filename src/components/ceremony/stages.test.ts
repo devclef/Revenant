@@ -50,6 +50,8 @@ const OPENED_STUB: Opened = {
   header: { sealedAt: "2024-10-01T00:00:00.000Z", opensAt: "2024-11-05T00:00:00.000Z" },
   payload: {} as never,
   openingKey: {} as never,
+  envelopeHash:
+    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 };
 
 const RECORD = { version: 1, answers: [] } as never;

@@ -156,6 +156,8 @@ function openedFor(
       opensAt: persona.opens_at,
     },
     openingKey: {} as unknown as CryptoKey,
+    envelopeHash:
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     payload,
   };
 

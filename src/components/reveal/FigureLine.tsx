@@ -17,12 +17,17 @@ import styles from "./reveal.module.css";
  * `<details>` with the source, series and (for an official figure) a link to
  * check it at the source.
  *
- * The label is decided by the caller's `role` and the figure itself:
+ * The label is decided by the caller's `role`, the figure itself and the
+ * `letterKind` of the opened letter (R13.1-R13.4):
  *
  * - A fixture figure (source or series_id starting with FIXTURE) always shows
- *   "fixture data" and never "historical record" (R13.4, data-integrity.md).
- * - A non-fixture "then" figure shows "historical record, retrieved {date}"
- *   (R13.2); a non-fixture "now" figure shows "retrieved {date}".
+ *   "fixture data" and never "historical record" (R13.3, data-integrity.md).
+ * - A self-reported figure always shows "self-reported" and never "historical
+ *   record" or "retrieved" (R13.4).
+ * - A non-fixture official "then" figure shows "historical record, retrieved
+ *   {date}" in a persona letter (R13.1) and "sealed with the letter, retrieved
+ *   {date}" in a Live_Letter or Real_Letter (R13.2); a non-fixture official
+ *   "now" figure shows "retrieved {date}" whatever the letter kind.
  *
  * `{date}` is `retrieved_at` formatted with `formatLetterDate` in UTC into the
  * en-GB long form (e.g. "30 October 2024"). A `retrieved_at` is an instant of
@@ -41,11 +46,25 @@ import styles from "./reveal.module.css";
  * no clock, logs nothing and touches no storage.
  */
 
+/**
+ * The kind of letter the figure belongs to, which decides the then-figure
+ * label for an official non-fixture figure (R13.1, R13.2). A persona letter
+ * reads "historical record"; a Live_Letter or Real_Letter reads "sealed with
+ * the letter". Fixture and self-reported figures ignore this (R13.3, R13.4).
+ */
+export type LetterKind = "persona" | "live" | "real";
+
 export type FigureLineProps = {
   /** The sealed figure to show, with its full provenance. */
   figure: Readonly<FigureV1>;
   /** Whether this is the "then" figure or the "now" figure. */
   role: "then" | "now";
+  /**
+   * The kind of letter the figure belongs to. Default `"persona"` keeps the
+   * persona path, and its tests, unchanged. Only the official non-fixture then
+   * label depends on it (R13.1, R13.2).
+   */
+  letterKind?: LetterKind;
   /** The series' display rescale, when one applies (display-only). */
   displayRescale?: Readonly<DisplayRescale>;
 };
@@ -56,21 +75,37 @@ function sourceUrlOf(figure: Readonly<FigureV1>): string | undefined {
   return figure.kind === "official" ? figure.source_url : undefined;
 }
 
-export function FigureLine({ figure, role, displayRescale }: FigureLineProps) {
+export function FigureLine({
+  figure,
+  role,
+  letterKind = "persona",
+  displayRescale,
+}: FigureLineProps) {
   const fixture = isFixtureFigure(figure);
 
-  // Label: fixture always wins; otherwise the role decides.
+  // Label precedence: fixture first (R13.3), then self-reported (R13.4), then
+  // the official figure by role and letter kind (R13.1, R13.2).
   let label: string;
   if (fixture) {
     label = REVEAL_COPY.labelFixtureData;
+  } else if (figure.kind === "self-reported") {
+    // A self-reported number is the reader's own: never "retrieved" (R13.4).
+    label = REVEAL_COPY.labelSelfReported;
   } else {
     // retrieved_at is a UTC instant; formatLetterDate in UTC renders it as the
     // en-GB long form (e.g. "30 October 2024"), so it never shifts.
     const retrievedDate = formatLetterDate(figure.retrieved_at, { kind: "utc" });
-    label =
-      role === "then"
-        ? REVEAL_COPY.labelHistoricalRecord.replace("{date}", retrievedDate)
-        : REVEAL_COPY.labelRetrieved.replace("{date}", retrievedDate);
+    if (role === "now") {
+      label = REVEAL_COPY.labelRetrieved.replace("{date}", retrievedDate);
+    } else {
+      // A persona then figure is a historical record (R13.1); a live or real
+      // then figure was sealed with the letter (R13.2).
+      const template =
+        letterKind === "persona"
+          ? REVEAL_COPY.labelHistoricalRecord
+          : REVEAL_COPY.labelSealedWithLetter;
+      label = template.replace("{date}", retrievedDate);
+    }
   }
 
   // Display value and unit: rescaled (display-only, exact) when the series has

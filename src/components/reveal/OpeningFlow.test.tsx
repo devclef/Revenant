@@ -127,6 +127,8 @@ const OPENED: Opened = {
     opensAt: "2024-11-05T00:00:00.000Z",
   },
   openingKey: {} as unknown as CryptoKey,
+  envelopeHash:
+    "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   payload: {
     format_version: 1,
     letter_text: "LETTER_BODY_SECRET the letter text must never appear here.",

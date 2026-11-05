@@ -360,6 +360,9 @@ export function useOpeningFlow(
           header: { sealedAt: header.sealedAt, opensAt: header.opensAt },
           payload: result.payload,
           openingKey: result.openingKey,
+          // The verified hash is the one just passed to openLetter; openLetter
+          // returns ok only after its constant-time check passed (R14.5).
+          envelopeHash: snapshot.envelopeHash,
         },
       });
     })();
@@ -450,6 +453,9 @@ export function useOpeningFlow(
           header: { sealedAt: header.sealedAt, opensAt: header.opensAt },
           payload: result.payload,
           openingKey: result.openingKey,
+          // The verified hash is the one just passed to openLetter; openLetter
+          // returns ok only after its constant-time check passed (R14.5).
+          envelopeHash,
         },
       });
     })();
