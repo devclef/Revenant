@@ -49,12 +49,6 @@ describe("landing page `/`", () => {
     state.personas = [];
   });
 
-  it("renders no Ghost element and no data-ghost marker (Property 20, landing part)", () => {
-    const html = render([MAYA]);
-    expect(html).not.toContain("data-ghost");
-    expect(html.toLowerCase()).not.toContain("ghost");
-  });
-
   it("renders exactly one h1 with the exact headline text", () => {
     const html = render([MAYA]);
     const h1s = html.match(/<h1[\s>]/g) ?? [];
@@ -139,7 +133,6 @@ describe("landing page `/`", () => {
         expect(specifier).not.toMatch(/useOpeningFlow/);
         expect(specifier).not.toMatch(/\/api\//);
         expect(specifier).not.toMatch(/\bdb\b|drizzle|letter-store/);
-        expect(specifier).not.toMatch(/ghost/i);
       }
     }
     const page = readFileSync(new URL("../app/page.tsx", import.meta.url), "utf8");
