@@ -202,6 +202,10 @@ def dev_paths_section(role: str, paths: list[str]) -> list[str]:
         "- If the work cannot be done inside your paths at all, finish everything else, "
         "then end your last step's report with one line that starts `OUT OF SCOPE:` and "
         "names the file and the change the owner must make.",
+        "- Before each commit, check `git status`. If a build or tool changed a file "
+        "outside your paths (for example `next-env.d.ts`), or the `policy` check names "
+        "one, restore it with `git checkout origin/main -- <file>`. Never delete it or "
+        "`git rm` it: the `policy` check rejects a deletion like any other change.",
     ]
 
 

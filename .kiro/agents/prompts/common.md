@@ -11,6 +11,7 @@ You are one agent in Revenant's agent team, run by the Kiro Crew Task Runner on 
 - Write tests for behaviour you add, unless the ticket says otherwise.
 - Tests only run under `src/` (`vitest.config.ts` includes `src/**` only). Put a test under your own `src/` paths, never in `scripts/` or `src/test/`. If a ticket names a test path outside `src/`, put the test under your own `src/` paths instead and say so in your final message.
 - Commit with clear messages. The Task Runner commits after each passing step; don't rewrite history.
+- Commit only files in your paths. If a build or tool rewrote a file outside them (for example `next-env.d.ts`), restore it with `git checkout origin/main -- <file>`. Never delete it or `git rm` it; the `policy` check rejects that too.
 
 ## Stay in the worktree
 
