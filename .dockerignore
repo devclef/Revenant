@@ -28,8 +28,6 @@ scripts/
 # The seal-personas sources are also needed by `npm run build` in the builder stage.
 !scripts/migrate.mjs
 !scripts/seal-personas*
-# The builder stage type-checks src/lib/sources tests that import this script (Next 16 checks them).
-!scripts/prefetch-figures*
 deploy/
 
 # Test coverage
