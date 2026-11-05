@@ -25,7 +25,7 @@ export const LIVE_COPY = {
   letterCount: "{count} of 5,000 characters",
   figuresLegend: "Choose the figures to seal with it",
   figuresHint:
-    "Choose between 1 and 6. Each is sealed as published, with its period and source.",
+    "Choose between 1 and {max}. Each is sealed as published, with its period and source.",
   figureLatest: "Latest period: {period}",
   fixtureLabel: "fixture data",
   passkeySteps:
@@ -49,7 +49,9 @@ export const LIVE_COPY = {
   letterTooLong:
     "This letter is longer than 5,000 characters. Shorten it and try again.",
   figuresNone: "Choose at least one figure before you seal.",
-  figuresTooMany: "Choose no more than 6 figures.",
+  figuresTooMany: "Choose no more than {max} figures.",
+  prfHint:
+    "This device may not be able to lock the letter with a passkey. If so, you will need a backup key card.",
   warningUnticked:
     "Tick the box to confirm you understand, then create your passkey.",
   unavailable:

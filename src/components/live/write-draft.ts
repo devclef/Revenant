@@ -27,7 +27,7 @@ export const INITIAL_WRITE_DRAFT: WriteDraft = {
 
 export type WriteDraftEvent =
   | { type: "TEXT_CHANGED"; text: string }
-  | { type: "FIGURE_TOGGLED"; metricId: string }
+  | { type: "FIGURE_TOGGLED"; metricId: string; limit?: number }
   | { type: "WARNING_CHANGED"; ticked: boolean }
   | { type: "BACKUP_CARD_CHANGED"; ticked: boolean };
 
@@ -54,7 +54,7 @@ export function reduceWriteDraft(
           metricIds: state.metricIds.filter((id) => id !== metricId),
         };
       }
-      if (state.metricIds.length >= MAX_FIGURES) return state;
+      if (state.metricIds.length >= (event.limit ?? MAX_FIGURES)) return state;
       return { ...state, metricIds: [...state.metricIds, metricId] };
     }
   }

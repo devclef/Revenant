@@ -96,10 +96,18 @@ describe("FigurePicker", () => {
     expect(html.match(/disabled=""/g)).toHaveLength(1);
   });
 
+  it("states the maximum as the smaller of 6 and the offered count", () => {
+    const four = [REAL, FIXTURE, { ...REAL, metricId: "c" }, { ...REAL, metricId: "d" }];
+    const ten = Array.from({ length: 10 }, (_, i) => ({ ...REAL, metricId: `m-${i}` }));
+
+    expect(render(four)).toContain("Choose between 1 and 4.");
+    expect(render(ten)).toContain("Choose between 1 and 6.");
+  });
+
   it("has the legend and hint copy", () => {
     const html = render([REAL]);
 
     expect(html).toContain(LIVE_COPY.figuresLegend);
-    expect(html).toContain(LIVE_COPY.figuresHint);
+    expect(html).toContain(LIVE_COPY.figuresHint.replace("{max}", "1"));
   });
 });

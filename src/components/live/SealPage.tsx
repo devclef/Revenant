@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useReducer } from "react";
+import Link from "next/link";
 
 import "@/components/ceremony/scene/tokens.css";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
@@ -8,14 +9,18 @@ import type { LoadedFigures } from "@/lib/figures";
 
 import { realSealApi, type SealApi } from "./api";
 import { listPickableSeries } from "./catalogue-list";
+import { LIVE_COPY } from "./copy";
 import { BackupFallback } from "./BackupFallback";
+import styles from "./live.module.css";
 import { SealedView } from "./SealedView";
 import { SealFailure } from "./SealFailure";
 import type { AuthenticatorPort, SealDeps, SealDraft } from "./seal-runner";
 import { useCryptoModule } from "./useCryptoModule";
 import { useSealFlow } from "./useSealFlow";
 import { WriteForm } from "./WriteForm";
+import { usePrfHint } from "./prf-hint";
 import { INITIAL_WRITE_DRAFT, reduceWriteDraft } from "./write-draft";
+import { figureLimit } from "./form";
 
 /** The figures on offer, computed once from the demo figure file. */
 const PICKABLE = listPickableSeries(DEMO_FIGURES);
@@ -57,6 +62,8 @@ export interface SealPageProps {
  */
 export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
   const crypto = useCryptoModule();
+  const prfHint = usePrfHint();
+  const figureMax = figureLimit(PICKABLE.length);
 
   // The letter text, chosen figures and warning tick. The page holds them, not
   // WriteForm, so they survive the cancelled, failed and cannot_lock screens and
@@ -100,6 +107,9 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
       data-app-origin={appOrigin}
       data-live-step={state.tag}
     >
+      <p className={styles.backToDemo}>
+        <Link href="/demo">{LIVE_COPY.backToDemo}</Link>
+      </p>
       {renderState()}
     </div>
   );
@@ -144,6 +154,7 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
         return (
           <WriteForm
             series={PICKABLE}
+            prfHint={prfHint}
             state={state}
             cryptoLoaded={crypto !== null}
             text={writeDraft.text}
@@ -154,7 +165,7 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
               dispatchDraft({ type: "TEXT_CHANGED", text })
             }
             onToggleFigure={(metricId) =>
-              dispatchDraft({ type: "FIGURE_TOGGLED", metricId })
+              dispatchDraft({ type: "FIGURE_TOGGLED", metricId, limit: figureMax })
             }
             onWarningChange={(ticked) =>
               dispatchDraft({ type: "WARNING_CHANGED", ticked })

@@ -1,5 +1,6 @@
 import type { PickableSeries } from "./catalogue-list";
 import { LIVE_COPY } from "./copy";
+import { figureLimit } from "./form";
 import styles from "./live.module.css";
 
 export interface FigurePickerProps {
@@ -27,10 +28,13 @@ export function FigurePicker({
   atLimit,
   onToggle,
 }: FigurePickerProps) {
+  const limit = figureLimit(series.length);
   return (
     <fieldset className={styles.figures}>
       <legend className={styles.legend}>{LIVE_COPY.figuresLegend}</legend>
-      <p className={styles.hint}>{LIVE_COPY.figuresHint}</p>
+      <p className={styles.hint}>
+        {LIVE_COPY.figuresHint.replace("{max}", String(limit))}
+      </p>
       <ul className={styles.figureList}>
         {series.map((item) => {
           const checked = selected.includes(item.metricId);
@@ -67,6 +71,12 @@ export function FigurePicker({
           );
         })}
       </ul>
+      {atLimit ? (
+        <p className={styles.hint}>
+          {LIVE_COPY.figuresTooMany.replace("{max}", String(limit))}
+        </p>
+      ) : null}
     </fieldset>
   );
 }
+

@@ -3,11 +3,11 @@
 import { DemoLabel } from "@/components/demo/DemoLabel";
 
 import type { PickableSeries } from "./catalogue-list";
-import { MAX_FIGURES } from "./constants";
 import { LIVE_COPY } from "./copy";
 import { FigurePicker } from "./FigurePicker";
-import { countCodePoints, validateWrite, type WriteProblem } from "./form";
+import { countCodePoints, figureLimit, validateWrite, type WriteProblem } from "./form";
 import styles from "./live.module.css";
+import { type PrfHint } from "./prf-hint";
 import type { SealState } from "./seal-machine";
 import { StepStatus } from "./StepStatus";
 
@@ -22,6 +22,8 @@ export interface WriteFormProps {
   text: string;
   /** The chosen figure IDs, held by the page (controlled). */
   metricIds: string[];
+  /** The PRF_Hint from usePrfHint in the page. `missing` shows a note; it blocks nothing. */
+  prfHint?: PrfHint;
   /** Whether the warning box is ticked, held by the page (controlled). */
   warningTicked: boolean;
   /** Whether the backup key card box is ticked, held by the page (controlled). */
@@ -79,6 +81,7 @@ export function WriteForm({
   cryptoLoaded,
   text,
   metricIds,
+  prfHint = "none",
   warningTicked,
   backupCardTicked,
   onTextChange,
@@ -89,8 +92,15 @@ export function WriteForm({
   onConfirmPress,
 }: WriteFormProps) {
   const letterCount = countCodePoints(text);
-  const problems = validateWrite({ text, metricIds, warningTicked, backupCardTicked });
-  const atLimit = metricIds.length >= MAX_FIGURES;
+  const limit = figureLimit(series.length);
+  const problems = validateWrite({
+    text,
+    metricIds,
+    warningTicked,
+    backupCardTicked,
+    maxFigures: limit,
+  });
+  const atLimit = metricIds.length >= limit;
 
   /** The message for a problem, or "" when validateWrite does not report it. */
   function problemText(problem: WriteProblem): string {
@@ -152,6 +162,12 @@ export function WriteForm({
       <p id="live-figures-problem" className={styles.problem}>
         {problemText("figures_none")}
       </p>
+
+      {prfHint === "missing" ? (
+        <p className={styles.hint} role="status">
+          {LIVE_COPY.prfHint}
+        </p>
+      ) : null}
 
       <div className={styles.explain}>
         <p>{LIVE_COPY.passkeySteps}</p>

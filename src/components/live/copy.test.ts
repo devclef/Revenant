@@ -50,6 +50,19 @@ describe("LIVE_COPY", () => {
     expect(LIVE_COPY.warningLabel).toContain("can never be opened");
   });
 
+  it("states the figure maximum as {max} and fills it with the offered count", () => {
+    for (const key of ["figuresHint", "figuresTooMany"] as const) {
+      expect(LIVE_COPY[key], key).toContain("{max}");
+      const filled = LIVE_COPY[key].replace("{max}", "4");
+      expect(filled, key).toContain("4");
+      expect(filled, key).not.toContain("6");
+    }
+  });
+
+  it("has the PRF_Hint copy, which says a backup key card may be needed", () => {
+    expect(LIVE_COPY.prfHint).toContain("backup key card");
+  });
+
   it("has the unavailable string that the page needs", () => {
     expect(LIVE_COPY.unavailable.length).toBeGreaterThan(0);
   });

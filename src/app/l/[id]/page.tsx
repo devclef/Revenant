@@ -1,5 +1,5 @@
 import { notFound } from "next/navigation";
-import { MotionProvider } from "@/components/ceremony/motion";
+import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { LiveLetter } from "@/components/live/LiveLetter";
 import { isLetterId } from "@/lib/seal-format";
 
@@ -8,9 +8,10 @@ import { isLetterId } from "@/lib/seal-format";
  * "Letter_Page").
  *
  * A server component. It awaits `params`, and calls `notFound()` unless the
- * segment is a letter ID (`isLetterId`). It renders the motion provider and
- * `LiveLetter`, which runs the opening flow in live mode. The desk scene was
- * retired with spec 07 task 9.
+ * segment is a letter ID (`isLetterId`). It renders the plain Scene shell with
+ * no Demo chip and no shell controls, so the region's own Calm, Skip and sound
+ * controls (CeremonyRoot) are the only ones on the page. The wordmark links
+ * home.
  *
  * It imports no crypto module and no database module. The letter ID comes only
  * from this URL segment, after its shape is checked. The client flow fetches
@@ -27,8 +28,8 @@ export default async function LetterPage({
   }
 
   return (
-    <MotionProvider>
+    <SceneShell variant="plain" demo={false} controls="none">
       <LiveLetter letterId={id} />
-    </MotionProvider>
+    </SceneShell>
   );
 }

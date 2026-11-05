@@ -26,7 +26,15 @@ import { SceneBackdrop } from "./SceneBackdrop";
 export type SceneShellProps =
   | { variant: "landing"; children: ReactNode }
   | { variant: "index"; children: ReactNode }
-  | { variant: "persona"; personaName: string; children: ReactNode };
+  | { variant: "persona"; personaName: string; children: ReactNode }
+  | {
+      variant: "plain";
+      /** Shows the Demo chip. Default true. */
+      demo?: boolean;
+      /** Which Top_Bar controls to show. Default `calm`. */
+      controls?: "calm" | "none";
+      children: ReactNode;
+    };
 
 export function SceneShell(props: SceneShellProps) {
   return (
@@ -47,7 +55,7 @@ function SceneFrame(props: SceneShellProps) {
   // counts as `full`, because only `calm` turns motion off (design.md "Motion
   // modes"). The index root is marked "index" (R26.4).
   const rootAttributes: Record<string, string> =
-    props.variant === "persona"
+    props.variant === "persona" || props.variant === "plain"
       ? {}
       : {
           "data-ceremony": props.variant === "landing" ? "scene" : "index",
@@ -55,11 +63,20 @@ function SceneFrame(props: SceneShellProps) {
         };
 
   return (
-    <div className={styles.scene} {...rootAttributes}>
+    <div
+      className={
+        props.variant === "plain"
+          ? `${styles.scene} ${styles.plain}`
+          : styles.scene
+      }
+      {...rootAttributes}
+    >
       {/* The index variant gets the Soil backdrop from the shell, with no Ghost. */}
       {props.variant === "index" ? <SceneBackdrop /> : null}
       {props.variant === "persona" ? (
         <TopBar personaName={props.personaName} />
+      ) : props.variant === "plain" ? (
+        <TopBar demo={props.demo ?? true} controls={props.controls ?? "calm"} />
       ) : (
         <TopBar />
       )}

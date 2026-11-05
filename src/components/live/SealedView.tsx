@@ -9,7 +9,7 @@ import { BackupKeyCard } from "./BackupKeyCard";
 import { COUNTDOWN_TICK_MS } from "./constants";
 import { LIVE_COPY } from "./copy";
 import { formatLocalDateTime } from "./format";
-import { remainingSeconds } from "./clock";
+import { goToLetterReady, remainingSeconds } from "./clock";
 import styles from "./live.module.css";
 import { SealedKeepsakes } from "./SealedKeepsakes";
 import type { SealState } from "./seal-machine";
@@ -83,17 +83,24 @@ export function SealedView({
   const [seconds, setSeconds] = useState(() =>
     remainingSeconds(opensAtMs, nowRef.current(), state.offsetMs),
   );
+  // "Go to your letter" is enabled only when goToLetterReady says the countdown
+  // has ended (Property 19). It is kept in state, updated on the same tick.
+  const [ready, setReady] = useState(() =>
+    goToLetterReady(opensAtMs, nowRef.current(), state.offsetMs),
+  );
 
   useEffect(() => {
     // Refresh the countdown text on the tick. Stops ticking once it reaches
     // zero: the value is non-increasing and ends at zero (Property 16).
     setSeconds(remainingSeconds(opensAtMs, nowRef.current(), state.offsetMs));
+    setReady(goToLetterReady(opensAtMs, nowRef.current(), state.offsetMs));
     if (opensAtMs <= nowRef.current() + state.offsetMs) {
       return;
     }
     const id = setInterval(() => {
       const left = remainingSeconds(opensAtMs, nowRef.current(), state.offsetMs);
       setSeconds(left);
+      setReady(goToLetterReady(opensAtMs, nowRef.current(), state.offsetMs));
       if (left <= 0) {
         clearInterval(id);
       }
@@ -144,7 +151,7 @@ export function SealedView({
         </div>
 
         <div className={styles.actions}>
-          {done ? (
+          {ready ? (
             <Link href={relativeHref} className={styles.primary} data-live-goto>
               {LIVE_COPY.goToLetter}
             </Link>
