@@ -23,10 +23,28 @@ const sans = localFont({
   display: "swap",
 });
 
-export const metadata: Metadata = {
-  title: "Revenant",
-  description: "Your past self returns with the receipts.",
-};
+const FALLBACK_ORIGIN = "http://localhost:3000";
+
+/**
+ * Site-wide metadata. Runs per request so APP_ORIGIN is read from the
+ * environment at runtime, not frozen at build time. Pages set their own title
+ * through the template; metadataBase makes relative Open Graph URLs absolute.
+ */
+export async function generateMetadata(): Promise<Metadata> {
+  const origin = (process.env.APP_ORIGIN ?? "").trim().replace(/\/+$/, "");
+  return {
+    metadataBase: new URL(origin || FALLBACK_ORIGIN),
+    title: {
+      default: "Revenant",
+      template: "%s · Revenant",
+    },
+    description: "Your past self returns with the receipts.",
+    icons: {
+      icon: "/icon.svg",
+      apple: "/apple-icon",
+    },
+  };
+}
 
 export default async function RootLayout({
   children,
