@@ -8,15 +8,11 @@
 //
 // Pure module: the caller supplies the track width and each label's width.
 
+import { TICK_GAP_PX } from "../constants";
 import { positionOfIn } from "./scale-math";
 import type { ScaleRange } from "./unit-ranges";
 
-/** Smallest gap between two tick label boxes, in px. */
-export const TICK_GAP_PX = 4;
-/** Track width used before measurement (server render and first client render). */
-export const TRACK_MIN_PX = 260;
-/** Estimated width of one character of a tick label at 0.75rem, in px. */
-export const TICK_CHAR_PX = 7.5;
+export { TICK_CHAR_PX, TICK_GAP_PX, TRACK_MIN_PX } from "../constants";
 
 /** One tick label that is drawn. */
 export type VisibleTick = {

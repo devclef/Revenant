@@ -79,6 +79,23 @@ export const CEREMONY_COPY = {
   /** The Unit_Helper_Line for the euro-per-1,000-litres unit (spec 08 R7.8). */
   unitHelperEurPer1000L: "1,000 here means 1 euro per litre.",
 
+  // --- Recall number field (spec 08 R32) ---
+
+  /** Under the field, the number as read, for example "Read as 1,585.76". `{value}` is the number. */
+  parsedValue: "Read as {value}",
+
+  /** The legend of the two-reading choice for an Ambiguous_Input. */
+  readingLegend: "This could be read two ways. Which did you mean?",
+
+  /** The decimal reading in words. `{head}` and `{tail}` are the judge's digits. */
+  readingDecimal: "{head} point {tail}",
+
+  /** The grouping reading in words. `{head}` is the judge's digits; `{rest}` is the tail without leading zeros. */
+  readingGrouping: "{head} thousand {rest}",
+
+  /** Shown when the field text cannot be read as one number. One fixed example for every input. */
+  numberUnreadable: "This number could not be read. Write it like 1585.76.",
+
   // --- Tilt and sound ---
 
   /** The control that asks for device-motion permission for the light tilt. */

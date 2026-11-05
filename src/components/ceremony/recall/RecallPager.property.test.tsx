@@ -118,7 +118,7 @@ describe("Property 3: paging never changes the Recall_Record (fast-check)", () =
               if (op.action === "prev") index = previousIndex(index);
               if (op.action === "enter") {
                 index =
-                  submitAction(index, n, false) === "advance"
+                  submitAction(index, n, false, true) === "advance"
                     ? nextIndex(index, n)
                     : index;
               }

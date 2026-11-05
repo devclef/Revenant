@@ -114,18 +114,6 @@ describe("the recall scale has a plain control for the hold-still zoom", () => {
     expect(markup).toContain(CEREMONY_COPY.recallLookCloser);
   });
 
-  it("does not offer Look closer in read-only (marks) mode", () => {
-    const markup = renderToStaticMarkup(
-      createElement(RecallScale, {
-        ...baseProps,
-        value: 3.4,
-        noAnswer: false,
-        readOnly: true,
-      }),
-    );
-    expect(markup).not.toContain(CEREMONY_COPY.recallLookCloser);
-  });
-
   it("does not offer Look closer when there is no answer to zoom on", () => {
     const markup = renderToStaticMarkup(
       createElement(RecallScale, { ...baseProps, value: null, noAnswer: true }),

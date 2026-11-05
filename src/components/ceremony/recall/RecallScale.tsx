@@ -62,11 +62,6 @@ export type RecallScaleProps = {
   /** Called with the question id and the plain-decimal text to send as EDIT_DRAFT. */
   onEdit: (id: string, text: string) => void;
   /**
-   * True in the marks stage: the Mark shows the recorded value, but the track
-   * takes no pointer or key input and is out of the tab order.
-   */
-  readOnly?: boolean;
-  /**
    * Text placed before the value in the spoken value, for example "Your answer".
    * Used only when the Mark is shown, in edit and read-only mode alike. It is
    * not drawn on screen.
@@ -186,7 +181,6 @@ export function RecallScale({
   value,
   noAnswer,
   onEdit,
-  readOnly = false,
   spokenPrefix,
 }: RecallScaleProps) {
   const [level, setLevel] = useState<ZoomLevel>(0);
@@ -274,7 +268,7 @@ export function RecallScale({
   }
 
   function onPointerDown(event: ReactPointerEvent<HTMLDivElement>) {
-    if (readOnly || noAnswer || drag.current !== null) return;
+    if (noAnswer || drag.current !== null) return;
     const start = valueAtClientX(event.clientX, win);
     if (start === null) return;
     const state: DragState = {
@@ -297,7 +291,7 @@ export function RecallScale({
   }
 
   function onKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
-    if (readOnly || noAnswer) return;
+    if (noAnswer) return;
     const next = nextValueForKey(event.key, base);
     if (next === null) return;
     event.preventDefault();
@@ -318,7 +312,7 @@ export function RecallScale({
     setLevel((level + 1) as ZoomLevel);
     setAnchor(base);
   }
-  const canLookCloser = !readOnly && hasMark && level < 2;
+  const canLookCloser = hasMark && level < 2;
 
   const ariaValueNow = Math.round(positionOf(base) * 1000);
 
@@ -346,14 +340,13 @@ export function RecallScale({
         <div className={styles.rail} aria-hidden="true" />
         <div
           role="slider"
-          tabIndex={noAnswer || readOnly ? -1 : 0}
+          tabIndex={noAnswer ? -1 : 0}
           aria-label={label}
           aria-orientation="horizontal"
           aria-valuemin={0}
           aria-valuemax={1000}
           aria-valuenow={ariaValueNow}
           aria-valuetext={spokenValue}
-          aria-readonly={readOnly ? "true" : undefined}
           aria-disabled={noAnswer ? "true" : undefined}
           className={hasMark ? styles.mark : `${styles.mark} ${styles.markFaded}`}
           onKeyDown={onKeyDown}
