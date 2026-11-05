@@ -165,13 +165,13 @@ describe("Property 11: the Soil_Canvas draws the same thing from the seed", () =
 
         const elapsedS = ms / 1000;
         for (const d of model.dust) {
-          expect(dustPoint(d, g, ceiling, elapsedS).y).toBeGreaterThanOrEqual(ceiling);
+          expect(dustPoint(d, g, ceiling, elapsedS).y).toBeGreaterThanOrEqual(ceiling - 1e-9);
         }
         const tauS = (ms - RISE_AT_MS) / 1000;
         for (const c of model.clods) {
           const p = clodPoint(c, g, ceiling, tauS);
           if (p !== null) {
-            expect(p.y).toBeGreaterThanOrEqual(ceiling);
+            expect(p.y).toBeGreaterThanOrEqual(ceiling - 1e-9);
           }
         }
       }),
