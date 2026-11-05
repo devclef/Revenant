@@ -6,7 +6,7 @@
 // `defaultFetcher` is only inspected structurally (it must set no header,
 // credential or cookie), never invoked.
 
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { SourceError } from "./errors";
 import { ALLOWED_HOSTS, defaultFetcher, download } from "./fetcher";
@@ -262,5 +262,67 @@ describe("defaultFetcher (structural, no network)", () => {
 
   it("follows redirects", () => {
     expect(source).toContain('redirect: "follow"');
+  });
+});
+
+describe("defaultFetcher timeout (no network)", () => {
+  // The global fetch is replaced with a stub that never answers on its own. It
+  // only settles when the AbortSignal fires, so the timeout is what ends it.
+  afterEach(() => {
+    vi.useRealTimers();
+    vi.unstubAllGlobals();
+  });
+
+  function hangingFetch(): { calls: number } {
+    const state = { calls: 0 };
+    vi.stubGlobal(
+      "fetch",
+      (_url: string, init: { signal: AbortSignal }) => {
+        state.calls += 1;
+        return new Promise((_resolve, reject) => {
+          init.signal.addEventListener("abort", () =>
+            reject(new Error("aborted")),
+          );
+        });
+      },
+    );
+    return state;
+  }
+
+  it("aborts after 60 000 ms when no timeout is given", async () => {
+    vi.useFakeTimers();
+    const state = hangingFetch();
+
+    let settled = false;
+    const pending = defaultFetcher(OK_URL).then(
+      () => (settled = true),
+      () => (settled = true),
+    );
+
+    await vi.advanceTimersByTimeAsync(59_999);
+    expect(state.calls).toBe(1);
+    expect(settled).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(1);
+    await pending;
+    expect(settled).toBe(true);
+  });
+
+  it("aborts after a custom timeoutMs when one is given", async () => {
+    vi.useFakeTimers();
+    hangingFetch();
+
+    let settled = false;
+    const pending = defaultFetcher(OK_URL, 5_000).then(
+      () => (settled = true),
+      () => (settled = true),
+    );
+
+    await vi.advanceTimersByTimeAsync(4_999);
+    expect(settled).toBe(false);
+
+    await vi.advanceTimersByTimeAsync(1);
+    await pending;
+    expect(settled).toBe(true);
   });
 });
