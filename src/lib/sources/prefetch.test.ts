@@ -29,7 +29,6 @@ import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { CATALOGUE, FigureDataError, loadFigureFile } from "@/lib/figures";
 
-import { SourceError } from "./errors";
 import {
   BULLETIN_PAGE,
   BULLETIN_FILE_NAME,
@@ -93,6 +92,8 @@ const EU_DIESEL_KEY: BulletinKey = "EU_price_with_tax_diesel";
 const FIXED_NOW = new Date("2026-11-01T12:00:00Z");
 const FIXED_STAMP = "2026-11-01T12:00:00Z";
 const fixedNow = (): Date => FIXED_NOW;
+// A later clock for the second run, as a real daily run would have.
+const laterNow = (): Date => new Date("2026-11-02T14:02:11Z");
 
 // --- Global fetch guard (R8.1) ---------------------------------------------
 
@@ -421,11 +422,11 @@ describe("runPrefetch — a differing value is a revision and is kept", () => {
 
     const second = await runPrefetch(file, {
       fetcher: recordedFetcher().fetcher,
-      now: fixedNow,
+      now: laterNow,
     });
 
-    // The source value (4.269) differs from the edited committed value, so it
-    // is reported as a revision and nothing is added for that period.
+    // The source value (4.269) differs from the committed one, so it is reported
+    // as a revision and appended as a Revision_Row (spec 08, R20.17).
     expect(second.report.revisions).toContainEqual({
       metricId: GASOLINE,
       period: "2026-10-26",
@@ -433,13 +434,15 @@ describe("runPrefetch — a differing value is a revision and is kept", () => {
       source: "4.269",
     });
 
-    // The written file keeps the committed value; the source value is not
-    // substituted in.
+    // The committed row is kept unchanged; the new row sits after it and is the
+    // newest by retrieved_at.
     const loaded = loadFigureFile(JSON.parse(second.text), CATALOGUE);
-    const point = loaded.series
+    const rows = loaded.series
       .get(GASOLINE)
-      ?.figures.find((f) => f.period === "2026-10-26");
-    expect(point?.value).toBe(committed);
+      ?.figures.filter((f) => f.period === "2026-10-26") ?? [];
+    expect(rows.map((f) => f.value)).toEqual([committed, "4.269"]);
+    expect(rows[0].retrieved_at).toBe("2026-11-01T12:00:00Z");
+    expect(rows[1].retrieved_at).toBe("2026-11-02T14:02:11Z");
 
     assertReportNeutral(second.report);
     assertNoBannedWords(second.text);
@@ -547,20 +550,21 @@ describe("runPrefetch — a backfill throws PrefetchError kind backfill", () => 
 // An adapter failure propagates a SourceError.
 // ---------------------------------------------------------------------------
 
-describe("runPrefetch — an adapter failure propagates SourceError", () => {
-  it("a 500 on the gasoline download throws SourceError, not PrefetchError", async () => {
+describe("runPrefetch — a failed download fails only its own series", () => {
+  it("a 500 on the gasoline download is reported as failed; the other series are still stored", async () => {
     const { fetcher } = recordedFetcher({ gasolineStatus: 500 });
-    await expect(runPrefetch(null, { fetcher, now: fixedNow })).rejects.toThrow(
-      SourceError,
-    );
-    try {
-      await runPrefetch(null, { fetcher, now: fixedNow });
-    } catch (error) {
-      expect(error).toBeInstanceOf(SourceError);
-      expect((error as SourceError).kind).toBe("http_status");
-      expect((error as SourceError).publisher).toBe("eia");
-      assertNoBannedWords((error as SourceError).message);
-    }
+    const outcome = await runPrefetch(null, { fetcher, now: fixedNow });
+
+    expect(outcome.failed).toEqual([
+      { metricId: GASOLINE, reason: "source http_status" },
+    ]);
+    expect(outcome.succeeded).not.toContain(GASOLINE);
+    expect(outcome.succeeded).toContain("us-diesel");
+    // Nothing from the failed series is stored; the other series are.
+    const loaded = loadFigureFile(JSON.parse(outcome.text), CATALOGUE);
+    expect(loaded.series.get(GASOLINE)?.figures ?? []).toHaveLength(0);
+    expect(loaded.series.get("us-diesel")?.figures.length).toBeGreaterThan(0);
+    assertNoBannedWords(outcome.failed[0].reason);
   });
 });
 

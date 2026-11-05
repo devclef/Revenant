@@ -33,9 +33,15 @@ import { constants as fsConstants } from "node:fs";
 import { readFile, writeFile, rename, access } from "node:fs/promises";
 import path from "node:path";
 
-import { runPrefetch, PrefetchError } from "@/lib/sources/prefetch";
+import { runPrefetch, PrefetchError, parseFetchStatus, updateFetchStatus } from "@/lib/sources/prefetch";
 import { formatReportLine, type Report } from "@/lib/sources/refresh";
 import type { Fetcher } from "@/lib/sources/types";
+
+/**
+ * The fetch status file (spec 08, R21.2): one run start time per series that
+ * succeeded in the last run that reached it. Lives beside the figure file.
+ */
+export const STATUS_PATH = "src/lib/figures/real/fetch-status.json";
 
 /**
  * The committed figure file this script refreshes (design.md "Prefetch"). A
@@ -161,13 +167,26 @@ function printReport(report: Report, log: (line: string) => void): void {
   }
 }
 
+/** Write `text` to a temp file next to `target`, then rename it over `target`. */
+async function replaceFile(
+  deps: MainDeps,
+  target: string,
+  text: string,
+): Promise<void> {
+  const dir = path.dirname(target);
+  const base = path.basename(target);
+  const tempPath = path.join(dir, `.${base}.tmp`);
+  await deps.writeFile(tempPath, text);
+  await deps.rename(tempPath, target);
+}
+
 /**
  * Run the prefetch entry with the given dependencies (design.md "Script
- * entry"). It reads the Real_File if it exists, calls `runPrefetch`, and on
- * success writes a temp file next to the target and renames it over the target,
- * prints the Report and exits 0; on any thrown error it prints one
+ * entry"). It reads the Real_File and the fetch status if they exist, calls
+ * `runPrefetch`, writes both files, prints the Report and exits 1 when any
+ * series failed, else 0. On a thrown error it prints one
  * `prefetch failed: <detail>` line (after any report lines a `backfill` or
- * `coverage` {@link PrefetchError} carries) and exits 1 without touching the
+ * `coverage` {@link PrefetchError} carries) and exits 1 without touching either
  * target. It never throws out of itself: every path ends in `exit`.
  */
 export async function main(deps: MainDeps = defaultDeps()): Promise<void> {
@@ -176,24 +195,37 @@ export async function main(deps: MainDeps = defaultDeps()): Promise<void> {
     const existingJson: unknown | null = (await deps.exists(TARGET_PATH))
       ? (JSON.parse(await deps.readFile(TARGET_PATH)) as unknown)
       : null;
+    const statusJson: unknown | null = (await deps.exists(STATUS_PATH))
+      ? (JSON.parse(await deps.readFile(STATUS_PATH)) as unknown)
+      : null;
+    const existingStatus = statusJson === null ? {} : parseFetchStatus(statusJson);
 
-    const { text, report } = await runPrefetch(existingJson, {
+    const outcome = await runPrefetch(existingJson, {
       now: deps.now,
       fetcher: deps.fetcher,
     });
+    const { text, report } = outcome;
+    const statusText = updateFetchStatus(
+      existingStatus,
+      outcome.succeeded,
+      outcome.runStartedAt,
+    );
 
-    // Atomic replace: write a temp file next to the target, then rename it over
-    // the target. The target is changed only here, only after a full run.
-    const dir = path.dirname(TARGET_PATH);
-    const base = path.basename(TARGET_PATH);
-    const tempPath = path.join(dir, `.${base}.tmp`);
-    await deps.writeFile(tempPath, text);
-    await deps.rename(tempPath, TARGET_PATH);
+    // Atomic replace: write a temp file next to each target, then rename it over
+    // the target. The targets change only here, only after a full run.
+    await replaceFile(deps, TARGET_PATH, text);
+    await replaceFile(deps, STATUS_PATH, statusText);
 
-    // Print the Report and exit 0 — including when revisions, gaps or
-    // missing-from-source were reported; those are not failures.
     printReport(report, deps.log);
-    deps.exit(0);
+
+    // Any failed series makes the run fail (R21.2), even though the other series
+    // were stored. One line per failed series names it and why.
+    for (const failure of outcome.failed) {
+      deps.errorLog(
+        `prefetch failed: series ${failure.metricId} reason=${failure.reason}`,
+      );
+    }
+    deps.exit(outcome.failed.length > 0 ? 1 : 0);
   } catch (err) {
     // For a backfill or coverage failure, print the report it carries first
     // (every backfill line visible), then the single failure line.
