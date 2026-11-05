@@ -174,7 +174,7 @@ export function FiguresThenNow({
 
   return (
     <section className={styles.figuresThenNow}>
-      <h2 tabIndex={-1}>{REVEAL_COPY.stage3Title}</h2>
+      <h2 tabIndex={-1} data-figures-heading="">{REVEAL_COPY.stage3Title}</h2>
 
       {anyFixture ? <FixtureNote /> : null}
 

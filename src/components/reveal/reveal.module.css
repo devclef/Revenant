@@ -146,6 +146,13 @@
 
 .reveal {
   text-align: left;
+  /* Focus after "See the numbers" (spec 08, R2.2): the Top_Bar is at most 96 px
+     tall, so the Figures_Heading below clears it. */
+  --topbar-clear: 96px;
+}
+
+.figuresThenNow h2[data-figures-heading] {
+  scroll-margin-top: calc(var(--topbar-clear) + 0.75rem);
 }
 
 .stage {

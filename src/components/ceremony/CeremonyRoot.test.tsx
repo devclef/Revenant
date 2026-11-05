@@ -109,6 +109,7 @@ vi.mock("./skip", () => ({
 // Imported after the mocks are declared (vi.mock is hoisted, so this is safe).
 import { OpeningFlow } from "../reveal/OpeningFlow";
 import { CeremonyRoot, type CeremonyRootProps } from "./CeremonyRoot";
+import { focusTargetFor, shouldRescueFocus } from "./stages";
 
 // --- fixtures ----------------------------------------------------------------
 
@@ -518,5 +519,82 @@ describe("CeremonyRoot controls prop", () => {
     } finally {
       setHasActive(false);
     }
+  });
+});
+
+// Feature: 08-judge-polish (spec 08 focus table, R2.1 to R2.6)
+//
+// The focus rule is the pure `focusTargetFor` table (stages.ts). These cases pin
+// the rows of design.md "Focus after See the numbers". The DOM wiring (the
+// effect, the scroll and the re-check timer) cannot run in this node
+// environment, so a source scan pins that CeremonyRoot calls the table, sets the
+// scroll check and clears it.
+
+describe("CeremonyRoot focus rule (spec 08, focusTargetFor table)", () => {
+  it("moves focus to the Figures_Heading on See the numbers (letter to figures)", () => {
+    expect(focusTargetFor("letter", "figures")).toEqual({ kind: "figures-heading" });
+  });
+
+  it("moves focus to the Figures_Heading on Show everything from letter, marks and seal", () => {
+    expect(focusTargetFor("letter", "close")).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("marks", "close")).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("seal", "close")).toEqual({ kind: "figures-heading" });
+  });
+
+  it("moves nothing on the settle from figures to close (R2.4)", () => {
+    expect(focusTargetFor("figures", "close")).toEqual({ kind: "none" });
+  });
+
+  it("keeps the spec 07 rule for the first mount and for a tag change inside one Stage", () => {
+    expect(focusTargetFor(null, "marks")).toEqual({ kind: "default" });
+    expect(focusTargetFor(null, "close")).toEqual({ kind: "default" });
+    expect(focusTargetFor("recall", "recall")).toEqual({ kind: "default" });
+    expect(focusTargetFor("figures", "figures")).toEqual({ kind: "default" });
+  });
+
+  it("keeps the spec 07 rule for every other pair", () => {
+    expect(focusTargetFor("recall", "marks")).toEqual({ kind: "default" });
+    expect(focusTargetFor("marks", "letter")).toEqual({ kind: "default" });
+    expect(focusTargetFor("intact", "recall")).toEqual({ kind: "default" });
+  });
+
+  it("rescues focus only when the focused element was removed and the target is none", () => {
+    expect(shouldRescueFocus(true, { kind: "none" })).toBe(true);
+    expect(shouldRescueFocus(false, { kind: "none" })).toBe(false);
+    expect(shouldRescueFocus(true, { kind: "default" })).toBe(false);
+    expect(shouldRescueFocus(true, { kind: "figures-heading" })).toBe(false);
+  });
+
+  it("wires the table, the scroll check and its cleanup into CeremonyRoot", () => {
+    const source = readFileSync(join(__dirname, "CeremonyRoot.tsx"), "utf8");
+    expect(source).toContain("focusTargetFor(prev, stage)");
+    expect(source).toContain("shouldRescueFocus(activeIsBody, target)");
+    expect(source).toContain("FOCUS_SCROLL_CHECK_MS");
+    expect(source).toContain('focus({ preventScroll: true })');
+    expect(source).toContain('"smooth" : "auto"');
+    expect(source).toContain("clearTimeout(timer)");
+  });
+
+  it("keeps the Figures_Heading focusable without a positive tabindex", () => {
+    const heading = readFileSync(
+      join(__dirname, "..", "reveal", "FiguresThenNow.tsx"),
+      "utf8",
+    );
+    expect(heading).toContain('<h2 tabIndex={-1} data-figures-heading="">');
+    const reveal = readFileSync(join(__dirname, "..", "reveal", "Reveal.tsx"), "utf8");
+    for (const source of [heading, reveal]) {
+      expect(source).not.toMatch(/tabIndex=\{[1-9]/);
+    }
+  });
+
+  it("sets scroll-margin-top on the Figures_Heading from the 96 px Top_Bar clearance", () => {
+    const css = readFileSync(
+      join(__dirname, "..", "reveal", "reveal.module.css"),
+      "utf8",
+    );
+    expect(css).toMatch(/--topbar-clear:\s*96px/);
+    expect(css).toContain(
+      "scroll-margin-top: calc(var(--topbar-clear) + 0.75rem)",
+    );
   });
 });
