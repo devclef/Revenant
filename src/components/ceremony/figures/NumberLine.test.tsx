@@ -269,11 +269,22 @@ describe("NumberLine text alternative (spec 08 R5.8)", () => {
 });
 
 describe("Property 12: the text alternative and labels name the same points (R5.8, R12.3)", () => {
-  it("for any answer, the labels and the text alternative carry the same answer", () => {
+  it("for any answer or no answer, the labels and the text alternative match", () => {
     fc.assert(
       fc.property(
-        fc.integer({ min: -100000, max: 100000 }),
+        fc.option(fc.integer({ min: -100000, max: 100000 }), { nil: null }),
         (answer) => {
+          if (answer === null) {
+            const html = render(base);
+            // The third visible label reads "No answer" and the text alternative uses
+            // numberLineAltNoAnswer with the same then and now points.
+            expect(html).toContain(`data-line-label="answer"`);
+            expect(html).toContain(`>${CEREMONY_COPY.lineNoAnswer}</span>`);
+            expect(html).toContain(
+              "Then 10 USD per gallon, Sep 2024. Now 20 USD per gallon, Sep 2026. No answer.",
+            );
+            return;
+          }
           const value = (answer / 100).toFixed(2);
           const html = render({
             ...base,
