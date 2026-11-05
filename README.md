@@ -17,7 +17,7 @@ Revenant lets you write a letter to your future self and seal it together with t
 ## The ritual
 
 1. **Write.** A letter to your future self. Plain text, up to 5,000 characters.
-2. **Seal the figures.** Pick everyday costs (fuel, groceries, rent) from official sources for the US, EU or Sweden, and optionally your own numbers, labelled as self-reported. Every figure keeps its source, period, unit and region.
+2. **Seal the figures.** Pick fuel prices from official sources for the US or the EU. Every figure keeps its source, period, unit and region.
 3. **Wait.** Choose an opening date at least three months away. Until then the letter is sealed and unreadable, even to you.
 4. **Recall.** After the opening date you unlock the letter. Before anything is shown, Revenant asks how you remember it. Your answers are recorded first.
 5. **Reveal.** What you remembered, what you wrote, then the numbers then and now with the plain change between them. Revenant does not explain the gap.
@@ -43,7 +43,7 @@ Known limitation for the MVP: opening needs the Revenant server, because it hold
 
 Judges cannot wait years, so there are two clearly labelled demos under `/demo`, stored separately from real letters.
 
-- **Persona letters.** Pre-sealed letters from fictional people, written for recent election windows in the US, EU and Sweden. Break the seal, answer the recall questions, see the figures then and now. No passkey needed.
+- **Persona letters.** A pre-sealed letter from a fictional person, written for a recent US election window. Break the seal, answer the recall questions, see the figures then and now. No passkey needed.
 - **Lock and unlock.** Seal a short letter with your own passkey and a 30-second lock, then unlock it.
 
 ## Status
