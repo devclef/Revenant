@@ -3,7 +3,8 @@
   "shared": [
     "package.json",
     "package-lock.json",
-    ".env.example"
+    ".env.example",
+    "src/test/integration/**"
   ],
   "roles": {
     "platform-dev": [
