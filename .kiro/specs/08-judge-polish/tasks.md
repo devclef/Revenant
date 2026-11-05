@@ -228,7 +228,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
   - Validation: `bash scripts/check.sh`
   - _Requirements: R15.2–R15.6, R23.1, R23.3, R29.2, R29.6_
 
-- [ ] 7. The Fingerprint module and the hash in the demo seal response
+- [x] 7. The Fingerprint module and the hash in the demo seal response
   - Agent: `crypto-dev` · Depends on: none · Estimated size: ~350 changed lines
   - Before this task: only `main`. This task shares no file with tasks 1 to 6 and may run beside them.
   - Scope: `src/lib/seal-format/fingerprint.ts` (new), `src/lib/seal-format/index.ts` (export), `src/app/api/letters/demo/seal/route.ts` (the live demo seal route on `main`; adjust the path if it differs and say so), and the `*.test.ts` for each file above
