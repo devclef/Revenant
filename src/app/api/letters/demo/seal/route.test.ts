@@ -274,18 +274,31 @@ describe("POST /api/letters/demo/seal: R4.1 rows", () => {
     expect(text).not.toContain(ID);
   });
 
-  it("success: 201 with letterId, sealedAt and opensAt in ISO millisecond form", async () => {
-    const res = await POST(postRequest(await validBody()));
+  it("success: 201 with letterId, sealedAt, opensAt and envelopeHash in ISO millisecond form", async () => {
+    const envelope = liveEnvelope();
+    const hash = await envelopeHash(envelope);
+    const res = await POST(postRequest(await validBody(envelope)));
     expect(res.status).toBe(201);
     expect(await res.json()).toEqual({
       letterId: ID,
       sealedAt: SEALED_AT,
       opensAt: OPENS_AT,
+      envelopeHash: hash,
     });
     expect(storeLiveLetterSpy).toHaveBeenCalledTimes(1);
     expect(new Date(OPENS_AT).getTime() - new Date(SEALED_AT).getTime()).toBe(
       LOCK_DURATION_MS,
     );
+  });
+
+  it("success: the body envelopeHash is the hash the store was given and wrote", async () => {
+    const envelope = liveEnvelope();
+    const hash = await envelopeHash(envelope);
+    const res = await POST(postRequest(await validBody(envelope)));
+    const body = (await res.json()) as { envelopeHash: string };
+    expect(body.envelopeHash).toMatch(/^[0-9a-f]{64}$/);
+    expect(body.envelopeHash).toBe(hash);
+    expect(storeLiveLetterSpy.mock.calls[0]?.[0].envelopeHash).toBe(body.envelopeHash);
   });
 });
 
