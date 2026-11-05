@@ -24,16 +24,18 @@ import styles from "./reveal.module.css";
  *    or the "fixture data" label for a fixture figure;
  * 3. the now row: "Now:", the now value (.figValue), then the same items for
  *    the now figure;
- * 4. the "Your answer" p.figAnswer, only when no Mark is drawn (see below);
- * 5. the Number_Line, with the then and now pins and the Mark (when answered).
- *    The judge's answer is its label, "Your answer: {value} {unit}";
- * 6. the change line, with both periods (ChangeLine, unchanged);
- * 7. the formula as text, with both inputs (ChangeLine, unchanged);
- * 8. the source control, which shows the source, the series ID and the
+ * 4. the Number_Line, with the then and now pins, the Mark (when answered) and
+ *    the "Your answer" label. The Number_Line is always drawn, so the label is
+ *    too: with an answer it reads "Your answer" over the value and unit; with
+ *    no answer it reads "Your answer" over "No answer". The Mark's own hidden
+ *    text is "Your answer: {value} {unit}";
+ * 5. the change line, with both periods (ChangeLine, unchanged);
+ * 6. the formula as text, with both inputs (ChangeLine, unchanged);
+ * 7. the source control, which shows the source, the series ID and the
  *    `source_url` link.
  *
- * "Your answer" appears once in every case: as the Number_Line label when a
- * Mark is drawn, otherwise as p.figAnswer after the now row.
+ * "Your answer" is visible once in every case, as that Number_Line label. No
+ * p.figAnswer element is rendered; the .figAnswer class is not used here.
  *
  * Every figure number carries its own period (R14.11). The then and now values
  * are both `.figValue` at FIG_VALUE_SIZE, so they have equal weight, and the
