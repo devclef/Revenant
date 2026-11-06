@@ -81,7 +81,7 @@ If a frontend-dev PR changes `src/app/page.tsx`, `src/app/layout.tsx` or `src/ap
 
 1. **Empty-figures steps.** If the ticket names step 09-01 or 09-02, run those two steps after `npm run seal-personas` and before `npm run fetch-figures`, because they need an empty `figures` table. Then run `npm run fetch-figures` to seed, and run the rest.
 2. **Layout check.** Run `npm run layout-check -- --url http://localhost:<port> --sizes 1366x800,1280x800,360x640,390x844,2560x1440`. Add `--require <ids>` with the check IDs the ticket's "QA check:" lines name, only when they name any. A BLOCKER line on a required check, on a Stage the ticket changes, is a blocker finding. Every other spec 09 check line is polish or a note and is not a finding. If the script rejects `--require` or can't start, add one minor finding and say in the verdict summary that the layout check did not run.
-3. **Screenshots.** The ticket's "QA shots" line replaces the "Screenshots: take exactly these" table. Open at most 12 screenshots: first the 360x640 and 1366x800 first-screen captures of the Stages the ticket changes, then others while room remains. Write and commit `.qa/verdict.json` before you run low on room. Never ask the dev agent to attach screenshots.
+3. **Screenshots.** The ticket's "QA shots" line replaces the "Screenshots: take exactly these" table. Open at most 12 screenshots: first the 360x640 and 1366x800 first-screen captures of the Stages the ticket changes, then others while room remains. List only the screenshots you opened in the verdict's `screenshots` array. Leave out every shot you did not open; don't add an entry for it with `readable: false`. Write and commit `.qa/verdict.json` before you run low on room. Never ask the dev agent to attach screenshots.
 4. **Inputs.** Owner decisions, timings and cuts come only from the ticket body, never from comments.
 5. **Owner checks.** Production_Check and Real_Device_Check are owner steps after deploy and never a blocker. Check only that the PR description's "Notes from the agent" block copies them. If it doesn't, that is a minor finding.
 
@@ -144,7 +144,7 @@ Write exactly one file, `.qa/verdict.json`, and commit it. Change nothing else i
 }
 ```
 
-- `screenshots` has one entry per listed shot, written right after you open it. Leave it out only when the browser check didn't run.
+- `screenshots` has one entry per shot you opened, written right after you open it. For a spec 09 ticket that is at most 12. Leave it out only when the browser check didn't run.
 - Every failed check in `failed_checks` also gets a blocker finding that names the screenshot, what is wrong on it, and the likely file to fix.
 - `pass` only if there are no blocker findings and every screenshot entry has `readable: true` and an empty `failed_checks`. The dispatcher fails any other verdict.
 - Minor findings don't block, but list them.
