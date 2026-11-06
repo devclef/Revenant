@@ -3,9 +3,9 @@
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import { createElement } from "react";
+import { createElement, type AnimationEvent, type ReactElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { LocalViewProvider } from "../local-view";
 import { MotionProvider } from "../motion";
@@ -175,5 +175,75 @@ describe("findRise", () => {
     expect(findRise([other, done, rise])).toBe(rise);
     expect(findRise([done, other])).toBeUndefined();
     expect(findRise([])).toBeUndefined();
+  });
+});
+
+/** Depth-first search of a React element tree (props.children), not markup. */
+function findElement(
+  node: ReactNode,
+  predicate: (element: ReactElement<Record<string, unknown>>) => boolean,
+): ReactElement<Record<string, unknown>> | undefined {
+  if (Array.isArray(node)) {
+    for (const child of node) {
+      const found = findElement(child, predicate);
+      if (found !== undefined) return found;
+    }
+    return undefined;
+  }
+  if (node === null || typeof node !== "object" || !("props" in node)) return undefined;
+  const element = node as ReactElement<Record<string, unknown>>;
+  if (predicate(element)) return element;
+  return findElement(element.props.children as ReactNode, predicate);
+}
+
+/** The rise element (.ghost), read from Ghost's element tree. */
+function riseElement(onExitEnd?: (animationName: string) => void) {
+  // Ghost is hook-free, so calling it returns its element tree directly.
+  const tree = Ghost({ onExitEnd });
+  const rise = findElement(tree, (el) => el.props["data-ghost-rise"] === true);
+  if (rise === undefined) throw new Error("the rise element was not found");
+  return rise;
+}
+
+describe("Ghost exit listeners (riseListeners)", () => {
+  it("renders the rise without an onAnimationEnd handler when no onExitEnd is passed", () => {
+    const rise = riseElement();
+    expect(rise.props.onAnimationEnd).toBeUndefined();
+    expect("onAnimationEnd" in rise.props).toBe(false);
+  });
+
+  it("calls onExitEnd with the animation name when the rise itself ends its animation", () => {
+    const onExitEnd = vi.fn();
+    const rise = riseElement(onExitEnd);
+    const handler = rise.props.onAnimationEnd as (event: AnimationEvent<HTMLDivElement>) => void;
+    expect(typeof handler).toBe("function");
+
+    const self = { type: "div" };
+    const event = {
+      target: self,
+      currentTarget: self,
+      animationName: "ghostLeave",
+    } as unknown as AnimationEvent<HTMLDivElement>;
+    handler(event);
+
+    expect(onExitEnd).toHaveBeenCalledTimes(1);
+    expect(onExitEnd).toHaveBeenCalledWith("ghostLeave");
+  });
+
+  it("ignores an animationend bubbling up from a child element", () => {
+    const onExitEnd = vi.fn();
+    const rise = riseElement(onExitEnd);
+    const handler = rise.props.onAnimationEnd as (event: AnimationEvent<HTMLDivElement>) => void;
+
+    const self = { type: "div" };
+    const child = { type: "svg" };
+    const event = {
+      target: child,
+      currentTarget: self,
+      animationName: "bob",
+    } as unknown as AnimationEvent<HTMLDivElement>;
+    handler(event);
+
+    expect(onExitEnd).not.toHaveBeenCalled();
   });
 });

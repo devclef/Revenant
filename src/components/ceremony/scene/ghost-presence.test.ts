@@ -8,10 +8,31 @@ import { describe, expect, it } from "vitest";
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
 import { GHOST_EXIT_FALLBACK_MS, GHOST_LEAVE_MS } from "../constants";
 import { planSealBreak } from "../seal/SealBreak";
+import { SkipProvider, useSequence, type SkipContextValue } from "../skip";
 import { ghostExitFallbackMs, ghostPresent, isGhostExitEnd } from "./ghost-presence";
+
+/**
+ * The live SkipProvider context, captured through a probe (house style: no DOM,
+ * see skip.test.tsx). `register` and `skipAll` are closures over the provider's
+ * registration map, so they can be driven directly here.
+ */
+function captureSequence(): SkipContextValue {
+  let captured: SkipContextValue | null = null;
+  function Probe() {
+    captured = useSequence();
+    return null;
+  }
+  renderToStaticMarkup(createElement(SkipProvider, null, createElement(Probe)));
+  if (captured === null) {
+    throw new Error("Probe never read the Skip context");
+  }
+  return captured;
+}
 
 describe("Property 22: break clause (R12.10, R12.9, R12.8)", () => {
   it("plans no break steps in Calm", () => {
@@ -75,10 +96,40 @@ describe("Ghost exit lifecycle (spec 07 A11, issue #253)", () => {
     expect(ghostExitFallbackMs(true)).toBe(0);
   });
 
-  it("removes the Ghost at once on Skip, with no fallback wait", () => {
-    // Skip runs the registered onLeft directly (PersonaGhost's register effect),
-    // not through the timer, so its removal is at once in the same render.
-    expect(ghostExitFallbackMs(false)).toBeGreaterThan(0);
+  it("removes the Ghost at once when Skip runs the registered sequence", () => {
+    // PersonaGhost registers `() => onLeft?.()` while the leave runs. Skip calls
+    // every registered skip callback, so this drives the real SkipProvider's
+    // register and skipAll with the same callback shape.
+    const seq = captureSequence();
+    let leaving = true;
+    let leftCalls = 0;
+    const onLeft = () => {
+      leftCalls += 1;
+      leaving = false;
+    };
+    const unregister = seq.register(() => onLeft());
+
+    expect(ghostPresent({ tag: "reveal", stage: 2, leaving })).toBe(true);
+
+    seq.skipAll();
+
+    expect(leftCalls).toBe(1);
+    expect(leaving).toBe(false);
+    expect(ghostPresent({ tag: "reveal", stage: 2, leaving })).toBe(false);
+    unregister();
+  });
+
+  it("does not call the skip callback once the leave has unregistered", () => {
+    const seq = captureSequence();
+    let leftCalls = 0;
+    const unregister = seq.register(() => {
+      leftCalls += 1;
+    });
+    unregister();
+
+    seq.skipAll();
+
+    expect(leftCalls).toBe(0);
   });
 });
 
