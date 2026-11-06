@@ -5,7 +5,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { FigureEntry, type FigureEntryProps } from "./FigureEntry";
+import { FigureEntry, YourAnswerLine, type FigureEntryProps } from "./FigureEntry";
 import { maskLineLabels } from "./line-label-mask";
 import { REVEAL_COPY } from "./copy";
 import { FIG_VALUE_SIZE } from "@/components/ceremony/constants";
@@ -190,5 +190,52 @@ describe("FigureEntry sits on the dark desk, never on paper (spec 07 R14.1)", ()
   it("wraps the comparable entry in its figure section", () => {
     const html = render();
     expect(html).toMatch(/<section class="[^"]*fig[^"]*"/);
+  });
+});
+
+/**
+ * Property 4 (issue #250, A7): every Figure_Entry branch shows "Your answer"
+ * exactly once in its visible text. Comparable entries show it as the
+ * Number_Line label; the other branches show it on the YourAnswerLine.
+ */
+describe("Property 4: one Your answer per Figure_Entry branch (issue #250, A7)", () => {
+  // Visible text only: no aria-label and no screen-reader-only span.
+  const visibleAnswers = (html: string): number => {
+    const text = html
+      .replace(/aria-label="[^"]*"/g, "")
+      .replace(/<span class="[^"]*srOnly[^"]*">[^<]*<\/span>/g, "")
+      .replace(/<[^>]+>/g, "");
+    return text.split(REVEAL_COPY.yourAnswer).length - 1;
+  };
+
+  it("the comparable entry shows Your answer once, answered or not", () => {
+    expect(visibleAnswers(render({ markValue: undefined }))).toBe(1);
+    expect(visibleAnswers(render({ markValue: "3.50" }))).toBe(1);
+  });
+
+  it("YourAnswerLine shows Your answer once, with No answer when unanswered", () => {
+    const html = plain(
+      renderToStaticMarkup(createElement(YourAnswerLine, { unit: "USD per gallon" })),
+    );
+    expect(visibleAnswers(html)).toBe(1);
+    expect(html).toContain(REVEAL_COPY.noAnswer);
+    expect(html).toMatch(/class="[^"]*yourAnswerLabel[^"]*"/);
+  });
+
+  it("YourAnswerLine shows the answer and unit in the Accent value, once", () => {
+    const html = plain(
+      renderToStaticMarkup(
+        createElement(YourAnswerLine, { markValue: "3.50", unit: "USD per gallon" }),
+      ),
+    );
+    expect(visibleAnswers(html)).toBe(1);
+    expect(html).toMatch(/class="[^"]*yourAnswerValue[^"]*">3\.50 USD per gallon</);
+    expect(html).not.toContain(REVEAL_COPY.noAnswer);
+  });
+
+  it("renders the nowNote under the now row when one is given", () => {
+    const html = plain(render({ nowNote: "Revenant has not fetched a newer figure yet." }));
+    expect(html).toContain("Revenant has not fetched a newer figure yet.");
+    expect(visibleAnswers(html)).toBe(1);
   });
 });

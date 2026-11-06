@@ -104,10 +104,49 @@ describe("FigurePicker", () => {
     expect(render(ten)).toContain("Choose between 1 and 6.");
   });
 
-  it("has the legend and hint copy", () => {
+  it("has the legend and the singular hint when one figure can be sealed", () => {
     const html = render([REAL]);
 
     expect(html).toContain(LIVE_COPY.figuresLegend);
-    expect(html).toContain(LIVE_COPY.figuresHint.replace("{max}", "1"));
+    expect(html).toContain(LIVE_COPY.figuresHintOne);
+    expect(html).not.toContain("between 1 and");
+  });
+
+  it("shows the none message with a link to /demo and no list when nothing can be sealed", () => {
+    const html = render([]);
+
+    expect(html).toContain("No figure can be sealed right now.");
+    expect(html).toContain('href="/demo"');
+    expect(html).not.toContain("<ul");
+    expect(html).not.toContain("between 1 and");
+  });
+
+  it("uses the singular too-many message when the limit is 1 and reached", () => {
+    const html = render([REAL], ["us-gasoline-regular"], true);
+
+    expect(html).toContain(LIVE_COPY.figuresTooManyOne);
+  });
+
+  it("shows a Fallback_Figure with its retrieved date and the Fallback_Note", () => {
+    const fallback: PickableSeries = {
+      ...REAL,
+      metricId: "us-gasoline-fallback",
+      latestPeriod: "2026-09-01",
+      fallbackRetrievedAt: "2026-10-30T14:02:11Z",
+    };
+    const html = render([fallback]);
+
+    expect(html).toContain("Period: 2026-09-01");
+    expect(html).not.toContain("Latest period");
+    expect(html).toContain(
+      "Revenant hasn&#x27;t fetched a newer figure yet. This one was retrieved 30 October 2026.",
+    );
+  });
+
+  it("shows no Fallback_Note for a figure that is not a fallback", () => {
+    const html = render([REAL]);
+
+    expect(html).toContain("Latest period: 2026-10-26");
+    expect(html).not.toContain("hasn&#x27;t fetched");
   });
 });

@@ -9,6 +9,7 @@ import { countCodePoints, figureLimit, validateWrite, type WriteProblem } from "
 import styles from "./live.module.css";
 import { type PrfHint } from "./prf-hint";
 import { RealDatePicker } from "./RealDatePicker";
+import { INITIAL_TOUCHED, showsFieldMessage, type TouchedState } from "./touched";
 import type { SealState } from "./seal-machine";
 import { StepStatus } from "./StepStatus";
 
@@ -35,6 +36,17 @@ export interface WriteFormProps {
   warningTicked: boolean;
   /** Whether the backup key card box is ticked, held by the page (controlled). */
   backupCardTicked: boolean;
+  /**
+   * Which fields the judge has changed or left, and whether they tried to seal
+   * (spec 09, A4.4). A validation message shows only when its field is touched
+   * or the seal was attempted. Held by the page. Defaults to nothing touched,
+   * so no message shows on first load.
+   */
+  touched?: TouchedState;
+  /** Records that the judge changed or left `field` (see touched.ts). */
+  onTouch?: (field: string) => void;
+  /** Records that the judge pressed the create or confirm button while it could not act. */
+  onAttempt?: () => void;
   /** The visitor typed in the letter. */
   onTextChange: (text: string) => void;
   /** The visitor picked or unpicked a figure. */
@@ -58,6 +70,14 @@ export interface WriteFormProps {
     onChange: (date: string | null) => void;
   };
 }
+
+/** Field names used with `touched` and `onTouch`. */
+export const TOUCH_FIELDS = {
+  letter: "letter",
+  figures: "figures",
+  warning: "warning",
+  date: "date",
+} as const;
 
 /** The message shown for each write problem that the form renders. */
 export const PROBLEM_COPY: Partial<Record<WriteProblem, string>> = {
@@ -102,6 +122,9 @@ export function WriteForm({
   prfHint = "none",
   warningTicked,
   backupCardTicked,
+  touched = INITIAL_TOUCHED,
+  onTouch = () => {},
+  onAttempt = () => {},
   onTextChange,
   onToggleFigure,
   onWarningChange,
@@ -125,8 +148,28 @@ export function WriteForm({
   function problemText(problem: WriteProblem): string {
     return problems.includes(problem) ? (PROBLEM_COPY[problem] ?? "") : "";
   }
-  const letterProblem =
-    problemText("letter_empty") || problemText("letter_too_long");
+  /** A field's message shows only once the judge has touched it or tried to seal. */
+  function shownFor(field: string, text: string): string {
+    return showsFieldMessage(touched, field) ? text : "";
+  }
+  const letterProblem = shownFor(
+    TOUCH_FIELDS.letter,
+    problemText("letter_empty") || problemText("letter_too_long"),
+  );
+  const figuresProblem = shownFor(
+    TOUCH_FIELDS.figures,
+    problemText("figures_none"),
+  );
+  const warningProblem = shownFor(
+    TOUCH_FIELDS.warning,
+    problemText("warning_unticked"),
+  );
+  const dateMissing =
+    realDate !== undefined && realDate.value === null && state.tag === "write";
+  const dateProblem = shownFor(
+    TOUCH_FIELDS.date,
+    dateMissing ? REAL_COPY.dateMissing : "",
+  );
 
   // In `created` the button confirms the passkey; everywhere else it creates
   // one. The button is only live in `write` (Create, blocked while the input is
@@ -136,12 +179,23 @@ export function WriteForm({
   const buttonLabel = inCreated
     ? LIVE_COPY.confirmButton
     : LIVE_COPY.createButton;
-  const buttonDisabled =
-    !cryptoLoaded ||
-    figuresStatus !== "ready" ||
-    !buttonLive(state, problems) ||
-    (realDate !== undefined && realDate.value === null);
+  // Hard blocks (crypto not loaded, figures not ready, mid-flow state) use the
+  // disabled attribute. Input problems use aria-disabled, so a press still
+  // registers as an attempt and the messages then show (spec 09, A4.4).
+  const formReady =
+    cryptoLoaded &&
+    figuresStatus === "ready" &&
+    (state.tag === "write" || inCreated);
+  const inputBlocked =
+    formReady && !inCreated && (!buttonLive(state, problems) || dateMissing);
   const onButtonPress = inCreated ? onConfirmPress : onCreatePress;
+  function handleButtonPress() {
+    if (inputBlocked) {
+      onAttempt();
+      return;
+    }
+    onButtonPress();
+  }
 
   return (
     <form
@@ -168,7 +222,11 @@ export function WriteForm({
           rows={10}
           value={text}
           aria-describedby="live-letter-count live-letter-problem"
-          onChange={(event) => onTextChange(event.target.value)}
+          onChange={(event) => {
+            onTouch(TOUCH_FIELDS.letter);
+            onTextChange(event.target.value);
+          }}
+          onBlur={() => onTouch(TOUCH_FIELDS.letter)}
         />
         <p id="live-letter-count" className={styles.count}>
           {LIVE_COPY.letterCount.replace("{count}", String(letterCount))}
@@ -185,7 +243,12 @@ export function WriteForm({
             value={realDate.value}
             min={realDate.min}
             timeZoneFallback={realDate.timeZoneFallback}
-            onChange={realDate.onChange}
+            problem={dateProblem}
+            onChange={(date) => {
+              onTouch(TOUCH_FIELDS.date);
+              realDate.onChange(date);
+            }}
+            onTouch={() => onTouch(TOUCH_FIELDS.date)}
           />
         </>
       ) : null}
@@ -195,7 +258,10 @@ export function WriteForm({
           series={series}
           selected={metricIds}
           atLimit={atLimit}
-          onToggle={onToggleFigure}
+          onToggle={(metricId) => {
+            onTouch(TOUCH_FIELDS.figures);
+            onToggleFigure(metricId);
+          }}
         />
       ) : (
         <p className={styles.hint} role="status">
@@ -205,7 +271,7 @@ export function WriteForm({
         </p>
       )}
       <p id="live-figures-problem" className={styles.problem}>
-        {problemText("figures_none")}
+        {figuresProblem}
       </p>
 
       {prfHint === "missing" ? (
@@ -228,12 +294,15 @@ export function WriteForm({
             className={styles.checkbox}
             checked={warningTicked}
             aria-describedby="live-warning-problem"
-            onChange={(event) => onWarningChange(event.target.checked)}
+            onChange={(event) => {
+              onTouch(TOUCH_FIELDS.warning);
+              onWarningChange(event.target.checked);
+            }}
           />
           <span>{LIVE_COPY.warningLabel}</span>
         </label>
         <p id="live-warning-problem" className={styles.problem}>
-          {problemText("warning_unticked")}
+          {warningProblem}
         </p>
       </div>
 
@@ -245,7 +314,10 @@ export function WriteForm({
             className={styles.checkbox}
             checked={backupCardTicked}
             aria-describedby="live-backup-card-hint"
-            onChange={(event) => onBackupCardChange(event.target.checked)}
+            onChange={(event) => {
+              onTouch(TOUCH_FIELDS.warning);
+              onBackupCardChange(event.target.checked);
+            }}
           />
           <span>{LIVE_COPY.backupCardOption}</span>
         </label>
@@ -258,8 +330,9 @@ export function WriteForm({
         <button
           type="button"
           className={styles.primary}
-          disabled={buttonDisabled}
-          onClick={onButtonPress}
+          disabled={!formReady}
+          aria-disabled={inputBlocked ? true : undefined}
+          onClick={handleButtonPress}
         >
           {buttonLabel}
         </button>

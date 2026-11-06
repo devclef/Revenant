@@ -12,7 +12,11 @@ export interface RealDatePickerProps {
   min: string;
   /** True when the browser's zone is unknown, so the opening is at midnight UTC. */
   timeZoneFallback: boolean;
+  /** The validation message for the date, or "" to show none (spec 09, A4.4). */
+  problem?: string;
   onChange: (date: string | null) => void;
+  /** Called when the judge leaves the date input. */
+  onTouch?: () => void;
 }
 
 /**
@@ -20,7 +24,14 @@ export interface RealDatePickerProps {
  * earliest allowed date, and the chosen date written in the R15.1 form. The
  * page checks the date again at each press (see real-opening.ts).
  */
-export function RealDatePicker({ value, min, timeZoneFallback, onChange }: RealDatePickerProps) {
+export function RealDatePicker({
+  value,
+  min,
+  timeZoneFallback,
+  problem = "",
+  onChange,
+  onTouch = () => {},
+}: RealDatePickerProps) {
   return (
     <div className={styles.field}>
       <label htmlFor="real-opens-on" className={styles.label}>
@@ -35,12 +46,16 @@ export function RealDatePicker({ value, min, timeZoneFallback, onChange }: RealD
         className={styles.dateInput}
         min={min}
         value={value ?? ""}
-        aria-describedby="real-opens-on-hint real-opens-on-chosen"
+        aria-describedby="real-opens-on-hint real-opens-on-chosen real-opens-on-problem"
         onChange={(event) => onChange(event.target.value === "" ? null : event.target.value)}
+        onBlur={() => onTouch()}
       />
       {timeZoneFallback ? <p className={styles.count}>{REAL_COPY.utcFallback}</p> : null}
       <p id="real-opens-on-chosen" className={styles.count}>
         {value === null ? "" : REAL_COPY.dateChosen.replace("{date}", formatCalendarDate(value))}
+      </p>
+      <p id="real-opens-on-problem" className={styles.problem}>
+        {problem}
       </p>
     </div>
   );

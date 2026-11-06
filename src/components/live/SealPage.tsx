@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useReducer, useState } from "react";
+import { useCallback, useMemo, useReducer, useState } from "react";
 import Link from "next/link";
 
 import "@/components/ceremony/scene/tokens.css";
@@ -21,6 +21,12 @@ import { WriteForm } from "./WriteForm";
 import { usePrfHint } from "./prf-hint";
 import { resolveTimeZone } from "./real-opening";
 import { INITIAL_WRITE_DRAFT, reduceWriteDraft } from "./write-draft";
+import {
+  INITIAL_TOUCHED,
+  markAttempted,
+  markTouched,
+  type TouchedState,
+} from "./touched";
 import { figureLimit } from "./form";
 import { browserTimeZone } from "@/components/ui/letter-date";
 import { earliestOpeningDate } from "@/lib/seal-format";
@@ -126,6 +132,14 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
   // Real mode only: the opening date (held here, so Try again keeps it) and the
   // zone it opens in. The zone falls back to UTC when the browser's is unknown.
   const [opensOn, setOpensOn] = useState<string | null>(null);
+  // Which fields the judge has touched, and whether they tried to seal. Held
+  // here so the messages survive the failed and cannot_lock screens (spec 09, A4.4).
+  const [touched, setTouched] = useState<TouchedState>(INITIAL_TOUCHED);
+  const onTouch = useCallback(
+    (field: string) => setTouched((prev) => markTouched(prev, field)),
+    [],
+  );
+  const onAttempt = useCallback(() => setTouched(markAttempted), []);
   const timeZone = useMemo(() => resolveTimeZone(browserTimeZone()), []);
   const draft: SealDraft = useMemo(
     () => ({
@@ -204,6 +218,9 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
             metricIds={writeDraft.metricIds}
             warningTicked={writeDraft.warningTicked}
             backupCardTicked={writeDraft.backupCardTicked}
+            touched={touched}
+            onTouch={onTouch}
+            onAttempt={onAttempt}
             onTextChange={(text) =>
               dispatchDraft({ type: "TEXT_CHANGED", text })
             }

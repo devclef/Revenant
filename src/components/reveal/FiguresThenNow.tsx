@@ -1,15 +1,16 @@
 import type { FigureV1, MetricDefinitionV1 } from "@/lib/seal-format";
 import type { DisplayRescale } from "@/lib/figures";
-import { computeChange, isFixtureFigure } from "@/lib/figures";
+import { computeChange, isFixtureFigure, rescaleForDisplay } from "@/lib/figures";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
 import { pickNow } from "@/lib/figures/now";
 import type { FiguresState } from "./figures-api";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV1 } from "@/lib/recall";
-import { FigureEntry } from "./FigureEntry";
+import { FigureEntry, YourAnswerLine } from "./FigureEntry";
 import { FigureLine, type LetterKind } from "./FigureLine";
 import { FixtureNote } from "./FixtureNote";
 import { REVEAL_COPY } from "./copy";
+import { nowMessageFor } from "./now-message";
 import styles from "./reveal.module.css";
 
 /**
@@ -30,7 +31,7 @@ import styles from "./reveal.module.css";
  *   (`figures`, read once per reveal by `useFigures` in Reveal). The match uses
  *   the sealed metric's source, series, unit and region only. While the request
  *   is in flight the entry shows `nowLoading`. A series that is missing, or has
- *   no figure, shows `nowUnavailableMissing`. A failed request shows
+ *   no figure, shows `nowRetired` (series missing) or `nowNotYet` (no figure), via nowMessageFor, plus a "Your answer" line when no Number_Line is drawn (issue #250). A failed request shows
  *   `nowUnavailableFetch`. In every missing case there is no change and no
  *   Number_Line (R6.5, R6.6, data-integrity.md). An honest gap, never a filled
  *   one.
@@ -87,12 +88,12 @@ export type FiguresThenNowProps = {
 };
 
 type NowLookup =
-  | { found: true; figure: Readonly<FigureV1> }
-  | { found: false; message: string };
+  | { found: true; figure: Readonly<FigureV1>; note: string | null }
+  | { found: false; message: string | null };
 
 // The Now_Figure for one sealed then figure, or the copy that says why there is
-// none. A request still in flight, a failed request, and a series that is
-// missing or has no figure each get their own line. None of them shows a value.
+// none (issue #250, A3). A request still in flight shows nowLoading. Every other
+// reason is mapped by nowMessageFor, so each message describes the real cause.
 function nowLookup(
   then: Readonly<FigureV1>,
   metric: MetricDefinitionV1,
@@ -102,12 +103,27 @@ function nowLookup(
     return { found: false, message: REVEAL_COPY.nowLoading };
   }
   if (figures.status === "failed") {
-    return { found: false, message: REVEAL_COPY.nowUnavailableFetch };
+    return {
+      found: false,
+      message: nowMessageFor({ kind: "request_failed" }),
+    };
   }
   const picked = pickNow(then, metric, figures.figures);
-  return picked.found
-    ? { found: true, figure: picked.figure }
-    : { found: false, message: REVEAL_COPY.nowUnavailableMissing };
+  if (!picked.found) {
+    return {
+      found: false,
+      message: nowMessageFor({ kind: picked.reason }),
+    };
+  }
+  return {
+    found: true,
+    figure: picked.figure,
+    note: nowMessageFor({
+      kind: "found",
+      fallback: picked.fallback,
+      retrievedAt: picked.figure.retrieved_at,
+    }),
+  };
 }
 
 /**
@@ -151,10 +167,14 @@ export function FiguresThenNow({
     name: string;
     then: Readonly<FigureV1>;
     now: Readonly<FigureV1> | undefined;
-    nowMissing: string | undefined;
+    nowMissing: string | null;
+    nowNote: string | null;
     rescale: Readonly<DisplayRescale> | undefined;
     change: ReturnType<typeof computeChange> | undefined;
     markValue: string | undefined;
+    /** The answer in the shown unit, for a branch with no Number_Line. */
+    answerValue: string | undefined;
+    answerUnit: string;
   };
 
   const entries: Entry[] = [];
@@ -172,7 +192,8 @@ export function FiguresThenNow({
 
     const lookup = nowLookup(then, metric, figures);
     const now = lookup.found ? lookup.figure : undefined;
-    const nowMissing = lookup.found ? undefined : lookup.message;
+    const nowMissing = lookup.found ? null : lookup.message;
+    const nowNote = lookup.found ? lookup.note : null;
 
     const change =
       now === undefined
@@ -182,6 +203,7 @@ export function FiguresThenNow({
     if (isFixtureFigure(then)) anyFixture = true;
     if (now !== undefined && isFixtureFigure(now)) anyFixture = true;
 
+    const markValue = markValueFor(then.metric_id, payload.recall_questions, record);
     entries.push({
       // metric_id is unique per payload, but index keeps the key stable even if
       // that ever changes.
@@ -190,9 +212,15 @@ export function FiguresThenNow({
       then,
       now,
       nowMissing,
+      nowNote,
       rescale,
       change,
-      markValue: markValueFor(then.metric_id, payload.recall_questions, record),
+      markValue,
+      answerValue:
+        markValue === undefined || rescale === undefined
+          ? markValue
+          : rescaleForDisplay(markValue, rescale.divisor),
+      answerUnit: rescale === undefined ? then.unit : rescale.unit,
     });
   });
 
@@ -223,7 +251,13 @@ export function FiguresThenNow({
                 letterKind={letterKind}
                 displayRescale={entry.rescale}
               />
-              <p className={styles.period}>{entry.nowMissing}</p>
+              {entry.nowMissing === null ? null : (
+                <p className={styles.period}>{entry.nowMissing}</p>
+              )}
+              <YourAnswerLine
+                markValue={entry.answerValue}
+                unit={entry.answerUnit}
+              />
             </>
           ) : entry.change !== undefined && entry.change.comparable ? (
             // Comparable: the nine R14.3 items, with the name at the top
@@ -236,6 +270,7 @@ export function FiguresThenNow({
               rescale={entry.rescale}
               letterKind={letterKind}
               markValue={entry.markValue}
+              nowNote={entry.nowNote ?? undefined}
             />
           ) : (
             // Not comparable: both figures with their own periods, plus the one
@@ -256,12 +291,19 @@ export function FiguresThenNow({
                 letterKind={letterKind}
                 displayRescale={entry.rescale}
               />
+              {entry.nowNote === null ? null : (
+                <p className={styles.period}>{entry.nowNote}</p>
+              )}
               <p className={styles.period}>{REVEAL_COPY.notComparable}</p>
               {entry.change !== undefined && !entry.change.comparable ? (
                 <p className={styles.period}>
                   {REVEAL_COPY.reason[entry.change.reason]}
                 </p>
               ) : null}
+              <YourAnswerLine
+                markValue={entry.answerValue}
+                unit={entry.answerUnit}
+              />
             </>
           )}
         </div>

@@ -22,6 +22,26 @@ function render(value: string | null, timeZoneFallback = false): string {
 }
 
 describe("RealDatePicker", () => {
+  it("shows no date message unless one is passed", () => {
+    const html = render(null);
+    expect(html).toContain('id="real-opens-on-problem"');
+    expect(html).not.toContain(REAL_COPY.dateMissing);
+  });
+
+  it("shows the date message it is given, linked to the input", () => {
+    const html = renderToStaticMarkup(
+      createElement(RealDatePicker, {
+        value: null,
+        min: MIN,
+        timeZoneFallback: false,
+        problem: REAL_COPY.dateMissing,
+        onChange: () => {},
+      }),
+    );
+    expect(html).toContain(REAL_COPY.dateMissing);
+    expect(html).toContain('aria-describedby="real-opens-on-hint real-opens-on-chosen real-opens-on-problem"');
+  });
+
   it("is a native date input whose min is the earliest allowed opening date", () => {
     const html = render(null);
     expect(html).toContain('type="date"');

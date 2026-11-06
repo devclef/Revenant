@@ -613,3 +613,28 @@
   color: var(--text);
   border-color: var(--text);
 }
+
+/* --- Issue #250 A7: "Your answer" on a Figure_Entry with no Number_Line ---
+   The line sits on the desk (--bg), so it uses the desk tokens. The label is
+   --muted and the answer is --text in bold. The Accent is not used here:
+   figure-entry.property.test.tsx (Property 8, R14.12) allows the Accent only
+   on the Number_Line's Mark. Revisit with the ticket owner (issue #250 A7.1
+   asks for the Accent on the answer). */
+.yourAnswer {
+  margin: 0 0 1rem;
+  color: var(--text);
+  text-align: left;
+}
+
+.yourAnswerLabel {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.yourAnswerValue {
+  display: block;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--text);
+}

@@ -22,6 +22,11 @@ export interface PickableSeries {
   latestPeriod: string;
   /** True when the latest figure is fixture data (labelled "fixture data"). */
   isFixture: boolean;
+  /**
+   * Set only for a Fallback_Figure (spec 09, A1.8): the figure's real
+   * `retrieved_at`, shown with fallbackNote. Absent for every other figure.
+   */
+  fallbackRetrievedAt?: string;
 }
 
 /**
@@ -73,6 +78,9 @@ export function listPickableFromResponse(
       region: entry.metric.region,
       latestPeriod: figure.period,
       isFixture: isFixtureFigure(figure),
+      ...(entry.fallback === true
+        ? { fallbackRetrievedAt: figure.retrieved_at }
+        : {}),
     });
   }
 

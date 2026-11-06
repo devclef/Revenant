@@ -132,6 +132,7 @@ describe("WriteForm", () => {
       text: "A letter",
       metricIds: [SERIES[0]!.metricId],
       backupCardTicked: false,
+      touched: { touched: {}, attempted: true },
     });
     expect(without).toContain(esc(LIVE_COPY.warningUnticked));
   });
@@ -191,17 +192,43 @@ describe("WriteForm", () => {
     }
   });
 
-  it("shows each missing-input message next to its field on first render", () => {
-    // A new form has an empty letter, no figures and an unticked warning.
-    expect(html).toContain(esc(LIVE_COPY.letterEmpty));
-    expect(html).toContain(esc(LIVE_COPY.figuresNone));
-    expect(html).toContain(esc(LIVE_COPY.warningUnticked));
-    expect(html.indexOf(esc(LIVE_COPY.letterEmpty))).toBeLessThan(
-      html.indexOf('id="live-figures-problem"'),
+  it("shows no validation message on first render (spec 09, A4.4)", () => {
+    // A new form has an empty letter, no figures and an unticked warning, but
+    // nothing has been touched or attempted yet, so no message shows.
+    expect(html).not.toContain(esc(LIVE_COPY.letterEmpty));
+    expect(html).not.toContain(esc(LIVE_COPY.figuresNone));
+    expect(html).not.toContain(esc(LIVE_COPY.warningUnticked));
+  });
+
+  it("shows only the touched field's message", () => {
+    const onlyLetter = renderWriteForm({
+      touched: { touched: { letter: true }, attempted: false },
+    });
+    expect(onlyLetter).toContain(esc(LIVE_COPY.letterEmpty));
+    expect(onlyLetter).not.toContain(esc(LIVE_COPY.figuresNone));
+    expect(onlyLetter).not.toContain(esc(LIVE_COPY.warningUnticked));
+  });
+
+  it("shows every missing-input message once the seal was attempted", () => {
+    const attempted = renderWriteForm({
+      touched: { touched: {}, attempted: true },
+    });
+    expect(attempted).toContain(esc(LIVE_COPY.letterEmpty));
+    expect(attempted).toContain(esc(LIVE_COPY.figuresNone));
+    expect(attempted).toContain(esc(LIVE_COPY.warningUnticked));
+    expect(attempted.indexOf(esc(LIVE_COPY.letterEmpty))).toBeLessThan(
+      attempted.indexOf('id="live-figures-problem"'),
     );
-    expect(html.indexOf(esc(LIVE_COPY.figuresNone))).toBeLessThan(
-      html.indexOf('id="live-warning"'),
+    expect(attempted.indexOf(esc(LIVE_COPY.figuresNone))).toBeLessThan(
+      attempted.indexOf('id="live-warning"'),
     );
+  });
+
+  it("marks the input-blocked button aria-disabled, so a press can count as an attempt", () => {
+    const html = renderWriteForm({ state: { tag: "write" } as SealState });
+    const tag = html.match(new RegExp(`<button[^>]*>(?=${LIVE_COPY.createButton})`))?.[0] ?? "";
+    expect(tag).toContain('aria-disabled="true"');
+    expect(tag).not.toMatch(/ disabled=""/);
   });
 
   it("maps each rendered write problem to its message", () => {

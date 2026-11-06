@@ -30,7 +30,7 @@ import type { FigureV1, MetricDefinitionV1, PayloadV1 } from "@/lib/seal-format"
  * - the sealed "then" figure, straight from the payload;
  * - the "now" figure picked with `pickNow` from the Figures_API response,
  *   stubbed here as GET /api/figures built from DEMO_FIGURES (the same figure
- *   `thenAndNow` reported as now). A missing now shows `nowUnavailableMissing`,
+ *   `thenAndNow` reported as now). A missing series shows `nowRetired`, a series with no figure shows `nowNotYet`,
  *   a failed request shows `nowUnavailableFetch`, and no change is drawn;
  * - a single neutral change line + formula when the two figures are comparable;
  * - both figures with their own periods plus the one neutral reason sentence
@@ -300,20 +300,20 @@ describe("FiguresThenNow markup", () => {
     expect(html).toContain(CHANGE_FORMULA_ID);
   });
 
-  it("shows a missing now with nowUnavailableMissing and no change (series not in the response)", () => {
+  it("shows a missing now with nowRetired and no change (series not in the response)", () => {
     const html = render();
 
     // The response has no entry for this series, so pickNow reports series_missing.
     const { now } = thenAndNow(MISSING_METRIC.id, "2026-10-27", DEMO_FIGURES);
     expect(now.found).toBe(false);
 
-    expect(html).toContain(REVEAL_COPY.nowUnavailableMissing);
+    expect(html).toContain(REVEAL_COPY.nowRetired);
     // The missing figure never invents a now value or a fetch message.
     expect(html).not.toContain(REVEAL_COPY.nowUnavailableFetch);
     expect(html).not.toContain(REVEAL_COPY.nowLoading);
   });
 
-  it("shows nowUnavailableMissing for a series whose response figure is null", async () => {
+  it("shows nowNotYet for a series whose response figure is null", async () => {
     const body = figuresResponseFrom(DEMO_FIGURES);
     const emptied = {
       ...body,
@@ -330,7 +330,7 @@ describe("FiguresThenNow markup", () => {
     // Each figure renders as one group, starting at its data-figure-entry marker.
     // The gasoline group is the first one, and it shows no now figure.
     const gasolineGroup = html.split('data-figure-entry=""')[1] ?? "";
-    expect(gasolineGroup).toContain(REVEAL_COPY.nowUnavailableMissing);
+    expect(gasolineGroup).toContain(htmlText(REVEAL_COPY.nowNotYet));
     expect(gasolineGroup).toContain(GASOLINE_METRIC.display_name);
     expect(gasolineGroup).not.toContain("retrieved");
     // The comparable branch is the only one that draws a now value (data-role="now").
@@ -340,7 +340,7 @@ describe("FiguresThenNow markup", () => {
   it("shows nowUnavailableFetch and no change when the request failed", () => {
     const html = render(OPENED, { status: "failed" });
     expect(html).toContain(REVEAL_COPY.nowUnavailableFetch);
-    expect(html).not.toContain(REVEAL_COPY.nowUnavailableMissing);
+    expect(html).not.toContain(REVEAL_COPY.nowRetired);
     expect(html).not.toContain(CHANGE_FORMULA_ID);
     // The then figure is still shown with its own period.
     expect(html).toContain(formatValue(GASOLINE_THEN.value, GASOLINE_THEN.region));
@@ -350,6 +350,42 @@ describe("FiguresThenNow markup", () => {
     const html = render(OPENED, { status: "loading" });
     expect(html).toContain(REVEAL_COPY.nowLoading);
     expect(html).not.toContain(CHANGE_FORMULA_ID);
+  });
+
+  it("shows Your answer exactly once in every entry branch (issue #250, A7)", async () => {
+    // Visible text only: no aria-label and no screen-reader-only span.
+    const visibleAnswers = (group: string): number => {
+      const text = group
+        .replace(/aria-label="[^"]*"/g, "")
+        .replace(/<span class="[^"]*srOnly[^"]*">[^<]*<\/span>/g, "")
+        .replace(/<[^>]+>/g, "");
+      return text.split(REVEAL_COPY.yourAnswer).length - 1;
+    };
+    const groupsOf = (html: string): string[] =>
+      html.split('data-figure-entry=""').slice(1);
+
+    // Comparable branch, with the Number_Line label.
+    const comparable = groupsOf(render());
+    expect(comparable.length).toBeGreaterThan(0);
+    for (const group of comparable) expect(visibleAnswers(group)).toBe(1);
+
+    // Series not in the response (no now figure).
+    const missing = groupsOf(render(OPENED, { status: "failed" }));
+    expect(missing.length).toBeGreaterThan(0);
+    for (const group of missing) expect(visibleAnswers(group)).toBe(1);
+
+    // Still loading: the then figure and the answer line, no Number_Line.
+    const loading = groupsOf(render(OPENED, { status: "loading" }));
+    expect(loading.length).toBeGreaterThan(0);
+    for (const group of loading) expect(visibleAnswers(group)).toBe(1);
+
+    // Not comparable (unit mismatch): both figures, no Number_Line, one answer line.
+    const diesel = groupsOf(render()).find((group) =>
+      group.includes(DIESEL_METRIC.display_name),
+    );
+    expect(diesel).toBeDefined();
+    expect(diesel).not.toContain('data-line-label="answer"');
+    expect(visibleAnswers(diesel ?? "")).toBe(1);
   });
 
   it("shows both figures with their own periods plus the reason for a unit mismatch", () => {

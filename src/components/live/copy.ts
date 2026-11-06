@@ -26,7 +26,18 @@ export const LIVE_COPY = {
   figuresLegend: "Choose the figures to seal with it",
   figuresHint:
     "Choose between 1 and {max}. Each is sealed as published, with its period and source.",
+  /** Shown instead of any range when no figure can be sealed (A4.1). */
+  figuresNoneAvailable:
+    "No figure can be sealed right now. Try again later, or {link}.",
+  /** The text of the `{link}` in figuresNoneAvailable; it links to /demo. */
+  figuresNoneLink: "open a persona letter in the demo",
+  /** The singular hint, used when the stated maximum is 1 (A4.3). */
+  figuresHintOne:
+    "Choose 1. It is sealed as published, with its period and source.",
+  figuresTooManyOne: "Choose no more than 1 figure.",
   figureLatest: "Latest period: {period}",
+  /** A Fallback_Figure is not the latest, so it never says "Latest" (A1.8). */
+  figurePeriod: "Period: {period}",
   fixtureLabel: "fixture data",
   /** Shown in place of the figure list while the figures request is in flight. */
   figuresLoading: "Loading the figures you can seal with.",

@@ -77,7 +77,35 @@ export type FigureEntryProps = {
    * `undefined` for "No answer" (or no answer to this metric at all).
    */
   markValue?: string;
+  /**
+   * A line shown under the now row, for a now figure that is a bundled
+   * fallback (issue #250, A3.3). Absent for a stored figure.
+   */
+  nowNote?: string;
 };
+
+export type YourAnswerLineProps = {
+  /** The judge's answer, already in the shown unit, or `undefined` for none. */
+  markValue?: string;
+  /** The unit shown with the answer. */
+  unit: string;
+};
+
+/**
+ * "Your answer", once, on its own line, for a Figure_Entry branch with no
+ * Number_Line (issue #250, A7.1, A7.2). The answer and its unit are in the
+ * Accent colour; with no answer the line reads "No answer" instead.
+ */
+export function YourAnswerLine({ markValue, unit }: YourAnswerLineProps) {
+  return (
+    <div className={styles.yourAnswer} data-your-answer="">
+      <span className={styles.yourAnswerLabel}>{REVEAL_COPY.yourAnswer}</span>
+      <span className={styles.yourAnswerValue}>
+        {markValue === undefined ? REVEAL_COPY.noAnswer : `${markValue} ${unit}`}
+      </span>
+    </div>
+  );
+}
 
 // The "check at the source" link exists only on an official figure, which is
 // the only member of the FigureV1 union that carries source_url.
@@ -93,6 +121,7 @@ export function FigureEntry({
   rescale,
   letterKind = "persona",
   markValue,
+  nowNote,
 }: FigureEntryProps) {
   // The drawing values use the same rescale as the printed values. Only
   // positions and the Mark's hidden text come from these; no displayed number
@@ -175,6 +204,10 @@ export function FigureEntry({
           {" · "}
           <span className={styles.fixtureLabel}>{nowLabel}</span>
         </p>
+
+        {nowNote === undefined ? null : (
+          <p className={styles.period}>{nowNote}</p>
+        )}
 
         <NumberLine
           thenValue={toDisplay(then.value)}

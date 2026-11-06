@@ -296,6 +296,28 @@ export const REVEAL_COPY = {
   nowUnavailableFetch:
     "This figure could not be loaded. Check your connection and reload the page.",
 
+  /**
+   * The series is no longer in Revenant's catalogue or published, so the figure
+   * is missing from the figures response. Only this string may say "no longer
+   * published" (issue #250, A3.1).
+   */
+  nowRetired:
+    "Revenant no longer publishes this series. The sealed figure is shown on its own.",
+
+  /**
+   * The series is in the catalogue but has no figure yet (A3.2). It never says
+   * the series is gone.
+   */
+  nowNotYet:
+    "Revenant hasn't fetched a figure for this series yet. The sealed figure is shown on its own.",
+
+  /**
+   * The now figure is a bundled fallback, not a stored one (A3.3). `{date}` is
+   * the figure's retrieved date in UTC.
+   */
+  fallbackNote:
+    "Revenant hasn't fetched a newer figure yet. This one was retrieved {date}.",
+
   /** The lead line shown when the then and now figures can't be compared. */
   notComparable:
     "These figures can't be compared, so no change is shown.",
