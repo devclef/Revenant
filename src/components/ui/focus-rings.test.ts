@@ -36,9 +36,9 @@ function blockOf(css: string, selector: string): string {
 }
 
 describe("A12.1: a heading focused by script or pointer draws no outline", () => {
-  it("hides the outline on tabIndex -1 elements unless :focus-visible matches", () => {
+  it("hides the outline on heading elements with tabIndex -1 unless :focus-visible matches", () => {
     expect(globalsCss).toMatch(
-      /:where\(\[tabindex="-1"\]\):focus:not\(:focus-visible\)\s*\{\s*outline:\s*none;/,
+      /:where\(h1, h2, h3, h4, h5, h6\)\[tabindex="-1"\]:focus:not\(:focus-visible\)\s*\{\s*outline:\s*none;/,
     );
   });
 
@@ -47,8 +47,8 @@ describe("A12.1: a heading focused by script or pointer draws no outline", () =>
     expect(ceremonyCss).not.toMatch(/\.onPaper :focus\s*\{/);
   });
 
-  it("gives the reveal stage headings a ring for the keyboard only", () => {
-    expect(revealCss).toMatch(/\.sealedLetter h2:focus-visible,\s*\.figuresThenNow h2:focus-visible\s*\{/);
+  it("gives the figures heading a ring for the keyboard only", () => {
+    expect(revealCss).toMatch(/\.figuresThenNow h2:focus-visible\s*\{/);
     expect(revealCss).not.toMatch(/h2:focus\s*\{/);
   });
 
@@ -69,7 +69,21 @@ describe("A12.2: every control keeps a :focus-visible ring", () => {
 
   it("keeps the Letter_Block ring pure white (Text_On_Purple, spec 07 R3.15)", () => {
     const letterCss = read(resolve(componentsRoot, "ceremony", "letter", "LetterBlock.module.css"));
-    expect(letterCss).toMatch(/\.letterBlock :focus-visible\s*\{\s*outline:\s*2px solid #ffffff/);
+    expect(letterCss).toMatch(/\.letterBlock :focus-visible:focus\s*\{\s*outline:\s*2px solid #ffffff/);
+  });
+});
+
+describe("A12.3: the Figures_Heading focus move still lands on that heading", () => {
+  const figuresSource = read(resolve(componentsRoot, "reveal", "FiguresThenNow.tsx"));
+  const rootSource = read(resolve(componentsRoot, "ceremony", "CeremonyRoot.tsx"));
+
+  it("keeps the Figures_Heading focusable (tabIndex -1) with its marker", () => {
+    expect(figuresSource).toMatch(/<h2 tabIndex=\{-1\} data-figures-heading="">/);
+  });
+
+  it("keeps the focus move to figures-heading in CeremonyRoot", () => {
+    expect(rootSource).toMatch(/figures-heading/);
+    expect(rootSource).toMatch(/heading\.focus\(\{ preventScroll: true \}\)/);
   });
 });
 

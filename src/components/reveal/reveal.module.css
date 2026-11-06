@@ -420,8 +420,9 @@
 
 /* Each stage heading is given focus programmatically when its stage appears
    (it carries tabIndex={-1}). Only keyboard focus draws the ring, so a
-   plainly focused heading shows none (spec 09 A12.1, globals.css). */
-.sealedLetter h2:focus-visible,
+   plainly focused heading shows none (spec 09 A12.1, globals.css). The
+   sealed letter heading sits inside the Letter_Block, which sets its own
+   white ring (LetterBlock.module.css), so it is not listed here. */
 .figuresThenNow h2:focus-visible {
   outline: 2px solid var(--text);
   outline-offset: 2px;

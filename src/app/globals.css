@@ -138,10 +138,10 @@ a:focus-visible {
 /*
  * A heading that takes focus from a script or a pointer press (tabIndex -1)
  * shows no outline. The keyboard ring still appears through :focus-visible
- * (spec 09 A12.1). :where keeps this rule at zero specificity, so a component
- * rule can still set a focus-visible ring on the same element.
+ * (spec 09 A12.1). The rule matches headings only; the Ceremony region has
+ * its own reset in ceremony.module.css.
  */
-:where([tabindex="-1"]):focus:not(:focus-visible) {
+:where(h1, h2, h3, h4, h5, h6)[tabindex="-1"]:focus:not(:focus-visible) {
   outline: none;
 }
 

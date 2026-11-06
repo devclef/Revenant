@@ -59,8 +59,10 @@
   }
 }
 
-/* Focus inside the block is white (--on-purple), the Accent everywhere else. */
-.letterBlock :focus-visible {
+/* Focus inside the block is white (--on-purple), the Accent everywhere else.
+   The selector has specificity 0,3,0 so the white ring also wins over the
+   ink ring from .flow and the heading rules in reveal.module.css. */
+.letterBlock :focus-visible:focus {
   outline: 2px solid #ffffff;
   outline-offset: 2px;
 }
