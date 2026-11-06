@@ -67,6 +67,9 @@ COPY --from=builder --chown=1001:1001 /app/.next/static ./.next/static
 # shares the same postgres and drizzle-orm packages.
 COPY --from=builder --chown=1001:1001 /app/scripts/migrate.mjs ./scripts/migrate.mjs
 COPY --from=builder --chown=1001:1001 /app/dist/seal-personas.mjs ./scripts/seal-personas.mjs
+# The daily Fetch_Job (CronJob: `node scripts/fetch-figures.mjs`). The build writes
+# a self-contained bundle to dist/fetch-figures.mjs; it needs no node_modules.
+COPY --from=builder --chown=1001:1001 /app/dist/fetch-figures.mjs ./scripts/fetch-figures.mjs
 COPY --from=builder --chown=1001:1001 /app/drizzle ./drizzle
 COPY --from=deps --chown=1001:1001 /app/node_modules/postgres ./node_modules/postgres
 COPY --from=deps --chown=1001:1001 /app/node_modules/drizzle-orm ./node_modules/drizzle-orm

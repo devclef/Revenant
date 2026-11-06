@@ -99,6 +99,46 @@ helm template t deploy/helm/revenant
 | `tolerations` | `[]` | Tolerations for the web pod. |
 | `affinity` | `{}` | Affinity rules for the web pod. |
 | `demo.sealPersonas` | `true` | When true, the migrate init container seals demo persona letters after running migrations (`node scripts/migrate.mjs && node scripts/seal-personas.mjs`). Set to `false` to run migrations only. A non-zero exit from the sealing step fails the init container and blocks web startup. |
+| `figures.source` | `db` | Where `GET /api/figures` reads figures from: `db` (figures stored by the fetch job) or `file` (bundled demo figures). Written to `FIGURES_SOURCE` in the ConfigMap. Any other value fails the render. |
+| `fetchFigures.enabled` | `true` | Render the daily figure fetch CronJob (`scripts/fetch-figures.mjs`). Uses the same image, security context and `DATABASE_URL` Secret key as the web pod. |
+| `fetchFigures.schedule` | `"17 6 * * *"` | Cron schedule for the fetch, in `fetchFigures.timeZone`. |
+| `fetchFigures.timeZone` | `"Etc/UTC"` | IANA time zone the schedule is evaluated in. |
+| `fetchFigures.startingDeadlineSeconds` | `600` | Seconds after the scheduled time a missed run may still start. Empty or `0` means no deadline. |
+| `fetchFigures.activeDeadlineSeconds` | `1800` | Seconds a single fetch run may take before Kubernetes stops it. Empty or `0` means unlimited. |
+| `fetchFigures.successfulJobsHistoryLimit` | `3` | Successful CronJob runs kept. Minimum `1`. |
+| `fetchFigures.failedJobsHistoryLimit` | `3` | Failed CronJob runs kept. Minimum `1`. |
+
+## Daily figure fetch
+
+When `fetchFigures.enabled` is `true` (the default), the chart renders a
+CronJob that runs `node scripts/fetch-figures.mjs` from the app image. It writes
+the latest official figures to the database, which `GET /api/figures` reads when
+`figures.source` is `db`.
+
+- **Schedule:** `fetchFigures.schedule` defaults to `"17 6 * * *"`, which is
+  06:17 every day.
+- **Time zone:** `fetchFigures.timeZone` defaults to `"Etc/UTC"`, so the schedule
+  is evaluated in UTC unless you change it.
+- **Overlap and retries:** `concurrencyPolicy: Forbid` stops a second run from
+  starting while one is still going. `backoffLimit: 0` and `restartPolicy: Never`
+  mean a failed run is not retried inside the Job; the next scheduled run tries
+  again. Failed runs stay visible in Kubernetes (`failedJobsHistoryLimit`, default
+  `3`, minimum `1`).
+- **Database access:** the job reads `DATABASE_URL` from the existing Secret. It
+  has no HTTP endpoint and needs no other secret.
+
+**Site availability:** the site, the figures API and the Reveal are expected to
+keep running at `revenant.devclef.se` until at least 23:59:59 PT on
+29 January 2027, the end of judging. The chart does not enforce this. The
+figure fetch needs to keep running until then to keep "now" figures current.
+
+**Source API keys:** none are needed today. If a source ever requires one (for
+example `BLS_API_KEY` or `EIA_API_KEY`), add the key to the existing Secret, for
+example `kubectl create secret generic revenant --from-literal=BLS_API_KEY='...'`
+(or add it to the Secret you already manage). Then add an `env` entry with
+`secretKeyRef` to the `fetch-figures` container in
+`templates/cronjob-fetch-figures.yaml`, and bump the chart `version`. Never put
+the key in `values.yaml` or the ConfigMap.
 
 ## Demo persona letters
 
