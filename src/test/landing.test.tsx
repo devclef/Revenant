@@ -116,6 +116,23 @@ describe("landing page `/`", () => {
     expect(anchor?.index ?? -1).toBeGreaterThan(sceneAt);
   });
 
+  it("lists the demo, live, How and source links after the Scene, in that order", () => {
+    const html = decode(render([MAYA]));
+    const sceneAt = html.indexOf('data-ceremony="scene"');
+    const order = [
+      'href="/demo"',
+      'href="/demo/live"',
+      'href="/how-it-is-sealed"',
+      'href="https://github.com/devclef/Revenant"',
+    ].map((marker) => {
+      const at = html.indexOf(marker);
+      expect(at, marker).toBeGreaterThan(sceneAt);
+      return at;
+    });
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(html).not.toContain('href="/seal"');
+  });
+
   it("includes the no-script light style as a noscript block", () => {
     const html = render([MAYA]);
     expect(html).toContain("<noscript>");
