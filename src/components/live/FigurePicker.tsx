@@ -45,7 +45,7 @@ export function FigurePicker({
     const [before = "", after = ""] =
       LIVE_COPY.figuresNoneAvailable.split("{link}");
     return (
-      <fieldset className={styles.figures}>
+      <fieldset className={styles.figures} data-card="live-figures">
         <legend className={styles.legend}>{LIVE_COPY.figuresLegend}</legend>
         <p className={styles.hint}>
           {before}
@@ -68,7 +68,7 @@ export function FigurePicker({
       : LIVE_COPY.figuresTooMany.replace("{max}", String(hint.max));
 
   return (
-    <fieldset className={styles.figures}>
+    <fieldset className={styles.figures} data-card="live-figures">
       <legend className={styles.legend}>{LIVE_COPY.figuresLegend}</legend>
       <p className={styles.hint}>{hintText}</p>
       <ul className={styles.figureList}>

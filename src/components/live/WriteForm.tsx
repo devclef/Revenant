@@ -199,6 +199,7 @@ export function WriteForm({
 
   return (
     <form
+      data-card="live-write"
       className={styles.panel}
       aria-labelledby="live-seal-heading"
       onSubmit={(event) => event.preventDefault()}

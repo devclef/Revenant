@@ -59,11 +59,12 @@
   color: var(--ink-soft);
 }
 
-/* The typed number and the Next or submit control share one row (R11.13). */
+/* The typed number and the Next or submit control share one wrapping row at and
+   above RECALL_STACK_BELOW_PX (640 px). Below it they stack (spec 09 A8.3). */
 .answerRow {
   display: flex;
   align-items: center;
-  flex-wrap: nowrap;
+  flex-wrap: wrap;
   gap: 0.6rem;
   max-width: 100%;
 }
@@ -88,7 +89,11 @@
 .cta {
   font: inherit;
   font-weight: 700;
-  white-space: nowrap;
+  /* Labels wrap inside the button (spec 09 A8.1). The 44 px minimum stays as a
+     floor for the touch target; it is not a fixed width. */
+  white-space: normal;
+  max-width: 100%;
+  text-align: center;
   color: var(--on-accent);
   background-color: var(--accent);
   border: 0;
@@ -119,6 +124,9 @@
   min-height: 44px;
   min-width: 44px;
   padding: 0.5rem 1rem;
+  white-space: normal;
+  max-width: 100%;
+  text-align: center;
   cursor: pointer;
 }
 
@@ -142,6 +150,24 @@
   outline-offset: 2px;
 }
 
+/* Below 640 px (RECALL_STACK_BELOW_PX) the typed number and the Next control stack,
+   each at the full card width (spec 09 A8.3). The number and button keep their
+   own sizes; only the layout changes. */
+@media (max-width: 639.98px) {
+  .answerRow {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .input {
+    width: 100%;
+  }
+
+  .cta {
+    width: 100%;
+  }
+}
+
 /* Below 900 px the intro moves under the answer controls, so the field and the
    button stay above the fold (R11.15). The number and the button shrink to fit. */
 @media (max-width: 899px) {
@@ -154,7 +180,7 @@
   }
 
   .cta {
-    font-size: 0.9rem;
+    font-size: 1rem;
     padding: 0 0.75rem;
   }
 
@@ -169,14 +195,6 @@
 
   .body {
     gap: 0.35rem;
-  }
-
-  /* Below 900 px the typed number and Next stay on one row (R11.13). A wrapped
-     Next control would fall below 640 px at 360 x 640 (R11.15). The input is
-     a flex item with min-width 0 (base .input rule), so it shrinks to fit, and
-     the Next label stays whole. */
-  .answerRow {
-    flex-wrap: nowrap;
   }
 
   .noAnswer {
@@ -233,4 +251,32 @@
 .readingOption input:focus-visible {
   outline: 3px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* Below 900 px the recall card is tightened so the question, the field and the
+   Next button all sit above the fold at 360 x 640 (layout check R1). The counter
+   and the unit helper each fit on one line, and the gaps between the stacked
+   controls shrink. Sizes only; colours are unchanged. */
+@media (max-width: 899px) {
+  .counter {
+    font-size: 0.8rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .unit {
+    font-size: 0.95rem;
+  }
+
+  .unitHelp {
+    font-size: 0.8rem;
+    line-height: 1.25;
+  }
+
+  .body {
+    gap: 0.25rem;
+  }
+
+  .answerRow {
+    gap: 0.4rem;
+  }
 }

@@ -258,6 +258,6 @@ describe("stage 1 text sits on StagePanel's paper panel (WCAG AA)", () => {
 
   it("renders the stage 1 section with the remembered class", () => {
     const html = render(RECORD);
-    expect(html).toMatch(/<section class="[^"]*remembered[^"]*">/);
+    expect(html).toMatch(/<section class="[^"]*remembered[^"]*"[^>]*>/);
   });
 });

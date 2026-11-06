@@ -71,7 +71,8 @@
   font-variant-numeric: tabular-nums;
 }
 
-/* Plain text button in the product voice; no judgement colour. */
+/* Plain text button in the product voice; no judgement colour. Labels wrap
+   inside the button (spec 09 A8.1). */
 .button {
   font: inherit;
   color: var(--ink);
@@ -80,13 +81,21 @@
   border-radius: 2px;
   min-height: 44px;
   min-width: 44px;
+  max-width: 100%;
   padding: 0.5rem 1.1rem;
+  text-align: center;
+  white-space: normal;
   cursor: pointer;
   transition: background-color 150ms ease;
 }
 
 .button:hover {
   background-color: var(--paper);
+}
+
+.button:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
 /* --- Recall step --- */
@@ -97,6 +106,15 @@
 
 .recallHint {
   color: var(--ink-soft);
+}
+
+/* Below 900 px the recall card keeps its question, field and Next button above
+   the fold at 360 x 640 (layout check R1). The paper's padding shrinks here only,
+   so the card gives the field and button the room. Text colour stays the paper's. */
+@media (max-width: 899px) {
+  section.recall {
+    padding: 0.9rem 1rem;
+  }
 }
 
 .fieldset {
@@ -410,11 +428,11 @@
 }
 
 /* Each stage heading is given focus programmatically when its stage appears
-   (it carries tabIndex={-1}). A scripted .focus() does not match
-   :focus-visible, so give a plainly focused stage heading the same 2px ink
-   outline, no judgement colour. */
-.sealedLetter h2:focus,
-.figuresThenNow h2:focus {
+   (it carries tabIndex={-1}). Only keyboard focus draws the ring, so a
+   plainly focused heading shows none (spec 09 A12.1, globals.css). The
+   sealed letter heading sits inside the Letter_Block, which sets its own
+   white ring (LetterBlock.module.css), so it is not listed here. */
+.figuresThenNow h2:focus-visible {
   outline: 2px solid var(--text);
   outline-offset: 2px;
 }

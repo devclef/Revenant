@@ -49,7 +49,7 @@ export function RememberedAnswers({ opened, record }: RememberedAnswersProps) {
   );
 
   return (
-    <section className={styles.remembered}>
+    <section className={styles.remembered} data-card="recall">
       <h2>{REVEAL_COPY.stage1Title}</h2>
 
       <dl>

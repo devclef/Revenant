@@ -16,5 +16,5 @@ export type StagePanelProps = {
 };
 
 export function StagePanel({ children }: StagePanelProps) {
-  return <ParchmentSurface className={styles.stagePanel}>{children}</ParchmentSurface>;
+  return <ParchmentSurface className={styles.stagePanel} data-stage-panel="">{children}</ParchmentSurface>;
 }

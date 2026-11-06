@@ -132,7 +132,7 @@ export function SealedView({
   }
 
   return (
-    <div className={styles.panel} data-live-sealed={state.factors} data-live-real={real ? "" : undefined}>
+    <div className={styles.panel} data-card="live-sealed" data-live-sealed={state.factors} data-live-real={real ? "" : undefined}>
       <div className={styles.noPrint}>
         <DemoLabel />
         <h1 className={styles.heading}>{real ? REAL_COPY.stillSealed : LIVE_COPY.sealedTitle}</h1>

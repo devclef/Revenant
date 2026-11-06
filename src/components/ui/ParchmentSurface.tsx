@@ -21,10 +21,11 @@ export function ParchmentSurface({
   as: Tag = "div",
   tone = "paper",
   className,
-}: ParchmentSurfaceProps) {
+  ...dataProps
+}: ParchmentSurfaceProps & { [key: `data-${string}`]: string | undefined }) {
   const toneClass = tone === "deep" ? styles.deep : styles.paper;
   const classes = [styles.surface, toneClass, className]
     .filter(Boolean)
     .join(" ");
-  return <Tag className={classes}>{children}</Tag>;
+  return <Tag className={classes} {...dataProps}>{children}</Tag>;
 }

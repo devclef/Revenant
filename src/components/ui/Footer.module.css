@@ -1,0 +1,30 @@
+/*
+ * Footer layout. Colour and stacking stay inline in Footer.tsx, next to the
+ * desk tokens they come from. The tap-target sizes live here so a media query
+ * can apply them (P8.4, PH7).
+ */
+
+.footer {
+  padding: 1rem 1.25rem;
+  gap: 0.5rem 1.5rem;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Below 600 px every footer link is at least 44 x 44 CSS px. The footer keeps
+   its FOOTER_MAX_PX cap, so its padding shrinks to make room. */
+@media (max-width: 599.98px) {
+  .footer {
+    padding: 0.25rem 0.5rem;
+    gap: 0 1rem;
+  }
+
+  .link {
+    min-width: 44px;
+    min-height: 44px;
+  }
+}

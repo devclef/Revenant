@@ -78,6 +78,12 @@ export const GHOST_RISEN_WIDE = -0.07; // translateY, share of ghost height
 export const GHOST_RISEN_NARROW = -0.03;
 export const GHOST_HANDED = -0.12;
 export const NARROW_GHOST_SCALE = 0.8; // R10.15
+
+// --- Recall field (spec 09 A8.3) ---
+// Below this width the recall field and its control stack at the full card
+// width. At or above it they share a wrapping row. RecallPager.module.css repeats
+// this value in its max-width media query; constants-css.test.ts checks the two.
+export const RECALL_STACK_BELOW_PX = 640;
 export const HELD_LEFT = 0.18;
 export const HELD_WIDTH = 0.64;
 export const HELD_TOP_WIDE = 0.48;

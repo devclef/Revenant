@@ -68,18 +68,10 @@
 
 /*
  * A Stage heading is given focus programmatically when its Stage appears
- * (it carries tabIndex={-1}). A scripted .focus() does not match
- * :focus-visible, so a plainly focused heading gets the same 2px ring.
+ * (it carries tabIndex={-1}). It draws no ring for a script or pointer focus:
+ * the heading rule in globals.css (spec 09 A12.1) hides it, and the
+ * :focus-visible rings above show it for keyboard users only.
  */
-.desk :focus {
-  outline: 2px solid var(--desk-ink);
-  outline-offset: 2px;
-}
-
-.onPaper :focus {
-  outline: 2px solid var(--ink);
-  outline-offset: 2px;
-}
 
 /*
  * The Calm and Skip controls (CeremonyRoot.tsx). They sit on the desk, not in
@@ -100,6 +92,9 @@
   font: inherit;
   font-size: 1rem;
   line-height: 1.25;
+  text-align: center;
+  white-space: normal;
+  max-width: 100%;
   color: var(--desk-ink);
   background-color: var(--desk-lit);
   border: 1px solid var(--desk-ink);

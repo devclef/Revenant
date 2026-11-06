@@ -141,6 +141,16 @@ a:focus-visible {
   outline-offset: 2px;
 }
 
+/*
+ * A heading that takes focus from a script or a pointer press (tabIndex -1)
+ * shows no outline. The keyboard ring still appears through :focus-visible
+ * (spec 09 A12.1). The rule matches headings only; the Ceremony region has
+ * its own reset in ceremony.module.css.
+ */
+:where(h1, h2, h3, h4, h5, h6)[tabindex="-1"]:focus:not(:focus-visible) {
+  outline: none;
+}
+
 /* Numbers read in body ink so figures always clear AA. */
 strong {
   color: var(--ink);

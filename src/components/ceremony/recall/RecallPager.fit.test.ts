@@ -34,6 +34,19 @@ function narrowRuleBody(selector: string): string {
   return m?.[1] ?? "";
 }
 
+/** The body of the stacked (max-width: 639.98px) media block, or "" when absent. */
+function stackBlock(): string {
+  const m = css.match(/@media \(max-width: 639\.98px\) \{([\s\S]*?)\n\}/);
+  return m?.[1] ?? "";
+}
+
+/** The body of one rule nested inside the stacked media block. */
+function stackRuleBody(selector: string): string {
+  const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = stackBlock().match(new RegExp(`${escaped}\\s*\\{([^}]*)\\}`));
+  return m?.[1] ?? "";
+}
+
 describe("Recall_Pager fit hooks", () => {
   it("names the counter, question, answer row and advance control", () => {
     expect(source).toContain('data-fit="counter"');
@@ -83,16 +96,23 @@ describe("Recall_Pager card fits above the fold at 1280 x 800", () => {
 });
 
 describe("Recall_Pager card fits inside its padding at 360 x 640", () => {
-  it("keeps the typed number and Next on one row on narrow screens (R11.13)", () => {
-    // A wrapped Next control lands at 660 px and below 640 px at 360 x 640.
-    expect(narrowRuleBody(".answerRow")).toMatch(/flex-wrap:\s*nowrap/);
+  it("shares one wrapping row at 640 px and up, and stacks below it (spec 09 A8.3)", () => {
+    // Below RECALL_STACK_BELOW_PX (640 px) the typed number and Next stack at the
+    // full card width. At and above 640 px they share a row that may wrap. The
+    // old rule kept them on one nowrap row below 900 px; that rule is gone.
+    expect(ruleBody(".answerRow")).toMatch(/flex-wrap:\s*wrap/);
+    expect(narrowRuleBody(".answerRow")).not.toMatch(/flex-wrap:\s*nowrap/);
+    expect(stackRuleBody(".answerRow")).toMatch(/flex-direction:\s*column/);
+    expect(stackRuleBody(".input")).toMatch(/width:\s*100%/);
+    expect(stackRuleBody(".cta")).toMatch(/width:\s*100%/);
   });
 
   it("lets the typed number shrink inside the nowrap row", () => {
     // The input is the flex item that absorbs the width, so it needs min-width 0.
     expect(ruleBody(".input")).toMatch(/min-width:\s*0/);
     expect(ruleBody(".input")).toMatch(/width:\s*6\.5ch/);
-    expect(ruleBody(".cta")).toMatch(/white-space:\s*nowrap/);
+    expect(ruleBody(".cta")).toMatch(/white-space:\s*normal/);
+    expect(ruleBody(".cta")).not.toMatch(/white-space:\s*nowrap/);
   });
 
   it("shrinks the question, fieldset and typed number below 900 px", () => {
