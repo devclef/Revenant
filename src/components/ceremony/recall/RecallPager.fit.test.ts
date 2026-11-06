@@ -92,7 +92,8 @@ describe("Recall_Pager card fits inside its padding at 360 x 640", () => {
     // The input is the flex item that absorbs the width, so it needs min-width 0.
     expect(ruleBody(".input")).toMatch(/min-width:\s*0/);
     expect(ruleBody(".input")).toMatch(/width:\s*6\.5ch/);
-    expect(ruleBody(".cta")).toMatch(/white-space:\s*nowrap/);
+    expect(ruleBody(".cta")).toMatch(/white-space:\s*normal/);
+    expect(ruleBody(".cta")).not.toMatch(/white-space:\s*nowrap/);
   });
 
   it("shrinks the question, fieldset and typed number below 900 px", () => {

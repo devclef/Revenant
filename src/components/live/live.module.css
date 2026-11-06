@@ -275,6 +275,8 @@
   font-family: var(--font-sans);
   font-size: 1rem;
   font-weight: 600;
+  text-align: center;
+  white-space: normal;
   color: var(--on-accent);
   background-color: var(--accent);
   border: 1px solid var(--accent);
@@ -323,6 +325,8 @@
   font-family: var(--font-sans);
   font-size: 1rem;
   font-weight: 600;
+  text-align: center;
+  white-space: normal;
   color: var(--ink);
   background-color: transparent;
   border: 1px solid var(--ink);
@@ -437,6 +441,7 @@
 
 .card {
   margin: 0;
+  min-width: 0;
   padding: clamp(1rem, 3vw, 1.5rem);
   color: var(--ink);
   background-color: var(--paper);

@@ -88,7 +88,11 @@
 .cta {
   font: inherit;
   font-weight: 700;
-  white-space: nowrap;
+  /* Labels wrap inside the button (spec 09 A8.1). The 44 px minimum stays as a
+     floor for the touch target; it is not a fixed width. */
+  white-space: normal;
+  max-width: 100%;
+  text-align: center;
   color: var(--on-accent);
   background-color: var(--accent);
   border: 0;
@@ -119,6 +123,9 @@
   min-height: 44px;
   min-width: 44px;
   padding: 0.5rem 1rem;
+  white-space: normal;
+  max-width: 100%;
+  text-align: center;
   cursor: pointer;
 }
 
@@ -154,7 +161,7 @@
   }
 
   .cta {
-    font-size: 0.9rem;
+    font-size: 1rem;
     padding: 0 0.75rem;
   }
 
