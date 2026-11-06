@@ -983,7 +983,8 @@ class SharedTests(unittest.TestCase):
         self.assertEqual(pr_policy.check_files("frontend-dev", files, OWNERSHIP), [])
 
     def test_dev_spec_tells_the_agent_tests_are_shared(self):
-        spec = d.dev_spec({"number": 2, "title": "t", "body": "b"}, "data-dev")
+        spec = d.dev_spec({"number": 2, "title": "t", "body": "b"}, "data-dev",
+                          paths=["src/lib/figures/**"])
         self.assertIn("Tests are shared", spec)
 
     def test_qa_prompt_keeps_unfixable_findings_minor(self):
