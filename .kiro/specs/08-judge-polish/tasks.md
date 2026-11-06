@@ -333,7 +333,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
   - Validation: `bash scripts/check.sh`
   - _Requirements: R1.6, R10.1, R10.2, R11.2, R12.1–R12.5, R18.1–R18.8, R29.3, R29.5, R29.6_
 
-- [ ] 12. The footer on every page and the landing links
+- [x] 12. The footer on every page and the landing links
   - Agent: `platform-dev` · Depends on: 5, 11 · Estimated size: ~200 changed lines
   - Before this task: tasks 5 and 11 are on `main`.
   - Scope: `src/app/layout.tsx` (renders `Footer` after `{children}`), `src/app/page.tsx` (landing copy, links and metadata), `src/test/landing.test.tsx`, and new `*.test.ts(x)` files under `src/test/`
