@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { realLetterSealApi, realSealApi, REAL_PREPARE_PATH, REAL_SEAL_PATH, PREPARE_PATH } from "./api";
-import { LIVE_COPY } from "./copy";
+import { LIVE_COPY, REAL_COPY } from "./copy";
 import { sealReducer, INITIAL_SEAL_STATE, type SealEvent, type SealState } from "./seal-machine";
 
 vi.mock("./useSealFlow", () => ({
@@ -91,7 +91,44 @@ describe("SealPage in real mode", () => {
     );
     expect(html).toContain('data-seal-mode="demo"');
   });
+
+  it("holds no validation message on first load in demo mode (spec 09, A4.4)", () => {
+    const html = renderToStaticMarkup(
+      createElement(SealPage, {
+        rpId: "revenant.devclef.se",
+        appOrigin: "https://revenant.devclef.se",
+        mode: "demo",
+      }),
+    );
+    expect(html).not.toContain(esc(LIVE_COPY.letterEmpty));
+    expect(html).not.toContain(esc(LIVE_COPY.figuresNone));
+    expect(html).not.toContain(esc(LIVE_COPY.warningUnticked));
+  });
+
+  it("holds no validation message on first load in real mode, including the date (spec 09, A4.4)", () => {
+    const html = renderToStaticMarkup(
+      createElement(SealPage, {
+        rpId: "revenant.devclef.se",
+        appOrigin: "https://revenant.devclef.se",
+        mode: "real",
+      }),
+    );
+    expect(html).not.toContain(esc(LIVE_COPY.letterEmpty));
+    expect(html).not.toContain(esc(LIVE_COPY.figuresNone));
+    expect(html).not.toContain(esc(LIVE_COPY.warningUnticked));
+    expect(html).not.toContain(esc(REAL_COPY.dateMissing));
+  });
 });
+
+/** React escapes quotes and ampersands in static markup. */
+function esc(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
 
 describe("the Sealing_Flow step order (same in both modes)", () => {
   // The flow is one reducer shared by both modes; mode changes only the API.
