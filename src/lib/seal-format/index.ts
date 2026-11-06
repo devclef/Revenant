@@ -51,5 +51,16 @@ export {
   LOCK_MAX_AHEAD_MS,
 } from "./live-constants";
 
+// The 3-calendar-month rule for real letters (shared by the browser and the server).
+export {
+  SEAL_MARGIN_MS,
+  REAL_LOCK_MONTHS,
+  addCalendarMonthsUtc,
+  addCalendarMonthsLocal,
+  opensAtFor,
+  earliestOpeningDate,
+  meetsRealLock,
+} from "./opening-date";
+
 // Human-readable fingerprint of an envelope hash (16 groups of 4 hex characters).
 export { formatFingerprint, parseFingerprint } from "./fingerprint";
