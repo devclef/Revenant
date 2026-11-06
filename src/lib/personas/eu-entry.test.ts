@@ -13,6 +13,7 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { DEMO_FIGURES } from "@/lib/figures/demo";
+import { periodEnd } from "@/lib/figures/periods";
 import { thenAndNow } from "@/lib/figures/then-now";
 import fuelFile from "@/lib/figures/real/fuel-figures.json";
 
@@ -23,15 +24,27 @@ const eu = PERSONAS.find((p) => p.key === "eu-tomas")!;
 
 type FuelRow = (typeof fuelFile.figures)[number];
 
-/** The fuel row with the latest period on or before `date` for one metric. */
+/**
+ * The fuel row with the latest period end on or before `date` for one metric.
+ * Uses the same rule as thenAndNow: compare periodEnd(period, period_type)
+ * with the date, using the series' own period type.
+ */
 function latestRowOnOrBefore(metricId: string, date: string): FuelRow {
+  const series = DEMO_FIGURES.series.get(metricId);
+  if (series === undefined) {
+    throw new Error(`no series for ${metricId}`);
+  }
+  const type = series.period_type;
   const rows = fuelFile.figures.filter(
-    (row) => row.metric_id === metricId && row.period <= date,
+    (row) =>
+      row.metric_id === metricId && periodEnd(row.period, type) <= date,
   );
   if (rows.length === 0) {
     throw new Error(`no ${metricId} row on or before ${date}`);
   }
-  return rows.reduce((best, row) => (row.period > best.period ? row : best));
+  return rows.reduce((best, row) =>
+    periodEnd(row.period, type) > periodEnd(best.period, type) ? row : best,
+  );
 }
 
 describe("EU persona entry (eu-tomas)", () => {
@@ -77,7 +90,7 @@ describe("EU persona entry (eu-tomas)", () => {
 
 describe("EU persona then-figures match fuel-figures.json field for field", () => {
   it("each metric's then figure equals the latest row on or before written_as_of", () => {
-        const date = eu.written_as_of;
+  const date = eu.written_as_of;
 
     for (const metric of eu.metrics) {
       const expected = latestRowOnOrBefore(metric.metric_id, date);
