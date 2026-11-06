@@ -53,3 +53,31 @@
   line-height: 1.6;
   color: var(--text-on-desk);
 }
+
+/* The Seal_Mapping table, first on the page. Text is set on the table, so no
+   colour is inherited from the shell. Columns wrap rather than scroll at 360 px. */
+.mapping {
+  width: 100%;
+  border-collapse: collapse;
+  color: var(--text-on-desk);
+  font-size: 0.95rem;
+  line-height: 1.5;
+  table-layout: fixed;
+}
+
+.mapping th,
+.mapping td {
+  padding: 0.6rem 0.5rem;
+  text-align: left;
+  vertical-align: top;
+  border-bottom: 1px solid var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.mapping th {
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-on-desk);
+}

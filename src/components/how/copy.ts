@@ -17,8 +17,14 @@ export type HowSection = {
 };
 
 export const HOW_COPY = {
-  /** The one h1 on the page. */
-  heading: "How a letter is sealed",
+  /** The one h1 on the page. It opens the page. */
+  heading: "How the seal works",
+
+  /** The column headers of the Seal_Mapping table, which opens the page. */
+  mappingHeaders: {
+    seal: "The wax seal",
+    revenant: "Revenant",
+  },
 
   sections: [
     {

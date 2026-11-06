@@ -27,7 +27,7 @@ Rules for every entry:
 | src/components/ceremony/envelope/WaxSeal.tsx | Component. One inline SVG wax seal: an irregular blob, a ring, an inner disc, a pressed ghost silhouette and two eyes, drawn by hand in two clipped halves. Same for every persona. No image or font. | original | 2026-11-03 |
 | public/icon.svg | Hand-written SVG: a 64 x 64 near-black tile with the Ghost path, purple folds and two eyes, the same geometry as ghost-geometry.ts. A plain sheet ghost, not Kiro's logo or mascot. Not AI-generated. No image or font. | original | 2026-11-06 |
 | src/app/apple-icon.tsx | Route. A 180 x 180 next/og ImageResponse, drawn in JSX from the shared ghost-geometry.ts constants on the near-black background. A plain sheet ghost, not Kiro's logo or mascot. Not AI-generated. No image or font file. | original | 2026-11-06 |
-| src/app/opengraph-image.tsx | Route. A 1200 x 630 next/og ImageResponse with the landing headline ("receipts." in the Accent colour) and the same Ghost drawn from ghost-geometry.ts. Uses the default next/og font. Not AI-generated. No Kiro logo or mascot. | original | 2026-11-06 |
+| src/app/opengraph-image.tsx | Route. A 1200 x 630 next/og ImageResponse with the Eyebrow ("The wax seal, resurrected.") above the Tagline ("Memory rewrites itself. Revenant doesn't."), both from Brand_Copy, and the same Ghost drawn from ghost-geometry.ts. No text uses the Accent colour. Uses the default next/og font. Not AI-generated. No Kiro logo or mascot. | original | 2026-11-06 |
 
 Rows whose path is outside `assets/` name a component file in the repository,
 which `assets.test.ts` checks. No asset file is under `assets/`. The ceremony

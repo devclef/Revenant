@@ -13,6 +13,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
+import { BRAND_COPY } from "@/components/brand/copy";
 import { CEREMONY_COPY } from "../copy";
 import { SCENE_COPY } from "./copy";
 
@@ -37,7 +38,7 @@ vi.mock("../skip", () => ({
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { SceneBackdrop } from "./SceneBackdrop";
-import { SceneHeadline, splitHeadlineLead } from "./SceneHeadline";
+import { SceneHeadline, splitTagline } from "./SceneHeadline";
 import { SceneShell, type SceneShellProps } from "./SceneShell";
 import { SoilStrip } from "./SoilStrip";
 import { TopBar, personaNoticeText } from "./TopBar";
@@ -172,24 +173,35 @@ describe("SceneBackdrop (R6.9, R19.5)", () => {
   });
 });
 
-describe("SceneHeadline (R3.18)", () => {
+describe("SceneHeadline (R3.18, F2)", () => {
   it("renders the only h1 with data-scene-ceiling", () => {
     const html = render(createElement(SceneHeadline));
     expect(html.match(/<h1[^>]*data-scene-ceiling/g)?.length).toBe(1);
     expect(html.match(/<h1/g)?.length).toBe(1);
   });
 
-  it("puts 'the receipts.' in one nowrap span, with the Accent on 'receipts.'", () => {
+  it("renders the Eyebrow above the h1, then the Tagline", () => {
     const html = render(createElement(SceneHeadline));
-    expect(html).toMatch(/<span class="[^"]*">the <span class="[^"]*">receipts\.<\/span><\/span>/);
+    expect(html.indexOf(BRAND_COPY.eyebrow)).toBeGreaterThanOrEqual(0);
+    expect(html.indexOf(BRAND_COPY.eyebrow)).toBeLessThan(html.indexOf("<h1"));
+    expect(html).toContain("Memory rewrites itself.");
   });
 
-  it("splits the lead so the article joins the Accent in the nowrap span", () => {
-    expect(splitHeadlineLead(SCENE_COPY.headlineLead)).toEqual({
-      before: "Your past self returns with",
-      article: "the",
+  it("keeps \"Revenant doesn't.\" together in a nowrap span with no Accent", () => {
+    const html = render(createElement(SceneHeadline));
+    expect(html).toMatch(/<span class="[^"]*">Revenant\u00a0doesn&#x27;t\.<\/span>/);
+    expect(html).not.toContain("receipts.");
+  });
+
+  it("splits the Tagline before the kept phrase", () => {
+    expect(splitTagline(BRAND_COPY.tagline)).toEqual({
+      before: "Memory rewrites itself. ",
+      kept: "Revenant\u00a0doesn't.",
     });
-    expect(render(createElement(SceneHeadline))).toContain("Your past self returns with");
+  });
+
+  it("returns a tagline without the kept phrase whole", () => {
+    expect(splitTagline("Plain line")).toEqual({ before: "Plain line", kept: "" });
   });
 });
 

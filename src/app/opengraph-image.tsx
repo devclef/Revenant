@@ -1,13 +1,13 @@
-// Feature: 08-judge-polish
+// Feature: 08-judge-polish, 09-demo-polish (F2)
 //
 // The Open Graph image, 1200 x 630 (design.md "Icons and Open Graph"). It shows
-// the landing headline, with "receipts." in the Accent colour (orange means
-// "you", tone.md). It uses the default next/og font, so it adds no font file
-// and no dependency. The headline text comes from SCENE_COPY, the same source
-// as the on-page headline.
+// the Eyebrow and the Tagline from Brand_Copy beside the ghost. No text uses the
+// Accent colour: orange means "you" on the page, and the image carries no
+// orange text. It uses the default next/og font, so it adds no font file and no
+// dependency.
 
 import { ImageResponse } from "next/og";
-import { SCENE_COPY } from "@/components/ceremony/scene/copy";
+import { BRAND_COPY } from "@/components/brand/copy";
 import {
   BODY_PATH,
   EYE_CENTRES,
@@ -18,17 +18,21 @@ import {
 
 export const size = { width: 1200, height: 630 };
 export const contentType = "image/png";
-export const alt = `${SCENE_COPY.headlineLead} ${SCENE_COPY.headlineAccent}`;
+export const alt = BRAND_COPY.tagline;
 
 /** Near-black background (--bg in tokens.css). */
 const BG = "#0b0912";
 /** Page text (--text in tokens.css) and the purple fold colour (--purple). */
 const TEXT = "#f5f3ff";
+/** Muted text (--muted in tokens.css), used for the Eyebrow. */
+const MUTED = "#bdb4dc";
 const PURPLE = "#8f46ff";
-/** The Accent colour (--accent in tokens.css), used only on "receipts.". */
-const ACCENT = "#ff7b1c";
+
+const NBSP = "\u00a0";
 
 export default function OpenGraphImage() {
+  // Keeps "Revenant doesn't." on one line, as the on-page headline does.
+  const tagline = BRAND_COPY.tagline.replace("Revenant doesn't.", `Revenant${NBSP}doesn't.`);
   return new ImageResponse(
     (
       <div
@@ -47,14 +51,30 @@ export default function OpenGraphImage() {
             display: "flex",
             flexDirection: "column",
             width: 680,
-            fontSize: 72,
-            fontWeight: 700,
-            lineHeight: 1.05,
-            color: TEXT,
           }}
         >
-          <span>{SCENE_COPY.headlineLead}</span>
-          <span style={{ color: ACCENT }}>{SCENE_COPY.headlineAccent}</span>
+          <span
+            style={{
+              fontSize: 28,
+              fontWeight: 600,
+              letterSpacing: 4,
+              textTransform: "uppercase",
+              color: MUTED,
+              marginBottom: 24,
+            }}
+          >
+            {BRAND_COPY.eyebrow}
+          </span>
+          <span
+            style={{
+              fontSize: 72,
+              fontWeight: 700,
+              lineHeight: 1.05,
+              color: TEXT,
+            }}
+          >
+            {tagline}
+          </span>
         </div>
         <svg
           width="220"
