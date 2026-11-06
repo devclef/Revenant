@@ -74,6 +74,11 @@ export const HASH_MISMATCH = Object.freeze({ error: "hash_mismatch" } as const);
 /** Fixed error body: the envelope's lock does not fit the server clock (422). */
 export const LOCK_OUT_OF_RANGE = Object.freeze({ error: "lock_out_of_range" } as const);
 
+/** The real-letter `opens_at` is earlier than three calendar months after sealing (422). */
+export const OPENS_AT_TOO_EARLY = Object.freeze({
+  error: "opens_at_too_early",
+} as const);
+
 /**
  * Build the fixed `invalid_body` error body for a named field (400).
  *

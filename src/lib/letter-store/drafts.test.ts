@@ -13,6 +13,7 @@ import { PgDialect } from "drizzle-orm/pg-core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { getDb } from "@/lib/db/client";
+import { letterDrafts } from "@/lib/db/schema/letters";
 import { encodeBase64url, isLetterId } from "@/lib/seal-format/base64url";
 import { DRAFT_LIFETIME_MS } from "@/lib/seal-format/live-constants";
 import { DRAFT_CAP, PREPARE_ID_ATTEMPTS } from "@/lib/letter-store/live-constants";
@@ -43,6 +44,7 @@ const dialect = new PgDialect();
 function makeFakeDb(seed: { drafts?: FakeDraft[]; taken?: string[] } = {}) {
   const drafts: FakeDraft[] = [...(seed.drafts ?? [])];
   const taken = new Set(seed.taken ?? []);
+  const statements: string[] = [];
   let clockReads = 0;
   let lockCalls = 0;
 
@@ -54,6 +56,8 @@ function makeFakeDb(seed: { drafts?: FakeDraft[]; taken?: string[] } = {}) {
       // Multi-line templates render with leading whitespace; match on the statement start.
       const text = rendered.sql.trimStart();
       const params = rendered.params;
+      statements.push(text);
+      statements.push(text);
 
       if (text.includes("pg_advisory_xact_lock")) {
         lockCalls += 1;
@@ -100,6 +104,7 @@ function makeFakeDb(seed: { drafts?: FakeDraft[]; taken?: string[] } = {}) {
   return {
     db,
     drafts,
+    statements: () => statements,
     clockReads: () => clockReads,
     lockCalls: () => lockCalls,
   };
@@ -269,6 +274,52 @@ describe("createDraft", () => {
       expect(random.calls.filter((n) => n === 16)).toHaveLength(PREPARE_ID_ATTEMPTS);
       expect(random.calls).not.toContain(32);
       expect(fake.drafts).toHaveLength(0);
+    });
+  });
+
+  describe("table argument", () => {
+    // The draft-table statements: the cleanup DELETE, the cap COUNT and the INSERT.
+    // The ID-collision EXISTS query names every table and is not checked here.
+    const isDraftTableStatement = (s: string) =>
+      s.startsWith("DELETE FROM") ||
+      s.startsWith("INSERT INTO") ||
+      s.includes("count(*)");
+
+    it("writes to demo_letter_drafts when no table is given", async () => {
+      useFake();
+
+      await createDraft(scriptedRandom([ONES]).fn);
+
+      const writes = fake.statements().filter(isDraftTableStatement);
+      expect(writes.length).toBeGreaterThan(0);
+      for (const s of writes) {
+        expect(s).toContain('"demo_letter_drafts"');
+        expect(s).not.toMatch(/"letter_drafts"/);
+      }
+    });
+
+    it("writes to letter_drafts when given the real table", async () => {
+      useFake();
+
+      const draft = await createDraft(scriptedRandom([ONES]).fn, letterDrafts);
+
+      const writes = fake.statements().filter(isDraftTableStatement);
+      expect(writes.length).toBeGreaterThan(0);
+      for (const s of writes) {
+        expect(s).toContain('"letter_drafts"');
+        expect(s).not.toContain('"demo_letter_drafts"');
+      }
+      expect(fake.drafts).toHaveLength(1);
+      expect(fake.drafts[0].id).toBe(draft.letterId);
+      expect(fake.drafts[0].createdAt).toEqual(CLOCK);
+    });
+
+    it("applies the cap to the table it is given", async () => {
+      useFake({ drafts: freshDrafts(DRAFT_CAP + 1, "fresh") });
+
+      await expect(
+        createDraft(scriptedRandom([ONES]).fn, letterDrafts),
+      ).rejects.toMatchObject({ check: "busy" });
     });
   });
 

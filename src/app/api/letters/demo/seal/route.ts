@@ -25,6 +25,7 @@ import {
   INTERNAL,
   INVALID_ENVELOPE,
   LOCK_OUT_OF_RANGE,
+  OPENS_AT_TOO_EARLY,
   NOT_CONFIGURED,
   NOT_FOUND,
   TOO_LARGE,
@@ -56,6 +57,7 @@ const STORE_ERROR_RESPONSE = {
   draft_not_found: [404, NOT_FOUND],
   busy: [429, BUSY],
   lock_out_of_range: [422, LOCK_OUT_OF_RANGE],
+  opens_at_too_early: [422, OPENS_AT_TOO_EARLY],
 } as const;
 
 /**

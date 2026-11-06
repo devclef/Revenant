@@ -38,6 +38,7 @@ import { draftIsFresh, lockRuleHolds } from "@/lib/letter-store/live-rules";
  *   - `draft_not_found`: no fresh Draft exists for the letter ID (`storeLiveLetter`).
  *   - `busy`: the rolling Live_Letter cap is reached (`storeLiveLetter`), or the draft cap is reached (`createDraft`).
  *   - `lock_out_of_range`: the envelope's Lock rule does not hold (`storeLiveLetter`).
+ *   - `opens_at_too_early`: `opens_at` is less than three calendar months after the server clock (`storeRealLetter`).
  */
 export type LetterStoreCheck =
   | "envelope"
@@ -46,7 +47,8 @@ export type LetterStoreCheck =
   | "duplicate_id"
   | "draft_not_found"
   | "busy"
-  | "lock_out_of_range";
+  | "lock_out_of_range"
+  | "opens_at_too_early";
 
 /**
  * A fixed message per check. These strings never include any submitted value
@@ -61,6 +63,8 @@ const MESSAGES: Record<LetterStoreCheck, string> = {
   busy: "The service is busy. Try again in a moment.",
   lock_out_of_range:
     "The lock must open 30 seconds after sealing, within the allowed window.",
+  opens_at_too_early:
+    "The opening date must be at least three calendar months after sealing.",
 };
 
 /**
@@ -317,7 +321,7 @@ export async function storeLiveLetter(
  * (SQLSTATE 23505). postgres-js surfaces the SQLSTATE on the error's `code`
  * field. Read defensively without widening the type to the driver's.
  */
-function isUniqueViolation(error: unknown): boolean {
+export function isUniqueViolation(error: unknown): boolean {
   return (
     typeof error === "object" &&
     error !== null &&
