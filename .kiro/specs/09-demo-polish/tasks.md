@@ -142,7 +142,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
 
 ### Group A: visible bugs
 
-- [ ] 4. A8, A12, A13 · Controls that fit, focus rings only for the keyboard, and the recall field's name
+- [x] 4. A8, A12, A13 · Controls that fit, focus rings only for the keyboard, and the recall field's name
   - Agent: `frontend-dev` · Depends on: 3 · Estimated size: ~600 changed lines
   - Before this task: task 3 is on `main`; owner step O3 is done (layout checks BO1, BC1 and FV1 exist).
   - Scope: `src/components/ui/Footer.tsx`, `src/components/ui/Footer.module.css` (new if missing), `src/components/reveal/StagePanel.tsx` (the `data-stage-panel` attribute only), `src/components/reveal/RememberedAnswers.tsx`, `src/components/live/WriteForm.tsx`, `src/components/live/FigurePicker.tsx` and `src/components/live/SealedView.tsx` (the `data-card` attribute only), `src/components/ceremony/recall/RecallPager.tsx`, `src/components/ceremony/recall/RecallPager.module.css`, `src/components/ceremony/ceremony.module.css`, `src/components/ceremony/constants.ts`, `src/components/ceremony/constants-css.test.ts`, `src/components/ui/**` (button styles), `src/components/reveal/reveal.module.css`, `src/components/live/live.module.css`, and the `*.test.ts(x)` for each file above
