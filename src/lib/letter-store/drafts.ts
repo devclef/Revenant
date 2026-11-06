@@ -19,7 +19,12 @@ if (typeof window !== "undefined") {
 
 import { sql } from "drizzle-orm";
 import { getDb } from "@/lib/db/client";
-import { demoLetterDrafts, demoLetters, letters } from "@/lib/db/schema/letters";
+import {
+  demoLetterDrafts,
+  demoLetters,
+  letterDrafts,
+  letters,
+} from "@/lib/db/schema/letters";
 import { encodeBase64url } from "@/lib/seal-format/base64url";
 import { DRAFT_LIFETIME_MS } from "@/lib/seal-format/live-constants";
 import {
@@ -39,28 +44,34 @@ export interface Draft {
   serverNow: Date;
 }
 
+/** A draft table: `demo_letter_drafts` for Live_Letters, `letter_drafts` for real letters. */
+export type DraftTable = typeof demoLetterDrafts | typeof letterDrafts;
+
 /** The default source of random bytes: the Web Crypto CSPRNG. */
 function defaultRandomBytes(n: number): Uint8Array {
   return globalThis.crypto.getRandomValues(new Uint8Array(n));
 }
 
 /**
- * Create a draft for a Live_Letter.
+ * Create a draft for a Live_Letter or a real letter.
  *
  * In one transaction:
  * 1. Take the advisory lock `PREPARE_LOCK_KEY`.
  * 2. Read `clock_timestamp()` once; this is the server time `T`.
- * 3. Delete drafts created before `T - DRAFT_LIFETIME_MS`.
- * 4. Count the remaining drafts. More than `DRAFT_CAP` rejects with `busy`.
+ * 3. Delete drafts in `table` created before `T - DRAFT_LIFETIME_MS`.
+ * 4. Count the remaining drafts in `table`. More than `DRAFT_CAP` rejects with `busy`.
  * 5. Pick an ID up to `PREPARE_ID_ATTEMPTS` times, skipping any ID already used
- *    by a draft, a demo letter or a real letter.
- * 6. Insert the draft with `created_at = T`.
+ *    by a demo draft, a real draft, a demo letter or a real letter.
+ * 6. Insert the draft into `table` with `created_at = T`.
  *
  * @param randomBytes Source of random bytes, injectable for tests. It is called
  *   with 16 for an ID and 32 for the server secret.
+ * @param table The draft table to write to. Defaults to `demo_letter_drafts`, so
+ *   existing Live_Letter callers are unchanged. Real letters pass `letter_drafts`.
  */
 export async function createDraft(
   randomBytes: (n: number) => Uint8Array = defaultRandomBytes,
+  table: DraftTable = demoLetterDrafts,
 ): Promise<Draft> {
   const db = getDb();
   try {
@@ -73,12 +84,12 @@ export async function createDraft(
       const now = new Date(clock.t);
 
       await tx.execute(sql`
-        DELETE FROM ${demoLetterDrafts}
-        WHERE ${demoLetterDrafts.createdAt} < ${new Date(now.getTime() - DRAFT_LIFETIME_MS).toISOString()}
+        DELETE FROM ${table}
+        WHERE ${table.createdAt} < ${new Date(now.getTime() - DRAFT_LIFETIME_MS).toISOString()}
       `);
 
       const [counted] = await tx.execute<{ n: number }>(
-        sql`SELECT count(*)::int AS n FROM ${demoLetterDrafts}`,
+        sql`SELECT count(*)::int AS n FROM ${table}`,
       );
       if (counted.n > DRAFT_CAP) {
         throw new LetterStoreError("busy");
@@ -90,6 +101,7 @@ export async function createDraft(
         const taken = await tx.execute(sql`
           SELECT 1 AS present
           WHERE EXISTS (SELECT 1 FROM ${demoLetterDrafts} WHERE ${demoLetterDrafts.id} = ${candidate})
+             OR EXISTS (SELECT 1 FROM ${letterDrafts} WHERE ${letterDrafts.id} = ${candidate})
              OR EXISTS (SELECT 1 FROM ${demoLetters} WHERE ${demoLetters.id} = ${candidate})
              OR EXISTS (SELECT 1 FROM ${letters} WHERE ${letters.id} = ${candidate})
         `);
@@ -104,7 +116,7 @@ export async function createDraft(
 
       const serverSecret = randomBytes(32);
       await tx.execute(sql`
-        INSERT INTO ${demoLetterDrafts} (id, server_secret, created_at)
+        INSERT INTO ${table} (id, server_secret, created_at)
         VALUES (${id}, ${Buffer.from(serverSecret)}, ${now.toISOString()})
       `);
 

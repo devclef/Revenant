@@ -172,3 +172,31 @@ export const openings = pgTable(
     index("openings_demo_letter_id_idx").on(table.demoLetterId),
   ],
 );
+
+/**
+ * Drafts for real letters. A draft holds the 32-byte `server_secret` that the
+ * real Prepare_Route issues, and it is deleted when the real Seal_Route uses it
+ * or when it expires. It holds no letter content, so it has no immutability
+ * trigger. Same columns and checks as `demo_letter_drafts`.
+ */
+export const letterDrafts = pgTable(
+  "letter_drafts",
+  {
+    id: text("id").primaryKey(),
+    serverSecret: bytea("server_secret").notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true })
+      .notNull()
+      .default(sql`now()`),
+  },
+  (table) => [
+    check(
+      "letter_drafts_id_format",
+      sql`${table.id} ~ '^[A-Za-z0-9_-]{21}[AQgw]$'`,
+    ),
+    check(
+      "letter_drafts_server_secret_len",
+      sql`octet_length(${table.serverSecret}) = 32`,
+    ),
+    index("letter_drafts_created_at_idx").on(table.createdAt),
+  ],
+);

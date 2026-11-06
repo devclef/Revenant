@@ -50,6 +50,21 @@ describe("createPasskey", () => {
     await pending;
   });
 
+  it("uses PASSKEY_USER_NAME as the userName when none is given", async () => {
+    const fake = createFakeAuthenticator();
+    await createPasskey(fake, { rpId: RP_ID });
+    const options = fake.calls[0].options as unknown as Record<string, unknown>;
+    expect(options.userName).toBe(PASSKEY_USER_NAME);
+  });
+
+  it("uses the userName given to createPasskey", async () => {
+    const fake = createFakeAuthenticator();
+    await createPasskey(fake, { rpId: RP_ID, userName: "Revenant real letter" });
+    const options = fake.calls[0].options as unknown as Record<string, unknown>;
+    expect(options.userName).toBe("Revenant real letter");
+    expect(options.userDisplayName).toBe("Revenant demo");
+  });
+
   it("sends the R7.2 create options", async () => {
     const fake = createFakeAuthenticator();
     await createPasskey(fake, { rpId: RP_ID });
