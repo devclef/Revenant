@@ -311,7 +311,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
   - Validation: `bash scripts/check.sh`
   - _Requirements: R12.1, R12.2, R12.3, R12.5_
 
-- [ ] 11. Landing copy, the footer, the How_Page, the Apple icon and Open Graph image, and per-page titles
+- [x] 11. Landing copy, the footer, the How_Page, the Apple icon and Open Graph image, and per-page titles
   - Agent: `frontend-dev` · Depends on: 10 · Estimated size: ~1,400 changed lines
   - Before this task: task 10 is on `main`.
   - Scope: `src/components/ceremony/scene/copy.ts` (landing keys), `src/components/ui/Footer.tsx` (new), `src/components/ui/copy.ts` (new), `src/components/ui/index.ts`, `src/components/how/copy.ts` (new), `src/app/how-it-is-sealed/page.tsx` (new), `src/app/apple-icon.tsx` (new), `src/app/opengraph-image.tsx` (new), `src/components/ceremony/ASSETS.md`, the metadata exports of `src/app/demo/page.tsx`, `src/app/demo/personas/[key]/page.tsx`, `src/app/demo/live/page.tsx`, `src/app/l/[id]/page.tsx` and the two `not-found.tsx` pages, the copy and import scan tests under `src/components` (additions only), and the `*.test.ts(x)` for each file above
