@@ -11,6 +11,7 @@ import { FOOTER_MAX_PX } from "@/components/ceremony/constants";
 import "@/components/ceremony/scene/tokens.css";
 
 import { UI_COPY } from "./copy";
+import styles from "./Footer.module.css";
 
 /** The GitHub repository linked from the footer. */
 export const FOOTER_SOURCE_URL = "https://github.com/devclef/Revenant";
@@ -27,12 +28,10 @@ const FOOTER_STYLE: CSSProperties = {
   color: "var(--text)",
   boxSizing: "border-box",
   maxHeight: `${FOOTER_MAX_PX}px`,
-  padding: "1rem 1.25rem",
   display: "flex",
   flexWrap: "wrap",
   alignItems: "center",
   justifyContent: "center",
-  gap: "0.5rem 1.5rem",
   fontSize: "0.9rem",
   lineHeight: 1.4,
 };
@@ -47,11 +46,16 @@ const LINK_STYLE: CSSProperties = {
 
 export function Footer() {
   return (
-    <footer style={FOOTER_STYLE}>
-      <Link href="/how-it-is-sealed" style={LINK_STYLE}>
+    <footer className={styles.footer} style={FOOTER_STYLE}>
+      <Link href="/how-it-is-sealed" className={styles.link} style={LINK_STYLE}>
         {UI_COPY.footer.how}
       </Link>
-      <a href={FOOTER_SOURCE_URL} rel="noopener noreferrer" style={LINK_STYLE}>
+      <a
+        href={FOOTER_SOURCE_URL}
+        rel="noopener noreferrer"
+        className={styles.link}
+        style={LINK_STYLE}
+      >
         {UI_COPY.footer.source}
       </a>
     </footer>

@@ -319,6 +319,7 @@ export function RecallPager({
                 disabled={draft.noAnswer}
                 data-stage-focus=""
                 aria-invalid={isInvalid || unreadable}
+                aria-labelledby={headingId}
                 aria-describedby={describedBy === "" ? undefined : describedBy}
                 onChange={(event) =>
                   field === null

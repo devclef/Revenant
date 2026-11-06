@@ -3,6 +3,8 @@
 // Markup test for the shared footer. Rendered with `renderToStaticMarkup` in the
 // node environment, like the other component markup tests.
 
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -56,5 +58,45 @@ describe("Footer copy", () => {
   it("holds the footer labels from design.md \"Copy\"", () => {
     expect(UI_COPY.footer.how).toBe("How a letter is sealed");
     expect(UI_COPY.footer.source).toBe("Source code on GitHub");
+  });
+});
+
+describe("Footer tap targets (P8.4, PH7)", () => {
+  const css = readFileSync(resolve(__dirname, "Footer.module.css"), "utf8");
+
+  /** The body of the below-600px media block, or "" when it is absent. */
+  const narrow =
+    /@media \(max-width: 599\.98px\) \{([\s\S]*?)\n\}/.exec(css)?.[1] ?? "";
+
+  /** The body of one rule nested in a block, or "" when the rule is absent. */
+  function ruleIn(block: string, selector: string): string {
+    const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return (
+      new RegExp(`${escaped}\\s*\\{([^}]*)\\}`).exec(block)?.[1] ?? ""
+    );
+  }
+
+  it("gives every footer link a 44 x 44 CSS px minimum below 600 px", () => {
+    const link = ruleIn(narrow, ".link");
+    expect(link).toMatch(/min-width:\s*44px/);
+    expect(link).toMatch(/min-height:\s*44px/);
+  });
+
+  it("applies the same link class to both footer links", () => {
+    const classes = [...html.matchAll(/<a [^>]*class="([^"]+)"/g)].map(
+      (m) => m[1],
+    );
+    expect(classes).toHaveLength(2);
+    expect(classes[0]).not.toBe("");
+    expect(classes[0]).toBe(classes[1]);
+  });
+
+  it("keeps the footer class on the footer element", () => {
+    expect(html).toMatch(/<footer[^>]*class="[^"]+"/);
+  });
+
+  it("keeps the 44 px rule out of the wider layouts", () => {
+    const outside = css.replace(narrow, "");
+    expect(outside).not.toMatch(/min-height:\s*44px/);
   });
 });
