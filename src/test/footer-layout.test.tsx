@@ -4,6 +4,8 @@
 // (R12.4). The landing.test.tsx file covers the landing page's own copy and
 // links; this file covers the layout around it.
 
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -69,6 +71,23 @@ describe("footer placement in the root layout", () => {
     const footerAt = body.indexOf("<footer");
     expect(sceneAt).toBeGreaterThanOrEqual(0);
     expect(footerAt).toBeGreaterThan(sceneAt);
+  });
+
+  it("wraps the footer in the .site-footer layout wrapper", async () => {
+    const html = await layoutMarkup();
+    const wrapper = /<div class="site-footer"><footer[\s>]/.exec(html);
+    expect(wrapper).not.toBeNull();
+  });
+
+  it("keeps the .site-footer rule that stops the footer overlapping Stage content", () => {
+    const css = readFileSync(
+      fileURLToPath(new URL("../app/globals.css", import.meta.url)),
+      "utf8",
+    );
+    const rule = /\.site-footer\s*\{([^}]*)\}/.exec(css)?.[1] ?? "";
+    expect(rule).toMatch(/position:\s*relative/);
+    expect(rule).toMatch(/z-index:\s*0/);
+    expect(css).toMatch(/\.site-footer::before\s*\{[^}]*height:\s*6rem/);
   });
 
   it("carries the How link and the GitHub source link", async () => {
