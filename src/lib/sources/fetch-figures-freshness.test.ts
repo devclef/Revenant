@@ -28,6 +28,7 @@ type Series = {
   period_type: PeriodType;
   last_success_at: string | null;
   figure: { value: string; period: string; retrieved_at: string } | null;
+  fallback?: boolean;
 };
 
 function series(overrides: Partial<Series> & { id?: string } = {}): Series {
@@ -129,6 +130,45 @@ describe("classifyFreshness", () => {
     const c = classifyFreshness(ok([series({ last_success_at: null, figure: null })]), RUN_AT);
     expect(c.status).toBe("fail");
     expect(c.findings.map((f) => f.result).sort()).toEqual(["fail", "warn"]);
+  });
+});
+
+describe("classifyFreshness with the optional fallback field (#248)", () => {
+  const weekly = (period: string) => series({ figure: { value: "0", period, retrieved_at: RUN_ISO } });
+
+  it("passes a fresh series with fallback true", () => {
+    expect(classifyFreshness(ok([series({ fallback: true })]), RUN_AT).status).toBe("pass");
+  });
+
+  it("passes a fresh series with fallback false", () => {
+    expect(classifyFreshness(ok([series({ fallback: false })]), RUN_AT).status).toBe("pass");
+  });
+
+  it("passes a fresh series with fallback absent", () => {
+    expect(classifyFreshness(ok([series()]), RUN_AT).status).toBe("pass");
+  });
+
+  it("fails a series with fallback true when its last success is stale", () => {
+    const old = new Date(RUN_AT - FETCH_FAILURE_MS - 1).toISOString();
+    expect(classifyFreshness(ok([series({ fallback: true, last_success_at: old })]), RUN_AT).status).toBe("fail");
+  });
+
+  it("warns on a fallback true series whose period is more than 14 days old", () => {
+    expect(classifyFreshness(ok([weekly("2026-10-21")].map((s) => ({ ...s, fallback: true }))), RUN_AT).status).toBe("warn");
+  });
+
+  it("classifies fallback true and fallback false identically for the same series", () => {
+    const base = weekly("2026-10-21");
+    const withTrue = classifyFreshness(ok([{ ...base, fallback: true }]), RUN_AT);
+    const withFalse = classifyFreshness(ok([{ ...base, fallback: false }]), RUN_AT);
+    expect(withTrue).toEqual(withFalse);
+  });
+
+  it("treats a non-boolean fallback as a parse failure", () => {
+    const bad = { ...series(), fallback: "yes" } as unknown as Series;
+    const c = classifyFreshness(ok([bad]), RUN_AT);
+    expect(c.status).toBe("fail");
+    expect(c.request).toEqual({ kind: "request_failed", problem: "parse" });
   });
 });
 
