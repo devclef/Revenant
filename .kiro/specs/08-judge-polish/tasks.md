@@ -506,7 +506,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
 
 ### Group 6: real sealing
 
-- [ ] 20. The real sealing flag, its chart values, and the landing link behind it
+- [x] 20. The real sealing flag, its chart values, and the landing link behind it
   - Agent: `platform-dev` · Depends on: 12, 17, 19 · Estimated size: ~250 changed lines
   - Before this task: tasks 12, 17 and 19 are on `main`. (Task 19 is added because this task's new `*.test.ts(x)` files under `src/test/` can match task 19's `src/test/integration/figures.test.ts`.)
   - Gate: on a no-go on 20 November 2026 this task stays merged with the flag off, so `/seal` and its routes stay off and the landing shows no link (R25.2).
