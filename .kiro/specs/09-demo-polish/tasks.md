@@ -207,7 +207,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`
   - _Requirements: A11.1–A11.4, A14.1–A14.4_
 
-- [ ] 7. L1, L2 · Fonts that load, and sans headings site-wide
+- [x] 7. L1, L2 · Fonts that load, and sans headings site-wide
   - Agent: `platform-dev` · Depends on: 2 · Estimated size: ~250 changed lines
   - Before this task: task 2 is on `main`. Steering updated (Owner patches w, x and y on `main`, owner step O0). Owner patch q includes FONT1.
   - Scope: `src/app/layout.tsx` (the font consts and their `className` only), `src/app/globals.css`, `src/test/fonts.test.ts` (new)
