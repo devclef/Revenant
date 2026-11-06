@@ -87,13 +87,12 @@ describe("landing page `/`", () => {
     expect(html).toContain('href="/demo"');
   });
 
-  it("renders every explanation paragraph after the Scene, verbatim", () => {
+  it("renders the Resurrection paragraph and the fuel-prices paragraph after the Scene, verbatim", () => {
     // The expected text is read from SCENE_COPY, the single source the page
-    // renders from, so a copy change (spec 08 task 11) cannot break this test
-    // on a branch that may not edit src/test/landing.test.tsx. The wording
-    // itself is pinned in scene/copy.test.ts.
-    const paragraphs = SCENE_COPY.landing.paragraphs;
-    expect(paragraphs.length).toBeGreaterThan(0);
+    // renders from. The landing page shows the first and second paragraphs
+    // only (task 2 of issue #199); the wording is pinned in scene/copy.test.ts.
+    const paragraphs = SCENE_COPY.landing.paragraphs.slice(0, 2);
+    expect(paragraphs).toHaveLength(2);
     const html = render([MAYA]);
     const sceneAt = html.indexOf('data-ceremony="scene"');
     const explainStart = html.indexOf(paragraphs[0].slice(0, 24));
@@ -108,11 +107,11 @@ describe("landing page `/`", () => {
     }
   });
 
-  it("links to /demo with the demo link text after the Scene", () => {
+  it("links to /demo with the one-letter link text after the Scene when there is one persona", () => {
     const html = render([MAYA]);
     const anchor = /<a[^>]*href="\/demo"[^>]*>(.*?)<\/a>/s.exec(html);
     expect(anchor).not.toBeNull();
-    expect(textOf(anchor?.[1] ?? "")).toBe("Open the demo letters");
+    expect(textOf(anchor?.[1] ?? "")).toBe("Open the demo letter");
     const sceneAt = html.indexOf('data-ceremony="scene"');
     expect(anchor?.index ?? -1).toBeGreaterThan(sceneAt);
   });

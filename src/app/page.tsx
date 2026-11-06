@@ -7,11 +7,23 @@ import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { SCENE_COPY } from "@/components/ceremony/scene/copy";
 import styles from "@/components/ceremony/scene/scene.module.css";
 import { PERSONAS } from "@/lib/personas";
+import { pageMetadata } from "@/lib/page-metadata";
 
 import {
   LANDING_NOSCRIPT_STYLE,
   LandingBackdrop,
 } from "@/lib/landing-backdrop";
+
+/** The landing page keeps the site title and description (see pageMetadata). */
+export const metadata = pageMetadata(null, "/");
+
+/** The GitHub repository linked from the landing page. */
+const GITHUB_URL = "https://github.com/devclef/Revenant";
+
+/** Link style on the dark --bg surface, as in DEMO_LINK_STYLE. */
+const LINK_STYLE: CSSProperties = {
+  color: "var(--text)",
+};
 
 /**
  * Landing page `/` (design.md "SceneShell, TopBar and the landing page",
@@ -86,6 +98,11 @@ export default function Home() {
     first === undefined
       ? null
       : SCENE_COPY.openLetter.replace("{name}", first.display_name);
+  // One persona gets the singular link text. Two or more, or none, get the plural.
+  const demoLinkLabel =
+    PERSONAS.length === 1
+      ? SCENE_COPY.landing.demoLinkOne
+      : SCENE_COPY.landing.demoLinkMany;
 
   return (
     <>
@@ -112,13 +129,28 @@ export default function Home() {
       </SceneShell>
 
       <section style={EXPLAIN_STYLE}>
-        {SCENE_COPY.landing.paragraphs.map((paragraph) => (
-          <p key={paragraph}>{paragraph}</p>
-        ))}
+        <p>{SCENE_COPY.landing.paragraphs[0]}</p>
+        <p>{SCENE_COPY.landing.paragraphs[1]}</p>
         <p>
           <Link href="/demo" style={DEMO_LINK_STYLE}>
-            {SCENE_COPY.landing.demoLink}
+            {demoLinkLabel}
           </Link>
+        </p>
+        <p>
+          <Link href="/demo/live" style={LINK_STYLE}>
+            {SCENE_COPY.landing.liveLink}
+          </Link>{" "}
+          <span>{SCENE_COPY.landing.liveNote}</span>
+        </p>
+        <p>
+          <Link href="/how-it-is-sealed" style={LINK_STYLE}>
+            {SCENE_COPY.landing.howLink}
+          </Link>
+        </p>
+        <p>
+          <a href={GITHUB_URL} rel="noopener noreferrer" style={LINK_STYLE}>
+            {SCENE_COPY.landing.sourceLink}
+          </a>
         </p>
       </section>
     </>
