@@ -149,8 +149,10 @@ describe("seal-personas entry: DATABASE_URL guard", () => {
 // =============================================================================
 // Shared generators for the two properties.
 //
-// Every generated series is FIXTURE-prefixed on source and series_id, so
-// loadFigureFile accepts the file with fixture: true. Values are rounded
+// Every generated series is labelled as fake test data on source and series_id,
+// with no FIXTURE prefix. The sealing guard refuses FIXTURE figures, and
+// loadFigureFile needs the prefix to match the fixture flag, so the file is
+// fixture: false and loadFigureFile accepts it. Values are rounded
 // two-decimal strings and periods are real Mondays in a bounded range, so the
 // loader's period and value rules always pass. The persona's written_as_of is
 // chosen to be >= the latest generated period end across all its tracked
@@ -192,8 +194,8 @@ function fixtureMetric(n: number): MetricDefinitionV1 {
     display_name: `Fixture series ${n} (fixture)`,
     unit: "USD per gallon",
     region: "U.S.",
-    source: `FIXTURE weekly retail price ${n} (fake data)`,
-    series_id: `FIXTURE-SERIES-${n}`,
+    source: `Generated test series ${n} (fake data)`,
+    series_id: `TEST-SERIES-${n}`,
   };
 }
 
@@ -250,8 +252,8 @@ const figuresArb: fc.Arbitrary<GeneratedFigures> = fc
   )
   .map((generated) => {
     const file: FigureFile = {
-      fixture: true,
-      note: "generated fixture file for seal-personas property tests",
+      fixture: false,
+      note: "generated test file for seal-personas property tests",
       series: generated.map((g) => g.series),
       figures: generated.flatMap((g) => g.figures),
     };
