@@ -4,11 +4,11 @@ import { useMemo, useReducer } from "react";
 import Link from "next/link";
 
 import "@/components/ceremony/scene/tokens.css";
-import { DEMO_FIGURES } from "@/lib/figures/demo";
+import { useFigures } from "@/components/reveal/figures-api";
 import type { LoadedFigures } from "@/lib/figures";
 
 import { realSealApi, type SealApi } from "./api";
-import { listPickableSeries } from "./catalogue-list";
+import { sealFiguresFrom } from "./catalogue-list";
 import { LIVE_COPY } from "./copy";
 import { BackupFallback } from "./BackupFallback";
 import styles from "./live.module.css";
@@ -22,20 +22,24 @@ import { usePrfHint } from "./prf-hint";
 import { INITIAL_WRITE_DRAFT, reduceWriteDraft } from "./write-draft";
 import { figureLimit } from "./form";
 
-/** The figures on offer, computed once from the demo figure file. */
-const PICKABLE = listPickableSeries(DEMO_FIGURES);
+/** Figures used when the request has not resolved. Sealing is blocked then. */
+const NO_FIGURES: LoadedFigures = { fixture: false, series: new Map() };
 
 /**
  * The injectable parts of the flow (R11.5): the browser port, the routes, the
- * figures and the clock. The QA stub passes its own port, api and nowMs. The
- * default port is the crypto module's own `browserAuthenticatorPort`, taken
- * from the dynamically loaded module so this file never statically imports
- * `@/lib/crypto` (the component import boundary forbids that).
+ * figures request and the clock. The QA stub passes its own port, api and
+ * nowMs. The default port is the crypto module's own
+ * `browserAuthenticatorPort`, taken from the dynamically loaded module so this
+ * file never statically imports `@/lib/crypto` (the component import boundary
+ * forbids that).
+ *
+ * The figures come only from GET /api/figures (issue #202). There is no bundled
+ * fallback: `fetchFigures` replaces the browser `fetch` for that one request.
  */
 export interface SealPageDeps {
   port: AuthenticatorPort;
   api: SealApi;
-  figures: LoadedFigures;
+  fetchFigures?: typeof fetch;
   nowMs: () => number;
 }
 
@@ -63,7 +67,11 @@ export interface SealPageProps {
 export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
   const crypto = useCryptoModule();
   const prfHint = usePrfHint();
-  const figureMax = figureLimit(PICKABLE.length);
+  const figuresState = useFigures(deps?.fetchFigures);
+  const sealFigures = useMemo(() => sealFiguresFrom(figuresState), [figuresState]);
+  const figuresReady = sealFigures.status === "ready";
+  const pickable = sealFigures.status === "ready" ? sealFigures.pickable : [];
+  const figureMax = figureLimit(pickable.length);
 
   // The letter text, chosen figures and warning tick. The page holds them, not
   // WriteForm, so they survive the cancelled, failed and cannot_lock screens and
@@ -73,10 +81,11 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
     INITIAL_WRITE_DRAFT,
   );
 
-  // SealDeps for the runner, built once the crypto module is loaded. Null until
-  // then, which keeps the flow's presses disabled.
+  // SealDeps for the runner, built once the crypto module is loaded and the
+  // figures response is ready. Null until both, which keeps the flow's presses
+  // disabled. A failed figures request therefore blocks sealing.
   const sealDeps: SealDeps | null = useMemo(() => {
-    if (crypto === null) return null;
+    if (crypto === null || !figuresReady) return null;
     return {
       crypto,
       port: deps?.port ?? crypto.browserAuthenticatorPort,
@@ -84,18 +93,20 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
       rpId,
       now: deps?.nowMs ?? Date.now,
     };
-  }, [crypto, deps?.port, deps?.api, deps?.nowMs, rpId]);
+  }, [crypto, figuresReady, deps?.port, deps?.api, deps?.nowMs, rpId]);
 
   // The flow reads the draft at Confirm_Press; memoised so the handlers keep
-  // their identity while the form is unchanged.
+  // their identity while the form is unchanged. The figures are the response's,
+  // and the empty set stands in only while sealDeps is null.
+  const sealedFigures = sealFigures.status === "ready" ? sealFigures.figures : NO_FIGURES;
   const draft: SealDraft = useMemo(
     () => ({
       text: writeDraft.text,
       metricIds: writeDraft.metricIds,
-      figures: deps?.figures ?? DEMO_FIGURES,
+      figures: sealedFigures,
       backupCard: writeDraft.backupCardTicked,
     }),
-    [writeDraft.text, writeDraft.metricIds, writeDraft.backupCardTicked, deps?.figures],
+    [writeDraft.text, writeDraft.metricIds, writeDraft.backupCardTicked, sealedFigures],
   );
 
   const flow = useSealFlow(sealDeps, draft);
@@ -153,7 +164,8 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
         // form knows which of its controls to show for each step.
         return (
           <WriteForm
-            series={PICKABLE}
+            series={pickable}
+            figuresStatus={sealFigures.status}
             prfHint={prfHint}
             state={state}
             cryptoLoaded={crypto !== null}

@@ -72,14 +72,14 @@ export async function loadFigures(
  * Loads the figures once per mounted reveal and returns their state. It starts
  * as `loading`, then becomes `ready` or `failed`.
  */
-export function useFigures(): FiguresState {
+export function useFigures(fetchImpl?: typeof fetch): FiguresState {
   const [state, setState] = useState<FiguresState>({ status: "loading" });
   const requested = useRef(false);
 
   useEffect(() => {
     if (requested.current) return;
     requested.current = true;
-    void loadFigures().then(setState);
+    void loadFigures(fetchImpl).then(setState);
   }, []);
 
   return state;

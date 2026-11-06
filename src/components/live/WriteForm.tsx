@@ -14,6 +14,12 @@ import { StepStatus } from "./StepStatus";
 export interface WriteFormProps {
   /** The figures the visitor can pick from. */
   series: readonly PickableSeries[];
+  /**
+   * The state of the figures request (issue #202). Only `ready` shows the
+   * picker and allows sealing. Defaults to `ready` so callers with a list
+   * already in hand need not pass it.
+   */
+  figuresStatus?: "loading" | "ready" | "failed";
   /** The current sealing state, from useSealFlow in the page. */
   state: SealState;
   /** True once useCryptoModule() has loaded the crypto module (R15.3). */
@@ -77,6 +83,7 @@ export function buttonLive(
  */
 export function WriteForm({
   series,
+  figuresStatus = "ready",
   state,
   cryptoLoaded,
   text,
@@ -117,7 +124,8 @@ export function WriteForm({
   const buttonLabel = inCreated
     ? LIVE_COPY.confirmButton
     : LIVE_COPY.createButton;
-  const buttonDisabled = !cryptoLoaded || !buttonLive(state, problems);
+  const buttonDisabled =
+    !cryptoLoaded || figuresStatus !== "ready" || !buttonLive(state, problems);
   const onButtonPress = inCreated ? onConfirmPress : onCreatePress;
 
   return (
@@ -153,12 +161,20 @@ export function WriteForm({
         </p>
       </div>
 
-      <FigurePicker
-        series={series}
-        selected={metricIds}
-        atLimit={atLimit}
-        onToggle={onToggleFigure}
-      />
+      {figuresStatus === "ready" ? (
+        <FigurePicker
+          series={series}
+          selected={metricIds}
+          atLimit={atLimit}
+          onToggle={onToggleFigure}
+        />
+      ) : (
+        <p className={styles.hint} role="status">
+          {figuresStatus === "failed"
+            ? LIVE_COPY.figuresLoadFailed
+            : LIVE_COPY.figuresLoading}
+        </p>
+      )}
       <p id="live-figures-problem" className={styles.problem}>
         {problemText("figures_none")}
       </p>
