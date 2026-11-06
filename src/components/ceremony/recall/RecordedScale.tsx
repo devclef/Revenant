@@ -97,7 +97,7 @@ export function RecordedScale({ id, label, unitLabel, value }: RecordedScaleProp
       </div>
 
       {helper === null ? null : (
-        <p id={helperId} className={styles.unitHelp}>
+        <p id={helperId} className={`${styles.unitHelp} ${styles.recordedHelp}`}>
           {helper}
         </p>
       )}

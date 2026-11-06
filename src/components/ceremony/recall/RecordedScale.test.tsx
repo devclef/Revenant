@@ -124,12 +124,17 @@ describe("the Unit_Helper_Line sits on its own row under the tick labels", () =>
     expect(markup.slice(helper)).toContain(CEREMONY_COPY.unitHelperEurPer1000L);
   });
 
-  it("reserves at least 1.5rem below the track for the tick row", () => {
-    const rule = /\.recordedTrack\s*\{([^}]*)\}/.exec(css);
+  it("gives the helper a top margin of at least 1.5rem, clearing the 1.5rem tick row", () => {
+    const rule = /\.recordedHelp\s*\{([^}]*)\}/.exec(css);
     expect(rule).not.toBeNull();
-    const margin = /margin-bottom:\s*([\d.]+)rem/.exec(rule?.[1] ?? "");
+    const margin = /margin:\s*([\d.]+)rem/.exec(rule?.[1] ?? "");
     expect(margin).not.toBeNull();
     expect(Number(margin?.[1])).toBeGreaterThanOrEqual(1.5);
+  });
+
+  it("applies the helper spacing only where a helper line is shown (US scale unchanged)", () => {
+    expect(render({ unitLabel: "EUR per 1,000 litres" })).toContain("recordedHelp");
+    expect(render({ unitLabel: "USD per gallon" })).not.toContain("recordedHelp");
   });
 });
 
