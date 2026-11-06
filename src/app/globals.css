@@ -41,12 +41,6 @@
   /* Decorative "faded ink" -- never on body text or numbers */
   --ink-faded: rgba(31, 27, 22, 0.55);
 
-  /* Type */
-  --font-serif:
-    "EB Garamond", Georgia, "Times New Roman", serif; /* fallback until layout vars load */
-  --font-sans:
-    "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-
   --measure: 68ch; /* comfortable reading width for generous negative space */
 }
 
@@ -83,14 +77,21 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Headings: serif display face, deep ink, room to breathe. */
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+/* Headings: clean sans display face, deep ink, room to breathe. */
 h1,
 h2,
 h3,
 h4,
 h5,
 h6 {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   color: var(--ink);
   font-weight: 600;
   line-height: 1.2;
@@ -101,15 +102,20 @@ h6 {
 
 h1 {
   font-size: clamp(2.25rem, 5vw, 3.5rem);
-  font-weight: 500;
+  font-weight: 900;
+  letter-spacing: -0.02em;
 }
 
 h2 {
   font-size: clamp(1.6rem, 3.5vw, 2.25rem);
+  font-weight: 800;
+  letter-spacing: -0.015em;
 }
 
 h3 {
   font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  font-weight: 750;
+  letter-spacing: -0.01em;
 }
 
 p {
