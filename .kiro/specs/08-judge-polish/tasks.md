@@ -487,7 +487,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
   - Validation: `bash scripts/check.sh`
   - _Requirements: R22.1–R22.4, R22.6, R22.8, R23.2_
 
-- [ ] 19. FIXTURE guard in persona sealing, and the Postgres tests for the EU persona and the figures tables
+- [x] 19. FIXTURE guard in persona sealing, and the Postgres tests for the EU persona and the figures tables
   - Agent: `crypto-dev` · Depends on: 16, 17, 18 · Estimated size: ~100 changed lines (integration tests excluded from the count)
   - Before this task: tasks 16, 17 and 18 are on `main`: task 16 for the figures-table tests, task 18 for the EU persona this task seals, and task 17 because its new `*.test.ts` files under `src/test/` can match `src/test/integration/figures.test.ts`. Must merge by 27 November 2026 (R31.5).
   - Scope: `scripts/seal-personas-core.ts`, `scripts/seal-personas.build.mjs` (only if the new letter file must be listed for the build), `src/test/integration/seal-personas-core.test.ts`, `src/test/integration/seal-personas.test.ts`, `src/test/integration/figures.test.ts` (new), `src/test/integration/setup.ts` (truncate list, additions only), and the `*.test.ts` next to `scripts/seal-personas-core.ts`
