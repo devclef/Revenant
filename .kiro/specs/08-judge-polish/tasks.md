@@ -355,7 +355,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
   - Validation: `bash scripts/check.sh`
   - _Requirements: R9.9, R9.14, R10.1–R10.6, R12.4, R12.6_
 
-- [ ] 13. Promise audit, the regions search test, and the README, write-up and steering patches
+- [x] 13. Promise audit, the regions search test, and the README, write-up and steering patches
   - Agent: `frontend-dev` · Depends on: 12 · Estimated size: ~400 changed lines
   - Before this task: task 12 is on `main`. The README Sweden lines are already on `main`: line 20 names fuel prices for the US or the EU and has no self-reported clause, and line 46 names only a recent US election window. The README already passes the R23.3 search, so there is nothing to wait for.
   - Scope: the frontend-dev copy modules (`src/components/**/copy.ts`), `src/components/live/LetterCard.tsx` and `live/BackupKeyCard.tsx` (card wording only, if the audit finds an untrue claim), `src/components/regions-scan.test.ts` (new), and the `*.test.ts(x)` for each copy module changed
