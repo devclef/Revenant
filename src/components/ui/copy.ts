@@ -6,6 +6,27 @@
 // Plain readonly constants only. No JSX lives here.
 
 export const UI_COPY = {
+  /**
+   * Strings for BrandedPage, the shared body of the not-found and error pages.
+   * Calm and literal (tone.md): say what happened and what the reader can do.
+   */
+  branded: {
+    /** The link to the demo letters, shown on every branded page. */
+    demoLink: "Open the demo letters",
+  },
+
+  notFound: {
+    heading: "This page is not here.",
+    body: "Nothing is sealed at this address. Check the link, or go to the demo letters.",
+  },
+
+  error: {
+    heading: "This page could not be shown.",
+    body: "Something failed while the page was loading. Try again in a moment, or go to the demo letters.",
+    /** The control that asks the page to render again. */
+    retry: "Try again",
+  },
+
   footer: {
     /** The link to the How_Page. */
     how: "How a letter is sealed",

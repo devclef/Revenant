@@ -1,0 +1,68 @@
+/*
+ * BrandedPage layout (the not-found and error pages). It sits on the plain Scene:
+ * the near-black --bg, with --text for the heading, the copy and the link. Each
+ * colour is set here, on the page, so no colour is inherited from the shell.
+ * --text on --bg is about 18:1 and clears WCAG 2.2 AA.
+ *
+ * The column is capped at 40rem and uses border-box sizing, so nothing scrolls
+ * sideways at 360 px. Long words wrap.
+ */
+
+.page {
+  --text-on-desk: var(--text);
+
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: clamp(1.25rem, 3vw, 2rem);
+  width: 100%;
+  max-width: 40rem;
+  margin-inline: auto;
+  padding: clamp(1.25rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem);
+  box-sizing: border-box;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  color: var(--text-on-desk);
+  font-family: var(--font-sans);
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: clamp(2rem, 6vw, 3rem);
+  font-weight: 800;
+  line-height: 1.1;
+  color: var(--text-on-desk);
+}
+
+.body {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-on-desk);
+}
+
+.action {
+  min-width: 0;
+}
+
+.demo {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.6;
+  color: var(--text-on-desk);
+}
+
+/* The global `a` rule is wax-seal red, which does not clear AA on --bg. The
+   link takes --text and keeps the underline, as the footer links do. */
+.link {
+  color: var(--text-on-desk);
+  text-decoration-line: underline;
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 1px;
+}
+
+.link:hover,
+.link:focus-visible {
+  text-decoration-thickness: 2px;
+}
