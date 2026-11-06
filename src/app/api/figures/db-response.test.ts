@@ -17,6 +17,7 @@ import { describe, expect, it } from "vitest";
 import { bundledLatestFigure } from "@/lib/figures/bundled-latest";
 import { CATALOGUE } from "@/lib/figures/catalogue";
 import { parseFiguresResponse } from "@/lib/figures/now";
+import type { CatalogueSeries } from "@/lib/figures/types";
 import type { FigureV1 } from "@/lib/seal-format";
 
 import {
@@ -262,8 +263,15 @@ describe("Property 23 (database part): the Figures_API lists every series with i
 
 // --- Examples ----------------------------------------------------------------
 
-const GASOLINE = CATALOGUE[0].metric;
-const DIESEL = CATALOGUE[1].metric;
+/** The Catalogue entry for one metric ID. Looked up by ID, never by position. */
+function catalogueSeries(metricId: string): CatalogueSeries {
+  const found = CATALOGUE.find((c) => c.metric.id === metricId);
+  if (found === undefined) throw new Error(`unknown metric in test: ${metricId}`);
+  return found;
+}
+
+const GASOLINE = catalogueSeries("us-gasoline-regular").metric;
+const DIESEL = catalogueSeries("us-diesel").metric;
 
 function stored(
   metric: typeof GASOLINE,
@@ -295,7 +303,7 @@ describe("database mode examples", () => {
     const byId = new Map(body.series.map((s) => [s.metric.id, s]));
     expect(byId.get(GASOLINE.id)?.figure).not.toBeNull();
     expect(byId.get(GASOLINE.id)?.fallback).toBe(false);
-    expect(byId.get(DIESEL.id)?.figure).toEqual(bundledLatestFigure(CATALOGUE[1]));
+    expect(byId.get(DIESEL.id)?.figure).toEqual(bundledLatestFigure(catalogueSeries("us-diesel")));
     expect(byId.get(DIESEL.id)?.fallback).toBe(true);
     expect(byId.get(DIESEL.id)?.last_success_at).toBeNull();
   });
@@ -389,7 +397,7 @@ describe("database mode examples", () => {
 
 describe("Property 1: stored, else bundled, else null", () => {
   const storedFigure = asFigure(stored(GASOLINE, "2026-10-05", "1.0001", "2026-11-02T10:00:00Z"));
-  const bundledFigure = bundledLatestFigure(CATALOGUE[0]);
+  const bundledFigure = bundledLatestFigure(catalogueSeries("us-gasoline-regular"));
 
   it("gives the stored figure with fallback false when a stored row exists", () => {
     expect(chooseFigure(storedFigure, bundledFigure)).toEqual({
