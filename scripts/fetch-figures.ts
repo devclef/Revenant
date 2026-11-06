@@ -17,9 +17,16 @@ import { CATALOGUE, loadFigureFile } from "@/lib/figures";
 import type { FigureFile } from "@/lib/figures/types";
 import realFigures from "@/lib/figures/real/fuel-figures.json";
 import { createFetchAdapters } from "@/lib/sources/fetch-adapters";
+import {
+  parseWaitForSchema,
+  runGatedFetch,
+} from "@/lib/sources/fetch-gate";
 import { runFetchJob, seedRowsFromFigureFile } from "@/lib/sources/fetch-job";
 
-import { createPostgresFigureStore } from "./fetch-figures-store";
+import {
+  createPostgresFigureStore,
+  openFetchSession,
+} from "./fetch-figures-store";
 
 function log(line: string): void {
   process.stdout.write(`${line}\n`);
@@ -31,6 +38,13 @@ function runStartedAt(): Date {
 }
 
 async function main(): Promise<0 | 1> {
+  // `--wait-for-schema=<seconds>` is optional. Without it the job makes one attempt.
+  const wait = parseWaitForSchema(process.argv.slice(2));
+  if (!wait.ok) {
+    log("fetch-figures failed: arguments");
+    return 1;
+  }
+
   // Validate the bundled seed the way the app loads it, so a bad file ends the job
   // before any write.
   let seed: ReturnType<typeof seedRowsFromFigureFile>;
@@ -52,14 +66,24 @@ async function main(): Promise<0 | 1> {
   }
 
   try {
-    const result = await runFetchJob({
-      store: createPostgresFigureStore(sql),
-      adapters: createFetchAdapters(),
-      runStartedAt: runStartedAt(),
-      seed,
+    // The gate takes the run lock before any read, and waits for the schema if asked.
+    return await runGatedFetch({
+      waitSeconds: wait.waitSeconds,
+      openSession: () => openFetchSession(sql),
+      runJob: async () => {
+        const result = await runFetchJob({
+          store: createPostgresFigureStore(sql),
+          adapters: createFetchAdapters(),
+          runStartedAt: runStartedAt(),
+          seed,
+          log,
+        });
+        return result.exitCode;
+      },
       log,
+      now: () => Date.now(),
+      sleep: (ms) => new Promise((resolve) => setTimeout(resolve, ms)),
     });
-    return result.exitCode;
   } finally {
     await sql.end({ timeout: 5 });
   }

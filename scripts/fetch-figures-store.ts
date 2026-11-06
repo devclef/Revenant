@@ -12,6 +12,7 @@ type Sql = postgres.Sql;
 type Tx = postgres.TransactionSql;
 
 import type { FigureRow, FigureStore } from "@/lib/sources/fetch-job";
+import type { FetchSession } from "@/lib/sources/fetch-gate";
 
 /** Inserts one figure row with the eight provenance columns. The `kind` column defaults to official. */
 function insertFigure(tx: Tx, row: FigureRow) {
@@ -108,6 +109,36 @@ export function createPostgresFigureStore(sql: Sql): FigureStore {
           await insertFigure(tx, row);
         }
       });
+    },
+  };
+}
+
+/**
+ * Opens a run session on a dedicated connection, reserved from the pool. The
+ * session advisory lock belongs to the connection that takes it, so the lock and
+ * the schema check both use this one connection, and `close` returns it to the
+ * pool. Throws when the database cannot be reached; the caller decides whether to
+ * retry. The lock key is the literal `hashtext('revenant-fetch-figures')`.
+ */
+export async function openFetchSession(sql: Sql): Promise<FetchSession> {
+  const conn = await sql.reserve();
+  return {
+    async tryLock(): Promise<boolean> {
+      const [row] = await conn<{ locked: boolean }[]>`
+        SELECT pg_try_advisory_lock(hashtext('revenant-fetch-figures')) AS locked`;
+      return row.locked === true;
+    },
+    async schemaReady(): Promise<boolean> {
+      const [row] = await conn<{ ready: boolean }[]>`
+        SELECT (to_regclass('figures') IS NOT NULL
+                AND to_regclass('figure_fetch_runs') IS NOT NULL) AS ready`;
+      return row.ready === true;
+    },
+    async unlock(): Promise<void> {
+      await conn`SELECT pg_advisory_unlock(hashtext('revenant-fetch-figures'))`;
+    },
+    async close(): Promise<void> {
+      conn.release();
     },
   };
 }
