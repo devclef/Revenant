@@ -266,7 +266,7 @@ export function Reveal({
       <div className={`${styles.stage} ${styles.fade}`}>
         <StagePanel>
           <SoundEnabledContext.Provider value={soundOn}>
-            <div className={styles.marks}>
+            <div className={styles.marks} data-card="marks">
               <h2 className={styles.marksHeading} data-fit="marks-heading">
                 {REVEAL_COPY.stage1Title}
               </h2>
