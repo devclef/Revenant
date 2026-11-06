@@ -110,6 +110,14 @@ fetchFigures:
   successfulJobsHistoryLimit: 3
   # -- Failed CronJob runs kept. Minimum 1.
   failedJobsHistoryLimit: 3
+  # -- Run the figure fetch once as a Job on every install and upgrade, so the
+  # figures exist before the first scheduled run. Its logs are in the Job named
+  # `<fullname>-fetch-seed-r<revision>`. Set to false to skip the seed run.
+  seedOnDeploy: true
+  # -- Seconds the seed Job waits for the database schema (created by the
+  # migrate init container of the web pod) before it gives up. A seed run that
+  # times out fails the Job; the scheduled CronJob still runs daily.
+  seedWaitForSchemaSeconds: 600
 
 # -- Pod-level security context. Runs the whole pod as a non-root user.
 podSecurityContext:
