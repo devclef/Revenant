@@ -46,6 +46,11 @@ QA_CLONE = HOME / "qa"
 ROLES = ("platform-dev", "frontend-dev", "data-dev", "crypto-dev")
 MAX_DEV_RUNS = int(os.environ.get("REVENANT_MAX_DEV_RUNS", "1"))  # all Task Runner runs, dev + fix + QA
 MAX_FIX_ATTEMPTS = 3
+# A run that died in the Task Runner itself, before the agent did any work, is started
+# again this many times per issue before a human is asked. "Failed to decompose spec
+# into tasks" blocked #192 and #193 this way; a plain re-run went through.
+MAX_RUN_RETRIES = 2
+TRANSIENT_RUN_ERRORS = ("Failed to decompose spec into tasks",)
 CI_CHECK = "ci-gate"
 REQUIRED_CHECKS = ("ci-gate", "policy")
 # Text of the size error in pr_policy.evaluate; only a human can split a ticket.
@@ -206,6 +211,10 @@ def dev_paths_section(role: str, paths: list[str]) -> list[str]:
         "- If the work cannot be done inside your paths at all, finish everything else, "
         "then end your last step's report with one line that starts `OUT OF SCOPE:` and "
         "names the file and the change the owner must make.",
+        "- Tests are shared: you may update an existing `*.test.ts` or `*.test.tsx` file "
+        "anywhere under `src/` when your ticket's change makes its expectation out of date "
+        "(for example a new date format or new copy). Change only the assertions your work "
+        "outdated, keep what they check, and never delete another role's test file.",
         "- Before each commit, check `git status`. If a build or tool changed a file "
         "outside your paths (for example `next-env.d.ts`), or the `policy` check names "
         "one, restore it with `git checkout origin/main -- <file>`. Never delete it or "
@@ -644,6 +653,33 @@ def fix_attempts(comments: list[dict]) -> int:
     return sum(1 for t in started if t not in empty)
 
 
+def transient_run_failure(run: dict | None) -> bool:
+    """True when the run failed inside the Task Runner (not in the agent's work), so a
+    fresh run of the same spec is likely to go through."""
+    if not run:
+        return False
+    err = str(run.get("error") or "")
+    return any(t in err for t in TRANSIENT_RUN_ERRORS)
+
+
+def run_retries(comments: list[dict]) -> int:
+    """run-retry markers on an issue since the latest fix-reset."""
+    count = 0
+    for c in comments:
+        if not c.get("_trusted"):
+            continue
+        for m in _MARKER_RE.finditer(c.get("body") or ""):
+            try:
+                kind = json.loads(m.group(1)).get("kind")
+            except ValueError:
+                continue
+            if kind == "fix-reset":
+                count = 0
+            elif kind == "run-retry":
+                count += 1
+    return count
+
+
 def marker_comments(comments: list[dict], kind: str, sha: str) -> list[dict]:
     """Trusted comments carrying a marker of this kind for this commit."""
     out = []
@@ -1063,6 +1099,8 @@ class Tick:
             problem = resumed_agent_problem(run, resumed, role)
             if state == "failed" and not problem and only_noop_review_failures(run):
                 state = "passed"  # nothing to change is not a failure; the branch holds the work
+            if state == "failed" and not problem and self._retry_transient_run(issue, marker, run, prs):
+                continue
             if state != "passed" or problem:
                 detail = problem or f"ended as **{state}**"
                 reason = "" if problem else run_failure_reason(run)
@@ -1126,10 +1164,36 @@ class Tick:
             return False
         return run_sha == head
 
+    def _retry_transient_run(self, issue: dict, marker: dict, run: dict | None, prs: list[dict]) -> bool:
+        """Start a run again that failed in the Task Runner before the agent got going.
+        A dev run goes back to status:ready and is claimed again; a fix run goes back to
+        changes-requested and is not counted as a fix attempt. Returns True when handled."""
+        n = issue["number"]
+        comments = self.gh.comments(n)
+        if not transient_run_failure(run) or run_retries(comments) >= MAX_RUN_RETRIES:
+            return False
+        pr = next((p for p in prs if closes_issue(p.get("body")) == n), None)
+        err = str((run or {}).get("error") or "").strip()[:300]
+        data = {"kind": "run-retry", "task_id": marker["task_id"]}
+        body = (f"Run `{marker['task_id']}` failed in the Task Runner before any work was done "
+                f"(`{err}`). Starting it again.\n\n")
+        if marker.get("fix") and pr is not None:
+            self.gh.comment(n, body + make_marker(data) + "\n"
+                            + make_marker({"kind": "dev-result", "task_id": marker["task_id"], "commits": False}))
+            self.gh.set_status(n, L_REVIEW, L_PROGRESS)
+            self.gh.add_labels(pr["number"], L_CHANGES)
+        else:
+            self.gh.comment(n, body + make_marker(data))
+            self.gh.set_status(n, L_READY, L_PROGRESS)
+        self.say(f"#{n}: run failed in the Task Runner, retrying")
+        return True
+
     def fix_made_no_commits(self, issue: dict, pr: dict, marker: dict) -> None:
         """A fix run that committed nothing. It is not an attempt (the dev-result marker
         says so). Nothing changed, so repeating the same feedback would only loop:
-        - after QA feedback, the same review would come back, so flag it now;
+        - after QA feedback the agent found nothing to change. QA reviews the same commit
+          once more (QA findings have been wrong about the environment, as on #241), and
+          only a second empty fix on that commit is flagged;
         - after CI feedback, start_qa re-runs CI once on the commit, then flags it."""
         n = issue["number"]
         self.gh.comment(n, f"Fix run `{marker['task_id']}` for PR #{pr['number']} made no commits. "
@@ -1140,9 +1204,17 @@ class Tick:
         if feedback and feedback.get("source") == "ci":
             self.gh.set_status(pr["number"], L_NEEDS_QA, L_CHANGES)
             self.say(f"#{n}: fix run made no commits; PR #{pr['number']} back to CI")
+        elif feedback and not marker_comments(self.gh.comments(pr["number"]), "qa-retry",
+                                               str(feedback.get("sha"))):
+            self.gh.comment(pr["number"], "The fix run found nothing to change for the QA feedback "
+                                          "above. QA reviews this commit once more before a human "
+                                          "is asked.\n\n"
+                            + make_marker({"kind": "qa-retry", "sha": feedback.get("sha")}))
+            self.gh.set_status(pr["number"], L_NEEDS_QA, L_CHANGES)
+            self.say(f"#{n}: fix run made no commits; PR #{pr['number']} back to QA once")
         else:
-            self.block_pr(pr, "The fix run made no commits in response to QA feedback, so the same "
-                              "review would come back. Needs a human.")
+            self.block_pr(pr, "The fix run made no commits in response to QA feedback twice on "
+                              "the same commit, so the same review would come back. Needs a human.")
 
     # 2 ─ QA runs finished → verdict
     def finish_qa_runs(self, prs: list[dict], runs: dict) -> None:

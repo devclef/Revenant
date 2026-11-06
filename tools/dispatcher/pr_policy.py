@@ -4,6 +4,7 @@ Rules for agent PRs:
   - the body links an issue with "Closes #n"
   - that issue has exactly one agent:* label
   - every changed file is owned by that agent (or shared) per .github/agents.json
+  - shared test files may be updated by any role but deleted only by their owner
   - no owner-only paths (.kiro/**, .github/**, tools/**, scripts/check.sh)
   - changed lines (excluding generated files) stay under max_changed_lines
 
@@ -19,6 +20,7 @@ import urllib.request
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
+SHARED_TESTS = ["src/**/*.test.ts", "src/**/*.test.tsx"]
 OWNER_ONLY = [".kiro/**", ".github/**", "tools/**", "scripts/check.sh", ".qa/**"]
 
 
@@ -74,6 +76,9 @@ def check_files(role: str, files: list[dict], ownership: dict) -> list[str]:
             errors.append(f"`{path}` is owner-only.")
         elif not matches(path, allowed):
             errors.append(f"`{path}` is outside `{role}`'s owned paths.")
+        elif (f.get("status") == "removed" and matches(path, SHARED_TESTS)
+              and not matches(path, ownership["roles"][role])):
+            errors.append(f"`{path}` is another role's test; update it, don't delete it.")
         if not matches(path, ownership.get("exclude_from_size", [])):
             size += int(f.get("additions", 0)) + int(f.get("deletions", 0))
     limit = int(ownership.get("max_changed_lines", 2000))

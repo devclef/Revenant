@@ -902,8 +902,18 @@ class EmptyFixRun(unittest.TestCase):
         self.assertIn(("status", 5, "needs-qa", ("status:changes-requested",)), gh.events)
         self.assertEqual(gh.has("status", 5)[0][2], "needs-qa")
 
-    def test_no_commits_after_qa_feedback_is_flagged_now(self):
+    def test_no_commits_after_qa_feedback_goes_back_to_qa_once(self):
         gh = RecGH()
+        self.run_finish(gh, "qa", "sha5")
+        self.assertIn(("status", 5, "needs-qa", ("status:changes-requested",)), gh.events)
+        self.assertFalse(any(e[2] == "status:blocked" for e in gh.has("status", 5)))
+        self.assertIn('"kind": "qa-retry"', gh.has("comment", 5)[0][2])
+
+    def test_second_empty_fix_on_the_same_commit_is_flagged(self):
+        gh = RecGH()
+        retry = {"body": d.make_marker({"kind": "qa-retry", "sha": "sha5"}), "_trusted": True}
+        orig = gh.comments
+        gh.comments = lambda n: orig(n) + ([retry] if n == 5 else [])
         self.run_finish(gh, "qa", "sha5")
         self.assertIn(("status", 5, "status:blocked", ("status:changes-requested",)), gh.events)
 
@@ -912,6 +922,75 @@ class EmptyFixRun(unittest.TestCase):
         git_calls = self.run_finish(gh, "ci", "other")
         self.assertTrue(any(a[0] == "push" for a in git_calls))
         self.assertIn(("status", 5, "needs-qa", ("status:changes-requested", "status:qa-passed")), gh.events)
+
+
+class TransientRunRetry(unittest.TestCase):
+    """A run that failed in the Task Runner itself is started again, up to MAX_RUN_RETRIES."""
+
+    def finish(self, gh, fix=False, extra=()):
+        from unittest import mock
+        gh.comments_by[105] = [{"body": d.make_marker({"kind": "dev", "task_id": "T1", "role": "data-dev",
+                                                       **({"fix": True} if fix else {})}),
+                                "_trusted": True}, *extra]
+        run = {"status": "failed", "error": "Failed to decompose spec into tasks"}
+        tick, notes = make_tick(gh)
+        prs = [pr_item(5, "agent:data-dev")] if fix else []
+        with mock.patch.object(d, "git") as git_mock:
+            tick.finish_dev_runs([issue(105, ["status:in-progress", "agent:data-dev"])], prs, {"T1": run})
+        git_mock.assert_not_called()
+        return notes
+
+    def test_dev_run_goes_back_to_ready(self):
+        gh = RecGH()
+        notes = self.finish(gh)
+        self.assertIn(("status", 105, "status:ready", ("status:in-progress",)), gh.events)
+        self.assertIn('"kind": "run-retry"', gh.has("comment", 105)[0][2])
+        self.assertEqual(notes, [])
+
+    def test_fix_run_goes_back_to_changes_requested_and_is_not_an_attempt(self):
+        gh = RecGH()
+        self.finish(gh, fix=True)
+        self.assertIn(("label+", 5, ("status:changes-requested",)), gh.events)
+        self.assertIn(("status", 105, "status:in-review", ("status:in-progress",)), gh.events)
+        note = gh.has("comment", 105)[0][2]
+        comments = gh.comments_by[105] + [{"body": note, "_trusted": True}]
+        self.assertEqual(d.fix_attempts(comments), 0)
+
+    def test_blocks_after_the_retries_are_used(self):
+        gh = RecGH()
+        used = [{"body": d.make_marker({"kind": "run-retry", "task_id": f"T{i}"}), "_trusted": True}
+                for i in range(d.MAX_RUN_RETRIES)]
+        notes = self.finish(gh, extra=used)
+        self.assertIn(("status", 105, "status:blocked", ("status:in-progress",)), gh.events)
+        self.assertTrue(notes)
+
+    def test_agent_failures_are_not_retried(self):
+        self.assertFalse(d.transient_run_failure({"error": "Task 10 failed: Loop detected: same error 3 times"}))
+        self.assertTrue(d.transient_run_failure({"error": "Failed to decompose spec into tasks"}))
+
+    def test_fix_reset_restarts_the_retry_count(self):
+        m = lambda k: {"body": d.make_marker({"kind": k}), "_trusted": True}
+        self.assertEqual(d.run_retries([m("run-retry"), m("run-retry"), m("fix-reset"), m("run-retry")]), 1)
+
+
+class SharedTests(unittest.TestCase):
+    def test_any_role_may_update_but_not_delete_another_roles_test(self):
+        files = [{"filename": "src/components/reveal/opening-machine.property.test.ts",
+                  "additions": 1, "deletions": 1, "status": "modified"}]
+        self.assertEqual(pr_policy.check_files("data-dev", files, OWNERSHIP), [])
+        files[0]["status"] = "removed"
+        self.assertIn("don't delete it", pr_policy.check_files("data-dev", files, OWNERSHIP)[0])
+        self.assertEqual(pr_policy.check_files("frontend-dev", files, OWNERSHIP), [])
+
+    def test_dev_spec_tells_the_agent_tests_are_shared(self):
+        spec = d.dev_spec({"number": 2, "title": "t", "body": "b"}, "data-dev",
+                          paths=["src/lib/figures/**"])
+        self.assertIn("Tests are shared", spec)
+
+    def test_qa_prompt_keeps_unfixable_findings_minor(self):
+        prompt = (Path(__file__).resolve().parents[3] / ".kiro/agents/prompts/qa.md").read_text()
+        self.assertIn("Blockers must be fixable by the dev agent", prompt)
+        self.assertIn("npm run fetch-figures", prompt)
 
 
 class QASpecManual(unittest.TestCase):

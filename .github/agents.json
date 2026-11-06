@@ -1,10 +1,12 @@
 {
-  "_comment": "Path ownership per role agent. Used by pr-policy CI and the dispatcher. Keep in sync with fs_write rules in .kiro/agents/*.json. Paths not owned by any role (.kiro/**, .github/**, tools/**, scripts/check.sh) are owner-only.",
+  "_comment": "Path ownership per role agent. Used by pr-policy CI and the dispatcher. Keep in sync with fs_write rules in .kiro/agents/*.json. Paths not owned by any role (.kiro/**, .github/**, tools/**, scripts/check.sh) are owner-only. Test files under src/ are shared so a ticket that changes behaviour can update the tests it outdates; pr_policy still refuses deleting another role's test.",
   "shared": [
     "package.json",
     "package-lock.json",
     ".env.example",
-    "src/test/integration/**"
+    "src/test/integration/**",
+    "src/**/*.test.ts",
+    "src/**/*.test.tsx"
   ],
   "roles": {
     "platform-dev": [

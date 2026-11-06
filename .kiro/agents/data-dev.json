@@ -45,6 +45,8 @@
           "package.json",
           "scripts/fetch-figures*",
           "scripts/prefetch*",
+          "src/**/*.test.ts",
+          "src/**/*.test.tsx",
           "src/app/api/figures/**",
           "src/lib/db/schema/figures*",
           "src/lib/events/**",
