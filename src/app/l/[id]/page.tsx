@@ -2,6 +2,24 @@ import { notFound } from "next/navigation";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { LiveLetter } from "@/components/live/LiveLetter";
 import { isLetterId } from "@/lib/seal-format";
+import { pageMetadata } from "@/lib/page-metadata";
+import { UI_COPY } from "@/components/ui/copy";
+import type { Metadata } from "next";
+
+/**
+ * Title and description for one letter. The og url is the letter's own path
+ * when the segment is a valid letter ID, so a link preview points at that
+ * letter.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
+  const { id } = await params;
+  const path = isLetterId(id) ? `/l/${id}` : "/l";
+  return pageMetadata(UI_COPY.pageMeta.letter, path);
+}
 
 /**
  * The Letter_Page at `/l/[id]` (spec 06 task 8, R17.1, R17.13, design.md

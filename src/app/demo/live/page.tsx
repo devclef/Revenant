@@ -1,6 +1,10 @@
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { SealPage } from "@/components/live/SealPage";
 import { Unavailable } from "@/components/live/Unavailable";
+import { UI_COPY } from "@/components/ui/copy";
+import { pageMetadata } from "@/lib/page-metadata";
+
+export const metadata = pageMetadata(UI_COPY.pageMeta.live, "/demo/live");
 
 /**
  * The live demo Seal_Page at `/demo/live` (spec 06, R12.8). A server component.

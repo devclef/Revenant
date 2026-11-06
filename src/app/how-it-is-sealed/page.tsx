@@ -9,8 +9,12 @@
 
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { HOW_COPY } from "@/components/how/copy";
+import { UI_COPY } from "@/components/ui/copy";
+import { pageMetadata } from "@/lib/page-metadata";
 
 import styles from "./page.module.css";
+
+export const metadata = pageMetadata(UI_COPY.pageMeta.howItIsSealed, "/how-it-is-sealed");
 
 export default function HowItIsSealedPage() {
   return (

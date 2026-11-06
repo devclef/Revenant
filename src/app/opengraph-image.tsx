@@ -46,7 +46,8 @@ export default function OpenGraphImage() {
           style={{
             display: "flex",
             flexDirection: "column",
-            fontSize: 92,
+            width: 680,
+            fontSize: 72,
             fontWeight: 700,
             lineHeight: 1.05,
             color: TEXT,
@@ -55,7 +56,12 @@ export default function OpenGraphImage() {
           <span>{SCENE_COPY.headlineLead}</span>
           <span style={{ color: ACCENT }}>{SCENE_COPY.headlineAccent}</span>
         </div>
-        <svg width="260" height="312" viewBox={VIEWBOX}>
+        <svg
+          width="220"
+          height="264"
+          viewBox={VIEWBOX}
+          style={{ flexShrink: 0 }}
+        >
           <path d={BODY_PATH} fill="#ffffff" />
           <path
             d={FOLDS_PATH}
