@@ -160,3 +160,14 @@ describe("index — committed list: Maya after the catalogue move (#82)", () => 
     expect(maya().letter_path).toBe("letters/us-maya.txt");
   });
 });
+
+// The demo shows exactly two persona letters: one US and one EU. Any other
+// key, a missing key or a duplicate key makes this fail, so a list change has
+// to update this test on purpose (issue #205).
+describe("index — Persona_List keys are exactly the US and EU keys", () => {
+  it("lists exactly us-maya and eu-tomas, once each", () => {
+    const keys = PERSONAS.map((p) => p.key).sort();
+    expect(keys).toEqual(["eu-tomas", "us-maya"]);
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+});
