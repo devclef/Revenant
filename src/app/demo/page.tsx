@@ -5,7 +5,11 @@ import { PersonaCard } from "@/components/demo/PersonaCard";
 import { DEMO_COPY } from "@/components/demo/copy";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { PERSONAS } from "@/lib/personas";
+import { pageMetadata } from "@/lib/page-metadata";
+import { UI_COPY } from "@/components/ui/copy";
 import styles from "./page.module.css";
+
+export const metadata = pageMetadata(UI_COPY.pageMeta.demo, "/demo");
 
 /**
  * Demo_Index page at `/demo`. A server component with no database access. It

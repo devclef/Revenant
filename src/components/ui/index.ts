@@ -3,6 +3,7 @@
  * components styled from globals.css tokens and co-located CSS modules — no
  * client-side JS, no third-party scripts, fonts or images.
  */
+export { Footer } from "./Footer";
 export { ParchmentSurface } from "./ParchmentSurface";
 export { PageShell } from "./PageShell";
 export { Wordmark } from "./Wordmark";

@@ -2,6 +2,32 @@ import { notFound } from "next/navigation";
 import { OpeningFlow } from "@/components/reveal/OpeningFlow";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { PERSONAS } from "@/lib/personas";
+import { pageMetadata } from "@/lib/page-metadata";
+import { UI_COPY } from "@/components/ui/copy";
+import type { Metadata } from "next";
+
+/**
+ * Title for one persona letter: "{name}'s letter". An unknown key gets the
+ * not-found title, matching the page's notFound() call.
+ */
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ key: string }>;
+}): Promise<Metadata> {
+  const { key } = await params;
+  const persona = PERSONAS.find((p) => p.key === key);
+  if (persona === undefined) {
+    return pageMetadata(UI_COPY.pageMeta.notFound, "/demo");
+  }
+  return pageMetadata(
+    {
+      title: UI_COPY.pageMeta.persona.title.replace("{name}", persona.display_name),
+      description: UI_COPY.pageMeta.persona.description,
+    },
+    `/demo/personas/${persona.key}`,
+  );
+}
 
 /**
  * Persona letter route at `/demo/personas/[key]` (design.md "Persona route",

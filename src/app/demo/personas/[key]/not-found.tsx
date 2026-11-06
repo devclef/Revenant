@@ -2,7 +2,11 @@ import Link from "next/link";
 import { PageShell, ParchmentSurface } from "@/components/ui";
 import { DemoLabel } from "@/components/demo/DemoLabel";
 import { DEMO_COPY } from "@/components/demo/copy";
+import { pageMetadata } from "@/lib/page-metadata";
+import { UI_COPY } from "@/components/ui/copy";
 import styles from "./not-found.module.css";
+
+export const metadata = pageMetadata(UI_COPY.pageMeta.notFound, "/demo");
 
 /**
  * Persona not-found page, rendered by Next.js when `page.tsx` calls

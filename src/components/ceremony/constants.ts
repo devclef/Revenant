@@ -169,3 +169,6 @@ export const LABEL_CHAR_PX = 8; // estimate per character at 0.8rem, before meas
 export const TICK_GAP_PX = 4; // smallest gap between two tick label boxes
 export const TRACK_MIN_PX = 260; // track width used before measurement
 export const TICK_CHAR_PX = 7.5; // estimated width of one tick label character at 0.75rem
+
+// --- R12 footer (spec 08 task 11) ---
+export const FOOTER_MAX_PX = 64; // the footer is at most this tall, so it stays clear of the Soil strip

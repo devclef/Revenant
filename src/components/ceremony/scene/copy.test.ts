@@ -47,13 +47,31 @@ describe("SCENE_COPY is exact (Property 23)", () => {
     );
   });
 
-  it("holds the three landing paragraphs and the demo link, verbatim from page.tsx", () => {
+  it("holds the four landing paragraphs and the link copy, verbatim from design.md \"Copy\"", () => {
     expect(SCENE_COPY.landing.paragraphs).toEqual([
-      "Revenant is a sealed letter to your future self. You write what is on your mind today, and you choose the numbers that matter to you — the price of fuel, groceries, rent — each one a real figure from an official source, kept with its date and where it came from.",
+      "Revenant brings back the classroom time capsule: a sealed letter to your future self that your teacher mailed back years later.",
+      "You write what is on your mind, and you choose figures to seal with it: weekly fuel prices for the United States and the European Union, each from an official source, kept with its date and where it came from.",
       "You pick a date to open it. Then you seal the letter. Once sealed, it cannot be changed, not even by you, and no one else can read it.",
       "When that date arrives, the letter opens. First it asks how you remember things. Then it shows what you wrote, and the numbers then beside the numbers now. The space between the two is yours to read.",
     ]);
     expect(SCENE_COPY.landing.demoLink).toBe("Open the demo letters");
+    expect(SCENE_COPY.landing.demoLinkOne).toBe("Open the demo letter");
+    expect(SCENE_COPY.landing.demoLinkMany).toBe("Open the demo letters");
+    expect(SCENE_COPY.landing.liveLink).toBe("Seal your own letter");
+    expect(SCENE_COPY.landing.liveNote).toBe("It opens 30 seconds after you seal it.");
+    expect(SCENE_COPY.landing.realLink).toBe("Seal a letter to your future self");
+    expect(SCENE_COPY.landing.howLink).toBe("How a letter is sealed");
+    expect(SCENE_COPY.landing.sourceLink).toBe("Source code on GitHub");
+  });
+
+  it("names fuel prices for the two regions only, with no groceries, rent or other figures", () => {
+    const landing = SCENE_COPY.landing.paragraphs.join(" ");
+    expect(landing).toContain("fuel prices");
+    expect(landing).toContain("United States");
+    expect(landing).toContain("European Union");
+    expect(landing).toContain("time capsule");
+    expect(landing).toContain("future self");
+    expect(landing).not.toMatch(/\b(groceries|rent)\b/i);
   });
 });
 

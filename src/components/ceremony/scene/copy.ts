@@ -2,8 +2,7 @@
 //
 // User-facing strings for the Scene: the headline, the Top_Bar, the persona
 // notice and the landing copy that task 7 imports into `src/app/page.tsx`.
-// The landing strings are copied verbatim from that page (JSX line breaks
-// collapsed to single spaces, which is how the browser renders them).
+// The landing strings are copied verbatim from design.md "Copy" (spec 08).
 //
 // Tone (tone.md) and neutrality (neutrality.md) apply. Scene_Copy_Modules are
 // checked for scoring words by scene/copy.test.ts (R24.6, R24.7).
@@ -45,15 +44,37 @@ export const SCENE_COPY = {
     "{name} is fictional. This letter was prepared later as a demo.",
 
   landing: {
-    /** The three paragraphs of the landing page, in order. */
+    /** The four paragraphs of the landing page, in order (design.md "Copy"). */
     paragraphs: [
-      "Revenant is a sealed letter to your future self. You write what is on your mind today, and you choose the numbers that matter to you — the price of fuel, groceries, rent — each one a real figure from an official source, kept with its date and where it came from.",
+      "Revenant brings back the classroom time capsule: a sealed letter to your future self that your teacher mailed back years later.",
+      "You write what is on your mind, and you choose figures to seal with it: weekly fuel prices for the United States and the European Union, each from an official source, kept with its date and where it came from.",
       "You pick a date to open it. Then you seal the letter. Once sealed, it cannot be changed, not even by you, and no one else can read it.",
       "When that date arrives, the letter opens. First it asks how you remember things. Then it shows what you wrote, and the numbers then beside the numbers now. The space between the two is yours to read.",
     ] as const,
 
     /** The link text that leads to the demo letters. */
     demoLink: "Open the demo letters",
+
+    /** The link text when the demo has one persona letter. */
+    demoLinkOne: "Open the demo letter",
+
+    /** The link text when the demo has two or more persona letters. */
+    demoLinkMany: "Open the demo letters",
+
+    /** The link to the live demo, where a judge seals a letter with a passkey. */
+    liveLink: "Seal your own letter",
+
+    /** The note under the live demo link, shown while real sealing is off. */
+    liveNote: "It opens 30 seconds after you seal it.",
+
+    /** The link to real sealing, shown while real sealing is on. */
+    realLink: "Seal a letter to your future self",
+
+    /** The link to the How_Page. */
+    howLink: "How a letter is sealed",
+
+    /** The link to the source code. */
+    sourceLink: "Source code on GitHub",
   },
 } as const;
 

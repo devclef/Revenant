@@ -2,7 +2,11 @@ import Link from "next/link";
 import { PageShell, ParchmentSurface } from "@/components/ui";
 import { DEMO_COPY } from "@/components/demo/copy";
 import { LIVE_COPY } from "@/components/live/copy";
+import { UI_COPY } from "@/components/ui/copy";
+import { pageMetadata } from "@/lib/page-metadata";
 import styles from "./not-found.module.css";
+
+export const metadata = pageMetadata(UI_COPY.pageMeta.notFound, "/demo");
 
 /**
  * Not-found page for `/l/[id]`, shown when the page calls `notFound()` because
