@@ -21,6 +21,7 @@ import {
   type SealDraft,
 } from "./seal-runner";
 import { INITIAL_SEAL_STATE, sealReducer, type SealEvent, type SealState } from "./seal-machine";
+import { checkRealOpening } from "./real-opening";
 
 export interface SealFlow {
   state: SealState;
@@ -86,7 +87,15 @@ export function useSealFlow(deps: SealDeps | null, draft: SealDraft): SealFlow {
     if (deps === null || inFlight.current || phase.current.tag !== "write") return;
     inFlight.current = true;
     send({ type: "CREATE_PRESS" });
-    void pressCreate(deps)
+    // Real_Letter: a date that became too early is refused before the passkey
+    // prompt, so no passkey is made for it.
+    const check = draft.real !== undefined ? checkRealOpening(draft.real, deps.now()) : null;
+    if (check !== null && !check.ok) {
+      send({ type: "FAILED", kind: check.kind, passkeyCreated: false });
+      inFlight.current = false;
+      return;
+    }
+    void pressCreate(deps, check !== null && check.ok ? check.userName : undefined)
       .then((step) => {
         if (step.ok) {
           created.current = step.created;
@@ -101,7 +110,7 @@ export function useSealFlow(deps: SealDeps | null, draft: SealDraft): SealFlow {
       .finally(() => {
         inFlight.current = false;
       });
-  }, [deps, send]);
+  }, [deps, draft, send]);
 
   const onConfirmPress = useCallback(() => {
     const createdKey = created.current;
@@ -113,6 +122,15 @@ export function useSealFlow(deps: SealDeps | null, draft: SealDraft): SealFlow {
 
     const run = async (): Promise<void> => {
       try {
+        // Real_Letter: the same date check as the Create_Press, before the
+        // second prompt. The passkey already exists, so passkeyCreated is true.
+        if (draft.real !== undefined) {
+          const check = checkRealOpening(draft.real, deps.now());
+          if (!check.ok) {
+            send({ type: "FAILED", kind: check.kind, passkeyCreated: true });
+            return;
+          }
+        }
         const step = await pressConfirm(deps, createdKey);
         if (!step.ok) {
           send(step.event);

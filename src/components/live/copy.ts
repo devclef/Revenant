@@ -150,3 +150,30 @@ export const LIVE_COPY = {
   backupCardKeyLabel: "Your backup key",
   backupCardQrHint: "Scan this code to open the letter link with your backup key.",
 } as const;
+
+/**
+ * User-facing strings for the Real_Seal_Page at `/seal` (spec 08, R15.1). Kept
+ * apart from LIVE_COPY because a Real_Letter is not a demo: none of these
+ * strings mention the 30-second lock or the demo label.
+ *
+ * `{date}` is filled with a calendar date in the R15.1 form, for example
+ * "12 May 2027". Same tone rules as LIVE_COPY.
+ */
+export const REAL_COPY = {
+  intro:
+    "Your letter is sealed with your own passkey. It opens at midnight on the date you choose, and no one can open it before then.",
+  dateLabel: "Opening date",
+  dateHint:
+    "Your letter opens at midnight on this date. It must be at least three months after you seal it. You cannot change the date once it is sealed.",
+  dateChosen: "Opens at midnight on {date}, in your time zone.",
+  utcFallback: "It opens at midnight UTC.",
+  testNotice:
+    "This is a test site. A letter sealed here can only be opened here, or with its backup key.",
+  passkeyUserName: "Revenant letter · opens {date}",
+  tooEarly:
+    "That date is too soon. A letter must open at least three months after it is sealed. Choose a later date and try again. Nothing was sealed, and your letter is still here.",
+  invalidDate:
+    "Revenant could not seal the letter with that date. Choose another date and try again. Nothing was sealed, and your letter is still here.",
+  dateMissing: "Choose an opening date before you seal.",
+  stillSealed: "This letter is still sealed.",
+} as const;

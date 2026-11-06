@@ -7,7 +7,7 @@ import { DemoLabel } from "@/components/demo/DemoLabel";
 
 import { BackupKeyCard } from "./BackupKeyCard";
 import { COUNTDOWN_TICK_MS } from "./constants";
-import { LIVE_COPY } from "./copy";
+import { LIVE_COPY, REAL_COPY } from "./copy";
 import { formatLocalDateTime } from "./format";
 import { goToLetterReady, remainingSeconds } from "./clock";
 import styles from "./live.module.css";
@@ -65,6 +65,13 @@ export interface SealedViewProps {
    * or when the key is no longer held.
    */
   getBackupKeyText?: () => string | null;
+  /**
+   * True for a Real_Letter sealed at `/seal` (spec 08, R24.10). The body then
+   * shows only the still-sealed statement, the opening date and the time
+   * remaining. The letter link and "Go to your letter" appear once the
+   * countdown has ended.
+   */
+  real?: boolean;
 }
 
 export function SealedView({
@@ -72,6 +79,7 @@ export function SealedView({
   appOrigin,
   nowMs = Date.now,
   getBackupKeyText = () => null,
+  real = false,
 }: SealedViewProps) {
   const opensAtMs = Date.parse(state.opensAt);
   const [showBackupCard, setShowBackupCard] = useState(false);
@@ -116,17 +124,19 @@ export function SealedView({
   // the printed key is still held. A passkey-only letter has no key to show.
   const backupKeyText = getBackupKeyText();
   const offerBackupCard = showKeyReminder && backupKeyText !== null && backupKeyText.length > 0;
+  // A Real_Letter shows its link only once the countdown has ended (R24.10).
+  const showLink = !real || done;
 
   function onCopyLink(): void {
     void navigator.clipboard?.writeText(linkText);
   }
 
   return (
-    <div className={styles.panel} data-live-sealed={state.factors}>
+    <div className={styles.panel} data-live-sealed={state.factors} data-live-real={real ? "" : undefined}>
       <div className={styles.noPrint}>
         <DemoLabel />
-        <h1 className={styles.heading}>{LIVE_COPY.sealedTitle}</h1>
-        <p className={styles.intro}>{LIVE_COPY.sealedBody}</p>
+        <h1 className={styles.heading}>{real ? REAL_COPY.stillSealed : LIVE_COPY.sealedTitle}</h1>
+        {real ? null : <p className={styles.intro}>{LIVE_COPY.sealedBody}</p>}
 
         <p className={styles.intro}>
           {LIVE_COPY.opensAt.replace("{time}", formatLocalDateTime(state.opensAt))}
@@ -138,36 +148,40 @@ export function SealedView({
             : LIVE_COPY.countdown.replace("{seconds}", String(seconds))}
         </p>
 
-        <p className={styles.hint}>{LIVE_COPY.linkLabel}</p>
-        <p className={styles.intro}>
-          <span className={styles.linkText} data-live-link>
-            {linkText}
-          </span>
-        </p>
-        <div className={styles.actions}>
-          <button type="button" className={styles.primary} onClick={onCopyLink}>
-            {LIVE_COPY.copyLink}
-          </button>
-        </div>
+        {showLink ? (
+          <>
+            <p className={styles.hint}>{LIVE_COPY.linkLabel}</p>
+            <p className={styles.intro}>
+              <span className={styles.linkText} data-live-link>
+                {linkText}
+              </span>
+            </p>
+            <div className={styles.actions}>
+              <button type="button" className={styles.primary} onClick={onCopyLink}>
+                {LIVE_COPY.copyLink}
+              </button>
+            </div>
 
-        <div className={styles.actions}>
-          {ready ? (
-            <Link href={relativeHref} className={styles.primary} data-live-goto>
-              {LIVE_COPY.goToLetter}
-            </Link>
-          ) : (
-            <span
-              className={`${styles.primary} ${styles.primaryDisabled}`}
-              aria-disabled="true"
-              data-live-goto
-              data-disabled="true"
-            >
-              {LIVE_COPY.goToLetter}
-            </span>
-          )}
-        </div>
+            <div className={styles.actions}>
+              {ready ? (
+                <Link href={relativeHref} className={styles.primary} data-live-goto>
+                  {LIVE_COPY.goToLetter}
+                </Link>
+              ) : (
+                <span
+                  className={`${styles.primary} ${styles.primaryDisabled}`}
+                  aria-disabled="true"
+                  data-live-goto
+                  data-disabled="true"
+                >
+                  {LIVE_COPY.goToLetter}
+                </span>
+              )}
+            </div>
 
-        <p className={styles.hint}>{LIVE_COPY.keepLink}</p>
+            <p className={styles.hint}>{LIVE_COPY.keepLink}</p>
+          </>
+        ) : null}
         {showKeyReminder ? <p className={styles.intro}>{LIVE_COPY.keyReminder}</p> : null}
       </div>
 

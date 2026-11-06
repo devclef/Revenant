@@ -5,7 +5,16 @@
 // not held here. Each press event is accepted only in its source state, so a
 // second press while a step is in flight changes nothing (R15.10).
 
-export type SealFailureKind = "network" | "server" | "clock" | "busy" | "missing_then";
+export type SealFailureKind =
+  | "network"
+  | "server"
+  | "clock"
+  | "busy"
+  | "missing_then"
+  /** Real_Letter only: the opening date is inside the three-month rule (422 or a recheck). */
+  | "too_early"
+  /** Real_Letter only: the seal route refused the date or the request (400). */
+  | "invalid_date";
 
 export type SealState =
   | { tag: "write" }

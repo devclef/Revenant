@@ -2,7 +2,7 @@
 
 import { CATALOGUE } from "@/lib/figures/catalogue";
 
-import { LIVE_COPY } from "./copy";
+import { LIVE_COPY, REAL_COPY } from "./copy";
 import styles from "./live.module.css";
 import { RECALL_SUBJECTS } from "./recall-subjects";
 import type { SealState } from "./seal-machine";
@@ -71,6 +71,10 @@ function failedBody(
       return LIVE_COPY.failedBody;
     case "server":
       return LIVE_COPY.failedServerBody;
+    case "too_early":
+      return REAL_COPY.tooEarly;
+    case "invalid_date":
+      return REAL_COPY.invalidDate;
   }
 }
 

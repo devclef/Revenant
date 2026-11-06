@@ -17,6 +17,10 @@ import { z } from "zod";
 export const PREPARE_PATH = "/api/letters/demo/prepare";
 export const SEAL_PATH = "/api/letters/demo/seal";
 
+/** The Real_Letter routes (spec 08, task 21). Used only by `mode="real"`. */
+export const REAL_PREPARE_PATH = "/api/letters/prepare";
+export const REAL_SEAL_PATH = "/api/letters/seal";
+
 const BASE_INIT = {
   cache: "no-store",
   credentials: "same-origin",
@@ -60,11 +64,11 @@ async function readJson(response: Response): Promise<unknown> {
   }
 }
 
-/** POST the prepare route. Never throws. */
-export async function prepareLetter(): Promise<PrepareResult> {
+/** POST a prepare route (the Live_Letter route by default). Never throws. */
+export async function prepareLetter(path: string = PREPARE_PATH): Promise<PrepareResult> {
   let response: Response;
   try {
-    response = await fetch(PREPARE_PATH, { ...BASE_INIT, method: "POST" });
+    response = await fetch(path, { ...BASE_INIT, method: "POST" });
   } catch {
     return { ok: false, kind: "network" };
   }
@@ -78,15 +82,21 @@ export async function prepareLetter(): Promise<PrepareResult> {
   return { ok: true, ...parsed.data };
 }
 
-/** POST the seal route with exactly `{ letterId, envelope, envelopeHash }`. Never throws. */
-export async function postSeal(body: {
-  letterId: string;
-  envelope: unknown;
-  envelopeHash: string;
-}): Promise<SealPostResult> {
+/**
+ * POST a seal route (the Live_Letter route by default) with exactly
+ * `{ letterId, envelope, envelopeHash }`. Never throws.
+ */
+export async function postSeal(
+  body: {
+    letterId: string;
+    envelope: unknown;
+    envelopeHash: string;
+  },
+  path: string = SEAL_PATH,
+): Promise<SealPostResult> {
   let response: Response;
   try {
-    response = await fetch(SEAL_PATH, {
+    response = await fetch(path, {
       ...BASE_INIT,
       method: "POST",
       headers: { "content-type": "application/json" },
@@ -119,4 +129,14 @@ export async function postSeal(body: {
 export const realSealApi: SealApi = {
   prepare: () => prepareLetter(),
   seal: (body) => postSeal(body),
+};
+
+/**
+ * The Real_Letter API for `mode="real"`. It posts to the Real_Letter routes and
+ * reads the same response shapes. `realSealApi` above still targets the demo
+ * routes and stays as it is for the Live_Letter flow.
+ */
+export const realLetterSealApi: SealApi = {
+  prepare: () => prepareLetter(REAL_PREPARE_PATH),
+  seal: (body) => postSeal(body, REAL_SEAL_PATH),
 };

@@ -494,7 +494,9 @@ function selectView(
           }
           close={
             mode === "live"
-              ? { kind: "live" }
+              ? live?.demo === true
+                ? { kind: "live" }
+                : { kind: "real" }
               : persona === undefined
                 ? undefined
                 : { kind: "persona", personaKey: persona.key, demo2On }

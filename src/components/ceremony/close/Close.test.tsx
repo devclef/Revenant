@@ -101,3 +101,13 @@ describe("Close, live kind", () => {
     expect(html).not.toContain(CEREMONY_COPY.startOver);
   });
 });
+
+describe("Close, real kind", () => {
+  it("renders nothing: no LiveLockNote, no persona items, no demo link", () => {
+    const html = renderToStaticMarkup(createElement(Close, { kind: "real" }));
+    expect(html).toBe("");
+    expect(html).not.toContain(LIVE_COPY.lockNote);
+    expect(html).not.toContain(CEREMONY_COPY.closeLine);
+    expect(html).not.toContain("/demo/live");
+  });
+});

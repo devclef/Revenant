@@ -22,7 +22,8 @@ import styles from "./close.module.css";
 
 export type CloseProps =
   | { kind: "persona"; personaKey: string; demo2On: boolean }
-  | { kind: "live" };
+  | { kind: "live" }
+  | { kind: "real" };
 
 /** Where the Demo_2_On link leads: the passkey demo's seal page. */
 export const DEMO_2_HREF = "/demo/live";
@@ -35,6 +36,10 @@ export function startOverHref(personaKey: string): string {
 export function Close(props: CloseProps) {
   if (props.kind === "live") {
     return <LiveLockNote />;
+  }
+  if (props.kind === "real") {
+    // A Real_Letter gets no close: no 30-second note and no demo links (spec 08, R24.11).
+    return null;
   }
 
   return (
