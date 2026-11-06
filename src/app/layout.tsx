@@ -10,18 +10,20 @@ import { Footer } from "@/components/ui/Footer";
 // (allowed by font-src 'self'); it makes no remote font request, so the strict
 // CSP is satisfied. Both faces are variable fonts covering their full weight
 // range from a single file. See src/app/fonts/NOTE.md.
-const serif = localFont({
+const ebGaramond = localFont({
   src: "./fonts/EBGaramond-Variable.woff2",
   variable: "--font-serif",
   weight: "400 800",
   display: "swap",
+  fallback: ["Georgia", "Times New Roman", "serif"],
 });
 
-const sans = localFont({
+const inter = localFont({
   src: "./fonts/Inter-Variable.woff2",
   variable: "--font-sans",
   weight: "100 900",
   display: "swap",
+  fallback: ["system-ui", "-apple-system", "Segoe UI", "Roboto", "sans-serif"],
 });
 
 const FALLBACK_ORIGIN = "http://localhost:3000";
@@ -61,7 +63,7 @@ export default async function RootLayout({
   await headers();
 
   return (
-    <html lang="en" className={`${serif.variable} ${sans.variable}`}>
+    <html lang="en" className={`${ebGaramond.variable} ${inter.variable}`}>
       <body>
         {children}
         {/* Layout-owned wrapper: keeps the footer in normal flow, below the page
