@@ -153,6 +153,10 @@ export const EYE_TRANSITION_MS = 120;
 
 // --- Break and letter (R12.6, R12.7, R18.4) (spec 07 task 5) ---
 export const GHOST_LEAVE_MS = 1100;
+// The Ghost is removed at animationend (ghostLeave). This timer is only the
+// safety net for an exit whose animationend never fires. It is longer than
+// GHOST_LEAVE_MS (spec 07 A11, issue #253).
+export const GHOST_EXIT_FALLBACK_MS = 1400;
 export const GHOST_FADE_MS = 900;
 export const EASE_LEAVE = "cubic-bezier(0.4, 0, 0.6, 1)";
 export const FLAP_AT_MS = 250;

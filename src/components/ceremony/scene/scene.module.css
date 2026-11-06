@@ -262,6 +262,17 @@
   pointer-events: none;
 }
 
+/* The Ghost layer (spec 07 A11, issue #253). Above every Stage card, below the
+   Top_Bar (z-index 10 at the root). It clips and passes pointer events through,
+   as the backdrop did, so the Ghost keeps the same placement and clipping. */
+.ghostLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 /* The light. Its centre is the Ghost's x and the Soil's top. */
 .light {
   position: absolute;
@@ -519,6 +530,14 @@
   filter:
     drop-shadow(0 0 26px var(--ghost-glow))
     drop-shadow(0 0 4px var(--ghost-glow));
+}
+
+/* The Ghost body takes the hit test only while the seal is up, so the reader
+   can see what covers the seal (GZ1). Elsewhere the layer stays pass-through,
+   so the Break the seal button on the marks stage (narrow widths) and the
+   other content under the Ghost keep their clicks. */
+.scene:has([data-ceremony="seal"]) .ghostSvg {
+  pointer-events: auto;
 }
 
 .ghostSvg {

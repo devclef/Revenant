@@ -7,7 +7,9 @@
 // This module is server-safe: no hooks, no browser APIs, no "use client". It
 // renders from props only. The motion, the Stage pose, the Skip registration,
 // the Emergence rise and the pointer eye follow live in PersonaGhost.tsx,
-// which owns the state and passes it down.
+// which owns the state and passes it down. The one listener, animationend on
+// the rise, is attached only when a client caller passes onExitEnd, so the
+// landing page (a server component) renders it without any handler.
 //
 // Layers, outside to inside:
 //   .pit        the Emergence shake (the pit is the Ghost's placement)
@@ -16,7 +18,7 @@
 //   .bob        the Idle_Bob, and the held Envelope's slot (.heldSlot)
 //   svg         the drawing, with the eyes group that follows the pointer
 
-import type { CSSProperties, ReactNode, Ref } from "react";
+import type { AnimationEvent, CSSProperties, ReactNode, Ref } from "react";
 
 import { EYE_TRANSITION_MS } from "../constants";
 import styles from "./scene.module.css";
@@ -47,9 +49,32 @@ export type GhostProps = {
   riseRef?: Ref<HTMLDivElement>;
   /** The leave timings as CSS variables. */
   leaveVars?: CSSProperties;
+  /** Extra attributes for the root (pit) element, for example data-ghost. */
+  rootAttributes?: Record<string, string>;
+  /** Called with the animation name when an animation on the rise element ends. */
+  onExitEnd?: (animationName: string) => void;
   /** The held Envelope, rendered in the bob's slot. */
   children?: ReactNode;
 };
+
+/**
+ * The animationend listener for the rise element. It exists only when a caller
+ * passes `onExitEnd` (the persona Ghost, which is a client component). The
+ * landing page renders this drawing on the server without a callback, so the
+ * server render never carries an event-handler prop.
+ */
+function riseListeners(
+  onExitEnd: ((animationName: string) => void) | undefined,
+): { onAnimationEnd?: (event: AnimationEvent<HTMLDivElement>) => void } {
+  if (onExitEnd === undefined) return {};
+  return {
+    onAnimationEnd: (event) => {
+      // animationend bubbles from children, so only the rise's own counts.
+      if (event.target !== event.currentTarget) return;
+      onExitEnd(event.animationName);
+    },
+  };
+}
 
 /**
  * The Ghost drawing. `children` render in the held slot, inside the bob, so an
@@ -62,10 +87,12 @@ export function Ghost({
   leaving = false,
   riseRef,
   leaveVars,
+  rootAttributes,
+  onExitEnd,
   children,
 }: GhostProps) {
   return (
-    <div className={styles.pit} data-pose={pose} data-ghost-pit>
+    <div className={styles.pit} data-pose={pose} data-ghost-pit {...rootAttributes}>
       <div className={styles.ghostPlace}>
         <div
           ref={riseRef}
@@ -74,6 +101,7 @@ export function Ghost({
           data-leaving={leaving ? "true" : undefined}
           data-ghost-rise
           style={leaveVars}
+          {...riseListeners(onExitEnd)}
         >
           <div className={styles.bob} data-ghost-bob>
             <div className={styles.ghostGlow}>

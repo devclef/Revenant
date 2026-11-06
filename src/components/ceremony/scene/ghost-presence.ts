@@ -8,6 +8,8 @@
 //
 // Pure: no React, no clock. OpeningFlow reads it on every render.
 
+import { GHOST_EXIT_FALLBACK_MS } from "../constants";
+
 /** The inputs that decide whether the Ghost is mounted. */
 export type GhostPresenceInput = {
   /** The Opening_Flow state tag, for example `reveal` or `verified`. */
@@ -29,4 +31,32 @@ export function ghostPresent(input: GhostPresenceInput): boolean {
   if (input.leaving) return true;
   if (input.tag !== "reveal") return true;
   return input.stage === 1;
+}
+
+// --- Exit lifecycle (spec 07 A11, issue #253) ---
+//
+// After a completed full-motion break the Ghost leaves, then is removed. The
+// removal comes from one of three places: the animationend of the leave, the
+// GHOST_EXIT_FALLBACK_MS timer, or at once under Calm_Mode, Skip or Skip_Link.
+// PersonaGhost.tsx runs these two rules.
+
+/**
+ * CSS modules may prefix keyframe names, so the match is the same as
+ * `isRiseName` in useEmergence.ts. Only ghostLeave counts: ghostFade ends first
+ * (900 ms against 1,100 ms), so removing on it would cut the last of the move.
+ */
+const GHOST_LEAVE_NAME = /(?:^|_)ghostLeave(?:_|$)/;
+
+/** True when an animationend on the Ghost's rise element ends its exit. */
+export function isGhostExitEnd(animationName: string): boolean {
+  return GHOST_LEAVE_NAME.test(animationName);
+}
+
+/**
+ * How long a leaving Ghost may stay before it is removed anyway. Calm_Mode
+ * gives 0, which means remove at once. Full motion gives the fallback, the
+ * safety net for an animationend that never fires.
+ */
+export function ghostExitFallbackMs(calm: boolean): number {
+  return calm ? 0 : GHOST_EXIT_FALLBACK_MS;
 }

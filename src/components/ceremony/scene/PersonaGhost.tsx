@@ -21,10 +21,14 @@ import { ghostHanded } from "../stages";
 import { useStage } from "../stage-context";
 import { eyeOffset, followsPointer } from "./eyes";
 import { EYE_CENTRE_SVG, VIEWBOX_HEIGHT, VIEWBOX_WIDTH, type EyeOffset } from "./ghost-geometry";
+import { ghostExitFallbackMs, isGhostExitEnd } from "./ghost-presence";
 import { Ghost, type GhostPose } from "./Ghost";
 import { useEmergence } from "./useEmergence";
 
 const NO_OFFSET: EyeOffset = { dx: 0, dy: 0 };
+
+/** The Ghost's root carries data-ghost, so a test or a reader can find it. */
+const ROOT_ATTRIBUTES = { "data-ghost": "" };
 
 /** The leave timings as CSS variables, from constants.ts (R12.6). */
 const LEAVE_VARS = {
@@ -62,6 +66,24 @@ export function PersonaGhost({ children, leaving = false, onLeft }: PersonaGhost
     if (!leaving || register === undefined) return undefined;
     return register(() => onLeft?.());
   }, [leaving, onLeft, register]);
+
+  // The exit lifecycle (spec 07 A11, issue #253). The Ghost is removed by one
+  // of three paths: at once under Calm_Mode (here), on animationend (the
+  // onExitEnd handler on the rise, below), or on the fallback timer.
+  useEffect(() => {
+    if (!leaving) return undefined;
+    const delay = ghostExitFallbackMs(calm);
+    if (delay === 0) {
+      onLeft?.();
+      return undefined;
+    }
+    const timer = setTimeout(() => onLeft?.(), delay);
+    return () => clearTimeout(timer);
+  }, [leaving, calm, onLeft]);
+
+  const onExitEnd = (animationName: string) => {
+    if (leaving && isGhostExitEnd(animationName)) onLeft?.();
+  };
 
   const riseRef = useRef<HTMLDivElement>(null);
   const [pointerOffset, setPointerOffset] = useState<EyeOffset>(NO_OFFSET);
@@ -124,6 +146,8 @@ export function PersonaGhost({ children, leaving = false, onLeft }: PersonaGhost
       leaving={leaving}
       riseRef={riseRef}
       leaveVars={LEAVE_VARS}
+      rootAttributes={ROOT_ATTRIBUTES}
+      onExitEnd={onExitEnd}
     >
       {children}
     </Ghost>
