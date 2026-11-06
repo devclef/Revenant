@@ -12,6 +12,7 @@ import type { CSSProperties } from "react";
 import { CEREMONY_COPY } from "../copy";
 import { TICK_CHAR_PX, TRACK_MIN_PX } from "../constants";
 import styles from "./RecallScale.module.css";
+import { answerText } from "./answer-text";
 import { positionOfIn } from "./scale-math";
 import { visibleTicks } from "./tick-layout";
 import { scaleRangeFor, unitHelperFor } from "./unit-ranges";
@@ -20,6 +21,8 @@ import { scaleRangeFor, unitHelperFor } from "./unit-ranges";
 export type RecordedScaleProps = {
   /** The question's id. Used to give the Unit_Helper_Line its element id. */
   id: string;
+  /** The metric's display name, shown above the scale (spec 09 A9). */
+  name: string;
   /** The question text, the start of the accessible name. */
   label: string;
   /** The sealed unit string. It picks the range, the ticks and the helper line. */
@@ -43,7 +46,7 @@ function tickText(tick: number): string {
   return groupThousands(String(tick));
 }
 
-export function RecordedScale({ id, label, unitLabel, value }: RecordedScaleProps) {
+export function RecordedScale({ id, name, label, unitLabel, value }: RecordedScaleProps) {
   const range = scaleRangeFor(unitLabel);
   const helper = unitHelperFor(unitLabel);
   const helperId = `recall-${id}-unit-help`;
@@ -54,11 +57,15 @@ export function RecordedScale({ id, label, unitLabel, value }: RecordedScaleProp
   // positionOfIn clamps, so the Mark keeps the same shape at both edges.
   const markPosition = hasMark ? positionOfIn(recorded, range) : 0;
 
-  const markText = hasMark ? `${value} ${unitLabel}` : CEREMONY_COPY.lineNoAnswer;
+  const shownAnswer = value === null ? "" : answerText(value);
+  const markText = hasMark ? `${shownAnswer} ${unitLabel}` : CEREMONY_COPY.lineNoAnswer;
   const ticks = visibleTicks(range, TRACK_MIN_PX, (tick) => tickText(tick).length * TICK_CHAR_PX);
 
   return (
-    <div className={styles.recorded}>
+    <div className={styles.recorded} data-recorded-scale="">
+      <p className={styles.recordedName}>
+        {name}
+      </p>
       <div
         role="img"
         aria-label={`${label}: ${markText}`}
@@ -72,7 +79,7 @@ export function RecordedScale({ id, label, unitLabel, value }: RecordedScaleProp
           <>
             <span className={styles.recordedMark} aria-hidden="true" />
             <span className={`${styles.recordedReadout} ${readoutEdgeClass(markPosition)}`} aria-hidden="true">
-              {value}
+              {shownAnswer}
               <span className={styles.unit}>{unitLabel}</span>
             </span>
           </>

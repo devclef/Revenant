@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { CEREMONY_COPY } from "../copy";
+import { MARKS_SCALE_GAP_PX } from "../constants";
 import { RecordedScale } from "./RecordedScale";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -20,6 +21,7 @@ const css = readFileSync(join(here, "RecallScale.module.css"), "utf8");
 function render(overrides: Partial<Parameters<typeof RecordedScale>[0]> = {}): string {
   const props = {
     id: "q1",
+    name: "Regular gasoline",
     label: "What do you think a gallon of gas cost then?",
     unitLabel: "USD per gallon",
     value: "3.47",
@@ -59,10 +61,16 @@ describe("RecordedScale is a record, not a control (R6.1, R6.2, R6.4)", () => {
 });
 
 describe("the Mark and its label (R6.3)", () => {
-  it("draws the Mark and the value as typed, with the unit", () => {
+  it("draws the Mark and the value with its digits kept and the integer part grouped", () => {
     const markup = render({ value: "1585.70", unitLabel: "USD per gallon" });
-    expect(markup).toContain("1585.70");
+    expect(markup).toContain("1,585.70");
+    expect(markup).not.toContain(">1585.70<");
     expect(markup).toContain("recordedMark");
+  });
+
+  it("names the answer with its grouped value in the image label", () => {
+    const markup = render({ value: "1000", unitLabel: "USD per gallon" });
+    expect(markup).toContain(": 1,000 USD per gallon\"");
   });
 
   it("shows no Mark and the text No answer when no answer is recorded", () => {
@@ -75,6 +83,29 @@ describe("the Mark and its label (R6.3)", () => {
   it("places a value past the top of the range on the nearer edge", () => {
     const markup = render({ value: "20", unitLabel: "USD per gallon" });
     expect(markup).toContain("--pos-mark:1");
+  });
+});
+
+describe("the marks card scale: name, box and spacing (spec 09 A9)", () => {
+  it("marks the root with data-recorded-scale and shows the metric name above the track", () => {
+    const markup = render({ name: "Regular gasoline" });
+    expect(markup).toContain('data-recorded-scale=""');
+    const nameAt = markup.indexOf("Regular gasoline");
+    const trackAt = markup.indexOf('role="img"');
+    expect(nameAt).toBeGreaterThan(-1);
+    expect(nameAt).toBeLessThan(trackAt);
+  });
+
+  it("spaces each scale after the first MARKS_SCALE_GAP_PX below the one above", () => {
+    const block = css.match(/\.recorded\s*\+\s*\.recorded\s*\{([^}]*)\}/);
+    expect(block).not.toBeNull();
+    expect(block?.[1]).toContain(`margin-top: ${MARKS_SCALE_GAP_PX}px`);
+  });
+
+  it("keeps the readout and the tick row inside the scale's own box", () => {
+    // The readout sits above the track and the ticks below it; the track's
+    // margins hold both, so nothing is positioned outside the .recorded box.
+    expect(css).toMatch(/\.recordedTrack\s*\{[^}]*margin:\s*1\.75rem\s+0/);
   });
 });
 

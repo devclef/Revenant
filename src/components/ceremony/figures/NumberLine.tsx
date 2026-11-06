@@ -39,6 +39,7 @@ import {
 import { CEREMONY_COPY } from "../copy";
 import { numberLineGeometry } from "./number-line";
 import { placeLineLabels, type LabelBox } from "./line-labels";
+import { answerText } from "../recall/answer-text";
 import styles from "./figures.module.css";
 
 export type NumberLineProps = {
@@ -96,15 +97,17 @@ export function NumberLine({
     style["--pos-mark"] = String(geometry.posMark);
   }
 
+  const shownMark = markValue === undefined ? undefined : answerText(markValue);
+
   const markText =
-    markValue === undefined
+    shownMark === undefined
       ? undefined
-      : CEREMONY_COPY.markAnswer.replace("{value}", markValue).replace("{unit}", unit);
+      : CEREMONY_COPY.markAnswer.replace("{value}", shownMark).replace("{unit}", unit);
 
   const answerLines =
-    markValue === undefined
+    shownMark === undefined
       ? [CEREMONY_COPY.lineAnswer, CEREMONY_COPY.lineNoAnswer]
-      : [CEREMONY_COPY.lineAnswer, `${markValue} ${unit}`];
+      : [CEREMONY_COPY.lineAnswer, `${shownMark} ${unit}`];
   const labelTexts = [
     [CEREMONY_COPY.lineThen],
     [CEREMONY_COPY.lineNow],
@@ -169,7 +172,7 @@ export function NumberLine({
           now: nowShown,
           thenPeriod,
           nowPeriod,
-          answer: markValue,
+          answer: shownMark ?? "",
           unit,
         });
 
@@ -231,7 +234,7 @@ export function NumberLine({
         <>
           <span className={styles.lineLabelLine}>{CEREMONY_COPY.lineAnswer}</span>
           <span className={styles.lineLabelLine}>
-            {markValue === undefined ? CEREMONY_COPY.lineNoAnswer : `${markValue} ${unit}`}
+            {shownMark === undefined ? CEREMONY_COPY.lineNoAnswer : `${shownMark} ${unit}`}
           </span>
         </>
       </span>

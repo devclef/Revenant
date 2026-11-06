@@ -13,6 +13,7 @@ import fc from "fast-check";
 import { FigureEntry, type FigureEntryProps } from "./FigureEntry";
 import { REVEAL_COPY } from "./copy";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
+import { answerText } from "@/components/ceremony/recall/answer-text";
 import { FIG_VALUE_SIZE } from "@/components/ceremony/constants";
 import {
   computeChange,
@@ -235,7 +236,7 @@ describe("Property 11: one visible Your answer per comparable entry, in R4.2 ord
             expect(visible).not.toContain(`${answer} USD per gallon`);
           } else {
             expect(countOf(visible, CEREMONY_COPY.lineNoAnswer)).toBe(0);
-            expect(visible).toContain(`${answer} USD per gallon`);
+            expect(visible).toContain(`${answerText(answer)} USD per gallon`);
           }
 
           // R4.2 order: name and region, then row, now row, Number_Line, change
