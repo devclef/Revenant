@@ -14,6 +14,8 @@ import {
   CHANGE_FORMULA_ID,
 } from "@/lib/figures";
 import type { Opened } from "./opening-machine";
+import { figuresStateFrom, figuresResponseFrom, stubFiguresFetch } from "./figures-stub";
+import { loadFigures, type FiguresState } from "./figures-api";
 import type { FigureV1, MetricDefinitionV1, PayloadV1 } from "@/lib/seal-format";
 
 /**
@@ -26,10 +28,10 @@ import type { FigureV1, MetricDefinitionV1, PayloadV1 } from "@/lib/seal-format"
  * - the metric display name looked up from `payload.metrics` (never the live
  *   catalogue);
  * - the sealed "then" figure, straight from the payload;
- * - the "now" figure sourced only from `thenAndNow(metricId, sealedDate,
- *   DEMO_FIGURES).now` — a static import, never a fetch (data-integrity.md,
- *   R6.3). A missing now shows `nowUnavailableUnknown` (series left the
- *   catalogue) or `nowUnavailableEmpty` (no figures) and no change;
+ * - the "now" figure picked with `pickNow` from the Figures_API response,
+ *   stubbed here as GET /api/figures built from DEMO_FIGURES (the same figure
+ *   `thenAndNow` reported as now). A missing now shows `nowUnavailableMissing`,
+ *   a failed request shows `nowUnavailableFetch`, and no change is drawn;
  * - a single neutral change line + formula when the two figures are comparable;
  * - both figures with their own periods plus the one neutral reason sentence
  *   when they are not (including `reason.unreadable_period`).
@@ -206,8 +208,15 @@ const OPENED: Opened = {
   payload: PAYLOAD,
 };
 
-function render(opened: Opened = OPENED): string {
-  return renderToStaticMarkup(createElement(FiguresThenNow, { opened }));
+// The Figures_API state for every Now_Figure: GET /api/figures stubbed with a
+// response built from the same DEMO_FIGURES the reveal reads for rescales.
+const FIGURES: FiguresState = await figuresStateFrom(DEMO_FIGURES);
+
+function render(
+  opened: Opened = OPENED,
+  figures: FiguresState = FIGURES,
+): string {
+  return renderToStaticMarkup(createElement(FiguresThenNow, { opened, figures }));
 }
 
 // Encode a copy string the way renderToStaticMarkup encodes a bare text child,
@@ -265,10 +274,10 @@ describe("FiguresThenNow markup", () => {
     expect(html).toContain(formatPeriod(GASOLINE_THEN.period, GASOLINE_THEN.region));
   });
 
-  it("sources the now figure from thenAndNow(..., DEMO_FIGURES).now", () => {
+  it("sources the now figure from the Figures_API response (pickNow)", () => {
     const html = render();
-    // The now value is the latest frozen figure in DEMO_FIGURES, not anything
-    // from the payload.
+    // The now value is the latest figure of the series in the response, not
+    // anything from the payload.
     expect(html).toContain(formatValue(GASOLINE_NOW.value, GASOLINE_NOW.region));
     expect(html).toContain(formatPeriod(GASOLINE_NOW.period, GASOLINE_NOW.region));
   });
@@ -291,30 +300,56 @@ describe("FiguresThenNow markup", () => {
     expect(html).toContain(CHANGE_FORMULA_ID);
   });
 
-  it("shows a missing now with nowUnavailableUnknown and no change (unknown series)", () => {
+  it("shows a missing now with nowUnavailableMissing and no change (series not in the response)", () => {
     const html = render();
 
-    // thenAndNow reports unknown_series for a series not in DEMO_FIGURES.
+    // The response has no entry for this series, so pickNow reports series_missing.
     const { now } = thenAndNow(MISSING_METRIC.id, "2026-10-27", DEMO_FIGURES);
     expect(now.found).toBe(false);
 
-    expect(html).toContain(REVEAL_COPY.nowUnavailableUnknown);
-    // The missing figure never invents a now value.
-    expect(html).not.toContain(REVEAL_COPY.nowUnavailableEmpty);
+    expect(html).toContain(REVEAL_COPY.nowUnavailableMissing);
+    // The missing figure never invents a now value or a fetch message.
+    expect(html).not.toContain(REVEAL_COPY.nowUnavailableFetch);
+    expect(html).not.toContain(REVEAL_COPY.nowLoading);
   });
 
-  it("shows an empty-series now as nowUnavailableEmpty (no figures)", () => {
-    // A metric that exists in DEMO_FIGURES would need no figures to report
-    // no_figures; DEMO_FIGURES has figures for both its series, so this branch
-    // is exercised with a crafted LoadedFigures-independent payload: the
-    // component maps thenAndNow's reason, so verify the mapping holds by using a
-    // payload whose only figure is the gasoline then and asserting the two
-    // missing-now messages are mutually exclusive. The dedicated empty-series
-    // path is covered by then-now's own tests; here we assert the copy mapping
-    // used by the component distinguishes the two reasons.
-    expect(REVEAL_COPY.nowUnavailableEmpty).not.toEqual(
-      REVEAL_COPY.nowUnavailableUnknown,
-    );
+  it("shows nowUnavailableMissing for a series whose response figure is null", async () => {
+    const body = figuresResponseFrom(DEMO_FIGURES);
+    const emptied = {
+      ...body,
+      series: body.series.map((entry) =>
+        entry.metric.series_id === GASOLINE_NOW.series_id
+          ? { ...entry, figure: null }
+          : entry,
+      ),
+    };
+    const state = await loadFigures(stubFiguresFetch(emptied));
+    expect(state.status).toBe("ready");
+
+    const html = render(OPENED, state);
+    // Each figure renders as one group, starting at its data-figure-entry marker.
+    // The gasoline group is the first one, and it shows no now figure.
+    const gasolineGroup = html.split('data-figure-entry=""')[1] ?? "";
+    expect(gasolineGroup).toContain(REVEAL_COPY.nowUnavailableMissing);
+    expect(gasolineGroup).toContain(GASOLINE_METRIC.display_name);
+    expect(gasolineGroup).not.toContain("retrieved");
+    // The comparable branch is the only one that draws a now value (data-role="now").
+    expect(gasolineGroup).not.toContain('data-role="now"');
+  });
+
+  it("shows nowUnavailableFetch and no change when the request failed", () => {
+    const html = render(OPENED, { status: "failed" });
+    expect(html).toContain(REVEAL_COPY.nowUnavailableFetch);
+    expect(html).not.toContain(REVEAL_COPY.nowUnavailableMissing);
+    expect(html).not.toContain(CHANGE_FORMULA_ID);
+    // The then figure is still shown with its own period.
+    expect(html).toContain(formatValue(GASOLINE_THEN.value, GASOLINE_THEN.region));
+  });
+
+  it("shows nowLoading and no change while the request is in flight", () => {
+    const html = render(OPENED, { status: "loading" });
+    expect(html).toContain(REVEAL_COPY.nowLoading);
+    expect(html).not.toContain(CHANGE_FORMULA_ID);
   });
 
   it("shows both figures with their own periods plus the reason for a unit mismatch", () => {

@@ -13,6 +13,7 @@ import type { Opened } from "./opening-machine";
 import type { FigureV1, MetricDefinitionV1, PayloadV1 } from "@/lib/seal-format";
 
 import usFuelFixture from "@/lib/figures/demo/us-fuel.fixture.json";
+import { figuresStateFrom } from "./figures-stub";
 
 // The reveal tests read the fixture through a mocked DEMO_FIGURES, so they do
 // not depend on the real figure file (spec 04, task 11). The factory loads the
@@ -65,6 +66,8 @@ const ELEMENT_BOUNDED_LABEL = `>${LABEL}<`;
 // loadFigureFile validates it against the real CATALOGUE and deep-freezes the
 // result, so these are the exact frozen figures the component also sees.
 const FIXTURE: LoadedFigures = loadFigureFile(usFuelFixture, CATALOGUE);
+// The Now_Figures come from a stubbed GET /api/figures built from the fixture.
+const FIXTURE_FIGURES = await figuresStateFrom(FIXTURE);
 
 // The latest frozen "now" fixture figures in the loaded fixture file, read
 // straight from the loaded catalogue so the test uses the same bytes the
@@ -166,7 +169,9 @@ const OPENED: Opened = {
 };
 
 function render(opened: Opened = OPENED): string {
-  return renderToStaticMarkup(createElement(FiguresThenNow, { opened }));
+  return renderToStaticMarkup(
+    createElement(FiguresThenNow, { opened, figures: FIXTURE_FIGURES }),
+  );
 }
 
 // Count element-bounded occurrences of the label (`>fixture data<`), which the

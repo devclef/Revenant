@@ -5,6 +5,10 @@ import { describe, expect, it, vi } from "vitest";
 import { FiguresThenNow } from "./FiguresThenNow";
 import { REVEAL_COPY } from "./copy";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
+import { figuresStateFrom } from "./figures-stub";
+
+// Every Now_Figure comes from a stubbed GET /api/figures built from DEMO_FIGURES.
+const FIGURES = await figuresStateFrom(DEMO_FIGURES);
 import { thenAndNow } from "@/lib/figures/then-now";
 import { formatPeriod } from "@/lib/figures";
 import { numberLineGeometry } from "@/components/ceremony/figures/number-line";
@@ -71,7 +75,11 @@ const OPENED: Opened = {
 
 function render(allowSamePeriod?: boolean): string {
   return renderToStaticMarkup(
-    createElement(FiguresThenNow, { opened: OPENED, allowSamePeriod }),
+    createElement(FiguresThenNow, {
+      opened: OPENED,
+      allowSamePeriod,
+      figures: FIGURES,
+    }),
   );
 }
 
