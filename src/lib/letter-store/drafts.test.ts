@@ -57,7 +57,6 @@ function makeFakeDb(seed: { drafts?: FakeDraft[]; taken?: string[] } = {}) {
       const text = rendered.sql.trimStart();
       const params = rendered.params;
       statements.push(text);
-      statements.push(text);
 
       if (text.includes("pg_advisory_xact_lock")) {
         lockCalls += 1;
