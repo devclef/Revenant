@@ -119,7 +119,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`
   - _Requirements: A2.1–A2.6, A5.1–A5.4_
 
-- [ ] 3. A3, A4, A7 · Honest now messages, "Your answer" on every Figure_Entry, and the picker's empty state
+- [x] 3. A3, A4, A7 · Honest now messages, "Your answer" on every Figure_Entry, and the picker's empty state
   - Agent: `frontend-dev` · Depends on: 1 · Estimated size: ~1,000 changed lines
   - Before this task: task 1 is on `main` (the `fallback` field). OD1 and OD10 recorded, or defaults. Steering updated (Owner patches w, x and y on `main`, owner step O0).
   - Scope: `src/components/reveal/now-message.ts` (new), `src/components/reveal/FiguresThenNow.tsx`, `src/components/reveal/FigureEntry.tsx`, `src/components/reveal/reveal.module.css`, `src/components/reveal/copy.ts`, `src/components/live/figure-hint.ts` (new), `src/components/live/touched.ts` (new), `src/components/live/FigurePicker.tsx`, `src/components/live/WriteForm.tsx`, `src/components/live/SealPage.tsx`, `src/components/live/RealDatePicker.tsx`, `src/components/live/copy.ts`, `src/components/live/live.module.css`, and the `*.test.ts(x)` for each file above
