@@ -99,7 +99,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`
   - _Requirements: A1.1–A1.9, A2.2, A2.5, G1, G2_
 
-- [ ] 2. A2, A5 · The Seed_Job on install and upgrade, and `public/` in the image
+- [x] 2. A2, A5 · The Seed_Job on install and upgrade, and `public/` in the image
   - Agent: `platform-dev` · Depends on: 1 · Estimated size: ~350 changed lines
   - Before this task: task 1 is on `main` (the `--wait-for-schema` flag exists).
   - Scope: `deploy/helm/revenant/templates/job-fetch-figures-seed.yaml` (new), `deploy/helm/revenant/values.yaml`, `deploy/helm/revenant/Chart.yaml`, `deploy/helm/revenant/README.md`, `deploy/helm/revenant/templates/NOTES.txt`, `Dockerfile`, `src/test/seed-job.test.ts` (new), `src/test/dockerfile-public.test.ts` (new)
