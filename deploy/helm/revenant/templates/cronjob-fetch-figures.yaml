@@ -1,0 +1,70 @@
+{{/*
+Daily figure fetch CronJob (scripts/fetch-figures.mjs from the app image).
+
+Runs directly against the database: no HTTP endpoint and no shared secret.
+Rendered only when fetchFigures.enabled is true. It uses the same pod and
+container security context as the web pod, and DATABASE_URL comes from the
+existing Secret. This template renders no Secret.
+
+concurrencyPolicy Forbid stops a second run starting while one is still
+going. backoffLimit 0 and restartPolicy Never mean a failed run is not retried
+inside the Job; the next scheduled run tries again.
+*/}}
+{{- if .Values.fetchFigures.enabled }}
+{{- if lt (int .Values.fetchFigures.successfulJobsHistoryLimit) 1 }}
+{{- fail "fetchFigures.successfulJobsHistoryLimit must be at least 1" }}
+{{- end }}
+{{- if lt (int .Values.fetchFigures.failedJobsHistoryLimit) 1 }}
+{{- fail "fetchFigures.failedJobsHistoryLimit must be at least 1" }}
+{{- end }}
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "revenant.fullname" . }}-fetch-figures
+  labels:
+    {{- include "revenant.labels" . | nindent 4 }}
+spec:
+  schedule: {{ .Values.fetchFigures.schedule | quote }}
+  timeZone: {{ .Values.fetchFigures.timeZone | quote }}
+  concurrencyPolicy: Forbid
+  {{- with .Values.fetchFigures.startingDeadlineSeconds }}
+  startingDeadlineSeconds: {{ . }}
+  {{- end }}
+  successfulJobsHistoryLimit: {{ .Values.fetchFigures.successfulJobsHistoryLimit }}
+  failedJobsHistoryLimit: {{ .Values.fetchFigures.failedJobsHistoryLimit }}
+  jobTemplate:
+    spec:
+      backoffLimit: 0
+      {{- with .Values.fetchFigures.activeDeadlineSeconds }}
+      activeDeadlineSeconds: {{ . }}
+      {{- end }}
+      template:
+        metadata:
+          labels:
+            {{- include "revenant.selectorLabels" . | nindent 12 }}
+        spec:
+          restartPolicy: Never
+          securityContext:
+            {{- toYaml .Values.podSecurityContext | nindent 12 }}
+          containers:
+            - name: fetch-figures
+              image: {{ include "revenant.image" . }}
+              imagePullPolicy: {{ .Values.image.pullPolicy }}
+              command:
+                - node
+                - scripts/fetch-figures.mjs
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: {{ .Values.existingSecret | quote }}
+                      key: DATABASE_URL
+              # Non-secret config (FIGURES_SOURCE, RP_ID, APP_ORIGIN) from the ConfigMap.
+              envFrom:
+                - configMapRef:
+                    name: {{ include "revenant.fullname" . }}-config
+              securityContext:
+                {{- toYaml .Values.securityContext | nindent 16 }}
+              resources:
+                {{- toYaml .Values.resources | nindent 16 }}
+{{- end }}

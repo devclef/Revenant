@@ -82,6 +82,31 @@ demo:
   # fails the init container, so the web container never starts.
   sealPersonas: true
 
+figures:
+  # -- Where GET /api/figures reads figures from. `db` serves the figures the
+  # daily fetch job stored; `file` serves the bundled demo figures. Written to
+  # the FIGURES_SOURCE variable in the ConfigMap. Only `db` or `file` are
+  # accepted.
+  source: db
+
+fetchFigures:
+  # -- Render the daily figure fetch CronJob (scripts/fetch-figures.mjs).
+  enabled: true
+  # -- Cron schedule for the fetch, in `timeZone`. Default: 06:17 every day.
+  schedule: "17 6 * * *"
+  # -- IANA time zone the schedule is evaluated in.
+  timeZone: "Etc/UTC"
+  # -- Seconds after the scheduled time a run may still start if it was missed.
+  # Empty or 0 leaves the Kubernetes default (no deadline).
+  startingDeadlineSeconds: 600
+  # -- Seconds a single fetch run may take before Kubernetes stops it. Empty or
+  # 0 leaves it unlimited.
+  activeDeadlineSeconds: 1800
+  # -- Successful CronJob runs kept. Minimum 1.
+  successfulJobsHistoryLimit: 3
+  # -- Failed CronJob runs kept. Minimum 1.
+  failedJobsHistoryLimit: 3
+
 # -- Pod-level security context. Runs the whole pod as a non-root user.
 podSecurityContext:
   runAsNonRoot: true

@@ -99,6 +99,14 @@ helm template t deploy/helm/revenant
 | `tolerations` | `[]` | Tolerations for the web pod. |
 | `affinity` | `{}` | Affinity rules for the web pod. |
 | `demo.sealPersonas` | `true` | When true, the migrate init container seals demo persona letters after running migrations (`node scripts/migrate.mjs && node scripts/seal-personas.mjs`). Set to `false` to run migrations only. A non-zero exit from the sealing step fails the init container and blocks web startup. |
+| `figures.source` | `db` | Where `GET /api/figures` reads figures from: `db` (figures stored by the fetch job) or `file` (bundled demo figures). Written to `FIGURES_SOURCE` in the ConfigMap. Any other value fails the render. |
+| `fetchFigures.enabled` | `true` | Render the daily figure fetch CronJob (`scripts/fetch-figures.mjs`). Uses the same image, security context and `DATABASE_URL` Secret key as the web pod. |
+| `fetchFigures.schedule` | `"17 6 * * *"` | Cron schedule for the fetch, in `fetchFigures.timeZone`. |
+| `fetchFigures.timeZone` | `"Etc/UTC"` | IANA time zone the schedule is evaluated in. |
+| `fetchFigures.startingDeadlineSeconds` | `600` | Seconds after the scheduled time a missed run may still start. Empty or `0` means no deadline. |
+| `fetchFigures.activeDeadlineSeconds` | `1800` | Seconds a single fetch run may take before Kubernetes stops it. Empty or `0` means unlimited. |
+| `fetchFigures.successfulJobsHistoryLimit` | `3` | Successful CronJob runs kept. Minimum `1`. |
+| `fetchFigures.failedJobsHistoryLimit` | `3` | Failed CronJob runs kept. Minimum `1`. |
 
 ## Demo persona letters
 
