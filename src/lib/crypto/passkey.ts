@@ -114,7 +114,7 @@ function getOptions(
  */
 export async function createPasskey(
   port: AuthenticatorPort,
-  input: { rpId: string },
+  input: { rpId: string; userName?: string },
 ): Promise<CreatePasskeyResult> {
   if (!port.isAvailable()) {
     return { ok: false, reason: "unsupported" };
@@ -124,7 +124,7 @@ export async function createPasskey(
     rpId: input.rpId,
     rpName: PASSKEY_RP_NAME,
     userId: randomBytes(USER_ID_BYTES),
-    userName: PASSKEY_USER_NAME,
+    userName: input.userName ?? PASSKEY_USER_NAME,
     userDisplayName: PASSKEY_USER_DISPLAY_NAME,
     challenge: randomBytes(CHALLENGE_BYTES),
     pubKeyCredParams: pubKeyCredParams(),

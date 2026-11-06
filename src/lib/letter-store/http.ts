@@ -79,6 +79,9 @@ export const OPENS_AT_TOO_EARLY = Object.freeze({
   error: "opens_at_too_early",
 } as const);
 
+/** Fixed error body: real sealing is switched off by REAL_SEALING (404). Nothing was stored. */
+export const REAL_SEALING_OFF = Object.freeze({ error: "real_sealing_off" } as const);
+
 /**
  * Build the fixed `invalid_body` error body for a named field (400).
  *
