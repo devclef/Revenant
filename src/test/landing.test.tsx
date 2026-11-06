@@ -87,13 +87,12 @@ describe("landing page `/`", () => {
     expect(html).toContain('href="/demo"');
   });
 
-  it("renders every explanation paragraph after the Scene, verbatim", () => {
+  it("renders the Resurrection paragraph and the fuel-prices paragraph after the Scene, verbatim", () => {
     // The expected text is read from SCENE_COPY, the single source the page
-    // renders from, so a copy change (spec 08 task 11) cannot break this test
-    // on a branch that may not edit src/test/landing.test.tsx. The wording
-    // itself is pinned in scene/copy.test.ts.
-    const paragraphs = SCENE_COPY.landing.paragraphs;
-    expect(paragraphs.length).toBeGreaterThan(0);
+    // renders from. The landing page shows the first and second paragraphs
+    // only (task 2 of issue #199); the wording is pinned in scene/copy.test.ts.
+    const paragraphs = SCENE_COPY.landing.paragraphs.slice(0, 2);
+    expect(paragraphs).toHaveLength(2);
     const html = render([MAYA]);
     const sceneAt = html.indexOf('data-ceremony="scene"');
     const explainStart = html.indexOf(paragraphs[0].slice(0, 24));
@@ -108,13 +107,30 @@ describe("landing page `/`", () => {
     }
   });
 
-  it("links to /demo with the demo link text after the Scene", () => {
+  it("links to /demo with the one-letter link text after the Scene when there is one persona", () => {
     const html = render([MAYA]);
     const anchor = /<a[^>]*href="\/demo"[^>]*>(.*?)<\/a>/s.exec(html);
     expect(anchor).not.toBeNull();
-    expect(textOf(anchor?.[1] ?? "")).toBe("Open the demo letters");
+    expect(textOf(anchor?.[1] ?? "")).toBe("Open the demo letter");
     const sceneAt = html.indexOf('data-ceremony="scene"');
     expect(anchor?.index ?? -1).toBeGreaterThan(sceneAt);
+  });
+
+  it("lists the demo, live, How and source links after the Scene, in that order", () => {
+    const html = decode(render([MAYA]));
+    const sceneAt = html.indexOf('data-ceremony="scene"');
+    const order = [
+      'href="/demo"',
+      'href="/demo/live"',
+      'href="/how-it-is-sealed"',
+      'href="https://github.com/devclef/Revenant"',
+    ].map((marker) => {
+      const at = html.indexOf(marker);
+      expect(at, marker).toBeGreaterThan(sceneAt);
+      return at;
+    });
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(html).not.toContain('href="/seal"');
   });
 
   it("includes the no-script light style as a noscript block", () => {
@@ -264,5 +280,60 @@ describe("landing Ghost in the server HTML (R9.15)", () => {
     const html = renderToStaticMarkup(createElement(Home));
     const noscript = /<noscript>(.*?)<\/noscript>/s.exec(html)?.[1] ?? "";
     expect(noscript).toContain("[data-ghost-rise]");
+  });
+});
+
+// R10.1 to R10.6: the landing page link text and targets. The demo link text
+// depends on the persona count, the GitHub link is the exact repository URL,
+// and the live Seal_Page link carries its note and never points to /seal.
+const GITHUB_URL = "https://github.com/devclef/Revenant";
+
+/** The text of one anchor, found by its exact href. */
+function anchorText(html: string, href: string): string | null {
+  const escaped = href.replace(/[.*+?^${}()|[\]\\/]/g, "\\$&");
+  const match = new RegExp(`<a[^>]*href="${escaped}"[^>]*>(.*?)</a>`, "s").exec(
+    html,
+  );
+  return match === null ? null : match[1].replace(/<[^>]+>/g, "").trim();
+}
+
+describe("landing page link text and targets (R10.1 to R10.6)", () => {
+  it("uses the singular demo link text for one persona", () => {
+    const html = decode(render([MAYA]));
+    expect(anchorText(html, "/demo")).toBe(SCENE_COPY.landing.demoLinkOne);
+  });
+
+  it("uses the plural demo link text for two personas", () => {
+    const html = decode(
+      render([MAYA, { key: "eu-anna", display_name: "Anna" }]),
+    );
+    expect(anchorText(html, "/demo")).toBe(SCENE_COPY.landing.demoLinkMany);
+    expect(SCENE_COPY.landing.demoLinkMany).not.toBe(
+      SCENE_COPY.landing.demoLinkOne,
+    );
+  });
+
+  it("uses the plural demo link text for no personas", () => {
+    const html = decode(render([]));
+    expect(anchorText(html, "/demo")).toBe(SCENE_COPY.landing.demoLinkMany);
+  });
+
+  it("links to the exact GitHub URL in the landing body", () => {
+    const html = decode(render([MAYA]));
+    expect(anchorText(html, GITHUB_URL)).toBe(SCENE_COPY.landing.sourceLink);
+  });
+
+  it("links the How_Page with its landing copy", () => {
+    const html = decode(render([MAYA]));
+    expect(anchorText(html, "/how-it-is-sealed")).toBe(
+      SCENE_COPY.landing.howLink,
+    );
+  });
+
+  it("links the live Seal_Page with its note and never to /seal", () => {
+    const html = decode(render([MAYA]));
+    expect(anchorText(html, "/demo/live")).toBe(SCENE_COPY.landing.liveLink);
+    expect(html).toContain(SCENE_COPY.landing.liveNote);
+    expect(html).not.toMatch(/href="\/seal[";/]/);
   });
 });

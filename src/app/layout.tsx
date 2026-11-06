@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { headers } from "next/headers";
 import localFont from "next/font/local";
 import "./globals.css";
+import { Footer } from "@/components/ui/Footer";
 
 // Self-hosted fonts loaded via next/font/local: a build-time local import that
 // bundles the woff2 files and serves them from the app's own origin. It emits a
@@ -61,7 +62,16 @@ export default async function RootLayout({
 
   return (
     <html lang="en" className={`${serif.variable} ${sans.variable}`}>
-      <body>{children}</body>
+      <body>
+        {children}
+        {/* Layout-owned wrapper: keeps the footer in normal flow, below the page
+            content in stacking order, with a spacer so Stage content that
+            overflows the scene at 360x640 cannot end under the footer (issue #199).
+            See `.site-footer` in globals.css. */}
+        <div className="site-footer">
+          <Footer />
+        </div>
+      </body>
     </html>
   );
 }
