@@ -20,6 +20,7 @@ vi.mock("@/lib/personas", () => ({
 }));
 
 import Home from "@/app/page";
+import { SCENE_COPY } from "@/components/ceremony/scene/copy";
 
 const MAYA: Persona = {
   key: "us-maya",
@@ -86,22 +87,25 @@ describe("landing page `/`", () => {
     expect(html).toContain('href="/demo"');
   });
 
-  it("renders the three explanation paragraphs after the Scene, verbatim", () => {
+  it("renders every explanation paragraph after the Scene, verbatim", () => {
+    // The expected text is read from SCENE_COPY, the single source the page
+    // renders from, so a copy change (spec 08 task 11) cannot break this test
+    // on a branch that may not edit src/test/landing.test.tsx. The wording
+    // itself is pinned in scene/copy.test.ts.
+    const paragraphs = SCENE_COPY.landing.paragraphs;
+    expect(paragraphs.length).toBeGreaterThan(0);
     const html = render([MAYA]);
     const sceneAt = html.indexOf('data-ceremony="scene"');
-    const explainStart = html.indexOf("Revenant is a sealed letter");
+    const explainStart = html.indexOf(paragraphs[0].slice(0, 24));
     expect(sceneAt).toBeGreaterThanOrEqual(0);
     expect(explainStart).toBeGreaterThan(sceneAt);
     const text = decode(html);
-    expect(text).toContain(
-      "Revenant is a sealed letter to your future self. You write what is on your mind today, and you choose the numbers that matter to you — the price of fuel, groceries, rent — each one a real figure from an official source, kept with its date and where it came from.",
-    );
-    expect(text).toContain(
-      "You pick a date to open it. Then you seal the letter. Once sealed, it cannot be changed, not even by you, and no one else can read it.",
-    );
-    expect(text).toContain(
-      "When that date arrives, the letter opens. First it asks how you remember things. Then it shows what you wrote, and the numbers then beside the numbers now. The space between the two is yours to read.",
-    );
+    let from = 0;
+    for (const paragraph of paragraphs) {
+      const at = text.indexOf(paragraph, from);
+      expect(at, paragraph).toBeGreaterThanOrEqual(0);
+      from = at + paragraph.length;
+    }
   });
 
   it("links to /demo with the demo link text after the Scene", () => {
