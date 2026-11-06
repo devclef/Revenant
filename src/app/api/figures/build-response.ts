@@ -91,6 +91,8 @@ export function buildFiguresResponse(
         period_type: cat.period_type,
         last_success_at: lastSuccessAt(input.fetchStatus, cat.metric.id),
         figure: latestFigure(rows, cat.period_type),
+        // File mode never falls back to the bundled file, so this is always false.
+        fallback: false,
       };
     }),
   };
