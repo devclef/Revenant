@@ -411,6 +411,7 @@ export function RecallPager({
                 unitLabel={unit}
                 range={scaleRangeFor(unit)}
                 value={markValue}
+                text={resolved ?? undefined}
                 noAnswer={draft.noAnswer}
                 onEdit={(id, text) =>
                   applyField(id, setFromScale(fieldFor(id), text))

@@ -30,6 +30,7 @@ import {
   type ZoomLevel,
 } from "./scale-math";
 import { visibleTicks } from "./tick-layout";
+import { answerText } from "./answer-text";
 import { FALLBACK_RANGE, scaleRangeFor } from "./unit-ranges";
 import { TICK_CHAR_PX, TICK_GAP_PX, TRACK_MIN_PX } from "../constants";
 
@@ -196,12 +197,13 @@ describe("Property 9: values beyond the track sit at the ends and look the same"
 });
 
 describe("Property 10: the zoom reads nothing but the marker and the pointer", () => {
-  it("the props are only id, label, unit label, value, no-answer, onEdit, and the read-only flags", () => {
+  it("the props are only id, label, unit label, value, the judge's own answer text, no-answer, onEdit, and the read-only flags", () => {
     expectTypeOf<keyof RecallScaleProps>().toEqualTypeOf<
       | "id"
       | "label"
       | "unitLabel"
       | "value"
+      | "text"
       | "noAnswer"
       | "onEdit"
       | "spokenPrefix"
@@ -342,6 +344,18 @@ describe("markup", () => {
     expect(markup).toContain(`aria-valuetext="${CEREMONY_COPY.recallNoMarkYet}"`);
     expect(markup).toContain('tabindex="0"');
     expect(readoutOf(markup)).toBeNull();
+  });
+
+  it("a typed 3.90 reads 3.90, the same as answerText", () => {
+    const markup = render({ value: 3.9, text: "3.90" });
+    expect(readoutOf(markup)).toBe("3.90");
+    expect(readoutOf(markup)).toBe(answerText("3.90"));
+  });
+
+  it("a stored 1000 reads 1,000, the same as answerText", () => {
+    const markup = render({ value: 1000, text: "1000" });
+    expect(readoutOf(markup)).toBe("1,000");
+    expect(readoutOf(markup)).toBe(answerText("1000"));
   });
 
   it("the readout is the plain decimal, with thousands grouped only in labels", () => {

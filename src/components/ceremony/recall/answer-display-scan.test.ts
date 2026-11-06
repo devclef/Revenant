@@ -18,6 +18,7 @@ const components = join(here, "..", "..");
 const ANSWER_DISPLAY_FILES = [
   "ceremony/recall/RecallPager.tsx",
   "ceremony/recall/RecordedScale.tsx",
+  "ceremony/recall/RecallScale.tsx",
   "ceremony/figures/NumberLine.tsx",
   "reveal/FigureEntry.tsx",
   "reveal/RememberedAnswers.tsx",

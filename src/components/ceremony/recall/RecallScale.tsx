@@ -26,6 +26,7 @@ import {
 import { CEREMONY_COPY } from "../copy";
 import { TICK_CHAR_PX, TRACK_MIN_PX } from "../constants";
 import styles from "./RecallScale.module.css";
+import { answerText } from "./answer-text";
 import {
   clampValue,
   edgeValue,
@@ -67,6 +68,12 @@ export type RecallScaleProps = {
   range: ScaleRange;
   /** The current answer as a number, or null while the answer is empty. */
   value: number | null;
+  /**
+   * The stored answer text as the judge entered it, for example "3.90". When
+   * given, the readout shows it through `answerText`, so 3.90 stays 3.90. It is
+   * ignored while a drag is under way, because the marker then moves ahead of it.
+   */
+  text?: string;
   /** True when the judge chose "No answer": the Mark is hidden and the slider is disabled. */
   noAnswer: boolean;
   /** Called with the question id and the plain-decimal text to send as EDIT_DRAFT. */
@@ -288,6 +295,7 @@ export function RecallScale({
   unitLabel,
   range,
   value,
+  text,
   noAnswer,
   onEdit,
   spokenPrefix,
@@ -309,7 +317,15 @@ export function RecallScale({
   const hasMark = !noAnswer && shownValue !== null;
   const markPosition =
     level === 0 ? positionOfIn(base, range) : positionInWindow(base, win);
-  const readout = !noAnswer && shownValue !== null ? readoutFor(shownValue, range) : "";
+  // The stored text is trusted only when the marker is not being dragged. A drag
+  // moves `dragValue` ahead of the text the parent has stored.
+  const storedText = dragValue === null && text !== undefined && text !== "" ? text : null;
+  const readout =
+    !noAnswer && shownValue !== null
+      ? storedText !== null
+        ? answerText(storedText)
+        : readoutFor(shownValue, range)
+      : "";
   const markText = hasMark ? `${readout} ${unitLabel}` : CEREMONY_COPY.recallNoMarkYet;
   // The Mark is announced as the judge's answer, not as a position: with a
   // prefix ("Your answer") the spoken value is the answer and its unit. The
