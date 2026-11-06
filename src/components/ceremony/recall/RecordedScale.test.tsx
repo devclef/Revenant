@@ -111,3 +111,53 @@ describe("tick labels (R6.5)", () => {
     expect(markup).toContain("data-tick-label");
   });
 });
+
+describe("the Unit_Helper_Line sits on its own row under the tick labels", () => {
+  it("places the helper line after every tick label, outside the track", () => {
+    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "1200" });
+    const lastTick = markup.lastIndexOf("data-tick-label=");
+    const helper = markup.indexOf(`id="recall-q1-unit-help"`);
+    expect(lastTick).toBeGreaterThan(-1);
+    expect(helper).toBeGreaterThan(lastTick);
+    expect(markup.slice(helper)).not.toContain("data-tick-label");
+    expect(markup.slice(helper)).not.toContain("data-tick-labels");
+    expect(markup.slice(helper)).toContain(CEREMONY_COPY.unitHelperEurPer1000L);
+  });
+
+  it("gives the helper a top margin of at least 1.5rem, clearing the 1.5rem tick row", () => {
+    const rule = /\.recordedHelp\s*\{([^}]*)\}/.exec(css);
+    expect(rule).not.toBeNull();
+    const margin = /margin:\s*([\d.]+)rem/.exec(rule?.[1] ?? "");
+    expect(margin).not.toBeNull();
+    expect(Number(margin?.[1])).toBeGreaterThanOrEqual(1.5);
+  });
+
+  it("applies the helper spacing only where a helper line is shown (US scale unchanged)", () => {
+    expect(render({ unitLabel: "EUR per 1,000 litres" })).toContain("recordedHelp");
+    expect(render({ unitLabel: "USD per gallon" })).not.toContain("recordedHelp");
+  });
+});
+
+describe("the recorded readout stays on the paper near the track ends", () => {
+  it("anchors a value near the start of the track to that start", () => {
+    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "1.90" });
+    expect(markup).toContain("recordedReadoutStart");
+    expect(markup).not.toContain("recordedReadoutEnd");
+  });
+
+  it("anchors a value near the end of the track to that end", () => {
+    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "2950" });
+    expect(markup).toContain("recordedReadoutEnd");
+  });
+
+  it("keeps a mid-track readout centred", () => {
+    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "1200" });
+    expect(markup).not.toContain("recordedReadoutStart");
+    expect(markup).not.toContain("recordedReadoutEnd");
+  });
+
+  it("defines both edge rules in the stylesheet", () => {
+    expect(css).toMatch(/\.recordedReadoutStart\s*\{[^}]*transform:\s*none/);
+    expect(css).toMatch(/\.recordedReadoutEnd\s*\{[^}]*translateX\(-100%\)/);
+  });
+});

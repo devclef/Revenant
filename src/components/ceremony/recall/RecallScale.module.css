@@ -201,6 +201,15 @@
   color: var(--ink);
 }
 
+/* A readout near an end of the track anchors to that edge so it stays on the paper. */
+.recordedReadoutStart {
+  transform: none;
+}
+
+.recordedReadoutEnd {
+  transform: translateX(-100%);
+}
+
 .recordedNone {
   position: absolute;
   left: 0;
@@ -242,4 +251,13 @@
   margin: 0;
   font-size: 0.875rem;
   color: var(--ink-soft);
+}
+
+/*
+ * The Unit_Helper_Line on a recorded scale. The tick labels hang 1.5rem below
+ * the track (top: 100%, a 0.25rem gap, then a 1.25rem row), so this top margin
+ * puts the helper on its own row under them. Scales with no helper are unchanged.
+ */
+.recordedHelp {
+  margin: 1.75rem 0 0;
 }
