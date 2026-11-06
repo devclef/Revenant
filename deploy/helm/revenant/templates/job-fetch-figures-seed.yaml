@@ -1,0 +1,57 @@
+{{/*
+One-off figure fetch Job (scripts/fetch-figures.mjs from the app image), run on
+every install and upgrade so figures exist before the first scheduled run.
+
+It is a plain Job, not a Helm hook, and nothing in the release waits on it. The
+name carries the release revision, so each install or upgrade creates a new Job
+and its logs stay available. The seed Job waits for the schema that the web
+pod's migrate init container creates (--wait-for-schema), then fetches once.
+A timeout or failed run fails only this Job; the CronJob still runs daily.
+
+Rendered only when fetchFigures.enabled and fetchFigures.seedOnDeploy are true.
+It uses the same pod and container security context, env and ConfigMap as the
+CronJob. DATABASE_URL comes from the existing Secret. No Secret is rendered.
+*/}}
+{{- if and .Values.fetchFigures.enabled .Values.fetchFigures.seedOnDeploy }}
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "revenant.fullname" . }}-fetch-seed-r{{ .Release.Revision }}
+  labels:
+    {{- include "revenant.labels" . | nindent 4 }}
+spec:
+  backoffLimit: 0
+  {{- with .Values.fetchFigures.activeDeadlineSeconds }}
+  activeDeadlineSeconds: {{ . }}
+  {{- end }}
+  template:
+    metadata:
+      labels:
+        {{- include "revenant.selectorLabels" . | nindent 8 }}
+    spec:
+      restartPolicy: Never
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+      containers:
+        - name: fetch-figures-seed
+          image: {{ include "revenant.image" . }}
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command:
+            - node
+            - scripts/fetch-figures.mjs
+            - --wait-for-schema={{ .Values.fetchFigures.seedWaitForSchemaSeconds }}
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: {{ .Values.existingSecret | quote }}
+                  key: DATABASE_URL
+          # Non-secret config (FIGURES_SOURCE, RP_ID, APP_ORIGIN) from the ConfigMap.
+          envFrom:
+            - configMapRef:
+                name: {{ include "revenant.fullname" . }}-config
+          securityContext:
+            {{- toYaml .Values.securityContext | nindent 12 }}
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+{{- end }}
