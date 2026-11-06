@@ -378,6 +378,14 @@ describe("FiguresThenNow markup", () => {
     const loading = groupsOf(render(OPENED, { status: "loading" }));
     expect(loading.length).toBeGreaterThan(0);
     for (const group of loading) expect(visibleAnswers(group)).toBe(1);
+
+    // Not comparable (unit mismatch): both figures, no Number_Line, one answer line.
+    const diesel = groupsOf(render()).find((group) =>
+      group.includes(DIESEL_METRIC.display_name),
+    );
+    expect(diesel).toBeDefined();
+    expect(diesel).not.toContain('data-line-label="answer"');
+    expect(visibleAnswers(diesel ?? "")).toBe(1);
   });
 
   it("shows both figures with their own periods plus the reason for a unit mismatch", () => {
