@@ -165,7 +165,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`
   - _Requirements: A8.1–A8.4, A12.1–A12.3, A13.1–A13.3_
 
-- [ ] 5. A9, A10 · Named, spaced recorded scales, one answer format, and even ticks
+- [x] 5. A9, A10 · Named, spaced recorded scales, one answer format, and even ticks
   - Agent: `frontend-dev` · Depends on: 4 · Estimated size: ~800 changed lines
   - Before this task: task 4 is on `main`.
   - Scope: `src/components/ceremony/recall/RecordedScale.tsx`, `src/components/ceremony/recall/RecallScale.tsx`, `src/components/ceremony/recall/RecallScale.module.css`, `src/components/ceremony/recall/tick-layout.ts`, `src/components/ceremony/recall/answer-text.ts` (new), `src/components/ceremony/recall/RecallPager.tsx` (the parsed-value line only), `src/components/reveal/RememberedAnswers.tsx`, `src/components/reveal/FigureEntry.tsx` and `src/components/ceremony/figures/NumberLine.tsx` (the answer text only), `src/components/ceremony/constants.ts`, and the `*.test.ts(x)` for each file above
