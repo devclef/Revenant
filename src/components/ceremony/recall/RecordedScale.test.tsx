@@ -132,3 +132,27 @@ describe("the Unit_Helper_Line sits on its own row under the tick labels", () =>
     expect(Number(margin?.[1])).toBeGreaterThanOrEqual(1.5);
   });
 });
+
+describe("the recorded readout stays on the paper near the track ends", () => {
+  it("anchors a value near the start of the track to that start", () => {
+    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "1.90" });
+    expect(markup).toContain("recordedReadoutStart");
+    expect(markup).not.toContain("recordedReadoutEnd");
+  });
+
+  it("anchors a value near the end of the track to that end", () => {
+    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "2950" });
+    expect(markup).toContain("recordedReadoutEnd");
+  });
+
+  it("keeps a mid-track readout centred", () => {
+    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "1200" });
+    expect(markup).not.toContain("recordedReadoutStart");
+    expect(markup).not.toContain("recordedReadoutEnd");
+  });
+
+  it("defines both edge rules in the stylesheet", () => {
+    expect(css).toMatch(/\.recordedReadoutStart\s*\{[^}]*transform:\s*none/);
+    expect(css).toMatch(/\.recordedReadoutEnd\s*\{[^}]*translateX\(-100%\)/);
+  });
+});

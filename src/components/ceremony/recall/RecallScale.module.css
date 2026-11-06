@@ -207,6 +207,15 @@
   color: var(--ink);
 }
 
+/* A readout near an end of the track anchors to that edge so it stays on the paper. */
+.recordedReadoutStart {
+  transform: none;
+}
+
+.recordedReadoutEnd {
+  transform: translateX(-100%);
+}
+
 .recordedNone {
   position: absolute;
   left: 0;

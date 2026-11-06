@@ -71,7 +71,7 @@ export function RecordedScale({ id, label, unitLabel, value }: RecordedScaleProp
         {hasMark ? (
           <>
             <span className={styles.recordedMark} aria-hidden="true" />
-            <span className={styles.recordedReadout} aria-hidden="true">
+            <span className={`${styles.recordedReadout} ${readoutEdgeClass(markPosition)}`} aria-hidden="true">
               {value}
               <span className={styles.unit}>{unitLabel}</span>
             </span>
@@ -103,6 +103,17 @@ export function RecordedScale({ id, label, unitLabel, value }: RecordedScaleProp
       )}
     </div>
   );
+}
+
+/**
+ * The readout is centred on the Mark, so near either end of the track it would
+ * hang past the paper onto the desk, where the ink is unreadable. Such a readout
+ * anchors to the track edge it is next to instead.
+ */
+export function readoutEdgeClass(position: number): string {
+  if (position < 0.12) return styles.recordedReadoutStart;
+  if (position > 0.88) return styles.recordedReadoutEnd;
+  return "";
 }
 
 function tickAnchorClass(anchor: "start" | "centre" | "end"): string {
