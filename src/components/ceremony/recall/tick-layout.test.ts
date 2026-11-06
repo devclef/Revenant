@@ -12,6 +12,9 @@ import {
 // Feature: 08-judge-polish, Task 1 (tick labels, R6.5).
 // Property 14: Tick labels never overlap.
 // Validates: Requirements 6.5
+// Feature: 09-demo-polish, A10 (even ticks).
+// Property 6: Ticks are evenly spaced and never collide.
+// Validates: A10.1, A10.2
 
 const NUM_RUNS = 100;
 
@@ -58,60 +61,17 @@ describe("visibleTicks — examples", () => {
     expect(ticks).toHaveLength(1);
     expect(ticks[0].anchor).toBe("start");
   });
-});
 
-describe("visibleTicks — even ticks (spec 09 A10)", () => {
-  it("draws every second EUR tick at the 260 px track with the estimate", () => {
+  it("draws every second EUR tick at the 260 px track: 0, 1,000, 2,000, 3,000 (A10.3)", () => {
     const ticks = visibleTicks(UNIT_RANGE_TABLE["EUR per 1,000 litres"], TRACK_MIN_PX, estimate);
     expect(ticks.map((t) => t.value)).toEqual([0, 1000, 2000, 3000]);
     expect(ticks[0].anchor).toBe("start");
-    expect(ticks[3].anchor).toBe("end");
+    expect(ticks[ticks.length - 1].anchor).toBe("end");
   });
 
   it("keeps all seven EUR ticks when they fit at the wide track", () => {
     const ticks = visibleTicks(UNIT_RANGE_TABLE["EUR per 1,000 litres"], 960, estimate);
     expect(ticks.map((t) => t.value)).toEqual([0, 500, 1000, 1500, 2000, 2500, 3000]);
-  });
-});
-
-describe("Property 6: ticks are evenly spaced and never collide", () => {
-  const RANGES: readonly ScaleRange[] = [
-    UNIT_RANGE_TABLE["USD per gallon"],
-    UNIT_RANGE_TABLE["EUR per 1,000 litres"],
-    FALLBACK_RANGE,
-  ];
-
-  it("drawn ticks are every k-th tick with k dividing n - 1, include both ends, and never collide", () => {
-    fc.assert(
-      fc.property(
-        fc.constantFrom(...RANGES),
-        fc.integer({ min: TRACK_MIN_PX, max: 1200 }),
-        fc.double({ min: 0.5, max: 1, noNaN: true }),
-        (range, trackPx, factor) => {
-          const labelPx = (tick: number) => estimate(tick) * factor;
-          const ticks = visibleTicks(range, trackPx, labelPx);
-          const n = range.ticks.length;
-
-          expect(ticks[0].value).toBe(range.ticks[0]);
-          expect(ticks[ticks.length - 1].value).toBe(range.ticks[n - 1]);
-
-          if (ticks.length > 2) {
-            const indices = ticks.map((t) => range.ticks.indexOf(t.value));
-            const k = indices[1] - indices[0];
-            expect((n - 1) % k).toBe(0);
-            for (let i = 1; i < indices.length; i += 1) {
-              expect(indices[i] - indices[i - 1]).toBe(k);
-            }
-          }
-
-          const boxes = ticks.map((t) => boxOf(t, trackPx, labelPx(t.value)));
-          for (let i = 1; i < boxes.length; i += 1) {
-            expect(boxes[i].left - boxes[i - 1].right).toBeGreaterThanOrEqual(TICK_GAP_PX);
-          }
-        },
-      ),
-      { numRuns: NUM_RUNS },
-    );
   });
 });
 
@@ -144,6 +104,39 @@ describe("Property 14: tick labels never overlap", () => {
             expect(boxes[i].left - boxes[i - 1].right).toBeGreaterThanOrEqual(
               TICK_GAP_PX,
             );
+          }
+        },
+      ),
+      { numRuns: NUM_RUNS },
+    );
+  });
+
+  it("Property 6: drawn ticks are every k-th tick with k dividing n - 1, and never collide", () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom(...RANGES),
+        fc.integer({ min: TRACK_MIN_PX, max: 1200 }),
+        fc.double({ min: 0.5, max: 1, noNaN: true }),
+        (range, trackPx, factor) => {
+          const labelPx = (tick: number) => estimate(tick) * factor;
+          const ticks = visibleTicks(range, trackPx, labelPx);
+          const n = range.ticks.length;
+
+          expect(ticks[0].value).toBe(range.ticks[0]);
+          expect(ticks[ticks.length - 1].value).toBe(range.ticks[n - 1]);
+
+          if (ticks.length > 2) {
+            const indices = ticks.map((t) => range.ticks.indexOf(t.value));
+            const k = indices[1] - indices[0];
+            expect((n - 1) % k).toBe(0);
+            for (let i = 1; i < indices.length; i += 1) {
+              expect(indices[i] - indices[i - 1]).toBe(k);
+            }
+          }
+
+          const boxes = ticks.map((t) => boxOf(t, trackPx, labelPx(t.value)));
+          for (let i = 1; i < boxes.length; i += 1) {
+            expect(boxes[i].left - boxes[i - 1].right).toBeGreaterThanOrEqual(TICK_GAP_PX);
           }
         },
       ),
