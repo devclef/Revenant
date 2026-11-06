@@ -148,6 +148,27 @@ hr {
 }
 
 /*
+ * Site footer wrapper (layout.tsx). The footer is an in-flow block after the
+ * page content. Its own z-index 3 must not lift it above Stage content. This
+ * wrapper creates a stacking context at z-index 0, below `main` (z-index 1) and
+ * the Top_Bar, so page content that overlaps the footer paints on top of it.
+ * The spacer keeps the footer clear of Stage content that overflows the scene
+ * bottom (persona Stage, 360x640: "Pick up the letter" button).
+ */
+.site-footer {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  clear: both;
+}
+
+.site-footer::before {
+  content: "";
+  display: block;
+  height: 6rem;
+}
+
+/*
  * Reduced motion: disable every decorative transition and animation.
  * The ceremonial reveal and any other motion must be averted here so the
  * experience respects the user's system preference (tone.md).

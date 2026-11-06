@@ -64,7 +64,13 @@ export default async function RootLayout({
     <html lang="en" className={`${serif.variable} ${sans.variable}`}>
       <body>
         {children}
-        <Footer />
+        {/* Layout-owned wrapper: keeps the footer in normal flow, below the page
+            content in stacking order, with a spacer so Stage content that
+            overflows the scene at 360x640 cannot end under the footer (issue #199).
+            See `.site-footer` in globals.css. */}
+        <div className="site-footer">
+          <Footer />
+        </div>
       </body>
     </html>
   );

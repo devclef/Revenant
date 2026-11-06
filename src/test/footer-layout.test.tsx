@@ -63,7 +63,7 @@ describe("footer placement in the root layout", () => {
     const html = await layoutMarkup();
     const body = /<body>(.*)<\/body>/s.exec(html)?.[1] ?? "";
     expect(body).not.toBe("");
-    expect(body.endsWith("</footer>")).toBe(true);
+    expect(body.endsWith('</footer></div>')).toBe(true);
 
     const sceneAt = body.indexOf('data-ceremony="scene"');
     const footerAt = body.indexOf("<footer");
