@@ -108,6 +108,15 @@
   color: var(--ink-soft);
 }
 
+/* Below 900 px the recall card keeps its question, field and Next button above
+   the fold at 360 x 640 (layout check R1). The paper's padding shrinks here only,
+   so the card gives the field and button the room. Text colour stays the paper's. */
+@media (max-width: 899px) {
+  section.recall {
+    padding: 0.9rem 1rem;
+  }
+}
+
 .fieldset {
   border: 1px solid var(--gold-leaf); /* decorative rule only */
   border-radius: 2px;
