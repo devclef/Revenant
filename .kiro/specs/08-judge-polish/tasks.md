@@ -443,7 +443,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
   - Validation: `bash scripts/check.sh`
   - _Requirements: R20.1, R20.3–R20.8, R20.12–R20.19, R21.1, R21.5–R21.14, R30.2, R30.4_
 
-- [ ] 17. The Fetch_Job CronJob in the image and the Helm chart
+- [x] 17. The Fetch_Job CronJob in the image and the Helm chart
   - Agent: `platform-dev` · Depends on: 12, 16 · Estimated size: ~350 changed lines
   - Before this task: tasks 12 and 16 are on `main`. (Task 12 is added because both tasks add new `*.test.ts(x)` files under `src/test/`.) This task merges before the Fetch_Job is first deployed (R20.11).
   - Scope: `Dockerfile`, `package.json` (build step for `scripts/fetch-figures.build.mjs`), `.env.example`, `deploy/helm/revenant/templates/cronjob-fetch-figures.yaml` (new), `deploy/helm/revenant/templates/configmap.yaml`, `deploy/helm/revenant/values.yaml`, `deploy/helm/revenant/Chart.yaml`, `deploy/helm/revenant/README.md`, and new `*.test.ts` files under `src/test/`
