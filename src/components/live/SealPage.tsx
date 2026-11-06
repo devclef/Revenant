@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useReducer } from "react";
+import { useMemo, useReducer, useState } from "react";
 import Link from "next/link";
 
 import "@/components/ceremony/scene/tokens.css";
@@ -19,8 +19,11 @@ import { useCryptoModule } from "./useCryptoModule";
 import { useSealFlow } from "./useSealFlow";
 import { WriteForm } from "./WriteForm";
 import { usePrfHint } from "./prf-hint";
+import { resolveTimeZone } from "./real-opening";
 import { INITIAL_WRITE_DRAFT, reduceWriteDraft } from "./write-draft";
 import { figureLimit } from "./form";
+import { browserTimeZone } from "@/components/ui/letter-date";
+import { earliestOpeningDate } from "@/lib/seal-format";
 
 /** Figures used when the request has not resolved. Sealing is blocked then. */
 const NO_FIGURES: LoadedFigures = { fixture: false, series: new Map() };
@@ -120,14 +123,19 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
   // their identity while the form is unchanged. The figures are the response's,
   // and the empty set stands in only while sealDeps is null.
   const sealedFigures = sealFigures.status === "ready" ? sealFigures.figures : NO_FIGURES;
+  // Real mode only: the opening date (held here, so Try again keeps it) and the
+  // zone it opens in. The zone falls back to UTC when the browser's is unknown.
+  const [opensOn, setOpensOn] = useState<string | null>(null);
+  const timeZone = useMemo(() => resolveTimeZone(browserTimeZone()), []);
   const draft: SealDraft = useMemo(
     () => ({
       text: writeDraft.text,
       metricIds: writeDraft.metricIds,
       figures: sealedFigures,
       backupCard: writeDraft.backupCardTicked,
+      ...(mode === "real" ? { real: { opensOn, timeZone: timeZone.timeZone } } : {}),
     }),
-    [writeDraft.text, writeDraft.metricIds, writeDraft.backupCardTicked, sealedFigures],
+    [writeDraft.text, writeDraft.metricIds, writeDraft.backupCardTicked, sealedFigures, mode, opensOn, timeZone],
   );
 
   const flow = useSealFlow(sealDeps, draft);
@@ -209,6 +217,16 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
             }
             onCreatePress={flow.onCreatePress}
             onConfirmPress={flow.onConfirmPress}
+            realDate={
+              mode === "real"
+                ? {
+                    value: opensOn,
+                    min: earliestOpeningDate((deps?.nowMs ?? Date.now)(), timeZone.timeZone),
+                    timeZoneFallback: timeZone.fallback,
+                    onChange: setOpensOn,
+                  }
+                : undefined
+            }
           />
         );
     }

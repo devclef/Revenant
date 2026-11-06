@@ -575,3 +575,17 @@
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* The opening date input (RealDatePicker). Same surface and ink as the textarea. */
+.dateInput {
+  display: block;
+  box-sizing: border-box;
+  max-width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: var(--ink);
+  background-color: var(--paper);
+  border: 1px solid var(--ink-soft);
+  border-radius: 3px;
+}

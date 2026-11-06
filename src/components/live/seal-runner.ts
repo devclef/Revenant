@@ -16,6 +16,7 @@ import type { CryptoModule } from "./crypto-module";
 import type { SealApi } from "./api";
 import { computeSealTimes } from "./clock";
 import { buildLivePayload } from "./build-payload";
+import { checkRealOpening, type RealOpening } from "./real-opening";
 import type { SealEvent, SealFailureKind } from "./seal-machine";
 
 /** The browser port type, taken from the crypto module's own signature. */
@@ -54,6 +55,12 @@ export interface SealDraft {
    * Confirm_Press; the key itself is generated there, not here.
    */
   backupCard?: boolean;
+  /**
+   * Real_Letter mode only (`/seal`). The chosen opening date and zone. When it
+   * is set, opensAt is 00:00 of that date, not the 30-second demo lock, and the
+   * date is checked before any request. Demo mode leaves it unset.
+   */
+  real?: RealOpening;
 }
 
 export type SealedEvent = Extract<SealEvent, { type: "SEALED" }>;
@@ -109,10 +116,12 @@ function mapConfirm(result: ConfirmResult): ConfirmStep {
 
 /**
  * The Create_Press. Calls `createPasskey` synchronously, so the passkey prompt
- * is the first async operation of the click (R15.1 step 1).
+ * is the first async operation of the click (R15.1 step 1). In real mode the
+ * passkey is named for the opening date (`userName`); demo mode passes none.
  */
-export function pressCreate(deps: SealDeps): Promise<CreateStep> {
-  return deps.crypto.createPasskey(deps.port, { rpId: deps.rpId }).then(mapCreate);
+export function pressCreate(deps: SealDeps, userName?: string): Promise<CreateStep> {
+  const input = userName === undefined ? { rpId: deps.rpId } : { rpId: deps.rpId, userName };
+  return deps.crypto.createPasskey(deps.port, input).then(mapCreate);
 }
 
 /**
@@ -183,6 +192,16 @@ async function runSeal(
   let serverSecret: Uint8Array | null = null;
 
   try {
+    // Real_Letter: the picked date is checked before the first request, so a
+    // date that became too early is refused with nothing sent. The `finally`
+    // below still zeroes the PRF output.
+    let realOpensAt: string | undefined;
+    if (draft.real !== undefined) {
+      const check = checkRealOpening(draft.real, deps.now());
+      if (!check.ok) return { ok: false, event: failure(check.kind, passkeyCreated) };
+      realOpensAt = check.opensAt;
+    }
+
     // Step 3: the first request of the flow. Nothing is sent before this.
     const prepared = await deps.api.prepare();
     const arrivedMs = deps.now();
@@ -239,7 +258,7 @@ async function runSeal(
         serverSecret,
         ...factor,
         sealedAt: times.sealedAt,
-        opensAt: times.opensAt,
+        opensAt: realOpensAt ?? times.opensAt,
       });
     } catch (error) {
       if (error instanceof deps.crypto.SealError && error.error.kind === "wrap_failed") {
@@ -255,14 +274,20 @@ async function runSeal(
       envelopeHash: sealed.envelopeHash,
     });
     if (!posted.ok) {
+      // Real_Letter: 422 (opens_at_too_early) and 400 (any refused request)
+      // both let the visitor pick another date with the letter kept.
       const kind: SealFailureKind =
-        posted.kind === "busy"
-          ? "busy"
-          : posted.kind === "clock"
-            ? "clock"
-            : posted.kind === "network"
-              ? "network"
-              : "server";
+        draft.real !== undefined && posted.kind === "clock"
+          ? "too_early"
+          : draft.real !== undefined && posted.kind === "invalid"
+            ? "invalid_date"
+            : posted.kind === "busy"
+              ? "busy"
+              : posted.kind === "clock"
+                ? "clock"
+                : posted.kind === "network"
+                  ? "network"
+                  : "server";
       return { ok: false, event: failure(kind, passkeyCreated) };
     }
 

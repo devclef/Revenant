@@ -3,11 +3,12 @@
 import { DemoLabel } from "@/components/demo/DemoLabel";
 
 import type { PickableSeries } from "./catalogue-list";
-import { LIVE_COPY } from "./copy";
+import { LIVE_COPY, REAL_COPY } from "./copy";
 import { FigurePicker } from "./FigurePicker";
 import { countCodePoints, figureLimit, validateWrite, type WriteProblem } from "./form";
 import styles from "./live.module.css";
 import { type PrfHint } from "./prf-hint";
+import { RealDatePicker } from "./RealDatePicker";
 import type { SealState } from "./seal-machine";
 import { StepStatus } from "./StepStatus";
 
@@ -46,6 +47,16 @@ export interface WriteFormProps {
   onCreatePress: () => void;
   /** The Confirm_Press: starts the second prompt and the seal. */
   onConfirmPress: () => void;
+  /**
+   * Real_Letter mode only (`/seal`). The opening date picker and the test
+   * notice. Absent in demo mode, which shows neither.
+   */
+  realDate?: {
+    value: string | null;
+    min: string;
+    timeZoneFallback: boolean;
+    onChange: (date: string | null) => void;
+  };
 }
 
 /** The message shown for each write problem that the form renders. */
@@ -97,6 +108,7 @@ export function WriteForm({
   onBackupCardChange,
   onCreatePress,
   onConfirmPress,
+  realDate,
 }: WriteFormProps) {
   const letterCount = countCodePoints(text);
   const limit = figureLimit(series.length);
@@ -125,7 +137,10 @@ export function WriteForm({
     ? LIVE_COPY.confirmButton
     : LIVE_COPY.createButton;
   const buttonDisabled =
-    !cryptoLoaded || figuresStatus !== "ready" || !buttonLive(state, problems);
+    !cryptoLoaded ||
+    figuresStatus !== "ready" ||
+    !buttonLive(state, problems) ||
+    (realDate !== undefined && realDate.value === null);
   const onButtonPress = inCreated ? onConfirmPress : onCreatePress;
 
   return (
@@ -160,6 +175,18 @@ export function WriteForm({
           {letterProblem}
         </p>
       </div>
+
+      {realDate !== undefined ? (
+        <>
+          <p className={styles.explain}>{REAL_COPY.testNotice}</p>
+          <RealDatePicker
+            value={realDate.value}
+            min={realDate.min}
+            timeZoneFallback={realDate.timeZoneFallback}
+            onChange={realDate.onChange}
+          />
+        </>
+      ) : null}
 
       {figuresStatus === "ready" ? (
         <FigurePicker
