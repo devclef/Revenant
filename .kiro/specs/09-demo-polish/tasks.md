@@ -185,7 +185,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`
   - _Requirements: A9.1–A9.4, A10.1–A10.3_
 
-- [ ] 6. A11, A14 · The Ghost leaves after the seal breaks, and branded not-found and error pages
+- [x] 6. A11, A14 · The Ghost leaves after the seal breaks, and branded not-found and error pages
   - Agent: `frontend-dev` · Depends on: 5 · Estimated size: ~600 changed lines
   - Before this task: task 5 is on `main`. Steering updated (Owner patches w, x and y on `main`, owner step O0).
   - Scope: `src/components/ceremony/scene/PersonaGhost.tsx`, `src/components/ceremony/scene/scene.module.css`, `src/components/ceremony/scene/ghost-presence.ts`, `src/components/ceremony/constants.ts`, `src/components/ui/BrandedPage.tsx` (new), `src/components/ui/BrandedPage.module.css` (new), `src/components/ui/copy.ts`, `src/app/not-found.tsx` (new), `src/app/error.tsx` (new), and the `*.test.ts(x)` for each file above
