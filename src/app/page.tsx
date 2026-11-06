@@ -6,6 +6,7 @@ import { SceneHeadline } from "@/components/ceremony/scene/SceneHeadline";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { SCENE_COPY } from "@/components/ceremony/scene/copy";
 import styles from "@/components/ceremony/scene/scene.module.css";
+import { realSealingOn } from "@/lib/feature-flags";
 import { PERSONAS } from "@/lib/personas";
 import { pageMetadata } from "@/lib/page-metadata";
 
@@ -103,6 +104,9 @@ export default function Home() {
     PERSONAS.length === 1
       ? SCENE_COPY.landing.demoLinkOne
       : SCENE_COPY.landing.demoLinkMany;
+  // The /seal link appears only while real sealing is on. Otherwise the
+  // Seal_Page link with its 30-second note stays.
+  const realSealing = realSealingOn();
 
   return (
     <>
@@ -137,10 +141,18 @@ export default function Home() {
           </Link>
         </p>
         <p>
-          <Link href="/demo/live" style={LINK_STYLE}>
-            {SCENE_COPY.landing.liveLink}
-          </Link>{" "}
-          <span>{SCENE_COPY.landing.liveNote}</span>
+          {realSealing ? (
+            <Link href="/seal" style={LINK_STYLE}>
+              {SCENE_COPY.landing.realLink}
+            </Link>
+          ) : (
+            <>
+              <Link href="/demo/live" style={LINK_STYLE}>
+                {SCENE_COPY.landing.liveLink}
+              </Link>{" "}
+              <span>{SCENE_COPY.landing.liveNote}</span>
+            </>
+          )}
         </p>
         <p>
           <Link href="/how-it-is-sealed" style={LINK_STYLE}>

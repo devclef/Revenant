@@ -17,6 +17,9 @@ const state = vi.hoisted(() => ({
   personas: [] as Array<{ key: string; display_name: string }>,
 }));
 
+// page.tsx imports feature-flags.ts, which imports `server-only`.
+vi.mock("server-only", () => ({}));
+
 vi.mock("@/lib/personas", () => ({
   get PERSONAS() {
     return state.personas;

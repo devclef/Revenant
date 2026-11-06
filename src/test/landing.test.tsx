@@ -3,9 +3,12 @@ import { dirname, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { Persona } from "@/lib/personas";
+
+// feature-flags.ts imports `server-only`, which throws outside a server bundle.
+vi.mock("server-only", () => ({}));
 
 // The persona list is read at render time, so a mutable state object lets one
 // file cover both the one-persona and the empty-list cases.
@@ -335,5 +338,31 @@ describe("landing page link text and targets (R10.1 to R10.6)", () => {
     expect(anchorText(html, "/demo/live")).toBe(SCENE_COPY.landing.liveLink);
     expect(html).toContain(SCENE_COPY.landing.liveNote);
     expect(html).not.toMatch(/href="\/seal[";/]/);
+  });
+});
+
+
+// The real sealing flag (REAL_SEALING) picks the link to sealing on the landing page.
+describe("landing page sealing link follows REAL_SEALING", () => {
+  beforeEach(() => {
+    state.personas = [MAYA];
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("shows the /seal link with the real sealing copy when the flag is on", () => {
+    vi.stubEnv("REAL_SEALING", "on");
+    const html = decode(renderToStaticMarkup(createElement(Home)));
+    expect(anchorText(html, "/seal")).toBe(SCENE_COPY.landing.realLink);
+  });
+
+  it("shows no /seal link when the flag is off, and keeps the Seal_Page link and its note", () => {
+    vi.stubEnv("REAL_SEALING", "off");
+    const html = decode(renderToStaticMarkup(createElement(Home)));
+    expect(html).not.toMatch(/href="\/seal[";/]/);
+    expect(anchorText(html, "/demo/live")).toBe(SCENE_COPY.landing.liveLink);
+    expect(html).toContain(SCENE_COPY.landing.liveNote);
   });
 });
