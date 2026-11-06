@@ -200,6 +200,32 @@ describe("reveal marks stage: column markers and order", () => {
   });
 });
 
+describe("reveal marks stage: recorded scale names and answer format (spec 09 A9)", () => {
+  const RECORD: RecallRecordV1 = {
+    version: 1,
+    answers: [
+      { question_id: "q-fuel", kind: "number", value: "2500.50" },
+      { question_id: "q-milk", kind: "no_answer" },
+      { question_id: "q-note", kind: "no_answer" },
+    ],
+  };
+
+  it("draws one data-recorded-scale per number question, each named with its metric", () => {
+    const html = renderMarks(RECORD);
+    expect(html.match(/data-recorded-scale=""/g) ?? []).toHaveLength(2);
+    expect(html.indexOf("Regular gasoline")).toBeGreaterThan(-1);
+    expect(html.indexOf("Milk")).toBeGreaterThan(-1);
+  });
+
+  it("shows the recorded answer grouped in threes on the scale and in the answers list", () => {
+    const html = renderMarks(RECORD);
+    expect(html).toContain(": 2,500.50 USD per gallon\"");
+    const answers = sliceBetween(html, 'data-fit="marks-answers"', "</dl>");
+    expect(answers).toContain(">2,500.50</span>");
+    expect(answers).not.toContain(">2500.50<");
+  });
+});
+
 /** The text between two markers, used to scope an assertion to one part. */
 function sliceBetween(html: string, start: string, end: string): string {
   const from = html.indexOf(start);

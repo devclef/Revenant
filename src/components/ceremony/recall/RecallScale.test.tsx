@@ -30,6 +30,7 @@ import {
   type ZoomLevel,
 } from "./scale-math";
 import { visibleTicks } from "./tick-layout";
+import { answerText } from "./answer-text";
 import { FALLBACK_RANGE, scaleRangeFor } from "./unit-ranges";
 import { TICK_CHAR_PX, TICK_GAP_PX, TRACK_MIN_PX } from "../constants";
 
@@ -119,7 +120,7 @@ describe("Property 7: the Recall_Scale only produces values the record accepts",
           const digits = text.includes(".") ? bare : bare.replace(/0+$/, "");
           expect(digits.length).toBeLessThanOrEqual(3);
           expect(acceptedByRecord(text)).toBe(true);
-          expect(readoutOf(render({ value: v }))).toBe(text);
+          expect(readoutOf(render({ value: v }))).toBe(answerText(text));
         },
       ),
       { numRuns: NUM_RUNS },
@@ -196,12 +197,13 @@ describe("Property 9: values beyond the track sit at the ends and look the same"
 });
 
 describe("Property 10: the zoom reads nothing but the marker and the pointer", () => {
-  it("the props are only id, label, unit label, value, no-answer, onEdit, and the read-only flags", () => {
+  it("the props are only id, label, unit label, value, the judge's own answer text, no-answer, onEdit, and the read-only flags", () => {
     expectTypeOf<keyof RecallScaleProps>().toEqualTypeOf<
       | "id"
       | "label"
       | "unitLabel"
       | "value"
+      | "text"
       | "noAnswer"
       | "onEdit"
       | "spokenPrefix"
@@ -344,8 +346,20 @@ describe("markup", () => {
     expect(readoutOf(markup)).toBeNull();
   });
 
-  it("the readout is the plain decimal, with thousands grouped only in labels", () => {
-    expect(readoutOf(render({ value: 1712.4 }))).toBe("1710");
+  it("a typed 3.90 reads 3.90, the same as answerText", () => {
+    const markup = render({ value: 3.9, text: "3.90" });
+    expect(readoutOf(markup)).toBe("3.90");
+    expect(readoutOf(markup)).toBe(answerText("3.90"));
+  });
+
+  it("a stored 1000 reads 1,000, the same as answerText", () => {
+    const markup = render({ value: 1000, text: "1000" });
+    expect(readoutOf(markup)).toBe("1,000");
+    expect(readoutOf(markup)).toBe(answerText("1000"));
+  });
+
+  it("the readout is the answer text: the plain decimal with thousands grouped", () => {
+    expect(readoutOf(render({ value: 1712.4 }))).toBe("1,710");
     expect(readoutText(0)).toBe("0");
     expect(readoutText(0.001)).toBe("0.01");
     expect(readoutText(1000000)).toBe("100000");
@@ -382,13 +396,13 @@ describe("the track uses the sealed unit's range", () => {
       value: 1710,
     });
     // The range's ticks are every 500 from 0 to 3,000 (checked here, not by
-    // the layout). At the 260 px minimum track tick-layout drops 2,500 so its
-    // label does not crowd the 3,000 end label; the drawn list is exact.
+    // the layout). At the 260 px minimum track tick-layout draws every second
+    // tick (spec 09 A10), so the drawn list is 0, 1,000, 2,000, 3,000.
     const range = scaleRangeFor("EUR per 1,000 litres");
     expect(range.ticks).toEqual([0, 500, 1000, 1500, 2000, 2500, 3000]);
-    expect(tickLabelsOf(markup)).toEqual(["0", "500", "1,000", "1,500", "2,000", "3,000"]);
+    expect(tickLabelsOf(markup)).toEqual(["0", "1,000", "2,000", "3,000"]);
     expect(markup).toContain("--pos-mark:0.57");
-    expect(readoutOf(markup)).toBe("1710");
+    expect(readoutOf(markup)).toBe("1,710");
   });
 
   it("EUR per 1,000 litres draws all seven ticks on a wide track", () => {

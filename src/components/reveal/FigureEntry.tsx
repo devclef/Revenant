@@ -9,6 +9,7 @@ import {
 import type { LetterKind } from "./FigureLine";
 import { formatLetterDate } from "@/components/ui/letter-date";
 import { MotionProvider } from "@/components/ceremony/motion";
+import { answerText } from "@/components/ceremony/recall/answer-text";
 import { FIG_VALUE_SIZE } from "@/components/ceremony/constants";
 import { NumberLine } from "@/components/ceremony/figures/NumberLine";
 import { ChangeLine } from "./ChangeLine";
@@ -101,7 +102,7 @@ export function YourAnswerLine({ markValue, unit }: YourAnswerLineProps) {
     <div className={styles.yourAnswer} data-your-answer="">
       <span className={styles.yourAnswerLabel}>{REVEAL_COPY.yourAnswer}</span>
       <span className={styles.yourAnswerValue}>
-        {markValue === undefined ? REVEAL_COPY.noAnswer : `${markValue} ${unit}`}
+        {markValue === undefined ? REVEAL_COPY.noAnswer : `${answerText(markValue)} ${unit}`}
       </span>
     </div>
   );

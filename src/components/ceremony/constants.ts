@@ -178,3 +178,6 @@ export const TICK_CHAR_PX = 7.5; // estimated width of one tick label character 
 
 // --- R12 footer (spec 08 task 11) ---
 export const FOOTER_MAX_PX = 64; // the footer is at most this tall, so it stays clear of the Soil strip
+
+// --- Marks card scales (spec 09 A9) ---
+export const MARKS_SCALE_GAP_PX = 32; // least space between two Recall_Scale rows

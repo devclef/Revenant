@@ -22,8 +22,8 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { RecallScale } from "./RecallScale";
+import { answerText } from "./answer-text";
 import { CEREMONY_COPY } from "../copy";
-import { formatParsedValue } from "./parse-number";
 import {
   canAdvance,
   draftTextFor,
@@ -343,7 +343,7 @@ export function RecallPager({
             {resolved === null ? null : (
               <p id={parsedId} className={styles.parsed} aria-live="polite">
                 {fill(CEREMONY_COPY.parsedValue, {
-                  value: formatParsedValue(resolved),
+                  value: answerText(resolved),
                 })}
               </p>
             )}
@@ -411,6 +411,7 @@ export function RecallPager({
                 unitLabel={unit}
                 range={scaleRangeFor(unit)}
                 value={markValue}
+                text={resolved ?? undefined}
                 noAnswer={draft.noAnswer}
                 onEdit={(id, text) =>
                   applyField(id, setFromScale(fieldFor(id), text))

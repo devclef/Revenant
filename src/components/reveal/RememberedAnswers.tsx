@@ -4,6 +4,7 @@ import type { Opened } from "./opening-machine";
 import type { RecallRecordV1 } from "@/lib/recall";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
+import { answerText } from "@/components/ceremony/recall/answer-text";
 
 /**
  * Stage 1 of the reveal (R9.2, R9.3): what the judge just remembered. For each
@@ -55,9 +56,9 @@ export function RememberedAnswers({ opened, record }: RememberedAnswersProps) {
       <dl>
         {payload.recall_questions.map((question) => {
           const answer = answerByQuestionId.get(question.id);
-          const answerText =
+          const shownAnswer =
             answer !== undefined && answer.kind === "number"
-              ? `${REVEAL_COPY.yourAnswer}: ${answer.value}`
+              ? `${REVEAL_COPY.yourAnswer}: ${answerText(answer.value)}`
               : REVEAL_COPY.noAnswer;
 
           const unit =
@@ -77,7 +78,7 @@ export function RememberedAnswers({ opened, record }: RememberedAnswersProps) {
                   <span className={styles.unit}> {unitText}</span>
                 )}
               </dt>
-              <dd className={styles.rememberedAnswer}>{answerText}</dd>
+              <dd className={styles.rememberedAnswer}>{shownAnswer}</dd>
             </div>
           );
         })}

@@ -28,6 +28,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import fc from "fast-check";
 
 import { ChangeLine } from "./ChangeLine";
+import { answerText } from "@/components/ceremony/recall/answer-text";
 import { maskLineLabels } from "./line-label-mask";
 import { FigureEntry, type FigureEntryProps } from "./FigureEntry";
 import { FigureLine } from "./FigureLine";
@@ -278,7 +279,7 @@ function thousandths(scaled: number): string {
 
 function markAnswerText(value: string, unit: string): string {
   return CEREMONY_COPY.markAnswer
-    .replace("{value}", value)
+    .replace("{value}", answerText(value))
     .replace("{unit}", unit);
 }
 
@@ -418,7 +419,7 @@ describe("Property 12: a Mark outside the range sits at an edge that looks the s
           // The Mark's value appears in the Number_Line's hidden text and in
           // the "Your answer" line; both are replaced by the same token.
           const skeleton = (html: string, mark: string): string =>
-            skeletonOf(html.split(`${mark} ${then.unit}`).join("MARK"));
+            skeletonOf(html.split(`${answerText(mark)} ${then.unit}`).join("MARK"));
           expect(skeleton(lowHtml, low)).toBe(skeleton(highHtml, high));
         },
       ),

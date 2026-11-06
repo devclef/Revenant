@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 
 import { CEREMONY_COPY } from "../copy";
+import { answerText } from "../recall/answer-text";
 import { maskLineLabels } from "../../reveal/line-label-mask";
 import { POSITION_PROPERTIES } from "../constants";
 import { NumberLine, type NumberLineProps } from "./NumberLine";
@@ -290,8 +291,8 @@ describe("Property 12: the text alternative and labels name the same points (R5.
             ...base,
             markValue: value,
           });
-          expect(html).toContain(`>${value} USD per gallon</span>`);
-          expect(html).toContain(`Your answer ${value} USD per gallon.`);
+          expect(html).toContain(`>${answerText(value)} USD per gallon</span>`);
+          expect(html).toContain(`Your answer ${answerText(value)} USD per gallon.`);
         },
       ),
       { numRuns: 100 },

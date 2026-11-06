@@ -19,6 +19,7 @@ import { SealBreak } from "@/components/ceremony/seal/SealBreak";
 import type { SealController } from "@/components/ceremony/seal/useSealBreak";
 import { IDLE } from "@/components/ceremony/seal/hold";
 import { RecordedScale } from "@/components/ceremony/recall/RecordedScale";
+import { answerText } from "@/components/ceremony/recall/answer-text";
 import { useLocalView } from "@/components/ceremony/local-view";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
@@ -190,8 +191,10 @@ export function Reveal({
   // no stored number shows no Mark. The unit comes from the sealed metric; the
   // answer comes from the stored record.
   const unitByMetricId = new Map<string, string>();
+  const nameByMetricId = new Map<string, string>();
   for (const metric of opened.payload.metrics) {
     unitByMetricId.set(metric.id, metric.unit);
+    nameByMetricId.set(metric.id, metric.display_name);
   }
   const answerByQuestionId = new Map(
     record.answers.map((answer) => [answer.question_id, answer] as const),
@@ -202,6 +205,11 @@ export function Reveal({
         ? unitByMetricId.get(question.metric_id)
         : undefined;
     if (unit === undefined) return [];
+    const metricName =
+      question.answer_type === "number"
+        ? nameByMetricId.get(question.metric_id)
+        : undefined;
+    const name = metricName ?? unit;
     const answer = answerByQuestionId.get(question.id);
     const recordedValue =
       answer !== undefined && answer.kind === "number" ? answer.value : null;
@@ -209,6 +217,7 @@ export function Reveal({
       <RecordedScale
         key={question.id}
         id={question.id}
+        name={name}
         label={question.text}
         unitLabel={unit}
         value={recordedValue}
@@ -237,7 +246,7 @@ export function Reveal({
         </dt>
         <dd className={styles.marksAnswer}>
           {hasNumber ? (
-            <span className={styles.marksValue}>{answer.value}</span>
+            <span className={styles.marksValue}>{answerText(answer.value)}</span>
           ) : (
             REVEAL_COPY.noAnswer
           )}

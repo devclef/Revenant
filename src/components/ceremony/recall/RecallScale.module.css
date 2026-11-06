@@ -162,20 +162,38 @@
  * default cursor. The ring Mark uses --accent. Its text label is --ink.
  */
 
+/*
+ * One recorded scale is one box: its name, its readout, the track and its tick
+ * labels all sit inside it, so an answer label never spills into the scale above.
+ * Scales are spaced MARKS_SCALE_GAP_PX apart (constants.ts, spec 09 A9). The
+ * value is repeated here; the gap test in RecordedScale.test.tsx checks it.
+ */
 .recorded {
   container: recordedTrack / inline-size;
   color: var(--ink);
-  margin: 1.5rem 0 0.5rem;
+  margin: 1.5rem 0 0;
   cursor: default;
+}
+
+.recorded + .recorded {
+  margin-top: 32px;
+}
+
+.recordedName {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ink);
 }
 
 .recorded * {
   cursor: default;
 }
 
+/* The top margin holds the readout above the track; the bottom margin holds the tick row. */
 .recordedTrack {
   position: relative;
   height: 2.5rem;
+  margin: 1.75rem 0;
 }
 
 .recordedMark {
@@ -254,9 +272,9 @@
 }
 
 /*
- * The Unit_Helper_Line on a recorded scale. The tick labels hang 1.5rem below
- * the track (top: 100%, a 0.25rem gap, then a 1.25rem row), so this top margin
- * puts the helper on its own row under them. Scales with no helper are unchanged.
+ * The Unit_Helper_Line on a recorded scale. The track's bottom margin already
+ * clears the tick labels; the two margins collapse, so the helper sits on its own
+ * row under them. Scales with no helper are unchanged.
  */
 .recordedHelp {
   margin: 1.75rem 0 0;
