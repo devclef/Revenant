@@ -171,10 +171,8 @@ describe("CEREMONY_COPY tone and neutrality", () => {
     }
   });
 
-  it("has the desk and tilt-permission strings, all non-empty", () => {
+  it("has the desk string, non-empty", () => {
     expect(CEREMONY_COPY.deskEmpty.trim().length).toBeGreaterThan(0);
-    expect(CEREMONY_COPY.tiltEnable).toBe("Let the light follow your phone");
-    expect(CEREMONY_COPY.tiltPermissionNote.trim().length).toBeGreaterThan(0);
   });
 
   it("has a stageLive entry for every Stage except emerging (none missing)", () => {
@@ -254,5 +252,12 @@ describe("CEREMONY_COPY tone and neutrality", () => {
       expect(s).not.toMatch(/\b(close|right|wrong|accuracy|score|off by)\b/i);
       expect(s.split(/[.!?]+/).every((sentence) => sentence.trim().split(/\s+/).filter(Boolean).length <= 25)).toBe(true);
     }
+  });
+});
+
+describe("CEREMONY_COPY has no tilt strings (no device-motion code exists)", () => {
+  it("omits tiltEnable and tiltPermissionNote, which retired with spec 07", () => {
+    expect("tiltEnable" in CEREMONY_COPY).toBe(false);
+    expect("tiltPermissionNote" in CEREMONY_COPY).toBe(false);
   });
 });

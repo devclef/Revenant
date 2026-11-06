@@ -1,8 +1,7 @@
 /**
  * User-facing strings for the reveal Ceremony: the motion and sound controls,
  * the skip control, the envelope stage, the seal break, the recall scale, the
- * tilt prompt, and one short
- * line per Stage for the polite live region.
+ * desk, and one short line per Stage for the polite live region.
  *
  * Every word a reader or screen reader hears in the Ceremony comes from here;
  * the components hold no inline literals (R15.1). Existing strings in
@@ -95,15 +94,6 @@ export const CEREMONY_COPY = {
 
   /** Shown when the field text cannot be read as one number. One fixed example for every input. */
   numberUnreadable: "This number could not be read. Write it like 1585.76.",
-
-  // --- Tilt and sound ---
-
-  /** The control that asks for device-motion permission for the light tilt. */
-  tiltEnable: "Let the light follow your phone",
-
-  /** The note beside the tilt control: what the permission request is for. */
-  tiltPermissionNote:
-    "Your phone asks for permission to read its motion. Saying no keeps the light where it is.",
 
   // --- Desk ---
 

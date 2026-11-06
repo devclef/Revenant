@@ -199,7 +199,7 @@ export const REVEAL_COPY = {
    * (R14.3): the same Fingerprint is printed on the reader's letter card.
    */
   fingerprintPassedCard:
-    "It matches the fingerprint printed on your letter card.",
+    "Compare it with the fingerprint printed on your letter card.",
 
   /**
    * The label shown after `fingerprintPassed` on a persona letter (R14.8). A

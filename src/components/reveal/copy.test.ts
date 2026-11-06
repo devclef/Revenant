@@ -193,3 +193,10 @@ describe("REVEAL_COPY tone and neutrality", () => {
     }
   });
 });
+
+describe("REVEAL_COPY claims with code behind them", () => {
+  it("asks the reader to compare the fingerprint with the card, without claiming a match the app never checks", () => {
+    expect(REVEAL_COPY.fingerprintPassedCard).toContain("Compare it with the fingerprint");
+    expect(REVEAL_COPY.fingerprintPassedCard).not.toMatch(/matches/i);
+  });
+});
