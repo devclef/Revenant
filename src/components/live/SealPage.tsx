@@ -164,6 +164,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
             appOrigin={appOrigin}
             nowMs={deps?.nowMs ?? Date.now}
             getBackupKeyText={flow.getBackupKeyText}
+            real={mode === "real"}
           />
         );
       case "cannot_lock":

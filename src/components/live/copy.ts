@@ -173,4 +173,5 @@ export const REAL_COPY = {
   invalidDate:
     "Revenant could not seal the letter with that date. Choose another date and try again. Nothing was sealed, and your letter is still here.",
   dateMissing: "Choose an opening date before you seal.",
+  stillSealed: "This letter is still sealed.",
 } as const;
