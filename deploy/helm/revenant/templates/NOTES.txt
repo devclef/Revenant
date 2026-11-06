@@ -45,4 +45,10 @@ Before it can open a single letter, two things must be in place.
    reached over HTTPS at exactly that host, or letters cannot be opened.
 {{- end }}
 
+If `fetchFigures.seedOnDeploy` is true (the default), this release also runs the
+figure fetch once, as a Job named `<fullname>-fetch-seed-r<revision>`. Read its
+log with:
+
+       kubectl -n {{ .Release.Namespace }} logs job/{{ include "revenant.fullname" . }}-fetch-seed-r{{ .Release.Revision }}
+
 When both are in place, open https://{{ .Values.host }} and seal a letter.

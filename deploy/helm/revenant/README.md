@@ -108,6 +108,8 @@ helm template t deploy/helm/revenant
 | `fetchFigures.activeDeadlineSeconds` | `1800` | Seconds a single fetch run may take before Kubernetes stops it. Empty or `0` means unlimited. |
 | `fetchFigures.successfulJobsHistoryLimit` | `3` | Successful CronJob runs kept. Minimum `1`. |
 | `fetchFigures.failedJobsHistoryLimit` | `3` | Failed CronJob runs kept. Minimum `1`. |
+| `fetchFigures.seedOnDeploy` | `true` | Run the figure fetch once as a Job on every install and upgrade (see [Seed run](#seed-run)). Set to `false` to skip it. |
+| `fetchFigures.seedWaitForSchemaSeconds` | `600` | Seconds the seed Job waits for the database schema before it gives up. |
 
 ## Daily figure fetch
 
@@ -140,6 +142,25 @@ example `kubectl create secret generic revenant --from-literal=BLS_API_KEY='...'
 `secretKeyRef` to the `fetch-figures` container in
 `templates/cronjob-fetch-figures.yaml`, and bump the chart `version`. Never put
 the key in `values.yaml` or the ConfigMap.
+
+## Seed run
+
+When `fetchFigures.seedOnDeploy` is `true` (the default), each install and upgrade
+also runs the figure fetch once, as a Job named
+`<fullname>-fetch-seed-r<revision>` (the revision is the Helm release revision).
+This gives the site figures before the first scheduled run at 06:17.
+
+The seed Job waits up to `fetchFigures.seedWaitForSchemaSeconds` (default `600`)
+for the database schema, which the web pod's migrate init container creates. If
+the schema is still missing after that, the Job fails. The scheduled CronJob
+still runs daily.
+
+To read the seed log, replace `<ns>` with your namespace and `<revision>` with
+the release revision (for example from `helm history revenant -n <ns>`):
+
+```bash
+kubectl -n <ns> logs job/<fullname>-fetch-seed-r<revision>
+```
 
 ## Demo persona letters
 
