@@ -532,6 +532,14 @@
     drop-shadow(0 0 4px var(--ghost-glow));
 }
 
+/* The Ghost body takes the hit test only while the seal is up, so the reader
+   can see what covers the seal (GZ1). Elsewhere the layer stays pass-through,
+   so the Break the seal button on the marks stage (narrow widths) and the
+   other content under the Ghost keep their clicks. */
+.scene:has([data-ceremony="seal"]) .ghostSvg {
+  pointer-events: auto;
+}
+
 .ghostSvg {
   display: block;
   width: 100%;
