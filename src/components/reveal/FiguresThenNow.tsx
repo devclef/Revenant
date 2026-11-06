@@ -1,8 +1,9 @@
-import type { FigureV1 } from "@/lib/seal-format";
+import type { FigureV1, MetricDefinitionV1 } from "@/lib/seal-format";
 import type { DisplayRescale } from "@/lib/figures";
 import { computeChange, isFixtureFigure } from "@/lib/figures";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
-import { thenAndNow } from "@/lib/figures/then-now";
+import { pickNow } from "@/lib/figures/now";
+import type { FiguresState } from "./figures-api";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV1 } from "@/lib/recall";
 import { FigureEntry } from "./FigureEntry";
@@ -25,12 +26,14 @@ import styles from "./reveal.module.css";
  *   happen for a validly sealed letter.
  * - The sealed "then" figure comes from the payload only and is shown with
  *   {@link FigureLine} (role "then").
- * - The "now" figure is looked up in {@link DEMO_FIGURES} (a static import, no
- *   network) with `thenAndNow(metricId, sealedAt.slice(0,10), DEMO_FIGURES).now`
- *   — the latest figure in that series. A missing now shows
- *   `nowUnavailableUnknown` (the series left the catalogue) or
- *   `nowUnavailableEmpty` (the series has no figures), and no change (R6.5,
- *   R6.6, data-integrity.md). An honest gap, never a filled one.
+ * - The "now" figure is picked with `pickNow` from the Figures_API response
+ *   (`figures`, read once per reveal by `useFigures` in Reveal). The match uses
+ *   the sealed metric's source, series, unit and region only. While the request
+ *   is in flight the entry shows `nowLoading`. A series that is missing, or has
+ *   no figure, shows `nowUnavailableMissing`. A failed request shows
+ *   `nowUnavailableFetch`. In every missing case there is no change and no
+ *   Number_Line (R6.5, R6.6, data-integrity.md). An honest gap, never a filled
+ *   one.
  * - When both figures are present, {@link computeChange} decides comparability.
  *   Not comparable: both figures are shown with their own periods, plus the one
  *   neutral reason sentence for the first failing check (R12.x,
@@ -51,8 +54,8 @@ import styles from "./reveal.module.css";
  *
  * Every string comes from copy.ts; no letter text or figure value is an
  * authored literal (R15.1). This component reads no clock, holds no state, logs
- * nothing and makes no network request: `sealedAt` comes from the opened
- * letter's header and `DEMO_FIGURES` is a frozen import.
+ * nothing and makes no network request. The Now_Figures come from the `figures`
+ * prop. `DEMO_FIGURES` is a frozen import, used only for the display rescale.
  */
 
 export type FiguresThenNowProps = {
@@ -76,17 +79,35 @@ export type FiguresThenNowProps = {
    * persona path, and its tests, unchanged.
    */
   letterKind?: LetterKind;
+  /**
+   * The Figures_API state from `useFigures()` (figures-api.ts). It supplies
+   * every Now_Figure. The caller reads it once per reveal and passes it down.
+   */
+  figures: FiguresState;
 };
 
-// The copy for a missing "now" figure, by the reason thenAndNow reports. A
-// series that left the catalogue is unknown; a series with no figures (or no
-// figure at or before the date, which cannot occur for "now") is empty.
-function missingNowCopy(
-  reason: "unknown_series" | "no_figures" | "none_at_or_before_date",
-): string {
-  return reason === "unknown_series"
-    ? REVEAL_COPY.nowUnavailableUnknown
-    : REVEAL_COPY.nowUnavailableEmpty;
+type NowLookup =
+  | { found: true; figure: Readonly<FigureV1> }
+  | { found: false; message: string };
+
+// The Now_Figure for one sealed then figure, or the copy that says why there is
+// none. A request still in flight, a failed request, and a series that is
+// missing or has no figure each get their own line. None of them shows a value.
+function nowLookup(
+  then: Readonly<FigureV1>,
+  metric: MetricDefinitionV1,
+  figures: FiguresState,
+): NowLookup {
+  if (figures.status === "loading") {
+    return { found: false, message: REVEAL_COPY.nowLoading };
+  }
+  if (figures.status === "failed") {
+    return { found: false, message: REVEAL_COPY.nowUnavailableFetch };
+  }
+  const picked = pickNow(then, metric, figures.figures);
+  return picked.found
+    ? { found: true, figure: picked.figure }
+    : { found: false, message: REVEAL_COPY.nowUnavailableMissing };
 }
 
 /**
@@ -114,17 +135,13 @@ export function FiguresThenNow({
   record,
   allowSamePeriod = false,
   letterKind = "persona",
+  figures,
 }: FiguresThenNowProps) {
-  const { payload, header } = opened;
+  const { payload } = opened;
 
-  // The reference date for "now" is the UTC calendar date the letter was
-  // sealed; sealedAt is a millisecond-`Z` instant, so its date is the first ten
-  // characters (already UTC).
-  const sealedDate = header.sealedAt.slice(0, 10);
-
-  const metricName = new Map<string, string>();
+  const metricById = new Map<string, MetricDefinitionV1>();
   for (const metric of payload.metrics) {
-    metricName.set(metric.id, metric.display_name);
+    metricById.set(metric.id, metric);
   }
 
   // Build each entry up front so we can decide the fixture note from every
@@ -144,19 +161,18 @@ export function FiguresThenNow({
   let anyFixture = false;
 
   payload.figures.forEach((then, index) => {
-    const name = metricName.get(then.metric_id);
+    const metric = metricById.get(then.metric_id);
     // A figure with no matching metric cannot occur for a validly sealed letter
     // (the schema enforces it); skip defensively rather than invent a name.
-    if (name === undefined) return;
+    if (metric === undefined) return;
+    const name = metric.display_name;
 
     const series = DEMO_FIGURES.series.get(then.metric_id);
     const rescale = series?.display_rescale;
 
-    const result = thenAndNow(then.metric_id, sealedDate, DEMO_FIGURES);
-    const now = result.now.found ? result.now.figure : undefined;
-    const nowMissing = result.now.found
-      ? undefined
-      : missingNowCopy(result.now.reason);
+    const lookup = nowLookup(then, metric, figures);
+    const now = lookup.found ? lookup.figure : undefined;
+    const nowMissing = lookup.found ? undefined : lookup.message;
 
     const change =
       now === undefined

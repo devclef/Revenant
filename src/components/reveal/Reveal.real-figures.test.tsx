@@ -8,6 +8,10 @@ import type { Opened } from "./opening-machine";
 import { PERSONAS } from "@/lib/personas";
 import { CATALOGUE } from "@/lib/figures/catalogue";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
+import { figuresStateFrom } from "./figures-stub";
+
+// Every Now_Figure comes from a stubbed GET /api/figures built from DEMO_FIGURES.
+const REAL_FIGURES = await figuresStateFrom(DEMO_FIGURES);
 import { thenAndNow } from "@/lib/figures/then-now";
 import { formatPeriod } from "@/lib/figures";
 import type { FigureV1, MetricDefinitionV1, PayloadV1 } from "@/lib/seal-format";
@@ -182,7 +186,7 @@ describe("FiguresThenNow with the committed personas and real figures", () => {
     describe(`persona ${persona.key}`, () => {
       const { opened, expected } = openedFor(persona);
       const markup = renderToStaticMarkup(
-        createElement(FiguresThenNow, { opened }),
+        createElement(FiguresThenNow, { opened, figures: REAL_FIGURES }),
       );
       const groups = figureGroups(markup);
 

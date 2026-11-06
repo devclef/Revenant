@@ -4,7 +4,7 @@
       "key": "us-maya",
       "display_name": "Maya",
       "region": "United States",
-      "letter_id": "GNUIStxJIx6BBmZXHGHBnA",
+      "letter_id": "Qbm5FLgjOC6vJiRAy5Wh0g",
       "written_as_of": "2024-05-12",
       "opens_at": "2024-11-05T00:00:00.000Z",
       "metrics": [
@@ -21,6 +21,7 @@
     }
   ],
   "retired_letter_ids": [
-    "wom_GdH6gqP6AGgnyhIMgA"
+    "wom_GdH6gqP6AGgnyhIMgA",
+    "GNUIStxJIx6BBmZXHGHBnA"
   ]
 }

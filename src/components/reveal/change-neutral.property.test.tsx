@@ -40,6 +40,10 @@ import {
   type ChangeResult,
 } from "@/lib/figures";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
+import { figuresStateFrom } from "./figures-stub";
+
+// Every Now_Figure comes from a stubbed GET /api/figures built from DEMO_FIGURES.
+const FIGURES = await figuresStateFrom(DEMO_FIGURES);
 import { thenAndNow } from "@/lib/figures/then-now";
 import type { FigureV1, MetricDefinitionV1, PayloadV1 } from "@/lib/seal-format";
 import type { RecallRecordV1 } from "@/lib/recall";
@@ -623,7 +627,7 @@ function renderThenNow(payload: PayloadV1, record?: RecallRecordV1): string {
       "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
     payload,
   };
-  const props = record === undefined ? { opened } : { opened, record };
+  const props = record === undefined ? { opened, figures: FIGURES } : { opened, record, figures: FIGURES };
   return renderToStaticMarkup(createElement(FiguresThenNow, props));
 }
 

@@ -12,6 +12,10 @@ import { describe, expect, it } from "vitest";
 
 import { DEMO_COPY } from "@/components/demo/copy";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
+import {
+  figuresResponseFrom,
+  stubFiguresFetch,
+} from "@/components/reveal/figures-stub";
 
 import { listPickableSeries } from "./catalogue-list";
 import { validateWrite } from "./form";
@@ -236,11 +240,37 @@ describe("SealPage", () => {
       createElement(SealPage, {
         rpId: "revenant.devclef.se",
         appOrigin: "https://revenant.devclef.se",
+        deps: {
+          fetchFigures: stubFiguresFetch(figuresResponseFrom(DEMO_FIGURES)),
+        },
       }),
     );
 
     expect(html).toContain(LIVE_COPY.heading);
     expect(html).toContain(LIVE_COPY.createButton);
+  });
+});
+
+describe("WriteForm — figures request state", () => {
+  it("shows the failure and blocks creating a passkey when the request failed", () => {
+    const html = renderWriteForm({
+      figuresStatus: "failed",
+      text: "A letter",
+      metricIds: [],
+      warningTicked: true,
+      cryptoLoaded: true,
+    });
+
+    expect(html).toContain(esc(LIVE_COPY.figuresLoadFailed));
+    expect(html).not.toContain('id="figure-');
+    expect(/<button[^>]*disabled/.test(html)).toBe(true);
+  });
+
+  it("shows the loading message and no picker while the request is in flight", () => {
+    const html = renderWriteForm({ figuresStatus: "loading", series: [] });
+
+    expect(html).toContain(esc(LIVE_COPY.figuresLoading));
+    expect(html).not.toContain('id="figure-');
   });
 });
 

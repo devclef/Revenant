@@ -10,6 +10,7 @@ import { SoundToggle } from "@/components/ceremony/sound/SoundToggle";
 import { SoundEnabledContext } from "@/components/ceremony/sound/SoundEnabledContext";
 import { soundCues } from "@/components/ceremony/sound/cues";
 import { FiguresThenNow } from "./FiguresThenNow";
+import { useFigures } from "./figures-api";
 import { Fingerprint } from "./Fingerprint";
 import { StagePanel } from "./StagePanel";
 import { FiguresFadeUp } from "@/components/ceremony/figures/FiguresFadeUp";
@@ -145,6 +146,10 @@ export function Reveal({
   // up to CeremonyRoot, so `stageFor(state, local)` resolves `seal` while a
   // break is in progress and `marks` otherwise (design.md "Stage resolution").
   const { localView, setLocalView } = useLocalView();
+
+  // The Figures_API is read once per reveal (figures-api.ts). Stage 3 picks each
+  // Now_Figure from this response, not from DEMO_FIGURES.
+  const figures = useFigures();
 
   // "See the numbers" starts the figures fade-up. The fade runs in FiguresFadeUp.
   const onSeeNumbers = useCallback(() => {
@@ -333,6 +338,7 @@ export function Reveal({
                   record={record}
                   allowSamePeriod={variant === "live"}
                   letterKind={letterKind}
+                  figures={figures}
                 />
               </FiguresFadeUp>
             </div>

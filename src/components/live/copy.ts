@@ -28,6 +28,14 @@ export const LIVE_COPY = {
     "Choose between 1 and {max}. Each is sealed as published, with its period and source.",
   figureLatest: "Latest period: {period}",
   fixtureLabel: "fixture data",
+  /** Shown in place of the figure list while the figures request is in flight. */
+  figuresLoading: "Loading the figures you can seal with.",
+  /**
+   * The figures request failed. Sealing stays blocked: there is no bundled list
+   * to fall back to.
+   */
+  figuresLoadFailed:
+    "The figures could not be loaded, so you cannot seal a letter yet. Check your connection and reload the page.",
   passkeySteps:
     'Your device will ask for the passkey twice. Each time, you press a button first. The passkey will be named "Revenant demo" in your passkey manager.',
   crossDevice:

@@ -276,13 +276,25 @@ export const REVEAL_COPY = {
    */
   periodRange: " to ",
 
-  /** The now figure is unavailable because its series left the catalogue. */
-  nowUnavailableUnknown:
-    "The current figure is unavailable. This series is no longer in the catalogue.",
+  /**
+   * Shown in place of a Now_Figure while the figures request is in flight. Only
+   * the then figure is drawn meanwhile: no Now_Figure, change or Number_Line.
+   */
+  nowLoading: "Loading this figure.",
 
-  /** The now figure is unavailable because its series has no figures yet. */
-  nowUnavailableEmpty:
-    "The current figure is unavailable. This series has no figures yet.",
+  /**
+   * The Now_Figure is missing from the figures response: its series is no
+   * longer published, or the series has no figure. The then figure stays with it.
+   */
+  nowUnavailableMissing:
+    "This figure is no longer published by Revenant. The figure written then is shown with it.",
+
+  /**
+   * The figures request failed: a network error, a non-2xx status or a body
+   * that could not be read. The then figure above stays.
+   */
+  nowUnavailableFetch:
+    "This figure could not be loaded. Check your connection and reload the page.",
 
   /** The lead line shown when the then and now figures can't be compared. */
   notComparable:
