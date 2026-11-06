@@ -398,7 +398,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
   - Validation: `bash scripts/check.sh`
   - _Requirements: R20.3–R20.6, R20.8, R20.9, R20.13, R20.14, R20.17, R20.18, R21.2, R21.5, R23.1_
 
-- [ ] 15. The Reveal and the Seal_Page read the Figures_API
+- [x] 15. The Reveal and the Seal_Page read the Figures_API
   - Agent: `frontend-dev` · Depends on: 13, 14 · Estimated size: ~1,100 changed lines
   - Before this task: tasks 13 and 14 are on `main`.
   - Scope: `src/components/reveal/figures-api.ts` (new), `src/components/reveal/FiguresThenNow.tsx`, `reveal/FigureEntry.tsx`, `reveal/Reveal.tsx`, `reveal/copy.ts`, `src/components/live/SealPage.tsx`, `live/FigurePicker.tsx`, `live/catalogue-list.ts`, `live/copy.ts`, the copy scan tests under `src/components/reveal` (additions only), and the `*.test.ts(x)` for each file above, including `reveal/Reveal.real-figures.test.tsx`, `reveal/FiguresThenNow.test.tsx`, `reveal/FiguresThenNow.live.test.tsx` and the `live/SealPage` tests
