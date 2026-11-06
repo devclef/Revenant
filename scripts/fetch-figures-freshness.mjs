@@ -93,6 +93,9 @@ function parseBody(body) {
     if (entry.last_success_at !== null && typeof entry.last_success_at !== "string") return null;
     if (!("figure" in entry)) return null;
     if (entry.figure !== null && typeof entry.figure !== "object") return null;
+    // `fallback` is optional (#248). When present it must be a boolean. It does
+    // not change how a series is classified.
+    if ("fallback" in entry && typeof entry.fallback !== "boolean") return null;
   }
   return body.series;
 }

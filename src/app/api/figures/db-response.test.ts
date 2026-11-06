@@ -14,11 +14,14 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
+import { bundledLatestFigure } from "@/lib/figures/bundled-latest";
 import { CATALOGUE } from "@/lib/figures/catalogue";
 import { parseFiguresResponse } from "@/lib/figures/now";
+import type { CatalogueSeries } from "@/lib/figures/types";
 import type { FigureV1 } from "@/lib/seal-format";
 
 import {
+  chooseFigure,
   toUtcSeconds,
   type FigureReadStore,
   type StoredFigureRow,
@@ -238,8 +241,14 @@ describe("Property 23 (database part): the Figures_API lists every series with i
             CATALOGUE.map((c) => c.metric.id),
           );
           for (const entry of body.series) {
-            expect(entry.figure, entry.metric.id).toEqual(
-              oracleFigure(entry.metric.id, rows),
+            const cat = CATALOGUE.find((c) => c.metric.id === entry.metric.id);
+            if (cat === undefined) throw new Error("unknown metric in test");
+            // Property 1: stored, else bundled, else null.
+            const stored = oracleFigure(entry.metric.id, rows);
+            const bundled = bundledLatestFigure(cat);
+            expect(entry.figure, entry.metric.id).toEqual(stored ?? bundled);
+            expect(entry.fallback, entry.metric.id).toBe(
+              stored === null && bundled !== null,
             );
             expect(entry.last_success_at, entry.metric.id).toEqual(
               oracleLastSuccess(entry.metric.id, runs),
@@ -254,8 +263,15 @@ describe("Property 23 (database part): the Figures_API lists every series with i
 
 // --- Examples ----------------------------------------------------------------
 
-const GASOLINE = CATALOGUE[0].metric;
-const DIESEL = CATALOGUE[1].metric;
+/** The Catalogue entry for one metric ID. Looked up by ID, never by position. */
+function catalogueSeries(metricId: string): CatalogueSeries {
+  const found = CATALOGUE.find((c) => c.metric.id === metricId);
+  if (found === undefined) throw new Error(`unknown metric in test: ${metricId}`);
+  return found;
+}
+
+const GASOLINE = catalogueSeries("us-gasoline-regular").metric;
+const DIESEL = catalogueSeries("us-diesel").metric;
 
 function stored(
   metric: typeof GASOLINE,
@@ -278,7 +294,7 @@ function stored(
 }
 
 describe("database mode examples", () => {
-  it("lists every series in Catalogue order, with null where nothing is stored or succeeded", async () => {
+  it("lists every series in Catalogue order, with the bundled figure where nothing is stored and null last_success_at where nothing succeeded", async () => {
     const body = await bodyFrom(
       new MemoryReadStore([stored(GASOLINE, "2026-10-05", "1.0001", "2026-11-02T10:00:00Z")]),
     );
@@ -286,7 +302,9 @@ describe("database mode examples", () => {
     expect(body.series).toHaveLength(CATALOGUE.length);
     const byId = new Map(body.series.map((s) => [s.metric.id, s]));
     expect(byId.get(GASOLINE.id)?.figure).not.toBeNull();
-    expect(byId.get(DIESEL.id)?.figure).toBeNull();
+    expect(byId.get(GASOLINE.id)?.fallback).toBe(false);
+    expect(byId.get(DIESEL.id)?.figure).toEqual(bundledLatestFigure(catalogueSeries("us-diesel")));
+    expect(byId.get(DIESEL.id)?.fallback).toBe(true);
     expect(byId.get(DIESEL.id)?.last_success_at).toBeNull();
   });
 
@@ -347,7 +365,10 @@ describe("database mode examples", () => {
       CATALOGUE.map((c) => c.metric.id),
     );
     for (const entry of body.series) {
-      expect(entry.figure, entry.metric.id).toBeNull();
+      const cat = CATALOGUE.find((c) => c.metric.id === entry.metric.id);
+      if (cat === undefined) throw new Error("unknown metric in test");
+      expect(entry.figure, entry.metric.id).toEqual(bundledLatestFigure(cat));
+      expect(entry.fallback, entry.metric.id).toBe(true);
     }
   });
 
@@ -369,5 +390,62 @@ describe("database mode examples", () => {
     expect(JSON.parse(text)).toEqual({ error: "figures_unavailable" });
     expect(text).not.toMatch(/postgres/i);
     expect(text).not.toMatch(/secret/);
+  });
+});
+
+// --- Property 1 (Fallback_Refresh): stored, else bundled, else null -----------
+
+describe("Property 1: stored, else bundled, else null", () => {
+  const storedFigure = asFigure(stored(GASOLINE, "2026-10-05", "1.0001", "2026-11-02T10:00:00Z"));
+  const bundledFigure = bundledLatestFigure(catalogueSeries("us-gasoline-regular"));
+
+  it("gives the stored figure with fallback false when a stored row exists", () => {
+    expect(chooseFigure(storedFigure, bundledFigure)).toEqual({
+      figure: storedFigure,
+      fallback: false,
+    });
+    expect(chooseFigure(storedFigure, null)).toEqual({
+      figure: storedFigure,
+      fallback: false,
+    });
+  });
+
+  it("gives the bundled figure with fallback true when nothing is stored", () => {
+    expect(chooseFigure(null, bundledFigure)).toEqual({
+      figure: bundledFigure,
+      fallback: true,
+    });
+  });
+
+  it("gives null with fallback false when neither is available", () => {
+    expect(chooseFigure(null, null)).toEqual({ figure: null, fallback: false });
+  });
+
+  it("holds for any combination of stored and bundled presence", () => {
+    fc.assert(
+      fc.property(fc.boolean(), fc.boolean(), (hasStored, hasBundled) => {
+        const result = chooseFigure(
+          hasStored ? storedFigure : null,
+          hasBundled ? bundledFigure : null,
+        );
+        if (hasStored) {
+          expect(result).toEqual({ figure: storedFigure, fallback: false });
+        } else if (hasBundled) {
+          expect(result).toEqual({ figure: bundledFigure, fallback: true });
+        } else {
+          expect(result).toEqual({ figure: null, fallback: false });
+        }
+      }),
+    );
+  });
+
+  it("serves the stored figure over the bundled one for the same series", async () => {
+    const storedRow = stored(GASOLINE, "2026-10-05", "1.0001", "2026-11-02T10:00:00Z");
+    const body = await bodyFrom(new MemoryReadStore([storedRow]));
+
+    const entry = body.series.find((s) => s.metric.id === GASOLINE.id);
+    expect(entry?.figure).toEqual(asFigure(storedRow));
+    expect(entry?.fallback).toBe(false);
+    expect(entry?.figure).not.toEqual(bundledFigure);
   });
 });

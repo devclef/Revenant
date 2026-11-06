@@ -30,6 +30,9 @@ export const figuresResponseV1Schema = z.strictObject({
       period_type: z.enum(["weekly", "monthly"]),
       last_success_at: z.string().nullable(),
       figure: figureV1Schema.nullable(),
+      // True when the figure came from the bundled fallback file rather than
+      // the database. Optional: a body without it means false.
+      fallback: z.boolean().optional(),
     }),
   ),
 });
@@ -50,7 +53,7 @@ export function parseFiguresResponse(body: unknown): ParseFiguresResponse {
 }
 
 export type PickNowResult =
-  | { found: true; figure: FigureV1 }
+  | { found: true; figure: FigureV1; fallback: boolean }
   | { found: false; reason: "series_missing" | "no_figure" };
 
 /**
@@ -84,5 +87,9 @@ export function pickNow(
   if (entry.figure === null) {
     return { found: false, reason: "no_figure" };
   }
-  return { found: true, figure: entry.figure };
+  return {
+    found: true,
+    figure: entry.figure,
+    fallback: entry.fallback ?? false,
+  };
 }

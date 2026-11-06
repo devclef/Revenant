@@ -87,6 +87,40 @@ describe("parseFiguresResponse", () => {
     expect(parseFiguresResponse(body).ok).toBe(true);
   });
 
+  it("accepts an entry with fallback true or false", () => {
+    for (const fallback of [true, false]) {
+      const body = response([{ ...entry(EIA_METRIC, officialFigure()), fallback }]);
+      expect(parseFiguresResponse(body)).toEqual({ ok: true, value: body });
+    }
+  });
+
+  it("rejects an entry whose fallback is not a boolean", () => {
+    const body = {
+      ...response([entry(EIA_METRIC, officialFigure())]),
+      series: [{ ...entry(EIA_METRIC, officialFigure()), fallback: "yes" }],
+    };
+    expect(parseFiguresResponse(body)).toEqual({ ok: false });
+  });
+
+  // Property 2: a response parses whether or not each entry carries `fallback`,
+  // and the parsed value keeps exactly the fields it was given.
+  it("Property 2: responses parse with or without fallback", () => {
+    fc.assert(
+      fc.property(fc.option(fc.boolean(), { nil: undefined }), (fallback) => {
+        const base = entry(EIA_METRIC, officialFigure());
+        const series = fallback === undefined ? base : { ...base, fallback };
+        const body = response([series]);
+        const result = parseFiguresResponse(body);
+        expect(result).toEqual({ ok: true, value: body });
+        if (result.ok) {
+          expect("fallback" in result.value.series[0]).toBe(
+            fallback !== undefined,
+          );
+        }
+      }),
+    );
+  });
+
   it("rejects a body with the wrong format tag", () => {
     expect(parseFiguresResponse({ ...valid, format: "other" })).toEqual({
       ok: false,
@@ -138,6 +172,17 @@ describe("pickNow examples", () => {
     expect(pickNow(officialFigure(), EIA_METRIC, body)).toEqual({
       found: true,
       figure,
+      fallback: false,
+    });
+  });
+
+  it("returns fallback true when the matching entry is marked as a fallback", () => {
+    const figure = officialFigure({ value: "3.541", period: "2026-10-19" });
+    const body = response([{ ...entry(EIA_METRIC, figure), fallback: true }]);
+    expect(pickNow(officialFigure(), EIA_METRIC, body)).toEqual({
+      found: true,
+      figure,
+      fallback: true,
     });
   });
 
@@ -313,7 +358,7 @@ describe("Property 24: the browser picks the now figure by its series alone", ()
             ? { found: false, reason: "series_missing" }
             : matches[0].figure === null
               ? { found: false, reason: "no_figure" }
-              : { found: true, figure: matches[0].figure };
+              : { found: true, figure: matches[0].figure, fallback: false };
 
         expect(pickNow(sealedFigure, sealed.metric, body)).toEqual(expected);
       }),
@@ -329,7 +374,7 @@ describe("Property 24: the browser picks the now figure by its series alone", ()
         const body = response([entry(listed, figure)]);
         expect(
           pickNow({ ...figure, source: sealedMetric.source, series_id: sealedMetric.series_id, unit: sealedMetric.unit, region: sealedMetric.region }, sealedMetric, body),
-        ).toEqual({ found: true, figure });
+        ).toEqual({ found: true, figure, fallback: false });
       }),
       { numRuns: 100 },
     );

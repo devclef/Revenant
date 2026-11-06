@@ -8,8 +8,11 @@
 // data.
 //
 // Data integrity (data-integrity.md): nothing is filled, converted or estimated.
-// A series with no stored row is listed with `figure: null`.
+// A series with no stored row takes its latest real bundled figure, marked
+// `fallback: true`, and only when the bundled file has one. Otherwise it is
+// listed with `figure: null`.
 
+import { bundledLatestFigure } from "@/lib/figures/bundled-latest";
 import { isFixtureFigure } from "@/lib/figures/fixture";
 import type { FiguresResponseV1 } from "@/lib/figures/now";
 import type { CatalogueSeries, LoadedSeries } from "@/lib/figures/types";
@@ -66,9 +69,32 @@ function toFigure(row: StoredFigureRow): FigureV1 {
   };
 }
 
+/** The figure a series answers with, and whether it came from the bundled file. */
+export interface ChosenFigure {
+  readonly figure: FigureV1 | null;
+  readonly fallback: boolean;
+}
+
+/**
+ * The stored-else-bundled-else-null rule (spec 08-judge-polish, Fallback_Refresh,
+ * Property 1). A stored figure always wins and is never marked as a fallback. A
+ * bundled figure is used only where nothing is stored, and is marked `fallback:
+ * true`. Where neither exists the figure is null and `fallback` is false.
+ */
+export function chooseFigure(
+  stored: FigureV1 | null,
+  bundled: FigureV1 | null,
+): ChosenFigure {
+  if (stored !== null) return { figure: stored, fallback: false };
+  if (bundled !== null) return { figure: bundled, fallback: true };
+  return { figure: null, fallback: false };
+}
+
 /**
  * Reads the latest figures and the success times, then shapes the response. The
  * store may reject; the caller decides what to answer (respond.ts answers 500).
+ * Each series gets its figure from chooseFigure. last_success_at still comes only
+ * from figure_fetch_runs, never from a bundled or stored figure.
  */
 export async function buildDbFiguresResponse(
   store: FigureReadStore,
@@ -100,7 +126,7 @@ export async function buildDbFiguresResponse(
     fetchStatus[metricId] = toUtcSeconds(at);
   }
 
-  return buildFiguresResponse({
+  const body = buildFiguresResponse({
     loaded: {
       fixture: figures.some((f) => isFixtureFigure(f)),
       series,
@@ -110,4 +136,14 @@ export async function buildDbFiguresResponse(
     sourceMode: "db",
     generatedAt,
   });
+
+  return {
+    ...body,
+    series: body.series.map((entry) => {
+      const cat = catalogue.find((c) => c.metric.id === entry.metric.id);
+      const bundled =
+        entry.figure === null && cat !== undefined ? bundledLatestFigure(cat) : null;
+      return { ...entry, ...chooseFigure(entry.figure, bundled) };
+    }),
+  };
 }
