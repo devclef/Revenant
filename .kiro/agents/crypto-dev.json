@@ -44,6 +44,8 @@
           "package-lock.json",
           "package.json",
           "scripts/seal-personas*",
+          "src/**/*.test.ts",
+          "src/**/*.test.tsx",
           "src/app/api/letters/**",
           "src/app/api/openings/**",
           "src/lib/crypto/**",

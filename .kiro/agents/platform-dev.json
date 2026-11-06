@@ -53,6 +53,8 @@
           "package.json",
           "public/**",
           "scripts/migrate.mjs",
+          "src/**/*.test.ts",
+          "src/**/*.test.tsx",
           "src/app/api/health/**",
           "src/app/globals.css",
           "src/app/layout.tsx",
