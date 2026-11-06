@@ -6,6 +6,10 @@
 // thenAndNow pick against that row directly, so the entry and the figures
 // cannot drift apart silently.
 
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import { DEMO_FIGURES } from "@/lib/figures/demo";
@@ -45,6 +49,13 @@ describe("EU persona entry (eu-tomas)", () => {
     expect(eu.opening_event?.source_url).toBe(
       "https://www.europarl.europa.eu/elections/en/",
     );
+  });
+
+  it("has a letter_path that resolves to a real, non-empty letter file", () => {
+    const here = dirname(fileURLToPath(import.meta.url));
+    const path = resolve(here, "../../../content/personas", eu.letter_path);
+    expect(existsSync(path)).toBe(true);
+    expect(readFileSync(path, "utf8").trim().length).toBeGreaterThan(0);
   });
 
   it("is written within the 12 months before opening and before it opens", () => {
