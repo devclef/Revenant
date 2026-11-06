@@ -547,7 +547,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
   - Validation: `bash scripts/check.sh`
   - _Requirements: R14.1, R24.2–R24.5, R24.7, R24.12–R24.14, R25.4, R25.5, R30.2, R30.5_
 
-- [ ] 22. The Real_Seal_Page at `/seal`
+- [x] 22. The Real_Seal_Page at `/seal`
   - Agent: `frontend-dev` · Depends on: 18, 21 · Estimated size: ~1,800 changed lines
   - Before this task: tasks 18 and 21 are on `main`.
   - Gate: the owner records go or no-go in this task's issue on 20 November 2026 (R25.1). Go needs every R24 test passing and one Real_Letter sealed on `revenant.devclef.se` with its countdown checked, which needs this branch deployed with `realSealing: true`. On no-go the PR is closed unmerged, or, if merged, stays behind the off flag. On a go, production runs a `v*` version tag, not `dev`, because `deploy.md` says `dev` must not serve an installation that holds real letters: the owner cuts the tag and pins `image.tag` to it in the GitOps values before setting `realSealing: true`.
