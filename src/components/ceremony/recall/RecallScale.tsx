@@ -317,14 +317,13 @@ export function RecallScale({
   const hasMark = !noAnswer && shownValue !== null;
   const markPosition =
     level === 0 ? positionOfIn(base, range) : positionInWindow(base, win);
-  // The stored text is trusted only when the marker is not being dragged. A drag
-  // moves `dragValue` ahead of the text the parent has stored.
+  // Every readout is the answer text (answerText). The text is the stored answer
+  // when the marker is at rest. During a drag, or when no text is stored, it is
+  // the plain decimal the scale sends for the value: the same string onEdit stores.
   const storedText = dragValue === null && text !== undefined && text !== "" ? text : null;
   const readout =
     !noAnswer && shownValue !== null
-      ? storedText !== null
-        ? answerText(storedText)
-        : readoutFor(shownValue, range)
+      ? answerText(storedText ?? readoutFor(shownValue, range))
       : "";
   const markText = hasMark ? `${readout} ${unitLabel}` : CEREMONY_COPY.recallNoMarkYet;
   // The Mark is announced as the judge's answer, not as a position: with a

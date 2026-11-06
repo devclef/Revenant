@@ -120,7 +120,7 @@ describe("Property 7: the Recall_Scale only produces values the record accepts",
           const digits = text.includes(".") ? bare : bare.replace(/0+$/, "");
           expect(digits.length).toBeLessThanOrEqual(3);
           expect(acceptedByRecord(text)).toBe(true);
-          expect(readoutOf(render({ value: v }))).toBe(text);
+          expect(readoutOf(render({ value: v }))).toBe(answerText(text));
         },
       ),
       { numRuns: NUM_RUNS },
@@ -358,8 +358,8 @@ describe("markup", () => {
     expect(readoutOf(markup)).toBe(answerText("1000"));
   });
 
-  it("the readout is the plain decimal, with thousands grouped only in labels", () => {
-    expect(readoutOf(render({ value: 1712.4 }))).toBe("1710");
+  it("the readout is the answer text: the plain decimal with thousands grouped", () => {
+    expect(readoutOf(render({ value: 1712.4 }))).toBe("1,710");
     expect(readoutText(0)).toBe("0");
     expect(readoutText(0.001)).toBe("0.01");
     expect(readoutText(1000000)).toBe("100000");
@@ -402,7 +402,7 @@ describe("the track uses the sealed unit's range", () => {
     expect(range.ticks).toEqual([0, 500, 1000, 1500, 2000, 2500, 3000]);
     expect(tickLabelsOf(markup)).toEqual(["0", "1,000", "2,000", "3,000"]);
     expect(markup).toContain("--pos-mark:0.57");
-    expect(readoutOf(markup)).toBe("1710");
+    expect(readoutOf(markup)).toBe("1,710");
   });
 
   it("EUR per 1,000 litres draws all seven ticks on a wide track", () => {
