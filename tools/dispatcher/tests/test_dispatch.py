@@ -1204,3 +1204,34 @@ class SetStatusOrder(unittest.TestCase):
         gh.remove_label = lambda n, l: events.append(("-", l))
         gh.set_status(1, "status:qa-passed", "status:qa-running", "status:qa-passed", "needs-qa")
         self.assertEqual(events, [("+", "status:qa-passed"), ("-", "status:qa-running"), ("-", "needs-qa")])
+
+
+class AgentNotes(unittest.TestCase):
+    def test_commit_notes_keep_bodies_only(self):
+        log = "subject only\n\x00subj\n\nTable row\n\x00"
+        self.assertEqual(d.commit_notes(log), "Table row")
+
+    def test_body_notes_are_replaced_not_stacked(self):
+        once = d.pr_body_with_notes("Closes #1", "A")
+        twice = d.pr_body_with_notes(once, "B")
+        self.assertIn("B", twice)
+        self.assertNotIn("A\n", twice.split(d.NOTES_START)[1].replace("B", ""))
+        self.assertEqual(twice.count(d.NOTES_START), 1)
+        self.assertTrue(twice.startswith("Closes #1"))
+
+    def test_noop_review_failure_is_not_a_failed_run(self):
+        err = "Self-review could not verify the step: the step left no diff to review"
+        run = {"status": "failed", "task_details": [{"status": "failed", "error": err}]}
+        self.assertTrue(d.only_noop_review_failures(run))
+        run["task_details"].append({"status": "failed", "error": "tests failed"})
+        self.assertFalse(d.only_noop_review_failures(run))
+        self.assertFalse(d.only_noop_review_failures({"status": "failed", "error": "boom"}))
+
+    def test_qa_spec_quotes_the_pr_body(self):
+        pr = {"number": 5, "title": "t", "body": "Closes #2\n\n| 1 | claim |", "labels": []}
+        issue = {"number": 2, "body": "b", "labels": []}
+        self.assertIn("| 1 | claim |", d.qa_spec(pr, issue))
+
+    def test_dev_spec_points_pr_description_at_commit_messages(self):
+        spec = d.dev_spec({"number": 2, "title": "t", "body": "b"}, "frontend-dev")
+        self.assertIn("commit message", spec)
