@@ -262,6 +262,17 @@
   pointer-events: none;
 }
 
+/* The Ghost layer (spec 07 A11, issue #253). Above every Stage card, below the
+   Top_Bar (z-index 10 at the root). It clips and passes pointer events through,
+   as the backdrop did, so the Ghost keeps the same placement and clipping. */
+.ghostLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 /* The light. Its centre is the Ghost's x and the Soil's top. */
 .light {
   position: absolute;

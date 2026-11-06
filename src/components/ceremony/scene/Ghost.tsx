@@ -47,6 +47,10 @@ export type GhostProps = {
   riseRef?: Ref<HTMLDivElement>;
   /** The leave timings as CSS variables. */
   leaveVars?: CSSProperties;
+  /** Extra attributes for the root (pit) element, for example data-ghost. */
+  rootAttributes?: Record<string, string>;
+  /** Called with the animation name when an animation on the rise element ends. */
+  onExitEnd?: (animationName: string) => void;
   /** The held Envelope, rendered in the bob's slot. */
   children?: ReactNode;
 };
@@ -62,10 +66,12 @@ export function Ghost({
   leaving = false,
   riseRef,
   leaveVars,
+  rootAttributes,
+  onExitEnd,
   children,
 }: GhostProps) {
   return (
-    <div className={styles.pit} data-pose={pose} data-ghost-pit>
+    <div className={styles.pit} data-pose={pose} data-ghost-pit {...rootAttributes}>
       <div className={styles.ghostPlace}>
         <div
           ref={riseRef}
@@ -74,6 +80,11 @@ export function Ghost({
           data-leaving={leaving ? "true" : undefined}
           data-ghost-rise
           style={leaveVars}
+          onAnimationEnd={(event) => {
+            // animationend bubbles from children, so only the rise's own counts.
+            if (event.target !== event.currentTarget) return;
+            onExitEnd?.(event.animationName);
+          }}
         >
           <div className={styles.bob} data-ghost-bob>
             <div className={styles.ghostGlow}>

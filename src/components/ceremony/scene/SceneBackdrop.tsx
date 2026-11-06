@@ -73,17 +73,28 @@ export function SceneBackdrop({
   }, [handed]);
 
   return (
-    <div
-      className={styles.backdrop}
-      aria-hidden="true"
-      data-dimmed={dimmed ? "true" : undefined}
-      data-dim-animated={dimmed && animateDim ? "true" : undefined}
-      style={DIM_VARS}
-    >
-      <div className={styles.light} />
-      <SoilStrip />
-      <SoilCanvasLoader />
-      {children}
-    </div>
+    <>
+      <div
+        className={styles.backdrop}
+        aria-hidden="true"
+        data-dimmed={dimmed ? "true" : undefined}
+        data-dim-animated={dimmed && animateDim ? "true" : undefined}
+        style={DIM_VARS}
+      >
+        <div className={styles.light} />
+        <SoilStrip />
+        <SoilCanvasLoader />
+      </div>
+      {children === undefined || children === null ? null : (
+        // The Ghost layer (spec 07 A11, issue #253). It is a sibling of the
+        // backdrop, not a child, because the backdrop's z-index 0 stacking
+        // context would keep the Ghost under the Stage cards. This layer sits
+        // above the cards and below the Top_Bar. It passes pointer events
+        // through, as the backdrop did.
+        <div className={styles.ghostLayer} aria-hidden="true" data-ghost-layer>
+          {children}
+        </div>
+      )}
+    </>
   );
 }

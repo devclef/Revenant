@@ -64,7 +64,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { PersonaGhost } from "@/components/ceremony/scene/PersonaGhost";
 import { SceneBackdrop } from "@/components/ceremony/scene/SceneBackdrop";
 import { ghostPresent } from "@/components/ceremony/scene/ghost-presence";
-import { GHOST_LEAVE_MS } from "@/components/ceremony/constants";
 import { CeremonyRoot } from "@/components/ceremony/CeremonyRoot";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { SkipProvider } from "@/components/ceremony/skip";
@@ -221,13 +220,9 @@ export function OpeningFlow({
 
   // True from a completed full-motion break until the Ghost has left (R12.6).
   // Calm, Skip and Show everything never set it, so the Ghost unmounts in the
-  // same render as their ADVANCE or SHOW_ALL.
+  // same render as their ADVANCE or SHOW_ALL. PersonaGhost removes the Ghost
+  // (animationend, the fallback timer, or at once) and then calls leftGhost.
   const [ghostLeaving, setGhostLeaving] = useState(false);
-  useEffect(() => {
-    if (!ghostLeaving) return undefined;
-    const timer = setTimeout(() => setGhostLeaving(false), GHOST_LEAVE_MS);
-    return () => clearTimeout(timer);
-  }, [ghostLeaving]);
   const leftGhost = useCallback(() => setGhostLeaving(false), []);
 
   // The break's ADVANCE. `animated` is true only for a full-motion break, which

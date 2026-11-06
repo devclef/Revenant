@@ -54,6 +54,22 @@ describe("Persona scene — Ghost and Soil strip render (Property 20)", () => {
     expect(html).toContain("data-soil-strip");
   });
 
+  it("marks the Ghost root with data-ghost (spec 07 A11)", () => {
+    const html = renderToStaticMarkup(personaScene());
+    expect(html).toMatch(/data-ghost-pit[^>]*data-ghost=""/);
+  });
+
+  it("renders the Ghost in its own layer, outside the backdrop, so it sits above the cards", () => {
+    const html = renderToStaticMarkup(personaScene());
+    const layer = html.indexOf("data-ghost-layer");
+    const ghost = html.indexOf("data-ghost-box");
+    const backdropEnd = html.indexOf("data-soil-strip");
+    expect(layer).toBeGreaterThan(-1);
+    expect(ghost).toBeGreaterThan(layer);
+    // The layer opens after the backdrop's Soil strip, so it is a sibling.
+    expect(layer).toBeGreaterThan(backdropEnd);
+  });
+
   it("places the envelope inside the Ghost's held slot", () => {
     const html = renderToStaticMarkup(personaScene());
     const held = html.search(/heldSlot/);
