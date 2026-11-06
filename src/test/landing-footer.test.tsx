@@ -1,15 +1,13 @@
 // Feature: 08-judge-polish (issue #199)
 //
-// The site footer comes last in the root layout, and the landing page links
-// (demo, live seal, How page, GitHub source) carry the copy and targets the
-// landing copy defines. The landing.test.tsx file covers the page on its own;
-// this file covers the layout around it.
+// The site footer comes last in the root layout, after the page content
+// (R12.4). The landing.test.tsx file covers the landing page's own copy and
+// links; this file covers the layout around it.
 
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { SCENE_COPY } from "@/components/ceremony/scene/copy";
 import { FOOTER_SOURCE_URL } from "@/components/ui/Footer";
 import { UI_COPY } from "@/components/ui/copy";
 
@@ -40,11 +38,6 @@ const GITHUB_URL = "https://github.com/devclef/Revenant";
 async function layoutMarkup(): Promise<string> {
   const tree = await RootLayout({ children: createElement(Home) });
   return renderToStaticMarkup(tree).replace(/&#x27;/g, "'");
-}
-
-/** Markup of the landing page alone, as the page renders it. */
-function pageMarkup(): string {
-  return renderToStaticMarkup(createElement(Home)).replace(/&#x27;/g, "'");
 }
 
 /** The text of one anchor, found by its exact href. */
@@ -84,44 +77,5 @@ describe("footer placement in the root layout", () => {
     expect(anchorText(footer, "/how-it-is-sealed")).toBe(UI_COPY.footer.how);
     expect(anchorText(footer, GITHUB_URL)).toBe(UI_COPY.footer.source);
     expect(FOOTER_SOURCE_URL).toBe(GITHUB_URL);
-  });
-});
-
-describe("landing page link text", () => {
-  it("uses the singular demo link text for one persona", () => {
-    state.personas = [MAYA];
-    const html = pageMarkup();
-    expect(anchorText(html, "/demo")).toBe(SCENE_COPY.landing.demoLinkOne);
-  });
-
-  it("uses the plural demo link text for two personas", () => {
-    state.personas = [MAYA, { key: "eu-anna", display_name: "Anna" }];
-    const html = pageMarkup();
-    expect(anchorText(html, "/demo")).toBe(SCENE_COPY.landing.demoLinkMany);
-    expect(SCENE_COPY.landing.demoLinkMany).not.toBe(
-      SCENE_COPY.landing.demoLinkOne,
-    );
-  });
-
-  it("links to the exact GitHub URL in the landing body", () => {
-    state.personas = [MAYA];
-    const html = pageMarkup();
-    expect(anchorText(html, GITHUB_URL)).toBe(SCENE_COPY.landing.sourceLink);
-  });
-
-  it("links the How_Page with its landing copy", () => {
-    state.personas = [MAYA];
-    const html = pageMarkup();
-    expect(anchorText(html, "/how-it-is-sealed")).toBe(
-      SCENE_COPY.landing.howLink,
-    );
-  });
-
-  it("links the live Seal_Page with its note and never to /seal", () => {
-    state.personas = [MAYA];
-    const html = pageMarkup();
-    expect(anchorText(html, "/demo/live")).toBe(SCENE_COPY.landing.liveLink);
-    expect(html).toContain(SCENE_COPY.landing.liveNote);
-    expect(html).not.toMatch(/href="\/seal[";/]/);
   });
 });
