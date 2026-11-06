@@ -176,6 +176,12 @@
 .recordedTrack {
   position: relative;
   height: 2.5rem;
+  /*
+   * The tick labels hang below the track (top: 100%, a 0.25rem gap, then a
+   * 1.25rem row), so 1.5rem of track-bottom space holds them. The margin below
+   * that keeps the Unit_Helper_Line on its own row under the tick labels.
+   */
+  margin-bottom: 1.75rem;
 }
 
 .recordedMark {

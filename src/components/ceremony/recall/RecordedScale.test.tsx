@@ -111,3 +111,24 @@ describe("tick labels (R6.5)", () => {
     expect(markup).toContain("data-tick-label");
   });
 });
+
+describe("the Unit_Helper_Line sits on its own row under the tick labels", () => {
+  it("places the helper line after every tick label, outside the track", () => {
+    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "1200" });
+    const lastTick = markup.lastIndexOf("data-tick-label=");
+    const helper = markup.indexOf(`id="recall-q1-unit-help"`);
+    expect(lastTick).toBeGreaterThan(-1);
+    expect(helper).toBeGreaterThan(lastTick);
+    expect(markup.slice(helper)).not.toContain("data-tick-label");
+    expect(markup.slice(helper)).not.toContain("data-tick-labels");
+    expect(markup.slice(helper)).toContain(CEREMONY_COPY.unitHelperEurPer1000L);
+  });
+
+  it("reserves at least 1.5rem below the track for the tick row", () => {
+    const rule = /\.recordedTrack\s*\{([^}]*)\}/.exec(css);
+    expect(rule).not.toBeNull();
+    const margin = /margin-bottom:\s*([\d.]+)rem/.exec(rule?.[1] ?? "");
+    expect(margin).not.toBeNull();
+    expect(Number(margin?.[1])).toBeGreaterThanOrEqual(1.5);
+  });
+});
