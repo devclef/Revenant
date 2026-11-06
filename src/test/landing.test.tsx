@@ -341,7 +341,6 @@ describe("landing page link text and targets (R10.1 to R10.6)", () => {
   });
 });
 
-
 // The real sealing flag (REAL_SEALING) picks the link to sealing on the landing page.
 describe("landing page sealing link follows REAL_SEALING", () => {
   beforeEach(() => {
