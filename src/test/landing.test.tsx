@@ -334,6 +334,6 @@ describe("landing page link text and targets (R10.1 to R10.6)", () => {
     const html = decode(render([MAYA]));
     expect(anchorText(html, "/demo/live")).toBe(SCENE_COPY.landing.liveLink);
     expect(html).toContain(SCENE_COPY.landing.liveNote);
-    expect(html).not.toMatch(/href="\/seal[";]/);
+    expect(html).not.toMatch(/href="\/seal[";/]/);
   });
 });
