@@ -526,7 +526,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
   - Validation: `bash scripts/check.sh`
   - _Requirements: R10.5, R24.9, R25.2, R25.3, R25.4, R30.2_
 
-- [ ] 21. The 3-calendar-month rule, real letter drafts and the real seal routes
+- [x] 21. The 3-calendar-month rule, real letter drafts and the real seal routes
   - Agent: `crypto-dev` · Depends on: 19, 20 · Estimated size: ~1,600 changed lines
   - Before this task: tasks 19 and 20 are on `main`.
   - Gate: 20 November 2026 go or no-go (R25.1). Go needs every R24 test of this task and task 22 passing in `bash scripts/check.sh`. On no-go an open PR is closed unmerged; if it has merged, it stays behind the off flag, which this task's tests cover.
