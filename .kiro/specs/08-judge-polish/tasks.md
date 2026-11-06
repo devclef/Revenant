@@ -464,7 +464,7 @@ Tasks 23 and 24 (group 7) are in `later-tasks.md`, which spec-sync does not read
 
 ### Group 5: EU persona
 
-- [ ] 18. The EU persona
+- [x] 18. The EU persona
   - Agent: `frontend-dev` · Depends on: 15 · Estimated size: ~450 changed lines
   - Before this task: task 15 is on `main`. Must merge by 27 November 2026 (R31.5).
   - Scope: `content/personas/personas.json`, `content/personas/letters/eu-<name>.txt` (new), `src/lib/personas/schema.ts` (`opening_event`), `src/lib/personas/index.ts`, and the `*.test.ts` files under `src/lib/personas/`
