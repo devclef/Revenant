@@ -33,9 +33,9 @@ export const LIVE_COPY = {
   crossDevice:
     'A passkey may not work on a device from a different ecosystem. To open this letter, use a device that has the passkey, or your computer\'s "use a phone" option.',
   warning:
-    "A lost or deleted passkey means this letter can never be opened. Revenant cannot recover it.",
+    "A lost or deleted passkey means this letter can never be opened, unless you also keep its backup key. Revenant cannot recover it.",
   warningLabel:
-    "I understand that a lost or deleted passkey means this letter can never be opened.",
+    "I understand that a lost or deleted passkey means this letter can never be opened, unless I keep its backup key.",
   createButton: "Create your passkey",
   confirmButton: "Confirm your passkey",
   preparing: "Getting ready.",
@@ -59,7 +59,7 @@ export const LIVE_COPY = {
   cannotLockTitle: "This device cannot lock a letter with a passkey",
   cannotLockBody: "Your letter has not been sealed, and nothing was stored.",
   cannotLockNext1:
-    'Try another device or browser. If your browser offers it, choose "use a phone or tablet".',
+    "Try another device or browser. If your browser offers it, choose the option to use a phone or tablet.",
   cannotLockNext2:
     "You can also seal with a backup key instead, or open a persona letter.",
   passkeyDeleteNote:
@@ -96,9 +96,9 @@ export const LIVE_COPY = {
   linkLabel: "Your letter link",
   copyLink: "Copy link",
   goToLetter: "Go to your letter",
-  keepLink: "Keep this link. This page keeps nothing once you close it.",
+  keepLink: "Keep this link. This page does not keep your key, so it cannot show the key again after you close it.",
   keyReminder:
-    "This letter opens only with your backup key. Paste it into the key field on the letter page.",
+    "Your backup key opens this letter after the opening date. Paste it into the key field on the letter page.",
   regionLabel: "Your letter",
   unlockTitle: "Unlock your letter",
   unlockPasskey: "Unlock with your passkey",
