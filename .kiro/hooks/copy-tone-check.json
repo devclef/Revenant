@@ -7,7 +7,7 @@
       "matcher": "^src/.*\\.tsx$|content/.*\\.(md|txt)$",
       "action": {
         "type": "agent",
-        "prompt": "A UI or copy file was saved. Check its user-facing text against .kiro/steering/tone.md and neutrality.md. Flag: judgemental words (soared, plunged, skyrocketed, finally fell), exclamation marks, puns or horror clichés, and red/green or arrow styling that implies a number going up or down is good or bad. Report file and line for each hit, or say it is clean. Do not edit."
+        "prompt": "A UI or copy file was saved. Check its user-facing text against .kiro/steering/tone.md and neutrality.md. Flag: judgemental words (soared, plunged, skyrocketed, finally fell), exclamation marks, puns or horror clichés, and red/green or arrow styling that implies a number going up or down is good or bad. Report file and line for each hit, or say it is clean. Do not edit. Also flag: the retired tagline \"Your past self returns with the receipts.\"; \"rose-tinted\"; any sentence that names the classroom time capsule as what Revenant resurrects, revives or brings back (the time capsule may appear as an example); old ritual names used as step names (\"Recall first\", \"Reveal\", \"Snapshot\", \"Rest\", \"Return\"); and accusing testimony words (\"cross-examine\", \"caught\", \"wrong\", \"you misremembered\")."
       }
     }
   ]

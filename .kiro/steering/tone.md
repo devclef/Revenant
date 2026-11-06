@@ -4,7 +4,7 @@ inclusion: always
 
 # Tone and Visual Voice
 
-Revenant is the ghost of your past self returning with the receipts. The mood is a dark room and one shaft of purple light: something you buried comes back up, carrying your letter. It is spooky the way a quiet night is spooky, not the way a haunted house ride is.
+Revenant is the wax seal, resurrected. A sealed letter comes back out of the dark, carried by the ghost of your past self, and before you read it you testify. The mood is a dark room and one shaft of purple light: something you buried comes back up, carrying your letter. It is spooky the way a quiet night is spooky, not the way a haunted house ride is.
 
 ## The feeling
 
@@ -15,10 +15,11 @@ Revenant is the ghost of your past self returning with the receipts. The mood is
 ## Copy
 
 - Short sentences. Second person. Calm.
-- Light, consistent metaphor: *seal*, *sealed*, *open*, *unseal*, *letter*, *record*, *then* and *now*. Use these as product vocabulary everywhere.
-- Good: "This letter was sealed on 30 October 2026. Before you read it, tell us how you remember that autumn."
+- Light, consistent metaphor: *seal*, *sealed*, *open*, *unseal*, *letter*, *record*, *then* and *now*, *testify*, *testimony*, *the record*, *see the receipts*. Use these as product vocabulary everywhere.
+- Good: "This letter was sealed on 30 October 2026. Before you read it, testify: say what you remember about that autumn."
 - Good: "The seal is intact. Nothing here has changed since it was sealed."
 - Avoid: puns ("boo-tiful", "spooktacular"), skulls, blood, gore, jump scares, "mwahaha", horror clichés, exclamation marks.
+- Testimony words stay calm and never accuse. Never use "cross-examine", "caught", "wrong", "you misremembered" or anything that grades the testimony in the UI.
 - Data copy stays literal and neutral (see `neutrality.md`). Atmosphere never bends a number or adds a judgement.
 - Errors and empty states stay in voice but stay clear: say what happened and what the user can do.
 
@@ -39,8 +40,8 @@ Revenant is the ghost of your past self returning with the receipts. The mood is
 - **Emergence:** the ghost rises out of the soil holding the letter while the seal is really checked. The letter is offered only once the check has passed.
 - **Sealing:** feels final and a little solemn. Make it clear the letter can't be changed after this.
 - **Waiting:** the sealed letter is visible but unreadable, held and unopened.
-- **Recall:** one question at a time, gentle prompts, no hints about what's inside.
-- **Reveal:** memory first, then the letter, then the numbers. Breaking the seal is the reader's own act. The ghost delivers the letter and leaves; the letter unfolds.
+- **Testify:** one question at a time, gentle prompts, no hints about what's inside.
+- **See the receipts:** testimony first, then the letter, then the numbers. Breaking the seal is the reader's own act. The ghost delivers the letter and leaves; the letter unfolds.
 - **Ending:** quiet. Nothing is added to what the reader remembered, what was written, or the record.
 - **Locking:** the passkey prompt is the wax seal being pressed. Warnings about lost keys stay plain and unmissable. Atmosphere never softens a warning that could cost the user their letter.
 - **Cards:** the letter card and backup key card are printable keepsakes in the same visual language. The backup key card says clearly what it is, that it opens the letter on its own after the opening date, and that it should be kept somewhere safe.

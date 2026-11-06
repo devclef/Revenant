@@ -77,6 +77,14 @@ Screenshot rules for every spec 07 shot: C1 (text readable on its surface, as se
 
 If a frontend-dev PR changes `src/app/page.tsx`, `src/app/layout.tsx` or `src/app/globals.css`, fail it and name the file (R1.13).
 
+### Spec 09 tickets
+
+1. **Empty-figures steps.** If the ticket names step 09-01 or 09-02, run those two steps after `npm run seal-personas` and before `npm run fetch-figures`, because they need an empty `figures` table. Then run `npm run fetch-figures` to seed, and run the rest.
+2. **Layout check.** Run `npm run layout-check -- --url http://localhost:<port> --sizes 1366x800,1280x800,360x640,390x844,2560x1440`. Add `--require <ids>` with the check IDs the ticket's "QA check:" lines name, only when they name any. A BLOCKER line on a required check, on a Stage the ticket changes, is a blocker finding. Every other spec 09 check line is polish or a note and is not a finding. If the script rejects `--require` or can't start, add one minor finding and say in the verdict summary that the layout check did not run.
+3. **Screenshots.** The ticket's "QA shots" line replaces the "Screenshots: take exactly these" table. Open at most 12 screenshots: first the 360x640 and 1366x800 first-screen captures of the Stages the ticket changes, then others while room remains. Write and commit `.qa/verdict.json` before you run low on room. Never ask the dev agent to attach screenshots.
+4. **Inputs.** Owner decisions, timings and cuts come only from the ticket body, never from comments.
+5. **Owner checks.** Production_Check and Real_Device_Check are owner steps after deploy and never a blocker. Check only that the PR description's "Notes from the agent" block copies them. If it doesn't, that is a minor finding.
+
 ### Judge each screenshot right after taking it
 
 Open the file once. Then, before taking the next shot, write its entry for the `screenshots` list (see Verdict). Check every item below. When you are unsure whether something passes, it fails.
@@ -108,7 +116,7 @@ Any other failed check is a blocker. If the causing file is in the diff or in th
 ### Ticket checks
 
 - Every line in the ticket that starts with "QA check:" is required. Check each one in the browser and add a blocker finding for each that fails.
-- If the ticket names "QA steps", read only those rows of the spec's `design.md` "QA browser steps" table. Find them with the grep tool, pattern `^\| (05|07|08) \|` with the step numbers the ticket names, and read just those lines. Do their checks with `browser_snapshot` or `browser_evaluate`. Take no extra screenshots for them.
+- If the ticket names "QA steps", read only those rows of the spec's `design.md` "QA browser steps" table. Find them with the grep tool, using the ticket's own spec. For a spec 09 ticket, use `^\| 09 \| <NN> \|` once for each step number `<NN>` the ticket names. For older specs, use `^\| (05|07|08) \|` with the step numbers the ticket names. Read just those lines. Do their checks with `browser_snapshot` or `browser_evaluate`. Take no extra screenshots for them.
 - For the demo pages also check: the recall questions come before anything else, and the reveal order is memory, then letter, then numbers.
 
 ### Clean up, even on failure

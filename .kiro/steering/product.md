@@ -4,27 +4,30 @@ inclusion: always
 
 # Product: Revenant
 
-**Tagline:** "Your past self returns with the receipts."
+**Tagline:** "The wax seal, resurrected. Memory rewrites itself. Revenant doesn't."
 
-Built for the Kiroween hackathon, Resurrection category. The technology being resurrected is the sealed letter to your future self: the classroom time capsule a teacher mails back years later.
+Built for the Kiroween hackathon, Resurrection category. The technology being resurrected is the wax seal: the plis cachetés the French Académie des sciences has kept since 1735, sealed envelopes that prove what someone knew, and when. A classroom time capsule, a letter to your future self that a teacher mails back years later, works the same way.
 
 ## The problem
 
-People remember the past through rose-tinted glasses, and they rarely trust anyone else to correct them. The one source most people will believe is themselves.
+Memory rewrites itself. Every time you recall something, you edit it a little, and you can't cross-examine your own past: the only witness is a memory that has already been rewritten.
+
+## What's new
+
+The one thing no wax seal could do: Revenant makes you testify before you read. The gap between your testimony and the record is the product, and Revenant never says what it means.
 
 ## Core loop
 
 1. **Write.** The user writes a letter to their future self.
-2. **Choose figures.** The user picks data that matters to them:
+2. **Seal the figures.** The user picks data that matters to them:
    - Public figures from official sources (fuel, groceries, rent, etc.) for a chosen region.
    - Personal numbers only they know (their own rent, commute cost). These are labelled as self-reported.
-3. **Choose an opening.** A calendar date at least 3 months away.
-4. **Seal.** Everything needed to open the letter goes inside it: the letter, the figures with their sources and the recall questions. The letter does not rely on any data source or app feature still existing when it opens. The user locks it with a passkey (fingerprint, face or device PIN) and can also download a backup key card.
-5. **Keep.** The user gets a letter card with a QR code and an `.ics` calendar file for the opening date.
-6. **Wait.** Sealed contents are immutable and hidden, including from the author. Scanning the QR code before the opening date shows only that the letter is still sealed and a countdown.
-7. **Recall first.** After the opening date, the user scans the QR code and unlocks with their passkey or backup key. Revenant asks the sealed recall questions *before* showing anything. Their answers are recorded.
-8. **Reveal.** Revenant shows, in order:
-   - What they remembered (just now).
+3. **Press the seal.** Choose an opening date at least 3 months away and lock the letter with a passkey. Everything needed to open the letter goes inside it: the letter, the figures with their sources and the recall questions. The letter does not rely on any data source or app feature still existing when it opens. The user locks it with a passkey (fingerprint, face or device PIN) and can also download a backup key card.
+4. **Keep.** The user gets a letter card with a QR code and an `.ics` calendar file for the opening date.
+5. **Wait.** Sealed contents are immutable and hidden, including from the author. Scanning the QR code before the opening date shows only that the letter is still sealed and a countdown.
+6. **Testify.** After the opening date, the user scans the QR code and unlocks with their passkey or backup key. Revenant asks the sealed recall questions *before* showing anything. Their answers are recorded.
+7. **See the receipts.** Revenant shows, in order:
+   - Their testimony (just now).
    - What they actually wrote (then).
    - The numbers then vs now, with the plain change between them.
 
@@ -56,7 +59,7 @@ The gap between memory and record is the product. Revenant does not interpret th
 - **Language:** English only.
 - **Letter content:** plain text only, at most 5,000 characters.
 - **Hosting (MVP):** the user's self-hosted RKE2 cluster, internet-facing with Let's Encrypt HTTPS, deployed by the user's own Fleet GitOps repo. This repo provides the Helm chart (with Postgres included) and the image on GHCR (see `deploy.md`). Spam protection and rate limiting are handled later.
-- **Recall step (MVP):** fixed questions generated from the data points the user tracked ("What do you think a gallon of gas cost then?"). AI-generated questions based on the letter text are a post-MVP idea and must still follow `neutrality.md`.
+- **Testify step (MVP):** fixed questions generated from the data points the user tracked ("What do you think a gallon of gas cost then?"). AI-generated questions based on the letter text are a post-MVP idea and must still follow `neutrality.md`.
 - **Unlocking:** a passkey using the WebAuthn PRF extension, unlocked with fingerprint, face or device PIN. A backup key card is offered as a second way in and is optional when the passkey works. Skipping it needs an explicit confirmation that a lost passkey means a lost letter. If the user's passkey can't produce a PRF key at sealing, the backup key becomes required.
 - **Opening on another device:** passkeys may not move between ecosystems (for example from iCloud to an Android phone). The sealing screen explains this in plain words: open on a device that has the passkey, use a computer's "use a phone" option, or use the backup key.
 - **Server time lock:** unchanged. Neither the passkey nor the backup key can open a letter before its opening date.
@@ -73,7 +76,7 @@ Judges can't wait years, so there are two demos. Both live at `/demo`, are clear
 
 ### Demo 1: Persona letters
 
-Pre-sealed letters from fictional people, written before a recent election in their region and set to open on that election day. Judges get the opening experience without a passkey: open the letter, recall, break the seal, reveal.
+Pre-sealed letters from fictional people, written before a recent election in their region and set to open on that election day. Judges get the opening experience without a passkey: open the letter, testify, break the seal, see the receipts.
 
 - One or two personas per region, chosen from these fixed windows (the 12 months up to and including election day):
   - **US:** presidential election, 5 November 2024.

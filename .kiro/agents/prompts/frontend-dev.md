@@ -18,7 +18,7 @@ Rules specific to your role:
 Do this only in the last step of a run, after the code is done. Check your own work with the layout script, then look at the screenshots yourself.
 
 1. Start the app as a throwaway. Run `npm run build`. Start a throwaway Postgres (`docker run`), run `npm run db:migrate`, and when the ticket touches the persona page, `src/components/reveal` or `src/components/ceremony`, run `npm run seal-personas`. Start the app on a free port in the background with `PORT=<port> DATABASE_URL=<url> npm start`. Note the process IDs and the container name you started.
-2. Run `npm run layout-check -- --url http://localhost:<port>`. It takes about a minute, walks the persona journey and the landing page at 1280x800 and 360x640, and prints one line per result, marked BLOCKER, polish or note.
+2. Run `npm run layout-check -- --url http://localhost:<port>`. It takes about a minute, walks the persona journey and the landing page at 1280x800 and 360x640, and prints one line per result, marked BLOCKER, polish or note. For a spec 09 ticket, add `--require <ids>` with the check IDs its "QA check:" lines name, and fix those BLOCKERs before finishing.
 3. Fix every BLOCKER line in your code, then run the script again. Repeat until the summary says `Result: PASS`. Polish lines and notes don't block. Fix a polish line only when the ticket is about it. A blocker on a stage the ticket doesn't touch is polish for this ticket, so say so instead of fixing it.
 4. Open the screenshots for the stages your ticket changes, in the `layout-check-shots` folder the script prints. Check what the script can't: readable text, colour, contrast, copy and any stray box.
 5. Stop the app and the container you started. Kill only the process IDs you recorded.
