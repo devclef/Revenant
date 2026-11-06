@@ -32,19 +32,49 @@
 // figValue class, L1 without [data-line-label], LG1 without [data-ghost-pit] on /.
 // W1, X1 and R1 measure what every build has and are always checked.
 //
+// Spec 09 checks (spec 09 design.md "Owner patches", q, and "Check hooks"):
+//   BO1   button-overflow     every button and button-styled link: scrollWidth <= clientWidth.
+//   BC1   control-in-card     every control inside its nearest [data-card], fieldset or
+//                             [data-stage-panel].
+//   RS1   scale-overlap       marks: no box of one [data-recorded-scale] meets a box of another.
+//   GZ1   ghost-after-seal    letter, figures, close: no [data-ghost] in the document; during
+//                             the seal, the Ghost_Body_Box centre hits the Ghost or nothing.
+//   FV1   heading-focus-ring  the Figures_Heading has no outline after a mouse click on the
+//                             figures button, and has one after Tab and Enter.
+//   CTA1  landing-ctas        /: [data-cta="primary"] and [data-cta="secondary"] in view at the
+//                             top; the primary links to /demo.
+//   DX1   demo-cards-in-view  /demo at the Desktop_Sizes and the Wide_Size: every persona open
+//                             link in view at the top.
+//   HW1   hero-wide           2560x1440: the / h1 font size is at least 1.5 times its 1366x800 size.
+//   ST1   step-indicator      persona intact to close: [data-step-indicator] present; one
+//                             aria-current="step" from recall on; 1 line at 600 px and wider,
+//                             at most 2 below.
+//   RC1   receipts-in-view    after the figures button at the Desktop_Sizes and the Wide_Size:
+//                             the first [data-figure-entry] fully in view.
+//   PH1   first-viewport ... PH7 touch-targets: the phone checks at 390x844 and 360x640
+//                             (runPhoneChecks, exported for tools/qa/journey-check.mjs).
+//   FONT1 fonts-loaded        the sans face loaded and on <body> on every page; the serif face
+//                             loaded and on the Letter_Text where the letter shows (runFontCheck,
+//                             exported). FONT2 fonts-sans-ui: every h1 to h3 and button in sans.
+// A spec 09 check prints BLOCKER only when its ID is passed with --require; any other
+// failure prints polish. A spec 09 check whose element is not on the page prints a note.
+//
 // Line format: <PASS|BLOCKER|polish|note> <id> <name> <WxH> <stage> <detail>.
-// The spec 08 checks put the measured values and threshold=<...> in <detail>.
+// The spec 08 and spec 09 checks put the measured values and threshold=<...> in <detail>.
 //
 // Usage:
 //   npm run layout-check -- --url http://localhost:3000
 //   npm run layout-check -- --url http://localhost:3000 --sizes 360x640
 //   npm run layout-check -- --url http://localhost:3000 --all-sizes
+//   npm run layout-check -- --url http://localhost:3000 --require BO1,BC1,FV1
 //
 // Options:
 //   --url <origin>      Required. The running app. Start it first, with a database
 //                       that has the demo personas (see docs/agent-loop.md).
-//   --sizes <WxH,...>   Viewports. Default 1366x800,1280x800,360x640 (spec 08 R27.1).
-//   --all-sizes         The seven spec 07 sizes plus 1366x800. Used for the polish pass.
+//   --sizes <WxH,...>   Viewports. Default 1366x800,1280x800,360x640,390x844,2560x1440
+//                       (the spec 09 Evidence_Sizes).
+//   --all-sizes         The seven spec 07 sizes plus 1366x800 and 390x844. Used for the polish pass.
+//   --require <ID,...>  Spec 09 check IDs whose failures are BLOCKERs. An unknown ID prints a note.
 //   --shots <dir>       Screenshots go to <dir>/<WxH>/<stage>.png.
 //                       Default layout-check-shots.
 //   --chromium <path>   Chromium binary. Default $CHROMIUM_PATH, then /usr/bin/chromium.
@@ -58,6 +88,7 @@
 //            - a flow that cannot be finished: the control is there and does nothing
 //            - a judgement word, an exclamation mark or red or green text outside the
 //              persona letter (neutrality.md, data-integrity.md)
+//            - a spec 09 check that failed and whose ID was passed with --require
 //   polish   Reported, never fails the run. Every other layout measure: 1 px drift,
 //            margins, the Top_Bar height, dust height, a date wrapping, a sideways
 //            Ghost move, and any size other than 1280x800 for the button rule.
@@ -67,11 +98,26 @@
 // Exit codes: 0 no blocker. 1 at least one blocker. 2 the check could not start
 // (bad arguments, no Chromium, or the app does not answer at --url).
 
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, realpathSync } from "node:fs";
 import { join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const DEFAULT_SIZES = ["1366x800", "1280x800", "360x640"];
-const ALL_SIZES = ["360x640", "1024x768", "1280x720", "1280x800", "1366x800", "1440x900", "1920x1080", "2560x1440"];
+const DEFAULT_SIZES = ["1366x800", "1280x800", "360x640", "390x844", "2560x1440"];
+const ALL_SIZES = ["360x640", "390x844", "1024x768", "1280x720", "1280x800", "1366x800", "1440x900", "1920x1080", "2560x1440"];
+// Spec 09 (design.md "Owner patches", q). Only these IDs are accepted by --require.
+const SPEC09_CHECKS = ["BO1", "BC1", "RS1", "GZ1", "FV1", "CTA1", "DX1", "HW1", "ST1", "RC1", "PH1", "PH2", "PH3", "PH4", "PH5", "PH6", "PH7", "FONT1", "FONT2"];
+const DESKTOP_SIZES = ["1366x800", "1280x800"];
+const WIDE_SIZE = "2560x1440";
+const HW1_BASE_SIZE = "1366x800";
+const HW1_RATIO_MIN = 1.5;
+const PH_GAP_MAX_PX = 64;
+const PH_TOPBAR_MAX_PX = 56;
+const PH_TARGET_MIN_PX = 44;
+const PH_HEADLINE_LINES_LANDING = 3;
+const PH_HEADLINE_LINES_OTHER = 2;
+const PH6_SIZE = "390x844";
+const PH6_SCREENS = 3;
+const ST_LINES_PHONE_MAX = 2;
 // Spec 08 thresholds (spec 08 requirements R2, R3, R8, R27).
 const PHONE_WIDTH_MAX = 600;
 const LETTER_EM_MIN = 28;
@@ -89,14 +135,30 @@ const TOP_BAR_SIZE = "360x640";
 const TOP_BAR_MAX_PX = 96;
 const WAIT_MS = 8000;
 const PERSONA_PATH = "/demo/personas/us-maya";
+// Both personas are walked, because spec 09 QA checks name both. Maya's stages
+// and shots keep their spec 07 names; Tomás's carry the "eu-tomas/" prefix.
+// Tomás's answers follow the unit the recall question shows (spec 09 C8 changes it).
+const PERSONAS = [
+  { key: "us-maya", path: PERSONA_PATH, prefix: "", answers: () => ["3.20", "3.90"] },
+  { key: "eu-tomas", path: "/demo/personas/eu-tomas", prefix: "eu-tomas/", answers: (text) => (/1,000 litres/.test(text) ? ["1850", "1700"] : ["1.85", "1.70"]) },
+];
 const PICK_UP = "Pick up the letter";
 const NEXT = "Next question";
 const RECORD = "Record my answers";
 const BREAK_SEAL = "Break the seal";
+// Spec 09 renames: the figures button (task 14), "Show everything" (task 17) and
+// the landing's Accent control (tasks 8 and 9). The walk accepts the old and new
+// labels, and the data-* hooks first where a build has them.
 const SEE_NUMBERS = "See the numbers";
+const FIGURES_LABEL = /^(See the numbers|See the receipts)$/;
+const FIGURES_HOOK = '[data-advance="figures"]';
 // The landing's Accent control is a next/link, so the walk finds it by role link.
 const LANDING_START = /Open Maya/;
+const LANDING_HOOK = '[data-cta="primary"]';
 const SHOW_ALL = "Show everything";
+const SHOW_ALL_LABEL = /^(Show everything|Skip to the receipts)$/;
+const LIVE_PATH = "/demo/live";
+const LIVE_UNREACHED = "created, confirming, sealing, sealed, the wait, unlock, testify and receipts";
 const SEALED_BODY = JSON.stringify({ status: "sealed", opensAt: "2099-01-01T00:00:00.000Z" });
 
 // ---------------------------------------------------------------------------
@@ -391,7 +453,7 @@ const LG1_READ = (startPattern) => {
     if ([...range.getClientRects()].some(hit)) hits.push("headline");
   }
   const re = new RegExp(startPattern);
-  const link = [...document.querySelectorAll("a")].find((a) => re.test(a.textContent));
+  const link = document.querySelector('[data-cta="primary"]') ?? [...document.querySelectorAll("a")].find((a) => re.test(a.textContent));
   if (link && hit(link.getBoundingClientRect())) hits.push("Accent link");
   return { missing: false, width: g.width, height: g.height, opacity, inViewport, hits, centre: g.left + g.width / 2 };
 };
@@ -525,6 +587,380 @@ const NEUTRALITY = () => {
 };
 
 // ---------------------------------------------------------------------------
+// Spec 09 page-side measures (spec 09 design.md "Owner patches", q). Each runs
+// inside the page and stays self-contained. Each returns { missing: true } when
+// the element it measures is not on this build, so the runner prints a note.
+// ---------------------------------------------------------------------------
+
+// BO1 (A8.1): button labels inside their buttons, after web fonts load.
+const BO1_READ = async () => {
+  await document.fonts.ready;
+  const els = [...document.querySelectorAll('button, a[class*="button" i]')].filter((el) => {
+    const r = el.getBoundingClientRect();
+    return r.width > 1 && r.height > 1 && (!el.checkVisibility || el.checkVisibility({ visibilityProperty: true }));
+  });
+  if (!els.length) return { missing: true };
+  const over = [];
+  let worst = 0;
+  for (const el of els) {
+    const d = el.scrollWidth - el.clientWidth;
+    worst = Math.max(worst, d);
+    if (d > 0) over.push(`"${(el.textContent.trim() || el.getAttribute("aria-label") || el.tagName).slice(0, 30)}" ${el.scrollWidth}>${el.clientWidth}px`);
+  }
+  return { missing: false, count: els.length, worst, over };
+};
+
+// BC1 (A8.2): every control inside its nearest card, fieldset or Stage panel.
+const BC1_READ = () => {
+  const CONTAINER = "[data-card], fieldset, [data-stage-panel]";
+  const containers = document.querySelectorAll(CONTAINER);
+  if (!containers.length) return { missing: true };
+  const controls = document.querySelectorAll('button, input:not([type="hidden"]), select, textarea, summary, [role="button"], a[class*="button" i]');
+  let measured = 0;
+  let worst = 0;
+  const outside = [];
+  for (const el of controls) {
+    const r = el.getBoundingClientRect();
+    if (r.width <= 1 || r.height <= 1) continue;
+    if (el.checkVisibility && !el.checkVisibility({ visibilityProperty: true })) continue;
+    const box = el.parentElement?.closest(CONTAINER);
+    if (!box) continue;
+    measured += 1;
+    const c = box.getBoundingClientRect();
+    const by = Math.max(c.left - r.left, r.right - c.right, c.top - r.top, r.bottom - c.bottom);
+    worst = Math.max(worst, by);
+    if (by > 0.5) outside.push(`"${(el.textContent.trim() || el.getAttribute("aria-label") || el.tagName).slice(0, 30)}" by ${by.toFixed(1)}px`);
+  }
+  return { missing: false, containers: containers.length, measured, worst, outside };
+};
+
+// RS1 (A9.2): no box inside one read-only Recall_Scale meets a box in another.
+const RS1_READ = async () => {
+  await document.fonts.ready;
+  const scales = [...document.querySelectorAll("[data-recorded-scale]")];
+  if (!scales.length) return { missing: true };
+  const sets = scales.map((s) => [s, ...s.querySelectorAll("*")].map((el) => el.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0));
+  let worst = 0;
+  const hits = [];
+  for (let i = 0; i < sets.length; i++) {
+    for (let j = i + 1; j < sets.length; j++) {
+      let pairWorst = 0;
+      for (const a of sets[i]) {
+        for (const b of sets[j]) {
+          const area = Math.max(0, Math.min(a.right, b.right) - Math.max(a.left, b.left)) * Math.max(0, Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top));
+          pairWorst = Math.max(pairWorst, area);
+        }
+      }
+      worst = Math.max(worst, pairWorst);
+      if (pairWorst > 0.01) hits.push(`scale ${i + 1} and ${j + 1} overlap ${pairWorst.toFixed(1)}px²`);
+    }
+  }
+  return { missing: false, scales: scales.length, worst, hits };
+};
+
+// GZ1 (A11): during the seal, what the Ghost_Body_Box centre hits; after it, the
+// [data-ghost] elements left in the document. The body box uses G1's fractions.
+const GZ1_READ = (duringSeal) => {
+  const ghosts = document.querySelectorAll("[data-ghost]");
+  if (!duringSeal) return { missing: false, count: ghosts.length };
+  const ghost = ghosts[0];
+  if (!ghost) return { missing: true };
+  const g = (ghost.querySelector("[data-ghost-box]") ?? ghost).getBoundingClientRect();
+  const x = g.left + g.width / 2;
+  const y = (g.top + 0.155 * g.height + g.bottom - 0.12 * g.height) / 2;
+  const hit = document.elementFromPoint(x, y);
+  const ok = !hit || hit === document.documentElement || hit === document.body || ghost.contains(hit);
+  const describe = (el) => (el ? `<${el.tagName.toLowerCase()}${el.className && typeof el.className === "string" ? ` class="${el.className.slice(0, 40)}"` : ""}>` : "nothing");
+  return { missing: false, count: ghosts.length, x, y, hit: describe(hit), ok };
+};
+
+// FV1 (A12): the Figures_Heading's outline as it is now.
+const FV1_READ = () => {
+  const h = document.querySelector("[data-figures-heading]");
+  if (!h) return { missing: true };
+  const cs = getComputedStyle(h);
+  return { missing: false, outlineStyle: cs.outlineStyle, outlineWidth: cs.outlineWidth, focused: document.activeElement === h, focusVisible: h.matches(":focus-visible") };
+};
+
+// CTA1 (B1.1, B1.3, B1.5): the landing's calls to action at the top of the page.
+const CTA1_READ = () => {
+  const inView = (r) => r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight && r.right <= innerWidth;
+  const primary = document.querySelector('[data-cta="primary"]');
+  if (!primary) return { missing: true };
+  const secondary = document.querySelector('[data-cta="secondary"]');
+  const p = primary.getBoundingClientRect();
+  const s = secondary?.getBoundingClientRect() ?? null;
+  return {
+    missing: false,
+    href: primary.getAttribute("href"),
+    primary: { top: p.top, bottom: p.bottom, inView: inView(p) },
+    secondary: s ? { top: s.top, bottom: s.bottom, inView: inView(s) } : null,
+  };
+};
+
+// DX1 (B2.4): every persona open link on /demo inside the viewport at the top.
+const DX1_READ = () => {
+  const links = [...document.querySelectorAll('a[href^="/demo/personas/"]')];
+  if (!links.length) return { missing: true };
+  return {
+    missing: false,
+    links: links.map((a) => {
+      const r = a.getBoundingClientRect();
+      return { href: a.getAttribute("href"), bottom: r.bottom, right: r.right, inView: r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight && r.right <= innerWidth };
+    }),
+  };
+};
+
+// HW1 (B4.1): the h1 font size in px.
+const HW1_READ = () => {
+  const h1 = document.querySelector("h1");
+  return h1 ? parseFloat(getComputedStyle(h1).fontSize) : null;
+};
+
+// ST1 (C2): the Step_Indicator, its current steps and its line count.
+const ST1_READ = () => {
+  const el = document.querySelector("[data-step-indicator]");
+  if (!el) return { missing: true };
+  const items = [...el.querySelectorAll("li")];
+  const boxes = (items.length ? items : [...el.children]).map((c) => c.getBoundingClientRect()).filter((r) => r.width > 0 && r.height > 0);
+  const tops = [];
+  for (const r of boxes) if (!tops.some((t) => Math.abs(t - r.top) < r.height / 2)) tops.push(r.top);
+  return { missing: false, current: el.querySelectorAll('[aria-current="step"]').length, steps: items.length, lines: tops.length };
+};
+
+// RC1 (C3.5): the first Figure_Entry fully inside the viewport.
+const RC1_READ = () => {
+  const el = document.querySelector("[data-figure-entry]");
+  if (!el) return { missing: true };
+  const r = el.getBoundingClientRect();
+  return { missing: false, top: r.top, bottom: r.bottom, inView: r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight && r.right <= innerWidth };
+};
+
+// PH1 on / (P1.1): headline, Hero_Sentence, both calls to action and the Landing_Ghost
+// in the first viewport. The Hero_Sentence is [data-hero-sentence], else the first
+// paragraph in a [data-block] after the h1.
+const PH1_LANDING = () => {
+  const scene = document.querySelector('[data-ceremony="scene"]') ?? document.body;
+  const h1 = document.querySelector("h1");
+  const after = (el) => h1 && (h1.compareDocumentPosition(el) & Node.DOCUMENT_POSITION_FOLLOWING);
+  const sentence = document.querySelector("[data-hero-sentence]")
+    ?? [...scene.querySelectorAll("[data-block] p, p[data-block]")].find((p) => after(p) && !p.closest("[data-cta]"));
+  const named = [
+    ["headline", h1],
+    ["Hero_Sentence", sentence],
+    ["primary", document.querySelector('[data-cta="primary"]')],
+    ["Landing_Ghost", scene.querySelector("[data-ghost-pit] [data-ghost-box]") ?? document.querySelector("[data-ghost-box]")],
+  ];
+  const secondary = document.querySelector('[data-cta="secondary"]');
+  if (secondary) named.push(["secondary", secondary]);
+  const missing = named.filter(([, el]) => !el).map(([n]) => n);
+  const items = named.filter(([, el]) => el).map(([name, el]) => {
+    const r = el.getBoundingClientRect();
+    return { name, top: r.top, bottom: r.bottom, inView: r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight && r.right <= innerWidth };
+  });
+  return { missing, items };
+};
+
+// PH1 on the persona page: scroll so the top of [data-stage-content] meets the
+// bottom of a sticky or fixed Top_Bar. Returns false when the hook is missing.
+const PH1_STAGE_SCROLL = () => {
+  const sc = document.querySelector("[data-stage-content]");
+  if (!sc) return false;
+  const bar = document.querySelector("[data-topbar]");
+  const pos = bar ? getComputedStyle(bar).position : "static";
+  const off = bar && (pos === "sticky" || pos === "fixed") ? bar.getBoundingClientRect().height : 0;
+  window.scrollTo({ top: Math.max(0, sc.getBoundingClientRect().top + window.scrollY - off), behavior: "instant" });
+  return true;
+};
+
+// PH1 on the persona page and /demo/live: every visible [data-primary-control] in view.
+const PH1_CONTROLS = () => {
+  const els = [...document.querySelectorAll("[data-primary-control]")].filter((el) => {
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && (!el.checkVisibility || el.checkVisibility({ visibilityProperty: true }));
+  });
+  if (!els.length) return { missing: ["[data-primary-control]"], items: [] };
+  return {
+    missing: [],
+    items: els.map((el) => {
+      const r = el.getBoundingClientRect();
+      const name = (el.getAttribute("aria-label") || el.textContent.trim() || el.tagName).slice(0, 30);
+      return { name, top: r.top, bottom: r.bottom, inView: r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight && r.right <= innerWidth };
+    }),
+  };
+};
+
+// PH2 (P2.1): the largest vertical gap between consecutive [data-block] boxes in the viewport.
+const PH2_READ = () => {
+  const blocks = [...document.querySelectorAll("[data-block]")]
+    .filter((el) => !el.closest("[data-soil]"))
+    .map((el) => el.getBoundingClientRect())
+    .filter((r) => r.width > 0 && r.height > 0 && r.bottom > 0 && r.top < innerHeight)
+    .sort((a, b) => a.top - b.top);
+  if (blocks.length < 2) return { missing: true, blocks: blocks.length };
+  let maxBottom = blocks[0].bottom;
+  let worst = 0;
+  let at = null;
+  for (const r of blocks.slice(1)) {
+    const gap = r.top - maxBottom;
+    if (gap > worst) {
+      worst = gap;
+      at = Math.round(maxBottom);
+    }
+    maxBottom = Math.max(maxBottom, r.bottom);
+  }
+  return { missing: false, blocks: blocks.length, worst, at };
+};
+
+// PH3 (P3.1, P3.2): the h1's lines and the words on each, from one range per word.
+const PH3_READ = () => {
+  const h1 = document.querySelector("h1");
+  if (!h1) return { missing: true };
+  const hr = h1.getBoundingClientRect();
+  if (hr.width <= 1 || hr.height <= 1) return { missing: false, hidden: true };
+  const lines = [];
+  const walker = document.createTreeWalker(h1, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const re = /[^\s\u00a0]+(?:\u00a0[^\s\u00a0]+)*/g;
+    for (let m = re.exec(n.textContent); m; m = re.exec(n.textContent)) {
+      const range = document.createRange();
+      range.setStart(n, m.index);
+      range.setEnd(n, m.index + m[0].length);
+      const r = [...range.getClientRects()].find((x) => x.width > 0);
+      if (!r) continue;
+      const line = lines.find((l) => Math.abs(l.top - r.top) < r.height / 2);
+      if (line) line.words += 1;
+      else lines.push({ top: r.top, words: 1 });
+    }
+  }
+  lines.sort((a, b) => a.top - b.top);
+  return { missing: false, hidden: false, lines: lines.length, words: lines.map((l) => l.words) };
+};
+
+// PH4 (P5.1): the Top_Bar height.
+const PH4_READ = () => {
+  const bar = document.querySelector("[data-topbar]");
+  if (!bar) return { missing: true };
+  return { missing: false, height: bar.getBoundingClientRect().height, compact: bar.hasAttribute("data-compact") };
+};
+
+// PH5 (P6.3): every descendant inside each Figure_Entry and the figures panel, and
+// each one's own background painted.
+const PH5_READ = () => {
+  const roots = [...document.querySelectorAll("[data-figure-entry], [data-figures-panel]")];
+  if (!roots.length) return { missing: true };
+  const outside = [];
+  const unpainted = [];
+  let worst = 0;
+  roots.forEach((root, i) => {
+    const e = root.getBoundingClientRect();
+    if (e.width === 0 || e.height === 0) return;
+    const name = root.hasAttribute("data-figures-panel") ? "panel" : `entry ${i + 1}`;
+    for (const el of root.querySelectorAll("*")) {
+      const r = el.getBoundingClientRect();
+      if (r.width <= 1 && r.height <= 1) continue;
+      if (el.checkVisibility && !el.checkVisibility({ visibilityProperty: true })) continue;
+      const by = Math.max(e.left - r.left, r.right - e.right, e.top - r.top, r.bottom - e.bottom);
+      worst = Math.max(worst, by);
+      if (by > 0.5) outside.push(`${name} <${el.tagName.toLowerCase()}> by ${by.toFixed(1)}px`);
+    }
+    const cs = getComputedStyle(root);
+    const m = cs.backgroundColor.match(/[\d.]+/g);
+    const painted = (m && (m.length < 4 || Number(m[3]) > 0)) || cs.backgroundImage !== "none";
+    if (!painted) unpainted.push(name);
+  });
+  return { missing: false, roots: roots.length, worst, outside: [...new Set(outside)], unpainted };
+};
+
+// PH6 (P7.1): letter Stage top to the close's first line, against the screens budget.
+const PH6_READ = (screens) => {
+  const close = document.querySelector("[data-close-line]");
+  const stage = document.querySelector("[data-letter-stage]");
+  const text = document.querySelector("[data-letter-text]");
+  const missing = [["[data-close-line]", close], ["[data-letter-stage]", stage], ["[data-letter-text]", text]].filter(([, el]) => !el).map(([n]) => n);
+  if (missing.length) return { missing };
+  const length = close.getBoundingClientRect().bottom - stage.getBoundingClientRect().top;
+  const letter = text.getBoundingClientRect().height;
+  return { missing: [], length, letter, limit: screens * innerHeight + letter };
+};
+
+// PH7 (P8.4): every visible target at least min x min px. Inline text links are
+// exempt; inside [data-topbar] the check applies only with data-compact. An input
+// in a label is measured with its label's box.
+const PH7_READ = (min) => {
+  const small = [];
+  let measured = 0;
+  for (const el of document.querySelectorAll('a, button, summary, input:not([type="hidden"]), textarea, [role="button"]')) {
+    let r = el.getBoundingClientRect();
+    if (r.width <= 1 || r.height <= 1) continue;
+    if (el.checkVisibility && !el.checkVisibility({ visibilityProperty: true })) continue;
+    const bar = el.closest("[data-topbar]");
+    if (bar && !bar.hasAttribute("data-compact")) continue;
+    if (el.tagName === "A") {
+      const parent = el.parentElement;
+      if (parent && (parent.tagName === "P" || parent.tagName === "LI") && parent.textContent.trim() !== el.textContent.trim()) continue;
+    }
+    if (el.tagName === "INPUT" || el.tagName === "TEXTAREA") {
+      const label = el.closest("label") ?? (el.id ? document.querySelector(`label[for="${CSS.escape(el.id)}"]`) : null);
+      if (label) {
+        const l = label.getBoundingClientRect();
+        r = { width: Math.max(r.right, l.right) - Math.min(r.left, l.left), height: Math.max(r.bottom, l.bottom) - Math.min(r.top, l.top) };
+      }
+    }
+    measured += 1;
+    if (r.width < min || r.height < min) small.push(`"${(el.getAttribute("aria-label") || el.textContent.trim() || el.getAttribute("type") || el.tagName).slice(0, 24)}" ${r.width.toFixed(0)}x${r.height.toFixed(0)}`);
+  }
+  if (!measured) return { missing: true };
+  return { missing: false, measured, small };
+};
+
+// FONT1 (L1.4, L1.5): the first family of --font-sans loaded and first on <body>; where
+// the Letter_Text shows ([data-letter-text], else W1's fallback), the first family of
+// --font-serif loaded and first on the Letter_Text. A face no text uses stays unloaded,
+// so the serif is not checked on a page without the letter.
+const FONT1_READ = async () => {
+  await document.fonts.ready;
+  const first = (v) => (v || "").split(",")[0].trim().replace(/^["']|["']$/g, "");
+  const root = getComputedStyle(document.documentElement);
+  const sans = first(root.getPropertyValue("--font-sans"));
+  const serif = first(root.getPropertyValue("--font-serif"));
+  if (!sans) return { missing: true };
+  const loaded = (fam) => [...document.fonts].some((f) => first(f.family) === fam && f.status === "loaded");
+  let letter = document.querySelector("[data-letter-text]");
+  if (!letter) {
+    const sealed = document.querySelector('[class*="sealedLetter"]');
+    if (sealed) letter = [...sealed.querySelectorAll("p")].sort((a, b) => b.textContent.length - a.textContent.length)[0] ?? null;
+  }
+  if (letter) {
+    const r = letter.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) letter = null;
+  }
+  return {
+    missing: false,
+    sans,
+    sansLoaded: loaded(sans),
+    body: first(getComputedStyle(document.body).fontFamily),
+    letter: letter
+      ? { serif, serifLoaded: !!serif && loaded(serif), family: first(getComputedStyle(letter).fontFamily), selector: letter.hasAttribute("data-letter-text") ? "[data-letter-text]" : "sealed letter <p>" }
+      : null,
+  };
+};
+
+// FONT2 (L2.1): every visible h1 to h3 and button in the sans family.
+const FONT2_READ = () => {
+  const first = (v) => (v || "").split(",")[0].trim().replace(/^["']|["']$/g, "");
+  const sans = first(getComputedStyle(document.documentElement).getPropertyValue("--font-sans"));
+  if (!sans) return { missing: true };
+  const els = [...document.querySelectorAll("h1, h2, h3, button")].filter((el) => {
+    const r = el.getBoundingClientRect();
+    return r.width > 1 && r.height > 1 && (!el.checkVisibility || el.checkVisibility({ visibilityProperty: true }));
+  });
+  if (!els.length) return { missing: true };
+  const off = els.filter((el) => first(getComputedStyle(el).fontFamily) !== sans).map((el) => `<${el.tagName.toLowerCase()}> "${el.textContent.trim().slice(0, 24)}" in ${first(getComputedStyle(el).fontFamily)}`);
+  return { missing: false, sans, measured: els.length, off };
+};
+
+// ---------------------------------------------------------------------------
 // Runner
 // ---------------------------------------------------------------------------
 
@@ -542,7 +978,7 @@ async function settle(page, maxMs = 5000) {
 }
 
 function parseArgs(argv) {
-  const opts = { url: null, sizes: DEFAULT_SIZES, shots: "layout-check-shots", chromium: null };
+  const opts = { url: null, sizes: DEFAULT_SIZES, shots: "layout-check-shots", chromium: null, require: [] };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     const take = () => {
@@ -553,6 +989,7 @@ function parseArgs(argv) {
     if (arg === "--url") opts.url = take();
     else if (arg === "--sizes") opts.sizes = take().split(",").map((s) => s.trim()).filter(Boolean);
     else if (arg === "--all-sizes") opts.sizes = ALL_SIZES;
+    else if (arg === "--require") opts.require = take().split(",").map((s) => s.trim()).filter(Boolean);
     else if (arg === "--shots") opts.shots = take();
     else if (arg === "--chromium") opts.chromium = take();
     else if (arg === "--help" || arg === "-h") opts.help = true;
@@ -663,9 +1100,11 @@ async function checkFit(page, ctx, selectors) {
 // scrolled into view, with the button at the top of the hit test at its centre.
 // Being below the fold is polish.
 async function checkMainButton(page, ctx, name, mustBeInView = false, role = "button") {
-  const button = page.getByRole(role, { name, exact: typeof name === "string" }).first();
+  // `name` is a label (string or RegExp), or { loc, label } from figuresButton or landingStart.
+  const located = typeof name === "object" && name !== null && "loc" in name;
+  const button = located ? name.loc : page.getByRole(role, { name, exact: typeof name === "string" }).first();
   if ((await button.count()) === 0) return;
-  const label = typeof name === "string" ? `"${name}"` : `"${name.source}"`;
+  const label = located ? `"${name.label}"` : typeof name === "string" ? `"${name}"` : `"${name.source}"`;
   const r = await button.evaluate((el) => {
     const b = el.getBoundingClientRect();
     return { top: b.top, bottom: b.bottom, left: b.left, right: b.right, scrollY: window.scrollY };
@@ -946,6 +1385,312 @@ async function checkNumbersFocus(page, ctx, via, shotName = null) {
   return true;
 }
 
+// ---------------------------------------------------------------------------
+// Spec 09 checks. Each builds a result { id, name, status, detail } with status
+// "pass", "fail" or "missing"; report() prints it. A failure is a BLOCKER only
+// when the ID was passed with --require, else polish. "missing" is a note.
+// ---------------------------------------------------------------------------
+
+const px = (v) => `${Math.round(v)}px`;
+const result = (id, name, status, detail) => ({ id, name, status, detail });
+
+function report(ctx, r) {
+  if (!r) return;
+  const level = r.status === "pass" ? "ok" : r.status === "missing" ? "note" : ctx.required.has(r.id) ? "blocker" : "polish";
+  ctx.rep.add(level, r.id, r.detail, r.name);
+}
+
+const parseSize = (size) => size.split("x").map(Number);
+
+function routeKind(route) {
+  const path = route.replace(/[?#].*$/, "").replace(/\/+$/, "") || "/";
+  if (path === "/") return "landing";
+  if (path === "/demo") return "index";
+  if (path === LIVE_PATH) return "live";
+  if (path.startsWith("/demo/personas/")) return "persona";
+  return "other";
+}
+
+/**
+ * The phone checks PH1 to PH7 (spec 09 design.md "Owner patches", q), for the
+ * page as it is now. `size` is "WxH"; `route` is the page's path, for example
+ * "/", "/demo/live" or "/demo/personas/us-maya". At 600 px and wider it returns
+ * []. Returns one { id, name, status: "pass"|"fail"|"missing", detail } per check
+ * that applies; detail holds the measured values and threshold=. The page's
+ * scroll position is restored before it returns. Exported for the Journey_Check.
+ */
+export async function runPhoneChecks(page, size, route) {
+  const [w, h] = parseSize(size);
+  if (w >= PHONE_WIDTH_MAX) return [];
+  const kind = routeKind(route);
+  const stage = await stageOf(page);
+  const beforeFirstStep = kind === "landing" || (kind === "persona" && ["emerging", "sealed", "intact"].includes(stage));
+  const startY = await page.evaluate(() => window.scrollY);
+  const toTop = () => page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  const out = [];
+  try {
+    // PH1 first-viewport.
+    if (kind === "landing" || kind === "live" || kind === "persona") {
+      let r;
+      let where = "scrollY 0";
+      if (kind === "landing") {
+        await toTop();
+        r = await page.evaluate(PH1_LANDING);
+      } else if (kind === "live") {
+        await toTop();
+        r = await page.evaluate(PH1_CONTROLS);
+      } else {
+        const scrolled = await page.evaluate(PH1_STAGE_SCROLL);
+        await sleep(150);
+        r = scrolled ? await page.evaluate(PH1_CONTROLS) : { missing: ["[data-stage-content]"], items: [] };
+        where = `scrollY ${Math.round(await page.evaluate(() => window.scrollY))} (top of [data-stage-content])`;
+      }
+      const parts = r.items.map((i) => `${i.name}=${px(i.top)}..${px(i.bottom)}${i.inView ? "" : "(out)"}`);
+      const detail = `${parts.join(" ")}${r.missing.length ? ` missing=${r.missing.join(",")}` : ""} viewport=${w}x${h} at ${where} threshold=inside viewport`;
+      out.push(result("PH1", "first-viewport", r.missing.length ? "missing" : r.items.every((i) => i.inView) ? "pass" : "fail", detail));
+    }
+    await toTop();
+    // PH2 dead-space.
+    if (beforeFirstStep) {
+      const r = await page.evaluate(PH2_READ);
+      out.push(r.missing
+        ? result("PH2", "dead-space", "missing", `not on this build: ${r.blocks} [data-block] box(es) in view, need 2`)
+        : result("PH2", "dead-space", r.worst <= PH_GAP_MAX_PX ? "pass" : "fail", `blocks=${r.blocks} worstGap=${px(r.worst)}${r.at === null ? "" : ` below y=${r.at}px`} threshold=<=${PH_GAP_MAX_PX}px`));
+    }
+    // PH3 headline-lines.
+    {
+      const max = kind === "landing" ? PH_HEADLINE_LINES_LANDING : PH_HEADLINE_LINES_OTHER;
+      const r = await page.evaluate(PH3_READ);
+      if (r.missing) out.push(result("PH3", "headline-lines", "missing", "no h1 on this page"));
+      else if (r.hidden) out.push(result("PH3", "headline-lines", "missing", "the h1 is visually hidden at this Stage"));
+      else {
+        const lone = r.words.slice(0, -1).some((n) => n === 1);
+        out.push(result("PH3", "headline-lines", r.lines <= max && !lone ? "pass" : "fail", `lines=${r.lines} wordsPerLine=${r.words.join(",")} threshold=lines<=${max}, no lone word before the last line`));
+      }
+    }
+    // PH4 topbar-height.
+    {
+      const r = await page.evaluate(PH4_READ);
+      out.push(r.missing
+        ? result("PH4", "topbar-height", "missing", "no [data-topbar] on this page")
+        : result("PH4", "topbar-height", r.height <= PH_TOPBAR_MAX_PX ? "pass" : "fail", `height=${r.height.toFixed(1)}px compact=${r.compact} threshold=<=${PH_TOPBAR_MAX_PX}px`));
+    }
+    // PH5 card-containment, where the figures show.
+    if (kind === "persona" && (stage === "figures" || stage === "close")) {
+      const r = await page.evaluate(PH5_READ);
+      out.push(r.missing
+        ? result("PH5", "card-containment", "missing", "not on this build: no [data-figure-entry] or [data-figures-panel]")
+        : result("PH5", "card-containment", r.outside.length || r.unpainted.length ? "fail" : "pass", `roots=${r.roots} worst=${r.worst.toFixed(1)}px outside=${r.outside.length}${r.outside.length ? ` (${r.outside.slice(0, 3).join("; ")})` : ""} unpainted=${r.unpainted.length ? r.unpainted.join(",") : "none"} threshold=0px, background painted`));
+    }
+    // PH6 page-height, at 390x844 in close.
+    if (kind === "persona" && stage === "close" && size === PH6_SIZE) {
+      const r = await page.evaluate(PH6_READ, PH6_SCREENS);
+      out.push(r.missing.length
+        ? result("PH6", "page-height", "missing", `not on this build: ${r.missing.join(", ")}`)
+        : result("PH6", "page-height", r.length <= r.limit ? "pass" : "fail", `length=${px(r.length)} letterText=${px(r.letter)} threshold=<=${px(r.limit)} (${PH6_SCREENS}x${h} + letterText)`));
+    }
+    // PH7 touch-targets.
+    {
+      const r = await page.evaluate(PH7_READ, PH_TARGET_MIN_PX);
+      out.push(r.missing
+        ? result("PH7", "touch-targets", "missing", "no target measured on this page")
+        : result("PH7", "touch-targets", r.small.length ? "fail" : "pass", `targets=${r.measured} small=${r.small.length}${r.small.length ? ` (${r.small.slice(0, 5).join("; ")})` : ""} threshold=>=${PH_TARGET_MIN_PX}x${PH_TARGET_MIN_PX}px`));
+    }
+  } finally {
+    await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), startY);
+  }
+  return out;
+}
+
+/**
+ * FONT1 fonts-loaded for the page as it is now (spec 09 design.md "Owner
+ * patches", q). Returns one { id, name, status: "pass"|"fail"|"missing", detail }.
+ * Exported for the Journey_Check.
+ */
+export async function runFontCheck(page) {
+  const r = await page.evaluate(FONT1_READ);
+  if (r.missing) return result("FONT1", "fonts-loaded", "missing", "no --font-sans on <html>");
+  const problems = [];
+  if (!r.sansLoaded) problems.push(`${r.sans} not loaded`);
+  if (r.body !== r.sans) problems.push(`body starts with ${r.body}`);
+  let letter = "letter=none (serif not checked)";
+  if (r.letter) {
+    letter = `serif=${r.letter.serif} serifLoaded=${r.letter.serifLoaded} letter=${r.letter.family} (${r.letter.selector})`;
+    if (!r.letter.serifLoaded) problems.push(`${r.letter.serif || "--font-serif"} not loaded`);
+    if (r.letter.family !== r.letter.serif) problems.push(`Letter_Text starts with ${r.letter.family}`);
+  }
+  const detail = `sans=${r.sans} sansLoaded=${r.sansLoaded} body=${r.body} ${letter} threshold=loaded and first${problems.length ? ` (${problems.join("; ")})` : ""}`;
+  return result("FONT1", "fonts-loaded", problems.length ? "fail" : "pass", detail);
+}
+
+async function checkFonts(page, ctx, route) {
+  report(ctx, await runFontCheck(page));
+  const r = await page.evaluate(FONT2_READ);
+  report(ctx, r.missing
+    ? result("FONT2", "fonts-sans-ui", "missing", `no heading or button on ${route}`)
+    : result("FONT2", "fonts-sans-ui", r.off.length ? "fail" : "pass", `sans=${r.sans} measured=${r.measured} off=${r.off.length}${r.off.length ? ` (${r.off.slice(0, 3).join("; ")})` : ""} threshold=0`));
+}
+
+async function checkPhone(page, ctx, route) {
+  for (const r of await runPhoneChecks(page, ctx.size, route)) report(ctx, r);
+}
+
+async function checkButtonOverflow(page, ctx) {
+  const r = await page.evaluate(BO1_READ);
+  report(ctx, r.missing
+    ? result("BO1", "button-overflow", "missing", "no button on this page")
+    : result("BO1", "button-overflow", r.over.length ? "fail" : "pass", `buttons=${r.count} worst=${r.worst}px over=${r.over.length}${r.over.length ? ` (${r.over.slice(0, 3).join("; ")})` : ""} threshold=scrollWidth<=clientWidth`));
+}
+
+async function checkControlInCard(page, ctx) {
+  const r = await page.evaluate(BC1_READ);
+  report(ctx, r.missing
+    ? result("BC1", "control-in-card", "missing", "not on this build: no [data-card], fieldset or [data-stage-panel]")
+    : result("BC1", "control-in-card", r.outside.length ? "fail" : "pass", `containers=${r.containers} controls=${r.measured} worst=${r.worst.toFixed(1)}px outside=${r.outside.length}${r.outside.length ? ` (${r.outside.slice(0, 3).join("; ")})` : ""} threshold=0.5px`));
+}
+
+async function checkScaleOverlap(page, ctx) {
+  const r = await page.evaluate(RS1_READ);
+  report(ctx, r.missing
+    ? result("RS1", "scale-overlap", "missing", "not on this build: no [data-recorded-scale]")
+    : result("RS1", "scale-overlap", r.hits.length ? "fail" : "pass", `scales=${r.scales} worst=${r.worst.toFixed(1)}px²${r.hits.length ? ` (${r.hits.slice(0, 3).join("; ")})` : ""} threshold=0px²`));
+}
+
+// GZ1: ctx.ghostHook is set once a [data-ghost] has been seen in this walk, so a
+// build without the hook gets a note after the seal, not a pass.
+async function checkGhostGone(page, ctx, duringSeal) {
+  const r = await page.evaluate(GZ1_READ, duringSeal);
+  if (r.count) ctx.ghostHook = true;
+  if (duringSeal) {
+    report(ctx, r.missing
+      ? result("GZ1", "ghost-after-seal", "missing", "not on this build: no [data-ghost] during the seal")
+      : result("GZ1", "ghost-after-seal", r.ok ? "pass" : "fail", `bodyCentre=${px(r.x)},${px(r.y)} hit=${r.hit} threshold=the Ghost or nothing`));
+    return;
+  }
+  if (!ctx.ghostHook) {
+    report(ctx, result("GZ1", "ghost-after-seal", "missing", "not on this build: no [data-ghost] seen before the seal"));
+    return;
+  }
+  report(ctx, result("GZ1", "ghost-after-seal", r.count ? "fail" : "pass", `ghostElements=${r.count} threshold=0`));
+}
+
+async function checkHeadingRing(page, ctx, via) {
+  const r = await page.evaluate(FV1_READ);
+  if (r.missing) {
+    report(ctx, result("FV1", "heading-focus-ring", "missing", "not on this build: no [data-figures-heading]"));
+    return;
+  }
+  const want = via === "mouse" ? "none" : "not none";
+  const ok = via === "mouse" ? r.outlineStyle === "none" : r.outlineStyle !== "none";
+  report(ctx, result("FV1", "heading-focus-ring", ok ? "pass" : "fail", `via=${via} outlineStyle=${r.outlineStyle} outlineWidth=${r.outlineWidth} focused=${r.focused} focusVisible=${r.focusVisible} threshold=${want}`));
+}
+
+async function checkLandingCtas(page, ctx) {
+  const r = await page.evaluate(CTA1_READ);
+  if (r.missing) {
+    report(ctx, result("CTA1", "landing-ctas", "missing", 'not on this build: no [data-cta="primary"]'));
+    return;
+  }
+  const problems = [];
+  if (!r.primary.inView) problems.push("primary out of view");
+  if (r.secondary && !r.secondary.inView) problems.push("secondary out of view");
+  if (r.href !== "/demo") problems.push(`primary href=${r.href}`);
+  const sec = r.secondary ? `${px(r.secondary.top)}..${px(r.secondary.bottom)}` : "absent";
+  report(ctx, result("CTA1", "landing-ctas", problems.length ? "fail" : "pass", `primary=${px(r.primary.top)}..${px(r.primary.bottom)} href=${r.href} secondary=${sec} viewport=${ctx.w}x${ctx.h} threshold=in view at the top, href=/demo`));
+}
+
+async function checkDemoCards(page, ctx) {
+  if (!DESKTOP_SIZES.includes(ctx.size) && ctx.size !== WIDE_SIZE) return;
+  const r = await page.evaluate(DX1_READ);
+  if (r.missing) {
+    report(ctx, result("DX1", "demo-cards-in-view", "missing", "no persona link on /demo"));
+    return;
+  }
+  const parts = r.links.map((l) => `${l.href}=bottom ${px(l.bottom)}${l.inView ? "" : "(out)"}`);
+  report(ctx, result("DX1", "demo-cards-in-view", r.links.every((l) => l.inView) ? "pass" : "fail", `${parts.join(" ")} viewport=${ctx.w}x${ctx.h} threshold=inside viewport at scrollY 0`));
+}
+
+// HW1: at the Wide_Size, compare with the 1366x800 headline. The run stores the
+// 1366x800 size when it walks that size; otherwise it opens / there once.
+async function checkHeroWide(page, ctx) {
+  if (ctx.size === HW1_BASE_SIZE) ctx.memo.h1At1366 = await page.evaluate(HW1_READ);
+  if (ctx.size !== WIDE_SIZE) return;
+  const wide = await page.evaluate(HW1_READ);
+  if (ctx.memo.h1At1366 === undefined) {
+    const [bw, bh] = parseSize(HW1_BASE_SIZE);
+    const other = await page.context().browser().newContext({ viewport: { width: bw, height: bh } });
+    try {
+      const p = await other.newPage();
+      await p.goto(`${ctx.base}/`, { waitUntil: "load" });
+      ctx.memo.h1At1366 = await p.evaluate(HW1_READ);
+    } finally {
+      await other.close();
+    }
+  }
+  const base = ctx.memo.h1At1366;
+  if (wide === null || base === null) {
+    report(ctx, result("HW1", "hero-wide", "missing", "no h1 on /"));
+    return;
+  }
+  const ratio = wide / base;
+  report(ctx, result("HW1", "hero-wide", ratio >= HW1_RATIO_MIN ? "pass" : "fail", `h1=${wide}px at ${WIDE_SIZE}, ${base}px at ${HW1_BASE_SIZE} ratio=${ratio.toFixed(2)} threshold=>=${HW1_RATIO_MIN}`));
+}
+
+async function checkStepIndicator(page, ctx, stage) {
+  const r = await page.evaluate(ST1_READ);
+  if (r.missing) {
+    report(ctx, result("ST1", "step-indicator", "missing", "not on this build: no [data-step-indicator]"));
+    return;
+  }
+  const maxLines = isPhone(ctx) ? ST_LINES_PHONE_MAX : 1;
+  const wantCurrent = stage === "intact" ? null : 1;
+  const ok = r.lines <= maxLines && (wantCurrent === null || r.current === wantCurrent);
+  report(ctx, result("ST1", "step-indicator", ok ? "pass" : "fail", `steps=${r.steps} current=${r.current} lines=${r.lines} threshold=present${wantCurrent === null ? "" : ", current=1"}, lines<=${maxLines}`));
+}
+
+async function checkReceiptsInView(page, ctx) {
+  if (!DESKTOP_SIZES.includes(ctx.size) && ctx.size !== WIDE_SIZE) return;
+  const r = await page.evaluate(RC1_READ);
+  report(ctx, r.missing
+    ? result("RC1", "receipts-in-view", "missing", "not on this build: no [data-figure-entry]")
+    : result("RC1", "receipts-in-view", r.inView ? "pass" : "fail", `firstEntry=${px(r.top)}..${px(r.bottom)} viewport=${ctx.w}x${ctx.h} scrollY=${Math.round(await page.evaluate(() => window.scrollY))} threshold=fully inside viewport`));
+}
+
+// The spec 09 checks every page and Stage gets.
+async function checkEveryPage(page, ctx, route, { fonts = false } = {}) {
+  await guard(ctx, "BO1", () => checkButtonOverflow(page, ctx));
+  await guard(ctx, "BC1", () => checkControlInCard(page, ctx));
+  if (fonts) await guard(ctx, "FONT1", () => checkFonts(page, ctx, route));
+  await guard(ctx, "PH", () => checkPhone(page, ctx, route));
+}
+
+// The figures button: [data-advance="figures"], else either label (task 14 renames it).
+async function figuresButton(page) {
+  const hooked = page.locator(FIGURES_HOOK);
+  if ((await hooked.count()) > 0) return { loc: hooked.first(), label: FIGURES_HOOK };
+  const named = page.getByRole("button", { name: FIGURES_LABEL });
+  if ((await named.count()) > 0) return { loc: named.first(), label: (await named.first().textContent())?.trim() || SEE_NUMBERS };
+  return null;
+}
+
+// The landing's start: [data-cta="primary"], else the old "Open Maya" link.
+async function landingStart(page) {
+  const hooked = page.locator(LANDING_HOOK);
+  if ((await hooked.count()) > 0) return { loc: hooked.first(), label: LANDING_HOOK };
+  const named = page.getByRole("link", { name: LANDING_START });
+  if ((await named.count()) > 0) return { loc: named.first(), label: LANDING_START.source };
+  return null;
+}
+
+// Tab until the control has focus, so the press that follows is a keyboard press.
+async function tabTo(page, loc) {
+  for (let i = 0; i < 120; i++) {
+    if (await loc.evaluate((el) => document.activeElement === el)) return true;
+    await page.keyboard.press("Tab");
+  }
+  return false;
+}
+
 // Runs one check. A thrown error here is a check that could not run, which is
 // reported as a note so the walk carries on.
 async function guard(ctx, label, fn) {
@@ -969,18 +1714,22 @@ async function landing(context, ctx) {
     await page.goto(`${ctx.base}/`, { waitUntil: "load" });
     await sleep(1000);
     const stage = await stageOf(page);
-    hasStart = (await page.getByRole("link", { name: LANDING_START }).count()) > 0;
+    const start = await landingStart(page);
+    hasStart = start !== null;
     if (stage !== "scene") {
       ctx.rep.add("note", "scene", `the landing is not a scene on this build (data-ceremony is ${stage ?? "missing"}); skipped`);
     } else {
       await shot(page, ctx, "scene");
       await guard(ctx, "F2", () => checkSoil(page, ctx));
-      await guard(ctx, "BTN", () => checkMainButton(page, ctx, LANDING_START, true, "link"));
+      if (start) await guard(ctx, "BTN", () => checkMainButton(page, ctx, start, true, "link"));
       await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
       await guard(ctx, "LG1", () => checkLandingGhost(page, ctx));
       await guard(ctx, "BAND1", () => checkLightBand(page, ctx));
       await guard(ctx, "FT1", () => checkFooter(page, ctx));
       await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
+      await guard(ctx, "CTA1", () => checkLandingCtas(page, ctx));
+      await guard(ctx, "HW1", () => checkHeroWide(page, ctx));
+      await checkEveryPage(page, ctx, "/", { fonts: true });
     }
   } finally {
     await page.close();
@@ -988,7 +1737,7 @@ async function landing(context, ctx) {
 
   if (!hasStart) {
     ctx.rep.stage("emerging, sealed, error");
-    ctx.rep.add("note", "walk", "the landing has no \"Open Maya's letter\" button on this build; these stages are skipped");
+    ctx.rep.add("note", "walk", `the landing has no ${LANDING_HOOK} and no "Open Maya's letter" link on this build; these stages are skipped`);
     return;
   }
 
@@ -1008,7 +1757,14 @@ async function fromLanding(context, ctx, stage, handler, settleMs) {
   try {
     await page.route("**/api/letters/**", handler);
     await page.goto(`${ctx.base}/`, { waitUntil: "load" });
-    await page.getByRole("link", { name: LANDING_START }).click({ timeout: WAIT_MS });
+    const start = await landingStart(page);
+    if (!start) throw new Error("no landing start control");
+    await start.loc.click({ timeout: WAIT_MS });
+    // From task 9 the primary call to action opens /demo; the walk then opens Maya's letter from there.
+    await sleep(300);
+    if (new URL(page.url()).pathname.replace(/\/+$/, "") === "/demo") {
+      await page.locator(`a[href="${PERSONA_PATH}"]`).first().click({ timeout: WAIT_MS });
+    }
     await sleep(settleMs);
     const got = await stageOf(page);
     if (got !== stage) {
@@ -1040,20 +1796,28 @@ async function index(context, ctx) {
     }
     await sleep(800);
     await shot(page, ctx, "index");
-    const link = await page.locator(`a[href="${PERSONA_PATH}"]`).count();
-    if (link === 0) ctx.rep.add("blocker", "walk", `/demo has no link to ${PERSONA_PATH}, so the judge cannot reach the letter`);
-    else ctx.rep.add("ok", "walk", "/demo links to the persona letter");
+    for (const persona of PERSONAS) {
+      const link = await page.locator(`a[href="${persona.path}"]`).count();
+      if (link === 0) ctx.rep.add("blocker", "walk", `/demo has no link to ${persona.path}, so the judge cannot reach the letter`);
+      else ctx.rep.add("ok", "walk", `/demo links to ${persona.path}`);
+    }
     await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
+    await guard(ctx, "DX1", () => checkDemoCards(page, ctx));
+    await checkEveryPage(page, ctx, "/demo", { fonts: true });
   } finally {
     await page.close();
   }
 }
 
 // The persona walk: intact, recall (two questions), marks, seal (when built), letter, figures, close.
-async function persona(context, ctx) {
+// Maya's walk presses the figures button with the mouse and Tomás's with Tab and
+// Enter, so FV1 reads both cases at every size.
+async function persona(context, ctx, p, via) {
   const page = await newPage(context);
+  ctx.ghostHook = false;
+  ctx.intactCentre = null;
   try {
-    await personaWalk(page, ctx);
+    await personaWalk(page, ctx, p, via);
   } catch (error) {
     // Once the persona page is open, an error that stops the walk means the judge cannot finish the flow.
     const where = ctx.stage ? ` at the ${ctx.stage} stage` : "";
@@ -1063,22 +1827,24 @@ async function persona(context, ctx) {
   }
 }
 
-async function personaWalk(page, ctx) {
-  ctx.rep.stage("intact");
-  const res = await page.goto(`${ctx.base}${PERSONA_PATH}`, { waitUntil: "load" });
+async function personaWalk(page, ctx, p, via) {
+  const S = (stage) => `${p.prefix}${stage}`;
+  const route = p.path;
+  ctx.rep.stage(S("intact"));
+  const res = await page.goto(`${ctx.base}${p.path}`, { waitUntil: "load" });
   if (!res || res.status() !== 200) {
-    ctx.rep.add("blocker", "walk", `${PERSONA_PATH} answered HTTP ${res?.status() ?? "none"}; the flow cannot be finished`);
+    ctx.rep.add("blocker", "walk", `${p.path} answered HTTP ${res?.status() ?? "none"}; the flow cannot be finished`);
     return;
   }
   const pickUp = page.getByRole("button", { name: PICK_UP, exact: true });
   try {
     await pickUp.waitFor({ timeout: 15000 });
   } catch {
-    ctx.rep.add("blocker", "walk", `no "${PICK_UP}" button on ${PERSONA_PATH}; the flow cannot be finished`);
+    ctx.rep.add("blocker", "walk", `no "${PICK_UP}" button on ${p.path}; the flow cannot be finished`);
     return;
   }
   await sleep(2600); // the Ghost's rise (900 ms delay + 1500 ms) settles before the box checks
-  await shot(page, ctx, "intact");
+  await shot(page, ctx, S("intact"));
   await guard(ctx, "F2", () => checkSoil(page, ctx));
   await guard(ctx, "G1", () => checkGhostBody(page, ctx));
   await guard(ctx, "G2", () => checkGhostCentre(page, ctx, "intact"));
@@ -1089,6 +1855,11 @@ async function personaWalk(page, ctx) {
   await guard(ctx, "D1", () => checkDust(page, ctx));
   await guard(ctx, "BAND1", () => checkLightBand(page, ctx));
   await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
+  await guard(ctx, "ST1", () => checkStepIndicator(page, ctx, "intact"));
+  await guard(ctx, "GZ1", async () => {
+    if (await page.evaluate(() => !!document.querySelector("[data-ghost]"))) ctx.ghostHook = true;
+  });
+  await checkEveryPage(page, ctx, route, { fonts: true });
 
   // Pick up the letter: the recall stage.
   await pickUp.click();
@@ -1096,13 +1867,13 @@ async function personaWalk(page, ctx) {
     ctx.rep.add("blocker", "walk", `"${PICK_UP}" does not reach the recall stage (data-ceremony is ${await stageOf(page)})`);
     return;
   }
-  ctx.rep.stage("recall");
+  ctx.rep.stage(S("recall"));
   // The handed layout starts moving a frame after the stage changes, so wait before settling.
   await sleep(1500);
   await settle(page);
   // R1 reads the page as the judge first sees it, before anything scrolls.
   await guard(ctx, "R1", () => checkRecallInView(page, ctx));
-  await shot(page, ctx, "recall");
+  await shot(page, ctx, S("recall"));
   await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
   await guard(ctx, "T2", () => checkTicks(page, ctx));
   await guard(ctx, "F1", () => checkFit(page, ctx, [
@@ -1115,9 +1886,12 @@ async function personaWalk(page, ctx) {
   await guard(ctx, "G2", () => checkGhostCentre(page, ctx, "recall"));
   await guard(ctx, "BTN", () => checkMainButton(page, ctx, NEXT));
   await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
+  await guard(ctx, "ST1", () => checkStepIndicator(page, ctx, "recall"));
+  await checkEveryPage(page, ctx, route);
 
+  const answers = p.answers(await page.evaluate(() => document.body.innerText));
   const answer = page.locator('input[type="text"]');
-  await answer.first().fill("3.20");
+  await answer.first().fill(answers[0]);
   await answer.first().press("Enter");
   if ((await page.getByText("Question 2 of 2").count()) === 0) {
     const counter = await page.evaluate(() => document.querySelector('[data-fit="counter"]')?.textContent ?? "");
@@ -1128,18 +1902,18 @@ async function personaWalk(page, ctx) {
   await guard(ctx, "BTN", () => checkMainButton(page, ctx, RECORD));
 
   // Only the current question's field is rendered, so question 2 is the first text input again.
-  await answer.first().fill("3.90");
+  await answer.first().fill(answers[1]);
   await answer.first().press("Enter");
 
   // Marks: both answers recorded.
-  ctx.rep.stage("marks");
+  ctx.rep.stage(S("marks"));
   if (!(await waitForStage(page, "marks"))) {
     ctx.rep.add("blocker", "walk", `"${RECORD}" does not reach the marks stage (data-ceremony is ${await stageOf(page)})`);
     return;
   }
   await sleep(1500);
   await settle(page);
-  await shot(page, ctx, "marks");
+  await shot(page, ctx, S("marks"));
   await guard(ctx, "F1", () => checkFit(page, ctx, [
     { name: "marks-heading", sel: '[data-fit="marks-heading"]' },
     { name: "marks-answers", sel: '[data-fit="marks-answers"]' },
@@ -1152,19 +1926,23 @@ async function personaWalk(page, ctx) {
   await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
   await guard(ctx, "T2", () => checkTicks(page, ctx));
   await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
+  await guard(ctx, "RS1", () => checkScaleOverlap(page, ctx));
+  await guard(ctx, "ST1", () => checkStepIndicator(page, ctx, "marks"));
+  await checkEveryPage(page, ctx, route);
 
   // Seal: the hold, when this build has the seal target (a later spec 07 task).
   const seal = page.locator("[data-seal-target]").first();
   if ((await seal.count()) > 0) {
-    ctx.rep.stage("seal");
+    ctx.rep.stage(S("seal"));
     await seal.evaluate((el) => {
       const box = el.getBoundingClientRect();
       const init = { pointerId: 1, pointerType: "touch", isPrimary: true, bubbles: true, clientX: box.left + box.width / 2, clientY: box.top + box.height / 2 };
       el.dispatchEvent(new PointerEvent("pointerdown", init));
     });
     await sleep(700);
-    await shot(page, ctx, "seal");
+    await shot(page, ctx, S("seal"));
     await guard(ctx, "G2", () => checkGhostCentre(page, ctx, "seal"));
+    await guard(ctx, "GZ1", () => checkGhostGone(page, ctx, true));
     await seal.evaluate((el) => {
       const box = el.getBoundingClientRect();
       el.dispatchEvent(new PointerEvent("pointerup", { pointerId: 1, pointerType: "touch", isPrimary: true, bubbles: true, clientX: box.left + box.width / 2, clientY: box.top + box.height / 2 }));
@@ -1185,54 +1963,78 @@ async function personaWalk(page, ctx) {
     ctx.rep.add("blocker", "walk", `"${BREAK_SEAL}" does not reach the letter stage (data-ceremony is ${await stageOf(page)})`);
     return;
   }
-  ctx.rep.stage("letter");
+  ctx.rep.stage(S("letter"));
   await sleep(2300);
-  await shot(page, ctx, "letter");
+  await shot(page, ctx, S("letter"));
   await guard(ctx, "F2", () => checkSoil(page, ctx));
   await guard(ctx, "W1", () => checkLetterWidth(page, ctx));
   await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
-  // The letter is long by design, so "See the numbers" sits below it and is not held to the 1280x800 rule.
-  await guard(ctx, "BTN", () => checkMainButton(page, ctx, SEE_NUMBERS));
+  // The letter is long by design, so the figures button sits below it and is not held to the 1280x800 rule.
+  const figures = await figuresButton(page);
+  if (figures) await guard(ctx, "BTN", () => checkMainButton(page, ctx, figures));
   await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
+  await guard(ctx, "GZ1", () => checkGhostGone(page, ctx, false));
+  await guard(ctx, "ST1", () => checkStepIndicator(page, ctx, "letter"));
+  await checkEveryPage(page, ctx, route, { fonts: true });
 
-  // Figures.
-  const numbers = page.getByRole("button", { name: SEE_NUMBERS, exact: true });
-  if ((await numbers.count()) === 0) {
-    ctx.rep.add("blocker", "walk", `no "${SEE_NUMBERS}" button after the letter; the flow cannot be finished`);
+  // Figures: [data-advance="figures"], else "See the numbers" or "See the receipts".
+  if (!figures) {
+    ctx.rep.add("blocker", "walk", `no ${FIGURES_HOOK} and no "See the numbers" or "See the receipts" button after the letter; the flow cannot be finished`);
     return;
   }
-  await numbers.click();
+  if (via === "keyboard") {
+    if (!(await tabTo(page, figures.loc))) {
+      ctx.rep.add("note", "FV1", `Tab did not reach "${figures.label}"; pressed with the mouse instead`, "heading-focus-ring");
+      via = "mouse";
+      await figures.loc.click();
+    } else {
+      await page.keyboard.press("Enter");
+    }
+  } else {
+    await figures.loc.click();
+  }
   await sleep(100);
   const figuresStage = await stageOf(page);
   if (figuresStage === "letter") {
     await sleep(400);
     if ((await stageOf(page)) === "letter") {
-      ctx.rep.add("blocker", "walk", `"${SEE_NUMBERS}" does nothing (still in the letter stage)`);
+      ctx.rep.add("blocker", "walk", `"${figures.label}" does nothing (still in the letter stage)`);
       return;
     }
   }
-  ctx.rep.stage("figures");
+  ctx.rep.stage(S("figures"));
   ctx.rep.add("ok", "walk", `figures reached (data-ceremony is ${await stageOf(page)})`);
   // N1 reads where the press landed the judge, so nothing scrolls before it.
   let headingFound = false;
   await guard(ctx, "N1", async () => {
-    headingFound = await checkNumbersFocus(page, ctx, SEE_NUMBERS, "figures");
+    headingFound = await checkNumbersFocus(page, ctx, figures.label, S("figures"));
   });
-  ctx.hasFiguresHeading = headingFound;
+  if (p.key === PERSONAS[0].key) ctx.hasFiguresHeading = headingFound;
+  await guard(ctx, "FV1", () => checkHeadingRing(page, ctx, via));
   await guard(ctx, "F2", () => checkSoil(page, ctx));
   await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
+  await guard(ctx, "GZ1", () => checkGhostGone(page, ctx, false));
 
   // Close.
   if (await waitForStage(page, "close", 12000)) {
-    ctx.rep.stage("close");
+    ctx.rep.stage(S("close"));
     await sleep(1000);
+    // RC1 reads where the figures button left the judge, before anything scrolls.
+    await guard(ctx, "RC1", () => checkReceiptsInView(page, ctx));
     await guard(ctx, "B1", () => checkFigureBoxes(page, ctx));
     await guard(ctx, "L1", () => checkLineLabels(page, ctx));
     await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
-    await shot(page, ctx, "close");
+    await shot(page, ctx, S("close"));
     await guard(ctx, "F2", () => checkSoil(page, ctx));
     await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
     await guard(ctx, "FT1", () => checkFooter(page, ctx));
+    await guard(ctx, "GZ1", () => checkGhostGone(page, ctx, false));
+    await guard(ctx, "ST1", () => checkStepIndicator(page, ctx, "close"));
+    await guard(ctx, "FONT2", async () => {
+      const r = await page.evaluate(FONT2_READ);
+      if (!r.missing) report(ctx, result("FONT2", "fonts-sans-ui", r.off.length ? "fail" : "pass", `sans=${r.sans} measured=${r.measured} off=${r.off.length}${r.off.length ? ` (${r.off.slice(0, 3).join("; ")})` : ""} threshold=0`));
+    });
+    await checkEveryPage(page, ctx, route);
   } else {
     ctx.rep.add("note", "close", `not reached: the walk stops at data-ceremony "${await stageOf(page)}" on this build`);
   }
@@ -1259,10 +2061,12 @@ async function showAll(context, ctx) {
     await answer.first().press("Enter");
     if (!(await waitForStage(page, "marks"))) throw new Error("marks not reached");
     await sleep(1500);
-    await page.getByRole("button", { name: SHOW_ALL, exact: true }).click({ timeout: WAIT_MS });
-    await guard(ctx, "N1", () => checkNumbersFocus(page, ctx, SHOW_ALL));
+    const showAllControl = page.getByRole("button", { name: SHOW_ALL_LABEL }).or(page.getByRole("link", { name: SHOW_ALL_LABEL })).first();
+    const label = (await showAllControl.textContent({ timeout: WAIT_MS }))?.trim() || SHOW_ALL;
+    await showAllControl.click({ timeout: WAIT_MS });
+    await guard(ctx, "N1", () => checkNumbersFocus(page, ctx, label));
   } catch (error) {
-    ctx.rep.add("note", "N1", `"${SHOW_ALL}" walk not finished: ${String(error.message ?? error).split("\n")[0]}`, "numbers-focus");
+    ctx.rep.add("note", "N1", `"${SHOW_ALL}" or "Skip to the receipts" walk not finished: ${String(error.message ?? error).split("\n")[0]}`, "numbers-focus");
   } finally {
     await page.close();
   }
@@ -1282,6 +2086,13 @@ async function otherPages(context, ctx) {
       await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
       await guard(ctx, "FT1", () => checkFooter(page, ctx));
       await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
+      if (path === LIVE_PATH) {
+        // Only the steps before the first passkey prompt are reachable here.
+        const step = await page.evaluate(() => document.querySelector("[data-live-step]")?.getAttribute("data-live-step") ?? null);
+        ctx.rep.add(step ? "ok" : "note", "walk", step ? `/demo/live step "${step}" reached` : "no [data-live-step] on /demo/live");
+      }
+      await checkEveryPage(page, ctx, path, { fonts: true });
+      if (path === LIVE_PATH) ctx.rep.add("note", "live", `not reached: ${LIVE_UNREACHED} (they need a passkey)`);
     } finally {
       await page.close();
     }
@@ -1291,13 +2102,14 @@ async function otherPages(context, ctx) {
 async function runSize(browser, base, size, opts, rep) {
   const [w, h] = size.split("x").map(Number);
   const context = await browser.newContext({ viewport: { width: w, height: h } });
-  const ctx = { size, w, h, base, shotsDir: opts.shots, rep, intactCentre: null, stage: null, hasFiguresHeading: false };
+  const ctx = { size, w, h, base, shotsDir: opts.shots, rep, intactCentre: null, stage: null, hasFiguresHeading: false, required: opts.required, memo: opts.memo, ghostHook: false };
   rep.setContext(ctx);
   console.log(`\n==== ${size} ====`);
   try {
     await guard(ctx, "walk", () => landing(context, ctx));
     await guard(ctx, "walk", () => index(context, ctx));
-    await guard(ctx, "walk", () => persona(context, ctx));
+    await guard(ctx, "walk", () => persona(context, ctx, PERSONAS[0], "mouse"));
+    await guard(ctx, "walk", () => persona(context, ctx, PERSONAS[1], "keyboard"));
     await guard(ctx, "walk", () => showAll(context, ctx));
     await guard(ctx, "walk", () => otherPages(context, ctx));
   } finally {
@@ -1306,7 +2118,7 @@ async function runSize(browser, base, size, opts, rep) {
 }
 
 function printUsage() {
-  console.log(`Usage: npm run layout-check -- --url <origin> [--sizes WxH,WxH] [--all-sizes] [--shots <dir>] [--chromium <path>]`);
+  console.log(`Usage: npm run layout-check -- --url <origin> [--sizes WxH,WxH] [--all-sizes] [--require ID,ID] [--shots <dir>] [--chromium <path>]`);
 }
 
 async function main() {
@@ -1358,6 +2170,15 @@ async function main() {
   const rep = makeReport();
   console.log(`Revenant layout check: ${opts.url}`);
   console.log(`Sizes: ${opts.sizes.join(", ")}. Screenshots: ${opts.shots}`);
+  // --require: the spec 09 checks whose failures are BLOCKERs. An unknown ID is a note.
+  opts.required = new Set();
+  for (const id of opts.require) {
+    const known = SPEC09_CHECKS.find((c) => c.toLowerCase() === id.toLowerCase());
+    if (known) opts.required.add(known);
+    else rep.add("note", "args", `--require: unknown check ID "${id}" ignored (known: ${SPEC09_CHECKS.join(",")})`);
+  }
+  console.log(`Required: ${opts.required.size ? [...opts.required].join(", ") : "none (spec 09 checks print polish)"}`);
+  opts.memo = {};
   try {
     for (const size of opts.sizes) {
       await runSize(browser, opts.url, size, opts, rep);
@@ -1378,12 +2199,24 @@ async function main() {
   return rep.counts.blocker ? 1 : 0;
 }
 
-main().then(
-  (code) => {
-    process.exitCode = code;
-  },
-  (error) => {
-    console.error(`layout-check: ${error.stack ?? error}`);
-    process.exitCode = 2;
-  },
-);
+// Runs only as a command, so tools/qa/journey-check.mjs can import runPhoneChecks
+// and runFontCheck without starting a check.
+const invokedAsScript = (() => {
+  try {
+    return !!process.argv[1] && realpathSync(resolve(process.argv[1])) === realpathSync(fileURLToPath(import.meta.url));
+  } catch {
+    return false;
+  }
+})();
+
+if (invokedAsScript) {
+  main().then(
+    (code) => {
+      process.exitCode = code;
+    },
+    (error) => {
+      console.error(`layout-check: ${error.stack ?? error}`);
+      process.exitCode = 2;
+    },
+  );
+}
