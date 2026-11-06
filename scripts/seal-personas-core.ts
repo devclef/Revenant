@@ -27,7 +27,11 @@ import {
   type MetricDefinitionV1,
 } from "@/lib/seal-format";
 import { thenAndNow } from "@/lib/figures/then-now";
-import type { LoadedFigures } from "@/lib/figures";
+import {
+  isFixtureFigure,
+  isFixtureMetric,
+  type LoadedFigures,
+} from "@/lib/figures";
 import {
   openLetter,
   parseBackupKey,
@@ -212,6 +216,45 @@ function toUint8Array(value: Uint8Array): Uint8Array {
 }
 
 /**
+ * Refuse to seal any persona that tracks fixture data (data-integrity.md).
+ *
+ * Checks every series a persona tracks: its metric's `source` and `series_id`,
+ * and each figure's `source` and `series_id`. Any value starting with FIXTURE
+ * throws an error naming the persona key and the series ID. It is pure: it
+ * reads no store and writes nothing, so calling it before the first write
+ * keeps a fixture persona out of `demo_letters`. A tracked metric with no
+ * series in `figures` is skipped here; `buildPersonaPayload` reports that as
+ * `missing_then_figure`.
+ */
+export function assertNoFixtureFigures(
+  personas: readonly Persona[],
+  figures: LoadedFigures,
+): void {
+  for (const persona of personas) {
+    for (const { metric_id } of persona.metrics) {
+      const series = figures.series.get(metric_id);
+      if (series === undefined) {
+        continue;
+      }
+      if (isFixtureMetric(series.metric)) {
+        throw fixtureError(persona.key, series.metric.series_id);
+      }
+      for (const figure of series.figures) {
+        if (isFixtureFigure(figure)) {
+          throw fixtureError(persona.key, figure.series_id);
+        }
+      }
+    }
+  }
+}
+
+function fixtureError(personaKey: string, seriesId: string): Error {
+  return new Error(
+    `persona "${personaKey}" tracks fixture series "${seriesId}"; fixture data cannot be sealed`,
+  );
+}
+
+/**
  * Seal every persona in `deps.personas`, in list order, each isolated in its
  * own try/catch so one failure never stops the rest (R4.14).
  *
@@ -244,6 +287,9 @@ function toUint8Array(value: Uint8Array): Uint8Array {
 export async function sealPersonas(
   deps: Deps,
 ): Promise<{ results: PersonaResult[]; exitCode: 0 | 1 }> {
+  // Runs before any read or write. A fixture persona throws and nothing is stored.
+  assertNoFixtureFigures(deps.personas, deps.figures);
+
   const results: PersonaResult[] = [];
 
   // Parse the published demo key once. A failure here poisons every persona,

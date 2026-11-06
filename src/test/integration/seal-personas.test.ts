@@ -39,6 +39,7 @@ import { afterAll, beforeAll, expect, it, vi } from "vitest";
 import { PERSONAS } from "@/lib/personas";
 import type { Persona } from "@/lib/personas";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
+import type { LoadedFigures, LoadedSeries } from "@/lib/figures";
 import { thenAndNow } from "@/lib/figures/then-now";
 import {
   openLetter,
@@ -127,6 +128,35 @@ function dbDeps(
 /** Index the results of a run by persona key, for per-persona assertions. */
 function byKey(results: readonly PersonaResult[]): Map<string, PersonaResult> {
   return new Map(results.map((r) => [r.key, r]));
+}
+
+/** The EU persona (eu-tomas) from the committed list. */
+function euPersona(): Persona {
+  const eu = PERSONAS.find((p) => p.key === "eu-tomas");
+  if (eu === undefined) {
+    throw new Error("eu-tomas is missing from PERSONAS");
+  }
+  return eu;
+}
+
+/**
+ * Row counts for one letter ID across the tables a sealing run could touch.
+ * The counts are scoped to the ID, so rows written by other test files sharing
+ * the database cannot affect them.
+ */
+async function rowCountsFor(
+  id: string,
+): Promise<{ letters: number; demo_letters: number; openings: number }> {
+  const sql = getSql();
+  const [row] = await sql<
+    { letters: number; demo_letters: number; openings: number }[]
+  >`
+    SELECT
+      (SELECT COUNT(*)::int FROM letters WHERE id = ${id}) AS letters,
+      (SELECT COUNT(*)::int FROM demo_letters WHERE id = ${id}) AS demo_letters,
+      (SELECT COUNT(*)::int FROM openings WHERE demo_letter_id = ${id}) AS openings
+  `;
+  return row;
 }
 
 describeDb("seal-personas against Postgres (integration)", () => {
@@ -354,5 +384,123 @@ describeDb("seal-personas against Postgres (integration)", () => {
 
     // Nothing was stored in demo_letters under that ID.
     expect(await personaRowCount(persona.letter_id)).toBe(0);
+  });
+
+  // ---------------------------------------------------------------------------
+  // The EU persona (eu-tomas), driven through the real database.
+  // ---------------------------------------------------------------------------
+
+  // Feature: 03-persona-demo, Property 17 (EU persona, store side)
+  // The EU persona is sealed into demo_letters only: no letters row appears
+  // for its ID, and the stored letter opens with the published demo key to the
+  // committed text and the exact thenAndNow "then" figures.
+  it("seals the EU persona into demo_letters with the demo key and adds no letters row", async () => {
+    const persona = { ...euPersona(), letter_id: freshLetterId() };
+    expect(await rowCountsFor(persona.letter_id)).toEqual({
+      letters: 0,
+      demo_letters: 0,
+      openings: 0,
+    });
+
+    const run = await sealPersonas(dbDeps([persona]));
+    expect(run.results).toEqual([
+      { key: "eu-tomas", letterId: persona.letter_id, result: "stored" },
+    ]);
+    expect(run.exitCode).toBe(0);
+
+    // One persona row in demo_letters; nothing in letters or openings.
+    expect(await personaRowCount(persona.letter_id)).toBe(1);
+    expect(await rowCountsFor(persona.letter_id)).toEqual({
+      letters: 0,
+      demo_letters: 1,
+      openings: 0,
+    });
+
+    // The stored EU letter opens with the published demo key.
+    const found = await findLetter(persona.letter_id);
+    expect(found).not.toBeNull();
+    const opened = await openLetter({
+      envelope: JSON.parse(found!.envelope),
+      envelopeHash: found!.envelopeHash,
+      serverSecret: Uint8Array.from(found!.serverSecret),
+      backupKey: demoKey,
+    });
+    expect(opened.ok).toBe(true);
+    if (!opened.ok) return;
+
+    expect(opened.payload.letter_text).toBe(readPersonaText(persona.letter_path));
+    expect(opened.payload.figures).toHaveLength(persona.metrics.length);
+    persona.metrics.forEach((m, i) => {
+      const then = thenAndNow(m.metric_id, persona.written_as_of, DEMO_FIGURES).then;
+      expect(then.found).toBe(true);
+      if (!then.found) return;
+      expect(opened.payload.figures[i]).toEqual(then.figure);
+    });
+  });
+
+  // Feature: 03-persona-demo, Property 17 (EU persona, idempotence)
+  // A second run with unchanged EU inputs skips the persona, inserts no row,
+  // and leaves the stored EU row byte-for-byte unchanged.
+  it("skips the EU persona on an unchanged re-run, adding no row and changing none", async () => {
+    const persona = { ...euPersona(), letter_id: freshLetterId() };
+
+    const first = await sealPersonas(dbDeps([persona]));
+    expect(first.results[0]!.result).toBe("stored");
+    const before = await storedRow(persona.letter_id);
+    expect(before).not.toBeNull();
+    const countsBefore = await rowCountsFor(persona.letter_id);
+
+    const second = await sealPersonas(dbDeps([persona]));
+    expect(second.results).toEqual([
+      { key: "eu-tomas", letterId: persona.letter_id, result: "skipped" },
+    ]);
+    expect(second.exitCode).toBe(0);
+
+    expect(await rowCountsFor(persona.letter_id)).toEqual(countsBefore);
+    expect(await storedRow(persona.letter_id)).toEqual(before);
+  });
+
+  // Feature: 03-persona-demo, Property 17 (EU persona, FIXTURE guard)
+  // The FIXTURE guard rejects the EU persona before any lookup or write. It
+  // leaves no row for that ID in letters, demo_letters or openings.
+  it("the FIXTURE guard rejects the EU persona before any read or write, leaving no row", async () => {
+    const persona = { ...euPersona(), letter_id: freshLetterId() };
+    const metricId = persona.metrics[0]!.metric_id;
+    const series = DEMO_FIGURES.series.get(metricId);
+    expect(series).toBeDefined();
+    const fixtureSeries: LoadedSeries = {
+      ...series!,
+      metric: { ...series!.metric, source: "FIXTURE demo source" },
+    };
+    const figures: LoadedFigures = {
+      ...DEMO_FIGURES,
+      series: new Map(DEMO_FIGURES.series).set(metricId, fixtureSeries),
+    };
+
+    let lookups = 0;
+    let writes = 0;
+    const deps: Deps = {
+      ...dbDeps([persona]),
+      figures,
+      findLetter: async (id) => {
+        lookups++;
+        return findLetter(id);
+      },
+      storePersonaLetter: async (input) => {
+        writes++;
+        return storePersonaLetter(input);
+      },
+    };
+
+    await expect(sealPersonas(deps)).rejects.toThrow(
+      'persona "eu-tomas" tracks fixture series',
+    );
+    expect(lookups).toBe(0);
+    expect(writes).toBe(0);
+    expect(await rowCountsFor(persona.letter_id)).toEqual({
+      letters: 0,
+      demo_letters: 0,
+      openings: 0,
+    });
   });
 });

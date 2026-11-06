@@ -34,14 +34,15 @@
 
 import { execFileSync, spawnSync } from "node:child_process";
 import { randomBytes } from "node:crypto";
-import { existsSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 
 import { beforeAll, describe, expect, it, vi } from "vitest";
 import fc from "fast-check";
 
-import type { Persona } from "@/lib/personas";
+import { PERSONAS, type Persona } from "@/lib/personas";
+import { DEMO_FIGURES } from "@/lib/figures/demo";
 import type {
   LoadedFigures,
   LoadedSeries,
@@ -60,6 +61,7 @@ import {
 } from "@/lib/seal-format";
 import {
   sealLetter,
+  openLetter,
   parseBackupKey,
   PUBLIC_DEMO_BACKUP_KEY,
 } from "@/lib/crypto";
@@ -149,8 +151,10 @@ describe("seal-personas entry: DATABASE_URL guard", () => {
 // =============================================================================
 // Shared generators for the two properties.
 //
-// Every generated series is FIXTURE-prefixed on source and series_id, so
-// loadFigureFile accepts the file with fixture: true. Values are rounded
+// Every generated series is labelled as fake test data on source and series_id,
+// with no FIXTURE prefix. The sealing guard refuses FIXTURE figures, and
+// loadFigureFile needs the prefix to match the fixture flag, so the file is
+// fixture: false and loadFigureFile accepts it. Values are rounded
 // two-decimal strings and periods are real Mondays in a bounded range, so the
 // loader's period and value rules always pass. The persona's written_as_of is
 // chosen to be >= the latest generated period end across all its tracked
@@ -192,8 +196,8 @@ function fixtureMetric(n: number): MetricDefinitionV1 {
     display_name: `Fixture series ${n} (fixture)`,
     unit: "USD per gallon",
     region: "U.S.",
-    source: `FIXTURE weekly retail price ${n} (fake data)`,
-    series_id: `FIXTURE-SERIES-${n}`,
+    source: `Generated test series ${n} (fake data)`,
+    series_id: `TEST-SERIES-${n}`,
   };
 }
 
@@ -250,8 +254,8 @@ const figuresArb: fc.Arbitrary<GeneratedFigures> = fc
   )
   .map((generated) => {
     const file: FigureFile = {
-      fixture: true,
-      note: "generated fixture file for seal-personas property tests",
+      fixture: false,
+      note: "generated test file for seal-personas property tests",
       series: generated.map((g) => g.series),
       figures: generated.flatMap((g) => g.figures),
     };
@@ -885,3 +889,79 @@ function assertNoLeak(
     expect(line).not.toContain(Buffer.from(secret).toString("hex"));
   }
 }
+
+// =============================================================================
+// (d) The real EU persona (eu-tomas) with the real committed letter text.
+// Insert-only fake store, real crypto, no database. Covers the first seal, the
+// idempotent re-run, and the opened letter's figures.
+// =============================================================================
+
+function euPersonaFixed(): Persona {
+  const eu = PERSONAS.find((p) => p.key === "eu-tomas");
+  if (eu === undefined) {
+    throw new Error("eu-tomas is missing from PERSONAS");
+  }
+  return { ...eu, letter_id: FIXED_LETTER_IDS[0] };
+}
+
+describe("sealPersonas: the EU persona (insert-only fake store, real crypto)", () => {
+  // Feature: 03-persona-demo, Property 16 (EU persona)
+  it("seals the EU persona once, skips it on an unchanged re-run, and changes no row", async () => {
+    const persona = euPersonaFixed();
+    const text = readFileSync(
+      resolve(REPO_ROOT, "content/personas", persona.letter_path),
+      "utf8",
+    );
+    const store = new FakeStore();
+    const deps = fixedDeps(
+      [persona],
+      DEMO_FIGURES,
+      store,
+      new Map([[persona.letter_path, text]]),
+    );
+
+    const first = await sealPersonas(deps);
+    expect(first.results).toEqual([
+      { key: "eu-tomas", letterId: persona.letter_id, result: "stored" },
+    ]);
+    expect(first.exitCode).toBe(0);
+    expect(store.insertCount).toBe(1);
+
+    // The stored letter opens with the demo key to the committed text and the
+    // exact thenAndNow "then" figure for each tracked metric.
+    const parsed = parseBackupKey(PUBLIC_DEMO_BACKUP_KEY);
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) return;
+    const stored = await store.findLetter(persona.letter_id);
+    expect(stored).not.toBeNull();
+    if (stored === null) return;
+    const opened = await openLetter({
+      envelope: JSON.parse(stored.envelope),
+      envelopeHash: stored.envelopeHash,
+      serverSecret: Uint8Array.from(stored.serverSecret),
+      backupKey: parsed.key,
+    });
+    expect(opened.ok).toBe(true);
+    if (!opened.ok) return;
+    expect(opened.payload.letter_text).toBe(text);
+    persona.metrics.forEach((m, i) => {
+      const then = thenAndNow(m.metric_id, persona.written_as_of, DEMO_FIGURES)
+        .then;
+      expect(then.found).toBe(true);
+      if (then.found) {
+        expect(opened.payload.figures[i]).toEqual(then.figure);
+      }
+    });
+
+    // A second run with the same inputs skips the persona and changes nothing.
+    const snapshot = store.snapshots.get(persona.letter_id);
+    const second = await sealPersonas(deps);
+    expect(second.results).toEqual([
+      { key: "eu-tomas", letterId: persona.letter_id, result: "skipped" },
+    ]);
+    expect(second.exitCode).toBe(0);
+    expect(store.insertCount).toBe(1);
+    expect(store.snapshots.get(persona.letter_id)).toBe(snapshot);
+    expect(store.unchanged()).toBe(true);
+  });
+});
