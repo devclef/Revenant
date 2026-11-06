@@ -77,7 +77,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
 
 ### Group A: production health
 
-- [ ] 1. A1 · Fallback figures in the Figures_API, a wait for the schema, and one fetch run at a time
+- [x] 1. A1 · Fallback figures in the Figures_API, a wait for the schema, and one fetch run at a time
   - Agent: `data-dev` · Depends on: none · Estimated size: ~700 changed lines
   - Before this task: owner step O1 has run, and its log is in this issue.
   - Scope: `src/app/api/figures/db-response.ts`, `src/app/api/figures/respond.ts`, `src/app/api/figures/build-response.ts`, `src/lib/figures/now.ts`, `src/lib/figures/bundled-latest.ts` (new), `scripts/fetch-figures.ts`, `scripts/fetch-figures-store.ts`, `scripts/fetch-figures-freshness.mjs`, and the `*.test.ts` for each file above
