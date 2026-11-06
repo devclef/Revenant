@@ -149,11 +149,13 @@ export function WriteForm({
       aria-labelledby="live-seal-heading"
       onSubmit={(event) => event.preventDefault()}
     >
-      <DemoLabel />
+      {realDate === undefined ? <DemoLabel /> : null}
       <h1 id="live-seal-heading" className={styles.heading}>
         {LIVE_COPY.heading}
       </h1>
-      <p className={styles.intro}>{LIVE_COPY.intro}</p>
+      <p className={styles.intro}>
+        {realDate === undefined ? LIVE_COPY.intro : REAL_COPY.intro}
+      </p>
 
       <div className={styles.field}>
         <label htmlFor="live-letter" className={styles.label}>

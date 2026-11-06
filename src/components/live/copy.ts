@@ -160,6 +160,8 @@ export const LIVE_COPY = {
  * "12 May 2027". Same tone rules as LIVE_COPY.
  */
 export const REAL_COPY = {
+  intro:
+    "Your letter is sealed with your own passkey. It opens at midnight on the date you choose, and no one can open it before then.",
   dateLabel: "Opening date",
   dateHint:
     "Your letter opens at midnight on this date. It must be at least three months after you seal it. You cannot change the date once it is sealed.",

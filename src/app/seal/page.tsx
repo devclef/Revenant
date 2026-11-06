@@ -32,7 +32,7 @@ export default function RealSealPage() {
   const appOrigin = (process.env.APP_ORIGIN ?? "").trim().replace(/\/+$/, "");
 
   return (
-    <SceneShell variant="plain">
+    <SceneShell variant="plain" demo={false}>
       {rpId === "" ? (
         <Unavailable />
       ) : (
