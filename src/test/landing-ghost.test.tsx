@@ -4,6 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 
 // One persona is enough: the Accent link needs a first persona, and the Ghost
 // does not depend on the persona list.
+// page.tsx imports feature-flags.ts, which imports `server-only`.
+vi.mock("server-only", () => ({}));
+
 vi.mock("@/lib/personas", () => ({
   PERSONAS: [{ key: "us-maya", display_name: "Maya" }],
 }));

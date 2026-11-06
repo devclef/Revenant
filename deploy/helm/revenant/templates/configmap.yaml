@@ -22,3 +22,5 @@ data:
   APP_ORIGIN: {{ .Values.appOrigin | quote }}
   # Where GET /api/figures reads figures: `db` or `file`. See values.yaml figures.source.
   FIGURES_SOURCE: {{ .Values.figures.source | quote }}
+  # Real sealing flag: "on" when realSealing is true, "off" otherwise. See values.yaml realSealing.
+  REAL_SEALING: {{ if .Values.realSealing }}"on"{{ else }}"off"{{ end }}

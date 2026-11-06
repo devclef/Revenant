@@ -1,8 +1,11 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import Home from "./page";
+
+// page.tsx imports feature-flags.ts, which imports `server-only`.
+vi.mock("server-only", () => ({}));
 
 /**
  * Markup test for the landing page. Renders with `renderToStaticMarkup` and

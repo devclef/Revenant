@@ -99,6 +99,7 @@ helm template t deploy/helm/revenant
 | `tolerations` | `[]` | Tolerations for the web pod. |
 | `affinity` | `{}` | Affinity rules for the web pod. |
 | `demo.sealPersonas` | `true` | When true, the migrate init container seals demo persona letters after running migrations (`node scripts/migrate.mjs && node scripts/seal-personas.mjs`). Set to `false` to run migrations only. A non-zero exit from the sealing step fails the init container and blocks web startup. |
+| `realSealing` | `false` | Turns on the real sealing flow. Renders `REAL_SEALING` in the ConfigMap as `"on"` when `true` and `"off"` otherwise. The app reads it on the server only. |
 | `figures.source` | `db` | Where `GET /api/figures` reads figures from: `db` (figures stored by the fetch job) or `file` (bundled demo figures). Written to `FIGURES_SOURCE` in the ConfigMap. Any other value fails the render. |
 | `fetchFigures.enabled` | `true` | Render the daily figure fetch CronJob (`scripts/fetch-figures.mjs`). Uses the same image, security context and `DATABASE_URL` Secret key as the web pod. |
 | `fetchFigures.schedule` | `"17 6 * * *"` | Cron schedule for the fetch, in `fetchFigures.timeZone`. |

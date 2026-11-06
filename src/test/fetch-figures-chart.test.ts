@@ -108,6 +108,26 @@ describe("ConfigMap", () => {
   });
 });
 
+describe("ConfigMap REAL_SEALING", () => {
+  // Stands in for `helm template` with realSealing set to a given value by
+  // replacing the one conditional that produces the REAL_SEALING line.
+  function renderRealSealing(realSealing: boolean): string {
+    const conditional = /\{\{ if \.Values\.realSealing \}\}"on"\{\{ else \}\}"off"\{\{ end \}\}/;
+    if (!conditional.test(configmap)) {
+      throw new Error("REAL_SEALING conditional missing in configmap.yaml");
+    }
+    return configmap.replace(conditional, realSealing ? '"on"' : '"off"');
+  }
+
+  it("renders REAL_SEALING as off when realSealing is false", () => {
+    expect(renderRealSealing(false)).toMatch(/^\s*REAL_SEALING: "off"\s*$/m);
+  });
+
+  it("renders REAL_SEALING as on when realSealing is true", () => {
+    expect(renderRealSealing(true)).toMatch(/^\s*REAL_SEALING: "on"\s*$/m);
+  });
+});
+
 describe("chart templates", () => {
   it("render no Secret", () => {
     const templates = readdirSync(`${CHART}/templates`).filter((name) =>

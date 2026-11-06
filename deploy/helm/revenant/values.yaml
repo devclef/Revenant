@@ -82,6 +82,10 @@ demo:
   # fails the init container, so the web container never starts.
   sealPersonas: true
 
+# -- Turn on the real sealing flow. Renders REAL_SEALING as "on" when true and
+# "off" otherwise. The app reads it on the server only (src/lib/feature-flags.ts).
+realSealing: false
+
 figures:
   # -- Where GET /api/figures reads figures from. `db` serves the figures the
   # daily fetch job stored; `file` serves the bundled demo figures. Written to
