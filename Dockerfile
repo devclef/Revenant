@@ -49,10 +49,11 @@ RUN addgroup -g 1001 -S nodejs \
 
 # server.js lands at /app/server.js because outputFileTracingRoot is the
 # project root. Copy only the standalone bundle and static assets, chowned
-# to the non-root user. There is no public/ dir in this scaffold; add its
-# COPY here when one is introduced.
+# to the non-root user.
 COPY --from=builder --chown=1001:1001 /app/.next/standalone ./
 COPY --from=builder --chown=1001:1001 /app/.next/static ./.next/static
+# public/ holds files served from the site root (for example icon.svg).
+COPY --from=builder --chown=1001:1001 /app/public ./public
 
 # The same image also runs the migration entrypoint (`node scripts/migrate.mjs`),
 # invoked by the Helm pre-upgrade hook and the CI smoke job. The Next.js
