@@ -382,11 +382,11 @@ describe("the track uses the sealed unit's range", () => {
       value: 1710,
     });
     // The range's ticks are every 500 from 0 to 3,000 (checked here, not by
-    // the layout). At the 260 px minimum track tick-layout drops 2,500 so its
-    // label does not crowd the 3,000 end label; the drawn list is exact.
+    // the layout). At the 260 px minimum track tick-layout draws every second
+    // tick (spec 09 A10), so the drawn list is 0, 1,000, 2,000, 3,000.
     const range = scaleRangeFor("EUR per 1,000 litres");
     expect(range.ticks).toEqual([0, 500, 1000, 1500, 2000, 2500, 3000]);
-    expect(tickLabelsOf(markup)).toEqual(["0", "500", "1,000", "1,500", "2,000", "3,000"]);
+    expect(tickLabelsOf(markup)).toEqual(["0", "1,000", "2,000", "3,000"]);
     expect(markup).toContain("--pos-mark:0.57");
     expect(readoutOf(markup)).toBe("1710");
   });
