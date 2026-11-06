@@ -30,8 +30,17 @@ Tomás
 - Written as of: 2024-05-12
 - Opens: 2024-06-09T00:00:00.000Z (European Parliament election, 2024-06-09)
 - Recall subjects:
-- a litre of unleaded petrol (metric_id `eu-petrol-euro95`)
-- a litre of diesel (metric_id `eu-diesel`)
+  - a litre of unleaded petrol (metric_id `eu-petrol-euro95`)
+  - a litre of diesel (metric_id `eu-diesel`)
+
+## Figure pick check (then figures at written_as_of)
+
+The then figure is the latest `fuel-figures.json` row with a period end on or before 2024-05-12, under the same rule as `thenAndNow` in `src/lib/figures/then-now.ts`. Both series are weekly, so the 2024-05-06 row is the pick for each.
+
+- `eu-petrol-euro95`: period 2024-05-06, value 1791.3149889844324, unit EUR per 1,000 litres, region EU27 weighted average, series column `EU_price_with_tax_euro95`.
+- `eu-diesel`: period 2024-05-06, value 1645.194212158339, unit EUR per 1,000 litres, region EU27 weighted average, series column `EU_price_with_tax_diesel`.
+
+`src/lib/personas/eu-entry.test.ts` checks this pick field for field against the JSON row.
 
 ## Copy test record (neutrality.md)
 
