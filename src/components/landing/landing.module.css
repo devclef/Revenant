@@ -1,0 +1,124 @@
+/*
+ * Feature: 09-demo-polish (landing hero, B1, B4 and Group P).
+ *
+ * The values here repeat landing/constants.ts. constants.test.ts checks them.
+ * Colours come from the Scene tokens (scene/tokens.css): text is --text on
+ * --bg, and the one Accent button is --on-accent on --accent.
+ */
+
+/* Stacked column. Source order is the phone order (OD12 c): eyebrow,
+   headline, sentence, calls to action, then the Landing_Ghost box. */
+.hero {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  max-width: 40rem;
+  padding: 1.5rem 1.25rem 2rem;
+  color: var(--text);
+}
+
+.eyebrow {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.85rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+/* Phone headline: the design's phone clamp, balanced, at most 3 lines. */
+.headline {
+  margin: 0;
+  font-size: clamp(2rem, 9.4vw, 2.6rem);
+  font-weight: 800;
+  line-height: 1.05;
+  text-wrap: balance;
+}
+
+.keep {
+  white-space: nowrap;
+}
+
+.sentence {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.cost {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+/* Shared shape for both calls to action. Both are at least 44 px tall. */
+.cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 3.5rem;
+  min-width: 2.75rem;
+  padding: 0 1.5rem;
+  border-radius: 4px;
+  font-size: 1.05rem;
+  text-decoration: none;
+}
+
+/* The only Accent button: orange means "you". Never text on purple. */
+.accent {
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* The secondary call to action: outlined, in --text on --bg, not Accent. */
+.outlined {
+  background: transparent;
+  border: 2px solid var(--text);
+  color: var(--text);
+}
+
+.cta:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* The Landing_Ghost box is reserved in the server HTML so the page does not
+   move when the ghost arrives (CLS 0). It is at most 30% of the viewport
+   height and at most 190 px (P1.1). */
+.ghost {
+  width: 100%;
+  height: 30vh;
+  height: min(30svh, 190px);
+}
+
+/* Wide: the headline grows with the viewport. At 2560 px it is about 143 px,
+   against 72 px at 1366 px, which is at least 1.5 times (B4.1). The hero
+   fills the first viewport and centres its content (B4.2). */
+@media (min-width: 600px) {
+  .headline {
+    font-size: clamp(2.5rem, 6vw, 4.5rem);
+  }
+
+  .actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+  }
+}
+
+@media (min-width: 1920px) {
+  .hero {
+    min-height: calc(100svh - var(--topbar-clear, 0px));
+    justify-content: center;
+    max-width: 52rem;
+  }
+
+  .headline {
+    font-size: clamp(4.5rem, 5.6vw, 9rem);
+  }
+}
