@@ -7,7 +7,7 @@ import "@/components/ceremony/scene/tokens.css";
 import { useFigures } from "@/components/reveal/figures-api";
 import type { LoadedFigures } from "@/lib/figures";
 
-import { realSealApi, type SealApi } from "./api";
+import { realLetterSealApi, realSealApi, type SealApi } from "./api";
 import { sealFiguresFrom } from "./catalogue-list";
 import { LIVE_COPY } from "./copy";
 import { BackupFallback } from "./BackupFallback";
@@ -43,15 +43,36 @@ export interface SealPageDeps {
   nowMs: () => number;
 }
 
+/**
+ * Which sealing mode the page runs in. `demo` is the Live_Letter Seal_Page at
+ * `/demo/live`. `real` is the Real_Seal_Page at `/seal` (spec 08, task 22).
+ * The two run the same Sealing_Flow steps in the same order; only the routes
+ * differ.
+ */
+export type SealPageMode = "demo" | "real";
+
+/**
+ * The seal API for a mode. An injected `deps.api` always wins. Otherwise demo
+ * mode uses `realSealApi` (the Live_Letter routes) and real mode uses
+ * `realLetterSealApi` (the Real_Letter routes), so a real seal never posts to a
+ * demo route.
+ */
+export function sealApiFor(mode: SealPageMode, injected?: SealApi): SealApi {
+  if (injected) return injected;
+  return mode === "real" ? realLetterSealApi : realSealApi;
+}
+
 export interface SealPageProps {
   /** The passkey relying-party ID (RP_ID), read at request time by the page. */
   rpId: string;
   /** The app origin (APP_ORIGIN) without a trailing slash. */
   appOrigin: string;
+  /** `demo` (default) for `/demo/live`; `real` for `/seal`. */
+  mode?: SealPageMode;
   /**
    * The one injection point for the port, routes, figures and clock (R11.5).
    * Any field left out falls back to the real default: the loaded crypto
-   * module's `browserAuthenticatorPort`, `realSealApi`, `DEMO_FIGURES` and
+   * module's `browserAuthenticatorPort`, the mode's seal API, `DEMO_FIGURES` and
    * `Date.now`.
    */
   deps?: Partial<SealPageDeps>;
@@ -64,7 +85,7 @@ export interface SealPageProps {
  * stay disabled until it has (R15.3). The page root carries
  * `data-live-step={state.tag}` for the QA agent.
  */
-export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
+export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps) {
   const crypto = useCryptoModule();
   const prfHint = usePrfHint();
   const figuresState = useFigures(deps?.fetchFigures);
@@ -89,11 +110,11 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
     return {
       crypto,
       port: deps?.port ?? crypto.browserAuthenticatorPort,
-      api: deps?.api ?? realSealApi,
+      api: sealApiFor(mode, deps?.api),
       rpId,
       now: deps?.nowMs ?? Date.now,
     };
-  }, [crypto, figuresReady, deps?.port, deps?.api, deps?.nowMs, rpId]);
+  }, [crypto, figuresReady, deps?.port, deps?.api, deps?.nowMs, rpId, mode]);
 
   // The flow reads the draft at Confirm_Press; memoised so the handlers keep
   // their identity while the form is unchanged. The figures are the response's,
@@ -116,6 +137,7 @@ export function SealPage({ rpId, appOrigin, deps }: SealPageProps) {
     <div
       data-rp-id={rpId}
       data-app-origin={appOrigin}
+      data-seal-mode={mode}
       data-live-step={state.tag}
     >
       <p className={styles.backToDemo}>
