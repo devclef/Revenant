@@ -67,3 +67,30 @@ describe("LIVE_COPY", () => {
     expect(LIVE_COPY.unavailable.length).toBeGreaterThan(0);
   });
 });
+
+/**
+ * Claim checks for the wording corrected in the copy audit (issue #200). Each
+ * check pins a claim the code makes true, so the old, untrue wording cannot
+ * come back unnoticed.
+ */
+describe("LIVE_COPY claims with code behind them", () => {
+  it("does not say a letter opens only with its backup key (a both seal also shows this)", () => {
+    expect(LIVE_COPY.keyReminder).not.toContain("only with your backup key");
+    expect(LIVE_COPY.keyReminder).toContain("backup key opens this letter after the opening date");
+  });
+
+  it("says a lost passkey is survivable only with a backup key, as the seal form offers one", () => {
+    expect(LIVE_COPY.warning).toContain("unless you also keep its backup key");
+    expect(LIVE_COPY.warningLabel).toContain("unless I keep its backup key");
+  });
+
+  it("does not claim the page keeps nothing (the backup key lives in memory only, and the link is the way back)", () => {
+    expect(LIVE_COPY.keepLink).not.toContain("keeps nothing");
+    expect(LIVE_COPY.keepLink).toContain("does not keep your key");
+  });
+
+  it("does not quote a browser menu label that the app does not control", () => {
+    expect(LIVE_COPY.cannotLockNext1).not.toContain('"');
+    expect(LIVE_COPY.cannotLockNext1).toContain("use a phone or tablet");
+  });
+});

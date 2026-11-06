@@ -254,3 +254,10 @@ describe("CEREMONY_COPY tone and neutrality", () => {
     }
   });
 });
+
+describe("CEREMONY_COPY has no tilt strings (no device-motion code exists)", () => {
+  it("omits tiltEnable and tiltPermissionNote, which retired with spec 07", () => {
+    expect("tiltEnable" in CEREMONY_COPY).toBe(false);
+    expect("tiltPermissionNote" in CEREMONY_COPY).toBe(false);
+  });
+});
