@@ -552,8 +552,10 @@ describe("Property 17: views never render letter content before the reveal", () 
     fc.assert(
       fc.property(fc.constantFrom(...afterBreak), ({ state }) => {
         const html = render(state);
+        // The Step_Indicator lists "Break the seal" as a step name (spec 09
+        // C2.1), so the check is for the button element, not the label text.
         expect(
-          html.includes(CEREMONY_COPY.sealButton),
+          /<button[^>]*>Break the seal<\/button>/.test(html),
           `${state.tag} must not render the seal-break button after the break`,
         ).toBe(false);
         expect(html.includes("Read the letter")).toBe(false);

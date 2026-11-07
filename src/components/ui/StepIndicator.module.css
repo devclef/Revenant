@@ -1,0 +1,42 @@
+/*
+ * Step_Indicator styles (spec 09 C2.1 to C2.5, design.md "C1 and C2").
+ *
+ * The list sits on whatever surface holds it and uses the page tokens from
+ * scene/tokens.css (--text, --muted). It sets its own text colour. The current
+ * step is bold, in --text, with a 2px underline in --text. The others are
+ * --muted. Nothing here uses the Accent, and nothing changes colour by direction.
+ *
+ * Desktop and Wide: one line, because the steps do not wrap (nowrap per item).
+ * Phone: the row may wrap to a second line, and no more.
+ */
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--muted);
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.step {
+  margin: 0;
+  padding: 0;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.current {
+  margin: 0;
+  padding: 0;
+  color: var(--text);
+  font-weight: 700;
+  white-space: nowrap;
+  text-decoration-line: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.3em;
+}
