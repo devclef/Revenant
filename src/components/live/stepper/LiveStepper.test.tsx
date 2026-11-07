@@ -91,13 +91,15 @@ describe("LiveStepper", () => {
     const html = render("write", () =>
       createElement("button", { type: "button" }, "Next"),
     );
-    const group = html.match(
-      /<div[^>]*data-primary-control[^>]*>([\s\S]*?)<\/div>/,
-    );
-    expect(group).not.toBeNull();
-    const inside = group?.[1] ?? "";
-    expect(inside).toContain("Write");
-    expect(inside).toContain(">Next<");
+    // The hook appears once. The group runs from its opening tag to the card's
+    // closing </section>, so nested divs in the step content cannot cut it short.
+    expect(html.match(/data-primary-control/g)).toHaveLength(1);
+    const start = html.indexOf("data-primary-control");
+    const end = html.indexOf("</section>", start);
+    expect(end).toBeGreaterThan(start);
+    const group = html.slice(start, end);
+    expect(group).toContain(">Write</h2>");
+    expect(group).toContain(">Next<");
   });
 
   it("carries the step on the card so the layout check can tell them apart", () => {
