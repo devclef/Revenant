@@ -503,7 +503,7 @@ Each task in this group meets group P for the Stages it changes (G3.7), and atta
   - Validation: `bash scripts/check.sh`
   - _Requirements: L2.2, L3.1, L3.3, L6.1–L6.5, L7.1–L7.6, L8.1, L8.2, L9.1, L9.2, G2.10, G2.11_
 
-- [ ] 19. L2, L3 · Delete the retired tokens, and guard the type system and the palette
+- [x] 19. L2, L3 · Delete the retired tokens, and guard the type system and the palette
   - Agent: `platform-dev` · Depends on: 12, 18 · Estimated size: ~200 changed lines
   - Before this task: task 18 is on `main`, so no component references a Retired_Token or the serif outside the Letter_Text module.
   - Scope: `src/app/globals.css`, `src/test/retired-tokens.test.ts` (new), `src/test/serif-scope.test.ts` (new)
