@@ -709,6 +709,10 @@
   position: absolute;
   right: calc(100% + 1rem);
   top: 50%;
+  /* Above the Ghost body (the glow layer and the body SVG paint beneath the
+     held slot's children). Without a positive z-index the body can cover the
+     ends of the line at 1280, 1366 and 2560 px wide (spec 09 C5.1 QA). */
+  z-index: 3;
   transform: translateY(-50%);
   width: max-content;
   max-width: 14rem;
