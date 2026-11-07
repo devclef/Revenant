@@ -42,7 +42,7 @@
 // `Math.random` and `Date.now` are never called in render, and this module
 // imports no `@/lib/crypto` (the ceremony source scan enforces both).
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
 
 import { CEREMONY_COPY } from "./copy";
 import { LiveRegion, LiveRegionProvider } from "./LiveRegion";
@@ -204,6 +204,10 @@ function CeremonyRegion({
   // Seal_Break reads it through SoundEnabledContext below. The toggle itself
   // keeps its own copy, and both change on the same press.
   const [soundOn, setSoundOn] = useState(false);
+  // On the persona page (`controls="topbar"`) the Top_Bar owns the sound state,
+  // above this region (SceneShell). This region then passes that state down, so
+  // the Seal_Break follows the Top_Bar toggle. Live pages (`region`) keep their own.
+  const inheritedSound = useContext(SoundEnabledContext);
 
   // The Stage for the current state at the live local view (design.md "Stage
   // resolution"). On the server and first render `localView` is
@@ -307,7 +311,7 @@ function CeremonyRegion({
       data-ceremony-motion={motionAttr}
       className={`${styles.desk} ${className ? `${styles.ceremony} ${className}` : styles.ceremony}`}
     >
-      <SoundEnabledContext.Provider value={soundOn}>
+      <SoundEnabledContext.Provider value={showRegionControls ? soundOn : inheritedSound}>
         <StageContext.Provider value={stage}>
         <LiveRegion message={liveLine} />
         {showRegionControls ? (

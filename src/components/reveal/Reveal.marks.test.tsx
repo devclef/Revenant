@@ -192,7 +192,7 @@ describe("reveal marks stage: column markers and order", () => {
     expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
 
-  it("shows the sound toggle and its note only on the persona page", () => {
+  it("shows the sound note only on the persona page", () => {
     const persona = renderMarks(RECORD);
     expect(persona).toContain(CEREMONY_COPY.soundNote);
     const live = renderMarks(RECORD, { variant: "live", letterId: "live-marks" });

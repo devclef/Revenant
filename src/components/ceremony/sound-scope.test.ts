@@ -35,6 +35,8 @@ const ALLOWED_SOUND_CALLERS: ReadonlyMap<string, string> = new Map([
   ["components/ceremony/seal/useSealBreak.ts", "spec 05 R14.2: fires the Seal_Break cue"],
   ["components/ceremony/seal/SealBreak.tsx", "spec 05 R14.2: reads the sound toggle context for the break"],
   ["components/reveal/Reveal.tsx", "spec 05 R14: the reveal's toggle and break cues"],
+  ["components/ceremony/scene/TopBar.tsx", "spec 09 C4.4: the Top_Bar sound toggle between Calm and Skip (persona page)"],
+  ["components/ceremony/scene/SceneShell.tsx", "spec 09 C4.4: holds the sound state and provides SoundEnabledContext above the persona page"],
 ]);
 
 const isTest = (name: string): boolean => /\.(test|spec)\.tsx?$/.test(name);

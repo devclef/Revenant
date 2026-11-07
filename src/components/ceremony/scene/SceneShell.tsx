@@ -15,11 +15,13 @@
 import { useMotion, MotionProvider } from "../motion";
 import { LocalViewProvider } from "../local-view";
 import { SkipProvider } from "../skip";
-import type { ReactNode } from "react";
+import { SoundEnabledContext } from "../sound/SoundEnabledContext";
+import { soundCues } from "../sound/cues";
+import { useState, type ReactNode } from "react";
 
 import styles from "./scene.module.css";
 import "./tokens.css";
-import { TopBar } from "./TopBar";
+import { TopBar, type TopBarSound } from "./TopBar";
 import { SceneHeadline } from "./SceneHeadline";
 import { SCENE_COPY } from "./copy";
 import { SceneBackdrop } from "./SceneBackdrop";
@@ -52,6 +54,21 @@ export function SceneShell(props: SceneShellProps) {
 function SceneFrame(props: SceneShellProps) {
   const { mode } = useMotion();
 
+  // The sound state for the page visit (spec 09 C4.4). It lives here, above the
+  // persona page's content, so the Top_Bar toggle and the Seal_Break read the
+  // same value. In memory only; a new visit starts off.
+  const [soundOn, setSoundOn] = useState(false);
+  const sound: TopBarSound | undefined =
+    props.variant === "persona"
+      ? {
+          enabled: soundOn,
+          onChange: (next) => {
+            setSoundOn(next);
+            soundCues.onToggle(next);
+          },
+        }
+      : undefined;
+
   // The landing and index roots carry the page's one data-ceremony. `light`
   // counts as `full`, because only `calm` turns motion off (design.md "Motion
   // modes"). The index root is marked "index" (R26.4).
@@ -64,6 +81,7 @@ function SceneFrame(props: SceneShellProps) {
         };
 
   return (
+    <SoundEnabledContext.Provider value={soundOn}>
     <div
       className={
         props.variant === "plain"
@@ -75,7 +93,7 @@ function SceneFrame(props: SceneShellProps) {
       {/* The index variant gets the Soil backdrop from the shell, with no Ghost. */}
       {props.variant === "index" ? <SceneBackdrop /> : null}
       {props.variant === "persona" ? (
-        <TopBar personaName={props.personaName} />
+        <TopBar personaName={props.personaName} sound={sound} />
       ) : props.variant === "plain" ? (
         <TopBar demo={props.demo ?? true} controls={props.controls ?? "calm"} />
       ) : (
@@ -98,5 +116,6 @@ function SceneFrame(props: SceneShellProps) {
         )}
       </main>
     </div>
+    </SoundEnabledContext.Provider>
   );
 }

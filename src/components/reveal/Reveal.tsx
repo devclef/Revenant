@@ -8,9 +8,7 @@ import type { LetterKind } from "./FigureLine";
 import type { RecallRecordV1 } from "@/lib/recall";
 import { LetterBlock } from "@/components/ceremony/letter/LetterBlock";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
-import { SoundToggle } from "@/components/ceremony/sound/SoundToggle";
 import { SoundEnabledContext } from "@/components/ceremony/sound/SoundEnabledContext";
-import { soundCues } from "@/components/ceremony/sound/cues";
 import { FiguresThenNow } from "./FiguresThenNow";
 import { useFigures } from "./figures-api";
 import { Fingerprint } from "./Fingerprint";
@@ -205,10 +203,11 @@ export function Reveal({
   // toggle placement"). CeremonyRoot renders its own toggle only in `region`
   // mode, which the live pages use. So the persona marks hold their own sound
   // state and pass it to the Seal_Break; live pages keep the inherited state.
-  const inheritedSound = useContext(SoundEnabledContext);
-  const [marksSound, setMarksSound] = useState(false);
+  // The sound state comes from above: on the persona page the Top_Bar toggle
+  // (SceneShell, through CeremonyRoot), on live pages CeremonyRoot's own toggle.
+  // spec 09 C4.4: the persona marks column no longer holds a toggle.
+  const soundOn = useContext(SoundEnabledContext);
   const personaMarks = variant === "persona";
-  const soundOn = personaMarks ? marksSound : inheritedSound;
 
   // Report the seal-break's in-progress flag up to the local view so the
   // Ceremony Stage reads `seal` while holding and settles back to `marks`.
@@ -385,12 +384,6 @@ export function Reveal({
                       </div>
                       {personaMarks ? (
                         <div className={styles.marksSound}>
-                          <SoundToggle
-                            onChange={(next) => {
-                              setMarksSound(next);
-                              soundCues.onToggle(next);
-                            }}
-                          />
                           <p className={styles.marksSoundNote}>
                             {CEREMONY_COPY.soundNote}
                           </p>
