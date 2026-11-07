@@ -1,11 +1,15 @@
 import { createElement } from "react";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import Link from "next/link";
-import { WaxSeal, normaliseWaxSealIds } from "@/components/ceremony/envelope/WaxSeal";
+import { Envelope } from "@/components/ceremony/envelope/Envelope";
+import { WaxSeal, normaliseWaxSealIds } from "@/components/ui/WaxSeal";
 
 import { PersonaCard, type PersonaCardProps } from "./PersonaCard";
+import styles from "@/components/ceremony/envelope/Envelope.module.css";
 import { DEMO_COPY } from "./copy";
 import {
   formatCalendarDate,
@@ -24,13 +28,12 @@ vi.mock("next/navigation", () => ({
 }));
 
 /**
- * Markup tests for a single PersonaCard (R6.2, R6.6, R6.7). Renders with
- * `renderToStaticMarkup` and `createElement` — no DOM library and no JSX, so
- * the card's full output is just a string we can scan.
+ * Markup tests for a single PersonaCard on the Demo_Index page (R6.2, R6.6,
+ * R6.7). Renders with `renderToStaticMarkup` and `createElement`, with no DOM
+ * library and no JSX.
  *
  * The props here are the only fields a card may receive: the persona's list
- * fields. No sealed payload (letter text, metric figures) is ever passed in,
- * because a card never receives it (R6.6); the card is a label and a way in.
+ * fields. No sealed payload is ever passed in (R6.6).
  */
 
 /** Example list-field props. Dates are chosen to format to distinct strings. */
@@ -42,10 +45,26 @@ const PROPS = {
   opens_at: "2024-11-05T00:00:00.000Z",
 } as const;
 
+/** The same persona with the public event its opening date comes from. */
+const EVENT_PROPS: PersonaCardProps = {
+  personaKey: "eu-anna",
+  display_name: "Anna",
+  region: "European Union",
+  written_as_of: "2024-03-01",
+  opens_at: "2024-06-09T00:00:00.000Z",
+  opening_event_name: "European Parliament election",
+};
+
 const render = (props: PersonaCardProps = PROPS) =>
-  normaliseWaxSealIds(
-    renderToStaticMarkup(createElement(PersonaCard, props)),
-  );
+  normaliseWaxSealIds(renderToStaticMarkup(createElement(PersonaCard, props)));
+
+/** The accessible name the envelope link must carry. */
+const labelFor = (name: string) =>
+  DEMO_COPY.openLetterFor.replace("{name}", name);
+
+/** Escapes text the way React writes it into an attribute. */
+const attr = (text: string) =>
+  text.replace(/&/g, "&amp;").replace(/"/g, "&quot;").replace(/'/g, "&#x27;");
 
 /** A minimal view of a React element, enough to walk an unrendered tree. */
 type El = { type: unknown; props: { children?: unknown; [name: string]: unknown } };
@@ -69,21 +88,20 @@ const tree = (props: PersonaCardProps = PROPS) =>
   PersonaCard(props) as unknown as El;
 
 describe("PersonaCard markup", () => {
-  it("shows the display name and region", () => {
+  it("shows the display name and region in the sans", () => {
     const html = render();
     expect(html).toContain(PROPS.display_name);
     expect(html).toContain(PROPS.region);
   });
 
-  it('shows the "Written as of" line with the date formatted via letter-date.ts', () => {
+  it('shows the "Written as of" line with the date from letter-date.ts', () => {
     const html = render();
     expect(html).toContain(DEMO_COPY.writtenAsOfPrefix);
     expect(html).toContain(formatCalendarDate(PROPS.written_as_of));
-    // Sanity-check the fixture: the helper really does reshape the raw input.
     expect(formatCalendarDate(PROPS.written_as_of)).toBe("12 May 2024");
   });
 
-  it('shows the "Opens" line with the date formatted via letter-date.ts', () => {
+  it('shows the "Opens" line with the date from letter-date.ts', () => {
     const html = render();
     expect(html).toContain(DEMO_COPY.opensPrefix);
     expect(html).toContain(formatLetterDate(PROPS.opens_at, { kind: "utc" }));
@@ -92,40 +110,49 @@ describe("PersonaCard markup", () => {
     );
   });
 
-  it('renders an "Open the letter" link to /demo/personas/{key}', () => {
-    const html = render();
-    expect(html).toContain(DEMO_COPY.openLetter);
-    expect(html).toContain("Open the letter");
-    expect(html).toContain(`href="/demo/personas/${PROPS.personaKey}"`);
+  it("adds the plain name of the opening event after the opening date", () => {
+    const html = render(EVENT_PROPS);
+    expect(html).toContain(
+      `9 June 2024${DEMO_COPY.eventSeparator}European Parliament election`,
+    );
+    expect(html).toContain("Opens");
   });
 
-  it('never says "Break the seal" on the card (R2)', () => {
-    // The old link copy was "Break the seal"; the seal-break moment belongs to
-    // the reveal ceremony, not a persona card. The card only invites the reader
-    // in, so the words must appear nowhere in its markup.
+  it("shows no event name when the persona has no opening event", () => {
     const html = render();
-    expect(html).not.toContain("Break the seal");
+    expect(html).not.toContain(DEMO_COPY.eventSeparator);
   });
 
-  it('never says \"Pick up the letter\" on the card (R6.7)', () => {
+  it("shows the orange button with the text \"Open {name}'s letter\"", () => {
+    const html = render();
+    expect(html).toContain(`>${attr(labelFor("Maya"))}<`);
+    expect(html).toContain("Open Maya");
+  });
+
+  it("gives the envelope link the accessible name \"Open {name}'s letter\" from its button", () => {
+    const html = render();
+    expect(html).toContain(`aria-labelledby="persona-us-maya-open"`);
+    expect(html).toContain(`id="persona-us-maya-open"`);
+    expect(html).not.toContain("aria-label=");
+    expect(render(EVENT_PROPS)).toContain(`id="persona-eu-anna-open"`);
+  });
+
+  it("never says \"Break the seal\" on the card (R2)", () => {
+    expect(render()).not.toContain("Break the seal");
+  });
+
+  it('never says "Pick up the letter" on the card (R6.7)', () => {
     expect(render()).not.toContain("Pick up the letter");
   });
 
-  it("renders the raw ISO/calendar inputs nowhere — only the formatted dates", () => {
+  it("renders the raw ISO/calendar inputs nowhere, only the formatted dates", () => {
     const html = render();
-    // The unformatted source values must not leak into the visible card.
     expect(html).not.toContain(PROPS.written_as_of);
     expect(html).not.toContain(PROPS.opens_at);
   });
 
-  it("contains no sealed-payload strings — a card is list fields only (R6.6)", () => {
+  it("contains no sealed-payload strings, since a card is list fields only (R6.6)", () => {
     const html = render().toLowerCase();
-    // A card never receives the letter body, its metric figures, units,
-    // sources or periods. None of these could appear because the component
-    // only reads the list-field props above. Guard against a future prop leak.
-    // "letter text" (not the bare word "letter", which is product vocabulary
-    // used in the "Open the letter" link label) stands in for the sealed
-    // letter body; the rest are real payload markers a card can never hold.
     const payloadStrings = [
       "letter text",
       "USD per gallon",
@@ -150,32 +177,32 @@ describe("PersonaCard markup", () => {
     expect(root.props.href).toBe(`/demo/personas/${PROPS.personaKey}`);
   });
 
-  it("renders the envelope as a real anchor with the persona href", () => {
+  it("renders the envelope as one real anchor with the persona href", () => {
     const html = render();
     expect(html).toMatch(
       new RegExp(`<a[^>]*href="/demo/personas/${PROPS.personaKey}"[^>]*>`),
     );
+    expect(html.match(/<a /g)).toHaveLength(1);
   });
 
-  it("seeds the WaxSeal from personaKey and nothing else", () => {
-    const seals = findElements(tree(), WaxSeal);
-    expect(seals).toHaveLength(1);
-    expect(seals[0]?.props.patternKey).toBe(PROPS.personaKey);
-  });
-
-  it("the WaxSeal markup is the one for personaKey, and it is hidden from assistive tech", () => {
+  it("draws the closed envelope turned to its back, with the wax seal on the flap", () => {
+    const envelopes = findElements(tree(), Envelope);
+    expect(envelopes).toHaveLength(1);
+    expect(envelopes[0]?.props.state).toBe("turned");
     const html = render();
     const sealSvg = normaliseWaxSealIds(
-      renderToStaticMarkup(
-        createElement(WaxSeal, { patternKey: PROPS.personaKey, size: 48 }),
-      ),
+      renderToStaticMarkup(createElement(WaxSeal, { size: 64 })),
     );
     expect(html).toContain(sealSvg);
-    // The seal is decorative: the link already carries the persona's name.
-    expect(html).toMatch(/aria-hidden="true"[^>]*>\s*<svg/);
   });
 
-  it("passes only the list fields to the card, never sealed payload", () => {
+  it("hides the envelope drawing from assistive tech, since the link carries the name", () => {
+    const html = render();
+    expect(html).toMatch(/class="[^"]*art[^"]*" aria-hidden="true"[^>]*>\s*<div/);
+    expect(html).toMatch(/<svg/);
+  });
+
+  it("passes only list fields to the card, never sealed payload", () => {
     const withPayload = {
       ...PROPS,
       letter_text: "SEALED BODY MARKER",
@@ -184,15 +211,50 @@ describe("PersonaCard markup", () => {
     const html = render(withPayload);
     expect(html).not.toContain("SEALED BODY MARKER");
     expect(html).not.toContain("9.999");
-    // The element tree carries only the list fields the card reads.
     const root = tree(withPayload);
-    expect(Object.keys(root.props).sort()).toEqual(["children", "className", "href"]);
+    expect(Object.keys(root.props).sort()).toEqual([
+      "aria-labelledby",
+      "children",
+      "className",
+      "href",
+    ]);
   });
+});
 
-  it("keeps the card's text unchanged inside the envelope", () => {
+describe("PersonaCard date colour", () => {
+  it("does not put the accent colour on any date", () => {
+    const html = render(EVENT_PROPS);
+    // Each date sits in a span with the date-value class; none may be the button.
+    const dateSpans = html.match(/<span class="[^"]*dateValue[^"]*">[^<]*<\/span>/g);
+    expect(dateSpans).toHaveLength(2);
+    for (const span of dateSpans ?? []) {
+      expect(span).not.toContain("button");
+      expect(span).not.toContain("accent");
+    }
+    const css = readFileSync(
+      resolve(__dirname, "PersonaCard.module.css"),
+      "utf8",
+    );
+    const dateRules = css.match(/\.(dateRow|dateLabel|dateValue)\s*\{[^}]*\}/g) ?? [];
+    expect(dateRules).toHaveLength(3);
+    for (const rule of dateRules) {
+      expect(rule).not.toContain("var(--accent)");
+      expect(rule).not.toContain("var(--on-accent)");
+    }
+  });
+});
+
+describe("PersonaCard turned state on first paint", () => {
+  it("renders the turned back with its flap and one wax seal, with no turn animation", () => {
     const html = render();
-    expect(html).toContain(PROPS.display_name);
-    expect(html).toContain(PROPS.region);
-    expect(html).toContain(DEMO_COPY.openLetter);
+    // The turned pose is on the turner, and the turn animation is off, so the
+    // start keyframe cannot hold the front face during a delay.
+    expect(html).toContain(styles.turned);
+    expect(html).not.toContain(styles.turning);
+    expect(html).not.toContain("animation-delay");
+    // The flap is drawn on the back face.
+    expect(html).toContain(styles.flapDown);
+    // One seal: each seal draws its wax blob twice, once per half.
+    expect((html.match(/M50 4 C74 3 96 22/g) ?? []).length).toBe(2);
   });
 });

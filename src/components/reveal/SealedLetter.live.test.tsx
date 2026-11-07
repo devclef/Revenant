@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { SealedLetter } from "./SealedLetter";
 import { LIVE_COPY, REVEAL_COPY } from "./copy";
 import { formatLocalDateTime } from "@/components/live/format";
-import { WaxSeal, normaliseWaxSealIds } from "@/components/ceremony/envelope/WaxSeal";
+import { WaxSeal, normaliseWaxSealIds } from "@/components/ui/WaxSeal";
 import type { Opened } from "./opening-machine";
 import type { PayloadV1 } from "@/lib/seal-format";
 

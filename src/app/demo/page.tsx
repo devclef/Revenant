@@ -1,4 +1,3 @@
-import { ParchmentSurface } from "@/components/ui";
 import { DemoLabel } from "@/components/demo/DemoLabel";
 import { LiveEntry } from "@/components/demo/LiveEntry";
 import { PersonaCard } from "@/components/demo/PersonaCard";
@@ -18,7 +17,7 @@ export const metadata = pageMetadata(UI_COPY.pageMeta.demo, "/demo");
  * the Soil backdrop, with no Ghost.
  *
  * Order on the page: the "Demo" label, the heading, the intro note, then one
- * PersonaCard per persona in list order, or the empty state when the list is
+ * envelope per persona in list order, or the empty state when the list is
  * empty. The live demo entry (`/demo/live`) sits after the list, with or without
  * personas. A card receives only list fields (R5.3, R6.2, R16.5), never anything
  * from inside the sealed letter. The persona's `key` is passed as `personaKey`
@@ -43,9 +42,9 @@ export default function DemoIndexPage() {
         </p>
 
         {PERSONAS.length === 0 ? (
-          <ParchmentSurface as="section">
+          <section>
             <p className={styles.empty}>{DEMO_COPY.indexEmpty}</p>
-          </ParchmentSurface>
+          </section>
         ) : (
           <ul className={styles.list}>
             {PERSONAS.map((persona) => (
@@ -56,6 +55,7 @@ export default function DemoIndexPage() {
                   region={persona.region}
                   written_as_of={persona.written_as_of}
                   opens_at={persona.opens_at}
+                  opening_event_name={persona.opening_event?.name}
                 />
               </li>
             ))}

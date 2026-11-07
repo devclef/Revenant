@@ -288,7 +288,7 @@ const NEW_STRINGS = [
   REVEAL_COPY.questionCounterAsOf,
   REVEAL_COPY.nextQuestion,
   REVEAL_COPY.previousQuestion,
-  DEMO_COPY.openLetter,
+  DEMO_COPY.openLetterFor,
 ];
 
 const SCORING_ALWAYS = /\b(accuracy|score|off by)\b/i;
@@ -300,7 +300,7 @@ describe("Property 23: the new strings are exact and clear of scoring words (exa
     expect(REVEAL_COPY.questionCounterAsOf).toBe("as of {date}");
     expect(REVEAL_COPY.nextQuestion).toBe("Next question");
     expect(REVEAL_COPY.previousQuestion).toBe("Previous question");
-    expect(DEMO_COPY.openLetter).toBe("Open the letter");
+    expect(DEMO_COPY.openLetterFor).toBe("Open {name}'s letter");
   });
 
   it("has no exclamation mark, no sentence over 25 words, and no scoring words", () => {

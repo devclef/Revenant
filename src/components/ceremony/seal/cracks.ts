@@ -12,7 +12,7 @@
 // the drawing function is a progress value in 0..1.
 //
 // Coordinates are in the WaxSeal's fixed 100×100 user space, centred at
-// (50, 50) with a disc radius of 46 (see envelope/WaxSeal.tsx). The cracks are
+// (50, 50) with a disc radius of 46 (see ui/WaxSeal.tsx). The cracks are
 // drawn in the same space so they overlay the disc exactly at any rendered size.
 
 import { FLAKE_COUNT } from "../constants";

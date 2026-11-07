@@ -1,6 +1,5 @@
-import { ParchmentSurface } from "@/components/ui";
 import Link from "next/link";
-import { WaxSeal } from "@/components/ceremony/envelope/WaxSeal";
+import { Envelope } from "@/components/ceremony/envelope/Envelope";
 import { DEMO_COPY } from "./copy";
 import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-date";
 import styles from "./PersonaCard.module.css";
@@ -24,18 +23,24 @@ export type PersonaCardProps = {
   written_as_of: string;
   /** The ISO UTC instant the letter opens. */
   opens_at: string;
+  /** The plain name of the public event the opening date comes from, if any. */
+  opening_event_name?: string;
 };
 
 /**
- * A single persona on the Demo_Index page (R6.2, R6.7), drawn as a sealed
- * envelope on the Scene. The whole envelope is one real anchor to the persona's letter
- * (next/link), so it works without JavaScript. The wax seal is seeded by
- * `personaKey` only.
+ * A single persona on the Demo_Index page, drawn as one closed envelope with
+ * the wax seal on its flap. The whole envelope is one real anchor to the
+ * persona's letter (next/link), so it works without JavaScript. Its accessible
+ * name is "Open {name}'s letter", which is also the text of the one orange
+ * button inside it.
  *
- * All label prefixes come from copy.ts and all dates from dates.ts, so no
- * user-facing literal lives here (R15.1). The paper panel sets its own ink
- * colour, so the desk's text colour never leaks onto it. No directional or
- * judgement colour anywhere (neutrality.md).
+ * The envelope drawing is the shared Envelope, turned to its back so the flap
+ * and seal face the reader. The dates and names sit on a paper panel below the
+ * drawing. The panel sets its own `--ink`, so the desk's light text never
+ * reaches the paper. No date uses the accent colour, and no up or down
+ * direction is coloured (neutrality.md).
+ *
+ * All words come from copy.ts and all dates from letter-date.ts (R15.1).
  */
 export function PersonaCard({
   personaKey,
@@ -43,31 +48,45 @@ export function PersonaCard({
   region,
   written_as_of,
   opens_at,
+  opening_event_name,
 }: PersonaCardProps) {
+  const openedOn = formatLetterDate(opens_at, { kind: "utc" });
+  const opensValue =
+    opening_event_name === undefined
+      ? openedOn
+      : `${openedOn}${DEMO_COPY.eventSeparator}${opening_event_name}`;
+  const openLabel = DEMO_COPY.openLetterFor.replace("{name}", display_name);
+  const buttonId = `persona-${personaKey}-open`;
+
   return (
-    <Link href={`/demo/personas/${personaKey}`} className={styles.envelope}>
-      <ParchmentSurface tone="deep" className={styles.card}>
-        <span className={styles.seal} aria-hidden="true">
-          <WaxSeal patternKey={personaKey} size={48} />
-        </span>
-        <h2 className={styles.name}>{display_name}</h2>
-        <p className={styles.region}>{region}</p>
-        <dl className={styles.dates}>
-          <div className={styles.dateRow}>
-            <dt className={styles.dateLabel}>{DEMO_COPY.writtenAsOfPrefix}</dt>
-            <dd className={styles.dateValue}>
+    <Link
+      href={`/demo/personas/${personaKey}`}
+      className={styles.envelope}
+      aria-labelledby={buttonId}
+    >
+      <span className={styles.art} aria-hidden="true">
+        {/* A static end pose: no turn animation, so the flap and seal show on first paint. */}
+        <Envelope state="turned" layout="narrow" animate={false} />
+      </span>
+      <span className={styles.paper}>
+        <span className={styles.name}>{display_name}</span>
+        <span className={styles.region}>{region}</span>
+        <span className={styles.dates}>
+          <span className={styles.dateRow}>
+            <span className={styles.dateLabel}>{DEMO_COPY.writtenAsOfPrefix}</span>{" "}
+            <span className={styles.dateValue}>
               {formatCalendarDate(written_as_of)}
-            </dd>
-          </div>
-          <div className={styles.dateRow}>
-            <dt className={styles.dateLabel}>{DEMO_COPY.opensPrefix}</dt>
-            <dd className={styles.dateValue}>
-              {formatLetterDate(opens_at, { kind: "utc" })}
-            </dd>
-          </div>
-        </dl>
-        <span className={styles.openLetter}>{DEMO_COPY.openLetter}</span>
-      </ParchmentSurface>
+            </span>
+          </span>
+          <span className={styles.dateRow}>
+            <span className={styles.dateLabel}>{DEMO_COPY.opensPrefix}</span>{" "}
+            <span className={styles.dateValue}>{opensValue}</span>
+          </span>
+        </span>
+        <span id={buttonId} className={styles.button}>
+          {openLabel}
+        </span>
+      </span>
     </Link>
   );
 }

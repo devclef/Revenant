@@ -112,7 +112,7 @@ describe("Property 23, example checks: the R24.3 table matches exactly", () => {
   });
 
   it("holds the Demo_Index card link", () => {
-    expect(DEMO_COPY.openLetter).toBe("Open the letter");
+    expect(DEMO_COPY.openLetterFor).toBe("Open {name}'s letter");
   });
 
   it("holds the close line, close link, close note and restart", () => {

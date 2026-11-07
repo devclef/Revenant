@@ -1,94 +1,101 @@
 /*
- * PersonaCard styling: one envelope on the /demo index Scene. The anchor
- * (.envelope) is a block link, width min(84vw, 26rem), so it fits inside a 360
- * px viewport with no sideways scroll. No placeholder envelopes and no fixed
- * heights, so 1 to 6 cards flow in the list at any width.
+ * PersonaCard styling: one closed envelope on the /demo index. The anchor is a
+ * flex column so every card in a grid row stretches to the same height. The
+ * envelope drawing sits on the desk; the paper panel below it holds all the
+ * text and the one orange button.
  *
- * Colours come from globals.css tokens only. The card is a ParchmentSurface
- * with tone="deep" and sets --ink itself, so the desk's cream text never
- * reaches the paper. Contrast on --paper-deep (globals.css record): --ink
- * 13.17:1, --ink-soft 9.58:1, all above the 4.5:1 WCAG 2.2 AA floor. The link
- * text and focus ring are --ink, underlined, so no control is red or green.
- * Wax red appears only on the WaxSeal (C5). No green/red or directional colour
- * (neutrality.md); no figures here.
+ * The paper panel sets its own --ink and --ink-soft (the same values as the
+ * letter tokens in tokens.css), so the desk's light text never reaches it.
+ * Contrast on --env (#f1e4c8): --ink 14.2:1, --ink-soft 9.6:1, both above the
+ * WCAG 2.2 AA floor for body text. The button is --on-accent on --accent,
+ * about 9:1. No date uses the accent colour, and no direction is coloured.
  */
 
 .envelope {
-  display: block;
-  width: min(84vw, 26rem);
-  max-width: 100%;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  min-width: 0;
   color: var(--ink);
   text-decoration: none;
 }
 
 .envelope:focus-visible {
-  outline: 2px solid var(--ink);
+  outline: 2px solid var(--accent);
   outline-offset: 4px;
 }
 
-.card {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  color: var(--ink);
+.art {
+  display: block;
+  width: 100%;
 }
 
-.seal {
-  display: block;
-  align-self: flex-end;
-  line-height: 0;
-  margin-bottom: 0.25rem;
+.paper {
+  --ink: #1f1b16;
+  --ink-soft: #4a4036;
+
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.6rem;
+  padding: 1rem 1.1rem 1.15rem;
+  background: var(--env);
+  color: var(--ink);
+  border-radius: 0 0 0.5rem 0.5rem;
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .name {
-  font-family: var(--font-serif);
+  display: block;
+  font-family: var(--font-sans);
+  font-size: clamp(1.25rem, 3.4vw, 1.5rem);
+  font-weight: 800;
+  line-height: 1.15;
   color: var(--ink);
-  margin: 0;
 }
 
 .region {
+  display: block;
   font-family: var(--font-sans);
+  font-size: 0.9375rem;
   color: var(--ink-soft);
-  margin: 0;
 }
 
 .dates {
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
-  margin: 0;
 }
 
 .dateRow {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-  align-items: baseline;
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.4;
 }
 
 .dateLabel {
-  font-family: var(--font-sans);
-  font-size: 0.85rem;
-  letter-spacing: 0.02em;
   color: var(--ink-soft);
-  margin: 0;
 }
 
 .dateValue {
-  font-family: var(--font-sans);
   color: var(--ink);
-  margin: 0;
 }
 
-.openLetter {
+.button {
+  display: inline-block;
   align-self: flex-start;
-  margin-top: 0.25rem;
+  margin-top: auto;
+  padding: 0.6rem 1rem;
+  min-height: 2.75rem;
+  box-sizing: border-box;
+  border-radius: 0.4rem;
+  background: var(--accent);
+  color: var(--on-accent);
   font-family: var(--font-sans);
-  color: var(--ink);
-  text-decoration: underline;
-  text-underline-offset: 0.15em;
-}
-
-.envelope:hover .openLetter {
-  text-decoration-thickness: 2px;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.2;
 }

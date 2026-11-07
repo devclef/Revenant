@@ -5,7 +5,7 @@ import { describe, expect, it } from "vitest";
 import { Reveal, type RevealProps } from "./Reveal";
 import { REVEAL_COPY } from "./copy";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
-import { WaxSeal, normaliseWaxSealIds } from "@/components/ceremony/envelope/WaxSeal";
+import { WaxSeal, normaliseWaxSealIds } from "@/components/ui/WaxSeal";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { SkipProvider } from "@/components/ceremony/skip";
 import { LiveRegionProvider } from "@/components/ceremony/LiveRegion";

@@ -141,6 +141,10 @@ export const LIVE_COPY = {
   lockNote:
     "This letter was locked for 30 seconds. For a longer comparison, open a persona letter.",
   lockNoteLink: "Open a persona letter",
+  /** Heading of the /l/[id] not-found page. */
+  letterNotFoundTitle: "No letter here",
+
+  /** Body of the /l/[id] not-found page. */
   letterNotFound:
     "This link does not match a letter. Check the link and try again.",
   letterCardTitle: "Letter card",

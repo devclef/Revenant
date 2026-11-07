@@ -1,7 +1,7 @@
 // Feature: 05-reveal-ceremony
 //
 // Envelope: one inline-SVG envelope with a front and a back face, drawn in a
-// fixed viewBox. `closed` shows the front (with a postmark), `turned` turns the
+// fixed viewBox. `closed` shows the front (plain paper), `turned` turns the
 // back to the reader (flap down, the one WaxSeal on the flap) and `open` shows
 // the flap lifted with the letter. It is the paper object the Ceremony turns
 // over and opens (design.md "The Envelope", R3.6, R3.7, R10.8).
@@ -34,7 +34,7 @@ import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-dat
 
 import { CEREMONY_COPY } from "../copy";
 import { ENVELOPE_TURN_AT_MS, ENVELOPE_TURN_MS } from "../constants";
-import { WaxSeal } from "./WaxSeal";
+import { WaxSeal } from "@/components/ui/WaxSeal";
 import styles from "./Envelope.module.css";
 
 /** The envelope's three states. */
@@ -70,6 +70,13 @@ export type EnvelopeProps = {
   layout?: EnvelopeLayout;
   /** The persona list fields. Optional, so spec 03 renders show no dates. */
   persona?: EnvelopePersona;
+  /**
+   * Whether a turned envelope animates its turn. Defaults to `true`, so the
+   * Ceremony's closed-to-turned turn plays. Pass `false` for a static pose that
+   * must show the back at once: the animation's start keyframe would otherwise
+   * hold the front face during its delay.
+   */
+  animate?: boolean;
   /** Optional extra class on the root <svg>. */
   className?: string;
 };
@@ -93,9 +100,9 @@ const BODY_W = VIEW_W - 12;
 const BODY_H = VIEW_H - 12;
 
 /**
- * The front face: a plain paper rectangle with a postmark ring in the top-right
- * corner. The postmark is decoration only, the same for every letter, and reads
- * nothing. The date text is laid over the paper by HTML in the component, not in
+ * The front face: a plain paper rectangle and nothing else. It carries no
+ * postmark and no seal-like mark, so the only seal on the envelope is the one on
+ * the flap. The date text is laid over the paper by HTML in the component, not in
  * the SVG, so it stays selectable and meets AA on the paper surface.
  */
 function Front(): ReactElement {
@@ -109,14 +116,6 @@ function Front(): ReactElement {
         rx={8}
         className={styles.paper}
       />
-      {/* Postmark: two concentric rings and three cancel bars, top-right. */}
-      <g className={styles.postmark} aria-hidden="true">
-        <circle cx={242} cy={44} r={26} />
-        <circle cx={242} cy={44} r={20} />
-        <line x1={278} y1={34} x2={300} y2={34} />
-        <line x1={278} y1={44} x2={300} y2={44} />
-        <line x1={278} y1={54} x2={300} y2={54} />
-      </g>
     </g>
   );
 }
@@ -271,7 +270,7 @@ const SEAL_Y_OPEN = BODY_Y - 44 + 8;
  * The envelope.
  *
  * The envelope has a front face and a back face in one turning object. `closed`
- * shows the front with its postmark; `turned` turns the back to the reader with
+ * shows the plain front; `turned` turns the back to the reader with
  * the flap down and the WaxSeal on it; `open` shows the flap lifted and the
  * letter sheet. The turn is CSS, timed from the constants (R10.8). The date
  * lines sit over the front as HTML text and only appear on `closed`, because
@@ -281,6 +280,7 @@ export function Envelope({
   state,
   layout = "responsive",
   persona,
+  animate = true,
   className,
 }: EnvelopeProps): ReactElement {
   const rootClass = [
@@ -315,17 +315,18 @@ export function Envelope({
   // The seal is the same for every letter (R10.10), so nothing here reads the
   // persona beyond its date lines.
   const turning = state !== "closed";
+  const animating = turning && animate;
   const turnerClass = [
     styles.turner,
     turning ? styles.turned : undefined,
-    turning ? styles.turning : undefined,
+    animating ? styles.turning : undefined,
   ]
     .filter(Boolean)
     .join(" ");
   // The turn starts at ENVELOPE_TURN_AT_MS and lasts ENVELOPE_TURN_MS, ending
   // by 920 ms (R10.8). Calm and reduced motion drop the animation in CSS and
   // keep the end pose, so the back shows in the same render (R10.9).
-  const turnStyle: CSSProperties | undefined = turning
+  const turnStyle: CSSProperties | undefined = animating
     ? {
         animationDelay: `${ENVELOPE_TURN_AT_MS}ms`,
         animationDuration: `${ENVELOPE_TURN_MS}ms`,
@@ -339,7 +340,7 @@ export function Envelope({
       data-envelope-layout={layout}
     >
       <div className={turnerClass} style={turnStyle} data-envelope-turner>
-        {/* The front face: the postmark and the torn edge. It holds no seal. */}
+        {/* The front face: the paper and the torn edge. It holds no seal. */}
         <svg
           className={`${styles.art} ${styles.faceFront}`}
           viewBox={`0 0 ${VIEW_W} ${VIEW_H}`}

@@ -59,3 +59,23 @@ describe("Envelope back in the same render (R10.9)", () => {
     expect((html.match(/M50 4 C74 3 96 22/g) ?? []).length).toBe(2);
   });
 });
+
+describe("Envelope static end pose (animate=false)", () => {
+  it("shows the turned back with no turn animation or delay", () => {
+    const html = renderToStaticMarkup(
+      createElement(Envelope, { state: "turned", persona: PERSONA, animate: false }),
+    );
+    expect(html).toContain(styles.turned);
+    expect(html).not.toContain(styles.turning);
+    expect(html).not.toContain("animation-delay");
+    expect(html).not.toContain("animation-duration");
+  });
+
+  it("still animates a turned envelope by default", () => {
+    const html = renderToStaticMarkup(
+      createElement(Envelope, { state: "turned", persona: PERSONA }),
+    );
+    expect(html).toContain(styles.turning);
+    expect(html).toContain(`animation-delay:${ENVELOPE_TURN_AT_MS}ms`);
+  });
+});
