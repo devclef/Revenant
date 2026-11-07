@@ -96,6 +96,23 @@
   }
 }
 
+/* Calm, light and still letters mark the shaft static (LetterBlock.tsx sets
+   data-light="static"). It rests at its final state with no animation. The
+   reduced-motion rule does the same for the OS preference. */
+.lightShaft[data-light="static"] {
+  transform: none;
+  opacity: 1;
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lightShaft {
+    transform: none;
+    opacity: 1;
+    animation: none;
+  }
+}
+
 /* A crease: one full-width hairline across the paper. Decorative only. */
 .crease {
   position: absolute;

@@ -154,7 +154,11 @@ describe("Property 17: the letter is shown verbatim with nothing against it (R13
   it("applies no mask, clip or opacity to the letter (R13.4)", () => {
     const blockCss = readFileSync(join(HERE, "LetterBlock.module.css"), "utf8");
     const revealCss = readFileSync(join(REVEAL_DIR, "reveal.module.css"), "utf8");
-    expect(withoutComments(blockCss)).not.toMatch(/mask|clip|opacity/);
+    expect(withoutComments(blockCss)).not.toMatch(/mask|clip/);
+    // Opacity is allowed on the decorative shaft and creases, which sit outside
+    // the article. The letter's own rules must carry none of the three.
+    expect(blockOf(withoutComments(blockCss), "paper")).not.toMatch(/mask|clip|opacity/);
+    expect(blockOf(withoutComments(blockCss), "letterBlock")).not.toMatch(/mask|clip|opacity/);
     const letterRule = blockOf(withoutComments(revealCss), "letter");
     expect(letterRule).not.toMatch(/mask|clip|opacity/);
   });

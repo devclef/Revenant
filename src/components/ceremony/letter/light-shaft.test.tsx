@@ -134,8 +134,23 @@ describe("Light_Shaft Calm path (spec 09 L7)", () => {
   it("is a gradient with transform and opacity only, with no solid fill (no slab)", () => {
     const shaft = blockOf(LETTER_CSS, "lightShaft");
     expect(shaft).toMatch(/linear-gradient/);
-    expect(shaft).not.toMatch(/background-color:\s*rgba?\(|background-color:\s*#/);
+    expect(shaft).not.toMatch(/background-color/);
+    // The CSS band equals the constant: a change to one must change the other.
     expect(shaft).toMatch(new RegExp(`height:\\s*${SHAFT_PHONE_BAND_MAX_PX}px`));
+  });
+
+  it("is static under Calm and reduced motion in CSS too, not only in the JavaScript", () => {
+    const css = withoutComments(LETTER_CSS);
+    expect(css).toMatch(/\.lightShaft\[data-light="static"\]\s*\{[^}]*transform:\s*none[^}]*animation:\s*none/);
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.lightShaft\s*\{[^}]*animation:\s*none/);
+  });
+
+  it("derives its static state from the motion mode, and the shaft ref is wired to the animation", () => {
+    const source = readFileSync(join(HERE, "LetterBlock.tsx"), "utf8");
+    expect(source).toMatch(/const lightStatic = mode !== "full" \|\| stillAtMount;/);
+    expect(source).toContain("ref={shaftRef}");
+    expect(source).toContain("shaft.animate(");
+    expect(source).toContain('data-light={lightStatic ? "static" : "unfold"}');
   });
 });
 
@@ -144,10 +159,18 @@ describe("paper creases (spec 09 L8)", () => {
     expect(CREASE_POSITIONS).toEqual([1 / 3, 2 / 3]);
     const html = render("full");
     const creases = [...html.matchAll(/<div[^>]*data-crease="(\d)"[^>]*>/g)].map((m) => m[0]);
-    expect(creases).toHaveLength(2);
-    expect(creases[0]).toContain('style="top:33.3333%"');
-    expect(creases[1]).toContain('style="top:66.6667%"');
-    for (const crease of creases) expect(crease).toMatch(/aria-hidden="true"/);
+    expect(creases).toHaveLength(CREASE_POSITIONS.length);
+    CREASE_POSITIONS.forEach((share, index) => {
+      // Expected top is derived from the constant, to the 4 decimals React writes.
+      const expected = `top:${(share * 100).toFixed(4)}%`;
+      expect(creases[index]).toContain(`style="${expected}"`);
+      expect(creases[index]).toMatch(/aria-hidden="true"/);
+    });
+  });
+
+  it("sit at the same top in every motion mode, since they are static layout", () => {
+    expect(render("calm")).toContain('style="top:33.3333%"');
+    expect(render("light")).toContain('style="top:66.6667%"');
   });
 
   it("sit outside the article, so the paper still holds only the letter text", () => {
