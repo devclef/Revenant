@@ -41,7 +41,8 @@ import { SceneBackdrop } from "./SceneBackdrop";
 import { SceneHeadline, splitTagline } from "./SceneHeadline";
 import { SceneShell, type SceneShellProps } from "./SceneShell";
 import { SoilStrip } from "./SoilStrip";
-import { TopBar, personaNoticeText } from "./TopBar";
+import { COMPACT_TOP_BAR_PX, TOUCH_TARGET_MIN_PX } from "../constants";
+import { PHONE_QUERY, TopBar, personaNoticeText, topBarShowsNotice } from "./TopBar";
 
 function render(element: React.ReactElement, mode: "full" | "calm" = "full", active = false): string {
   currentMode = mode;
@@ -114,6 +115,18 @@ describe("TopBar (R8.1 to R8.6)", () => {
     expect(html).toContain(SCENE_COPY.demoChip);
   });
 
+  it("renders no notice below 600 px, even with a persona name (PersonaIntro shows it)", () => {
+    expect(topBarShowsNotice("Maya", true)).toBe(false);
+    expect(topBarShowsNotice(undefined, true)).toBe(false);
+  });
+
+  it("renders the notice at 600 px and wider when given a persona name", () => {
+    expect(topBarShowsNotice("Maya", false)).toBe(true);
+    expect(topBarShowsNotice(undefined, false)).toBe(false);
+    const html = render(createElement(TopBar, { personaName: "Maya" }));
+    expect(html).toContain(personaNoticeText("Maya"));
+  });
+
   it("shows the persona notice when given a persona name, and no notice otherwise", () => {
     const withNotice = render(createElement(TopBar, { personaName: "Maya" }));
     expect(withNotice).toContain(personaNoticeText("Maya"));
@@ -173,24 +186,19 @@ describe("SceneBackdrop (R6.9, R19.5)", () => {
   });
 });
 
-describe("SceneHeadline (R3.18, F2)", () => {
-  it("renders the only h1 with data-scene-ceiling", () => {
-    const html = render(createElement(SceneHeadline));
+describe("SceneHeadline (R3.18, F7)", () => {
+  it("renders the only h1 with data-scene-ceiling and the text it is given", () => {
+    const html = render(createElement(SceneHeadline, { text: "Maya's letter" }));
     expect(html.match(/<h1[^>]*data-scene-ceiling/g)?.length).toBe(1);
     expect(html.match(/<h1/g)?.length).toBe(1);
+    expect(html).toContain(">Maya&#x27;s letter</h1>");
   });
 
-  it("renders the Eyebrow above the h1, then the Tagline", () => {
-    const html = render(createElement(SceneHeadline));
-    expect(html.indexOf(BRAND_COPY.eyebrow)).toBeGreaterThanOrEqual(0);
-    expect(html.indexOf(BRAND_COPY.eyebrow)).toBeLessThan(html.indexOf("<h1"));
-    expect(html).toContain("Memory rewrites itself.");
-  });
-
-  it("keeps \"Revenant doesn't.\" together in a nowrap span with no Accent", () => {
-    const html = render(createElement(SceneHeadline));
-    expect(html).toMatch(/<span class="[^"]*">Revenant\u00a0doesn&#x27;t\.<\/span>/);
-    expect(html).not.toContain("receipts.");
+  it("shows no Eyebrow and no Tagline", () => {
+    const html = render(createElement(SceneHeadline, { text: "The demo letters" }));
+    expect(html).not.toContain(BRAND_COPY.eyebrow);
+    expect(html).not.toContain("Memory rewrites itself.");
+    expect(html).not.toContain("Revenant");
   });
 
   it("splits the Tagline before the kept phrase", () => {
@@ -205,11 +213,63 @@ describe("SceneHeadline (R3.18, F2)", () => {
   });
 });
 
+describe("Scene headings and check hooks (F7, C1, P2)", () => {
+  it("the persona page headline is personaHeading with the persona name, and no Tagline", () => {
+    const html = render(
+      createElement(
+        SceneShell,
+        { variant: "persona", personaName: "Maya" } as SceneShellProps,
+        createElement("p", null, "body"),
+      ),
+    );
+    const heading = /<h1[^>]*>(.*?)<\/h1>/s.exec(html);
+    expect(heading?.[1]).toBe("Maya&#x27;s letter");
+    expect(SCENE_COPY.personaHeading.replace("{name}", "Maya")).toBe("Maya's letter");
+    expect(html).not.toContain("Memory rewrites itself.");
+    expect(html.match(/<h1/g)?.length).toBe(1);
+  });
+
+  it("names the Stage content wrapper data-stage-content in the persona copy source", () => {
+    const ceremonyRoot = readFileSync(
+      resolve(__dirname, "../CeremonyRoot.tsx"),
+      "utf8",
+    );
+    expect(ceremonyRoot).toContain("<div data-stage-content>{children}</div>");
+  });
+
+  it("the Pick_Up_Button carries data-primary-control", () => {
+    const envelopeView = readFileSync(
+      resolve(__dirname, "../envelope/EnvelopeView.tsx"),
+      "utf8",
+    );
+    expect(envelopeView).toContain("data-primary-control onClick={onBegin}");
+  });
+
+  it("the Persona_Intro and the intact block carry data-block", () => {
+    const intro = readFileSync(resolve(__dirname, "../intro/PersonaIntro.tsx"), "utf8");
+    const envelopeView = readFileSync(
+      resolve(__dirname, "../envelope/EnvelopeView.tsx"),
+      "utf8",
+    );
+    expect(intro).toContain('data-block="persona-intro"');
+    expect(envelopeView).toContain('data-block="intact"');
+  });
+
+  it("the phone headline clamp and text-wrap: balance sit below 600 px", () => {
+    const css = readFileSync(resolve(__dirname, "scene.module.css"), "utf8");
+    const clampAt = css.indexOf("font-size: clamp(1.55rem, 7.2vw, 1.9rem);");
+    const phone = css.slice(css.lastIndexOf("@media (max-width: 599.98px)", clampAt));
+    expect(phone).toContain("font-size: clamp(1.55rem, 7.2vw, 1.9rem);");
+    expect(phone).toContain("text-wrap: balance;");
+  });
+});
+
 // --- Top_Bar narrow layout and single Calm (spec 07 task 2) ----------------
 //
-// The 96 px height at 360 x 640 is measured in the browser check. These tests
-// pin the CSS rules that the measurement depends on: the notice takes its own
-// full row below 900 px, and only the wide layout lets it share a row.
+// Below 600 px the Top_Bar is at most 56 px tall (COMPACT_TOP_BAR_PX), and the
+// browser check measures that height. These tests pin the CSS rules that the
+// wide layout depends on: at 600 px and wider the notice takes its own full
+// row below 900 px, and only the wide layout lets it share a row.
 
 const sceneCss = readFileSync(resolve(__dirname, "scene.module.css"), "utf8");
 
@@ -220,8 +280,83 @@ function ruleBodyOf(selector: string): string {
   return m?.[1] ?? "";
 }
 
-describe("Top_Bar narrow layout (spec 07 task 2)", () => {
-  it("gives the notice its own full-width row below 900 px", () => {
+describe("Compact_Top_Bar below 600 px (spec 09 P5)", () => {
+  /** The text of the phone media block (below 600 px), up to its closing brace. */
+  function phoneBlock(): string {
+    const start = sceneCss.indexOf("@media (max-width: 599.98px)");
+    if (start < 0) return "";
+    return sceneCss.slice(start, sceneCss.indexOf("\n}\n", start));
+  }
+
+  /** The body of the rule for `selector` inside the phone block. */
+  function phoneRuleOf(selector: string): string {
+    const block = phoneBlock();
+    const at = block.indexOf(`\n  ${selector} {`);
+    if (at < 0) return "";
+    const open = block.indexOf("{", at);
+    return block.slice(open + 1, block.indexOf("}", open));
+  }
+
+  it("uses the 599.98px breakpoint, the largest width under PHONE_BELOW_PX", () => {
+    expect(phoneBlock()).not.toBe("");
+    expect(PHONE_QUERY).toBe("(max-width: 599.98px)");
+  });
+
+  it("caps the bar at COMPACT_TOP_BAR_PX (56 px) and keeps it on one row", () => {
+    const bar = phoneRuleOf(".topbar");
+    expect(bar).toMatch(/height:\s*56px/);
+    expect(bar).toMatch(/max-height:\s*56px/);
+    expect(bar).toMatch(/flex-wrap:\s*nowrap/);
+    expect(COMPACT_TOP_BAR_PX).toBe(56);
+  });
+
+  it("makes motion and Skip 44 x 44 icon controls", () => {
+    const control = phoneRuleOf(".control");
+    expect(control).toMatch(/width:\s*44px/);
+    expect(control).toMatch(/height:\s*44px/);
+    expect(control).toMatch(/min-width:\s*44px/);
+    expect(control).toMatch(/min-height:\s*44px/);
+    expect(TOUCH_TARGET_MIN_PX).toBe(44);
+    expect(phoneRuleOf(".controlIcon")).toMatch(/display:\s*block/);
+    expect(phoneRuleOf(".controlLabel")).toMatch(/display:\s*none/);
+  });
+
+  it("does not hide the notice with CSS: TopBar leaves it out below 600 px", () => {
+    expect(phoneBlock()).not.toMatch(/\.notice\s*\{/);
+  });
+
+  it("hides the icon and shows the label at 600 px and wider", () => {
+    expect(ruleBodyOf(".controlIcon")).toMatch(/display:\s*none/);
+    expect(ruleBodyOf(".controlLabel")).toBe("");
+  });
+
+  it("keeps the Demo chip and the wordmark in the bar below 600 px", () => {
+    expect(phoneRuleOf(".chip")).toBe("");
+    expect(phoneRuleOf(".wordmark")).toMatch(/font-size:\s*0\.92rem/);
+  });
+
+  it("names each icon control with its copy string, as aria-label and title", () => {
+    const html = render(createElement(TopBar, { personaName: "Maya" }), "full", true);
+    expect(html).toContain(`aria-label="${CEREMONY_COPY.calmOn}"`);
+    expect(html).toContain(`title="${CEREMONY_COPY.calmOn}"`);
+    expect(html).toContain(`aria-label="${CEREMONY_COPY.skip}"`);
+    expect(html).toContain(`title="${CEREMONY_COPY.skip}"`);
+  });
+
+  it("renders each icon as hidden decoration inside its control", () => {
+    const html = render(createElement(TopBar), "calm", true);
+    expect(html).toContain('data-icon="motion"');
+    expect(html).toContain('data-icon="skip"');
+    expect(html.match(/aria-hidden="true"/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("does not set data-compact in the server markup, so hydration matches", () => {
+    expect(render(createElement(TopBar))).not.toContain("data-compact");
+  });
+});
+
+describe("Top_Bar at 600 px and wider (spec 07 R8.3, R8.4 unchanged)", () => {
+  it("keeps the rule that gives the notice its own row below 900 px", () => {
     const base = ruleBodyOf(".notice");
     expect(base).toMatch(/flex-basis:\s*100%/);
     expect(base).toMatch(/order:\s*3/);
@@ -233,11 +368,6 @@ describe("Top_Bar narrow layout (spec 07 task 2)", () => {
     expect(notice).toMatch(/flex-basis:\s*auto/);
   });
 
-  it("wraps the bar and keeps the controls at the 36 px touch minimum below 900 px", () => {
-    expect(ruleBodyOf(".topbar")).toMatch(/flex-wrap:\s*wrap/);
-    expect(ruleBodyOf(".control")).toMatch(/min-height:\s*36px/);
-  });
-
   it("renders one Calm control on the persona page, held by the Top_Bar", () => {
     const html = render(
       shellElement({
@@ -247,5 +377,40 @@ describe("Top_Bar narrow layout (spec 07 task 2)", () => {
       }),
     );
     expect(html.split(`>${CEREMONY_COPY.calmOn}<`).length - 1).toBe(1);
+  });
+});
+
+describe("Top_Bar touch targets (spec 07 control minimum, spec 09 P5 phone hit areas)", () => {
+  /** The bodies of every media block below 600 px, in the order they appear. */
+  function phoneBlocks(): string[] {
+    const blocks: string[] = [];
+    const opener = /@media \(max-width: 599\.98px\) \{/g;
+    let m: RegExpExecArray | null;
+    while ((m = opener.exec(sceneCss)) !== null) {
+      const end = sceneCss.indexOf("\n}\n", m.index);
+      blocks.push(sceneCss.slice(m.index + m[0].length, end < 0 ? undefined : end));
+    }
+    return blocks;
+  }
+
+  it("keeps the 36 px touch minimum on the base control rule", () => {
+    expect(ruleBodyOf(".control")).toMatch(/min-height:\s*36px/);
+  });
+
+  it("gives the wordmark link a 44 px hit area in the phone Top_Bar", () => {
+    const rules = phoneBlocks()
+      .map((block) => block.match(/\n {2}\.wordmarkLink \{([^}]*)\}/)?.[1] ?? "")
+      .filter((body) => body !== "");
+    expect(rules.length).toBeGreaterThan(0);
+    expect(rules[0]).toMatch(/min-height:\s*44px/);
+  });
+
+  it("keeps the persona heading nowrap after the text-wrap: balance rule (PH3)", () => {
+    // text-wrap: balance resets text-wrap-mode to wrap, so the persona nowrap
+    // must be declared in a later block to win the cascade.
+    const balanceAt = sceneCss.indexOf("text-wrap: balance;");
+    const nowrapAt = sceneCss.lastIndexOf(".personaColumn .headline {\n    white-space: nowrap;");
+    expect(balanceAt).toBeGreaterThan(-1);
+    expect(nowrapAt).toBeGreaterThan(balanceAt);
   });
 });

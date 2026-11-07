@@ -88,7 +88,9 @@
     min-height: calc(100vh - 6rem);
   }
 
-  .personaColumn > [data-ceremony="intact"],
+  /* The intact stage is not pinned here. It follows the Persona_Intro in the
+     flow (see the headline and intro rules below). recall, marks and seal hide
+     the intro, so they stay pinned under the strip. */
   .personaColumn > [data-ceremony="recall"],
   .personaColumn > [data-ceremony="marks"],
   .personaColumn > [data-ceremony="seal"] {
@@ -96,6 +98,21 @@
     left: 0;
     right: 0;
     top: calc(var(--soil-top) + var(--soil-band) + 0.25rem - 6rem);
+  }
+
+  /* Narrow, with the Persona_Intro shown (spec 09 C1, P5.3): emerging, sealed
+     and intact. There is no room for the card above the Ghost body (about 120 px
+     between the headline and the body at 360 x 640), so the headline leaves the
+     flow and keeps its top band. The card then starts under the Soil strip
+     (intro.module.css sets its top margin), and the stage card follows it in the
+     flow. Neither sits on the Ghost body. */
+  .personaColumn:has(> [data-ceremony="emerging"]) > .headline,
+  .personaColumn:has(> [data-ceremony="sealed"]) > .headline,
+  .personaColumn:has(> [data-ceremony="intact"]) > .headline {
+    position: absolute;
+    top: 2.5rem;
+    left: 0;
+    right: 0;
   }
 
   /* Narrow handed lift (spec 08 R8.2). In recall, marks and seal the backdrop
@@ -138,6 +155,12 @@
   }
 }
 
+/* The Persona_Intro (spec 09 C1, C1.2) shows in emerging, sealed and intact.
+   From the recall Stage on, the page has moved past it, so it is hidden here. */
+.personaColumn:has(> :is([data-ceremony="recall"], [data-ceremony="marks"], [data-ceremony="seal"], [data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"])) > [data-persona-intro] {
+  display: none;
+}
+
 /* The Top_Bar. Fixed to the top of the window (R8.1). */
 .topbar {
   position: fixed;
@@ -171,8 +194,16 @@
 
 /* The wordmark links home. It keeps the wordmark's look and shows a focus ring. */
 .wordmarkLink {
-  color: inherit;
+  color: var(--text);
   text-decoration: none;
+}
+
+/* Links on the desk use the desk text colour. The global link rule is the
+   wax-seal red (about 1.9:1 on --bg), so it cannot be used here. Links inside a
+   ParchmentSurface keep the paper rule, so the paper colour is not changed.
+   The :not() takes the specificity of its argument, which is zero. */
+.scene a:not(:where([class*="ParchmentSurface"] *)) {
+  color: var(--text);
 }
 
 .wordmarkLink:focus-visible {
@@ -224,6 +255,16 @@
   outline-offset: 2px;
 }
 
+/* The control's icon and label. At 600 px and wider the label shows and the
+   icon is hidden. Below 600 px the phone block swaps them (P5.2). */
+.controlIcon {
+  display: none;
+  flex: none;
+  width: 1.25rem;
+  height: 1.25rem;
+  color: currentColor;
+}
+
 /* The notice. On its own full-width row below 900 px, so it is never cut off. */
 .notice {
   order: 3;
@@ -259,6 +300,66 @@
   .notice {
     font-size: 0.72rem;
     line-height: 1.2;
+  }
+}
+
+/* The Compact_Top_Bar (spec 09 P5, OD13 a). Below 600 px (PHONE_BELOW_PX; the
+   largest width under it is 599.98px) the bar is one row, 56 px tall. Motion
+   and Skip are 44 x 44 icon controls, named by aria-label and title. The
+   notice is not in the bar here: TopBar does not render it below 600 px, and
+   PersonaIntro shows it as its first line. Declared after the 900 px block, so
+   it wins below 600 px. The bar's 56 px height is COMPACT_TOP_BAR_PX in
+   constants.ts. */
+@media (max-width: 599.98px) {
+  .topbar {
+    flex-wrap: nowrap;
+    align-items: center;
+    height: 56px;
+    max-height: 56px;
+    padding-block: 0;
+  }
+
+  .wordmark {
+    font-size: 0.92rem;
+  }
+
+  .controls {
+    flex-wrap: nowrap;
+    gap: 0.25rem;
+  }
+
+  .control {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0;
+    border-radius: 50%;
+  }
+
+  .controlIcon {
+    display: block;
+  }
+
+  .controlLabel {
+    display: none;
+  }
+}
+
+/* Phone intact stage (below 600 px). The Ghost is fixed to the window and sits
+   above every Stage card (spec 07 A11), so card text that scrolls into its band
+   is covered. When the intact stage is brought into view, its content (the seal
+   card and the Pick_Up button) starts 16 px below the Ghost's bottom edge, which
+   is about 71vh (454 px at 360x640, 601 px at 390x844). The offset is
+   scroll-margin-top, so the browser's scroll to the stage lands the card below
+   the Ghost, and the Persona_Intro above it stays where it is. Above 600 px
+   nothing changes. */
+@media (max-width: 599.98px) {
+  .personaColumn:has(> [data-ceremony="intact"]) [data-stage-content] {
+    scroll-margin-top: calc(71vh + 16px);
   }
 }
 
@@ -783,10 +884,71 @@
   }
 }
 
-/* The landing Accent button. Below 900 px it sits below the Soil strip
-   (--soil-top + --soil-band), so the strip never crosses the button. */
-@media (max-width: 899.98px) {
-  .landingColumn .landingCta {
-    margin-top: calc(var(--soil-top) + var(--soil-band) + 1.5rem - 6rem);
+/* The landing calls to action (LandingHero's actions block, data-block
+   "actions"). Below 900 px they are taken out of the flow and placed under the
+   Soil strip: the top is the strip's bottom edge plus 1.5 rem, measured from the
+   hero's top (the column's top padding, 6 rem). The Accent link then sits clear
+   of the Landing_Ghost body, which ends above the strip. The hero's side padding
+   (1.25 rem) is repeated here so the buttons keep its width.
+
+   Scoped to 600-899 px only. Below 600 px the landing hero is a plain stacked
+   flex column (landing.module.css .hero) and the Soil strip is far below the
+   first viewport, so the actions belong in normal flow after the Hero_Sentence:
+   taking them out of flow here left a tall gap under the sentence (PH2) and
+   pushed the secondary call to action past the 640 px fold (PH1) at phone
+   widths. The Soil-strip overlap this rule prevents (F2: "Seal your own..."
+   sitting on the strip) only occurs at 600 px and wider, so the fix is pinned
+   to that range. */
+@media (min-width: 600px) and (max-width: 899.98px) {
+  .landingColumn [data-block="actions"] {
+    position: absolute;
+    left: 1.25rem;
+    right: 1.25rem;
+    top: calc(var(--soil-top) + var(--soil-band) + 1.5rem - 6rem);
+  }
+}
+
+/* Phone persona headline on one line (layout-check PH3, eu-tomas). The persona
+   heading is always "{name}'s letter" with no other words, so nowrap keeps the
+   name and "letter" together. Without it the 9ch cap split "Tomás's" alone on
+   the first line. The /demo headline is not in the persona column, so it wraps
+   as before. */
+@media (max-width: 599.98px) {
+  .personaColumn .headline {
+    max-width: none;
+    white-space: nowrap;
+  }
+}
+
+/* Phone Top_Bar hit area (PH7). The wordmark link keeps the bar at 56 px and
+   gives its link a 44 px tall hit area, centred in the bar. */
+@media (max-width: 599.98px) {
+  .wordmarkLink {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
+
+/* Phone headline (spec 09 P2.1, P3, design "Group P", the persona page). Below
+   600 px the persona and /demo headline is 1.55 to 1.9 rem, balanced across
+   lines, so it wraps to at most two lines with no lone word. Placed after the
+   900 px rules so it wins at equal specificity. */
+@media (max-width: 599.98px) {
+  .headline,
+  .personaColumn .headline {
+    font-size: clamp(1.55rem, 7.2vw, 1.9rem);
+    line-height: 1.05;
+    text-wrap: balance;
+  }
+}
+
+/* The persona heading stays on one line below 600 px (layout-check PH3). The
+   rule above sets text-wrap: balance, and that shorthand resets text-wrap-mode
+   to wrap, which would override the nowrap set earlier for .personaColumn. This
+   block comes after it, so the persona heading keeps nowrap. */
+@media (max-width: 599.98px) {
+  .personaColumn .headline {
+    white-space: nowrap;
   }
 }

@@ -36,7 +36,14 @@ describe("narrow intact stage rules (scene.module.css)", () => {
   it("applies only to the intact stage, through :has() on the persona column", () => {
     const block = narrowIntactBlock();
     expect(block).toContain('.personaColumn:has(> [data-ceremony="intact"])');
-    expect(block).toContain('.personaColumn > [data-ceremony="intact"]');
+  });
+
+  it("keeps the intact stage in the flow, below the Persona_Intro, not pinned", () => {
+    // The card is in flow after the intro (spec 09 C1), so the intact stage has
+    // no absolute rule of its own. recall, marks and seal stay pinned.
+    const block = narrowIntactBlock();
+    expect(block).not.toContain('.personaColumn > [data-ceremony="intact"]');
+    expect(block).toContain('.personaColumn > [data-ceremony="recall"],');
   });
 
   it("fills the window below the Top_Bar: min-height is the window less the main padding-top", () => {
@@ -46,7 +53,7 @@ describe("narrow intact stage rules (scene.module.css)", () => {
     expect(declaration(narrowIntactBlock(), "min-height")).toBe("calc(100vh - 6rem)");
   });
 
-  it("pins the region below the Soil strip instead of the flow layout", () => {
+  it("pins the recall, marks and seal regions below the Soil strip instead of the flow layout", () => {
     expect(declaration(narrowIntactBlock(), "position")).toBe("absolute");
   });
 

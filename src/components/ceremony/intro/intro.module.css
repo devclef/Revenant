@@ -1,0 +1,133 @@
+/*
+ * The Persona_Intro (spec 09 C1, P5.3). It sits on the desk, so it takes the
+ * desk tokens and sets its own text colour (--text for reading text, --muted
+ * for the quieter lines). Both meet WCAG 2.2 AA on --bg. Orange is not used:
+ * it is reserved for "you" (tone.md).
+ *
+ * The fictional-persona notice is the first line at every width. Below 600 px
+ * the Top_Bar does not render it, so this card is the only place it shows
+ * there. At 600 px and wider the Top_Bar shows it too (spec 07 R8.4).
+ */
+
+.intro {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 34rem;
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-sans, inherit);
+}
+
+/* Below 900 px the headline is out of the flow (scene.module.css), so the card
+   is the first in-flow block of the persona column, which starts 2.5 rem down
+   (its top padding). The margin moves the card to the bottom edge of the Soil
+   strip plus a quarter rem. The card then clears the Ghost body and its glow at
+   every narrow height, because the strip sits below the Ghost. The stage card
+   follows the card in the flow. */
+@media (max-width: 899.98px) {
+  .intro {
+    margin-top: calc(var(--soil-top) + var(--soil-band) + 0.25rem - 6rem - 2.5rem);
+  }
+}
+
+.notice {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+.line {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.source,
+.meta {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.source a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.source a:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}
+
+@media (max-width: 599.98px) {
+  .line,
+  .dates,
+  .source,
+  .meta {
+    font-size: 0.9375rem;
+  }
+
+  /* Below 600 px the card is a solid paper surface (the letter paper, --paper),
+     so its text is --ink set on the card itself, not the desk text. Computed
+     from the scene token hex values (relative luminance) on --paper #f6ead4:
+     --ink #1f1b16 14.38:1 and --ink-soft #4a4036 8.49:1, both above WCAG 2.2
+     AA 4.5:1. The "Before you read it" line is in .meta and uses --ink-soft,
+     which replaces the muted desk colour that failed on this surface. The
+     .source link is --ink here too, so it meets AA on the card. */
+  .intro {
+    padding: 0.75rem 0.875rem;
+    border-radius: 4px;
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  .notice,
+  .meta {
+    color: var(--ink-soft);
+  }
+
+  .line,
+  .dates,
+  .source {
+    color: var(--ink);
+  }
+
+  /* The global desk-link rule .scene a:not(:where([class*="ParchmentSurface"] *))
+     in scene.module.css is (0,1,1) because :where() adds zero specificity, and
+     it sets the link to the light desk --text. This card is paper below 600 px,
+     not a ParchmentSurface, so that rule still applies and TIES a bare .source a
+     (0,1,1), winning on load order and forcing the lavender link back (~1.1:1 on
+     --paper). Qualifying with the .intro parent makes this (0,2,1), so the dark
+     --ink link (#1f1b16 on --paper #f6ead4 = 14.38:1, WCAG 2.2 AA) wins. */
+  .intro .source a {
+    color: var(--ink);
+  }
+
+  .intro .source a:focus-visible {
+    outline-color: var(--ink);
+  }
+}

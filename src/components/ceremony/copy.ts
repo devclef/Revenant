@@ -30,6 +30,23 @@ export const CEREMONY_COPY = {
   /** Skips the current stage's motion and settles it at once. */
   skip: "Skip",
 
+  // --- Persona_Intro (spec 09 C1.1, P5.3) ---
+
+  /** The question count line. `{n}` is the number of recall questions (two or more). */
+  introQuestions: "Before you read it, you'll answer {n} questions from memory.",
+
+  /** The question count line when the letter has one question. */
+  introQuestionsOne: "Before you read it, you'll answer one question from memory.",
+
+  /** The time the reader should expect. `{minutes}` is the value of FLOW_MINUTES, once the owner has set it. */
+  introTime: "It takes about {minutes} minutes.",
+
+  /** The opening line with the opening event. `{date}` is the opening date; `{event}` is the event's plain name. */
+  introOpensEvent: "Opens {date} · {event}",
+
+  /** The link text to the event's official source. `{source}` is the publisher's name. */
+  introEventSource: "Date source: {source}",
+
 
   // --- Envelope stage ---
 

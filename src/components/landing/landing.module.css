@@ -25,10 +25,16 @@
   text-transform: uppercase;
 }
 
-/* Phone headline: the design's phone clamp, balanced, at most 3 lines. */
+/* Phone headline: the design's phone clamp, balanced, at most 3 lines. The
+   colour is set here because the global h1 rule uses the paper ink (--ink),
+   which is dark on this dark desk. */
 .headline {
   margin: 0;
-  font-size: clamp(2rem, 9.4vw, 2.6rem);
+  color: var(--text);
+  /* Phone size: the design's phone headline clamp (spec 09 P2.1). At 360 px
+     the first line "Memory rewrites itself." fits, so the kept phrase makes
+     two lines, with no lone word (layout-check PH3). */
+  font-size: clamp(1.55rem, 7.2vw, 1.9rem);
   font-weight: 800;
   line-height: 1.05;
   text-wrap: balance;
@@ -87,6 +93,28 @@
   outline-offset: 3px;
 }
 
+/* Phone hero (below 600 px): the Landing_Ghost is drawn at a fixed place in the
+   Scene backdrop, with its bottom at about 71vh (452 px at 360x640, 601 px at
+   390x844). The calls to action stay in the flow, so the reserved ghost box
+   moves in front of them: the actions take order 1, and the box, which is
+   sized so the actions start 20 px below the drawn ghost, takes the space
+   between the Hero_Sentence and the actions. The box keeps the same CLS
+   reservation. Its height is 71vh less 380 px, which the Hero_Sentence bottom
+   (about 353 to 358 px at these heights) fixes. Above 600 px nothing changes. */
+/* The phone box rule is `.hero .ghost`, not `.ghost`: the base `.ghost` rule
+   below sets 30svh (at most 190 px), and at equal specificity that later rule
+   wins. With the base height the actions sat at 591 px at 360x640, past the
+   fold (layout-check PH1). */
+@media (max-width: 599.98px) {
+  .actions {
+    order: 1;
+  }
+
+  .hero .ghost {
+    height: max(0px, calc(71vh - 380px));
+  }
+}
+
 /* The Landing_Ghost box is reserved in the server HTML so the page does not
    move when the ghost arrives (CLS 0). It is at most 30% of the viewport
    height and at most 190 px (P1.1). */
@@ -96,9 +124,10 @@
   height: min(30svh, 190px);
 }
 
-/* Wide: the headline grows with the viewport. At 2560 px it is about 143 px,
-   against 72 px at 1366 px, which is at least 1.5 times (B4.1). The hero
-   fills the first viewport and centres its content (B4.2). */
+/* Wide: the headline grows with the viewport up to 1920 px. From 1920 px it is
+   capped at 88 px (see the 1920 px block below), so the nowrap phrase stays
+   clear of the Landing_Ghost body. The hero fills the first viewport and centres
+   its content (B4.2). */
 @media (min-width: 600px) {
   .headline {
     font-size: clamp(2.5rem, 6vw, 4.5rem);
@@ -111,6 +140,16 @@
   }
 }
 
+/* At 900 px and wider the hero drops its top padding, so the two calls to
+   action (the second wraps under the first when the live demo is on) end above
+   the Soil strip. At 1280 x 800 the secondary button then ends at y 580, and the
+   strip starts at y 592 (the seal-your-own text sat on the strip before). */
+@media (min-width: 900px) {
+  .hero {
+    padding-top: 0;
+  }
+}
+
 @media (min-width: 1920px) {
   .hero {
     min-height: calc(100svh - var(--topbar-clear, 0px));
@@ -118,8 +157,13 @@
     max-width: 52rem;
   }
 
+  /* Capped at 88 px (5.5rem). At 143 px the nowrap "Revenant doesn't." line ran
+     to x 1787 at 2560 px, past the Landing_Ghost body (from x 1384), so the
+     Ghost overlapped the headline (LG1). 88 px keeps the phrase clear of the
+     Ghost at 1920 and 2560 px. The ghost position is shared with the Soil light
+     and stays put. */
   .headline {
-    font-size: clamp(4.5rem, 5.6vw, 9rem);
+    font-size: clamp(4.5rem, 5.6vw, 5.5rem);
   }
 }
 

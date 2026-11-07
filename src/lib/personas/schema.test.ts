@@ -85,6 +85,7 @@ function validList(): PersonaList {
       {
         key: "us-maya",
         display_name: "Maya",
+        intro_line: "Maya writes about work and the week ahead.",
         region: "United States",
         letter_id: ID_A,
         written_as_of: "2024-05-12",

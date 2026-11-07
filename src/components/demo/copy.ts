@@ -17,9 +17,6 @@ export const DEMO_COPY = {
   /** The small "Demo" badge shown before the heading on every demo page (R6.5). */
   demoLabel: "Demo",
 
-  /** The Demo_Index page heading. */
-  heading: "Demo letters",
-
   /**
    * The intro note under the heading (R6.4). It says the personas are
    * fictional, that their letters were prepared later as a demo, and that no

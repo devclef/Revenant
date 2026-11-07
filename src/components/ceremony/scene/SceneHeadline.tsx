@@ -1,14 +1,15 @@
-// Feature: 07-judge-journey, 09-demo-polish (F1, F2)
+// Feature: 07-judge-journey, 09-demo-polish (F7, C1)
 //
 // The Scene headline (design.md "SceneShell, TopBar and the landing page",
-// R3.18). The only h1 on the scene. It shows the Eyebrow above the Tagline from
-// Brand_Copy. "Revenant doesn't." sits in one nowrap span, joined by a
-// non-breaking space, and carries no Accent colour. `data-scene-ceiling` marks
-// the element whose bottom sets the dust ceiling in the Soil_Canvas (R6.16).
+// R3.18, and spec 09 F7). The only h1 on the persona page and on `/demo`. It
+// shows one line of text from the caller: `personaHeading` on a persona page,
+// `demoHeading` on `/demo`. It carries no Tagline and no Eyebrow.
 //
-// Every word comes from BRAND_COPY, so no text sits in the JSX.
-
-import { BRAND_COPY } from "@/components/brand/copy";
+// The landing page keeps its Tagline. `splitTagline` still lives here, so the
+// landing hero can keep "Revenant doesn't." on one line (F2.3).
+//
+// `data-scene-ceiling` marks the element whose bottom sets the dust ceiling in
+// the Soil_Canvas (R6.16).
 
 import styles from "./scene.module.css";
 
@@ -34,17 +35,15 @@ export function splitTagline(tagline: string): { before: string; kept: string } 
   };
 }
 
-export function SceneHeadline() {
-  const { before, kept } = splitTagline(BRAND_COPY.tagline);
+export type SceneHeadlineProps = {
+  /** The headline text, already filled in (for example "Maya's letter"). */
+  text: string;
+};
+
+export function SceneHeadline({ text }: SceneHeadlineProps) {
   return (
-    <>
-      <p className={styles.eyebrow} data-scene-eyebrow>
-        {BRAND_COPY.eyebrow}
-      </p>
-      <h1 className={styles.headline} data-scene-ceiling>
-        {before}
-        {kept === "" ? null : <span className={styles.nowrap}>{kept}</span>}
-      </h1>
-    </>
+    <h1 className={styles.headline} data-scene-ceiling data-scene-headline>
+      {text}
+    </h1>
   );
 }

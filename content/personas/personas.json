@@ -3,6 +3,7 @@
     {
       "key": "us-maya",
       "display_name": "Maya",
+      "intro_line": "Maya, who works early shifts at a clinic, writes on a May Sunday about her commute, filling the tank and Saturday deliveries.",
       "region": "United States",
       "letter_id": "Qbm5FLgjOC6vJiRAy5Wh0g",
       "written_as_of": "2024-05-12",
@@ -17,11 +18,18 @@
           "recall_subject": "a gallon of diesel"
         }
       ],
-      "letter_path": "letters/us-maya.txt"
+      "letter_path": "letters/us-maya.txt",
+      "opening_event": {
+        "name": "U.S. presidential election day",
+        "date": "2024-11-05",
+        "source": "U.S. National Archives",
+        "source_url": "https://www.archives.gov/electoral-college/2024"
+      }
     },
     {
       "key": "eu-tomas",
       "display_name": "Tomás",
+      "intro_line": "Tomás, who works shifts at a hospital pharmacy, writes on a May Sunday about his commute, the car and the market with Inês.",
       "region": "European Union",
       "letter_id": "8t6Bz4bWlaUky-byt1mzGg",
       "written_as_of": "2024-05-12",

@@ -21,6 +21,7 @@ import styles from "./scene.module.css";
 import "./tokens.css";
 import { TopBar } from "./TopBar";
 import { SceneHeadline } from "./SceneHeadline";
+import { SCENE_COPY } from "./copy";
 import { SceneBackdrop } from "./SceneBackdrop";
 
 export type SceneShellProps =
@@ -83,7 +84,9 @@ function SceneFrame(props: SceneShellProps) {
       <main className={styles.main}>
         {props.variant === "persona" ? (
           <div className={styles.personaColumn} data-persona-column>
-            <SceneHeadline />
+            <SceneHeadline
+              text={SCENE_COPY.personaHeading.replace("{name}", props.personaName)}
+            />
             {props.children}
           </div>
         ) : props.variant === "landing" ? (

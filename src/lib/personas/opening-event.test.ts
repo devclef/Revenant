@@ -23,6 +23,7 @@ function listWith(openingEvent?: unknown): unknown {
   const persona: Record<string, unknown> = {
     key: "eu-test",
     display_name: "Test",
+    intro_line: "A short everyday line for the test persona.",
     region: "European Union",
     letter_id: ID_A,
     written_as_of: "2024-05-12",
@@ -55,7 +56,16 @@ describe("persona opening_event", () => {
     expect(parsed.personas[0].opening_event).toEqual(validOpeningEvent);
   });
 
-  it("rejects a source other than the literal European Parliament", () => {
+  it("accepts the U.S. National Archives as a source", () => {
+    const event = {
+      ...validOpeningEvent,
+      source: "U.S. National Archives",
+      source_url: "https://www.archives.gov/electoral-college/2024",
+    };
+    expect(() => parsePersonaList(listWith(event))).not.toThrow();
+  });
+
+  it("rejects a source outside the official publisher list", () => {
     const event = { ...validOpeningEvent, source: "Eurostat" };
     expect(() => parsePersonaList(listWith(event))).toThrow();
   });

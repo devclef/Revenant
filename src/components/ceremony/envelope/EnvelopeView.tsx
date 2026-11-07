@@ -261,12 +261,12 @@ export function EnvelopeView({
       // no height and the text spills onto the dark background (S1a).
       return (
         <ParchmentSurface as="section" className={styles.intactStage}>
-          <div className={held ? styles.intactFlow : styles.intactTop}>
+          <div className={held ? styles.intactFlow : styles.intactTop} data-block="intact">
             <p className={styles.statement} role="status">
               {REVEAL_COPY.sealIntact}
             </p>
             <PickUpGate tag="verified">
-              <button type="button" className={styles.pickUp} onClick={onBegin}>
+              <button type="button" className={styles.pickUp} data-primary-control onClick={onBegin}>
                 {REVEAL_COPY.pickUp}
               </button>
             </PickUpGate>

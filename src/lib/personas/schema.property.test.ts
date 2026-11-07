@@ -118,6 +118,7 @@ const METRICS = [
 interface RawPersona {
   key: string;
   display_name: string;
+  intro_line: string;
   region: string;
   letter_id: string;
   written_as_of: string;
@@ -143,6 +144,7 @@ const personaArb: fc.Arbitrary<RawPersona> = fc
     return {
       key: r.key,
       display_name: r.display_name,
+      intro_line: "A short everyday line about the week ahead.",
       region: r.region,
       letter_id: r.letter_id,
       written_as_of: r.written_as_of,

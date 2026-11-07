@@ -118,7 +118,7 @@ describe("Recall_Pager card fits inside its padding at 360 x 640", () => {
   it("shrinks the question, fieldset and typed number below 900 px", () => {
     expect(narrowRuleBody(".qTitle")).toMatch(/font-size:\s*1rem/);
     expect(narrowRuleBody(".qTitle")).toMatch(/margin-bottom:\s*0\.25rem/);
-    expect(narrowRuleBody(".fieldset")).toMatch(/padding:\s*0\.3rem 0\.75rem/);
+    expect(narrowRuleBody(".fieldset")).toMatch(/padding:\s*0\.2rem 0\.75rem/);
     expect(narrowRuleBody(".input")).toMatch(/font-size:\s*1\.5rem/);
   });
 

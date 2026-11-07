@@ -185,3 +185,12 @@ export const FOOTER_MAX_PX = 64; // the footer is at most this tall, so it stays
 
 // --- Marks card scales (spec 09 A9) ---
 export const MARKS_SCALE_GAP_PX = 32; // least space between two Recall_Scale rows
+
+// --- Phone layout (spec 09 Group P, P5 and P2) ---
+// Every value below applies while the viewport is narrower than PHONE_BELOW_PX.
+// scene.module.css repeats the breakpoint (599.98px, the largest width under 600)
+// and the bar height; scene-shell.test.tsx checks the two.
+export const PHONE_BELOW_PX = 600;
+export const COMPACT_TOP_BAR_PX = 56; // P5.1: the Compact_Top_Bar is at most this tall
+export const DEAD_SPACE_MAX_PX = 64; // P2.1: no gap between blocks above this before the First_Step
+export const TOUCH_TARGET_MIN_PX = 44; // P8.4: the smallest side of a touch target
