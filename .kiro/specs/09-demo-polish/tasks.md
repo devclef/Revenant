@@ -422,7 +422,7 @@ Each task in this group meets group P for the Stages it changes (G3.7), and atta
   - Validation: `bash scripts/check.sh`
   - _Requirements: C8.1–C8.3_
 
-- [ ] 16. C3, C8, P6, P7 · The Receipt_Card, the marks card and Answer_List, the EU per-litre display, and the reveal on the phone
+- [x] 16. C3, C8, P6, P7 · The Receipt_Card, the marks card and Answer_List, the EU per-litre display, and the reveal on the phone
   - Agent: `frontend-dev` · Depends on: 14, 15 · Estimated size: ~2,200 changed lines
   - Before this task: task 15 is on `main` or closed unmerged under OD3 (a). OD2 and OD15 recorded, or defaults. Steering updated (Owner patches w, x and y on `main`, owner step O0).
   - Scope: `src/components/reveal/ReceiptCard.tsx` (new), `src/components/reveal/AnswerList.tsx` (new), `src/components/reveal/FigureEntry.tsx`, `src/components/reveal/FigureLine.tsx`, `src/components/reveal/FiguresThenNow.tsx`, `src/components/reveal/ChangeLine.tsx`, `src/components/reveal/RememberedAnswers.tsx`, `src/components/reveal/SealedLetter.tsx` (layout only), `src/components/reveal/Reveal.tsx`, `src/components/reveal/reveal.module.css`, `src/components/reveal/copy.ts`, `src/components/ceremony/figures/NumberLine.tsx`, `src/components/ceremony/figures/figures.module.css`, `src/components/ceremony/close/Close.tsx` (the `data-close-line` attribute only), `src/components/ceremony/recall/unit-ranges.ts`, `src/components/ceremony/recall/RecallPager.tsx`, `src/components/ceremony/recall/RecallScale.tsx`, `src/components/ceremony/recall/RecordedScale.tsx`, `src/components/ceremony/constants.ts`, and the `*.test.ts(x)` for each file above
