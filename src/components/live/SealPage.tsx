@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useReducer, useState, type ReactNode }
 import Link from "next/link";
 
 import "@/components/ceremony/scene/tokens.css";
-import { useFigures } from "@/components/reveal/figures-api";
+import { useFigures, type FiguresState } from "@/components/reveal/figures-api";
 import type { LoadedFigures } from "@/lib/figures";
 
 import { realLetterSealApi, realSealApi, type SealApi } from "./api";
@@ -18,6 +18,7 @@ import type { AuthenticatorPort, SealDeps, SealDraft } from "./seal-runner";
 import { useCryptoModule } from "./useCryptoModule";
 import { useSealFlow } from "./useSealFlow";
 import { WriteForm, type WriteSection } from "./WriteForm";
+import type { FigureDetail } from "./FigurePicker";
 import { usePrfHint } from "./prf-hint";
 import { resolveTimeZone } from "./real-opening";
 import type { WriteDraftEvent } from "./write-draft";
@@ -36,6 +37,29 @@ import { earliestOpeningDate } from "@/lib/seal-format";
 
 /** Figures used when the request has not resolved. Sealing is blocked then. */
 const NO_FIGURES: LoadedFigures = { fixture: false, series: new Map() };
+
+/**
+ * The value and source of each official figure in a ready response, keyed by
+ * metric id, in the response's (catalogue) order. The value is the string the
+ * response carries, unchanged. A self-reported figure has no source_url, so it
+ * gets no entry and the picker shows it without a value.
+ */
+function figureDetailsFrom(state: FiguresState): ReadonlyMap<string, FigureDetail> {
+  const details = new Map<string, FigureDetail>();
+  if (state.status !== "ready") return details;
+  for (const entry of state.figures.series) {
+    const figure = entry.figure;
+    if (figure === null || figure.kind !== "official") continue;
+    details.set(entry.metric.id, {
+      value: figure.value,
+      sourceName: figure.source,
+      seriesId: figure.series_id,
+      sourceUrl: figure.source_url,
+      retrievedAt: figure.retrieved_at,
+    });
+  }
+  return details;
+}
 
 /**
  * The injectable parts of the flow (R11.5): the browser port, the routes, the
@@ -112,6 +136,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
   const prfHint = usePrfHint();
   const figuresState = useFigures(deps?.fetchFigures);
   const sealFigures = useMemo(() => sealFiguresFrom(figuresState), [figuresState]);
+  const figureDetails = useMemo(() => figureDetailsFrom(figuresState), [figuresState]);
   const figuresReady = sealFigures.status === "ready";
   const pickable = sealFigures.status === "ready" ? sealFigures.pickable : [];
   const figureMax = figureLimit(pickable.length);
@@ -302,6 +327,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
         onNext={nav?.onNext}
         onBack={nav?.onBack}
         series={pickable}
+        figureDetails={figureDetails}
         figuresStatus={sealFigures.status}
         prfHint={prfHint}
         state={state}

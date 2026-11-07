@@ -4,6 +4,8 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { realLetterSealApi, realSealApi, REAL_PREPARE_PATH, REAL_SEAL_PATH, PREPARE_PATH } from "./api";
 import { LIVE_COPY, REAL_COPY } from "./copy";
+import { figuresResponseFrom } from "@/components/reveal/figures-stub";
+import { DEMO_FIGURES } from "@/lib/figures/demo";
 import { sealReducer, INITIAL_SEAL_STATE, type SealEvent, type SealState } from "./seal-machine";
 
 vi.mock("./useSealFlow", () => ({
@@ -28,6 +30,38 @@ vi.mock("./prf-hint", async (importOriginal) => ({
   ...(await importOriginal<typeof import("./prf-hint")>()),
   usePrfHint: () => "missing",
 }));
+
+// The figures response and the stepper step are set per test. Left null, the
+// page behaves as before: no response yet, and the real stepper on Write.
+const pageStub = vi.hoisted(() => ({
+  figures: null as import("@/components/reveal/figures-api").FiguresState | null,
+  step: null as null | "figures",
+}));
+
+vi.mock("@/components/reveal/figures-api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/components/reveal/figures-api")>()),
+  useFigures: () => pageStub.figures ?? { status: "loading" },
+}));
+
+vi.mock("./stepper/LiveStepper", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./stepper/LiveStepper")>();
+  return {
+    ...actual,
+    LiveStepper: (props: import("./stepper/LiveStepper").LiveStepperProps) => {
+      if (pageStub.step === null) return actual.LiveStepper(props);
+      // Show one step directly, so the picker renders in SSR (no clicks here).
+      return props.renderStep({
+        step: pageStub.step,
+        draft: props.state.draft,
+        dispatchDraft: () => {},
+        next: () => {},
+        back: () => {},
+        canGoBack: false,
+        advanceTo: () => {},
+      } as import("./stepper/LiveStepper").StepView);
+    },
+  };
+});
 
 import { SealPage, sealApiFor } from "./SealPage";
 
@@ -195,5 +229,59 @@ describe("SealPage in demo mode (/demo/live)", () => {
       }),
     );
     expect(html).not.toContain("Seal your own letter");
+  });
+});
+
+describe("SealPage passes each figure's value and source into the picker", () => {
+  afterEach(() => {
+    pageStub.figures = null;
+    pageStub.step = null;
+  });
+
+  it("shows the published value and source of every official series on the figures step", () => {
+    const response = figuresResponseFrom(DEMO_FIGURES);
+    pageStub.figures = { status: "ready", figures: response };
+    pageStub.step = "figures";
+
+    const html = renderToStaticMarkup(
+      createElement(SealPage, {
+        rpId: "revenant.devclef.se",
+        appOrigin: "https://revenant.devclef.se",
+        mode: "demo",
+      }),
+    );
+
+    expect(html).toContain('data-card="live-figures"');
+    let checked = 0;
+    for (const entry of response.series) {
+      const figure = entry.figure;
+      if (figure === null || figure.kind !== "official") continue;
+      checked += 1;
+      expect(html).toContain(esc(LIVE_COPY.figureValue.replace("{value}", figure.value)));
+      expect(html).toContain(esc(LIVE_COPY.figureSource.replace("{source}", figure.source)));
+      expect(html).toContain(esc(figure.source_url));
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+
+  it("leaves a series with no figure out of the picker", () => {
+    const response = figuresResponseFrom(DEMO_FIGURES);
+    const first = response.series[0]!;
+    const emptied = {
+      ...response,
+      series: [{ ...first, figure: null }, ...response.series.slice(1)],
+    };
+    pageStub.figures = { status: "ready", figures: emptied as typeof response };
+    pageStub.step = "figures";
+
+    const html = renderToStaticMarkup(
+      createElement(SealPage, {
+        rpId: "revenant.devclef.se",
+        appOrigin: "https://revenant.devclef.se",
+        mode: "demo",
+      }),
+    );
+
+    expect(html).not.toContain(`id="figure-${first.metric.id}"`);
   });
 });
