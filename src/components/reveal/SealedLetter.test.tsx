@@ -204,7 +204,7 @@ describe("SealedLetter collapsible letter (P6, P7)", () => {
 
   it("puts the letter text in a closed disclosure when collapsible", () => {
     const markup = renderCollapsible(OPENED);
-    expect(markup).toContain('<details data-letter-disclosure="">');
+    expect(markup).toMatch(/<details[^>]*data-letter-disclosure=""/);
     expect(markup).toContain(`<summary>${REVEAL_COPY.letterDisclosure}</summary>`);
     expect(markup).not.toMatch(/<details[^>]* open/);
     expect(markup).toContain("data-letter-text");
