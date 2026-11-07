@@ -1,23 +1,21 @@
 /*
  * Demo_Index page layout on the Scene (SceneShell variant="index"). The Scene
  * background is --bg and its text is --text, with --muted for secondary text.
- * The child components (DemoLabel, LiveEntry) read the desk token names, so
- * this page maps those names onto the Scene tokens. The mapping is local to
- * the page: paper panels (the empty state) set their own --ink, so Scene text
- * never reaches them.
+ * The child components (DemoLabel, LiveEntry) read the --demo-ink tokens, so
+ * this page maps them onto the Scene tokens. Every text colour on the desk is
+ * one of these tokens; no paper token is used here.
  *
  * Text uses --text and --muted on --bg. Both are light tokens on the near-black
- * background and clear the WCAG 2.2 AA floor. The label rule uses --line as a
- * decorative border.
+ * background and clear the WCAG 2.2 AA floor.
  *
- * The page keeps its width inside a 360 px viewport: border-box sizing and
- * width capped to the viewport, so nothing scrolls sideways (no horizontal
- * scroll at 360 px).
+ * Envelopes sit in a grid: one column on phones, two from 40rem and three from
+ * 64rem. Every cell is the same width and the row stretches cards to one
+ * height. The list starts at the heading's left edge.
  */
 
 .page {
-  --desk-ink: var(--text);
-  --desk-ink-soft: var(--muted);
+  --demo-ink: var(--text);
+  --demo-ink-soft: var(--muted);
   --demo-label-ink: var(--text);
   --demo-label-rule: var(--line);
 
@@ -25,7 +23,7 @@
   flex-direction: column;
   gap: clamp(1rem, 3vw, 1.5rem);
   width: 100%;
-  max-width: 40rem;
+  max-width: 64rem;
   margin-inline: auto;
   padding: clamp(1.25rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem);
   box-sizing: border-box;
@@ -39,40 +37,51 @@
 }
 
 .heading {
-  font-family: var(--font-serif);
-  color: var(--text);
+  font-family: var(--font-sans);
+  font-weight: 800;
+  color: var(--demo-ink);
   margin: 0;
 }
 
 .introNote {
   font-family: var(--font-sans);
-  color: var(--muted);
+  color: var(--demo-ink-soft);
   margin: 0;
+  max-width: 40rem;
 }
 
 .list {
   list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: clamp(1rem, 3vw, 1.75rem);
   width: 100%;
   min-width: 0;
 }
 
+@media (min-width: 40rem) {
+  .list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 64rem) {
+  .list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
 .listItem {
   margin: 0;
   padding: 0;
-  width: 100%;
   min-width: 0;
   display: flex;
-  justify-content: center;
 }
 
 .empty {
   font-family: var(--font-sans);
-  color: var(--ink-soft);
+  color: var(--demo-ink-soft);
   margin: 0;
 }

@@ -2,12 +2,11 @@
  * DemoLabel: a small, quiet "Demo" badge. Set in the body sans face, upper
  * case with wide tracking so it reads as a label rather than a heading.
  *
- * Colour: --ink-soft text inside a hairline --gold-leaf border. --ink-soft on
- * --paper is 10.57:1 and on --paper-deep 9.58:1 (globals.css record), well
- * above the 4.5:1 AA floor. The border is --gold-leaf, used decoratively only
- * (never on text). No green/red or directional colour -- neutrality.md.
+ * Colour: --ink-soft text inside a hairline border of the same ink, set by the
+ * --demo-label-rule token. The border is decorative only (never on text). No
+ * green/red or directional colour -- neutrality.md.
  *
- * On the ceremony desk the two tokens are overridden to desk ink and desk gold.
+ * On the demo index the two tokens are overridden to the desk text colours.
  */
 
 .badge {
@@ -23,7 +22,7 @@
      unreadable on the dark desk. */
   color: var(--demo-label-ink, var(--ink-soft));
   padding: 0.25rem 0.6rem;
-  border: 1px solid var(--demo-label-rule, var(--gold-leaf));
+  border: 1px solid var(--demo-label-rule, var(--ink-soft));
   border-radius: 0.25rem;
   line-height: 1;
 }

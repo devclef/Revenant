@@ -35,8 +35,15 @@ export const DEMO_COPY = {
   /** Prefix for a persona's opening date on a card. */
   opensPrefix: "Opens",
 
-  /** The link that opens a persona's sealed letter (R6.7). */
-  openLetter: "Open the letter",
+  /**
+   * The accessible name and the orange button text of a persona's envelope.
+   * `{name}` is replaced with the persona's display name (for example
+   * "Open Maya's letter").
+   */
+  openLetterFor: "Open {name}'s letter",
+
+  /** Joins a date to the public event it is taken from. */
+  eventSeparator: " · ",
 
   /**
    * Empty-state text when the Persona_List is empty (R6.8). It names an
