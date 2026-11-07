@@ -308,7 +308,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`
   - _Requirements: B3.1–B3.7, F6.1–F6.3, P8.4_
 
-- [ ] 11. L4, L5 · One WaxSeal, and the demo letters as sealed envelopes
+- [x] 11. L4, L5 · One WaxSeal, and the demo letters as sealed envelopes
   - Agent: `frontend-dev` · Depends on: 10 · Estimated size: ~1,300 changed lines
   - Before this task: task 10 is on `main`. OD20 is closed (dates as in L5.2). Steering updated (Owner patches w, x and y on `main`, owner step O0).
   - Scope: `src/components/ui/WaxSeal.tsx`, `src/components/ui/WaxSeal.module.css`, `src/components/ui/index.ts`, `src/components/ceremony/envelope/**`, `src/components/demo/**`, `src/app/demo/page.tsx`, `src/app/demo/page.module.css`, `src/app/demo/personas/[key]/not-found.tsx`, `src/app/demo/personas/[key]/not-found.module.css`, `src/app/l/[id]/not-found.tsx`, `src/components/ceremony/ASSETS.md`, and the `*.test.ts(x)` for each file above
