@@ -194,7 +194,7 @@
 
 /* The wordmark links home. It keeps the wordmark's look and shows a focus ring. */
 .wordmarkLink {
-  color: inherit;
+  color: var(--text);
   text-decoration: none;
 }
 
