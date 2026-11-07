@@ -740,6 +740,17 @@
   margin-bottom: 1rem;
 }
 
+/* The collapsed letter's summary is a touch target on the phone (P8.4, PH7). */
+[data-letter-disclosure] > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
+
 /* The Answer_List sits on the paper panel of the marks Stage, so it sets the
    panel's ink itself. The desk tokens in .answerList are cream and would be
    unreadable here (issue #119). */
