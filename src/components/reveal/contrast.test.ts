@@ -20,8 +20,10 @@ const here = dirname(fileURLToPath(import.meta.url));
 // src/app/globals.css, from src/components/reveal.
 const globalsCssPath = resolve(here, "..", "..", "app", "globals.css");
 
-/** The tokens the reveal depends on (see reveal.module.css). */
-const TEXT_TOKENS = ["--ink", "--ink-soft", "--seal", "--gold-text"] as const;
+/** The tokens the reveal depends on (see reveal.module.css). The retired
+ * --seal and --gold-text pairs are dropped here (spec 09 L3); the remaining
+ * text tokens are the ink pair the reveal actually uses. */
+const TEXT_TOKENS = ["--ink", "--ink-soft"] as const;
 const SURFACE_TOKENS = ["--paper", "--paper-deep"] as const;
 
 const WCAG_AA_NORMAL = 4.5;
