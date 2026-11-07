@@ -59,9 +59,10 @@ describe("pick-up timings (R10.7, R10.8, R10.15)", () => {
     expect(css).toMatch(/\.ghost\[data-pose="handed"\] \{\s*transform: translateY\(-12%\);/);
   });
 
-  it("scales the narrow pit to 0.8 about its bottom, transform only", () => {
+  it("scales the pit to 0.8 about its bottom at 600 to 899.98 px only, transform only (R10.15, tablet)", () => {
+    // Below 600 px the Compact_Ghost replaces this scale (spec 09 P4.2, see compact-ghost.test.tsx).
     expect(css).toMatch(
-      /@media \(max-width: 899\.98px\) \{[\s\S]*?\.pit\[data-pose="handed"\] \{\s*transform: translateX\(-50%\) scale\(0\.8\);\s*transform-origin: 50% 100%;/,
+      /@media \(min-width: 600px\) and \(max-width: 899\.98px\) \{[\s\S]*?\.pit\[data-pose="handed"\] \{\s*transform: translateX\(-50%\) scale\(0\.8\);\s*transform-origin: 50% 100%;/,
     );
   });
 });

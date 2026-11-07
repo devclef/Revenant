@@ -820,11 +820,62 @@
   transform: translateY(-12%);
 }
 
-@media (max-width: 899.98px) {
-  /* The narrow pit scales to NARROW_GHOST_SCALE once handed (R10.15). */
+@media (min-width: 600px) and (max-width: 899.98px) {
+  /* 600 px to 899.98 px: the pit scales to NARROW_GHOST_SCALE once handed (R10.15).
+     Below 600 px the Compact_Ghost below replaces this (spec 09 P4.2). */
   .pit[data-pose="handed"] {
     transform: translateX(-50%) scale(0.8);
     transform-origin: 50% 100%;
+  }
+}
+
+/* The Compact_Ghost (spec 09 P4.2, P4.3). Below 600 px, after the First_Step
+   (data-compact="true" on the pit), the Ghost_Box is scaled by COMPACT_GHOST_SCALE
+   about the pit's own point (50vw, 69vh) and moved with translate, so its top
+   sits at 56 px (the Compact_Top_Bar's bottom edge) and its right edge sits 16 px
+   from the window's right edge. Its box is 0.58 x 1.2 x min(26vh, 170px) tall,
+   at most 118 px. Only transform changes; the classes and the pit's own left and
+   top stay the same. The seal's hit square grows so it stays 44 px on screen
+   (HeldSeal.module.css, --seal-hit-compact). */
+@media (max-width: 599.98px) {
+  .pit[data-compact="true"] {
+    --seal-hit-compact: 76px;
+    transform-origin: 0 0;
+    transform: translate(
+        calc(100vw - 16px - 0.29 * min(26vh, 170px) - var(--ghost-x)),
+        calc(56px - var(--soil-top) + 0.58 * (1.2 * min(26vh, 170px) - 3vh))
+      )
+      scale(0.58);
+  }
+
+  /* The Soil fades out once the persona Stages start (after the First_Step). */
+  :is([data-ceremony="recall"], [data-ceremony="marks"], [data-ceremony="seal"], [data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"]) .soilStrip,
+  :is([data-ceremony="recall"], [data-ceremony="marks"], [data-ceremony="seal"], [data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"]) .soilLayer {
+    opacity: 0;
+  }
+
+  /* The Hero stays in the document for the outline but is visually hidden after
+     the First_Step (spec 09 design, Group P). Not display: none, so screen
+     readers keep it. */
+  .personaColumn:has(> :is([data-ceremony="recall"], [data-ceremony="marks"], [data-ceremony="seal"], [data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"])) .headline {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+    border: 0;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) and (max-width: 599.98px) {
+  /* The Compact_Ghost and the Soil fade animate in full motion only. Calm shows
+     the end state at once. */
+  [data-ceremony-motion="full"] .soilStrip,
+  [data-ceremony-motion="full"] .soilLayer {
+    transition: opacity 400ms ease;
   }
 }
 

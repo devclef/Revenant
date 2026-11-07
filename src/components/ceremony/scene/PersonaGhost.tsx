@@ -18,6 +18,7 @@ import { EASE_LEAVE, GHOST_FADE_MS, GHOST_LEAVE_MS } from "../constants";
 import { useMotion } from "../motion";
 import { useMaybeSequence } from "../skip-optional";
 import { ghostHanded } from "../stages";
+import { personaStepFor } from "../steps";
 import { useStage } from "../stage-context";
 import { eyeOffset, followsPointer } from "./eyes";
 import { EYE_CENTRE_SVG, VIEWBOX_HEIGHT, VIEWBOX_WIDTH, type EyeOffset } from "./ghost-geometry";
@@ -136,7 +137,14 @@ export function PersonaGhost({ children, leaving = false, onLeft }: PersonaGhost
   const eyes = calm ? NO_OFFSET : pointerOffset;
   // The pose is set by the Stage, never by the placement. Only the vertical
   // lift changes; the classes and horizontal values stay the same.
-  const pose: GhostPose = ghostHanded(useStage()) ? "handed" : "risen";
+  const stage = useStage();
+  const pose: GhostPose = ghostHanded(stage) ? "handed" : "risen";
+  // The Compact_Ghost (spec 09 P4.2) applies from the First_Step on, and the CSS
+  // limits it to below 600 px. This attribute only selects that CSS rule.
+  const rootAttributes = {
+    ...ROOT_ATTRIBUTES,
+    "data-compact": personaStepFor(stage) !== null ? "true" : "false",
+  };
 
   return (
     <Ghost
@@ -146,7 +154,7 @@ export function PersonaGhost({ children, leaving = false, onLeft }: PersonaGhost
       leaving={leaving}
       riseRef={riseRef}
       leaveVars={LEAVE_VARS}
-      rootAttributes={ROOT_ATTRIBUTES}
+      rootAttributes={rootAttributes}
       onExitEnd={onExitEnd}
     >
       {children}

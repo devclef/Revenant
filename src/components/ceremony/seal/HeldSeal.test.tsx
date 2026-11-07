@@ -77,8 +77,8 @@ describe("HeldSeal stylesheet (touch target and hit box)", () => {
 
   it("gives the ::before hit box at least the minimum size, centred on the seal", () => {
     const before = css.match(/\.target::before\s*\{[^}]*\}/)?.[0] ?? "";
-    expect(before).toMatch(/width:\s*max\(100%,\s*var\(--seal-hit-min\)\)/);
-    expect(before).toMatch(/height:\s*max\(100%,\s*var\(--seal-hit-min\)\)/);
+    expect(before).toMatch(/width:\s*max\(100%,\s*var\(--seal-hit-min\)/);
+    expect(before).toMatch(/height:\s*max\(100%,\s*var\(--seal-hit-min\)/);
     expect(before).toMatch(/translate\(-50%,\s*-50%\)/);
   });
 });

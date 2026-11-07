@@ -15,8 +15,10 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: max(100%, var(--seal-hit-min));
-  height: max(100%, var(--seal-hit-min));
+  /* --seal-hit-compact is set on the pit below 600 px (the Compact_Ghost is
+     scaled to 0.58, so its hit square grows to keep 44 px on screen, P8.4). */
+  width: max(100%, var(--seal-hit-min), var(--seal-hit-compact, 0px));
+  height: max(100%, var(--seal-hit-min), var(--seal-hit-compact, 0px));
   transform: translate(-50%, -50%);
   /* The box takes the pointer; the seal drawn inside it is decoration. */
   background: transparent;

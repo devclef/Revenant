@@ -198,3 +198,10 @@ export const TOUCH_TARGET_MIN_PX = 44; // P8.4: the smallest side of a touch tar
 // --- Step_Indicator and Compact_Ghost (spec 09 C2, P4.2) ---
 export const PERSONA_STEPS = 4; // Testify, Break the seal, Read, See the receipts
 export const COMPACT_GHOST_MAX_PX = 120; // P4.2: the Compact_Ghost is at most this tall below 600 px
+// The Compact_Ghost is the Ghost_Box scaled by this transform below 600 px. The
+// narrow Ghost_Box is at most 170 px wide and 1.2 times as tall, so
+// 170 * 1.2 * 0.58 = 118.3 px tall at the widest narrow box (under 120 px).
+export const COMPACT_GHOST_SCALE = 0.58;
+// The seal's hit square before the Compact_Ghost scale. ceil(44 / 0.58) = 76, so
+// the square is 44 px on screen (P8.4, the 44x44 seal target).
+export const COMPACT_SEAL_HIT_PX = 76;
