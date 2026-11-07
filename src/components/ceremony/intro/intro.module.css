@@ -92,4 +92,35 @@
   .meta {
     font-size: 0.9375rem;
   }
+
+  /* Below 600 px the card is a solid paper surface (the letter paper, --paper),
+     so its text is --ink set on the card itself, not the desk text. Contrast on
+     --paper: --ink is above 13:1 and --ink-soft about 8.5:1, both above WCAG 2.2
+     AA 4.5:1. The "Before you read it" line is in .meta and uses --ink-soft,
+     which replaces the muted desk colour that failed on this surface. */
+  .intro {
+    padding: 0.75rem 0.875rem;
+    border-radius: 4px;
+    background: var(--paper);
+    color: var(--ink);
+  }
+
+  .notice,
+  .meta {
+    color: var(--ink-soft);
+  }
+
+  .line,
+  .dates,
+  .source {
+    color: var(--ink);
+  }
+
+  .source a {
+    color: var(--ink);
+  }
+
+  .source a:focus-visible {
+    outline-color: var(--ink);
+  }
 }
