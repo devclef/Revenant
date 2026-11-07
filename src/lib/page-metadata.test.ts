@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { SITE_NAME, pageMetadata } from "./page-metadata";
+import { HOME_DESCRIPTION, SITE_NAME, pageMetadata } from "./page-metadata";
 
 describe("pageMetadata", () => {
   const page = {
@@ -23,6 +23,20 @@ describe("pageMetadata", () => {
       type: "website",
       siteName: SITE_NAME,
     });
+  });
+
+  it("uses the eyebrow and tagline as the landing description (OD16)", () => {
+    expect(HOME_DESCRIPTION).toBe(
+      "The wax seal, resurrected. Memory rewrites itself. Revenant doesn't.",
+    );
+    expect(HOME_DESCRIPTION).not.toContain("Your past self returns with the receipts.");
+  });
+
+  it("uses HOME_DESCRIPTION for the landing page when there is no page info", () => {
+    const meta = pageMetadata(null, "/");
+    expect(meta.description).toBe(HOME_DESCRIPTION);
+    expect(meta.openGraph?.description).toBe(HOME_DESCRIPTION);
+    expect(meta.title).toBeUndefined();
   });
 
   it("uses Revenant as the site name", () => {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { BRAND_COPY } from "../components/brand/copy";
 
 /** The product name used as the Open Graph site name. */
 export const SITE_NAME = "Revenant";
@@ -11,8 +12,11 @@ export interface PageInfo {
   description: string;
 }
 
-/** The one-sentence description of the landing page, in Revenant's voice. */
-export const HOME_DESCRIPTION = "Your past self returns with the receipts.";
+/**
+ * The description of the landing page: the Eyebrow and the Tagline from
+ * Brand_Copy (OD16). The retired tagline is not used anywhere.
+ */
+export const HOME_DESCRIPTION = `${BRAND_COPY.eyebrow} ${BRAND_COPY.tagline}`;
 
 /**
  * Builds the Next.js metadata for one page: title, description, and the
