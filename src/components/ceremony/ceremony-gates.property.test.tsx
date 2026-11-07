@@ -176,6 +176,7 @@ let currentMode: Mode = "full";
 
 vi.mock("./motion", () => ({
   useMotion: () => ({ mode: currentMode, setCalm: vi.fn() }),
+  useCalmInForce: () => currentMode === "calm",
   MotionProvider: ({ children }: { children: ReactNode }) => children,
 }));
 

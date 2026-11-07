@@ -83,6 +83,7 @@ function setMotionMode(mode: "full" | "light" | "calm"): void {
 
 vi.mock("./motion", () => ({
   useMotion: () => ({ mode: currentMode, setCalm }),
+  useCalmInForce: () => currentMode === "calm",
   MotionProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 

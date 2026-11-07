@@ -35,6 +35,8 @@ import {
   type FieldState,
 } from "./recall-field";
 import { formatCalendarDate } from "@/components/ui/letter-date";
+import { useKeepInVisualViewport } from "@/components/ui/use-keep-in-visual-viewport";
+import { useCalmInForce } from "../motion";
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import type { Draft } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
@@ -110,6 +112,10 @@ export function RecallPager({
   const [focusRequest, setFocusRequest] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
   const checkboxRef = useRef<HTMLInputElement>(null);
+  // The field group (the field and its Next or submit control). It stays inside
+  // the visual viewport when the on-screen keyboard opens (spec 09 P9).
+  const answerRef = useRef<HTMLDivElement>(null);
+  useKeepInVisualViewport(answerRef, useCalmInForce());
   // Set by a submit on the last question. The next change to `invalid` answers
   // it: the pager jumps to the first invalid question in payload order (R11.10).
   const pendingCheck = useRef(false);
@@ -307,7 +313,12 @@ export function RecallPager({
               </p>
             )}
 
-            <div className={styles.answerRow} data-fit="answer">
+            <div
+              ref={answerRef}
+              className={styles.answerRow}
+              data-fit="answer"
+              data-primary-control=""
+            >
               <input
                 ref={inputRef}
                 id={inputId}
