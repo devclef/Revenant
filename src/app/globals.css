@@ -210,8 +210,8 @@ hr {
  * (>=24px, or >=18.66px bold) and UI components.
  *
  * Every text/number token is verified on BOTH background surfaces actually
- * used: --paper (#f4ecd8, PageShell + ParchmentSurface.paper) and --paper-deep
- * (#ece1c6, ParchmentSurface.deep). The worse of the two is what matters.
+ * used: --paper (#f4ecd8, PageShell and the paper panel) and --paper-deep
+ * (#ece1c6, the deep paper panel). The worse of the two is what matters.
  *
  *   TEXT TOKEN              USED FOR                 on --paper  on --paper-deep
  *   --ink      #1f1b16   body, headings, numbers      14.54:1      13.17:1   PASS

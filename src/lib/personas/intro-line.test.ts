@@ -118,10 +118,10 @@ describe("committed Persona_List intro_line and opening_event", () => {
     });
   });
 
-  it("keeps the us-maya letter ID unchanged", () => {
+  it("keeps the us-maya letter ID as it is in personas.json", () => {
     const maya = parsePersonaList(rawPersonaList).personas.find(
       (p) => p.key === "us-maya",
     );
-    expect(maya?.letter_id).toBe("Qbm5FLgjOC6vJiRAy5Wh0g");
+    expect(maya?.letter_id).toBe("ydsos6hcjdEUOs3sK42RQg");
   });
 });

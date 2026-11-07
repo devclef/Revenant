@@ -394,6 +394,12 @@ export function Reveal({
             className={`${styles.stage} ${styles.fade} ${styles.letterCol}`}
             data-letter-stage=""
           >
+            {/* The Caption_Block holds the Fingerprint: the Seal_Verdict and its
+                control (spec 09 L6.2, C6.4). It sits on the dark above the paper.
+                It shows the verified envelope hash from `Opened.envelopeHash`.
+                A persona letter gets the verdict and a closed disclosure; a live
+                or real letter gets the open block with the card sentence (R14.8).
+                A failed check never reaches the Reveal (R14.6). */}
             <LetterBlock
               opened={opened}
               personaName={personaName}
@@ -401,16 +407,12 @@ export function Reveal({
               letterId={letterId}
               still={jumpedToEnd}
               collapsible={stage >= 3 && isPhone}
-            />
-            {/* The opening Fingerprint sits under the Letter_Block, on the desk
-                surface, before "See the receipts" (design.md, R14.3). It shows
-                the verified envelope hash from `Opened.envelopeHash`. A persona
-                letter gets the verdict and a closed disclosure (spec 09 C6.4);
-                a live or real letter gets the open block with the card sentence
-                (R14.8). A failed check never reaches the Reveal (R14.6). */}
-            <Fingerprint
-              envelopeHash={opened.envelopeHash}
-              letterKind={letterKind}
+              caption={
+                <Fingerprint
+                  envelopeHash={opened.envelopeHash}
+                  letterKind={letterKind}
+                />
+              }
             />
           </div>
 

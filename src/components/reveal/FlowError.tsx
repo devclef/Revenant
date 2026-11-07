@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ParchmentSurface } from "@/components/ui";
+import paper from "@/components/ui/paper.module.css";
 import { DEMO_COPY } from "@/components/demo/copy";
 import { REVEAL_COPY } from "./copy";
 import { LIVE_COPY } from "@/components/live/copy";
@@ -77,7 +77,7 @@ export function FlowError({ kind, onRetry }: FlowErrorProps) {
   const canRetry = kind === "unreachable";
 
   return (
-    <ParchmentSurface as="section" className={styles.error}>
+    <section className={`${paper.paper} ${styles.error}`} data-paper="">
       <p>{MESSAGE[kind]}</p>
       {canRetry ? (
         <button type="button" className={styles.button} onClick={onRetry}>
@@ -87,6 +87,6 @@ export function FlowError({ kind, onRetry }: FlowErrorProps) {
       <p>
         <Link href="/demo">{DEMO_COPY.backToDemo}</Link>
       </p>
-    </ParchmentSurface>
+    </section>
   );
 }

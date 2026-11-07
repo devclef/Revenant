@@ -1,8 +1,7 @@
 // Feature: 08-judge-polish (spec task 3, R14.3, R14.6, R14.8)
 //
-// The opening Fingerprint block. It sits under the Letter_Block in the `letter`
-// Stage, on the desk surface (`--bg`), before "See the numbers" (design.md "The
-// opening Fingerprint block"). It gives the reader their own receipt that the
+// The opening Fingerprint block. It sits in the Caption_Block of the `letter`
+// Stage, on the desk surface (`--bg`), above the paper (spec 09 L6.2). It gives the reader their own receipt that the
 // sealed letter has not changed: the same 16 groups of 4 hex characters that
 // were printed on the letter card.
 //

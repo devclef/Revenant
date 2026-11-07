@@ -5,7 +5,7 @@
       "display_name": "Maya",
       "intro_line": "Maya, who works early shifts at a clinic, writes on a May Sunday about her commute, filling the tank and Saturday deliveries.",
       "region": "United States",
-      "letter_id": "Qbm5FLgjOC6vJiRAy5Wh0g",
+      "letter_id": "ydsos6hcjdEUOs3sK42RQg",
       "written_as_of": "2024-05-12",
       "opens_at": "2024-11-05T00:00:00.000Z",
       "metrics": [
@@ -55,6 +55,7 @@
   ],
   "retired_letter_ids": [
     "wom_GdH6gqP6AGgnyhIMgA",
-    "GNUIStxJIx6BBmZXHGHBnA"
+    "GNUIStxJIx6BBmZXHGHBnA",
+    "Qbm5FLgjOC6vJiRAy5Wh0g"
   ]
 }

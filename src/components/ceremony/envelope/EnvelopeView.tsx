@@ -46,7 +46,7 @@
 
 import type { ReactElement, ReactNode } from "react";
 
-import { ParchmentSurface } from "@/components/ui";
+import paper from "@/components/ui/paper.module.css";
 
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import {
@@ -203,14 +203,14 @@ export function EnvelopeView({
           ? emergingStatus(variant === "loading" ? "loading" : "verifying")
           : undefined;
       return (
-        <ParchmentSurface as="section" className={styles.envelopeStage}>
+        <section className={`${paper.paper} ${styles.envelopeStage}`} data-paper="">
           {frame("closed")}
           {statement === undefined ? null : (
             <p className={styles.statement} role="status">
               {statement}
             </p>
           )}
-        </ParchmentSurface>
+        </section>
       );
     }
 
@@ -224,7 +224,7 @@ export function EnvelopeView({
       // a live letter (no persona).
       const opensAt = persona?.opens_at ?? sealedOpensAt;
       return (
-        <ParchmentSurface as="section" className={styles.envelopeStage}>
+        <section className={`${paper.paper} ${styles.envelopeStage}`} data-paper="">
           {frame("closed")}
           {opensAt === undefined ? null : (
             <div className={styles.panel}>
@@ -235,7 +235,7 @@ export function EnvelopeView({
               />
             </div>
           )}
-        </ParchmentSurface>
+        </section>
       );
     }
 
@@ -243,10 +243,10 @@ export function EnvelopeView({
       // The key step (R17.2): the envelope stays closed and the children (the
       // passkey control, the key field and any notice) sit beneath it.
       return (
-        <ParchmentSurface as="section" className={styles.envelopeStage}>
+        <section className={`${paper.paper} ${styles.envelopeStage}`} data-paper="">
           {frame("closed")}
           {children}
-        </ParchmentSurface>
+        </section>
       );
 
     case "verified":
@@ -260,7 +260,7 @@ export function EnvelopeView({
       // so they flow normally inside the card — otherwise the absolute box has
       // no height and the text spills onto the dark background (S1a).
       return (
-        <ParchmentSurface as="section" className={styles.intactStage}>
+        <section className={`${paper.paper} ${styles.intactStage}`} data-paper="">
           <div className={held ? styles.intactFlow : styles.intactTop} data-block="intact">
             <p className={styles.statement} role="status">
               {REVEAL_COPY.sealIntact}
@@ -272,7 +272,7 @@ export function EnvelopeView({
             </PickUpGate>
           </div>
           {frame(envelopeState)}
-        </ParchmentSurface>
+        </section>
       );
   }
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { ParchmentSurface } from "@/components/ui";
+import paper from "@/components/ui/paper.module.css";
 import {
   browserTimeZone,
   formatLetterDate,
@@ -144,7 +144,7 @@ export function StillSealed({
         .replace("{minutes}", String(remaining.minutes));
 
   return (
-    <ParchmentSurface as="section" className={styles.sealed}>
+    <section className={`${paper.paper} ${styles.sealed}`} data-paper="">
       <h1>{REVEAL_COPY.sealedTitle}</h1>
       <p>{bodyText}</p>
       {atZero ? (
@@ -154,6 +154,6 @@ export function StillSealed({
       ) : (
         <p className={styles.remaining}>{remainingText}</p>
       )}
-    </ParchmentSurface>
+    </section>
   );
 }
