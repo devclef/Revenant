@@ -20,6 +20,8 @@ import { isRealDate } from "@/lib/figures";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
 import { checkRecallSubject } from "@/lib/recall";
 
+import { firstPoliticalTerm } from "./banned-terms";
+
 // --- Field schemas -----------------------------------------------------------
 
 // key: a URL segment. Lowercase alphanumerics in hyphen-separated groups, with
@@ -58,10 +60,31 @@ const letterPathSchema = z.string().regex(/^letters\/[a-z0-9-]+\.txt$/, {
   message: "letter_path must match letters/<name>.txt",
 });
 
+// intro_line: the one everyday line shown above the letter (spec 09 C1.1).
+// 1 to 160 characters, no digit, and no election or party term from the
+// spec 03 R1.10 list (banned-terms.ts).
+const introLineSchema = z
+  .string()
+  .min(1)
+  .max(160)
+  .refine((s) => !/\d/.test(s), {
+    message: "intro_line must not contain a digit",
+  })
+  .refine((s) => firstPoliticalTerm(s) === null, {
+    message: "intro_line must not contain an election or party term (R1.10)",
+  });
+
 const metricSchema = z.strictObject({
   metric_id: z.string().min(1),
   recall_subject: z.string().min(1),
 });
+
+// Official publishers an opening_event may cite. Each must publish the date
+// on the source_url it names (spec 09 C1.3).
+export const OPENING_EVENT_SOURCES = [
+  "European Parliament",
+  "U.S. National Archives",
+] as const;
 
 // opening_event: an optional public event the persona's opening date is
 // taken from (for example an election day). Only the plain date and its
@@ -71,7 +94,7 @@ const openingEventSchema = z.strictObject({
   date: z.string().refine(isRealDate, {
     message: "opening_event.date must be a real YYYY-MM-DD date",
   }),
-  source: z.literal("European Parliament"),
+  source: z.enum(OPENING_EVENT_SOURCES),
   source_url: z
     .string()
     .url()
@@ -88,6 +111,7 @@ const personaSchema = z.strictObject({
   written_as_of: writtenAsOfSchema,
   opens_at: opensAtSchema,
   metrics: z.array(metricSchema).min(1).max(20),
+  intro_line: introLineSchema,
   letter_path: letterPathSchema,
   opening_event: openingEventSchema.optional(),
 });

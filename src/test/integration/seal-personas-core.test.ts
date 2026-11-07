@@ -350,6 +350,7 @@ function personaArb(figures: GeneratedFigures): fc.Arbitrary<Persona> {
       return {
         key,
         display_name: "Generated Persona",
+        intro_line: "A short everyday line about the week ahead.",
         region: "United States",
         letter_id: letterIdFromSeed(seed),
         written_as_of,
