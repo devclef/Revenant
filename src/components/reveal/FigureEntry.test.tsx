@@ -149,7 +149,8 @@ describe("FigureEntry shows the figures in the display rescale (R11.10)", () => 
     const note = REVEAL_COPY.rescaledNote
       .replace("{toUnit}", "EUR per litre")
       .replace("{fromUnit}", "EUR per 1,000 litres");
-    expect(count(html, note)).toBe(2);
+    // Under the then row, under the now row, and on the change line (C8.4).
+    expect(count(html, note)).toBe(3);
   });
 });
 
@@ -199,5 +200,41 @@ describe("FigureEntry sits on the dark desk, never on paper (spec 07 R14.1)", ()
     const rule = ruleBody(".fig");
     expect(rule).toMatch(/color:\s*var\(--text\)/);
     expect(rule).not.toMatch(/--paper|--ink/);
+  });
+});
+
+describe("FigureEntry shows the change line in the rescaled unit (C8.4, eu-tomas)", () => {
+  // The eu-tomas case: the petrol figure is sealed per 1,000 litres and shown
+  // per litre. Then 1800.00, now 1900.00, both in the same series.
+  const rescale: DisplayRescale = { divisor: 1000, unit: "EUR per litre" };
+  const TOMAS_THEN: Readonly<FigureV1> = {
+    ...THEN,
+    value: "1800.00",
+    unit: "EUR per 1,000 litres",
+    region: "European Union",
+    period: "2024-05",
+  };
+  const TOMAS_NOW: Readonly<FigureV1> = {
+    ...TOMAS_THEN,
+    value: "1900.00",
+    period: "2026-05",
+  };
+
+  it("builds the formula from the per-litre inputs and shows the rescale note", () => {
+    const html = plain(
+      render({
+        then: TOMAS_THEN,
+        now: TOMAS_NOW,
+        change: comparable(TOMAS_THEN, TOMAS_NOW),
+        rescale,
+      }),
+    );
+    expect(html).toContain(`${REVEAL_COPY.formulaLabel}: (1.9 - 1.8) / 1.8 x 100`);
+    expect(html).not.toContain("(1900.00 - 1800.00)");
+    expect(html).toContain(
+      REVEAL_COPY.rescaledNote
+        .replace("{toUnit}", "EUR per litre")
+        .replace("{fromUnit}", "EUR per 1,000 litres"),
+    );
   });
 });

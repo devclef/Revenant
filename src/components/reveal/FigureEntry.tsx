@@ -4,6 +4,7 @@ import { formatPeriod, formatValue, rescaleForDisplay } from "@/lib/figures";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { NumberLine } from "@/components/ceremony/figures/NumberLine";
 import { ChangeLine } from "./ChangeLine";
+import { rescaledChangeInputs } from "./change-display";
 import { ReceiptCard } from "./ReceiptCard";
 import {
   receiptFigureOf,
@@ -110,7 +111,19 @@ export function FigureEntry({
             unit={unit}
           />
         }
-        change={<ChangeLine result={change} region={then.region} then={then} now={now} />}
+        change={
+          <ChangeLine
+            result={change}
+            region={then.region}
+            then={then}
+            now={now}
+            display={
+              rescale === undefined
+                ? undefined
+                : rescaledChangeInputs(then.value, now.value, rescale, then.unit)
+            }
+          />
+        }
         source={receiptSourceOf(then)}
       />
     </MotionProvider>
