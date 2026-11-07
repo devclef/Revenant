@@ -2,7 +2,8 @@
  * EnvelopeView styles (design.md "Envelope and seal", R8.7, R10.1, R9.5, R9.6).
  *
  * Only colour tokens from globals.css are used: --ink / --ink-soft for text,
- * --paper / --paper-deep for surfaces, --seal for the one label colour. There
+ * --paper / --paper-deep for surfaces, --accent for the one accent button.
+ * There
  * is no judgement colour anywhere -- no green/red, no directional semantics.
  * Every envelope, whatever a letter's figures did, is drawn the same way
  * (neutrality.md, R10.1).

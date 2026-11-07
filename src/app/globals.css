@@ -14,14 +14,10 @@
  *   --paper-deep #ece1c6  deeper parchment (reference surface)
  *   --ink        #1f1b16  body/headings/numbers -> 13.17:1 (AA, AAA)
  *   --ink-soft   #3a332a  secondary text         ->  9.58:1 (AA, AAA)
- *   --seal       #7a1f1a  wax-seal red on text    ->  7.92:1 (AA, AAA)
- *   --gold-text  #5a4414  muted gold for text     ->  7.11:1 (AA, AAA)
  *
- * --gold-leaf (#b08d2e, 2.41:1) and --ink-faded are DECORATIVE only (rules,
- * seals, faded-ink effect). They are never applied to body text or numbers,
- * so their lower contrast is acceptable. Up and down, good and bad, get the
- * same treatment -- no green/red or directional semantics anywhere
- * (neutrality.md).
+ * Links and the document focus ring use --ink (spec 09 L3; --accent is
+ * reserved for the WaxSeal). Up and down, good and bad, get the same
+ * treatment -- no green/red or directional semantics anywhere (neutrality.md).
  */
 
 :root {
@@ -33,13 +29,8 @@
   --ink: #1f1b16;
   --ink-soft: #3a332a;
 
-  /* Accents */
-  --seal: #7a1f1a; /* wax-seal red, AA on text */
-  --gold-text: #5a4414; /* muted gold, AA on text */
-  --gold-leaf: #b08d2e; /* decorative gold only */
-
-  /* Decorative "faded ink" -- never on body text or numbers */
-  --ink-faded: rgba(31, 27, 22, 0.55);
+  /* Links and the document focus ring use --ink (spec 09 L3); --accent is
+     reserved for the WaxSeal and does not pass text contrast on paper. */
 
   --measure: 68ch; /* comfortable reading width for generous negative space */
 }
@@ -61,8 +52,8 @@ body {
 }
 
 html {
-  /* The layout sets --font-serif / --font-sans via next/font/local on <html>;
-     these :root values above are only fallbacks before those resolve. */
+  /* The layout sets the serif and sans font variables via next/font/local on
+     <html>; these :root values above are only fallbacks before those resolve. */
   color: var(--ink);
   -webkit-text-size-adjust: 100%;
 }
@@ -123,9 +114,11 @@ p {
   max-width: var(--measure);
 }
 
-/* Links in wax-seal red; underlined so colour is never the only signal. */
+/* Links in --ink; the underline (never the only signal) carries the link, so
+   the colour need not differ. --accent is reserved for the WaxSeal and fails
+   text contrast on the paper surface (spec 09 L3). */
 a {
-  color: var(--seal);
+  color: var(--ink);
   text-decoration-line: underline;
   text-underline-offset: 0.15em;
   text-decoration-thickness: 1px;
@@ -137,7 +130,7 @@ a:focus-visible {
 }
 
 :focus-visible {
-  outline: 2px solid var(--seal);
+  outline: 2px solid var(--ink);
   outline-offset: 2px;
 }
 
@@ -159,7 +152,9 @@ strong {
 
 hr {
   border: none;
-  border-top: 1px solid var(--gold-leaf); /* decorative rule */
+  /* A faint decorative hairline on the paper, the ink at a low, decorative
+     alpha like the letter creases (spec 09 L3 retired the old gold rule). */
+  border-top: 1px solid rgba(31, 27, 22, 0.2);
   margin: 2.5rem 0;
 }
 
@@ -210,27 +205,25 @@ hr {
  * (>=24px, or >=18.66px bold) and UI components.
  *
  * Every text/number token is verified on BOTH background surfaces actually
- * used: --paper (#f4ecd8, PageShell + ParchmentSurface.paper) and --paper-deep
- * (#ece1c6, ParchmentSurface.deep). The worse of the two is what matters.
+ * used: --paper (#f4ecd8, the page surface) and --paper-deep (#ece1c6, the
+ * deeper surface). The worse of the two is what matters.
  *
  *   TEXT TOKEN              USED FOR                 on --paper  on --paper-deep
- *   --ink      #1f1b16   body, headings, numbers      14.54:1      13.17:1   PASS
+ *   --ink      #1f1b16   body, headings, numbers,     14.54:1      13.17:1   PASS
+ *                        links, focus ring
  *   --ink-soft #3a332a   tagline, secondary text      10.57:1       9.58:1   PASS
- *   --seal     #7a1f1a   links, accent text, focus     8.75:1       7.92:1   PASS
- *   --gold-text#5a4414   muted gold text (reserved)     7.85:1       7.11:1   PASS
  *
- * Lowest text ratio anywhere: 7.11:1 (--gold-text on --paper-deep) -- well
+ * Lowest text ratio anywhere: 9.58:1 (--ink-soft on --paper-deep) -- well
  * above the 4.5:1 normal-text floor, so all text/number pairs clear AA (and
  * AAA's 7:1) on either surface.
  *
  * UI COMPONENT / NON-TEXT
- *   focus-visible outline uses --seal (#7a1f1a): 8.75:1 on paper -- PASS (>=3:1).
- *   link underline is --seal and never the only signal (text is underlined).
+ *   focus-visible outline uses --ink (#1f1b16): 13.17:1 on paper -- PASS (>=3:1).
+ *   link colour is --ink and the underline is never the only signal.
  *
  * DECORATIVE ONLY -- not held to the text threshold, and never applied to
  * text or numbers:
- *   --gold-leaf #b08d2e  2.66:1 / 2.41:1   hairline rules, hr, seal rim
- *   --ink-faded rgba(31,27,22,.55)         faded-ink effect on decoration only
+ *   hr hairline  rgba(31,27,22,.2)        a faint rule on the paper
  *   paper-grain gradients (<=0.025 alpha)  texture, carries no information
  *
  * Neutrality: up/down, good/bad share one treatment; no green/red or
