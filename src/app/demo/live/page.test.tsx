@@ -45,7 +45,8 @@ describe("/demo/live page", () => {
     expect(html).toContain('data-rp-id="revenant.devclef.se"');
     // The trailing slash is dropped so the origin has no trailing slash.
     expect(html).toContain('data-app-origin="https://revenant.devclef.se"');
-    expect(html).toContain(LIVE_COPY.heading);
+    expect(html).toContain("data-live-stepper");
+    expect(html).toContain(LIVE_COPY.letterLabel);
     expect(html).not.toContain(LIVE_COPY.unavailable);
   });
 
