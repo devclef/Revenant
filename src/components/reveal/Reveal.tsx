@@ -23,6 +23,7 @@ import { answerText } from "@/components/ceremony/recall/answer-text";
 import { displayUnitFor } from "@/components/ceremony/recall/unit-ranges";
 import { useLocalView } from "@/components/ceremony/local-view";
 import { REVEAL_COPY } from "./copy";
+import { useViewportWidth } from "./viewport-width";
 import styles from "./reveal.module.css";
 
 /**
@@ -43,24 +44,6 @@ function usePhone(): boolean {
     return () => query.removeEventListener("change", update);
   }, []);
   return phone;
-}
-
-/**
- * The viewport width in CSS px, read after mount (spec 09 C5.1). Null on the
- * server and the first client render, so the seal placement starts in the
- * Content_Column and hydration never mismatches. The effect then follows
- * resizes, so the seal moves onto the Envelope at the Desktop_Sizes.
- */
-function useViewportWidth(): number | null {
-  const [width, setWidth] = useState<number | null>(null);
-  useEffect(() => {
-    if (typeof window === "undefined") return;
-    const update = () => setWidth(window.innerWidth);
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-  return width;
 }
 
 /**
