@@ -93,9 +93,11 @@
 
   /* Below 600 px the card is a solid paper surface (the letter paper, --paper),
      so its text is --ink set on the card itself, not the desk text. Computed
-     from the hex values (relative luminance) on --paper #f6ead4: --ink #1f1b16
-     14.38:1 and --ink-soft #3a332a 10.46:1, both above WCAG 2.2 AA 4.5:1. The "Before you read it" line is in .meta and uses --ink-soft,
-     which replaces the muted desk colour that failed on this surface. */
+     from the scene token hex values (relative luminance) on --paper #f6ead4:
+     --ink #1f1b16 14.38:1 and --ink-soft #4a4036 8.49:1, both above WCAG 2.2
+     AA 4.5:1. The "Before you read it" line is in .meta and uses --ink-soft,
+     which replaces the muted desk colour that failed on this surface. The
+     .source link is --ink here too, so it meets AA on the card. */
   .intro {
     padding: 0.75rem 0.875rem;
     border-radius: 4px;

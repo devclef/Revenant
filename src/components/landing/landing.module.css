@@ -101,12 +101,16 @@
    between the Hero_Sentence and the actions. The box keeps the same CLS
    reservation. Its height is 71vh less 380 px, which the Hero_Sentence bottom
    (about 353 to 358 px at these heights) fixes. Above 600 px nothing changes. */
+/* The phone box rule is `.hero .ghost`, not `.ghost`: the base `.ghost` rule
+   below sets 30svh (at most 190 px), and at equal specificity that later rule
+   wins. With the base height the actions sat at 591 px at 360x640, past the
+   fold (layout-check PH1). */
 @media (max-width: 599.98px) {
   .actions {
     order: 1;
   }
 
-  .ghost {
+  .hero .ghost {
     height: max(0px, calc(71vh - 380px));
   }
 }
