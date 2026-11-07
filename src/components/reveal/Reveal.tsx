@@ -20,6 +20,7 @@ import type { SealController } from "@/components/ceremony/seal/useSealBreak";
 import { IDLE } from "@/components/ceremony/seal/hold";
 import { RecordedScale } from "@/components/ceremony/recall/RecordedScale";
 import { answerText } from "@/components/ceremony/recall/answer-text";
+import { displayUnitFor } from "@/components/ceremony/recall/unit-ranges";
 import { useLocalView } from "@/components/ceremony/local-view";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
@@ -234,7 +235,9 @@ export function Reveal({
         ? unitByMetricId.get(question.metric_id)
         : undefined;
     const unitText =
-      unit === undefined ? undefined : REVEAL_COPY.unitLabel.replace("{unit}", unit);
+      unit === undefined
+        ? undefined
+        : REVEAL_COPY.unitLabel.replace("{unit}", displayUnitFor(unit));
     const hasNumber = answer !== undefined && answer.kind === "number";
     return (
       <div key={question.id} className={styles.marksRow}>

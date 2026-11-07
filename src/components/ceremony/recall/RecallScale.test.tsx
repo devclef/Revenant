@@ -197,7 +197,7 @@ describe("Property 9: values beyond the track sit at the ends and look the same"
 });
 
 describe("Property 10: the zoom reads nothing but the marker and the pointer", () => {
-  it("the props are only id, label, unit label, value, the judge's own answer text, no-answer, onEdit, and the read-only flags", () => {
+  it("the props are only id, label, unit label, value, the judge's own answer text, no-answer, onEdit, the read-only flags and the display-only rescale note (C8)", () => {
     expectTypeOf<keyof RecallScaleProps>().toEqualTypeOf<
       | "id"
       | "label"
@@ -208,6 +208,7 @@ describe("Property 10: the zoom reads nothing but the marker and the pointer", (
       | "onEdit"
       | "spokenPrefix"
       | "range"
+      | "note"
     >();
   });
 
@@ -389,26 +390,23 @@ describe("the track uses the sealed unit's range", () => {
     expect(markup).toContain(CEREMONY_COPY.recallLookCloser);
   });
 
-  it("EUR per 1,000 litres draws the linear 0 to 3,000 track with ticks every 500", () => {
+  it("EUR per litre draws the linear 0 to 3 track with ticks every 0.5", () => {
     const markup = render({
-      unitLabel: "EUR per 1,000 litres",
-      range: scaleRangeFor("EUR per 1,000 litres"),
-      value: 1710,
+      unitLabel: "EUR per litre",
+      range: scaleRangeFor("EUR per litre"),
+      value: 1.71,
     });
-    // The range's ticks are every 500 from 0 to 3,000 (checked here, not by
-    // the layout). At the 260 px minimum track tick-layout draws every second
-    // tick (spec 09 A10), so the drawn list is 0, 1,000, 2,000, 3,000.
-    const range = scaleRangeFor("EUR per 1,000 litres");
-    expect(range.ticks).toEqual([0, 500, 1000, 1500, 2000, 2500, 3000]);
-    expect(tickLabelsOf(markup)).toEqual(["0", "1,000", "2,000", "3,000"]);
+    const range = scaleRangeFor("EUR per litre");
+    expect(range.ticks).toEqual([0, 0.5, 1, 1.5, 2, 2.5, 3]);
     expect(markup).toContain("--pos-mark:0.57");
-    expect(readoutOf(markup)).toBe("1,710");
+    expect(readoutOf(markup)).toBe("1.71");
+    expect(tickLabelsOf(markup)).toEqual(["0", "0.5", "1", "1.5", "2", "2.5", "3"]);
   });
 
-  it("EUR per 1,000 litres draws all seven ticks on a wide track", () => {
-    const range = scaleRangeFor("EUR per 1,000 litres");
+  it("EUR per litre draws all seven ticks on a wide track", () => {
+    const range = scaleRangeFor("EUR per litre");
     const ticks = visibleTicks(range, 960, () => 40).map((tick) => tick.value);
-    expect(ticks).toEqual([0, 500, 1000, 1500, 2000, 2500, 3000]);
+    expect(ticks).toEqual([0, 0.5, 1, 1.5, 2, 2.5, 3]);
   });
 
   it("the fallback range draws its decade labels from visibleTicks and no tick labels", () => {

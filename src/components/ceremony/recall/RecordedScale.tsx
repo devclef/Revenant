@@ -4,8 +4,8 @@
 //
 // The component has no state and no handlers. It has no slider role, no
 // tabindex and no pointer or key handler, so Tab skips it, clicks do nothing and
-// the cursor stays the default (R6.1, R6.2, R6.4). The Unit_Helper_Line for the
-// euro-per-1,000-litres unit sits under the scale, linked by aria-describedby.
+// the cursor stays the default (R6.1, R6.2, R6.4). A rescale note (C8) for a
+// per-1,000-litres unit sits under the scale, linked by aria-describedby.
 
 import type { CSSProperties } from "react";
 
@@ -15,17 +15,21 @@ import styles from "./RecallScale.module.css";
 import { answerText } from "./answer-text";
 import { positionOfIn } from "./scale-math";
 import { visibleTicks } from "./tick-layout";
-import { scaleRangeFor, unitHelperFor } from "./unit-ranges";
+import {
+  displayUnitFor,
+  rescaleNoteFor,
+  scaleRangeFor,
+} from "./unit-ranges";
 
 /** The props `RecordedScale` reads. Nothing else reaches the component. */
 export type RecordedScaleProps = {
-  /** The question's id. Used to give the Unit_Helper_Line its element id. */
+  /** The question's id. Used to give the rescale note its element id. */
   id: string;
   /** The metric's display name, shown above the scale (spec 09 A9). */
   name: string;
   /** The question text, the start of the accessible name. */
   label: string;
-  /** The sealed unit string. It picks the range, the ticks and the helper line. */
+  /** The sealed unit string. It picks the displayed unit, the range and the note. */
   unitLabel: string;
   /**
    * The recorded answer as its canonical plain-decimal text, or null when no
@@ -46,10 +50,14 @@ function tickText(tick: number): string {
   return groupThousands(String(tick));
 }
 
-export function RecordedScale({ id, name, label, unitLabel, value }: RecordedScaleProps) {
+export function RecordedScale({ id, name, label, unitLabel: sealedUnit, value }: RecordedScaleProps) {
+  // The judge's answer is shown in the displayed unit (C8): the range, the unit
+  // and the note all come from the sealed unit string. The value is shown as
+  // recorded, with no conversion.
+  const unitLabel = displayUnitFor(sealedUnit);
   const range = scaleRangeFor(unitLabel);
-  const helper = unitHelperFor(unitLabel);
-  const helperId = `recall-${id}-unit-help`;
+  const note = rescaleNoteFor(sealedUnit);
+  const noteId = `recall-${id}-unit-help`;
 
   const recorded = value === null ? null : Number(value);
   const hasMark = recorded !== null && Number.isFinite(recorded);
@@ -69,7 +77,7 @@ export function RecordedScale({ id, name, label, unitLabel, value }: RecordedSca
       <div
         role="img"
         aria-label={`${label}: ${markText}`}
-        aria-describedby={helper === null ? undefined : helperId}
+        aria-describedby={note === null ? undefined : noteId}
         className={styles.recordedTrack}
         style={{ "--pos-mark": String(markPosition) } as CSSProperties}
       >
@@ -103,9 +111,9 @@ export function RecordedScale({ id, name, label, unitLabel, value }: RecordedSca
         </div>
       </div>
 
-      {helper === null ? null : (
-        <p id={helperId} className={`${styles.unitHelp} ${styles.recordedHelp}`}>
-          {helper}
+      {note === null ? null : (
+        <p id={noteId} className={`${styles.unitHelp} ${styles.recordedHelp}`}>
+          {note}
         </p>
       )}
     </div>

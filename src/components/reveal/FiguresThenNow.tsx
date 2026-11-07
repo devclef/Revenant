@@ -1,7 +1,6 @@
 import type { FigureV1, MetricDefinitionV1 } from "@/lib/seal-format";
 import type { DisplayRescale } from "@/lib/figures";
-import { computeChange, isFixtureFigure, rescaleForDisplay } from "@/lib/figures";
-import { DEMO_FIGURES } from "@/lib/figures/demo";
+import { computeChange, displayRescaleForUnit, isFixtureFigure } from "@/lib/figures";
 import { pickNow } from "@/lib/figures/now";
 import type { FiguresState } from "./figures-api";
 import type { Opened } from "./opening-machine";
@@ -13,6 +12,20 @@ import { ReceiptCard } from "./ReceiptCard";
 import { REVEAL_COPY } from "./copy";
 import { nowMessageFor } from "./now-message";
 import styles from "./reveal.module.css";
+
+/**
+ * The display rescale for a sealed unit (C8): read from the unit string alone,
+ * so a letter still shows it whatever the Catalogue holds. Undefined when the
+ * unit is shown as sealed.
+ */
+function rescaleFor(sealedUnit: string): Readonly<DisplayRescale> | undefined {
+  const display = displayRescaleForUnit(sealedUnit);
+  if (display === null) return undefined;
+  return {
+    divisor: display.divisor as DisplayRescale["divisor"],
+    unit: display.displayUnit,
+  };
+}
 
 /**
  * Stage 3 of the reveal (design.md "Reveal", R11-R13): the sealed figures then
@@ -45,10 +58,10 @@ import styles from "./reveal.module.css";
  * - The Mark for a metric is the judge's answer to its number question in the
  *   stored record (`record`, optional). No record, or "No answer", draws no Mark.
  *
- * The display rescale (if any) comes from the series as loaded in
- * `DEMO_FIGURES` and is passed to each {@link receiptFigureOf}; it is display-only
- * and never changes a stored value (R11.10). The sealed "then" figure uses the
- * same series rescale so then and now read in the same unit.
+ * The display rescale comes from the sealed unit string (`displayRescaleForUnit`,
+ * C8) and is passed to each {@link receiptFigureOf}; it is display-only and never
+ * changes a stored value (R11.10). The sealed "then" figure uses the same rescale
+ * so then and now read in the same unit.
  *
  * {@link FixtureNote} is rendered once at the top when any shown figure is a
  * fixture (`isFixtureFigure`, R13.5). The per-figure "fixture data" label is
@@ -57,7 +70,7 @@ import styles from "./reveal.module.css";
  * Every string comes from copy.ts; no letter text or figure value is an
  * authored literal (R15.1). This component reads no clock, holds no state, logs
  * nothing and makes no network request. The Now_Figures come from the `figures`
- * prop. `DEMO_FIGURES` is a frozen import, used only for the display rescale.
+ * prop. The display rescale is read from each sealed unit string (C8).
  */
 
 export type FiguresThenNowProps = {
@@ -188,8 +201,9 @@ export function FiguresThenNow({
     if (metric === undefined) return;
     const name = metric.display_name;
 
-    const series = DEMO_FIGURES.series.get(then.metric_id);
-    const rescale = series?.display_rescale;
+    // The display rescale comes from the sealed unit string (C8.2), so it holds
+    // whatever the Catalogue carries.
+    const rescale = rescaleFor(then.unit);
 
     const lookup = nowLookup(then, metric, figures);
     const now = lookup.found ? lookup.figure : undefined;
@@ -217,10 +231,9 @@ export function FiguresThenNow({
       rescale,
       change,
       markValue,
-      answerValue:
-        markValue === undefined || rescale === undefined
-          ? markValue
-          : rescaleForDisplay(markValue, rescale.divisor),
+      // The typed answer is stored per litre already (C8.3), so it is shown as
+      // typed. Only the unit changes.
+      answerValue: markValue,
       answerUnit: rescale === undefined ? then.unit : rescale.unit,
     });
   });

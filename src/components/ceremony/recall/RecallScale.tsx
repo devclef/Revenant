@@ -61,6 +61,8 @@ export type RecallScaleProps = {
   label: string;
   /** The unit label shown beside the readout, for example "USD per gallon". */
   unitLabel: string;
+  /** The rescale note under the scale, when the displayed unit is rescaled (C8). */
+  note?: string;
   /**
    * The track range for the sealed unit (`scaleRangeFor(unit)`). The track, the
    * tick labels and the Mark all use this one range.
@@ -293,6 +295,7 @@ export function RecallScale({
   id,
   label,
   unitLabel,
+  note,
   range,
   value,
   text,
@@ -518,6 +521,10 @@ export function RecallScale({
           <span className={styles.endStart}>{toPlainDecimalIn(win.min, range)}</span>
           <span className={styles.endEnd}>{toPlainDecimalIn(win.max, range)}</span>
         </div>
+      )}
+
+      {note === undefined ? null : (
+        <p className={styles.unitHelp}>{note}</p>
       )}
 
       {canLookCloser ? (

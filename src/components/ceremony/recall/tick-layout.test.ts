@@ -43,10 +43,10 @@ describe("visibleTicks — examples", () => {
   });
 
   it("drops inner ticks on a narrow track and keeps the first and last", () => {
-    const ticks = visibleTicks(UNIT_RANGE_TABLE["EUR per 1,000 litres"], 90, () => 30);
+    const ticks = visibleTicks(UNIT_RANGE_TABLE["EUR per litre"], 90, () => 30);
     const values = ticks.map((t) => t.value);
     expect(values[0]).toBe(0);
-    expect(values[values.length - 1]).toBe(3000);
+    expect(values[values.length - 1]).toBe(3);
     expect(values.length).toBeLessThan(7);
   });
 
@@ -62,23 +62,23 @@ describe("visibleTicks — examples", () => {
     expect(ticks[0].anchor).toBe("start");
   });
 
-  it("draws every second EUR tick at the 260 px track: 0, 1,000, 2,000, 3,000 (A10.3)", () => {
-    const ticks = visibleTicks(UNIT_RANGE_TABLE["EUR per 1,000 litres"], TRACK_MIN_PX, estimate);
-    expect(ticks.map((t) => t.value)).toEqual([0, 1000, 2000, 3000]);
+  it("keeps all seven EUR per litre ticks at the 260 px track, since their labels fit (A10.3)", () => {
+    const ticks = visibleTicks(UNIT_RANGE_TABLE["EUR per litre"], TRACK_MIN_PX, estimate);
+    expect(ticks.map((t) => t.value)).toEqual([0, 0.5, 1, 1.5, 2, 2.5, 3]);
     expect(ticks[0].anchor).toBe("start");
     expect(ticks[ticks.length - 1].anchor).toBe("end");
   });
 
-  it("keeps all seven EUR ticks when they fit at the wide track", () => {
-    const ticks = visibleTicks(UNIT_RANGE_TABLE["EUR per 1,000 litres"], 960, estimate);
-    expect(ticks.map((t) => t.value)).toEqual([0, 500, 1000, 1500, 2000, 2500, 3000]);
+  it("keeps all seven EUR per litre ticks on a wide track", () => {
+    const ticks = visibleTicks(UNIT_RANGE_TABLE["EUR per litre"], 960, estimate);
+    expect(ticks.map((t) => t.value)).toEqual([0, 0.5, 1, 1.5, 2, 2.5, 3]);
   });
 });
 
 describe("Property 14: tick labels never overlap", () => {
   const RANGES: readonly ScaleRange[] = [
     UNIT_RANGE_TABLE["USD per gallon"],
-    UNIT_RANGE_TABLE["EUR per 1,000 litres"],
+    UNIT_RANGE_TABLE["EUR per litre"],
     FALLBACK_RANGE,
   ];
 

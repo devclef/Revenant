@@ -7,7 +7,6 @@ import { FigureRow } from "./ReceiptCard";
 import { receiptFigureOf, type LetterKind } from "./FigureLine";
 import { RecallScale } from "@/components/ceremony/recall/RecallScale";
 import { scaleRangeFor } from "@/components/ceremony/recall/unit-ranges";
-import { CEREMONY_COPY } from "@/components/ceremony/copy";
 import { RecallPager, type RecallPagerProps } from "@/components/ceremony/recall/RecallPager";
 import { REVEAL_COPY } from "./copy";
 import type { Opened } from "./opening-machine";
@@ -187,25 +186,25 @@ describe("EU persona figure label (stage 3)", () => {
 });
 
 describe("EU persona recall scale (recall step)", () => {
-  it("draws the 0 to 3,000 scale for the EUR per 1,000 litres unit", () => {
+  it("draws the 0 to 3 scale in EUR per litre for the sealed per-1,000-litres unit", () => {
     const html = renderToStaticMarkup(
       createElement(RecallScale, {
         id: "q-petrol",
         label: "What do you think a litre of unleaded petrol cost then?",
-        unitLabel: "EUR per 1,000 litres",
-        range: scaleRangeFor("EUR per 1,000 litres"),
+        unitLabel: "EUR per litre",
+        range: scaleRangeFor("EUR per litre"),
         value: null,
         noAnswer: false,
         onEdit: () => {},
       }),
     );
-    expect(html).toContain("3,000");
+    expect(html).toContain(">3<");
     expect(html).toContain(">0<");
   });
 });
 
-describe("EU persona recall question (Unit_Helper_Line)", () => {
-  it("shows the Unit_Helper_Line under the EUR per 1,000 litres question", () => {
+describe("EU persona recall question (C8 rescale note)", () => {
+  it("shows the displayed unit and the rescale note under the question", () => {
     const props: RecallPagerProps = {
       payload: {
         metrics: [
@@ -213,7 +212,7 @@ describe("EU persona recall question (Unit_Helper_Line)", () => {
         ],
         recall_questions: [PAYLOAD.recall_questions[0]],
       },
-      drafts: { "q-petrol": { text: "1200", noAnswer: false } },
+      drafts: { "q-petrol": { text: "1.2", noAnswer: false } },
       invalid: [],
       submitting: false,
       onEdit: () => undefined,
@@ -221,7 +220,8 @@ describe("EU persona recall question (Unit_Helper_Line)", () => {
       onSubmit: () => undefined,
     };
     const html = renderToStaticMarkup(createElement(RecallPager, props));
-    expect(html).toContain(CEREMONY_COPY.unitHelperEurPer1000L);
+    expect(html).toContain("EUR per litre");
+    expect(html).toContain("Published per 1,000 litres, shown per litre.");
     expect(html).toMatch(/aria-describedby="[^"]*recall-q-petrol-unit-help/);
   });
 });

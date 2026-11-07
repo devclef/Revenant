@@ -5,6 +5,7 @@ import type { RecallRecordV1 } from "@/lib/recall";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
 import { answerText } from "@/components/ceremony/recall/answer-text";
+import { displayUnitFor } from "@/components/ceremony/recall/unit-ranges";
 
 /**
  * Stage 1 of the reveal (R9.2, R9.3): what the judge just remembered. For each
@@ -68,7 +69,7 @@ export function RememberedAnswers({ opened, record }: RememberedAnswersProps) {
           const unitText =
             unit === undefined
               ? undefined
-              : REVEAL_COPY.unitLabel.replace("{unit}", unit);
+              : REVEAL_COPY.unitLabel.replace("{unit}", displayUnitFor(unit));
 
           return (
             <div key={question.id} className={styles.rememberedItem}>

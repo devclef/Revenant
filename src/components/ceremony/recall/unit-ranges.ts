@@ -1,13 +1,18 @@
-// The fixed Recall_Scale ranges per sealed unit, and the Unit_Helper_Line
-// (spec 08 design.md, "The Unit_Range_Table" and R7).
+// The fixed Recall_Scale ranges per display unit (spec 08 design.md, "The
+// Unit_Range_Table"; spec 09 C8, option b).
+//
+// The table is keyed by the unit the judge sees. A sealed unit whose display is
+// rescaled (`EUR per 1,000 litres`, shown as `EUR per litre`) is resolved with
+// `displayUnitFor` first, so the range, the ticks and the typed answer all use
+// the displayed unit. The stored answer is never converted.
 //
 // These are literals. They are not computed from any figure, so the scale never
 // depends on a Now_Figure, a Catalogue value or an answer. Lookup is exact: no
 // trimming and no case folding.
 //
-// Pure module: no DOM, clock or randomness. It imports only copy strings.
+// Pure module: no DOM, clock or randomness.
 
-import { CEREMONY_COPY } from "../copy";
+import { displayRescaleForUnit } from "@/lib/figures/rescale";
 
 /** The track range for one unit. Both shipped ranges are linear. */
 export type ScaleRange = {
@@ -26,7 +31,7 @@ export const FALLBACK_RANGE: ScaleRange = {
   ticks: [0.01, 0.1, 1, 10, 100, 1000, 10000, 100000],
 };
 
-/** Approved ranges (R7.10). Exactly these two keys: no Sweden unit is listed (R7.1, R23.1). */
+/** Approved ranges, keyed by the displayed unit. Exactly these two keys. */
 export const UNIT_RANGE_TABLE: Readonly<Record<string, ScaleRange>> = {
   "USD per gallon": {
     min: 0,
@@ -34,16 +39,16 @@ export const UNIT_RANGE_TABLE: Readonly<Record<string, ScaleRange>> = {
     scale: "linear",
     ticks: [0, 2, 4, 6, 8, 10],
   },
-  "EUR per 1,000 litres": {
+  "EUR per litre": {
     min: 0,
-    max: 3000,
+    max: 3,
     scale: "linear",
-    ticks: [0, 500, 1000, 1500, 2000, 2500, 3000],
+    ticks: [0, 0.5, 1, 1.5, 2, 2.5, 3],
   },
 };
 
 /**
- * The range for a sealed unit string. Only an exact own key of
+ * The range for a displayed unit string. Only an exact own key of
  * UNIT_RANGE_TABLE returns its entry; every other string gets FALLBACK_RANGE
  * (R7.3, R7.4, R7.5).
  */
@@ -53,13 +58,19 @@ export function scaleRangeFor(unit: string): ScaleRange {
     : FALLBACK_RANGE;
 }
 
-/** The one unit that shows the Unit_Helper_Line (R7.8). */
-export const UNIT_HELPER_UNIT = "EUR per 1,000 litres";
+/**
+ * The unit the judge sees for a sealed unit string. A unit with a display
+ * rescale (C8) shows its display unit; every other unit shows itself. It reads
+ * only the sealed unit string.
+ */
+export function displayUnitFor(sealedUnit: string): string {
+  return displayRescaleForUnit(sealedUnit)?.displayUnit ?? sealedUnit;
+}
 
 /**
- * The Unit_Helper_Line for a sealed unit, or null. It compares the unit string
- * with one constant and reads nothing else (R7.9).
+ * The rescale note shown beside each figure value of a sealed unit, or null
+ * when the unit is shown as sealed.
  */
-export function unitHelperFor(unit: string): string | null {
-  return unit === UNIT_HELPER_UNIT ? CEREMONY_COPY.unitHelperEurPer1000L : null;
+export function rescaleNoteFor(sealedUnit: string): string | null {
+  return displayRescaleForUnit(sealedUnit)?.note ?? null;
 }
