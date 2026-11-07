@@ -116,7 +116,7 @@ describe("Property 23, example checks: the R24.3 table matches exactly", () => {
 
   it("holds the close line, close link, close note and restart", () => {
     expect(CEREMONY_COPY.closeLine).toBe(
-      "The space between the two is yours to read.",
+      "Your testimony sits beside the record. What lies between them is yours to read.",
     );
     expect(CEREMONY_COPY.closeLink).toBe(
       "Seal your own. It opens 30 seconds after you seal it.",

@@ -232,7 +232,9 @@ describe("CEREMONY_COPY tone and neutrality", () => {
 
   // Property 23 (spec 07 task 6): the Close strings, exact and checked.
   it("gives the Close strings their exact text (Property 23)", () => {
-    expect(CEREMONY_COPY.closeLine).toBe("The space between the two is yours to read.");
+    expect(CEREMONY_COPY.closeLine).toBe(
+      "Your testimony sits beside the record. What lies between them is yours to read.",
+    );
     expect(CEREMONY_COPY.closeLink).toBe("Seal your own. It opens 30 seconds after you seal it.");
     expect(CEREMONY_COPY.closeNote).toBe(
       "That is the whole letter. Nothing has been added to what you remembered, what was written, or the record.",
@@ -277,5 +279,25 @@ describe("spec 09 Step_Indicator and recall copy (C2, design.md Copy)", () => {
   it("gives the recall live line its ritual wording", () => {
     expect(CEREMONY_COPY.stageLive.recall).toBe("Testify. Say what you remember.");
     expect(CEREMONY_COPY.stageLive.recall).not.toContain("Tell us how");
+  });
+});
+
+// Feature: 09-demo-polish, task 17 (C4.2, C7.1, F5.1): the Skip_Link and close strings.
+describe("spec 09 Skip_Link and close copy (C4.2, C7.1, F5.1)", () => {
+  it("gives the Skip_Link its exact text (C4.2)", () => {
+    expect(CEREMONY_COPY.skipToReceipts).toBe("Skip to the receipts");
+  });
+
+  it("names the testimony and the record in the close line, and leaves the meaning to the reader (F5.1)", () => {
+    expect(CEREMONY_COPY.closeLine).toMatch(/testimony/);
+    expect(CEREMONY_COPY.closeLine).toMatch(/record/);
+    expect(CEREMONY_COPY.closeLine).toMatch(/yours to read\.$/);
+  });
+
+  it("keeps the close line free of judgement, direction and scoring words (F5.2)", () => {
+    expect(CEREMONY_COPY.closeLine).not.toContain("!");
+    expect(CEREMONY_COPY.closeLine).not.toMatch(
+      /\b(accuracy|score|off by|close|right|wrong|better|worse|rose|fell|rise|fall|up|down|more|less|higher|lower|increase|decrease|gain|loss|soar|drop|cheaper|dearer)\b/i,
+    );
   });
 });

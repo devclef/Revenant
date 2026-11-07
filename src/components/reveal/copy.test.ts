@@ -219,3 +219,38 @@ describe("spec 09 ritual copy (C2, F4, design.md Copy)", () => {
     expect(all).not.toContain("tell us how you remember");
   });
 });
+
+// Feature: 09-demo-polish, task 17 (C6.1-C6.4, C4.2): exact text of the
+// persona disclosure, seal verdict and Fingerprint strings.
+describe("spec 09 persona disclosure, verdict and Fingerprint copy (C6, C4.2)", () => {
+  it("gives the persona disclosure line its exact text (C6.1)", () => {
+    expect(REVEAL_COPY.letterDisclosure).toBe(
+      "{name} is fictional. This letter was written as of {writtenAsOf}.",
+    );
+  });
+
+  it("gives the seal line its exact text (C6.3)", () => {
+    expect(REVEAL_COPY.sealedForThisDemo).toBe("Sealed for this demo on {sealedAt}");
+  });
+
+  it("gives the seal verdict and the closed Fingerprint strings their exact text (C6.4)", () => {
+    expect(REVEAL_COPY.sealVerdict).toBe("The seal is intact. This is exactly the text that was sealed.");
+    expect(REVEAL_COPY.letterDisclosureSummary).toBe("Read the letter again");
+    expect(REVEAL_COPY.fingerprintShow).toBe("Show the fingerprint");
+    expect(REVEAL_COPY.fingerprintHowLink).toBe("How the seal is checked");
+  });
+
+  it("keeps the new disclosure and verdict strings free of judgement and scoring words", () => {
+    const strings = [
+      REVEAL_COPY.letterDisclosure,
+      REVEAL_COPY.sealedForThisDemo,
+      REVEAL_COPY.sealVerdict,
+      REVEAL_COPY.fingerprintShow,
+      REVEAL_COPY.fingerprintHowLink,
+    ];
+    for (const s of strings) {
+      expect(s).not.toContain("!");
+      expect(s).not.toMatch(/\b(accuracy|score|off by|close|right|wrong|better|worse|rose|fell|up|down)\b/i);
+    }
+  });
+});

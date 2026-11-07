@@ -14,7 +14,6 @@
 // Every link is at least 44 px tall and keyboard reachable with a focus ring
 // (R15.4, R19.6).
 
-import { ParchmentSurface } from "@/components/ui";
 import { LiveLockNote } from "@/components/live/LiveLockNote";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
 
@@ -43,7 +42,7 @@ export function Close(props: CloseProps) {
   }
 
   return (
-    <ParchmentSurface className={styles.close}>
+    <section className={styles.close}>
       <h2 className={styles.heading} data-close-line="">{CEREMONY_COPY.closeLine}</h2>
       {props.demo2On ? (
         <a className={styles.cta} href={DEMO_2_HREF}>
@@ -56,6 +55,6 @@ export function Close(props: CloseProps) {
       <a className={styles.quietLink} href={startOverHref(props.personaKey)}>
         {CEREMONY_COPY.startOver}
       </a>
-    </ParchmentSurface>
+    </section>
   );
 }

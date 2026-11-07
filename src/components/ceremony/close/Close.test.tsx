@@ -30,7 +30,7 @@ describe("Close, persona kind", () => {
     expect(html).toMatch(/<h2[^>]*>/);
     expect(html).toContain(CEREMONY_COPY.closeLine);
     expect(CEREMONY_COPY.closeLine).toBe(
-      "The space between the two is yours to read.",
+      "Your testimony sits beside the record. What lies between them is yours to read.",
     );
   });
 

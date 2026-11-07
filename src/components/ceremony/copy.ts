@@ -198,8 +198,11 @@ export const CEREMONY_COPY = {
   stepAnnounce: "Step {n} of {total}: {label}",
 
   // --- Close (spec 07 task 6, design.md "Close") ---
-  /** The persona close's heading. */
-  closeLine: "The space between the two is yours to read.",
+  /**
+   * The persona close's heading (spec 09 C7.1, F5.1). It names the reader's
+   * testimony and the record, and leaves what lies between them to the reader.
+   */
+  closeLine: "Your testimony sits beside the record. What lies between them is yours to read.",
   /** The Accent link to /demo/live, shown only while Demo_2_On is true. */
   closeLink: "Seal your own. It opens 30 seconds after you seal it.",
   /** The smaller note under the link. */

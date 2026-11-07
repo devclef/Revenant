@@ -1,9 +1,10 @@
 /*
- * The persona Close (Close.tsx). A paper panel that sets its own ink, so its
- * text never inherits the desk's cream colour. The Demo_2_On link is a filled
- * Accent button with the Accent's own ink (--on-accent): orange text on paper
- * is about 2.3:1 and fails AA, while this pair is about 7.4:1. Orange marks
- * "you", which fits a button (tone.md).
+ * The persona Close (Close.tsx). A paper panel that sets its own paper and ink
+ * tokens, so its text never inherits the desk's light colour. The Demo_2_On
+ * link is a filled Accent button with the Accent's own ink (--on-accent): orange
+ * text on paper is about 2.3:1 and fails AA, while this pair is about 7.4:1.
+ * Orange marks "you", which fits a button (tone.md). The paper is set here with
+ * plain tokens, not a shared wrapper (spec 09 L3.1, L4.1).
  */
 
 .close {
@@ -16,6 +17,9 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 1rem;
+  background-color: var(--paper);
+  border: 1px solid var(--ink-soft);
+  border-radius: 4px;
   color: var(--ink);
 }
 
