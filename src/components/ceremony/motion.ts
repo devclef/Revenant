@@ -290,3 +290,13 @@ export function useMotion(): MotionContextValue {
   }
   return value;
 }
+
+/**
+ * Whether Calm (reduced motion or the judge's Calm control) is in force. Unlike
+ * `useMotion`, it does not throw outside a `MotionProvider`: a component that
+ * can render alone, such as the Recall_Pager under test, reads it as not calm.
+ */
+export function useCalmInForce(): boolean {
+  const value = useContext(MotionContext);
+  return value !== null && value.mode === "calm";
+}

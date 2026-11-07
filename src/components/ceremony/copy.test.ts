@@ -261,3 +261,21 @@ describe("CEREMONY_COPY has no tilt strings (no device-motion code exists)", () 
     expect("tiltPermissionNote" in CEREMONY_COPY).toBe(false);
   });
 });
+
+describe("spec 09 Step_Indicator and recall copy (C2, design.md Copy)", () => {
+  it("gives the four steps in order, with the step label and announce line", () => {
+    expect(CEREMONY_COPY.stepsLabel).toBe("Your progress");
+    expect([...CEREMONY_COPY.steps]).toEqual([
+      "Testify",
+      "Break the seal",
+      "Read",
+      "See the receipts",
+    ]);
+    expect(CEREMONY_COPY.stepAnnounce).toBe("Step {n} of {total}: {label}");
+  });
+
+  it("gives the recall live line its ritual wording", () => {
+    expect(CEREMONY_COPY.stageLive.recall).toBe("Testify. Say what you remember.");
+    expect(CEREMONY_COPY.stageLive.recall).not.toContain("Tell us how");
+  });
+});

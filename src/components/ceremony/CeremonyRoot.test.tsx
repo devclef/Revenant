@@ -83,6 +83,7 @@ function setMotionMode(mode: "full" | "light" | "calm"): void {
 
 vi.mock("./motion", () => ({
   useMotion: () => ({ mode: currentMode, setCalm }),
+  useCalmInForce: () => currentMode === "calm",
   MotionProvider: ({ children }: { children: React.ReactNode }) => children,
 }));
 
@@ -598,5 +599,55 @@ describe("CeremonyRoot focus rule (spec 08, focusTargetFor table)", () => {
     expect(css).toContain(
       "scroll-margin-top: calc(var(--topbar-clear) + 0.75rem)",
     );
+  });
+});
+
+// --- Step_Indicator and the step announcement (spec 09 C2.1, C2.3) ----------
+
+describe("CeremonyRoot persona Step_Indicator", () => {
+  const LETTER_STATE: FlowState = {
+    tag: "reveal",
+    opened: OPENED,
+    record: RECORD,
+    stage: 2,
+  };
+
+  it("announces the step, not the Stage line, on the letter stage (persona mode)", () => {
+    const html = render(LETTER_STATE, "persona");
+    expect(html).toContain(esc("Step 3 of 4: Read"));
+    expect(html).not.toContain(esc(CEREMONY_COPY.stageLive.letter));
+  });
+
+  it("announces Step 2 of 4 on the marks stage (stage 1 reveal)", () => {
+    const html = render(
+      { tag: "reveal", opened: OPENED, record: RECORD, stage: 1 },
+      "persona",
+    );
+    expect(html).toContain(esc("Step 2 of 4: Break the seal"));
+  });
+
+  it("announces Step 4 of 4 on the close stage (stage 3 reveal)", () => {
+    const html = render(
+      { tag: "reveal", opened: OPENED, record: RECORD, stage: 3 },
+      "persona",
+    );
+    expect(html).toContain(esc("Step 4 of 4: See the receipts"));
+  });
+
+  it("keeps the Stage line in live mode, with no Step_Indicator", () => {
+    const html = render(LETTER_STATE, "live");
+    expect(html).toContain(esc(CEREMONY_COPY.stageLive.letter));
+    expect(html).not.toContain("data-step-indicator");
+  });
+
+  it("renders the Step_Indicator from intact on, with the current step marked", () => {
+    const html = render(LETTER_STATE, "persona");
+    expect(html).toContain("data-step-indicator");
+    expect(html).toContain('aria-current="step"');
+  });
+
+  it("renders no Step_Indicator while loading (before intact)", () => {
+    const html = render({ tag: "loading" }, "persona");
+    expect(html).not.toContain("data-step-indicator");
   });
 });

@@ -200,3 +200,22 @@ describe("REVEAL_COPY claims with code behind them", () => {
     expect(REVEAL_COPY.fingerprintPassedCard).not.toMatch(/matches/i);
   });
 });
+
+describe("spec 09 ritual copy (C2, F4, design.md Copy)", () => {
+  it("names the reveal stages and the recall intro with the ritual words", () => {
+    expect(REVEAL_COPY.stage1Title).toBe("Your testimony");
+    expect(REVEAL_COPY.stage2Next).toBe("See the receipts");
+    expect(REVEAL_COPY.stage3Title).toBe("The receipts");
+    expect(REVEAL_COPY.recallIntro).toBe(
+      "This letter was written as of {date}. Before you read it, testify: say what you remember about that time.",
+    );
+  });
+
+  it("keeps the retired ritual names out of the reveal copy", () => {
+    const all = JSON.stringify(REVEAL_COPY);
+    expect(all).not.toContain("What you remembered");
+    expect(all).not.toContain("See the numbers");
+    expect(all).not.toContain("The numbers, then and now");
+    expect(all).not.toContain("tell us how you remember");
+  });
+});

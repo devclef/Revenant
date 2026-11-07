@@ -308,14 +308,16 @@ describe("Hero after the First_Step and the narrow handed lift (spec 08, R8)", (
     expect(scene).toContain(`- 6rem - ${C.NARROW_HANDED_LIFT_VH}vh);`);
   });
 
-  it("keeps the Hero after-size strictly smaller than the before-sizes at every 10 px from 320 to 2560 (R8.1)", () => {
+  it("keeps the Hero after-size strictly smaller than the before-sizes at every 10 px from 600 to 2560 (R8.1)", () => {
     // The before-sizes are the rules the stages use in CSS. Narrow stages share
     // the base rule; wide emerging uses the base wide rule, and wide intact its own.
+    // Below 600 px the Hero is hidden after the First_Step (spec 09 P4.2), so the
+    // size check starts at PHONE_BELOW_PX; the phone hide rule is tested below.
     expect(scene).toContain("font-size: clamp(2rem, 6.6vw, 3rem);");
     expect(scene).toContain("font-size: clamp(2.35rem, 6vw, 5.4rem);");
     expect(scene).toContain("font-size: clamp(2.5rem, 4.4vw, 3.5rem);");
 
-    for (let w = 320; w <= 2560; w += 10) {
+    for (let w = C.PHONE_BELOW_PX; w <= 2560; w += 10) {
       const narrow = w < C.SCENE_BREAKPOINT_PX;
       const after = narrow ? clampPx(C.HERO_AFTER_NARROW, w) : clampPx(C.HERO_AFTER_WIDE, w);
       const before = narrow
@@ -325,6 +327,17 @@ describe("Hero after the First_Step and the narrow handed lift (spec 08, R8)", (
         expect(after, `Hero after-size at ${w} px must be below ${b} px (R8.1)`).toBeLessThan(b);
       }
     }
+  });
+
+  it("hides the Hero visually, not with display none, below 600 px after the First_Step (spec 09 P4.2)", () => {
+    const rules = [
+      ...scene.matchAll(/\.personaColumn:has\(> :is\(\[data-ceremony="recall"\][^{]*\) \.headline \{([^}]*)\}/g),
+    ].map((match) => match[1] ?? "");
+    const phone = rules.find((rule) => rule.includes("clip-path")) ?? "";
+    expect(phone).not.toBe("");
+    expect(phone).toMatch(/clip-path: inset\(50%\)/);
+    expect(phone).toMatch(/position: absolute/);
+    expect(phone).not.toMatch(/display:\s*none/);
   });
 
   it("matches the design's worked sizes: 35.5 px after at 1366 px, 22 px at 360 px", () => {

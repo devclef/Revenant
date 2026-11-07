@@ -141,7 +141,7 @@ describe("Property 23, example checks: the R24.3 table matches exactly", () => {
       "The seal is intact. Nothing here has changed since it was sealed.",
     );
     expect(CEREMONY_COPY.sealButton).toBe("Break the seal");
-    expect(REVEAL_COPY.stage2Next).toBe("See the numbers");
+    expect(REVEAL_COPY.stage2Next).toBe("See the receipts");
   });
 
   it("no string anywhere still carries the retired error wording", () => {

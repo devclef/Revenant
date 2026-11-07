@@ -171,7 +171,7 @@ export const CEREMONY_COPY = {
     /** The intact seal, before it is broken. */
     intact: "The seal is intact.",
     /** The recall step, before the letter is opened. */
-    recall: "Tell us how you remember it.",
+    recall: "Testify. Say what you remember.",
     /** The remembered answers, placed as ink marks. */
     marks: "Your answers are placed.",
     /** The seal, waiting to be broken. */
@@ -185,6 +185,20 @@ export const CEREMONY_COPY = {
     /** An error state. */
     error: "The letter could not be opened. You can try again.",
   },
+
+  // --- Step_Indicator on the persona page (spec 09 C2, design.md "Copy") ---
+
+  /** The accessible name of the Step_Indicator list. */
+  stepsLabel: "Your progress",
+
+  /** The four steps, in order. Testify and See the receipts match Brand_Copy. */
+  steps: ["Testify", "Break the seal", "Read", "See the receipts"],
+
+  /**
+   * The polite live-region line when the current step changes. `{n}` is the
+   * step number from 1, `{total}` is the step count and `{label}` is the step name.
+   */
+  stepAnnounce: "Step {n} of {total}: {label}",
 
   // --- Close (spec 07 task 6, design.md "Close") ---
   /** The persona close's heading. */
