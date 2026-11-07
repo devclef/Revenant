@@ -1,7 +1,8 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { CEREMONY_COPY } from "@/components/ceremony/copy";
 import { DEMO_COPY } from "@/components/demo/copy";
 import * as branded from "@/components/ui/BrandedPage";
 import { UI_COPY } from "@/components/ui/copy";
@@ -30,6 +31,10 @@ beforeEach(() => {
   );
 });
 
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
 async function renderPage(): Promise<string> {
   const { default: PersonaNotFound } = await import("./not-found");
   vi.mocked(branded.BrandedPage).mockClear();
@@ -37,6 +42,13 @@ async function renderPage(): Promise<string> {
 }
 
 describe("persona not-found page", () => {
+  it("renders the Top_Bar and no Demo chip, as every branded page does", async () => {
+    const html = await renderPage();
+
+    expect(html).toContain("data-topbar");
+    expect(html).toContain(CEREMONY_COPY.calmOn);
+    expect(html).not.toContain(DEMO_COPY.demoLabel);
+  });
   it("renders BrandedPage with the not-found heading and body", async () => {
     await renderPage();
 
