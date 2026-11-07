@@ -194,3 +194,7 @@ export const PHONE_BELOW_PX = 600;
 export const COMPACT_TOP_BAR_PX = 56; // P5.1: the Compact_Top_Bar is at most this tall
 export const DEAD_SPACE_MAX_PX = 64; // P2.1: no gap between blocks above this before the First_Step
 export const TOUCH_TARGET_MIN_PX = 44; // P8.4: the smallest side of a touch target
+
+// --- Step_Indicator and Compact_Ghost (spec 09 C2, P4.2) ---
+export const PERSONA_STEPS = 4; // Testify, Break the seal, Read, See the receipts
+export const COMPACT_GHOST_MAX_PX = 120; // P4.2: the Compact_Ghost is at most this tall below 600 px

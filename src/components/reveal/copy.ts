@@ -105,7 +105,7 @@ export const REVEAL_COPY = {
 
   /** Intro for the recall step. `{date}` is the written-as-of date. */
   recallIntro:
-    "This letter was written as of {date}. Before you read it, tell us how you remember that time.",
+    "This letter was written as of {date}. Before you read it, testify: say what you remember about that time.",
 
   /** Hint under the recall intro. */
   recallHint: "Answer from memory. You can mark any question as no answer.",
@@ -154,7 +154,7 @@ export const REVEAL_COPY = {
   // --- Reveal, stage 1 ---
 
   /** Heading for stage 1 of the reveal: what the reader just remembered. */
-  stage1Title: "What you remembered",
+  stage1Title: "Your testimony",
 
   /** Prefix for a remembered answer. `{value}` is filled in at render time. */
   yourAnswer: "Your answer",
@@ -184,7 +184,7 @@ export const REVEAL_COPY = {
   sealedForDemoOn: "Sealed for the demo on {sealedAt}",
 
   /** The control that advances from the letter to the figures (R9.4). */
-  stage2Next: "See the numbers",
+  stage2Next: "See the receipts",
 
   // --- The opening Fingerprint (R14.3, R14.8) ---
 
@@ -210,7 +210,7 @@ export const REVEAL_COPY = {
   // --- Reveal, stage 3: the figures then and now ---
 
   /** Heading for stage 3 of the reveal: the figures then and now. */
-  stage3Title: "The numbers, then and now",
+  stage3Title: "The receipts",
 
   /** Label on the then figure. */
   then: "Then",

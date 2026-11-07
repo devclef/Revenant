@@ -48,7 +48,7 @@ const INERT_SEAL: SealController = {
  * judge move forward, one part at a time.
  *
  * - Stage 1 is the `marks` Stage (design.md "Seal_Break"): the marks column.
- *   It shows the "What you remembered" heading, each answer with the judge's
+ *   It shows the "Your testimony" heading, each answer with the judge's
  *   value in the Accent (or "No answer"), the read-only recall scales, then the
  *   seal, its instruction line and the "Break the seal" and "Show everything"
  *   buttons, all owned by `SealBreak`, with the sound toggle and its note under
@@ -60,7 +60,7 @@ const INERT_SEAL: SealController = {
  *   reads `seal` while a break is in progress and `marks` otherwise (design.md
  *   "Stage resolution").
  * - Stage 2 (`LetterBlock`, which wraps `SealedLetter`) is shown once
- *   `stage >= 2`: what was written then. Its "See the numbers" button
+ *   `stage >= 2`: what was written then. Its "See the receipts" button
  *   (`stage2Next`) dispatches `ADVANCE`.
  * - Stage 3 (`FiguresThenNow`) is shown once `stage >= 3`: the figures then and
  *   now. "Show everything" (`SHOW_ALL`) takes the stage straight to 3, so all
@@ -152,7 +152,7 @@ export function Reveal({
   // Now_Figure from this response, not from DEMO_FIGURES.
   const figures = useFigures();
 
-  // "See the numbers" starts the figures fade-up. The fade runs in FiguresFadeUp.
+  // "See the receipts" starts the figures fade-up. The fade runs in FiguresFadeUp.
   const onSeeNumbers = useCallback(() => {
     setLocalView({ figures: "running" });
     onAdvance();
@@ -326,7 +326,7 @@ export function Reveal({
               still={jumpedToEnd}
             />
             {/* The opening Fingerprint sits under the Letter_Block, on the desk
-                surface, before "See the numbers" (design.md, R14.3). It shows
+                surface, before "See the receipts" (design.md, R14.3). It shows
                 the verified envelope hash from `Opened.envelopeHash`; the
                 letter kind decides the demo label or the card sentence (R14.8).
                 A failed check never reaches the Reveal, so this is always the
@@ -369,6 +369,7 @@ export function Reveal({
           <button
             type="button"
             className={styles.button}
+            data-advance="figures"
             onClick={onSeeNumbers}
           >
             {REVEAL_COPY.stage2Next}
