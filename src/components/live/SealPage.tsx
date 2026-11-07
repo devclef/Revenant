@@ -29,6 +29,7 @@ import {
 } from "./touched";
 import { figureLimit } from "./form";
 import { LiveStepper, type StepView } from "./stepper/LiveStepper";
+import { LiveWaitStep } from "./stepper/LiveWaitStep";
 import { browserTimeZone } from "@/components/ui/letter-date";
 import { earliestOpeningDate } from "@/lib/seal-format";
 
@@ -192,7 +193,22 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
    */
   function renderDemoStep(view: StepView) {
     if (state.tag === "sealed") {
-      return <SealedStep view={view}>{renderState()}</SealedStep>;
+      // Wait, Testify and Receipts share one card: the countdown, then the
+      // embedded Opening_Flow (spec 09, D5). The seal's own state stays
+      // `sealed` for the rest of the page.
+      return (
+        <SealedStep view={view}>
+          <LiveWaitStep
+            state={state}
+            appOrigin={appOrigin}
+            step={view.step}
+            advanceTo={view.advanceTo}
+            nowMs={deps?.nowMs ?? Date.now}
+            getBackupKeyText={flow.getBackupKeyText}
+            port={deps?.port}
+          />
+        </SealedStep>
+      );
     }
     switch (state.tag) {
       case "cannot_lock":

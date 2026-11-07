@@ -188,6 +188,13 @@ export type OpeningFlowProps = {
    * reaches the client; RP_ID itself never does (R15.9). Default false.
    */
   demo2On?: boolean;
+  /**
+   * Set when the flow sits inside the live stepper (spec 09, D5). The flow then
+   * drops its own Demo label, because the stepper card shows it, and reports
+   * each phase change so the stepper can move to Testify or Receipts. It is the
+   * only embedding hook; the flow's states and requests are unchanged.
+   */
+  embedded?: { onPhase: (tag: FlowState["tag"]) => void };
 };
 
 /**
@@ -211,6 +218,7 @@ export function OpeningFlow({
   port,
   initialBackupKey,
   demo2On = false,
+  embedded,
 }: OpeningFlowProps) {
   // Live mode reads the key from the reader (keySource "user"). Persona mode
   // passes no options, so the hook behaves exactly as before.
@@ -220,6 +228,14 @@ export function OpeningFlow({
   );
   const { state, retry } = flow;
   const KeyStep = useKeyStep(state.tag === "awaiting_key");
+
+  // Reports each phase to the embedding stepper. The latest callback is read
+  // through a ref, so the effect runs only when the phase changes.
+  const onPhaseRef = useRef(embedded?.onPhase);
+  onPhaseRef.current = embedded?.onPhase;
+  useEffect(() => {
+    onPhaseRef.current?.(state.tag);
+  }, [state.tag]);
 
   // True from a completed full-motion break until the Ghost has left (R12.6).
   // Calm, Skip and Show everything never set it, so the Ghost unmounts in the
@@ -287,7 +303,7 @@ export function OpeningFlow({
           className={mode === "persona" ? `${styles.flow} ${styles.flowPersona}` : styles.flow}
           controls={mode === "persona" ? "topbar" : "region"}
         >
-          {flow.live?.demo === true ? <DemoLabel /> : null}
+          {flow.live?.demo === true && embedded === undefined ? <DemoLabel /> : null}
           {mode === "persona" ? (
             <SceneBackdrop
               dimmed={state.tag === "reveal" && state.stage >= 2}

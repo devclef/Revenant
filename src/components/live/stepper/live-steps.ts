@@ -9,6 +9,7 @@
  */
 
 import { BRAND_COPY } from "@/components/brand/copy";
+import type { FlowState } from "@/components/reveal/opening-machine";
 
 import { LIVE_COPY } from "../copy";
 import {
@@ -64,6 +65,35 @@ export function canGoBack(step: LiveStep, sealed: boolean): boolean {
   return index > 0 && index < stepIndex("wait");
 }
 
+/**
+ * The step the embedded Opening_Flow moves the stepper to (spec 09, D5.4). The
+ * flow reaches Testify once the reader has unlocked and presses Begin (`recall`),
+ * and Receipts once the reveal starts. Every other phase keeps the step where
+ * it is, so the stepper never moves on its own.
+ */
+export function stepForFlowPhase(tag: FlowState["tag"]): LiveStep | null {
+  switch (tag) {
+    case "recall":
+    case "submitting":
+    case "submit_failed":
+      return "testify";
+    case "reveal":
+      return "receipts";
+    default:
+      return null;
+  }
+}
+
+/**
+ * Whether the embedded Opening_Flow is mounted on the Wait card. It mounts only
+ * once the countdown has reached zero, so the letter request is made once, at
+ * zero (D5.2). Testify and Receipts keep it mounted.
+ */
+export function flowMounted(step: LiveStep, countdownDone: boolean): boolean {
+  if (step === "testify" || step === "receipts") return true;
+  return step === "wait" && countdownDone;
+}
+
 /** A step change moves focus to the new step's heading (spec 09 D2.6). */
 export function movesFocus(from: LiveStep, to: LiveStep): boolean {
   return from !== to;
@@ -80,7 +110,8 @@ export type StepperAction =
   | { type: "NEXT" }
   | { type: "BACK" }
   | { type: "DRAFT"; event: WriteDraftEvent }
-  | { type: "SEALED" };
+  | { type: "SEALED" }
+  | { type: "GOTO"; step: LiveStep };
 
 export function initialStepperState(step: LiveStep = "write"): StepperState {
   return { step, draft: INITIAL_WRITE_DRAFT, sealed: false };
@@ -107,5 +138,11 @@ export function reduceStepper(
     }
     case "SEALED":
       return { ...state, sealed: true, draft: INITIAL_WRITE_DRAFT };
+    case "GOTO": {
+      // Forward only. A step at or before the current one changes nothing, and
+      // returning the same state keeps React from re-rendering.
+      if (stepIndex(action.step) <= stepIndex(state.step)) return state;
+      return { ...state, step: action.step };
+    }
   }
 }

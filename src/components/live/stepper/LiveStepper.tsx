@@ -36,6 +36,12 @@ export interface StepView {
    * Back for good (spec 09 D2.3).
    */
   markSealed: () => void;
+  /**
+   * Moves forward to a later step (spec 09, D5.4). Used by the embedded
+   * Opening_Flow when the reader reaches Testify or Receipts. It never moves
+   * back and never moves the stepper on its own.
+   */
+  advanceTo: (step: LiveStep) => void;
 }
 
 export interface LiveStepperProps {
@@ -80,6 +86,7 @@ export function LiveStepper({
     next: () => dispatch({ type: "NEXT" }),
     back: () => dispatch({ type: "BACK" }),
     canGoBack: canGoBack(state.step, state.sealed),
+    advanceTo: (step) => dispatch({ type: "GOTO", step }),
     markSealed: () => {
       dispatch({ type: "SEALED" });
       // The seal step hands over to Wait once the seal is stored. Any other
