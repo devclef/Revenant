@@ -42,7 +42,7 @@ import { SceneHeadline, splitTagline } from "./SceneHeadline";
 import { SceneShell, type SceneShellProps } from "./SceneShell";
 import { SoilStrip } from "./SoilStrip";
 import { COMPACT_TOP_BAR_PX, TOUCH_TARGET_MIN_PX } from "../constants";
-import { PHONE_QUERY, TopBar, personaNoticeText } from "./TopBar";
+import { PHONE_QUERY, TopBar, personaNoticeText, topBarShowsNotice } from "./TopBar";
 
 function render(element: React.ReactElement, mode: "full" | "calm" = "full", active = false): string {
   currentMode = mode;
@@ -113,6 +113,18 @@ describe("TopBar (R8.1 to R8.6)", () => {
     expect(html).toContain("data-wordmark");
     expect(html).toContain(SCENE_COPY.wordmark);
     expect(html).toContain(SCENE_COPY.demoChip);
+  });
+
+  it("renders no notice below 600 px, even with a persona name (PersonaIntro shows it)", () => {
+    expect(topBarShowsNotice("Maya", true)).toBe(false);
+    expect(topBarShowsNotice(undefined, true)).toBe(false);
+  });
+
+  it("renders the notice at 600 px and wider when given a persona name", () => {
+    expect(topBarShowsNotice("Maya", false)).toBe(true);
+    expect(topBarShowsNotice(undefined, false)).toBe(false);
+    const html = render(createElement(TopBar, { personaName: "Maya" }));
+    expect(html).toContain(personaNoticeText("Maya"));
   });
 
   it("shows the persona notice when given a persona name, and no notice otherwise", () => {
@@ -308,8 +320,8 @@ describe("Compact_Top_Bar below 600 px (spec 09 P5)", () => {
     expect(phoneRuleOf(".controlLabel")).toMatch(/display:\s*none/);
   });
 
-  it("hides the notice in the bar below 600 px, because PersonaIntro shows it", () => {
-    expect(phoneRuleOf(".notice")).toMatch(/display:\s*none/);
+  it("does not hide the notice with CSS: TopBar leaves it out below 600 px", () => {
+    expect(phoneBlock()).not.toMatch(/\.notice\s*\{/);
   });
 
   it("hides the icon and shows the label at 600 px and wider", () => {

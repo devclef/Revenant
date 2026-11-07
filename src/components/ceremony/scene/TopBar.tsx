@@ -4,7 +4,9 @@
 //
 // The Top_Bar (design.md "Providers and the Top_Bar", R8.1 to R8.6). Fixed to
 // the top of the window. It holds the wordmark and the Demo chip, and on the
-// persona page the notice, Calm and Skip, in that order.
+// persona page the notice, Calm and Skip, in that order. Below 600 px the
+// notice is not rendered here: PersonaIntro shows the same text as its first
+// line at every width.
 //
 // Skip shows only while a sequence is registered (`useSequence().hasActive`),
 // so it is in the Tab order only then. It is a native button, so Enter and
@@ -74,6 +76,15 @@ export function personaNoticeText(personaName: string): string {
   return SCENE_COPY.personaNotice.replace("{name}", personaName);
 }
 
+/**
+ * Whether the Top_Bar renders the persona notice. It shows only for a persona
+ * page and only at 600 px and wider (`compact` is false there). Below 600 px
+ * PersonaIntro carries the notice instead.
+ */
+export function topBarShowsNotice(personaName: string | undefined, compact: boolean): boolean {
+  return personaName !== undefined && !compact;
+}
+
 export function TopBar({
   personaName,
   demo = true,
@@ -106,9 +117,9 @@ export function TopBar({
           <span className={styles.chip}>{SCENE_COPY.demoChip}</span>
         ) : null}
       </div>
-      {personaName === undefined ? null : (
+      {topBarShowsNotice(personaName, compact) && personaName !== undefined ? (
         <p className={styles.notice}>{personaNoticeText(personaName)}</p>
-      )}
+      ) : null}
       {controls === "none" ? null : (
         <div className={styles.controls}>
           <button

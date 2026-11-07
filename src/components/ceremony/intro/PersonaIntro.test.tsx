@@ -114,11 +114,11 @@ describe("PersonaIntro stages (spec 09 C1, emerging, sealed and intact)", () => 
     );
   });
 
-  it("shows the notice inside the Persona_Intro only below 600 px", () => {
+  it("shows the notice inside the Persona_Intro at every width, with no CSS hiding", () => {
     const css = readFileSync(intro, "utf8");
     const notice = css.slice(css.indexOf(".notice {"), css.indexOf("}", css.indexOf(".notice {")));
-    expect(notice).toMatch(/display:\s*none/);
-    expect(css).toMatch(/@media \(max-width: 599\.98px\) \{\s*\.notice \{\s*display:\s*block;/);
+    expect(notice).not.toMatch(/display:\s*none/);
+    expect(css).not.toMatch(/\.notice \{\s*display:/);
   });
 });
 

@@ -4,9 +4,9 @@
  * for the quieter lines). Both meet WCAG 2.2 AA on --bg. Orange is not used:
  * it is reserved for "you" (tone.md).
  *
- * The fictional-persona notice is the first line below 600 px and is hidden at
- * 600 px and wider, where the Top_Bar shows it. The breakpoint is 599.98px, the
- * largest width under PHONE_BELOW_PX.
+ * The fictional-persona notice is the first line at every width. Below 600 px
+ * the Top_Bar does not render it, so this card is the only place it shows
+ * there. At 600 px and wider the Top_Bar shows it too (spec 07 R8.4).
  */
 
 .intro {
@@ -31,7 +31,6 @@
 }
 
 .notice {
-  display: none;
   margin: 0;
   font-size: 0.8rem;
   line-height: 1.3;
@@ -85,10 +84,6 @@
 }
 
 @media (max-width: 599.98px) {
-  .notice {
-    display: block;
-  }
-
   .line,
   .dates,
   .source,

@@ -11,9 +11,9 @@
 // letter, figures, close) is on the page. So it shows in `emerging`, `sealed`
 // and `intact`, the states the spec names.
 //
-// Below 600 px the first line is the fictional-persona notice (P5.3), which
-// the Compact_Top_Bar no longer shows. At 600 px and wider the Top_Bar shows it
-// (spec 07 R8.4), so this card hides it. The text is the same either way.
+// The first line is the fictional-persona notice at every width (P5.3). Below
+// 600 px the Compact_Top_Bar does not render it, so this card is the only place
+// it shows there. At 600 px and wider the Top_Bar also shows it (spec 07 R8.4).
 //
 // Server-safe: no hooks, no browser APIs, no import from lib/crypto or
 // lib/seal-format.
