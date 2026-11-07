@@ -355,7 +355,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
 
 Each task in this group meets group P for the Stages it changes (G3.7), and attaches First_Viewport shots of those Stages at both Phone_Sizes.
 
-- [ ] 13. C1, P5 · The persona first screen: Persona_Intro, Maya's opening event, the Compact_Top_Bar and a two-line headline
+- [x] 13. C1, P5 · The persona first screen: Persona_Intro, Maya's opening event, the Compact_Top_Bar and a two-line headline
   - Agent: `frontend-dev` · Depends on: 11 · Estimated size: ~1,300 changed lines
   - Before this task: task 11 is on `main`. OD13 recorded, or default (a). Steering updated (Owner patches w, x and y on `main`, owner step O0).
   - Scope: `content/personas/personas.json`, `src/lib/personas/schema.ts`, `src/components/ceremony/intro/PersonaIntro.tsx` (new), `src/components/ceremony/intro/intro.module.css` (new), `src/components/ceremony/scene/TopBar.tsx`, `src/components/ceremony/scene/icons.tsx` (new), `src/components/ceremony/scene/SceneHeadline.tsx`, `src/components/ceremony/scene/scene.module.css`, `src/components/ceremony/scene/copy.ts`, `src/components/ceremony/ASSETS.md`, `src/components/ceremony/copy.ts`, `src/components/ceremony/constants.ts`, `src/app/demo/personas/[key]/page.tsx`, `src/app/demo/page.tsx`, `src/components/demo/**`, and the `*.test.ts(x)` for each file above
