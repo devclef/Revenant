@@ -1,8 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { headers } from "next/headers";
 import localFont from "next/font/local";
 import "./globals.css";
 import { Footer } from "@/components/ui/Footer";
+import { HOME_DESCRIPTION } from "@/lib/page-metadata";
 
 // Self-hosted fonts loaded via next/font/local: a build-time local import that
 // bundles the woff2 files and serves them from the app's own origin. It emits a
@@ -41,13 +42,24 @@ export async function generateMetadata(): Promise<Metadata> {
       default: "Revenant",
       template: "%s · Revenant",
     },
-    description: "Your past self returns with the receipts.",
+    description: HOME_DESCRIPTION,
     icons: {
       icon: "/icon.svg",
       apple: "/apple-icon",
     },
   };
 }
+
+/**
+ * Viewport settings. `interactiveWidget: "resizes-content"` makes the on-screen
+ * keyboard shrink the layout viewport instead of covering the page, so a focused
+ * field stays in view on small phones.
+ */
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
+};
 
 export default async function RootLayout({
   children,
