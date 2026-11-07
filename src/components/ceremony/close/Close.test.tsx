@@ -89,6 +89,18 @@ describe("Close, persona kind", () => {
     expect(css).toMatch(/\.cta:focus-visible\s*\{[^}]*outline/);
     expect(css).toMatch(/\.quietLink:focus-visible\s*\{[^}]*outline/);
   });
+
+  it("sets the close link colours with two-class selectors so the scene's link rule cannot override them", () => {
+    const css = readFileSync(
+      join(process.cwd(), "src/components/ceremony/close/close.module.css"),
+      "utf8",
+    );
+    // `.scene a` has specificity 0,1,1, so a single-class colour rule loses to it.
+    expect(css).toMatch(/\.close\s+\.cta\s*\{[^}]*color:\s*var\(--on-accent\)/);
+    expect(css).toMatch(/\.close\s+\.quietLink\s*\{[^}]*color:\s*var\(--ink\)/);
+    expect(css).not.toMatch(/^\.cta\s*\{[^}]*(?<![-\w])color:/m);
+    expect(css).not.toMatch(/^\.quietLink\s*\{[^}]*(?<![-\w])color:/m);
+  });
 });
 
 describe("Close, live kind", () => {
