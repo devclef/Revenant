@@ -122,6 +122,29 @@ describe("PersonaIntro stages (spec 09 C1, emerging, sealed and intact)", () => 
   });
 });
 
+describe("PersonaIntro source link colour and underline (spec 09 C1, P5)", () => {
+  it("keeps the source link on the desk text colour at 600 px and wider, with an underline", () => {
+    const css = readFileSync(intro, "utf8");
+    const rule = css.match(/(?:^|\n)\.source a \{([^}]*)\}/)?.[1] ?? "";
+    expect(rule).toMatch(/color:\s*var\(--text\);/);
+    expect(rule).toMatch(/text-decoration:\s*underline;/);
+  });
+
+  it("sets the source link to --ink on the paper card below 600 px", () => {
+    const css = readFileSync(intro, "utf8");
+    const phone = css.slice(css.indexOf("@media (max-width: 599.98px)"));
+    expect(phone).toMatch(/\.source a \{\s*color:\s*var\(--ink\);\s*\}/);
+  });
+
+  it("renders the link and the intro lines (intro line, dates, questions line) in the card", () => {
+    const html = render({ flowMinutes: 2 });
+    expect(html).toContain("writes on a May Sunday");
+    expect(html).toContain("Opens 5 November 2024");
+    expect(html).toContain("answer 2 questions");
+    expect(html).toContain('href="https://www.archives.gov/electoral-college/2024"');
+  });
+});
+
 describe("PersonaIntro source link hit area (spec 09 P5)", () => {
   it("gives the source link a 44 px tall hit area below 600 px", () => {
     const css = readFileSync(intro, "utf8");
