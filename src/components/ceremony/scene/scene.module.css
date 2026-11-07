@@ -709,9 +709,11 @@
   position: absolute;
   right: calc(100% + 1rem);
   top: 50%;
-  /* Above the Ghost body (the glow layer and the body SVG paint beneath the
-     held slot's children). Without a positive z-index the body can cover the
-     ends of the line at 1280, 1366 and 2560 px wide (spec 09 C5.1 QA). */
+  /* Explicit stacking above the Ghost's glow layer and body SVG inside the
+     held slot. Unverified as the QA blocker's fix: a static harness with this
+     stylesheet showed no body coverage of the glyphs with or without this
+     z-index. The layout check in the next step decides whether the blocker is
+     fixed. */
   z-index: 3;
   transform: translateY(-50%);
   width: max-content;
