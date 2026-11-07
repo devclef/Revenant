@@ -16,8 +16,12 @@ export const MAX_FIGURES = 6;
 /** How often the countdown on the sealed view refreshes, in milliseconds (R16.2). */
 export const COUNTDOWN_TICK_MS = 250;
 
-/** Rows the letter textarea starts with on a phone (spec 09 P9). */
-export const LETTER_FIELD_ROWS = 5;
+/**
+ * Rows the letter textarea starts with on a phone (spec 09 P9). Three rows
+ * keep the Next button inside a 360x640 viewport under the headline (PH1); the
+ * field still grows with the text up to LETTER_FIELD_MAX_VH.
+ */
+export const LETTER_FIELD_ROWS = 3;
 
 /**
  * Most of the visual viewport the letter textarea may grow to, in percent

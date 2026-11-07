@@ -11,8 +11,8 @@ import {
 import { letterFieldHeightPx, letterFieldMaxPx } from "./phone";
 
 describe("phone constants (P8.4, P9, P10)", () => {
-  it("starts the letter field at 5 rows", () => {
-    expect(LETTER_FIELD_ROWS).toBe(5);
+  it("starts the letter field at 3 rows", () => {
+    expect(LETTER_FIELD_ROWS).toBe(3);
   });
 
   it("lets the letter field grow to at most 50% of the visual viewport", () => {
