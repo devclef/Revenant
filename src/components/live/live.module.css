@@ -10,7 +10,7 @@
  * means "you", and the main button is one of the places R3.9 allows it.
  *
  * Colour carries no direction. Figures and changes get the same treatment. The
- * wax-seal red (--seal, globals.css) is used only on the warning border
+ * warning border uses --ink-soft, not a colour that marks a judgement
  * (neutrality.md, tone.md).
  */
 
@@ -23,7 +23,7 @@
   background-color: var(--paper);
   border: 1px solid var(--ink-soft);
   border-radius: 4px;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 1rem;
   line-height: 1.6;
 }
@@ -58,7 +58,7 @@
   color: var(--ink);
   background-color: var(--paper);
   border-radius: 4px;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 1.125rem;
   line-height: 1.6;
 }
@@ -105,7 +105,7 @@
   width: 100%;
   min-height: 10rem;
   padding: 0.75rem;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   /* 16px or more stops mobile browsers zooming on focus. */
   font-size: 1rem;
   line-height: 1.5;
@@ -218,7 +218,7 @@
 .warning {
   margin: 1.5rem 0;
   padding: 1rem;
-  border: 1px solid var(--seal);
+  border: 1px solid var(--ink-soft);
   border-radius: 3px;
   background-color: var(--paper-deep);
 }
@@ -400,7 +400,7 @@
   max-width: 28rem;
   margin: 0 auto;
   color: var(--ink);
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 1.0625rem;
   line-height: 1.5;
   text-align: left;
@@ -439,15 +439,19 @@
   margin-top: 2rem;
 }
 
+/*
+ * The card is the shared paper panel (ui/paper.module.css), so its surface,
+ * border and ink come from there. The card keeps its own padding, under a
+ * more specific selector so it still wins over the shared paper padding.
+ */
+.keepsakes .card {
+  padding: clamp(1rem, 3vw, 1.5rem);
+}
+
 .card {
   margin: 0;
   min-width: 0;
-  padding: clamp(1rem, 3vw, 1.5rem);
-  color: var(--ink);
-  background-color: var(--paper);
-  border: 1px solid var(--ink-soft);
-  border-radius: 4px;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 1rem;
   line-height: 1.6;
 }

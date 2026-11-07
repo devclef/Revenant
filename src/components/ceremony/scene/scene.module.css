@@ -199,10 +199,10 @@
 }
 
 /* Links on the desk use the desk text colour. The global link rule is the
-   wax-seal red (about 1.9:1 on --bg), so it cannot be used here. Links inside a
-   ParchmentSurface keep the paper rule, so the paper colour is not changed.
-   The :not() takes the specificity of its argument, which is zero. */
-.scene a:not(:where([class*="ParchmentSurface"] *)) {
+   wax-seal red, so it cannot be used here. Links inside a paper panel (any
+   element with data-paper) keep the paper rule, so the paper colour is not
+   changed. The :not() takes the specificity of its argument, which is zero. */
+.scene a:not(:where([data-paper] *)) {
   color: var(--text);
 }
 

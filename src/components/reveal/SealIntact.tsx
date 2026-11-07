@@ -1,6 +1,6 @@
 "use client";
 
-import { ParchmentSurface } from "@/components/ui";
+import paper from "@/components/ui/paper.module.css";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
 
@@ -27,11 +27,11 @@ export type SealIntactProps = {
 
 export function SealIntact({ onBegin }: SealIntactProps) {
   return (
-    <ParchmentSurface as="section" className={styles.intact}>
+    <section className={`${paper.paper} ${styles.intact}`} data-paper="">
       <p>{REVEAL_COPY.sealIntact}</p>
       <button type="button" className={styles.button} onClick={onBegin}>
         {REVEAL_COPY.begin}
       </button>
-    </ParchmentSurface>
+    </section>
   );
 }

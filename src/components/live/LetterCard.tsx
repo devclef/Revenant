@@ -3,6 +3,7 @@
 import { useId, useMemo } from "react";
 
 import { DemoLabel } from "@/components/demo/DemoLabel";
+import paper from "@/components/ui/paper.module.css";
 import { encodeQr, qrPath, letterCardSvg } from "@/lib/cards";
 import { formatFingerprint } from "@/lib/seal-format";
 
@@ -61,7 +62,7 @@ export function LetterCard({ letterId, appOrigin, opensAt, envelopeHash }: Lette
   }
 
   return (
-    <section className={styles.card} aria-labelledby={headingId} data-live-letter-card>
+    <section className={`${paper.paper} ${styles.card}`} aria-labelledby={headingId} data-live-letter-card data-paper="">
       <DemoLabel />
       <h2 id={headingId} className={styles.cardTitle}>
         {LIVE_COPY.letterCardTitle}

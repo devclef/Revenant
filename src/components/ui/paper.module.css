@@ -1,23 +1,22 @@
 /*
- * ParchmentSurface styling. Colours come from globals.css tokens only.
- * A soft paper texture rendered with layered CSS gradients (no image fetch,
- * keeps CSP img-src / default-src clean) and a thin gold-leaf hairline border.
- * Decorative only; carries no directional or judgement colour (neutrality.md).
+ * The paper panel every reveal, envelope and live sealed surface sits on.
+ * It replaces the retired ParchmentSurface component. Each panel sets its own
+ * text colour (--ink) so no text inherits the desk's colour. Colours come from
+ * the paper tokens in globals.css. The grain is decorative only.
+ * Carries no directional or judgement colour (neutrality.md).
  */
 
-.surface {
+.paper {
   position: relative;
+  color: var(--ink);
   border-radius: 4px;
   padding: clamp(1.5rem, 4vw, 3rem);
-  border: 1px solid var(--gold-leaf);
+  border: 1px solid rgba(31, 27, 22, 0.25);
   box-shadow:
     0 1px 2px rgba(31, 27, 22, 0.08),
     0 8px 24px rgba(31, 27, 22, 0.06);
-}
-
-.paper {
   background-color: var(--paper);
-  /* Faint, even paper grain — purely decorative, low opacity. */
+  /* Faint, even paper grain: purely decorative, low opacity. */
   background-image: radial-gradient(
       rgba(31, 27, 22, 0.025) 1px,
       transparent 1px

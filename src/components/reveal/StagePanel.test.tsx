@@ -11,7 +11,7 @@ import { SkipProvider } from "@/components/ceremony/skip";
 import { LiveRegionProvider } from "@/components/ceremony/LiveRegion";
 import { LocalViewProvider } from "@/components/ceremony/local-view";
 import styles from "./reveal.module.css";
-import surfaceStyles from "@/components/ui/ParchmentSurface.module.css";
+import paperStyles from "@/components/ui/paper.module.css";
 import blockStyles from "@/components/ceremony/letter/LetterBlock.module.css";
 import { readFileSync as readCss } from "node:fs";
 import { join as joinPath } from "node:path";
@@ -20,13 +20,13 @@ import type { RecallRecordV1 } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
 
 /**
- * Issue #119, task 1: every reveal stage sits on a ParchmentSurface panel that
+ * Issue #119, task 1: every reveal stage sits on a paper panel that
  * sets its own `--ink` text colour. Without the panel, stage text inherits the
  * desk's cream ink and cannot be read on the paper-free desk.
  *
  * Rendered with `renderToStaticMarkup` (no DOM library), like the other reveal
  * markup tests. The check is structural: for each stage heading, the nearest
- * enclosing panel must carry both the ParchmentSurface class and the reveal
+ * enclosing panel must carry both the paper class and the reveal
  * StagePanel class, with no `</div>` between that panel's opening tag and the
  * heading.
  */
@@ -124,9 +124,9 @@ function escapeHtml(text: string): string {
 }
 
 /**
- * True when `heading` sits inside a ParchmentSurface panel that is also a
+ * True when `heading` sits inside a paper panel that is also a
  * StagePanel. The nearest preceding `<div class="...">` that carries the
- * StagePanel class must carry the ParchmentSurface class too, and no `</div>`
+ * StagePanel class must carry the paper class too, and no `</div>`
  * may close between that opening tag and the heading.
  */
 function isInsidePanel(html: string, heading: string): boolean {
@@ -146,7 +146,7 @@ function isInsidePanel(html: string, heading: string): boolean {
   if (panelIndex < 0) return false;
   const between = before.slice(panelIndex);
   return (
-    panelClass.includes(surfaceStyles.surface) &&
+    panelClass.includes(paperStyles.paper) &&
     !between.includes("</div>")
   );
 }
@@ -170,7 +170,7 @@ function isInsideLetterPaper(html: string, heading: string): boolean {
   return !before.slice(paperIndex).includes("</div>");
 }
 
-describe("reveal stages sit on a ParchmentSurface panel", () => {
+describe("reveal stages sit on a paper panel", () => {
   it("wraps stage 1 (the seal break) in a panel", () => {
     const html = renderReveal(1);
     expect(isInsidePanel(html, CEREMONY_COPY.sealButton)).toBe(true);

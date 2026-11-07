@@ -9,7 +9,7 @@ const css = readFileSync(join(__dirname, "scene.module.css"), "utf8");
 describe("desk link colour", () => {
   it("sets desk links to the desk text token", () => {
     expect(css).toMatch(
-      /\.scene a:not\(:where\(\[class\*="ParchmentSurface"\] \*\)\) \{\s*color: var\(--text\);/,
+      /\.scene a:not\(:where\(\[data-paper\] \*\)\) \{\s*color: var\(--text\);/,
     );
   });
 
