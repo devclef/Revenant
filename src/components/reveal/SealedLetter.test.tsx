@@ -124,14 +124,28 @@ describe("SealedLetter markup", () => {
     expect(html).toContain("first line.\nSecond line, after a break.\n\nA  double  space");
   });
 
-  it('shows "Written as of {date}" when written_as_of is present (R10.2)', () => {
+  it("shows the Letter_Disclosure line with the persona name and written-as-of date (C6.1)", () => {
     const html = render(OPENED);
     expect(html).toContain(
-      REVEAL_COPY.writtenAsOfPrefix.replace(
-        "{date}",
-        formatCalendarDate("2024-10-15"),
-      ),
+      REVEAL_COPY.letterDisclosure
+        .replace("{name}", PERSONA_NAME)
+        .replace("{writtenAsOf}", formatCalendarDate("2024-10-15")),
     );
+    expect(html).toContain("data-persona-disclosure");
+  });
+
+  it("omits the disclosure line when the payload has no written_as_of", () => {
+    const payloadNoAsOf: PayloadV1 = {
+      format_version: PAYLOAD.format_version,
+      letter_text: PAYLOAD.letter_text,
+      metrics: PAYLOAD.metrics,
+      figures: PAYLOAD.figures,
+      recall_questions: PAYLOAD.recall_questions,
+    };
+    const openedNoAsOf: Opened = { ...OPENED, payload: payloadNoAsOf };
+    const html = render(openedNoAsOf);
+    expect(html).not.toContain("data-persona-disclosure");
+    expect(html).not.toContain("is fictional.");
   });
 
   it("omits the written-as-of line when the payload has no written_as_of", () => {
@@ -148,17 +162,19 @@ describe("SealedLetter markup", () => {
     expect(html).not.toContain("Written as of");
   });
 
-  it("always shows the demo letter label with the persona name (R10.3)", () => {
+  it("always shows the disclosure with the persona name, as a fictional persona (R10.3, C6.1)", () => {
     const html = render(OPENED);
     expect(html).toContain(
-      REVEAL_COPY.demoLetterLabel.replace("{name}", PERSONA_NAME),
+      REVEAL_COPY.letterDisclosure
+        .replace("{name}", PERSONA_NAME)
+        .replace("{writtenAsOf}", formatCalendarDate("2024-10-15")),
     );
   });
 
-  it('shows "Sealed for the demo on {sealedAt}" derived from the header (R10.4)', () => {
+  it('shows "Sealed for this demo on {sealedAt}" derived from the header (R10.4, C6.3)', () => {
     const html = render(OPENED);
     expect(html).toContain(
-      REVEAL_COPY.sealedForDemoOn.replace(
+      REVEAL_COPY.sealedForThisDemo.replace(
         "{sealedAt}",
         formatLetterDate(OPENED.header.sealedAt, { kind: "utc" }),
       ),
@@ -205,7 +221,7 @@ describe("SealedLetter collapsible letter (P6, P7)", () => {
   it("puts the letter text in a closed disclosure when collapsible", () => {
     const markup = renderCollapsible(OPENED);
     expect(markup).toMatch(/<details[^>]*data-letter-disclosure=""/);
-    expect(markup).toContain(`<summary>${REVEAL_COPY.letterDisclosure}</summary>`);
+    expect(markup).toContain(`<summary>${REVEAL_COPY.letterDisclosureSummary}</summary>`);
     expect(markup).not.toMatch(/<details[^>]* open/);
     expect(markup).toContain("data-letter-text");
     expect(markup).toContain("LETTER_BODY_SECRET");

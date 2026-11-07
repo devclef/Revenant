@@ -35,11 +35,12 @@ describe("Envelope — narrow front holds only the two date lines (Property 21)"
     expect(html).not.toContain("Prepared later as a demo.");
   });
 
-  it("wide and responsive fronts keep the demo note", () => {
-    expect(render("wide", persona())).toContain("Prepared later as a demo.");
-    expect(render("responsive", persona())).toContain(
-      "Prepared later as a demo.",
-    );
+  it("wide and responsive fronts also hold only the two date lines (spec 09 OD5)", () => {
+    for (const layout of ["wide", "responsive"] as const) {
+      const html = render(layout, persona());
+      expect(html.match(/data-date="true"/g)).toHaveLength(2);
+      expect(html).not.toContain("Prepared later as a demo.");
+    }
   });
 
   it("marks the layout on the root element", () => {

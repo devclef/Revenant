@@ -87,7 +87,6 @@ describe("Property 23, example checks: the R24.3 table matches exactly", () => {
   it("holds the Envelope_Front strings for wide viewports (R8.7)", () => {
     expect(CEREMONY_COPY.envelopeWrittenAsOf).toBe("Written as of {date}");
     expect(CEREMONY_COPY.envelopeOpens).toBe("Opens {date}");
-    expect(CEREMONY_COPY.envelopeDemoNote).toBe("Prepared later as a demo.");
   });
 
   it("builds the narrow Envelope_Front lines from the same strings (R8.7)", () => {
@@ -117,7 +116,7 @@ describe("Property 23, example checks: the R24.3 table matches exactly", () => {
 
   it("holds the close line, close link, close note and restart", () => {
     expect(CEREMONY_COPY.closeLine).toBe(
-      "The space between the two is yours to read.",
+      "Your testimony sits beside the record. What lies between them is yours to read.",
     );
     expect(CEREMONY_COPY.closeLink).toBe(
       "Seal your own. It opens 30 seconds after you seal it.",

@@ -67,6 +67,20 @@ describe("HeldSeal pointer handling", () => {
   });
 });
 
+describe("HeldSeal context menu", () => {
+  it("prevents the browser callout menu on a contextmenu event", () => {
+    const el = targetOf({ controller: controller() });
+    const event = {
+      defaultPrevented: false,
+      preventDefault() {
+        this.defaultPrevented = true;
+      },
+    };
+    el.props.onContextMenu(event);
+    expect(event.defaultPrevented).toBe(true);
+  });
+});
+
 describe("HeldSeal stylesheet (touch target and hit box)", () => {
   const css = readFileSync(join(__dirname, "HeldSeal.module.css"), "utf8");
 

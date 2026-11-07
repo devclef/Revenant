@@ -99,6 +99,12 @@ export type FiguresThenNowProps = {
    * every Now_Figure. The caller reads it once per reveal and passes it down.
    */
   figures: FiguresState;
+  /**
+   * Whether the first card carries the Stage's primary control (C3, P4.1).
+   * Reveal turns it off once the Close shows, so the Close owns the layout
+   * check's first viewport (spec 09 PH1). Default true.
+   */
+  primaryCard?: boolean;
 };
 
 type NowLookup =
@@ -166,6 +172,7 @@ export function FiguresThenNow({
   allowSamePeriod = false,
   letterKind = "persona",
   figures,
+  primaryCard = true,
 }: FiguresThenNowProps) {
   const { payload } = opened;
 
@@ -246,7 +253,7 @@ export function FiguresThenNow({
 
       {entries.map((entry, index) => {
         // The first card of the Stage carries the primary control (C3, P4.1).
-        const primary = index === 0;
+        const primary = primaryCard && index === 0;
         const answer = {
           markValue: entry.answerValue,
           unit: entry.answerUnit,

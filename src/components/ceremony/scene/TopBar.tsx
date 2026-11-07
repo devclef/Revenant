@@ -14,6 +14,9 @@
 //
 // `data-wordmark` and `data-topbar-last` are set for the browser checks: the
 // first marks the wordmark, the second the last control in the bar.
+//
+// On the persona page the bar also holds the sound toggle, between Calm and
+// Skip (spec 09 C4.4). SceneShell owns its state and passes it in as `sound`.
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -22,6 +25,7 @@ import { CEREMONY_COPY } from "../copy";
 import { PHONE_BELOW_PX } from "../constants";
 import { useMotion } from "../motion";
 import { useSequence } from "../skip";
+import { SoundToggle } from "../sound/SoundToggle";
 import { SCENE_COPY } from "./copy";
 import { MotionIcon, SkipIcon } from "./icons";
 import styles from "./scene.module.css";
@@ -69,6 +73,18 @@ export type TopBarProps = {
   demo?: boolean;
   /** Which controls the bar shows. Default `calm`. */
   controls?: TopBarControls;
+  /**
+   * The sound toggle, between Calm and Skip (spec 09 C4.4). Its state lives
+   * in SceneShell, because the Seal_Break reads it. Omit it on a page with
+   * no sound cue, so the bar shows no sound control there.
+   */
+  sound?: TopBarSound;
+};
+
+/** The sound state the Top_Bar toggle shows, and the press that changes it. */
+export type TopBarSound = {
+  enabled: boolean;
+  onChange: (next: boolean) => void;
 };
 
 /** The persona notice with the persona's name filled in. */
@@ -89,6 +105,7 @@ export function TopBar({
   personaName,
   demo = true,
   controls = "calm",
+  sound,
 }: TopBarProps) {
   const { mode, setCalm } = useMotion();
   const { hasActive, skipAll } = useSequence();
@@ -97,10 +114,12 @@ export function TopBar({
   const calmOn = mode === "calm";
   const calmLabel = calmOn ? CEREMONY_COPY.calmOff : CEREMONY_COPY.calmOn;
 
-  // The last control in the bar: Skip when it shows, otherwise Calm.
+  // The last control in the bar: Skip when it shows, otherwise the sound
+  // control when the page has one, otherwise Calm.
   // Each control holds its icon and its text. Below 600 px CSS shows the icon
   // as a 44 x 44 control and hides the text; the aria-label and title keep the
   // name. At 600 px and wider CSS shows the text as before.
+  const soundIsLast = !hasActive && sound !== undefined;
   return (
     <header
       className={styles.topbar}
@@ -125,7 +144,7 @@ export function TopBar({
           <button
             type="button"
             className={styles.control}
-            data-topbar-last={hasActive ? undefined : true}
+            data-topbar-last={hasActive || soundIsLast ? undefined : true}
             aria-label={calmLabel}
             title={calmLabel}
             onClick={() => setCalm(!calmOn)}
@@ -133,6 +152,14 @@ export function TopBar({
             <MotionIcon off={calmOn} className={styles.controlIcon} />
             <span className={styles.controlLabel}>{calmLabel}</span>
           </button>
+          {sound !== undefined ? (
+            <SoundToggle
+              variant="topbar"
+              enabled={sound.enabled}
+              onChange={sound.onChange}
+              last={soundIsLast}
+            />
+          ) : null}
           {hasActive ? (
             <button
               type="button"

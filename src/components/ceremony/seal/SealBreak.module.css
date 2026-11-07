@@ -156,12 +156,50 @@
   }
 }
 
+/* --- The hold ring (spec 09 P8.2) --- */
+
+/*
+ * Twelve segments in --text around the seal. Each lights by opacity only, set
+ * inline from holdSegmentsLit, so no segment moves or changes colour.
+ */
+.ring {
+  position: absolute;
+  left: -6%;
+  top: -6%;
+  width: 112%;
+  height: 112%;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.ringSegment {
+  fill: none;
+  stroke: var(--text, #f5f3ff);
+  stroke-width: 2;
+  stroke-linecap: butt;
+}
+
+/* --- The Skip_Link (spec 09 C4.2): quiet underlined text, 44 px target --- */
+
+.textLink {
+  font: inherit;
+  font-size: 0.95rem;
+  color: var(--ink);
+  background: none;
+  border: 0;
+  padding: 0.6rem 0.5rem;
+  min-height: 44px;
+  min-width: 44px;
+  text-decoration: underline;
+  text-underline-offset: 0.2em;
+  cursor: pointer;
+}
+
 /* --- The instruction line --- */
 
 .instruction {
   margin: 0;
   color: var(--ink);
-  font-family: var(--font-serif);
   line-height: 1.4;
   max-width: var(--measure);
 }

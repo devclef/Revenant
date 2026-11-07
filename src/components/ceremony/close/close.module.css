@@ -1,9 +1,12 @@
 /*
- * The persona Close (Close.tsx). A paper panel that sets its own ink, so its
- * text never inherits the desk's cream colour. The Demo_2_On link is a filled
- * Accent button with the Accent's own ink (--on-accent): orange text on paper
- * is about 2.3:1 and fails AA, while this pair is about 7.4:1. Orange marks
- * "you", which fits a button (tone.md).
+ * The persona Close (Close.tsx). A paper panel that sets its own paper and ink
+ * tokens, so its text never inherits the desk's light colour. The Demo_2_On
+ * link is a filled Accent button with the Accent's own ink (--on-accent): orange
+ * text on paper is about 2.2:1 and fails AA. Measured in Chromium from computed
+ * styles: the button ink on the Accent fill is 7.39:1, and the Start over ink
+ * (--ink) on the paper is 14.38:1. Orange marks "you", which fits a button
+ * (tone.md). The paper is set here with plain tokens, not a shared wrapper
+ * (spec 09 L3.1, L4.1).
  */
 
 .close {
@@ -16,6 +19,9 @@
   flex-direction: column;
   align-items: flex-start;
   gap: 1rem;
+  background-color: var(--paper);
+  border: 1px solid var(--ink-soft);
+  border-radius: 4px;
   color: var(--ink);
 }
 
@@ -35,9 +41,15 @@
   box-sizing: border-box;
   border-radius: 4px;
   background-color: var(--accent);
-  color: var(--on-accent);
   font-weight: 700;
   text-decoration: none;
+}
+
+/* The colour is set on .close .cta, not .cta. The scene's `.scene a` rule
+   (0,1,1) would otherwise win over a single-class rule and paint the link in
+   the desk's light text. Two classes (0,2,0) beat it. */
+.close .cta {
+  color: var(--on-accent);
 }
 
 .cta:focus-visible {
@@ -56,9 +68,13 @@
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  color: var(--ink);
   text-decoration: underline;
   text-underline-offset: 0.2em;
+}
+
+/* Same reason as .close .cta: the scene's link colour must not reach the paper. */
+.close .quietLink {
+  color: var(--ink);
 }
 
 .quietLink:focus-visible {

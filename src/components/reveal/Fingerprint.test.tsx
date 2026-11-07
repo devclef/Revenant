@@ -32,8 +32,8 @@ const hexHash = fc
   .map((digits) => digits.map((d) => d.toString(16)).join(""));
 
 describe("Fingerprint markup", () => {
-  it('shows the "Fingerprint at sealing" heading as an h3 (R14.3)', () => {
-    const html = render(HASH, "persona");
+  it('a live letter shows the "Fingerprint at sealing" heading as an h3 (R14.3)', () => {
+    const html = render(HASH, "live");
     expect(html).toContain("<h3");
     expect(html).toContain(REVEAL_COPY.fingerprintTitle);
     // The focus rule's newest h1/h2 is unchanged: this block adds no h1/h2.
@@ -64,16 +64,32 @@ describe("Fingerprint markup", () => {
     expect(html).toContain('translate="no"');
   });
 
-  it('always states the seal check passed (R14.3)', () => {
-    for (const kind of ["persona", "live", "real"] as const) {
+  it("a live or real letter always states the seal check passed (R14.3)", () => {
+    for (const kind of ["live", "real"] as const) {
       const html = render(HASH, kind);
       expect(html).toContain(REVEAL_COPY.fingerprintPassed);
     }
   });
 
-  it('a persona letter shows "demo letter" and no card wording (R14.8)', () => {
+  it("a persona letter shows the verdict first, then a closed disclosure (C6.4)", () => {
+    const html = render(HASH, "persona");
+    const verdictAt = html.indexOf(REVEAL_COPY.sealVerdict);
+    const detailsAt = html.indexOf("<details");
+    expect(verdictAt).toBeGreaterThanOrEqual(0);
+    expect(detailsAt).toBeGreaterThan(verdictAt);
+    // The disclosure is closed, and its summary names the fingerprint.
+    expect(html).not.toMatch(/<details[^>]* open/);
+    expect(html).toContain(`<summary>${REVEAL_COPY.fingerprintShow}</summary>`);
+    // The persona block has no h3 and no "seal check passed" statement.
+    expect(html).not.toContain("<h3");
+    expect(html).not.toContain(REVEAL_COPY.fingerprintPassed);
+  });
+
+  it('a persona letter shows "demo letter" and the How_Page link, and no card wording (R14.8, C6.4)', () => {
     const html = render(HASH, "persona");
     expect(html).toContain(REVEAL_COPY.fingerprintDemo);
+    expect(html).toContain('href="/how-it-is-sealed"');
+    expect(html).toContain(REVEAL_COPY.fingerprintHowLink);
     expect(html).not.toContain(REVEAL_COPY.fingerprintPassedCard);
   });
 

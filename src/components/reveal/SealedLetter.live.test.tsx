@@ -96,13 +96,13 @@ describe("SealedLetter, live variant (R18.2)", () => {
     const html = render("live");
     expect(html).not.toContain("Written as of");
     expect(html).not.toContain("Prepared later as a demo");
-    expect(html).not.toContain(REVEAL_COPY.sealedForDemoOn.split("{")[0]);
+    expect(html).not.toContain(REVEAL_COPY.sealedForThisDemo.split("{")[0].trim());
     expect(html).not.toContain("A demo letter.");
   });
 
   it("the default persona variant is unchanged and has no live line", () => {
     const html = render();
-    expect(html).toContain(REVEAL_COPY.demoLetterLabel.split("{")[0]);
+    expect(html).toContain(REVEAL_COPY.sealedForThisDemo.split("{")[0].trim());
     expect(html).not.toContain(LIVE_COPY.sealedOn.split("{")[0]);
   });
 });

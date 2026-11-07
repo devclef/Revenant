@@ -4,12 +4,10 @@
 // smallest and largest Envelope sizes, in both the wide and the narrow layout.
 //
 // The model reads the date-line rules from Envelope.module.css (the `.lines`
-// bottom offset and the `.line` / `.demoNote` font clamps) and the aspect and
+// bottom offset and the `.line` font clamp) and the aspect and
 // dirt-band constants from ../constants. Sizes follow the resting width,
 // `min(84vw, 26rem)`: the smallest width is at a 360 px viewport and the largest
-// is the 26 rem cap. Font clamps use the browser root size of 16 px. The line
-// height of the demo note is not set in CSS, so it takes a 1.5 body value here,
-// which is the larger of the two cases.
+// is the 26 rem cap. Font clamps use the browser root size of 16 px.
 //
 // This is a model, not a measurement. The browser check records the real
 // positions at 1280 x 800 and 360 x 640.
@@ -32,7 +30,7 @@ const SMALLEST_VIEWPORT_PX = 360;
 const LARGEST_WIDTH_REM = 26; // resting width cap: min(84vw, 26rem)
 const SHARE_OF_VIEWPORT = 0.84;
 const DATE_LINE_HEIGHT = 1.3; // `.line` in Envelope.module.css
-const DEMO_NOTE_LINE_HEIGHT = 1.5; // not set in CSS: the body default
+
 const LINE_GAP_PX = 0.25 * REM_PX; // `.lines` gap: 0.25rem
 
 /** The body of one rule in the CSS module, or "" when the rule is absent. */
@@ -59,11 +57,6 @@ function dateFontPx(viewport: number): number {
   return clampPx(0.85 * REM_PX, 0.024, 1 * REM_PX, viewport);
 }
 
-/** The demo-note font size at a viewport, from the `.demoNote` clamp. */
-function demoNoteFontPx(viewport: number): number {
-  return clampPx(0.75 * REM_PX, 0.021, 0.9 * REM_PX, viewport);
-}
-
 /** The width of the envelope at a viewport: min(84vw, 26rem). */
 function envelopeWidthPx(viewport: number): number {
   return Math.min(SHARE_OF_VIEWPORT * viewport, LARGEST_WIDTH_REM * REM_PX);
@@ -71,13 +64,11 @@ function envelopeWidthPx(viewport: number): number {
 
 type Layout = "wide" | "narrow";
 
-/** Lines in the front for a layout: two date lines, plus the demo note on wide. */
-function frontTextBlockHeightPx(layout: Layout, viewport: number): number {
+/** Lines in the front for a layout. Both layouts now show the two date lines only (spec 09 C6.2). */
+function frontTextBlockHeightPx(_layout: Layout, viewport: number): number {
   const dateH = dateFontPx(viewport) * DATE_LINE_HEIGHT;
   const dates = [dateH, dateH];
-  const note =
-    layout === "wide" ? [demoNoteFontPx(viewport) * DEMO_NOTE_LINE_HEIGHT] : [];
-  const lines = [...dates, ...note];
+  const lines = [...dates];
   const gaps = (lines.length - 1) * LINE_GAP_PX;
   return lines.reduce((sum, h) => sum + h, 0) + gaps;
 }
@@ -143,7 +134,6 @@ describe("Property 21: the narrow front's date lines fit on one line each", () =
 
   it("keeps every front font at or above ENVELOPE_FRONT_MIN_PX at the smallest size", () => {
     expect(dateFontPx(SMALLEST_VIEWPORT_PX)).toBeGreaterThanOrEqual(ENVELOPE_FRONT_MIN_PX);
-    expect(demoNoteFontPx(SMALLEST_VIEWPORT_PX)).toBeGreaterThanOrEqual(ENVELOPE_FRONT_MIN_PX);
   });
 
   it("fits the longest date in the front's text width at the smallest size", () => {

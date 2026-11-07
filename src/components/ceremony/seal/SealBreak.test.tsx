@@ -156,3 +156,26 @@ describe("SealBreak instruction colour", () => {
     expect(css).not.toMatch(/\.instruction\s*\{[^}]*color:\s*var\(--desk-ink/);
   });
 });
+
+describe("SealBreak Top_Bar Skip: registered only from a break until it settles", () => {
+  // Effects do not run under renderToStaticMarkup, so the registration is
+  // checked on the source with comments and string literals blanked out.
+  const code = readFileSync(SOURCE_PATH, "utf8")
+    .replace(/\/\*[\s\S]*?\*\//g, " ")
+    .replace(/\/\/[^\n]*/g, " ");
+
+  it("does not register a skip on mount (the seal waits at its marks)", () => {
+    expect(code).not.toMatch(/useEffect\(\s*\(\)\s*=>\s*register\(/);
+  });
+
+  it("registers the skip only while a break is armed and not yet broken", () => {
+    expect(code).toMatch(/const\s+skipArmed\s*=\s*skipRegisteredFor\(\s*breaking\s*,\s*broken\s*\)/);
+    expect(code).toMatch(
+      /skipArmed\s*\?\s*register\(\s*\(\)\s*=>\s*skip\(\)\s*\)\s*:\s*undefined/,
+    );
+  });
+
+  it("arms the registration from the button press (breakNow)", () => {
+    expect(code).toMatch(/const\s+onButton\s*=\s*\(\)\s*=>\s*\{\s*setBreaking\(true\);\s*breakNow\(/);
+  });
+});

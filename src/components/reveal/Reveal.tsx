@@ -7,10 +7,7 @@ import { PHONE_QUERY } from "@/components/ceremony/scene/TopBar";
 import type { LetterKind } from "./FigureLine";
 import type { RecallRecordV1 } from "@/lib/recall";
 import { LetterBlock } from "@/components/ceremony/letter/LetterBlock";
-import { CEREMONY_COPY } from "@/components/ceremony/copy";
-import { SoundToggle } from "@/components/ceremony/sound/SoundToggle";
 import { SoundEnabledContext } from "@/components/ceremony/sound/SoundEnabledContext";
-import { soundCues } from "@/components/ceremony/sound/cues";
 import { FiguresThenNow } from "./FiguresThenNow";
 import { useFigures } from "./figures-api";
 import { Fingerprint } from "./Fingerprint";
@@ -205,10 +202,10 @@ export function Reveal({
   // toggle placement"). CeremonyRoot renders its own toggle only in `region`
   // mode, which the live pages use. So the persona marks hold their own sound
   // state and pass it to the Seal_Break; live pages keep the inherited state.
-  const inheritedSound = useContext(SoundEnabledContext);
-  const [marksSound, setMarksSound] = useState(false);
-  const personaMarks = variant === "persona";
-  const soundOn = personaMarks ? marksSound : inheritedSound;
+  // The sound state comes from above: on the persona page the Top_Bar toggle
+  // (SceneShell, through CeremonyRoot), on live pages CeremonyRoot's own toggle.
+  // spec 09 C4.4: the persona marks column no longer holds a toggle.
+  const soundOn = useContext(SoundEnabledContext);
 
   // Report the seal-break's in-progress flag up to the local view so the
   // Ceremony Stage reads `seal` while holding and settles back to `marks`.
@@ -348,6 +345,10 @@ export function Reveal({
     </>
   );
 
+  // Once the Close shows, the figures no longer hold the Stage's primary
+  // control: the Close is the last Stage and its own view sets the first viewport.
+  const closeShown = stage >= 3 && localView.figures === "settled" && close !== undefined;
+
   return (
     <section className={styles.reveal}>
       {marksGone ? null : (
@@ -365,38 +366,20 @@ export function Reveal({
                 </details>
               ) : (
                 <div className={styles.marks} data-card="marks">
-                  <h2 className={styles.marksHeading} data-fit="marks-heading">
-                    {REVEAL_COPY.stage1Title}
-                  </h2>
-                  {marksBody}
+                  {isPhone ? <AnswerList items={answerItems} /> : null}
                   {showSeal ? (
-                    <>
-                      <div className={styles.marksBreak} data-fit="break">
-                        <SealBreak
-                          patternKey={
-                            variant === "live"
-                              ? (letterId ?? personaName)
-                              : personaName
-                          }
-                          seal={seal ?? INERT_SEAL}
-                          showAll
-                          onSealingChange={onSealingChange}
-                        />
-                      </div>
-                      {personaMarks ? (
-                        <div className={styles.marksSound}>
-                          <SoundToggle
-                            onChange={(next) => {
-                              setMarksSound(next);
-                              soundCues.onToggle(next);
-                            }}
-                          />
-                          <p className={styles.marksSoundNote}>
-                            {CEREMONY_COPY.soundNote}
-                          </p>
-                        </div>
-                      ) : null}
-                    </>
+                    <div className={styles.marksBreak} data-fit="break">
+                      <SealBreak
+                        patternKey={
+                          variant === "live"
+                            ? (letterId ?? personaName)
+                            : personaName
+                        }
+                        seal={seal ?? INERT_SEAL}
+                        showAll={stage === 1}
+                        onSealingChange={onSealingChange}
+                      />
+                    </div>
                   ) : null}
                 </div>
               )}
@@ -421,10 +404,10 @@ export function Reveal({
             />
             {/* The opening Fingerprint sits under the Letter_Block, on the desk
                 surface, before "See the receipts" (design.md, R14.3). It shows
-                the verified envelope hash from `Opened.envelopeHash`; the
-                letter kind decides the demo label or the card sentence (R14.8).
-                A failed check never reaches the Reveal, so this is always the
-                passed state (R14.6). */}
+                the verified envelope hash from `Opened.envelopeHash`. A persona
+                letter gets the verdict and a closed disclosure (spec 09 C6.4);
+                a live or real letter gets the open block with the card sentence
+                (R14.8). A failed check never reaches the Reveal (R14.6). */}
             <Fingerprint
               envelopeHash={opened.envelopeHash}
               letterKind={letterKind}
@@ -443,6 +426,7 @@ export function Reveal({
                   allowSamePeriod={variant === "live"}
                   letterKind={letterKind}
                   figures={figures}
+                  primaryCard={!closeShown}
                 />
               </FiguresFadeUp>
             </div>
@@ -453,7 +437,7 @@ export function Reveal({
       {/* Close (R12.9) shows once the figures have settled. FiguresFadeUp
           reports `settled` when its clock ends or Skip ends it, so Close never
           appears while the figures are still fading in. */}
-      {stage >= 3 && localView.figures === "settled" && close !== undefined ? (
+      {closeShown ? (
         <div className={`${styles.stage} ${styles.fade}`}>
           <Close {...close} />
         </div>

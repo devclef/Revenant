@@ -37,7 +37,7 @@ describe("Property 12: Demo_2_On false means no /demo/live link", () => {
           const html = render(demo2On);
           expect(html).not.toContain("/demo/live");
           // The other three items stay, in order.
-          expect(html.indexOf("The space between the two is yours to read.")).toBeLessThan(
+          expect(html.indexOf("Your testimony sits beside the record.")).toBeLessThan(
             html.indexOf("That is the whole letter."),
           );
           expect(html.indexOf("That is the whole letter.")).toBeLessThan(
