@@ -574,9 +574,12 @@ describe("Property 17: views never render letter content before the reveal", () 
         ({ state }) => {
           const html = render(state);
           QUESTION_TEXTS.forEach((text, position) => {
-            // Reveal lists every question; the recall states show the first only.
+            // Stage 1 (marks) draws no answers (spec 09 C4.1). From stage 3 the
+            // closed testimony disclosure lists every question.
             if (state.tag === "reveal") {
-              expect(html).toContain(text);
+              expect(html.includes(text), `reveal stage ${state.stage} question "${text}"`).toBe(
+                state.stage >= 3,
+              );
               return;
             }
             const shown = RECALL_TAGS.includes(state.tag) && position === 0;

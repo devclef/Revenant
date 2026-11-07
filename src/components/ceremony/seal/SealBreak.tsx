@@ -34,12 +34,12 @@ import {
 } from "react";
 
 import { CEREMONY_COPY } from "../copy";
-import { REVEAL_COPY } from "@/components/reveal/copy";
 import {
   EASE_STANDARD,
   EASE_STAMP,
   FLAP_AT_MS,
   FLAP_LIFT_MS,
+  HOLD_PROGRESS_SEGMENTS,
   LETTER_SLIDE_AT_MS,
   LETTER_SLIDE_MS,
   SEAL_SETTLE_MS,
@@ -59,11 +59,39 @@ import {
   cracksForProgress,
 } from "./cracks";
 import { HeldSeal } from "./HeldSeal";
+import { activateSkipLink, skipLinkVisible } from "./skip-link";
+import { holdSegmentsLit } from "./hold";
 import type { SealController } from "./useSealBreak";
 import styles from "./SealBreak.module.css";
 
 /** The WaxSeal's fixed 100×100 user space, shared by the crack overlay. */
 const VIEWBOX = SEAL_CENTER * 2;
+
+/** The ring sits just outside the disc: radius 50 in the same user space. */
+const RING_RADIUS = 50;
+const RING_VIEWBOX = "-6 -6 112 112";
+const TAU_RING = Math.PI * 2;
+const RING_GAP_RAD = 0.08;
+
+/**
+ * One arc path per hold segment (spec 09 P8.2), fixed by index: segment k
+ * covers its share of the circle, minus a small gap. Angles run clockwise from
+ * the top. Pure, so the server and the client draw the same ring.
+ */
+function ringSegmentPath(index: number, count: number): string {
+  const a0 = (index / count) * TAU_RING + RING_GAP_RAD / 2;
+  const a1 = ((index + 1) / count) * TAU_RING - RING_GAP_RAD / 2;
+  const point = (a: number) =>
+    `${(VIEWBOX / 2 + RING_RADIUS * Math.sin(a)).toFixed(3)} ${(
+      VIEWBOX / 2 -
+      RING_RADIUS * Math.cos(a)
+    ).toFixed(3)}`;
+  return `M ${point(a0)} A ${RING_RADIUS} ${RING_RADIUS} 0 0 1 ${point(a1)}`;
+}
+
+const RING_PATHS: readonly string[] = Array.from({ length: HOLD_PROGRESS_SEGMENTS }, (_, i) =>
+  ringSegmentPath(i, HOLD_PROGRESS_SEGMENTS),
+);
 
 export type SealBreakProps = {
   /** The persona key that seeds the WaxSeal's decorative pattern (R8.4). */
@@ -190,7 +218,7 @@ export function SealBreak({
   // Whether the sound toggle is on (R14.2).
   const soundOn = useContext(SoundEnabledContext);
 
-  const { broken, progress, breakNow, showAll: showAllSeal, skip } = seal;
+  const { broken, progress, breakNow, skip } = seal;
 
   // The crack overlay root. The button's short draw animates its paths.
   const overlayRef = useRef<SVGSVGElement | null>(null);
@@ -212,10 +240,29 @@ export function SealBreak({
   // a given progress (Property 6, Property 21).
   const cracks = cracksForProgress(progress);
 
+  // The hold ring: each segment lights by opacity only (spec 09 P8.2).
+  const ringLit = holdSegmentsLit(seal.hold);
+
   return (
     <section className={styles.stage} style={TIMING_VARS} data-broken={broken}>
-      <HeldSeal controller={seal} className={styles.sealTarget}>
+      <HeldSeal controller={seal} className={styles.sealTarget} primary>
         <WaxSeal patternKey={patternKey} className={styles.seal} />
+        <svg
+          className={styles.ring}
+          viewBox={RING_VIEWBOX}
+          aria-hidden="true"
+          focusable="false"
+          data-hold-ring=""
+        >
+          {RING_PATHS.map((d, index) => (
+            <path
+              key={index}
+              className={styles.ringSegment}
+              d={d}
+              style={{ opacity: ringLit[index] ? 1 : 0 }}
+            />
+          ))}
+        </svg>
         <svg
           ref={overlayRef}
           className={styles.crackOverlay}
@@ -246,12 +293,22 @@ export function SealBreak({
         ) : null}
       </HeldSeal>
       <p className={styles.instruction}>{CEREMONY_COPY.sealInstruction}</p>
-      <button type="button" className={styles.button} onClick={onButton}>
+      <button
+        type="button"
+        className={styles.button}
+        data-primary-control=""
+        onClick={onButton}
+      >
         {CEREMONY_COPY.sealButton}
       </button>
-      {showAll ? (
-        <button type="button" className={styles.button} onClick={() => showAllSeal()}>
-          {REVEAL_COPY.showAll}
+      {skipLinkVisible(showAll, broken) ? (
+        <button
+          type="button"
+          className={styles.textLink}
+          data-skip-link=""
+          onClick={() => activateSkipLink(seal)}
+        >
+          {CEREMONY_COPY.skipToReceipts}
         </button>
       ) : null}
     </section>

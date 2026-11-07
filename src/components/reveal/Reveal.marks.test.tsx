@@ -124,20 +124,20 @@ describe("reveal marks stage: recorded scales (spec 08 R6)", () => {
   };
 
   it("renders one recorded scale per number question, with no slider and no tab stop", () => {
-    const html = renderMarks(RECORD);
+    const html = renderTestimony(RECORD);
     expect(html).not.toContain('role="slider"');
     expect(html.match(/role="img"/g) ?? []).toHaveLength(2);
-    expect(html).not.toContain("tabindex");
+    expect(sliceBetween(html, 'data-card="marks"', "</details>")).not.toContain("tabindex");
   });
 
   it("places the Mark at the recorded value and names the value with its unit", () => {
-    const html = renderMarks(RECORD);
+    const html = renderTestimony(RECORD);
     expect(html).toContain(": 2.50 USD per gallon\"");
     expect(html).toContain(">2.50<");
   });
 
   it("shows no Mark for a question recorded as no answer, and says No answer", () => {
-    const html = renderMarks(RECORD);
+    const html = renderTestimony(RECORD);
     expect(html).toContain(`: ${CEREMONY_COPY.lineNoAnswer}"`);
     expect(html).toContain(CEREMONY_COPY.lineNoAnswer);
     // Only the answered question carries a Mark readout.
@@ -145,7 +145,7 @@ describe("reveal marks stage: recorded scales (spec 08 R6)", () => {
   });
 
   it("shows the judge's value in the Accent, in its own answers list", () => {
-    const html = renderMarks(RECORD);
+    const html = renderTestimony(RECORD);
     const answers = sliceBetween(html, 'data-fit="marks-answers"', "</dl>");
     expect(answers).toContain(">2.50</span>");
     expect(answers).toMatch(/class="[^"]*marksValue[^"]*"/);
@@ -154,7 +154,7 @@ describe("reveal marks stage: recorded scales (spec 08 R6)", () => {
   });
 
   it("shows 'No answer' for a question recorded without a number", () => {
-    const html = renderMarks(RECORD);
+    const html = renderTestimony(RECORD);
     const answers = sliceBetween(html, 'data-fit="marks-answers"', "</dl>");
     expect(answers.match(new RegExp(REVEAL_COPY.noAnswer, "g")) ?? []).toHaveLength(2);
   });
@@ -170,32 +170,31 @@ describe("reveal marks stage: column markers and order", () => {
     ],
   };
 
-  it("renders the three data-fit markers for the heading, the answers and the break", () => {
-    const html = renderMarks(RECORD);
-    expect(html.match(/data-fit="marks-heading"/g) ?? []).toHaveLength(1);
-    expect(html.match(/data-fit="marks-answers"/g) ?? []).toHaveLength(1);
+  it("renders the break region and no marks heading or answers at stage 1 on the desktop (spec 09 C4.1)", () => {
+    const html = renderMarks(RECORD, { phone: false, stage: 1 });
     expect(html.match(/data-fit="break"/g) ?? []).toHaveLength(1);
+    expect(html).not.toContain('data-fit="marks-heading"');
+    expect(html).not.toContain('data-fit="marks-answers"');
+    expect(html).not.toContain('role="img"');
   });
 
-  it("puts the heading, answers, scales, the break region, instruction, Show everything, then the sound note, in that order", () => {
-    const html = renderMarks(RECORD);
+  it("puts the instruction, Break the seal, then the Skip_Link in that order at stage 1", () => {
+    const html = renderMarks(RECORD, { phone: false, stage: 1 });
     const order = [
-      html.indexOf('data-fit="marks-heading"'),
-      html.indexOf('data-fit="marks-answers"'),
-      html.indexOf('role="img"'),
       html.indexOf('data-fit="break"'),
       html.indexOf(CEREMONY_COPY.sealInstruction),
-      html.indexOf(REVEAL_COPY.showAll),
-      html.indexOf(CEREMONY_COPY.soundNote),
+      html.indexOf(CEREMONY_COPY.sealButton),
+      html.indexOf(CEREMONY_COPY.skipToReceipts),
     ];
     for (const index of order) expect(index).toBeGreaterThanOrEqual(0);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
+    expect(html).not.toContain(REVEAL_COPY.showAll);
   });
 
-  it("shows the sound note only on the persona page", () => {
-    const persona = renderMarks(RECORD);
-    expect(persona).toContain(CEREMONY_COPY.soundNote);
-    const live = renderMarks(RECORD, { variant: "live", letterId: "live-marks" });
+  it("shows no sound note in the marks Stage, on the persona page or live", () => {
+    const persona = renderMarks(RECORD, { phone: false, stage: 1 });
+    expect(persona).not.toContain(CEREMONY_COPY.soundNote);
+    const live = renderMarks(RECORD, { variant: "live", letterId: "live-marks", phone: false, stage: 1 });
     expect(live).not.toContain(CEREMONY_COPY.soundNote);
   });
 });
@@ -211,20 +210,30 @@ describe("reveal marks stage: recorded scale names and answer format (spec 09 A9
   };
 
   it("draws one data-recorded-scale per number question, each named with its metric", () => {
-    const html = renderMarks(RECORD);
+    const html = renderTestimony(RECORD);
     expect(html.match(/data-recorded-scale=""/g) ?? []).toHaveLength(2);
     expect(html.indexOf("Regular gasoline")).toBeGreaterThan(-1);
     expect(html.indexOf("Milk")).toBeGreaterThan(-1);
   });
 
   it("shows the recorded answer grouped in threes on the scale and in the answers list", () => {
-    const html = renderMarks(RECORD);
+    const html = renderTestimony(RECORD);
     expect(html).toContain(": 2,500.50 USD per gallon\"");
     const answers = sliceBetween(html, 'data-fit="marks-answers"', "</dl>");
     expect(answers).toContain(">2,500.50</span>");
     expect(answers).not.toContain(">2500.50<");
   });
 });
+
+/**
+ * The judge's testimony on the desktop: the recorded scales and the answers
+ * list sit in the marks card, which from `figures` on is a closed disclosure
+ * (spec 09 C3.4). At stage 1 they are not drawn (C4.1), so these tests read
+ * them from the disclosure.
+ */
+function renderTestimony(record: RecallRecordV1): string {
+  return renderMarks(record, { stage: 3, phone: false });
+}
 
 /** The text between two markers, used to scope an assertion to one part. */
 function sliceBetween(html: string, start: string, end: string): string {
@@ -296,9 +305,10 @@ describe("reveal marks stage on the phone and the collapsed card (spec 09 P6, C3
     expect(html).not.toContain("data-recorded-scale");
   });
 
-  it("keeps the marks card open with its heading on the phone at stage 1", () => {
+  it("keeps no marks heading on the phone at stage 1, and shows the Answer_List", () => {
     const html = renderMarks(RECORD, { phone: true });
-    expect(html).toContain('data-fit="marks-heading"');
+    expect(html).not.toContain('data-fit="marks-heading"');
+    expect(html).toContain('data-answer-list=""');
     expect(html).not.toContain("data-testimony");
   });
 
@@ -320,9 +330,17 @@ describe("reveal marks stage on the phone and the collapsed card (spec 09 P6, C3
     expect(html.match(/role="img"/g) ?? []).toHaveLength(2);
   });
 
-  it("keeps the open marks card at 600 px and wider on the marks Stage", () => {
+  it("keeps the open marks card on the desktop at stage 1, with no heading and no disclosure", () => {
     const html = renderMarks(RECORD, { phone: false, stage: 1 });
     expect(html).not.toContain("data-testimony");
-    expect(html).toContain('data-fit="marks-heading"');
+    expect(html).toContain('data-card="marks"');
+    expect(html).not.toContain('data-fit="marks-heading"');
+  });
+
+  it("marks the pressable seal and Break the seal as the primary control at stage 1 (spec 09 C4.1, P8.2)", () => {
+    const html = renderMarks(RECORD, { phone: false, stage: 1 });
+    expect(html.match(/data-primary-control=""/g) ?? []).toHaveLength(2);
+    expect(html).toContain("data-seal-target");
+    expect(html).toContain('data-hold-ring=""');
   });
 });

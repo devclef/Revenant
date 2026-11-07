@@ -202,18 +202,17 @@ function renderReveal(record: RecallRecordV1, stage: 1 | 2 | 3 = 1): string {
 }
 
 describe("Reveal stage 1 is the marks Stage", () => {
-  it("keeps the stage 1 heading", () => {
+  it("shows no marks heading at stage 1 (spec 09 C4.1)", () => {
     const html = renderReveal(RECORD);
-    expect(html).toContain(REVEAL_COPY.stage1Title);
+    expect(html).not.toContain(REVEAL_COPY.stage1Title);
   });
 
-  it("shows the remembered answers as plain text", () => {
+  it("shows no remembered answers or question text at stage 1 (spec 09 C4.1)", () => {
     const html = renderReveal(RECORD);
-    // Each question's text and the recorded number answer still render.
     for (const question of OPENED.payload.recall_questions) {
-      expect(html).toContain(question.text);
+      expect(html).not.toContain(question.text);
     }
-    expect(html).toContain(">2.50</span>");
+    expect(html).not.toContain(">2.50</span>");
   });
 
   it("shows the seal instruction and the 'Break the seal' button, not a 'Read the letter' button", () => {
@@ -224,9 +223,10 @@ describe("Reveal stage 1 is the marks Stage", () => {
     expect(html).not.toContain("Read the letter");
   });
 
-  it("still renders the 'Show everything' control", () => {
+  it("shows the Skip_Link 'Skip to the receipts' and no 'Show everything' at stage 1", () => {
     const html = renderReveal(RECORD);
-    expect(html).toContain(REVEAL_COPY.showAll);
+    expect(html).toContain(CEREMONY_COPY.skipToReceipts);
+    expect(html).not.toContain(REVEAL_COPY.showAll);
   });
 
   it("leaks nothing from inside the letter at stage 1 (R3.8)", () => {

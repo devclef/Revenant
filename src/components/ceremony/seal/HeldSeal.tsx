@@ -11,7 +11,12 @@
 // The target is aria-hidden and outside the tab order. The "Break the seal"
 // button is the accessible control (R6.3, Property 19).
 
-import type { PointerEvent as ReactPointerEvent, CSSProperties, ReactNode } from "react";
+import type {
+  MouseEvent as ReactMouseEvent,
+  PointerEvent as ReactPointerEvent,
+  CSSProperties,
+  ReactNode,
+} from "react";
 
 import { SEAL_HIT_MIN_PX } from "../constants";
 import type { SealController } from "./useSealBreak";
@@ -22,15 +27,22 @@ export type HeldSealProps = {
   controller: SealController;
   /** Extra class names for the wrapper (the seal's placement). */
   className?: string;
+  /** Marks the pressable seal as the page's primary control (spec 09 C4.1). */
+  primary?: boolean;
   children?: ReactNode;
 };
 
 /** The hit box size, set as a custom property the stylesheet reads. */
 const HIT_VARS = { "--seal-hit-min": `${SEAL_HIT_MIN_PX}px` } as CSSProperties;
 
-export function HeldSeal({ controller, className, children }: HeldSealProps) {
+export function HeldSeal({ controller, className, primary = false, children }: HeldSealProps) {
   const onPointerDown = (event: ReactPointerEvent<HTMLElement>) => {
     controller.press(event.currentTarget, event.pointerId);
+  };
+  // A long press on touch opens the browser's callout menu. The seal is a
+  // press-and-hold control, so that menu is suppressed (spec 09 P8.1).
+  const onContextMenu = (event: ReactMouseEvent<HTMLElement>) => {
+    event.preventDefault();
   };
   const classes = className ? `${styles.target} ${className}` : styles.target;
   return (
@@ -39,7 +51,9 @@ export function HeldSeal({ controller, className, children }: HeldSealProps) {
       style={HIT_VARS}
       aria-hidden="true"
       data-seal-target
+      data-primary-control={primary ? "" : undefined}
       onPointerDown={onPointerDown}
+      onContextMenu={onContextMenu}
     >
       {children}
     </span>

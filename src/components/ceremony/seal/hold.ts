@@ -11,7 +11,7 @@
 // argument so the caller (SealBreak) controls the clock and the same inputs
 // always produce the same outputs.
 
-import { SEAL_HOLD_MS, SEAL_SETTLE_MS } from "../constants";
+import { HOLD_PROGRESS_SEGMENTS, SEAL_HOLD_MS, SEAL_SETTLE_MS } from "../constants";
 
 /**
  * The hold's phase and how far it has progressed.
@@ -123,4 +123,23 @@ export function onRelease(s: HoldState, now: number): HoldState {
  */
 export function isBreak(prev: HoldState, next: HoldState): boolean {
   return next.phase === "broken" && prev.phase !== "broken";
+}
+
+/**
+ * The hold ring's segments, lit or not (spec 09 P8.2). Segment k (1-based, of
+ * `count`) lights when the hold reaches k/count of SEAL_HOLD_MS. Only the hold
+ * lights them: an early release (`settling`) and `idle` light none, so the
+ * ring resets at once. `broken` lights all of them. The view turns each flag
+ * into opacity only.
+ */
+export function holdSegmentsLit(
+  s: HoldState,
+  count: number = HOLD_PROGRESS_SEGMENTS,
+): boolean[] {
+  const lit: boolean[] = [];
+  for (let k = 1; k <= count; k += 1) {
+    const reached = s.progress + 1e-9 >= k / count;
+    lit.push(s.phase === "broken" || (s.phase === "holding" && reached));
+  }
+  return lit;
 }

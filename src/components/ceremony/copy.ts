@@ -68,6 +68,9 @@ export const CEREMONY_COPY = {
   /** The button that breaks the seal. */
   sealButton: "Break the seal",
 
+  /** The Skip_Link under the seal: sends SHOW_ALL once (spec 09 C4.2). */
+  skipToReceipts: "Skip to the receipts",
+
   /** Live: the seal has not been held long enough yet. */
   sealHolds: "The seal holds. Press and hold a little longer to break it.",
 

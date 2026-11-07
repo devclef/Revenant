@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { Reveal } from "./Reveal";
 import { REVEAL_COPY } from "./copy";
+import { CEREMONY_COPY } from "@/components/ceremony/copy";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { SkipProvider } from "@/components/ceremony/skip";
 import { LiveRegionProvider } from "@/components/ceremony/LiveRegion";
@@ -170,9 +171,9 @@ function isInsideLetterPaper(html: string, heading: string): boolean {
 }
 
 describe("reveal stages sit on a ParchmentSurface panel", () => {
-  it("wraps stage 1 (What you remembered and the seal break) in a panel", () => {
+  it("wraps stage 1 (the seal break) in a panel", () => {
     const html = renderReveal(1);
-    expect(isInsidePanel(html, REVEAL_COPY.stage1Title)).toBe(true);
+    expect(isInsidePanel(html, CEREMONY_COPY.sealButton)).toBe(true);
   });
 
   it("wraps stage 2 (What was written then) in the letter block's paper panel", () => {

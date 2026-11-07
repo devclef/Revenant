@@ -7,7 +7,6 @@ import { PHONE_QUERY } from "@/components/ceremony/scene/TopBar";
 import type { LetterKind } from "./FigureLine";
 import type { RecallRecordV1 } from "@/lib/recall";
 import { LetterBlock } from "@/components/ceremony/letter/LetterBlock";
-import { CEREMONY_COPY } from "@/components/ceremony/copy";
 import { SoundEnabledContext } from "@/components/ceremony/sound/SoundEnabledContext";
 import { FiguresThenNow } from "./FiguresThenNow";
 import { useFigures } from "./figures-api";
@@ -207,7 +206,6 @@ export function Reveal({
   // (SceneShell, through CeremonyRoot), on live pages CeremonyRoot's own toggle.
   // spec 09 C4.4: the persona marks column no longer holds a toggle.
   const soundOn = useContext(SoundEnabledContext);
-  const personaMarks = variant === "persona";
 
   // Report the seal-break's in-progress flag up to the local view so the
   // Ceremony Stage reads `seal` while holding and settles back to `marks`.
@@ -364,32 +362,20 @@ export function Reveal({
                 </details>
               ) : (
                 <div className={styles.marks} data-card="marks">
-                  <h2 className={styles.marksHeading} data-fit="marks-heading">
-                    {REVEAL_COPY.stage1Title}
-                  </h2>
-                  {marksBody}
+                  {isPhone ? <AnswerList items={answerItems} /> : null}
                   {showSeal ? (
-                    <>
-                      <div className={styles.marksBreak} data-fit="break">
-                        <SealBreak
-                          patternKey={
-                            variant === "live"
-                              ? (letterId ?? personaName)
-                              : personaName
-                          }
-                          seal={seal ?? INERT_SEAL}
-                          showAll
-                          onSealingChange={onSealingChange}
-                        />
-                      </div>
-                      {personaMarks ? (
-                        <div className={styles.marksSound}>
-                          <p className={styles.marksSoundNote}>
-                            {CEREMONY_COPY.soundNote}
-                          </p>
-                        </div>
-                      ) : null}
-                    </>
+                    <div className={styles.marksBreak} data-fit="break">
+                      <SealBreak
+                        patternKey={
+                          variant === "live"
+                            ? (letterId ?? personaName)
+                            : personaName
+                        }
+                        seal={seal ?? INERT_SEAL}
+                        showAll={stage === 1}
+                        onSealingChange={onSealingChange}
+                      />
+                    </div>
                   ) : null}
                 </div>
               )}

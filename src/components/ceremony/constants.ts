@@ -15,6 +15,7 @@ export const SEAL_HOLD_MS = 1500; // R6.2: press and hold this long to break
 export const SEAL_SETTLE_MS = 300; // R6.4: cracks recede on early release
 export const SEAL_SHORT_MS = 450; // R6.3: the button's non-gesture version
 export const SEAL_SPLIT_MS = 520; // the two seal halves fall apart
+export const HOLD_PROGRESS_SEGMENTS = 12; // spec 09 P8.2: the hold ring, one segment per k/12 of SEAL_HOLD_MS
 export const FLAP_LIFT_MS = 450;
 export const LETTER_SLIDE_MS = 600;
 export const FLAKE_COUNT = 14;

@@ -407,8 +407,11 @@ describe("OpeningFlow view selection", () => {
       record: RECORD,
       stage: 1,
     });
-    expect(html).toContain(REVEAL_COPY.stage1Title);
-    expect(html).toContain(">3.50</span>");
+    expect(html).not.toContain(REVEAL_COPY.stage1Title);
+    // C4.1: the answers are not drawn at stage 1 on the desktop; they wait in the
+    // closed testimony disclosure from stage 3 on.
+    expect(html).not.toContain(">3.50</span>");
+    expect(html).toContain(CEREMONY_COPY.skipToReceipts);
     // Stage 1 is the `marks` Stage: the remembered answers above the unbroken
     // seal, its instruction line and the "Break the seal" button (owned by
     // SealBreak). It replaces the old stage1Next ("Read the letter") control.
@@ -571,7 +574,7 @@ describe("OpeningFlow Ceremony root attributes (R3.1, R3.2, R17.3)", () => {
         record: RECORD,
         stage: 1,
       });
-      expect(revealHtml).toContain(REVEAL_COPY.stage1Title);
+      expect(revealHtml).not.toContain(REVEAL_COPY.stage1Title);
       // Stage 1 is the `marks` Stage: the "Break the seal" button is shown.
       expect(revealHtml).toContain(CEREMONY_COPY.sealButton);
     },
