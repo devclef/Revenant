@@ -637,3 +637,54 @@
     padding: 0.625rem 1.25rem;
   }
 }
+
+/* The published value, at full precision. Plain weight, no direction cue. */
+.figureValue {
+  grid-column: 2;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: var(--ink);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Source details, one click away, under the figure's checkbox row. */
+.sourceDetails {
+  margin: 0 0.75rem 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  color: var(--ink);
+}
+
+.sourceSummary {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.sourceSummary:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
+}
+
+.sourceList {
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  gap: 0.25rem 0.75rem;
+  margin: 0.5rem 0 0;
+}
+
+.sourceList dt {
+  color: var(--ink-soft);
+}
+
+.sourceList dd {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.sourceList a {
+  color: var(--ink);
+  text-decoration: underline;
+}

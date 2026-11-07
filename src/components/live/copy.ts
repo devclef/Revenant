@@ -36,6 +36,14 @@ export const LIVE_COPY = {
     "Choose 1. It is sealed as published, with its period and source.",
   figuresTooManyOne: "Choose no more than 1 figure.",
   figureLatest: "Latest period: {period}",
+  /** The published value, shown at full precision with its unit beside it. */
+  figureValue: "Value: {value}",
+  figureSource: "Source: {source}",
+  figureSourceDetails: "Source details",
+  figureSourceName: "Source name",
+  figureSeriesId: "Series ID",
+  figureSourceLink: "Source link",
+  figureRetrieved: "Retrieved",
   /** A Fallback_Figure is not the latest, so it never says "Latest" (A1.8). */
   figurePeriod: "Period: {period}",
   fixtureLabel: "fixture data",

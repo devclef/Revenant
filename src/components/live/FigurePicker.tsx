@@ -9,6 +9,24 @@ import { pickerHint } from "./figure-hint";
 import { figureLimit } from "./form";
 import styles from "./live.module.css";
 
+/**
+ * The value and source of one figure, as the Figures_API published it. The
+ * value is the string from the response, shown at full published precision.
+ * Nothing here is rounded, converted or estimated.
+ */
+export interface FigureDetail {
+  /** The value exactly as published. */
+  value: string;
+  /** Publisher name, as the figure's source field gives it. */
+  sourceName: string;
+  /** The series identifier at the publisher. */
+  seriesId: string;
+  /** Link a visitor can follow to check the figure. */
+  sourceUrl: string;
+  /** When Revenant fetched the figure (UTC). */
+  retrievedAt: string;
+}
+
 export interface FigurePickerProps {
   /** The series to offer, already in catalogue order (see listPickableSeries). */
   series: readonly PickableSeries[];
@@ -17,12 +35,19 @@ export interface FigurePickerProps {
   /** True when the visitor has chosen the most figures allowed. */
   atLimit: boolean;
   onToggle: (metricId: string) => void;
+  /**
+   * Value and source per metric id. A series with no entry shows its name,
+   * unit, region and period only; no value is invented for it.
+   */
+  details?: ReadonlyMap<string, FigureDetail>;
 }
 
 /**
- * Lists the figures a visitor can seal with: name, unit, region and the latest
- * period. Fixture series carry the "fixture data" label. No value is shown,
- * because a figure is only read at reveal (R13.1, R13.7).
+ * Lists the figures a visitor can seal with: name, value, unit, region, the
+ * period and the source name. The source details (series ID, source link and
+ * retrieved date) sit behind a details control. Fixture series carry the
+ * "fixture data" label. Items keep catalogue order and are never sorted or
+ * styled by value or direction (R13.7).
  *
  * A Fallback_Figure shows its own period and the retrieved date with the
  * Fallback_Note (spec 09, A1.8). With no series to offer, the picker shows the
@@ -37,6 +62,7 @@ export function FigurePicker({
   selected,
   atLimit,
   onToggle,
+  details,
 }: FigurePickerProps) {
   const limit = figureLimit(series.length);
   const hint = pickerHint(limit);
@@ -77,6 +103,7 @@ export function FigurePicker({
           const disabled = !checked && atLimit;
           const inputId = `figure-${item.metricId}`;
           const isFallback = item.fallbackRetrievedAt !== undefined;
+          const detail = details?.get(item.metricId);
           return (
             <li key={item.metricId} className={styles.figureItem}>
               <label htmlFor={inputId} className={styles.figureLabel}>
@@ -89,6 +116,12 @@ export function FigurePicker({
                   onChange={() => onToggle(item.metricId)}
                 />
                 <span className={styles.figureName}>{item.displayName}</span>
+                {detail !== undefined ? (
+                  <span className={styles.figureValue}>
+                    {LIVE_COPY.figureValue.replace("{value}", detail.value)}{" "}
+                    {item.unit}
+                  </span>
+                ) : null}
                 <span className={styles.figureMeta}>
                   {item.unit} · {item.region}
                 </span>
@@ -98,6 +131,14 @@ export function FigurePicker({
                     : LIVE_COPY.figureLatest
                   ).replace("{period}", item.latestPeriod)}
                 </span>
+                {detail !== undefined ? (
+                  <span className={styles.figureMeta}>
+                    {LIVE_COPY.figureSource.replace(
+                      "{source}",
+                      detail.sourceName,
+                    )}
+                  </span>
+                ) : null}
                 {isFallback ? (
                   <span className={styles.figureMeta}>
                     {REVEAL_COPY.fallbackNote.replace(
@@ -114,6 +155,29 @@ export function FigurePicker({
                   </span>
                 ) : null}
               </label>
+              {detail !== undefined ? (
+                <details className={styles.sourceDetails}>
+                  <summary className={styles.sourceSummary}>
+                    {LIVE_COPY.figureSourceDetails}
+                  </summary>
+                  <dl className={styles.sourceList}>
+                    <dt>{LIVE_COPY.figureSourceName}</dt>
+                    <dd>{detail.sourceName}</dd>
+                    <dt>{LIVE_COPY.figureSeriesId}</dt>
+                    <dd>{detail.seriesId}</dd>
+                    <dt>{LIVE_COPY.figureSourceLink}</dt>
+                    <dd>
+                      <a href={detail.sourceUrl} rel="noopener noreferrer">
+                        {detail.sourceUrl}
+                      </a>
+                    </dd>
+                    <dt>{LIVE_COPY.figureRetrieved}</dt>
+                    <dd>
+                      {formatLetterDate(detail.retrievedAt, { kind: "utc" })}
+                    </dd>
+                  </dl>
+                </details>
+              ) : null}
             </li>
           );
         })}

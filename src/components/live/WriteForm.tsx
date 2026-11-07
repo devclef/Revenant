@@ -7,7 +7,7 @@ import { DemoLabel } from "@/components/demo/DemoLabel";
 import type { PickableSeries } from "./catalogue-list";
 import { LETTER_FIELD_ROWS } from "./constants";
 import { LIVE_COPY, REAL_COPY } from "./copy";
-import { FigurePicker } from "./FigurePicker";
+import { FigurePicker, type FigureDetail } from "./FigurePicker";
 import { countCodePoints, figureLimit, validateWrite, type WriteProblem } from "./form";
 import styles from "./live.module.css";
 import { letterFieldHeightPx } from "./phone";
@@ -75,6 +75,16 @@ export interface WriteFormProps {
   onNext?: () => void;
   /** Section mode: moves back one step. Omit where Back is not offered. */
   onBack?: () => void;
+  /**
+   * Value and source per metric id, from the figures response. Passed to the
+   * picker, which shows nothing extra for a figure with no entry.
+   */
+  figureDetails?: ReadonlyMap<string, FigureDetail>;
+  /**
+   * Starts the backup-key path. Shown as the first option, beside the passkey
+   * press, only when prfHint is `missing`. Omit it and no backup option shows.
+   */
+  onBackupStart?: () => void;
   /** The Create_Press: starts the first passkey prompt. */
   onCreatePress: () => void;
   /** The Confirm_Press: starts the second prompt and the seal. */
@@ -145,6 +155,8 @@ export function WriteForm({
   text,
   metricIds,
   prfHint = "none",
+  figureDetails,
+  onBackupStart,
   warningTicked,
   backupCardTicked,
   touched = INITIAL_TOUCHED,
@@ -268,6 +280,20 @@ export function WriteForm({
     </button>
   );
 
+  // The backup option comes first, beside the passkey press (D6.1). It only
+  // starts the backup path. Whether a backup key is required is still decided
+  // by the PRF_Check when the letter is sealed (R15.9).
+  const backupButton =
+    prfHint === "missing" && onBackupStart !== undefined ? (
+      <button
+        type="button"
+        className={styles.secondary}
+        onClick={onBackupStart}
+      >
+        {LIVE_COPY.fallbackButton}
+      </button>
+    ) : null;
+
   const body = (
     <>
       {all && realDate === undefined ? <DemoLabel /> : null}
@@ -334,6 +360,7 @@ export function WriteForm({
               series={series}
               selected={metricIds}
               atLimit={atLimit}
+              details={figureDetails}
               onToggle={(metricId) => {
                 onTouch(TOUCH_FIELDS.figures);
                 onToggleFigure(metricId);
@@ -412,6 +439,7 @@ export function WriteForm({
 
       {all ? (
         <div className={styles.actions}>
+          {backupButton}
           {pressButton}
           <StepStatus state={state} />
         </div>
@@ -453,6 +481,7 @@ export function WriteForm({
               {LIVE_COPY.backButton}
             </button>
           ) : null}
+          {backupButton}
           {pressButton}
           <StepStatus state={state} />
         </div>
