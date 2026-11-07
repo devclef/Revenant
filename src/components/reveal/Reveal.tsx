@@ -345,6 +345,10 @@ export function Reveal({
     </>
   );
 
+  // Once the Close shows, the figures no longer hold the Stage's primary
+  // control: the Close is the last Stage and its own view sets the first viewport.
+  const closeShown = stage >= 3 && localView.figures === "settled" && close !== undefined;
+
   return (
     <section className={styles.reveal}>
       {marksGone ? null : (
@@ -422,6 +426,7 @@ export function Reveal({
                   allowSamePeriod={variant === "live"}
                   letterKind={letterKind}
                   figures={figures}
+                  primaryCard={!closeShown}
                 />
               </FiguresFadeUp>
             </div>
@@ -432,7 +437,7 @@ export function Reveal({
       {/* Close (R12.9) shows once the figures have settled. FiguresFadeUp
           reports `settled` when its clock ends or Skip ends it, so Close never
           appears while the figures are still fading in. */}
-      {stage >= 3 && localView.figures === "settled" && close !== undefined ? (
+      {closeShown ? (
         <div className={`${styles.stage} ${styles.fade}`}>
           <Close {...close} />
         </div>

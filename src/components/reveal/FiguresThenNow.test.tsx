@@ -228,6 +228,15 @@ function htmlText(text: string): string {
 }
 
 describe("FiguresThenNow markup", () => {
+  it("marks the first card as the primary control by default, and drops it when primaryCard is false (spec 09 PH1)", () => {
+    const withPrimary = renderToStaticMarkup(createElement(FiguresThenNow, { opened: OPENED, figures: FIGURES }));
+    expect(withPrimary).toContain('data-primary-control=""');
+    const without = renderToStaticMarkup(
+      createElement(FiguresThenNow, { opened: OPENED, figures: FIGURES, primaryCard: false }),
+    );
+    expect(without).not.toContain("data-primary-control");
+  });
+
   beforeEach(() => {
     // No network of any kind in stage 3: the now data is a static import. A
     // guard fails the test if any render reaches for fetch (as Property 17 does).
