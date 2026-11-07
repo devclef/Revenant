@@ -71,7 +71,7 @@ export function SealedLetter({
     </p>
   );
   const letterBody = collapsible ? (
-    <details data-letter-disclosure="">
+    <details className={styles.letterDisclosure} data-letter-disclosure="">
       <summary>{REVEAL_COPY.letterDisclosure}</summary>
       {letterText}
     </details>

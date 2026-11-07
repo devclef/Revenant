@@ -741,7 +741,7 @@
 }
 
 /* The collapsed letter's summary is a touch target on the phone (P8.4, PH7). */
-[data-letter-disclosure] > summary {
+.letterDisclosure > summary {
   min-height: 44px;
   display: flex;
   align-items: center;
