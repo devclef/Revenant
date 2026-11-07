@@ -287,6 +287,15 @@ describe("reveal marks stage on the phone and the collapsed card (spec 09 P6, C3
     expect(html).toContain(`${REVEAL_COPY.noAnswer}`);
   });
 
+  it("lists each number question once in the phone Answer_List, with its answer or No answer", () => {
+    const html = renderMarks(RECORD, { phone: true });
+    const items = html.match(/<li class="[^"]*">/g) ?? [];
+    expect(items).toHaveLength(2);
+    expect(html).toContain("2.50 USD per gallon");
+    expect(html).toContain("Milk");
+    expect(html).not.toContain("data-recorded-scale");
+  });
+
   it("keeps the marks card open with its heading on the phone at stage 1", () => {
     const html = renderMarks(RECORD, { phone: true });
     expect(html).toContain('data-fit="marks-heading"');

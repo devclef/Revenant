@@ -785,6 +785,37 @@
     margin: 0;
   }
 
+  /* Spec 09 P6 (PH1): on the phone, the letter column, the Fingerprint and the
+     figures heading sit above the first Receipt_Card. Their gaps are cut so the
+     card starts inside the First_Viewport at 360 x 640 and 390 x 844. */
+  .letterFigures {
+    gap: 1rem;
+  }
+
+  .letterCol,
+  .figuresCol {
+    margin-bottom: 1rem;
+  }
+
+  .figuresThenNow h2[data-figures-heading] {
+    margin-bottom: 1rem;
+  }
+
+  /* The Number_Line's mark ring can sit 0.5rem left of the axis at the lowest
+     value. The inline padding keeps that ring inside the Figure_Entry (PH5). */
+  .figureGroup {
+    padding-inline: 0.5rem;
+  }
+
+  .fingerprint {
+    margin-top: 0.75rem;
+  }
+
+  .fingerprintGroups {
+    font-size: 0.8rem;
+    letter-spacing: 0.02em;
+  }
+
   /* "See the receipts" stays on screen while the long letter is read
      (PH1, P6). It sits on the desk, so it has a solid background behind it. */
   .stageControls {
