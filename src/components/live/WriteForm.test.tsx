@@ -96,6 +96,16 @@ describe("WriteForm", () => {
     expect(html).toContain(esc(LIVE_COPY.passkeySteps));
   });
 
+  it("collapses the ecosystem note under its summary, keeping its text and the Seal hooks", () => {
+    expect(html).toMatch(
+      new RegExp(
+        `<details[^>]*>\\s*<summary[^>]*>${esc(LIVE_COPY.crossDeviceSummary)}</summary>\\s*<p>${esc(LIVE_COPY.crossDevice)}</p>\\s*</details>`,
+      ),
+    );
+    expect(html).toContain('id="live-warning"');
+    expect(html).toContain("Press the seal with your passkey");
+  });
+
   it("shows the live count of the letter, starting at zero", () => {
     expect(html).toContain("0 of 5,000 characters");
   });

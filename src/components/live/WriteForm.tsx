@@ -388,7 +388,12 @@ export function WriteForm({
       {shows("seal") ? (
         <div className={styles.explain}>
           <p>{LIVE_COPY.passkeySteps}</p>
-          <p>{LIVE_COPY.crossDevice}</p>
+          <details className={styles.more}>
+            <summary className={styles.moreSummary}>
+              {LIVE_COPY.crossDeviceSummary}
+            </summary>
+            <p>{LIVE_COPY.crossDevice}</p>
+          </details>
         </div>
       ) : null}
 

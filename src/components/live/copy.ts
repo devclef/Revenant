@@ -57,6 +57,7 @@ export const LIVE_COPY = {
     "The figures could not be loaded, so you cannot seal a letter yet. Check your connection and reload the page.",
   passkeySteps:
     'Your device will ask for the passkey twice. Each time, you press a button first. The passkey will be named "Revenant demo" in your passkey manager.',
+  crossDeviceSummary: "Opening on another device",
   crossDevice:
     'A passkey may not work on a device from a different ecosystem. To open this letter, use a device that has the passkey, or your computer\'s "use a phone" option.',
   warning:
