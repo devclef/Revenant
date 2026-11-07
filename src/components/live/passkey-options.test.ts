@@ -5,8 +5,10 @@
 
 import { describe, expect, it } from "vitest";
 
-import { assertPasskey, confirmPasskey, createPasskey } from "@/lib/crypto/passkey";
-import { createFakeAuthenticator } from "@/lib/crypto/testing/fake-authenticator";
+// lib/crypto is loaded with dynamic import() only: the import-boundary test
+// forbids a static import from src/components.
+const loadPasskey = () => import("@/lib/crypto/passkey");
+const loadFake = () => import("@/lib/crypto/testing/fake-authenticator");
 
 const RP_ID = "revenant.devclef.se";
 
@@ -27,6 +29,8 @@ function allKeys(value: unknown, out: string[] = []): string[] {
 
 describe("passkey calls send no authenticatorAttachment and no hints (P10.4)", () => {
   it("createPasskey sends neither key at any depth", async () => {
+    const { createPasskey } = await loadPasskey();
+    const { createFakeAuthenticator } = await loadFake();
     const fake = createFakeAuthenticator();
     await createPasskey(fake, { rpId: RP_ID });
     const keys = allKeys(fake.calls[0].options);
@@ -36,6 +40,8 @@ describe("passkey calls send no authenticatorAttachment and no hints (P10.4)", (
   });
 
   it("confirmPasskey sends neither key at any depth", async () => {
+    const { createPasskey, confirmPasskey } = await loadPasskey();
+    const { createFakeAuthenticator } = await loadFake();
     const fake = createFakeAuthenticator();
     const created = await createPasskey(fake, { rpId: RP_ID });
     if (!created.ok) throw new Error("create failed in the fake");
@@ -54,6 +60,8 @@ describe("passkey calls send no authenticatorAttachment and no hints (P10.4)", (
   });
 
   it("assertPasskey sends neither key at any depth", async () => {
+    const { createPasskey, assertPasskey } = await loadPasskey();
+    const { createFakeAuthenticator } = await loadFake();
     const fake = createFakeAuthenticator();
     const created = await createPasskey(fake, { rpId: RP_ID });
     if (!created.ok) throw new Error("create failed in the fake");
