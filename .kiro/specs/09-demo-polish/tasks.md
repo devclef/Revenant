@@ -286,7 +286,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`
   - _Requirements: B1.1, B1.5, B1.6, B2.1, F2.2, F2.4, F8.1, F8.2, P1.1–P1.3, P2.1, P9.3, P11.1_
 
-- [ ] 10. B3, F6 · Landing sections, and the retired landing keys removed: the ritual, what we resurrected, what no wax seal could do, the Sample_Receipt and the Coven_Strip
+- [x] 10. B3, F6 · Landing sections, and the retired landing keys removed: the ritual, what we resurrected, what no wax seal could do, the Sample_Receipt and the Coven_Strip
   - Agent: `frontend-dev` · Depends on: 8, 9 · Estimated size: ~1,100 changed lines
   - Before this task: task 8 is on `main`. Steering updated (Owner patches w, x and y on `main`, owner step O0).
   - Scope: `src/components/ceremony/scene/copy.ts`, `src/components/ceremony/scene/copy.test.ts`, `src/components/landing/RitualSection.tsx` (new), `src/components/landing/ResurrectionSection.tsx` (new), `src/components/landing/NoSealSection.tsx` (new), `src/components/landing/SampleReceipt.tsx` (new), `src/components/landing/CovenStrip.tsx` (new), `src/components/landing/copy.ts`, `src/components/landing/landing.module.css`, and the `*.test.ts(x)` for each file above
