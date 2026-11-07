@@ -86,7 +86,9 @@ export function FigureEntry({
     formatValue(toDisplay(figure.value), figure.region);
 
   const unit = rescale === undefined ? then.unit : rescale.unit;
-  const markForLine = markValue === undefined ? undefined : toDisplay(markValue);
+  // The typed answer is already in the shown unit: FiguresThenNow passes the
+  // per-litre value it stored (C8.3). Rescaling it again here would divide twice.
+  const markForLine = markValue;
 
   return (
     <MotionProvider>

@@ -154,6 +154,58 @@ describe("FigureEntry shows the figures in the display rescale (R11.10)", () => 
   });
 });
 
+describe("FigureEntry shows a rescaled answer once, in the shown unit (C8.3)", () => {
+  // The answer is typed per litre and stored per litre. A 1.50 answer must read
+  // 1.50 EUR per litre, not 0.0015 (the double-rescale bug).
+  const rescale: DisplayRescale = {
+    divisor: 1000,
+    unit: "EUR per litre",
+  };
+  const EU_THEN: Readonly<FigureV1> = {
+    ...THEN,
+    value: "3412",
+    unit: "EUR per 1,000 litres",
+    region: "EU average",
+    period: "2024-10",
+  };
+  const EU_NOW: Readonly<FigureV1> = {
+    ...EU_THEN,
+    value: "3900",
+    period: "2026-10",
+  };
+
+  it("shows Your answer as 1.50 EUR per litre for a per-litre answer of 1.50", () => {
+    const html = plain(
+      render({
+        then: EU_THEN,
+        now: EU_NOW,
+        change: comparable(EU_THEN, EU_NOW),
+        rescale,
+        markValue: "1.50",
+      }),
+    );
+    expect(html).toContain(">1.50 EUR per litre</span>");
+    expect(html).not.toContain("0.0015");
+  });
+
+  it("draws the Number_Line mark as 1.50 EUR per litre for the same answer", () => {
+    const mark = CEREMONY_COPY.markAnswer
+      .replace("{value}", "1.50")
+      .replace("{unit}", "EUR per litre");
+    const html = plain(
+      render({
+        then: EU_THEN,
+        now: EU_NOW,
+        change: comparable(EU_THEN, EU_NOW),
+        rescale,
+        markValue: "1.50",
+      }),
+    );
+    expect(html).toContain(mark);
+    expect(html).not.toContain("0.0015");
+  });
+});
+
 describe("FigureEntry carries its own source, the nowNote and the primary hook", () => {
   it("shows one source control for a comparable pair, with its series and source link", () => {
     const html = render();
