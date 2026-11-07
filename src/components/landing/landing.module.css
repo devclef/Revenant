@@ -93,6 +93,24 @@
   outline-offset: 3px;
 }
 
+/* Phone hero (below 600 px): the Landing_Ghost is drawn at a fixed place in the
+   Scene backdrop, with its bottom at about 71vh (452 px at 360x640, 601 px at
+   390x844). The calls to action stay in the flow, so the reserved ghost box
+   moves in front of them: the actions take order 1, and the box, which is
+   sized so the actions start 20 px below the drawn ghost, takes the space
+   between the Hero_Sentence and the actions. The box keeps the same CLS
+   reservation. Its height is 71vh less 380 px, which the Hero_Sentence bottom
+   (about 353 to 358 px at these heights) fixes. Above 600 px nothing changes. */
+@media (max-width: 599.98px) {
+  .actions {
+    order: 1;
+  }
+
+  .ghost {
+    height: max(0px, calc(71vh - 380px));
+  }
+}
+
 /* The Landing_Ghost box is reserved in the server HTML so the page does not
    move when the ghost arrives (CLS 0). It is at most 30% of the viewport
    height and at most 190 px (P1.1). */

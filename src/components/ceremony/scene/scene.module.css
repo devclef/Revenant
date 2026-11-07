@@ -344,6 +344,20 @@
   }
 }
 
+/* Phone intact stage (below 600 px). The Ghost is fixed to the window and sits
+   above every Stage card (spec 07 A11), so card text that scrolls into its band
+   is covered. When the intact stage is brought into view, its content (the seal
+   card and the Pick_Up button) starts 16 px below the Ghost's bottom edge, which
+   is about 71vh (454 px at 360x640, 601 px at 390x844). The offset is
+   scroll-margin-top, so the browser's scroll to the stage lands the card below
+   the Ghost, and the Persona_Intro above it stays where it is. Above 600 px
+   nothing changes. */
+@media (max-width: 599.98px) {
+  .personaColumn:has(> [data-ceremony="intact"]) [data-stage-content] {
+    scroll-margin-top: calc(71vh + 16px);
+  }
+}
+
 /* The backdrop. One aria-hidden layer under the content; the pointer passes
    through it. Fixed to the window, so the Soil stays where the design puts it. */
 .backdrop {
