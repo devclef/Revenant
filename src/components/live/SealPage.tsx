@@ -56,6 +56,9 @@ function figureDetailsFrom(state: FiguresState): ReadonlyMap<string, FigureDetai
       seriesId: figure.series_id,
       sourceUrl: figure.source_url,
       retrievedAt: figure.retrieved_at,
+      period: figure.period,
+      unit: figure.unit,
+      region: figure.region,
     });
   }
   return details;

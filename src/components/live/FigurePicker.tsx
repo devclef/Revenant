@@ -25,6 +25,12 @@ export interface FigureDetail {
   sourceUrl: string;
   /** When Revenant fetched the figure (UTC). */
   retrievedAt: string;
+  /** The period the value describes, as the figure gives it. */
+  period: string;
+  /** Unit and currency, as the figure gives it. */
+  unit: string;
+  /** Geographic scope, as the figure gives it. */
+  region: string;
 }
 
 export interface FigurePickerProps {

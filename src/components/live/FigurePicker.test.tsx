@@ -158,6 +158,9 @@ describe("FigurePicker value and source details", () => {
     seriesId: "EMM_EPMR_PTE_NUS_DPG",
     sourceUrl: "https://www.eia.gov/series",
     retrievedAt: "2026-10-30T14:02:11Z",
+    period: "2026-09",
+    unit: "USD per gallon",
+    region: "U.S. city average",
   };
 
   function renderWith(
