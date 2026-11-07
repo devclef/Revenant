@@ -20,7 +20,7 @@ import { useSealFlow } from "./useSealFlow";
 import { WriteForm, type WriteSection } from "./WriteForm";
 import { usePrfHint } from "./prf-hint";
 import { resolveTimeZone } from "./real-opening";
-import { INITIAL_WRITE_DRAFT, reduceWriteDraft } from "./write-draft";
+import type { WriteDraftEvent } from "./write-draft";
 import {
   INITIAL_TOUCHED,
   markAttempted,
@@ -30,6 +30,7 @@ import {
 import { figureLimit } from "./form";
 import { LiveStepper, type StepView } from "./stepper/LiveStepper";
 import { LiveWaitStep } from "./stepper/LiveWaitStep";
+import { initialStepperState, reduceStepper } from "./stepper/live-steps";
 import { browserTimeZone } from "@/components/ui/letter-date";
 import { earliestOpeningDate } from "@/lib/seal-format";
 
@@ -115,13 +116,20 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
   const pickable = sealFigures.status === "ready" ? sealFigures.pickable : [];
   const figureMax = figureLimit(pickable.length);
 
-  // The letter text, chosen figures and warning tick. The page holds them, not
-  // WriteForm, so they survive the cancelled, failed and cannot_lock screens and
-  // Try again shows them again. No passkey or key material is kept here. The
-  // stepper's Back uses the same draft, because it only changes which step shows.
-  const [writeDraft, dispatchDraft] = useReducer(
-    reduceWriteDraft,
-    INITIAL_WRITE_DRAFT,
+  // The letter text, chosen figures and warning tick live in the stepper state,
+  // which this page owns. That is the single copy of the draft: the stepper's
+  // Back keeps it, and the cancelled, failed and cannot_lock screens and Try
+  // again still show it. It is dropped once the seal is stored (SEALED below).
+  // No passkey or key material is kept here.
+  const [stepper, dispatchStepper] = useReducer(
+    reduceStepper,
+    "write",
+    initialStepperState,
+  );
+  const writeDraft = stepper.draft;
+  const dispatchDraft = useCallback(
+    (event: WriteDraftEvent) => dispatchStepper({ type: "DRAFT", event }),
+    [],
   );
 
   // SealDeps for the runner, built once the crypto module is loaded and the
@@ -168,6 +176,14 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
   const flow = useSealFlow(sealDeps, draft);
   const { state } = flow;
 
+  // Once the seal is stored, the draft is dropped from the stepper state and
+  // Back is no longer offered (spec 09, D2.3). Every mode does this once.
+  useEffect(() => {
+    if (state.tag === "sealed" && !stepper.sealed) {
+      dispatchStepper({ type: "SEALED" });
+    }
+  }, [state.tag, stepper.sealed]);
+
   return (
     <div
       data-rp-id={rpId}
@@ -179,7 +195,14 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
         <Link href="/demo">{LIVE_COPY.backToDemo}</Link>
       </p>
       {mode === "demo" ? (
-        <LiveStepper renderStep={renderDemoStep} />
+        <>
+          <h1 className={styles.liveHeading}>{LIVE_COPY.liveHeading}</h1>
+          <LiveStepper
+            state={stepper}
+            dispatch={dispatchStepper}
+            renderStep={renderDemoStep}
+          />
+        </>
       ) : (
         renderState()
       )}
@@ -323,9 +346,9 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
  * never moved past Wait. The sealed content renders as the children.
  */
 function SealedStep({ view, children }: { view: StepView; children: ReactNode }) {
-  const { step, markSealed } = view;
+  const { step, advanceTo } = view;
   useEffect(() => {
-    if (step === "seal") markSealed();
-  }, [step, markSealed]);
+    if (step === "seal") advanceTo("wait");
+  }, [step, advanceTo]);
   return <>{children}</>;
 }

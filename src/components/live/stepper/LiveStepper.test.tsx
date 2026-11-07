@@ -11,7 +11,7 @@ import { describe, expect, it } from "vitest";
 import { LIVE_COPY } from "../copy";
 
 import { LiveStepper, type StepView } from "./LiveStepper";
-import { LIVE_STEP_NAMES, type LiveStep } from "./live-steps";
+import { LIVE_STEP_NAMES, initialStepperState, type LiveStep } from "./live-steps";
 import { StepIndicator } from "./StepIndicator";
 
 function render(
@@ -19,7 +19,11 @@ function render(
   content: (view: StepView) => ReactNode = () => null,
 ): string {
   return renderToStaticMarkup(
-    createElement(LiveStepper, { initialStep, renderStep: content }),
+    createElement(LiveStepper, {
+      state: initialStepperState(initialStep),
+      dispatch: () => undefined,
+      renderStep: content,
+    }),
   );
 }
 

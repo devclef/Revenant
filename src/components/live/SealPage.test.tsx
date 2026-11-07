@@ -169,3 +169,31 @@ describe("the Sealing_Flow step order (same in both modes)", () => {
     ]);
   });
 });
+
+describe("SealPage in demo mode (/demo/live)", () => {
+  it("renders the liveHeading above the Live_Stepper", () => {
+    const html = renderToStaticMarkup(
+      createElement(SealPage, {
+        rpId: "revenant.devclef.se",
+        appOrigin: "https://revenant.devclef.se",
+        mode: "demo",
+      }),
+    );
+    expect(LIVE_COPY.liveHeading).toBe("Seal your own letter");
+    expect(html).toMatch(/<h1[^>]*>Seal your own letter<\/h1>/);
+    expect(html.indexOf("Seal your own letter")).toBeLessThan(
+      html.indexOf("data-live-stepper"),
+    );
+  });
+
+  it("does not show the demo heading in real mode", () => {
+    const html = renderToStaticMarkup(
+      createElement(SealPage, {
+        rpId: "revenant.devclef.se",
+        appOrigin: "https://revenant.devclef.se",
+        mode: "real",
+      }),
+    );
+    expect(html).not.toContain("Seal your own letter");
+  });
+});

@@ -71,6 +71,16 @@
   color: var(--ink);
 }
 
+/* The page heading sits on the desk, so it takes the desk text colour. */
+.liveHeading {
+  margin: 0 0 0.75rem;
+  font-family: var(--font-sans);
+  font-size: clamp(1.75rem, 5vw, 2.5rem);
+  font-weight: 700;
+  line-height: 1.1;
+  color: var(--text);
+}
+
 .intro,
 .explain p,
 .warning p {

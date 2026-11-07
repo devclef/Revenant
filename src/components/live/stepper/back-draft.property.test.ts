@@ -1,11 +1,12 @@
 // Property 11: Back keeps the draft, and nothing goes back after the seal
 // (spec 09, D2.2 and D2.3).
 //
-// Random sequences of stepper actions run through the reducer. An oracle
-// folds the same draft events itself, so the expected draft does not come from
-// the reducer under test. Before the seal, the draft equals the oracle after
-// every action, Back included. After the seal, the draft is empty, Back never
-// moves the visitor back, and no draft event changes anything.
+// SealPage owns the stepper state and dispatches DRAFT and SEALED through
+// reduceStepper, so this test drives that same reducer. An oracle folds the
+// same draft events with reduceWriteDraft on its own, so the expected draft
+// does not come from the reducer under test. Before the seal, the draft equals
+// the oracle after every action, Back included. After the seal, the draft is
+// empty, Back never moves the visitor back, and no draft event changes anything.
 
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";

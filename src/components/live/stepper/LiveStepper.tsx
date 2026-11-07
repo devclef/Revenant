@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useReducer, useRef, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 import { useCalmInForce } from "@/components/ceremony/motion";
 import { useKeepInVisualViewport } from "@/components/ui/use-keep-in-visual-viewport";
@@ -11,11 +11,11 @@ import styles from "./stepper.module.css";
 import { StepIndicator } from "./StepIndicator";
 import {
   canGoBack,
-  initialStepperState,
   movesFocus,
-  reduceStepper,
   stepName,
   type LiveStep,
+  type StepperAction,
+  type StepperState,
 } from "./live-steps";
 
 /** What a step's content receives from the stepper. */
@@ -32,11 +32,6 @@ export interface StepView {
   /** Whether Back is offered on this step. */
   canGoBack: boolean;
   /**
-   * Call once the seal is stored. It drops the draft from state and removes
-   * Back for good (spec 09 D2.3).
-   */
-  markSealed: () => void;
-  /**
    * Moves forward to a later step (spec 09, D5.4). Used by the embedded
    * Opening_Flow when the reader reaches Testify or Receipts. It never moves
    * back and never moves the stepper on its own.
@@ -45,10 +40,15 @@ export interface StepView {
 }
 
 export interface LiveStepperProps {
+  /**
+   * The stepper state, owned by SealPage. The page is the single owner of the
+   * letter draft, so Back keeps it between steps (spec 09 D2.2).
+   */
+  state: StepperState;
+  /** Sends one stepper action to the page-owned state. */
+  dispatch: (action: StepperAction) => void;
   /** Renders the content of the current step, including its fields and Next. */
   renderStep: (view: StepView) => ReactNode;
-  /** The step to start on. Defaults to Write. */
-  initialStep?: LiveStep;
 }
 
 /**
@@ -57,15 +57,7 @@ export interface LiveStepperProps {
  * heading, its fields and its Next inside one `data-primary-control` group.
  * When the step changes, focus moves to the new heading.
  */
-export function LiveStepper({
-  renderStep,
-  initialStep = "write",
-}: LiveStepperProps) {
-  const [state, dispatch] = useReducer(
-    reduceStepper,
-    initialStep,
-    initialStepperState,
-  );
+export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const primaryRef = useRef<HTMLDivElement>(null);
   // Keeps the focused field and its Next above the on-screen keyboard (P9).
@@ -87,12 +79,6 @@ export function LiveStepper({
     back: () => dispatch({ type: "BACK" }),
     canGoBack: canGoBack(state.step, state.sealed),
     advanceTo: (step) => dispatch({ type: "GOTO", step }),
-    markSealed: () => {
-      dispatch({ type: "SEALED" });
-      // The seal step hands over to Wait once the seal is stored. Any other
-      // step only records the seal.
-      if (state.step === "seal") dispatch({ type: "NEXT" });
-    },
   };
 
   return (
