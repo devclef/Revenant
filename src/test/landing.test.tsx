@@ -5,6 +5,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { LANDING_COPY } from "@/components/landing/copy";
 import type { Persona } from "@/lib/personas";
 
 // feature-flags.ts imports `server-only`, which throws outside a server bundle.
@@ -23,7 +24,6 @@ vi.mock("@/lib/personas", () => ({
 }));
 
 import Home from "@/app/page";
-import { SCENE_COPY } from "@/components/ceremony/scene/copy";
 
 const MAYA: Persona = {
   key: "us-maya",
@@ -55,6 +55,10 @@ describe("landing page `/`", () => {
     state.personas = [];
   });
 
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("renders exactly one h1 with the Tagline text", () => {
     const html = render([MAYA]);
     const h1s = html.match(/<h1[\s>]/g) ?? [];
@@ -71,75 +75,44 @@ describe("landing page `/`", () => {
     expect(html.match(/data-ceremony="scene"/g)).toHaveLength(1);
   });
 
-  it("renders one Accent button to the first persona, labelled with its name", () => {
-    const html = decode(render([MAYA]));
-    const links = html.match(/<a [^>]*href="\/demo\/personas\/[^"]*"[^>]*>/g) ?? [];
-    expect(links).toHaveLength(1);
-    expect(links[0]).toContain('href="/demo/personas/us-maya"');
-
-    const anchor = /<a [^>]*href="\/demo\/personas\/us-maya"[^>]*>(.*?)<\/a>/s.exec(
-      html,
-    );
-    expect(textOf(anchor?.[1] ?? "")).toBe("Open Maya's letter");
+  it("renders the hero inside the Scene", () => {
+    const html = render([MAYA]);
+    const sceneAt = html.indexOf('data-ceremony="scene"');
+    const heroAt = html.indexOf("data-landing-hero");
+    expect(heroAt).toBeGreaterThan(sceneAt);
   });
 
-  it("renders no persona button for an empty list, but keeps the headline and the demo link", () => {
+  it("renders one Accent button to /demo, labelled with the one-letter text, and no persona link", () => {
+    const html = decode(render([MAYA]));
+    const links = html.match(/<a [^>]*href="\/demo"[^>]*>/g) ?? [];
+    expect(links).toHaveLength(1);
+    expect(links[0]).toContain('data-cta="primary"');
+
+    const anchor = /<a [^>]*href="\/demo"[^>]*>(.*?)<\/a>/s.exec(html);
+    expect(textOf(anchor?.[1] ?? "")).toBe(LANDING_COPY.primaryCtaOne);
+    expect(html).not.toContain("/demo/personas/");
+    expect(html).not.toContain("Maya");
+  });
+
+  it("renders no primary button for an empty list, and keeps the headline", () => {
     const html = render([]);
     expect(html).not.toContain("/demo/personas/");
+    expect(html).not.toContain('data-cta="primary"');
     expect(html.match(/<h1[\s>]/g)).toHaveLength(1);
-    expect(html).toContain('href="/demo"');
-  });
-
-  it("renders the Resurrection paragraph and the fuel-prices paragraph after the Scene, verbatim", () => {
-    // The expected text is read from SCENE_COPY, the single source the page
-    // renders from. The landing page shows the first and second paragraphs
-    // only (task 2 of issue #199); the wording is pinned in scene/copy.test.ts.
-    const paragraphs = SCENE_COPY.landing.paragraphs.slice(0, 2);
-    expect(paragraphs).toHaveLength(2);
-    const html = render([MAYA]);
-    const sceneAt = html.indexOf('data-ceremony="scene"');
-    const explainStart = html.indexOf(paragraphs[0].slice(0, 24));
-    expect(sceneAt).toBeGreaterThanOrEqual(0);
-    expect(explainStart).toBeGreaterThan(sceneAt);
-    const text = decode(html);
-    let from = 0;
-    for (const paragraph of paragraphs) {
-      const at = text.indexOf(paragraph, from);
-      expect(at, paragraph).toBeGreaterThanOrEqual(0);
-      from = at + paragraph.length;
-    }
-  });
-
-  it("links to /demo with the one-letter link text after the Scene when there is one persona", () => {
-    const html = render([MAYA]);
-    const anchor = /<a[^>]*href="\/demo"[^>]*>(.*?)<\/a>/s.exec(html);
-    expect(anchor).not.toBeNull();
-    expect(textOf(anchor?.[1] ?? "")).toBe("Open the demo letter");
-    const sceneAt = html.indexOf('data-ceremony="scene"');
-    expect(anchor?.index ?? -1).toBeGreaterThan(sceneAt);
-  });
-
-  it("lists the demo, live, How and source links after the Scene, in that order", () => {
-    const html = decode(render([MAYA]));
-    const sceneAt = html.indexOf('data-ceremony="scene"');
-    const order = [
-      'href="/demo"',
-      'href="/demo/live"',
-      'href="/how-it-is-sealed"',
-      'href="https://github.com/devclef/Revenant"',
-    ].map((marker) => {
-      const at = html.indexOf(marker);
-      expect(at, marker).toBeGreaterThan(sceneAt);
-      return at;
-    });
-    expect([...order].sort((a, b) => a - b)).toEqual(order);
-    expect(html).not.toContain('href="/seal"');
   });
 
   it("includes the no-script light style as a noscript block", () => {
     const html = render([MAYA]);
     expect(html).toContain("<noscript>");
     expect(html).toContain("[data-ghost-rise],[data-ghost-bob]{animation:none}");
+  });
+
+  it("leaves How and GitHub to the footer, and links no /seal", () => {
+    vi.stubEnv("REAL_SEALING", "on");
+    const html = decode(render([MAYA]));
+    expect(html).not.toContain('href="/how-it-is-sealed"');
+    expect(html).not.toContain('href="https://github.com/devclef/Revenant"');
+    expect(html).not.toMatch(/href="\/seal[";/]/);
   });
 
   it("imports nothing from crypto, the opening flow, the API, or the database", () => {
@@ -260,10 +233,10 @@ describe("landing Ghost in the server HTML (R9.15)", () => {
     const html = decode(renderToStaticMarkup(createElement(Home)));
     const pit = elementAround(html, "data-ghost-pit");
     expect(pit).not.toContain("data-envelope");
-    expect(pit).not.toContain('href="/demo/personas/us-maya"');
+    expect(pit).not.toContain('href="/demo"');
     const pitStart = html.indexOf(pit);
     const pitEnd = pitStart + pit.length;
-    const linkAt = html.indexOf('href="/demo/personas/us-maya"');
+    const linkAt = html.indexOf('href="/demo"');
     expect(linkAt).toBeGreaterThanOrEqual(0);
     expect(linkAt < pitStart || linkAt >= pitEnd).toBe(true);
   });
@@ -286,10 +259,9 @@ describe("landing Ghost in the server HTML (R9.15)", () => {
   });
 });
 
-// R10.1 to R10.6: the landing page link text and targets. The demo link text
-// depends on the persona count, the GitHub link is the exact repository URL,
-// and the live Seal_Page link carries its note and never points to /seal.
-const GITHUB_URL = "https://github.com/devclef/Revenant";
+// R10.1 and R10.2 (spec 09 B1): the primary call to action links to /demo
+// with the singular or plural text by Persona_List length, and the live-demo
+// call to action shows only while Demo_2_On (RP_ID is set).
 
 /** The text of one anchor, found by its exact href. */
 function anchorText(html: string, href: string): string | null {
@@ -300,68 +272,36 @@ function anchorText(html: string, href: string): string | null {
   return match === null ? null : match[1].replace(/<[^>]+>/g, "").trim();
 }
 
-describe("landing page link text and targets (R10.1 to R10.6)", () => {
-  it("uses the singular demo link text for one persona", () => {
-    const html = decode(render([MAYA]));
-    expect(anchorText(html, "/demo")).toBe(SCENE_COPY.landing.demoLinkOne);
-  });
-
-  it("uses the plural demo link text for two personas", () => {
-    const html = decode(
-      render([MAYA, { key: "eu-anna", display_name: "Anna" }]),
-    );
-    expect(anchorText(html, "/demo")).toBe(SCENE_COPY.landing.demoLinkMany);
-    expect(SCENE_COPY.landing.demoLinkMany).not.toBe(
-      SCENE_COPY.landing.demoLinkOne,
-    );
-  });
-
-  it("uses the plural demo link text for no personas", () => {
-    const html = decode(render([]));
-    expect(anchorText(html, "/demo")).toBe(SCENE_COPY.landing.demoLinkMany);
-  });
-
-  it("links to the exact GitHub URL in the landing body", () => {
-    const html = decode(render([MAYA]));
-    expect(anchorText(html, GITHUB_URL)).toBe(SCENE_COPY.landing.sourceLink);
-  });
-
-  it("links the How_Page with its landing copy", () => {
-    const html = decode(render([MAYA]));
-    expect(anchorText(html, "/how-it-is-sealed")).toBe(
-      SCENE_COPY.landing.howLink,
-    );
-  });
-
-  it("links the live Seal_Page with its note and never to /seal", () => {
-    const html = decode(render([MAYA]));
-    expect(anchorText(html, "/demo/live")).toBe(SCENE_COPY.landing.liveLink);
-    expect(html).toContain(SCENE_COPY.landing.liveNote);
-    expect(html).not.toMatch(/href="\/seal[";/]/);
-  });
-});
-
-// The real sealing flag (REAL_SEALING) picks the link to sealing on the landing page.
-describe("landing page sealing link follows REAL_SEALING", () => {
-  beforeEach(() => {
-    state.personas = [MAYA];
-  });
-
+describe("landing page call-to-action text and targets (R10.1 and R10.2)", () => {
   afterEach(() => {
     vi.unstubAllEnvs();
   });
 
-  it("shows the /seal link with the real sealing copy when the flag is on", () => {
-    vi.stubEnv("REAL_SEALING", "on");
-    const html = decode(renderToStaticMarkup(createElement(Home)));
-    expect(anchorText(html, "/seal")).toBe(SCENE_COPY.landing.realLink);
+  it("uses the singular primary text for one persona", () => {
+    const html = decode(render([MAYA]));
+    expect(anchorText(html, "/demo")).toBe(LANDING_COPY.primaryCtaOne);
   });
 
-  it("shows no /seal link when the flag is off, and keeps the Seal_Page link and its note", () => {
-    vi.stubEnv("REAL_SEALING", "off");
-    const html = decode(renderToStaticMarkup(createElement(Home)));
-    expect(html).not.toMatch(/href="\/seal[";/]/);
-    expect(anchorText(html, "/demo/live")).toBe(SCENE_COPY.landing.liveLink);
-    expect(html).toContain(SCENE_COPY.landing.liveNote);
+  it("uses the plural primary text for two personas", () => {
+    const html = decode(
+      render([MAYA, { key: "eu-anna", display_name: "Anna" }]),
+    );
+    expect(anchorText(html, "/demo")).toBe(LANDING_COPY.primaryCtaMany);
+    expect(LANDING_COPY.primaryCtaMany).not.toBe(LANDING_COPY.primaryCtaOne);
+  });
+
+  it("shows no primary link for no personas", () => {
+    const html = decode(render([]));
+    expect(anchorText(html, "/demo")).toBeNull();
+  });
+
+  it("shows the live-demo call to action only while RP_ID is set", () => {
+    vi.stubEnv("RP_ID", "revenant.devclef.se");
+    const on = decode(render([MAYA]));
+    expect(anchorText(on, "/demo/live")).toBe(LANDING_COPY.secondaryCta);
+
+    vi.stubEnv("RP_ID", "   ");
+    const off = decode(render([MAYA]));
+    expect(off).not.toContain('href="/demo/live"');
   });
 });
