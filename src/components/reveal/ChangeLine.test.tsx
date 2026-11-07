@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { ChangeLine } from "./ChangeLine";
+import { rescaledChangeInputs } from "./change-display";
 import { REVEAL_COPY } from "./copy";
 import {
   CHANGE_FORMULA_ID,
@@ -161,5 +162,72 @@ describe("ChangeLine fade marker (R3.1)", () => {
     expect(html).toMatch(/<div class="[^"]*change[^"]*" data-change="">/);
     // Both the change line and the formula line sit inside that block.
     expect(html).toContain(REVEAL_COPY.formulaLabel);
+  });
+});
+
+describe("ChangeLine shows the rescaled inputs (C8.4)", () => {
+  // Sealed per 1,000 litres: 1800.00 then, 1900.00 now. Shown per litre: 1.8
+  // then, 1.9 now. The stored values are not changed by the display.
+  const EU_THEN: Readonly<FigureV1> = {
+    ...THEN,
+    value: "1800.00",
+    unit: "EUR per 1,000 litres",
+    region: "European Union",
+    period: "2024-05",
+  };
+  const EU_NOW: Readonly<FigureV1> = {
+    ...EU_THEN,
+    value: "1900.00",
+    period: "2026-05",
+  };
+
+  function euRender(): string {
+    const result = computeChange(EU_THEN, EU_NOW);
+    if (!result.comparable) throw new Error("test setup: must be comparable");
+    const display = rescaledChangeInputs(
+      EU_THEN.value,
+      EU_NOW.value,
+      { divisor: 1000, unit: "EUR per litre" },
+      EU_THEN.unit,
+    );
+    return renderToStaticMarkup(
+      createElement(ChangeLine, {
+        result,
+        region: EU_THEN.region,
+        then: EU_THEN,
+        now: EU_NOW,
+        display,
+      }),
+    );
+  }
+
+  it("builds the formula from the rescaled inputs, not the sealed values", () => {
+    const html = euRender();
+    expect(html).toContain("(1.9 - 1.8) / 1.8 x 100");
+    const visibleText = html.replace(/<[^>]*>/g, "");
+    expect(visibleText).not.toContain("1800.00");
+    expect(visibleText).not.toContain("1900.00");
+  });
+
+  it("shows the difference from the rescaled inputs and keeps the percentage", () => {
+    const html = euRender();
+    // Per litre: 1.9 − 1.8 = +0.1. The sealed difference would read +100.00.
+    expect(html).toContain("+0.1");
+    expect(html).not.toContain("+100.00");
+    // The percentage is the same as the sealed change: 100 / 1800 = 5.6%.
+    expect(html).toContain("+5.6%");
+  });
+
+  it("shows the rescale note on the change line", () => {
+    const html = euRender();
+    const note = REVEAL_COPY.rescaledNote
+      .replace("{toUnit}", "EUR per litre")
+      .replace("{fromUnit}", "EUR per 1,000 litres");
+    expect(html).toContain(note);
+  });
+
+  it("shows no rescale note when no display inputs are passed", () => {
+    const html = render(comparableResult(), THEN, NOW);
+    expect(html).not.toContain(REVEAL_COPY.rescaledNote.split("{")[0]);
   });
 });

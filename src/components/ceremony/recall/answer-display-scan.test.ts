@@ -20,7 +20,8 @@ const ANSWER_DISPLAY_FILES = [
   "ceremony/recall/RecordedScale.tsx",
   "ceremony/recall/RecallScale.tsx",
   "ceremony/figures/NumberLine.tsx",
-  "reveal/FigureEntry.tsx",
+  "reveal/ReceiptCard.tsx",
+  "reveal/AnswerList.tsx",
   "reveal/RememberedAnswers.tsx",
   "reveal/Reveal.tsx",
 ] as const;

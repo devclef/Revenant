@@ -20,14 +20,14 @@ const NUMBER_PATTERN = /^[0-9]+(\.[0-9]+)?$/;
 
 const RANGES: readonly ScaleRange[] = [
   UNIT_RANGE_TABLE["USD per gallon"],
-  UNIT_RANGE_TABLE["EUR per 1,000 litres"],
+  UNIT_RANGE_TABLE["EUR per litre"],
   FALLBACK_RANGE,
 ];
 
 describe("linearStepFor", () => {
-  it("is 0.01 for a maximum of 10 and 1 for a maximum of 3,000", () => {
+  it("is 0.01 for a maximum of 10 and 0.001 for a maximum of 3", () => {
     expect(linearStepFor(UNIT_RANGE_TABLE["USD per gallon"])).toBe(0.01);
-    expect(linearStepFor(UNIT_RANGE_TABLE["EUR per 1,000 litres"])).toBe(1);
+    expect(linearStepFor(UNIT_RANGE_TABLE["EUR per litre"])).toBe(0.001);
   });
 });
 
@@ -39,10 +39,10 @@ describe("valueAtIn — examples", () => {
     expect(valueAtIn(1, usd)).toBe(10);
   });
 
-  it("snaps EUR to whole units and keeps three significant figures", () => {
-    const eur = UNIT_RANGE_TABLE["EUR per 1,000 litres"];
-    expect(valueAtIn(0.5713, eur)).toBe(1710);
-    expect(valueAtIn(1, eur)).toBe(3000);
+  it("snaps EUR per litre to 0.001 steps and keeps three significant figures", () => {
+    const eur = UNIT_RANGE_TABLE["EUR per litre"];
+    expect(valueAtIn(0.5713, eur)).toBe(1.71);
+    expect(valueAtIn(1, eur)).toBe(3);
   });
 
   it("clamps the track position to [0, 1]", () => {
@@ -82,10 +82,8 @@ describe("toPlainDecimalIn — examples", () => {
     expect(toPlainDecimalIn(2, usd)).toBe("2");
   });
 
-  it("writes whole EUR values without a decimal point", () => {
-    expect(toPlainDecimalIn(1710, UNIT_RANGE_TABLE["EUR per 1,000 litres"])).toBe(
-      "1710",
-    );
+  it("writes EUR per litre values with their decimals, trimmed", () => {
+    expect(toPlainDecimalIn(1.71, UNIT_RANGE_TABLE["EUR per litre"])).toBe("1.71");
   });
 
   it("throws for a value outside the range", () => {

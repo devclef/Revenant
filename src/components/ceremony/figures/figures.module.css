@@ -28,7 +28,7 @@
   width: 100%;
   /* Room for the axis, the pins and three label rows (spec 08 R5.5). */
   height: 7.5rem;
-  margin: 2.5rem 0;
+  margin: 0.75rem 0;
   color: var(--text);
 }
 

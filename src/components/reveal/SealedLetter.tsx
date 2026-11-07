@@ -50,6 +50,12 @@ export type SealedLetterProps = {
    * live letter gets its own seal look. Ignored by the persona variant.
    */
   letterId?: string;
+  /**
+   * When true, the letter text sits in a closed disclosure, so the figures
+   * Stage starts near the first Receipt_Card on the phone (P6, P7). The text
+   * is kept in the document and opens on one tap.
+   */
+  collapsible?: boolean;
 };
 
 export function SealedLetter({
@@ -57,7 +63,22 @@ export function SealedLetter({
   personaName,
   variant = "persona",
   letterId,
+  collapsible = false,
 }: SealedLetterProps) {
+  const letterText = (
+    <p className={styles.letter} data-letter-text="">
+      {opened.payload.letter_text}
+    </p>
+  );
+  const letterBody = collapsible ? (
+    <details className={styles.letterDisclosure} data-letter-disclosure="">
+      <summary>{REVEAL_COPY.letterDisclosure}</summary>
+      {letterText}
+    </details>
+  ) : (
+    letterText
+  );
+
   const { payload, header } = opened;
 
   if (variant === "live") {
@@ -74,7 +95,7 @@ export function SealedLetter({
           )}
         </p>
 
-        <p className={styles.letter}>{payload.letter_text}</p>
+        <p className={styles.letter} data-letter-text="">{payload.letter_text}</p>
       </section>
     );
   }
@@ -108,7 +129,7 @@ export function SealedLetter({
 
       <p className={styles.period}>{sealedForDemoOn}</p>
 
-      <p className={styles.letter}>{payload.letter_text}</p>
+      {letterBody}
     </section>
   );
 }

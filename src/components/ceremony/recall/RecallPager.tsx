@@ -47,7 +47,7 @@ import {
   previousIndex,
   submitAction,
 } from "./recall-pager";
-import { scaleRangeFor, unitHelperFor } from "./unit-ranges";
+import { displayUnitFor, rescaleNoteFor, scaleRangeFor } from "./unit-ranges";
 import styles from "./RecallPager.module.css";
 
 export type RecallPagerProps = {
@@ -210,10 +210,13 @@ export function RecallPager({
       : Number(field.mark);
   const isLast = isLastIndex(index, total);
   const isFirst = index === 0;
-  const unit =
+  const sealedUnit =
     question.answer_type === "number"
       ? unitByMetricId.get(question.metric_id)
       : undefined;
+  // The judge answers in the displayed unit (C8): per litre for a per-1,000-litre
+  // figure. The stored answer is the typed value, so nothing is converted.
+  const unit = sealedUnit === undefined ? undefined : displayUnitFor(sealedUnit);
   const unitText =
     unit === undefined ? undefined : fill(REVEAL_COPY.unitLabel, { unit });
 
@@ -226,7 +229,8 @@ export function RecallPager({
   const unreadableId = `recall-${question.id}-unreadable`;
   const errorId = `recall-${question.id}-error`;
   const noAnswerId = `recall-${question.id}-no-answer`;
-  const unitHelp = unit === undefined ? null : unitHelperFor(unit);
+  const rescaleNote =
+    sealedUnit === undefined ? null : rescaleNoteFor(sealedUnit);
 
   const counterBase = fill(REVEAL_COPY.questionCounter, {
     n: index + 1,
@@ -253,7 +257,7 @@ export function RecallPager({
 
   const describedBy = [
     unitText === undefined ? null : unitId,
-    unitHelp === null ? null : helpId,
+    rescaleNote === null ? null : helpId,
     resolved === null ? null : parsedId,
     reading === null ? null : readingsId,
     unreadable ? unreadableId : null,
@@ -307,9 +311,9 @@ export function RecallPager({
               </span>
             )}
 
-            {unitHelp === null ? null : (
+            {rescaleNote === null ? null : (
               <p id={helpId} className={styles.unitHelp}>
-                {unitHelp}
+                {rescaleNote}
               </p>
             )}
 
@@ -421,6 +425,7 @@ export function RecallPager({
                 label={question.text}
                 unitLabel={unit}
                 range={scaleRangeFor(unit)}
+                note={rescaleNote ?? undefined}
                 value={markValue}
                 text={resolved ?? undefined}
                 noAnswer={draft.noAnswer}

@@ -5,7 +5,9 @@ import {
   formatChange,
   isFixtureFigure,
 } from "@/lib/figures";
+import { parseDecimal, sub, toDecimalString } from "@/lib/figures/decimal";
 import { REVEAL_COPY } from "./copy";
+import type { ChangeDisplayInputs } from "./change-display";
 import styles from "./reveal.module.css";
 
 /**
@@ -41,15 +43,41 @@ export type ChangeLineProps = {
   then: Readonly<FigureV1>;
   /** The sealed "now" figure, used only to detect fixture inputs. */
   now: Readonly<FigureV1>;
+  /**
+   * The rescaled then and now values and the rescale note (C8.4), when the
+   * unit is shown in a display rescale. The formula and the difference use
+   * these values; the percentage stays the same. Absent when no rescale applies.
+   */
+  display?: ChangeDisplayInputs;
 };
 
+type ComparableResult = Extract<ChangeResult, { comparable: true }>;
+
+// The same change with the display inputs in place of the sealed values. The
+// difference is the exact now − then of the display values. The percent is
+// unchanged, because a power-of-ten rescale leaves the ratio the same.
+function withDisplayInputs(
+  result: ComparableResult,
+  inputs: ChangeDisplayInputs,
+): ComparableResult {
+  const difference = toDecimalString(
+    sub(parseDecimal(inputs.now), parseDecimal(inputs.then)),
+  );
+  return {
+    ...result,
+    then: { ...result.then, value: inputs.then },
+    now: { ...result.now, value: inputs.now },
+    difference,
+  };
+}
+
 /**
- * The formula as a reader sees it, built from the sealed inputs: for example
+ * The formula as a reader sees it, built from the inputs shown: for example
  * `(3.600 - 3.000) / 3.000 x 100`. When the then value is zero there is no
  * percent, so the formula is the plain difference. The formula identifier
  * (CHANGE_FORMULA_ID) is not printed; it lives in a data attribute.
  */
-function readableFormula(result: Extract<ChangeResult, { comparable: true }>): string {
+function readableFormula(result: ComparableResult): string {
   const thenValue = result.then.value;
   const nowValue = result.now.value;
   if (result.percent === null) {
@@ -58,8 +86,9 @@ function readableFormula(result: Extract<ChangeResult, { comparable: true }>): s
   return `(${nowValue} - ${thenValue}) / ${thenValue} x 100`;
 }
 
-export function ChangeLine({ result, region, then, now }: ChangeLineProps) {
-  const display = formatChange(result, region);
+export function ChangeLine({ result, region, then, now, display }: ChangeLineProps) {
+  const shown = display === undefined ? result : withDisplayInputs(result, display);
+  const changeText = formatChange(shown, region);
   const fixture = isFixtureFigure(then) || isFixtureFigure(now);
 
   // The percent is shown only when formatChange produced one (the then value
@@ -77,14 +106,15 @@ export function ChangeLine({ result, region, then, now }: ChangeLineProps) {
             </span>{" "}
           </>
         ) : null}
-        <span>{display.direction}</span> <span>{display.difference}</span>
-        {display.percent === null ? null : <span> {display.percent}</span>}{" "}
-        <span className={styles.period}>{display.thenPeriod}</span>
+        <span>{changeText.direction}</span> <span>{changeText.difference}</span>
+        {changeText.percent === null ? null : <span> {changeText.percent}</span>}{" "}
+        <span className={styles.period}>{changeText.thenPeriod}</span>
         {REVEAL_COPY.periodRange}
-        <span className={styles.period}>{display.nowPeriod}</span>
+        <span className={styles.period}>{changeText.nowPeriod}</span>
       </p>
+      {display === undefined ? null : <p className={styles.period}>{display.note}</p>}
       <p className={styles.formula} data-formula={CHANGE_FORMULA_ID}>
-        {REVEAL_COPY.formulaLabel}: {readableFormula(result)}
+        {REVEAL_COPY.formulaLabel}: {readableFormula(shown)}
       </p>
     </div>
   );

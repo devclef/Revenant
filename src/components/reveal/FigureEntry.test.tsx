@@ -5,18 +5,16 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { FigureEntry, YourAnswerLine, type FigureEntryProps } from "./FigureEntry";
-import { maskLineLabels } from "./line-label-mask";
+import { FigureEntry, type FigureEntryProps } from "./FigureEntry";
 import { REVEAL_COPY } from "./copy";
+import { CEREMONY_COPY } from "@/components/ceremony/copy";
 import { FIG_VALUE_SIZE } from "@/components/ceremony/constants";
-import { computeChange, formatPeriod, type DisplayRescale } from "@/lib/figures";
+import { computeChange, type DisplayRescale } from "@/lib/figures";
 import type { FigureV1 } from "@/lib/seal-format";
 
-/**
- * Markup tests for FigureEntry (spec 07 R14.3 item order, R14.1 desk surface,
- * R14.12 type styles). Rendered with `renderToStaticMarkup` and `createElement`,
- * matching the other reveal tests. No DOM library, no JSX.
- */
+// Feature: 09-demo-polish, task 16 (issue #263). FigureEntry renders one
+// Receipt_Card (C3.1 to C3.3). These tests replace the spec 07 FigureEntry
+// markup tests: the old "figAnswer" line and YourAnswerLine no longer exist.
 
 const THEN: Readonly<FigureV1> = {
   kind: "official",
@@ -58,103 +56,191 @@ function render(overrides: Partial<FigureEntryProps> = {}): string {
 // Remove React's text-node separators so text checks read the visible string.
 const plain = (html: string): string => html.replace(/<!-- -->/g, "");
 
-describe("FigureEntry draws the R14.3 items in order (spec 07 R14.3)", () => {
-  it("shows the name and region first, then the answer line", () => {
-    const html = plain(render({ markValue: "3.50" }));
-    const name = html.indexOf("Regular gasoline · U.S. city average");
-    const answer = html.indexOf('data-line-label="answer"');
-    expect(name).toBeGreaterThan(-1);
-    expect(answer).toBeGreaterThan(name);
-  });
+const count = (text: string, needle: string): number => text.split(needle).length - 1;
 
-  it("orders the items: name, then row, now row, the answer, Number_Line, change, formula, source", () => {
-    const html = plain(render({ markValue: "3.50" }));
-    const at = (needle: string): number => {
-      const index = html.indexOf(needle);
-      expect(index, needle).toBeGreaterThan(-1);
-      return index;
-    };
+describe("FigureEntry draws one Receipt_Card in the C3.1 order (spec 09 C3.1)", () => {
+  it("puts the name, Your answer, Then, Now, Number_Line, change line and source in order", () => {
+    const html = plain(render({ markValue: "3.90" }));
+    const at = (needle: string) => html.indexOf(needle);
     const order = [
       at("Regular gasoline · U.S. city average"),
-      at(`${REVEAL_COPY.then}:`),
-      at(`data-role="then">3.412<`),
-      at(REVEAL_COPY.labelHistoricalRecord.replace("{date}", "30 October 2024")),
-      at(`${REVEAL_COPY.now}:`),
-      at(`data-role="now">3.9<`),
-      at("_numberLine"),
-      at('data-line-label="answer"'),
-      at(REVEAL_COPY.periodRange),
-      at(REVEAL_COPY.formulaLabel),
-      at(REVEAL_COPY.sourceSummary),
+      at(`>${REVEAL_COPY.yourAnswer}</span>`),
+      at(`data-role="then"`),
+      at(`data-role="now"`),
+      at(`data-line-label="answer"`),
+      at(`${REVEAL_COPY.formulaLabel}:`),
+      at(`<summary>${REVEAL_COPY.sourceSummary}</summary>`),
     ];
-    expect(order).toEqual([...order].sort((a, b) => a - b));
+    for (const index of order) expect(index).toBeGreaterThan(-1);
+    expect([...order].sort((a, b) => a - b)).toEqual(order);
   });
 
-  it("the then and now values are .figValue spans at the same size, with no Accent or direction class", () => {
+  it("is a receipt card section with the desk class", () => {
     const html = render();
-    expect(html).toMatch(/class="[^"]*figValue[^"]*"[^>]*data-role="then">3\.412</);
-    expect(html).toMatch(/class="[^"]*figValue[^"]*"[^>]*data-role="now">3\.9</);
-    expect(html).toContain(`font-size:${FIG_VALUE_SIZE}`);
-    expect(html).not.toMatch(/class="[^"]*(big|youLine|youValue|accent)[^"]*"/);
-  });
-
-
-  it("the now row shows the now value, unit, both periods and the retrieved date", () => {
-    const text = plain(render()).replace(/<[^>]+>/g, "");
-    expect(text).toContain("Now: 3.9 USD per gallon");
-    expect(text).toContain(formatPeriod("2026-10", NOW.region));
-    expect(text).toContain("retrieved 27 October 2026");
-  });
-
-  it("shows the source, the series ID and the source_url in the source control", () => {
-    const html = render();
-    expect(html).toContain("U.S. EIA");
-    expect(html).toContain(`${REVEAL_COPY.seriesLabel}: EMM_EPMR_PTE_NUS_DPG`);
-    expect(html).toContain("https://www.eia.gov/series");
+    expect(html).toMatch(/<section class="[^"]*fig[^"]*"[^>]*data-receipt-card=""/);
   });
 });
 
-describe("FigureEntry draws the Mark only when there is an answer (R12.1)", () => {
-  it("shows No answer on the figAnswer line and no Mark for an unanswered figure", () => {
-    const html = render({ markValue: undefined });
-    expect(plain(html)).toContain(REVEAL_COPY.noAnswer);
-    expect(html.match(/Your answer/g) ?? []).toHaveLength(1);
-    expect(html).toMatch(/data-line-label="answer"/);
-    expect(html).not.toMatch(/class="[^"]*markLabel/);
-    expect(html).not.toMatch(/class="[^"]*markWrap/);
+describe("Then and Now share one type style (spec 09 C3.2)", () => {
+  it("gives the then and now values the same class and the same inline size", () => {
+    const html = render();
+    const then = html.match(/<span class="([^"]*)"[^>]*style="font-size:([^"]*)"[^>]*data-role="then"/);
+    const now = html.match(/<span class="([^"]*)"[^>]*style="font-size:([^"]*)"[^>]*data-role="now"/);
+    expect(then).not.toBeNull();
+    expect(now).not.toBeNull();
+    expect(then?.[1]).toBe(now?.[1]);
+    expect(then?.[2]).toBe(now?.[2]);
+    expect(then?.[2]).toContain(FIG_VALUE_SIZE);
+  });
+});
+
+describe("Your answer appears once, and the Number_Line label carries only the answer (spec 09 C3.3)", () => {
+  // A rescaled EUR per 1,000 litres entry: the case the unscaled tests could not catch.
+  const rescale: DisplayRescale = { divisor: 1000, unit: "EUR per litre" };
+  const EU_THEN: Readonly<FigureV1> = {
+    ...THEN,
+    value: "3412",
+    unit: "EUR per 1,000 litres",
+    region: "EU average",
+    period: "2024-10",
+  };
+  const EU_NOW: Readonly<FigureV1> = { ...EU_THEN, value: "3900", period: "2026-10" };
+  const euRender = (overrides: Partial<FigureEntryProps> = {}) =>
+    render({
+      then: EU_THEN,
+      now: EU_NOW,
+      change: comparable(EU_THEN, EU_NOW),
+      rescale,
+      ...overrides,
+    });
+
+  it("shows Your answer once as a visible label, with the answer in the card row", () => {
+    const html = plain(euRender({ markValue: "1.50" }));
+    expect(count(html, `>${REVEAL_COPY.yourAnswer}</span>`)).toBe(1);
+    expect(html).toContain(`>1.50 EUR per litre</span>`);
   });
 
-  it("shows the typed answer once as the Number_Line label and in the Mark's hidden text", () => {
-    const html = plain(render({ markValue: "3.50" }));
-    expect(html).toContain("Your answer: 3.50 USD per gallon");
-    expect(html).toContain(">3.50 USD per gallon</span>");
-    expect(html).toMatch(/class="[^"]*markWrap/);
-    expect(html).not.toMatch(/class="[^"]*figAnswer/);
+  it("shows No answer in the card row when the judge gave none", () => {
+    const html = plain(euRender());
+    expect(count(html, `>${REVEAL_COPY.yourAnswer}</span>`)).toBe(1);
+    expect(html).toContain(`>${REVEAL_COPY.noAnswer}</span>`);
   });
 
-  it("the figure items other than the answer are identical with or without a Mark", () => {
-    const strip = (html: string): string =>
-      maskLineLabels(plain(html))
-        .replace(/<p class="[^"]*figAnswer[^"]*">[\s\S]*?<\/p>/, "")
-        .replace(/<span class="[^"]*markLabel[^"]*"[^>]*>[\s\S]*?<\/span>/, "")
-        .replace(/--pos-mark:[^;"]+;?/, "")
-        .replace(/;"/g, '"')
-        .replace(/<span class="[^"]*markWrap[^"]*">[\s\S]*?<\/span><\/span>/, "");
-    expect(strip(render({ markValue: "9.99" }))).toBe(
-      strip(render({ markValue: undefined })),
-    );
+  it("draws the Mark only when there is an answer", () => {
+    const mark = CEREMONY_COPY.markAnswer
+      .replace("{value}", "1.50")
+      .replace("{unit}", "EUR per litre");
+    expect(plain(euRender({ markValue: "1.50" }))).toContain(mark);
+    expect(plain(euRender())).not.toContain(mark);
   });
-
 });
 
 describe("FigureEntry shows the figures in the display rescale (R11.10)", () => {
-  it("shows the rescaled face value and unit when the series has a rescale", () => {
-    const rescale: DisplayRescale = {
-      divisor: 1000,
-      unit: "USD per 1,000 gallons",
-    };
-    const html = render({ rescale });
-    expect(html).toContain("USD per 1,000 gallons");
+  const rescale: DisplayRescale = {
+    divisor: 1000,
+    unit: "EUR per litre",
+  };
+  const EU_THEN: Readonly<FigureV1> = {
+    ...THEN,
+    value: "3412",
+    unit: "EUR per 1,000 litres",
+    region: "EU average",
+    period: "2024-10",
+  };
+  const EU_NOW: Readonly<FigureV1> = {
+    ...EU_THEN,
+    value: "3900",
+    period: "2026-10",
+  };
+
+  it("shows the rescaled value and unit with the rescale note under each figure", () => {
+    const html = plain(
+      render({
+        then: EU_THEN,
+        now: EU_NOW,
+        change: comparable(EU_THEN, EU_NOW),
+        rescale,
+      }),
+    );
+    expect(html).toContain("3.412");
+    expect(html).toContain("3.9<");
+    expect(html).toContain("EUR per litre");
+    const note = REVEAL_COPY.rescaledNote
+      .replace("{toUnit}", "EUR per litre")
+      .replace("{fromUnit}", "EUR per 1,000 litres");
+    // Under the then row, under the now row, and on the change line (C8.4).
+    expect(count(html, note)).toBe(3);
+  });
+});
+
+describe("FigureEntry shows a rescaled answer once, in the shown unit (C8.3)", () => {
+  // The answer is typed per litre and stored per litre. A 1.50 answer must read
+  // 1.50 EUR per litre, not 0.0015 (the double-rescale bug).
+  const rescale: DisplayRescale = {
+    divisor: 1000,
+    unit: "EUR per litre",
+  };
+  const EU_THEN: Readonly<FigureV1> = {
+    ...THEN,
+    value: "3412",
+    unit: "EUR per 1,000 litres",
+    region: "EU average",
+    period: "2024-10",
+  };
+  const EU_NOW: Readonly<FigureV1> = {
+    ...EU_THEN,
+    value: "3900",
+    period: "2026-10",
+  };
+
+  it("shows Your answer as 1.50 EUR per litre for a per-litre answer of 1.50", () => {
+    const html = plain(
+      render({
+        then: EU_THEN,
+        now: EU_NOW,
+        change: comparable(EU_THEN, EU_NOW),
+        rescale,
+        markValue: "1.50",
+      }),
+    );
+    expect(html).toContain(">1.50 EUR per litre</span>");
+    expect(html).not.toContain("0.0015");
+  });
+
+  it("draws the Number_Line mark as 1.50 EUR per litre for the same answer", () => {
+    const mark = CEREMONY_COPY.markAnswer
+      .replace("{value}", "1.50")
+      .replace("{unit}", "EUR per litre");
+    const html = plain(
+      render({
+        then: EU_THEN,
+        now: EU_NOW,
+        change: comparable(EU_THEN, EU_NOW),
+        rescale,
+        markValue: "1.50",
+      }),
+    );
+    expect(html).toContain(mark);
+    expect(html).not.toContain("0.0015");
+  });
+});
+
+describe("FigureEntry carries its own source, the nowNote and the primary hook", () => {
+  it("shows one source control for a comparable pair, with its series and source link", () => {
+    const html = render();
+    expect(count(html, "<details")).toBe(1);
+    expect(html).toContain(`${REVEAL_COPY.seriesLabel}: EMM_EPMR_PTE_NUS_DPG`);
+    expect(html).toContain('href="https://www.eia.gov/series"');
+  });
+
+  it("renders the nowNote under the now row when one is given", () => {
+    const html = plain(render({ nowNote: "Revenant hasn't fetched a newer figure yet." }));
+    expect(html).toContain("Revenant hasn&#x27;t fetched a newer figure yet.");
+  });
+
+  it("marks the card as the primary control only when asked", () => {
+    expect(render({ primary: true })).toContain('data-primary-control=""');
+    expect(render()).not.toContain("data-primary-control");
   });
 });
 
@@ -181,61 +267,45 @@ describe("FigureEntry sits on the dark desk, never on paper (spec 07 R14.1)", ()
     expect(rule).not.toMatch(/--paper|--ink/);
   });
 
-  it("the figure entry sets desk text tokens only", () => {
+  it("the receipt card sets desk text tokens only", () => {
     const rule = ruleBody(".fig");
     expect(rule).toMatch(/color:\s*var\(--text\)/);
     expect(rule).not.toMatch(/--paper|--ink/);
   });
-
-  it("wraps the comparable entry in its figure section", () => {
-    const html = render();
-    expect(html).toMatch(/<section class="[^"]*fig[^"]*"/);
-  });
 });
 
-/**
- * Property 4 (issue #250, A7): every Figure_Entry branch shows "Your answer"
- * exactly once in its visible text. Comparable entries show it as the
- * Number_Line label; the other branches show it on the YourAnswerLine.
- */
-describe("Property 4: one Your answer per Figure_Entry branch (issue #250, A7)", () => {
-  // Visible text only: no aria-label and no screen-reader-only span.
-  const visibleAnswers = (html: string): number => {
-    const text = html
-      .replace(/aria-label="[^"]*"/g, "")
-      .replace(/<span class="[^"]*srOnly[^"]*">[^<]*<\/span>/g, "")
-      .replace(/<[^>]+>/g, "");
-    return text.split(REVEAL_COPY.yourAnswer).length - 1;
+describe("FigureEntry shows the change line in the rescaled unit (C8.4, eu-tomas)", () => {
+  // The eu-tomas case: the petrol figure is sealed per 1,000 litres and shown
+  // per litre. Then 1800.00, now 1900.00, both in the same series.
+  const rescale: DisplayRescale = { divisor: 1000, unit: "EUR per litre" };
+  const TOMAS_THEN: Readonly<FigureV1> = {
+    ...THEN,
+    value: "1800.00",
+    unit: "EUR per 1,000 litres",
+    region: "European Union",
+    period: "2024-05",
+  };
+  const TOMAS_NOW: Readonly<FigureV1> = {
+    ...TOMAS_THEN,
+    value: "1900.00",
+    period: "2026-05",
   };
 
-  it("the comparable entry shows Your answer once, answered or not", () => {
-    expect(visibleAnswers(render({ markValue: undefined }))).toBe(1);
-    expect(visibleAnswers(render({ markValue: "3.50" }))).toBe(1);
-  });
-
-  it("YourAnswerLine shows Your answer once, with No answer when unanswered", () => {
+  it("builds the formula from the per-litre inputs and shows the rescale note", () => {
     const html = plain(
-      renderToStaticMarkup(createElement(YourAnswerLine, { unit: "USD per gallon" })),
+      render({
+        then: TOMAS_THEN,
+        now: TOMAS_NOW,
+        change: comparable(TOMAS_THEN, TOMAS_NOW),
+        rescale,
+      }),
     );
-    expect(visibleAnswers(html)).toBe(1);
-    expect(html).toContain(REVEAL_COPY.noAnswer);
-    expect(html).toMatch(/class="[^"]*yourAnswerLabel[^"]*"/);
-  });
-
-  it("YourAnswerLine shows the answer and unit in the Accent value, once", () => {
-    const html = plain(
-      renderToStaticMarkup(
-        createElement(YourAnswerLine, { markValue: "3.50", unit: "USD per gallon" }),
-      ),
+    expect(html).toContain(`${REVEAL_COPY.formulaLabel}: (1.9 - 1.8) / 1.8 x 100`);
+    expect(html).not.toContain("(1900.00 - 1800.00)");
+    expect(html).toContain(
+      REVEAL_COPY.rescaledNote
+        .replace("{toUnit}", "EUR per litre")
+        .replace("{fromUnit}", "EUR per 1,000 litres"),
     );
-    expect(visibleAnswers(html)).toBe(1);
-    expect(html).toMatch(/class="[^"]*yourAnswerValue[^"]*">3\.50 USD per gallon</);
-    expect(html).not.toContain(REVEAL_COPY.noAnswer);
-  });
-
-  it("renders the nowNote under the now row when one is given", () => {
-    const html = plain(render({ nowNote: "Revenant has not fetched a newer figure yet." }));
-    expect(html).toContain("Revenant has not fetched a newer figure yet.");
-    expect(visibleAnswers(html)).toBe(1);
   });
 });

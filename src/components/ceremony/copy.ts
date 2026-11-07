@@ -92,9 +92,6 @@ export const CEREMONY_COPY = {
   /** Shown on the scale before the reader has given an answer. */
   recallNoMarkYet: "No answer yet",
 
-  /** The Unit_Helper_Line for the euro-per-1,000-litres unit (spec 08 R7.8). */
-  unitHelperEurPer1000L: "1,000 here means 1 euro per litre.",
-
   // --- Recall number field (spec 08 R32) ---
 
   /** Under the field, the number as read, for example "Read as 1,585.76". `{value}` is the number. */

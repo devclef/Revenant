@@ -1,17 +1,31 @@
 import type { FigureV1, MetricDefinitionV1 } from "@/lib/seal-format";
 import type { DisplayRescale } from "@/lib/figures";
-import { computeChange, isFixtureFigure, rescaleForDisplay } from "@/lib/figures";
-import { DEMO_FIGURES } from "@/lib/figures/demo";
+import { computeChange, displayRescaleForUnit, isFixtureFigure } from "@/lib/figures";
 import { pickNow } from "@/lib/figures/now";
 import type { FiguresState } from "./figures-api";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV1 } from "@/lib/recall";
-import { FigureEntry, YourAnswerLine } from "./FigureEntry";
-import { FigureLine, type LetterKind } from "./FigureLine";
+import { FigureEntry } from "./FigureEntry";
+import { receiptFigureOf, receiptSourceOf, type LetterKind } from "./FigureLine";
 import { FixtureNote } from "./FixtureNote";
+import { ReceiptCard } from "./ReceiptCard";
 import { REVEAL_COPY } from "./copy";
 import { nowMessageFor } from "./now-message";
 import styles from "./reveal.module.css";
+
+/**
+ * The display rescale for a sealed unit (C8): read from the unit string alone,
+ * so a letter still shows it whatever the Catalogue holds. Undefined when the
+ * unit is shown as sealed.
+ */
+function rescaleFor(sealedUnit: string): Readonly<DisplayRescale> | undefined {
+  const display = displayRescaleForUnit(sealedUnit);
+  if (display === null) return undefined;
+  return {
+    divisor: display.divisor as DisplayRescale["divisor"],
+    unit: display.displayUnit,
+  };
+}
 
 /**
  * Stage 3 of the reveal (design.md "Reveal", R11-R13): the sealed figures then
@@ -26,7 +40,7 @@ import styles from "./reveal.module.css";
  *   declared is skipped; the sealed-letter schema forbids that, so it cannot
  *   happen for a validly sealed letter.
  * - The sealed "then" figure comes from the payload only and is shown with
- *   {@link FigureLine} (role "then").
+ *   {@link receiptFigureOf} (role "then") inside a {@link ReceiptCard}.
  * - The "now" figure is picked with `pickNow` from the Figures_API response
  *   (`figures`, read once per reveal by `useFigures` in Reveal). The match uses
  *   the sealed metric's source, series, unit and region only. While the request
@@ -44,19 +58,19 @@ import styles from "./reveal.module.css";
  * - The Mark for a metric is the judge's answer to its number question in the
  *   stored record (`record`, optional). No record, or "No answer", draws no Mark.
  *
- * The display rescale (if any) comes from the series as loaded in
- * `DEMO_FIGURES` and is passed to each {@link FigureLine}; it is display-only
- * and never changes a stored value (R11.10). The sealed "then" figure uses the
- * same series rescale so then and now read in the same unit.
+ * The display rescale comes from the sealed unit string (`displayRescaleForUnit`,
+ * C8) and is passed to each {@link receiptFigureOf}; it is display-only and never
+ * changes a stored value (R11.10). The sealed "then" figure uses the same rescale
+ * so then and now read in the same unit.
  *
  * {@link FixtureNote} is rendered once at the top when any shown figure is a
  * fixture (`isFixtureFigure`, R13.5). The per-figure "fixture data" label is
- * separate and lives on each {@link FigureLine} / {@link ChangeLine}.
+ * separate and lives on each {@link ReceiptCard} row (the labels come from receiptFigureOf).
  *
  * Every string comes from copy.ts; no letter text or figure value is an
  * authored literal (R15.1). This component reads no clock, holds no state, logs
  * nothing and makes no network request. The Now_Figures come from the `figures`
- * prop. `DEMO_FIGURES` is a frozen import, used only for the display rescale.
+ * prop. The display rescale is read from each sealed unit string (C8).
  */
 
 export type FiguresThenNowProps = {
@@ -187,8 +201,9 @@ export function FiguresThenNow({
     if (metric === undefined) return;
     const name = metric.display_name;
 
-    const series = DEMO_FIGURES.series.get(then.metric_id);
-    const rescale = series?.display_rescale;
+    // The display rescale comes from the sealed unit string (C8.2), so it holds
+    // whatever the Catalogue carries.
+    const rescale = rescaleFor(then.unit);
 
     const lookup = nowLookup(then, metric, figures);
     const now = lookup.found ? lookup.figure : undefined;
@@ -216,10 +231,9 @@ export function FiguresThenNow({
       rescale,
       change,
       markValue,
-      answerValue:
-        markValue === undefined || rescale === undefined
-          ? markValue
-          : rescaleForDisplay(markValue, rescale.divisor),
+      // The typed answer is stored per litre already (C8.3), so it is shown as
+      // typed. Only the unit changes.
+      answerValue: markValue,
       answerUnit: rescale === undefined ? then.unit : rescale.unit,
     });
   });
@@ -230,84 +244,91 @@ export function FiguresThenNow({
 
       {anyFixture ? <FixtureNote /> : null}
 
-      {entries.map((entry) => (
-        <div
-          key={entry.key}
-          className={styles.figureGroup}
-          data-figure-entry=""
-        >
-          {entry.now === undefined ? (
-            <h3 className={styles.metricName}>{entry.name}</h3>
-          ) : null}
+      {entries.map((entry, index) => {
+        // The first card of the Stage carries the primary control (C3, P4.1).
+        const primary = index === 0;
+        const answer = {
+          markValue: entry.answerValue,
+          unit: entry.answerUnit,
+        };
+        const thenRow = receiptFigureOf(
+          entry.then,
+          "then",
+          letterKind,
+          entry.rescale,
+        );
 
-          {entry.now === undefined ? (
-            // No now figure: show the sealed then figure and say, plainly, why
-            // the current figure is unavailable. No change is shown.
-            <>
-              <p className={styles.then}>{REVEAL_COPY.then}</p>
-              <FigureLine
-                figure={entry.then}
-                role="then"
+        if (entry.now === undefined) {
+          // No now figure: the sealed then figure, and the A3 message in place
+          // of the now row. No Number_Line and no change line (issue #250).
+          return (
+            <div key={entry.key} className={styles.figureGroup} data-figure-entry="">
+              <ReceiptCard
+                name={entry.name}
+                region={entry.then.region}
+                markValue={answer.markValue}
+                unit={answer.unit}
+                then={thenRow}
+                now={{ message: entry.nowMissing }}
+                primary={primary}
+                source={receiptSourceOf(entry.then)}
+              />
+            </div>
+          );
+        }
+
+        if (entry.change !== undefined && entry.change.comparable) {
+          // Comparable: the Receipt_Card with the Number_Line and the change
+          // line (FigureEntry, C3.1).
+          return (
+            <div key={entry.key} className={styles.figureGroup} data-figure-entry="">
+              <FigureEntry
+                name={entry.name}
+                then={entry.then}
+                now={entry.now}
+                change={entry.change}
+                rescale={entry.rescale}
                 letterKind={letterKind}
-                displayRescale={entry.rescale}
+                markValue={entry.markValue}
+                nowNote={entry.nowNote ?? undefined}
+                primary={primary}
               />
-              {entry.nowMissing === null ? null : (
-                <p className={styles.period}>{entry.nowMissing}</p>
-              )}
-              <YourAnswerLine
-                markValue={entry.answerValue}
-                unit={entry.answerUnit}
-              />
-            </>
-          ) : entry.change !== undefined && entry.change.comparable ? (
-            // Comparable: the nine R14.3 items, with the name at the top
-            // (FigureEntry, R14.3, R12.1).
-            <FigureEntry
+            </div>
+          );
+        }
+
+        // Not comparable: both figures with their own periods and sources, plus
+        // the one neutral reason sentence for the first failing check. No
+        // Number_Line and no change line.
+        const reason =
+          entry.change !== undefined && !entry.change.comparable
+            ? REVEAL_COPY.reason[entry.change.reason]
+            : undefined;
+        return (
+          <div key={entry.key} className={styles.figureGroup} data-figure-entry="">
+            <ReceiptCard
               name={entry.name}
-              then={entry.then}
-              now={entry.now}
-              change={entry.change}
-              rescale={entry.rescale}
-              letterKind={letterKind}
-              markValue={entry.markValue}
+              region={entry.then.region}
+              markValue={answer.markValue}
+              unit={answer.unit}
+              then={thenRow}
+              now={receiptFigureOf(entry.now, "now", letterKind, entry.rescale)}
               nowNote={entry.nowNote ?? undefined}
+              primary={primary}
+              source={receiptSourceOf(entry.then)}
+              nowSource={receiptSourceOf(entry.now)}
+              change={
+                <>
+                  <p className={styles.period}>{REVEAL_COPY.notComparable}</p>
+                  {reason === undefined ? null : (
+                    <p className={styles.period}>{reason}</p>
+                  )}
+                </>
+              }
             />
-          ) : (
-            // Not comparable: both figures with their own periods, plus the one
-            // neutral reason sentence for the first failing check.
-            <>
-              <h3 className={styles.metricName}>{entry.name}</h3>
-              <p className={styles.then}>{REVEAL_COPY.then}</p>
-              <FigureLine
-                figure={entry.then}
-                role="then"
-                letterKind={letterKind}
-                displayRescale={entry.rescale}
-              />
-              <p className={styles.now}>{REVEAL_COPY.now}</p>
-              <FigureLine
-                figure={entry.now}
-                role="now"
-                letterKind={letterKind}
-                displayRescale={entry.rescale}
-              />
-              {entry.nowNote === null ? null : (
-                <p className={styles.period}>{entry.nowNote}</p>
-              )}
-              <p className={styles.period}>{REVEAL_COPY.notComparable}</p>
-              {entry.change !== undefined && !entry.change.comparable ? (
-                <p className={styles.period}>
-                  {REVEAL_COPY.reason[entry.change.reason]}
-                </p>
-              ) : null}
-              <YourAnswerLine
-                markValue={entry.answerValue}
-                unit={entry.answerUnit}
-              />
-            </>
-          )}
-        </div>
-      ))}
+          </div>
+        );
+      })}
     </section>
   );
 }

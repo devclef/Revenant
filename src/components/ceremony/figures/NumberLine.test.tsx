@@ -214,19 +214,20 @@ describe("NumberLine labels (spec 08 R5.1, R5.2, R5.9)", () => {
     expect(html).toContain(styles.lineLabelMuted);
   });
 
-  it("draws the answer label with its value and unit in the accent class", () => {
+  it("draws the answer label with only its value and unit, in the accent class (C3.3)", () => {
     const html = render({ ...base, markValue: "15.50" });
     expect(html).toContain(`data-line-label="answer"`);
-    expect(html).toContain(`>${CEREMONY_COPY.lineAnswer}</span>`);
     expect(html).toContain(`>15.50 USD per gallon</span>`);
+    // The "Your answer" words sit in the Receipt_Card row, once, not here.
+    expect(html).not.toContain(`>${CEREMONY_COPY.lineAnswer}</span>`);
     expect(html).toContain(styles.lineLabelAccent);
   });
 
-  it("reads No answer in the answer label when there is no Mark", () => {
+  it("reads No answer in the answer label when there is no Mark (C3.3)", () => {
     const html = render(base);
     expect(html).toContain(`data-line-label="answer"`);
     expect(html).toContain(`>${CEREMONY_COPY.lineNoAnswer}</span>`);
-    expect(html.match(/Your answer/g) ?? []).toHaveLength(1);
+    expect(html).not.toContain(`>${CEREMONY_COPY.lineAnswer}</span>`);
   });
 
   it("gives every visible label an inline position in px", () => {

@@ -44,7 +44,7 @@ export function Close(props: CloseProps) {
 
   return (
     <ParchmentSurface className={styles.close}>
-      <h2 className={styles.heading}>{CEREMONY_COPY.closeLine}</h2>
+      <h2 className={styles.heading} data-close-line="">{CEREMONY_COPY.closeLine}</h2>
       {props.demo2On ? (
         <a className={styles.cta} href={DEMO_2_HREF}>
           {CEREMONY_COPY.closeLink}

@@ -6,8 +6,8 @@
  * Each subject must pass checkRecallSubject from src/lib/recall. A test
  * (recall-subjects.test.ts) fails when one is missing or rejected. A subject
  * may not contain a digit, a direction word, or the metric's source or series
- * ID. EU subjects say "a thousand litres" because the sealed unit is
- * "EUR per 1,000 litres".
+ * ID. EU fuel subjects say "a litre": the sealed unit is "EUR per 1,000 litres",
+ * shown per litre (spec 09 C8), so the question asks about one litre.
  *
  * The fixture subjects cover the fixture figures, which the page labels
  * "fixture data".
@@ -15,8 +15,8 @@
 export const RECALL_SUBJECTS: Readonly<Record<string, string>> = {
   "us-gasoline-regular": "a gallon of regular gasoline",
   "us-diesel": "a gallon of diesel",
-  "eu-petrol-euro95": "a thousand litres of petrol",
-  "eu-diesel": "a thousand litres of diesel",
+  "eu-petrol-euro95": "a litre of petrol",
+  "eu-diesel": "a litre of diesel",
   "fixture-us-gasoline-regular": "a gallon of regular gasoline in the fixture data",
   "fixture-us-diesel": "a gallon of diesel in the fixture data",
 };

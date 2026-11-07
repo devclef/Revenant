@@ -191,6 +191,33 @@ describe("SealedLetter markup", () => {
   });
 });
 
+describe("SealedLetter collapsible letter (P6, P7)", () => {
+  function renderCollapsible(opened: Opened): string {
+    return renderToStaticMarkup(
+      createElement(SealedLetter, {
+        opened,
+        personaName: PERSONA_NAME,
+        collapsible: true,
+      }),
+    );
+  }
+
+  it("puts the letter text in a closed disclosure when collapsible", () => {
+    const markup = renderCollapsible(OPENED);
+    expect(markup).toMatch(/<details[^>]*data-letter-disclosure=""/);
+    expect(markup).toContain(`<summary>${REVEAL_COPY.letterDisclosure}</summary>`);
+    expect(markup).not.toMatch(/<details[^>]* open/);
+    expect(markup).toContain("data-letter-text");
+    expect(markup).toContain("LETTER_BODY_SECRET");
+  });
+
+  it("leaves the letter text unwrapped by default", () => {
+    const markup = render(OPENED);
+    expect(markup).not.toContain("data-letter-disclosure");
+    expect(markup).toContain("data-letter-text");
+  });
+});
+
 describe("stage 2 letter sits on StagePanel's paper panel (WCAG AA)", () => {
   it("leaves the paper and ink to StagePanel, so the section sets no background or colour", () => {
     const css = readFileSync(join(__dirname, "reveal.module.css"), "utf8");

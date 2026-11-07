@@ -267,3 +267,62 @@ describe("reveal seal pattern key (spec 06, R18.2)", () => {
     expect(html).toContain(sealMarkup(LIVE_LETTER_ID));
   });
 });
+
+describe("reveal marks stage on the phone and the collapsed card (spec 09 P6, C3.4)", () => {
+  const RECORD: RecallRecordV1 = {
+    version: 1,
+    answers: [
+      { question_id: "q-fuel", kind: "number", value: "2.50" },
+      { question_id: "q-milk", kind: "no_answer" },
+      { question_id: "q-note", kind: "no_answer" },
+    ],
+  };
+
+  it("shows the Answer_List in place of the recall scales on the phone", () => {
+    const html = renderMarks(RECORD, { phone: true });
+    expect(html).toContain('data-answer-list=""');
+    expect(html).not.toContain('role="img"');
+    expect(html).not.toContain("data-recorded-scale");
+    expect(html).toContain("Regular gasoline");
+    expect(html).toContain(`${REVEAL_COPY.noAnswer}`);
+  });
+
+  it("lists each number question once in the phone Answer_List, with its answer or No answer", () => {
+    const html = renderMarks(RECORD, { phone: true });
+    const items = html.match(/<li class="[^"]*">/g) ?? [];
+    expect(items).toHaveLength(2);
+    expect(html).toContain("2.50 USD per gallon");
+    expect(html).toContain("Milk");
+    expect(html).not.toContain("data-recorded-scale");
+  });
+
+  it("keeps the marks card open with its heading on the phone at stage 1", () => {
+    const html = renderMarks(RECORD, { phone: true });
+    expect(html).toContain('data-fit="marks-heading"');
+    expect(html).not.toContain("data-testimony");
+  });
+
+  it("renders no marks card on the phone from figures on", () => {
+    const html = renderMarks(RECORD, { phone: true, stage: 3 });
+    expect(html).not.toContain('data-card="marks"');
+    expect(html).not.toContain("data-testimony");
+    expect(html).not.toContain('data-answer-list=""');
+  });
+
+  it("collapses the marks card into a closed details titled Your testimony at 600 px and wider from figures on", () => {
+    const html = renderMarks(RECORD, { phone: false, stage: 3 });
+    expect(html).toContain('data-testimony=""');
+    expect(html).toMatch(
+      new RegExp(`<details[^>]*>\\s*<summary>${REVEAL_COPY.stage1Title}</summary>`),
+    );
+    expect(html).not.toMatch(/<details[^>]*\sopen/);
+    // The recorded scales stay in the document inside the closed card.
+    expect(html.match(/role="img"/g) ?? []).toHaveLength(2);
+  });
+
+  it("keeps the open marks card at 600 px and wider on the marks Stage", () => {
+    const html = renderMarks(RECORD, { phone: false, stage: 1 });
+    expect(html).not.toContain("data-testimony");
+    expect(html).toContain('data-fit="marks-heading"');
+  });
+});

@@ -109,23 +109,31 @@ describe("the marks card scale: name, box and spacing (spec 09 A9)", () => {
   });
 });
 
-describe("the Unit_Helper_Line (R7.8, R7.9)", () => {
-  it("shows the helper line under an EUR per 1,000 litres scale, linked by aria-describedby", () => {
-    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "1200" });
-    expect(markup).toContain(CEREMONY_COPY.unitHelperEurPer1000L);
+describe("the rescale note under the EUR per litre scale (C8)", () => {
+  const NOTE = "Published per 1,000 litres, shown per litre.";
+
+  it("shows the note under an EUR per 1,000 litres scale, linked by aria-describedby", () => {
+    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "1.2" });
+    expect(markup).toContain(NOTE);
     expect(markup).toContain('aria-describedby="recall-q1-unit-help"');
     expect(markup).toContain('id="recall-q1-unit-help"');
   });
 
-  it("shows no helper line and no aria-describedby for any other unit", () => {
+  it("shows the displayed unit per litre, not the sealed unit", () => {
+    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "1.2" });
+    expect(markup).toContain("EUR per litre");
+    expect(markup).not.toContain("EUR per 1,000 litres");
+  });
+
+  it("shows no note and no aria-describedby for any other unit", () => {
     const markup = render({ unitLabel: "USD per gallon" });
-    expect(markup).not.toContain(CEREMONY_COPY.unitHelperEurPer1000L);
+    expect(markup).not.toContain(NOTE);
     expect(markup).not.toContain("aria-describedby");
   });
 
   it("does not match a unit that differs only in case or spacing", () => {
     const markup = render({ unitLabel: "eur per 1,000 litres" });
-    expect(markup).not.toContain(CEREMONY_COPY.unitHelperEurPer1000L);
+    expect(markup).not.toContain(NOTE);
   });
 });
 
@@ -138,21 +146,21 @@ describe("tick labels (R6.5)", () => {
 
   it("uses tick labels from visibleTicks, not every tick", () => {
     const markup = render({ unitLabel: "EUR per 1,000 litres", value: null });
-    expect(markup).toContain("3,000");
+    expect(markup).toContain(">3<");
     expect(markup).toContain("data-tick-label");
   });
 });
 
-describe("the Unit_Helper_Line sits on its own row under the tick labels", () => {
-  it("places the helper line after every tick label, outside the track", () => {
-    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "1200" });
+describe("the rescale note sits on its own row under the tick labels", () => {
+  it("places the note after every tick label, outside the track", () => {
+    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "1.2" });
     const lastTick = markup.lastIndexOf("data-tick-label=");
     const helper = markup.indexOf(`id="recall-q1-unit-help"`);
     expect(lastTick).toBeGreaterThan(-1);
     expect(helper).toBeGreaterThan(lastTick);
     expect(markup.slice(helper)).not.toContain("data-tick-label");
     expect(markup.slice(helper)).not.toContain("data-tick-labels");
-    expect(markup.slice(helper)).toContain(CEREMONY_COPY.unitHelperEurPer1000L);
+    expect(markup.slice(helper)).toContain("Published per 1,000 litres, shown per litre.");
   });
 
   it("gives the helper a top margin of at least 1.5rem, clearing the 1.5rem tick row", () => {
@@ -163,7 +171,7 @@ describe("the Unit_Helper_Line sits on its own row under the tick labels", () =>
     expect(Number(margin?.[1])).toBeGreaterThanOrEqual(1.5);
   });
 
-  it("applies the helper spacing only where a helper line is shown (US scale unchanged)", () => {
+  it("applies the helper spacing only where a note is shown (US scale unchanged)", () => {
     expect(render({ unitLabel: "EUR per 1,000 litres" })).toContain("recordedHelp");
     expect(render({ unitLabel: "USD per gallon" })).not.toContain("recordedHelp");
   });
@@ -171,18 +179,18 @@ describe("the Unit_Helper_Line sits on its own row under the tick labels", () =>
 
 describe("the recorded readout stays on the paper near the track ends", () => {
   it("anchors a value near the start of the track to that start", () => {
-    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "1.90" });
+    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "0.10" });
     expect(markup).toContain("recordedReadoutStart");
     expect(markup).not.toContain("recordedReadoutEnd");
   });
 
   it("anchors a value near the end of the track to that end", () => {
-    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "2950" });
+    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "2.95" });
     expect(markup).toContain("recordedReadoutEnd");
   });
 
   it("keeps a mid-track readout centred", () => {
-    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "1200" });
+    const markup = render({ unitLabel: "EUR per 1,000 litres", value: "1.2" });
     expect(markup).not.toContain("recordedReadoutStart");
     expect(markup).not.toContain("recordedReadoutEnd");
   });

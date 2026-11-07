@@ -31,7 +31,8 @@ import { ChangeLine } from "./ChangeLine";
 import { answerText } from "@/components/ceremony/recall/answer-text";
 import { maskLineLabels } from "./line-label-mask";
 import { FigureEntry, type FigureEntryProps } from "./FigureEntry";
-import { FigureLine } from "./FigureLine";
+import { FigureRow } from "./ReceiptCard";
+import { receiptFigureOf } from "./FigureLine";
 import { FiguresThenNow } from "./FiguresThenNow";
 import type { Opened } from "./opening-machine";
 import {
@@ -633,11 +634,11 @@ function renderThenNow(payload: PayloadV1, record?: RecallRecordV1): string {
 }
 
 function figureLineMarkup(figure: Readonly<FigureV1>, role: "then" | "now"): string {
+  const displayRescale = DEMO_FIGURES.series.get(figure.metric_id)?.display_rescale;
   return renderToStaticMarkup(
-    createElement(FigureLine, {
-      figure,
+    createElement(FigureRow, {
       role,
-      displayRescale: DEMO_FIGURES.series.get(figure.metric_id)?.display_rescale,
+      figure: receiptFigureOf(figure, role, "persona", displayRescale),
     }),
   );
 }

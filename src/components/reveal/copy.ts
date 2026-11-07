@@ -156,6 +156,12 @@ export const REVEAL_COPY = {
   /** Heading for stage 1 of the reveal: what the reader just remembered. */
   stage1Title: "Your testimony",
 
+  /**
+   * The summary of the marks card on the figures and close Stages at 600 px and
+   * wider (C3.4). The card stays closed until the reader opens it.
+   */
+  marksSummary: "Your testimony",
+
   /** Prefix for a remembered answer. `{value}` is filled in at render time. */
   yourAnswer: "Your answer",
 
@@ -169,6 +175,9 @@ export const REVEAL_COPY = {
 
   /** Heading for stage 2 of the reveal: what was written then. */
   stage2Title: "What was written then",
+
+  /** Summary of the letter disclosure on the phone's figures and close Stages. */
+  letterDisclosure: "Read the letter again",
 
   /** The "written as of" line. `{date}` is the payload's written-as-of date. */
   writtenAsOfPrefix: "Written as of {date}",

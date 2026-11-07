@@ -127,15 +127,18 @@ describe("the unreadable message (R32.7)", () => {
   });
 });
 
-describe("the Unit_Helper_Line on a euro-per-litre block (R7.8)", () => {
-  it("shows the helper under the unit label, linked by aria-describedby", () => {
+describe("the EUR per litre display with its rescale note (C8)", () => {
+  it("shows the displayed unit and the note, linked by aria-describedby", () => {
     const markup = render("1200", "EUR per 1,000 litres");
-    expect(markup).toContain(CEREMONY_COPY.unitHelperEurPer1000L);
+    expect(markup).toContain("EUR per litre");
+    expect(markup).not.toContain("EUR per 1,000 litres");
+    expect(markup).toContain("Published per 1,000 litres, shown per litre.");
     expect(markup).toMatch(/aria-describedby="[^"]*recall-q1-unit-help/);
   });
 
-  it("shows no helper line for a USD block", () => {
+  it("shows no note for a USD block", () => {
     const markup = render("3.47", "USD per gallon");
-    expect(markup).not.toContain(CEREMONY_COPY.unitHelperEurPer1000L);
+    expect(markup).not.toContain("Published per");
+    expect(markup).not.toContain("recall-q1-unit-help");
   });
 });
