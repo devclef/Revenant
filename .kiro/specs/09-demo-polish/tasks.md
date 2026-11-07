@@ -452,7 +452,7 @@ Each task in this group meets group P for the Stages it changes (G3.7), and atta
   - Validation: `bash scripts/check.sh`
   - _Requirements: C3.1–C3.6, C8.1, C8.3–C8.6, P4.1, P6.1–P6.4, P7.1, P8.4_
 
-- [ ] 17. C4, C6, C7, P8 · One action at the climax, sound in the Top_Bar, one disclosure at the letter, the seal verdict, the closing line, and the seal by touch
+- [x] 17. C4, C6, C7, P8 · One action at the climax, sound in the Top_Bar, one disclosure at the letter, the seal verdict, the closing line, and the seal by touch
   - Agent: `frontend-dev` · Depends on: 16 · Estimated size: ~1,300 changed lines
   - Before this task: task 16 is on `main`. OD5 recorded, or default (drop the line). Steering updated (Owner patches w, x and y on `main`, owner step O0).
   - Scope: `src/components/ceremony/scene/TopBar.tsx`, `src/components/ceremony/scene/icons.tsx`, `src/components/ceremony/scene/SceneShell.tsx`, `src/components/ceremony/scene/scene.module.css`, `src/components/ceremony/ASSETS.md`, `src/components/ceremony/sound/SoundToggle.tsx`, `src/components/ceremony/seal/**`, `src/components/ceremony/envelope/**`, `src/components/ceremony/close/**`, `src/components/ceremony/copy.ts`, `src/components/ceremony/constants.ts`, `src/components/reveal/Reveal.tsx`, `src/components/reveal/OpeningFlow.tsx` (the Skip_Link only), `src/components/reveal/SealedLetter.tsx`, `src/components/reveal/Fingerprint.tsx`, `src/components/reveal/copy.ts`, `src/components/reveal/reveal.module.css`, and the `*.test.ts(x)` for each file above
