@@ -217,7 +217,7 @@
 }
 
 .marksHeading {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   color: var(--ink);
 }
 
