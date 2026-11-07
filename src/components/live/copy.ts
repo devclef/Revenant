@@ -55,8 +55,10 @@ export const LIVE_COPY = {
     "A lost or deleted passkey means this letter can never be opened, unless you also keep its backup key. Revenant cannot recover it.",
   warningLabel:
     "I understand that a lost or deleted passkey means this letter can never be opened, unless I keep its backup key.",
-  createButton: "Create your passkey",
+  createButton: "Press the seal with your passkey",
   confirmButton: "Confirm your passkey",
+  nextButton: "Next",
+  backButton: "Back",
   preparing: "Getting ready.",
   stepCreating: "Waiting for your device. Create the passkey when it asks.",
   stepCreated: "Your passkey is created. Press the button to confirm it.",

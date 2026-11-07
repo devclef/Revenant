@@ -74,7 +74,12 @@ export function LiveStepper({
     next: () => dispatch({ type: "NEXT" }),
     back: () => dispatch({ type: "BACK" }),
     canGoBack: canGoBack(state.step, state.sealed),
-    markSealed: () => dispatch({ type: "SEALED" }),
+    markSealed: () => {
+      dispatch({ type: "SEALED" });
+      // The seal step hands over to Wait once the seal is stored. Any other
+      // step only records the seal.
+      if (state.step === "seal") dispatch({ type: "NEXT" });
+    },
   };
 
   return (

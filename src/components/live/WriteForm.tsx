@@ -13,6 +13,13 @@ import { INITIAL_TOUCHED, showsFieldMessage, type TouchedState } from "./touched
 import type { SealState } from "./seal-machine";
 import { StepStatus } from "./StepStatus";
 
+/**
+ * Which part of the write flow a WriteForm renders (spec 09, D2). `all` is the
+ * whole form, as on the page before the Live_Stepper. The other three render
+ * one step each inside the stepper, with that step's Next or Back control.
+ */
+export type WriteSection = "all" | "write" | "figures" | "seal";
+
 export interface WriteFormProps {
   /** The figures the visitor can pick from. */
   series: readonly PickableSeries[];
@@ -55,6 +62,15 @@ export interface WriteFormProps {
   onWarningChange: (ticked: boolean) => void;
   /** The visitor ticked or unticked the backup key card box. */
   onBackupCardChange: (ticked: boolean) => void;
+  /**
+   * Which part to render. Defaults to `all`, the whole form. The stepper passes
+   * `write`, `figures` or `seal` (spec 09, D2).
+   */
+  section?: WriteSection;
+  /** Section mode: moves to the next step once this step is valid. */
+  onNext?: () => void;
+  /** Section mode: moves back one step. Omit where Back is not offered. */
+  onBack?: () => void;
   /** The Create_Press: starts the first passkey prompt. */
   onCreatePress: () => void;
   /** The Confirm_Press: starts the second prompt and the seal. */
@@ -108,9 +124,14 @@ export function buttonLive(
  * local state (R12.7); the two presses are the page's flow handlers.
  *
  * The create button is disabled until the crypto module has loaded (R15.3) and
- * until the write input is valid. In the `write` state it is labelled "Create
- * your passkey"; once the passkey is created it becomes "Confirm your passkey"
- * (R15.10). The step line below it is a `role="status"` region (StepStatus).
+ * until the write input is valid. In the `write` state it is labelled "Press
+ * the seal with your passkey"; once the passkey is created it becomes "Confirm
+ * your passkey" (R15.10). The step line below it is a `role="status"` region
+ * (StepStatus).
+ *
+ * In section mode (spec 09, D2) only the fields of that step render, with the
+ * step's Next and Back. The stepper supplies the heading, so the form drops
+ * its own heading and the Demo label.
  */
 export function WriteForm({
   series,
@@ -129,6 +150,9 @@ export function WriteForm({
   onToggleFigure,
   onWarningChange,
   onBackupCardChange,
+  section = "all",
+  onNext,
+  onBack,
   onCreatePress,
   onConfirmPress,
   realDate,
@@ -143,6 +167,9 @@ export function WriteForm({
     maxFigures: limit,
   });
   const atLimit = metricIds.length >= limit;
+  const all = section === "all";
+  /** True when this part of the form renders in the current section. */
+  const shows = (part: WriteSection) => all || section === part;
 
   /** The message for a problem, or "" when validateWrite does not report it. */
   function problemText(problem: WriteProblem): string {
@@ -197,47 +224,76 @@ export function WriteForm({
     onButtonPress();
   }
 
-  return (
-    <form
-      data-card="live-write"
-      className={styles.panel}
-      aria-labelledby="live-seal-heading"
-      onSubmit={(event) => event.preventDefault()}
+  // Section mode: Next checks only this step's own input. A failed check shows
+  // the step's messages and moves nothing.
+  const letterValid = !problems.some(
+    (problem) => problem === "letter_empty" || problem === "letter_too_long",
+  );
+  const figuresValid =
+    figuresStatus === "ready" && !problems.includes("figures_none");
+  function pressNext(valid: boolean, field: string) {
+    if (!valid) {
+      onTouch(field);
+      onAttempt();
+      return;
+    }
+    onNext?.();
+  }
+
+  const pressButton = (
+    <button
+      type="button"
+      className={styles.primary}
+      disabled={!formReady}
+      aria-disabled={inputBlocked ? true : undefined}
+      onClick={handleButtonPress}
     >
-      {realDate === undefined ? <DemoLabel /> : null}
-      <h1 id="live-seal-heading" className={styles.heading}>
-        {LIVE_COPY.heading}
-      </h1>
-      <p className={styles.intro}>
-        {realDate === undefined ? LIVE_COPY.intro : REAL_COPY.intro}
-      </p>
+      {buttonLabel}
+    </button>
+  );
 
-      <div className={styles.field}>
-        <label htmlFor="live-letter" className={styles.label}>
-          {LIVE_COPY.letterLabel}
-        </label>
-        <p className={styles.hint}>{LIVE_COPY.letterHint}</p>
-        <textarea
-          id="live-letter"
-          className={styles.textarea}
-          rows={10}
-          value={text}
-          aria-describedby="live-letter-count live-letter-problem"
-          onChange={(event) => {
-            onTouch(TOUCH_FIELDS.letter);
-            onTextChange(event.target.value);
-          }}
-          onBlur={() => onTouch(TOUCH_FIELDS.letter)}
-        />
-        <p id="live-letter-count" className={styles.count}>
-          {LIVE_COPY.letterCount.replace("{count}", String(letterCount))}
+  const body = (
+    <>
+      {all && realDate === undefined ? <DemoLabel /> : null}
+      {all ? (
+        <h1 id="live-seal-heading" className={styles.heading}>
+          {LIVE_COPY.heading}
+        </h1>
+      ) : null}
+      {shows("write") ? (
+        <p className={styles.intro}>
+          {realDate === undefined ? LIVE_COPY.intro : REAL_COPY.intro}
         </p>
-        <p id="live-letter-problem" className={styles.problem}>
-          {letterProblem}
-        </p>
-      </div>
+      ) : null}
 
-      {realDate !== undefined ? (
+      {shows("write") ? (
+        <div className={styles.field}>
+          <label htmlFor="live-letter" className={styles.label}>
+            {LIVE_COPY.letterLabel}
+          </label>
+          <p className={styles.hint}>{LIVE_COPY.letterHint}</p>
+          <textarea
+            id="live-letter"
+            className={styles.textarea}
+            rows={10}
+            value={text}
+            aria-describedby="live-letter-count live-letter-problem"
+            onChange={(event) => {
+              onTouch(TOUCH_FIELDS.letter);
+              onTextChange(event.target.value);
+            }}
+            onBlur={() => onTouch(TOUCH_FIELDS.letter)}
+          />
+          <p id="live-letter-count" className={styles.count}>
+            {LIVE_COPY.letterCount.replace("{count}", String(letterCount))}
+          </p>
+          <p id="live-letter-problem" className={styles.problem}>
+            {letterProblem}
+          </p>
+        </div>
+      ) : null}
+
+      {all && realDate !== undefined ? (
         <>
           <p className={styles.explain}>{REAL_COPY.testNotice}</p>
           <RealDatePicker
@@ -254,91 +310,154 @@ export function WriteForm({
         </>
       ) : null}
 
-      {figuresStatus === "ready" ? (
-        <FigurePicker
-          series={series}
-          selected={metricIds}
-          atLimit={atLimit}
-          onToggle={(metricId) => {
-            onTouch(TOUCH_FIELDS.figures);
-            onToggleFigure(metricId);
-          }}
-        />
-      ) : (
-        <p className={styles.hint} role="status">
-          {figuresStatus === "failed"
-            ? LIVE_COPY.figuresLoadFailed
-            : LIVE_COPY.figuresLoading}
-        </p>
-      )}
-      <p id="live-figures-problem" className={styles.problem}>
-        {figuresProblem}
-      </p>
+      {shows("figures") ? (
+        <>
+          {figuresStatus === "ready" ? (
+            <FigurePicker
+              series={series}
+              selected={metricIds}
+              atLimit={atLimit}
+              onToggle={(metricId) => {
+                onTouch(TOUCH_FIELDS.figures);
+                onToggleFigure(metricId);
+              }}
+            />
+          ) : (
+            <p className={styles.hint} role="status">
+              {figuresStatus === "failed"
+                ? LIVE_COPY.figuresLoadFailed
+                : LIVE_COPY.figuresLoading}
+            </p>
+          )}
+          <p id="live-figures-problem" className={styles.problem}>
+            {figuresProblem}
+          </p>
+        </>
+      ) : null}
 
-      {prfHint === "missing" ? (
+      {shows("seal") && prfHint === "missing" ? (
         <p className={styles.hint} role="status">
           {LIVE_COPY.prfHint}
         </p>
       ) : null}
 
-      <div className={styles.explain}>
-        <p>{LIVE_COPY.passkeySteps}</p>
-        <p>{LIVE_COPY.crossDevice}</p>
-      </div>
+      {shows("seal") ? (
+        <div className={styles.explain}>
+          <p>{LIVE_COPY.passkeySteps}</p>
+          <p>{LIVE_COPY.crossDevice}</p>
+        </div>
+      ) : null}
 
-      <div className={styles.warning}>
-        <p>{LIVE_COPY.warning}</p>
-        <label className={styles.warningLabel}>
-          <input
-            id="live-warning"
-            type="checkbox"
-            className={styles.checkbox}
-            checked={warningTicked}
-            aria-describedby="live-warning-problem"
-            onChange={(event) => {
-              onTouch(TOUCH_FIELDS.warning);
-              onWarningChange(event.target.checked);
-            }}
-          />
-          <span>{LIVE_COPY.warningLabel}</span>
-        </label>
-        <p id="live-warning-problem" className={styles.problem}>
-          {warningProblem}
-        </p>
-      </div>
+      {shows("seal") ? (
+        <div className={styles.warning}>
+          <p>{LIVE_COPY.warning}</p>
+          <label className={styles.warningLabel}>
+            <input
+              id="live-warning"
+              type="checkbox"
+              className={styles.checkbox}
+              checked={warningTicked}
+              aria-describedby="live-warning-problem"
+              onChange={(event) => {
+                onTouch(TOUCH_FIELDS.warning);
+                onWarningChange(event.target.checked);
+              }}
+            />
+            <span>{LIVE_COPY.warningLabel}</span>
+          </label>
+          <p id="live-warning-problem" className={styles.problem}>
+            {warningProblem}
+          </p>
+        </div>
+      ) : null}
 
-      <div className={styles.warning}>
-        <label className={styles.warningLabel}>
-          <input
-            id="live-backup-card"
-            type="checkbox"
-            className={styles.checkbox}
-            checked={backupCardTicked}
-            aria-describedby="live-backup-card-hint"
-            onChange={(event) => {
-              onTouch(TOUCH_FIELDS.warning);
-              onBackupCardChange(event.target.checked);
-            }}
-          />
-          <span>{LIVE_COPY.backupCardOption}</span>
-        </label>
-        <p id="live-backup-card-hint" className={styles.hint}>
-          {LIVE_COPY.backupCardOptionHint}
-        </p>
-      </div>
+      {shows("seal") ? (
+        <div className={styles.warning}>
+          <label className={styles.warningLabel}>
+            <input
+              id="live-backup-card"
+              type="checkbox"
+              className={styles.checkbox}
+              checked={backupCardTicked}
+              aria-describedby="live-backup-card-hint"
+              onChange={(event) => {
+                onTouch(TOUCH_FIELDS.warning);
+                onBackupCardChange(event.target.checked);
+              }}
+            />
+            <span>{LIVE_COPY.backupCardOption}</span>
+          </label>
+          <p id="live-backup-card-hint" className={styles.hint}>
+            {LIVE_COPY.backupCardOptionHint}
+          </p>
+        </div>
+      ) : null}
 
-      <div className={styles.actions}>
-        <button
-          type="button"
-          className={styles.primary}
-          disabled={!formReady}
-          aria-disabled={inputBlocked ? true : undefined}
-          onClick={handleButtonPress}
-        >
-          {buttonLabel}
-        </button>
-        <StepStatus state={state} />
-      </div>
-    </form>
+      {all ? (
+        <div className={styles.actions}>
+          {pressButton}
+          <StepStatus state={state} />
+        </div>
+      ) : null}
+
+      {section === "write" ? (
+        <div className={styles.actions}>
+          <button
+            type="button"
+            className={styles.primary}
+            onClick={() => pressNext(letterValid, TOUCH_FIELDS.letter)}
+          >
+            {LIVE_COPY.nextButton}
+          </button>
+        </div>
+      ) : null}
+
+      {section === "figures" ? (
+        <div className={styles.actions}>
+          {onBack ? (
+            <button type="button" className={styles.secondary} onClick={onBack}>
+              {LIVE_COPY.backButton}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            className={styles.primary}
+            onClick={() => pressNext(figuresValid, TOUCH_FIELDS.figures)}
+          >
+            {LIVE_COPY.nextButton}
+          </button>
+        </div>
+      ) : null}
+
+      {section === "seal" ? (
+        <div className={styles.actions}>
+          {onBack ? (
+            <button type="button" className={styles.secondary} onClick={onBack}>
+              {LIVE_COPY.backButton}
+            </button>
+          ) : null}
+          {pressButton}
+          <StepStatus state={state} />
+        </div>
+      ) : null}
+    </>
+  );
+
+  if (all) {
+    return (
+      <form
+        data-card="live-write"
+        className={styles.panel}
+        aria-labelledby="live-seal-heading"
+        onSubmit={(event) => event.preventDefault()}
+      >
+        {body}
+      </form>
+    );
+  }
+  return (
+    <div data-card={`live-step-${section}`} className={styles.panel}>
+      {body}
+    </div>
   );
 }
