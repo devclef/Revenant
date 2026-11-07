@@ -870,8 +870,17 @@
    Soil strip: the top is the strip's bottom edge plus 1.5 rem, measured from the
    hero's top (the column's top padding, 6 rem). The Accent link then sits clear
    of the Landing_Ghost body, which ends above the strip. The hero's side padding
-   (1.25 rem) is repeated here so the buttons keep its width. */
-@media (max-width: 899.98px) {
+   (1.25 rem) is repeated here so the buttons keep its width.
+
+   Scoped to 600-899 px only. Below 600 px the landing hero is a plain stacked
+   flex column (landing.module.css .hero) and the Soil strip is far below the
+   first viewport, so the actions belong in normal flow after the Hero_Sentence:
+   taking them out of flow here left a tall gap under the sentence (PH2) and
+   pushed the secondary call to action past the 640 px fold (PH1) at phone
+   widths. The Soil-strip overlap this rule prevents (F2: "Seal your own..."
+   sitting on the strip) only occurs at 600 px and wider, so the fix is pinned
+   to that range. */
+@media (min-width: 600px) and (max-width: 899.98px) {
   .landingColumn [data-block="actions"] {
     position: absolute;
     left: 1.25rem;
