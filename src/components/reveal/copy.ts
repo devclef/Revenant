@@ -176,6 +176,9 @@ export const REVEAL_COPY = {
   /** Heading for stage 2 of the reveal: what was written then. */
   stage2Title: "What was written then",
 
+  /** Summary of the letter disclosure on the phone's figures and close Stages. */
+  letterDisclosure: "Read the letter again",
+
   /** The "written as of" line. `{date}` is the payload's written-as-of date. */
   writtenAsOfPrefix: "Written as of {date}",
 

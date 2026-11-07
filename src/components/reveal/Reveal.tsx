@@ -417,6 +417,7 @@ export function Reveal({
               variant={variant}
               letterId={letterId}
               still={jumpedToEnd}
+              collapsible={stage >= 3 && isPhone}
             />
             {/* The opening Fingerprint sits under the Letter_Block, on the desk
                 surface, before "See the receipts" (design.md, R14.3). It shows
