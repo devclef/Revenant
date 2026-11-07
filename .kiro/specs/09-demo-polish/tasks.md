@@ -329,7 +329,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`
   - _Requirements: L2.1, L3.1, L4.1–L4.3, L5.1–L5.6, G2.10, G2.11_
 
-- [ ] 12. B3 · Wire the landing sections and count the Kiro_Stats at build time
+- [x] 12. B3 · Wire the landing sections and count the Kiro_Stats at build time
   - Agent: `platform-dev` · Depends on: 9, 10, 11 · Estimated size: ~350 changed lines
   - Before this task: tasks 9, 10 and 11 are on `main`. Steering updated (Owner patches w, x and y on `main`, owner step O0).
   - Scope: `src/app/page.tsx`, `src/app/page.test.tsx`, `next.config.ts`, `.dockerignore`, `src/lib/kiro-stats.ts` (new), `src/lib/kiro-stats.test.ts` (new), `src/test/kiro-stats-build.test.ts` (new)
