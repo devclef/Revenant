@@ -36,6 +36,14 @@ export const DEMO_COPY = {
   opensPrefix: "Opens",
 
   /**
+   * The verb that opens a persona's letter, with its trailing space. It appears
+   * once on each envelope, in the orange button text. The space keeps it from
+   * matching the "Opens" date label, so the Demo_Index test counts one per card.
+   * The full button text and accessible name come from openLetterFor.
+   */
+  openLetter: "Open ",
+
+  /**
    * The accessible name and the orange button text of a persona's envelope.
    * `{name}` is replaced with the persona's display name (for example
    * "Open Maya's letter").

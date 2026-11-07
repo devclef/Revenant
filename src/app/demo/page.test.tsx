@@ -82,8 +82,8 @@ describe("Demo_Index page markup", () => {
 
   it("renders exactly the Persona_List, one card per entry, in order", async () => {
     const html = await renderWithPersonas(TWO_PERSONAS);
-    // One envelope link per persona.
-    const sealLinks = html.match(/<a [^>]*href="\/demo\/personas\//g);
+    // One "Open the letter" link per persona.
+    const sealLinks = html.match(new RegExp(DEMO_COPY.openLetter, "g"));
     expect(sealLinks).not.toBeNull();
     expect(sealLinks).toHaveLength(TWO_PERSONAS.length);
 
@@ -146,7 +146,8 @@ describe("Demo_Index page markup", () => {
     const html = await renderWithPersonas([]);
     expect(html).toContain(DEMO_COPY.indexEmpty);
     expect(html).toContain('data-ceremony="index"');
-    // No persona cards: no envelope link appears.
+    // No persona cards: no "Open the letter" link appears.
+    expect(html).not.toContain(DEMO_COPY.openLetter);
     expect(html).not.toContain('href="/demo/personas/');
   });
 });

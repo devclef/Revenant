@@ -128,12 +128,12 @@ describe("PersonaCard markup", () => {
     expect(html).toContain("Open Maya");
   });
 
-  it("gives the envelope link the accessible name \"Open {name}'s letter\"", () => {
+  it("gives the envelope link the accessible name \"Open {name}'s letter\" from its button", () => {
     const html = render();
-    expect(html).toContain(`aria-label="${attr(labelFor("Maya"))}"`);
-    expect(render(EVENT_PROPS)).toContain(
-      `aria-label="${attr(labelFor("Anna"))}"`,
-    );
+    expect(html).toContain(`aria-labelledby="persona-us-maya-open"`);
+    expect(html).toContain(`id="persona-us-maya-open"`);
+    expect(html).not.toContain("aria-label=");
+    expect(render(EVENT_PROPS)).toContain(`id="persona-eu-anna-open"`);
   });
 
   it("never says \"Break the seal\" on the card (R2)", () => {
@@ -212,7 +212,7 @@ describe("PersonaCard markup", () => {
     expect(html).not.toContain("9.999");
     const root = tree(withPayload);
     expect(Object.keys(root.props).sort()).toEqual([
-      "aria-label",
+      "aria-labelledby",
       "children",
       "className",
       "href",

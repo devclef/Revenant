@@ -56,12 +56,13 @@ export function PersonaCard({
       ? openedOn
       : `${openedOn}${DEMO_COPY.eventSeparator}${opening_event_name}`;
   const openLabel = DEMO_COPY.openLetterFor.replace("{name}", display_name);
+  const buttonId = `persona-${personaKey}-open`;
 
   return (
     <Link
       href={`/demo/personas/${personaKey}`}
       className={styles.envelope}
-      aria-label={openLabel}
+      aria-labelledby={buttonId}
     >
       <span className={styles.art} aria-hidden="true">
         <Envelope state="turned" layout="narrow" />
@@ -81,7 +82,7 @@ export function PersonaCard({
             <span className={styles.dateValue}>{opensValue}</span>
           </span>
         </span>
-        <span className={styles.button} aria-hidden="true">
+        <span id={buttonId} className={styles.button}>
           {openLabel}
         </span>
       </span>
