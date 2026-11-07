@@ -365,3 +365,29 @@ describe("Top_Bar at 600 px and wider (spec 07 R8.3, R8.4 unchanged)", () => {
     expect(html.split(`>${CEREMONY_COPY.calmOn}<`).length - 1).toBe(1);
   });
 });
+
+describe("Top_Bar touch targets (spec 07 control minimum, spec 09 P5 phone hit areas)", () => {
+  /** The bodies of every media block below 600 px, in the order they appear. */
+  function phoneBlocks(): string[] {
+    const blocks: string[] = [];
+    const opener = /@media \(max-width: 599\.98px\) \{/g;
+    let m: RegExpExecArray | null;
+    while ((m = opener.exec(sceneCss)) !== null) {
+      const end = sceneCss.indexOf("\n}\n", m.index);
+      blocks.push(sceneCss.slice(m.index + m[0].length, end < 0 ? undefined : end));
+    }
+    return blocks;
+  }
+
+  it("keeps the 36 px touch minimum on the base control rule", () => {
+    expect(ruleBodyOf(".control")).toMatch(/min-height:\s*36px/);
+  });
+
+  it("gives the wordmark link a 44 px hit area in the phone Top_Bar", () => {
+    const rules = phoneBlocks()
+      .map((block) => block.match(/\n {2}\.wordmarkLink \{([^}]*)\}/)?.[1] ?? "")
+      .filter((body) => body !== "");
+    expect(rules.length).toBeGreaterThan(0);
+    expect(rules[0]).toMatch(/min-height:\s*44px/);
+  });
+});

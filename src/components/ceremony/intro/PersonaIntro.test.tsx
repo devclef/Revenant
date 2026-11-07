@@ -121,3 +121,12 @@ describe("PersonaIntro stages (spec 09 C1, emerging, sealed and intact)", () => 
     expect(css).toMatch(/@media \(max-width: 599\.98px\) \{\s*\.notice \{\s*display:\s*block;/);
   });
 });
+
+describe("PersonaIntro source link hit area (spec 09 P5)", () => {
+  it("gives the source link a 44 px tall hit area below 600 px", () => {
+    const css = readFileSync(intro, "utf8");
+    const rule = css.match(/(?:^|\n)\.source a \{([^}]*)\}/)?.[1] ?? "";
+    expect(rule).toMatch(/display:\s*inline-flex;/);
+    expect(rule).toMatch(/min-height:\s*44px;/);
+  });
+});
