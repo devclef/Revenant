@@ -75,7 +75,7 @@
 .statement {
   margin: 0;
   color: var(--ink);
-  font-family: var(--font-serif);
+  /* Status text, not Letter_Text: it stays in the sans (spec 09 L2.3). */
   line-height: 1.4;
   max-width: var(--measure);
 }
