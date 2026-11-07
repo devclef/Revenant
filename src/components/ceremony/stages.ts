@@ -152,6 +152,11 @@ export type FocusTarget =
 export function focusTargetFor(prev: Stage | null, next: Stage): FocusTarget {
   if (prev === "figures" && next === "close") return { kind: "none" };
   if (prev === "letter" && next === "figures") return { kind: "figures-heading" };
+  // Skip to the receipts jumps from marks or seal to the figures stage first,
+  // then settles to close.
+  if ((prev === "marks" || prev === "seal") && next === "figures") {
+    return { kind: "figures-heading" };
+  }
   if (
     (prev === "letter" || prev === "marks" || prev === "seal") &&
     next === "close"

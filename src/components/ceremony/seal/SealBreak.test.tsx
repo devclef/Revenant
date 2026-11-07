@@ -169,7 +169,7 @@ describe("SealBreak Top_Bar Skip: registered only from a break until it settles"
   });
 
   it("registers the skip only while a break is armed and not yet broken", () => {
-    expect(code).toMatch(/const\s+skipArmed\s*=\s*breaking\s*&&\s*!broken/);
+    expect(code).toMatch(/const\s+skipArmed\s*=\s*skipRegisteredFor\(\s*breaking\s*,\s*broken\s*\)/);
     expect(code).toMatch(
       /skipArmed\s*\?\s*register\(\s*\(\)\s*=>\s*skip\(\)\s*\)\s*:\s*undefined/,
     );

@@ -257,6 +257,11 @@ describe("focusTargetFor (spec 08 focus table)", () => {
     expect(focusTargetFor("seal", "close")).toEqual({ kind: "figures-heading" });
   });
 
+  it("returns figures-heading for marks and seal to figures (Skip to the receipts)", () => {
+    expect(focusTargetFor("marks", "figures")).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("seal", "figures")).toEqual({ kind: "figures-heading" });
+  });
+
   it("returns none for the settle from figures to close", () => {
     expect(focusTargetFor("figures", "close")).toEqual({ kind: "none" });
   });
@@ -281,7 +286,10 @@ describe("focusTargetFor (spec 08 focus table)", () => {
     for (const prev of [null, ...ALL_STAGES] as (Stage | null)[]) {
       for (const next of ALL_STAGES) {
         let expected: FocusTarget = { kind: "default" };
-        if (next === "figures" && prev === "letter") {
+        if (
+          next === "figures" &&
+          (prev === "letter" || prev === "marks" || prev === "seal")
+        ) {
           expected = { kind: "figures-heading" };
         } else if (
           next === "close" &&

@@ -21,6 +21,15 @@ export function skipLinkVisible(showAll: boolean, broken: boolean): boolean {
 }
 
 /**
+ * Whether the seal is a registered Skip sequence. It is registered only from
+ * the button press (`breaking`) until the seal has broken. At the marks, before
+ * any press, nothing is registered, so the Top_Bar shows no Skip.
+ */
+export function skipRegisteredFor(breaking: boolean, broken: boolean): boolean {
+  return breaking && !broken;
+}
+
+/**
  * Activate the Skip_Link. Sends SHOW_ALL at most once: a second activation
  * after the seal has broken does nothing.
  */

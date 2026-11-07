@@ -60,7 +60,11 @@ import {
   cracksForProgress,
 } from "./cracks";
 import { HeldSeal } from "./HeldSeal";
-import { activateSkipLink, skipLinkVisible } from "./skip-link";
+import {
+  activateSkipLink,
+  skipLinkVisible,
+  skipRegisteredFor,
+} from "./skip-link";
 import { holdSegmentsLit } from "./hold";
 import type { SealController } from "./useSealBreak";
 import styles from "./SealBreak.module.css";
@@ -236,7 +240,7 @@ export function SealBreak({
   // the seal waits at its marks nothing is registered, so the Top_Bar shows no
   // Skip.
   const [breaking, setBreaking] = useState(false);
-  const skipArmed = breaking && !broken;
+  const skipArmed = skipRegisteredFor(breaking, broken);
   useEffect(
     () => (skipArmed ? register(() => skip()) : undefined),
     [skipArmed, register, skip],
