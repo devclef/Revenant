@@ -69,3 +69,34 @@ export function rescaleForDisplay(value: string, divisor: number): string {
   const shifted: Decimal = { int: d.int, scale: d.scale + power };
   return toDecimalString(shifted);
 }
+
+/**
+ * How a sealed unit is shown on screen: the display unit, the exact power-of-ten
+ * divisor for `rescaleForDisplay`, and the note shown under each figure value.
+ */
+export type UnitDisplay = { displayUnit: string; divisor: number; note: string };
+
+// Keyed on the exact unit string as sealed. A Map, not a plain object, so a unit
+// such as "constructor" can never match an inherited property.
+const UNIT_DISPLAY: ReadonlyMap<string, UnitDisplay> = new Map<string, UnitDisplay>([
+  [
+    "EUR per 1,000 litres",
+    {
+      displayUnit: "EUR per litre",
+      divisor: 1000,
+      note: "Published per 1,000 litres, shown per litre.",
+    },
+  ],
+]);
+
+/**
+ * The display rescale for a sealed unit, or `null` when the unit has none.
+ *
+ * Matching is exact and case- and whitespace-sensitive. It reads only the unit
+ * string and never the Catalogue, so it works whatever the Catalogue holds. The
+ * values themselves are converted with {@link rescaleForDisplay}; stored values
+ * are never changed.
+ */
+export function displayRescaleForUnit(unit: string): UnitDisplay | null {
+  return UNIT_DISPLAY.get(unit) ?? null;
+}
