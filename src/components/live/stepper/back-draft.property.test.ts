@@ -84,3 +84,35 @@ describe("Property 11: Back keeps the draft; nothing goes back after the seal", 
     );
   });
 });
+
+describe("the page's draft path (SealPage dispatches DRAFT through reduceStepper)", () => {
+  it("Back keeps the typed text and figures, and SEALED drops them", () => {
+    let state = initialStepperState();
+    state = reduceStepper(state, { type: "NEXT" }); // write -> figures
+    state = reduceStepper(state, {
+      type: "DRAFT",
+      event: { type: "TEXT_CHANGED", text: "Kept on Back." },
+    });
+    state = reduceStepper(state, {
+      type: "DRAFT",
+      event: { type: "FIGURE_TOGGLED", metricId: "us-groceries" },
+    });
+    state = reduceStepper(state, { type: "NEXT" }); // figures -> seal
+    state = reduceStepper(state, { type: "BACK" }); // seal -> figures
+    expect(state.step).toBe("figures");
+    expect(state.draft.text).toBe("Kept on Back.");
+    expect(state.draft.metricIds).toEqual(["us-groceries"]);
+
+    state = reduceStepper(state, { type: "NEXT" });
+    state = reduceStepper(state, { type: "SEALED" });
+    expect(state.sealed).toBe(true);
+    expect(state.draft).toEqual(INITIAL_WRITE_DRAFT);
+
+    // A late draft event after the seal changes nothing.
+    const after = reduceStepper(state, {
+      type: "DRAFT",
+      event: { type: "TEXT_CHANGED", text: "Too late." },
+    });
+    expect(after.draft).toEqual(INITIAL_WRITE_DRAFT);
+  });
+});
