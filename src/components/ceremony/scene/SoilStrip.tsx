@@ -8,5 +8,5 @@
 import styles from "./scene.module.css";
 
 export function SoilStrip() {
-  return <div className={styles.soilStrip} data-soil-strip />;
+  return <div className={styles.soilStrip} data-soil data-soil-strip />;
 }

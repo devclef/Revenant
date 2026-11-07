@@ -13,6 +13,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { BRAND_COPY } from "@/components/brand/copy";
 import { HOW_COPY } from "@/components/how/copy";
 
 import HowItIsSealedPage from "./page";
@@ -30,6 +31,27 @@ describe("How_Page headings", () => {
   it("renders exactly one h1 with the page heading", () => {
     expect(html.match(/<h1[\s>]/g)).toHaveLength(1);
     expect(html).toContain(`>${HOW_COPY.heading}</h1>`);
+  });
+
+  it("opens with the seal heading and the Seal_Mapping table before any section", () => {
+    expect(HOW_COPY.heading).toBe("How the seal works");
+    const h1At = html.indexOf(`>${HOW_COPY.heading}</h1>`);
+    const tableAt = html.indexOf("<table");
+    const firstSectionAt = html.indexOf("<h2");
+    expect(h1At).toBeGreaterThanOrEqual(0);
+    expect(tableAt).toBeGreaterThan(h1At);
+    expect(firstSectionAt).toBeGreaterThan(tableAt);
+  });
+
+  it("renders the four Seal_Mapping rows from Brand_Copy with the column headers", () => {
+    const text = html.replace(/&#x27;/g, "'");
+    expect(html.match(/<tbody>[\s\S]*<\/tbody>/)?.[0].match(/<tr>/g)).toHaveLength(4);
+    expect(text).toContain(HOW_COPY.mappingHeaders.seal);
+    expect(text).toContain(HOW_COPY.mappingHeaders.revenant);
+    for (const row of BRAND_COPY.sealMapping) {
+      expect(text).toContain(row.seal);
+      expect(text).toContain(row.revenant);
+    }
   });
 
   it("renders the six section headings as h2", () => {

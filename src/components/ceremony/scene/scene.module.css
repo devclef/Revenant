@@ -128,6 +128,16 @@
   font-size: clamp(2rem, 6.6vw, 3rem);
 }
 
+/* Narrow: the Tagline is four lines, and at the default size its last line
+   ("Revenant doesn't.") reaches into the Ghost_Body_Box (G1 at 360x640). A
+   smaller headline keeps the block in the top band above the Ghost. Desktop
+   keeps the size above. */
+@media (max-width: 899.98px) {
+  .personaColumn .headline {
+    font-size: clamp(1.75rem, 5.2vw, 2.5rem);
+  }
+}
+
 /* The Top_Bar. Fixed to the top of the window (R8.1). */
 .topbar {
   position: fixed;
@@ -385,7 +395,18 @@
   color: var(--text);
 }
 
-/* "the receipts." stays on one line (R3.18). */
+/* The Eyebrow above the headline: small, uppercase, in --muted on --bg. */
+.eyebrow {
+  margin: 0 0 0.75rem;
+  font-size: 0.8rem;
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* "Revenant doesn't." stays on one line (F2). */
 .nowrap {
   white-space: nowrap;
 }

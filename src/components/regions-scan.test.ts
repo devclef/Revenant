@@ -67,6 +67,11 @@ describe("regions scan: no Swedish-region wording in scanned copy", () => {
     }
   });
 
+  it("scans the landing hero copy module (landing/copy.ts)", () => {
+    const landingCopy = join(COMPONENTS_DIR, "landing", "copy.ts");
+    expect(SCANNED_FILES).toContain(landingCopy);
+  });
+
   it("finds no banned term in README, copy modules, the how-it-is-sealed page or the figures modules", () => {
     const matches = SCANNED_FILES.flatMap(scanFile);
     expect(matches, describeMatches(matches)).toEqual([]);

@@ -30,9 +30,9 @@ const SCORING_ALWAYS = ["accuracy", "score", "off by"];
 const SCORING_SCENE = ["close", "right", "wrong"];
 
 describe("SCENE_COPY is exact (Property 23)", () => {
-  it("holds the headline in two parts, the Accent on the second", () => {
-    expect(SCENE_COPY.headlineLead).toBe("Your past self returns with the");
-    expect(SCENE_COPY.headlineAccent).toBe("receipts.");
+  it("no longer holds the retired headline parts (F2)", () => {
+    expect(SCENE_COPY).not.toHaveProperty("headlineLead");
+    expect(SCENE_COPY).not.toHaveProperty("headlineAccent");
   });
 
   it("holds the wordmark, the demo chip and the open-letter control", () => {
@@ -47,9 +47,9 @@ describe("SCENE_COPY is exact (Property 23)", () => {
     );
   });
 
-  it("holds the four landing paragraphs and the link copy, verbatim from design.md \"Copy\"", () => {
+  it("holds the four landing paragraphs and the link copy, verbatim from SCENE_COPY", () => {
     expect(SCENE_COPY.landing.paragraphs).toEqual([
-      "Revenant brings back the classroom time capsule: a sealed letter to your future self that your teacher mailed back years later.",
+      "Revenant seals a letter to your future self. It opens on a date you choose, and you testify before you read it.",
       "You write what is on your mind, and you choose figures to seal with it: weekly fuel prices for the United States and the European Union, each from an official source, kept with its date and where it came from.",
       "You pick a date to open it. Then you seal the letter. Once sealed, it cannot be changed, not even by you, and no one else can read it.",
       "When that date arrives, the letter opens. First it asks how you remember things. Then it shows what you wrote, and the numbers then beside the numbers now. The space between the two is yours to read.",
@@ -69,8 +69,8 @@ describe("SCENE_COPY is exact (Property 23)", () => {
     expect(landing).toContain("fuel prices");
     expect(landing).toContain("United States");
     expect(landing).toContain("European Union");
-    expect(landing).toContain("time capsule");
     expect(landing).toContain("future self");
+    expect(landing).not.toMatch(/time capsule/i);
     expect(landing).not.toMatch(/\b(groceries|rent)\b/i);
   });
 });

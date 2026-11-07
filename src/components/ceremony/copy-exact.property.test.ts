@@ -14,6 +14,7 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
+import { BRAND_COPY } from "@/components/brand/copy";
 import { DEMO_COPY } from "@/components/demo/copy";
 import { LIVE_COPY as REVEAL_LIVE_COPY, REVEAL_COPY } from "@/components/reveal/copy";
 import { LIVE_COPY as LIVE_PAGE_COPY } from "@/components/live/copy";
@@ -79,10 +80,9 @@ const isVerbatimLanding = (path: string): boolean =>
   path.startsWith("landing.paragraphs");
 
 describe("Property 23, example checks: the R24.3 table matches exactly", () => {
-  it("holds the headline on / and the persona page, Accent on receipts.", () => {
-    expect(`${SCENE_COPY.headlineLead} ${SCENE_COPY.headlineAccent}`).toBe(
-      "Your past self returns with the receipts.",
-    );
+  it("takes the headline from BRAND_COPY, with no Accent part (F2)", () => {
+    expect(BRAND_COPY.tagline).toBe("Memory rewrites itself. Revenant doesn't.");
+    expect(SCENE_COPY).not.toHaveProperty("headlineAccent");
   });
 
   it("holds the landing button, persona notice and Demo chip", () => {

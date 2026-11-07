@@ -55,15 +55,15 @@ describe("landing page `/`", () => {
     state.personas = [];
   });
 
-  it("renders exactly one h1 with the exact headline text", () => {
+  it("renders exactly one h1 with the Tagline text", () => {
     const html = render([MAYA]);
     const h1s = html.match(/<h1[\s>]/g) ?? [];
     expect(h1s).toHaveLength(1);
     const headline = /<h1[^>]*>(.*?)<\/h1>/s.exec(html);
     expect(headline).not.toBeNull();
-    expect(textOf(headline?.[1] ?? "")).toBe(
-      "Your past self returns with the receipts.",
-    );
+    // The Tagline from Brand_Copy (F2). textOf folds the non-breaking space in
+    // "Revenant doesn't." into a plain space.
+    expect(textOf(headline?.[1] ?? "")).toBe("Memory rewrites itself. Revenant doesn't.");
   });
 
   it("renders the Scene root with data-ceremony=\"scene\"", () => {

@@ -24,12 +24,6 @@ export const SCENE_COPY = {
     verifying: REVEAL_COPY.verifying,
   },
 
-  /** The first part of the headline. The Accent word follows it. */
-  headlineLead: "Your past self returns with the",
-
-  /** The Accent word of the headline, set in the Accent colour. */
-  headlineAccent: "receipts.",
-
   /** The control that opens a persona letter. `{name}` is the persona's first name. */
   openLetter: "Open {name}'s letter",
 
@@ -46,7 +40,7 @@ export const SCENE_COPY = {
   landing: {
     /** The four paragraphs of the landing page, in order (design.md "Copy"). */
     paragraphs: [
-      "Revenant brings back the classroom time capsule: a sealed letter to your future self that your teacher mailed back years later.",
+      "Revenant seals a letter to your future self. It opens on a date you choose, and you testify before you read it.",
       "You write what is on your mind, and you choose figures to seal with it: weekly fuel prices for the United States and the European Union, each from an official source, kept with its date and where it came from.",
       "You pick a date to open it. Then you seal the letter. Once sealed, it cannot be changed, not even by you, and no one else can read it.",
       "When that date arrives, the letter opens. First it asks how you remember things. Then it shows what you wrote, and the numbers then beside the numbers now. The space between the two is yours to read.",
