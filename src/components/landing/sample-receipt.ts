@@ -5,10 +5,7 @@
 // response turned into the receipt's state. Pure apart from the injectable
 // fetch, so it is safe in the browser and in tests. It never throws.
 
-import {
-  parseFiguresResponse,
-  type FiguresResponseV1,
-} from "@/lib/figures/now";
+import type { FiguresResponseV1 } from "@/lib/figures/now";
 import type { FigureV1, MetricDefinitionV1 } from "@/lib/seal-format";
 
 /** The fixed relative route. No origin, no query. */
@@ -64,6 +61,11 @@ export async function loadSampleFigure(
       signal: controller.signal,
     });
     if (!response.ok) return { status: "none" };
+    // Dynamic import so the parser (and its zod schema) is code-split out of
+    // the `/` first-load bundle. SampleReceipt is the only client code on the
+    // landing page, and it only needs the parser after hydration, inside this
+    // request path — never in the server HTML or the initial JS.
+    const { parseFiguresResponse } = await import("@/lib/figures/now");
     const parsed = parseFiguresResponse(await response.json());
     return parsed.ok ? sampleFromResponse(parsed.value) : { status: "none" };
   } catch {
