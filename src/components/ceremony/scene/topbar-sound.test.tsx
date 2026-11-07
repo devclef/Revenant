@@ -109,7 +109,7 @@ describe("Top_Bar Skip visibility (C4.5)", () => {
 describe("the sound control on the persona page (SceneShell)", () => {
   it("renders the sound control in the persona Top_Bar, between Calm and the content", () => {
     const html = renderToStaticMarkup(
-      createElement(SceneShell, {
+      SceneShell({
         variant: "persona",
         personaName: "Maya",
         children: createElement("p", null, "PERSONA_CONTENT"),
@@ -126,7 +126,7 @@ describe("the sound control on the persona page (SceneShell)", () => {
 
   it("renders no sound control on the landing page", () => {
     const html = renderToStaticMarkup(
-      createElement(SceneShell, {
+      SceneShell({
         variant: "landing",
         children: createElement("p", null, "LANDING"),
       }),
