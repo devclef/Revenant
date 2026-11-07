@@ -29,7 +29,7 @@ export const FIG_CLOCK_MS = 780; // FIG_START_DELAY_MS + FIG_TOTAL_MS: the colum
 
 // --- Figure_Entry values (spec 07 R14.3 item 3, R14.12) ---
 // The then and now values share this size and weight, so neither reads as the
-// main figure. Set inline by the reveal components (FigureEntry, FigureLine).
+// main figure. Set inline by the reveal components (FigureEntry, ReceiptCard).
 export const FIG_VALUE_SIZE = "clamp(2.5rem, 6vw, 4.5rem)";
 
 // --- Easing ---

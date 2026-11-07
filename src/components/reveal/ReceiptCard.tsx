@@ -70,7 +70,7 @@ export type ReceiptCardProps = {
    * The now figure row, or a message in place of it (A3). A message shows the
    * text in the now row's position and nothing else for the now figure.
    */
-  now: ReceiptFigure | { message: string };
+  now: ReceiptFigure | { message: string | null };
   /** A line under the now row, for a bundled fallback figure (A3.3). */
   nowNote?: string;
   /** The Number_Line, or `undefined` when the card has none. */
@@ -79,19 +79,46 @@ export type ReceiptCardProps = {
   change?: ReactNode;
   /** The source control. */
   source: ReceiptSource;
+  /**
+   * A second source control for the now figure, shown only when the now figure
+   * comes from a different source (a not-comparable pair). Absent for a
+   * comparable pair, whose two figures share one series.
+   */
+  nowSource?: ReceiptSource;
+  /** Marks the card's primary control for the layout checks (data-primary-control). */
+  primary?: boolean;
 };
 
 function isMessage(
-  now: ReceiptFigure | { message: string },
-): now is { message: string } {
+  now: ReceiptFigure | { message: string | null },
+): now is { message: string | null } {
   return "message" in now;
+}
+
+function SourceControl({ source }: { source: ReceiptSource }) {
+  return (
+    <details className={styles.src}>
+      <summary>{REVEAL_COPY.sourceSummary}</summary>
+      <p>{source.source}</p>
+      <p>
+        {REVEAL_COPY.seriesLabel}: {source.seriesId}
+      </p>
+      {source.sourceUrl === undefined ? null : (
+        <p>
+          <a href={source.sourceUrl} rel="noreferrer noopener" target="_blank">
+            {REVEAL_COPY.checkAtSource}
+          </a>
+        </p>
+      )}
+    </details>
+  );
 }
 
 /**
  * One Then or Now row. Both roles render through this function, so they share
  * one element structure, one class and one size (C3.2).
  */
-function FigureRow({
+export function FigureRow({
   role,
   figure,
 }: {
@@ -132,6 +159,8 @@ export function ReceiptCard({
   numberLine,
   change,
   source,
+  nowSource,
+  primary = false,
 }: ReceiptCardProps) {
   const answer =
     markValue === undefined
@@ -143,6 +172,7 @@ export function ReceiptCard({
       className={styles.fig}
       aria-label={`${name}, ${region}`}
       data-receipt-card=""
+      data-primary-control={primary ? "" : undefined}
     >
       <h3 className={styles.figName}>
         {name} · {region}
@@ -160,9 +190,11 @@ export function ReceiptCard({
           <p className={styles.figRow} data-receipt-row="now">
             <span className={styles.rowLabel}>{REVEAL_COPY.now}:</span>
           </p>
-          <p className={styles.period} data-receipt-message="">
-            {now.message}
-          </p>
+          {now.message === null ? null : (
+            <p className={styles.period} data-receipt-message="">
+              {now.message}
+            </p>
+          )}
         </>
       ) : (
         <FigureRow role="now" figure={now} />
@@ -176,20 +208,8 @@ export function ReceiptCard({
 
       {change}
 
-      <details className={styles.src}>
-        <summary>{REVEAL_COPY.sourceSummary}</summary>
-        <p>{source.source}</p>
-        <p>
-          {REVEAL_COPY.seriesLabel}: {source.seriesId}
-        </p>
-        {source.sourceUrl === undefined ? null : (
-          <p>
-            <a href={source.sourceUrl} rel="noreferrer noopener" target="_blank">
-              {REVEAL_COPY.checkAtSource}
-            </a>
-          </p>
-        )}
-      </details>
+      <SourceControl source={source} />
+      {nowSource === undefined ? null : <SourceControl source={nowSource} />}
     </section>
   );
 }

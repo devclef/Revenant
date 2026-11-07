@@ -106,8 +106,8 @@ export function NumberLine({
 
   const answerLines =
     shownMark === undefined
-      ? [CEREMONY_COPY.lineAnswer, CEREMONY_COPY.lineNoAnswer]
-      : [CEREMONY_COPY.lineAnswer, `${shownMark} ${unit}`];
+      ? [CEREMONY_COPY.lineNoAnswer]
+      : [`${shownMark} ${unit}`];
   const labelTexts = [
     [CEREMONY_COPY.lineThen],
     [CEREMONY_COPY.lineNow],
@@ -231,12 +231,7 @@ export function NumberLine({
         data-line-label="answer"
         aria-hidden="true"
       >
-        <>
-          <span className={styles.lineLabelLine}>{CEREMONY_COPY.lineAnswer}</span>
-          <span className={styles.lineLabelLine}>
-            {shownMark === undefined ? CEREMONY_COPY.lineNoAnswer : `${shownMark} ${unit}`}
-          </span>
-        </>
+        {shownMark === undefined ? CEREMONY_COPY.lineNoAnswer : `${shownMark} ${unit}`}
       </span>
     </div>
   );

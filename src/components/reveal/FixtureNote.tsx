@@ -6,7 +6,7 @@ import styles from "./reveal.module.css";
  * the reveal is fixture data (R13.5, data-integrity.md). It states plainly that
  * some figures were made up for building the demo and are not real prices, so a
  * reader can never mistake a fixture figure for a real one. The per-figure
- * "fixture data" label on each fixture figure is separate (FigureLine) and this
+ * "fixture data" label on each fixture figure is separate (receiptFigureOf) and this
  * note does not replace it.
  *
  * The single string comes from copy.ts (R15.1). This component holds no state,

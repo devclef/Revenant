@@ -3,7 +3,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { SealedLetter } from "./SealedLetter";
-import { FigureLine } from "./FigureLine";
+import { FigureRow } from "./ReceiptCard";
+import { receiptFigureOf, type LetterKind } from "./FigureLine";
 import { RecallScale } from "@/components/ceremony/recall/RecallScale";
 import { scaleRangeFor } from "@/components/ceremony/recall/unit-ranges";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
@@ -16,6 +17,21 @@ import {
 } from "@/components/ui/letter-date";
 import { formatPeriod } from "@/lib/figures";
 import type { FigureV1, PayloadV1 } from "@/lib/seal-format";
+
+/** One figure's Then or Now row, drawn the way FiguresThenNow draws it. */
+function FigureLine({
+  figure,
+  role,
+  letterKind,
+}: {
+  figure: Readonly<FigureV1>;
+  role: "then" | "now";
+  letterKind: LetterKind;
+}) {
+  return (
+    <FigureRow role={role} figure={receiptFigureOf(figure, role, letterKind)} />
+  );
+}
 
 /**
  * Labels for the EU persona (Tomás) on `/demo/personas/eu-tomas`, the copy

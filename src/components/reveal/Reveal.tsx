@@ -317,7 +317,10 @@ export function Reveal({
 
       {stage >= 2 ? (
         <div className={styles.letterFigures}>
-          <div className={`${styles.stage} ${styles.fade} ${styles.letterCol}`}>
+          <div
+            className={`${styles.stage} ${styles.fade} ${styles.letterCol}`}
+            data-letter-stage=""
+          >
             <LetterBlock
               opened={opened}
               personaName={personaName}
@@ -340,6 +343,7 @@ export function Reveal({
           {stage >= 3 ? (
             <div
               className={`${styles.stage} ${styles.fade} ${styles.figuresCol}`}
+              data-figures-panel=""
             >
               <FiguresFadeUp count={figureCount}>
                 <FiguresThenNow
@@ -370,6 +374,7 @@ export function Reveal({
             type="button"
             className={styles.button}
             data-advance="figures"
+            data-primary-control=""
             onClick={onSeeNumbers}
           >
             {REVEAL_COPY.stage2Next}
