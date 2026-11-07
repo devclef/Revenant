@@ -522,7 +522,7 @@ Each task in this group meets group P for the Stages it changes (G3.7), and atta
   - Validation: `bash scripts/check.sh`
   - _Requirements: L2.3, L3.1, L3.2_
 
-- [ ] 20. C5 · Break the seal on the Envelope the Ghost holds
+- [x] 20. C5 · Break the seal on the Envelope the Ghost holds
   - Agent: `frontend-dev` · Depends on: 19 · Estimated size: ~500 changed lines
   - Before this task: task 19 is on `main`. Cut candidate (G3.5).
   - Scope: `src/components/ceremony/seal/**`, `src/components/ceremony/scene/PersonaGhost.tsx`, `src/components/ceremony/scene/scene.module.css`, `src/components/reveal/Reveal.tsx` (the seal placement only), and the `*.test.ts(x)` for each file above
