@@ -72,6 +72,8 @@
 /* The typed number is the largest text in the Stage (R11.16). */
 .input {
   font: inherit;
+  /* A 44 px tall touch target, also on a phone (layout-check PH7). */
+  min-height: 44px;
   font-size: clamp(2.4rem, 5vw, 3.6rem);
   font-weight: 900;
   line-height: 1.05;
@@ -134,6 +136,8 @@
   display: inline-flex;
   align-items: center;
   gap: 0.4rem;
+  /* The label is the touch target for the checkbox (layout-check PH7). */
+  min-height: 44px;
   color: var(--ink);
 }
 

@@ -914,3 +914,13 @@
     text-wrap: balance;
   }
 }
+
+/* The persona heading stays on one line below 600 px (layout-check PH3). The
+   rule above sets text-wrap: balance, and that shorthand resets text-wrap-mode
+   to wrap, which would override the nowrap set earlier for .personaColumn. This
+   block comes after it, so the persona heading keeps nowrap. */
+@media (max-width: 599.98px) {
+  .personaColumn .headline {
+    white-space: nowrap;
+  }
+}

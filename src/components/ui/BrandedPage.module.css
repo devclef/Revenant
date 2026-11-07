@@ -60,6 +60,10 @@
   text-decoration-line: underline;
   text-underline-offset: 0.15em;
   text-decoration-thickness: 1px;
+  /* A 44 px tall touch target on a phone (layout-check PH7). */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
 }
 
 .link:hover,

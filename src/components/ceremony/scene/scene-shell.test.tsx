@@ -245,7 +245,8 @@ describe("Scene headings and check hooks (F7, C1, P2)", () => {
 
   it("the phone headline clamp and text-wrap: balance sit below 600 px", () => {
     const css = readFileSync(resolve(__dirname, "scene.module.css"), "utf8");
-    const phone = css.slice(css.lastIndexOf("@media (max-width: 599.98px)"));
+    const clampAt = css.indexOf("font-size: clamp(1.55rem, 7.2vw, 1.9rem);");
+    const phone = css.slice(css.lastIndexOf("@media (max-width: 599.98px)", clampAt));
     expect(phone).toContain("font-size: clamp(1.55rem, 7.2vw, 1.9rem);");
     expect(phone).toContain("text-wrap: balance;");
   });
@@ -389,5 +390,14 @@ describe("Top_Bar touch targets (spec 07 control minimum, spec 09 P5 phone hit a
       .filter((body) => body !== "");
     expect(rules.length).toBeGreaterThan(0);
     expect(rules[0]).toMatch(/min-height:\s*44px/);
+  });
+
+  it("keeps the persona heading nowrap after the text-wrap: balance rule (PH3)", () => {
+    // text-wrap: balance resets text-wrap-mode to wrap, so the persona nowrap
+    // must be declared in a later block to win the cascade.
+    const balanceAt = sceneCss.indexOf("text-wrap: balance;");
+    const nowrapAt = sceneCss.lastIndexOf(".personaColumn .headline {\n    white-space: nowrap;");
+    expect(balanceAt).toBeGreaterThan(-1);
+    expect(nowrapAt).toBeGreaterThan(balanceAt);
   });
 });
