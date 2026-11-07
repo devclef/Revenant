@@ -29,9 +29,10 @@
 }
 
 /* Focus in the caption is the desk's light ring, since the caption is on the
-   dark. The selector is 0,3,0 so it wins over the ink ring from .flow in
-   reveal.module.css. */
-.caption :focus-visible {
+   dark. The selector is 0,3,0 (.letterBlock .caption plus :focus-visible), so
+   it wins over the ink ring from .flow :focus-visible (0,2,0) in
+   reveal.module.css whatever the stylesheet order. */
+.letterBlock .caption :focus-visible {
   outline: 2px solid var(--text, #f5f3ff);
   outline-offset: 2px;
 }
