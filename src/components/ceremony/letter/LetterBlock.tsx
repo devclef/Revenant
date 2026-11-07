@@ -27,7 +27,7 @@ import {
 } from "@/components/reveal/SealedLetter";
 import { REVEAL_COPY } from "@/components/reveal/copy";
 
-import { EASE_STANDARD, UNFOLD_AT_MS, UNFOLD_MS } from "../constants";
+import { CREASE_POSITIONS, EASE_STANDARD, UNFOLD_AT_MS, UNFOLD_MS } from "../constants";
 import { useMotion } from "../motion";
 import { useMaybeSequence } from "../skip-optional";
 import styles from "./LetterBlock.module.css";
@@ -56,25 +56,41 @@ const UNFOLD_TO = {
   opacity: 1,
 };
 
+/**
+ * The Light_Shaft's move from the Soil down to the paper, with the unfold. It
+ * uses transform and opacity only (spec 09 L7).
+ */
+const SHAFT_FROM = { transform: "translateY(-12%)", opacity: 0 };
+const SHAFT_TO = { transform: "translateY(0)", opacity: 1 };
+
+/** Two horizontal creases, at 1/3 and 2/3 of the paper height (spec 09 L8). */
+function creaseTop(share: number): string {
+  return `${(share * 100).toFixed(4)}%`;
+}
+
 export function LetterBlock(props: LetterBlockProps) {
   const { still = false, caption, collapsible = false, ...letterProps } = props;
   const { mode } = useMotion();
-  const paperRef = useRef<HTMLElement>(null);
+  const sheetRef = useRef<HTMLDivElement>(null);
+  const shaftRef = useRef<HTMLDivElement>(null);
   const [stillAtMount] = useState(still);
   // Skip finishes the unfold at once, so the letter sits at its end state.
   const skip = useMaybeSequence();
   const register = skip?.register;
+  // Light and calm modes (and a still letter) start no animation: the shaft
+  // and the paper sit at their final state from the first paint.
+  const lightStatic = mode !== "full" || stillAtMount;
 
   useLayoutEffect(() => {
     // Light and calm modes start no animation (R11.2, Property 22). A letter
     // that mounts still (Show everything) shows at its end state (R12.8).
-    if (mode !== "full" || stillAtMount) return undefined;
-    const paper = paperRef.current;
-    if (paper === null || typeof paper.animate !== "function") return undefined;
+    if (lightStatic) return undefined;
+    const sheet = sheetRef.current;
+    if (sheet === null || typeof sheet.animate !== "function") return undefined;
 
     let animation: Animation | undefined;
     try {
-      animation = paper.animate([UNFOLD_FROM, UNFOLD_TO], {
+      animation = sheet.animate([UNFOLD_FROM, UNFOLD_TO], {
         duration: UNFOLD_MS,
         delay: UNFOLD_AT_MS,
         easing: EASE_STANDARD,
@@ -87,6 +103,24 @@ export function LetterBlock(props: LetterBlockProps) {
     if (animation === undefined) return undefined;
     const current = animation;
 
+    // The shaft moves with the unfold. If its animation fails, the shaft simply
+    // sits at its final state.
+    let shaftAnimation: Animation | undefined;
+    const shaft = shaftRef.current;
+    if (shaft !== null && typeof shaft.animate === "function") {
+      try {
+        shaftAnimation = shaft.animate([SHAFT_FROM, SHAFT_TO], {
+          duration: UNFOLD_MS,
+          delay: UNFOLD_AT_MS,
+          easing: EASE_STANDARD,
+          fill: "backwards",
+        });
+      } catch {
+        shaftAnimation = undefined;
+      }
+    }
+    const shaftNow = shaftAnimation;
+
     // The unfold is one Skip step. It ends when it finishes, by its own clock or
     // by Skip (finish() fires onfinish), so the step unregisters then.
     let unregister: (() => void) | undefined;
@@ -97,19 +131,43 @@ export function LetterBlock(props: LetterBlockProps) {
         } catch {
           // A finish that throws leaves the paper at its final pose already.
         }
+        try {
+          shaftNow?.finish();
+        } catch {
+          // The shaft is already at its final state if this throws.
+        }
       });
       current.onfinish = () => unregister?.();
     }
     return () => {
       unregister?.();
       current.cancel();
+      shaftNow?.cancel();
     };
-  }, [mode, stillAtMount, register]);
+  }, [lightStatic, register]);
 
   const paper = (
-    <article ref={paperRef} className={styles.paper}>
-      <SealedLetterText opened={letterProps.opened} />
-    </article>
+    <div ref={sheetRef} className={styles.sheet}>
+      <div
+        ref={shaftRef}
+        className={styles.lightShaft}
+        aria-hidden="true"
+        data-light-shaft=""
+        data-light={lightStatic ? "static" : "unfold"}
+      />
+      <article className={styles.paper}>
+        <SealedLetterText opened={letterProps.opened} />
+      </article>
+      {CREASE_POSITIONS.map((share, index) => (
+        <div
+          key={index}
+          className={styles.crease}
+          aria-hidden="true"
+          data-crease={index + 1}
+          style={{ top: creaseTop(share) }}
+        />
+      ))}
+    </div>
   );
 
   return (

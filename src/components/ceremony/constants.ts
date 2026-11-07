@@ -135,6 +135,13 @@ export const LIGHT_MOVE_MS = 1100;
 // The light is clipped to its top half plus this gap, so it shows nothing below the Soil line (scene.module.css .light).
 export const LIGHT_CLIP_GAP_PX = 12;
 
+// --- Light_Shaft and paper creases (spec 09 L7, L8) ---
+// The shaft lights the top edge of the paper and the dark around it. Below
+// 600 px the lit band above the paper is at most this tall (px).
+export const SHAFT_PHONE_BAND_MAX_PX = 80;
+// Two horizontal creases across the paper, as shares of its height (1/3, 2/3).
+export const CREASE_POSITIONS = [1 / 3, 2 / 3] as const;
+
 // --- Emergence (R9.5, R9.6, R18.2, R18.8) (spec 07) ---
 export const SHAKE_AT_MS = 750;
 export const SHAKE_MS = 500;

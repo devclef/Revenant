@@ -15,6 +15,8 @@
    its Fingerprint. It is on the dark, so it sets light text and the sans. The
    child selectors keep the caption colours off the Fingerprint's own text. */
 .caption {
+  position: relative;
+  z-index: 1;
   font-family: var(--font-sans);
   color: var(--text, #f5f3ff);
   margin: 0 0 1rem;
@@ -60,6 +62,48 @@
   padding: var(--paper-pad);
   margin: 0;
   text-align: left;
+}
+
+/* The sheet holds the paper, the Light_Shaft and the creases. It is as tall as
+   the paper (the article is its only in-flow child), so the creases at 1/3 and
+   2/3 of the sheet are at 1/3 and 2/3 of the paper. It unfolds as one. */
+.sheet {
+  position: relative;
+}
+
+/* The Light_Shaft: the lit band above the paper, which lights its top edge and
+   the dark around it. It is a gradient only, no solid fill, and it sits behind
+   the Caption_Block. Its band is at most 80 px below 600 px (phone sizes, spec
+   09 L7). It is decorative, so it takes no pointer events. */
+.lightShaft {
+  position: absolute;
+  left: -0.5rem;
+  right: -0.5rem;
+  bottom: 100%;
+  height: 80px;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--purple, transparent) 35%, transparent),
+    transparent
+  );
+}
+
+@media (min-width: 600px) {
+  .lightShaft {
+    height: 120px;
+  }
+}
+
+/* A crease: one full-width hairline across the paper. Decorative only. */
+.crease {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px solid color-mix(in srgb, var(--ink, #1f1b16) 12%, transparent);
+  pointer-events: none;
 }
 
 /* Below LETTER_NARROW_PX (600 px) the paper padding tightens, so the

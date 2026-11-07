@@ -384,17 +384,20 @@
   pointer-events: none;
 }
 
-/* The light. Its centre is the Ghost's x and the Soil's top. */
+/* The light: a shaft rising from the Soil. Its foot is the Ghost's x and the
+   Soil's top. It is not a slab: the purple is strongest at the Soil, fades to
+   nothing toward the top, and narrows to a column at the sides (the ellipse is
+   centred on the element's bottom edge, which sits below the clip). It is
+   static (no animation), so Calm and reduced motion show the same light. */
 .light {
   position: absolute;
   left: var(--ghost-x);
   top: var(--soil-top);
-  width: 130vmax;
+  width: 40vmax;
   height: 130vmax;
   transform: translate(-50%, -50%);
-  border-radius: 50%;
-  background: radial-gradient(closest-side, var(--purple), transparent);
-  opacity: 0.55;
+  background: radial-gradient(ellipse 50% 100% at 50% 100%, var(--purple), transparent 100%);
+  opacity: 0.4;
   /* LIGHT_CLIP_GAP_PX in constants.ts. Only the top half plus the gap shows. */
   clip-path: inset(0 0 calc(50% - 12px) 0);
 }

@@ -159,13 +159,13 @@ describe("Property 17: the letter is shown verbatim with nothing against it (R13
     expect(letterRule).not.toMatch(/mask|clip|opacity/);
   });
 
-  it("holds only the letter text in the paper, with no creases or other marks (L6.1)", () => {
+  it("holds only the letter text in the article; creases and the shaft sit outside it (L6.1, L8)", () => {
     const html = render("A short letter.");
     const paper = /<article[^>]*>([\s\S]*?)<\/article>/.exec(html);
     expect(paper).not.toBeNull();
     // The paper's only child is the Letter_Text paragraph: no crease, no label.
     expect(paper?.[1]).toMatch(/^<p class="[^"]*" data-letter-text="">A short letter\.<\/p>$/);
-    expect(html).not.toContain("aria-hidden");
+    expect(paper?.[1]).not.toContain("aria-hidden");
   });
 
   it("puts the Caption_Block before the paper, with the heading, labels and caption content in it (L6.2, L6.4)", () => {
@@ -194,11 +194,19 @@ describe("Property 17: the letter is shown verbatim with nothing against it (R13
     expect(caption).not.toContain("A short letter.");
   });
 
-  it("has no purple slab and no vertical creases in its stylesheet (L7.1, L8.1)", () => {
+  it("has no solid purple slab, and its creases are horizontal hairlines (L7.1, L8.1)", () => {
     const css = withoutComments(readFileSync(join(HERE, "LetterBlock.module.css"), "utf8"));
     expect(blockOf(css, "letterBlock")).not.toMatch(/background/);
-    expect(css).not.toMatch(/\.crease/);
+    // The shaft is a gradient with no literal fill.
+    const shaft = blockOf(css, "lightShaft");
+    expect(shaft).toMatch(/linear-gradient/);
+    expect(shaft).not.toMatch(/background-color/);
     expect(css).not.toMatch(/#8f46ff|143,\s*70,\s*255/i);
+    // A crease is one full-width horizontal line: zero height, no vertical extent.
+    const crease = blockOf(css, "crease");
+    expect(crease).toMatch(/height:\s*0/);
+    expect(crease).toMatch(/left:\s*0/);
+    expect(crease).toMatch(/right:\s*0/);
   });
 
   it("gives the caption its own light focus ring, not a white ring inside a purple block (L6.2)", () => {
