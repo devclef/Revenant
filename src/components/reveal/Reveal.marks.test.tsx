@@ -5,6 +5,8 @@ import { describe, expect, it } from "vitest";
 import { Reveal, type RevealProps } from "./Reveal";
 import { REVEAL_COPY } from "./copy";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
+import { IDLE } from "@/components/ceremony/seal/hold";
+import type { SealController } from "@/components/ceremony/seal/useSealBreak";
 import { WaxSeal, normaliseWaxSealIds } from "@/components/ui/WaxSeal";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { SkipProvider } from "@/components/ceremony/skip";
@@ -342,5 +344,70 @@ describe("reveal marks stage on the phone and the collapsed card (spec 09 P6, C3
     expect(html.match(/data-primary-control=""/g) ?? []).toHaveLength(2);
     expect(html).toContain("data-seal-target");
     expect(html).toContain('data-hold-ring=""');
+  });
+});
+
+/**
+ * The stage 1 seal by width class (spec 09 C5.1, C5.2). The node tests cannot
+ * mount the held Envelope's DOM slot, so they show the placement before the
+ * slot exists (the server render and the first client render). The rule that
+ * moves the seal onto the Envelope is tested in `seal/seal-placement.test.ts`.
+ * The Phone_Sizes keep the seal in the Content_Column with the Compact_Ghost.
+ */
+describe("reveal stage 1 seal by width class (spec 09 C5.1, C5.2)", () => {
+  const SEAL_RECORD: RecallRecordV1 = {
+    version: 1,
+    answers: [
+      { question_id: "q-fuel", kind: "number", value: "2.50" },
+      { question_id: "q-milk", kind: "no_answer" },
+      { question_id: "q-note", kind: "no_answer" },
+    ],
+  };
+  const UNBROKEN: SealController = {
+    hold: IDLE,
+    broken: false,
+    progress: 0,
+    press: () => undefined,
+    breakNow: () => undefined,
+    showAll: () => undefined,
+    skip: () => undefined,
+    connect: () => undefined,
+  };
+  const BROKEN: SealController = { ...UNBROKEN, broken: true, progress: 1 };
+  // The seal is drawn at stage 1 for both `marks` (unbroken) and `seal` (broken).
+  const STATES: Array<[string, SealController]> = [
+    ["marks", UNBROKEN],
+    ["seal", BROKEN],
+  ];
+  // Phone_Sizes: 360 and 390 CSS px. The Phone flag is what the viewport sets.
+  // Desktop_Sizes and the Wide_Size have no slot in a node render, so the seal
+  // stays in place there too.
+  const CLASSES: Array<[string, boolean]> = [
+    ["Phone", true],
+    ["Desktop", false],
+    ["Wide", false],
+  ];
+
+  for (const [classLabel, phone] of CLASSES) {
+    for (const [stateLabel, seal] of STATES) {
+      it(`${classLabel} ${stateLabel}: draws the pressable seal and the instruction in the Content_Column before the Envelope slot exists`, () => {
+        const html = renderMarks(SEAL_RECORD, { phone, stage: 1, seal });
+        expect(html).toContain("data-seal-target");
+        expect(html).toContain(CEREMONY_COPY.sealInstruction);
+        expect(html).not.toContain("data-envelope-seal");
+      });
+
+      it(`${classLabel} ${stateLabel}: keeps the Break the seal button in the Content_Column`, () => {
+        const html = renderMarks(SEAL_RECORD, { phone, stage: 1, seal });
+        expect(html).toContain(CEREMONY_COPY.sealButton);
+        expect(html).toContain('data-primary-control=""');
+      });
+    }
+  }
+
+  it("draws no seal in the Content_Column once the reveal passes stage 1", () => {
+    const html = renderMarks(SEAL_RECORD, { phone: false, stage: 2, seal: UNBROKEN });
+    expect(html).not.toContain("data-seal-target");
+    expect(html).not.toContain(CEREMONY_COPY.sealButton);
   });
 });

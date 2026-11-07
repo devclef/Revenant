@@ -33,6 +33,7 @@ import {
   type CSSProperties,
   type ReactElement,
 } from "react";
+import { createPortal } from "react-dom";
 
 import { CEREMONY_COPY } from "../copy";
 import {
@@ -117,6 +118,13 @@ export type SealBreakProps = {
    * `marks` otherwise (design.md "Stage resolution").
    */
   onSealingChange?: (sealing: boolean) => void;
+  /**
+   * The held Envelope's slot in the Ghost (spec 09 C5.1). When set, the seal and
+   * its instruction line are drawn into this slot, beside the Envelope, and only
+   * the "Break the seal" button and the Skip_Link stay where this view renders.
+   * Absent or null, the whole view renders in place, as before.
+   */
+  envelopeSlot?: HTMLElement | null;
 };
 
 /**
@@ -214,6 +222,7 @@ export function SealBreak({
   calm: calmProp,
   showAll = false,
   onSealingChange,
+  envelopeSlot = null,
 }: SealBreakProps): ReactElement {
   const { mode } = useMotion();
   const calm = calmProp ?? mode === "calm";
@@ -259,56 +268,72 @@ export function SealBreak({
   // The hold ring: each segment lights by opacity only (spec 09 P8.2).
   const ringLit = holdSegmentsLit(seal.hold);
 
-  return (
-    <section className={styles.stage} style={TIMING_VARS} data-broken={broken}>
-      <HeldSeal controller={seal} className={styles.sealTarget} primary>
-        <WaxSeal patternKey={patternKey} className={styles.seal} />
-        <svg
-          className={styles.ring}
-          viewBox={RING_VIEWBOX}
-          aria-hidden="true"
-          focusable="false"
-          data-hold-ring=""
-        >
-          {RING_PATHS.map((d, index) => (
-            <path
-              key={index}
-              className={styles.ringSegment}
-              d={d}
-              style={{ opacity: ringLit[index] ? 1 : 0 }}
+  // The pressable seal: the HeldSeal target with its hold ring, crack overlay
+  // and flakes. Drawn where the placement puts it (C5.1). In the Content_Column
+  // it takes the fixed in-place size; on the held Envelope it fills the layer.
+  const onEnvelope = envelopeSlot !== null;
+  const sealDrawing = (
+    <HeldSeal
+      controller={seal}
+      className={onEnvelope ? styles.envelopeSeal : styles.sealTarget}
+      primary
+    >
+      <WaxSeal patternKey={patternKey} className={styles.seal} />
+      <svg
+        className={styles.ring}
+        viewBox={RING_VIEWBOX}
+        aria-hidden="true"
+        focusable="false"
+        data-hold-ring=""
+      >
+        {RING_PATHS.map((d, index) => (
+          <path
+            key={index}
+            className={styles.ringSegment}
+            d={d}
+            style={{ opacity: ringLit[index] ? 1 : 0 }}
+          />
+        ))}
+      </svg>
+      <svg
+        ref={overlayRef}
+        className={styles.crackOverlay}
+        viewBox={`0 0 ${VIEWBOX} ${VIEWBOX}`}
+        aria-hidden="true"
+        focusable="false"
+      >
+        {CRACK_PATHS.map((d, index) => (
+          <path
+            key={index}
+            className={styles.crack}
+            d={d}
+            strokeDasharray={TOTAL_LENGTH}
+            strokeDashoffset={cracks[index].dashoffset}
+          />
+        ))}
+      </svg>
+      {broken && !calm ? (
+        <span className={styles.flakeLayer}>
+          {FLAKE_FALLS.map((flake) => (
+            <span
+              key={flake.index}
+              className={styles.flake}
+              style={flakeStyle(flake.index)}
             />
           ))}
-        </svg>
-        <svg
-          ref={overlayRef}
-          className={styles.crackOverlay}
-          viewBox={`0 0 ${VIEWBOX} ${VIEWBOX}`}
-          aria-hidden="true"
-          focusable="false"
-        >
-          {CRACK_PATHS.map((d, index) => (
-            <path
-              key={index}
-              className={styles.crack}
-              d={d}
-              strokeDasharray={TOTAL_LENGTH}
-              strokeDashoffset={cracks[index].dashoffset}
-            />
-          ))}
-        </svg>
-        {broken && !calm ? (
-          <span className={styles.flakeLayer}>
-            {FLAKE_FALLS.map((flake) => (
-              <span
-                key={flake.index}
-                className={styles.flake}
-                style={flakeStyle(flake.index)}
-              />
-            ))}
-          </span>
-        ) : null}
-      </HeldSeal>
-      <p className={styles.instruction}>{CEREMONY_COPY.sealInstruction}</p>
+        </span>
+      ) : null}
+    </HeldSeal>
+  );
+
+  const instruction = (
+    <p className={onEnvelope ? styles.instructionBeside : styles.instruction}>
+      {CEREMONY_COPY.sealInstruction}
+    </p>
+  );
+
+  const controls = (
+    <>
       <button
         type="button"
         className={styles.button}
@@ -327,6 +352,42 @@ export function SealBreak({
           {CEREMONY_COPY.skipToReceipts}
         </button>
       ) : null}
+    </>
+  );
+
+  if (envelopeSlot !== null) {
+    // The seal and its instruction line go into the held Envelope's slot, beside
+    // the Envelope (C5.1). The layer is positioned by the Envelope's box, so the
+    // timing variables travel with it. The controls stay in the Content_Column
+    // (C5.2).
+    return (
+      <>
+        {createPortal(
+          <>
+            <div
+              className={styles.envelopeLayer}
+              style={TIMING_VARS}
+              data-broken={broken}
+              data-envelope-seal=""
+            >
+              {sealDrawing}
+            </div>
+            {instruction}
+          </>,
+          envelopeSlot,
+        )}
+        <section className={styles.stage} data-broken={broken} data-seal-controls="">
+          {controls}
+        </section>
+      </>
+    );
+  }
+
+  return (
+    <section className={styles.stage} style={TIMING_VARS} data-broken={broken}>
+      {sealDrawing}
+      {instruction}
+      {controls}
     </section>
   );
 }

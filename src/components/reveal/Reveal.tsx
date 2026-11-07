@@ -15,6 +15,7 @@ import { StagePanel } from "./StagePanel";
 import { FiguresFadeUp } from "@/components/ceremony/figures/FiguresFadeUp";
 import { Close, type CloseProps } from "@/components/ceremony/close/Close";
 import { SealBreak } from "@/components/ceremony/seal/SealBreak";
+import { sealPlacement } from "@/components/ceremony/seal/seal-placement";
 import type { SealController } from "@/components/ceremony/seal/useSealBreak";
 import { IDLE } from "@/components/ceremony/seal/hold";
 import { RecordedScale } from "@/components/ceremony/recall/RecordedScale";
@@ -42,6 +43,24 @@ function usePhone(): boolean {
     return () => query.removeEventListener("change", update);
   }, []);
   return phone;
+}
+
+/**
+ * The viewport width in CSS px, read after mount (spec 09 C5.1). Null on the
+ * server and the first client render, so the seal placement starts in the
+ * Content_Column and hydration never mismatches. The effect then follows
+ * resizes, so the seal moves onto the Envelope at the Desktop_Sizes.
+ */
+function useViewportWidth(): number | null {
+  const [width, setWidth] = useState<number | null>(null);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const update = () => setWidth(window.innerWidth);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+  return width;
 }
 
 /**
@@ -154,6 +173,13 @@ export type RevealProps = {
    * in the app, where the viewport decides.
    */
   phone?: boolean;
+  /**
+   * The held Envelope's slot in the Ghost (spec 09 C5.1). OpeningFlow passes
+   * it once the Envelope is mounted. At the Desktop_Sizes and the Wide_Size the
+   * stage 1 seal is drawn on it, so the Content_Column keeps only the button and
+   * the Skip_Link. Omitted or null, the seal stays in the Content_Column.
+   */
+  heldSlot?: HTMLElement | null;
 };
 
 export function Reveal({
@@ -169,6 +195,7 @@ export function Reveal({
   letterKind = "persona",
   close,
   phone,
+  heldSlot = null,
 }: RevealProps) {
   // The local-view context lets stage 1's SealBreak report its `sealing` flag
   // up to CeremonyRoot, so `stageFor(state, local)` resolves `seal` while a
@@ -181,6 +208,12 @@ export function Reveal({
   // card collapses into a closed "Your testimony" disclosure.
   const detectedPhone = usePhone();
   const isPhone = phone ?? detectedPhone;
+
+  // Where the stage 1 seal is drawn (spec 09 C5.1, C5.2). At the Desktop_Sizes
+  // and the Wide_Size it goes on the held Envelope; otherwise it stays here.
+  const viewportWidth = useViewportWidth();
+  const sealOnEnvelope = sealPlacement({ viewportWidth, slotReady: heldSlot !== null });
+  const envelopeSlot = sealOnEnvelope === "envelope" && !isPhone ? heldSlot : null;
 
   // The Figures_API is read once per reveal (figures-api.ts). Stage 3 picks each
   // Now_Figure from this response, not from DEMO_FIGURES.
@@ -374,6 +407,7 @@ export function Reveal({
                       seal={seal ?? INERT_SEAL}
                       showAll={stage === 1}
                       onSealingChange={onSealingChange}
+                      envelopeSlot={envelopeSlot}
                     />
                   </div>
                 ) : null}
