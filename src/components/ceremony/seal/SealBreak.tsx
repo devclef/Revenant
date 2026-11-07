@@ -29,6 +29,7 @@ import {
   useContext,
   useEffect,
   useRef,
+  useState,
   type CSSProperties,
   type ReactElement,
 } from "react";
@@ -229,11 +230,22 @@ export function SealBreak({
     seal.connect({ announce, calm, soundOn, onSealingChange });
   });
 
-  // Register this sequence so CeremonyRoot shows Skip while a break is possible
-  // (Property 19). Skipping goes to the end state and sends ADVANCE once.
-  useEffect(() => register(() => skip()), [register, skip]);
+  // The seal is only a sequence while it breaks. `breaking` is set by the button
+  // press, and the registration ends once the seal has broken. Skipping during
+  // the draw goes to the end state and sends ADVANCE once (Property 19). While
+  // the seal waits at its marks nothing is registered, so the Top_Bar shows no
+  // Skip.
+  const [breaking, setBreaking] = useState(false);
+  const skipArmed = breaking && !broken;
+  useEffect(
+    () => (skipArmed ? register(() => skip()) : undefined),
+    [skipArmed, register, skip],
+  );
 
-  const onButton = () => breakNow(overlayRef.current);
+  const onButton = () => {
+    setBreaking(true);
+    breakNow(overlayRef.current);
+  };
 
   // The crack overlay tracks the controller's progress. The pure model is the
   // only input, so the overlay reads the same on the server and the client for
