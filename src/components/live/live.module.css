@@ -571,11 +571,15 @@
 /* The way back to the demo, above every Sealing_Flow state. It sits on the
    desk, so it sets the desk text colour and meets AA on --bg. */
 .backToDemo {
-  margin: 0 0 1.5rem;
+  margin: 0 0 0.5rem;
   font-size: 0.9rem;
 }
 
+/* A 44px box keeps the link a usable touch target (spec 09 P8.4). */
 .backToDemo a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--text);
   text-decoration: underline;
   text-underline-offset: 3px;
@@ -598,4 +602,38 @@
   background-color: var(--paper);
   border: 1px solid var(--ink-soft);
   border-radius: 3px;
+}
+
+/* Phone width (spec 09 P9, P10): the step's heading, fields and Next fit the
+   First_Viewport when the step begins, so the intro and field spacing tighten. */
+@media (max-width: 480px) {
+  .intro {
+    margin: 0 0 0.375rem;
+    font-size: 0.9375rem;
+    line-height: 1.4;
+  }
+
+  .field {
+    margin: 0.5rem 0;
+  }
+
+  .label {
+    font-size: 0.9375rem;
+  }
+
+  .hint {
+    margin: 0.125rem 0 0.25rem;
+  }
+
+  .backToDemo {
+    margin: 0;
+  }
+
+  .textarea {
+    padding: 0.5rem 0.625rem;
+  }
+
+  .primary {
+    padding: 0.625rem 1.25rem;
+  }
 }
