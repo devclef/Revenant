@@ -4,16 +4,14 @@
  *
  * R1.7: the Ceremony never edits src/app/globals.css. All of its colours,
  * tokens and global-looking rules live here, in a CSS module under
- * src/components/ceremony/. The desk tokens below are the dark-desk
- * counterparts to the paper tokens in globals.css; paper surfaces (the
+ * src/components/ceremony/. The desk uses the scene tokens (--bg, --text,
+ * --muted) and the dark-desk surfaces are the counterparts to the paper tokens in globals.css; paper surfaces (the
  * envelope, the letter, the stamps) keep --paper / --paper-deep and the
  * globals.css text tokens unchanged.
  *
  * Contrast (see design.md "Colour and contrast", verified by contrast.test.ts
- * / Property 22): on the desk, every text token clears WCAG 2.2 AA on each of
- * --desk, --desk-lit and --desk-lit-max. The candle light layer swings the lit
- * desk between --desk-lit and --desk-lit-max only, so text never drops below
- * AA. Tokens are kept as 6-digit hex so the contrast test can parse them.
+ * / Property 22): on the desk, every text token clears WCAG 2.2 AA on the
+ * desk surface (--bg). Tokens are kept as 6-digit hex so the contrast test can parse them.
  *
  * Neutrality (neutrality.md, R10.1): no colour here depends on any value or
  * direction. A figure that rose and one that fell are drawn with identical
@@ -26,20 +24,15 @@
   /* Dark surfaces and their text come from the scene tokens (scene/tokens.css),
      so the desk, the controls and the DEMO label share one palette. Every
      text token here sits on --bg and clears AA there. */
-  --desk: var(--bg);
-  --desk-lit: var(--bg);
-  --desk-lit-max: var(--bg);
-  --desk-ink: var(--text);
-  --desk-ink-soft: var(--muted);
   --demo-label-ink: var(--text);
   --demo-label-rule: var(--line);
-  color: var(--desk-ink);
-  background-color: var(--desk);
+  color: var(--text);
+  background-color: var(--bg);
 
   /* The darkest shading under text on a paper panel sitting on the desk (the
      envelope, the letter, the stamps). Paper panels keep the globals.css
      text tokens; --paper-shadowed is their deepest shaded surface, on which
-     the lowest text token (--gold-text) still clears AA (see design.md
+     the lowest text token still clears AA (see design.md
      "Colour and contrast", verified by contrast.test.ts / Property 22). It
      lives here, not in globals.css, because the Ceremony never edits
      globals.css (R1.7). */
@@ -51,12 +44,12 @@
 /*
  * Focus indicators are 2px and at least 9:1 against their surface:
  *   - --ink on paper surfaces (the globals.css ink token),
- *   - --desk-ink on the desk.
+ *   - --text on the desk.
  * Up and down, past and present all share these rules; focus colour never
  * encodes a value or direction (neutrality.md).
  */
 .desk :focus-visible {
-  outline: 2px solid var(--desk-ink);
+  outline: 2px solid var(--text);
   outline-offset: 2px;
 }
 
@@ -76,11 +69,11 @@
 /*
  * The Calm and Skip controls (CeremonyRoot.tsx). They sit on the desk, not in
  * a paper panel, so they use the desk tokens and never the browser's default
- * button look. `.desk` (above) sets --desk-ink and the desk background on the
+ * button look. `.desk` (above) sets --text and the desk background on the
  * element; this rule then sets the lit-desk surface and a solid ink border.
- * --desk-lit and --desk-lit-max are the two lit-desk surfaces that the
- * contrast test checks for --desk-ink text, so the label clears AA on both.
- * The border is --desk-ink, which clears the 3:1 non-text contrast minimum
+ * --bg is the lit-desk surface that the contrast test checks for --text
+ * text, so the label clears AA there.
+ * The border is --text, which clears the 3:1 non-text contrast minimum
  * (WCAG 1.4.11) on the lit desk.
  */
 .deskControl {
@@ -95,16 +88,16 @@
   text-align: center;
   white-space: normal;
   max-width: 100%;
-  color: var(--desk-ink);
-  background-color: var(--desk-lit);
-  border: 1px solid var(--desk-ink);
+  color: var(--text);
+  background-color: var(--bg);
+  border: 1px solid var(--text);
   border-radius: 2px;
   cursor: pointer;
   transition: background-color 150ms ease;
 }
 
 .deskControl:hover {
-  background-color: var(--desk-lit-max);
+  background-color: var(--bg);
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -116,7 +109,7 @@
 /* The control carries `.desk` itself, so `.desk :focus-visible` (a descendant
    rule) does not reach it. This gives it the same 2px desk-ink ring. */
 .deskControl:focus-visible {
-  outline: 2px solid var(--desk-ink);
+  outline: 2px solid var(--text);
   outline-offset: 2px;
 }
 
@@ -220,5 +213,5 @@
   margin: 0.25rem 0.5rem 0.25rem 0;
   font-size: 0.875rem;
   line-height: 1.4;
-  color: var(--desk-ink-soft);
+  color: var(--muted);
 }

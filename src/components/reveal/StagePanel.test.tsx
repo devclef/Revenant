@@ -202,13 +202,14 @@ describe("reveal stages sit on a paper panel", () => {
     expect(isInsidePanel(html, REVEAL_COPY.stage3Title)).toBe(false);
   });
 
-  it("gives every stage in the markup its own panel", () => {
-    const html = renderReveal(3);
-    // Stage 1 uses StagePanel; stage 2 uses the letter block's paper; stage 3
-    // sits on the desk (spec 07 R14.1).
-    const panels = html.split(styles.stagePanel).length - 1;
-    const paper = html.split(blockStyles.paper).length - 1;
-    expect(panels).toBe(1);
+  it("keeps the paper panel to stage 1, so the letter stage's paper holds only the letter (spec 09 L6.1)", () => {
+    // Stage 1 uses StagePanel; stage 2 uses the letter block's paper only;
+    // stage 3 sits on the desk (spec 07 R14.1).
+    const stage1 = renderReveal(1);
+    expect(stage1.split(styles.stagePanel).length - 1).toBe(1);
+    const stage3 = renderReveal(3);
+    expect(stage3.split(styles.stagePanel).length - 1).toBe(0);
+    const paper = stage3.split(blockStyles.paper).length - 1;
     expect(paper).toBe(1);
   });
 });

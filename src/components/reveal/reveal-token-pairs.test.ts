@@ -5,8 +5,8 @@
 // checked automatically. Each token is resolved to its hex value in the CSS
 // that defines it, and its contrast ratio is computed against every surface a
 // reveal stage can sit on:
-//   - the two ParchmentSurface paper variants (--paper, --paper-deep), which
-//     each stage panel uses (StagePanel).
+//   - the two paper variants (--paper, --paper-deep), which the stage panel
+//     (StagePanel) uses.
 // The desk text pairs were removed with the desk (spec 07 task 9, R4.8).
 //
 // Threshold: 4.5:1 for every text pair. That is the AA bar for normal text and
@@ -90,7 +90,6 @@ describe("reveal text token pairs meet WCAG 2.2 AA", () => {
   it("finds the text colour tokens the reveal uses", () => {
     expect(textTokens).toContain("--ink");
     expect(textTokens).toContain("--ink-soft");
-    expect(textTokens).toContain("--seal");
     for (const token of textTokens) {
       expect(token).toMatch(/^--[a-z0-9-]+$/);
     }

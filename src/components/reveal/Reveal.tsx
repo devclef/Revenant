@@ -349,42 +349,47 @@ export function Reveal({
   // control: the Close is the last Stage and its own view sets the first viewport.
   const closeShown = stage >= 3 && localView.figures === "settled" && close !== undefined;
 
+  const marksBlock = (
+          <SoundEnabledContext.Provider value={soundOn}>
+            {testimonyCollapsed ? (
+              <details
+                className={styles.testimony}
+                data-card="marks"
+                data-testimony=""
+              >
+                <summary>{REVEAL_COPY.stage1Title}</summary>
+                {marksBody}
+              </details>
+            ) : (
+              <div className={styles.marks} data-card="marks">
+                {isPhone ? <AnswerList items={answerItems} /> : null}
+                {showSeal ? (
+                  <div className={styles.marksBreak} data-fit="break">
+                    <SealBreak
+                      patternKey={
+                        variant === "live"
+                          ? (letterId ?? personaName)
+                          : personaName
+                      }
+                      seal={seal ?? INERT_SEAL}
+                      showAll={stage === 1}
+                      onSealingChange={onSealingChange}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </SoundEnabledContext.Provider>
+  );
+
   return (
     <section className={styles.reveal}>
       {marksGone ? null : (
         <div className={`${styles.stage} ${styles.fade}`}>
-          <StagePanel>
-            <SoundEnabledContext.Provider value={soundOn}>
-              {testimonyCollapsed ? (
-                <details
-                  className={styles.testimony}
-                  data-card="marks"
-                  data-testimony=""
-                >
-                  <summary>{REVEAL_COPY.stage1Title}</summary>
-                  {marksBody}
-                </details>
-              ) : (
-                <div className={styles.marks} data-card="marks">
-                  {isPhone ? <AnswerList items={answerItems} /> : null}
-                  {showSeal ? (
-                    <div className={styles.marksBreak} data-fit="break">
-                      <SealBreak
-                        patternKey={
-                          variant === "live"
-                            ? (letterId ?? personaName)
-                            : personaName
-                        }
-                        seal={seal ?? INERT_SEAL}
-                        showAll={stage === 1}
-                        onSealingChange={onSealingChange}
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              )}
-            </SoundEnabledContext.Provider>
-          </StagePanel>
+          {/* The paper panel holds the testimony and seal break on stage 1
+              only. From the letter stage on, the paper holds only the letter
+              text (spec 09 L6.1), so the testimony sits on the desk instead. */}
+          {stage < 2 ? <StagePanel>{marksBlock}</StagePanel> : <div className={styles.marksOnDesk}>{marksBlock}</div>}
         </div>
       )}
 

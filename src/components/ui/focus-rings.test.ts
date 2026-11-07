@@ -53,7 +53,7 @@ describe("A12.1: a heading focused by script or pointer draws no outline", () =>
   });
 
   it("keeps the ring on the Ceremony headings for the keyboard (:focus-visible)", () => {
-    expect(blockOf(ceremonyCss, ".desk :focus-visible")).toMatch(/outline:\s*2px solid var\(--desk-ink\)/);
+    expect(blockOf(ceremonyCss, ".desk :focus-visible")).toMatch(/outline:\s*2px solid var\(--text\)/);
   });
 });
 

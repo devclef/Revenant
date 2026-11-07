@@ -2,8 +2,7 @@
  * Styles for the Opening_Flow, recall step and staged Reveal.
  *
  * Only the colour tokens from globals.css are used: --ink / --ink-soft for
- * text, --seal and --gold-text for labels, --paper / --paper-deep for
- * surfaces, and --gold-leaf / --ink-faded for decoration only. There is no
+ * text, --paper / --paper-deep for surfaces, and --ink-faded for decoration only. There is no
  * judgement colour anywhere -- no green/red, no directional semantics. A
  * figure that rose and one that fell are drawn with the exact same classes
  * (see .change, .figure below), so up and down get identical treatment
@@ -12,7 +11,7 @@
  * R9.5: the @media (prefers-reduced-motion: reduce) block sets
  *       transition: none and animation: none.
  * R9.6: :focus-visible gets a 2px ink outline.
- * R9.7 / R13.6: text uses --ink / --ink-soft; labels use --seal / --gold-text,
+ * R9.7 / R13.6: text uses --ink / --ink-soft; labels use --ink,
  *       all AA on --paper per globals.css.
  */
 
@@ -118,7 +117,7 @@
 }
 
 .fieldset {
-  border: 1px solid var(--gold-leaf); /* decorative rule only */
+  border: 1px solid var(--ink-faded); /* decorative rule only */
   border-radius: 2px;
   margin: 0 0 1.5rem;
   padding: 1rem 1.25rem;
@@ -135,7 +134,7 @@
 }
 
 .legend {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   color: var(--ink);
   padding: 0 0.4rem;
 }
@@ -167,7 +166,7 @@
 .fieldError {
   display: block;
   margin-top: 0.4rem;
-  color: var(--seal); /* AA label colour, never the only signal */
+  color: var(--ink); /* never the only signal */
 }
 
 /* --- Staged reveal --- */
@@ -195,6 +194,16 @@
   --ink: #1f1b16;
   color: var(--ink);
   margin: 0;
+}
+
+/* The testimony card from stage 2 on sits on the desk, not in a paper panel.
+   The paper ink tokens are remapped to the desk text tokens, so the card's
+   ink-coloured rules read as the desk's cream text (spec 09 L6.1). */
+.marksOnDesk {
+  --ink: var(--text);
+  --ink-soft: var(--muted);
+  color: var(--text);
+  margin: 0 0 2.5rem;
 }
 
 /* The next-stage and "Show everything" controls, shown together while a stage
@@ -237,7 +246,7 @@
 
 .marksQuestion {
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   color: var(--ink);
 }
 
@@ -300,7 +309,7 @@
 }
 
 .rememberedQuestion {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   color: var(--ink);
 }
 
@@ -412,7 +421,7 @@
 }
 
 .metricName {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   color: var(--ink);
 }
 

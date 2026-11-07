@@ -113,13 +113,15 @@
   }
 }
 
-/* A crease: one full-width hairline across the paper. Decorative only. */
+/* A crease: one full-width hairline across the paper, with a light line under
+   it (design.md, Creases). Decorative only. */
 .crease {
   position: absolute;
   left: 0;
   right: 0;
   height: 0;
-  border-top: 1px solid color-mix(in srgb, var(--ink, #1f1b16) 12%, transparent);
+  border-top: 1px solid rgba(31, 27, 22, 0.08);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
   pointer-events: none;
 }
 
