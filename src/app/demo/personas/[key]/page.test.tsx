@@ -106,6 +106,27 @@ describe("persona letter route", () => {
     expect(notFound).not.toHaveBeenCalled();
   });
 
+  it("gives PersonaIntro the persona's opening event, its source link and question count", async () => {
+    const withEvent = {
+      ...PERSONA,
+      opening_event: {
+        name: "U.S. presidential election day",
+        date: "2024-11-05",
+        source: "U.S. National Archives",
+        source_url: "https://www.archives.gov/electoral-college/2024",
+      },
+    };
+    const Page = await loadPage([withEvent]);
+    const element = await Page({ params: Promise.resolve({ key: PERSONA.key }) });
+    const html = renderToStaticMarkup(element);
+
+    expect(html).toContain("data-persona-intro");
+    expect(html).toContain(PERSONA.intro_line);
+    expect(html).toContain("Opens 5 November 2024 · U.S. presidential election day");
+    expect(html).toContain('href="https://www.archives.gov/electoral-college/2024"');
+    expect(html).toContain("answer one question");
+  });
+
   it("passes the list's letter_id and personaName to OpeningFlow (R16.5)", async () => {
     const Page = await loadPage([PERSONA]);
     const element = await Page({ params: Promise.resolve({ key: PERSONA.key }) });
