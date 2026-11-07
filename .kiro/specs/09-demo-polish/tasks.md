@@ -379,7 +379,7 @@ Each task in this group meets group P for the Stages it changes (G3.7), and atta
   - Validation: `bash scripts/check.sh`
   - _Requirements: C1.1–C1.5, C9.2, F7.1, F7.2, P2.1, P3.1–P3.4, P5.1–P5.4, P8.4_
 
-- [ ] 14. C2, F4, P4, P9 · The Stages: the Step_Indicator, ritual words on Stage headings and buttons, the Hero collapse, the Compact_Ghost and the keyboard
+- [x] 14. C2, F4, P4, P9 · The Stages: the Step_Indicator, ritual words on Stage headings and buttons, the Hero collapse, the Compact_Ghost and the keyboard
   - Agent: `frontend-dev` · Depends on: 13 · Estimated size: ~1,400 changed lines
   - Before this task: task 13 is on `main`. Steering updated (Owner patches w, x and y on `main`, owner step O0).
   - Scope: `src/components/ui/StepIndicator.tsx` (new), `src/components/ui/StepIndicator.module.css` (new), `src/components/ui/use-keep-in-visual-viewport.ts` (new), `src/components/ceremony/steps.ts` (new), `src/components/ceremony/CeremonyRoot.tsx`, `src/components/ceremony/copy.ts`, `src/components/ceremony/constants.ts`, `src/components/ceremony/scene/PersonaGhost.tsx`, `src/components/ceremony/scene/SceneShell.tsx`, `src/components/ceremony/scene/scene.module.css`, `src/components/ceremony/recall/RecallPager.tsx`, `src/components/ceremony/recall/RecallPager.module.css`, `src/components/reveal/copy.ts`, `src/components/reveal/Reveal.tsx` (the figures button attribute only), and the `*.test.ts(x)` for each file above
