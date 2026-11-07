@@ -116,11 +116,18 @@
     color: var(--ink);
   }
 
-  .source a {
+  /* The global desk-link rule .scene a:not(:where([class*="ParchmentSurface"] *))
+     in scene.module.css is (0,1,1) because :where() adds zero specificity, and
+     it sets the link to the light desk --text. This card is paper below 600 px,
+     not a ParchmentSurface, so that rule still applies and TIES a bare .source a
+     (0,1,1), winning on load order and forcing the lavender link back (~1.1:1 on
+     --paper). Qualifying with the .intro parent makes this (0,2,1), so the dark
+     --ink link (#1f1b16 on --paper #f6ead4 = 14.38:1, WCAG 2.2 AA) wins. */
+  .intro .source a {
     color: var(--ink);
   }
 
-  .source a:focus-visible {
+  .intro .source a:focus-visible {
     outline-color: var(--ink);
   }
 }
