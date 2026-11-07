@@ -129,21 +129,26 @@ export function FigureRow({
   return (
     <p className={styles.figRow} data-receipt-row={role}>
       <span className={styles.rowLabel}>{roleLabel}:</span>{" "}
-      <span
-        className={styles.figValue}
-        style={{ fontSize: FIG_VALUE_SIZE }}
-        data-role={role}
-      >
-        {figure.value}
+      <span className={styles.valueLine}>
+        <span
+          className={styles.figValue}
+          style={{ fontSize: FIG_VALUE_SIZE }}
+          data-role={role}
+        >
+          {figure.value}
+        </span>{" "}
+        <span>{figure.unit}</span>
       </span>{" "}
-      <span>{figure.unit}</span> <span className={styles.period}>{figure.period}</span>
-      {" · "}
-      <span className={styles.region}>{figure.region}</span>
-      {" · "}
-      <span className={styles.fixtureLabel}>{figure.label}</span>
-      {figure.note === undefined ? null : (
-        <span className={styles.period}> · {figure.note}</span>
-      )}
+      <span className={styles.metaLine}>
+        <span className={styles.period}>{figure.period}</span>
+        {" · "}
+        <span className={styles.region}>{figure.region}</span>
+        {" · "}
+        <span className={styles.fixtureLabel}>{figure.label}</span>
+        {figure.note === undefined ? null : (
+          <span className={styles.period}> · {figure.note}</span>
+        )}
+      </span>
     </p>
   );
 }

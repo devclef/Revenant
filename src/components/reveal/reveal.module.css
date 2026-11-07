@@ -404,7 +404,11 @@
    metrics, and no colour that could hint at which way a figure moved
    (neutrality.md). */
 .figureGroup {
-  margin: 0 0 2rem;
+  margin: 0 0 1.25rem;
+  /* Painted with the desk colour so the group's own background contains every
+     card and label (spec 09 P6.3, layout-check PH5). */
+  display: flow-root;
+  background-color: var(--bg);
 }
 
 .metricName {
@@ -533,7 +537,7 @@
 }
 
 .src {
-  margin-top: 1rem;
+  margin-top: 0.5rem;
   color: var(--muted);
 }
 
@@ -691,4 +695,92 @@
   display: block;
   font-weight: 800;
   color: var(--text);
+}
+
+/* --- Spec 09 P6 and C3.4: receipts and the marks card on the phone ---
+ *
+ * The figures panel and every Receipt_Card use `display: flow-root` with no
+ * fixed height, so their painted background contains every child (P6.3, PH5).
+ */
+.figuresCol,
+.fig {
+  display: flow-root;
+}
+
+/* The Figure group above carries the gap between cards. Its flow-root would
+   otherwise take the card's own bottom margin inside the group (RC1). */
+.fig {
+  margin: 0;
+}
+
+/* Value and unit stay on one line (P6.1). Below 600 px the period, region and
+   provenance label move to their own line under them. */
+.valueLine {
+  white-space: nowrap;
+}
+
+/* The marks card collapsed to its heading from `figures` on, at 600 px and
+   wider (C3.4). Its heading is the summary; the disclosure marker stays. */
+.testimony {
+  margin: 0 0 1.5rem;
+  text-align: left;
+}
+
+.testimony summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.testimony[open] summary {
+  margin-bottom: 1rem;
+}
+
+/* The Answer_List sits on the paper panel of the marks Stage, so it sets the
+   panel's ink itself. The desk tokens in .answerList are cream and would be
+   unreadable here (issue #119). */
+.stagePanel .answerList,
+.stagePanel .answerValue {
+  color: var(--ink);
+}
+
+.stagePanel .answerName {
+  color: var(--ink-soft);
+}
+
+.stagePanel .answerItem {
+  margin: 0 0 0.9rem;
+}
+
+@media (max-width: 599.98px) {
+  .metaLine {
+    display: block;
+  }
+
+  /* A value and its unit must fit a 360 px screen on one line (P6.1). The
+     inline size is FIG_VALUE_SIZE, which is 2.5rem at this width, so the
+     phone sets a smaller size over it. */
+  .figValue {
+    font-size: 2rem !important;
+  }
+
+  /* Tighter spacing between cards keeps the closing line inside the P7 budget.
+     The group above carries the gap between cards, so the card adds none. */
+  .fig {
+    margin: 0;
+  }
+
+  /* "See the receipts" stays on screen while the long letter is read
+     (PH1, P6). It sits on the desk, so it has a solid background behind it. */
+  .stageControls {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    padding: 0.75rem 0;
+    background-color: var(--bg);
+  }
 }

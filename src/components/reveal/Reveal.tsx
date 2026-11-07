@@ -1,7 +1,9 @@
 "use client";
 
-import { useCallback, useContext, useState } from "react";
+import { useCallback, useContext, useEffect, useState } from "react";
 import type { Opened } from "./opening-machine";
+import { AnswerList, type AnswerListItem } from "./AnswerList";
+import { PHONE_QUERY } from "@/components/ceremony/scene/TopBar";
 import type { LetterKind } from "./FigureLine";
 import type { RecallRecordV1 } from "@/lib/recall";
 import { LetterBlock } from "@/components/ceremony/letter/LetterBlock";
@@ -24,6 +26,26 @@ import { displayUnitFor } from "@/components/ceremony/recall/unit-ranges";
 import { useLocalView } from "@/components/ceremony/local-view";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
+
+/**
+ * True below 600 px (the Phone_Sizes, spec 09 P6). The server and the first
+ * client render report false, so hydration never mismatches; the effect then
+ * follows the viewport, the same way `TopBar` does (P5.1).
+ */
+function usePhone(): boolean {
+  const [phone, setPhone] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+    const query = window.matchMedia(PHONE_QUERY);
+    const update = () => setPhone(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  return phone;
+}
 
 /**
  * Used when no controller is passed (static renders in the tests). The seal
@@ -129,6 +151,12 @@ export type RevealProps = {
    * close is rendered.
    */
   close?: CloseProps;
+  /**
+   * Forces the phone layout (true below 600 px) instead of reading the
+   * viewport. Tests pass it, because static renders have no viewport. Omitted
+   * in the app, where the viewport decides.
+   */
+  phone?: boolean;
 };
 
 export function Reveal({
@@ -143,11 +171,19 @@ export function Reveal({
   variant = "persona",
   letterKind = "persona",
   close,
+  phone,
 }: RevealProps) {
   // The local-view context lets stage 1's SealBreak report its `sealing` flag
   // up to CeremonyRoot, so `stageFor(state, local)` resolves `seal` while a
   // break is in progress and `marks` otherwise (design.md "Stage resolution").
   const { localView, setLocalView } = useLocalView();
+
+  // The phone layout (spec 09 P6, C3.4): below 600 px the marks Stage shows the
+  // Answer_List instead of the recall scales, and from `figures` on the marks
+  // card is not rendered at all. From 600 px up, from `figures` on, the marks
+  // card collapses into a closed "Your testimony" disclosure.
+  const detectedPhone = usePhone();
+  const isPhone = phone ?? detectedPhone;
 
   // The Figures_API is read once per reveal (figures-api.ts). Stage 3 picks each
   // Now_Figure from this response, not from DEMO_FIGURES.
@@ -226,6 +262,27 @@ export function Reveal({
     ];
   });
 
+  // The Answer_List (spec 09 A9, P6.4) shows the same number questions as the
+  // recall scales, with the metric name, the Answer_Text and the unit, or "No
+  // answer". It replaces the scales on the phone.
+  const answerItems: AnswerListItem[] = opened.payload.recall_questions.flatMap(
+    (question) => {
+      if (question.answer_type !== "number") return [];
+      const unit = unitByMetricId.get(question.metric_id);
+      if (unit === undefined) return [];
+      const answer = answerByQuestionId.get(question.id);
+      const markValue =
+        answer !== undefined && answer.kind === "number" ? answer.value : undefined;
+      return [
+        {
+          name: nameByMetricId.get(question.metric_id) ?? unit,
+          markValue,
+          unit: displayUnitFor(unit),
+        },
+      ];
+    },
+  );
+
   // Each sealed question with the judge's value in the Accent fill, or "No
   // answer". The unit comes from the sealed metric, never re-fetched (R8.2).
   const marksRows = opened.payload.recall_questions.map((question) => {
@@ -273,50 +330,80 @@ export function Reveal({
   }
   const showSeal = stage === 1 || jumpedToEnd;
 
+  // From `figures` on, the marks card is closed on the desk-side disclosure at
+  // 600 px and wider, and not rendered on the phone (C3.4, P6.4).
+  const testimonyCollapsed = stage >= 3 && !isPhone;
+  const marksGone = stage >= 3 && isPhone;
+
+  // The marks card's content: the phone shows the Answer_List; the wider layout
+  // shows the marks rows and the recorded scales.
+  const marksBody = isPhone ? (
+    <AnswerList items={answerItems} />
+  ) : (
+    <>
+      <dl className={styles.marksAnswers} data-fit="marks-answers">
+        {marksRows}
+      </dl>
+      {recordedScales}
+    </>
+  );
+
   return (
     <section className={styles.reveal}>
-      <div className={`${styles.stage} ${styles.fade}`}>
-        <StagePanel>
-          <SoundEnabledContext.Provider value={soundOn}>
-            <div className={styles.marks} data-card="marks">
-              <h2 className={styles.marksHeading} data-fit="marks-heading">
-                {REVEAL_COPY.stage1Title}
-              </h2>
-              <dl className={styles.marksAnswers} data-fit="marks-answers">
-                {marksRows}
-              </dl>
-              {recordedScales}
-              {showSeal ? (
-                <>
-                  <div className={styles.marksBreak} data-fit="break">
-                    <SealBreak
-                      patternKey={
-                        variant === "live" ? (letterId ?? personaName) : personaName
-                      }
-                      seal={seal ?? INERT_SEAL}
-                      showAll
-                      onSealingChange={onSealingChange}
-                    />
-                  </div>
-                  {personaMarks ? (
-                    <div className={styles.marksSound}>
-                      <SoundToggle
-                        onChange={(next) => {
-                          setMarksSound(next);
-                          soundCues.onToggle(next);
-                        }}
-                      />
-                      <p className={styles.marksSoundNote}>
-                        {CEREMONY_COPY.soundNote}
-                      </p>
-                    </div>
+      {marksGone ? null : (
+        <div className={`${styles.stage} ${styles.fade}`}>
+          <StagePanel>
+            <SoundEnabledContext.Provider value={soundOn}>
+              {testimonyCollapsed ? (
+                <details
+                  className={styles.testimony}
+                  data-card="marks"
+                  data-testimony=""
+                >
+                  <summary>{REVEAL_COPY.stage1Title}</summary>
+                  {marksBody}
+                </details>
+              ) : (
+                <div className={styles.marks} data-card="marks">
+                  <h2 className={styles.marksHeading} data-fit="marks-heading">
+                    {REVEAL_COPY.stage1Title}
+                  </h2>
+                  {marksBody}
+                  {showSeal ? (
+                    <>
+                      <div className={styles.marksBreak} data-fit="break">
+                        <SealBreak
+                          patternKey={
+                            variant === "live"
+                              ? (letterId ?? personaName)
+                              : personaName
+                          }
+                          seal={seal ?? INERT_SEAL}
+                          showAll
+                          onSealingChange={onSealingChange}
+                        />
+                      </div>
+                      {personaMarks ? (
+                        <div className={styles.marksSound}>
+                          <SoundToggle
+                            onChange={(next) => {
+                              setMarksSound(next);
+                              soundCues.onToggle(next);
+                            }}
+                          />
+                          <p className={styles.marksSoundNote}>
+                            {CEREMONY_COPY.soundNote}
+                          </p>
+                        </div>
+                      ) : null}
+                    </>
                   ) : null}
-                </>
-              ) : null}
-            </div>
-          </SoundEnabledContext.Provider>
-        </StagePanel>
-      </div>
+                </div>
+              )}
+            </SoundEnabledContext.Provider>
+          </StagePanel>
+        </div>
+      )}
 
       {stage >= 2 ? (
         <div className={styles.letterFigures}>
