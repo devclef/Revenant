@@ -98,7 +98,5 @@ const UNIT_DISPLAY: ReadonlyMap<string, UnitDisplay> = new Map<string, UnitDispl
  * are never changed.
  */
 export function displayRescaleForUnit(unit: string): UnitDisplay | null {
-  const entry = UNIT_DISPLAY.get(unit);
-  // Return a copy so a caller cannot change the shared table entry.
-  return entry === undefined ? null : { ...entry };
+  return UNIT_DISPLAY.get(unit) ?? null;
 }

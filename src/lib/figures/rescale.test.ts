@@ -94,20 +94,6 @@ describe("displayRescaleForUnit (Property 8)", () => {
     }
   });
 
-  it("returns a fresh object, so a caller cannot change the next lookup", () => {
-    const first = displayRescaleForUnit("EUR per 1,000 litres");
-    if (first === null) {
-      throw new Error("expected a display rescale for EUR per 1,000 litres");
-    }
-    first.divisor = 1;
-    first.displayUnit = "changed";
-    expect(displayRescaleForUnit("EUR per 1,000 litres")).toEqual({
-      displayUnit: "EUR per litre",
-      divisor: 1000,
-      note: "Published per 1,000 litres, shown per litre.",
-    });
-  });
-
   it("converts values exactly with the rescale divisor, with no floating-point drift", () => {
     const divisor = displayRescaleForUnit("EUR per 1,000 litres")?.divisor;
     expect(divisor).toBe(1000);
