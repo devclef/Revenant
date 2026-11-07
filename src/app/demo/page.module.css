@@ -31,6 +31,17 @@
   overflow-wrap: anywhere;
 }
 
+/*
+ * Short desktop windows (for example 1366x800): tighten the top padding and the
+ * gaps so the first row of envelopes and cards sits inside the first screen.
+ */
+@media (max-height: 900px) {
+  .page {
+    gap: 1rem;
+    padding-top: 1.5rem;
+  }
+}
+
 /* The label is an inline badge. Keep it at its own width, not the column width. */
 .label {
   align-self: flex-start;
