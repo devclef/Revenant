@@ -266,9 +266,10 @@ describe("Scene headings and check hooks (F7, C1, P2)", () => {
 
 // --- Top_Bar narrow layout and single Calm (spec 07 task 2) ----------------
 //
-// The 96 px height at 360 x 640 is measured in the browser check. These tests
-// pin the CSS rules that the measurement depends on: the notice takes its own
-// full row below 900 px, and only the wide layout lets it share a row.
+// Below 600 px the Top_Bar is at most 56 px tall (COMPACT_TOP_BAR_PX), and the
+// browser check measures that height. These tests pin the CSS rules that the
+// wide layout depends on: at 600 px and wider the notice takes its own full
+// row below 900 px, and only the wide layout lets it share a row.
 
 const sceneCss = readFileSync(resolve(__dirname, "scene.module.css"), "utf8");
 
