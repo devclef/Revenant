@@ -9,6 +9,7 @@ import { Envelope } from "@/components/ceremony/envelope/Envelope";
 import { WaxSeal, normaliseWaxSealIds } from "@/components/ui/WaxSeal";
 
 import { PersonaCard, type PersonaCardProps } from "./PersonaCard";
+import styles from "@/components/ceremony/envelope/Envelope.module.css";
 import { DEMO_COPY } from "./copy";
 import {
   formatCalendarDate,
@@ -240,5 +241,20 @@ describe("PersonaCard date colour", () => {
       expect(rule).not.toContain("var(--accent)");
       expect(rule).not.toContain("var(--on-accent)");
     }
+  });
+});
+
+describe("PersonaCard turned state on first paint", () => {
+  it("renders the turned back with its flap and one wax seal, with no turn animation", () => {
+    const html = render();
+    // The turned pose is on the turner, and the turn animation is off, so the
+    // start keyframe cannot hold the front face during a delay.
+    expect(html).toContain(styles.turned);
+    expect(html).not.toContain(styles.turning);
+    expect(html).not.toContain("animation-delay");
+    // The flap is drawn on the back face.
+    expect(html).toContain(styles.flapDown);
+    // One seal: each seal draws its wax blob twice, once per half.
+    expect((html.match(/M50 4 C74 3 96 22/g) ?? []).length).toBe(2);
   });
 });

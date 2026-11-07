@@ -65,7 +65,8 @@ export function PersonaCard({
       aria-labelledby={buttonId}
     >
       <span className={styles.art} aria-hidden="true">
-        <Envelope state="turned" layout="narrow" />
+        {/* A static end pose: no turn animation, so the flap and seal show on first paint. */}
+        <Envelope state="turned" layout="narrow" animate={false} />
       </span>
       <span className={styles.paper}>
         <span className={styles.name}>{display_name}</span>

@@ -70,6 +70,13 @@ export type EnvelopeProps = {
   layout?: EnvelopeLayout;
   /** The persona list fields. Optional, so spec 03 renders show no dates. */
   persona?: EnvelopePersona;
+  /**
+   * Whether a turned envelope animates its turn. Defaults to `true`, so the
+   * Ceremony's closed-to-turned turn plays. Pass `false` for a static pose that
+   * must show the back at once: the animation's start keyframe would otherwise
+   * hold the front face during its delay.
+   */
+  animate?: boolean;
   /** Optional extra class on the root <svg>. */
   className?: string;
 };
@@ -273,6 +280,7 @@ export function Envelope({
   state,
   layout = "responsive",
   persona,
+  animate = true,
   className,
 }: EnvelopeProps): ReactElement {
   const rootClass = [
@@ -307,17 +315,18 @@ export function Envelope({
   // The seal is the same for every letter (R10.10), so nothing here reads the
   // persona beyond its date lines.
   const turning = state !== "closed";
+  const animating = turning && animate;
   const turnerClass = [
     styles.turner,
     turning ? styles.turned : undefined,
-    turning ? styles.turning : undefined,
+    animating ? styles.turning : undefined,
   ]
     .filter(Boolean)
     .join(" ");
   // The turn starts at ENVELOPE_TURN_AT_MS and lasts ENVELOPE_TURN_MS, ending
   // by 920 ms (R10.8). Calm and reduced motion drop the animation in CSS and
   // keep the end pose, so the back shows in the same render (R10.9).
-  const turnStyle: CSSProperties | undefined = turning
+  const turnStyle: CSSProperties | undefined = animating
     ? {
         animationDelay: `${ENVELOPE_TURN_AT_MS}ms`,
         animationDuration: `${ENVELOPE_TURN_MS}ms`,
