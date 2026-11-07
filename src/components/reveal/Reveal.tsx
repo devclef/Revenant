@@ -15,6 +15,7 @@ import { StagePanel } from "./StagePanel";
 import { FiguresFadeUp } from "@/components/ceremony/figures/FiguresFadeUp";
 import { Close, type CloseProps } from "@/components/ceremony/close/Close";
 import { SealBreak } from "@/components/ceremony/seal/SealBreak";
+import { sealPlacement } from "@/components/ceremony/seal/seal-placement";
 import type { SealController } from "@/components/ceremony/seal/useSealBreak";
 import { IDLE } from "@/components/ceremony/seal/hold";
 import { RecordedScale } from "@/components/ceremony/recall/RecordedScale";
@@ -22,6 +23,7 @@ import { answerText } from "@/components/ceremony/recall/answer-text";
 import { displayUnitFor } from "@/components/ceremony/recall/unit-ranges";
 import { useLocalView } from "@/components/ceremony/local-view";
 import { REVEAL_COPY } from "./copy";
+import { useViewportWidth } from "./viewport-width";
 import styles from "./reveal.module.css";
 
 /**
@@ -154,6 +156,13 @@ export type RevealProps = {
    * in the app, where the viewport decides.
    */
   phone?: boolean;
+  /**
+   * The held Envelope's slot in the Ghost (spec 09 C5.1). OpeningFlow passes
+   * it once the Envelope is mounted. At the Desktop_Sizes and the Wide_Size the
+   * stage 1 seal is drawn on it, so the Content_Column keeps only the button and
+   * the Skip_Link. Omitted or null, the seal stays in the Content_Column.
+   */
+  heldSlot?: HTMLElement | null;
 };
 
 export function Reveal({
@@ -169,6 +178,7 @@ export function Reveal({
   letterKind = "persona",
   close,
   phone,
+  heldSlot = null,
 }: RevealProps) {
   // The local-view context lets stage 1's SealBreak report its `sealing` flag
   // up to CeremonyRoot, so `stageFor(state, local)` resolves `seal` while a
@@ -181,6 +191,12 @@ export function Reveal({
   // card collapses into a closed "Your testimony" disclosure.
   const detectedPhone = usePhone();
   const isPhone = phone ?? detectedPhone;
+
+  // Where the stage 1 seal is drawn (spec 09 C5.1, C5.2). At the Desktop_Sizes
+  // and the Wide_Size it goes on the held Envelope; otherwise it stays here.
+  const viewportWidth = useViewportWidth();
+  const sealOnEnvelope = sealPlacement({ viewportWidth, slotReady: heldSlot !== null });
+  const envelopeSlot = sealOnEnvelope === "envelope" && !isPhone ? heldSlot : null;
 
   // The Figures_API is read once per reveal (figures-api.ts). Stage 3 picks each
   // Now_Figure from this response, not from DEMO_FIGURES.
@@ -374,6 +390,7 @@ export function Reveal({
                       seal={seal ?? INERT_SEAL}
                       showAll={stage === 1}
                       onSealingChange={onSealingChange}
+                      envelopeSlot={envelopeSlot}
                     />
                   </div>
                 ) : null}

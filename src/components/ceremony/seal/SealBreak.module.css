@@ -63,6 +63,9 @@
   justify-content: center;
   width: min(42vw, 9rem);
   height: min(42vw, 9rem);
+  /* The pointer target never drops below 44 by 44 px (spec 09 C5.2). */
+  min-width: 44px;
+  min-height: 44px;
   touch-action: none;
   cursor: pointer;
 }
@@ -72,6 +75,30 @@
   width: 100%;
   height: 100%;
 }
+
+/*
+ * The seal on the held Envelope (spec 09 C5.1). The Envelope's box is the
+ * layer's containing block: the layer sits on the flap area, centred at 53 %
+ * of the Envelope's height (the flap tip, SVG y 100 of 188) and 46 % of its
+ * width. The seal target fills the layer, so the seal and its hit box move
+ * with the Envelope. The layer itself takes no pointer; only the target does.
+ */
+.envelopeSeal {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  /* The pointer target never drops below 44 by 44 px, however small the
+     Envelope is drawn (spec 09 C5.2). */
+  min-width: 44px;
+  min-height: 44px;
+  pointer-events: auto;
+  touch-action: none;
+  cursor: pointer;
+}
+
 
 /* --- The crack overlay --- */
 

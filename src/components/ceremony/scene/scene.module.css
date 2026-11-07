@@ -690,6 +690,41 @@
   pointer-events: none;
 }
 
+/* The held Envelope's seal and instruction line are placed by scene.module.css,
+   keyed on data-envelope-seal and data-envelope-instruction (spec 09 C5.1). */
+.heldEnvelope [data-envelope-seal] {
+  position: absolute;
+  left: 50%;
+  top: 53%;
+  width: 46%;
+  aspect-ratio: 1 / 1;
+  /* The seal's pointer target stays at least 44 by 44 px (spec 09 C5.2). */
+  min-width: 44px;
+  min-height: 44px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.heldEnvelope [data-envelope-instruction] {
+  position: absolute;
+  right: calc(100% + 1rem);
+  top: 50%;
+  /* Explicit stacking above the Ghost's glow layer and body SVG inside the
+     held slot. Unverified as the QA blocker's fix: a static harness with this
+     stylesheet showed no body coverage of the glyphs with or without this
+     z-index. The layout check in the next step decides whether the blocker is
+     fixed. */
+  z-index: 3;
+  transform: translateY(-50%);
+  width: max-content;
+  max-width: 14rem;
+  margin: 0;
+  color: var(--text);
+  line-height: 1.4;
+  text-align: right;
+  pointer-events: none;
+}
+
 /* The held Envelope's placement in the Ghost's slot (design.md "Held in the
    Ghost's subtree": left 18 %, width 64 %, top 48 % at or above 900 px, 47 %
    below). The envelope spans SVG y 115-203 (wide) / 113-211 (narrow), clearing

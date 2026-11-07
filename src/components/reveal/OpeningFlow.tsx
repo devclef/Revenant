@@ -84,6 +84,8 @@ import { Reveal } from "./Reveal";
 import { FlowError, type FlowErrorKind } from "./FlowError";
 import type { FlowState, OpenFailedKind } from "./opening-machine";
 import { createBeginGuard } from "./begin-guard";
+import { holdsEnvelope } from "./held-envelope";
+import { useViewportWidth } from "./viewport-width";
 import styles from "./reveal.module.css";
 
 /**
@@ -98,25 +100,26 @@ import styles from "./reveal.module.css";
 function HeldEnvelope({
   persona,
   tag,
+  stage,
+  viewportWidth,
+  slotRef,
 }: {
   persona: EnvelopePersona;
   tag: FlowState["tag"];
+  /** The reveal stage, or null outside the reveal. */
+  stage: number | null;
+  /** The viewport width in CSS px, or null before the client has read it. */
+  viewportWidth: number | null;
+  /** Receives the slot element, so Reveal can draw the seal on it (C5.1). */
+  slotRef: (element: HTMLDivElement | null) => void;
 }) {
   // The envelope is not held while the reader is away from the pre-reveal and
-  // reveal Stages (submitting the recall, a failed open). Those Stages show no
-  // Ghost envelope.
-  const held = new Set<FlowState["tag"]>([
-    "loading",
-    "openable",
-    "verifying",
-    "awaiting_key",
-    "unlocking",
-    "sealed",
-    "verified",
-  ]);
-  if (!held.has(tag)) return null;
+  // reveal Stages. Reveal stage 1 (marks and seal) holds it only at the
+  // Desktop_Sizes and the Wide_Size; at phones the Compact_Ghost carries it
+  // instead (spec 09 C5.1, C5.5). The rule lives in held-envelope.ts.
+  if (!holdsEnvelope({ tag, stage, viewportWidth })) return null;
   return (
-    <div className={heldStyles.heldEnvelope}>
+    <div className={heldStyles.heldEnvelope} ref={slotRef}>
       <Envelope state="closed" layout="responsive" persona={persona} />
     </div>
   );
@@ -225,6 +228,13 @@ export function OpeningFlow({
   const [ghostLeaving, setGhostLeaving] = useState(false);
   const leftGhost = useCallback(() => setGhostLeaving(false), []);
 
+  // The held Envelope's slot in the Ghost, set once the Envelope mounts. Reveal
+  // draws the stage 1 seal on it at the Desktop_Sizes (spec 09 C5.1).
+  const [heldSlot, setHeldSlot] = useState<HTMLDivElement | null>(null);
+  const onHeldSlot = useCallback((element: HTMLDivElement | null) => setHeldSlot(element), []);
+  // The width decides whether reveal stage 1 holds the Envelope (spec 09 C5.1).
+  const viewportWidth = useViewportWidth();
+
   // The break's ADVANCE. `animated` is true only for a full-motion break, which
   // starts the Ghost's leave before the reveal stage moves on.
   const { advance } = flow;
@@ -293,6 +303,9 @@ export function OpeningFlow({
                     <HeldEnvelope
                       persona={{ ...persona, demo: true }}
                       tag={state.tag}
+                      stage={state.tag === "reveal" ? state.stage : null}
+                      viewportWidth={viewportWidth}
+                      slotRef={onHeldSlot}
                     />
                   )}
                 </PersonaGhost>
@@ -303,7 +316,7 @@ export function OpeningFlow({
             {selectView(state, flow, letterId, personaName, persona, mode, retryAtZero, KeyStep, {
               keyText,
               onKeyTextChange: setKeyText,
-            }, beginGuard.begin, seal, demo2On)}
+            }, beginGuard.begin, seal, demo2On, heldSlot)}
           </div>
         </CeremonyRoot>
       </SkipProvider>
@@ -331,6 +344,7 @@ function selectView(
   begin: () => void,
   seal: SealController,
   demo2On: boolean,
+  heldSlot: HTMLElement | null,
 ): React.ReactNode {
   // The envelope's per-letter inputs: the persona list fields plus the demo
   // flag. These are always demo persona letters, so `demo` is true whenever a
@@ -477,6 +491,7 @@ function selectView(
           onAdvance={flow.advance}
           onShowAll={flow.showAll}
           seal={seal}
+          heldSlot={heldSlot}
           variant={mode}
           letterKind={
             // persona route -> persona; live route -> live for a demo letter,
