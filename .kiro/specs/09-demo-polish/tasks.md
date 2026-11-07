@@ -261,7 +261,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`
   - _Requirements: B1.2–B1.5, B1.7, B2.1–B2.4, B4.1–B4.3, F2.1–F2.3, F3.1–F3.4, P1.1–P1.3, P2.1, P3.1–P3.4, P8.4_
 
-- [ ] 9. B1, B2 · The landing page above the fold
+- [x] 9. B1, B2 · The landing page above the fold
   - Agent: `platform-dev` · Depends on: 2, 7, 8 · Estimated size: ~300 changed lines
   - Before this task: task 8 is on `main`. Steering updated (Owner patches w, x and y on `main`, owner step O0).
   - Scope: `src/app/page.tsx`, `src/app/page.test.tsx`, `src/lib/page-metadata.ts`, `src/lib/page-metadata.test.ts`, `src/test/retired-phrases.test.ts` (new), `src/test/tagline-source.test.ts` (new), `src/app/layout.tsx` (the `viewport` export and the site description only), `src/app/globals.css` (only if a landing rule must move), `src/lib/landing-backdrop.ts`, `src/test/viewport-export.test.ts` (new)
