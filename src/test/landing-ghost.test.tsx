@@ -41,7 +41,7 @@ describe("landing Ghost in the server HTML (R9.15)", () => {
   it("places the Accent link inside the landing column, outside the Ghost", () => {
     const columnAt = html.indexOf("data-landing-column");
     const pitAt = html.indexOf("data-ghost-pit");
-    const linkAt = html.indexOf('href="/demo/personas/us-maya"');
+    const linkAt = html.indexOf('href="/demo"');
     expect(columnAt).toBeGreaterThanOrEqual(0);
     expect(linkAt).toBeGreaterThan(columnAt);
     expect(linkAt).toBeGreaterThan(pitAt);
