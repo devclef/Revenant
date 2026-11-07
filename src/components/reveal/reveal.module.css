@@ -2,7 +2,7 @@
  * Styles for the Opening_Flow, recall step and staged Reveal.
  *
  * Only the colour tokens from globals.css are used: --ink / --ink-soft for
- * text, --paper / --paper-deep for surfaces, and --ink-faded for decoration only. There is no
+ * text, --paper / --paper-deep for surfaces, and --ink-soft for decoration only. There is no
  * judgement colour anywhere -- no green/red, no directional semantics. A
  * figure that rose and one that fell are drawn with the exact same classes
  * (see .change, .figure below), so up and down get identical treatment
@@ -117,7 +117,7 @@
 }
 
 .fieldset {
-  border: 1px solid var(--ink-faded); /* decorative rule only */
+  border: 1px solid var(--ink-soft); /* decorative rule only */
   border-radius: 2px;
   margin: 0 0 1.5rem;
   padding: 1rem 1.25rem;
@@ -190,7 +190,7 @@
    colour, so stage text never inherits the desk's cream ink (issue #119). */
 .stagePanel {
   /* The panel defines its own ink, so stage text never inherits the desk's
-     cream --desk-ink (issue #119). */
+     cream ink (issue #119). */
   --ink: #1f1b16;
   color: var(--ink);
   margin: 0;

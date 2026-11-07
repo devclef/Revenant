@@ -4,7 +4,7 @@ import styles from "./reveal.module.css";
 
 /**
  * A paper panel for one reveal stage (issue #119). The reveal sits on the
- * ceremony desk, whose text is cream (`--desk-ink`). Stage text placed directly
+ * ceremony desk, whose text is cream. Stage text placed directly
  * on the desk is unreadable, so every stage's content goes inside this
  * paper panel. The panel sets its own text colour (`--ink`) in
  * `.paper`, so no stage text inherits the desk's cream ink (tone.md).
