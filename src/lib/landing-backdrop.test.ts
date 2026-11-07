@@ -1,8 +1,9 @@
 // Feature: 09-demo-polish (B1.5, P1.1, P2.1, OD12 c)
 //
-// Asserts the sub-600 px Landing_Ghost and light placement in
-// landing-backdrop.ts. The stylesheet values are checked against the same
-// constants in src/components/landing/constants.test.ts.
+// Asserts the OD12 values in landing-backdrop.ts. These are constants only:
+// this file does not test the rendered layout. The rendered Ghost and light
+// position is not yet set, so it is not asserted here. The stylesheet value for
+// the reserved Ghost box is checked in src/components/landing/constants.test.ts.
 
 import { describe, expect, it } from "vitest";
 

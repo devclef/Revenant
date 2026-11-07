@@ -34,11 +34,13 @@ export function LandingBackdrop({ children }: { children?: ReactNode }) {
 }
 
 /**
- * Where the Landing_Ghost and the light sit below PHONE_BELOW_PX (OD12 c, P1.1,
- * P2.1). The Ghost sits below the calls to action, directly above the Soil, so
- * its box touches no text or control. The light is centred on the Ghost's
- * horizontal centre. The stylesheet applies the same values
- * (`min(30svh, 190px)` on `.ghost` in landing.module.css).
+ * The OD12 (c) values for the Landing_Ghost and the light below PHONE_BELOW_PX
+ * (P1.1, P2.1). These are the intended values only. They are not applied to the
+ * page yet: the Ghost and the light are positioned by scene.module.css (the
+ * fixed backdrop), and the hero's reserved Ghost box is in
+ * src/components/landing/landing.module.css. Neither file is in platform-dev's
+ * paths. The Ghost is meant to sit below the calls to action, with the light
+ * centred on the Ghost's horizontal centre.
  */
 export const PHONE_GHOST_PLACEMENT = {
   /** The Ghost follows the calls to action. */
