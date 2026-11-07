@@ -69,4 +69,33 @@ export const LANDING_SECTION_COPY = {
 
   /** The four seal mapping rows from Brand_Copy (F6.1). */
   sealMapping: BRAND_COPY.sealMapping,
+
+  /** The heading above the Sample_Receipt (B3.4). */
+  receiptTitle: "A receipt from the record",
+
+  /** Shown when the request fails or the first series has no figure (B3.4). */
+  receiptNone: "No figure is available to show right now.",
+
+  /** Labels for the provenance rows under the Sample_Receipt figure. */
+  receiptSource: "Source",
+  receiptSeries: "Series",
+  receiptRetrieved: "Retrieved",
+
+  /** The link to the publisher's page for the Sample_Receipt figure. */
+  receiptCheck: "Check the figure at its source",
+
+  /** The heading above the Coven_Strip (B3.5). `{n}` is the count. */
+  covenTitle: "Built by a coven of Kiro agents",
+
+  /** The Coven_Strip count labels, singular and plural (B3.5). */
+  covenCounts: {
+    specs: { one: "{n} spec", other: "{n} specs" },
+    steering: { one: "{n} steering doc", other: "{n} steering docs" },
+    agents: { one: "{n} custom agent", other: "{n} custom agents" },
+    hooks: { one: "{n} hook", other: "{n} hooks" },
+  },
+
+  /** The two Coven_Strip links to GitHub (B3.5). */
+  covenKiroLink: "Browse the .kiro folder on GitHub",
+  covenLoopLink: "Read how the agent loop works",
 } as const;
