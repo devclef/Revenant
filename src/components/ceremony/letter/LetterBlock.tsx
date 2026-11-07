@@ -1,27 +1,31 @@
 "use client";
 
-// Feature: 07-judge-journey (spec task 5, R13)
+// Feature: 07-judge-journey (spec task 5, R13); spec 09 L6 (task 18, step 1)
 //
-// The letter stage (stage 2). One rounded purple block holds one paper panel.
-// The paper carries the stage heading, the labels and `SealedLetter`'s
-// paragraph, so the letter text is one text node in the EB Garamond face.
+// The letter stage (stage 2). The Caption_Block sits on the dark, in the sans,
+// above the paper. It holds the Stage heading, the Letter_Disclosure, the seal
+// line and the Seal_Verdict with its Fingerprint (`caption`). The paper is an
+// `article` whose only child is the Letter_Text paragraph, so the letter reads
+// as something someone wrote.
 //
+// - The Caption_Block comes before the paper in document order (L6.4).
 // - No mask, clip or fade touches the text (R13.4). The only motion is the
 //   paper's unfold: a Web Animation with `fill: "backwards"`, started in a
 //   layout effect in full motion only. Light and calm modes start nothing, so
 //   the static render is the final state.
-// - Four `aria-hidden` crease marks sit at one third and two thirds of the
-//   paper, one at the top edge and one at the bottom edge. Each mark is only as
-//   tall as the paper's padding, so no crease runs behind a line of the letter
-//   (R13.7).
 // - `LetterBlock` adds nothing next to the text: no annotation, highlight or
 //   link (R13.7).
 //
 // Every string comes from the reveal copy through `SealedLetter`.
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
-import { SealedLetter, type SealedLetterProps } from "@/components/reveal/SealedLetter";
+import {
+  SealedLetterCaption,
+  SealedLetterText,
+  type SealedLetterProps,
+} from "@/components/reveal/SealedLetter";
+import { REVEAL_COPY } from "@/components/reveal/copy";
 
 import { EASE_STANDARD, UNFOLD_AT_MS, UNFOLD_MS } from "../constants";
 import { useMotion } from "../motion";
@@ -35,6 +39,11 @@ export type LetterBlockProps = SealedLetterProps & {
    * replays or cancels the unfold.
    */
   still?: boolean;
+  /**
+   * Extra content for the Caption_Block, after the labels. The reveal passes
+   * the Fingerprint (the Seal_Verdict and its control) here.
+   */
+  caption?: ReactNode;
 };
 
 /** The paper's unfold: from a folded pose to flat, opacity 0 to 1. */
@@ -47,18 +56,10 @@ const UNFOLD_TO = {
   opacity: 1,
 };
 
-/** The creases: two positions, each at the top and the bottom edge of the paper. */
-const CREASES = [
-  { left: "33.3%", edge: "top" },
-  { left: "33.3%", edge: "bottom" },
-  { left: "66.6%", edge: "top" },
-  { left: "66.6%", edge: "bottom" },
-] as const;
-
 export function LetterBlock(props: LetterBlockProps) {
-  const { still = false, ...letterProps } = props;
+  const { still = false, caption, collapsible = false, ...letterProps } = props;
   const { mode } = useMotion();
-  const paperRef = useRef<HTMLDivElement>(null);
+  const paperRef = useRef<HTMLElement>(null);
   const [stillAtMount] = useState(still);
   // Skip finishes the unfold at once, so the letter sits at its end state.
   const skip = useMaybeSequence();
@@ -105,19 +106,31 @@ export function LetterBlock(props: LetterBlockProps) {
     };
   }, [mode, stillAtMount, register]);
 
+  const paper = (
+    <article ref={paperRef} className={styles.paper}>
+      <SealedLetterText opened={letterProps.opened} />
+    </article>
+  );
+
   return (
     <div className={styles.letterBlock}>
-      <div ref={paperRef} className={styles.paper}>
-        {CREASES.map(({ left, edge }) => (
-          <span
-            key={`${edge}-${left}`}
-            className={`${styles.crease} ${edge === "top" ? styles.creaseTop : styles.creaseBottom}`}
-            style={{ left }}
-            aria-hidden="true"
-          />
-        ))}
-        <SealedLetter {...letterProps} />
-      </div>
+      <header className={styles.caption}>
+        <SealedLetterCaption
+          opened={letterProps.opened}
+          personaName={letterProps.personaName}
+          variant={letterProps.variant}
+          letterId={letterProps.letterId}
+        />
+        {caption}
+      </header>
+      {collapsible ? (
+        <details className={styles.letterDisclosure} data-letter-disclosure="">
+          <summary>{REVEAL_COPY.letterDisclosureSummary}</summary>
+          {paper}
+        </details>
+      ) : (
+        paper
+      )}
     </div>
   );
 }

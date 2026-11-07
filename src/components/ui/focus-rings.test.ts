@@ -67,9 +67,9 @@ describe("A12.2: every control keeps a :focus-visible ring", () => {
     expect(liveCss).toMatch(/\.secondary:focus-visible\s*\{/);
   });
 
-  it("keeps the Letter_Block ring pure white (Text_On_Purple, spec 07 R3.15)", () => {
+  it("gives the Caption_Block its own light focus ring on the dark (spec 09 L6.2; replaces the spec 07 R3.15 white Letter_Block ring)", () => {
     const letterCss = read(resolve(componentsRoot, "ceremony", "letter", "LetterBlock.module.css"));
-    expect(letterCss).toMatch(/\.letterBlock :focus-visible:focus\s*\{\s*outline:\s*2px solid #ffffff/);
+    expect(letterCss).toMatch(/\.caption :focus-visible\s*\{\s*outline:\s*2px solid var\(--text/);
   });
 });
 

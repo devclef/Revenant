@@ -81,7 +81,7 @@ function openedWith(letterText: string): Opened {
   };
 }
 
-function render(letterText: string): string {
+function render(letterText: string, caption?: string): string {
   return renderToStaticMarkup(
     createElement(
       MotionProvider,
@@ -89,6 +89,10 @@ function render(letterText: string): string {
       createElement(LetterBlock, {
         opened: openedWith(letterText),
         personaName: PERSONA_NAME,
+        caption:
+          caption === undefined
+            ? undefined
+            : createElement("span", { "data-caption-slot": "" }, "verdict"),
       }),
     ),
   );
@@ -155,30 +159,54 @@ describe("Property 17: the letter is shown verbatim with nothing against it (R13
     expect(letterRule).not.toMatch(/mask|clip|opacity/);
   });
 
-  it("is built from one purple block holding one paper panel with two creases", () => {
+  it("holds only the letter text in the paper, with no creases or other marks (L6.1)", () => {
     const html = render("A short letter.");
-    expect(html.match(/aria-hidden="true"/g)).toHaveLength(4);
-    expect(html).not.toContain("data-ink-text");
+    const paper = /<article[^>]*>([\s\S]*?)<\/article>/.exec(html);
+    expect(paper).not.toBeNull();
+    // The paper's only child is the Letter_Text paragraph: no crease, no label.
+    expect(paper?.[1]).toMatch(/^<p class="[^"]*" data-letter-text="">A short letter\.<\/p>$/);
+    expect(html).not.toContain("aria-hidden");
   });
 
-  it("keeps every crease in the paper margin, never behind a line of text (R13.7)", () => {
-    const html = render("A short letter.");
-    // Four crease marks: each position appears at the top and the bottom edge.
-    expect(html.match(/aria-hidden="true"/g)).toHaveLength(4);
-    const creaseTags = [...html.matchAll(/<span[^>]*aria-hidden="true"[^>]*>/g)].map(
-      (match) => match[0],
+  it("puts the Caption_Block before the paper, with the heading, labels and caption content in it (L6.2, L6.4)", () => {
+    const html = render("A short letter.", "verdict");
+    const headerStart = html.indexOf("<header");
+    const headerEnd = html.indexOf("</header>");
+    const paperStart = html.indexOf("<article");
+    expect(headerStart).toBeGreaterThanOrEqual(0);
+    expect(headerEnd).toBeGreaterThan(headerStart);
+    expect(paperStart).toBeGreaterThan(headerEnd);
+
+    const caption = html.slice(headerStart, headerEnd);
+    const heading = caption.indexOf(`<h2 tabindex="-1">${REVEAL_COPY.stage2Title}</h2>`);
+    const disclosure = caption.indexOf(
+      REVEAL_COPY.letterDisclosure
+        .replace("{name}", PERSONA_NAME)
+        .replace("{writtenAsOf}", formatCalendarDate("2024-10-15")),
     );
-    expect(creaseTags.filter((tag) => tag.includes("33.3%"))).toHaveLength(2);
-    expect(creaseTags.filter((tag) => tag.includes("66.6%"))).toHaveLength(2);
-
-    const css = withoutComments(readFileSync(join(HERE, "LetterBlock.module.css"), "utf8"));
-    // A crease spans only the padding band: no rule stretches it from top to bottom.
-    expect(blockOf(css, "crease")).not.toMatch(/top:\s*0;\s*bottom:\s*0/);
-    expect(blockOf(css, "crease")).toMatch(/height:\s*var\(--paper-pad\)/);
-    expect(blockOf(css, "creaseTop")).toMatch(/top:\s*0/);
-    expect(blockOf(css, "creaseBottom")).toMatch(/bottom:\s*0/);
-    expect(blockOf(css, "paper")).toMatch(/padding:\s*var\(--paper-pad\)/);
+    const sealed = caption.indexOf(REVEAL_COPY.sealedForThisDemo.split("{")[0]);
+    const slot = caption.indexOf("data-caption-slot");
+    expect(heading).toBeGreaterThanOrEqual(0);
+    expect(disclosure).toBeGreaterThan(heading);
+    expect(sealed).toBeGreaterThan(disclosure);
+    expect(slot).toBeGreaterThan(sealed);
+    // The letter text is not inside the caption.
+    expect(caption).not.toContain("A short letter.");
   });
+
+  it("has no purple slab and no vertical creases in its stylesheet (L7.1, L8.1)", () => {
+    const css = withoutComments(readFileSync(join(HERE, "LetterBlock.module.css"), "utf8"));
+    expect(blockOf(css, "letterBlock")).not.toMatch(/background/);
+    expect(css).not.toMatch(/\.crease/);
+    expect(css).not.toMatch(/#8f46ff|143,\s*70,\s*255/i);
+  });
+
+  it("gives the caption its own light focus ring, not a white ring inside a purple block (L6.2)", () => {
+    const css = withoutComments(readFileSync(join(HERE, "LetterBlock.module.css"), "utf8"));
+    expect(css).toMatch(/\.caption :focus-visible\s*\{[^}]*outline:\s*2px solid var\(--text/);
+    expect(css).not.toMatch(/#ffffff/i);
+  });
+
 
   it("keeps the letter as one text node with white-space: pre-wrap", () => {
     const revealCss = withoutComments(readFileSync(join(REVEAL_DIR, "reveal.module.css"), "utf8"));

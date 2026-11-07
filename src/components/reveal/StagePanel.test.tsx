@@ -176,9 +176,16 @@ describe("reveal stages sit on a ParchmentSurface panel", () => {
     expect(isInsidePanel(html, CEREMONY_COPY.sealButton)).toBe(true);
   });
 
-  it("wraps stage 2 (What was written then) in the letter block's paper panel", () => {
+  it("puts stage 2 (What was written then) in the Caption_Block, above the paper (spec 09 L6.2, L6.4)", () => {
     const html = renderReveal(2);
-    expect(isInsideLetterPaper(html, REVEAL_COPY.stage2Title)).toBe(true);
+    const heading = html.indexOf(escapeHtml(REVEAL_COPY.stage2Title));
+    const caption = html.indexOf(`class="${blockStyles.caption}"`);
+    const paper = html.indexOf(`class="${blockStyles.paper}"`);
+    expect(caption).toBeGreaterThanOrEqual(0);
+    expect(heading).toBeGreaterThan(caption);
+    expect(paper).toBeGreaterThan(heading);
+    // The heading is not inside the paper: no paper class opens before it.
+    expect(isInsideLetterPaper(html, REVEAL_COPY.stage2Title)).toBe(false);
   });
 
   it("sets --ink on the letter paper, so the letter does not inherit the desk's cream ink", () => {
