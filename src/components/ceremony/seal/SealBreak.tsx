@@ -50,7 +50,7 @@ import { useLiveRegion } from "../LiveRegion";
 import { useMotion } from "../motion";
 import { useSequence } from "../skip";
 import { SoundEnabledContext } from "../sound/SoundEnabledContext";
-import { WaxSeal } from "../envelope/WaxSeal";
+import { WaxSeal } from "@/components/ui/WaxSeal";
 import {
   CRACK_PATHS,
   FLAKE_FALLS,

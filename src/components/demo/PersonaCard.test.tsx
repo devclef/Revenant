@@ -3,7 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import Link from "next/link";
-import { WaxSeal, normaliseWaxSealIds } from "@/components/ceremony/envelope/WaxSeal";
+import { WaxSeal, normaliseWaxSealIds } from "@/components/ui/WaxSeal";
 
 import { PersonaCard, type PersonaCardProps } from "./PersonaCard";
 import { DEMO_COPY } from "./copy";

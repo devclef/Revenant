@@ -1,6 +1,6 @@
 import { ParchmentSurface } from "@/components/ui";
 import Link from "next/link";
-import { WaxSeal } from "@/components/ceremony/envelope/WaxSeal";
+import { WaxSeal } from "@/components/ui/WaxSeal";
 import { DEMO_COPY } from "./copy";
 import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-date";
 import styles from "./PersonaCard.module.css";

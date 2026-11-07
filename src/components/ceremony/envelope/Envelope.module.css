@@ -11,7 +11,7 @@
  * direction. Every envelope — whatever a letter's figures did — is drawn with
  * exactly these colours and the same geometry. There is no green/red and no
  * directional treatment. The seal carries its own one wax colour from
- * WaxSeal.module.css.
+ * ui/WaxSeal.module.css.
  *
  * R3.6: the geometry is fixed in the SVG itself; this stylesheet sets only
  * colours, stroke widths and the layout of the date lines, none of which reads
@@ -74,15 +74,6 @@
   stroke-width: 2;
 }
 
-/* Front postmark: faint ink rings and cancel bars, decoration only. */
-.postmark circle,
-.postmark line {
-  fill: none;
-  stroke: var(--env-ink);
-  stroke-width: 1.5;
-  opacity: 0.45;
-}
-
 /* Back folds: faint shaded triangles so the folds read without heavy lines. */
 .fold {
   fill: var(--env-paper-deep);
@@ -119,7 +110,7 @@
 
 /*
  * The date lines, laid over the front face as HTML so they stay selectable and
- * accessible. They sit in the lower-left of the paper, away from the postmark.
+ * accessible. They sit in the lower-left of the paper.
  */
 .lines {
   position: absolute;

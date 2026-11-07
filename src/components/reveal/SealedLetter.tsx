@@ -1,7 +1,7 @@
 import type { Opened } from "./opening-machine";
 import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-date";
 import { formatLocalDateTime } from "@/components/live/format";
-import { WaxSeal } from "@/components/ceremony/envelope/WaxSeal";
+import { WaxSeal } from "@/components/ui/WaxSeal";
 import { LIVE_COPY, REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
 

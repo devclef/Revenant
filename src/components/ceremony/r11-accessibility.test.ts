@@ -153,7 +153,7 @@ describe("decorative layers are hidden from assistive technology", () => {
   // later decorative svg from being read out as an unlabelled graphic.
   const files = [
     "envelope/Envelope.tsx",
-    "envelope/WaxSeal.tsx",
+    "../ui/WaxSeal.tsx",
     "seal/SealBreak.tsx",
   ];
   for (const file of files) {
