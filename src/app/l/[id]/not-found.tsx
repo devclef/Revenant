@@ -1,10 +1,7 @@
-import Link from "next/link";
-import { PageShell, ParchmentSurface } from "@/components/ui";
-import { DEMO_COPY } from "@/components/demo/copy";
+import { BrandedPage } from "@/components/ui/BrandedPage";
 import { LIVE_COPY } from "@/components/live/copy";
 import { UI_COPY } from "@/components/ui/copy";
 import { pageMetadata } from "@/lib/page-metadata";
-import styles from "./not-found.module.css";
 
 export const metadata = pageMetadata(UI_COPY.pageMeta.notFound, "/demo");
 
@@ -13,19 +10,10 @@ export const metadata = pageMetadata(UI_COPY.pageMeta.notFound, "/demo");
  * the segment is not a letter ID (R17.1).
  *
  * A server component with no state and no data access. It makes no request and
- * imports no crypto or database module. The words come from the live copy and
- * the demo copy, so the page holds no inline literals (R19.1). The link goes to
- * `/demo`, where the reader can find another letter.
+ * imports no crypto or database module. The heading and body come from the
+ * live copy. BrandedPage links to /demo, where the reader can find another
+ * letter.
  */
 export default function LetterNotFound() {
-  return (
-    <PageShell>
-      <div className={styles.column}>
-        <ParchmentSurface as="section">
-          <p>{LIVE_COPY.letterNotFound}</p>
-          <Link href="/demo">{DEMO_COPY.backToDemo}</Link>
-        </ParchmentSurface>
-      </div>
-    </PageShell>
-  );
+  return <BrandedPage heading={LIVE_COPY.letterNotFoundTitle} body={LIVE_COPY.letterNotFound} />;
 }
