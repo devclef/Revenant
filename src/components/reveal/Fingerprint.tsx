@@ -25,6 +25,7 @@
 // expected here; the block renders nothing in that case rather than show a
 // malformed fingerprint. Every string comes from copy.ts (R15.1).
 
+import Link from "next/link";
 import { formatFingerprint } from "@/lib/seal-format";
 import type { LetterKind } from "./FigureLine";
 import { REVEAL_COPY } from "./copy";
@@ -57,6 +58,34 @@ export function Fingerprint({ envelopeHash, letterKind }: FingerprintProps) {
   if (fingerprint === null) return null;
   const [lineOne, lineTwo] = twoLines(fingerprint);
 
+  // C6.4: a persona letter shows the verdict first, then a closed disclosure
+  // that holds the fingerprint, the demo label and a link to the How_Page. A
+  // persona letter has no card, so the card sentence is never shown here.
+  if (letterKind === "persona") {
+    return (
+      <section className={styles.fingerprint} data-fingerprint-persona="">
+        <p className={styles.sealVerdict}>{REVEAL_COPY.sealVerdict}</p>
+        <details className={styles.fingerprintDisclosure}>
+          <summary>{REVEAL_COPY.fingerprintShow}</summary>
+          <p className={styles.fingerprintGroups} translate="no">
+            <span className={styles.fingerprintLine}>{lineOne}</span>
+            <span className={styles.fingerprintLine}>{lineTwo}</span>
+          </p>
+          <p className={styles.fingerprintStatement}>
+            <span className={styles.fixtureLabel}>
+              {REVEAL_COPY.fingerprintDemo}
+            </span>
+          </p>
+          <p className={styles.fingerprintStatement}>
+            <Link href="/how-it-is-sealed" className={styles.fingerprintLink}>
+              {REVEAL_COPY.fingerprintHowLink}
+            </Link>
+          </p>
+        </details>
+      </section>
+    );
+  }
+
   return (
     <section className={styles.fingerprint} aria-labelledby="fp-title">
       <h3 id="fp-title" className={styles.fingerprintTitle}>
@@ -68,16 +97,7 @@ export function Fingerprint({ envelopeHash, letterKind }: FingerprintProps) {
       </p>
       <p className={styles.fingerprintStatement}>
         {REVEAL_COPY.fingerprintPassed}
-        {letterKind === "persona" ? (
-          <>
-            {" "}
-            <span className={styles.fixtureLabel}>
-              {REVEAL_COPY.fingerprintDemo}
-            </span>
-          </>
-        ) : (
-          ` ${REVEAL_COPY.fingerprintPassedCard}`
-        )}
+        {` ${REVEAL_COPY.fingerprintPassedCard}`}
       </p>
     </section>
   );

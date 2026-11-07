@@ -177,7 +177,15 @@ export const REVEAL_COPY = {
   stage2Title: "What was written then",
 
   /** Summary of the letter disclosure on the phone's figures and close Stages. */
-  letterDisclosure: "Read the letter again",
+  letterDisclosureSummary: "Read the letter again",
+
+  /**
+   * The one-line disclosure at a persona letter (C6.1, C6.3): the persona is
+   * fictional and the letter was written as of its date. `{name}` is the
+   * persona's name; `{writtenAsOf}` is the written-as-of date.
+   */
+  letterDisclosure:
+    "{name} is fictional. This letter was written as of {writtenAsOf}.",
 
   /** The "written as of" line. `{date}` is the payload's written-as-of date. */
   writtenAsOfPrefix: "Written as of {date}",
@@ -189,8 +197,11 @@ export const REVEAL_COPY = {
   demoLetterLabel:
     "A demo letter. {name} is fictional, and this letter was prepared later than its written as of date.",
 
-  /** The "sealed for the demo on" line. `{sealedAt}` is the header's seal date. */
-  sealedForDemoOn: "Sealed for the demo on {sealedAt}",
+  /**
+   * The seal line at a persona letter (C6.3), in the Caption_Block. `{sealedAt}`
+   * is the header's seal date, the only date that says when the demo was sealed.
+   */
+  sealedForThisDemo: "Sealed for this demo on {sealedAt}",
 
   /** The control that advances from the letter to the figures (R9.4). */
   stage2Next: "See the receipts",
@@ -215,6 +226,18 @@ export const REVEAL_COPY = {
    * persona letter has no card, so no card wording is shown next to it.
    */
   fingerprintDemo: "demo letter",
+
+  /**
+   * The verdict shown first at a persona letter once its hash check has passed
+   * (C6.4). It replaces `fingerprintPassed` on that path.
+   */
+  sealVerdict: "The seal is intact. This is exactly the text that was sealed.",
+
+  /** The summary of the closed disclosure that holds a persona's Fingerprint (C6.4). */
+  fingerprintShow: "Show the fingerprint",
+
+  /** The link from a persona's Fingerprint to the How_Page (C6.4). */
+  fingerprintHowLink: "How the seal is checked",
 
   // --- Reveal, stage 3: the figures then and now ---
 

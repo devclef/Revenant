@@ -639,6 +639,31 @@
   color: var(--text);
 }
 
+/* C6.4: the persona verdict and its closed disclosure sit on the desk (--bg),
+   so they take the desk text tokens. The summary is a 44 px touch target. */
+.sealVerdict {
+  margin: 0 0 0.5rem;
+  color: var(--text);
+}
+
+.fingerprintDisclosure {
+  color: var(--text);
+}
+
+.fingerprintDisclosure > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  color: var(--text);
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.fingerprintLink {
+  color: var(--text);
+  text-decoration: underline;
+}
+
 /* The "demo letter" label uses the shared bordered label, re-coloured for the
    desk so it reads on --bg (the paper-ink .fixtureLabel would be invisible). */
 .fingerprint .fixtureLabel {

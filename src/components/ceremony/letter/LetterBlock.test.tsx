@@ -8,6 +8,7 @@ import { describe, expect, it } from "vitest";
 import { LetterBlock } from "./LetterBlock";
 import { MotionProvider } from "../motion";
 import { REVEAL_COPY, LIVE_COPY } from "@/components/reveal/copy";
+import { formatCalendarDate } from "@/components/ui/letter-date";
 import type { Opened } from "@/components/reveal/opening-machine";
 import type { PayloadV1 } from "@/lib/seal-format";
 
@@ -207,7 +208,8 @@ const BLOCK_STRINGS: Record<string, string> = {
   showAll: REVEAL_COPY.showAll,
   writtenAsOfPrefix: REVEAL_COPY.writtenAsOfPrefix,
   demoLetterLabel: REVEAL_COPY.demoLetterLabel,
-  sealedForDemoOn: REVEAL_COPY.sealedForDemoOn,
+  sealedForThisDemo: REVEAL_COPY.sealedForThisDemo,
+  letterDisclosure: REVEAL_COPY.letterDisclosure,
   liveSealedOn: LIVE_COPY.sealedOn,
 };
 
@@ -231,6 +233,10 @@ describe("Property 23: strings for LetterBlock (copy checks)", () => {
   it("renders the stage heading and the demo label as they are in copy", () => {
     const html = render("Body.");
     expect(html).toContain(REVEAL_COPY.stage2Title);
-    expect(html).toContain(REVEAL_COPY.demoLetterLabel.replace("{name}", PERSONA_NAME));
+    expect(html).toContain(
+      REVEAL_COPY.letterDisclosure
+        .replace("{name}", PERSONA_NAME)
+        .replace("{writtenAsOf}", formatCalendarDate("2024-10-15")),
+    );
   });
 });

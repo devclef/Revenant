@@ -109,25 +109,18 @@ describe("EU persona letter header (stage 2)", () => {
     createElement(SealedLetter, { opened: OPENED, personaName: PERSONA_NAME }),
   );
 
-  it("says the letter was written as of its date", () => {
+  it("says the letter was written as of its date, and that the persona is fictional", () => {
     expect(html).toContain(
-      REVEAL_COPY.writtenAsOfPrefix.replace(
-        "{date}",
-        formatCalendarDate(WRITTEN_AS_OF),
-      ),
+      REVEAL_COPY.letterDisclosure
+        .replace("{name}", PERSONA_NAME)
+        .replace("{writtenAsOf}", formatCalendarDate(WRITTEN_AS_OF)),
     );
-  });
-
-  it("says the letter was prepared later as a demo, naming the persona", () => {
-    expect(html).toContain(
-      REVEAL_COPY.demoLetterLabel.replace("{name}", PERSONA_NAME),
-    );
-    expect(html).toContain("prepared later");
+    expect(html).toContain("is fictional.");
   });
 
   it("dates the seal from the header's real seal time, not a persona date", () => {
     expect(html).toContain(
-      REVEAL_COPY.sealedForDemoOn.replace(
+      REVEAL_COPY.sealedForThisDemo.replace(
         "{sealedAt}",
         formatLetterDate(SEALED_AT, { kind: "utc" }),
       ),
@@ -138,7 +131,7 @@ describe("EU persona letter header (stage 2)", () => {
     expect(html.toLowerCase()).not.toContain("sealed on");
     expect(html).not.toContain(formatCalendarDate(OPENS_AT_DATE));
     expect(html).not.toContain(
-      `Sealed for the demo on ${formatCalendarDate(WRITTEN_AS_OF)}`,
+      `Sealed for this demo on ${formatCalendarDate(WRITTEN_AS_OF)}`,
     );
   });
 });

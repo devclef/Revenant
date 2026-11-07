@@ -56,9 +56,6 @@ export const CEREMONY_COPY = {
   /** The envelope's opening line. `{date}` is the opening date. */
   envelopeOpens: "Opens {date}",
 
-  /** The quiet note on the demo envelope that it was prepared later. */
-  envelopeDemoNote: "Prepared later as a demo.",
-
   // --- Seal break ---
 
   /** The instruction above the wax seal. */

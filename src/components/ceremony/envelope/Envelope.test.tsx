@@ -13,8 +13,8 @@
 //     the envelope is handed none of that. We render each state in many
 //     "payload contexts" (varied notional letter length / figure count) and
 //     assert the markup never moves.
-//   - R3.7: the front shows "Written as of {date}" and "Opens {date}", shows
-//     "Prepared later as a demo." only when `demo`, and NEVER renders a
+//   - R3.7: the front shows "Written as of {date}" and "Opens {date}" only (spec
+//     09 OD5 dropped the demo note), and NEVER renders a
 //     sealed-on date or the words "sealed on".
 //   - R15.1: every user-facing string comes from CEREMONY_COPY, with no inline
 //     copy literals.
@@ -108,12 +108,13 @@ describe("Envelope — front dates come from the persona list, never a sealed-on
     expect(html).toContain("Opens 5 November 2024");
   });
 
-  it("shows 'Prepared later as a demo.' only when the persona is a demo", () => {
+  it("shows no demo note on the front, for a demo or a real persona (spec 09 OD5)", () => {
     const demoHtml = renderEnvelope("closed", PERSONA);
-    expect(demoHtml).toContain(CEREMONY_COPY.envelopeDemoNote);
+    expect(demoHtml).not.toContain("Prepared later as a demo.");
+    expect(demoHtml).not.toContain("data-demo-note");
 
     const realHtml = renderEnvelope("closed", { ...PERSONA, demo: false });
-    expect(realHtml).not.toContain(CEREMONY_COPY.envelopeDemoNote);
+    expect(realHtml).not.toContain("Prepared later as a demo.");
   });
 
   it("renders no date lines on the turned or open states (dates belong to the front, R3.7)", () => {
@@ -142,7 +143,7 @@ describe("Envelope — front dates come from the persona list, never a sealed-on
       const html = renderEnvelope(state);
       expect(html).not.toContain("Written as of");
       expect(html).not.toContain("Opens ");
-      expect(html).not.toContain(CEREMONY_COPY.envelopeDemoNote);
+      expect(html).not.toContain("Prepared later as a demo.");
     }
   });
 });
@@ -187,10 +188,11 @@ describe("Envelope — every user-facing string comes from CEREMONY_COPY (R15.1)
         "{date}",
         formatLetterDate(PERSONA.opens_at, { kind: "utc" }),
       ),
-      CEREMONY_COPY.envelopeDemoNote,
     ];
     for (const line of expected) {
       expect(html).toContain(line);
     }
+    // The demo note is gone from every width (spec 09 OD5).
+    expect(html).not.toContain("Prepared later as a demo.");
   });
 });

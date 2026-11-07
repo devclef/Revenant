@@ -16,7 +16,8 @@
 // are fixed.
 //
 // R3.7 — the front shows only the persona list dates: "Written as of {date}"
-// and "Opens {date}", plus "Prepared later as a demo." when `demo`. It NEVER
+// and "Opens {date}". The "Prepared later as a demo." line was dropped at every
+// width (spec 09 C6.2, OD5). It NEVER
 // renders a sealed-on date and never claims the letter was sealed on a persona
 // date. There is no `sealedAt` prop and nothing here reads one.
 //
@@ -51,15 +52,14 @@ export type EnvelopePersona = {
   written_as_of: string;
   /** The opening instant, ISO UTC (R3.7). */
   opens_at: string;
-  /** Whether this is a demo letter, so the demo note shows (R3.7). */
+  /** Whether this is a demo letter. The front no longer shows a demo note (OD5). */
   demo: boolean;
 };
 
 /**
- * The front's layout (spec 07 task 4). `wide` shows the written-as-of and
- * opening lines and the demo note. `narrow` shows only the two date lines, each
- * on its own line. `responsive` shows the wide content and lets CSS hide the
- * demo note at small widths.
+ * The front's layout (spec 07 task 4). Both layouts show the written-as-of and
+ * opening lines only (spec 09 C6.2). `narrow` puts each on its own line.
+ * `responsive` lets CSS pick the same two lines at every width.
  */
 export type EnvelopeLayout = "narrow" | "wide" | "responsive";
 
@@ -307,10 +307,6 @@ export function Envelope({
           "{date}",
           formatLetterDate(persona.opens_at, { kind: "utc" }),
         );
-  const demoNote =
-    persona !== undefined && persona.demo
-      ? CEREMONY_COPY.envelopeDemoNote
-      : undefined;
 
   // The seal is the same for every letter (R10.10), so nothing here reads the
   // persona beyond its date lines.
@@ -385,11 +381,6 @@ export function Envelope({
           <p className={`${styles.line} ${styles.date}`} data-date>
             {opens}
           </p>
-          {demoNote === undefined || layout === "narrow" ? null : (
-            <p className={styles.demoNote} data-demo-note>
-              {demoNote}
-            </p>
-          )}
         </div>
       ) : null}
     </div>

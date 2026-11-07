@@ -144,20 +144,6 @@
   font-size: min(clamp(0.85rem, 2.4vw, 1rem), 6cqi);
 }
 
-.demoNote {
-  margin: 0.15rem 0 0;
-  font-size: clamp(0.75rem, 2.1vw, 0.9rem);
-  /* A slightly quieter ink, still a scene text token that clears AA. */
-  color: var(--ink-soft);
-}
-
-/* The responsive front drops the demo note at small widths, so the dates keep
-   the room above the dirt band. */
-@media (max-width: 480px) {
-  .wide [data-demo-note] {
-    display: none;
-  }
-}
 
 /*
  * The turning object (R10.8, R10.9). The front and back faces sit one on top of
