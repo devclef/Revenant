@@ -1,53 +1,131 @@
-/* Feature: 07-judge-journey (spec task 5, R13)
+/* Feature: 07-judge-journey (spec task 5, R13); spec 09 L6 (task 18, step 1)
  *
- * The letter stage. One purple block holds one paper panel. The paper sets its
- * own text colour (--ink), so no text here inherits the desk's cream ink.
- * Nothing in this file applies a mask, clip or fade to the letter text (R13.4).
- * The colour tokens fall back to their literal values so this block renders the
- * same when the scene tokens are not loaded. */
+ * The letter stage. The Caption_Block sits on the desk (dark) in the sans. The
+ * paper below it sets its own text colour (--ink), so no paper text inherits
+ * the desk's light ink. Nothing here applies a mask, clip or fade to the letter
+ * text (R13.4). The colour tokens fall back to their literal values so this
+ * block renders the same when the scene tokens are not loaded. */
 
 .letterBlock {
   position: relative;
-  background-color: var(--purple, #8f46ff);
-  border-radius: clamp(24px, 4vw, 48px);
-  padding: clamp(0.9rem, 3vw, 2.4rem);
+  text-align: left;
 }
 
+/* The Caption_Block: the Stage heading, the labels, and the Seal_Verdict with
+   its Fingerprint. It is on the dark, so it sets light text and the sans. The
+   child selectors keep the caption colours off the Fingerprint's own text. */
+.caption {
+  position: relative;
+  z-index: 1;
+  font-family: var(--font-sans);
+  color: var(--text, #f5f3ff);
+  margin: 0 0 1rem;
+}
+
+.caption > h2 {
+  color: var(--text, #f5f3ff);
+}
+
+.caption > p {
+  color: var(--muted, #bdb4dc);
+}
+
+/* Focus in the caption is the desk's light ring, since the caption is on the
+   dark. The selector is 0,3,0 (.letterBlock .caption plus :focus-visible), so
+   it wins over the ink ring from .flow :focus-visible (0,2,0) in
+   reveal.module.css whatever the stylesheet order. */
+.letterBlock .caption :focus-visible {
+  outline: 2px solid var(--text, #f5f3ff);
+  outline-offset: 2px;
+}
+
+/* The phone's closed disclosure around the paper. Its summary sits on the dark,
+   so it is light text, and a touch target of 44 px (P8.4, PH7). */
+.letterDisclosure > summary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-sans);
+  font-weight: 700;
+  color: var(--text, #f5f3ff);
+  cursor: pointer;
+}
+
+/* The paper: flat --paper, the Letter_Text alone. */
 .paper {
   --ink: #1f1b16;
   --paper-pad: clamp(1rem, 3vw, 2rem);
   position: relative;
   color: var(--ink);
-  background-color: var(--paper, #f6ead4);
-  border-radius: 4px;
+  background-color: var(--paper, #f4ecd8);
+  border-radius: 6px;
   padding: var(--paper-pad);
+  margin: 0;
   text-align: left;
-  transform-origin: top center;
 }
 
-/* Two creases, one third and two thirds across the paper, each drawn at the top
- * and at the bottom edge. A crease is only as tall as the paper's padding, so it
- * stays in the margin and never sits behind a line of the letter (R13.7). The
- * colour is --ink at 8 % over the paper (R13.2): about 13.5 : 1 contrast for the
- * text. */
+/* The sheet holds the paper, the Light_Shaft and the creases. It is as tall as
+   the paper (the article is its only in-flow child), so the creases at 1/3 and
+   2/3 of the sheet are at 1/3 and 2/3 of the paper. It unfolds as one. */
+.sheet {
+  position: relative;
+}
+
+/* The Light_Shaft: the lit band above the paper, which lights its top edge and
+   the dark around it. It is a gradient only, no solid fill, and it sits behind
+   the Caption_Block. Its band is at most 80 px below 600 px (phone sizes, spec
+   09 L7). It is decorative, so it takes no pointer events. */
+.lightShaft {
+  position: absolute;
+  left: -0.5rem;
+  right: -0.5rem;
+  bottom: 100%;
+  height: 80px;
+  z-index: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top,
+    color-mix(in srgb, var(--purple, transparent) 35%, transparent),
+    transparent
+  );
+}
+
+@media (min-width: 600px) {
+  .lightShaft {
+    height: 120px;
+  }
+}
+
+/* Calm, light and still letters mark the shaft static (LetterBlock.tsx sets
+   data-light="static"). It rests at its final state with no animation. The
+   reduced-motion rule does the same for the OS preference. */
+.lightShaft[data-light="static"] {
+  transform: none;
+  opacity: 1;
+  animation: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lightShaft {
+    transform: none;
+    opacity: 1;
+    animation: none;
+  }
+}
+
+/* A crease: one full-width hairline across the paper, with a light line under
+   it (design.md, Creases). Decorative only. */
 .crease {
   position: absolute;
-  height: var(--paper-pad);
-  width: 2px;
-  margin-left: -1px;
-  background-color: rgba(31, 27, 22, 0.08);
+  left: 0;
+  right: 0;
+  height: 0;
+  border-top: 1px solid rgba(31, 27, 22, 0.08);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
   pointer-events: none;
 }
 
-.creaseTop {
-  top: 0;
-}
-
-.creaseBottom {
-  bottom: 0;
-}
-
-/* Below LETTER_NARROW_PX (600 px) the block and paper padding tighten, so the
+/* Below LETTER_NARROW_PX (600 px) the paper padding tightens, so the
    Letter_Text keeps at least 280 px at 360 px wide (spec 08, R3.3). */
 @media (max-width: 599.98px) {
   .letterBlock {
@@ -57,12 +135,4 @@
   .paper {
     --paper-pad: 0.875rem;
   }
-}
-
-/* Focus inside the block is white (--on-purple), the Accent everywhere else.
-   The selector has specificity 0,3,0 so the white ring also wins over the
-   ink ring from .flow and the heading rules in reveal.module.css. */
-.letterBlock :focus-visible:focus {
-  outline: 2px solid #ffffff;
-  outline-offset: 2px;
 }

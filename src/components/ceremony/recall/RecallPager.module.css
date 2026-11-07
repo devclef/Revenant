@@ -1,7 +1,7 @@
 /*
  * Styles for the Recall_Pager (design.md "Recall_Pager", spec 07 R11). Only the
- * colour tokens from globals.css are used. The surface is a ParchmentSurface,
- * which sets --ink itself, so every text colour here is set on purpose.
+ * colour tokens from globals.css are used. The surface is a paper panel
+ * (ui/paper.module.css), which sets --ink itself, so every text colour here is set on purpose.
  * The Accent (--accent) marks the reader's own control, the submit or Next
  * button; it never marks a figure, a change or a direction (tone.md).
  */

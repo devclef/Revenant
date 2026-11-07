@@ -31,7 +31,7 @@ describe("the reveal region draws no outline", () => {
   it("keeps the focus ring on controls, and only for the keyboard on headings", () => {
     const control = bodiesOf(".deskControl:focus-visible");
     expect(control.length).toBe(1);
-    expect(control[0]).toMatch(/outline:\s*2px solid var\(--desk-ink\)/);
+    expect(control[0]).toMatch(/outline:\s*2px solid var\(--text\)/);
     // Headings and controls share the :focus-visible ring. No generic :focus
     // rule draws a ring on a pointer or script focus (spec 09 A12.1).
     expect(bodiesOf(".desk :focus-visible").some((b) => /outline:\s*2px/.test(b))).toBe(true);

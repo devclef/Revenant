@@ -11,7 +11,7 @@ import { SkipProvider } from "@/components/ceremony/skip";
 import { LiveRegionProvider } from "@/components/ceremony/LiveRegion";
 import { LocalViewProvider } from "@/components/ceremony/local-view";
 import styles from "./reveal.module.css";
-import surfaceStyles from "@/components/ui/ParchmentSurface.module.css";
+import paperStyles from "@/components/ui/paper.module.css";
 import blockStyles from "@/components/ceremony/letter/LetterBlock.module.css";
 import { readFileSync as readCss } from "node:fs";
 import { join as joinPath } from "node:path";
@@ -20,13 +20,13 @@ import type { RecallRecordV1 } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
 
 /**
- * Issue #119, task 1: every reveal stage sits on a ParchmentSurface panel that
+ * Issue #119, task 1: every reveal stage sits on a paper panel that
  * sets its own `--ink` text colour. Without the panel, stage text inherits the
  * desk's cream ink and cannot be read on the paper-free desk.
  *
  * Rendered with `renderToStaticMarkup` (no DOM library), like the other reveal
  * markup tests. The check is structural: for each stage heading, the nearest
- * enclosing panel must carry both the ParchmentSurface class and the reveal
+ * enclosing panel must carry both the paper class and the reveal
  * StagePanel class, with no `</div>` between that panel's opening tag and the
  * heading.
  */
@@ -124,9 +124,9 @@ function escapeHtml(text: string): string {
 }
 
 /**
- * True when `heading` sits inside a ParchmentSurface panel that is also a
+ * True when `heading` sits inside a paper panel that is also a
  * StagePanel. The nearest preceding `<div class="...">` that carries the
- * StagePanel class must carry the ParchmentSurface class too, and no `</div>`
+ * StagePanel class must carry the paper class too, and no `</div>`
  * may close between that opening tag and the heading.
  */
 function isInsidePanel(html: string, heading: string): boolean {
@@ -146,7 +146,7 @@ function isInsidePanel(html: string, heading: string): boolean {
   if (panelIndex < 0) return false;
   const between = before.slice(panelIndex);
   return (
-    panelClass.includes(surfaceStyles.surface) &&
+    panelClass.includes(paperStyles.paper) &&
     !between.includes("</div>")
   );
 }
@@ -170,15 +170,22 @@ function isInsideLetterPaper(html: string, heading: string): boolean {
   return !before.slice(paperIndex).includes("</div>");
 }
 
-describe("reveal stages sit on a ParchmentSurface panel", () => {
+describe("reveal stages sit on a paper panel", () => {
   it("wraps stage 1 (the seal break) in a panel", () => {
     const html = renderReveal(1);
     expect(isInsidePanel(html, CEREMONY_COPY.sealButton)).toBe(true);
   });
 
-  it("wraps stage 2 (What was written then) in the letter block's paper panel", () => {
+  it("puts stage 2 (What was written then) in the Caption_Block, above the paper (spec 09 L6.2, L6.4)", () => {
     const html = renderReveal(2);
-    expect(isInsideLetterPaper(html, REVEAL_COPY.stage2Title)).toBe(true);
+    const heading = html.indexOf(escapeHtml(REVEAL_COPY.stage2Title));
+    const caption = html.indexOf(`class="${blockStyles.caption}"`);
+    const paper = html.indexOf(`class="${blockStyles.paper}"`);
+    expect(caption).toBeGreaterThanOrEqual(0);
+    expect(heading).toBeGreaterThan(caption);
+    expect(paper).toBeGreaterThan(heading);
+    // The heading is not inside the paper: no paper class opens before it.
+    expect(isInsideLetterPaper(html, REVEAL_COPY.stage2Title)).toBe(false);
   });
 
   it("sets --ink on the letter paper, so the letter does not inherit the desk's cream ink", () => {
@@ -195,13 +202,14 @@ describe("reveal stages sit on a ParchmentSurface panel", () => {
     expect(isInsidePanel(html, REVEAL_COPY.stage3Title)).toBe(false);
   });
 
-  it("gives every stage in the markup its own panel", () => {
-    const html = renderReveal(3);
-    // Stage 1 uses StagePanel; stage 2 uses the letter block's paper; stage 3
-    // sits on the desk (spec 07 R14.1).
-    const panels = html.split(styles.stagePanel).length - 1;
-    const paper = html.split(blockStyles.paper).length - 1;
-    expect(panels).toBe(1);
+  it("keeps the paper panel to stage 1, so the letter stage's paper holds only the letter (spec 09 L6.1)", () => {
+    // Stage 1 uses StagePanel; stage 2 uses the letter block's paper only;
+    // stage 3 sits on the desk (spec 07 R14.1).
+    const stage1 = renderReveal(1);
+    expect(stage1.split(styles.stagePanel).length - 1).toBe(1);
+    const stage3 = renderReveal(3);
+    expect(stage3.split(styles.stagePanel).length - 1).toBe(0);
+    const paper = stage3.split(blockStyles.paper).length - 1;
     expect(paper).toBe(1);
   });
 });

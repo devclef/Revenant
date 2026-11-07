@@ -1,6 +1,6 @@
 "use client";
 
-import { ParchmentSurface } from "@/components/ui";
+import paper from "@/components/ui/paper.module.css";
 import { RecallPager } from "@/components/ceremony/recall/RecallPager";
 import type { Draft } from "@/lib/recall";
 import type { Opened } from "./opening-machine";
@@ -62,7 +62,7 @@ export function RecallStep({
   writtenAsOf,
 }: RecallStepProps) {
   return (
-    <ParchmentSurface as="section" className={styles.recall}>
+    <section className={`${paper.paper} ${styles.recall}`} data-paper="">
       <RecallPager
         payload={opened.payload}
         drafts={drafts}
@@ -74,6 +74,6 @@ export function RecallStep({
         onToggleNoAnswer={onToggleNoAnswer}
         onSubmit={onSubmit}
       />
-    </ParchmentSurface>
+    </section>
   );
 }

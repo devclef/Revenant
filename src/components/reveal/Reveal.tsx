@@ -349,42 +349,47 @@ export function Reveal({
   // control: the Close is the last Stage and its own view sets the first viewport.
   const closeShown = stage >= 3 && localView.figures === "settled" && close !== undefined;
 
+  const marksBlock = (
+          <SoundEnabledContext.Provider value={soundOn}>
+            {testimonyCollapsed ? (
+              <details
+                className={styles.testimony}
+                data-card="marks"
+                data-testimony=""
+              >
+                <summary>{REVEAL_COPY.stage1Title}</summary>
+                {marksBody}
+              </details>
+            ) : (
+              <div className={styles.marks} data-card="marks">
+                {isPhone ? <AnswerList items={answerItems} /> : null}
+                {showSeal ? (
+                  <div className={styles.marksBreak} data-fit="break">
+                    <SealBreak
+                      patternKey={
+                        variant === "live"
+                          ? (letterId ?? personaName)
+                          : personaName
+                      }
+                      seal={seal ?? INERT_SEAL}
+                      showAll={stage === 1}
+                      onSealingChange={onSealingChange}
+                    />
+                  </div>
+                ) : null}
+              </div>
+            )}
+          </SoundEnabledContext.Provider>
+  );
+
   return (
     <section className={styles.reveal}>
       {marksGone ? null : (
         <div className={`${styles.stage} ${styles.fade}`}>
-          <StagePanel>
-            <SoundEnabledContext.Provider value={soundOn}>
-              {testimonyCollapsed ? (
-                <details
-                  className={styles.testimony}
-                  data-card="marks"
-                  data-testimony=""
-                >
-                  <summary>{REVEAL_COPY.stage1Title}</summary>
-                  {marksBody}
-                </details>
-              ) : (
-                <div className={styles.marks} data-card="marks">
-                  {isPhone ? <AnswerList items={answerItems} /> : null}
-                  {showSeal ? (
-                    <div className={styles.marksBreak} data-fit="break">
-                      <SealBreak
-                        patternKey={
-                          variant === "live"
-                            ? (letterId ?? personaName)
-                            : personaName
-                        }
-                        seal={seal ?? INERT_SEAL}
-                        showAll={stage === 1}
-                        onSealingChange={onSealingChange}
-                      />
-                    </div>
-                  ) : null}
-                </div>
-              )}
-            </SoundEnabledContext.Provider>
-          </StagePanel>
+          {/* The paper panel holds the testimony and seal break on stage 1
+              only. From the letter stage on, the paper holds only the letter
+              text (spec 09 L6.1), so the testimony sits on the desk instead. */}
+          {stage < 2 ? <StagePanel>{marksBlock}</StagePanel> : <div className={styles.marksOnDesk}>{marksBlock}</div>}
         </div>
       )}
 
@@ -394,6 +399,12 @@ export function Reveal({
             className={`${styles.stage} ${styles.fade} ${styles.letterCol}`}
             data-letter-stage=""
           >
+            {/* The Caption_Block holds the Fingerprint: the Seal_Verdict and its
+                control (spec 09 L6.2, C6.4). It sits on the dark above the paper.
+                It shows the verified envelope hash from `Opened.envelopeHash`.
+                A persona letter gets the verdict and a closed disclosure; a live
+                or real letter gets the open block with the card sentence (R14.8).
+                A failed check never reaches the Reveal (R14.6). */}
             <LetterBlock
               opened={opened}
               personaName={personaName}
@@ -401,16 +412,12 @@ export function Reveal({
               letterId={letterId}
               still={jumpedToEnd}
               collapsible={stage >= 3 && isPhone}
-            />
-            {/* The opening Fingerprint sits under the Letter_Block, on the desk
-                surface, before "See the receipts" (design.md, R14.3). It shows
-                the verified envelope hash from `Opened.envelopeHash`. A persona
-                letter gets the verdict and a closed disclosure (spec 09 C6.4);
-                a live or real letter gets the open block with the card sentence
-                (R14.8). A failed check never reaches the Reveal (R14.6). */}
-            <Fingerprint
-              envelopeHash={opened.envelopeHash}
-              letterKind={letterKind}
+              caption={
+                <Fingerprint
+                  envelopeHash={opened.envelopeHash}
+                  letterKind={letterKind}
+                />
+              }
             />
           </div>
 

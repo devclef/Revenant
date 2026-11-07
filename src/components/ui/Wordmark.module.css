@@ -18,7 +18,7 @@
 }
 
 .tagline {
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-style: italic;
   font-size: clamp(1.125rem, 2.5vw, 1.4rem);
   color: var(--ink-soft);
