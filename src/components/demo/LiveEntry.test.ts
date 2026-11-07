@@ -18,7 +18,12 @@ function ruleBody(name: string): string {
   return match[1] ?? "";
 }
 
-describe("LiveEntry heading", () => {
+describe("LiveEntry headings", () => {
+  it("uses no serif font in any rule of the stylesheet", () => {
+    // The file has no .title rule; this also covers one if it is added later.
+    expect(css).not.toMatch(/--font-serif/);
+  });
+
   it("uses the sans font for the heading", () => {
     expect(ruleBody("heading")).toMatch(/font-family:\s*var\(--font-sans\)/);
   });
