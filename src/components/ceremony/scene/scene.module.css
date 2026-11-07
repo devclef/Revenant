@@ -848,6 +848,21 @@
       scale(0.58);
   }
 
+  /* The Hero is hidden after the First_Step, and the Step_Indicator row takes the
+     top band under the Compact_Top_Bar. The region starts at 56 px so the row
+     (120 px) comes first, then the question, field and Next (P4.1, R1). The
+     handed backdrop lift does not apply below 600 px: the Compact_Ghost is fixed
+     to the row, so the lift would move it off the row. */
+  .scene:has([data-ceremony="recall"], [data-ceremony="marks"], [data-ceremony="seal"]) .backdrop {
+    transform: none;
+  }
+
+  .personaColumn > [data-ceremony="recall"],
+  .personaColumn > [data-ceremony="marks"],
+  .personaColumn > [data-ceremony="seal"] {
+    top: 56px;
+  }
+
   /* The Soil fades out once the persona Stages start (after the First_Step). */
   :is([data-ceremony="recall"], [data-ceremony="marks"], [data-ceremony="seal"], [data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"]) .soilStrip,
   :is([data-ceremony="recall"], [data-ceremony="marks"], [data-ceremony="seal"], [data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"]) .soilLayer {
