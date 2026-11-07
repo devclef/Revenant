@@ -666,3 +666,29 @@
   font-variant-numeric: tabular-nums;
   color: var(--text);
 }
+
+/* The Answer_List (spec 09 A9, C4.1): one line per answer, the name then the
+   answer. Text sits on the desk, so it uses the desk text token. */
+.answerList {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.answerItem {
+  margin: 0 0 0.75rem;
+}
+
+.answerName {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.answerValue {
+  display: block;
+  font-weight: 800;
+  color: var(--text);
+}

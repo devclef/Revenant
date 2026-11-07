@@ -156,6 +156,12 @@ export const REVEAL_COPY = {
   /** Heading for stage 1 of the reveal: what the reader just remembered. */
   stage1Title: "Your testimony",
 
+  /**
+   * The summary of the marks card on the figures and close Stages at 600 px and
+   * wider (C3.4). The card stays closed until the reader opens it.
+   */
+  marksSummary: "Your testimony",
+
   /** Prefix for a remembered answer. `{value}` is filled in at render time. */
   yourAnswer: "Your answer",
 
