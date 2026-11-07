@@ -405,7 +405,7 @@ Each task in this group meets group P for the Stages it changes (G3.7), and atta
   - _Requirements: C2.1–C2.5, C9.1, L2.1, L3.1, F4.1, F4.2, F4.4, F4.5, P4.1–P4.3, P8.4, P9.1–P9.4_
   - Framing evidence (G2.9): the Retired_Phrase search of both persona pages through `close`, and the `node tools/hooks/tone-check.mjs` result for each changed copy file.
 
-- [ ] 15. C8 · Display rescale keyed on the sealed unit
+- [x] 15. C8 · Display rescale keyed on the sealed unit
   - Agent: `data-dev` · Depends on: 1, 14 · Estimated size: ~200 changed lines
   - Before this task: OD3 recorded, or default (b). If OD3 is (a), this issue is closed unmerged and task 16 follows its "if (a)" line.
   - Scope: `src/lib/figures/rescale.ts`, `src/lib/figures/index.ts` (export only), and the `*.test.ts` for each file above
