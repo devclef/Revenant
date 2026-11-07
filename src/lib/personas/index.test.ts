@@ -119,7 +119,7 @@ describe("index — loads without any letter .txt file", () => {
 // to catalogue metrics and her letter ID was rotated. The old ID is retired.
 describe("index — committed list: Maya after the catalogue move (#82)", () => {
   const OLD_LETTER_ID = "wom_GdH6gqP6AGgnyhIMgA";
-  const NEW_LETTER_ID = "Qbm5FLgjOC6vJiRAy5Wh0g";
+  const NEW_LETTER_ID = "ydsos6hcjdEUOs3sK42RQg";
 
   function maya() {
     const entry = PERSONAS.find((p) => p.key === "us-maya");
