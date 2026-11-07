@@ -35,10 +35,9 @@ describe("SCENE_COPY is exact (Property 23)", () => {
     expect(SCENE_COPY).not.toHaveProperty("headlineAccent");
   });
 
-  it("holds the wordmark, the demo chip and the open-letter control", () => {
+  it("holds the wordmark and the demo chip", () => {
     expect(SCENE_COPY.wordmark).toBe("revenant");
     expect(SCENE_COPY.demoChip).toBe("Demo");
-    expect(SCENE_COPY.openLetter).toBe("Open {name}'s letter");
   });
 
   it("holds the persona notice", () => {
@@ -47,31 +46,24 @@ describe("SCENE_COPY is exact (Property 23)", () => {
     );
   });
 
-  it("holds the four landing paragraphs and the link copy, verbatim from SCENE_COPY", () => {
-    expect(SCENE_COPY.landing.paragraphs).toEqual([
-      "Revenant seals a letter to your future self. It opens on a date you choose, and you testify before you read it.",
-      "You write what is on your mind, and you choose figures to seal with it: weekly fuel prices for the United States and the European Union, each from an official source, kept with its date and where it came from.",
-      "You pick a date to open it. Then you seal the letter. Once sealed, it cannot be changed, not even by you, and no one else can read it.",
-      "When that date arrives, the letter opens. First it asks how you remember things. Then it shows what you wrote, and the numbers then beside the numbers now. The space between the two is yours to read.",
-    ]);
+  it("holds the demo link copy", () => {
     expect(SCENE_COPY.landing.demoLink).toBe("Open the demo letters");
-    expect(SCENE_COPY.landing.demoLinkOne).toBe("Open the demo letter");
-    expect(SCENE_COPY.landing.demoLinkMany).toBe("Open the demo letters");
-    expect(SCENE_COPY.landing.liveLink).toBe("Seal your own letter");
-    expect(SCENE_COPY.landing.liveNote).toBe("It opens 30 seconds after you seal it.");
-    expect(SCENE_COPY.landing.realLink).toBe("Seal a letter to your future self");
-    expect(SCENE_COPY.landing.howLink).toBe("How a letter is sealed");
-    expect(SCENE_COPY.landing.sourceLink).toBe("Source code on GitHub");
   });
 
-  it("names fuel prices for the two regions only, with no groceries, rent or other figures", () => {
-    const landing = SCENE_COPY.landing.paragraphs.join(" ");
-    expect(landing).toContain("fuel prices");
-    expect(landing).toContain("United States");
-    expect(landing).toContain("European Union");
-    expect(landing).toContain("future self");
-    expect(landing).not.toMatch(/time capsule/i);
-    expect(landing).not.toMatch(/\b(groceries|rent)\b/i);
+  it("no longer holds the retired landing keys or the persona open-letter control", () => {
+    expect(SCENE_COPY).not.toHaveProperty("openLetter");
+    for (const key of [
+      "paragraphs",
+      "demoLinkOne",
+      "demoLinkMany",
+      "realLink",
+      "liveLink",
+      "liveNote",
+      "howLink",
+      "sourceLink",
+    ]) {
+      expect(SCENE_COPY.landing).not.toHaveProperty(key);
+    }
   });
 });
 
@@ -92,11 +84,7 @@ describe("SCENE_COPY tone and scoring words (Property 23, R24.6, R24.7)", () => 
   });
 
   it("has no sentence over 25 words, ignoring {placeholders}", () => {
-    // Property 23: the 25-word limit applies to new strings. The landing
-    // paragraphs are copied verbatim from page.tsx (R24.3), so they are
-    // checked for exact text above and skipped here.
-    const checked = ENTRIES.filter(([key]) => !key.startsWith("landing.paragraphs"));
-    for (const [key, value] of checked) {
+    for (const [key, value] of ENTRIES) {
       const sentences = value
         .replace(/\{[^}]*\}/g, " ")
         .split(/[.!?]+/)

@@ -71,14 +71,6 @@ const stripPlaceholders = (text: string): string => text.replace(/\{[^}]*\}/g, "
 const hasWord = (text: string, word: string): boolean =>
   new RegExp(`\\b${word.replace(/\s+/g, "\\s+")}\\b`, "i").test(text);
 
-/**
- * The landing paragraphs are copied verbatim from src/app/page.tsx (R24.3) and
- * are longer than 25 words, so the length rule skips them. Their exact text is
- * checked in the example tests below.
- */
-const isVerbatimLanding = (path: string): boolean =>
-  path.startsWith("landing.paragraphs");
-
 describe("Property 23, example checks: the R24.3 table matches exactly", () => {
   it("takes the headline from BRAND_COPY, with no Accent part (F2)", () => {
     expect(BRAND_COPY.tagline).toBe("Memory rewrites itself. Revenant doesn't.");
@@ -86,7 +78,6 @@ describe("Property 23, example checks: the R24.3 table matches exactly", () => {
   });
 
   it("holds the landing button, persona notice and Demo chip", () => {
-    expect(SCENE_COPY.openLetter).toBe("Open {name}'s letter");
     expect(SCENE_COPY.personaNotice).toBe(
       "{name} is fictional. This letter was prepared later as a demo.",
     );
@@ -190,7 +181,6 @@ describe("Property 23: copy strings meet the tone rules (fast-check)", () => {
     fc.assert(
       fc.property(fc.constantFrom(...ALL_ENTRIES), ({ value, path, module }) => {
         expect(value, `${module.name} ${path}`).not.toContain("!");
-        if (isVerbatimLanding(path)) return;
         const sentences = stripPlaceholders(value)
           .split(/[.!?]+/)
           .map((s) => s.trim())

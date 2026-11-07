@@ -122,3 +122,232 @@
     font-size: clamp(4.5rem, 5.6vw, 9rem);
   }
 }
+
+/* Below-the-fold sections (B3, F6). Text is --text on the page background.
+   Accent is not used here: orange means "you" (tone.md). */
+.section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  max-width: 40rem;
+  padding: 2rem 1.25rem 0;
+  color: var(--text);
+}
+
+.sectionTitle {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.body {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+/* Five rectangular cards with rounded corners, stacked on the phone. */
+.ritualList {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.ritualCard {
+  display: grid;
+  grid-template-columns: 2.5rem 1fr;
+  gap: 0.25rem 0.75rem;
+  padding: 1rem;
+  border: 1px solid var(--text);
+  border-radius: 8px;
+}
+
+.ritualNumber {
+  grid-row: span 2;
+  font-size: 1.5rem;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.ritualName {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.ritualLine {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* The seal mapping rows reflow to stacked rows on the phone (P8.4). */
+.sealTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.95rem;
+}
+
+.sealTable th,
+.sealTable td {
+  padding: 0.5rem;
+  border-bottom: 1px solid var(--text);
+  text-align: left;
+  vertical-align: top;
+}
+
+@media (max-width: 599px) {
+  .sealTable thead {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+
+  .sealTable,
+  .sealTable tbody,
+  .sealTable tr,
+  .sealTable td {
+    display: block;
+    width: 100%;
+  }
+
+  .sealTable td {
+    border-bottom: none;
+    padding: 0.25rem 0.5rem;
+  }
+
+  .sealTable td::before {
+    content: attr(data-label);
+    display: block;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  .sealTable tr {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--text);
+  }
+}
+
+@media (min-width: 600px) {
+  .section {
+    padding-left: 0;
+    padding-right: 0;
+  }
+
+  .ritualList {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .ritualCard {
+    flex: 1 1 10rem;
+  }
+}
+
+/* Sample_Receipt (B3.4). The box is reserved in the server HTML so the page
+   does not move when the figure arrives. Text is --text on --bg. No Accent and
+   no direction marks on any figure element (tone.md, neutrality.md). */
+.receiptBox {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  min-height: 12rem;
+  padding: 1rem;
+  border: 1px solid var(--text);
+  border-radius: 8px;
+  color: var(--text);
+  overflow-wrap: anywhere;
+}
+
+.receiptFixture,
+.receiptName,
+.receiptMeta,
+.receiptNote {
+  margin: 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+.receiptName {
+  font-weight: 700;
+}
+
+/* Value and unit stay on one line; period and region sit on the next (P6.1). */
+.receiptValueLine {
+  margin: 0;
+  white-space: nowrap;
+}
+
+.receiptValue {
+  font-size: 2.25rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.receiptUnit {
+  font-size: 1rem;
+}
+
+.receiptDetails {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.25rem 0.75rem;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.receiptDetails dt {
+  color: var(--muted);
+}
+
+.receiptDetails dd {
+  margin: 0;
+}
+
+/* Every link and control is at least 44 by 44 px (P8.4). */
+.receiptLink,
+.covenLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.receiptLink:focus-visible,
+.covenLink:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* Coven_Strip (B3.5). */
+.covenList,
+.covenLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.covenCount {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+/* One column at every size, with no sideways scroll (P1, P8). */
+.section {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
