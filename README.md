@@ -18,10 +18,6 @@
 
 Built for Kiroween 2026, Resurrection category. Letters survived the move to digital, but the seal didn't. Revenant resurrects it with cryptography: no one else can read your letter, tampering is detectable, and no key can open it early. Then it adds what no wax seal ever could: it makes you testify before you read.
 
-<img src="docs/concept.png" srcset="docs/concept.png 1x, docs/concept@2x.png 2x" alt="Revenant design concept" width="800">
-
-*Design concept. Figures and some wording in the mock are illustrative and not product data.*
-
 ## What we resurrected
 
 Since 1735 the French Académie des sciences has kept *plis cachetés*: sealed envelopes that scientists and inventors deposit to prove what they knew, and when. Pasteur and Niépce left them. Around 18,000 have been deposited, each closed with wax and opened only at the author's request or after a hundred years. A classroom time capsule works the same way. When I was in school, my teacher had us each write a letter to our future selves. She kept them sealed for 15 years, then mailed them back to us. The seal carries the meaning: this was written then, by you, and nobody has touched it since.
