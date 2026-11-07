@@ -1,0 +1,83 @@
+/*
+ * The Persona_Intro (spec 09 C1, P5.3). It sits on the desk, so it takes the
+ * desk tokens and sets its own text colour (--text for reading text, --muted
+ * for the quieter lines). Both meet WCAG 2.2 AA on --bg. Orange is not used:
+ * it is reserved for "you" (tone.md).
+ *
+ * The fictional-persona notice is the first line below 600 px and is hidden at
+ * 600 px and wider, where the Top_Bar shows it. The breakpoint is 599.98px, the
+ * largest width under PHONE_BELOW_PX.
+ */
+
+.intro {
+  display: grid;
+  gap: 0.5rem;
+  max-width: 34rem;
+  margin: 0;
+  color: var(--text);
+  font-family: var(--font-sans, inherit);
+}
+
+.notice {
+  display: none;
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.3;
+  color: var(--muted);
+}
+
+.line {
+  margin: 0;
+  font-size: 1rem;
+  line-height: 1.45;
+  color: var(--text);
+}
+
+.dates {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.source,
+.meta {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.35;
+  color: var(--muted);
+}
+
+.source a {
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.source a:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem 1rem;
+}
+
+@media (max-width: 599.98px) {
+  .notice {
+    display: block;
+  }
+
+  .line,
+  .dates,
+  .source,
+  .meta {
+    font-size: 0.9375rem;
+  }
+}

@@ -14,12 +14,41 @@
 // first marks the wordmark, the second the last control in the bar.
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import { CEREMONY_COPY } from "../copy";
+import { PHONE_BELOW_PX } from "../constants";
 import { useMotion } from "../motion";
 import { useSequence } from "../skip";
 import { SCENE_COPY } from "./copy";
+import { MotionIcon, SkipIcon } from "./icons";
 import styles from "./scene.module.css";
+
+/**
+ * The phone query. The largest width below PHONE_BELOW_PX, so `max-width`
+ * excludes exactly 600 px. scene.module.css repeats the same 599.98px.
+ */
+export const PHONE_QUERY = `(max-width: ${PHONE_BELOW_PX - 0.02}px)`;
+
+/**
+ * True below PHONE_BELOW_PX, after the first client render (P5.1). The server
+ * and the first client render report false, so hydration never mismatches.
+ * The layout itself is CSS, so this only sets `data-compact` for the checks.
+ */
+function useCompact(): boolean {
+  const [compact, setCompact] = useState(false);
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") {
+      return;
+    }
+    const query = window.matchMedia(PHONE_QUERY);
+    const update = () => setCompact(query.matches);
+    update();
+    query.addEventListener("change", update);
+    return () => query.removeEventListener("change", update);
+  }, []);
+  return compact;
+}
 
 /**
  * The controls at the end of the Top_Bar. `calm` shows Calm, and Skip while a
@@ -52,13 +81,21 @@ export function TopBar({
 }: TopBarProps) {
   const { mode, setCalm } = useMotion();
   const { hasActive, skipAll } = useSequence();
+  const compact = useCompact();
 
   const calmOn = mode === "calm";
   const calmLabel = calmOn ? CEREMONY_COPY.calmOff : CEREMONY_COPY.calmOn;
 
   // The last control in the bar: Skip when it shows, otherwise Calm.
+  // Each control holds its icon and its text. Below 600 px CSS shows the icon
+  // as a 44 x 44 control and hides the text; the aria-label and title keep the
+  // name. At 600 px and wider CSS shows the text as before.
   return (
-    <header className={styles.topbar} data-topbar>
+    <header
+      className={styles.topbar}
+      data-topbar
+      data-compact={compact ? true : undefined}
+    >
       <div className={styles.brand}>
         <p className={styles.wordmark}>
           <Link href="/" className={styles.wordmarkLink} data-wordmark>
@@ -78,18 +115,24 @@ export function TopBar({
             type="button"
             className={styles.control}
             data-topbar-last={hasActive ? undefined : true}
+            aria-label={calmLabel}
+            title={calmLabel}
             onClick={() => setCalm(!calmOn)}
           >
-            {calmLabel}
+            <MotionIcon off={calmOn} className={styles.controlIcon} />
+            <span className={styles.controlLabel}>{calmLabel}</span>
           </button>
           {hasActive ? (
             <button
               type="button"
               className={styles.control}
               data-topbar-last={true}
+              aria-label={CEREMONY_COPY.skip}
+              title={CEREMONY_COPY.skip}
               onClick={skipAll}
             >
-              {CEREMONY_COPY.skip}
+              <SkipIcon className={styles.controlIcon} />
+              <span className={styles.controlLabel}>{CEREMONY_COPY.skip}</span>
             </button>
           ) : null}
         </div>

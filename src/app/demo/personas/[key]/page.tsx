@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { OpeningFlow } from "@/components/reveal/OpeningFlow";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
+import { PersonaIntro } from "@/components/ceremony/intro/PersonaIntro";
 import { PERSONAS } from "@/lib/personas";
 import { pageMetadata } from "@/lib/page-metadata";
 import { UI_COPY } from "@/components/ui/copy";
@@ -97,6 +98,14 @@ export default async function PersonaLetterPage({
 
   return (
     <SceneShell variant="persona" personaName={persona.display_name}>
+      <PersonaIntro
+        personaName={persona.display_name}
+        introLine={persona.intro_line}
+        writtenAsOf={persona.written_as_of}
+        opensAt={persona.opens_at}
+        questionCount={persona.metrics.length}
+        openingEvent={persona.opening_event}
+      />
       <OpeningFlow
         letterId={persona.letter_id}
         personaName={persona.display_name}
