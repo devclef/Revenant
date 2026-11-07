@@ -47,13 +47,6 @@
   align-self: flex-start;
 }
 
-.heading {
-  font-family: var(--font-sans);
-  font-weight: 800;
-  color: var(--demo-ink);
-  margin: 0;
-}
-
 .introNote {
   font-family: var(--font-sans);
   color: var(--demo-ink-soft);

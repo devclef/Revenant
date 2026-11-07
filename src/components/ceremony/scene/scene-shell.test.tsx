@@ -174,24 +174,19 @@ describe("SceneBackdrop (R6.9, R19.5)", () => {
   });
 });
 
-describe("SceneHeadline (R3.18, F2)", () => {
-  it("renders the only h1 with data-scene-ceiling", () => {
-    const html = render(createElement(SceneHeadline));
+describe("SceneHeadline (R3.18, F7)", () => {
+  it("renders the only h1 with data-scene-ceiling and the text it is given", () => {
+    const html = render(createElement(SceneHeadline, { text: "Maya's letter" }));
     expect(html.match(/<h1[^>]*data-scene-ceiling/g)?.length).toBe(1);
     expect(html.match(/<h1/g)?.length).toBe(1);
+    expect(html).toContain(">Maya&#x27;s letter</h1>");
   });
 
-  it("renders the Eyebrow above the h1, then the Tagline", () => {
-    const html = render(createElement(SceneHeadline));
-    expect(html.indexOf(BRAND_COPY.eyebrow)).toBeGreaterThanOrEqual(0);
-    expect(html.indexOf(BRAND_COPY.eyebrow)).toBeLessThan(html.indexOf("<h1"));
-    expect(html).toContain("Memory rewrites itself.");
-  });
-
-  it("keeps \"Revenant doesn't.\" together in a nowrap span with no Accent", () => {
-    const html = render(createElement(SceneHeadline));
-    expect(html).toMatch(/<span class="[^"]*">Revenant\u00a0doesn&#x27;t\.<\/span>/);
-    expect(html).not.toContain("receipts.");
+  it("shows no Eyebrow and no Tagline", () => {
+    const html = render(createElement(SceneHeadline, { text: "The demo letters" }));
+    expect(html).not.toContain(BRAND_COPY.eyebrow);
+    expect(html).not.toContain("Memory rewrites itself.");
+    expect(html).not.toContain("Revenant");
   });
 
   it("splits the Tagline before the kept phrase", () => {
@@ -203,6 +198,56 @@ describe("SceneHeadline (R3.18, F2)", () => {
 
   it("returns a tagline without the kept phrase whole", () => {
     expect(splitTagline("Plain line")).toEqual({ before: "Plain line", kept: "" });
+  });
+});
+
+describe("Scene headings and check hooks (F7, C1, P2)", () => {
+  it("the persona page headline is personaHeading with the persona name, and no Tagline", () => {
+    const html = render(
+      createElement(
+        SceneShell,
+        { variant: "persona", personaName: "Maya" } as SceneShellProps,
+        createElement("p", null, "body"),
+      ),
+    );
+    const heading = /<h1[^>]*>(.*?)<\/h1>/s.exec(html);
+    expect(heading?.[1]).toBe("Maya&#x27;s letter");
+    expect(SCENE_COPY.personaHeading.replace("{name}", "Maya")).toBe("Maya's letter");
+    expect(html).not.toContain("Memory rewrites itself.");
+    expect(html.match(/<h1/g)?.length).toBe(1);
+  });
+
+  it("names the Stage content wrapper data-stage-content in the persona copy source", () => {
+    const ceremonyRoot = readFileSync(
+      resolve(__dirname, "../CeremonyRoot.tsx"),
+      "utf8",
+    );
+    expect(ceremonyRoot).toContain("<div data-stage-content>{children}</div>");
+  });
+
+  it("the Pick_Up_Button carries data-primary-control", () => {
+    const envelopeView = readFileSync(
+      resolve(__dirname, "../envelope/EnvelopeView.tsx"),
+      "utf8",
+    );
+    expect(envelopeView).toContain("data-primary-control onClick={onBegin}");
+  });
+
+  it("the Persona_Intro and the intact block carry data-block", () => {
+    const intro = readFileSync(resolve(__dirname, "../intro/PersonaIntro.tsx"), "utf8");
+    const envelopeView = readFileSync(
+      resolve(__dirname, "../envelope/EnvelopeView.tsx"),
+      "utf8",
+    );
+    expect(intro).toContain('data-block="persona-intro"');
+    expect(envelopeView).toContain('data-block="intact"');
+  });
+
+  it("the phone headline clamp and text-wrap: balance sit below 600 px", () => {
+    const css = readFileSync(resolve(__dirname, "scene.module.css"), "utf8");
+    const phone = css.slice(css.lastIndexOf("@media (max-width: 599.98px)"));
+    expect(phone).toContain("font-size: clamp(1.55rem, 7.2vw, 1.9rem);");
+    expect(phone).toContain("text-wrap: balance;");
   });
 });
 

@@ -3,6 +3,8 @@ import { LiveEntry } from "@/components/demo/LiveEntry";
 import { PersonaCard } from "@/components/demo/PersonaCard";
 import { DEMO_COPY } from "@/components/demo/copy";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
+import { SceneHeadline } from "@/components/ceremony/scene/SceneHeadline";
+import { SCENE_COPY } from "@/components/ceremony/scene/copy";
 import { PERSONAS } from "@/lib/personas";
 import { pageMetadata } from "@/lib/page-metadata";
 import { UI_COPY } from "@/components/ui/copy";
@@ -36,7 +38,7 @@ export default function DemoIndexPage() {
         <div className={styles.label}>
           <DemoLabel />
         </div>
-        <h1 className={styles.heading}>{DEMO_COPY.heading}</h1>
+        <SceneHeadline text={SCENE_COPY.demoHeading} />
         <p className={styles.introNote} data-dust-ceiling>
           {DEMO_COPY.introNote}
         </p>

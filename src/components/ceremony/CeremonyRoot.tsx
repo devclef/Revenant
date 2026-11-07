@@ -333,7 +333,7 @@ function CeremonyRegion({
             {CEREMONY_COPY.skip}
           </button>
         ) : null}
-        {children}
+        <div data-stage-content>{children}</div>
         </StageContext.Provider>
       </SoundEnabledContext.Provider>
     </div>

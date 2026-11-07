@@ -34,6 +34,12 @@ export const SCENE_COPY = {
   personaNotice:
     "{name} is fictional. This letter was prepared later as a demo.",
 
+  /** The persona page's headline (spec 09 F7). `{name}` is the persona's name. */
+  personaHeading: "{name}'s letter",
+
+  /** The `/demo` headline (spec 09 F7). */
+  demoHeading: "The demo letters",
+
   landing: {
     /** The link text that leads to the demo letters. */
     demoLink: "Open the demo letters",

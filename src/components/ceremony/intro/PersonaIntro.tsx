@@ -85,7 +85,7 @@ export function PersonaIntro({
           .replace("{event}", openingEvent.name);
 
   return (
-    <section className={styles.intro} data-persona-intro>
+    <section className={styles.intro} data-persona-intro data-block="persona-intro">
       <p className={styles.notice}>{notice}</p>
       <p className={styles.line}>{introLine}</p>
       <p className={styles.dates}>

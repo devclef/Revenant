@@ -855,3 +855,16 @@
     margin-top: calc(var(--soil-top) + var(--soil-band) + 1.5rem - 6rem);
   }
 }
+
+/* Phone headline (spec 09 P2.1, P3, design "Group P", the persona page). Below
+   600 px the persona and /demo headline is 1.55 to 1.9 rem, balanced across
+   lines, so it wraps to at most two lines with no lone word. Placed after the
+   900 px rules so it wins at equal specificity. */
+@media (max-width: 599.98px) {
+  .headline,
+  .personaColumn .headline {
+    font-size: clamp(1.55rem, 7.2vw, 1.9rem);
+    line-height: 1.05;
+    text-wrap: balance;
+  }
+}

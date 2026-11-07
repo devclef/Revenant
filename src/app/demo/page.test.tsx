@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { DEMO_COPY } from "@/components/demo/copy";
+import { SCENE_COPY } from "@/components/ceremony/scene/copy";
 
 // Each card is a next/link, which reads the app router. The router is
 // stubbed here.
@@ -64,7 +65,7 @@ describe("Demo_Index page markup", () => {
   it("shows the Demo label, heading and intro note", async () => {
     const html = await renderWithPersonas(TWO_PERSONAS);
     expect(html).toContain(DEMO_COPY.demoLabel);
-    expect(html).toContain(DEMO_COPY.heading);
+    expect(html).toContain(SCENE_COPY.demoHeading);
     expect(html).toContain(DEMO_COPY.introNote);
   });
 
