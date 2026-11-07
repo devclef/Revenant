@@ -792,8 +792,7 @@
     gap: 1rem;
   }
 
-  .letterCol,
-  .figuresCol {
+  .letterFigures > * {
     margin-bottom: 1rem;
   }
 
