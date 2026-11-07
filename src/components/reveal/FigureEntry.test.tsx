@@ -95,24 +95,43 @@ describe("Then and Now share one type style (spec 09 C3.2)", () => {
 });
 
 describe("Your answer appears once, and the Number_Line label carries only the answer (spec 09 C3.3)", () => {
+  // A rescaled EUR per 1,000 litres entry: the case the unscaled tests could not catch.
+  const rescale: DisplayRescale = { divisor: 1000, unit: "EUR per litre" };
+  const EU_THEN: Readonly<FigureV1> = {
+    ...THEN,
+    value: "3412",
+    unit: "EUR per 1,000 litres",
+    region: "EU average",
+    period: "2024-10",
+  };
+  const EU_NOW: Readonly<FigureV1> = { ...EU_THEN, value: "3900", period: "2026-10" };
+  const euRender = (overrides: Partial<FigureEntryProps> = {}) =>
+    render({
+      then: EU_THEN,
+      now: EU_NOW,
+      change: comparable(EU_THEN, EU_NOW),
+      rescale,
+      ...overrides,
+    });
+
   it("shows Your answer once as a visible label, with the answer in the card row", () => {
-    const html = plain(render({ markValue: "3.90" }));
+    const html = plain(euRender({ markValue: "1.50" }));
     expect(count(html, `>${REVEAL_COPY.yourAnswer}</span>`)).toBe(1);
-    expect(html).toContain(`>3.90 USD per gallon</span>`);
+    expect(html).toContain(`>1.50 EUR per litre</span>`);
   });
 
   it("shows No answer in the card row when the judge gave none", () => {
-    const html = plain(render());
+    const html = plain(euRender());
     expect(count(html, `>${REVEAL_COPY.yourAnswer}</span>`)).toBe(1);
     expect(html).toContain(`>${REVEAL_COPY.noAnswer}</span>`);
   });
 
   it("draws the Mark only when there is an answer", () => {
     const mark = CEREMONY_COPY.markAnswer
-      .replace("{value}", "3.90")
-      .replace("{unit}", "USD per gallon");
-    expect(plain(render({ markValue: "3.90" }))).toContain(mark);
-    expect(plain(render())).not.toContain(mark);
+      .replace("{value}", "1.50")
+      .replace("{unit}", "EUR per litre");
+    expect(plain(euRender({ markValue: "1.50" }))).toContain(mark);
+    expect(plain(euRender())).not.toContain(mark);
   });
 });
 
