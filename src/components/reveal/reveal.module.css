@@ -583,7 +583,8 @@
 /* The Source control is a 44 px tall touch target below 600 px (layout-check
    PH7). The summary keeps its disclosure marker. */
 @media (max-width: 599.98px) {
-  .source summary {
+  .source summary,
+  .src summary {
     min-height: 44px;
     padding-block: 0.6rem;
   }

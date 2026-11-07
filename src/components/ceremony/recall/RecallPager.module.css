@@ -161,6 +161,9 @@
   .answerRow {
     flex-direction: column;
     align-items: stretch;
+    /* Tighter stack, so the 44 px field still leaves the Next control inside
+       the 640 px viewport at 360 px wide (layout-check R1). */
+    gap: 0.35rem;
   }
 
   .input {
@@ -193,7 +196,7 @@
   }
 
   .fieldset {
-    padding: 0.3rem 0.75rem;
+    padding: 0.2rem 0.75rem;
     margin-bottom: 0.5rem;
   }
 
