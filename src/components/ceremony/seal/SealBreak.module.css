@@ -80,16 +80,6 @@
  * width. The seal target fills the layer, so the seal and its hit box move
  * with the Envelope. The layer itself takes no pointer; only the target does.
  */
-.envelopeLayer {
-  position: absolute;
-  left: 50%;
-  top: 53%;
-  width: 46%;
-  aspect-ratio: 1 / 1;
-  transform: translate(-50%, -50%);
-  pointer-events: none;
-}
-
 .envelopeSeal {
   position: relative;
   display: flex;
@@ -102,25 +92,6 @@
   cursor: pointer;
 }
 
-/*
- * The instruction line beside the held Envelope (spec 09 C5.1, design C5):
- * left of the Envelope, at most 14 rem wide, vertically centred on it. Its
- * right edge sits 1 rem left of the Envelope's left edge, inside the 48 px
- * limit. The text is --text on the dark Scene, not --ink on paper.
- */
-.instructionBeside {
-  position: absolute;
-  right: calc(100% + 1rem);
-  top: 50%;
-  transform: translateY(-50%);
-  width: max-content;
-  max-width: 14rem;
-  margin: 0;
-  color: var(--text);
-  line-height: 1.4;
-  text-align: right;
-  pointer-events: none;
-}
 
 /* --- The crack overlay --- */
 

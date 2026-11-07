@@ -690,6 +690,32 @@
   pointer-events: none;
 }
 
+/* The held Envelope's seal and instruction line are placed by scene.module.css,
+   keyed on data-envelope-seal and data-envelope-instruction (spec 09 C5.1). */
+.heldEnvelope [data-envelope-seal] {
+  position: absolute;
+  left: 50%;
+  top: 53%;
+  width: 46%;
+  aspect-ratio: 1 / 1;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.heldEnvelope [data-envelope-instruction] {
+  position: absolute;
+  right: calc(100% + 1rem);
+  top: 50%;
+  transform: translateY(-50%);
+  width: max-content;
+  max-width: 14rem;
+  margin: 0;
+  color: var(--text);
+  line-height: 1.4;
+  text-align: right;
+  pointer-events: none;
+}
+
 /* The held Envelope's placement in the Ghost's slot (design.md "Held in the
    Ghost's subtree": left 18 %, width 64 %, top 48 % at or above 900 px, 47 %
    below). The envelope spans SVG y 115-203 (wide) / 113-211 (narrow), clearing

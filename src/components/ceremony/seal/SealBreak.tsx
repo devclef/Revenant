@@ -327,7 +327,10 @@ export function SealBreak({
   );
 
   const instruction = (
-    <p className={onEnvelope ? styles.instructionBeside : styles.instruction}>
+    <p
+      className={onEnvelope ? undefined : styles.instruction}
+      data-envelope-instruction={onEnvelope ? "" : undefined}
+    >
       {CEREMONY_COPY.sealInstruction}
     </p>
   );
@@ -365,7 +368,6 @@ export function SealBreak({
         {createPortal(
           <>
             <div
-              className={styles.envelopeLayer}
               style={TIMING_VARS}
               data-broken={broken}
               data-envelope-seal=""
