@@ -880,6 +880,28 @@
   }
 }
 
+/* Phone persona headline on one line (layout-check PH3, eu-tomas). The persona
+   heading is always "{name}'s letter" with no other words, so nowrap keeps the
+   name and "letter" together. Without it the 9ch cap split "Tomás's" alone on
+   the first line. The /demo headline is not in the persona column, so it wraps
+   as before. */
+@media (max-width: 599.98px) {
+  .personaColumn .headline {
+    max-width: none;
+    white-space: nowrap;
+  }
+}
+
+/* Phone Top_Bar hit area (PH7). The wordmark link keeps the bar at 56 px and
+   gives its link a 44 px tall hit area, centred in the bar. */
+@media (max-width: 599.98px) {
+  .wordmarkLink {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+}
+
 /* Phone headline (spec 09 P2.1, P3, design "Group P", the persona page). Below
    600 px the persona and /demo headline is 1.55 to 1.9 rem, balanced across
    lines, so it wraps to at most two lines with no lone word. Placed after the

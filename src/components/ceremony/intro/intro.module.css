@@ -65,6 +65,9 @@
 }
 
 .source a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
   color: var(--text);
   text-decoration: underline;
   text-underline-offset: 0.15em;
