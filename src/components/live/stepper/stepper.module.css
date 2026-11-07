@@ -1,0 +1,105 @@
+/*
+ * Styles for the Live_Stepper and its Step_Indicator (spec 09, D2).
+ *
+ * The stepper sits on the desk, so it sets the desk text colour (--text) itself.
+ * The step card is a paper panel, so it sets --ink and --paper itself and never
+ * inherits the desk colour. Step states use weight and a rule, not colour, so
+ * no state reads as a judgement (tone.md, neutrality.md).
+ */
+
+.stepper {
+  position: relative;
+  display: grid;
+  gap: 1.25rem;
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+.indicator {
+  color: var(--text);
+}
+
+.steps {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.step {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text);
+  font-size: 0.875rem;
+  line-height: 1.4;
+}
+
+.step[data-state="current"] {
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 0.3em;
+}
+
+.number {
+  display: inline-grid;
+  place-items: center;
+  width: 1.6rem;
+  height: 1.6rem;
+  border: 1px solid var(--text);
+  border-radius: 999px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+}
+
+.name {
+  color: var(--text);
+}
+
+.announce {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.card {
+  padding: 1.5rem 1.25rem;
+  color: var(--ink);
+  background-color: var(--paper);
+  border: 1px solid var(--ink-soft);
+  border-radius: 4px;
+  font-family: var(--font-sans);
+}
+
+.primary {
+  display: grid;
+  gap: 1rem;
+  color: var(--ink);
+}
+
+.heading {
+  margin: 0;
+  color: var(--ink);
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-weight: 800;
+  line-height: 1.15;
+}
+
+/* A12: a heading that takes focus from script shows a ring only for keyboard
+   focus. A pointer press does not show one. */
+.heading:where([tabindex="-1"]):focus:not(:focus-visible) {
+  outline: none;
+}
+
+.heading:where([tabindex="-1"]):focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}

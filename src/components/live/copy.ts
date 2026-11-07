@@ -164,6 +164,15 @@ export const LIVE_COPY = {
   backupCardShow: "Show my backup key card",
   backupCardKeyLabel: "Your backup key",
   backupCardQrHint: "Scan this code to open the letter link with your backup key.",
+  /** The headline of /demo/live (spec 09 F7). */
+  liveHeading: "Seal your own letter",
+  /** Brand_Copy has no Wait step, so the Live_Stepper takes its name from here. */
+  waitStep: "Wait",
+  stepsLabel: "Your progress",
+  /** Announced once per step change. `{n}` is the step number, `{total}` the count. */
+  stepAnnounce: "Step {n} of {total}: {label}",
+  back: "Back",
+  next: "Next",
 } as const;
 
 /**
