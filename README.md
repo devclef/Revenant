@@ -3,6 +3,10 @@
 *The wax seal, resurrected. Memory rewrites itself. Revenant doesn't.*
 
 <p align="center">
+  <img src="docs/readme-hero2x.png" alt="Revenant: a sealed letter rising out of the dark" width="800">
+</p>
+
+<p align="center">
   <a href="https://revenant.devclef.se/demo"><img src="https://img.shields.io/badge/Open%20the%20demo-revenant.devclef.se%2Fdemo-8F46FF?style=for-the-badge" alt="Open the demo at revenant.devclef.se/demo"></a>
 </p>
 
