@@ -12,7 +12,7 @@
 // This test reads the real hex values out of the CSS files (so it tracks the
 // tokens, not a copy of them), computes the sRGB relative-luminance contrast
 // ratio with the WCAG formula, and asserts:
-//   - every reveal text token (--ink, --ink-soft) on each
+//   - every reveal text token (--ink, --ink-soft, --seal, --gold-text) on each
 //     paper surface (--paper, --paper-deep, --paper-shadowed) is >=4.5,
 //   - the focus ring (--ink on paper) is >=3.
 //
@@ -33,7 +33,7 @@ const globalsCssPath = resolve(here, "..", "..", "app", "globals.css");
 const ceremonyCssPath = resolve(here, "ceremony.module.css");
 
 /** Reveal (paper) text tokens, from globals.css. */
-const PAPER_TEXT_TOKENS = ["--ink", "--ink-soft"] as const;
+const PAPER_TEXT_TOKENS = ["--ink", "--ink-soft", "--seal", "--gold-text"] as const;
 /** Paper surfaces: two from globals.css, the deepest shading from the Ceremony. */
 const GLOBALS_SURFACE_TOKENS = ["--paper", "--paper-deep"] as const;
 const CEREMONY_SURFACE_TOKENS = ["--paper-shadowed"] as const;
@@ -314,8 +314,19 @@ describe("Spec 07 R4 and Property 9: Scene token pairs", () => {
     });
   }
 
-  // Control boundaries and focus rings (3:1). The --line control border.
+  // Control boundaries and focus rings (3:1). The white ring inside the
+  // Letter_Block, the Accent ring on --bg, and the --line control border.
   const ringPairs: Array<{ pair: string; fg: Rgb; bg: Rgb }> = [
+    {
+      pair: "focus ring --on-purple on --purple (inside the Letter_Block)",
+      fg: sceneRgb("--on-purple"),
+      bg: sceneRgb("--purple"),
+    },
+    {
+      pair: "focus ring --accent on --bg (outside the Letter_Block)",
+      fg: sceneRgb("--accent"),
+      bg: sceneRgb("--bg"),
+    },
     { pair: "control border --line on --bg", fg: sceneRgb("--line"), bg: sceneRgb("--bg") },
   ];
 
