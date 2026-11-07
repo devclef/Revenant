@@ -1,12 +1,16 @@
 "use client";
 
+import { useLayoutEffect, useRef } from "react";
+
 import { DemoLabel } from "@/components/demo/DemoLabel";
 
 import type { PickableSeries } from "./catalogue-list";
+import { LETTER_FIELD_ROWS } from "./constants";
 import { LIVE_COPY, REAL_COPY } from "./copy";
 import { FigurePicker } from "./FigurePicker";
 import { countCodePoints, figureLimit, validateWrite, type WriteProblem } from "./form";
 import styles from "./live.module.css";
+import { letterFieldHeightPx } from "./phone";
 import { type PrfHint } from "./prf-hint";
 import { RealDatePicker } from "./RealDatePicker";
 import { INITIAL_TOUCHED, showsFieldMessage, type TouchedState } from "./touched";
@@ -158,6 +162,7 @@ export function WriteForm({
   realDate,
 }: WriteFormProps) {
   const letterCount = countCodePoints(text);
+  const letterRef = useRef<HTMLTextAreaElement>(null);
   const limit = figureLimit(series.length);
   const problems = validateWrite({
     text,
@@ -170,6 +175,17 @@ export function WriteForm({
   const all = section === "all";
   /** True when this part of the form renders in the current section. */
   const shows = (part: WriteSection) => all || section === part;
+
+  // Grow the letter field with its text, up to half the visual viewport (P9).
+  // Past the cap the field scrolls inside itself.
+  useLayoutEffect(() => {
+    const field = letterRef.current;
+    if (field === null) return;
+    field.style.height = "auto";
+    const viewportHeight =
+      window.visualViewport?.height ?? window.innerHeight;
+    field.style.height = `${letterFieldHeightPx(field.scrollHeight, viewportHeight)}px`;
+  }, [text, section]);
 
   /** The message for a problem, or "" when validateWrite does not report it. */
   function problemText(problem: WriteProblem): string {
@@ -274,8 +290,9 @@ export function WriteForm({
           <p className={styles.hint}>{LIVE_COPY.letterHint}</p>
           <textarea
             id="live-letter"
+            ref={letterRef}
             className={styles.textarea}
-            rows={10}
+            rows={LETTER_FIELD_ROWS}
             value={text}
             aria-describedby="live-letter-count live-letter-problem"
             onChange={(event) => {

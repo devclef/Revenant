@@ -15,3 +15,21 @@ export const MAX_FIGURES = 6;
 
 /** How often the countdown on the sealed view refreshes, in milliseconds (R16.2). */
 export const COUNTDOWN_TICK_MS = 250;
+
+/** Rows the letter textarea starts with on a phone (spec 09 P9). */
+export const LETTER_FIELD_ROWS = 5;
+
+/**
+ * Most of the visual viewport the letter textarea may grow to, in percent
+ * (spec 09 P9). Past this it scrolls inside the field.
+ */
+export const LETTER_FIELD_MAX_VH = 50;
+
+/** Smallest touch target on a phone, in CSS pixels (spec 09 P8.4). */
+export const MIN_TOUCH_TARGET_PX = 44;
+
+/** The two phone sizes the layout check walks (spec 09 P10). */
+export const PHONE_SIZES = [
+  { width: 390, height: 844 },
+  { width: 360, height: 640 },
+] as const;

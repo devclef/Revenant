@@ -2,6 +2,9 @@
 
 import { useEffect, useReducer, useRef, type ReactNode } from "react";
 
+import { useCalmInForce } from "@/components/ceremony/motion";
+import { useKeepInVisualViewport } from "@/components/ui/use-keep-in-visual-viewport";
+
 import type { WriteDraft, WriteDraftEvent } from "../write-draft";
 
 import styles from "./stepper.module.css";
@@ -58,6 +61,9 @@ export function LiveStepper({
     initialStepperState,
   );
   const headingRef = useRef<HTMLHeadingElement>(null);
+  const primaryRef = useRef<HTMLDivElement>(null);
+  // Keeps the focused field and its Next above the on-screen keyboard (P9).
+  useKeepInVisualViewport(primaryRef, useCalmInForce());
   const previousStep = useRef<LiveStep>(state.step);
 
   useEffect(() => {
@@ -86,7 +92,7 @@ export function LiveStepper({
     <div className={styles.stepper} data-live-stepper>
       <StepIndicator current={state.step} />
       <section className={styles.card} data-card data-step={state.step}>
-        <div className={styles.primary} data-primary-control>
+        <div ref={primaryRef} className={styles.primary} data-primary-control>
           <h2 ref={headingRef} tabIndex={-1} className={styles.heading}>
             {stepName(state.step)}
           </h2>

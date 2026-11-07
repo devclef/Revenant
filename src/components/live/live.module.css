@@ -103,7 +103,7 @@
   display: block;
   box-sizing: border-box;
   width: 100%;
-  min-height: 10rem;
+  /* Starts at LETTER_FIELD_ROWS rows; WriteForm grows it with the text (P9). */
   padding: 0.75rem;
   font-family: var(--font-sans);
   /* 16px or more stops mobile browsers zooming on focus. */
@@ -113,7 +113,8 @@
   background-color: var(--paper);
   border: 1px solid var(--ink-soft);
   border-radius: 3px;
-  resize: vertical;
+  resize: none;
+  overflow-y: auto;
 }
 
 .count {
