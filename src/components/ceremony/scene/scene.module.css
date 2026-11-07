@@ -88,7 +88,9 @@
     min-height: calc(100vh - 6rem);
   }
 
-  .personaColumn > [data-ceremony="intact"],
+  /* The intact stage is not pinned here. It follows the Persona_Intro in the
+     flow (see the headline and intro rules below). recall, marks and seal hide
+     the intro, so they stay pinned under the strip. */
   .personaColumn > [data-ceremony="recall"],
   .personaColumn > [data-ceremony="marks"],
   .personaColumn > [data-ceremony="seal"] {
@@ -96,6 +98,21 @@
     left: 0;
     right: 0;
     top: calc(var(--soil-top) + var(--soil-band) + 0.25rem - 6rem);
+  }
+
+  /* Narrow, with the Persona_Intro shown (spec 09 C1, P5.3): emerging, sealed
+     and intact. There is no room for the card above the Ghost body (about 120 px
+     between the headline and the body at 360 x 640), so the headline leaves the
+     flow and keeps its top band. The card then starts under the Soil strip
+     (intro.module.css sets its top margin), and the stage card follows it in the
+     flow. Neither sits on the Ghost body. */
+  .personaColumn:has(> [data-ceremony="emerging"]) > .headline,
+  .personaColumn:has(> [data-ceremony="sealed"]) > .headline,
+  .personaColumn:has(> [data-ceremony="intact"]) > .headline {
+    position: absolute;
+    top: 2.5rem;
+    left: 0;
+    right: 0;
   }
 
   /* Narrow handed lift (spec 08 R8.2). In recall, marks and seal the backdrop
@@ -848,11 +865,18 @@
   }
 }
 
-/* The landing Accent button. Below 900 px it sits below the Soil strip
-   (--soil-top + --soil-band), so the strip never crosses the button. */
+/* The landing calls to action (LandingHero's actions block, data-block
+   "actions"). Below 900 px they are taken out of the flow and placed under the
+   Soil strip: the top is the strip's bottom edge plus 1.5 rem, measured from the
+   hero's top (the column's top padding, 6 rem). The Accent link then sits clear
+   of the Landing_Ghost body, which ends above the strip. The hero's side padding
+   (1.25 rem) is repeated here so the buttons keep its width. */
 @media (max-width: 899.98px) {
-  .landingColumn .landingCta {
-    margin-top: calc(var(--soil-top) + var(--soil-band) + 1.5rem - 6rem);
+  .landingColumn [data-block="actions"] {
+    position: absolute;
+    left: 1.25rem;
+    right: 1.25rem;
+    top: calc(var(--soil-top) + var(--soil-band) + 1.5rem - 6rem);
   }
 }
 

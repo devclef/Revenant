@@ -18,6 +18,18 @@
   font-family: var(--font-sans, inherit);
 }
 
+/* Below 900 px the headline is out of the flow (scene.module.css), so the card
+   is the first in-flow block of the persona column, which starts 2.5 rem down
+   (its top padding). The margin moves the card to the bottom edge of the Soil
+   strip plus a quarter rem. The card then clears the Ghost body and its glow at
+   every narrow height, because the strip sits below the Ghost. The stage card
+   follows the card in the flow. */
+@media (max-width: 899.98px) {
+  .intro {
+    margin-top: calc(var(--soil-top) + var(--soil-band) + 0.25rem - 6rem - 2.5rem);
+  }
+}
+
 .notice {
   display: none;
   margin: 0;
