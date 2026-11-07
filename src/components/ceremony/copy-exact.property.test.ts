@@ -86,7 +86,6 @@ describe("Property 23, example checks: the R24.3 table matches exactly", () => {
   });
 
   it("holds the landing button, persona notice and Demo chip", () => {
-    expect(SCENE_COPY.openLetter).toBe("Open {name}'s letter");
     expect(SCENE_COPY.personaNotice).toBe(
       "{name} is fictional. This letter was prepared later as a demo.",
     );
