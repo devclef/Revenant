@@ -15,7 +15,28 @@ import type { FiguresResponseV1 } from "@/lib/figures/now";
 import fetchStatus from "@/lib/figures/real/fetch-status.json";
 
 import { buildFiguresResponse, type FiguresSourceMode } from "./build-response";
-import { buildDbFiguresResponse, type FigureReadStore } from "./db-response";
+import {
+  readDbFigures,
+  shapeDbFiguresResponse,
+  type FigureReadStore,
+} from "./db-response";
+
+/** The step that failed: the database or file read, or the response shaping. */
+type FiguresStep = "read" | "shape";
+
+/**
+ * The one diagnostic line for a failed request. It holds the step, the error's
+ * name and, only when it is a string, the Postgres code. It never holds the
+ * message, stack, cause or any request or header value, because the message may
+ * carry the connection string.
+ */
+export function figuresFailureLine(step: FiguresStep, err: unknown): string {
+  const name = err instanceof Error ? err.name : typeof err;
+  const code =
+    typeof err === "object" && err !== null && "code" in err ? err.code : undefined;
+  const codePart = typeof code === "string" ? ` code=${code}` : "";
+  return `figures_unavailable step=${step} error=${name}${codePart}`;
+}
 
 export const FIGURES_CACHE_CONTROL =
   "public, max-age=600, stale-while-revalidate=3600";
@@ -34,19 +55,27 @@ export async function respondFigures(
   const generatedAt = deps.now().toISOString().replace(/\.\d{3}Z$/, "Z");
 
   let body: FiguresResponseV1;
+  let step: FiguresStep = "read";
   try {
-    body =
-      mode === "db"
-        ? await buildDbFiguresResponse(deps.readStore(), CATALOGUE, generatedAt)
-        : buildFiguresResponse({
-            loaded: DEMO_FIGURES,
-            catalogue: CATALOGUE,
-            fetchStatus,
-            sourceMode: "file",
-            generatedAt,
-          });
-  } catch {
-    // The underlying error is discarded: it may carry the connection string.
+    if (mode === "db") {
+      step = "read";
+      const reads = await readDbFigures(deps.readStore());
+      step = "shape";
+      body = shapeDbFiguresResponse(reads, CATALOGUE, generatedAt);
+    } else {
+      step = "shape";
+      body = buildFiguresResponse({
+        loaded: DEMO_FIGURES,
+        catalogue: CATALOGUE,
+        fetchStatus,
+        sourceMode: "file",
+        generatedAt,
+      });
+    }
+  } catch (err) {
+    // Only the step, error name and Postgres code are logged. The message is
+    // dropped: it may carry the connection string.
+    console.error(figuresFailureLine(step, err));
     return NextResponse.json(
       { error: "figures_unavailable" },
       { status: 500, headers: { "Cache-Control": "no-store" } },

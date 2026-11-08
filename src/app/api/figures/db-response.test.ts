@@ -22,6 +22,7 @@ import type { FigureV1 } from "@/lib/seal-format";
 
 import {
   chooseFigure,
+  readDbFigures,
   toUtcSeconds,
   type FigureReadStore,
   type StoredFigureRow,
@@ -390,6 +391,33 @@ describe("database mode examples", () => {
     expect(JSON.parse(text)).toEqual({ error: "figures_unavailable" });
     expect(text).not.toMatch(/postgres/i);
     expect(text).not.toMatch(/secret/);
+  });
+});
+
+// --- Read step (issue #313): the store's rejection passes through unchanged ---
+
+describe("readDbFigures", () => {
+  it("passes a store rejection to the caller unchanged, and reads both answers", async () => {
+    const failure = new Error("connect ECONNREFUSED postgres://user:secret@db/x");
+    const store: FigureReadStore = {
+      latestFigures: () => Promise.reject(failure),
+      lastSuccessTimes: () => Promise.resolve(new Map<string, Date>()),
+    };
+
+    await expect(readDbFigures(store)).rejects.toBe(failure);
+  });
+
+  it("returns the rows and success times it read, without shaping them", async () => {
+    const successAt = new Date("2026-11-01T06:00:00Z");
+    const store: FigureReadStore = {
+      latestFigures: async () => [],
+      lastSuccessTimes: async () => new Map([["us-gasoline-regular", successAt]]),
+    };
+
+    const reads = await readDbFigures(store);
+
+    expect(reads.rows).toEqual([]);
+    expect(reads.successTimes.get("us-gasoline-regular")).toBe(successAt);
   });
 });
 
