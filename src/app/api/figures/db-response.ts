@@ -90,21 +90,35 @@ export function chooseFigure(
   return { figure: null, fallback: false };
 }
 
+/** The raw answers of the read step, before any shaping. */
+export interface DbFigureReads {
+  readonly rows: readonly StoredFigureRow[];
+  readonly successTimes: ReadonlyMap<string, Date>;
+}
+
 /**
- * Reads the latest figures and the success times, then shapes the response. The
- * store may reject; the caller decides what to answer (respond.ts answers 500).
- * Each series gets its figure from chooseFigure. last_success_at still comes only
- * from figure_fetch_runs, never from a bundled or stored figure.
+ * The read step: latest figures and success times from the store. It only reads.
+ * The store may reject; the rejection passes to the caller unchanged.
  */
-export async function buildDbFiguresResponse(
-  store: FigureReadStore,
-  catalogue: readonly CatalogueSeries[],
-  generatedAt: string,
-): Promise<FiguresResponseV1> {
+export async function readDbFigures(store: FigureReadStore): Promise<DbFigureReads> {
   const [rows, successTimes] = await Promise.all([
     store.latestFigures(),
     store.lastSuccessTimes(),
   ]);
+  return { rows, successTimes };
+}
+
+/**
+ * The shape step: builds the FiguresResponseV1 from the read answers. Each series
+ * gets its figure from chooseFigure. last_success_at still comes only from
+ * figure_fetch_runs, never from a bundled or stored figure.
+ */
+export function shapeDbFiguresResponse(
+  reads: DbFigureReads,
+  catalogue: readonly CatalogueSeries[],
+  generatedAt: string,
+): FiguresResponseV1 {
+  const { rows, successTimes } = reads;
   const figures = rows.map(toFigure);
 
   // A catalogue series owns the rows whose four series fields all match it.
@@ -146,4 +160,17 @@ export async function buildDbFiguresResponse(
       return { ...entry, ...chooseFigure(entry.figure, bundled) };
     }),
   };
+}
+
+/**
+ * Reads the latest figures and the success times, then shapes the response. The
+ * store may reject; the caller decides what to answer (respond.ts answers 500).
+ */
+export async function buildDbFiguresResponse(
+  store: FigureReadStore,
+  catalogue: readonly CatalogueSeries[],
+  generatedAt: string,
+): Promise<FiguresResponseV1> {
+  const reads = await readDbFigures(store);
+  return shapeDbFiguresResponse(reads, catalogue, generatedAt);
 }
