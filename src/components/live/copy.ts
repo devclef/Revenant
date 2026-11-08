@@ -187,6 +187,18 @@ export const LIVE_COPY = {
 } as const;
 
 /**
+ * Opening sentences offered on the Write step. Pressing one inserts it at the
+ * cursor in the letter. Each is second person and has no digits, no party,
+ * candidate, policy or election reference, no judgement word and no
+ * exclamation mark (neutrality.md copy test).
+ */
+export const promptStarters: readonly [string, string, string] = [
+  "Right now, the thing on my mind is",
+  "Today, the thing I most want to remember is",
+  "Over the past few months, I have been",
+] as const;
+
+/**
  * User-facing strings for the Real_Seal_Page at `/seal` (spec 08, R15.1). Kept
  * apart from LIVE_COPY because a Real_Letter is not a demo: none of these
  * strings mention the 30-second lock or the demo label.
