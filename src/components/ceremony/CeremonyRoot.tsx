@@ -308,7 +308,11 @@ function CeremonyRegion({
       }
       return undefined;
     }
-    focusStageDefault(region, { preventScroll: false });
+    // The effect also reruns when the flow tag changes inside one Stage (the
+    // loading, openable and verifying tags all show `emerging`), and it runs on
+    // the first mount. Neither may scroll the page, or the Load_Entry page jumps
+    // before recall starts (spec 10 C1.12). Only a Stage change scrolls.
+    focusStageDefault(region, { preventScroll: prev === null || prev === stage });
     return undefined;
   }, [state.tag, stage, letterAuthorQuestions, letterFigures]);
 

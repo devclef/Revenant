@@ -584,8 +584,10 @@ describe("CeremonyRoot focus rule (spec 08, focusTargetFor table)", () => {
     expect(source).toContain("stageFocus.focus({ preventScroll: options.preventScroll });");
     expect(source).toContain("target.focus({ preventScroll: options.preventScroll });");
     expect(source).toContain("focusStageDefault(region, { preventScroll: !target.scroll });");
-    // Only the default rule (Gesture_Entry) may move the page; it passes false.
-    expect(source).toContain("focusStageDefault(region, { preventScroll: false });");
+    // The default rule moves the page only on a Stage change (Gesture_Entry).
+    // The first mount and a rerun inside one Stage (the emerging tags) pass true.
+    expect(source).toContain("focusStageDefault(region, { preventScroll: prev === null || prev === stage });");
+    expect(source).not.toContain("focusStageDefault(region, { preventScroll: false });");
     expect(source).not.toMatch(/focusStageDefault\(region\);/);
     expect(source).not.toMatch(/stageFocus\.focus\(\);/);
   });
