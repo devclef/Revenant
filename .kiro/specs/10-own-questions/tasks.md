@@ -503,7 +503,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
 
 ### Group O: operations
 
-- [ ] 17. O1 · A diagnosable figures failure: one safe log line in the Figures_API catch
+- [x] 17. O1 · A diagnosable figures failure: one safe log line in the Figures_API catch
   - Agent: `data-dev` · Depends on: 1 · Estimated size: ~150 changed lines
   - Before this task: steering updated (S1 Owner_Patch on `main`).
   - Order: this task is an exception to the design's "nothing in `src/app/api/**` changes" and to G3.1's "Group E comes last", per requirements O1 and "Rules this spec replaces". It runs right after task 1 and is independent of every other task.
