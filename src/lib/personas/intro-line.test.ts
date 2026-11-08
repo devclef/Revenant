@@ -97,7 +97,7 @@ describe("persona intro_line", () => {
   });
 });
 
-describe("committed Persona_List intro_line and opening_event", () => {
+describe("committed Persona_List intro_line and opening date", () => {
   it("gives every persona a valid intro_line", () => {
     const parsed = parsePersonaList(rawPersonaList);
     for (const persona of parsed.personas) {
@@ -106,16 +106,12 @@ describe("committed Persona_List intro_line and opening_event", () => {
     }
   });
 
-  it("gives us-maya the 5 November 2024 opening_event from an official source", () => {
+  it("opens us-maya on 5 November 2024 with no event name", () => {
     const maya = parsePersonaList(rawPersonaList).personas.find(
       (p) => p.key === "us-maya",
     );
-    expect(maya?.opening_event).toEqual({
-      name: "U.S. presidential election day",
-      date: "2024-11-05",
-      source: "U.S. National Archives",
-      source_url: "https://www.archives.gov/electoral-college/2024",
-    });
+    expect(maya?.opens_at).toBe("2024-11-05T00:00:00.000Z");
+    expect("opening_event" in (maya ?? {})).toBe(false);
   });
 
   it("keeps the us-maya letter ID as it is in personas.json", () => {

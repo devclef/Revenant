@@ -25,6 +25,7 @@ import {
   SealedLetterText,
   type SealedLetterProps,
 } from "@/components/reveal/SealedLetter";
+import type { LetterKind } from "@/components/reveal/FigureLine";
 import { REVEAL_COPY } from "@/components/reveal/copy";
 
 import { CREASE_POSITIONS, EASE_STANDARD, UNFOLD_AT_MS, UNFOLD_MS } from "../constants";
@@ -44,6 +45,11 @@ export type LetterBlockProps = SealedLetterProps & {
    * the Fingerprint (the Seal_Verdict and its control) here.
    */
   caption?: ReactNode;
+  /**
+   * The letter's kind. A `"live"` or `"real"` letter marks its Letter_Text
+   * paragraph with `data-user-content`; a `"persona"` letter does not.
+   */
+  letterKind?: LetterKind;
 };
 
 /** The paper's unfold: from a folded pose to flat, opacity 0 to 1. */
@@ -69,7 +75,7 @@ function creaseTop(share: number): string {
 }
 
 export function LetterBlock(props: LetterBlockProps) {
-  const { still = false, caption, collapsible = false, ...letterProps } = props;
+  const { still = false, caption, collapsible = false, letterKind, ...letterProps } = props;
   const { mode } = useMotion();
   const sheetRef = useRef<HTMLDivElement>(null);
   const shaftRef = useRef<HTMLDivElement>(null);
@@ -156,7 +162,7 @@ export function LetterBlock(props: LetterBlockProps) {
         data-light={lightStatic ? "static" : "unfold"}
       />
       <article className={styles.paper}>
-        <SealedLetterText opened={letterProps.opened} />
+        <SealedLetterText opened={letterProps.opened} letterKind={letterKind} />
       </article>
       {CREASE_POSITIONS.map((share, index) => (
         <div

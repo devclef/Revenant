@@ -429,6 +429,7 @@ export function Reveal({
               letterId={letterId}
               still={jumpedToEnd}
               collapsible={stage >= 3 && isPhone}
+              letterKind={letterKind}
               caption={
                 <Fingerprint
                   envelopeHash={opened.envelopeHash}

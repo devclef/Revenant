@@ -55,13 +55,9 @@ describe("EU persona entry (eu-tomas)", () => {
     expect(eu.letter_path).toBe("letters/eu-tomas.txt");
   });
 
-  it("opens on the European Parliament election date, 9 June 2024 at 00:00 UTC", () => {
+  it("opens on 9 June 2024 at 00:00 UTC with no event name", () => {
     expect(eu.opens_at).toBe("2024-06-09T00:00:00.000Z");
-    expect(eu.opening_event?.date).toBe("2024-06-09");
-    expect(eu.opening_event?.source).toBe("European Parliament");
-    expect(eu.opening_event?.source_url).toBe(
-      "https://www.europarl.europa.eu/elections/en/",
-    );
+    expect("opening_event" in eu).toBe(false);
   });
 
   it("has a letter_path that resolves to a real, non-empty letter file", () => {

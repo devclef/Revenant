@@ -41,13 +41,6 @@ export const CEREMONY_COPY = {
   /** The time the reader should expect. `{minutes}` is the value of FLOW_MINUTES, once the owner has set it. */
   introTime: "It takes about {minutes} minutes.",
 
-  /** The opening line with the opening event. `{date}` is the opening date; `{event}` is the event's plain name. */
-  introOpensEvent: "Opens {date} · {event}",
-
-  /** The link text to the event's official source. `{source}` is the publisher's name. */
-  introEventSource: "Date source: {source}",
-
-
   // --- Envelope stage ---
 
   /** The envelope's written-as-of line. `{date}` is the written-as-of date. */

@@ -264,6 +264,17 @@ describe("CEREMONY_COPY has no tilt strings (no device-motion code exists)", () 
   });
 });
 
+describe("CEREMONY_COPY has no public-event strings (opening_event retired)", () => {
+  it("omits introOpensEvent and introEventSource, which named an event and linked its source", () => {
+    expect("introOpensEvent" in CEREMONY_COPY).toBe(false);
+    expect("introEventSource" in CEREMONY_COPY).toBe(false);
+  });
+
+  it("keeps the plain envelope opening line that shows only the date", () => {
+    expect(CEREMONY_COPY.envelopeOpens).toBe("Opens {date}");
+  });
+});
+
 describe("spec 09 Step_Indicator and recall copy (C2, design.md Copy)", () => {
   it("gives the four steps in order, with the step label and announce line", () => {
     expect(CEREMONY_COPY.stepsLabel).toBe("Your progress");

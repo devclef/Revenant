@@ -79,30 +79,6 @@ const metricSchema = z.strictObject({
   recall_subject: z.string().min(1),
 });
 
-// Official publishers an opening_event may cite. Each must publish the date
-// on the source_url it names (spec 09 C1.3).
-export const OPENING_EVENT_SOURCES = [
-  "European Parliament",
-  "U.S. National Archives",
-] as const;
-
-// opening_event: an optional public event the persona's opening date is
-// taken from (for example an election day). Only the plain date and its
-// official source are stored; the letter never follows the event.
-const openingEventSchema = z.strictObject({
-  name: z.string().min(1).max(120),
-  date: z.string().refine(isRealDate, {
-    message: "opening_event.date must be a real YYYY-MM-DD date",
-  }),
-  source: z.enum(OPENING_EVENT_SOURCES),
-  source_url: z
-    .string()
-    .url()
-    .refine((s) => s.startsWith("https://"), {
-      message: "opening_event.source_url must be an https URL",
-    }),
-});
-
 const personaSchema = z.strictObject({
   key: keySchema,
   display_name: nameSchema,
@@ -113,7 +89,6 @@ const personaSchema = z.strictObject({
   metrics: z.array(metricSchema).min(1).max(20),
   intro_line: introLineSchema,
   letter_path: letterPathSchema,
-  opening_event: openingEventSchema.optional(),
 });
 
 export type Persona = z.infer<typeof personaSchema>;

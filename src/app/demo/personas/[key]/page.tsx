@@ -104,7 +104,6 @@ export default async function PersonaLetterPage({
         writtenAsOf={persona.written_as_of}
         opensAt={persona.opens_at}
         questionCount={persona.metrics.length}
-        openingEvent={persona.opening_event}
       />
       <OpeningFlow
         letterId={persona.letter_id}

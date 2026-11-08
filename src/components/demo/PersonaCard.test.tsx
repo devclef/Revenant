@@ -45,14 +45,13 @@ const PROPS = {
   opens_at: "2024-11-05T00:00:00.000Z",
 } as const;
 
-/** The same persona with the public event its opening date comes from. */
-const EVENT_PROPS: PersonaCardProps = {
+/** A second persona, to check the card keys its link and button by persona. */
+const OTHER_PROPS: PersonaCardProps = {
   personaKey: "eu-anna",
   display_name: "Anna",
   region: "European Union",
   written_as_of: "2024-03-01",
   opens_at: "2024-06-09T00:00:00.000Z",
-  opening_event_name: "European Parliament election",
 };
 
 const render = (props: PersonaCardProps = PROPS) =>
@@ -110,17 +109,12 @@ describe("PersonaCard markup", () => {
     );
   });
 
-  it("adds the plain name of the opening event after the opening date", () => {
-    const html = render(EVENT_PROPS);
-    expect(html).toContain(
-      `9 June 2024${DEMO_COPY.eventSeparator}European Parliament election`,
-    );
-    expect(html).toContain("Opens");
-  });
-
-  it("shows no event name when the persona has no opening event", () => {
-    const html = render();
-    expect(html).not.toContain(DEMO_COPY.eventSeparator);
+  it("shows the opening date alone, with no event name", () => {
+    const html = render(OTHER_PROPS);
+    expect(html).toContain("9 June 2024");
+    expect(html).not.toContain(" · ");
+    expect(html).not.toContain("European Parliament election");
+    expect(html).not.toContain("Date source");
   });
 
   it("shows the orange button with the text \"Open {name}'s letter\"", () => {
@@ -134,7 +128,7 @@ describe("PersonaCard markup", () => {
     expect(html).toContain(`aria-labelledby="persona-us-maya-open"`);
     expect(html).toContain(`id="persona-us-maya-open"`);
     expect(html).not.toContain("aria-label=");
-    expect(render(EVENT_PROPS)).toContain(`id="persona-eu-anna-open"`);
+    expect(render(OTHER_PROPS)).toContain(`id="persona-eu-anna-open"`);
   });
 
   it("never says \"Break the seal\" on the card (R2)", () => {
@@ -223,7 +217,7 @@ describe("PersonaCard markup", () => {
 
 describe("PersonaCard date colour", () => {
   it("does not put the accent colour on any date", () => {
-    const html = render(EVENT_PROPS);
+    const html = render(OTHER_PROPS);
     // Each date sits in a span with the date-value class; none may be the button.
     const dateSpans = html.match(/<span class="[^"]*dateValue[^"]*">[^<]*<\/span>/g);
     expect(dateSpans).toHaveLength(2);

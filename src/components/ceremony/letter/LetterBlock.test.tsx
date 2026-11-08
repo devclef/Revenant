@@ -280,3 +280,44 @@ describe("Property 23: strings for LetterBlock (copy checks)", () => {
     );
   });
 });
+
+// --- The user-content marker on the Letter_Text paragraph (#300) -------------
+
+describe("the Letter_Text paragraph marker by letter kind", () => {
+  function renderKind(letterKind?: "persona" | "live" | "real"): string {
+    return renderToStaticMarkup(
+      createElement(
+        MotionProvider,
+        null,
+        createElement(LetterBlock, {
+          opened: openedWith("Dear me, the rent is due."),
+          personaName: PERSONA_NAME,
+          letterKind,
+        }),
+      ),
+    );
+  }
+
+  /** The opening tag of the Letter_Text paragraph. */
+  function letterTextTag(html: string): string {
+    const match = /<p [^>]*data-letter-text=""[^>]*>/.exec(html);
+    if (match === null) throw new Error("no Letter_Text paragraph");
+    return match[0];
+  }
+
+  it("marks a live letter's Letter_Text paragraph with data-user-content", () => {
+    expect(letterTextTag(renderKind("live"))).toContain('data-user-content=""');
+  });
+
+  it("marks a real letter's Letter_Text paragraph with data-user-content", () => {
+    expect(letterTextTag(renderKind("real"))).toContain('data-user-content=""');
+  });
+
+  it("leaves data-user-content off a persona letter's Letter_Text paragraph", () => {
+    expect(letterTextTag(renderKind("persona"))).not.toContain("data-user-content");
+  });
+
+  it("treats a letter with no kind as a persona letter, so the marker is off", () => {
+    expect(letterTextTag(renderKind())).not.toContain("data-user-content");
+  });
+});

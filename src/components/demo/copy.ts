@@ -47,9 +47,6 @@ export const DEMO_COPY = {
    */
   openLetterFor: "Open {name}'s letter",
 
-  /** Joins a date to the public event it is taken from. */
-  eventSeparator: " · ",
-
   /**
    * Empty-state text when the Persona_List is empty (R6.8). It names an
    * action so the reader knows what to do next.
