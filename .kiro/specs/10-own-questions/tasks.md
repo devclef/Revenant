@@ -151,7 +151,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
   - _Requirements: X1.1–X1.3, X2.2, X2.3, X2.5, X3.1–X3.3, C1.6_
 
-- [ ] 4. X4, S2, S3 · Plain opening dates, the election phrases retired, and the Letter_Text marker
+- [x] 4. X4, S2, S3 · Plain opening dates, the election phrases retired, and the Letter_Text marker
   - Agent: `frontend-dev` · Depends on: 2, 3 · Estimated size: ~500 changed lines
   - Before this task: steering updated (S1 Owner_Patch on `main`). Tasks 2 and 3 are on `main`. The owner has written the copy-test reviewer's name into this issue's body.
   - Scope: `content/personas/personas.json`, `content/personas/letters/us-copy-test.md`, `content/personas/letters/eu-copy-test.md`, `src/lib/personas/schema.ts`, `src/lib/personas/opening-event.test.ts` (retired), `src/components/ceremony/intro/PersonaIntro.tsx`, `src/components/ceremony/copy.ts`, `src/components/demo/PersonaCard.tsx`, `src/components/demo/copy.ts`, `src/app/demo/page.tsx`, `src/app/demo/personas/[key]/page.tsx`, `src/components/ceremony/letter/LetterBlock.tsx`, `src/test/retired-phrases.test.ts` (the two phrase rows), and the `*.test.ts(x)` for each file above
