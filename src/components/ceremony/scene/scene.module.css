@@ -1088,11 +1088,12 @@
 }
 
 /*
- * Phone Step_Indicator row and the Compact_Ghost (spec 10 X2.1, C1.6). Below
- * 600 px the Step_Indicator row sits under the Compact_Top_Bar, and the
+ * Phone Step_Indicator row and the Compact_Ghost (spec 10 X2.1, X2.3, C1.6).
+ * Below 600 px the Step_Indicator row sits under the Compact_Top_Bar, and the
  * Compact_Ghost is fixed at its right edge (top 56 px, width about 0.58 times
  * min(26vh, 170px)). The row reserves that space on its right so no step name
- * sits under the Ghost. The reserve is 7.5 rem tall, the row's 120 px.
+ * sits under the Ghost. The reserve is the Compact_Ghost's box: 1.2 times its
+ * width tall, and its width plus a 16 px edge and an 8 px gap on the right.
  *
  * The pit's transition is off below 600 px. The full-motion rule
  * `[data-ceremony-motion="full"] .pit` (0,2,0) comes later in this file and
@@ -1102,8 +1103,10 @@
 @media (max-width: 599.98px) {
   /* .scene keeps the selector pure for CSS Modules (it must hold a local class). */
   .scene [data-ceremony] > [data-step-indicator] {
-    min-height: 7.5rem;
-    padding-right: calc(0.58 * min(26vh, 170px) + 1.5rem);
+    box-sizing: border-box;
+    min-height: calc(0.58 * 1.2 * min(26vh, 170px));
+    padding-right: calc(0.58 * min(26vh, 170px) + 24px);
+    align-content: center;
   }
 
   [data-ceremony-motion="full"] .pit[data-compact="true"] {
