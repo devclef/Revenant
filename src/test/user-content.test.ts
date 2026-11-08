@@ -23,17 +23,28 @@ const textArb: fc.Arbitrary<TreeNode> = fc
   .array(fc.constantFrom(...TEXT_CHARS), { minLength: 1, maxLength: 12 })
   .map((chars) => ({ kind: "text" as const, value: chars.join("") }));
 
-const ELEMENT_TAGS = ["div", "p", "section", "span"] as const;
+const CONTAINER_TAGS = ["div", "section", "span"] as const;
 
+/**
+ * `<p>` may only hold text. A browser closes an open `<p>` when it meets a
+ * block child or another `<p>`, so a `<p>` with element children would
+ * produce markup no real page contains.
+ */
 function nodeArb(depth: number): fc.Arbitrary<TreeNode> {
   if (depth <= 0) return textArb;
-  const elementArb: fc.Arbitrary<TreeNode> = fc.record({
+  const containerArb: fc.Arbitrary<TreeNode> = fc.record({
     kind: fc.constant("el" as const),
-    tag: fc.constantFrom(...ELEMENT_TAGS),
+    tag: fc.constantFrom(...CONTAINER_TAGS),
     userContent: fc.boolean(),
     children: fc.array(nodeArb(depth - 1), { maxLength: 3 }),
   });
-  return fc.oneof(textArb, elementArb);
+  const paragraphArb: fc.Arbitrary<TreeNode> = fc.record({
+    kind: fc.constant("el" as const),
+    tag: fc.constant("p"),
+    userContent: fc.boolean(),
+    children: fc.array(textArb, { maxLength: 3 }),
+  });
+  return fc.oneof(textArb, containerArb, paragraphArb);
 }
 
 function escapeText(value: string): string {
