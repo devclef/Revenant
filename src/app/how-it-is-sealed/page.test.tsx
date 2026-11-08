@@ -63,7 +63,7 @@ describe("How_Page headings", () => {
 });
 
 describe("How_Page statements (R18.1 to R18.5)", () => {
-  it("R18.1: the browser encrypts before sending, the server stores only the envelope, header and time-lock secret", () => {
+  it("R18.1: the browser encrypts before sending, and the server stores the envelope, header, hash, time-lock secret and encrypted recall answers", () => {
     const body = sectionBody("browser-seals");
     expect(html).toContain(body);
     expect(body).toContain("encrypts the letter before anything is sent");
