@@ -124,3 +124,26 @@ describe("placeLineLabels, unit cases", () => {
     expect(now.row).toBe(0);
   });
 });
+
+// Spec 10 X1.4 (layout-check TK1 at the wide close stage): a point at the right
+// end can sit one float step past the line, at 1 + 4e-16. That must not make the
+// row search give up. No tick may then cross a label in a row above its own.
+describe("placeLineLabels, a point at the right end (spec 10 X1.4)", () => {
+  it("keeps a row plan when a position is 1 plus float noise, so no tick crosses a label", () => {
+    const input = {
+      positions: [0.81, 1.0000000000000004, 0.905] as const,
+      widths: [28, 28, 60] as const,
+      lineWidth: 300,
+    };
+    const placed = placeLineLabels({ ...input, positions: [...input.positions], widths: [...input.widths] });
+    const ticks = input.positions.map((p) => p * input.lineWidth);
+    for (let i = 0; i < 3; i += 1) {
+      for (let j = 0; j < 3; j += 1) {
+        if (i === j || placed[j].row <= placed[i].row) continue;
+        const crosses =
+          placed[i].x < ticks[j] + 1 && placed[i].x + placed[i].width > ticks[j] - 1;
+        expect(crosses, `tick ${j} crosses label ${i}`).toBe(false);
+      }
+    }
+  });
+});

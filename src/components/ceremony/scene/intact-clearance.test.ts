@@ -93,3 +93,16 @@ describe("wide intact headline rule (scene.module.css)", () => {
     expect(declaration(intactHeadlineRule(), "font-size")).toBe("clamp(2.5rem, 4.4vw, 3.5rem)");
   });
 });
+
+// Spec 10 X2.1 and G3: this step adds the step-row reserve below 600 px only.
+// The intact stage's own rules (the seal card's clearance) are not changed here,
+// so the intact block must not reference the step row.
+describe("intact stage is untouched by the step-row reserve (spec 10 X2)", () => {
+  it("keeps the step-row reserve inside the phone block, not the intact block", () => {
+    const reserveAt = css.indexOf("[data-step-indicator]");
+    expect(reserveAt).toBeGreaterThan(-1);
+    const mediaStart = css.lastIndexOf("@media", reserveAt);
+    expect(css.slice(mediaStart, reserveAt)).toContain("(max-width: 599.98px)");
+    expect(narrowIntactBlock()).not.toContain("[data-step-indicator]");
+  });
+});

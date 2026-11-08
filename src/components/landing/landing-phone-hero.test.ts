@@ -36,3 +36,12 @@ describe("landing hero below 600 px (landing.module.css)", () => {
     expect(block).toMatch(/\.ghost \{\s*height: max\(0px, calc\(71vh - 380px\)\);\s*\}/);
   });
 });
+
+describe("landing Landing_Ghost box below 600 px (spec 10 X2.5)", () => {
+  it("sets the phone ghost box rule inside the phone block, and keeps the base ghost rule outside it", () => {
+    const block = phoneBlock();
+    expect(block).toMatch(/\.hero \.ghost \{\s*height: max\(0px, calc\(71vh - 380px\)\);\s*\}/);
+    // Outside the phone block, the wide ghost rule is still the base 30svh rule.
+    expect(css).toMatch(/\.ghost \{\s*width: 100%;\s*height: 30vh;/);
+  });
+});

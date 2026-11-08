@@ -40,34 +40,27 @@
   border-top: 2px solid var(--figure-line);
 }
 
-/* The pin above the axis drops from the then figure; the pin below it rises to
-   the now figure. Only the left edge carries a position variable. */
-.pinThen,
-.pinNow {
+/* The Then and Now ticks hang from the axis top edge (spec 10 X1.1). Each one's
+   height is set inline from tickLeaderPx, so it ends TICK_LABEL_GAP_PX above
+   its own label row. Its left edge is centred on the point: the 2 px border
+   starts 1 px left of --pos-*. */
+.tick {
   position: absolute;
+  top: 0;
   width: 0;
-  height: 1.5rem;
   border-left: 2px solid var(--figure-pin);
 }
 
-.pinThen {
-  left: calc(var(--pos-then) * 100%);
-  bottom: 0;
-}
-
-.pinNow {
-  left: calc(var(--pos-now) * 100%);
-  top: 0;
-}
-
 /* The Mark: a ring in --accent centred on the axis at --pos-mark. Its wrapper
-   holds the hidden text, so only this wrapper is positioned by the variable. */
+   holds the hidden text, so only this wrapper is positioned by the variable.
+   The wrapper's 2 px left border is the leader under the ring (spec 10 X1.3).
+   Its height is set inline, the same way as a tick. */
 .markWrap {
   position: absolute;
   top: 0;
-  left: calc(var(--pos-mark) * 100%);
+  left: calc(var(--pos-mark) * 100% - 1px);
   width: 0;
-  height: 0;
+  border-left: 2px solid var(--figure-mark);
 }
 
 .markStroke {

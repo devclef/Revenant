@@ -167,3 +167,32 @@ describe("the Compact_Ghost and the Soil honour Calm and reduced motion (P4.3)",
     );
   });
 });
+
+// Spec 10 X2.1 and C1.6: below 600 px the Step_Indicator row reserves the
+// Compact_Ghost's box, and the Compact_Ghost's pit does not transition.
+describe("phone Compact_Ghost clearance and pit transition (scene.module.css)", () => {
+  it("reserves the Compact_Ghost box for the Step_Indicator row, below 600 px only", () => {
+    const block = phoneBlock("[data-step-indicator]");
+    expect(block).not.toBe("");
+    expect(block).toMatch(/box-sizing:\s*border-box;/);
+    expect(block).toMatch(/min-height:\s*calc\(0\.58 \* 1\.2 \* min\(26vh, 170px\)\);/);
+    expect(block).toMatch(/padding-right:\s*calc\(0\.58 \* min\(26vh, 170px\) \+ 24px\);/);
+    expect(block).toMatch(/align-content:\s*center;/);
+  });
+
+  it("turns the pit's transition off for the compact pit under full motion, below 600 px", () => {
+    const block = phoneBlock("[data-step-indicator]");
+    expect(block).toMatch(/\[data-ceremony-motion="full"\] \.pit\[data-compact="true"\] \{\s*transition: none;/);
+    // The 600 ms pit transition is still set above the phone block, unchanged.
+    expect(scene).toMatch(/\[data-ceremony-motion="full"\] \.pit \{\s*transition: transform 600ms ease;/);
+  });
+
+  it("sets .pit[data-compact='true'] to no transition in the phone block, in any motion mode", () => {
+    const block = phoneBlock("[data-step-indicator]");
+    expect(block).toMatch(/\.pit\[data-compact="true"\] \{\s*transition: none;\s*\}/);
+    // Declared after the full-motion pit transition, so it wins at equal specificity.
+    const literal = scene.lastIndexOf('\n  .pit[data-compact="true"] {');
+    expect(literal).toBeGreaterThan(-1);
+    expect(literal).toBeGreaterThan(scene.indexOf('[data-ceremony-motion="full"] .pit {'));
+  });
+});

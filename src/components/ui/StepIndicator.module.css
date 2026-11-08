@@ -40,3 +40,17 @@
   text-decoration-thickness: 2px;
   text-underline-offset: 0.3em;
 }
+
+/*
+ * Phone (below 600 px, spec 10 X2.2 and X2.3). The four step names show in
+ * full. Each name stays on one line (nowrap above), and the row wraps as whole
+ * names, so it takes at most two lines at the Phone_Sizes. The gaps and the
+ * size are smaller so the row fits that. At 600 px and wider nothing here
+ * applies.
+ */
+@media (max-width: 599.98px) {
+  .steps {
+    gap: 0.25rem 0.75rem;
+    font-size: 0.8rem;
+  }
+}

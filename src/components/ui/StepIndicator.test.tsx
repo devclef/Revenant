@@ -49,3 +49,32 @@ describe("StepIndicator", () => {
     expect(css).not.toMatch(/--accent/);
   });
 });
+
+// Spec 10 X2.2 and X2.3: the phone step row. The gaps and size change only
+// below 600 px, each step name stays on one line, and nothing else in the
+// stylesheet changes the row's layout.
+describe("StepIndicator phone rule (StepIndicator.module.css, spec 10 X2.2, X2.3)", () => {
+  const css = readFileSync(join(__dirname, "StepIndicator.module.css"), "utf8");
+  const phoneAt = css.indexOf("@media (max-width: 599.98px)");
+  const base = phoneAt >= 0 ? css.slice(0, phoneAt) : css;
+  const phone = phoneAt >= 0 ? css.slice(phoneAt) : "";
+
+  it("has one phone block, below 600 px only, and no min-width query", () => {
+    expect(phoneAt).toBeGreaterThan(-1);
+    expect(css.match(/@media/g)).toHaveLength(1);
+    expect(css).not.toMatch(/min-width/);
+  });
+
+  it("sets the phone gap and size inside the phone block only", () => {
+    expect(phone).toMatch(/\.steps \{\s*gap: 0\.25rem 0\.75rem;\s*font-size: 0\.8rem;\s*\}/);
+    expect(base).toMatch(/\.steps \{[^}]*gap: 0\.5rem 1\.25rem;/);
+    expect(base).toMatch(/\.steps \{[^}]*font-size: 0\.875rem;/);
+  });
+
+  it("keeps each step name on one line, so the row wraps only between whole names", () => {
+    expect(base).toMatch(/\.steps \{[^}]*flex-wrap: wrap;/);
+    expect(base).toMatch(/\.step \{[^}]*white-space: nowrap;/);
+    expect(base).toMatch(/\.current \{[^}]*white-space: nowrap;/);
+    expect(phone).not.toMatch(/white-space/);
+  });
+});

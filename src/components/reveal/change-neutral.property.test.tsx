@@ -264,10 +264,12 @@ const CONSTANT_STYLE_PROPERTIES = [
 const ALLOWED_STYLE_PROPERTIES: ReadonlySet<string> = new Set<string>([
   ...POSITION_PROPERTIES,
   ...CONSTANT_STYLE_PROPERTIES,
-  // Number_Line label offsets (spec 08 R5): px from placeLineLabels. They are
-  // positions of text, not figure values, and are masked out of the skeletons.
+  // Number_Line label offsets (spec 08 R5) and tick lengths (spec 10 X1.1): px
+  // from placeLineLabels and tick-leader.ts. They are positions and lengths,
+  // not figure values, and are masked out of the skeletons.
   "left",
   "top",
+  "height",
 ]);
 
 /** A decimal string with three fraction digits, from an integer count of thousandths. */
@@ -322,13 +324,24 @@ function expectNoDirectionClass(html: string): void {
  * token, and in text nodes every number becomes `#` and the words rose and fell
  * become `§`. Tags, classes and static copy are left as they are.
  */
+/** The opening tag of a Number_Line tick (spec 10 X1.1). Only these may carry a height. */
+const TICK_TAG = /<span[^>]*data-line-tick="[^"]*"[^>]*>/g;
+
+/** True when a style attribute outside a tick tag sets a height. */
+function heightOutsideTicks(html: string): boolean {
+  return /style="[^"]*height:/.test(html.replace(TICK_TAG, ""));
+}
+
 function skeletonOf(rawHtml: string): string {
   const html = maskLineLabels(rawHtml);
   const withoutPositions = html.replace(
     /--pos-(then|now|mark):[^;"]+/g,
     "--pos-$1:§",
   );
-  return withoutPositions.replace(/>([^<]*)</g, (_match, text: string) => {
+  const tickSafe = withoutPositions.replace(TICK_TAG, (tag) =>
+    tag.replace(/height:[0-9.]+px/g, "height:§"),
+  );
+  return tickSafe.replace(/>([^<]*)</g, (_match, text: string) => {
     const normalised = text
       .replace(/[+−]?[0-9][0-9.,\u00a0\u202f]*/g, "#")
       .replace(/rose|fell/g, "§");
@@ -462,6 +475,7 @@ describe("Property 20 (whole entry): a rise and its mirror fall render the same 
             for (const name of styleNames(html)) {
               expect(ALLOWED_STYLE_PROPERTIES.has(name)).toBe(true);
             }
+            expect(heightOutsideTicks(html)).toBe(false);
             expectNoDirectionClass(html);
           }
 
