@@ -84,6 +84,11 @@ If a frontend-dev PR changes `src/app/page.tsx`, `src/app/layout.tsx` or `src/ap
 3. **Screenshots.** The ticket's "QA shots" line replaces the "Screenshots: take exactly these" table. Open at most 12 screenshots: first the 360x640 and 1366x800 first-screen captures of the Stages the ticket changes, then others while room remains. List only the screenshots you opened in the verdict's `screenshots` array. Leave out every shot you did not open; don't add an entry for it with `readable: false`. Write and commit `.qa/verdict.json` before you run low on room. Never ask the dev agent to attach screenshots.
 4. **Inputs.** Owner decisions, timings and cuts come only from the ticket body, never from comments.
 5. **Owner checks.** Production_Check and Real_Device_Check are owner steps after deploy and never a blocker. Check only that the PR description's "Notes from the agent" block copies them. If it doesn't, that is a minor finding.
+### Spec 10 tickets
+Everything under "Spec 09 tickets" applies, with these changes.
+1. **QA steps.** Find each step the ticket names with `^\| 10 \| <NN> \|` in `.kiro/specs/10-own-questions/design.md`.
+2. **Persona walk.** If "Pick up the letter" shows, press it (builds before spec 10 task 5); otherwise wait for `[data-ceremony="recall"]`. On each question, keep a prefilled sample answer, and type an answer where the field is empty (builds before spec 10 task 9, and live letters), unless the step says otherwise. Press "Next question" and "Record my answers" with the mouse, not Enter.
+3. **Reduced motion.** For a group C, X or P ticket, the reduced-motion screenshot set (`<stage-or-page>-<width>x<height>-reduced.png`) is required (G2.4). A missing set is a blocker finding.
 
 ### Judge each screenshot right after taking it
 
@@ -116,7 +121,7 @@ Any other failed check is a blocker. If the causing file is in the diff or in th
 ### Ticket checks
 
 - Every line in the ticket that starts with "QA check:" is required. Check each one in the browser and add a blocker finding for each that fails.
-- If the ticket names "QA steps", read only those rows of the spec's `design.md` "QA browser steps" table. Find them with the grep tool, using the ticket's own spec. For a spec 09 ticket, use `^\| 09 \| <NN> \|` once for each step number `<NN>` the ticket names. For older specs, use `^\| (05|07|08) \|` with the step numbers the ticket names. Read just those lines. Do their checks with `browser_snapshot` or `browser_evaluate`. Take no extra screenshots for them.
+- If the ticket names "QA steps", read only those rows of the spec's `design.md` "QA browser steps" table. Find them with the grep tool, using the ticket's own spec. For a spec 09 ticket, use `^\| 09 \| <NN> \|` once for each step number `<NN>` the ticket names; for a spec 10 ticket, `^\| 10 \| <NN> \|`. For older specs, use `^\| (05|07|08) \|` with the step numbers the ticket names. Read just those lines. Do their checks with `browser_snapshot` or `browser_evaluate`. Take no extra screenshots for them.
 - For the demo pages also check: the recall questions come before anything else, and the reveal order is memory, then letter, then numbers.
 
 ### Clean up, even on failure

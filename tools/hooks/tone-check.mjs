@@ -36,7 +36,8 @@ const CHANGE_CONTEXT_RE = /change|delta|diff|rise|fall|trend/i;
 
 // Spec 07 (judge journey), design.md "Patterns for tools/hooks/tone-check.mjs".
 // T1: scoring words checked in every file this hook scans (Scoring_Words_Always).
-const SCORING_ALWAYS_RE = /\b(accuracy|score|off by)\b/i;
+// Spec 10 S3.3 adds "accurate": no answer is ever called accurate.
+const SCORING_ALWAYS_RE = /\b(accuracy|accurate|score|off by)\b/i;
 // T2: "close", "right" and "wrong" only in the Scene copy modules, inside string
 // literals (Scoring_Words_Scene). Never src/components/live/copy.ts.
 const SCENE_COPY_FILES = new Set([
@@ -45,7 +46,15 @@ const SCENE_COPY_FILES = new Set([
   "src/components/ceremony/scene/copy.ts",
   "src/components/demo/copy.ts",
 ]);
-const SCORING_SCENE_RE = /\b(close|right|wrong)\b/i;
+// Spec 10 S3.3 adds "near": no answer is ever called near.
+const SCORING_SCENE_RE = /\b(close|right|wrong|near)\b/i;
+// Spec 10 S3 (design.md "Owner patches", ac): copy a spec 10 task removed. Each
+// phrase joins this list in the task that removes it (ac-4, ac-5, ac-10), so the
+// hook never asks an agent to remove a string a later task owns. Matched
+// case-insensitively in every scanned file, except the copy-test records under
+// content/personas/letters/, which record the removals.
+const RETIRED_PHRASES = [];
+const COPY_TEST_RECORD_RE = /^content\/personas\/letters\/[^/]+-copy-test\.md$/;
 // T3: the Accent class next to a figure, change, formula, period, source or
 // direction class on one className line.
 const FIGURE_CLASS = "(?:big|now\\w*|change\\w*|formula\\w*|meta|period\\w*|src|source\\w*|pin\\w*|axis|direction\\w*)";
@@ -144,6 +153,17 @@ function scan(rel, text) {
   const isCode = extname(rel) === ".tsx" || extname(rel) === ".ts";
   const sceneCopy = SCENE_COPY_FILES.has(rel);
   const hits = [];
+  if (!COPY_TEST_RECORD_RE.test(rel)) {
+    const lower = text.toLowerCase();
+    for (const phrase of RETIRED_PHRASES) {
+      let at = lower.indexOf(phrase.toLowerCase());
+      while (at >= 0) {
+        const n = text.slice(0, at).split("\n").length;
+        hits.push(`${rel}:${n}: retired phrase "${phrase}" (spec 10 S3)`);
+        at = lower.indexOf(phrase.toLowerCase(), at + phrase.length);
+      }
+    }
+  }
   let inBlockComment = false;
   text.split("\n").forEach((raw, i) => {
     const n = i + 1;

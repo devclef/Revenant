@@ -59,6 +59,40 @@
 // A spec 09 check prints BLOCKER only when its ID is passed with --require; any other
 // failure prints polish. A spec 09 check whose element is not on the page prints a note.
 //
+// Spec 10 checks (spec 10 design.md "Owner patches", ad), BLOCKER only with --require:
+//   TK1   tick-on-axis        figures and close: each [data-line-tick] top on its
+//                             [data-line-axis] top (0±0.5 px), at most 8 px from its
+//                             [data-line-label]; no two labels overlap.
+//   SI1   step-indicator-fit  from recall on: every [data-step-indicator] li unclipped, in
+//                             the viewport and clear of [data-ghost]; four items; at most
+//                             2 lines below 600 px, 1 elsewhere. Not run at intact.
+//   GT1   ghost-over-text     at the intact, recall and letter Stage starts and scrolled
+//                             to the bottom (not marks or seal, which AL1 and SG1 own): no
+//                             visible p, h1-h3, li, label, button, a, input or textarea
+//                             outside [data-ghost] meets the Ghost_Body_Box. Elements
+//                             inside the Ghost (the Envelope date lines, the Seal_Group)
+//                             are skipped; ET1 and SG1 check them.
+//                             Below 600 px, a note on builds with the pick-up.
+//   FC1   load-focus          persona recall reached on load: focus on [data-stage-heading]
+//                             and scrollY unchanged. A note on builds with the pick-up.
+//   ET1   seal-on-envelope    marks at the Desktop_Sizes and 2560x1440: [data-envelope-seal]
+//                             inside its [data-envelope-state], on no [data-date], no two
+//                             drawn elements overlapping.
+//   SG1   seal-group          marks: [data-seal-group] beside the Ghost_Body_Box (gap 0 to
+//                             24 px), level with the seal, clear of the body and the
+//                             Envelope; on the phone 0 to 24 px under [data-ghost].
+//   AL1   answer-list         marks at every size: [data-answer-list] present, clear of
+//                             [data-ghost] and [data-seal-group].
+//   CF1   card-fit            every [data-card] and [data-stage-panel]: height minus its
+//                             children's union at most 48 px, and it holds a non-control.
+//   FP1   fastest-path        a fresh Maya page, pressing only [data-primary-control] (the
+//                             button inside a wrapper) to [data-figures-heading]: at most
+//                             2 + questions presses. A note on builds with the pick-up, or
+//                             where the empty field leaves the button disabled.
+// The persona walk works before and after spec 10 tasks 5 and 9: it presses "Pick up
+// the letter" only when the build shows it, keeps a prefilled field, fills an empty one,
+// and presses "Next question" and "Record my answers" with the mouse.
+//
 // Line format: <PASS|BLOCKER|polish|note> <id> <name> <WxH> <stage> <detail>.
 // The spec 08 and spec 09 checks put the measured values and threshold=<...> in <detail>.
 //
@@ -74,7 +108,7 @@
 //   --sizes <WxH,...>   Viewports. Default 1366x800,1280x800,360x640,390x844,2560x1440
 //                       (the spec 09 Evidence_Sizes).
 //   --all-sizes         The seven spec 07 sizes plus 1366x800 and 390x844. Used for the polish pass.
-//   --require <ID,...>  Spec 09 check IDs whose failures are BLOCKERs. An unknown ID prints a note.
+//   --require <ID,...>  Spec 09 and spec 10 check IDs whose failures are BLOCKERs. An unknown ID prints a note.
 //   --shots <dir>       Screenshots go to <dir>/<WxH>/<stage>.png.
 //                       Default layout-check-shots.
 //   --chromium <path>   Chromium binary. Default $CHROMIUM_PATH, then /usr/bin/chromium.
@@ -106,6 +140,21 @@ const DEFAULT_SIZES = ["1366x800", "1280x800", "360x640", "390x844", "2560x1440"
 const ALL_SIZES = ["360x640", "390x844", "1024x768", "1280x720", "1280x800", "1366x800", "1440x900", "1920x1080", "2560x1440"];
 // Spec 09 (design.md "Owner patches", q). Only these IDs are accepted by --require.
 const SPEC09_CHECKS = ["BO1", "BC1", "RS1", "GZ1", "FV1", "CTA1", "DX1", "HW1", "ST1", "RC1", "PH1", "PH2", "PH3", "PH4", "PH5", "PH6", "PH7", "FONT1", "FONT2"];
+// Spec 10 (spec 10 design.md "Owner patches", ad). Also accepted by --require.
+const SPEC10_CHECKS = ["TK1", "SI1", "GT1", "FC1", "ET1", "SG1", "AL1", "CF1", "FP1"];
+const REQUIRABLE_CHECKS = [...SPEC09_CHECKS, ...SPEC10_CHECKS];
+const TK1_AXIS_TOL_PX = 0.5;
+const TK1_LABEL_GAP_MAX_PX = 8;
+const SI1_ITEMS = 4;
+const SI1_LINES_PHONE_MAX = 2;
+const SG1_GAP_MAX_PX = 24;
+const CF1_SLACK_MAX_PX = 48;
+const FP1_MAX_PRESSES = 12;
+const FP1_WAIT_STEPS = 15;
+// The walk waits this long after load for recall or a "Pick up the letter" button.
+const FIRST_STAGE_WAIT_MS = 15000;
+// The walk's answer for an empty text field (an Author_Question, spec 10 task 7 on).
+const TEXT_ANSWER = "Mostly work, and the evenings at home.";
 const DESKTOP_SIZES = ["1366x800", "1280x800"];
 const WIDE_SIZE = "2560x1440";
 const HW1_BASE_SIZE = "1366x800";
@@ -574,6 +623,8 @@ const NEUTRALITY = () => {
     const el = n.parentElement;
     if (!text || !el || el.closest("script, style, noscript")) continue;
     if (el.closest('[class*="sealedLetter"]')) continue;
+    // Text a reader typed (spec 10 S2.2) is never checked.
+    if (el.closest("[data-user-content]")) continue;
     if (el.checkVisibility && !el.checkVisibility({ visibilityProperty: true })) continue;
     const r = el.getBoundingClientRect();
     if (r.width === 0 || r.height === 0) continue;
@@ -736,6 +787,275 @@ const RC1_READ = () => {
   return { missing: false, top: r.top, bottom: r.bottom, inView: r.top >= 0 && r.left >= 0 && r.bottom <= innerHeight && r.right <= innerWidth };
 };
 
+// ---------------------------------------------------------------------------
+// Spec 10 page-side measures (spec 10 design.md "Owner patches", ad). Each runs
+// inside the page and stays self-contained, and returns { missing: true } when
+// the element it measures is not on this build, so the runner prints a note.
+// ---------------------------------------------------------------------------
+// TK1 (X1): every Number_Line tick hangs from its axis and reaches its label.
+const TK1_READ = () => {
+  const axes = [...document.querySelectorAll("[data-line-axis]")];
+  if (!axes.length) return { missing: true };
+  const meets = (a, b) => a.right - b.left > 0.5 && b.right - a.left > 0.5 && a.bottom - b.top > 0.5 && b.bottom - a.top > 0.5;
+  const ticks = [];
+  const overlaps = [];
+  for (const axis of axes) {
+    let root = axis.parentElement;
+    while (root && root !== document.body && !root.querySelector("[data-line-tick]")) root = root.parentElement;
+    if (!root) continue;
+    const a = axis.getBoundingClientRect();
+    const labels = [...root.querySelectorAll("[data-line-label]")]
+      .map((el) => ({ el, r: el.getBoundingClientRect(), kind: el.getAttribute("data-line-label") }))
+      .filter((l) => l.r.width > 0 && l.r.height > 0);
+    for (const t of root.querySelectorAll("[data-line-tick]")) {
+      const r = t.getBoundingClientRect();
+      if (r.width === 0 && r.height === 0) continue;
+      const kind = t.getAttribute("data-line-tick") || "?";
+      const cx = (r.left + r.right) / 2;
+      const label =
+        labels.find((l) => l.kind === kind) ??
+        [...labels].sort((x, y) => Math.abs((x.r.left + x.r.right) / 2 - cx) - Math.abs((y.r.left + y.r.right) / 2 - cx))[0];
+      const gap = label ? Math.max(0, label.r.top - r.bottom, r.top - label.r.bottom) : null;
+      ticks.push({ kind, dTop: r.top - a.top, gap });
+    }
+    for (let i = 0; i < labels.length; i += 1) {
+      for (let j = i + 1; j < labels.length; j += 1) {
+        if (meets(labels[i].r, labels[j].r)) overlaps.push(`${labels[i].el.textContent.trim().slice(0, 20)} / ${labels[j].el.textContent.trim().slice(0, 20)}`);
+      }
+    }
+  }
+  if (!ticks.length) return { missing: true };
+  return { missing: false, axes: axes.length, ticks, overlaps };
+};
+// SI1 (X2.2, X2.4): every Step_Indicator item whole, in view and clear of the Ghost.
+const SI1_READ = () => {
+  // The [data-ghost] box. The root element can be a zero-size wrapper, so its
+  // drawing ([data-ghost-box]) is measured instead when the root has no box.
+  const ghostRectOf = (el) => {
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0) return r;
+    const box = el.querySelector("[data-ghost-box]")?.getBoundingClientRect();
+    return box && box.width > 0 && box.height > 0 ? box : null;
+  };
+  const el = document.querySelector("[data-step-indicator]");
+  if (!el) return { missing: true };
+  const items = [...el.querySelectorAll("li")];
+  const ghost = ghostRectOf(document.querySelector("[data-ghost]"));
+  const meets = (a, b) => a.right - b.left > 0.5 && b.right - a.left > 0.5 && a.bottom - b.top > 0.5 && b.bottom - a.top > 0.5;
+  const tops = [];
+  const problems = [];
+  for (const li of items) {
+    const r = li.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) continue;
+    if (!tops.some((t) => Math.abs(t - r.top) < r.height / 2)) tops.push(r.top);
+    const name = li.textContent.trim().slice(0, 24);
+    if (li.scrollWidth > li.clientWidth) problems.push(`"${name}" clipped (${li.scrollWidth}>${li.clientWidth})`);
+    if (r.left < -0.5 || r.top < -0.5 || r.right > innerWidth + 0.5 || r.bottom > innerHeight + 0.5) problems.push(`"${name}" outside the viewport`);
+    if (ghost && meets(r, ghost)) problems.push(`"${name}" under [data-ghost]`);
+  }
+  return { missing: false, items: items.length, lines: tops.length, problems };
+};
+// GT1 (X2.1, C1.6, C7.1): no text or control outside the Ghost on the Ghost_Body_Box,
+// the drawing's box less G1's empty margins (12% each side, 15.5% top, 12% bottom).
+const GT1_READ = () => {
+  // The [data-ghost] box. The root element can be a zero-size wrapper, so its
+  // drawing ([data-ghost-box]) is measured instead when the root has no box.
+  const ghostRectOf = (el) => {
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0) return r;
+    const box = el.querySelector("[data-ghost-box]")?.getBoundingClientRect();
+    return box && box.width > 0 && box.height > 0 ? box : null;
+  };
+  const ghostEl = document.querySelector("[data-ghost]");
+  if (!ghostEl) return { missing: true };
+  const box = ghostRectOf(ghostEl);
+  if (!box) return { missing: true };
+  const g = {
+    left: box.left + 0.12 * box.width,
+    right: box.right - 0.12 * box.width,
+    top: box.top + 0.155 * box.height,
+    bottom: box.bottom - 0.12 * box.height,
+  };
+  const isVisible = (el) => {
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return false;
+    if (el.checkVisibility && !el.checkVisibility({ visibilityProperty: true, opacityProperty: true })) return false;
+    return true;
+  };
+  const GT1_SELECTOR = "p, h1, h2, h3, li, label, button, a, input, textarea";
+  const els = [...document.querySelectorAll(GT1_SELECTOR)].filter((el) => isVisible(el) && !el.closest("[data-ghost]"));
+  const hits = [];
+  for (const el of els) {
+    const r = el.getBoundingClientRect();
+    if (r.right - g.left > 0.5 && g.right - r.left > 0.5 && r.bottom - g.top > 0.5 && g.bottom - r.top > 0.5) {
+      hits.push(`<${el.tagName.toLowerCase()}> "${(el.textContent.trim() || el.getAttribute("aria-label") || "").slice(0, 30)}"`);
+    }
+  }
+  return { missing: false, measured: els.length, ghost: { top: g.top, bottom: g.bottom, left: g.left, right: g.right }, hits: [...new Set(hits)] };
+};
+// FC1 (C1.12): focus and scroll once recall starts on page load.
+const FC1_READ = () => {
+  const a = document.activeElement;
+  return {
+    onHeading: !!a && a !== document.body && (a.matches("[data-stage-heading]") || !!a.closest("[data-stage-heading]")),
+    active: a ? `<${a.tagName.toLowerCase()}${a.id ? `#${a.id}` : ""}>` : "none",
+    hasHeading: !!document.querySelector("[data-stage-heading]"),
+    scrollY: window.scrollY,
+  };
+};
+// ET1 (C6.1, C6.2): the held seal inside its Envelope, on no date line, nothing overlapping.
+const ET1_READ = () => {
+  const seal = document.querySelector("[data-envelope-seal]");
+  if (!seal) return { missing: true };
+  const env = seal.closest("[data-envelope-state]") ?? document.querySelector("[data-ghost] [data-envelope-state]") ?? document.querySelector("[data-envelope-state]");
+  if (!env) return { missing: true };
+  const s = seal.getBoundingClientRect();
+  const e = env.getBoundingClientRect();
+  const meets = (a, b) => a.right - b.left > 0.5 && b.right - a.left > 0.5 && a.bottom - b.top > 0.5 && b.bottom - a.top > 0.5;
+  const inside = s.left >= e.left - 0.5 && s.top >= e.top - 0.5 && s.right <= e.right + 0.5 && s.bottom <= e.bottom + 0.5;
+  const dates = [...env.querySelectorAll("[data-date]")].filter((d) => {
+    const r = d.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  });
+  const onDates = dates.filter((d) => meets(s, d.getBoundingClientRect())).map((d) => d.textContent.trim().slice(0, 30));
+  // Drawn elements: the seal and every text element inside the Envelope box.
+  const drawn = [seal, ...[...env.querySelectorAll("p, h1, h2, h3, span")].filter((el) => {
+    if (seal.contains(el)) return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && el.textContent.trim() && ![...el.children].some((c) => c.textContent.trim());
+  })];
+  const pairs = [];
+  for (let i = 0; i < drawn.length; i += 1) {
+    for (let j = i + 1; j < drawn.length; j += 1) {
+      const a = drawn[i];
+      const b = drawn[j];
+      if (a.contains(b) || b.contains(a)) continue;
+      if (meets(a.getBoundingClientRect(), b.getBoundingClientRect())) {
+        const name = (el) => (el === seal ? "seal" : `"${el.textContent.trim().slice(0, 20)}"`);
+        pairs.push(`${name(a)} / ${name(b)}`);
+      }
+    }
+  }
+  return { missing: false, state: env.getAttribute("data-envelope-state"), inside, seal: s, envelope: e, dates: dates.length, onDates, pairs };
+};
+// SG1 (C6.1, C6.3, C6.4, C6.8): the Seal_Group beside the Ghost_Body_Box, level with the seal.
+const SG1_READ = (phone) => {
+  // The [data-ghost] box. The root element can be a zero-size wrapper, so its
+  // drawing ([data-ghost-box]) is measured instead when the root has no box.
+  const ghostRectOf = (el) => {
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0) return r;
+    const box = el.querySelector("[data-ghost-box]")?.getBoundingClientRect();
+    return box && box.width > 0 && box.height > 0 ? box : null;
+  };
+  const group = document.querySelector("[data-seal-group]");
+  if (!group) return { missing: true };
+  const r = group.getBoundingClientRect();
+  const meets = (a, b) => a.right - b.left > 0.5 && b.right - a.left > 0.5 && a.bottom - b.top > 0.5 && b.bottom - a.top > 0.5;
+  const ghostEl = document.querySelector("[data-ghost]");
+  const ghost = ghostRectOf(ghostEl);
+  const gb = document.querySelector("[data-ghost-box]")?.getBoundingClientRect() ?? null;
+  const body = gb ? { left: gb.left + 0.12 * gb.width, right: gb.right - 0.12 * gb.width, top: gb.top + 0.155 * gb.height, bottom: gb.bottom - 0.12 * gb.height } : null;
+  const env = document.querySelector("[data-ghost] [data-envelope-state]")?.getBoundingClientRect() ?? null;
+  const seal = document.querySelector("[data-envelope-seal]")?.getBoundingClientRect() ?? null;
+  const hint = [...group.querySelectorAll("p")].find((p) => p.textContent.trim()) ?? null;
+  const inView = r.left >= -0.5 && r.top >= -0.5 && r.right <= innerWidth + 0.5 && r.bottom <= innerHeight + 0.5;
+  const out = { missing: false, group: { top: r.top, bottom: r.bottom, left: r.left, right: r.right }, inView };
+  if (phone) {
+    out.ghostBottom = ghost ? ghost.bottom : null;
+    out.belowGhost = ghost ? r.top - ghost.bottom : null;
+    out.onGhost = ghost ? meets(r, ghost) : false;
+    return out;
+  }
+  if (!body) return { missing: true };
+  out.onBody = meets(r, body);
+  out.onEnvelope = env ? meets(r, env) : false;
+  // The body edge that faces the Content_Column: the column sits left of the Ghost on wide screens.
+  const columnLeft = (r.left + r.right) / 2 < (body.left + body.right) / 2;
+  out.edgeGap = columnLeft ? body.left - r.right : r.left - body.right;
+  const sealY = seal ? (seal.top + seal.bottom) / 2 : null;
+  out.sealY = sealY;
+  out.level = sealY !== null && sealY >= r.top && sealY <= r.bottom;
+  if (hint) {
+    const cs = getComputedStyle(hint);
+    out.hintAlign = cs.textAlign;
+    out.hintClipped = hint.scrollWidth > hint.clientWidth;
+  } else {
+    out.hintAlign = null;
+    out.hintClipped = false;
+  }
+  return out;
+};
+// AL1 (C6.10): the Answer_List in marks, clear of the Ghost and the Seal_Group.
+const AL1_READ = () => {
+  // The [data-ghost] box. The root element can be a zero-size wrapper, so its
+  // drawing ([data-ghost-box]) is measured instead when the root has no box.
+  const ghostRectOf = (el) => {
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    if (r.width > 0 && r.height > 0) return r;
+    const box = el.querySelector("[data-ghost-box]")?.getBoundingClientRect();
+    return box && box.width > 0 && box.height > 0 ? box : null;
+  };
+  const list = document.querySelector("[data-answer-list]");
+  const meets = (a, b) => a.right - b.left > 0.5 && b.right - a.left > 0.5 && a.bottom - b.top > 0.5 && b.bottom - a.top > 0.5;
+  if (!list) return { present: false };
+  const r = list.getBoundingClientRect();
+  const ghost = ghostRectOf(document.querySelector("[data-ghost]"));
+  const group = document.querySelector("[data-seal-group]")?.getBoundingClientRect() ?? null;
+  return {
+    present: r.width > 0 && r.height > 0,
+    onGhost: ghost ? meets(r, ghost) : false,
+    onGroup: group ? meets(r, group) : false,
+  };
+};
+// CF1 (C6.7, C7.3): no card much taller than what it holds, and none that holds only controls.
+const CF1_READ = () => {
+  const cards = [...document.querySelectorAll("[data-card], [data-stage-panel]")].filter((el) => {
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && (!el.checkVisibility || el.checkVisibility({ visibilityProperty: true }));
+  });
+  if (!cards.length) return { missing: true };
+  const CONTROL = "button, a, input, select, textarea, label, summary";
+  const out = [];
+  for (const card of cards) {
+    const r = card.getBoundingClientRect();
+    const kids = [...card.children].map((c) => c.getBoundingClientRect()).filter((b) => b.width > 0 && b.height > 0);
+    const union = kids.length ? Math.max(...kids.map((b) => b.bottom)) - Math.min(...kids.map((b) => b.top)) : 0;
+    const content = [...card.querySelectorAll("*")].some((el) => {
+      if (el.matches(CONTROL) || el.closest(CONTROL)) return false;
+      if (!el.textContent.trim() && !el.matches("svg, img")) return false;
+      const b = el.getBoundingClientRect();
+      return b.width > 0 && b.height > 0;
+    });
+    const name = card.getAttribute("data-card") || (card.hasAttribute("data-stage-panel") ? "stage-panel" : card.tagName.toLowerCase());
+    out.push({ name, height: r.height, union, slack: r.height - union, content });
+  }
+  return { missing: false, cards: out };
+};
+// FP1 (C5.12): mark the control a judge presses next, or return null. A
+// [data-primary-control] that is a button or link is pressed itself; a wrapper
+// (the recall answer row holds the field and its button) has its enabled button
+// pressed. A press-and-hold target with no button inside is skipped.
+const FP1_TARGET = () => {
+  for (const old of document.querySelectorAll("[data-fp1-target]")) old.removeAttribute("data-fp1-target");
+  const visible = (el) => {
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0 && (!el.checkVisibility || el.checkVisibility({ visibilityProperty: true }));
+  };
+  for (const c of document.querySelectorAll("[data-primary-control]")) {
+    if (!visible(c)) continue;
+    const el = c.matches("button, a[href]") ? c : [...c.querySelectorAll("button, a[href]")].find((b) => visible(b));
+    if (!el) continue;
+    if (el.disabled || el.getAttribute("aria-disabled") === "true") return { blocked: (el.textContent.trim() || el.tagName).slice(0, 30) };
+    el.setAttribute("data-fp1-target", "");
+    return { label: (el.textContent.trim() || el.tagName).slice(0, 30) };
+  }
+  return null;
+};
 // PH1 on / (P1.1): headline, Hero_Sentence, both calls to action and the Landing_Ghost
 // in the first viewport. The Hero_Sentence is [data-hero-sentence], else the first
 // paragraph in a [data-block] after the h1.
@@ -1139,7 +1459,8 @@ async function checkGhostCentre(page, ctx, stage) {
   const frameW = Math.min(ctx.w, 1440);
   const frameL = (ctx.w - frameW) / 2;
   const expected = ctx.w >= 900 ? frameL + 0.72 * frameW : ctx.w * 0.5;
-  if (stage === "intact") {
+  // The reference Stage is intact when the walk reached it, else recall (spec 10 ad).
+  if (stage === (ctx.g2Ref ?? "intact")) {
     ctx.intactCentre = centre;
     if (Math.abs(centre - expected) > 1) ctx.rep.add("polish", "G2", `Ghost centre x ${centre.toFixed(1)} px, expected ${expected.toFixed(1)} px`);
     else ctx.rep.add("ok", "G2", `Ghost centre x ${centre.toFixed(1)} px (expected ${expected.toFixed(1)})`);
@@ -1147,8 +1468,8 @@ async function checkGhostCentre(page, ctx, stage) {
   }
   if (ctx.intactCentre === null) return;
   const diff = Math.abs(centre - ctx.intactCentre);
-  if (diff > 1) ctx.rep.add("polish", "G2", `Ghost moved sideways by ${diff.toFixed(1)} px from intact (${centre.toFixed(1)} px)`);
-  else ctx.rep.add("ok", "G2", `Ghost centre x ${centre.toFixed(1)} px, same as intact`);
+  if (diff > 1) ctx.rep.add("polish", "G2", `Ghost moved sideways by ${diff.toFixed(1)} px from ${ctx.g2Ref ?? "intact"} (${centre.toFixed(1)} px)`);
+  else ctx.rep.add("ok", "G2", `Ghost centre x ${centre.toFixed(1)} px, same as ${ctx.g2Ref ?? "intact"}`);
 }
 
 async function checkFrame(page, ctx) {
@@ -1656,6 +1977,233 @@ async function checkReceiptsInView(page, ctx) {
     : result("RC1", "receipts-in-view", r.inView ? "pass" : "fail", `firstEntry=${px(r.top)}..${px(r.bottom)} viewport=${ctx.w}x${ctx.h} scrollY=${Math.round(await page.evaluate(() => window.scrollY))} threshold=fully inside viewport`));
 }
 
+// ---------------------------------------------------------------------------
+// Spec 10 checks (spec 10 design.md "Owner patches", ad). Each prints measured
+// values and threshold=, and is a BLOCKER only with --require; a check whose
+// element is not on this build prints a note.
+// ---------------------------------------------------------------------------
+async function checkTickOnAxis(page, ctx) {
+  const r = await page.evaluate(TK1_READ);
+  if (r.missing) {
+    report(ctx, result("TK1", "tick-on-axis", "missing", "not on this build: no [data-line-axis] with [data-line-tick]"));
+    return;
+  }
+  const off = r.ticks.filter((t) => Math.abs(t.dTop) > TK1_AXIS_TOL_PX);
+  const far = r.ticks.filter((t) => t.gap === null || t.gap > TK1_LABEL_GAP_MAX_PX);
+  const worstTop = Math.max(...r.ticks.map((t) => Math.abs(t.dTop)));
+  const worstGap = Math.max(...r.ticks.map((t) => (t.gap === null ? Infinity : t.gap)));
+  const list = (ts) => ts.slice(0, 4).map((t) => `${t.kind} dTop=${t.dTop.toFixed(1)} gap=${t.gap === null ? "no label" : t.gap.toFixed(1)}`).join("; ");
+  const bad = off.length || far.length || r.overlaps.length;
+  report(ctx, result("TK1", "tick-on-axis", bad ? "fail" : "pass", `axes=${r.axes} ticks=${r.ticks.length} worstTopOffset=${worstTop.toFixed(1)}px worstLabelGap=${Number.isFinite(worstGap) ? worstGap.toFixed(1) : "no label"}px labelOverlaps=${r.overlaps.length}${bad ? ` (${[list([...off, ...far]), ...r.overlaps.slice(0, 2)].filter(Boolean).join("; ")})` : ""} threshold=top offset 0±${TK1_AXIS_TOL_PX}px, label gap<=${TK1_LABEL_GAP_MAX_PX}px, no label overlap`));
+}
+// SI1 reads the indicator with the page at the top, where it is drawn, then restores the scroll.
+async function checkStepFit(page, ctx) {
+  const startY = await page.evaluate(() => window.scrollY);
+  await page.evaluate(() => window.scrollTo({ top: 0, behavior: "instant" }));
+  await sleep(150);
+  const r = await page.evaluate(SI1_READ);
+  await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), startY);
+  if (r.missing) {
+    report(ctx, result("SI1", "step-indicator-fit", "missing", "not on this build: no [data-step-indicator]"));
+    return;
+  }
+  const maxLines = isPhone(ctx) ? SI1_LINES_PHONE_MAX : 1;
+  const problems = [...r.problems];
+  if (r.items !== SI1_ITEMS) problems.push(`${r.items} items`);
+  if (r.lines > maxLines) problems.push(`${r.lines} lines`);
+  report(ctx, result("SI1", "step-indicator-fit", problems.length ? "fail" : "pass", `items=${r.items} lines=${r.lines}${problems.length ? ` (${problems.slice(0, 4).join("; ")})` : ""} threshold=${SI1_ITEMS} items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=${maxLines}`));
+}
+// GT1 at the Stage start, then again with the page scrolled to the bottom.
+async function checkGhostText(page, ctx) {
+  // Below 600 px the Ghost fix is spec 10 task 5's (X2.1), which also removes the
+  // pick-up press that scrolls the page. Until then GT1 prints a note on the phone.
+  // Patch ai removes this tolerance.
+  if (isPhone(ctx) && ctx.pickedUp) {
+    report(ctx, result("GT1", "ghost-over-text", "missing", `this build needs a "${PICK_UP}" press before recall; below ${PHONE_WIDTH_MAX} px GT1 reads only a build that opens on recall`));
+    return;
+  }
+  const startY = await page.evaluate(() => window.scrollY);
+  const first = await page.evaluate(GT1_READ);
+  if (first.missing) {
+    report(ctx, result("GT1", "ghost-over-text", "missing", "no [data-ghost] box at this Stage"));
+    return;
+  }
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
+  await sleep(250);
+  const bottom = await page.evaluate(GT1_READ);
+  await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), startY);
+  const hits = [...new Set([...first.hits, ...(bottom.missing ? [] : bottom.hits.map((h) => `${h} (scrolled)`))])];
+  report(ctx, result("GT1", "ghost-over-text", hits.length ? "fail" : "pass", `measured=${first.measured} ghostBody=${px(first.ghost.left)}..${px(first.ghost.right)}x${px(first.ghost.top)}..${px(first.ghost.bottom)} hits=${hits.length}${hits.length ? ` (${hits.slice(0, 4).join("; ")})` : ""} threshold=0 outside [data-ghost] on the Ghost_Body_Box (at the Stage start and scrolled to the bottom)`));
+}
+// FC1 reads the persona page once recall starts on load, with no pick-up press.
+async function checkLoadFocus(page, ctx, loadY) {
+  if (ctx.pickedUp) {
+    report(ctx, result("FC1", "load-focus", "missing", `this build needs a "${PICK_UP}" press before recall; FC1 reads only a recall reached on load`));
+    return;
+  }
+  const r = await page.evaluate(FC1_READ);
+  if (!r.hasHeading) {
+    report(ctx, result("FC1", "load-focus", "missing", "not on this build: no [data-stage-heading]"));
+    return;
+  }
+  const drift = Math.abs(r.scrollY - loadY);
+  const ok = r.onHeading && drift < 1;
+  report(ctx, result("FC1", "load-focus", ok ? "pass" : "fail", `active=${r.active} onHeading=${r.onHeading} scrollY=${Math.round(r.scrollY)} atLoad=${Math.round(loadY)} threshold=focus on [data-stage-heading], scrollY unchanged`));
+}
+async function checkSealOnEnvelope(page, ctx) {
+  if (!DESKTOP_SIZES.includes(ctx.size) && ctx.size !== WIDE_SIZE) return;
+  const r = await page.evaluate(ET1_READ);
+  if (r.missing) {
+    report(ctx, result("ET1", "seal-on-envelope", "missing", "not on this build: no [data-envelope-seal] in a [data-envelope-state] box"));
+    return;
+  }
+  const problems = [];
+  if (!r.inside) problems.push("seal outside the Envelope box");
+  if (r.onDates.length) problems.push(`seal on ${r.onDates.map((d) => `"${d}"`).join(", ")}`);
+  if (r.pairs.length) problems.push(`overlap ${r.pairs.slice(0, 3).join("; ")}`);
+  report(ctx, result("ET1", "seal-on-envelope", problems.length ? "fail" : "pass", `state=${r.state} seal=${px(r.seal.left)}..${px(r.seal.right)}x${px(r.seal.top)}..${px(r.seal.bottom)} envelope=${px(r.envelope.left)}..${px(r.envelope.right)}x${px(r.envelope.top)}..${px(r.envelope.bottom)} dateLines=${r.dates}${problems.length ? ` (${problems.join("; ")})` : ""} threshold=seal inside the Envelope, on no [data-date], no two drawn elements overlap`));
+}
+async function checkSealGroup(page, ctx) {
+  const phone = isPhone(ctx);
+  if (!phone && !DESKTOP_SIZES.includes(ctx.size) && ctx.size !== WIDE_SIZE) return;
+  const r = await page.evaluate(SG1_READ, phone);
+  if (r.missing) {
+    report(ctx, result("SG1", "seal-group", "missing", "not on this build: no [data-seal-group] (or no [data-ghost-box] to measure against)"));
+    return;
+  }
+  const g = `group=${px(r.group.left)}..${px(r.group.right)}x${px(r.group.top)}..${px(r.group.bottom)} inView=${r.inView}`;
+  const problems = [];
+  if (!r.inView) problems.push("outside the viewport");
+  if (phone) {
+    if (r.belowGhost === null) problems.push("no [data-ghost] box");
+    else if (r.belowGhost < 0 || r.belowGhost > SG1_GAP_MAX_PX) problems.push(`top ${r.belowGhost.toFixed(1)}px below the Ghost`);
+    if (r.onGhost) problems.push("on [data-ghost]");
+    report(ctx, result("SG1", "seal-group", problems.length ? "fail" : "pass", `${g} belowGhost=${r.belowGhost === null ? "n/a" : `${r.belowGhost.toFixed(1)}px`}${problems.length ? ` (${problems.join("; ")})` : ""} threshold=top 0 to ${SG1_GAP_MAX_PX}px below [data-ghost], not on it, inside the First_Viewport`));
+    return;
+  }
+  if (r.onBody) problems.push("on the Ghost_Body_Box");
+  if (r.onEnvelope) problems.push("on the Envelope");
+  if (r.edgeGap < 0 || r.edgeGap > SG1_GAP_MAX_PX) problems.push(`edge gap ${r.edgeGap.toFixed(1)}px`);
+  if (!r.level) problems.push("not level with the seal");
+  if (r.hintAlign !== null && r.hintAlign !== "left" && r.hintAlign !== "center" && r.hintAlign !== "start") problems.push(`hint text-align ${r.hintAlign}`);
+  if (r.hintClipped) problems.push("hint clipped");
+  report(ctx, result("SG1", "seal-group", problems.length ? "fail" : "pass", `${g} edgeGap=${r.edgeGap.toFixed(1)}px sealY=${r.sealY === null ? "n/a" : px(r.sealY)} hintAlign=${r.hintAlign ?? "no hint"}${problems.length ? ` (${problems.join("; ")})` : ""} threshold=clear of the Ghost_Body_Box and the Envelope, edge gap 0 to ${SG1_GAP_MAX_PX}px, seal centre within the group, hint left or centre and unclipped, inside the viewport`));
+}
+async function checkAnswerList(page, ctx) {
+  const r = await page.evaluate(AL1_READ);
+  const problems = [];
+  if (!r.present) problems.push("no [data-answer-list] in marks");
+  if (r.onGhost) problems.push("on [data-ghost]");
+  if (r.onGroup) problems.push("on [data-seal-group]");
+  report(ctx, result("AL1", "answer-list", problems.length ? "fail" : "pass", `present=${r.present} onGhost=${!!r.onGhost} onSealGroup=${!!r.onGroup}${problems.length ? ` (${problems.join("; ")})` : ""} threshold=present, clear of [data-ghost] and [data-seal-group]`));
+}
+async function checkCardFit(page, ctx) {
+  const r = await page.evaluate(CF1_READ);
+  if (r.missing) {
+    report(ctx, result("CF1", "card-fit", "missing", "no [data-card] or [data-stage-panel] at this Stage"));
+    return;
+  }
+  const bad = r.cards.filter((c) => c.slack > CF1_SLACK_MAX_PX || !c.content);
+  const worst = Math.max(...r.cards.map((c) => c.slack));
+  report(ctx, result("CF1", "card-fit", bad.length ? "fail" : "pass", `cards=${r.cards.length} worstSlack=${worst.toFixed(1)}px${bad.length ? ` (${bad.slice(0, 3).map((c) => `${c.name} height=${px(c.height)} content=${px(c.union)}${c.content ? "" : " controls only"}`).join("; ")})` : ""} threshold=height minus content<=${CF1_SLACK_MAX_PX}px, holds a non-control`));
+}
+// FP1: a fresh persona page, pressing only [data-primary-control] from load to the
+// Figures_Heading. Each press stores a Recall_Record in the local database, as the
+// main walk does.
+async function checkFastestPath(context, ctx, p) {
+  ctx.rep.stage(`${p.prefix}fastest path`);
+  const page = await newPage(context);
+  try {
+    await page.goto(`${ctx.base}${p.path}`, { waitUntil: "load" });
+    const first = await reachRecall(page);
+    if (first !== "recall") {
+      report(ctx, result("FP1", "fastest-path", "missing", first === "pickup" ? `this build needs a "${PICK_UP}" press before recall; FP1 reads only a recall reached on load` : "recall not reached"));
+      return;
+    }
+    const counter = await page.evaluate(() => document.querySelector('[data-fit="counter"]')?.textContent ?? "");
+    const total = Number((/of\s+(\d+)/i.exec(counter) ?? [])[1]) || null;
+    const limit = total === null ? null : 2 + total;
+    const pressed = [];
+    let reached = false;
+    let stuck = null;
+    for (let i = 0; i < FP1_MAX_PRESSES; i += 1) {
+      let target = null;
+      for (let t = 0; t < FP1_WAIT_STEPS; t += 1) {
+        if ((await page.locator("[data-figures-heading]").count()) > 0) {
+          reached = true;
+          break;
+        }
+        target = await page.evaluate(FP1_TARGET);
+        if (target?.label) break;
+        await sleep(400);
+      }
+      if (reached) break;
+      if (!target?.label) {
+        stuck = { stage: await stageOf(page), blocked: target?.blocked ?? null };
+        break;
+      }
+      await page.locator("[data-fp1-target]").first().click({ timeout: WAIT_MS });
+      pressed.push(target.label);
+      await sleep(600);
+    }
+    if (!reached && (await page.locator("[data-figures-heading]").count()) > 0) reached = true;
+    const path = pressed.map((l) => `"${l}"`).join(" > ") || "none";
+    if (!reached && stuck?.blocked && stuck.stage === "recall") {
+      report(ctx, result("FP1", "fastest-path", "missing", `"${stuck.blocked}" is disabled with the field as it loads (no Sample_Answer on this build); presses=${pressed.length} path=${path}`));
+      return;
+    }
+    const ok = reached && limit !== null && pressed.length <= limit;
+    report(ctx, result("FP1", "fastest-path", ok ? "pass" : "fail", `questions=${total ?? "unknown"} presses=${pressed.length} reachedFiguresHeading=${reached}${stuck ? ` stoppedAt=${stuck.stage}${stuck.blocked ? ` ("${stuck.blocked}" disabled)` : ""}` : ""} path=${path} threshold=<=${limit ?? "2+questions"} presses to [data-figures-heading]`));
+  } finally {
+    await page.close();
+  }
+}
+// The first of the recall Stage or a "Pick up the letter" button, after load.
+// Builds before spec 10 task 5 show the button; later builds open on recall.
+async function reachRecall(page, timeout = FIRST_STAGE_WAIT_MS) {
+  const pickUp = page.getByRole("button", { name: PICK_UP, exact: true });
+  const until = Date.now() + timeout;
+  while (Date.now() < until) {
+    if ((await stageOf(page)) === "recall") return "recall";
+    if ((await pickUp.count()) > 0 && (await pickUp.first().isVisible())) return "pickup";
+    await sleep(200);
+  }
+  return null;
+}
+// Answers every recall question. A field that holds a value (a Sample_Answer) is
+// kept; an empty one gets the walk's answer. The primary control is pressed with
+// the mouse, never Enter, since Enter adds a line break in a text field.
+// onQuestion(i, kind) runs before each press. Returns null or a blocker message.
+async function answerAll(page, answers, onQuestion = async () => {}) {
+  const field = page.locator('input[type="text"]:visible, textarea:visible').first();
+  const counterText = () => page.evaluate(() => document.querySelector('[data-fit="counter"]')?.textContent?.trim() ?? "");
+  for (let i = 0; i < 20; i += 1) {
+    if ((await field.count()) > 0) {
+      const value = await field.inputValue();
+      if (!value.trim()) await field.fill(answers[i] ?? answers[answers.length - 1] ?? TEXT_ANSWER);
+    }
+    const next = page.getByRole("button", { name: NEXT, exact: true });
+    const record = page.getByRole("button", { name: RECORD, exact: true });
+    if ((await next.count()) > 0 && (await next.first().isVisible())) {
+      await onQuestion(i, NEXT);
+      const before = await counterText();
+      await next.first().click();
+      try {
+        await page.waitForFunction((b) => (document.querySelector('[data-fit="counter"]')?.textContent?.trim() ?? "") !== b, before, { timeout: WAIT_MS });
+      } catch {
+        return `answering question ${i + 1} does not reach question ${i + 2} (counter: "${before}")`;
+      }
+      continue;
+    }
+    if ((await record.count()) > 0 && (await record.first().isVisible())) {
+      await onQuestion(i, RECORD);
+      await record.first().click();
+      return null;
+    }
+    return `no "${NEXT}" or "${RECORD}" button on question ${i + 1}`;
+  }
+  return "more than 20 questions";
+}
 // The spec 09 checks every page and Stage gets.
 async function checkEveryPage(page, ctx, route, { fonts = false } = {}) {
   await guard(ctx, "BO1", () => checkButtonOverflow(page, ctx));
@@ -1816,6 +2364,8 @@ async function persona(context, ctx, p, via) {
   const page = await newPage(context);
   ctx.ghostHook = false;
   ctx.intactCentre = null;
+  ctx.pickedUp = false;
+  ctx.g2Ref = "intact";
   try {
     await personaWalk(page, ctx, p, via);
   } catch (error) {
@@ -1836,40 +2386,51 @@ async function personaWalk(page, ctx, p, via) {
     ctx.rep.add("blocker", "walk", `${p.path} answered HTTP ${res?.status() ?? "none"}; the flow cannot be finished`);
     return;
   }
-  const pickUp = page.getByRole("button", { name: PICK_UP, exact: true });
-  try {
-    await pickUp.waitFor({ timeout: 15000 });
-  } catch {
-    ctx.rep.add("blocker", "walk", `no "${PICK_UP}" button on ${p.path}; the flow cannot be finished`);
+  const loadY = await page.evaluate(() => window.scrollY);
+  // Spec 10 ad: builds before task 5 show "Pick up the letter"; later builds open on recall.
+  const first = await reachRecall(page);
+  if (first === null) {
+    ctx.rep.add("blocker", "walk", `no "${PICK_UP}" button and no recall stage on ${p.path} within ${FIRST_STAGE_WAIT_MS / 1000} s; the flow cannot be finished`);
     return;
   }
-  await sleep(2600); // the Ghost's rise (900 ms delay + 1500 ms) settles before the box checks
-  await shot(page, ctx, S("intact"));
-  await guard(ctx, "F2", () => checkSoil(page, ctx));
-  await guard(ctx, "G1", () => checkGhostBody(page, ctx));
-  await guard(ctx, "G2", () => checkGhostCentre(page, ctx, "intact"));
-  await guard(ctx, "G3", () => checkFrame(page, ctx));
-  await guard(ctx, "E1", () => checkDates(page, ctx));
-  await guard(ctx, "T0", () => checkTopBar(page, ctx));
-  await guard(ctx, "BTN", () => checkMainButton(page, ctx, PICK_UP, true));
-  await guard(ctx, "D1", () => checkDust(page, ctx));
-  await guard(ctx, "BAND1", () => checkLightBand(page, ctx));
-  await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
-  await guard(ctx, "ST1", () => checkStepIndicator(page, ctx, "intact"));
-  await guard(ctx, "GZ1", async () => {
-    if (await page.evaluate(() => !!document.querySelector("[data-ghost]"))) ctx.ghostHook = true;
-  });
-  await checkEveryPage(page, ctx, route, { fonts: true });
-
-  // Pick up the letter: the recall stage.
-  await pickUp.click();
-  if (!(await waitForStage(page, "recall"))) {
-    ctx.rep.add("blocker", "walk", `"${PICK_UP}" does not reach the recall stage (data-ceremony is ${await stageOf(page)})`);
-    return;
+  ctx.pickedUp = first === "pickup";
+  ctx.g2Ref = ctx.pickedUp ? "intact" : "recall";
+  if (ctx.pickedUp) {
+    const pickUp = page.getByRole("button", { name: PICK_UP, exact: true });
+    await sleep(2600); // the Ghost's rise (900 ms delay + 1500 ms) settles before the box checks
+    await shot(page, ctx, S("intact"));
+    await guard(ctx, "F2", () => checkSoil(page, ctx));
+    await guard(ctx, "G1", () => checkGhostBody(page, ctx));
+    await guard(ctx, "G2", () => checkGhostCentre(page, ctx, "intact"));
+    await guard(ctx, "G3", () => checkFrame(page, ctx));
+    await guard(ctx, "E1", () => checkDates(page, ctx));
+    await guard(ctx, "T0", () => checkTopBar(page, ctx));
+    await guard(ctx, "BTN", () => checkMainButton(page, ctx, PICK_UP, true));
+    await guard(ctx, "D1", () => checkDust(page, ctx));
+    await guard(ctx, "BAND1", () => checkLightBand(page, ctx));
+    await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
+    await guard(ctx, "ST1", () => checkStepIndicator(page, ctx, "intact"));
+    await guard(ctx, "GT1", () => checkGhostText(page, ctx));
+    await guard(ctx, "CF1", () => checkCardFit(page, ctx));
+    await guard(ctx, "GZ1", async () => {
+      if (await page.evaluate(() => !!document.querySelector("[data-ghost]"))) ctx.ghostHook = true;
+    });
+    await checkEveryPage(page, ctx, route, { fonts: true });
+    // Pick up the letter: the recall stage.
+    await pickUp.click();
+    if (!(await waitForStage(page, "recall"))) {
+      ctx.rep.add("blocker", "walk", `"${PICK_UP}" does not reach the recall stage (data-ceremony is ${await stageOf(page)})`);
+      return;
+    }
   }
   ctx.rep.stage(S("recall"));
+  if (!ctx.pickedUp) {
+    ctx.rep.add("ok", "walk", "recall reached on load, with no pick-up press");
+    await sleep(500);
+  }
+  await guard(ctx, "FC1", () => checkLoadFocus(page, ctx, loadY));
   // The handed layout starts moving a frame after the stage changes, so wait before settling.
-  await sleep(1500);
+  await sleep(ctx.pickedUp ? 1500 : 2600);
   await settle(page);
   // R1 reads the page as the judge first sees it, before anything scrolls.
   await guard(ctx, "R1", () => checkRecallInView(page, ctx));
@@ -1884,27 +2445,26 @@ async function personaWalk(page, ctx, p, via) {
   await guard(ctx, "F2", () => checkSoil(page, ctx));
   await guard(ctx, "G1", () => checkGhostBody(page, ctx));
   await guard(ctx, "G2", () => checkGhostCentre(page, ctx, "recall"));
-  await guard(ctx, "BTN", () => checkMainButton(page, ctx, NEXT));
   await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
   await guard(ctx, "ST1", () => checkStepIndicator(page, ctx, "recall"));
-  await checkEveryPage(page, ctx, route);
-
+  await guard(ctx, "SI1", () => checkStepFit(page, ctx));
+  await guard(ctx, "GT1", () => checkGhostText(page, ctx));
+  await guard(ctx, "CF1", () => checkCardFit(page, ctx));
+  if (!ctx.pickedUp) {
+    await guard(ctx, "GZ1", async () => {
+      if (await page.evaluate(() => !!document.querySelector("[data-ghost]"))) ctx.ghostHook = true;
+    });
+  }
+  await checkEveryPage(page, ctx, route, { fonts: !ctx.pickedUp });
   const answers = p.answers(await page.evaluate(() => document.body.innerText));
-  const answer = page.locator('input[type="text"]');
-  await answer.first().fill(answers[0]);
-  await answer.first().press("Enter");
-  if ((await page.getByText("Question 2 of 2").count()) === 0) {
-    const counter = await page.evaluate(() => document.querySelector('[data-fit="counter"]')?.textContent ?? "");
-    ctx.rep.add("blocker", "walk", `answering question 1 does not reach question 2 (counter: "${counter.trim()}")`);
+  const problem = await answerAll(page, answers, async (i, control) => {
+    if (i > 0) await guard(ctx, "G1", () => checkGhostBody(page, ctx));
+    if (i === 0 || control === RECORD) await guard(ctx, "BTN", () => checkMainButton(page, ctx, control));
+  });
+  if (problem) {
+    ctx.rep.add("blocker", "walk", problem);
     return;
   }
-  await guard(ctx, "G1", () => checkGhostBody(page, ctx));
-  await guard(ctx, "BTN", () => checkMainButton(page, ctx, RECORD));
-
-  // Only the current question's field is rendered, so question 2 is the first text input again.
-  await answer.first().fill(answers[1]);
-  await answer.first().press("Enter");
-
   // Marks: both answers recorded.
   ctx.rep.stage(S("marks"));
   if (!(await waitForStage(page, "marks"))) {
@@ -1928,6 +2488,11 @@ async function personaWalk(page, ctx, p, via) {
   await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
   await guard(ctx, "RS1", () => checkScaleOverlap(page, ctx));
   await guard(ctx, "ST1", () => checkStepIndicator(page, ctx, "marks"));
+  await guard(ctx, "SI1", () => checkStepFit(page, ctx));
+  await guard(ctx, "ET1", () => checkSealOnEnvelope(page, ctx));
+  await guard(ctx, "SG1", () => checkSealGroup(page, ctx));
+  await guard(ctx, "AL1", () => checkAnswerList(page, ctx));
+  await guard(ctx, "CF1", () => checkCardFit(page, ctx));
   await checkEveryPage(page, ctx, route);
 
   // Seal: the hold, when this build has the seal target (a later spec 07 task).
@@ -1975,6 +2540,9 @@ async function personaWalk(page, ctx, p, via) {
   await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
   await guard(ctx, "GZ1", () => checkGhostGone(page, ctx, false));
   await guard(ctx, "ST1", () => checkStepIndicator(page, ctx, "letter"));
+  await guard(ctx, "SI1", () => checkStepFit(page, ctx));
+  await guard(ctx, "GT1", () => checkGhostText(page, ctx));
+  await guard(ctx, "CF1", () => checkCardFit(page, ctx));
   await checkEveryPage(page, ctx, route, { fonts: true });
 
   // Figures: [data-advance="figures"], else "See the numbers" or "See the receipts".
@@ -2030,6 +2598,9 @@ async function personaWalk(page, ctx, p, via) {
     await guard(ctx, "FT1", () => checkFooter(page, ctx));
     await guard(ctx, "GZ1", () => checkGhostGone(page, ctx, false));
     await guard(ctx, "ST1", () => checkStepIndicator(page, ctx, "close"));
+    await guard(ctx, "SI1", () => checkStepFit(page, ctx));
+    await guard(ctx, "TK1", () => checkTickOnAxis(page, ctx));
+    await guard(ctx, "CF1", () => checkCardFit(page, ctx));
     await guard(ctx, "FONT2", async () => {
       const r = await page.evaluate(FONT2_READ);
       if (!r.missing) report(ctx, result("FONT2", "fonts-sans-ui", r.off.length ? "fail" : "pass", `sans=${r.sans} measured=${r.measured} off=${r.off.length}${r.off.length ? ` (${r.off.slice(0, 3).join("; ")})` : ""} threshold=0`));
@@ -2051,14 +2622,16 @@ async function showAll(context, ctx) {
   const page = await newPage(context);
   try {
     await page.goto(`${ctx.base}${PERSONA_PATH}`, { waitUntil: "load" });
-    await page.getByRole("button", { name: PICK_UP, exact: true }).click({ timeout: 15000 });
-    if (!(await waitForStage(page, "recall"))) throw new Error("recall not reached");
+    // As the main walk (spec 10 ad): press "Pick up the letter" only where this build shows it.
+    const first = await reachRecall(page);
+    if (first === null) throw new Error("neither recall nor a pick-up button");
+    if (first === "pickup") {
+      await page.getByRole("button", { name: PICK_UP, exact: true }).click({ timeout: WAIT_MS });
+      if (!(await waitForStage(page, "recall"))) throw new Error("recall not reached");
+    }
     await sleep(1500);
-    const answer = page.locator('input[type="text"]');
-    await answer.first().fill("3.20");
-    await answer.first().press("Enter");
-    await answer.first().fill("3.90");
-    await answer.first().press("Enter");
+    const problem = await answerAll(page, PERSONAS[0].answers(""));
+    if (problem) throw new Error(problem);
     if (!(await waitForStage(page, "marks"))) throw new Error("marks not reached");
     await sleep(1500);
     const showAllControl = page.getByRole("button", { name: SHOW_ALL_LABEL }).or(page.getByRole("link", { name: SHOW_ALL_LABEL })).first();
@@ -2111,6 +2684,7 @@ async function runSize(browser, base, size, opts, rep) {
     await guard(ctx, "walk", () => persona(context, ctx, PERSONAS[0], "mouse"));
     await guard(ctx, "walk", () => persona(context, ctx, PERSONAS[1], "keyboard"));
     await guard(ctx, "walk", () => showAll(context, ctx));
+    await guard(ctx, "FP1", () => checkFastestPath(context, ctx, PERSONAS[0]));
     await guard(ctx, "walk", () => otherPages(context, ctx));
   } finally {
     await context.close();
@@ -2173,11 +2747,11 @@ async function main() {
   // --require: the spec 09 checks whose failures are BLOCKERs. An unknown ID is a note.
   opts.required = new Set();
   for (const id of opts.require) {
-    const known = SPEC09_CHECKS.find((c) => c.toLowerCase() === id.toLowerCase());
+    const known = REQUIRABLE_CHECKS.find((c) => c.toLowerCase() === id.toLowerCase());
     if (known) opts.required.add(known);
-    else rep.add("note", "args", `--require: unknown check ID "${id}" ignored (known: ${SPEC09_CHECKS.join(",")})`);
+    else rep.add("note", "args", `--require: unknown check ID "${id}" ignored (known: ${REQUIRABLE_CHECKS.join(",")})`);
   }
-  console.log(`Required: ${opts.required.size ? [...opts.required].join(", ") : "none (spec 09 checks print polish)"}`);
+  console.log(`Required: ${opts.required.size ? [...opts.required].join(", ") : "none (spec 09 and spec 10 checks print polish)"}`);
   opts.memo = {};
   try {
     for (const size of opts.sizes) {

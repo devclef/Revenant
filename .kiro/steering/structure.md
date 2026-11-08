@@ -24,6 +24,7 @@ Planned layout. Update this file when the structure changes.
 ├── Dockerfile               # One image for web, migrations and the fetch job
 ├── content/
 │   └── personas/            # Demo persona letters (text only, reviewed against neutrality.md)
+│       └── letters/samples.json  # Sample_Candidates for persona figure questions; shown on the Testify step, never sealed
 ├── drizzle/                 # SQL migrations, including immutability triggers
 ├── scripts/                 # fetch-figures (run by the CronJob), prefetch demo-window data, seal-personas
 ├── src/
@@ -46,6 +47,7 @@ Planned layout. Update this file when the structure changes.
 │   │   │   └── scene/       # The Scene: tokens, Top_Bar, light, Soil, Soil_Canvas, Ghost (browser-only canvas chunk)
 │   │   ├── live/            # Live demo UI: write, seal with a passkey, 30-second wait, unlock
 │   │   └── ui/              # Shared primitives (buttons, parchment surfaces, typography)
+│   │       └── buttons.module.css  # the shared primary button
 │   └── lib/
 │       ├── crypto/          # Browser-only: WebAuthn PRF, HKDF, AES-GCM, backup key, envelope hash
 │       ├── seal-format/     # Versioned sealed payload schema (one module per format_version)

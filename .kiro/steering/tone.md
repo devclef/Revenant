@@ -40,7 +40,7 @@ Revenant is the wax seal, resurrected. A sealed letter comes back out of the dar
 - **Emergence:** the ghost rises out of the soil holding the letter while the seal is really checked. The letter is offered only once the check has passed.
 - **Sealing:** feels final and a little solemn. Make it clear the letter can't be changed after this.
 - **Waiting:** the sealed letter is visible but unreadable, held and unopened.
-- **Testify:** one question at a time, gentle prompts, no hints about what's inside.
+- **Testify:** one question at a time, gentle prompts, no hints about what's inside. One exception, for persona letters only: each figure question may come with one sample answer, labelled as a sample, because the judge never lived the persona's life.
 - **See the receipts:** testimony first, then the letter, then the numbers. Breaking the seal is the reader's own act. The ghost delivers the letter and leaves; the letter unfolds.
 - **Ending:** quiet. Nothing is added to what the reader remembered, what was written, or the record.
 - **Locking:** the passkey prompt is the wax seal being pressed. Warnings about lost keys stay plain and unmissable. Atmosphere never softens a warning that could cost the user their letter.

@@ -16,10 +16,13 @@ Revenant never takes a political side. It shows people their own words and real 
 - Default to a metric set that leans toward one narrative. Defaults should be broad, everyday costs, and the user chooses.
 - Comment on, grade or argue with what the user wrote or remembered. Their letter is theirs.
 - Use an LLM to summarise, interpret or editorialise on the user's letter or data.
+- Score, diff, highlight, summarise or interpret the gap between the testimony and the letter, or between a written answer and any line of the letter. No similarity measure, no keyword match and no AI on either.
+- Call a sample answer, or any answer, right, close, near, wrong, off or accurate, in the UI or in persona copy.
+- Show an event name next to a persona opening date.
 
 ## Election dates (demo windows now, suggested opening dates later)
 
-- Elections appear only as dates, described in plain terms ("2028 U.S. presidential election day"). In the MVP they are used only for the demo persona windows.
+- In the MVP, election dates only set the demo persona windows, and they are shown as plain dates with no event name. Describing a date in plain terms ("2028 U.S. presidential election day") applies only to suggested opening dates after the MVP.
 - The event list includes events across jurisdictions and types and is not curated toward any outcome.
 - Event dates come from an official source and follow the same provenance rules as data (see `data-integrity.md`).
 

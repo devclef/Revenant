@@ -67,7 +67,10 @@ export const PERSONAS = ["us-maya", "eu-tomas"];
 const PAGE_TIMEOUT_MS = 30_000;
 const STAGE_TIMEOUT_MS = 20_000;
 
-// The same patterns as src/test/retired-phrases.test.ts (spec 09 task 9, F8).
+// The same patterns as src/test/retired-phrases.test.ts (spec 09 task 9, F8). Spec 10
+// Retired_Phrases join this list in the task that removes them (spec 10 design
+// "Owner patches", ac-4, ac-5, ac-10), as they join RETIRED_PHRASES in
+// tools/hooks/tone-check.mjs; that list is empty until spec 10 task 4.
 export const RETIRED_PHRASES = [
   { name: "the retired tagline", pattern: /your past self returns with the receipts/i },
   { name: "\"rose-tinted\"", pattern: /rose[- ]tinted/i },
@@ -196,7 +199,13 @@ async function waitForStage(page, names, timeout = STAGE_TIMEOUT_MS) {
 /** Per-page checks every opened page gets: J7, J8, and J6 at the Phone_Sizes. */
 async function pageChecks(page, ctx, where, route, size) {
   if (ctx.wants("J7")) {
-    const hits = retiredHits(await page.content());
+    // Text a reader typed (spec 10 S2.2, design "Owner patches" ac) is never checked.
+    const html = await page.evaluate(() => {
+      const root = document.documentElement.cloneNode(true);
+      for (const el of root.querySelectorAll("[data-user-content]")) el.remove();
+      return root.outerHTML;
+    });
+    const hits = retiredHits(html);
     ctx.add(res("J7", where, hits.length ? "fail" : "pass", `hits=${hits.length ? hits.join("; ") : "none"}`, "0"));
   }
   if (ctx.wants("J8")) {

@@ -121,6 +121,7 @@ Each rule below is replaced only for the work of this spec, by the requirement n
 - **Spec 06 R14.1 and the `build-payload.ts` rule "a self-reported figure never reaches the payload"**: replaced by group R.
 - **Spec 06 R12 and spec 09 D2.1 and D3** (the Write step holds the letter field and its Prompt_Starters only): extended by C2 (the Author_Question rows) and group R (the self-reported rows).
 - **Spec 08 R26.1's WHERE clause and spec 08 R26.7** (the conditions spec 08 put on self-reported numbers): replaced by group R. R26.1 applies as an unconditional requirement.
+- **G3's "group X comes before group C", for X2.1 only:** the phone Ghost layer fix is moved to C1.13 and ships with the C1 task (task 5), because its cause, the pick-up press and its focus scroll, is removed there. The rest of X2 stays in group X.
 - **Spec 09 G2.2** (the property test tag): this spec's tag is `// Feature: 10-own-questions, Property N: <title>`.
 - **Spec 08 later-tasks task 23**: moved into group R of this spec. Spec 08 task 24's self-reported check is done by E1.2.
 - **This spec's design, "Nothing in … `src/app/api/**` … changes"** and its "No task touches crypto-dev or data-dev paths" line: replaced by O1 for `src/app/api/figures/respond.ts` and `src/app/api/figures/db-response.ts` only. Every other path under `src/app/api/` stays unchanged.
@@ -225,7 +226,7 @@ Each rule below is replaced only for the work of this spec, by the requirement n
 1. THE tasks SHALL be numbered so that the S1 Owner_Patch task comes first, every group S and group X task has a lower number than every group C task, and the group C tasks follow this order: C1, C3, C4, C2, C5, C6, C7, C8, C9. THE C3 and C4 tasks SHALL be built and tested with fixture letters that carry text questions, so that the C2 task needs no deploy hold. Group P tasks SHALL follow C5. Group R tasks SHALL follow C9. Group E SHALL come last, except the group O task (task 17), which SHALL be dispatched right after task 1.
 2. EACH task SHALL be one GitHub issue and one PR for one role, with a changed-line estimate at or under `max_changed_lines` in `.github/agents.json` (5,000).
 3. NO role task SHALL be dispatched before the S1 Owner_Patch is committed on `main`. EVERY task SHALL list "steering updated (S1 Owner_Patch on `main`)" under "Before this task".
-4. THE owner SHALL merge no group C task while a group X task is open, unless the group X task's issue records a blocker the owner accepts.
+4. THE owner SHALL merge no group C task while a group X task is open, unless the group X task's issue records a blocker the owner accepts. One part of X2 is the exception: the phone Ghost layer fix (C1.13, moved from X2.1) ships with the C1 task, because C1 removes its cause.
 5. WHEN a PR merges, `main` SHALL pass `bash scripts/check.sh`, and `/`, `/demo`, `/demo/live`, `/l/[id]`, `/demo/personas/us-maya` and `/demo/personas/eu-tomas` SHALL load without error, with each persona flow reaching the `close` Stage from `/`.
 6. EVERY task of this spec SHALL be planned to merge by the 27 November 2026 freeze. THE tasks SHALL contain no cut order and no optional group.
 7. IF a task fails to merge by the end of 27 November 2026 despite being worked, THEN its issue SHALL be closed unmerged with the reason, and the group E audit SHALL remove every claim that depends on it.
@@ -287,7 +288,7 @@ Each rule below is replaced only for the work of this spec, by the requirement n
 
 **User story:** As a judge on a phone, I want to read the persona card and see every step name.
 
-1. AT the Phone_Sizes, THE Ghost_Box SHALL overlap no text box of the Persona_Intro or the Testify_Context, in every Stage from first paint to `recall`.
+1. Moved to C1.13. The cause of the Ghost covering text on the phone is the pick-up press and its focus scroll, which C1 removes, so the fix ships with C1 (see "Rules this spec replaces").
 2. AT every Evidence_Size, THE Step_Indicator SHALL show all four step names in full, with no truncation, no ellipsis and no step clipped by the viewport or its container, in at most two lines at the Phone_Sizes and one line elsewhere (spec 09 C2.5).
 3. THE Step_Indicator SHALL show the current step and every other step in every Stage where it renders.
 4. A layout check SHALL fail when a Step_Indicator item's `scrollWidth` exceeds its `clientWidth` or its box leaves the viewport (Owner_Patch).
@@ -319,13 +320,14 @@ Each rule below is replaced only for the work of this spec, by the requirement n
 3. THE page SHALL render no Pick_Up_Button, and the `BEGIN` event, the begin guard, `showPickUp`, the `pickUp` and `begin` copy keys and the `intact` Stage SHALL be removed, unless the design shows one of them still has a non-pick-up use and names it.
 4. IF loading, the hash check or the opening fails, THEN THE page SHALL show the existing FlowError for that failure and SHALL render no recall question, no Testify_Context seal statement and no Sample_Answer (spec 07 R9.12 kept in meaning).
 5. WHILE Calm_Mode is off, THE Ghost SHALL rise with the Envelope on page load and hold it through `recall`, `submitting` and `submit_failed`.
-6. THE Emergence SHALL NOT delay the first question: THE first question SHALL be in the document in the same render as the `recall` state at any Emergence phase, and THE Ghost_Box SHALL overlap no box of the first question, its field, its controls or the Testify_Context at any Evidence_Size and any Emergence phase.
+6. THE Emergence SHALL NOT delay the first question: THE first question SHALL be in the document in the same render as the `recall` state at any Emergence phase, and THE Ghost_Body_Box SHALL overlap no box of the first question, its field, its controls or the Testify_Context at any Evidence_Size and any Emergence phase.
 7. THE persona Step_Indicator SHALL show Testify as the current step from the first render of the `recall` Stage. Before `recall` (the `emerging` Stage), THE Step_Indicator MAY show no current step.
 8. UNDER reduced motion or Calm_Mode, THE page SHALL show the settled scene, with the Ghost holding the Envelope at its end pose and no motion, from the first render.
 9. THE Live_Stepper SHALL move from Wait to Testify when the letter opens, with no step or control in between, and SHALL keep its six steps.
 10. THE passkey assertion SHALL still be requested only inside the judge's press of the unlock control, as its first asynchronous operation (spec 06 R17.2). THE design SHALL state that no other step needs a user gesture.
 11. THE QA steps, layout checks, unit tests and property tests that refer to the Pick_Up_Button or the `intact` Stage SHALL be changed or retired, and each SHALL be named in the PR.
 12. WHEN the persona page enters `recall` by Load_Entry, THE page SHALL move focus to the recall Stage heading with `preventScroll: true`, SHALL NOT focus the answer field, and SHALL NOT change the scroll position. WHEN a page enters `recall` by Gesture_Entry, THE page SHALL keep the current rule and focus the answer field named by `[data-stage-focus]`. `focusTargetFor` SHALL encode both cases, and its tests in `CeremonyRoot.test.tsx` SHALL cover each.
+13. AT the Phone_Sizes, THE Ghost layer SHALL scroll with the page and SHALL be anchored to the top of the document, so that its containing block starts at the document's top edge whatever the page's scroll position. THE Ghost_Body_Box SHALL overlap no text box of the Persona_Intro or the Testify_Context in any Stage from first paint to `recall`, and THE GT1 layout check SHALL pass at both Phone_Sizes in `recall`, at the Stage start and after scrolling to the bottom (moved from X2.1).
 
 ### C2. Author_Questions on the Write step
 
@@ -414,7 +416,7 @@ Each rule below is replaced only for the work of this spec, by the requirement n
 
 **User story:** As a judge, I want every Stage to read cleanly, with controls next to what they act on.
 
-1. IN `recall`, `letter`, `figures` and `close`, THE Ghost_Box SHALL overlap no text box, field or control at any Evidence_Size, with and without reduced motion.
+1. IN `recall`, `letter`, `figures` and `close`, THE Ghost_Body_Box SHALL overlap no text box, field or control at any Evidence_Size, with and without reduced motion.
 2. EACH control in those Stages SHALL sit within 48 CSS px of the element it acts on, or directly under it in the Content_Column.
 3. NO Stage SHALL render a card whose box is more than 48 CSS px taller than its content, or a card that holds only controls.
 4. THE task SHALL list in its PR each problem found per Stage and size, with a screenshot before and after.

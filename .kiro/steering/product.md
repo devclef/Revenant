@@ -18,17 +18,17 @@ The one thing no wax seal could do: Revenant makes you testify before you read. 
 
 ## Core loop
 
-1. **Write.** The user writes a letter to their future self.
+1. **Write.** The user writes a letter to their future self, and may write up to three questions for their future self to answer when it opens.
 2. **Seal the figures.** The user picks data that matters to them:
    - Public figures from official sources (fuel, groceries, rent, etc.) for a chosen region.
    - Personal numbers only they know (their own rent, commute cost). These are labelled as self-reported.
 3. **Press the seal.** Choose an opening date at least 3 months away and lock the letter with a passkey. Everything needed to open the letter goes inside it: the letter, the figures with their sources and the recall questions. The letter does not rely on any data source or app feature still existing when it opens. The user locks it with a passkey (fingerprint, face or device PIN) and can also download a backup key card.
 4. **Keep.** The user gets a letter card with a QR code and an `.ics` calendar file for the opening date.
 5. **Wait.** Sealed contents are immutable and hidden, including from the author. Scanning the QR code before the opening date shows only that the letter is still sealed and a countdown.
-6. **Testify.** After the opening date, the user scans the QR code and unlocks with their passkey or backup key. Revenant asks the sealed recall questions *before* showing anything. Their answers are recorded.
+6. **Testify.** After the opening date, the user scans the QR code and unlocks with their passkey or backup key. Revenant asks the sealed questions *before* showing anything: first the questions the user wrote, then the questions about the figures. Their answers are recorded.
 7. **See the receipts.** Revenant shows, in order:
-   - Their testimony (just now).
-   - What they actually wrote (then).
+   - Each of their own questions with the answer they just gave, and their testimony on the figures (just now).
+   - What they actually wrote (then), in full.
    - The numbers then vs now, with the plain change between them.
 
 The gap between memory and record is the product. Revenant does not interpret that gap for the user.
@@ -59,7 +59,7 @@ The gap between memory and record is the product. Revenant does not interpret th
 - **Language:** English only.
 - **Letter content:** plain text only, at most 5,000 characters.
 - **Hosting (MVP):** the user's self-hosted RKE2 cluster, internet-facing with Let's Encrypt HTTPS, deployed by the user's own Fleet GitOps repo. This repo provides the Helm chart (with Postgres included) and the image on GHCR (see `deploy.md`). Spam protection and rate limiting are handled later.
-- **Testify step (MVP):** fixed questions generated from the data points the user tracked ("What do you think a gallon of gas cost then?"). AI-generated questions based on the letter text are a post-MVP idea and must still follow `neutrality.md`.
+- **Testify step (MVP):** the questions the author wrote for their future self (up to three, sealed as written), then fixed questions generated from the figures the user tracked ("What do you think a gallon of gas cost then?"). AI-generated questions based on the letter text are a post-MVP idea and must still follow `neutrality.md`.
 - **Unlocking:** a passkey using the WebAuthn PRF extension, unlocked with fingerprint, face or device PIN. A backup key card is offered as a second way in and is optional when the passkey works. Skipping it needs an explicit confirmation that a lost passkey means a lost letter. If the user's passkey can't produce a PRF key at sealing, the backup key becomes required.
 - **Opening on another device:** passkeys may not move between ecosystems (for example from iCloud to an Android phone). The sealing screen explains this in plain words: open on a device that has the passkey, use a computer's "use a phone" option, or use the backup key.
 - **Server time lock:** unchanged. Neither the passkey nor the backup key can open a letter before its opening date.
@@ -76,12 +76,14 @@ Judges can't wait years, so there are two demos. Both live at `/demo`, are clear
 
 ### Demo 1: Persona letters
 
-Pre-sealed letters from fictional people, written before a recent election in their region and set to open on that election day. Judges get the opening experience without a passkey: open the letter, testify, break the seal, see the receipts.
+Pre-sealed letters from fictional people, each written as of a date in its window and set to open on a fixed date. Judges get the opening experience without a passkey: open the letter, testify, break the seal, see the receipts. The persona page opens straight on the first question.
 
-- One or two personas per region, chosen from these fixed windows (the 12 months up to and including election day):
-  - **US:** presidential election, 5 November 2024.
-  - **EU:** European Parliament election, 6–9 June 2024.
-  - **Sweden:** Riksdag election, 11 September 2022 (the one before the 2026 election, which is too recent to show a meaningful gap).
+- One or two personas per region, chosen from these fixed windows (the 12 months up to and including the date):
+  - **US:** up to 5 November 2024.
+  - **EU:** up to 9 June 2024.
+  - **Sweden:** up to 11 September 2022 (the window before the most recent one, which is too recent to show a meaningful gap).
+- Personas ask only the figure questions. Each question comes with a sample answer, labelled as a sample, that the judge can keep or change. The testimony is the judge's own memory of that month.
+- Opening dates are shown as plain dates, with no event name.
 - Figures are official everyday metrics (for example fuel and groceries), as real historical records for the persona's date, with full provenance. Personas have no personal numbers.
 - No passkey. Each persona letter is sealed with a published demo key, the demo key opens it in the browser, and the seal break in the reveal shows it.
 - The persona letter is shown as a demo, written "as of" its window date. It never claims to have been sealed at that date.
@@ -92,6 +94,7 @@ Pre-sealed letters from fictional people, written before a recent election in th
 This demo shows the unlock capability. The judge writes a short letter, picks figures, and seals it for real with their own passkey (and optionally a backup key). Revenant generates a new letter card (QR) and `.ics` file for it. The time lock is 30 seconds instead of years. When the countdown ends, they scan the QR code and unlock with the same passkey.
 
 - The 30-second lock exists only for demo letters. The server rejects short locks for real letters.
+- The judge can ask their own question. The Write step starts with one question already filled in, which they can change or remove. The payoff leads with that question and the answer they give 30 seconds later; the figures come after.
 - The judge's passkey is real and will appear in their passkey manager, named so it is obviously a Revenant demo.
 - After 30 seconds the "now" figures will match "then". That is expected; the then-vs-now story belongs to Demo 1.
 - Details of this flow are refined after the MVP is up.
