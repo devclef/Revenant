@@ -243,47 +243,51 @@ const ALL_STAGES: Stage[] = [
   "error",
 ];
 
-describe("focusTargetFor (spec 08 focus table)", () => {
+describe("focusTargetFor (spec 08 focus table, spec 10 shape)", () => {
+  const FIGURES = { authorQuestions: false, figures: true };
+
   it("returns figures-heading for letter to figures (See the numbers)", () => {
-    expect(focusTargetFor("letter", "figures")).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("letter", "figures", FIGURES)).toEqual({ kind: "figures-heading" });
   });
 
-  it("returns figures-heading for letter, marks and seal to close (Show everything)", () => {
-    expect(focusTargetFor("letter", "close")).toEqual({ kind: "figures-heading" });
-    expect(focusTargetFor("marks", "close")).toEqual({ kind: "figures-heading" });
-    expect(focusTargetFor("seal", "close")).toEqual({ kind: "figures-heading" });
+  it("returns figures-heading for letter, marks and seal to close when there are figures (Show everything)", () => {
+    expect(focusTargetFor("letter", "close", FIGURES)).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("marks", "close", FIGURES)).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("seal", "close", FIGURES)).toEqual({ kind: "figures-heading" });
   });
 
   it("returns figures-heading for marks and seal to figures (Skip to the receipts)", () => {
-    expect(focusTargetFor("marks", "figures")).toEqual({ kind: "figures-heading" });
-    expect(focusTargetFor("seal", "figures")).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("marks", "figures", FIGURES)).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("seal", "figures", FIGURES)).toEqual({ kind: "figures-heading" });
   });
 
   it("returns none for the settle from figures to close", () => {
-    expect(focusTargetFor("figures", "close")).toEqual({ kind: "none" });
+    expect(focusTargetFor("figures", "close", FIGURES)).toEqual({ kind: "none" });
   });
 
   it("returns default for the same Stage and for a null previous (first mount)", () => {
     for (const stage of ALL_STAGES) {
-      expect(focusTargetFor(stage, stage)).toEqual({ kind: "default" });
-      expect(focusTargetFor(null, stage)).toEqual({ kind: "default" });
+      expect(focusTargetFor(stage, stage, FIGURES)).toEqual({ kind: "default" });
+      expect(focusTargetFor(null, stage, FIGURES)).toEqual({ kind: "default" });
     }
   });
 
-  it("returns default for every other pair", () => {
-    expect(focusTargetFor("emerging", "recall")).toEqual({ kind: "default" });
-    expect(focusTargetFor("recall", "marks")).toEqual({ kind: "default" });
-    expect(focusTargetFor("marks", "seal")).toEqual({ kind: "default" });
-    expect(focusTargetFor("seal", "letter")).toEqual({ kind: "default" });
-    expect(focusTargetFor("letter", "letter")).toEqual({ kind: "default" });
-    expect(focusTargetFor("figures", "letter")).toEqual({ kind: "default" });
+  it("returns default for the other pairs, and stage-heading only for emerging to recall", () => {
+    expect(focusTargetFor("emerging", "recall", FIGURES)).toEqual({ kind: "stage-heading" });
+    expect(focusTargetFor("recall", "marks", FIGURES)).toEqual({ kind: "default" });
+    expect(focusTargetFor("marks", "seal", FIGURES)).toEqual({ kind: "default" });
+    expect(focusTargetFor("seal", "letter", FIGURES)).toEqual({ kind: "default" });
+    expect(focusTargetFor("letter", "letter", FIGURES)).toEqual({ kind: "default" });
+    expect(focusTargetFor("figures", "letter", FIGURES)).toEqual({ kind: "default" });
   });
 
-  it("follows Property 10 for every pair of Stages", () => {
+  it("follows the spec 10 table for every pair of Stages with figures", () => {
     for (const prev of [null, ...ALL_STAGES] as (Stage | null)[]) {
       for (const next of ALL_STAGES) {
         let expected: FocusTarget = { kind: "default" };
-        if (
+        if (prev === "emerging" && next === "recall") {
+          expected = { kind: "stage-heading" };
+        } else if (
           next === "figures" &&
           (prev === "letter" || prev === "marks" || prev === "seal")
         ) {
@@ -296,7 +300,7 @@ describe("focusTargetFor (spec 08 focus table)", () => {
         } else if (prev === "figures" && next === "close") {
           expected = { kind: "none" };
         }
-        expect(focusTargetFor(prev, next)).toEqual(expected);
+        expect(focusTargetFor(prev, next, FIGURES)).toEqual(expected);
       }
     }
   });

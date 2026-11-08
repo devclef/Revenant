@@ -333,8 +333,8 @@ describe("OpeningFlow view selection", () => {
 
   it("has no pick-up step: verifying leads straight to the recall question (spec 10 C1)", () => {
     // The first question renders from `recall` with no judge action between
-    // the opening and the question. No pick-up control and no seal statement
-    // sit in front of it.
+    // the opening and the question. No pick-up control sits in front of it.
+    // The seal line is the Testify_Context's, shown above the question (C4.3).
     const html = render({
       tag: "recall",
       opened: OPENED,
@@ -343,7 +343,7 @@ describe("OpeningFlow view selection", () => {
     });
     expect(html).toContain(OPENED.payload.recall_questions[0].text);
     expect(html).not.toContain("Pick up the letter");
-    expect(html).not.toContain(REVEAL_COPY.sealIntact);
+    expect(html).toContain(REVEAL_COPY.sealIntact);
   });
 
   it.each([

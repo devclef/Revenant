@@ -80,6 +80,7 @@ import { DemoLabel } from "@/components/demo/DemoLabel";
 import { useOpeningFlow } from "./useOpeningFlow";
 import { onceOnly, type AuthenticatorPort } from "@/components/live/unlock";
 import { RecallStep } from "./RecallStep";
+import type { TestifyContextProps } from "@/components/ceremony/intro/TestifyContext";
 import { Reveal } from "./Reveal";
 import { FlowError, type FlowErrorKind } from "./FlowError";
 import type { FlowState, OpenFailedKind } from "./opening-machine";
@@ -362,6 +363,19 @@ function selectView(
   // Live_Letter has no persona, so it gets no "as of" part.
   const writtenAsOf = mode === "persona" ? persona?.written_as_of : undefined;
 
+  // The Testify_Context above the recall card (spec 10 C4.3). A persona letter
+  // names the persona and both dates; a Live_Letter or Real_Letter shows only
+  // the seal line. Without a persona in persona mode the seal line alone shows.
+  const testify: TestifyContextProps =
+    mode === "persona" && persona !== undefined
+      ? {
+          kind: "persona",
+          personaName,
+          writtenAsOf: persona.written_as_of,
+          opensAt: persona.opens_at,
+        }
+      : { kind: "letter" };
+
   // `live` is set only when the hook runs in user key-source mode. A live
   // letter has no persona, so its envelope gets the opening instant directly.
   const live = flow.live;
@@ -442,6 +456,7 @@ function selectView(
           onToggleNoAnswer={flow.toggleNoAnswer}
           onSubmit={flow.submit}
           writtenAsOf={writtenAsOf}
+          testify={testify}
         />
       );
 
@@ -457,6 +472,7 @@ function selectView(
           onToggleNoAnswer={flow.toggleNoAnswer}
           onSubmit={flow.submit}
           writtenAsOf={writtenAsOf}
+          testify={testify}
         />
       );
 
@@ -473,6 +489,7 @@ function selectView(
           onSubmit={flow.retryPost}
           failed={true}
           writtenAsOf={writtenAsOf}
+          testify={testify}
         />
       );
 

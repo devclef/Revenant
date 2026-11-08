@@ -55,6 +55,9 @@ export const REVEAL_COPY = {
   /** The verification statement shown before the recall step (R7.5). */
   sealIntact: "The seal is intact. Nothing here has changed since it was sealed.",
 
+  /** The Testify_Context line naming the persona. `{name}` is the persona's name. */
+  contextFrom: "A letter from {name}",
+
   // --- Errors ---
 
   /** The letter record has not been placed yet (404). */

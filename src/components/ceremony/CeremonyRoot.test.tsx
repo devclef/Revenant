@@ -526,32 +526,39 @@ describe("CeremonyRoot controls prop", () => {
 // environment, so a source scan pins that CeremonyRoot calls the table, sets the
 // scroll check and clears it.
 
+const NO_LETTER = { authorQuestions: false, figures: false };
+const FIGURES = { authorQuestions: false, figures: true };
+
 describe("CeremonyRoot focus rule (spec 08, focusTargetFor table)", () => {
   it("moves focus to the Figures_Heading on See the numbers (letter to figures)", () => {
-    expect(focusTargetFor("letter", "figures")).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("letter", "figures", FIGURES)).toEqual({ kind: "figures-heading" });
   });
 
   it("moves focus to the Figures_Heading on Show everything from letter, marks and seal", () => {
-    expect(focusTargetFor("letter", "close")).toEqual({ kind: "figures-heading" });
-    expect(focusTargetFor("marks", "close")).toEqual({ kind: "figures-heading" });
-    expect(focusTargetFor("seal", "close")).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("letter", "close", FIGURES)).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("marks", "close", FIGURES)).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("seal", "close", FIGURES)).toEqual({ kind: "figures-heading" });
   });
 
   it("moves nothing on the settle from figures to close (R2.4)", () => {
-    expect(focusTargetFor("figures", "close")).toEqual({ kind: "none" });
+    expect(focusTargetFor("figures", "close", FIGURES)).toEqual({ kind: "none" });
   });
 
   it("keeps the spec 07 rule for the first mount and for a tag change inside one Stage", () => {
-    expect(focusTargetFor(null, "marks")).toEqual({ kind: "default" });
-    expect(focusTargetFor(null, "close")).toEqual({ kind: "default" });
-    expect(focusTargetFor("recall", "recall")).toEqual({ kind: "default" });
-    expect(focusTargetFor("figures", "figures")).toEqual({ kind: "default" });
+    expect(focusTargetFor(null, "marks", FIGURES)).toEqual({ kind: "default" });
+    expect(focusTargetFor(null, "close", FIGURES)).toEqual({ kind: "default" });
+    expect(focusTargetFor("recall", "recall", FIGURES)).toEqual({ kind: "default" });
+    expect(focusTargetFor("figures", "figures", FIGURES)).toEqual({ kind: "default" });
   });
 
   it("keeps the spec 07 rule for every other pair", () => {
-    expect(focusTargetFor("recall", "marks")).toEqual({ kind: "default" });
-    expect(focusTargetFor("marks", "letter")).toEqual({ kind: "default" });
-    expect(focusTargetFor("emerging", "recall")).toEqual({ kind: "default" });
+    expect(focusTargetFor("recall", "marks", FIGURES)).toEqual({ kind: "default" });
+    expect(focusTargetFor("marks", "letter", NO_LETTER)).toEqual({ kind: "default" });
+    expect(focusTargetFor("envelope", "recall", NO_LETTER)).toEqual({ kind: "default" });
+  });
+
+  it("moves to the stage heading without scroll on a Load_Entry into recall", () => {
+    expect(focusTargetFor("emerging", "recall", NO_LETTER)).toEqual({ kind: "stage-heading" });
   });
 
   it("rescues focus only when the focused element was removed and the target is none", () => {
@@ -563,7 +570,7 @@ describe("CeremonyRoot focus rule (spec 08, focusTargetFor table)", () => {
 
   it("wires the table, the scroll check and its cleanup into CeremonyRoot", () => {
     const source = readFileSync(join(__dirname, "CeremonyRoot.tsx"), "utf8");
-    expect(source).toContain("focusTargetFor(prev, stage)");
+    expect(source).toContain("focusTargetFor(prev, stage, {");
     expect(source).toContain("shouldRescueFocus(activeIsBody, target)");
     expect(source).toContain("FOCUS_SCROLL_CHECK_MS");
     expect(source).toContain('focus({ preventScroll: true })');

@@ -2,6 +2,7 @@
 
 import paper from "@/components/ui/paper.module.css";
 import { RecallPager } from "@/components/ceremony/recall/RecallPager";
+import { TestifyContext, type TestifyContextProps } from "@/components/ceremony/intro/TestifyContext";
 import type { Draft } from "@/lib/recall";
 import type { Opened } from "./opening-machine";
 import styles from "./reveal.module.css";
@@ -49,6 +50,11 @@ export type RecallStepProps = {
    * letter, so the counter shows it (R11.5). Absent on a Live_Letter.
    */
   writtenAsOf?: string;
+  /**
+   * The Testify_Context above the card (spec 10 C4.3). A persona passes its
+   * name and dates; a Live_Letter or Real_Letter passes the seal line only.
+   */
+  testify?: TestifyContextProps;
 };
 
 export function RecallStep({
@@ -61,20 +67,24 @@ export function RecallStep({
   onSubmit,
   failed = false,
   writtenAsOf,
+  testify,
 }: RecallStepProps) {
   return (
-    <section className={`${paper.paper} ${styles.recall}`} data-paper="">
-      <RecallPager
-        payload={opened.payload}
-        drafts={drafts}
-        invalid={invalid}
-        submitting={submitting}
-        failed={failed}
-        writtenAsOf={writtenAsOf}
-        onEdit={onEdit}
-        onToggleNoAnswer={onToggleNoAnswer}
-        onSubmit={onSubmit}
-      />
-    </section>
+    <>
+      {testify === undefined ? null : <TestifyContext {...testify} />}
+      <section className={`${paper.paper} ${styles.recall}`} data-paper="">
+        <RecallPager
+          payload={opened.payload}
+          drafts={drafts}
+          invalid={invalid}
+          submitting={submitting}
+          failed={failed}
+          writtenAsOf={writtenAsOf}
+          onEdit={onEdit}
+          onToggleNoAnswer={onToggleNoAnswer}
+          onSubmit={onSubmit}
+        />
+      </section>
+    </>
   );
 }

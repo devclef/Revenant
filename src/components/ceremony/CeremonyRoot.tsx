@@ -57,6 +57,7 @@ import {
   emergingStatus,
   focusTargetFor,
   ghostHanded,
+  letterShape,
   shouldRescueFocus,
   stageFor,
   type Stage,
@@ -128,24 +129,33 @@ function focusStageDefault(region: HTMLElement): void {
 }
 
 /**
- * Focus the Figures_Heading after "See the numbers" or "Show everything" (spec 08,
- * R2.1 to R2.3). Focus moves with `preventScroll`, then the heading scrolls to
- * the top of the view. The scroll is `smooth` only in full motion without
- * reduced motion. One timer, `FOCUS_SCROLL_CHECK_MS` later, re-checks the
- * heading against the Top_Bar's bottom and the viewport's bottom and jumps once
- * with `auto` if it is hidden. The returned cleanup clears that timer, so the
- * next Stage change cancels it.
+ * Focus a heading for a Stage change (spec 08 R2.1 to R2.3, spec 10 C1.12).
+ * Focus moves with `preventScroll`. When `scroll` is set, the heading then
+ * scrolls to the top of the view, `smooth` only in full motion without reduced
+ * motion, and one timer, `FOCUS_SCROLL_CHECK_MS` later, re-checks the heading
+ * against the Top_Bar's bottom and the viewport's bottom and jumps once with
+ * `auto` if it is hidden. The returned cleanup clears that timer.
+ *
+ * If the heading is missing, it tries `fallback` (for the author and letter
+ * headings, the Figures_Heading), then the default rule.
  */
-function focusFiguresHeading(
+function focusHeading(
   region: HTMLElement,
+  target: { selector: string; fallback?: string; scroll: boolean },
   mode: MotionMode,
 ): (() => void) | undefined {
-  const heading = region.querySelector<HTMLElement>("[data-figures-heading]");
+  const heading =
+    region.querySelector<HTMLElement>(target.selector) ??
+    (target.fallback === undefined
+      ? null
+      : region.querySelector<HTMLElement>(target.fallback));
   if (heading === null) {
     focusStageDefault(region);
     return undefined;
   }
+  if (!heading.hasAttribute("tabindex")) heading.tabIndex = -1;
   heading.focus({ preventScroll: true });
+  if (!target.scroll) return undefined;
   const reduced =
     typeof window.matchMedia === "function" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -253,14 +263,38 @@ function CeremonyRegion({
   useEffect(() => {
     motionRef.current = mode;
   }, [mode]);
+  // The letter's shape, read as two booleans so the effect re-runs only when
+  // one of them changes, not on every flow update (the table reads nothing else).
+  const letterAuthorQuestions = letterShape(state).authorQuestions;
+  const letterFigures = letterShape(state).figures;
   useEffect(() => {
     const prev = previousStageRef.current;
     previousStageRef.current = stage;
     const region = regionRef.current;
     if (region === null) return undefined;
-    const target = focusTargetFor(prev, stage);
+    const target = focusTargetFor(prev, stage, {
+      authorQuestions: letterAuthorQuestions,
+      figures: letterFigures,
+    });
+    if (target.kind === "stage-heading") {
+      return focusHeading(region, { selector: "[data-stage-heading]", scroll: false }, motionRef.current);
+    }
     if (target.kind === "figures-heading") {
-      return focusFiguresHeading(region, motionRef.current);
+      return focusHeading(region, { selector: "[data-figures-heading]", scroll: true }, motionRef.current);
+    }
+    if (target.kind === "author-testimony-heading") {
+      return focusHeading(
+        region,
+        { selector: "[data-author-testimony-heading]", fallback: "[data-figures-heading]", scroll: true },
+        motionRef.current,
+      );
+    }
+    if (target.kind === "letter-heading") {
+      return focusHeading(
+        region,
+        { selector: "[data-letter-heading]", fallback: "[data-figures-heading]", scroll: true },
+        motionRef.current,
+      );
     }
     if (target.kind === "none") {
       const active = document.activeElement;
@@ -274,7 +308,7 @@ function CeremonyRegion({
     }
     focusStageDefault(region);
     return undefined;
-  }, [state.tag, stage]);
+  }, [state.tag, stage, letterAuthorQuestions, letterFigures]);
 
   // The dust ceiling depends on the backdrop's lift. Once the pick-up move has
   // finished, a resize tells the Soil_Canvas to read the ceiling again (its own

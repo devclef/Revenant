@@ -115,11 +115,11 @@ describe("Skip to the receipts (Skip_Link at marks)", () => {
       { emergence: "done", sealing: false, figures: "running" },
     );
     expect(stage).toBe("figures");
-    expect(focusTargetFor("marks", stage)).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("marks", stage, { authorQuestions: false, figures: true })).toEqual({ kind: "figures-heading" });
   });
 
   it("moves focus to the Figures_Heading when it goes seal to close", () => {
-    expect(focusTargetFor("seal", "close")).toEqual({
+    expect(focusTargetFor("seal", "close", { authorQuestions: false, figures: true })).toEqual({
       kind: "figures-heading",
     });
   });
