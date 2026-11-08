@@ -124,7 +124,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
 
 ### Group X: production bugs and the election labels
 
-- [ ] 3. X1, X2, X3 · The Then_Tick on the axis, the phone persona start, and the Step_Indicator row
+- [x] 3. X1, X2, X3 · The Then_Tick on the axis, the phone persona start, and the Step_Indicator row
   - Agent: `frontend-dev` · Depends on: 1 · Estimated size: ~700 changed lines
   - Before this task: steering updated (S1 Owner_Patch on `main`). Spec 09 patch t is on `main`, because patch ae edits the README as t left it.
   - Scope: `src/components/ceremony/figures/figures.module.css`, `src/components/ceremony/figures/NumberLine.tsx`, `src/components/ceremony/figures/tick-leader.ts` (new), `src/components/ceremony/constants.ts`, `src/components/ceremony/constants-css.test.ts`, `src/components/ceremony/scene/scene.module.css`, `src/components/ui/StepIndicator.module.css`, `src/components/landing/landing.module.css` (the `.hero .ghost` rule below 600 px), and the `*.test.ts(x)` for each file above, including `src/components/landing/*.test.ts(x)`
