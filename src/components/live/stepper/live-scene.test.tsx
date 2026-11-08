@@ -12,12 +12,47 @@ import { LIVE_COPY } from "../copy";
 import type { SealedState } from "../SealedView";
 
 import { LiveWaitStep } from "./LiveWaitStep";
+import { LiveStepper } from "./LiveStepper";
+import { LIVE_STEPS, initialStepperState } from "./live-steps";
+
+/** Every stepper step, rendered inside the Scene, in full motion and in Calm (D1.1, D1.4). */
+describe("each stepper step inside the Scene", () => {
+  for (const isCalm of [false, true]) {
+    const label = isCalm ? "Calm" : "full";
+    for (const step of LIVE_STEPS) {
+      it(`renders ${step} in the Scene with the Soil in ${label}`, () => {
+        calm = isCalm;
+        const shellProps: SceneShellProps = {
+          variant: "plain",
+          demo: true,
+          backdrop: true,
+          children: createElement(LiveStepper, {
+            state: initialStepperState(step),
+            dispatch: () => undefined,
+            renderStep: () => createElement("p", null, "STEP_BODY"),
+          }),
+        };
+        const html = renderToStaticMarkup(createElement(SceneShell, shellProps));
+        expect(html).toContain(`data-step="${step}"`);
+        expect(html).toContain("STEP_BODY");
+        expect(html).toContain("data-soil-strip");
+        expect(html).toContain(`data-ceremony-motion="${isCalm ? "calm" : "full"}"`);
+      });
+    }
+  }
+});
+
 
 let calm = false;
 
 vi.mock("@/components/ceremony/motion", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/components/ceremony/motion")>();
-  return { ...actual, useCalmInForce: () => calm };
+  return {
+    ...actual,
+    useCalmInForce: () => calm,
+    // The shell and the Top_Bar read the mode from useMotion, so Calm reaches them too.
+    useMotion: () => ({ mode: calm ? "calm" : "full", setCalm: () => undefined }),
+  };
 });
 
 const OPENS_AT = "2026-11-08T00:00:00.000Z";
