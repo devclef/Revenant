@@ -716,6 +716,16 @@
   pointer-events: none;
 }
 
+/* At or above 900 px the Ghost body is wide and white, and the instruction
+   line's right end reached into it (x 770 to 778 at 1280 x 800), where the light
+   text cannot be read. The line sits one more step to the left so its right end
+   clears the Ghost body box and stays on the dark background. */
+@media (min-width: 900px) {
+  .heldEnvelope [data-envelope-instruction] {
+    right: calc(100% + 2.5rem);
+  }
+}
+
 /* The held Envelope's placement in the Ghost's slot (design.md "Held in the
    Ghost's subtree": left 18 %, width 64 %, top 48 % at or above 900 px, 47 %
    below). The envelope spans SVG y 115-203 (wide) / 113-211 (narrow), clearing
