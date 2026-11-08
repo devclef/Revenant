@@ -1100,7 +1100,8 @@
  * rule has one more class-level selector and wins.
  */
 @media (max-width: 599.98px) {
-  [data-ceremony] > [data-step-indicator] {
+  /* .scene keeps the selector pure for CSS Modules (it must hold a local class). */
+  .scene [data-ceremony] > [data-step-indicator] {
     min-height: 7.5rem;
     padding-right: calc(0.58 * min(26vh, 170px) + 1.5rem);
   }
