@@ -68,8 +68,8 @@ The opening date is a plain public calendar date. It does not follow the event i
 
 ## Removal of the opening event (spec 10 X4, issue #300)
 
-- Removed: `opening_event` of `us-maya`, \"U.S. presidential election day\", 2024-11-05, from `content/personas/personas.json`. The schema no longer accepts `opening_event`, and the persona UI shows only \"Opens {date}\" with no event name and no source link.
+- Removed: `opening_event` of `us-maya`, "U.S. presidential election day", 2024-11-05, from `content/personas/personas.json`. The schema no longer accepts `opening_event`, and the persona UI shows only "Opens {date}" with no event name and no source link.
 - Opening date kept: 2024-11-05T00:00:00.000Z, shown as a plain date.
 - Reviewer: Jacob Morgan (named in issue #300).
 - Result: pending: Jacob Morgan has not yet recorded a pass or fail for the persona copy after this removal.
-- Retired phrase: \"U.S. presidential election day\" is in `RETIRED_PHRASES` in `src/test/retired-phrases.test.ts`. This record quotes it and is excluded from that scan.
+- Retired phrase: "U.S. presidential election day" is in `RETIRED_PHRASES` in `src/test/retired-phrases.test.ts`. This record quotes it and is excluded from that scan.

@@ -187,11 +187,13 @@ describe("copy-test exclusion and hit reporting", () => {
     const planted = `${record?.text ?? ""}\nrose-tinted\n`;
 
     // The phrase is really there, so the record would fail without the exclusion.
-    // The record already quotes the election phrases, so other hits can
-    // appear too. The planted line must be among them.
-    expect(findMatches(path, planted, RETIRED_PHRASES)).toContain(
+    // The record already quotes the election phrases, so its own hits are
+    // expected too. The exact list is the record's hits plus the planted line.
+    const recordHits = findMatches(path, record?.text ?? "", RETIRED_PHRASES);
+    expect(findMatches(path, planted, RETIRED_PHRASES)).toEqual([
       `${path}:${lineOf(planted, planted.indexOf("rose-tinted"))} "rose-tinted"`,
-    );
+      ...recordHits,
+    ]);
 
     const scanned = scannedSourceFiles([{ path, text: planted }]);
     expect(scanned).toEqual([]);
