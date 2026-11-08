@@ -105,7 +105,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh` on the owner commit, with the SHA and exit status recorded in this issue; `node tools/hooks/tone-check.mjs`; `npm run layout-check` against a local build of `main`.
   - _Requirements: S1.1–S1.6, S2.1, S2.5, S3.3, X1.4, X2.4, C6.11, C7.5, G3.3_
 
-- [ ] 2. S2, S3 · `textOutsideUserContent`, its property, and the copy-test exclusion in the retired-phrases test
+- [x] 2. S2, S3 · `textOutsideUserContent`, its property, and the copy-test exclusion in the retired-phrases test
   - Agent: `platform-dev` · Depends on: 1 · Estimated size: ~200 changed lines
   - Before this task: steering updated (S1 Owner_Patch on `main`); task 1's issue is closed.
   - Scope: `src/test/user-content.ts` (new), `src/test/user-content.test.ts` (new), `src/test/retired-phrases.test.ts`
