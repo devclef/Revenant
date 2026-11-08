@@ -87,6 +87,13 @@ describe("LiveStepper", () => {
     expect(html).toMatch(/<h2[^>]*tabindex="-1"[^>]*>Press the seal<\/h2>/);
   });
 
+  it("keeps the data-primary-control and data-card hooks on the Seal step", () => {
+    const html = render("seal");
+    expect(html).toMatch(/<section[^>]*data-card[^>]*data-step="seal"/);
+    expect(html.match(/data-primary-control/g)).toHaveLength(1);
+    expect(html).toMatch(/<h2[^>]*>Press the seal<\/h2>/);
+  });
+
   it("puts the step card on a data-card root", () => {
     expect(render("write")).toContain("data-card");
   });

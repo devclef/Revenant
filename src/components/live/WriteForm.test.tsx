@@ -104,6 +104,7 @@ describe("WriteForm", () => {
     );
     expect(html).toContain('id="live-warning"');
     expect(html).toContain("Press the seal with your passkey");
+    expect(html).toContain('data-card="live-write"');
   });
 
   it("shows the live count of the letter, starting at zero", () => {
