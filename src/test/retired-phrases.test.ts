@@ -169,20 +169,39 @@ describe("copy-test exclusion and hit reporting", () => {
     expect(scanned).toContain("content/personas/letters/us-maya.txt");
   });
 
-  it("flags a retired phrase in a letter but not in a copy-test record", () => {
-    const hits = scannedSourceFiles([
-      {
-        path: "content/personas/letters/us-copy-test.md",
-        text: "Sample line\nrose-tinted",
-      },
-      {
-        path: "content/personas/letters/us-maya.txt",
-        text: "First line\nSecond line\nrose-tinted",
-      },
-    ]).flatMap((file) => findMatches(file.path, file.text, RETIRED_PHRASES));
-    expect(hits).toEqual([
-      'content/personas/letters/us-maya.txt:3 "rose-tinted"',
+  it("lets a retired phrase in a real copy-test record pass the scan", () => {
+    const personas = readSourceFiles(["content/personas"], SOURCE_EXTENSIONS);
+    const record = personas.find(
+      (file) => file.path === "content/personas/letters/us-copy-test.md",
+    );
+    expect(record).toBeDefined();
+    const path = "content/personas/letters/us-copy-test.md";
+    const planted = `${record?.text ?? ""}\nrose-tinted\n`;
+
+    // The phrase is really there, so the record would fail without the exclusion.
+    expect(findMatches(path, planted, RETIRED_PHRASES)).toEqual([
+      `${path}:${lineOf(planted, planted.indexOf("rose-tinted"))} "rose-tinted"`,
     ]);
+
+    const scanned = scannedSourceFiles([{ path, text: planted }]);
+    expect(scanned).toEqual([]);
+  });
+
+  it("fails a retired phrase in the real us-maya.txt and names its file and line", () => {
+    const path = "content/personas/letters/us-maya.txt";
+    const letter = readSourceFiles(["content/personas"], SOURCE_EXTENSIONS).find(
+      (file) => file.path === path,
+    );
+    expect(letter).toBeDefined();
+    const lines = (letter?.text ?? "").split("\n");
+    // Plant the phrase as line 3 of the real letter, in memory only.
+    lines.splice(2, 0, "rose-tinted");
+    const planted = lines.join("\n");
+
+    const hits = scannedSourceFiles([{ path, text: planted }]).flatMap(
+      (file) => findMatches(file.path, file.text, RETIRED_PHRASES),
+    );
+    expect(hits).toEqual([`${path}:3 "rose-tinted"`]);
   });
 
   it("names the file and the line of each hit", () => {
