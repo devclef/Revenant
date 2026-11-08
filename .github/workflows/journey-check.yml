@@ -1,0 +1,31 @@
+# The Journey_Check (spec 09-demo-polish, design.md "A6. The Journey_Check" and
+# "Owner patches", n). Opens the judge's pages on production every six hours
+# and keeps one "Journey check: failure" issue in step with the result. J2 (the
+# persona reveals, which store a Recall_Record each) runs on the 00:47 UTC run
+# and on manual runs only (OD8). Runs until the owner removes it after
+# 29 January 2027.
+name: journey-check
+on:
+  schedule:
+    - cron: "47 */6 * * *"   # 00:47, 06:47, 12:47, 18:47 UTC
+  workflow_dispatch: {}
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: journey-check
+  cancel-in-progress: false
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with: { node-version: 22 }
+      - run: npm ci
+      - run: node tools/qa/journey-check.mjs --url https://revenant.devclef.se --chromium /usr/bin/google-chrome --require J1,J2,J3,J4,J5,J6,J7,J8
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          GITHUB_EVENT_NAME: ${{ github.event_name }}

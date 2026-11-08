@@ -2,18 +2,21 @@
 
 *The wax seal, resurrected. Memory rewrites itself. Revenant doesn't.*
 
+> **Judge quick path**
+> - [Open a sealed letter](https://revenant.devclef.se/demo/personas/us-maya) · about 2 minutes · no sign-up, no passkey
+> - [Seal your own](https://revenant.devclef.se/demo/live) · about 2 minutes · opens 30 seconds after you seal it · needs a passkey with PRF, or use the backup key
+> - [How it is sealed](https://revenant.devclef.se/how-it-is-sealed) · 3 minutes to read
+>
+> Passkeys with PRF work with iCloud Keychain on macOS and iOS 18+, Google Password Manager on Android, and Windows Hello on Windows 11 24H2/25H2 with the February 2026 update and Chrome/Edge 147+ or Firefox 148+. Some third-party passkey managers don't support it. Without PRF, seal with the backup key.
+>
+> <!-- VIDEO: embed link here --> <!-- GIF: docs/reveal.gif -->
+
 <p align="center">
   <img src="docs/readme-hero2x.png" alt="Revenant: a sealed letter rising out of the dark" width="800">
 </p>
 
 <p align="center">
   <a href="https://revenant.devclef.se/demo"><img src="https://img.shields.io/badge/Open%20the%20demo-revenant.devclef.se%2Fdemo-8F46FF?style=for-the-badge" alt="Open the demo at revenant.devclef.se/demo"></a>
-</p>
-
-<p align="center">
-  <b><a href="https://revenant.devclef.se/demo/personas/us-maya">Open Maya's pre-sealed letter</a></b> (two minutes, no passkey)
-  &nbsp;·&nbsp;
-  <b><a href="https://revenant.devclef.se/demo/live">Seal your own with a passkey</a></b> (30-second lock)
 </p>
 
 Built for Kiroween 2026, Resurrection category. Letters survived the move to digital, but the seal didn't. Revenant resurrects it with cryptography: no one else can read your letter, tampering is detectable, and no key can open it early. Then it adds what no wax seal ever could: it makes you testify before you read.
@@ -108,7 +111,7 @@ The Helm chart lives in `deploy/helm/revenant` and includes PostgreSQL. The imag
 
 ## Built by a coven of agents
 
-Here's the part we're genuinely proud of: **almost none of this code was written by a human sitting at a keyboard.** Revenant was built by a team of specialist AI agents orchestrated by [Kiro Crew](https://kiro.dev/docs/crew.md), running an autonomous build loop that ran for 227+ merged pull requests.
+Here's the part we're genuinely proud of: **almost none of this code was written by a human sitting at a keyboard.** Revenant was built by a team of specialist AI agents orchestrated by [Kiro Crew](https://kiro.dev/docs/crew.md), running an autonomous build loop that ran for 168 merged pull requests.
 
 ```mermaid
 flowchart TB

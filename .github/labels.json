@@ -15,5 +15,8 @@
   {"name": "spec:01-skeleton", "color": "c2e0c6", "description": "Spec 01: skeleton"},
   {"name": "spec:02-figures", "color": "c2e0c6", "description": "Spec 02: figures"},
   {"name": "spec:03-seal-and-open", "color": "c2e0c6", "description": "Spec 03: seal and open"},
-  {"name": "spec:04-demo", "color": "c2e0c6", "description": "Spec 04: demo"}
+  {"name": "spec:04-demo", "color": "c2e0c6", "description": "Spec 04: demo"},
+  {"name": "freshness:failure", "color": "b60205", "description": "Freshness check: a series failed to fetch for more than 48 hours, or the figures request failed"},
+  {"name": "freshness:warning", "color": "fbca04", "description": "Freshness check: a series' newest period is more than 14 days old"},
+  {"name": "journey:failure", "color": "b60205", "description": "Journey check: a production judge-journey check failed"}
 ]

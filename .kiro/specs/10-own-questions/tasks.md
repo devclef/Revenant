@@ -2,7 +2,7 @@
 
 ## Overview
 
-Spec 10 lets the author ask their future self up to three questions, answer them from memory when the letter opens, and see each answer beside the full letter. It first fixes the production bugs the owner found, and it ends with the persona prices, self-reported numbers and a final audit. Tasks follow the G3.1 order, and every task in a lower group has a lower number:
+Spec 10 lets the author ask their future self up to three questions, answer them from memory when the letter opens, and see each answer beside the full letter. It first fixes the production bugs the owner found, and it ends with the persona prices, self-reported numbers and a final audit. Tasks follow the G3.1 order, and every task in a lower group has a lower number. The one exception to the order is group O: task 17 carries the last number but runs right after task 1 (requirements O1 and "Rules this spec replaces").
 
 | Group | Tasks | What | Roles |
 |---|---|---|---|
@@ -12,6 +12,7 @@ Spec 10 lets the author ask their future self up to three questions, answer them
 | P, persona letters with the price | 11 | Price lines in both letters, new letter IDs, the reseal and its deploy order | frontend-dev |
 | R, self-reported numbers | 15 | Spec 08 later-tasks task 23, moved in and shipped | frontend-dev |
 | E, final audit | 16 | Promise audit, no trace of the retired persona IDs, patches ah and ai | frontend-dev |
+| O, operations | 17 | One safe log line in the Figures_API catch, so a figures 500 can be diagnosed; runs right after task 1 | data-dev |
 
 Task 11 (group P) carries number 11 but follows task 9 (C5) and sits between C6 and C7, as the design's Task outline places it (G3.1: group P follows C5).
 
@@ -21,14 +22,14 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
 
 "Depends on" lists only spec 10 task numbers.
 
-**What the loop can and can't see.** Spec-sync opens all 16 issues with `status:ready` as soon as this file reaches `main`. Task 1's issue gets the label `agent:owner`; `owner` is not in `ROLES` in `tools/dispatcher/revenant_dispatch.py`, so the dispatcher never claims it, and tasks 2 and 3 wait until the owner closes it. The dispatcher never reads "Before this task", the Production_Checks, the Real_Device_Checks or the milestone gates, and the agent and QA see only the issue body, never its comments. So every gate below is enforced by hand: with the `status:ready` label, a `Blocked by #N` line in an issue body, or text in the issue body. Anything an agent must know (a reviewer's name, a changed value, a recorded decision) goes into the issue body before the issue is claimed.
+**What the loop can and can't see.** Spec-sync opens all 17 issues with `status:ready` as soon as this file reaches `main`. Task 1's issue gets the label `agent:owner`; `owner` is not in `ROLES` in `tools/dispatcher/revenant_dispatch.py`, so the dispatcher never claims it, and tasks 2, 3 and 17 wait until the owner closes it. The dispatcher never reads "Before this task", the Production_Checks, the Real_Device_Checks or the milestone gates, and the agent and QA see only the issue body, never its comments. So every gate below is enforced by hand: with the `status:ready` label, a `Blocked by #N` line in an issue body, or text in the issue body. Anything an agent must know (a reviewer's name, a changed value, a recorded decision) goes into the issue body before the issue is claimed.
 
 ## Launch order
 
 1. Pull `main`, then commit this file.
 2. Check that spec 09 Owner_Patches o, t, u and v are on `main` (the owner is committing them outside this spec, E1.3). Patch ae (task 3) edits the README as patch t left it, and patch ah (task 16) edits the files t, u and v created.
-3. Pause the `revenant-dispatch` cron, then push the spec. Spec-sync opens the 16 issues.
-4. Commit task 1's Owner_Patches (z, aa, ab, the task 1 part of ac, ad, af, ag), run task 1's validation, record it in task 1's issue, and close that issue. This is the only way tasks 2 and 3 become claimable, so no role task is dispatched before the S1 Owner_Patch is on `main` (G3.3).
+3. Pause the `revenant-dispatch` cron, then push the spec. Spec-sync opens the 17 issues.
+4. Commit task 1's Owner_Patches (z, aa, ab, the task 1 part of ac, ad, af, ag), run task 1's validation, record it in task 1's issue, and close that issue. This is the only way tasks 2, 3 and 17 become claimable, so no role task is dispatched before the S1 Owner_Patch is on `main` (G3.3).
 5. Write into the issue bodies, not comments: the copy-test reviewer's name for tasks 4 and 11, and any proposed design value the owner changes.
 6. Resume the cron.
 
@@ -126,7 +127,8 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
 - [ ] 3. X1, X2, X3 · The Then_Tick on the axis, the phone persona start, and the Step_Indicator row
   - Agent: `frontend-dev` · Depends on: 1 · Estimated size: ~700 changed lines
   - Before this task: steering updated (S1 Owner_Patch on `main`). Spec 09 patch t is on `main`, because patch ae edits the README as t left it.
-  - Scope: `src/components/ceremony/figures/figures.module.css`, `src/components/ceremony/figures/NumberLine.tsx`, `src/components/ceremony/figures/tick-leader.ts` (new), `src/components/ceremony/constants.ts`, `src/components/ceremony/constants-css.test.ts`, `src/components/ceremony/scene/scene.module.css`, `src/components/ui/StepIndicator.module.css`, and the `*.test.ts(x)` for each file above
+  - Scope: `src/components/ceremony/figures/figures.module.css`, `src/components/ceremony/figures/NumberLine.tsx`, `src/components/ceremony/figures/tick-leader.ts` (new), `src/components/ceremony/constants.ts`, `src/components/ceremony/constants-css.test.ts`, `src/components/ceremony/scene/scene.module.css`, `src/components/ui/StepIndicator.module.css`, `src/components/landing/landing.module.css` (the `.hero .ghost` rule below 600 px), and the `*.test.ts(x)` for each file above, including `src/components/landing/*.test.ts(x)`
+  - Finding J6: a production Journey_Check dry run on 8 November 2026 found PH1 failing on `/` at 360×640. The Landing_Ghost's box reaches 670 px, past the bottom of the 640 px viewport.
   - Design sections: "Production findings and their causes on `main`" (Then_Tick, Ghost, Step_Indicator rows), "X1. The Then_Tick on the axis", "X2. The phone persona start", "Constants" (`TICK_LABEL_GAP_PX`), Owner patch ae.
   - Acceptance:
     - `.pinThen` and `.pinNow` become one `.tick` rule hanging from the axis's top edge; the answer Mark keeps its ring on the axis and gains a 2 px leader under it (X1.1, X1.3).
@@ -135,18 +137,19 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
     - Below 600 px on the persona page, `.ghostLayer` is `position: absolute; inset: 0 0 auto 0; height: 100vh`, so scrolling no longer slides text under a fixed Ghost (X2.1).
     - Below 600 px, `[data-ceremony] > [data-step-indicator]` reserves the Compact_Ghost's box as design "X2" gives it; all four step names show in full, in at most two lines at the Phone_Sizes and one line elsewhere (X2.2, X2.3).
     - `.pit[data-compact="true"]` has no transition below 600 px (C1.6). At 600 px and wider nothing changes.
+    - On `/`, the Landing_Ghost's box stays fully inside the First_Viewport at both Phone_Sizes, 390×844 and 360×640 (X2.5). Only the `.hero .ghost` rule below 600 px changes in `landing.module.css`.
     - The `intact` Stage and its `scroll-margin-top` rule stay until task 5 removes them.
     - The PR quotes the failing SI1 and GT1 lines from `npm run layout-check -- --require SI1,GT1` at both Phone_Sizes on the pre-change build, to confirm the cause.
   - Tests: Property 20 (every tick touches the axis and reaches its label). Example tests: the step row rule and the Ghost layer rule are present below 600 px only; `TICK_LABEL_GAP_PX` in `constants-css.test.ts`.
   - Earlier-spec tests changed or retired: `ceremony/figures/NumberLine.test.tsx`, `number-line.test.ts`, `line-labels.test.ts`, `scene/phone-stage-clearance.test.ts`, `scene/compact-ghost.test.tsx`, `scene/intact-clearance.test.ts`, only where the tick geometry, the Ghost layer or the step row changes an asserted value; name each.
   - Owner_Patches attached: ae (`README.md` status line and persona demo line, on top of patch t, with the patch date) (X3.1 to X3.3).
-  - QA shots: `recall`, `figures` and `close` of both persona pages at the five Evidence_Sizes, with and without reduced motion; First_Viewport captures of `recall` at both Phone_Sizes, plus one full-page capture per persona page.
+  - QA shots: `recall`, `figures` and `close` of both persona pages at the five Evidence_Sizes, with and without reduced motion; First_Viewport captures of `recall` at both Phone_Sizes, plus one full-page capture per persona page; First_Viewport captures of `/` at both Phone_Sizes, with and without reduced motion.
   - QA steps: 10-01, 10-02.
-  - QA check: `npm run layout-check -- --require TK1,SI1,GT1` PASS at every Evidence_Size, with and without reduced motion. GT1 ignores any element inside `[data-ghost]` (the Envelope's `<p data-date>` lines; ET1 and SG1 cover them) and still covers everything outside the Ghost.
-  - Production_Check: on `https://revenant.devclef.se/demo/personas/us-maya` in a 1366×800 window, walk to `close`. Pass: every Then, Now and answer mark touches its axis, with its label directly under it. In a 390×844 window, open both persona pages, scroll to the bottom and back. Pass: no text under the Ghost at any point; the Step_Indicator shows "Testify", "Break the seal", "Read" and "See the receipts" in full.
+  - QA check: `npm run layout-check -- --require TK1,SI1,GT1` PASS at every Evidence_Size, with and without reduced motion. GT1 ignores any element inside `[data-ghost]` (the Envelope's `<p data-date>` lines; ET1 and SG1 cover them) and still covers everything outside the Ghost. `npm run layout-check -- --require PH1` PASS on `/` at both Phone_Sizes.
+  - Production_Check: on `https://revenant.devclef.se/demo/personas/us-maya` in a 1366×800 window, walk to `close`. Pass: every Then, Now and answer mark touches its axis, with its label directly under it. In a 390×844 window, open both persona pages, scroll to the bottom and back. Pass: no text under the Ghost at any point; the Step_Indicator shows "Testify", "Break the seal", "Read" and "See the receipts" in full. Open `https://revenant.devclef.se/` in a 360×640 window and in a 390×844 window. Pass: the whole Landing_Ghost is on the first screen at both sizes, with nothing cut off at the bottom.
   - Real_Device_Check: on an iPhone with Safari and an Android phone with Chrome, open both persona pages, scroll to the bottom and back, and walk to `close`. Pass: the Ghost never covers text, all four step names show in full, and every tick meets its axis.
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
-  - _Requirements: X1.1–X1.3, X2.1–X2.3, X3.1–X3.3, C1.6_
+  - _Requirements: X1.1–X1.3, X2.1–X2.3, X2.5, X3.1–X3.3, C1.6_
 
 - [ ] 4. X4, S2, S3 · Plain opening dates, the election phrases retired, and the Letter_Text marker
   - Agent: `frontend-dev` · Depends on: 2, 3 · Estimated size: ~500 changed lines
@@ -496,9 +499,34 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
   - _Requirements: E1.1–E1.4, G3.7_
 
+### Group O: operations
+
+- [ ] 17. O1 · A diagnosable figures failure: one safe log line in the Figures_API catch
+  - Agent: `data-dev` · Depends on: 1 · Estimated size: ~150 changed lines
+  - Before this task: steering updated (S1 Owner_Patch on `main`).
+  - Order: this task is an exception to the design's "nothing in `src/app/api/**` changes" and to G3.1's "Group E comes last", per requirements O1 and "Rules this spec replaces". It runs right after task 1 and is independent of every other task.
+  - Scope: `src/app/api/figures/respond.ts`, `src/app/api/figures/db-response.ts` (only if the reads and the shaping must be split), and their `*.test.ts`
+  - Background: on 8 November 2026 `/api/figures` returned 500 on production for several hours and recovered after a pod restart. Postgres logged no error, the data and the query were fine, and `/api/letters` kept working on the same pod. The catch discards the error, so the cause can't be found.
+  - Acceptance:
+    - Inside the existing catch, one `console.error` line names the step, the error's `name`, and its Postgres `code` if it has a string one (O1.1).
+    - The step is `read` for `deps.readStore()` and the two store queries `latestFigures()` and `lastSuccessTimes()`, and `shape` for building the response (O1.2).
+    - The line never contains the error's message, stack or cause, or any other value from the error or the request, because they can carry the connection string (O1.3).
+    - The response stays exactly HTTP 500, `{"error":"figures_unavailable"}`, `Cache-Control: no-store` (O1.4).
+    - A failed read never falls back to the bundled file and never returns a partial list (O1.5).
+    - `buildDbFiguresResponse` may be split into a read step and a shape step; its behaviour is otherwise unchanged (O1.6).
+    - File mode is unchanged (O1.8).
+  - Tests: each step logs its label: a throwing `readStore()`, a throwing `latestFigures()` and a throwing `lastSuccessTimes()` log `read`, and a throwing shape step logs `shape`. An error with a string `code` logs it, and one without logs no code. A thrown error whose message contains a fake `DATABASE_URL` such as `postgres://user:secret@host/db` appears in neither the logged line nor the response body or headers. Exactly one log line per failure. The existing respond, route and db-response tests still pass (O1.7).
+  - Earlier-spec tests changed or retired: name any, with the reason.
+  - Owner_Patches attached: none.
+  - QA shots: none (no screen change). QA steps: none. QA check: none.
+  - Production_Check: after the deploy, `curl -sS -o /dev/null -w '%{http_code}' https://revenant.devclef.se/api/figures` prints 200. If a 500 recurs, the owner reads the pod log (`kubectl logs <pod> -c web`, or the container name the chart uses) and records the logged step, name and code in this issue.
+  - Real_Device_Check: none.
+  - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
+  - _Requirements: O1.1–O1.8_
+
 ## Notes
 
-- **Order.** The dispatcher claims the lowest-numbered ready issue whose dependencies are closed, one per role at a time. Task 1 is never claimed (`agent:owner`); closing it releases tasks 2 (platform-dev) and 3 (frontend-dev), which share no file. Tasks 3 to 16 are all frontend-dev and form one chain, because they share `reveal/`, `ceremony/`, `live/`, the copy modules and `src/test/retired-phrases.test.ts`. Task 11 depends on task 9 only, as the design's Task outline gives it; when task 10 merges, the dispatcher takes task 11 before task 12 because it has the lower number.
+- **Order.** The dispatcher claims the lowest-numbered ready issue whose dependencies are closed, one per role at a time. Task 1 is never claimed (`agent:owner`); closing it releases tasks 2 (platform-dev), 3 (frontend-dev) and 17 (data-dev), which share no file. Task 17 is the only data-dev task, so the dispatcher claims it at once, alongside tasks 2 and 3, although it carries the last number; group E (task 16) still comes last among the other groups. Tasks 3 to 16 are all frontend-dev and form one chain, because they share `reveal/`, `ceremony/`, `live/`, the copy modules and `src/test/retired-phrases.test.ts`. Task 11 depends on task 9 only, as the design's Task outline gives it; when task 10 merges, the dispatcher takes task 11 before task 12 because it has the lower number.
 - **Dates.** Groups S and X (tasks 1 to 4) merged by 13 November 2026. Real sealing go or no-go on 20 November 2026, unchanged. Feature freeze 27 November 2026. Submission 4 December 2026, 2:00 PM PT.
 - **Deploy holds.** None between the Write step questions and Testify: tasks 6 and 7 put Recall_Record_V2 and the text field on production before task 8 lets the Write step seal a text question (G3.1). The one ordered deploy is the persona reseal in task 11 (P2.2).
 - **QA rows by task.** 10-01 and 10-02 (task 3); 10-03 (4); 10-04 and 10-05 (5); 10-06 to 10-09 (8; 10-08 is sealing only); 10-10, 10-11 and 10-12 (9; 10-11 again in 10); 10-13 (10); 10-16 (11); 10-15 (12); 10-14, 10-19 and 10-20 (13); 10-17 (14); 10-18 (15).
@@ -510,13 +538,13 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
 
 ## Task Dependency Graph
 
-Dependencies: 1 has none; 2 after 1; 3 after 1; 4 after 2 and 3; 5 after 4; 6 after 5; 7 after 6; 8 after 7; 9 after 8; 10 after 9; 11 after 9; 12 after 10; 13 after 12; 14 after 13; 15 after 14; 16 after 11 and 15.
+Dependencies: 1 has none; 2 after 1; 3 after 1; 4 after 2 and 3; 5 after 4; 6 after 5; 7 after 6; 8 after 7; 9 after 8; 10 after 9; 11 after 9; 12 after 10; 13 after 12; 14 after 13; 15 after 14; 16 after 11 and 15; 17 after 1.
 
 ```json
 {
   "waves": [
     { "id": 0, "tasks": ["1"] },
-    { "id": 1, "tasks": ["2", "3"] },
+    { "id": 1, "tasks": ["2", "3", "17"] },
     { "id": 2, "tasks": ["4"] },
     { "id": 3, "tasks": ["5"] },
     { "id": 4, "tasks": ["6"] },

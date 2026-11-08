@@ -19,10 +19,12 @@ The owner's production walk at 2560×1440, 1366×800 and 390×844 also found the
 - **Break the seal (`marks` Stage).** The WaxSeal sits in the middle of the Envelope the Ghost holds and covers its text ("Written as of 12 May 2024", "Opens 5 November 2024"). The Seal_Hint "Press and hold the seal to break it, or use the button below." floats left of the Ghost, is right-aligned, is clipped where it meets the Ghost's body, and says "below" when the button is up and to the left. That button sits alone in a large, nearly empty cream card with the Skip_Link, far from the seal, and in an outline style that differs from the orange primary button on every other Stage. At 600 px and wider the `marks` Stage shows none of the judge's answers.
 - **Receipts.** The "Then" tick on the Number_Line floats 60 to 90 px below the axis, cut off from its label, at the Desktop_Sizes and the Phone_Sizes.
 - **Phone persona start.** At 390×844 the Ghost covers the Persona_Intro text, and the Step_Indicator is cut off ("Testify Brea…", and only "See the receipts" while on Testify).
+- **Phone landing.** A production Journey_Check dry run on 8 November 2026 found PH1 failing on `/` at 360×640: the Landing_Ghost's box reaches 670 px, past the 640 px viewport bottom. The Landing_Ghost box is placed by `.hero .ghost` below 600 px in `src/components/landing/landing.module.css`.
+- **Figures outage.** On 8 November 2026 `GET /api/figures` returned HTTP 500 `{"error":"figures_unavailable"}` on production for several hours and recovered after a pod restart. Postgres logged no error, the data and the query were fine, and `/api/letters` kept working on the same pod. The cause can't be found, because the catch in `src/app/api/figures/respond.ts` discards the error.
 - **Neutrality.** The persona opening dates carry election names: "U.S. presidential election day" for Maya and "European Parliament election" for Tomás, on the `/demo` envelopes and in the Persona_Intro. An election name next to a price that went up reads as political.
 - **README.** The status line still says spec 08 is in progress, and the persona demo line describes "a real US election window".
 
-Requirements are grouped and numbered by priority: G (rules for every task); S (steering and the copy scans, first); X (production bugs and the election labels, P0); C (the critical path, P1, in this order: C1 dropping the pick-up Stage, C3 the Recall_Record v2, C4 Testify, C2 the Write step questions, C5 the prefilled samples, C6 Break the seal, C7 the other Stages, C8 the Reveal, C9 the live demo payoff); P (persona letters that carry the price, P1, after C5 and alongside C6 to C9); R (self-reported numbers, moved in from spec 08, after C9); E (final audit and presentation). Every group ships; there is no cut line. Every rule of `.kiro/steering/` and of specs 02 to 09 still holds unless "Rules this spec replaces" names it.
+Requirements are grouped and numbered by priority: G (rules for every task); S (steering and the copy scans, first); X (production bugs and the election labels, P0); C (the critical path, P1, in this order: C1 dropping the pick-up Stage, C3 the Recall_Record v2, C4 Testify, C2 the Write step questions, C5 the prefilled samples, C6 Break the seal, C7 the other Stages, C8 the Reveal, C9 the live demo payoff); P (persona letters that carry the price, P1, after C5 and alongside C6 to C9); R (self-reported numbers, moved in from spec 08, after C9); E (final audit and presentation); O (operations: the diagnosable figures failure, task 17, which runs right after task 1). Every group ships; there is no cut line. Every rule of `.kiro/steering/` and of specs 02 to 09 still holds unless "Rules this spec replaces" names it.
 
 ## Code facts this spec relies on
 
@@ -58,7 +60,7 @@ Checked against `main` at `3d48d51` on 8 November 2026, in a local checkout at t
 | Topic | Decision |
 |---|---|
 | Deadlines | Group S and group X merged by 13 November 2026. Real sealing go/no-go on 20 November 2026, unchanged (spec 08 R25). Feature freeze 27 November 2026. Submission 4 December 2026, 2:00 PM PT. |
-| Order | Steering patch, then the production bugs, then the critical path: drop the pick-up Stage (C1), Recall_Record v2 (C3), Testify (C4), Write step questions (C2), prefilled samples (C5), Break the seal (C6), the other Stages (C7), Reveal (C8), live demo payoff (C9). Group P after C5, group R after C9, group E last (G3). |
+| Order | Steering patch, then the production bugs, then the critical path: drop the pick-up Stage (C1), Recall_Record v2 (C3), Testify (C4), Write step questions (C2), prefilled samples (C5), Break the seal (C6), the other Stages (C7), Reveal (C8), live demo payoff (C9). Group P after C5, group R after C9, group E last, except group O (task 17), which runs right after task 1 (G3). |
 | Testify before the Write step | C3 and C4 are built and tested with fixture letters that carry text questions, so no deploy hold is needed between C2 and C4: the Write step questions ship only after Testify can answer them (G3.1). |
 | Scope | Everything in this spec ships, including group R and the per-visit Sample_Pick (C5.6). There is no cut order. |
 | Sealed format and crypto | No change. Author_Questions are sealed as v1 `"text"` questions with no `metric_id` and no new `format_version`. The key hierarchy, time lock, envelope, header fields and hash stay exactly as they are. |
@@ -121,6 +123,8 @@ Each rule below is replaced only for the work of this spec, by the requirement n
 - **Spec 08 R26.1's WHERE clause and spec 08 R26.7** (the conditions spec 08 put on self-reported numbers): replaced by group R. R26.1 applies as an unconditional requirement.
 - **Spec 09 G2.2** (the property test tag): this spec's tag is `// Feature: 10-own-questions, Property N: <title>`.
 - **Spec 08 later-tasks task 23**: moved into group R of this spec. Spec 08 task 24's self-reported check is done by E1.2.
+- **This spec's design, "Nothing in … `src/app/api/**` … changes"** and its "No task touches crypto-dev or data-dev paths" line: replaced by O1 for `src/app/api/figures/respond.ts` and `src/app/api/figures/db-response.ts` only. Every other path under `src/app/api/` stays unchanged.
+- **G3.1, "Group E SHALL come last"**: replaced for task 17 (group O) only, which follows task 1.
 
 ## Out of scope
 
@@ -180,7 +184,7 @@ Each rule below is replaced only for the work of this spec, by the requirement n
 - **FlowError**: The existing error view, `src/components/reveal/FlowError.tsx`, shown for `not_placed`, `unreachable`, `verification_failed` and `open_failed`.
 - **First_Step**: The `emerging` Stage on the persona page, ended when the `recall` Stage starts. Every Stage after it is after the First_Step. This replaces the spec 08 term.
 - **Evidence_Sizes**, **Phone_Sizes**, **Wide_Size**, **First_Viewport**, **Compact_Top_Bar**, **Compact_Ghost**, **Answer_List**, **Real_Device_Check**, **Production_Check**, **Journey_Check**, **Persona_Intro**, **Opening_Event**, **Step_Indicator**, **Receipt_Card**, **Skip_Link**, **Seal_Verdict**, **Letter_Disclosure**, **Caption_Block**, **Display_Rescale**, **Live_Stepper**, **Prompt_Starter**, **Retired_Phrases**, **Copy task**, **WaxSeal**, **Envelope_Flap**, **Brand_Copy**: as defined in spec 09.
-- **Judge**, **Desktop_Sizes**, **QA agent**, **Recall_Number_Parser**, **Figures_Heading**, **Letter_Text**, **Then_Value**, **Now_Value**, **Answer_Value**, **Unit_Range_Table**, **Hero**, **Catalogue**, **Figures_API**, **Real_Letter**, **Real_Seal_Page**, **How_Page**, **Owner_Patch**, **Self_Reported_Figure**: as defined in spec 08.
+- **Judge**, **Desktop_Sizes**, **Landing_Ghost**, **QA agent**, **Recall_Number_Parser**, **Figures_Heading**, **Letter_Text**, **Then_Value**, **Now_Value**, **Answer_Value**, **Unit_Range_Table**, **Hero**, **Catalogue**, **Figures_API**, **Real_Letter**, **Real_Seal_Page**, **How_Page**, **Owner_Patch**, **Self_Reported_Figure**: as defined in spec 08.
 - **Scene**, **Ghost**, **Soil**, **Emergence**, **Envelope**, **Envelope_Front**, **Pick_Up_Button**, **Top_Bar**, **Letter_Block**, **Accent**, **Calm_Mode**, **Figure_Entry**, **Content_Column**, **Ghost_Box**, **Ghost_Body_Box**, **Recall_Pager**, **Scoring_Words_Always**, **Scoring_Words_Scene**, **Scene_Copy_Modules**: as defined in spec 07.
 - **Ceremony**, **Stage**, **Skip**, **Mark**, **Recall_Scale**, **Number_Line**, **Seal_Break**: as defined in spec 05.
 - **Persona_List**, **recall_subject**, **Persona_Letter**, **Recall_Generator**, **Recall_Record**, **Demo_Index**, **Opening_Flow**, **Reveal**, **Then_Figure**, **Now_Figure**, **Demo_Key**, **Sealing_Script**: as defined in spec 03.
@@ -218,7 +222,7 @@ Each rule below is replaced only for the work of this spec, by the requirement n
 
 **User story:** As the owner, I want the work in the order of the critical path, so that the demo's main change lands first.
 
-1. THE tasks SHALL be numbered so that the S1 Owner_Patch task comes first, every group S and group X task has a lower number than every group C task, and the group C tasks follow this order: C1, C3, C4, C2, C5, C6, C7, C8, C9. THE C3 and C4 tasks SHALL be built and tested with fixture letters that carry text questions, so that the C2 task needs no deploy hold. Group P tasks SHALL follow C5. Group R tasks SHALL follow C9. Group E SHALL come last.
+1. THE tasks SHALL be numbered so that the S1 Owner_Patch task comes first, every group S and group X task has a lower number than every group C task, and the group C tasks follow this order: C1, C3, C4, C2, C5, C6, C7, C8, C9. THE C3 and C4 tasks SHALL be built and tested with fixture letters that carry text questions, so that the C2 task needs no deploy hold. Group P tasks SHALL follow C5. Group R tasks SHALL follow C9. Group E SHALL come last, except the group O task (task 17), which SHALL be dispatched right after task 1.
 2. EACH task SHALL be one GitHub issue and one PR for one role, with a changed-line estimate at or under `max_changed_lines` in `.github/agents.json` (5,000).
 3. NO role task SHALL be dispatched before the S1 Owner_Patch is committed on `main`. EVERY task SHALL list "steering updated (S1 Owner_Patch on `main`)" under "Before this task".
 4. THE owner SHALL merge no group C task while a group X task is open, unless the group X task's issue records a blocker the owner accepts.
@@ -287,6 +291,7 @@ Each rule below is replaced only for the work of this spec, by the requirement n
 2. AT every Evidence_Size, THE Step_Indicator SHALL show all four step names in full, with no truncation, no ellipsis and no step clipped by the viewport or its container, in at most two lines at the Phone_Sizes and one line elsewhere (spec 09 C2.5).
 3. THE Step_Indicator SHALL show the current step and every other step in every Stage where it renders.
 4. A layout check SHALL fail when a Step_Indicator item's `scrollWidth` exceeds its `clientWidth` or its box leaves the viewport (Owner_Patch).
+5. AT both Phone_Sizes (390×844 and 360×640), THE Landing_Ghost's box on `/` SHALL stay fully inside the First_Viewport.
 
 ### X3. README status (Owner_Patch)
 
@@ -481,3 +486,20 @@ Each rule below is replaced only for the work of this spec, by the requirement n
 2. THE audit SHALL confirm that every surface describing self-reported numbers matches the merged group R code.
 3. THE owner commits spec 09 Owner_Patches o (`freshness-check.yml`, `keepalive.yml`), t (README "Judge quick path" box), u (`docs/kiro-writeup.md`) and v (`docs/video-script.md`) outside this spec. THIS spec's README, `docs/kiro-writeup.md` and `docs/video-script.md` Owner_Patches SHALL build on the files those patches committed, SHALL edit them in place, and SHALL NOT re-create or re-apply them. These SHALL describe Author_Questions, the persona sample answers and the live demo payoff, and the video script SHALL show the live demo beat: write a question, wait 30 seconds, answer it again from memory, see it beside the letter.
 4. THE audit SHALL confirm that no README text, video script, write-up, Open Graph image, test or QA step refers to the two letter IDs this spec retires, `ydsos6hcjdEUOs3sK42RQg` (Maya) and `8t6Bz4bWlaUky-byt1mzGg` (Tomás), apart from the `retired_letter_ids` entries in the Persona_List and the tests that read that list. THE search SHALL cover these two letter IDs only. Older retired IDs such as `wom_GdH6gqP6AGgnyhIMgA` are ordinary test fixtures and are outside the search.
+
+### Group O. Operations
+
+Group O comes after group E in this document, but its one task, task 17, runs right after task 1 (G3.1). It is a data-dev task on `src/app/api/figures/**`, which `.github/agents.json` gives data-dev.
+
+### O1. A diagnosable figures failure
+
+**User story:** As the owner, I want a failed figures response to say which step failed, so that the next outage can be diagnosed without exposing the connection string.
+
+1. WHEN the db-mode figures response fails, THE Figures_API SHALL write exactly one `console.error` line that names the failed step, the error's `name`, and the error's Postgres `code` WHERE the error has a string `code`.
+2. THE step label SHALL be `read` for a failure in `deps.readStore()`, `latestFigures()` or `lastSuccessTimes()`, and `shape` for a failure while building the response from their results.
+3. THE log line SHALL contain only the step label, the error's `name` and the Postgres `code`, and SHALL NOT contain the error's `message`, `stack` or `cause`, or any other value from the error or the request, because those can carry the connection string.
+4. WHEN the db-mode figures response fails, THE Figures_API SHALL return HTTP 500 with the body `{"error":"figures_unavailable"}` and `Cache-Control: no-store`, exactly as today.
+5. IF a read fails, THEN THE Figures_API SHALL NOT fall back to the bundled file and SHALL NOT return a partial list (spec 08 design, "Error Handling").
+6. `buildDbFiguresResponse` MAY be split so that the reads and the shaping are separate steps; THE Figures_API's behaviour SHALL otherwise stay unchanged.
+7. THE tests SHALL show that a failure in each step logs that step's label, and that a thrown error whose `message` contains a fake `DATABASE_URL` (for example `postgres://user:secret@host/db`) appears in neither the log line nor the response.
+8. WHERE the source mode is `file`, THE Figures_API SHALL behave exactly as today.
