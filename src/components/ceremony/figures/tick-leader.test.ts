@@ -1,5 +1,6 @@
 // Feature: 10 (spec 10 X1.1, X1.2, X1.3, X1.4). Property 20: every tick
-// touches the axis, reaches its own label, and never crosses a label above it.
+// touches the axis, reaches its own label where it can, and never runs through
+// a label in a row above its own.
 
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
@@ -9,11 +10,16 @@ import {
   LINE_LABEL_TOP_REM,
   TICK_LABEL_GAP_PX,
 } from "../constants";
-import { placeLineLabels, TICK_HALF_PX, type LabelBox } from "./line-labels";
+import {
+  placeLineLabels,
+  tickCrosses,
+  type LabelBox,
+} from "./line-labels";
 import {
   LABEL_FONT_REM,
   STATIC_REM_PX,
   labelRowTopPx,
+  tickBottomsPx,
   tickLeaderPx,
 } from "./tick-leader";
 
@@ -21,15 +27,13 @@ const rowArb = fc.constantFrom(0, 1, 2);
 const remArb = fc.integer({ min: 8, max: 32 });
 
 // Three points close together on one line, as the Then, Now and answer values
-// often are. Each gap between neighbouring points is 0.02 to 0.05 of the line,
-// which is at least 8 px on a 400 px line. Points at one spot are not generated:
-// ticks at one point can't all stay clear of each other's labels (see the
-// unit cases in line-labels.test.ts).
+// often are. A gap of 0 puts two points on one spot, which the placer must still
+// handle. Points are kept inside the line by the base range.
 const nearLine = fc.record({
   base: fc.double({ min: 0.05, max: 0.85, noNaN: true }),
   gaps: fc.tuple(
-    fc.double({ min: 0.02, max: 0.05, noNaN: true }),
-    fc.double({ min: 0.02, max: 0.05, noNaN: true }),
+    fc.double({ min: 0, max: 0.05, noNaN: true }),
+    fc.double({ min: 0, max: 0.05, noNaN: true }),
   ),
   order: fc.constantFrom<readonly [number, number, number]>(
     [0, 1, 2],
@@ -48,6 +52,7 @@ const nearLine = fc.record({
 });
 
 const TOL = 1e-6;
+const emPx = STATIC_REM_PX * LABEL_FONT_REM;
 
 function placeNear(input: {
   base: number;
@@ -55,7 +60,11 @@ function placeNear(input: {
   order: readonly [number, number, number];
   widths: readonly [number, number, number];
   lineWidth: number;
-}): { boxes: readonly [LabelBox, LabelBox, LabelBox]; ticks: number[] } {
+}): {
+  boxes: readonly [LabelBox, LabelBox, LabelBox];
+  ticks: number[];
+  bottoms: number[];
+} {
   const along = [
     input.base,
     input.base + input.gaps[0],
@@ -73,14 +82,15 @@ function placeNear(input: {
     widths: input.widths,
     lineWidth: input.lineWidth,
   });
-  return { boxes, ticks };
+  const bottoms = tickBottomsPx(boxes, ticks, STATIC_REM_PX, emPx);
+  return { boxes, ticks, bottoms };
 }
 
 describe("Property 20: every tick touches the axis and reaches its label", () => {
-  it("puts each tick inside its own label, keeps row neighbours apart, and never lets a tick cross a label above it", () => {
+  it("puts each tick inside its own label, keeps row neighbours apart, and never lets a tick run through a label above it", () => {
     fc.assert(
       fc.property(nearLine, (input) => {
-        const { boxes, ticks } = placeNear(input);
+        const { boxes, ticks, bottoms } = placeNear(input);
 
         // 1. Each tick's x lies inside its own label's box.
         for (let i = 0; i < 3; i += 1) {
@@ -100,16 +110,15 @@ describe("Property 20: every tick touches the axis and reaches its label", () =>
           }
         }
 
-        // 3. No label box contains the x of a tick from a row below it. A tick is
-        // 2 px wide, so it spans [x - 1, x + 1] and must not reach into the box.
+        // 3. No label box contains another tick's x within that tick's vertical
+        // span. The tick spans 0 to bottoms[i]; the box starts at its row's top.
         for (let i = 0; i < 3; i += 1) {
-          for (let j = 0; j < 3; j += 1) {
-            if (boxes[j].row <= boxes[i].row) continue;
-            const box = boxes[i];
-            const crosses =
-              box.x < ticks[j] + TICK_HALF_PX - TOL &&
-              box.x + box.width > ticks[j] - TICK_HALF_PX + TOL;
-            expect(crosses).toBe(false);
+          for (let k = 0; k < 3; k += 1) {
+            if (i === k) continue;
+            const box = boxes[k];
+            const rowTop = labelRowTopPx(box.row, STATIC_REM_PX, emPx);
+            const inSpan = bottoms[i] > rowTop + TOL;
+            expect(inSpan && tickCrosses(ticks[i], box.x, box.width)).toBe(false);
           }
         }
       }),
@@ -117,17 +126,14 @@ describe("Property 20: every tick touches the axis and reaches its label", () =>
     );
   });
 
-  it("ends each tick TICK_LABEL_GAP_PX above the row its own label was placed in", () => {
+  it("ends each tick no lower than TICK_LABEL_GAP_PX above its own label row", () => {
     fc.assert(
       fc.property(nearLine, (input) => {
-        const { boxes } = placeNear(input);
-        const emPx = STATIC_REM_PX * LABEL_FONT_REM;
-        for (const box of boxes) {
-          const bottom = tickLeaderPx(box.row, STATIC_REM_PX, emPx);
-          expect(
-            labelRowTopPx(box.row, STATIC_REM_PX, emPx) - bottom,
-          ).toBeCloseTo(TICK_LABEL_GAP_PX, 9);
-        }
+        const { boxes, bottoms } = placeNear(input);
+        boxes.forEach((box, i) => {
+          const ownEnd = labelRowTopPx(box.row, STATIC_REM_PX, emPx) - TICK_LABEL_GAP_PX;
+          expect(bottoms[i]).toBeLessThanOrEqual(ownEnd + TOL);
+        });
       }),
       { numRuns: 300 },
     );
@@ -136,10 +142,10 @@ describe("Property 20: every tick touches the axis and reaches its label", () =>
   it("starts every tick on the axis top edge (y = 0) and ends it above its label", () => {
     fc.assert(
       fc.property(rowArb, remArb, (row, remPx) => {
-        const emPx = remPx * LABEL_FONT_REM;
+        const e = remPx * LABEL_FONT_REM;
         const top = 0;
-        const bottom = top + tickLeaderPx(row, remPx, emPx);
-        expect(labelRowTopPx(row, remPx, emPx) - bottom).toBeCloseTo(
+        const bottom = top + tickLeaderPx(row, remPx, e);
+        expect(labelRowTopPx(row, remPx, e) - bottom).toBeCloseTo(
           TICK_LABEL_GAP_PX,
           9,
         );
@@ -158,8 +164,8 @@ describe("Property 20: every tick touches the axis and reaches its label", () =>
   it("makes each lower row's tick longer than the row above it", () => {
     fc.assert(
       fc.property(remArb, (remPx) => {
-        const emPx = remPx * LABEL_FONT_REM;
-        const heights = [0, 1, 2].map((row) => tickLeaderPx(row, remPx, emPx));
+        const e = remPx * LABEL_FONT_REM;
+        const heights = [0, 1, 2].map((row) => tickLeaderPx(row, remPx, e));
         expect(heights[1]).toBeGreaterThan(heights[0]);
         expect(heights[2]).toBeGreaterThan(heights[1]);
       }),
@@ -167,9 +173,42 @@ describe("Property 20: every tick touches the axis and reaches its label", () =>
   });
 });
 
-describe("tick heights at the static render (X1.2, 16 px root)", () => {
-  const emPx = STATIC_REM_PX * LABEL_FONT_REM;
+describe("Property 20, unit cases", () => {
+  it("clips a tick that would run through a label above it, at the top of that label", () => {
+    // Then and Now at one spot: the Now label drops to row 1, and its tick would
+    // run through the Then label in row 0. It stops above row 0 instead.
+    const input = {
+      positions: [0.5, 0.5, 0.9] as const,
+      widths: [60, 60, 60] as const,
+      lineWidth: 400,
+    };
+    const boxes = placeLineLabels(input);
+    expect(boxes[1].row).toBe(1);
+    const ticks = input.positions.map((p) => p * input.lineWidth);
+    const bottoms = tickBottomsPx(boxes, ticks, STATIC_REM_PX, emPx);
+    // Row 0 top is 1.25 rem = 20 px, so the clipped tick ends 16 px down.
+    expect(bottoms[1]).toBeCloseTo(16, 9);
+    // The unclipped Then and answer ticks keep their own row's height.
+    expect(bottoms[0]).toBeCloseTo(16, 9);
+    expect(bottoms[2]).toBeCloseTo(16, 9);
+  });
 
+  it("keeps a tick's own height when no label above it is crossed", () => {
+    const input = {
+      positions: [0.1, 0.9, 0.5] as const,
+      widths: [40, 40, 40] as const,
+      lineWidth: 400,
+    };
+    const boxes = placeLineLabels(input);
+    const ticks = input.positions.map((p) => p * input.lineWidth);
+    const bottoms = tickBottomsPx(boxes, ticks, STATIC_REM_PX, emPx);
+    boxes.forEach((box, i) => {
+      expect(bottoms[i]).toBeCloseTo(tickLeaderPx(box.row, STATIC_REM_PX, emPx), 9);
+    });
+  });
+});
+
+describe("tick heights at the static render (X1.2, 16 px root)", () => {
   it("reads the first row top from LINE_LABEL_TOP_REM at 16 px", () => {
     expect(labelRowTopPx(0, STATIC_REM_PX, emPx)).toBeCloseTo(
       LINE_LABEL_TOP_REM * STATIC_REM_PX,

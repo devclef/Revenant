@@ -18,8 +18,10 @@
 // may slide sideways inside its clamp to satisfy rules 1 to 3. When no plan
 // satisfies all three, the plan falls back to the greedy placement: each label
 // is centred and clamped, then takes the lowest row free of overlaps. That
-// fallback can leave a tick crossing a label. Ticks at the same point can't
-// avoid it: a label containing that point can't also exclude it.
+// fallback can leave a tick crossing a label. tickBottomsPx (tick-leader.ts)
+// then stops such a tick above the label it would cross, so no tick runs
+// through a label. Ticks at one spot always need that stop: a label containing
+// the spot can't also exclude it.
 
 import { LINE_LABEL_GAP_PX } from "../constants";
 
@@ -80,7 +82,7 @@ function collides(
 }
 
 // True when a tick at x (2 px wide) overlaps the box [boxX, boxX + width].
-function tickCrosses(tickX: number, boxX: number, width: number): boolean {
+export function tickCrosses(tickX: number, boxX: number, width: number): boolean {
   return boxX < tickX + TICK_HALF_PX && boxX + width > tickX - TICK_HALF_PX;
 }
 

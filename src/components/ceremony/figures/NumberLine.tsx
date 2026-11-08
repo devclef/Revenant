@@ -39,7 +39,7 @@ import {
 import { CEREMONY_COPY } from "../copy";
 import { numberLineGeometry } from "./number-line";
 import { placeLineLabels, type LabelBox } from "./line-labels";
-import { LABEL_FONT_REM, STATIC_REM_PX, tickLeaderPx } from "./tick-leader";
+import { LABEL_FONT_REM, STATIC_REM_PX, tickBottomsPx } from "./tick-leader";
 import { answerText } from "../recall/answer-text";
 import styles from "./figures.module.css";
 
@@ -171,9 +171,13 @@ export function NumberLine({
     widths,
     lineWidth,
   });
-  // Each tick ends above the label row its own label was placed in (spec 10 X1.1).
-  const tickHeight = (box: LabelBox): string =>
-    `${tickLeaderPx(box.row, remPx, emPx)}px`;
+  // Each tick ends above the label row its own label was placed in (spec 10 X1.1),
+  // and stops above any label it would otherwise cross (spec 10 X1.4).
+  const tickXs = [geometry.posThen, geometry.posNow, geometry.posMark ?? 1].map(
+    (p) => p * lineWidth,
+  );
+  const bottoms = tickBottomsPx(boxes, tickXs, remPx, emPx);
+  const tickHeight = (i: number): string => `${bottoms[i]}px`;
 
   const fill = (template: string, values: Readonly<Record<string, string>>): string =>
     template.replace(/\{(\w+)\}/g, (_match, key: string) => values[key] ?? "");
@@ -216,7 +220,7 @@ export function NumberLine({
         className={styles.tick}
         style={{
           left: "calc(var(--pos-then) * 100% - 1px)",
-          height: tickHeight(boxes[0]),
+          height: tickHeight(0),
         }}
         data-line-tick="then"
         aria-hidden="true"
@@ -225,7 +229,7 @@ export function NumberLine({
         className={styles.tick}
         style={{
           left: "calc(var(--pos-now) * 100% - 1px)",
-          height: tickHeight(boxes[1]),
+          height: tickHeight(1),
         }}
         data-line-tick="now"
         aria-hidden="true"
@@ -233,7 +237,7 @@ export function NumberLine({
       {markText === undefined ? null : (
         <span
           className={styles.markWrap}
-          style={{ height: tickHeight(boxes[2]) }}
+          style={{ height: tickHeight(2) }}
           data-line-tick="mark"
         >
           <span className={styles.markStroke} aria-hidden="true" />

@@ -14,6 +14,7 @@ import {
   LINE_LABEL_TOP_REM,
   TICK_LABEL_GAP_PX,
 } from "../constants";
+import { tickCrosses, type LabelBox } from "./line-labels";
 
 /** Root font size used for the static render, before any measurement (X1.2). */
 export const STATIC_REM_PX = 16;
@@ -46,4 +47,38 @@ export function labelRowTopPx(
  */
 export function tickLeaderPx(row: number, remPx: number, emPx: number): number {
   return labelRowTopPx(row, remPx, emPx) - TICK_LABEL_GAP_PX;
+}
+
+/**
+ * Bottom edge of each tick, in px from the axis top edge (spec 10 X1.4).
+ *
+ * A tick normally ends TICK_LABEL_GAP_PX above its own label row. If it would
+ * pass through a label in a row above its own, it stops TICK_LABEL_GAP_PX above
+ * the top of the highest such row instead. The label then loses its leader.
+ * This happens only in the fallback layout, or when two points sit at one spot.
+ *
+ * @param boxes the placed labels, from placeLineLabels
+ * @param tickXs each tick's x in px, in the same order as boxes
+ * @param remPx the root font size in px
+ * @param emPx the label's own font size in px
+ */
+export function tickBottomsPx(
+  boxes: readonly LabelBox[],
+  tickXs: readonly number[],
+  remPx: number,
+  emPx: number,
+): number[] {
+  return boxes.map((box, i) => {
+    let bottom = tickLeaderPx(box.row, remPx, emPx);
+    boxes.forEach((other, k) => {
+      if (k === i || other.row >= box.row) return;
+      if (tickCrosses(tickXs[i], other.x, other.width)) {
+        bottom = Math.min(
+          bottom,
+          labelRowTopPx(other.row, remPx, emPx) - TICK_LABEL_GAP_PX,
+        );
+      }
+    });
+    return bottom;
+  });
 }
