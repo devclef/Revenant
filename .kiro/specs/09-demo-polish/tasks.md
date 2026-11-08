@@ -589,7 +589,7 @@ Each task in this group meets group P for the Stages it changes (G3.7), and atta
   - Validation: `bash scripts/check.sh`
   - _Requirements: D3.1–D3.3, P8.4, P10.1_
 
-- [ ] 23. D1 · The Scene and the Ghost in the live demo
+- [x] 23. D1 · The Scene and the Ghost in the live demo
   - Agent: `frontend-dev` · Depends on: 22 · Estimated size: ~900 changed lines
   - Before this task: task 22 is on `main` or closed unmerged. Cut candidate, first in line (G3.5).
   - Scope: `src/components/live/stepper/**`, `src/components/ceremony/scene/PersonaGhost.tsx`, `src/components/ceremony/scene/scene.module.css`, `src/components/ceremony/scene/SceneShell.tsx`, `src/components/ceremony/constants.ts`, `src/app/demo/live/page.tsx`, and the `*.test.ts(x)` for each file above
