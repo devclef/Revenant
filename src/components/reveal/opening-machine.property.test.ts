@@ -206,7 +206,6 @@ const eventArb: fc.Arbitrary<FlowEvent> = fc.oneof(
   ...OPEN_FAILED_KINDS.map((kind) =>
     fc.constant<FlowEvent>({ type: "OPEN_FAILED", kind }),
   ),
-  fc.constant<FlowEvent>({ type: "BEGIN" }),
   fc.constant<FlowEvent>({ type: "EDIT_DRAFT", id: "q-fuel", text: "3.50" }),
   fc.constant<FlowEvent>({
     type: "TOGGLE_NO_ANSWER",
@@ -383,12 +382,6 @@ const RENDER_CASES: RenderCase[] = [
   },
   {
     state: { tag: "verifying" },
-    revealsQuestion: false,
-    revealsLetter: false,
-    revealsFigures: false,
-  },
-  {
-    state: { tag: "verified", opened: OPENED },
     revealsQuestion: false,
     revealsLetter: false,
     revealsFigures: false,

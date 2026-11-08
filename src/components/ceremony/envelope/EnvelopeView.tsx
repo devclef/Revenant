@@ -4,7 +4,7 @@
 //
 // EnvelopeView: the Stage wrapper around the <Envelope> for the opening flow
 // before the letter is revealed (design.md "Envelope and seal", state machine
-// row `EnvelopeView: loading / sealed / openable / verifying / verified`).
+// row `EnvelopeView: loading / sealed / openable / verifying`; spec 10 C1 removed `verified`).
 //
 // It renders exactly one scene for the flow tag it is given, drawing the
 // envelope at the one fixed resting geometry (R8.7: width min(84vw, 26rem), top
@@ -25,11 +25,6 @@
 //     clock, drawn inside the envelope's front panel. The clock lives in
 //     `StillSealed` (reveal/), never in this ceremony module, so the ceremony
 //     render stays deterministic (Property 21: no Date.now in ceremony render).
-//   - `verified`  the intact Stage: the "seal is intact" statement
-//     (REVEAL_COPY.sealIntact) shown BEFORE any recall question, and the
-//     control that sends BEGIN (REVEAL_COPY.begin). The envelope turns over
-//     (`closed` -> `turned` / `open`) only after BEGIN is sent, so the view
-//     holds the envelope `closed` here; the later Stages drive the turn.
 //
 // R3.6 / R3.7: the envelope's size, folds and markup never read the letter. Its
 // only per-letter inputs are the persona list fields (two dates and the demo
@@ -48,34 +43,13 @@ import type { ReactElement, ReactNode } from "react";
 
 import paper from "@/components/ui/paper.module.css";
 
-import { REVEAL_COPY } from "@/components/reveal/copy";
-import {
-  StillSealed,
+import { StillSealed,
   type StillSealedProps,
 } from "@/components/reveal/StillSealed";
-import type { FlowState } from "@/components/reveal/opening-machine";
 
-import { useLocalView } from "../local-view";
-import { emergingStatus, showPickUp } from "../stages";
+import { emergingStatus } from "../stages";
 import { Envelope, type EnvelopePersona, type EnvelopeState } from "./Envelope";
 import styles from "./EnvelopeView.module.css";
-
-/**
- * Renders its children only when the Pick_Up_Button gate is open: the flow tag
- * is `verified` and the Emergence is `"done"` (design.md "The Pick_Up_Button
- * gate", R9.8 to R9.10). Reads the local view, so it must sit under the
- * Ceremony's LocalViewProvider.
- */
-function PickUpGate({
-  tag,
-  children,
-}: {
-  tag: FlowState["tag"];
-  children: ReactNode;
-}): ReactElement | null {
-  const { localView } = useLocalView();
-  return showPickUp(tag, localView) ? <>{children}</> : null;
-}
 
 /**
  * Which pre-reveal scene to show. These are exactly the flow tags the design's
@@ -87,7 +61,6 @@ export type EnvelopeViewVariant =
   | "openable"
   | "verifying"
   | "sealed"
-  | "verified"
   | "unlock";
 
 export type EnvelopeViewProps = {
@@ -98,14 +71,6 @@ export type EnvelopeViewProps = {
    * Optional: with no persona the envelope shows no dates (spec 03 renders).
    */
   persona?: EnvelopePersona;
-  /**
-   * The envelope face to draw. The envelope rests `closed` through every
-   * pre-reveal Stage; it turns over only after BEGIN is sent, which the later
-   * Stages drive. Defaults to `closed`.
-   */
-  envelopeState?: EnvelopeState;
-  /** Sends BEGIN, moving from the intact statement to the recall step. */
-  onBegin?: () => void;
   /** Sends START (retry) once the still-sealed countdown reaches zero. */
   onRetry?: () => void;
   /**
@@ -124,7 +89,7 @@ export type EnvelopeViewProps = {
    * The persona page holds the Envelope in the Ghost's slot (design.md "The
    * Envelope", mermaid persona branch; it "never moves to the content column
    * on the persona page", R10.13). When `held` is true the Stage renders only
-   * its statement, StillSealed panel or Begin control in the content column and
+   * its statement or StillSealed panel in the content column and
    * draws NO in-column envelope frame, so the column stays clear of the Soil
    * strip and the Ghost body (R6.15, R5.19). Defaults to false (the `/demo` and
    * `/l/[id]` column, which draws the envelope inline).
@@ -168,14 +133,11 @@ function EnvelopeFrame({
  * EnvelopeView renders one pre-reveal scene for its `variant`, always drawing
  * the envelope at the resting geometry in EnvelopeFrame. The statement variants put a short line
  * beside the envelope (the verifying/loading line in a polite `role="status"`
- * region); `sealed` shows the reused StillSealed view; `verified` shows the
- * seal-is-intact statement and the Begin control.
+ * region); `sealed` shows the reused StillSealed view.
  */
 export function EnvelopeView({
   variant,
   persona,
-  envelopeState = "closed",
-  onBegin,
   onRetry,
   sealedOpensAt,
   stillSealed,
@@ -249,30 +211,5 @@ export function EnvelopeView({
         </section>
       );
 
-    case "verified":
-      // The seal-is-intact statement, shown BEFORE any recall question, and the
-      // control that sends BEGIN. The envelope stays closed; it turns over only
-      // after BEGIN (R7.5, product.md "Recall first").
-      //
-      // With an in-column envelope (`/demo`, `/l/[id]`) the statement and button
-      // overlay the space above the envelope frame (`.intactTop`, absolute). On
-      // the persona page the Ghost holds the envelope and the column draws none,
-      // so they flow normally inside the card — otherwise the absolute box has
-      // no height and the text spills onto the dark background (S1a).
-      return (
-        <section className={`${paper.paper} ${styles.intactStage}`} data-paper="">
-          <div className={held ? styles.intactFlow : styles.intactTop} data-block="intact">
-            <p className={styles.statement} role="status">
-              {REVEAL_COPY.sealIntact}
-            </p>
-            <PickUpGate tag="verified">
-              <button type="button" className={styles.pickUp} data-primary-control onClick={onBegin}>
-                {REVEAL_COPY.pickUp}
-              </button>
-            </PickUpGate>
-          </div>
-          {frame(envelopeState)}
-        </section>
-      );
   }
 }

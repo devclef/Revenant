@@ -84,9 +84,6 @@ export function stageFor(state: FlowState, local: LocalView): Stage {
     case "unlocking":
       return "envelope";
 
-    case "verified":
-      return "intact";
-
     case "recall":
     case "submitting":
     case "submit_failed":
@@ -109,15 +106,6 @@ export function stageFor(state: FlowState, local: LocalView): Stage {
     case "open_failed":
       return "error";
   }
-}
-
-/**
- * Whether the Pick_Up_Button renders (design.md "The Pick_Up_Button gate", R9.8
- * to R9.10). Only the `verified` tag shows it, and only once the Emergence is
- * `"done"`, so the button never appears while the Ghost is still rising.
- */
-export function showPickUp(tag: FlowState["tag"], local: LocalView): boolean {
-  return tag === "verified" && local.emergence === "done";
 }
 
 /**

@@ -8,9 +8,10 @@ import styles from "./reveal.module.css";
 
 /**
  * The recall step (R8, product.md "Recall first"). Shown for the `recall`
- * state, after the verification statement and BEFORE anything from inside the
- * letter is revealed. The judge answers, from memory, what each tracked figure
- * cost "then"; their answers are encrypted and stored before the reveal. This
+ * state. A persona letter reaches it from `verifying` and a live letter from
+ * `unlocking`, with no judge action in between (spec 10 C1). The judge answers,
+ * from memory, what each tracked figure cost "then"; their answers are
+ * encrypted and stored before the reveal. This
  * view never shows a sealed figure, a period, a source or any hint of which way
  * a figure moved (neutrality.md).
  *

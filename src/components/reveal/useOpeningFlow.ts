@@ -106,8 +106,6 @@ export type OpeningFlow = {
   state: FlowState;
   /** Retry from the start (sealed countdown finished, or an unreachable error). */
   retry: () => void;
-  /** The judge pressed "Begin" on the verification statement. */
-  begin: () => void;
   /** The judge edited one recall answer's text. */
   editDraft: (id: string, text: string) => void;
   /** The judge toggled one recall answer's "No answer" control. */
@@ -486,7 +484,6 @@ export function useOpeningFlow(
   // --- view handlers --------------------------------------------------------
 
   const retry = useCallback(() => safeDispatch({ type: "START" }), [safeDispatch]);
-  const begin = useCallback(() => safeDispatch({ type: "BEGIN" }), [safeDispatch]);
   const editDraft = useCallback(
     (id: string, text: string) => safeDispatch({ type: "EDIT_DRAFT", id, text }),
     [safeDispatch],
@@ -594,7 +591,6 @@ export function useOpeningFlow(
   return {
     state,
     retry,
-    begin,
     editDraft,
     toggleNoAnswer,
     submit,

@@ -331,14 +331,36 @@ describe("OpeningFlow view selection", () => {
     expect(render({ tag: "verifying" })).toContain(REVEAL_COPY.verifying);
   });
 
-  it("shows SealIntact (the statement + Begin) for verified, with no sealed content (R7.5)", () => {
-    const html = render({ tag: "verified", opened: OPENED });
-    expect(html).toContain(REVEAL_COPY.sealIntact);
-    expect(html).toContain(REVEAL_COPY.pickUp);
-    for (const needle of SEALED_PAYLOAD_STRINGS) {
-      expect(html, `verified must not leak "${needle}"`).not.toContain(needle);
-    }
+  it("has no pick-up step: verifying leads straight to the recall question (spec 10 C1)", () => {
+    // The first question renders from `recall` with no judge action between
+    // the opening and the question. No pick-up control and no seal statement
+    // sit in front of it.
+    const html = render({
+      tag: "recall",
+      opened: OPENED,
+      drafts: DRAFTS,
+      invalid: [],
+    });
+    expect(html).toContain(OPENED.payload.recall_questions[0].text);
+    expect(html).not.toContain("Pick up the letter");
+    expect(html).not.toContain(REVEAL_COPY.sealIntact);
   });
+
+  it.each([
+    ["verification_failed", { tag: "verification_failed" as const }],
+    ["open_failed", { tag: "open_failed" as const, kind: "wrong_key" as const }],
+    ["unreachable", { tag: "unreachable" as const }],
+  ])(
+    "a %s error renders its FlowError with no question and no seal statement (spec 10 C1.4)",
+    (_name, state) => {
+      const html = render(state);
+      for (const needle of SEALED_PAYLOAD_STRINGS) {
+        expect(html, `${state.tag} must not leak "${needle}"`).not.toContain(needle);
+      }
+      expect(html).not.toContain(OPENED.payload.recall_questions[0].text);
+      expect(html).not.toContain(REVEAL_COPY.sealIntact);
+    },
+  );
 
   it("shows RecallStep for recall, with the first question but no sealed figure (R16.4)", () => {
     const html = render({
@@ -487,7 +509,7 @@ describe("OpeningFlow view selection", () => {
     // Render one view of each broad category; the beforeEach guard fails any
     // fetch. Reaching here without a throw proves the selector is I/O-free.
     render({ tag: "loading" });
-    render({ tag: "verified", opened: OPENED });
+    render({ tag: "verifying" });
     render({ tag: "reveal", opened: OPENED, record: RECORD, stage: 1 });
     expect(fetch).not.toHaveBeenCalled();
   });
@@ -562,9 +584,6 @@ describe("OpeningFlow Ceremony root attributes (R3.1, R3.2, R17.3)", () => {
     () => {
       // The Stage changes but the view inside each state is unchanged: a few
       // representative tags still render their own view's copy.
-      expect(render({ tag: "verified", opened: OPENED })).toContain(
-        REVEAL_COPY.sealIntact,
-      );
       expect(
         render({ tag: "recall", opened: OPENED, drafts: DRAFTS, invalid: [] }),
       ).toContain(OPENED.payload.recall_questions[0].text);

@@ -12,9 +12,11 @@
  * - One attempt at a time (R7.1): `START` is accepted only in the initial
  *   state, in `unreachable` (retry) and in `sealed` (retry); every other state
  *   ignores it.
- * - Seal message first (R7.5): `verified` shows only the verification statement
- *   and a "Begin" button; recall questions render only in `recall`.
- * - Recall only after `verified`: `BEGIN` moves `verified` to `recall`.
+ * - No pick-up Stage (spec 10 C1.1, C1.2): both `OPENED` arms (`verifying` for
+ *   a persona letter, `unlocking` for a live letter) call `enterRecall`, so the
+ *   first recall question shows with no judge action in between. Recall
+ *   questions render only in `recall`, and the reveal gate is still the only
+ *   way into `reveal`.
  * - Single submission (R8.9): in `submitting`, `SUBMIT` and `RETRY_POST` are
  *   ignored.
  * - Retry resends the same record (R8.7): `submit_failed` keeps the sealed
@@ -115,7 +117,6 @@ export type FlowState =
       unlock: UnlockInfo;
     }
   | { tag: "verifying" }
-  | { tag: "verified"; opened: Opened }
   | {
       tag: "recall";
       opened: Opened;
@@ -156,7 +157,6 @@ export const INITIAL_STATE: FlowState = { tag: "loading" };
  *   `GET /api/letters/{id}/secret`.
  * - `OPENED` / `VERIFICATION_FAILED` / `OPEN_FAILED`: the outcome of
  *   `openLetter`.
- * - `BEGIN`: move from the verification statement to the recall step.
  * - `EDIT_DRAFT` / `TOGGLE_NO_ANSWER`: the judge editing a recall answer.
  * - `SUBMIT_INVALID`: a submit attempt whose answers did not all validate; the
  *   listed question IDs are invalid and the drafts stay as typed.
@@ -178,7 +178,6 @@ export type FlowEvent =
   | { type: "OPENED"; opened: Opened }
   | { type: "VERIFICATION_FAILED" }
   | { type: "OPEN_FAILED"; kind: OpenFailedKind }
-  | { type: "BEGIN" }
   | { type: "EDIT_DRAFT"; id: string; text: string }
   | { type: "TOGGLE_NO_ANSWER"; id: string; noAnswer: boolean }
   | { type: "SUBMIT_INVALID"; invalid: string[] }
@@ -200,6 +199,24 @@ export type FlowEvent =
 /** A fresh draft for a question that has not been touched yet. */
 function emptyDraft(): Draft {
   return { text: "", noAnswer: false };
+}
+
+/**
+ * The one path into recall (spec 10 C1.2). Both `OPENED` arms call it: the
+ * persona letter from `verifying` and the live letter from `unlocking`. It
+ * builds one draft per sealed question, starting from the matching sample
+ * answer when there is one, and moves straight to `recall`. The judge takes no
+ * action in between.
+ */
+function enterRecall(
+  opened: Opened,
+  samples: Readonly<Record<string, string>>,
+): FlowState {
+  const drafts: Record<string, Draft> = {};
+  for (const question of opened.payload.recall_questions) {
+    drafts[question.id] = { text: samples[question.id] ?? "", noAnswer: false };
+  }
+  return { tag: "recall", opened, drafts, invalid: [] };
 }
 
 /**
@@ -297,7 +314,7 @@ export function reduce(state: FlowState, event: FlowEvent): FlowState {
     case "unlocking": {
       switch (event.type) {
         case "OPENED":
-          return { tag: "verified", opened: event.opened };
+          return enterRecall(event.opened, {});
         case "VERIFICATION_FAILED":
           return { tag: "verification_failed" };
         case "OPEN_FAILED":
@@ -321,7 +338,7 @@ export function reduce(state: FlowState, event: FlowEvent): FlowState {
     case "verifying": {
       switch (event.type) {
         case "OPENED":
-          return { tag: "verified", opened: event.opened };
+          return enterRecall(event.opened, {});
         case "VERIFICATION_FAILED":
           return { tag: "verification_failed" };
         case "OPEN_FAILED":
@@ -329,19 +346,6 @@ export function reduce(state: FlowState, event: FlowEvent): FlowState {
         default:
           return state;
       }
-    }
-
-    case "verified": {
-      // Recall only after verified (R7.5): "Begin" opens the recall step with a
-      // fresh empty draft per question.
-      if (event.type === "BEGIN") {
-        const drafts: Record<string, Draft> = {};
-        for (const question of state.opened.payload.recall_questions) {
-          drafts[question.id] = emptyDraft();
-        }
-        return { tag: "recall", opened: state.opened, drafts, invalid: [] };
-      }
-      return state;
     }
 
     case "recall": {

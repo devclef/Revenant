@@ -15,14 +15,14 @@
  * - `loading` /
  *   `sealed` /
  *   `openable` /
- *   `verifying` /
- *   `verified`           -> `EnvelopeView` (design.md "Envelope and seal"): the
+ *   `verifying`          -> `EnvelopeView` (design.md "Envelope and seal"): the
  *                           envelope Stage carries the "Bringing the letter into
  *                           the light." statement (`loading`), the still-sealed
- *                           opening date and countdown (`sealed`), the "Checking
- *                           the seal." statement (`openable` / `verifying`), and
- *                           the intact Stage with the seal-is-intact statement
- *                           and Begin (`verified`). The persona list fields feed
+ *                           opening date and countdown (`sealed`), and the
+ *                           "Checking the seal." statement (`openable` /
+ *                           `verifying`). There is no pick-up step (spec 10 C1):
+ *                           a letter that opens goes straight to `recall`. The
+ *                           persona list fields feed
  *                           the envelope's dates and seal pattern; with no
  *                           persona the envelope uses its default pattern and
  *                           shows no dates (spec 03 renders).
@@ -83,7 +83,6 @@ import { RecallStep } from "./RecallStep";
 import { Reveal } from "./Reveal";
 import { FlowError, type FlowErrorKind } from "./FlowError";
 import type { FlowState, OpenFailedKind } from "./opening-machine";
-import { createBeginGuard } from "./begin-guard";
 import { holdsEnvelope } from "./held-envelope";
 import { useViewportWidth } from "./viewport-width";
 import styles from "./reveal.module.css";
@@ -266,16 +265,6 @@ export function OpeningFlow({
   // passed to Reveal's SealBreak. Its ADVANCE and SHOW_ALL go through the flow.
   const seal = useSealBreak({ onAdvance: onBreakAdvance, onShowAll: flow.showAll });
 
-  // The Pick_Up_Button sends BEGIN once per `verified` (R10.6). The latest
-  // `begin` is read through a ref, so the guard keeps its state across renders.
-  const latestBegin = useRef(flow.begin);
-  useEffect(() => {
-    latestBegin.current = flow.begin;
-  }, [flow.begin]);
-  const [beginGuard] = useState(() => createBeginGuard(() => latestBegin.current()));
-  useEffect(() => {
-    if (state.tag !== "verified") beginGuard.reset();
-  }, [state.tag, beginGuard]);
   // The typed backup key lives here, not in the key step, so it survives the
   // `unlocking` view (which unmounts the key step) and a wrong-key return to
   // `awaiting_key` shows the same text again.
@@ -332,7 +321,7 @@ export function OpeningFlow({
             {selectView(state, flow, letterId, personaName, persona, mode, retryAtZero, KeyStep, {
               keyText,
               onKeyTextChange: setKeyText,
-            }, beginGuard.begin, seal, demo2On, heldSlot)}
+            }, seal, demo2On, heldSlot)}
           </div>
         </CeremonyRoot>
       </SkipProvider>
@@ -357,7 +346,6 @@ function selectView(
   retryAtZero: () => void,
   KeyStep: KeyStepComponent | null,
   keyEntry: KeyEntry,
-  begin: () => void,
   seal: SealController,
   demo2On: boolean,
   heldSlot: HTMLElement | null,
@@ -388,7 +376,6 @@ function selectView(
       persona={envelopePersona}
       held={mode === "persona"}
       frameWidth={mode === "live" ? "min(84vw, 22rem)" : undefined}
-      onBegin={begin}
       onRetry={flow.retry}
       {...extra}
     />
@@ -439,9 +426,6 @@ function selectView(
 
     case "verifying":
       return envelopeView("verifying");
-
-    case "verified":
-      return envelopeView("verified");
 
     case "recall":
       // One RecallStep for recall, submitting and submit_failed, with the same

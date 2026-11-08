@@ -59,7 +59,6 @@ describe("holdsEnvelope before the reveal is unchanged by width (spec 09 C5.5)",
     "awaiting_key",
     "unlocking",
     "sealed",
-    "verified",
   ] as const;
 
   for (const tag of heldTags) {
@@ -70,9 +69,9 @@ describe("holdsEnvelope before the reveal is unchanged by width (spec 09 C5.5)",
     });
   }
 
-  it("holds the Envelope in verified before the width is read", () => {
+  it("holds the Envelope in sealed before the width is read", () => {
     expect(
-      holdsEnvelope({ tag: "verified", stage: null, viewportWidth: null }),
+      holdsEnvelope({ tag: "sealed", stage: null, viewportWidth: null }),
     ).toBe(true);
   });
 

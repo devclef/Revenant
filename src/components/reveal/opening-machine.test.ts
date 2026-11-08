@@ -77,7 +77,6 @@ function recallState(): FlowState {
     { type: "LETTER_OPENABLE", envelope: {}, envelopeHash: "h" },
     { type: "SECRET_OK" },
     { type: "OPENED", opened: OPENED },
-    { type: "BEGIN" },
   );
 }
 
@@ -149,7 +148,6 @@ describe("sealed", () => {
 
   it("ignores every other event", () => {
     expect(reduce(sealed, { type: "SECRET_OK" })).toBe(sealed);
-    expect(reduce(sealed, { type: "BEGIN" })).toBe(sealed);
     expect(reduce(sealed, { type: "POST_OK" })).toBe(sealed);
   });
 });
@@ -192,9 +190,16 @@ describe("openable", () => {
 describe("verifying", () => {
   const verifying: FlowState = { tag: "verifying" };
 
-  it("OPENED -> verified carrying the opened letter", () => {
+  it("OPENED -> recall with one empty draft per sealed question (spec 10 C1.1)", () => {
     const next = reduce(verifying, { type: "OPENED", opened: OPENED });
-    expect(next).toEqual({ tag: "verified", opened: OPENED });
+    expect(next.tag).toBe("recall");
+    if (next.tag !== "recall") throw new Error("unreachable");
+    expect(next.opened).toBe(OPENED);
+    expect(next.invalid).toEqual([]);
+    expect(next.drafts).toEqual({
+      q1: { text: "", noAnswer: false },
+      q2: { text: "", noAnswer: false },
+    });
   });
 
   it("VERIFICATION_FAILED -> verification_failed with no Opened", () => {
@@ -210,35 +215,40 @@ describe("verifying", () => {
   });
 
   it("ignores unrelated events", () => {
-    expect(reduce(verifying, { type: "BEGIN" })).toBe(verifying);
+    expect(reduce(verifying, { type: "ADVANCE" })).toBe(verifying);
     expect(reduce(verifying, { type: "START" })).toBe(verifying);
   });
 });
 
-// --- verified (seal message first, R7.5) -------------------------------------
+// --- one path to recall (spec 10 C1) -----------------------------------------
 
-describe("verified", () => {
-  const verified: FlowState = { tag: "verified", opened: OPENED };
-
-  it("BEGIN -> recall with one empty draft per sealed question", () => {
-    const next = reduce(verified, { type: "BEGIN" });
-    expect(next.tag).toBe("recall");
-    if (next.tag !== "recall") throw new Error("unreachable");
-    expect(next.opened).toBe(OPENED);
-    expect(next.invalid).toEqual([]);
-    expect(Object.keys(next.drafts).sort()).toEqual(["q1", "q2"]);
-    expect(next.drafts.q1).toEqual({ text: "", noAnswer: false });
-    expect(next.drafts.q2).toEqual({ text: "", noAnswer: false });
+describe("single recall path (spec 10 C1)", () => {
+  it("OPENED from verifying and from unlocking reach recall the same way", () => {
+    const unlocking: FlowState = {
+      tag: "unlocking",
+      envelope: {},
+      envelopeHash: "h",
+      unlock: { passkey: null, backup: true },
+    };
+    const viaUnlock = reduce(unlocking, { type: "OPENED", opened: OPENED });
+    const viaVerify = reduce({ tag: "verifying" }, { type: "OPENED", opened: OPENED });
+    expect(viaUnlock).toEqual(viaVerify);
+    expect(viaUnlock.tag).toBe("recall");
   });
+});
 
-  it("does not reach recall on any event other than BEGIN (R7.5)", () => {
-    expect(reduce(verified, { type: "EDIT_DRAFT", id: "q1", text: "3" })).toBe(
-      verified,
+// A failed load, hash check or opening renders its FlowError and carries no
+// recall question (spec 10 C1.4). Every error tag holds no Opened, so its view
+// cannot show a question.
+describe("error states hold no recall question (spec 10 C1.4)", () => {
+  it("a failed hash check never reaches recall", () => {
+    const failed = run(
+      { type: "LETTER_OPENABLE", envelope: {}, envelopeHash: "h" },
+      { type: "SECRET_OK" },
+      { type: "VERIFICATION_FAILED" },
     );
-    expect(
-      reduce(verified, { type: "RECORD_SEALED", record: RECORD, sealed: SEALED }),
-    ).toBe(verified);
-    expect(reduce(verified, { type: "START" })).toBe(verified);
+    expect(failed.tag).toBe("verification_failed");
+    expect("opened" in failed).toBe(false);
   });
 });
 
@@ -432,7 +442,6 @@ describe("error states carry no payload and ignore every event", () => {
     { type: "OPENED", opened: OPENED },
     { type: "VERIFICATION_FAILED" },
     { type: "OPEN_FAILED", kind: "wrong_key" },
-    { type: "BEGIN" },
     { type: "EDIT_DRAFT", id: "q1", text: "1" },
     { type: "TOGGLE_NO_ANSWER", id: "q1", noAnswer: true },
     { type: "SUBMIT_INVALID", invalid: ["q1"] },

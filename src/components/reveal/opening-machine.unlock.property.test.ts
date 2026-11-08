@@ -106,7 +106,6 @@ const eventArb: fc.Arbitrary<FlowEvent> = fc.oneof(
   ...OPEN_FAILED_KINDS.map((kind) =>
     fc.constant<FlowEvent>({ type: "OPEN_FAILED", kind }),
   ),
-  fc.constant<FlowEvent>({ type: "BEGIN" }),
   fc.constant<FlowEvent>({ type: "EDIT_DRAFT", id: "q1", text: "3.50" }),
   fc.constant<FlowEvent>({ type: "TOGGLE_NO_ANSWER", id: "q1", noAnswer: true }),
   fc.constant<FlowEvent>({ type: "SUBMIT_INVALID", invalid: ["q1"] }),
@@ -150,7 +149,6 @@ const startStateArb: fc.Arbitrary<FlowState> = fc.oneof(
     unlock: UNLOCK_INFO,
   }),
   fc.constant<FlowState>({ tag: "verifying" }),
-  fc.constant<FlowState>({ tag: "verified", opened: OPENED_STUB }),
   fc.constant<FlowState>({
     tag: "recall",
     opened: OPENED_STUB,
@@ -208,11 +206,11 @@ describe("Property 17: the Opening_Flow additions keep the gates (R17.3, R17.8, 
     );
   });
 
-  it("verified is reached only from verifying or unlocking by OPENED", () => {
+  it("recall is reached only from verifying or unlocking by OPENED (spec 10 C1.2)", () => {
     fc.assert(
       fc.property(startStateArb, sequenceArb, (start, events) => {
         for (const { prev, event, next } of walk(start, events)) {
-          if (next.tag === "verified" && prev.tag !== "verified") {
+          if (next.tag === "recall" && prev.tag !== "recall") {
             expect(["verifying", "unlocking"]).toContain(prev.tag);
             expect(event.type).toBe("OPENED");
           }
@@ -345,8 +343,15 @@ describe("Property 17: the Opening_Flow additions keep the gates (R17.3, R17.8, 
       unlock: UNLOCK_INFO,
     };
     expect(reduce(unlocking, { type: "OPENED", opened: OPENED_STUB })).toEqual({
-      tag: "verified",
+      tag: "recall",
       opened: OPENED_STUB,
+      drafts: Object.fromEntries(
+        OPENED_STUB.payload.recall_questions.map((q) => [
+          q.id,
+          { text: "", noAnswer: false },
+        ]),
+      ),
+      invalid: [],
     });
     expect(reduce(unlocking, { type: "VERIFICATION_FAILED" })).toEqual({
       tag: "verification_failed",

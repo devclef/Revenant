@@ -26,7 +26,6 @@ describe("stepForFlowPhase (D5.4)", () => {
       "awaiting_key",
       "unlocking",
       "verifying",
-      "verified",
     ] as const) {
       expect(stepForFlowPhase(tag)).toBeNull();
     }

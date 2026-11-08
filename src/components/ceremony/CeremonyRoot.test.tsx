@@ -282,12 +282,6 @@ describe("CeremonyRoot data-ceremony is the Stage for the state (R3.1)", () => {
       stage: "emerging",
     },
     { name: "verifying", state: { tag: "verifying" }, stage: "emerging" },
-    // verified -> intact.
-    {
-      name: "verified",
-      state: { tag: "verified", opened: OPENED },
-      stage: "intact",
-    },
     // recall -> recall.
     {
       name: "recall",
@@ -342,9 +336,9 @@ describe("CeremonyRoot data-ceremony-motion", () => {
 
 describe("CeremonyRoot live region", () => {
   it.skipIf(!CEREMONY_ROOT_PRESENT)("announces the Stage line for the current state (R3.1)", () => {
-    // verified -> intact Stage, whose live line is CEREMONY_COPY.stageLive.intact.
-    const html = render({ tag: "verified", opened: OPENED });
-    const line = CEREMONY_COPY.stageLive.intact;
+    // sealed -> sealed: the still-sealed line for the live region.
+    const html = render({ tag: "sealed", opensAt: "2030-01-01T00:00:00.000Z" });
+    const line = CEREMONY_COPY.stageLive.sealed;
     expect(html).toContain(esc(line));
     // The line sits in a polite live region.
     expect(html).toContain('aria-live="polite"');
@@ -396,7 +390,6 @@ function countButtons(html: string, text: string): number {
 describe("CeremonyRoot desk-token controls render once per state", () => {
   const flowStates: Array<{ name: string; state: FlowState }> = [
     { name: "loading", state: { tag: "loading" } },
-    { name: "verified", state: { tag: "verified", opened: OPENED } },
     {
       name: "reveal stage 3",
       state: { tag: "reveal", opened: OPENED, record: RECORD, stage: 3 },
@@ -439,7 +432,7 @@ describe("CeremonyRoot desk-token controls render once per state", () => {
 describe("CeremonyRoot render is I/O-free", () => {
   it("never fetches during render (the guard would throw otherwise)", () => {
     render({ tag: "loading" });
-    render({ tag: "verified", opened: OPENED });
+    render({ tag: "verifying" });
     render({ tag: "reveal", opened: OPENED, record: RECORD, stage: 3 });
     expect(fetch).not.toHaveBeenCalled();
   });

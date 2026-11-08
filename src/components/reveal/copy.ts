@@ -55,12 +55,6 @@ export const REVEAL_COPY = {
   /** The verification statement shown before the recall step (R7.5). */
   sealIntact: "The seal is intact. Nothing here has changed since it was sealed.",
 
-  /** The control that moves from the verification statement to recall. */
-  begin: "Begin",
-
-  /** The Pick_Up_Button on the persona page: moves from intact to recall (R10.4). */
-  pickUp: "Pick up the letter",
-
   // --- Errors ---
 
   /** The letter record has not been placed yet (404). */

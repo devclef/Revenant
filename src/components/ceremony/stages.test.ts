@@ -90,7 +90,6 @@ const nonRevealStateArbs: fc.Arbitrary<FlowState>[] = [
     unlock: { passkey: null, backup: true },
   }),
   fc.constant<FlowState>({ tag: "verifying" }),
-  fc.constant<FlowState>({ tag: "verified", opened: OPENED_STUB }),
   fc.constant<FlowState>({
     tag: "recall",
     opened: OPENED_STUB,
@@ -153,8 +152,7 @@ function expectedStage(state: FlowState, local: LocalView): Stage {
     case "awaiting_key":
     case "unlocking":
       return "envelope";
-    case "verified":
-      return "intact";
+
     case "recall":
     case "submitting":
     case "submit_failed":
