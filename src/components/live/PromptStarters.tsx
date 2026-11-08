@@ -60,12 +60,16 @@ export function PromptStarters({ fieldRef, onInsert }: PromptStartersProps) {
   }
 
   return (
-    <div role="group" aria-label={LIVE_COPY.starterGroup}>
+    <div
+      role="group"
+      aria-label={LIVE_COPY.starterGroup}
+      className={styles.starters}
+    >
       {promptStarters.map((starter) => (
         <button
           key={starter}
           type="button"
-          className={styles.secondary}
+          className={`${styles.secondary} ${styles.starter}`}
           onClick={() => insert(starter)}
         >
           {starter}

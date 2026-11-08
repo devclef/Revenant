@@ -351,6 +351,24 @@
 }
 
 /*
+ * Prompt starters (issue #269) sit beneath the letter field on the paper panel.
+ * They wrap onto rows at phone widths. Each button keeps the 44 by 44 CSS pixel
+ * minimum from .secondary, and its text and border use the paper's --ink.
+ */
+.starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 0.5rem 0 0;
+}
+
+.starter {
+  flex: 0 1 auto;
+  text-align: left;
+  justify-content: flex-start;
+}
+
+/*
  * The span stands in for the go-to-letter link while the countdown runs. It is
  * not interactive, so it reads as faded and shows a not-allowed cursor. No
  * colour is used, so the state carries no judgement.

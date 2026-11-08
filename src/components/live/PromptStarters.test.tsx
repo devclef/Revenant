@@ -83,6 +83,23 @@ describe("PromptStarters", () => {
     expect(html).toContain("aria-label=");
   });
 
+  it("applies the wrapping group class and the starter button classes", () => {
+    // The group wraps onto rows beneath the letter field. Each button takes the
+    // shared outlined control class and the starter class (phone-size layout).
+    const group = html.match(/<div role="group"[^>]*class="([^"]+)"/);
+    expect(group).not.toBeNull();
+    expect(group?.[1]).toMatch(/starters/);
+
+    const buttonClasses = [
+      ...html.matchAll(/<button type="button" class="([^"]+)"/g),
+    ].map((m) => m[1]);
+    expect(buttonClasses).toHaveLength(3);
+    for (const classes of buttonClasses) {
+      expect(classes).toMatch(/secondary/);
+      expect(classes).toMatch(/starter(?!s)/);
+    }
+  });
+
   it("starts with an existing starter as the first button label", () => {
     expect(html).toContain(FIRST);
   });
