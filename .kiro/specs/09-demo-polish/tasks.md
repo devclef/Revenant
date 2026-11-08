@@ -612,7 +612,7 @@ Each task in this group meets group P for the Stages it changes (G3.7), and atta
 
 ### Group E: presentation
 
-- [ ] 24. E1 · Final promise audit, and the README, write-up and video script patches
+- [x] 24. E1 · Final promise audit, and the README, write-up and video script patches
   - Agent: `frontend-dev` · Depends on: 23 · Estimated size: ~200 changed lines
   - Before this task: tasks 1 to 23 merged or closed unmerged; the 20 November decision recorded; the freeze reached or every earlier task closed. Steering updated (Owner patches w, x and y on `main`, owner step O0).
   - Scope: the frontend-dev copy modules (`src/components/**/copy.ts`), `src/components/regions-scan.test.ts`, and the `*.test.ts(x)` for each copy module changed
