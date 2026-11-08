@@ -324,13 +324,23 @@ function expectNoDirectionClass(html: string): void {
  * token, and in text nodes every number becomes `#` and the words rose and fell
  * become `§`. Tags, classes and static copy are left as they are.
  */
+/** The opening tag of a Number_Line tick (spec 10 X1.1). Only these may carry a height. */
+const TICK_TAG = /<span[^>]*data-line-tick="[^"]*"[^>]*>/g;
+
+/** True when a style attribute outside a tick tag sets a height. */
+function heightOutsideTicks(html: string): boolean {
+  return /style="[^"]*height:/.test(html.replace(TICK_TAG, ""));
+}
+
 function skeletonOf(rawHtml: string): string {
   const html = maskLineLabels(rawHtml);
   const withoutPositions = html.replace(
     /--pos-(then|now|mark):[^;"]+/g,
     "--pos-$1:§",
   );
-  const tickSafe = withoutPositions.replace(/height:[0-9.]+px/g, "height:§");
+  const tickSafe = withoutPositions.replace(TICK_TAG, (tag) =>
+    tag.replace(/height:[0-9.]+px/g, "height:§"),
+  );
   return tickSafe.replace(/>([^<]*)</g, (_match, text: string) => {
     const normalised = text
       .replace(/[+−]?[0-9][0-9.,\u00a0\u202f]*/g, "#")
@@ -465,6 +475,7 @@ describe("Property 20 (whole entry): a rise and its mirror fall render the same 
             for (const name of styleNames(html)) {
               expect(ALLOWED_STYLE_PROPERTIES.has(name)).toBe(true);
             }
+            expect(heightOutsideTicks(html)).toBe(false);
             expectNoDirectionClass(html);
           }
 
