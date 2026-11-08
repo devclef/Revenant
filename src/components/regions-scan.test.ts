@@ -236,9 +236,10 @@ describe("regions scan: no cut-task or real-sealing wording against the recorded
       return;
     }
     const found = scanPhrases(COPY_MODULES, REAL_SEALING_WORDING).map(
-      (m) => `${relative(ROOT, m.file)}|${m.phrase}`,
+      (m) => `${relative(ROOT, m.file)}|${m.phrase.toLowerCase()}`,
     );
-    const unlisted = found.filter((entry) => !HELD_FOR_OWNER.includes(entry));
+    const listed = HELD_FOR_OWNER.map((entry) => entry.toLowerCase());
+    const unlisted = found.filter((entry) => !listed.includes(entry));
     expect(
       unlisted,
       `New real-sealing wording for owner review:\n${unlisted.join("\n")}`,
