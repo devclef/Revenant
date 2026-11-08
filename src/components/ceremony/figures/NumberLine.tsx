@@ -144,8 +144,10 @@ export function NumberLine({
         lineWidth: root.clientWidth || LINE_MIN_PX,
         widths,
         remPx:
-          parseFloat(
-            window.getComputedStyle(document.documentElement).fontSize,
+          Number(
+            window
+              .getComputedStyle(document.documentElement)
+              .fontSize.replace("px", ""),
           ) || STATIC_REM_PX,
       });
     };
