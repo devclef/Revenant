@@ -40,6 +40,14 @@ const RETIRED_PHRASES: readonly RetiredPhrase[] = [
     name: "a time capsule that is resurrected, revived or brought back",
     pattern: /time[- ]capsule[^.!?]{0,40}\b(is|was)\s+(resurrected|revived|brought back)/i,
   },
+  {
+    name: "the removed persona opening event \"U.S. presidential election day\"",
+    pattern: /U\.S\. presidential election day/i,
+  },
+  {
+    name: "the removed persona opening event \"European Parliament election\"",
+    pattern: /European Parliament election/i,
+  },
 ];
 
 /**
@@ -179,9 +187,11 @@ describe("copy-test exclusion and hit reporting", () => {
     const planted = `${record?.text ?? ""}\nrose-tinted\n`;
 
     // The phrase is really there, so the record would fail without the exclusion.
-    expect(findMatches(path, planted, RETIRED_PHRASES)).toEqual([
+    // The record already quotes the election phrases, so other hits can
+    // appear too. The planted line must be among them.
+    expect(findMatches(path, planted, RETIRED_PHRASES)).toContain(
       `${path}:${lineOf(planted, planted.indexOf("rose-tinted"))} "rose-tinted"`,
-    ]);
+    );
 
     const scanned = scannedSourceFiles([{ path, text: planted }]);
     expect(scanned).toEqual([]);
