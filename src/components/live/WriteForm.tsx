@@ -11,6 +11,7 @@ import { FigurePicker, type FigureDetail } from "./FigurePicker";
 import { countCodePoints, figureLimit, validateWrite, type WriteProblem } from "./form";
 import styles from "./live.module.css";
 import { letterFieldHeightPx } from "./phone";
+import { PromptStarters } from "./PromptStarters";
 import { type PrfHint } from "./prf-hint";
 import { RealDatePicker } from "./RealDatePicker";
 import { INITIAL_TOUCHED, showsFieldMessage, type TouchedState } from "./touched";
@@ -326,6 +327,13 @@ export function WriteForm({
               onTextChange(event.target.value);
             }}
             onBlur={() => onTouch(TOUCH_FIELDS.letter)}
+          />
+          <PromptStarters
+            fieldRef={letterRef}
+            onInsert={(next) => {
+              onTouch(TOUCH_FIELDS.letter);
+              onTextChange(next);
+            }}
           />
           <p id="live-letter-count" className={styles.count}>
             {LIVE_COPY.letterCount.replace("{count}", String(letterCount))}

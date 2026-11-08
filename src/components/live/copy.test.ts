@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { LIVE_COPY } from "./copy";
+import { LIVE_COPY, promptStarters } from "./copy";
 
 /**
  * Plain string checks on LIVE_COPY, following the rules in
@@ -92,5 +92,28 @@ describe("LIVE_COPY claims with code behind them", () => {
   it("does not quote a browser menu label that the app does not control", () => {
     expect(LIVE_COPY.cannotLockNext1).not.toContain('"');
     expect(LIVE_COPY.cannotLockNext1).toContain("use a phone or tablet");
+  });
+});
+
+/**
+ * promptStarters: the three opening sentences on the Write step. Checked for
+ * shape only here; the neutrality copy test is done by reading the strings.
+ */
+describe("promptStarters", () => {
+  it("has exactly three strings", () => {
+    expect(promptStarters).toHaveLength(3);
+  });
+
+  it("has no digits in any string", () => {
+    for (const starter of promptStarters) {
+      expect(starter, `"${starter}" contains a digit`).not.toMatch(/\d/);
+    }
+  });
+
+  it("has a non-empty string with no exclamation mark in each entry", () => {
+    for (const starter of promptStarters) {
+      expect(starter.trim().length, `"${starter}" is empty`).toBeGreaterThan(0);
+      expect(starter, `"${starter}" contains "!"`).not.toContain("!");
+    }
   });
 });

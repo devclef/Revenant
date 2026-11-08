@@ -22,6 +22,8 @@ export const LIVE_COPY = {
     "This is a real sealed letter. It is locked for 30 seconds only because this is a demo. It opens with your own passkey.",
   letterLabel: "Your letter",
   letterHint: "Plain text. Up to 5,000 characters.",
+  /** The label of the group of starter buttons under the letter field. */
+  starterGroup: "Start with one of these sentences, or write your own",
   letterCount: "{count} of 5,000 characters",
   figuresLegend: "Choose the figures to seal with it",
   figuresHint:
@@ -185,6 +187,26 @@ export const LIVE_COPY = {
   back: "Back",
   next: "Next",
 } as const;
+
+/**
+ * Opening sentences offered on the Write step. Pressing one inserts it at the
+ * cursor in the letter.
+ *
+ * Copy review (neutrality.md copy test, tone.md copy rules). Each sentence was
+ * read as if by someone who holds the opposite political view:
+ * - "Right now, the thing on my mind is": open, personal, no subject matter
+ *   named, so it reads the same to any reader. No digits, no "!".
+ * - "Today, the thing I most want to remember is": asks for a memory, takes no
+ *   side and names no party, candidate, policy or election. No digits, no "!".
+ * - "Over the past few months, I have been": a neutral lead-in about the
+ *   writer's own life. No judgement word, no digits, no "!".
+ * copy.test.ts checks the digit and "!" rules for all three.
+ */
+export const promptStarters: readonly [string, string, string] = [
+  "Right now, the thing on my mind is",
+  "Today, the thing I most want to remember is",
+  "Over the past few months, I have been",
+] as const;
 
 /**
  * User-facing strings for the Real_Seal_Page at `/seal` (spec 08, R15.1). Kept
