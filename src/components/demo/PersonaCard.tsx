@@ -23,8 +23,6 @@ export type PersonaCardProps = {
   written_as_of: string;
   /** The ISO UTC instant the letter opens. */
   opens_at: string;
-  /** The plain name of the public event the opening date comes from, if any. */
-  opening_event_name?: string;
 };
 
 /**
@@ -48,13 +46,8 @@ export function PersonaCard({
   region,
   written_as_of,
   opens_at,
-  opening_event_name,
 }: PersonaCardProps) {
   const openedOn = formatLetterDate(opens_at, { kind: "utc" });
-  const opensValue =
-    opening_event_name === undefined
-      ? openedOn
-      : `${openedOn}${DEMO_COPY.eventSeparator}${opening_event_name}`;
   const openLabel = DEMO_COPY.openLetterFor.replace("{name}", display_name);
   const buttonId = `persona-${personaKey}-open`;
 
@@ -80,7 +73,7 @@ export function PersonaCard({
           </span>
           <span className={styles.dateRow}>
             <span className={styles.dateLabel}>{DEMO_COPY.opensPrefix}</span>{" "}
-            <span className={styles.dateValue}>{opensValue}</span>
+            <span className={styles.dateValue}>{openedOn}</span>
           </span>
         </span>
         <span id={buttonId} className={styles.button}>

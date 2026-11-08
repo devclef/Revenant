@@ -115,6 +115,13 @@ describe("Demo_Index page markup", () => {
     expect(lastCardAt).toBeGreaterThan(mainAt);
   });
 
+  it("names no public event on the index: each date is plain, with no event separator or source link", async () => {
+    const html = await renderWithPersonas(TWO_PERSONAS);
+    expect(html).not.toContain(" · ");
+    expect(html).not.toContain("Date source");
+    expect(html).not.toContain("election");
+  });
+
   it("never shows 'Pick up the letter' on the index or on any card (R6.7)", async () => {
     const withCards = await renderWithPersonas(TWO_PERSONAS);
     expect(withCards).not.toContain("Pick up the letter");

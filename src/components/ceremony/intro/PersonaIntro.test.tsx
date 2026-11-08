@@ -21,12 +21,6 @@ const base: PersonaIntroProps = {
   writtenAsOf: "2024-05-12",
   opensAt: "2024-11-05T00:00:00.000Z",
   questionCount: 2,
-  openingEvent: {
-    name: "U.S. presidential election day",
-    date: "2024-11-05",
-    source: "U.S. National Archives",
-    source_url: "https://www.archives.gov/electoral-college/2024",
-  },
 };
 
 function render(props: Partial<PersonaIntroProps> = {}): string {
@@ -42,24 +36,16 @@ describe("PersonaIntro content (spec 09 C1.1)", () => {
   });
 
   it("shows Written as of and Opens with the dates, in the letter's own zone", () => {
-    const html = render({ openingEvent: undefined });
+    const html = render();
     expect(html).toContain(CEREMONY_COPY.envelopeWrittenAsOf.replace("{date}", "12 May 2024"));
     expect(html).toContain(CEREMONY_COPY.envelopeOpens.replace("{date}", "5 November 2024"));
   });
 
-  it("shows the opening event after the date, as Opens {date} · {event}", () => {
+  it("shows only Opens {date}: no event name and no Date source link", () => {
     const html = render();
-    expect(html).toContain("Opens 5 November 2024 · U.S. presidential election day");
-  });
-
-  it("links the event's source, one tap away, to its https page", () => {
-    const html = render();
-    expect(html).toContain('href="https://www.archives.gov/electoral-college/2024"');
-    expect(html).toContain(CEREMONY_COPY.introEventSource.replace("{source}", "U.S. National Archives"));
-  });
-
-  it("shows no source link when the persona has no opening event", () => {
-    const html = render({ openingEvent: undefined });
+    expect(html).toContain("Opens 5 November 2024");
+    expect(html).not.toContain("presidential election");
+    expect(html).not.toContain(" · ");
     expect(html).not.toContain("Date source");
     expect(html).not.toContain("<a ");
   });
@@ -119,37 +105,5 @@ describe("PersonaIntro stages (spec 09 C1, emerging, sealed and intact)", () => 
     const notice = css.slice(css.indexOf(".notice {"), css.indexOf("}", css.indexOf(".notice {")));
     expect(notice).not.toMatch(/display:\s*none/);
     expect(css).not.toMatch(/\.notice \{\s*display:/);
-  });
-});
-
-describe("PersonaIntro source link colour and underline (spec 09 C1, P5)", () => {
-  it("keeps the source link on the desk text colour at 600 px and wider, with an underline", () => {
-    const css = readFileSync(intro, "utf8");
-    const rule = css.match(/(?:^|\n)\.source a \{([^}]*)\}/)?.[1] ?? "";
-    expect(rule).toMatch(/color:\s*var\(--text\);/);
-    expect(rule).toMatch(/text-decoration:\s*underline;/);
-  });
-
-  it("sets the source link to --ink on the paper card below 600 px", () => {
-    const css = readFileSync(intro, "utf8");
-    const phone = css.slice(css.indexOf("@media (max-width: 599.98px)"));
-    expect(phone).toMatch(/\.source a \{\s*color:\s*var\(--ink\);\s*\}/);
-  });
-
-  it("renders the link and the intro lines (intro line, dates, questions line) in the card", () => {
-    const html = render({ flowMinutes: 2 });
-    expect(html).toContain("writes on a May Sunday");
-    expect(html).toContain("Opens 5 November 2024");
-    expect(html).toContain("answer 2 questions");
-    expect(html).toContain('href="https://www.archives.gov/electoral-college/2024"');
-  });
-});
-
-describe("PersonaIntro source link hit area (spec 09 P5)", () => {
-  it("gives the source link a 44 px tall hit area below 600 px", () => {
-    const css = readFileSync(intro, "utf8");
-    const rule = css.match(/(?:^|\n)\.source a \{([^}]*)\}/)?.[1] ?? "";
-    expect(rule).toMatch(/display:\s*inline-flex;/);
-    expect(rule).toMatch(/min-height:\s*44px;/);
   });
 });

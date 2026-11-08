@@ -116,6 +116,8 @@ describe("persona letter route", () => {
     expect(html).toContain("Opens ");
     expect(html).not.toContain("archives.gov");
     expect(html).not.toContain("europarl.europa.eu");
+    expect(html).not.toContain("Date source");
+    expect(html).not.toContain(" · ");
     expect(html).toContain("answer one question");
   });
 

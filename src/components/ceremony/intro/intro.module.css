@@ -55,29 +55,11 @@
   color: var(--text);
 }
 
-.source,
 .meta {
   margin: 0;
   font-size: 0.9rem;
   line-height: 1.35;
   color: var(--muted);
-}
-
-.source a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  color: var(--text);
-  text-decoration: underline;
-  text-underline-offset: 0.15em;
-}
-
-.source a:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 2px;
-}
-
-.meta {
   display: flex;
   flex-wrap: wrap;
   gap: 0.25rem 1rem;
@@ -86,7 +68,6 @@
 @media (max-width: 599.98px) {
   .line,
   .dates,
-  .source,
   .meta {
     font-size: 0.9375rem;
   }
@@ -96,8 +77,7 @@
      from the scene token hex values (relative luminance) on --paper #f6ead4:
      --ink #1f1b16 14.38:1 and --ink-soft #4a4036 8.49:1, both above WCAG 2.2
      AA 4.5:1. The "Before you read it" line is in .meta and uses --ink-soft,
-     which replaces the muted desk colour that failed on this surface. The
-     .source link is --ink here too, so it meets AA on the card. */
+     which replaces the muted desk colour that failed on this surface. */
   .intro {
     padding: 0.75rem 0.875rem;
     border-radius: 4px;
@@ -111,23 +91,7 @@
   }
 
   .line,
-  .dates,
-  .source {
+  .dates {
     color: var(--ink);
-  }
-
-  /* The global desk-link rule .scene a:not(:where([data-paper] *))
-     in scene.module.css is (0,1,1) because :where() adds zero specificity, and
-     it sets the link to the light desk --text. This card is paper below 600 px,
-     not a data-paper panel, so that rule still applies and TIES a bare .source a
-     (0,1,1), winning on load order and forcing the lavender link back (~1.1:1 on
-     --paper). Qualifying with the .intro parent makes this (0,2,1), so the dark
-     --ink link (#1f1b16 on --paper #f6ead4 = 14.38:1, WCAG 2.2 AA) wins. */
-  .intro .source a {
-    color: var(--ink);
-  }
-
-  .intro .source a:focus-visible {
-    outline-color: var(--ink);
   }
 }
