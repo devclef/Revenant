@@ -190,9 +190,17 @@ export const LIVE_COPY = {
 
 /**
  * Opening sentences offered on the Write step. Pressing one inserts it at the
- * cursor in the letter. Each is second person and has no digits, no party,
- * candidate, policy or election reference, no judgement word and no
- * exclamation mark (neutrality.md copy test).
+ * cursor in the letter.
+ *
+ * Copy review (neutrality.md copy test, tone.md copy rules). Each sentence was
+ * read as if by someone who holds the opposite political view:
+ * - "Right now, the thing on my mind is": open, personal, no subject matter
+ *   named, so it reads the same to any reader. No digits, no "!".
+ * - "Today, the thing I most want to remember is": asks for a memory, takes no
+ *   side and names no party, candidate, policy or election. No digits, no "!".
+ * - "Over the past few months, I have been": a neutral lead-in about the
+ *   writer's own life. No judgement word, no digits, no "!".
+ * copy.test.ts checks the digit and "!" rules for all three.
  */
 export const promptStarters: readonly [string, string, string] = [
   "Right now, the thing on my mind is",
