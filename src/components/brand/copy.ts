@@ -42,7 +42,7 @@ export const BRAND_COPY = {
     },
     {
       seal: "The folded paper that hides the page",
-      revenant: "AES-GCM encryption in your browser; the server holds only ciphertext and the time-lock secret",
+      revenant: "AES-GCM encryption in your browser; the server stores ciphertext, never the letter text",
     },
     {
       seal: "The signet ring that made it yours",
