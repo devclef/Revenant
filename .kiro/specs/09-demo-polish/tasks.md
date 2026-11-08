@@ -544,7 +544,7 @@ Each task in this group meets group P for the Stages it changes (G3.7), and atta
 
 ### Group D: the live demo
 
-- [ ] 21. D2, D4 to D7, P10 · The Live_Stepper, figure values in the picker, unlock in place, the backup key up front, and the live demo on the phone
+- [x] 21. D2, D4 to D7, P10 · The Live_Stepper, figure values in the picker, unlock in place, the backup key up front, and the live demo on the phone
   - Agent: `frontend-dev` · Depends on: 20 · Estimated size: ~2,900 changed lines
   - Before this task: task 20 is on `main` or closed unmerged. OD6 and OD11 recorded, or defaults. Steering updated (Owner patches w, x and y on `main`, owner step O0).
   - Scope: `src/components/live/stepper/**` (new), `src/components/live/SealPage.tsx`, `src/components/live/WriteForm.tsx`, `src/components/live/FigurePicker.tsx`, `src/components/live/SealedView.tsx`, `src/components/live/BackupFallback.tsx`, `src/components/live/UnlockView.tsx`, `src/components/live/LiveLetter.tsx`, `src/components/live/copy.ts`, `src/components/live/constants.ts`, `src/components/live/live.module.css`, `src/components/reveal/OpeningFlow.tsx` (an `embedded` prop only), `src/app/demo/live/page.tsx`, `src/components/live/passkey-options.test.ts` (new), and the `*.test.ts(x)` for each file above
