@@ -75,10 +75,10 @@ describe("holdsEnvelope before the reveal is unchanged by width (spec 09 C5.5)",
     ).toBe(true);
   });
 
-  it("does not hold the Envelope in recall or submitting", () => {
+  it("holds the Envelope in recall, submitting and submit_failed (spec 10 C1.5)", () => {
     for (const tag of ["recall", "submitting", "submit_failed"] as const) {
       expect(holdsEnvelope({ tag, stage: null, viewportWidth: 1280 })).toBe(
-        false,
+        true,
       );
     }
   });

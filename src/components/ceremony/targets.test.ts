@@ -45,10 +45,6 @@ function expectBoth(rel: string, className: string, minPx: number): void {
 }
 
 describe("44 by 44 targets (R19.6)", () => {
-  it("the Pick_Up_Button is at least 44 by 44 px", () => {
-    expectBoth("ceremony/envelope/EnvelopeView.module.css", "pickUp", 44);
-  });
-
   it("the Break the seal button is at least 44 by 44 px", () => {
     expectBoth("ceremony/seal/SealBreak.module.css", "button", 44);
   });

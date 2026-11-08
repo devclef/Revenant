@@ -16,11 +16,6 @@
 //     `role="status"` region; `openable` is a silent transition.
 //   - `sealed` shows the opening date, the time remaining and "Try again", and
 //     NOTHING about the contents (R7.2).
-//   - `verified` (intact) shows the seal-is-intact statement and a Begin
-//     control, and does so with NO recall question, Mark or letter present
-//     (Property 2's envelope clauses: the envelope scene precedes every later
-//     Stage). The envelope stays `closed` until BEGIN; it only turns over when
-//     a later Stage drives `envelopeState`.
 //   - R8.7: every scene draws the envelope at the resting geometry — the
 //     literals from constants.ts appear in the rendered inline style.
 //   - With no persona: the default seal pattern and no dates (spec 03 renders).

@@ -551,7 +551,7 @@ describe("CeremonyRoot focus rule (spec 08, focusTargetFor table)", () => {
   it("keeps the spec 07 rule for every other pair", () => {
     expect(focusTargetFor("recall", "marks")).toEqual({ kind: "default" });
     expect(focusTargetFor("marks", "letter")).toEqual({ kind: "default" });
-    expect(focusTargetFor("intact", "recall")).toEqual({ kind: "default" });
+    expect(focusTargetFor("emerging", "recall")).toEqual({ kind: "default" });
   });
 
   it("rescues focus only when the focused element was removed and the target is none", () => {
@@ -633,13 +633,13 @@ describe("CeremonyRoot persona Step_Indicator", () => {
     expect(html).not.toContain("data-step-indicator");
   });
 
-  it("renders the Step_Indicator from intact on, with the current step marked", () => {
+  it("renders the Step_Indicator from the first recall render on, with the current step marked", () => {
     const html = render(LETTER_STATE, "persona");
     expect(html).toContain("data-step-indicator");
     expect(html).toContain('aria-current="step"');
   });
 
-  it("renders no Step_Indicator while loading (before intact)", () => {
+  it("renders no Step_Indicator while loading (before recall)", () => {
     const html = render({ tag: "loading" }, "persona");
     expect(html).not.toContain("data-step-indicator");
   });

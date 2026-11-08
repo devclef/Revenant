@@ -29,7 +29,6 @@ export type Stage =
   | "emerging"
   | "sealed"
   | "envelope"
-  | "intact"
   | "recall"
   | "marks"
   | "seal"
@@ -111,8 +110,8 @@ export function stageFor(state: FlowState, local: LocalView): Stage {
 /**
  * Whether the Ghost holds the handed pose (design.md "The Ghost", the pose
  * table). The Ghost lifts once the reader has picked the letter up, so it is
- * handed from `recall` through `seal`. It stays risen in `intact` and in every
- * Stage before it. The horizontal placement never depends on this value.
+ * handed from `recall` through `seal`. It stays risen in every Stage before
+ * `recall`. The horizontal placement never depends on this value.
  */
 export function ghostHanded(stage: Stage): boolean {
   return stage === "recall" || stage === "marks" || stage === "seal";

@@ -56,7 +56,7 @@
   padding-top: 2.5rem;
 }
 
-/* Narrow intact stage (below 900 px). The seal card must clear two things at
+/* Narrow stage card (below 900 px). The seal card must clear two things at
    once: the Ghost above (its eyes and held Envelope end near y 414 and the body
    box near y 432 at 360x640, so no text may sit on the Ghost_Body_Box, G1) and
    the Soil strip below (its top is at --soil-top = 69vh = 442 px at 360x640).
@@ -73,7 +73,7 @@
    button sit clear of the strip (F2) and clear of the Ghost (G1) at every
    narrow height, since both soil anchors are in vh. The region spans the
    column (left/right 0), which already carries the side padding. The same rule
-   covers intact and the handed stages (recall, marks, seal): the backdrop no
+   covers the handed stages (recall, marks, seal): the backdrop no
    longer lifts, so the narrow Ghost stays risen and low, and for every placed
    Stage the Soil strip is the one thing the status card and the recall card
    must clear. Pinning the region below the strip clears the Ghost at the same
@@ -81,16 +81,13 @@
    selector needs a browser that supports it; older browsers keep the flow
    layout and still show the card below the strip. */
 @media (max-width: 899.98px) {
-  .personaColumn:has(> [data-ceremony="intact"]),
   .personaColumn:has(> [data-ceremony="recall"]),
   .personaColumn:has(> [data-ceremony="marks"]),
   .personaColumn:has(> [data-ceremony="seal"]) {
     min-height: calc(100vh - 6rem);
   }
 
-  /* The intact stage is not pinned here. It follows the Persona_Intro in the
-     flow (see the headline and intro rules below). recall, marks and seal hide
-     the intro, so they stay pinned under the strip. */
+  /* recall, marks and seal hide the intro, so they stay pinned under the strip. */
   .personaColumn > [data-ceremony="recall"],
   .personaColumn > [data-ceremony="marks"],
   .personaColumn > [data-ceremony="seal"] {
@@ -100,15 +97,14 @@
     top: calc(var(--soil-top) + var(--soil-band) + 0.25rem - 6rem);
   }
 
-  /* Narrow, with the Persona_Intro shown (spec 09 C1, P5.3): emerging, sealed
-     and intact. There is no room for the card above the Ghost body (about 120 px
+  /* Narrow, with the Persona_Intro shown (spec 09 C1, P5.3): emerging and
+     sealed. There is no room for the card above the Ghost body (about 120 px
      between the headline and the body at 360 x 640), so the headline leaves the
      flow and keeps its top band. The card then starts under the Soil strip
      (intro.module.css sets its top margin), and the stage card follows it in the
      flow. Neither sits on the Ghost body. */
   .personaColumn:has(> [data-ceremony="emerging"]) > .headline,
-  .personaColumn:has(> [data-ceremony="sealed"]) > .headline,
-  .personaColumn:has(> [data-ceremony="intact"]) > .headline {
+  .personaColumn:has(> [data-ceremony="sealed"]) > .headline {
     position: absolute;
     top: 2.5rem;
     left: 0;
@@ -131,7 +127,7 @@
   }
 
   /* Hero after the First_Step, narrow (spec 08 R8.1). Below 900 px the Hero
-     is HERO_AFTER_NARROW, smaller than in emerging, sealed and intact. */
+     is HERO_AFTER_NARROW, smaller than in emerging and sealed. */
   .personaColumn:has(> :is([data-ceremony="recall"], [data-ceremony="marks"], [data-ceremony="seal"], [data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"])) .headline {
     max-width: none;
     font-size: clamp(1.375rem, 5vw, 1.75rem);
@@ -155,7 +151,7 @@
   }
 }
 
-/* The Persona_Intro (spec 09 C1, C1.2) shows in emerging, sealed and intact.
+/* The Persona_Intro (spec 09 C1, C1.2) shows in emerging and sealed.
    From the recall Stage on, the page has moved past it, so it is hidden here. */
 .personaColumn:has(> :is([data-ceremony="recall"], [data-ceremony="marks"], [data-ceremony="seal"], [data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"])) > [data-persona-intro] {
   display: none;
@@ -349,20 +345,8 @@
   }
 }
 
-/* Phone intact stage (below 600 px). The Ghost is fixed to the window and sits
-   above every Stage card (spec 07 A11), so card text that scrolls into its band
-   is covered. When the intact stage is brought into view, its content (the seal
-   card and the Pick_Up button) starts 16 px below the Ghost's bottom edge, which
-   is about 71vh (454 px at 360x640, 601 px at 390x844). The offset is
-   scroll-margin-top, so the browser's scroll to the stage lands the card below
-   the Ghost, and the Persona_Intro above it stays where it is. Above 600 px
-   nothing changes. */
-@media (max-width: 599.98px) {
-  .personaColumn:has(> [data-ceremony="intact"]) [data-stage-content] {
-    scroll-margin-top: calc(71vh + 16px);
-  }
-}
-
+/* Phone stage card (below 600 px). The Ghost is fixed to the window and sits
+   above every Stage card, so card text that scrolls into its band is covered. */
 /* The backdrop. One aria-hidden layer under the content; the pointer passes
    through it. Fixed to the window, so the Soil stays where the design puts it. */
 .backdrop {
@@ -551,15 +535,6 @@
   .personaColumn .headline {
     max-width: 11.5ch;
     font-size: clamp(2.35rem, 6vw, 5.4rem);
-  }
-
-  /* Intact stage only: a smaller, wider headline keeps the seal card's bottom
-     edge above the Soil strip at 1280 x 800 (soilTopPx = 592). At 1280 px the
-     headline is 3.5rem on 13ch, so the card ends near y 575. Other stages keep
-     the headline above. */
-  .personaColumn:has(> [data-ceremony="intact"]) .headline {
-    max-width: 13ch;
-    font-size: clamp(2.5rem, 4.4vw, 3.5rem);
   }
 
   /* Hero after the First_Step, wide (spec 08 R8.1). HERO_AFTER_WIDE. */
@@ -982,7 +957,7 @@
  * The Hero settle (spec 08 R8.3, R8.4). The Hero size changes in one frame.
  * In full motion only, the same selector fades the headline in from 0.4 to 1
  * over HERO_SETTLE_MS. Its animation-name stays the same through every later
- * Stage, so it plays once, at the move from intact to recall. Opacity only.
+ * Stage, so it plays once, at the move from the first Stage to recall. Opacity only.
  * Calm and reduced motion show the final size with no animation.
  */
 @keyframes heroSettle {

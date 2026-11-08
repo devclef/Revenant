@@ -232,8 +232,9 @@ function CeremonyRegion({
       : stage === "emerging"
         ? emergingStatus(state.tag)
         : CEREMONY_COPY.stageLive[stage];
-  // The Step_Indicator shows from `intact` to `close` on the persona page (C2.1).
-  const showSteps = controls === "topbar" && (stage === "intact" || stepNow !== null);
+  // The Step_Indicator shows from the first `recall` render to `close` on the
+  // persona page (C2.1, spec 10 C1.7): a step is current in each of those Stages.
+  const showSteps = controls === "topbar" && stepNow !== null;
 
   // Move focus when the view or the Stage changes (R9.6, R11, spec 08 focus
   // table). `focusTargetFor` reads the previous Stage and the next one:

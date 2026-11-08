@@ -10,7 +10,6 @@ const ALL_STAGES: readonly Stage[] = [
   "emerging",
   "sealed",
   "envelope",
-  "intact",
   "recall",
   "marks",
   "seal",
@@ -30,8 +29,8 @@ describe("personaStepFor (C2.2)", () => {
     expect(personaStepFor("close")).toBe(3);
   });
 
-  it("has no current step in intact or any Stage before it", () => {
-    for (const stage of ["emerging", "sealed", "envelope", "intact"] as const) {
+  it("has no current step in emerging, sealed, envelope or any Stage before them", () => {
+    for (const stage of ["emerging", "sealed", "envelope"] as const) {
       expect(personaStepFor(stage), stage).toBeNull();
     }
   });
@@ -51,7 +50,7 @@ describe("personaStepFor (C2.2)", () => {
   });
 
   it("never steps backwards along the persona path", () => {
-    const path: Stage[] = ["intact", "recall", "marks", "seal", "letter", "figures", "close"];
+    const path: Stage[] = ["recall", "marks", "seal", "letter", "figures", "close"];
     let last = -1;
     for (const stage of path) {
       const step = personaStepFor(stage);

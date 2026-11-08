@@ -11,7 +11,7 @@
 // the table row by row, so a change to either side is caught. It covers:
 //   - loading / openable / verifying -> emerging (any local view, spec 07);
 //   - sealed -> sealed (any local view, spec 07);
-//   - verified -> intact (any local view);
+//   - verifying -> recall (OPENED, spec 10 C1.2; the intact Stage is removed);
 //   - recall / submitting / submit_failed -> recall (any local view);
 //   - awaiting_key / unlocking -> envelope (spec 06, /l/[id] only);
 //   - reveal stage 1 -> "seal" when sealing is true, else "marks";
@@ -234,7 +234,6 @@ const ALL_STAGES: Stage[] = [
   "emerging",
   "sealed",
   "envelope",
-  "intact",
   "recall",
   "marks",
   "seal",
@@ -272,7 +271,7 @@ describe("focusTargetFor (spec 08 focus table)", () => {
   });
 
   it("returns default for every other pair", () => {
-    expect(focusTargetFor("intact", "recall")).toEqual({ kind: "default" });
+    expect(focusTargetFor("emerging", "recall")).toEqual({ kind: "default" });
     expect(focusTargetFor("recall", "marks")).toEqual({ kind: "default" });
     expect(focusTargetFor("marks", "seal")).toEqual({ kind: "default" });
     expect(focusTargetFor("seal", "letter")).toEqual({ kind: "default" });
@@ -310,8 +309,8 @@ describe("afterFirstStep (spec 08 hero table)", () => {
     }
   });
 
-  it("is false for emerging, sealed, envelope, intact and error", () => {
-    for (const stage of ["emerging", "sealed", "envelope", "intact", "error"] as Stage[]) {
+  it("is false for emerging, sealed, envelope and error", () => {
+    for (const stage of ["emerging", "sealed", "envelope", "error"] as Stage[]) {
       expect(afterFirstStep(stage)).toBe(false);
     }
   });
@@ -325,7 +324,7 @@ describe("afterGhost (spec 08 reveal layout table)", () => {
   });
 
   it("is false before the Ghost leaves", () => {
-    for (const stage of ["emerging", "sealed", "envelope", "intact", "recall", "marks", "seal", "error"] as Stage[]) {
+    for (const stage of ["emerging", "sealed", "envelope", "recall", "marks", "seal", "error"] as Stage[]) {
       expect(afterGhost(stage)).toBe(false);
     }
   });

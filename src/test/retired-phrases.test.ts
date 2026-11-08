@@ -48,6 +48,7 @@ const RETIRED_PHRASES: readonly RetiredPhrase[] = [
     name: "the removed persona opening event \"European Parliament election\"",
     pattern: /European Parliament election/i,
   },
+  { name: "\"Pick up the letter\"", pattern: /pick up the letter/i },
 ];
 
 /**

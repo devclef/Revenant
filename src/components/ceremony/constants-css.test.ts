@@ -310,19 +310,19 @@ describe("Hero after the First_Step and the narrow handed lift (spec 08, R8)", (
 
   it("keeps the Hero after-size strictly smaller than the before-sizes at every 10 px from 600 to 2560 (R8.1)", () => {
     // The before-sizes are the rules the stages use in CSS. Narrow stages share
-    // the base rule; wide emerging uses the base wide rule, and wide intact its own.
+    // the base rule; wide stages use the base wide rule (spec 10 C1.3 removed
+    // the intact Stage's own wide headline rule).
     // Below 600 px the Hero is hidden after the First_Step (spec 09 P4.2), so the
     // size check starts at PHONE_BELOW_PX; the phone hide rule is tested below.
     expect(scene).toContain("font-size: clamp(2rem, 6.6vw, 3rem);");
     expect(scene).toContain("font-size: clamp(2.35rem, 6vw, 5.4rem);");
-    expect(scene).toContain("font-size: clamp(2.5rem, 4.4vw, 3.5rem);");
 
     for (let w = C.PHONE_BELOW_PX; w <= 2560; w += 10) {
       const narrow = w < C.SCENE_BREAKPOINT_PX;
       const after = narrow ? clampPx(C.HERO_AFTER_NARROW, w) : clampPx(C.HERO_AFTER_WIDE, w);
       const before = narrow
         ? [clampPx("clamp(2rem, 6.6vw, 3rem)", w)]
-        : [clampPx("clamp(2.35rem, 6vw, 5.4rem)", w), clampPx("clamp(2.5rem, 4.4vw, 3.5rem)", w)];
+        : [clampPx("clamp(2.35rem, 6vw, 5.4rem)", w)];
       for (const b of before) {
         expect(after, `Hero after-size at ${w} px must be below ${b} px (R8.1)`).toBeLessThan(b);
       }

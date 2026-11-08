@@ -15,7 +15,6 @@ export type PersonaStep = 0 | 1 | 2 | 3;
 /**
  * The current Step_Indicator step for a Stage, or null when no step is current.
  *
- * - `intact` and the Stages before it: null (no step is current yet).
  * - `recall`: 0, Testify.
  * - `marks` and `seal`: 1, Break the seal.
  * - `letter`: 2, Read.

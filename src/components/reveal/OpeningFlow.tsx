@@ -90,7 +90,7 @@ import styles from "./reveal.module.css";
 /**
  * The Envelope held in the Ghost's slot on the persona page (design.md "The
  * Envelope": it sits in the Ghost's held slot through `emerging`, `sealed`,
- * `intact`, `recall`, `marks` and `seal`, and never moves to the content
+ * `recall`, `marks` and `seal`, and never moves to the content
  * column, R10.13). It rests `closed` through the pre-reveal Stages; the later
  * Stages (task 4+) drive it to `turned`/`open`. It carries the persona's two
  * date lines so they stay readable above the dirt band (R8.8) and are never

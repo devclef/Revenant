@@ -54,7 +54,7 @@ describe("Property 22: break clause (R12.10, R12.9, R12.8)", () => {
 
 describe("Ghost presence before and during the break (design.md \"The dissolve on break\")", () => {
   it("mounts the Ghost for every pre-reveal state, so the envelope is held", () => {
-    for (const tag of ["loading", "sealed", "openable", "verifying", "verified", "recall"]) {
+    for (const tag of ["loading", "sealed", "openable", "verifying", "recall"]) {
       expect(ghostPresent({ tag, stage: null, leaving: false })).toBe(true);
     }
   });

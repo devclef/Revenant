@@ -81,12 +81,12 @@ describe("PersonaIntro content (spec 09 C1.1)", () => {
   });
 });
 
-describe("PersonaIntro stages (spec 09 C1, emerging, sealed and intact)", () => {
-  it("shows in emerging, sealed and intact: the hide rule names only the later Stages", () => {
+describe("PersonaIntro stages (spec 09 C1, emerging and sealed)", () => {
+  it("shows in emerging and sealed: the hide rule names only the later Stages", () => {
     const start = sceneCss.indexOf(".personaColumn:has(> :is(");
     expect(start).toBeGreaterThanOrEqual(0);
     const hides = sceneCss.slice(start, sceneCss.indexOf("}", start));
-    for (const stage of ["emerging", "sealed", "intact"]) {
+    for (const stage of ["emerging", "sealed"]) {
       expect(hides).not.toContain(`"${stage}"`);
     }
     for (const stage of ["recall", "marks", "seal", "letter", "figures", "close"]) {
