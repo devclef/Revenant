@@ -3,6 +3,7 @@ import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-dat
 import { formatLocalDateTime } from "@/components/live/format";
 import { WaxSeal } from "@/components/ui/WaxSeal";
 import { LIVE_COPY, REVEAL_COPY } from "./copy";
+import type { LetterKind } from "./FigureLine";
 import styles from "./reveal.module.css";
 
 /**
@@ -110,10 +111,22 @@ export function SealedLetterCaption({
   );
 }
 
-/** The Letter_Text alone: the sealed text as one text node in one paragraph. */
-export function SealedLetterText({ opened }: { opened: Opened }) {
+/**
+ * The Letter_Text alone: the sealed text as one text node in one paragraph.
+ * A real, live or other non-persona letter carries `data-user-content`, so the
+ * user's own words are marked apart from the demo labels. Persona letters do
+ * not carry it.
+ */
+export function SealedLetterText({
+  opened,
+  letterKind = "persona",
+}: {
+  opened: Opened;
+  letterKind?: LetterKind;
+}) {
+  const userContent = letterKind === "persona" ? undefined : "";
   return (
-    <p className={styles.letter} data-letter-text="">
+    <p className={styles.letter} data-letter-text="" data-user-content={userContent}>
       {opened.payload.letter_text}
     </p>
   );
