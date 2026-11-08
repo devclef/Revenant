@@ -94,9 +94,9 @@ describe("the ticks hang from the axis and reach their labels (spec 10 X1.1 to X
   });
 
   it("sets each static tick height from 16 px and its label row", () => {
-    // Static render, 16 px root. Then and Now sit in row 0 (1.25rem = 20 px), so
-    // each ends 20 - 4 = 16 px down. The Mark's label overlaps Then and drops to
-    // row 1 (20 + 2.6 * 12.8 = 53.28 px), so its leader ends 49.28 px down.
+    // Static render, 16 px root. Then, Now and the Mark's label all sit in row 0
+    // (1.25rem = 20 px), so each tick ends 20 - 4 = 16 px down. No label sits
+    // in a deeper row, so no tick has to pass a label above it (spec 10 X1.4).
     const html = render({ ...base, markValue: "15" });
     const tags = html.match(/<span[^>]*data-line-tick="[^"]*"[^>]*>/g) ?? [];
     const heightOf = (name: string): number => {
@@ -105,7 +105,7 @@ describe("the ticks hang from the axis and reach their labels (spec 10 X1.1 to X
     };
     expect(heightOf("then")).toBeCloseTo(16, 6);
     expect(heightOf("now")).toBeCloseTo(16, 6);
-    expect(heightOf("mark")).toBeCloseTo(49.28, 6);
+    expect(heightOf("mark")).toBeCloseTo(16, 6);
   });
 });
 
