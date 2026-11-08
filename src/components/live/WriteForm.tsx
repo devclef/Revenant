@@ -386,6 +386,7 @@ export function WriteForm({
       ) : null}
 
       {shows("seal") ? (
+        <div className={styles.sealStep}>
         <div className={styles.explain}>
           <p>{LIVE_COPY.passkeySteps}</p>
           <details className={styles.more}>
@@ -395,9 +396,7 @@ export function WriteForm({
             <p>{LIVE_COPY.crossDevice}</p>
           </details>
         </div>
-      ) : null}
 
-      {shows("seal") ? (
         <div className={styles.warning}>
           <p>{LIVE_COPY.warning}</p>
           <label className={styles.warningLabel}>
@@ -418,9 +417,7 @@ export function WriteForm({
             {warningProblem}
           </p>
         </div>
-      ) : null}
 
-      {shows("seal") ? (
         <div className={styles.warning}>
           <label className={styles.warningLabel}>
             <input
@@ -439,6 +436,7 @@ export function WriteForm({
           <p id="live-backup-card-hint" className={styles.hint}>
             {LIVE_COPY.backupCardOptionHint}
           </p>
+        </div>
         </div>
       ) : null}
 
