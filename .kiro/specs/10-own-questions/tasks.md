@@ -81,7 +81,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
 
 ### Group S: steering and the copy scans
 
-- [ ] 1. S1 · Steering, copy checks and layout checks (Owner_Patches z, aa, ab, ac task 1 part, ad, af, ag)
+- [x] 1. S1 · Steering, copy checks and layout checks (Owner_Patches z, aa, ab, ac task 1 part, ad, af, ag)
   - Agent: `owner` · Depends on: none · Estimated size: n/a (owner commit, no PR)
   - Before this task: none. This task is the steering update; once it is committed and this issue is closed, "steering updated (S1 Owner_Patch on `main`)" is true for every later task. Spec 09 patches o, t, u and v are committed outside this spec; this task does not need them.
   - Scope: `.kiro/steering/product.md`, `.kiro/steering/neutrality.md`, `.kiro/steering/tone.md`, `.kiro/steering/structure.md`, `.kiro/hooks/copy-tone-check.json`, `.kiro/hooks/ceremony-truth-check.json`, `tools/hooks/tone-check.mjs`, `tools/qa/layout-check.mjs`, `.kiro/agents/prompts/qa.md`. All owner-only; no role agent commits them (S1.1, G1.3).
