@@ -30,6 +30,21 @@ export function insertAtSelection(
   return { text, caret: from + starter.length };
 }
 
+/**
+ * The text to insert for `starter` at `from`. A single space comes first when
+ * there is text before the insertion point and the character before it is not
+ * whitespace, so a starter never runs into the words already in the letter.
+ */
+export function starterText(
+  value: string,
+  from: number,
+  starter: string,
+): string {
+  const before = from > 0 ? value.charAt(from - 1) : "";
+  const needsSpace = before !== "" && !/\s/.test(before);
+  return needsSpace ? ` ${starter}` : starter;
+}
+
 export interface PromptStartersProps {
   /** The letter field. Read for the current value and selection. */
   fieldRef: RefObject<HTMLTextAreaElement | null>;
@@ -46,11 +61,12 @@ export function PromptStarters({ fieldRef, onInsert }: PromptStartersProps) {
   function insert(starter: string) {
     const field = fieldRef.current;
     if (field === null) return;
+    const from = Math.min(field.selectionStart, field.selectionEnd);
     const { text, caret } = insertAtSelection(
       field.value,
       field.selectionStart,
       field.selectionEnd,
-      starter,
+      starterText(field.value, from, starter),
     );
     // Commit the new value to the DOM before setting the caret, because React
     // would otherwise move the caret to the end of the field.

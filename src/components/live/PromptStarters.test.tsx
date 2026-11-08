@@ -3,9 +3,55 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { promptStarters } from "./copy";
-import { insertAtSelection, PromptStarters } from "./PromptStarters";
+import {
+  insertAtSelection,
+  PromptStarters,
+  starterText,
+} from "./PromptStarters";
 
-const [FIRST] = promptStarters;
+const [FIRST, SECOND] = promptStarters;
+
+describe("starterText", () => {
+  it("adds no space when the insertion point is the start of the field", () => {
+    expect(starterText("", 0, FIRST)).toBe(FIRST);
+    expect(starterText("abc", 0, FIRST)).toBe(FIRST);
+  });
+
+  it("adds no space when the character before the insertion point is whitespace", () => {
+    expect(starterText("abc ", 4, FIRST)).toBe(FIRST);
+    expect(starterText("abc\n", 4, FIRST)).toBe(FIRST);
+  });
+
+  it("adds one space when the character before the insertion point is not whitespace", () => {
+    expect(starterText("abc", 3, FIRST)).toBe(` ${FIRST}`);
+  });
+
+  it("checks the character before the start of a selection, not the selected text", () => {
+    // "abc def" with "def" selected (4 to 7): the character before is a space.
+    expect(starterText("abc def", 4, FIRST)).toBe(FIRST);
+    // The same text with the selection starting at 3: the character before is "c".
+    expect(starterText("abc def", 3, FIRST)).toBe(` ${FIRST}`);
+  });
+
+  it("keeps two starters pressed after existing text separated by one space", () => {
+    const existing = "Right now, the thing on my mind is";
+    const afterFirst = insertAtSelection(
+      existing,
+      existing.length,
+      existing.length,
+      starterText(existing, existing.length, FIRST),
+    );
+    const afterSecond = insertAtSelection(
+      afterFirst.text,
+      afterFirst.caret,
+      afterFirst.caret,
+      starterText(afterFirst.text, afterFirst.caret, SECOND),
+    );
+    expect(afterSecond.text).toBe(`${existing} ${FIRST} ${SECOND}`);
+    expect(afterSecond.text).not.toContain(`is${FIRST}`);
+    expect(afterSecond.text).not.toContain(`${FIRST}${SECOND}`);
+  });
+});
 
 describe("insertAtSelection", () => {
   it("inserts at the start of a selection, replacing the selected text", () => {
