@@ -99,11 +99,17 @@ function searchPlan(
   const lows: number[] = [];
   const highs: number[] = [];
   for (let i = 0; i < 3; i += 1) {
-    const low = Math.max(0, ticks[i] - widths[i]);
-    const high = Math.min(lineWidth - widths[i], ticks[i]);
-    if (low > high) return undefined;
+    // The same window tickCrosses uses: a 2 px tick at the box edge still counts
+    // as inside it. Without the half tick, a point 1 px from another (us-maya,
+    // the close stage's second figure) has no clear slot and the search fails.
+    const low = Math.max(0, ticks[i] - widths[i] - TICK_HALF_PX + EPS);
+    const high = Math.min(lineWidth - widths[i], ticks[i] + TICK_HALF_PX - EPS);
+    // A point at the right end can land a float step past the line (1 + 4e-16),
+    // which makes low a hair above high. That is the same spot, so it is not a
+    // reason to skip every row plan and fall back to the greedy placement.
+    if (low > high + EPS) return undefined;
     lows.push(low);
-    highs.push(high);
+    highs.push(Math.max(high, low));
   }
 
   // Candidate left edges for each label: its centred spot, both clamp ends, and

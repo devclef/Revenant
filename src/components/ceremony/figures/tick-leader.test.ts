@@ -11,6 +11,7 @@ import {
   TICK_LABEL_GAP_PX,
 } from "../constants";
 import {
+  TICK_HALF_PX,
   placeLineLabels,
   tickCrosses,
   type LabelBox,
@@ -92,11 +93,12 @@ describe("Property 20: every tick touches the axis and reaches its label", () =>
       fc.property(nearLine, (input) => {
         const { boxes, ticks, bottoms } = placeNear(input);
 
-        // 1. Each tick's x lies inside its own label's box.
+        // 1. Each tick's x lies inside its own label's box. A 2 px tick centred
+        // up to TICK_HALF_PX outside the box edge still touches it (tickCrosses).
         for (let i = 0; i < 3; i += 1) {
           const box = boxes[i];
-          expect(ticks[i]).toBeGreaterThanOrEqual(box.x - TOL);
-          expect(ticks[i]).toBeLessThanOrEqual(box.x + box.width + TOL);
+          expect(ticks[i]).toBeGreaterThanOrEqual(box.x - TICK_HALF_PX - TOL);
+          expect(ticks[i]).toBeLessThanOrEqual(box.x + box.width + TICK_HALF_PX + TOL);
         }
 
         // 2. No two labels in one row overlap; LINE_LABEL_GAP_PX stays between them.
