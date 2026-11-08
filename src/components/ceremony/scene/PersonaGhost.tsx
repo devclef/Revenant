@@ -14,7 +14,7 @@
 
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
-import { EASE_LEAVE, GHOST_FADE_MS, GHOST_LEAVE_MS } from "../constants";
+import { EASE_LEAVE, GHOST_FADE_MS, GHOST_LEAVE_MS, GHOST_SIZE_COMPACT, GHOST_SIZE_FULL } from "../constants";
 import { useMotion } from "../motion";
 import { useMaybeSequence } from "../skip-optional";
 import { ghostHanded } from "../stages";
@@ -23,7 +23,7 @@ import { useStage } from "../stage-context";
 import { eyeOffset, followsPointer } from "./eyes";
 import { EYE_CENTRE_SVG, VIEWBOX_HEIGHT, VIEWBOX_WIDTH, type EyeOffset } from "./ghost-geometry";
 import { ghostExitFallbackMs, isGhostExitEnd } from "./ghost-presence";
-import { Ghost, type GhostPose } from "./Ghost";
+import { Ghost, type GhostPose, type GhostSink, type GhostSize } from "./Ghost";
 import { useEmergence } from "./useEmergence";
 
 const NO_OFFSET: EyeOffset = { dx: 0, dy: 0 };
@@ -41,6 +41,8 @@ const LEAVE_VARS = {
 export type PersonaGhostProps = {
   /** The held Envelope, rendered in the bob's slot. */
   children?: ReactNode;
+  /** The sink state on a stored seal (spec 09 D1). Defaults to idle. */
+  sink?: GhostSink;
   /**
    * True while the Ghost leaves after a completed break (design.md "The
    * dissolve on break"). The rise and bob stop, and the Ghost moves up and
@@ -55,7 +57,7 @@ export type PersonaGhostProps = {
 };
 
 /** The persona Ghost: the drawing plus motion, Stage pose and eye follow. */
-export function PersonaGhost({ children, leaving = false, onLeft }: PersonaGhostProps) {
+export function PersonaGhost({ children, leaving = false, onLeft, sink = "idle" }: PersonaGhostProps) {
   const { mode } = useMotion();
   const calm = mode === "calm";
   const sequence = useMaybeSequence();
@@ -145,10 +147,14 @@ export function PersonaGhost({ children, leaving = false, onLeft }: PersonaGhost
     ...ROOT_ATTRIBUTES,
     "data-compact": personaStepFor(stage) !== null ? "true" : "false",
   };
+  // The size follows the same rule as data-compact: the Compact_Ghost from the First_Step on.
+  const size: GhostSize = personaStepFor(stage) !== null ? GHOST_SIZE_COMPACT : GHOST_SIZE_FULL;
 
   return (
     <Ghost
       pose={pose}
+      size={size}
+      sink={sink}
       eyes={eyes}
       gradientId={gradientId}
       leaving={leaving}

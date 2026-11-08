@@ -20,7 +20,7 @@
 
 import type { AnimationEvent, CSSProperties, ReactNode, Ref } from "react";
 
-import { EYE_TRANSITION_MS } from "../constants";
+import { EYE_TRANSITION_MS, GHOST_SIZE_COMPACT, GHOST_SIZE_FULL } from "../constants";
 import styles from "./scene.module.css";
 import {
   BODY_PATH,
@@ -34,11 +34,25 @@ import {
 /** The Ghost's pose: the risen end pose, or the handed pose once picked up. */
 export type GhostPose = "risen" | "handed";
 
+/** The Ghost's size: the full drawing, or the Compact_Ghost at the Phone_Sizes (spec 09 P4.2). */
+export type GhostSize = typeof GHOST_SIZE_FULL | typeof GHOST_SIZE_COMPACT;
+
+/**
+ * The sink state on a stored seal (spec 09 D1). `idle` shows no sink. `sinking`
+ * plays the ghostSink animation in full motion. `sunk` holds the settled pose
+ * with no motion, which is also what Calm and reduced motion show.
+ */
+export type GhostSink = "idle" | "sinking" | "sunk";
+
 const NO_OFFSET: EyeOffset = { dx: 0, dy: 0 };
 
 export type GhostProps = {
   /** The pose, set by the Stage. Defaults to the risen end pose. */
   pose?: GhostPose;
+  /** The size. Defaults to the full drawing. */
+  size?: GhostSize;
+  /** The sink state. Defaults to idle (no sink). */
+  sink?: GhostSink;
   /** The eyes' offset in SVG user units. Defaults to the centre. */
   eyes?: EyeOffset;
   /** The id of the body gradient. Must be unique in the page. */
@@ -82,6 +96,8 @@ function riseListeners(
  */
 export function Ghost({
   pose = "risen",
+  size = GHOST_SIZE_FULL,
+  sink = "idle",
   eyes = NO_OFFSET,
   gradientId = "ghost-body",
   leaving = false,
@@ -92,13 +108,20 @@ export function Ghost({
   children,
 }: GhostProps) {
   return (
-    <div className={styles.pit} data-pose={pose} data-ghost-pit {...rootAttributes}>
+    <div
+      className={styles.pit}
+      data-pose={pose}
+      data-size={size}
+      data-ghost-pit
+      {...rootAttributes}
+    >
       <div className={styles.ghostPlace}>
         <div
           ref={riseRef}
           className={styles.ghost}
           data-pose={pose}
           data-leaving={leaving ? "true" : undefined}
+          data-sink={sink === "idle" ? undefined : sink}
           data-ghost-rise
           style={leaveVars}
           {...riseListeners(onExitEnd)}

@@ -778,6 +778,20 @@
   }
 }
 
+/*
+ * The sink on a stored seal (spec 09 D1). The Ghost, holding the Envelope, moves
+ * from the risen pose back below the Soil, the reverse of the rise. Transform
+ * only (R21.4). The end pose is GHOST_SUNK_TRANSLATE in constants.ts.
+ */
+@keyframes ghostSink {
+  from {
+    transform: translateY(var(--ghost-risen));
+  }
+  to {
+    transform: translateY(105%);
+  }
+}
+
 @media (prefers-reduced-motion: no-preference) {
   [data-ceremony-motion="full"] .ghost[data-leaving="true"] {
     animation:
@@ -846,6 +860,22 @@
   [data-ceremony-motion="full"] .bob {
     animation: bob 3600ms ease-in-out calc(900ms + 1500ms) infinite;
   }
+
+  /* The sink on a stored seal (spec 09 D1). Only "sinking" animates. "sunk"
+     holds its end pose with no animation, so a reload never replays the sink. */
+  [data-ceremony-motion="full"] .ghost[data-sink="sinking"] {
+    animation: ghostSink 900ms cubic-bezier(0.4, 0, 0.6, 1) forwards;
+  }
+
+  [data-ceremony-motion="full"] .ghost[data-sink="sunk"] {
+    animation: none;
+  }
+}
+
+/* The settled sunk pose: GHOST_SUNK_TRANSLATE. Calm and reduced motion show it
+   at once, with no animation. */
+.ghost[data-sink="sunk"] {
+  transform: translateY(105%);
 }
 
 /* Pick up (design.md "The Ghost" pose table, "Narrow layout during `recall`

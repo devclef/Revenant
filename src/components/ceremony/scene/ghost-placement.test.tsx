@@ -44,9 +44,9 @@ function ghostAt(stage: Stage): string {
 }
 
 /** The markup with only the pose attribute removed, so placement is compared alone. */
-// The pose and the compact flag (spec 09 P4.2) select CSS rules; the placement is the same.
+// The pose, the compact flag and the size (spec 09 P4.2) select CSS rules; the placement is the same.
 const withoutPose = (html: string) =>
-  html.replace(/ data-pose="(?:risen|handed)"/g, "").replace(/ data-compact="(?:true|false)"/g, "");
+  html.replace(/ data-pose="(?:risen|handed)"/g, "").replace(/ data-compact="(?:true|false)"/g, "").replace(/ data-size="(?:full|compact)"/g, "");
 
 describe("Property 10: the Ghost's horizontal placement is the same in every placed Stage", () => {
   it("renders identical classes, styles and horizontal values in intact, recall, marks and seal", () => {
