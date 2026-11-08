@@ -6,7 +6,8 @@ import Home from "@/app/page";
 import { Footer } from "@/components/ui/Footer";
 import { pageMetadata } from "@/lib/page-metadata";
 
-import { lineOf, readSourceFiles } from "./source-scan";
+import { lineOf, readSourceFiles, type SourceFile } from "./source-scan";
+import { textOutsideUserContent } from "./user-content";
 
 // page.tsx imports feature-flags.ts, which imports `server-only`.
 vi.mock("server-only", () => ({}));
@@ -54,6 +55,17 @@ const AVOIDED_WORDS: readonly RetiredPhrase[] = [
 const SOURCE_ROOTS = ["src", "content/personas"];
 const SOURCE_EXTENSIONS = [".ts", ".tsx", ".json", ".txt", ".md"];
 
+/**
+ * Copy-test records (content/personas/letters/*-copy-test.md) quote the
+ * phrases the copy checks look for, so they are excluded from the scan.
+ */
+const COPY_TEST_RECORD = /^content\/personas\/letters\/[^/]+-copy-test\.md$/;
+
+/** The files the phrase scans read: every source file except copy-test records. */
+function scannedSourceFiles(files: readonly SourceFile[]): SourceFile[] {
+  return files.filter((file) => !COPY_TEST_RECORD.test(file.path));
+}
+
 function isCopyModule(path: string): boolean {
   return /(^|\/)copy\.ts$/.test(path) || path.startsWith("content/personas/");
 }
@@ -75,20 +87,25 @@ function findMatches(
   return hits;
 }
 
-/** Text of the rendered `/` page and the footer the root layout adds to it. */
+/**
+ * Text of the rendered `/` page and the footer the root layout adds to it.
+ * One text node per line, so a hit reports its line in this text. User
+ * content is left out by textOutsideUserContent.
+ */
 function renderedLandingText(): string {
   const html =
     renderToStaticMarkup(createElement(Home)) +
     renderToStaticMarkup(createElement(Footer));
-  return html
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&#x27;/g, "'")
-    .replace(/\s+/g, " ")
-    .trim();
+  return textOutsideUserContent(html)
+    .map((node) => node.replace(/\s+/g, " ").trim())
+    .filter((node) => node.length > 0)
+    .join("\n");
 }
 
 describe("F8.1 retired phrases in source", () => {
-  const files = readSourceFiles(SOURCE_ROOTS, SOURCE_EXTENSIONS);
+  const files = scannedSourceFiles(
+    readSourceFiles(SOURCE_ROOTS, SOURCE_EXTENSIONS),
+  );
 
   it("scans a non-empty set of source files", () => {
     expect(files.length).toBeGreaterThan(0);
@@ -138,5 +155,59 @@ describe("F8.4 retired phrases in the rendered / output and page metadata", () =
   it("no Retired_Phrase in the landing page metadata", () => {
     const meta = JSON.stringify(pageMetadata(null, "/"));
     expect(findMatches("page metadata", meta, RETIRED_PHRASES)).toEqual([]);
+  });
+});
+
+describe("copy-test exclusion and hit reporting", () => {
+  it("drops copy-test records from the content/personas scan and keeps the letters", () => {
+    const personas = readSourceFiles(["content/personas"], SOURCE_EXTENSIONS);
+    const paths = personas.map((file) => file.path);
+    expect(paths).toContain("content/personas/letters/us-copy-test.md");
+
+    const scanned = scannedSourceFiles(personas).map((file) => file.path);
+    expect(scanned).not.toContain("content/personas/letters/us-copy-test.md");
+    expect(scanned).toContain("content/personas/letters/us-maya.txt");
+  });
+
+  it("lets a retired phrase in a real copy-test record pass the scan", () => {
+    const personas = readSourceFiles(["content/personas"], SOURCE_EXTENSIONS);
+    const record = personas.find(
+      (file) => file.path === "content/personas/letters/us-copy-test.md",
+    );
+    expect(record).toBeDefined();
+    const path = "content/personas/letters/us-copy-test.md";
+    const planted = `${record?.text ?? ""}\nrose-tinted\n`;
+
+    // The phrase is really there, so the record would fail without the exclusion.
+    expect(findMatches(path, planted, RETIRED_PHRASES)).toEqual([
+      `${path}:${lineOf(planted, planted.indexOf("rose-tinted"))} "rose-tinted"`,
+    ]);
+
+    const scanned = scannedSourceFiles([{ path, text: planted }]);
+    expect(scanned).toEqual([]);
+  });
+
+  it("fails a retired phrase in the real us-maya.txt and names its file and line", () => {
+    const path = "content/personas/letters/us-maya.txt";
+    const letter = readSourceFiles(["content/personas"], SOURCE_EXTENSIONS).find(
+      (file) => file.path === path,
+    );
+    expect(letter).toBeDefined();
+    const lines = (letter?.text ?? "").split("\n");
+    // Plant the phrase as line 3 of the real letter, in memory only.
+    lines.splice(2, 0, "rose-tinted");
+    const planted = lines.join("\n");
+
+    const hits = scannedSourceFiles([{ path, text: planted }]).flatMap(
+      (file) => findMatches(file.path, file.text, RETIRED_PHRASES),
+    );
+    expect(hits).toEqual([`${path}:3 "rose-tinted"`]);
+  });
+
+  it("names the file and the line of each hit", () => {
+    const text = "Opening line\n\nThe word caught appears on line three.";
+    expect(findMatches("src/example/copy.ts", text, AVOIDED_WORDS)).toEqual([
+      'src/example/copy.ts:3 "caught"',
+    ]);
   });
 });
