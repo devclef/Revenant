@@ -1112,4 +1112,10 @@
   [data-ceremony-motion="full"] .pit[data-compact="true"] {
     transition: none;
   }
+
+  /* C1.6: the compact pit never transitions, in any motion mode. Declared here
+     after the full-motion pit transition, so it wins at equal specificity. */
+  .pit[data-compact="true"] {
+    transition: none;
+  }
 }

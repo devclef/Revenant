@@ -186,4 +186,13 @@ describe("phone Compact_Ghost clearance and pit transition (scene.module.css)", 
     // The 600 ms pit transition is still set above the phone block, unchanged.
     expect(scene).toMatch(/\[data-ceremony-motion="full"\] \.pit \{\s*transition: transform 600ms ease;/);
   });
+
+  it("sets .pit[data-compact='true'] to no transition in the phone block, in any motion mode", () => {
+    const block = phoneBlock("[data-step-indicator]");
+    expect(block).toMatch(/\.pit\[data-compact="true"\] \{\s*transition: none;\s*\}/);
+    // Declared after the full-motion pit transition, so it wins at equal specificity.
+    const literal = scene.lastIndexOf('\n  .pit[data-compact="true"] {');
+    expect(literal).toBeGreaterThan(-1);
+    expect(literal).toBeGreaterThan(scene.indexOf('[data-ceremony-motion="full"] .pit {'));
+  });
 });
