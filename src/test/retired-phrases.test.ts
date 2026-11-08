@@ -7,6 +7,7 @@ import { Footer } from "@/components/ui/Footer";
 import { pageMetadata } from "@/lib/page-metadata";
 
 import { lineOf, readSourceFiles } from "./source-scan";
+import { textOutsideUserContent } from "./user-content";
 
 // page.tsx imports feature-flags.ts, which imports `server-only`.
 vi.mock("server-only", () => ({}));
@@ -54,6 +55,12 @@ const AVOIDED_WORDS: readonly RetiredPhrase[] = [
 const SOURCE_ROOTS = ["src", "content/personas"];
 const SOURCE_EXTENSIONS = [".ts", ".tsx", ".json", ".txt", ".md"];
 
+/**
+ * Copy-test records (content/personas/letters/*-copy-test.md) quote the
+ * phrases the copy checks look for, so they are excluded from the scan.
+ */
+const COPY_TEST_RECORD = /^content\/personas\/letters\/[^/]+-copy-test\.md$/;
+
 function isCopyModule(path: string): boolean {
   return /(^|\/)copy\.ts$/.test(path) || path.startsWith("content/personas/");
 }
@@ -75,20 +82,25 @@ function findMatches(
   return hits;
 }
 
-/** Text of the rendered `/` page and the footer the root layout adds to it. */
+/**
+ * Text of the rendered `/` page and the footer the root layout adds to it.
+ * One text node per line, so a hit reports its line in this text. User
+ * content is left out by textOutsideUserContent.
+ */
 function renderedLandingText(): string {
   const html =
     renderToStaticMarkup(createElement(Home)) +
     renderToStaticMarkup(createElement(Footer));
-  return html
-    .replace(/<[^>]+>/g, " ")
-    .replace(/&#x27;/g, "'")
-    .replace(/\s+/g, " ")
-    .trim();
+  return textOutsideUserContent(html)
+    .map((node) => node.replace(/\s+/g, " ").trim())
+    .filter((node) => node.length > 0)
+    .join("\n");
 }
 
 describe("F8.1 retired phrases in source", () => {
-  const files = readSourceFiles(SOURCE_ROOTS, SOURCE_EXTENSIONS);
+  const files = readSourceFiles(SOURCE_ROOTS, SOURCE_EXTENSIONS).filter(
+    (file) => !COPY_TEST_RECORD.test(file.path),
+  );
 
   it("scans a non-empty set of source files", () => {
     expect(files.length).toBeGreaterThan(0);
