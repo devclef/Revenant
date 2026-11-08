@@ -51,3 +51,25 @@ describe("phone intact stage scroll offset (scene.module.css)", () => {
     expect(block).not.toMatch(/\bfixed\b/);
   });
 });
+
+// Spec 10 X2.2 and X2.3: the Step_Indicator row rule exists below 600 px only.
+describe("phone Step_Indicator row (StepIndicator.module.css)", () => {
+  const stepCss = readFileSync(
+    resolve(here, "..", "..", "ui", "StepIndicator.module.css"),
+    "utf8",
+  ).replace(/\/\*[\s\S]*?\*\//g, "");
+
+  it("has the phone .steps rule inside a block that only applies below 600 px", () => {
+    const mediaStart = stepCss.indexOf("@media (max-width: 599.98px)");
+    expect(mediaStart).toBeGreaterThan(-1);
+    const phone = stepCss.slice(mediaStart);
+    expect(phone).toMatch(/\.steps \{\s*gap: 0\.25rem 0\.75rem;\s*font-size: 0\.8rem;\s*\}/);
+    // The base .steps rule stays above the phone block, unchanged.
+    expect(stepCss.slice(0, mediaStart)).toMatch(/\.steps \{[^}]*flex-wrap: wrap;/);
+  });
+
+  it("keeps each step name on one line (nowrap is set on the items above)", () => {
+    expect(stepCss).toMatch(/\.step \{[^}]*white-space: nowrap;/);
+    expect(stepCss).toMatch(/\.current \{[^}]*white-space: nowrap;/);
+  });
+});

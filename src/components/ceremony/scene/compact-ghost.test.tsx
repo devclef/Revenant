@@ -167,3 +167,21 @@ describe("the Compact_Ghost and the Soil honour Calm and reduced motion (P4.3)",
     );
   });
 });
+
+// Spec 10 X2.1 and C1.6: below 600 px the Step_Indicator row reserves the
+// Compact_Ghost's box, and the Compact_Ghost's pit does not transition.
+describe("phone Compact_Ghost clearance and pit transition (scene.module.css)", () => {
+  it("reserves the Compact_Ghost box for the Step_Indicator row, below 600 px only", () => {
+    const block = phoneBlock("[data-step-indicator]");
+    expect(block).not.toBe("");
+    expect(block).toMatch(/min-height:\s*7\.5rem;/);
+    expect(block).toMatch(/padding-right:\s*calc\(0\.58 \* min\(26vh, 170px\) \+ 1\.5rem\);/);
+  });
+
+  it("turns the pit's transition off for the compact pit under full motion, below 600 px", () => {
+    const block = phoneBlock("[data-step-indicator]");
+    expect(block).toMatch(/\[data-ceremony-motion="full"\] \.pit\[data-compact="true"\] \{\s*transition: none;/);
+    // The 600 ms pit transition is still set above the phone block, unchanged.
+    expect(scene).toMatch(/\[data-ceremony-motion="full"\] \.pit \{\s*transition: transform 600ms ease;/);
+  });
+});
