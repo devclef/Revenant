@@ -323,8 +323,19 @@ describe("WriteForm — create button label and state", () => {
   };
 
   /** The opening tag of the one button in the markup. */
+  /**
+   * The opening tag of the create or confirm button. The prompt starters
+   * (issue #269) are buttons too and come first in the write step, so the first
+   * <button> is not necessarily the press button.
+   */
   function buttonTag(markup: string): string {
-    return /<button[^>]*>/.exec(markup)?.[0] ?? "";
+    const buttons = markup.match(/<button[^>]*>[\s\S]*?<\/button>/g) ?? [];
+    const press = buttons.find(
+      (button) =>
+        button.includes(LIVE_COPY.createButton) ||
+        button.includes(LIVE_COPY.confirmButton),
+    );
+    return /<button[^>]*>/.exec(press ?? "")?.[0] ?? "";
   }
 
   const midFlow = [

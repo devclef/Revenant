@@ -22,6 +22,8 @@ export const LIVE_COPY = {
     "This is a real sealed letter. It is locked for 30 seconds only because this is a demo. It opens with your own passkey.",
   letterLabel: "Your letter",
   letterHint: "Plain text. Up to 5,000 characters.",
+  /** The label of the group of starter buttons under the letter field. */
+  starterGroup: "Start with one of these sentences, or write your own",
   letterCount: "{count} of 5,000 characters",
   figuresLegend: "Choose the figures to seal with it",
   figuresHint:
