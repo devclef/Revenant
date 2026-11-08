@@ -50,6 +50,11 @@ export type PersonaGhostProps = {
    */
   leaving?: boolean;
   /**
+   * Forces the Compact_Ghost size (spec 09 P4.2) on a page that has no persona
+   * stage, such as the live demo's wait card. The persona stages set it themselves.
+   */
+  compact?: boolean;
+  /**
    * Called when the leave ends early because Skip ran. The parent then
    * unmounts the Ghost at once, so Skip leaves no Ghost (R12.9).
    */
@@ -57,7 +62,13 @@ export type PersonaGhostProps = {
 };
 
 /** The persona Ghost: the drawing plus motion, Stage pose and eye follow. */
-export function PersonaGhost({ children, leaving = false, onLeft, sink = "idle" }: PersonaGhostProps) {
+export function PersonaGhost({
+  children,
+  leaving = false,
+  onLeft,
+  sink = "idle",
+  compact = false,
+}: PersonaGhostProps) {
   const { mode } = useMotion();
   const calm = mode === "calm";
   const sequence = useMaybeSequence();
@@ -143,12 +154,13 @@ export function PersonaGhost({ children, leaving = false, onLeft, sink = "idle" 
   const pose: GhostPose = ghostHanded(stage) ? "handed" : "risen";
   // The Compact_Ghost (spec 09 P4.2) applies from the First_Step on, and the CSS
   // limits it to below 600 px. This attribute only selects that CSS rule.
+  const isCompact = compact || personaStepFor(stage) !== null;
   const rootAttributes = {
     ...ROOT_ATTRIBUTES,
-    "data-compact": personaStepFor(stage) !== null ? "true" : "false",
+    "data-compact": isCompact ? "true" : "false",
   };
   // The size follows the same rule as data-compact: the Compact_Ghost from the First_Step on.
-  const size: GhostSize = personaStepFor(stage) !== null ? GHOST_SIZE_COMPACT : GHOST_SIZE_FULL;
+  const size: GhostSize = isCompact ? GHOST_SIZE_COMPACT : GHOST_SIZE_FULL;
 
   return (
     <Ghost

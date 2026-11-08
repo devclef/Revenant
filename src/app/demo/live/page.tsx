@@ -12,8 +12,9 @@ export const metadata = pageMetadata(UI_COPY.pageMeta.live, "/demo/live");
  * value is never fixed at build time. When RP_ID is empty it shows the
  * Unavailable state with no seal control. Otherwise it renders SealPage.
  *
- * The page sits on the plain Scene shell (spec 07), which adds the Demo chip
- * and the Top_Bar with a way back to `/`.
+ * The page sits on the plain Scene shell (spec 07), which adds the Demo chip,
+ * the Top_Bar with a way back to `/`, and the light and Soil (spec 09 D1.1).
+ * The Ghost is drawn by the wait step, not here.
  *
  * This page must not import any letter-store module. It holds no letter data
  * and no database access.
@@ -25,7 +26,7 @@ export default function LiveDemoPage() {
   const appOrigin = (process.env.APP_ORIGIN ?? "").trim().replace(/\/+$/, "");
 
   return (
-    <SceneShell variant="plain" demo>
+    <SceneShell variant="plain" demo backdrop>
       {rpId === "" ? (
         <Unavailable />
       ) : (
