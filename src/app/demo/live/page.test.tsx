@@ -61,6 +61,14 @@ describe("/demo/live page", () => {
     expect(html).not.toContain("data-ceremony=");
   });
 
+  it("draws the light and Soil on the Scene, with the Top_Bar (spec 09 D1.1)", async () => {
+    vi.stubEnv("RP_ID", "");
+    vi.stubEnv("APP_ORIGIN", "");
+    const html = await renderLivePage();
+    expect(html).toContain("data-soil-strip");
+    expect(html).toContain("data-wordmark");
+  });
+
   it("shows the Demo chip and a wordmark that links to /", async () => {
     vi.stubEnv("RP_ID", "");
     vi.stubEnv("APP_ORIGIN", "");

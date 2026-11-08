@@ -36,6 +36,12 @@ export type SceneShellProps =
       demo?: boolean;
       /** Which Top_Bar controls to show. Default `calm`. */
       controls?: "calm" | "none";
+      /**
+       * Draws the light and the Soil behind the page (spec 09 D1.1). Off by
+       * default, so a plain page such as `/l/[id]` keeps no Soil and no Ghost.
+       * The Ghost itself is passed in by the page's own content.
+       */
+      backdrop?: boolean;
       children: ReactNode;
     };
 
@@ -72,13 +78,22 @@ function SceneFrame(props: SceneShellProps) {
   // The landing and index roots carry the page's one data-ceremony. `light`
   // counts as `full`, because only `calm` turns motion off (design.md "Motion
   // modes"). The index root is marked "index" (R26.4).
+  const motion = mode === "calm" ? "calm" : "full";
+  const plainBackdrop = props.variant === "plain" && props.backdrop === true;
+  // A plain page with a backdrop carries only the motion mode, so the Ghost's
+  // CSS rise and sink run under the same gate as the other Scene pages. It
+  // carries no ceremony root (the Ghost is not a Scene page's one ceremony).
   const rootAttributes: Record<string, string> =
-    props.variant === "persona" || props.variant === "plain"
+    props.variant === "persona"
       ? {}
-      : {
-          "data-ceremony": props.variant === "landing" ? "scene" : "index",
-          "data-ceremony-motion": mode === "calm" ? "calm" : "full",
-        };
+      : props.variant === "plain"
+        ? plainBackdrop
+          ? { "data-ceremony-motion": motion }
+          : {}
+        : {
+            "data-ceremony": props.variant === "landing" ? "scene" : "index",
+            "data-ceremony-motion": motion,
+          };
 
   return (
     <SoundEnabledContext.Provider value={soundOn}>
@@ -91,7 +106,7 @@ function SceneFrame(props: SceneShellProps) {
       {...rootAttributes}
     >
       {/* The index variant gets the Soil backdrop from the shell, with no Ghost. */}
-      {props.variant === "index" ? <SceneBackdrop /> : null}
+      {props.variant === "index" || plainBackdrop ? <SceneBackdrop /> : null}
       {props.variant === "persona" ? (
         <TopBar personaName={props.personaName} sound={sound} />
       ) : props.variant === "plain" ? (

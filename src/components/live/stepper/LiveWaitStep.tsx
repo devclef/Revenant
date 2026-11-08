@@ -19,6 +19,8 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 
+import type { GhostSink } from "@/components/ceremony/scene/Ghost";
+import { useCalmInForce } from "@/components/ceremony/motion";
 import { DemoLabel } from "@/components/demo/DemoLabel";
 import { OpeningFlow } from "@/components/reveal/OpeningFlow";
 import type { AuthenticatorPort } from "@/components/live/unlock";
@@ -32,6 +34,7 @@ import styles from "../live.module.css";
 import { SealedKeepsakes } from "../SealedKeepsakes";
 import type { SealedState } from "../SealedView";
 
+import { LiveGhost } from "./LiveGhost";
 import { flowMounted, stepForFlowPhase, type LiveStep } from "./live-steps";
 
 export interface LiveWaitStepProps {
@@ -94,9 +97,17 @@ export function LiveWaitStep({
   const offerBackupCard =
     showKeyReminder && backupKeyText !== null && backupKeyText.length > 0;
 
+  // The Ghost's sink (spec 09 D1.2 to D1.4). It sinks with the Envelope while
+  // the countdown runs. Calm shows the settled sunk pose with no motion. At zero
+  // it goes idle, so the CSS rise plays again: the Emergence on unlock in place.
+  const calm = useCalmInForce();
+  const sink: GhostSink = done ? "idle" : calm ? "sunk" : "sinking";
+
   return (
     <div className={styles.panel} data-live-wait>
       <DemoLabel />
+
+      {waiting ? <LiveGhost sink={sink} /> : null}
 
       {waiting ? (
         <>
@@ -108,6 +119,10 @@ export function LiveWaitStep({
               {LIVE_COPY.countdown.replace("{seconds}", String(seconds))}
             </p>
           )}
+          {/* The key reminder sits with the unlock control it describes (D1.5). */}
+          {showKeyReminder ? (
+            <p className={`${styles.intro} ${styles.noPrint}`}>{LIVE_COPY.keyReminder}</p>
+          ) : null}
         </>
       ) : null}
 
@@ -146,9 +161,6 @@ export function LiveWaitStep({
               </span>
             )}
           </div>
-          {showKeyReminder ? (
-            <p className={`${styles.intro} ${styles.noPrint}`}>{LIVE_COPY.keyReminder}</p>
-          ) : null}
           {offerBackupCard && backupKeyText !== null ? (
             showBackupCard ? (
               <div className={styles.backupCard}>

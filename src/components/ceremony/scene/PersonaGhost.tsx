@@ -14,7 +14,7 @@
 
 import { useEffect, useId, useRef, useState, type CSSProperties, type ReactNode } from "react";
 
-import { EASE_LEAVE, GHOST_FADE_MS, GHOST_LEAVE_MS } from "../constants";
+import { EASE_LEAVE, GHOST_FADE_MS, GHOST_LEAVE_MS, GHOST_SIZE_COMPACT, GHOST_SIZE_FULL } from "../constants";
 import { useMotion } from "../motion";
 import { useMaybeSequence } from "../skip-optional";
 import { ghostHanded } from "../stages";
@@ -23,7 +23,7 @@ import { useStage } from "../stage-context";
 import { eyeOffset, followsPointer } from "./eyes";
 import { EYE_CENTRE_SVG, VIEWBOX_HEIGHT, VIEWBOX_WIDTH, type EyeOffset } from "./ghost-geometry";
 import { ghostExitFallbackMs, isGhostExitEnd } from "./ghost-presence";
-import { Ghost, type GhostPose } from "./Ghost";
+import { Ghost, type GhostPose, type GhostSink, type GhostSize } from "./Ghost";
 import { useEmergence } from "./useEmergence";
 
 const NO_OFFSET: EyeOffset = { dx: 0, dy: 0 };
@@ -41,12 +41,19 @@ const LEAVE_VARS = {
 export type PersonaGhostProps = {
   /** The held Envelope, rendered in the bob's slot. */
   children?: ReactNode;
+  /** The sink state on a stored seal (spec 09 D1). Defaults to idle. */
+  sink?: GhostSink;
   /**
    * True while the Ghost leaves after a completed break (design.md "The
    * dissolve on break"). The rise and bob stop, and the Ghost moves up and
    * fades. The parent unmounts the Ghost after `GHOST_LEAVE_MS`.
    */
   leaving?: boolean;
+  /**
+   * Forces the Compact_Ghost size (spec 09 P4.2) on a page that has no persona
+   * stage, such as the live demo's wait card. The persona stages set it themselves.
+   */
+  compact?: boolean;
   /**
    * Called when the leave ends early because Skip ran. The parent then
    * unmounts the Ghost at once, so Skip leaves no Ghost (R12.9).
@@ -55,7 +62,13 @@ export type PersonaGhostProps = {
 };
 
 /** The persona Ghost: the drawing plus motion, Stage pose and eye follow. */
-export function PersonaGhost({ children, leaving = false, onLeft }: PersonaGhostProps) {
+export function PersonaGhost({
+  children,
+  leaving = false,
+  onLeft,
+  sink = "idle",
+  compact = false,
+}: PersonaGhostProps) {
   const { mode } = useMotion();
   const calm = mode === "calm";
   const sequence = useMaybeSequence();
@@ -141,14 +154,19 @@ export function PersonaGhost({ children, leaving = false, onLeft }: PersonaGhost
   const pose: GhostPose = ghostHanded(stage) ? "handed" : "risen";
   // The Compact_Ghost (spec 09 P4.2) applies from the First_Step on, and the CSS
   // limits it to below 600 px. This attribute only selects that CSS rule.
+  const isCompact = compact || personaStepFor(stage) !== null;
   const rootAttributes = {
     ...ROOT_ATTRIBUTES,
-    "data-compact": personaStepFor(stage) !== null ? "true" : "false",
+    "data-compact": isCompact ? "true" : "false",
   };
+  // The size follows the same rule as data-compact: the Compact_Ghost from the First_Step on.
+  const size: GhostSize = isCompact ? GHOST_SIZE_COMPACT : GHOST_SIZE_FULL;
 
   return (
     <Ghost
       pose={pose}
+      size={size}
+      sink={sink}
       eyes={eyes}
       gradientId={gradientId}
       leaving={leaving}

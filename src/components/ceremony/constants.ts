@@ -213,3 +213,11 @@ export const COMPACT_GHOST_SCALE = 0.58;
 // The seal's hit square before the Compact_Ghost scale. ceil(44 / 0.58) = 76, so
 // the square is 44 px on screen (P8.4, the 44x44 seal target).
 export const COMPACT_SEAL_HIT_PX = 76;
+
+// --- Ghost size and sink (spec 09 P4.2, D1) ---
+export const GHOST_SIZE_FULL = "full";
+export const GHOST_SIZE_COMPACT = "compact"; // the Compact_Ghost, at both Phone_Sizes after the First_Step
+export const GHOST_SINK_MS = 900; // the sink on a stored seal, transform only (D1)
+export const EASE_SINK = "cubic-bezier(0.4, 0, 0.6, 1)";
+// The settled, sunk pose: the Ghost below the Soil, where the rise starts. Calm and reduced motion show it at once.
+export const GHOST_SUNK_TRANSLATE = "translateY(105%)";

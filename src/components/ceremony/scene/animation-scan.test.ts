@@ -128,7 +128,7 @@ describe("R21.4: Scene animations change only transform and opacity", () => {
   it("keeps each animation's keyframes to the allowed properties by name", () => {
     const css = sources.filter((s) => s.name.endsWith(".css")).map((s) => s.text).join("\n");
     const names = keyframeBlocks(css).map((b) => b.name);
-    expect(names).toEqual(expect.arrayContaining(["rise", "bob", "shake", "shakeSoil", "ghostLeave", "ghostFade"]));
+    expect(names).toEqual(expect.arrayContaining(["rise", "bob", "shake", "shakeSoil", "ghostLeave", "ghostFade", "ghostSink"]));
   });
 });
 
