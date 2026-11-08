@@ -6,7 +6,7 @@ import Home from "@/app/page";
 import { Footer } from "@/components/ui/Footer";
 import { pageMetadata } from "@/lib/page-metadata";
 
-import { lineOf, readSourceFiles } from "./source-scan";
+import { lineOf, readSourceFiles, type SourceFile } from "./source-scan";
 import { textOutsideUserContent } from "./user-content";
 
 // page.tsx imports feature-flags.ts, which imports `server-only`.
@@ -61,6 +61,11 @@ const SOURCE_EXTENSIONS = [".ts", ".tsx", ".json", ".txt", ".md"];
  */
 const COPY_TEST_RECORD = /^content\/personas\/letters\/[^/]+-copy-test\.md$/;
 
+/** The files the phrase scans read: every source file except copy-test records. */
+function scannedSourceFiles(files: readonly SourceFile[]): SourceFile[] {
+  return files.filter((file) => !COPY_TEST_RECORD.test(file.path));
+}
+
 function isCopyModule(path: string): boolean {
   return /(^|\/)copy\.ts$/.test(path) || path.startsWith("content/personas/");
 }
@@ -98,8 +103,8 @@ function renderedLandingText(): string {
 }
 
 describe("F8.1 retired phrases in source", () => {
-  const files = readSourceFiles(SOURCE_ROOTS, SOURCE_EXTENSIONS).filter(
-    (file) => !COPY_TEST_RECORD.test(file.path),
+  const files = scannedSourceFiles(
+    readSourceFiles(SOURCE_ROOTS, SOURCE_EXTENSIONS),
   );
 
   it("scans a non-empty set of source files", () => {
@@ -150,5 +155,40 @@ describe("F8.4 retired phrases in the rendered / output and page metadata", () =
   it("no Retired_Phrase in the landing page metadata", () => {
     const meta = JSON.stringify(pageMetadata(null, "/"));
     expect(findMatches("page metadata", meta, RETIRED_PHRASES)).toEqual([]);
+  });
+});
+
+describe("copy-test exclusion and hit reporting", () => {
+  it("drops copy-test records from the content/personas scan and keeps the letters", () => {
+    const personas = readSourceFiles(["content/personas"], SOURCE_EXTENSIONS);
+    const paths = personas.map((file) => file.path);
+    expect(paths).toContain("content/personas/letters/us-copy-test.md");
+
+    const scanned = scannedSourceFiles(personas).map((file) => file.path);
+    expect(scanned).not.toContain("content/personas/letters/us-copy-test.md");
+    expect(scanned).toContain("content/personas/letters/us-maya.txt");
+  });
+
+  it("flags a retired phrase in a letter but not in a copy-test record", () => {
+    const hits = scannedSourceFiles([
+      {
+        path: "content/personas/letters/us-copy-test.md",
+        text: "Sample line\nrose-tinted",
+      },
+      {
+        path: "content/personas/letters/us-maya.txt",
+        text: "First line\nSecond line\nrose-tinted",
+      },
+    ]).flatMap((file) => findMatches(file.path, file.text, RETIRED_PHRASES));
+    expect(hits).toEqual([
+      'content/personas/letters/us-maya.txt:3 "rose-tinted"',
+    ]);
+  });
+
+  it("names the file and the line of each hit", () => {
+    const text = "Opening line\n\nThe word caught appears on line three.";
+    expect(findMatches("src/example/copy.ts", text, AVOIDED_WORDS)).toEqual([
+      'src/example/copy.ts:3 "caught"',
+    ]);
   });
 });
