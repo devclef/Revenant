@@ -18,7 +18,7 @@ export const SCENE_COPY = {
    * sentences as REVEAL_COPY, referenced here so the scene copy is the source.
    */
   emergingStatus: {
-    /** While the letter is fetched and verified. */
+    /** While the letter is fetched. */
     loading: REVEAL_COPY.loading,
     /** While the seal is checked (openable and verifying). */
     verifying: REVEAL_COPY.verifying,

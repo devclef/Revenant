@@ -110,12 +110,12 @@ export function stageHeadingIndex(tagNames: readonly string[]): number {
  * its own target, else the newest `h1`/`h2`, else the region itself. A view
  * without a heading (the envelope, the loading statement) takes the region.
  */
-function focusStageDefault(region: HTMLElement): void {
+function focusStageDefault(region: HTMLElement, options: { preventScroll: boolean }): void {
   // A view can name its own focus target (spec 07 R11.2): the recall field.
   // It wins over the newest heading.
   const stageFocus = region.querySelector<HTMLElement>("[data-stage-focus]");
   if (stageFocus !== null) {
-    stageFocus.focus();
+    stageFocus.focus({ preventScroll: options.preventScroll });
     return;
   }
   const headings = Array.from(region.querySelectorAll<HTMLElement>("h1, h2"));
@@ -125,7 +125,7 @@ function focusStageDefault(region: HTMLElement): void {
   if (target !== region && !target.hasAttribute("tabindex")) {
     target.tabIndex = -1;
   }
-  target.focus();
+  target.focus({ preventScroll: options.preventScroll });
 }
 
 /**
@@ -150,7 +150,9 @@ function focusHeading(
       ? null
       : region.querySelector<HTMLElement>(target.fallback));
   if (heading === null) {
-    focusStageDefault(region);
+    // The fallback follows the same scroll rule as the heading it replaces: a
+    // Load_Entry (scroll false) must not scroll the page to the field.
+    focusStageDefault(region, { preventScroll: !target.scroll });
     return undefined;
   }
   if (!heading.hasAttribute("tabindex")) heading.tabIndex = -1;
@@ -306,7 +308,7 @@ function CeremonyRegion({
       }
       return undefined;
     }
-    focusStageDefault(region);
+    focusStageDefault(region, { preventScroll: false });
     return undefined;
   }, [state.tag, stage, letterAuthorQuestions, letterFigures]);
 

@@ -345,8 +345,9 @@
   }
 }
 
-/* Phone stage card (below 600 px). The Ghost is fixed to the window and sits
-   above every Stage card, so card text that scrolls into its band is covered. */
+/* Phone stage card (below 600 px). The Ghost sits above every Stage card. Its
+   layer is anchored to the document below 600 px (see .ghostLayer), so it
+   scrolls with the page. */
 /* The backdrop. One aria-hidden layer under the content; the pointer passes
    through it. Fixed to the window, so the Soil stays where the design puts it. */
 .backdrop {
@@ -366,6 +367,21 @@
   z-index: 2;
   overflow: hidden;
   pointer-events: none;
+}
+
+/* Below 600 px the layer scrolls with the page. Its containing block is the
+   Scene (position: relative, starts at the top of the document), so the Ghost
+   stays at its document position and scrolls away when the card is read to the
+   bottom. Recall text then never sits over the Ghost body box (x 58 to 142 px,
+   y 259 to 362 px at 360 x 640, GT1). */
+@media (max-width: 599.98px) {
+  .ghostLayer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+  }
 }
 
 /* The light: a shaft rising from the Soil. Its foot is the Ghost's x and the

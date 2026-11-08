@@ -578,6 +578,18 @@ describe("CeremonyRoot focus rule (spec 08, focusTargetFor table)", () => {
     expect(source).toContain("clearTimeout(timer)");
   });
 
+  it("passes preventScroll to every focus call a Load_Entry into recall can reach", () => {
+    const source = readFileSync(join(__dirname, "CeremonyRoot.tsx"), "utf8");
+    // The recall field and the recall heading are both focused without a scroll.
+    expect(source).toContain("stageFocus.focus({ preventScroll: options.preventScroll });");
+    expect(source).toContain("target.focus({ preventScroll: options.preventScroll });");
+    expect(source).toContain("focusStageDefault(region, { preventScroll: !target.scroll });");
+    // Only the default rule (Gesture_Entry) may move the page; it passes false.
+    expect(source).toContain("focusStageDefault(region, { preventScroll: false });");
+    expect(source).not.toMatch(/focusStageDefault\(region\);/);
+    expect(source).not.toMatch(/stageFocus\.focus\(\);/);
+  });
+
   it("keeps the Figures_Heading focusable without a positive tabindex", () => {
     const heading = readFileSync(
       join(__dirname, "..", "reveal", "FiguresThenNow.tsx"),

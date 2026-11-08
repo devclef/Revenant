@@ -12,7 +12,7 @@
 // With no running rise (Calm, reduced motion, no animation support, or a rise
 // that already ended) `emergence` stays at its settled `"done"` default, so the
 // Pick_Up_Button shows at once. The layout effect runs before the flow can
-// reach `verified` (the flow needs a network round trip), so the button is
+// reach `openable` (the flow needs a network round trip), so the button is
 // never shown while the rise is still playing.
 
 import { useLayoutEffect, type RefObject } from "react";
