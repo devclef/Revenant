@@ -36,6 +36,14 @@ export const LIVE_COPY = {
     "Choose 1. It is sealed as published, with its period and source.",
   figuresTooManyOne: "Choose no more than 1 figure.",
   figureLatest: "Latest period: {period}",
+  /** The published value, shown at full precision with its unit beside it. */
+  figureValue: "Value: {value}",
+  figureSource: "Source: {source}",
+  figureSourceDetails: "Source details",
+  figureSourceName: "Source name",
+  figureSeriesId: "Series ID",
+  figureSourceLink: "Source link",
+  figureRetrieved: "Retrieved",
   /** A Fallback_Figure is not the latest, so it never says "Latest" (A1.8). */
   figurePeriod: "Period: {period}",
   fixtureLabel: "fixture data",
@@ -49,14 +57,17 @@ export const LIVE_COPY = {
     "The figures could not be loaded, so you cannot seal a letter yet. Check your connection and reload the page.",
   passkeySteps:
     'Your device will ask for the passkey twice. Each time, you press a button first. The passkey will be named "Revenant demo" in your passkey manager.',
+  crossDeviceSummary: "Opening on another device",
   crossDevice:
     'A passkey may not work on a device from a different ecosystem. To open this letter, use a device that has the passkey, or your computer\'s "use a phone" option.',
   warning:
     "A lost or deleted passkey means this letter can never be opened, unless you also keep its backup key. Revenant cannot recover it.",
   warningLabel:
     "I understand that a lost or deleted passkey means this letter can never be opened, unless I keep its backup key.",
-  createButton: "Create your passkey",
+  createButton: "Press the seal with your passkey",
   confirmButton: "Confirm your passkey",
+  nextButton: "Next",
+  backButton: "Back",
   preparing: "Getting ready.",
   stepCreating: "Waiting for your device. Create the passkey when it asks.",
   stepCreated: "Your passkey is created. Press the button to confirm it.",
@@ -164,6 +175,15 @@ export const LIVE_COPY = {
   backupCardShow: "Show my backup key card",
   backupCardKeyLabel: "Your backup key",
   backupCardQrHint: "Scan this code to open the letter link with your backup key.",
+  /** The headline of /demo/live (spec 09 F7). */
+  liveHeading: "Seal your own letter",
+  /** Brand_Copy has no Wait step, so the Live_Stepper takes its name from here. */
+  waitStep: "Wait",
+  stepsLabel: "Your progress",
+  /** Announced once per step change. `{n}` is the step number, `{total}` the count. */
+  stepAnnounce: "Step {n} of {total}: {label}",
+  back: "Back",
+  next: "Next",
 } as const;
 
 /**

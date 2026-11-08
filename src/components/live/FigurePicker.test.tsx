@@ -150,3 +150,70 @@ describe("FigurePicker", () => {
     expect(html).not.toContain("hasn&#x27;t fetched");
   });
 });
+
+describe("FigurePicker value and source details", () => {
+  const DETAIL = {
+    value: "3.412",
+    sourceName: "U.S. EIA",
+    seriesId: "EMM_EPMR_PTE_NUS_DPG",
+    sourceUrl: "https://www.eia.gov/series",
+    retrievedAt: "2026-10-30T14:02:11Z",
+    period: "2026-09",
+    unit: "USD per gallon",
+    region: "U.S. city average",
+  };
+
+  function renderWith(
+    series: readonly PickableSeries[],
+    details?: ReadonlyMap<string, typeof DETAIL>,
+  ): string {
+    return renderToStaticMarkup(
+      createElement(FigurePicker, {
+        series,
+        selected: [],
+        atLimit: false,
+        onToggle: () => undefined,
+        details,
+      }),
+    );
+  }
+
+  it("shows the published value at full precision with its unit", () => {
+    const html = renderWith([REAL], new Map([[REAL.metricId, DETAIL]]));
+
+    expect(html).toContain("Value: 3.412");
+    expect(html).toContain("USD per gallon");
+  });
+
+  it("shows the source name beside the item and the details behind a control", () => {
+    const html = renderWith([REAL], new Map([[REAL.metricId, DETAIL]]));
+
+    expect(html).toContain("Source: U.S. EIA");
+    expect(html).toContain("<details");
+    expect(html).toContain(LIVE_COPY.figureSourceDetails);
+    expect(html).toContain("EMM_EPMR_PTE_NUS_DPG");
+    expect(html).toContain('href="https://www.eia.gov/series"');
+  });
+
+  it("invents no value for a series with no detail entry", () => {
+    const html = renderWith([REAL], new Map());
+
+    expect(html).not.toContain("Value:");
+    expect(html).not.toContain("<details");
+    expect(html).toContain("Regular gasoline");
+  });
+
+  it("keeps catalogue order when details are shown", () => {
+    const html = renderWith(
+      [REAL, FIXTURE],
+      new Map([
+        [REAL.metricId, DETAIL],
+        [FIXTURE.metricId, { ...DETAIL, value: "1.000" }],
+      ]),
+    );
+
+    expect(html.indexOf("Regular gasoline")).toBeLessThan(
+      html.indexOf("Diesel (fixture)"),
+    );
+  });
+});

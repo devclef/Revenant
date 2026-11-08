@@ -96,6 +96,17 @@ describe("WriteForm", () => {
     expect(html).toContain(esc(LIVE_COPY.passkeySteps));
   });
 
+  it("collapses the ecosystem note under its summary, keeping its text and the Seal hooks", () => {
+    expect(html).toMatch(
+      new RegExp(
+        `<details[^>]*>\\s*<summary[^>]*>${esc(LIVE_COPY.crossDeviceSummary)}</summary>\\s*<p>${esc(LIVE_COPY.crossDevice)}</p>\\s*</details>`,
+      ),
+    );
+    expect(html).toContain('id="live-warning"');
+    expect(html).toContain("Press the seal with your passkey");
+    expect(html).toContain('data-card="live-write"');
+  });
+
   it("shows the live count of the letter, starting at zero", () => {
     expect(html).toContain("0 of 5,000 characters");
   });
@@ -150,7 +161,7 @@ describe("WriteForm", () => {
   it("disables the create button until the crypto module has loaded (R15.3)", () => {
     const notLoaded = renderWriteForm({ cryptoLoaded: false });
     expect(notLoaded).toMatch(
-      /<button[^>]*disabled=""[^>]*>Create your passkey<\/button>/,
+      /<button[^>]*disabled=""[^>]*>Press the seal with your passkey<\/button>/,
     );
   });
 
@@ -262,7 +273,7 @@ describe("Seal_Page panel", () => {
 });
 
 describe("SealPage", () => {
-  it("composes the write form", () => {
+  it("composes the write step inside the stepper (spec 09, D2)", () => {
     const html = renderToStaticMarkup(
       createElement(SealPage, {
         rpId: "revenant.devclef.se",
@@ -273,8 +284,11 @@ describe("SealPage", () => {
       }),
     );
 
-    expect(html).toContain(LIVE_COPY.heading);
-    expect(html).toContain(LIVE_COPY.createButton);
+    // The first step holds the letter only. The create button waits for the
+    // seal step, and the stepper supplies the step heading.
+    expect(html).toContain("data-live-stepper");
+    expect(html).toContain(LIVE_COPY.letterLabel);
+    expect(html).not.toContain(esc(LIVE_COPY.createButton));
   });
 });
 

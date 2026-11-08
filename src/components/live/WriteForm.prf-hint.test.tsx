@@ -59,3 +59,37 @@ describe("WriteForm PRF_Hint", () => {
     expect(disabled(without)).toBe(false);
   });
 });
+
+describe("WriteForm backup-key option (D6.1)", () => {
+  it("puts the backup option before the passkey press when prfHint is missing", () => {
+    const html = render({ prfHint: "missing", onBackupStart: () => undefined });
+
+    const backup = html.indexOf(LIVE_COPY.fallbackButton);
+    const passkey = html.indexOf(LIVE_COPY.createButton);
+    expect(backup).toBeGreaterThan(-1);
+    expect(passkey).toBeGreaterThan(-1);
+    expect(backup).toBeLessThan(passkey);
+  });
+
+  it("keeps the passkey press enabled, so the PRF_Check still runs on press", () => {
+    const html = render({ prfHint: "missing", onBackupStart: () => undefined });
+
+    expect(html).toContain(LIVE_COPY.createButton);
+    const passkeyButton = html.match(
+      new RegExp(`<button[^>]*>${LIVE_COPY.createButton}</button>`),
+    );
+    expect(passkeyButton?.[0]).not.toContain("disabled");
+  });
+
+  it("shows no backup option when prfHint is none", () => {
+    const html = render({ prfHint: "none", onBackupStart: () => undefined });
+
+    expect(html).not.toContain(LIVE_COPY.fallbackButton);
+  });
+
+  it("shows no backup option when no start handler is given", () => {
+    const html = render({ prfHint: "missing" });
+
+    expect(html).not.toContain(LIVE_COPY.fallbackButton);
+  });
+});
