@@ -217,6 +217,21 @@ describe("parsePersonaList — field rules reject bad input", () => {
   });
 });
 
+// --- Retired opening_event ---------------------------------------------------
+
+describe("parsePersonaList — opening_event is retired", () => {
+  it("rejects a persona that still carries opening_event", () => {
+    const list = validList() as unknown as { personas: Record<string, unknown>[] };
+    list.personas[0].opening_event = {
+      name: "U.S. presidential election day",
+      date: "2024-11-05",
+      source: "U.S. National Archives",
+      source_url: "https://www.archives.gov/electoral-college/2024",
+    };
+    expect(() => parsePersonaList(list)).toThrow();
+  });
+});
+
 // --- opens_at vs written_as_of cross-check -----------------------------------
 
 describe("parsePersonaList — opens_at must be after written_as_of midnight", () => {

@@ -18,13 +18,7 @@
           "recall_subject": "a gallon of diesel"
         }
       ],
-      "letter_path": "letters/us-maya.txt",
-      "opening_event": {
-        "name": "U.S. presidential election day",
-        "date": "2024-11-05",
-        "source": "U.S. National Archives",
-        "source_url": "https://www.archives.gov/electoral-college/2024"
-      }
+      "letter_path": "letters/us-maya.txt"
     },
     {
       "key": "eu-tomas",
@@ -44,13 +38,7 @@
           "recall_subject": "a litre of diesel"
         }
       ],
-      "letter_path": "letters/eu-tomas.txt",
-      "opening_event": {
-        "name": "European Parliament election",
-        "date": "2024-06-09",
-        "source": "European Parliament",
-        "source_url": "https://www.europarl.europa.eu/elections/en/"
-      }
+      "letter_path": "letters/eu-tomas.txt"
     }
   ],
   "retired_letter_ids": [
