@@ -39,6 +39,7 @@ import {
 import { CEREMONY_COPY } from "../copy";
 import { numberLineGeometry } from "./number-line";
 import { placeLineLabels, type LabelBox } from "./line-labels";
+import { LABEL_FONT_REM, STATIC_REM_PX, tickLeaderPx } from "./tick-leader";
 import { answerText } from "../recall/answer-text";
 import styles from "./figures.module.css";
 
@@ -64,7 +65,12 @@ export type NumberLineProps = {
   unit: string;
 };
 
-type Measured = { lineWidth: number; widths: readonly [number, number, number] };
+type Measured = {
+  lineWidth: number;
+  widths: readonly [number, number, number];
+  /** The root font size in px, read from the document after mount. */
+  remPx: number;
+};
 
 // The estimate for the server render and the first client render (R5.3).
 function estimateWidth(lines: readonly string[]): number {
@@ -134,7 +140,14 @@ export function NumberLine({
       const widths = labelRefs.current.map(
         (span, i) => Math.ceil(span?.offsetWidth || estimated[i]),
       ) as unknown as readonly [number, number, number];
-      setMeasured({ lineWidth: root.clientWidth || LINE_MIN_PX, widths });
+      setMeasured({
+        lineWidth: root.clientWidth || LINE_MIN_PX,
+        widths,
+        remPx:
+          parseFloat(
+            window.getComputedStyle(document.documentElement).fontSize,
+          ) || STATIC_REM_PX,
+      });
     };
     measure();
     document.fonts?.ready.then(measure);
@@ -149,11 +162,16 @@ export function NumberLine({
 
   const lineWidth = measured?.lineWidth ?? LINE_MIN_PX;
   const widths = measured?.widths ?? estimated;
+  const remPx = measured?.remPx ?? STATIC_REM_PX;
+  const emPx = remPx * LABEL_FONT_REM;
   const boxes: readonly [LabelBox, LabelBox, LabelBox] = placeLineLabels({
     positions: [geometry.posThen, geometry.posNow, geometry.posMark ?? 1],
     widths,
     lineWidth,
   });
+  // Each tick ends above the label row its own label was placed in (spec 10 X1.1).
+  const tickHeight = (box: LabelBox): string =>
+    `${tickLeaderPx(box.row, remPx, emPx)}px`;
 
   const fill = (template: string, values: Readonly<Record<string, string>>): string =>
     template.replace(/\{(\w+)\}/g, (_match, key: string) => values[key] ?? "");
@@ -191,11 +209,31 @@ export function NumberLine({
       role="img"
       aria-label={altText}
     >
-      <span className={styles.axis} aria-hidden="true" />
-      <span className={styles.pinThen} aria-hidden="true" />
-      <span className={styles.pinNow} aria-hidden="true" />
+      <span className={styles.axis} aria-hidden="true" data-line-axis="true" />
+      <span
+        className={styles.tick}
+        style={{
+          left: "calc(var(--pos-then) * 100% - 1px)",
+          height: tickHeight(boxes[0]),
+        }}
+        data-line-tick="then"
+        aria-hidden="true"
+      />
+      <span
+        className={styles.tick}
+        style={{
+          left: "calc(var(--pos-now) * 100% - 1px)",
+          height: tickHeight(boxes[1]),
+        }}
+        data-line-tick="now"
+        aria-hidden="true"
+      />
       {markText === undefined ? null : (
-        <span className={styles.markWrap}>
+        <span
+          className={styles.markWrap}
+          style={{ height: tickHeight(boxes[2]) }}
+          data-line-tick="mark"
+        >
           <span className={styles.markStroke} aria-hidden="true" />
           <span className={styles.srOnly}>{markText}</span>
         </span>

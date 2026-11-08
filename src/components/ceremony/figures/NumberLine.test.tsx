@@ -77,6 +77,38 @@ describe("only the three position variables carry positions (R10.3)", () => {
   });
 });
 
+describe("the ticks hang from the axis and reach their labels (spec 10 X1.1 to X1.3)", () => {
+  it("marks the axis, then, now and Mark ticks with data attributes", () => {
+    const html = render({ ...base, markValue: "15" });
+    expect(html).toContain(`data-line-axis="true"`);
+    expect(html).toContain(`data-line-tick="then"`);
+    expect(html).toContain(`data-line-tick="now"`);
+    expect(html).toContain(`data-line-tick="mark"`);
+    expect(html).toContain(`data-line-label="then"`);
+    expect(html).toContain(`data-line-label="now"`);
+    expect(html).toContain(`data-line-label="answer"`);
+  });
+
+  it("draws no Mark tick without an answer", () => {
+    expect(render(base)).not.toContain(`data-line-tick="mark"`);
+  });
+
+  it("sets each static tick height from 16 px and its label row", () => {
+    // Static render, 16 px root. Then and Now sit in row 0 (1.25rem = 20 px), so
+    // each ends 20 - 4 = 16 px down. The Mark's label overlaps Then and drops to
+    // row 1 (20 + 2.6 * 12.8 = 53.28 px), so its leader ends 49.28 px down.
+    const html = render({ ...base, markValue: "15" });
+    const tags = html.match(/<span[^>]*data-line-tick="[^"]*"[^>]*>/g) ?? [];
+    const heightOf = (name: string): number => {
+      const tag = tags.find((t) => t.includes(`data-line-tick="${name}"`)) ?? "";
+      return Number(tag.match(/height:([0-9.]+)px/)?.[1]);
+    };
+    expect(heightOf("then")).toBeCloseTo(16, 6);
+    expect(heightOf("now")).toBeCloseTo(16, 6);
+    expect(heightOf("mark")).toBeCloseTo(49.28, 6);
+  });
+});
+
 describe("the Mark's hidden text and the axis (R11.9, R12.4)", () => {
   it("speaks the typed answer with its unit, unchanged", () => {
     const html = render({ ...base, markValue: "15.50" });
@@ -167,16 +199,17 @@ describe("the Number_Line graphics clear 3:1 on the dark desk (WCAG 2.2 AA)", ()
 
   it("draws the axis in --line, the pins in --text and the Mark ring in --accent", () => {
     expect(declarationsFor(figuresCss, "axis")).toMatch(/var\(--figure-line\)/);
-    for (const name of ["pinThen", "pinNow"]) {
-      expect(declarationsFor(figuresCss, name), name).toMatch(/var\(--figure-pin\)/);
-    }
+    expect(declarationsFor(figuresCss, "tick"), "tick").toMatch(/var\(--figure-pin\)/);
+    expect(declarationsFor(figuresCss, "markWrap"), "markWrap").toMatch(
+      /var\(--figure-mark\)/,
+    );
     expect(declarationsFor(figuresCss, "markStroke"), "markStroke").toMatch(
       /var\(--figure-mark\)/,
     );
   });
 
   it("uses no hard-coded colour for the graphics", () => {
-    for (const name of ["axis", "pinThen", "pinNow", "markStroke"]) {
+    for (const name of ["axis", "tick", "markWrap", "markStroke"]) {
       expect(declarationsFor(figuresCss, name)).not.toMatch(/#[0-9a-fA-F]{3,6}\b|rgba?\(/);
     }
   });

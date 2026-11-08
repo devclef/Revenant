@@ -371,3 +371,9 @@ describe("recall field stacks below RECALL_STACK_BELOW_PX (spec 09, A8.3)", () =
     expect(recallCss).not.toMatch(/\.answerRow \{[^}]*flex-wrap:\s*nowrap;/);
   });
 });
+
+describe("Number_Line tick gap (spec 10 X1.1)", () => {
+  it("holds TICK_LABEL_GAP_PX at 4 px", () => {
+    expect(C.TICK_LABEL_GAP_PX).toBe(4);
+  });
+});

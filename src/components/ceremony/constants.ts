@@ -185,6 +185,7 @@ export const LABEL_CHAR_PX = 8; // estimate per character at 0.8rem, before meas
 
 // --- R6 ticks (spec 08, the marks card and the tick labels) ---
 export const TICK_GAP_PX = 4; // smallest gap between two tick label boxes
+export const TICK_LABEL_GAP_PX = 4; // a Number_Line tick ends this far above its own label row (spec 10 X1.1)
 export const TRACK_MIN_PX = 260; // track width used before measurement
 export const TICK_CHAR_PX = 7.5; // estimated width of one tick label character at 0.75rem
 
