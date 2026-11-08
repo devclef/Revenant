@@ -576,6 +576,18 @@
   width: 100%;
   max-width: 40rem;
   margin: 0 auto;
+  /* The embedded Opening_Flow (OpeningFlow mode="live") is written for the
+     full-viewport ceremony on /l/[id], where .scene owns the width. Inside the
+     live stepper's Wait step it has no .scene ancestor, so its .flow wrapper
+     falls back to the :root --measure (68ch ~= 544px), far wider than a
+     360x640 phone column. That let the Wait step's seal panel and the Turn off
+     motion / Turn sound on control row spill past the right edge and pushed the
+     countdown out of the First_Viewport (spec 09 D5, P10; QA PR #293).
+     Cap --measure to the column and clip any residual overflow so the embedded
+     flow can never exceed its container at a phone width. */
+  --measure: 100%;
+  min-width: 0;
+  overflow-x: clip;
 }
 
 /* The way back to the demo, above every Sealing_Flow state. It sits on the
