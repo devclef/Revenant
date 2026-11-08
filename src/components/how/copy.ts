@@ -30,7 +30,7 @@ export const HOW_COPY = {
     {
       id: "browser-seals",
       title: "The browser seals the letter",
-      body: "Your browser encrypts the letter before anything is sent. The server stores only the encrypted envelope, its unencrypted header and the time-lock secret. It does not receive the letter text in readable form.",
+      body: "Your browser encrypts the letter before anything is sent. The server stores the encrypted envelope, its unencrypted header, a hash of the envelope and the time-lock secret. Your recall answers are stored encrypted too. It does not receive the letter text in readable form.",
     },
     {
       id: "server-clock",

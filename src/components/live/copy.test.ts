@@ -93,6 +93,13 @@ describe("LIVE_COPY claims with code behind them", () => {
     expect(LIVE_COPY.cannotLockNext1).not.toContain('"');
     expect(LIVE_COPY.cannotLockNext1).toContain("use a phone or tablet");
   });
+
+  it("says no letter text was sent when the passkey fails, not that nothing was stored (the prepare route writes a draft row)", () => {
+    expect(LIVE_COPY.cannotLockBody).not.toContain("nothing was stored");
+    expect(LIVE_COPY.cannotLockBody).toContain(
+      "none of its text was sent to Revenant",
+    );
+  });
 });
 
 /**

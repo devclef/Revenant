@@ -89,7 +89,7 @@ export const LIVE_COPY = {
   unavailable:
     "Sealing your own letter is not available on this server. Go back to the demo.",
   cannotLockTitle: "This device cannot lock a letter with a passkey",
-  cannotLockBody: "Your letter has not been sealed, and nothing was stored.",
+  cannotLockBody: "Your letter has not been sealed, and none of its text was sent to Revenant.",
   cannotLockNext1:
     "Try another device or browser. If your browser offers it, choose the option to use a phone or tablet.",
   cannotLockNext2:
