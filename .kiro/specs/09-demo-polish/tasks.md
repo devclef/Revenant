@@ -570,7 +570,7 @@ Each task in this group meets group P for the Stages it changes (G3.7), and atta
   - _Requirements: D2.1–D2.7, D4.1–D4.3, D5.1–D5.5, D6.1–D6.3, D7.1, D7.2, F4.3, F7.1, P8.4, P9.1–P9.4, P10.1–P10.5_
   - Framing evidence (G2.9): the Retired_Phrase search of every `/demo/live` step, and the `node tools/hooks/tone-check.mjs` result for each changed copy file.
 
-- [ ] 22. D3 · Prompt starters on the Write step
+- [x] 22. D3 · Prompt starters on the Write step
   - Agent: `frontend-dev` · Depends on: 21 · Estimated size: ~250 changed lines
   - Before this task: task 21 is on `main`. Cut candidate, first in line (G3.5). Steering updated (Owner patches w, x and y on `main`, owner step O0).
   - Scope: `src/components/live/stepper/WriteStep.tsx`, `src/components/live/PromptStarters.tsx` (new), `src/components/live/copy.ts`, `src/components/live/live.module.css`, and the `*.test.ts(x)` for each file above
