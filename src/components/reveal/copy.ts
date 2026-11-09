@@ -138,6 +138,13 @@ export const REVEAL_COPY = {
   answerInvalid:
     "Enter a number, such as 3.50, or mark this question as no answer.",
 
+  /** The live count under a text answer. `{count}` is the trimmed length in code points. */
+  textCount: "{count} of 1,000 characters",
+
+  /** The inline error under a text answer that is empty or too long (C4.6). */
+  textAnswerInvalid:
+    "Write an answer of up to 1,000 characters, or choose No answer.",
+
   /** The submit control for the recall step. */
   submit: "Record my answers",
 

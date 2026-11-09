@@ -22,10 +22,12 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { RecallScale } from "./RecallScale";
+import { TextAnswerField } from "./TextAnswerField";
 import { answerText } from "./answer-text";
 import { CEREMONY_COPY } from "../copy";
 import {
   canAdvance,
+  canAdvanceText,
   draftTextFor,
   initialField,
   pickReading,
@@ -110,8 +112,10 @@ export function RecallPager({
   // Bumped on every paging action and invalid submit. The focus effect reads it,
   // so a view-local move focuses the shown field without a Flow event.
   const [focusRequest, setFocusRequest] = useState(0);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const checkboxRef = useRef<HTMLInputElement>(null);
+  // The text question whose submit was refused for its text (C4.6). The invalid
+  // message shows on it until the judge pages away.
+  const [rejectedId, setRejectedId] = useState<string | null>(null);
+  const formRef = useRef<HTMLFormElement>(null);
   // The field group (the field and its Next or submit control). It stays inside
   // the visual viewport when the on-screen keyboard opens (spec 09 P9).
   const answerRef = useRef<HTMLDivElement>(null);
@@ -134,12 +138,16 @@ export function RecallPager({
 
   useEffect(() => {
     if (focusRequest === 0) return;
-    const field = inputRef.current;
-    if (field !== null && !field.disabled) {
+    const field = answerRef.current?.querySelector<
+      HTMLInputElement | HTMLTextAreaElement
+    >("[data-stage-focus]");
+    if (field && !field.disabled) {
       field.focus();
       return;
     }
-    checkboxRef.current?.focus();
+    formRef.current
+      ?.querySelector<HTMLInputElement>('input[type="checkbox"]')
+      ?.focus();
   }, [focusRequest, index]);
 
   const question = questions[index];
@@ -147,6 +155,7 @@ export function RecallPager({
 
   function goTo(next: number) {
     setIndex(next);
+    setRejectedId(null);
     setFocusRequest((request) => request + 1);
   }
 
@@ -173,6 +182,17 @@ export function RecallPager({
 
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    // A text answer that is empty or too long is refused here, so the judge
+    // sees the message and the question does not advance (C4.6).
+    const current = drafts[question.id] ?? EMPTY_DRAFT;
+    if (
+      question.answer_type === "text" &&
+      !submitting &&
+      !canAdvanceText(current.text, current.noAnswer)
+    ) {
+      setRejectedId(question.id);
+      return;
+    }
     const action = submitAction(index, total, submitting, isReady(question));
     if (action === "ignore") return;
     if (action === "advance") {
@@ -194,6 +214,11 @@ export function RecallPager({
   const isInvalid = invalid.includes(question.id);
   const isNumber = question.answer_type === "number";
   const field = isNumber ? fieldFor(question.id) : null;
+  const textRejected =
+    question.answer_type === "text" &&
+    rejectedId === question.id &&
+    !canAdvanceText(draft.text, draft.noAnswer);
+  const showInvalid = isInvalid || textRejected;
   const ready = isReady(question);
   const resolved = field === null ? null : resolvedValue(field);
   const reading =
@@ -296,9 +321,19 @@ export function RecallPager({
         )}
       </p>
 
-      <form noValidate onSubmit={handleSubmit} className={styles.form}>
-        <h2 id={headingId} className={styles.qTitle} data-fit="question" data-stage-heading="">
-          {question.text}
+      <form
+        noValidate
+        onSubmit={handleSubmit}
+        className={styles.form}
+        ref={formRef}
+      >
+        <h2
+          id={headingId}
+          className={styles.qTitle}
+          data-fit="question"
+          data-stage-heading=""
+        >
+          <span data-user-content="">{question.text}</span>
         </h2>
 
         <fieldset className={styles.fieldset} aria-labelledby={headingId}>
@@ -317,43 +352,92 @@ export function RecallPager({
               </p>
             )}
 
-            <div
-              ref={answerRef}
-              className={styles.answerRow}
-              data-fit="answer"
-              data-primary-control=""
-            >
-              <input
-                ref={inputRef}
-                id={inputId}
-                className={styles.input}
-                type="text"
-                inputMode="decimal"
-                autoComplete="off"
-                value={field === null ? draft.text : field.typed}
-                disabled={draft.noAnswer}
-                data-stage-focus=""
-                aria-invalid={isInvalid || unreadable}
-                aria-labelledby={headingId}
-                aria-describedby={describedBy === "" ? undefined : describedBy}
-                onChange={(event) =>
-                  field === null
-                    ? onEdit(question.id, event.target.value)
-                    : applyField(
-                        question.id,
-                        typeText(field, event.target.value),
-                      )
-                }
-              />
-              <button
-                type="submit"
-                className={styles.cta}
-                data-fit="advance"
-                disabled={submitting || !ready}
+            {isNumber ? (
+              <div
+                ref={answerRef}
+                className={styles.answerRow}
+                data-fit="answer"
+                data-primary-control=""
               >
-                {isLast ? submitLabel : REVEAL_COPY.nextQuestion}
-              </button>
-            </div>
+                <input
+                  id={inputId}
+                  className={styles.input}
+                  type="text"
+                  inputMode="decimal"
+                  autoComplete="off"
+                  value={field === null ? draft.text : field.typed}
+                  disabled={draft.noAnswer}
+                  data-stage-focus=""
+                  aria-invalid={isInvalid || unreadable}
+                  aria-labelledby={headingId}
+                  aria-describedby={
+                    describedBy === "" ? undefined : describedBy
+                  }
+                  onChange={(event) =>
+                    field === null
+                      ? onEdit(question.id, event.target.value)
+                      : applyField(
+                          question.id,
+                          typeText(field, event.target.value),
+                        )
+                  }
+                />
+                <button
+                  type="submit"
+                  className={styles.cta}
+                  data-fit="advance"
+                  disabled={submitting || !ready}
+                >
+                  {isLast ? submitLabel : REVEAL_COPY.nextQuestion}
+                </button>
+              </div>
+            ) : (
+              <div
+                ref={answerRef}
+                className={styles.textGroup}
+                data-fit="answer"
+                data-primary-control=""
+              >
+                <TextAnswerField
+                  id={inputId}
+                  headingId={headingId}
+                  noAnswerId={noAnswerId}
+                  value={draft.text}
+                  noAnswer={draft.noAnswer}
+                  invalid={showInvalid}
+                  countLabel={(count) => fill(REVEAL_COPY.textCount, { count })}
+                  invalidText={REVEAL_COPY.textAnswerInvalid}
+                  onChange={(text) => onEdit(question.id, text)}
+                  onToggleNoAnswer={(noAnswer) =>
+                    onToggleNoAnswer(question.id, noAnswer)
+                  }
+                />
+                <div className={styles.row}>
+                  <button
+                    type="submit"
+                    className={styles.cta}
+                    data-fit="advance"
+                    disabled={submitting}
+                  >
+                    {isLast ? submitLabel : REVEAL_COPY.nextQuestion}
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {isNumber ? (
+              <label className={styles.noAnswer} htmlFor={noAnswerId}>
+                <input
+                  id={noAnswerId}
+                  type="checkbox"
+                  checked={draft.noAnswer}
+                  onChange={(event) =>
+                    onToggleNoAnswer(question.id, event.target.checked)
+                  }
+                />
+                {REVEAL_COPY.noAnswer}
+              </label>
+            ) : null}
 
             {resolved === null ? null : (
               <p id={parsedId} className={styles.parsed} aria-live="polite">
@@ -401,7 +485,7 @@ export function RecallPager({
               </p>
             ) : null}
 
-            {isInvalid ? (
+            {isNumber && isInvalid ? (
               <span id={errorId} role="alert" className={styles.fieldError}>
                 {REVEAL_COPY.answerInvalid}
               </span>
@@ -435,19 +519,6 @@ export function RecallPager({
                 spokenPrefix={REVEAL_COPY.yourAnswer}
               />
             ) : null}
-
-            <label className={styles.noAnswer} htmlFor={noAnswerId}>
-              <input
-                ref={checkboxRef}
-                id={noAnswerId}
-                type="checkbox"
-                checked={draft.noAnswer}
-                onChange={(event) =>
-                  onToggleNoAnswer(question.id, event.target.checked)
-                }
-              />
-              {REVEAL_COPY.noAnswer}
-            </label>
 
             {failed ? (
               <p role="alert" className={styles.fieldError}>

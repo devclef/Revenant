@@ -111,7 +111,12 @@ describe.each(["us-maya", "eu-tomas"])(
             `<h2[^>]*id="${headingId}"[^>]*>(.*?)</h2>`,
           ).exec(markup);
           expect(heading).not.toBeNull();
-          const shown = heading![1].replace(/&#x27;/g, "'");
+          // The sealed text sits in a data-user-content span, so it renders as sealed.
+          const wrapped = /^<span data-user-content="">(.*)<\/span>$/.exec(
+            heading![1],
+          );
+          expect(wrapped).not.toBeNull();
+          const shown = wrapped![1].replace(/&#x27;/g, "'");
           expect(shown).toBe(question.text);
         });
 
