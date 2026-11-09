@@ -92,6 +92,11 @@ describe("self-reported figures in stage 3", () => {
     expect(html).toContain('data-user-content="">USD per month<');
   });
 
+  it("marks the typed period as user content", () => {
+    const html = render();
+    expect(html).toMatch(/data-user-content="">Oct 2026</);
+  });
+
   it("draws no now row, no change and no Number_Line for it", () => {
     const html = render();
     expect(html).not.toContain('data-receipt-row="now"');

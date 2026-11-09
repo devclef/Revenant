@@ -424,7 +424,7 @@ function SelfReportedFigure({
           <span data-user-content="">{figure.unit}</span>
         </span>{" "}
         <span className={styles.metaLine}>
-          <span className={styles.period}>
+          <span className={styles.period} data-user-content="">
             {formatPeriod(figure.period, figure.region)}
           </span>
           {" · "}
