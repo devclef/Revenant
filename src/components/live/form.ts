@@ -1,5 +1,14 @@
 import { questionRowProblem, questionsForSeal } from "./author-questions";
-import { MAX_FIGURES, MAX_LETTER_CODE_POINTS, MIN_FIGURES } from "./constants";
+import {
+  MAX_FIGURES,
+  MAX_LETTER_CODE_POINTS,
+  MIN_FIGURES,
+  SELF_REPORTED_DECIMALS_MAX,
+  SELF_REPORTED_TEXT_MAX,
+  SELF_REPORTED_VALUE_MAX,
+} from "./constants";
+import type { SelfReportedField, SelfReportedRow } from "./write-draft";
+import { showsFieldMessage, type TouchedState } from "./touched";
 
 /**
  * Pure form rules for the live Seal_Page (spec 06, design.md "form.ts"). Each
@@ -58,6 +67,122 @@ export function countCodePoints(s: string): number {
  */
 export function figureLimit(offeredCount: number): number {
   return Math.min(MAX_FIGURES, Math.max(0, Math.floor(offeredCount)));
+}
+
+/** The fields of a self-reported row, in the order the form shows them. */
+export const SELF_REPORTED_FIELDS: readonly SelfReportedField[] = [
+  "name",
+  "value",
+  "unit",
+  "region",
+  "period",
+];
+
+/**
+ * The problem a self-reported field breaks. Each value names one message in
+ * LIVE_COPY, which says what is allowed.
+ */
+export type SelfReportedProblem =
+  "selfReportedTextLength" | "selfReportedValue" | "selfReportedPeriod";
+
+/** The problems in one row, by field. A field that passes has no entry. */
+export type SelfReportedRowProblems = Partial<
+  Record<SelfReportedField, SelfReportedProblem>
+>;
+
+/** True when a name, unit or region is 1 to 60 characters after trimming. */
+export function selfReportedTextOk(text: string): boolean {
+  const length = countCodePoints(text.trim());
+  return length >= 1 && length <= SELF_REPORTED_TEXT_MAX;
+}
+
+/**
+ * True when a value is digits with an optional dot and at most 4 decimal
+ * places, and is 0 to 999,999,999. Surrounding spaces are ignored. Nothing is
+ * rounded or rescaled.
+ */
+export function selfReportedValueOk(text: string): boolean {
+  const trimmed = text.trim();
+  const match = /^\d+(?:\.(\d+))?$/.exec(trimmed);
+  if (match === null) return false;
+  const decimals = match[1]?.length ?? 0;
+  if (decimals > SELF_REPORTED_DECIMALS_MAX) return false;
+  return Number(trimmed) <= SELF_REPORTED_VALUE_MAX;
+}
+
+/**
+ * True when a period is a month (YYYY-MM) or a date (YYYY-MM-DD) that is a real
+ * calendar value and is not after the sealing day. A month is allowed when it
+ * is the sealing month or earlier. `sealingDay` is YYYY-MM-DD.
+ */
+export function selfReportedPeriodOk(
+  text: string,
+  sealingDay: string,
+): boolean {
+  const trimmed = text.trim();
+  const match = /^(\d{4})-(\d{2})(?:-(\d{2}))?$/.exec(trimmed);
+  if (match === null) return false;
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  if (month < 1 || month > 12) return false;
+  if (match[3] === undefined) {
+    return trimmed <= sealingDay.slice(0, 7);
+  }
+  const day = Number(match[3]);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  const isRealDate =
+    date.getUTCFullYear() === year &&
+    date.getUTCMonth() === month - 1 &&
+    date.getUTCDate() === day;
+  return isRealDate && trimmed <= sealingDay;
+}
+
+/** Checks one self-reported row. An empty result means the row is valid. */
+export function selfReportedRowProblems(
+  row: SelfReportedRow,
+  sealingDay: string,
+): SelfReportedRowProblems {
+  const problems: SelfReportedRowProblems = {};
+  if (!selfReportedTextOk(row.name)) problems.name = "selfReportedTextLength";
+  if (!selfReportedValueOk(row.value)) problems.value = "selfReportedValue";
+  if (!selfReportedTextOk(row.unit)) problems.unit = "selfReportedTextLength";
+  if (!selfReportedTextOk(row.region))
+    problems.region = "selfReportedTextLength";
+  if (!selfReportedPeriodOk(row.period, sealingDay)) {
+    problems.period = "selfReportedPeriod";
+  }
+  return problems;
+}
+
+/** The touched-state key for one field of one self-reported row. */
+export function selfReportedFieldKey(
+  index: number,
+  field: SelfReportedField,
+): string {
+  return `self-reported:${index}:${field}`;
+}
+
+/**
+ * The problems a visitor should see now: only those whose field was touched or
+ * whose seal was attempted (touched.ts). Values are never dropped, so a
+ * message that stays hidden does not change what was typed.
+ */
+export function visibleSelfReportedProblems(
+  problems: SelfReportedRowProblems,
+  touched: TouchedState,
+  index: number,
+): SelfReportedRowProblems {
+  const shown: SelfReportedRowProblems = {};
+  for (const field of SELF_REPORTED_FIELDS) {
+    const problem = problems[field];
+    if (
+      problem !== undefined &&
+      showsFieldMessage(touched, selfReportedFieldKey(index, field))
+    ) {
+      shown[field] = problem;
+    }
+  }
+  return shown;
 }
 
 export function validateWrite(input: {

@@ -37,3 +37,15 @@ export const PHONE_SIZES = [
   { width: 390, height: 844 },
   { width: 360, height: 640 },
 ] as const;
+
+/** Most self-reported numbers a letter may carry (spec 08 later-tasks, R1). */
+export const SELF_REPORTED_MAX = 10;
+
+/** Longest name, unit or region of a self-reported number, in code points. */
+export const SELF_REPORTED_TEXT_MAX = 60;
+
+/** Largest self-reported value. The lowest is 0. */
+export const SELF_REPORTED_VALUE_MAX = 999999999;
+
+/** Most decimal places a self-reported value may have. */
+export const SELF_REPORTED_DECIMALS_MAX = 4;

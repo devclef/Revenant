@@ -1,7 +1,157 @@
 import { describe, expect, it } from "vitest";
 
 import { MAX_LETTER_CODE_POINTS } from "./constants";
-import { countCodePoints, figureLimit, minFiguresFor, validateWrite } from "./form";
+import {
+  countCodePoints,
+  figureLimit,
+  minFiguresFor,
+  selfReportedPeriodOk,
+  selfReportedRowProblems,
+  selfReportedTextOk,
+  selfReportedValueOk,
+  validateWrite,
+  visibleSelfReportedProblems,
+} from "./form";
+import { LIVE_COPY } from "./copy";
+import { INITIAL_TOUCHED, markAttempted, markTouched } from "./touched";
+
+const SEALING_DAY = "2026-11-09";
+const GOOD_ROW = {
+  name: "Rent",
+  value: "1200",
+  unit: "EUR per month",
+  region: "Stockholm",
+  period: "2026-10",
+};
+
+describe("self-reported text bounds (1 to 60 characters after trimming)", () => {
+  it("rejects an empty or spaces-only name", () => {
+    expect(selfReportedTextOk("")).toBe(false);
+    expect(selfReportedTextOk("   ")).toBe(false);
+  });
+  it("accepts 1 and 60 characters and rejects 61", () => {
+    expect(selfReportedTextOk("a")).toBe(true);
+    expect(selfReportedTextOk("a".repeat(60))).toBe(true);
+    expect(selfReportedTextOk("a".repeat(61))).toBe(false);
+  });
+  it("counts trimmed length, so padding does not push a name over 60", () => {
+    expect(selfReportedTextOk(`  ${"a".repeat(60)}  `)).toBe(true);
+  });
+  it("counts astral characters once", () => {
+    expect(selfReportedTextOk("\u{1F600}".repeat(60))).toBe(true);
+    expect(selfReportedTextOk("\u{1F600}".repeat(61))).toBe(false);
+  });
+});
+
+describe("self-reported value bounds (0 to 999,999,999, at most 4 decimals)", () => {
+  it("accepts 0 and the top of the range", () => {
+    expect(selfReportedValueOk("0")).toBe(true);
+    expect(selfReportedValueOk("999999999")).toBe(true);
+  });
+  it("rejects a value above 999,999,999", () => {
+    expect(selfReportedValueOk("1000000000")).toBe(false);
+    expect(selfReportedValueOk("999999999.0001")).toBe(false);
+  });
+  it("accepts up to 4 decimal places and rejects 5", () => {
+    expect(selfReportedValueOk("3.4125")).toBe(true);
+    expect(selfReportedValueOk("3.41250")).toBe(false);
+  });
+  it("rejects a sign, a comma, a letter and an empty value", () => {
+    for (const bad of ["", "-1", "+1", "1,000", "12a", "."]) {
+      expect(selfReportedValueOk(bad), bad).toBe(false);
+    }
+  });
+  it("ignores surrounding spaces without rescaling the value", () => {
+    expect(selfReportedValueOk(" 3.4125 ")).toBe(true);
+  });
+});
+
+describe("self-reported period (a month or a date, not after the sealing day)", () => {
+  it("accepts the sealing month and earlier months", () => {
+    expect(selfReportedPeriodOk("2026-11", SEALING_DAY)).toBe(true);
+    expect(selfReportedPeriodOk("2026-03", SEALING_DAY)).toBe(true);
+  });
+  it("rejects a month after the sealing month", () => {
+    expect(selfReportedPeriodOk("2026-12", SEALING_DAY)).toBe(false);
+  });
+  it("accepts a date up to and including the sealing day", () => {
+    expect(selfReportedPeriodOk("2026-11-09", SEALING_DAY)).toBe(true);
+    expect(selfReportedPeriodOk("2026-11-08", SEALING_DAY)).toBe(true);
+  });
+  it("rejects a date after the sealing day", () => {
+    expect(selfReportedPeriodOk("2026-11-10", SEALING_DAY)).toBe(false);
+  });
+  it("rejects dates that are not real calendar days", () => {
+    expect(selfReportedPeriodOk("2026-02-30", SEALING_DAY)).toBe(false);
+    expect(selfReportedPeriodOk("2026-13", SEALING_DAY)).toBe(false);
+    expect(selfReportedPeriodOk("2026-00", SEALING_DAY)).toBe(false);
+  });
+  it("rejects any other shape", () => {
+    for (const bad of ["", "2026", "09-2026", "2026/10", "October 2026", "2026-1"]) {
+      expect(selfReportedPeriodOk(bad, SEALING_DAY), bad).toBe(false);
+    }
+  });
+});
+
+describe("selfReportedRowProblems", () => {
+  it("returns no problems for a valid row", () => {
+    expect(selfReportedRowProblems(GOOD_ROW, SEALING_DAY)).toEqual({});
+  });
+
+  it("names each broken field with the message key that says what is allowed", () => {
+    const problems = selfReportedRowProblems(
+      { name: "", value: "1.00001", unit: "", region: "x".repeat(61), period: "2026-12" },
+      SEALING_DAY,
+    );
+    expect(problems).toEqual({
+      name: "selfReportedTextLength",
+      value: "selfReportedValue",
+      unit: "selfReportedTextLength",
+      region: "selfReportedTextLength",
+      period: "selfReportedPeriod",
+    });
+  });
+
+  it("maps every problem to a LIVE_COPY message that exists", () => {
+    const problems = selfReportedRowProblems(
+      { name: "", value: "", unit: "", region: "", period: "" },
+      SEALING_DAY,
+    );
+    for (const key of Object.values(problems)) {
+      expect(LIVE_COPY[key!]).toBeTruthy();
+    }
+  });
+});
+
+describe("validation messages show only after a touch or a seal attempt", () => {
+  const problems = selfReportedRowProblems(
+    { ...GOOD_ROW, value: "-1" },
+    SEALING_DAY,
+  );
+
+  it("shows nothing on first load", () => {
+    expect(visibleSelfReportedProblems(problems, INITIAL_TOUCHED, 0)).toEqual({});
+  });
+
+  it("shows the message for a field the visitor has touched, and only that field", () => {
+    const touched = markTouched(INITIAL_TOUCHED, "self-reported:0:value");
+    expect(visibleSelfReportedProblems(problems, touched, 0)).toEqual({
+      value: "selfReportedValue",
+    });
+  });
+
+  it("does not show a touched field of a different row", () => {
+    const touched = markTouched(INITIAL_TOUCHED, "self-reported:1:value");
+    expect(visibleSelfReportedProblems(problems, touched, 0)).toEqual({});
+  });
+
+  it("shows every problem after a seal attempt", () => {
+    const attempted = markAttempted(INITIAL_TOUCHED);
+    expect(visibleSelfReportedProblems(problems, attempted, 0)).toEqual({
+      value: "selfReportedValue",
+    });
+  });
+});
 
 const VALID = {
   text: "Dear future me, the rent was high.",

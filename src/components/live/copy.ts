@@ -198,6 +198,16 @@ export const LIVE_COPY = {
   answerInLetter: "Answer them in your letter too, in your own words.",
   /** Shown after the row was touched or a seal was attempted (C2.3). */
   questionTooLong: "Keep each question to 200 characters or fewer.",
+  /** A self-reported name, unit or region outside 1 to 60 characters. */
+  selfReportedTextLength: "Use 1 to 60 characters.",
+  /** A self-reported value that is not 0 to 999,999,999 with at most 4 decimals. */
+  selfReportedValue:
+    "Use a number from 0 to 999,999,999, with up to 4 decimal places, such as 3.4125.",
+  /** A period that is not a month or a date, or is later than the sealing day. */
+  selfReportedPeriod:
+    "Use a month, such as 2026-09, or a date, such as 2026-09-30. It cannot be after today.",
+  /** Shown when the visitor has reached the limit on their own numbers. */
+  selfReportedLimit: "You can add up to 10 numbers of your own.",
   /** The first row of /demo/live, which the judge can edit, clear or remove (C9.5). */
   livePrefill: "What's on your mind right now?",
   /** The label of the group of Question_Starter buttons (C2.4). */
