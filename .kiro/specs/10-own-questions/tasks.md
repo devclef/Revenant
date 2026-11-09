@@ -403,7 +403,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
   - _Requirements: C7.1–C7.5_
 
-- [ ] 13. C8 · The Author_Testimony above the letter, and the Reveal for a letter with no figures
+- [x] 13. C8 · The Author_Testimony above the letter, and the Reveal for a letter with no figures
   - Agent: `frontend-dev` · Depends on: 12 · Estimated size: ~1,000 changed lines
   - Before this task: steering updated (S1 Owner_Patch on `main`). Task 12 is on `main`.
   - Scope: `src/components/reveal/AuthorTestimony.tsx` (new), `src/components/reveal/Reveal.tsx`, `src/components/reveal/reveal.module.css`, `src/components/reveal/copy.ts`, `src/components/ceremony/stages.ts`, `src/components/ceremony/CeremonyRoot.tsx`, `src/components/ceremony/letter/LetterBlock.tsx`, `src/components/ceremony/close/**`, and the `*.test.ts(x)` for each file above
@@ -427,7 +427,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
   - _Requirements: C8.2–C8.9_
 
-- [ ] 14. C9 · The live demo payoff: your own question first, then the letter, then the figures
+- [x] 14. C9 · The live demo payoff: your own question first, then the letter, then the figures
   - Agent: `frontend-dev` · Depends on: 13 · Estimated size: ~400 changed lines
   - Before this task: steering updated (S1 Owner_Patch on `main`). Task 13 is on `main`.
   - Scope: `src/components/live/stepper/**`, `src/components/live/LiveLetter.tsx`, `src/components/live/LiveLockNote.tsx` (layout only; the text is unchanged), `src/components/live/live.module.css`, `src/components/reveal/Reveal.tsx` (only if the live order needs it), and the `*.test.ts(x)` for each file above
