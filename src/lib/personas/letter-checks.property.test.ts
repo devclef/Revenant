@@ -65,6 +65,8 @@ const CLEAN_WORDS = [
   "drying",
 ] as const;
 
+const NO_PRICES: readonly string[] = [];
+
 // A clean sentence: 3-40 words from CLEAN_WORDS joined by single spaces. By
 // construction it has no digit, no currency symbol, no whole currency word and
 // no election/party term at a word start, and it is well within 1-5,000 code
@@ -74,7 +76,7 @@ const cleanTextArb: fc.Arbitrary<string> = fc
   .map((words) => words.join(" "))
   .filter((text) => {
     const n = [...text].length;
-    return n >= 1 && n <= 5000 && checkLetterText("probe", text).length === 0;
+    return n >= 1 && n <= 5000 && checkLetterText("probe", text, NO_PRICES).length === 0;
   });
 
 const KEY = "us-maya";
@@ -85,7 +87,7 @@ describe("Property 14: checkLetterText passes clean text", () => {
   it("accepts clean generated text within 1-5,000 code points", () => {
     fc.assert(
       fc.property(cleanTextArb, (text) => {
-        expect(checkLetterText(KEY, text)).toEqual([]);
+        expect(checkLetterText(KEY, text, NO_PRICES)).toEqual([]);
       }),
       { numRuns: 100 },
     );
@@ -102,20 +104,115 @@ function insertAt(text: string, fragment: string, at: number): string {
   return cps.slice(0, index).join("") + fragment + cps.slice(index).join("");
 }
 
-// --- Digits (R1.8) -----------------------------------------------------------
+// --- Price lines (P1, Property 21) -------------------------------------------
+//
+// A letter holds exactly its Letter_Price_Lines: one "about {symbol}{value}"
+// phrase per expected price, in order. The digits and currency symbol of a
+// phrase are allowed only there, which retires the spec 03 R1.8 digit and
+// currency-symbol properties. Each property builds a clean letter with its
+// phrases, then changes it in one way.
 
-describe("Property 14: inserting a digit fails and names the persona key", () => {
-  it("any digit at any position is caught", () => {
+const priceArb: fc.Arbitrary<string> = fc
+  .integer({ min: 0, max: 99999 })
+  .map((n) => `${Math.floor(n / 100)}.${String(n % 100).padStart(2, "0")}`);
+
+const pricesArb = fc.array(priceArb, { minLength: 1, maxLength: 3 });
+
+// One phrase per price. The symbol alternates so that both $ and € appear.
+function phrasesFor(prices: readonly string[]): string[] {
+  return prices.map((value, i) => `about ${i % 2 === 0 ? "$" : "€"}${value}`);
+}
+
+// Inserts the phrases as one block, each padded by spaces, at a code-point
+// position in the clean text. Keeping them together keeps their order.
+function letterFor(
+  text: string,
+  phrases: readonly string[],
+  at: number,
+): string {
+  return insertAt(text, phrases.map((p) => ` ${p} `).join(""), at);
+}
+
+function mismatch(found: readonly string[], prices: readonly string[]): string {
+  return `persona "${KEY}": letter_text: price lines ${JSON.stringify(found)} do not match expected ${JSON.stringify(prices)}`;
+}
+
+describe("Property 21: a letter holds exactly its prices", () => {
+  it("passes when each expected price appears once as a phrase", () => {
     fc.assert(
       fc.property(
         cleanTextArb,
-        fc.constantFrom(..."0123456789".split("")),
+        pricesArb,
         fc.integer({ min: 0, max: 10000 }),
-        (text, digit, rawPos) => {
-          const corrupted = insertAt(text, digit, rawPos);
-          const problems = checkLetterText(KEY, corrupted);
-          expect(problems.length).toBeGreaterThan(0);
-          expect(problems).toContainEqual(
+        (text, prices, at) => {
+          const letter = letterFor(text, phrasesFor(prices), at);
+          expect(checkLetterText(KEY, letter, prices)).toEqual([]);
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  it("fails when one expected price loses its phrase", () => {
+    fc.assert(
+      fc.property(
+        cleanTextArb,
+        pricesArb,
+        fc.integer({ min: 0, max: 10000 }),
+        fc.nat(),
+        (text, prices, at, drop) => {
+          const gone = drop % prices.length;
+          const phrases = phrasesFor(prices).filter((_, i) => i !== gone);
+          const found = prices.filter((_, i) => i !== gone);
+          const problems = checkLetterText(
+            KEY,
+            letterFor(text, phrases, at),
+            prices,
+          );
+          expect(problems).toContainEqual(mismatch(found, prices));
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  it("fails when one expected price is stated twice", () => {
+    fc.assert(
+      fc.property(
+        cleanTextArb,
+        pricesArb,
+        fc.integer({ min: 0, max: 10000 }),
+        fc.nat(),
+        (text, prices, at, repeat) => {
+          const again = repeat % prices.length;
+          const phrases = [...phrasesFor(prices), `about $${prices[again]}`];
+          const found = [...prices, prices[again]];
+          const problems = checkLetterText(
+            KEY,
+            letterFor(text, phrases, at),
+            prices,
+          );
+          expect(problems).toContainEqual(mismatch(found, prices));
+        },
+      ),
+      { numRuns: 100 },
+    );
+  });
+
+  it("fails on any digit outside the phrases", () => {
+    fc.assert(
+      fc.property(
+        cleanTextArb,
+        pricesArb,
+        fc.integer({ min: 0, max: 10000 }),
+        fc.integer({ min: 0, max: 10000 }),
+        fc.constantFrom(..."0123456789".split("")),
+        (text, prices, at, digitAt, digit) => {
+          // The digit goes into the clean text before the phrases are placed,
+          // so it is never inside a phrase.
+          const spoiled = insertAt(text, digit, digitAt);
+          const letter = letterFor(spoiled, phrasesFor(prices), at);
+          expect(checkLetterText(KEY, letter, prices)).toContainEqual(
             `persona "${KEY}": letter_text: contains digit "${digit}"`,
           );
         },
@@ -123,27 +220,21 @@ describe("Property 14: inserting a digit fails and names the persona key", () =>
       { numRuns: 100 },
     );
   });
-});
 
-// --- Currency symbols (R1.8) -------------------------------------------------
-
-describe("Property 14: inserting a currency symbol fails and names the key", () => {
-  it("any of $ € £ at any position is caught", () => {
+  it("fails on any currency symbol outside the phrases", () => {
     fc.assert(
       fc.property(
         cleanTextArb,
-        fc.constantFrom("$", "€", "£"),
+        pricesArb,
         fc.integer({ min: 0, max: 10000 }),
-        (text, symbol, rawPos) => {
-          const corrupted = insertAt(text, symbol, rawPos);
-          const problems = checkLetterText(KEY, corrupted);
-          expect(problems.length).toBeGreaterThan(0);
-          expect(problems).toContainEqual(
+        fc.integer({ min: 0, max: 10000 }),
+        fc.constantFrom("$", "€", "£"),
+        (text, prices, at, symbolAt, symbol) => {
+          const spoiled = insertAt(text, symbol, symbolAt);
+          const letter = letterFor(spoiled, phrasesFor(prices), at);
+          expect(checkLetterText(KEY, letter, prices)).toContainEqual(
             `persona "${KEY}": letter_text: contains currency symbol "${symbol}"`,
           );
-          for (const problem of problems) {
-            expect(problem).toContain(`persona "${KEY}": letter_text`);
-          }
         },
       ),
       { numRuns: 100 },
@@ -185,7 +276,7 @@ describe("Property 14: inserting a currency word fails and names the key", () =>
           // Surround with spaces so the inserted token is a whole word and the
           // clean text (which is all lowercase letters) cannot fuse with it.
           const corrupted = insertAt(text, ` ${word} `, rawPos);
-          const problems = checkLetterText(KEY, corrupted);
+          const problems = checkLetterText(KEY, corrupted, NO_PRICES);
           expect(problems.length).toBeGreaterThan(0);
           expect(problems).toContainEqual(
             `persona "${KEY}": letter_text: contains currency word "${word}"`,
@@ -230,7 +321,7 @@ describe("Property 14: inserting an election/party term fails and names it", () 
           // A leading space makes the inserted token a word start; a trailing
           // space keeps any following clean word separate.
           const corrupted = insertAt(text, ` ${written} `, rawPos);
-          const problems = checkLetterText(KEY, corrupted);
+          const problems = checkLetterText(KEY, corrupted, NO_PRICES);
 
           // The term is at a word start, so it must be flagged.
           expect(problems.length).toBeGreaterThan(0);
@@ -298,13 +389,13 @@ describe("Property 14: a term in the middle of a word does not fail", () => {
           // is not the case this property is about. `checkLetterText` on the
           // bare prefix is non-empty exactly when the prefix itself starts a
           // term, so skip those.
-          fc.pre(checkLetterText("probe", prefix).length === 0);
+          fc.pre(checkLetterText("probe", prefix, NO_PRICES).length === 0);
 
           const embedded = `${prefix}${term}`;
           // The term now sits mid-word, preceded by a letter, so R1.10's
           // word-start rule must not flag it. The token is lowercase letters
           // only: no digit, no currency symbol or word either.
-          const problems = checkLetterText(KEY, embedded);
+          const problems = checkLetterText(KEY, embedded, NO_PRICES);
           expect(problems).toEqual([]);
         },
       ),
@@ -313,9 +404,9 @@ describe("Property 14: a term in the middle of a word does not fail", () => {
   });
 
   it("the design.md examples devote and apolicy pass", () => {
-    expect(checkLetterText(KEY, "I devote my evenings to reading.")).toEqual([]);
+    expect(checkLetterText(KEY, "I devote my evenings to reading.", NO_PRICES)).toEqual([]);
     expect(
-      checkLetterText(KEY, "An apolicy sort of day, nothing planned."),
+      checkLetterText(KEY, "An apolicy sort of day, nothing planned.", NO_PRICES),
     ).toEqual([]);
   });
 });
