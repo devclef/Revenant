@@ -346,27 +346,20 @@ describe("Hero after the First_Step and the narrow handed lift (spec 08, R8)", (
   });
 });
 
-// Spec 09 A8.3 (recall field stacks below 640 px). The media query in the recall
-// CSS repeats RECALL_STACK_BELOW_PX, and the stacked rules sit inside it.
-describe("recall field stacks below RECALL_STACK_BELOW_PX (spec 09, A8.3)", () => {
+// Spec 10 C1.5: the recall field and its Next control share one row at every
+// width, so the primary control sits inside the 360 x 640 First_Viewport. The
+// stacked layout of spec 09 A8.3 is retired, so no stacking rule may remain.
+describe("recall field shares one row at every width (spec 10, C1.5)", () => {
   const recallCss = stripComments(
     readFileSync(resolve(here, "recall/RecallPager.module.css"), "utf8"),
   );
 
-  it("holds RECALL_STACK_BELOW_PX at 640", () => {
-    expect(C.RECALL_STACK_BELOW_PX).toBe(640);
+  it("has no 639.98 px stacking media query and no stacked answer row", () => {
+    expect(recallCss).not.toContain("@media (max-width: 639.98px)");
+    expect(recallCss).not.toMatch(/\.answerRow \{[^}]*flex-direction:\s*column/);
   });
 
-  it("stacks the field and its control in a media query ending just below the constant", () => {
-    // max-width 639.98px is the largest width below 640 px, so 640 px itself shares a row.
-    expect(recallCss).toContain("@media (max-width: 639.98px) {");
-    const block = recallCss.match(/@media \(max-width: 639\.98px\) \{([\s\S]*?)\n\}/)?.[1] ?? "";
-    expect(block).toMatch(/\.answerRow \{[^}]*flex-direction:\s*column;/);
-    expect(block).toMatch(/\.input \{[^}]*width:\s*100%;/);
-    expect(block).toMatch(/\.cta \{[^}]*width:\s*100%;/);
-  });
-
-  it("lets the answer row wrap at and above the constant", () => {
+  it("lets the answer row wrap at every width", () => {
     expect(recallCss).toMatch(/\.answerRow \{[^}]*flex-wrap:\s*wrap;/);
     expect(recallCss).not.toMatch(/\.answerRow \{[^}]*flex-wrap:\s*nowrap;/);
   });

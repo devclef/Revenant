@@ -21,6 +21,25 @@ describe("phone intact stage scroll offset is removed (scene.module.css, spec 10
   });
 });
 
+// Spec 10 C1.5: the phone Ghost layer is anchored to the top of the document and
+// scrolls with the persona page. It is not a fixed or 100 % height box.
+describe("phone Ghost layer is anchored to the document (spec 10 C1.5)", () => {
+  const phoneBlock = css.match(/@media \(max-width: 599\.98px\) \{\s*\.personaColumn \.ghostLayer \{([^}]*)\}/)?.[1] ?? "";
+
+  it("is absolute, inset to the top and full width, at 100vh", () => {
+    expect(phoneBlock).toMatch(/position:\s*absolute;/);
+    expect(phoneBlock).toMatch(/inset:\s*0 0 auto 0;/);
+    expect(phoneBlock).toMatch(/height:\s*100vh;/);
+  });
+
+  it("has no top, left, width or 100 % height in the phone rule", () => {
+    expect(phoneBlock).not.toMatch(/\btop:/);
+    expect(phoneBlock).not.toMatch(/\bleft:/);
+    expect(phoneBlock).not.toMatch(/\bwidth:/);
+    expect(phoneBlock).not.toMatch(/height:\s*100%/);
+  });
+});
+
 // Spec 10 X2.2 and X2.3: the Step_Indicator row rule exists below 600 px only.
 describe("phone Step_Indicator row (StepIndicator.module.css)", () => {
   const stepCss = readFileSync(
