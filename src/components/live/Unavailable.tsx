@@ -13,7 +13,11 @@ import styles from "./live.module.css";
  */
 export function Unavailable() {
   return (
-    <section className={styles.panel} aria-labelledby="live-unavailable-heading">
+    <section
+      className={styles.panel}
+      aria-labelledby="live-unavailable-heading"
+      data-paper=""
+    >
       <DemoLabel />
       <h1 id="live-unavailable-heading" className={styles.heading}>
         {LIVE_COPY.heading}
