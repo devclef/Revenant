@@ -182,7 +182,12 @@ describe("Property 17: the letter is shown verbatim with nothing against it (R13
     expect(paperStart).toBeGreaterThan(headerEnd);
 
     const caption = html.slice(headerStart, headerEnd);
-    const heading = caption.indexOf(`<h2 tabindex="-1">${REVEAL_COPY.stage2Title}</h2>`);
+    // The Caption_Block h2 carries data-letter-heading (spec 10 C6, the
+    // no-figures Skip focus target), so match on the heading text, not an
+    // exact attribute list.
+    const heading = caption.search(
+      new RegExp(`<h2[^>]*>${REVEAL_COPY.stage2Title}</h2>`),
+    );
     const disclosure = caption.indexOf(
       REVEAL_COPY.letterDisclosure
         .replace("{name}", PERSONA_NAME)

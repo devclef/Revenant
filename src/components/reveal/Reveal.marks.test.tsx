@@ -180,13 +180,14 @@ describe("reveal marks stage: column markers and order", () => {
     expect(html).not.toContain('role="img"');
   });
 
-  it("puts the instruction, Break the seal, then the Skip_Link in that order at stage 1", () => {
+  it("puts the hint, Break the seal, then the Skip_Link in that order at stage 1", () => {
     const html = renderMarks(RECORD, { phone: false, stage: 1 });
+    // This payload has no figures, so the Skip_Link reads skipToLetter (C6.6).
     const order = [
-      html.indexOf('data-fit="break"'),
-      html.indexOf(CEREMONY_COPY.sealInstruction),
+      html.indexOf('data-seal-group=""'),
+      html.indexOf(CEREMONY_COPY.sealHint),
       html.indexOf(CEREMONY_COPY.sealButton),
-      html.indexOf(CEREMONY_COPY.skipToReceipts),
+      html.indexOf(CEREMONY_COPY.skipToLetter),
     ];
     for (const index of order) expect(index).toBeGreaterThanOrEqual(0);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
@@ -390,10 +391,10 @@ describe("reveal stage 1 seal by width class (spec 09 C5.1, C5.2)", () => {
 
   for (const [classLabel, phone] of CLASSES) {
     for (const [stateLabel, seal] of STATES) {
-      it(`${classLabel} ${stateLabel}: draws the pressable seal and the instruction in the Content_Column before the Envelope slot exists`, () => {
+      it(`${classLabel} ${stateLabel}: draws the pressable seal and the hint in the Content_Column before the Envelope slot exists`, () => {
         const html = renderMarks(SEAL_RECORD, { phone, stage: 1, seal });
         expect(html).toContain("data-seal-target");
-        expect(html).toContain(CEREMONY_COPY.sealInstruction);
+        expect(html).toContain(CEREMONY_COPY.sealHint);
         expect(html).not.toContain("data-envelope-seal");
       });
 

@@ -1,0 +1,40 @@
+/*
+ * The shared primary button (spec 10 C6.5). Lifted unchanged from
+ * RecallPager.module.css `.cta` (the orange "Next question" and "Record my
+ * answers" control), so the Stage's main button has one definition. The Accent
+ * (--accent) marks the reader's own, primary control; it never marks a figure,
+ * a change or a direction (tone.md). Orange is never used as text on purple:
+ * the label sits on the Accent fill in --on-accent.
+ *
+ * Used by: RecallPager's `.cta`, the Seal_Button and "See the receipts"
+ * (SealBreak / reveal). "Show everything" keeps its outline style, because only
+ * the Stage's one main button is orange.
+ */
+
+.primary {
+  font: inherit;
+  font-weight: 700;
+  /* Labels wrap inside the button (spec 09 A8.1). The 44 px minimum stays as a
+     floor for the touch target; it is not a fixed width. */
+  white-space: normal;
+  max-width: 100%;
+  text-align: center;
+  color: var(--on-accent);
+  background-color: var(--accent);
+  border: 0;
+  border-radius: 2px;
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 1.1rem;
+  cursor: pointer;
+}
+
+.primary:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.primary:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}

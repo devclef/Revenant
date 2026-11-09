@@ -40,11 +40,11 @@
 .stage {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  text-align: center;
-  gap: 1.25rem;
+  align-items: flex-start;
+  text-align: left;
+  gap: 1rem;
   max-width: var(--measure);
-  margin: 0 auto;
+  margin: 0;
 }
 
 /* --- The seal pointer target --- */
@@ -61,8 +61,10 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: min(42vw, 9rem);
-  height: min(42vw, 9rem);
+  /* PHONE_SEAL_SIZE (spec 10 C6.1): the WaxSeal in the Content_Column, its hit
+     square ~104 px at 6.5rem. constants.ts holds PHONE_SEAL_SIZE. */
+  width: 6.5rem;
+  height: 6.5rem;
   /* The pointer target never drops below 44 by 44 px (spec 09 C5.2). */
   min-width: 44px;
   min-height: 44px;
@@ -222,13 +224,21 @@
   cursor: pointer;
 }
 
-/* --- The instruction line --- */
+/* --- The hint line (spec 10 C6.4) --- */
 
-.instruction {
+.hint {
   margin: 0;
   color: var(--ink);
   line-height: 1.4;
   max-width: var(--measure);
+}
+
+/* The portalled Seal_Group container at 900 px and wider (spec 10 C6.3). Its
+   placement (position, the gap to the Ghost, the width and the grid) is set by
+   scene.module.css on [data-seal-group]; this class carries only the group's
+   own text colour, since it sits on the dark beside the Ghost, not on paper. */
+.sealGroup {
+  color: var(--on-purple);
 }
 
 /* --- The "Break the seal" button (matches EnvelopeView's paper button) --- */

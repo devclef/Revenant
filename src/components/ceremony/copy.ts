@@ -51,15 +51,17 @@ export const CEREMONY_COPY = {
 
   // --- Seal break ---
 
-  /** The instruction above the wax seal. */
-  sealInstruction:
-    "Press and hold the seal to break it, or use the button below.",
+  /** The hint above the wax seal (spec 10 C6.4). It names no position. */
+  sealHint: "Press and hold the wax seal to break it, or use the button.",
 
   /** The button that breaks the seal. */
   sealButton: "Break the seal",
 
   /** The Skip_Link under the seal: sends SHOW_ALL once (spec 09 C4.2). */
   skipToReceipts: "Skip to the receipts",
+
+  /** The Skip_Link label when the letter has no figures (spec 10 C6.6, C8.9). */
+  skipToLetter: "Skip to the letter",
 
   /** Live: the seal has not been held long enough yet. */
   sealHolds: "The seal holds. Press and hold a little longer to break it.",

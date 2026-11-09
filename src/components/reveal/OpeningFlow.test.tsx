@@ -429,16 +429,14 @@ describe("OpeningFlow view selection", () => {
       record: RECORD,
       stage: 1,
     });
-    expect(html).not.toContain(REVEAL_COPY.stage1Title);
-    // C4.1: the answers are not drawn at stage 1 on the desktop; they wait in the
-    // closed testimony disclosure from stage 3 on.
-    expect(html).not.toContain(">3.50</span>");
+    // C6.7/C6.10: stage 1 shows its own "Your testimony" heading (no paper panel),
+    // the Answer_List at every size, and the seal group below it.
+    expect(html).toContain(REVEAL_COPY.stage1Title);
     expect(html).toContain(CEREMONY_COPY.skipToReceipts);
     // Stage 1 is the `marks` Stage: the remembered answers above the unbroken
-    // seal, its instruction line and the "Break the seal" button (owned by
-    // SealBreak). It replaces the old stage1Next ("Read the letter") control.
+    // seal, its hint line and the "Break the seal" button (owned by SealBreak).
     expect(html).toContain(CEREMONY_COPY.sealButton);
-    expect(html).toContain(esc(CEREMONY_COPY.sealInstruction));
+    expect(html).toContain(esc(CEREMONY_COPY.sealHint));
     // Stages 2 (letter) and 3 (figures) are filled by a later task: the letter
     // text and the sealed figure must not appear at stage 1.
     for (const needle of SEALED_PAYLOAD_STRINGS) {
@@ -593,7 +591,9 @@ describe("OpeningFlow Ceremony root attributes (R3.1, R3.2, R17.3)", () => {
         record: RECORD,
         stage: 1,
       });
-      expect(revealHtml).not.toContain(REVEAL_COPY.stage1Title);
+      // C6.7/C6.10: stage 1 now shows its "Your testimony" heading (it was
+      // hidden before C6), so this inverts from `not.toContain`.
+      expect(revealHtml).toContain(REVEAL_COPY.stage1Title);
       // Stage 1 is the `marks` Stage: the "Break the seal" button is shown.
       expect(revealHtml).toContain(CEREMONY_COPY.sealButton);
     },

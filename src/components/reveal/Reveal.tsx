@@ -11,7 +11,6 @@ import { SoundEnabledContext } from "@/components/ceremony/sound/SoundEnabledCon
 import { FiguresThenNow } from "./FiguresThenNow";
 import { useFigures } from "./figures-api";
 import { Fingerprint } from "./Fingerprint";
-import { StagePanel } from "./StagePanel";
 import { FiguresFadeUp } from "@/components/ceremony/figures/FiguresFadeUp";
 import { Close, type CloseProps } from "@/components/ceremony/close/Close";
 import { SealBreak } from "@/components/ceremony/seal/SealBreak";
@@ -275,10 +274,13 @@ export function Reveal({
     ];
   });
 
-  // The Answer_List (spec 09 A9, P6.4) shows the same number questions as the
-  // recall scales, with the metric name, the Answer_Text and the unit, or "No
-  // answer". It replaces the scales on the phone.
-  const answerItems: AnswerListItem[] = opened.payload.recall_questions.flatMap(
+  // The Answer_List (spec 09 A9, P6.4; spec 10 C6.10) shows the recall answers,
+  // Author_Questions first (text), then the number questions with the metric
+  // name, the Answer_Text and the unit, or "No answer". The payload has no
+  // Author_Question field yet (spec 10 C2 adds it), so only number items appear
+  // until that lands; the text branch is ready for when it does.
+  const textItems: AnswerListItem[] = [];
+  const numberItems: AnswerListItem[] = opened.payload.recall_questions.flatMap(
     (question) => {
       if (question.answer_type !== "number") return [];
       const unit = unitByMetricId.get(question.metric_id);
@@ -288,13 +290,16 @@ export function Reveal({
         answer !== undefined && answer.kind === "number" ? answer.value : undefined;
       return [
         {
+          kind: "number" as const,
           name: nameByMetricId.get(question.metric_id) ?? unit,
           markValue,
           unit: displayUnitFor(unit),
+          sample: false,
         },
       ];
     },
   );
+  const answerItems: AnswerListItem[] = [...textItems, ...numberItems];
 
   // Each sealed question with the judge's value in the Accent fill, or "No
   // answer". The unit comes from the sealed metric, never re-fetched (R8.2).
@@ -378,7 +383,11 @@ export function Reveal({
               </details>
             ) : (
               <div className={styles.marks} data-card="marks">
-                {isPhone ? <AnswerList items={answerItems} /> : null}
+                {/* Stage 1 sits on the dark with no paper panel (spec 10 C6.7):
+                    the "Your testimony" heading, then the Answer_List at every
+                    Evidence_Size (C6.10), then the Seal_Group. */}
+                <h2 className={styles.marksHeading}>{REVEAL_COPY.stage1Title}</h2>
+                <AnswerList items={answerItems} />
                 {showSeal ? (
                   <div className={styles.marksBreak} data-fit="break">
                     <SealBreak
@@ -389,6 +398,7 @@ export function Reveal({
                       }
                       seal={seal ?? INERT_SEAL}
                       showAll={stage === 1}
+                      hasFigures={figureCount > 0}
                       onSealingChange={onSealingChange}
                       envelopeSlot={envelopeSlot}
                     />
@@ -403,10 +413,11 @@ export function Reveal({
     <section className={styles.reveal}>
       {marksGone ? null : (
         <div className={`${styles.stage} ${styles.fade}`}>
-          {/* The paper panel holds the testimony and seal break on stage 1
-              only. From the letter stage on, the paper holds only the letter
-              text (spec 09 L6.1), so the testimony sits on the desk instead. */}
-          {stage < 2 ? <StagePanel>{marksBlock}</StagePanel> : <div className={styles.marksOnDesk}>{marksBlock}</div>}
+          {/* Stage 1 renders no paper panel (spec 10 C6.7): the testimony
+              heading, the Answer_List and the Seal_Group sit on the dark in the
+              .marksOnDesk tokens. From the letter stage on, the testimony stays
+              on the desk too (spec 09 L6.1). */}
+          <div className={styles.marksOnDesk}>{marksBlock}</div>
         </div>
       )}
 

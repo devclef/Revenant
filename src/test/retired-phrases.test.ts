@@ -49,6 +49,10 @@ const RETIRED_PHRASES: readonly RetiredPhrase[] = [
     pattern: /European Parliament election/i,
   },
   { name: "\"Pick up the letter\"", pattern: /pick up the letter/i },
+  {
+    name: "the old seal instruction \"Press and hold the seal to break it, or use the button below.\"",
+    pattern: /press and hold the seal to break it, or use the button below\./i,
+  },
 ];
 
 /**

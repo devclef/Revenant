@@ -202,23 +202,24 @@ function renderReveal(record: RecallRecordV1, stage: 1 | 2 | 3 = 1): string {
 }
 
 describe("Reveal stage 1 is the marks Stage", () => {
-  it("shows no marks heading at stage 1 (spec 09 C4.1)", () => {
+  it("shows the stage 1 heading on the dark at stage 1 (spec 10 C6.7, C6.10)", () => {
     const html = renderReveal(RECORD);
-    expect(html).not.toContain(REVEAL_COPY.stage1Title);
+    expect(html).toContain(REVEAL_COPY.stage1Title);
   });
 
-  it("shows no remembered answers or question text at stage 1 (spec 09 C4.1)", () => {
+  it("shows no recall question wording at stage 1 (spec 09 C4.1)", () => {
     const html = renderReveal(RECORD);
+    // The Answer_List shows the metric name, not the sealed question wording.
     for (const question of OPENED.payload.recall_questions) {
       expect(html).not.toContain(question.text);
     }
     expect(html).not.toContain(">2.50</span>");
   });
 
-  it("shows the seal instruction and the 'Break the seal' button, not a 'Read the letter' button", () => {
+  it("shows the seal hint and the 'Break the seal' button, not a 'Read the letter' button", () => {
     const html = renderReveal(RECORD);
     expect(html).toContain(CEREMONY_COPY.sealButton);
-    expect(html).toContain(CEREMONY_COPY.sealInstruction);
+    expect(html).toContain(CEREMONY_COPY.sealHint);
     // The old stage-1 "Read the letter" / stage1Next control is gone.
     expect(html).not.toContain("Read the letter");
   });

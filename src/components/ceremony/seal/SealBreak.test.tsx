@@ -104,10 +104,10 @@ describe("SealBreak seal clause of Property 19: the pointer target has a real bu
     );
   });
 
-  it("shows the instruction line in the same Stage as the button", () => {
+  it("shows the hint line in the same Stage as the button", () => {
     const markup = renderSealBreak();
     expect(markup).toContain(
-      CEREMONY_COPY.sealInstruction.replace(/'/g, "&#x27;"),
+      CEREMONY_COPY.sealHint.replace(/'/g, "&#x27;"),
     );
   });
 
@@ -149,11 +149,11 @@ describe("SealBreak source (Property 21, and the hold has moved out)", () => {
   });
 });
 
-describe("SealBreak instruction colour", () => {
-  it("sets the instruction line to the paper ink, not the desk ink", () => {
+describe("SealBreak hint colour", () => {
+  it("sets the hint line to the paper ink, not the desk ink", () => {
     const css = readFileSync(join(__dirname, "SealBreak.module.css"), "utf8");
-    expect(css).toMatch(/\.instruction\s*\{[^}]*color:\s*var\(--ink\)/);
-    expect(css).not.toMatch(/\.instruction\s*\{[^}]*color:\s*var\(--desk-ink/);
+    expect(css).toMatch(/\.hint\s*\{[^}]*color:\s*var\(--ink\)/);
+    expect(css).not.toMatch(/\.hint\s*\{[^}]*color:\s*var\(--desk-ink/);
   });
 });
 

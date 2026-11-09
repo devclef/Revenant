@@ -370,3 +370,52 @@ describe("Number_Line tick gap (spec 10 X1.1)", () => {
     expect(C.TICK_LABEL_GAP_PX).toBe(4);
   });
 });
+
+// Spec 10 C6: the Seal_Group, the seal-on-flap, the narrow marks column, the
+// phone WaxSeal and the Text_Answer clamp. The CSS repeats these constants, so
+// this block keeps the two sides from drifting (design.md "Constants").
+describe("Break-the-seal (C6) constants and CSS (spec 10 C6)", () => {
+  const css = (rel: string) => stripComments(readFileSync(resolve(here, rel), "utf8"));
+  const scene = css("scene/scene.module.css");
+  const sealBreak = css("seal/SealBreak.module.css");
+  const reveal = css("../reveal/reveal.module.css");
+
+  it("holds the C6 constants at their design.md numbers", () => {
+    expect(C.SEAL_GROUP_GAP_PX).toBe(20);
+    expect(C.SEAL_GROUP_GAP_PX).toBeLessThanOrEqual(24);
+    expect(C.SEAL_GROUP_WIDTH).toBe("14rem");
+    expect(C.MARKS_COLUMN_MAX).toBe("min(28rem, 40vw)");
+    expect(C.SEAL_ON_FLAP_LEFT_PCT).toBe(50);
+    expect(C.SEAL_ON_FLAP_TOP_PCT).toBe(55.3);
+    expect(C.SEAL_ON_FLAP_WIDTH_PCT).toBe(28);
+    expect(C.PHONE_SEAL_SIZE).toBe("6.5rem");
+    expect(C.ANSWER_TEXT_CLAMP_LINES).toBe(3);
+  });
+
+  it("places the Seal_Group with SEAL_GROUP_GAP_PX and SEAL_GROUP_WIDTH in the scene CSS", () => {
+    expect(scene).toContain(`--seal-group-gap: ${C.SEAL_GROUP_GAP_PX}px;`);
+    expect(scene).toContain(`width: ${C.SEAL_GROUP_WIDTH};`);
+  });
+
+  it("puts the seal on the flap at the design percentages in the scene CSS", () => {
+    expect(scene).toMatch(
+      new RegExp(
+        `\\[data-envelope-seal\\] \\{[^}]*left: ${C.SEAL_ON_FLAP_LEFT_PCT}%;[^}]*top: ${C.SEAL_ON_FLAP_TOP_PCT}%;[^}]*width: ${C.SEAL_ON_FLAP_WIDTH_PCT}%;`,
+      ),
+    );
+  });
+
+  it("caps the marks Content_Column at MARKS_COLUMN_MAX in the scene CSS", () => {
+    expect(scene).toContain(`max-width: ${C.MARKS_COLUMN_MAX};`);
+  });
+
+  it("sizes the phone WaxSeal at PHONE_SEAL_SIZE in the SealBreak CSS", () => {
+    expect(sealBreak).toContain(`width: ${C.PHONE_SEAL_SIZE};`);
+    expect(sealBreak).toContain(`height: ${C.PHONE_SEAL_SIZE};`);
+  });
+
+  it("clamps the Text_Answer to ANSWER_TEXT_CLAMP_LINES lines in the reveal CSS", () => {
+    expect(reveal).toContain(`-webkit-line-clamp: ${C.ANSWER_TEXT_CLAMP_LINES};`);
+    expect(reveal).toContain(`line-clamp: ${C.ANSWER_TEXT_CLAMP_LINES};`);
+  });
+});

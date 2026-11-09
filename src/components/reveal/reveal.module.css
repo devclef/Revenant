@@ -741,6 +741,40 @@
   color: var(--text);
 }
 
+/* A text Author_Question answer in the Answer_List (spec 10 C6.10, C8.1). The
+   question is a plain label; the answer is clamped to ANSWER_TEXT_CLAMP_LINES
+   (3) lines, plain text, with a 3 px Accent left border that marks "you"
+   without colouring the paragraph orange (tone.md, neutrality.md). */
+.answerTextItem {
+  margin: 0 0 0.9rem;
+}
+
+.answerQuestion {
+  display: block;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.answerText {
+  display: -webkit-box;
+  -webkit-line-clamp: 3; /* ANSWER_TEXT_CLAMP_LINES */
+  line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0.25rem 0 0;
+  padding-left: 0.6rem;
+  border-left: 3px solid var(--accent);
+  color: var(--text);
+  white-space: pre-wrap;
+}
+
+/* On the marks paper panel the text answer reads as paper ink, not the desk
+   cream (issue #119). The Accent border is unchanged. */
+.stagePanel .answerText,
+.stagePanel .answerQuestion {
+  color: var(--ink);
+}
+
 /* --- Spec 09 P6 and C3.4: receipts and the marks card on the phone ---
  *
  * The figures panel and every Receipt_Card use `display: flow-root` with no

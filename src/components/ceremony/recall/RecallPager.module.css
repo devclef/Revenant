@@ -91,6 +91,11 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* The orange primary control (Next question / Record my answers). Its style is
+   the shared primary button lifted to ui/buttons.module.css (spec 10 C6.5),
+   kept in sync with these declarations; buttons-primary-parity.test.ts checks
+   the two match. The 899 px font/padding override below is the recall card's
+   own tightening. */
 .cta {
   font: inherit;
   font-weight: 700;
