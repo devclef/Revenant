@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { buildRecallRecord } from "@/lib/recall";
+import { buildRecallRecordV2 } from "@/lib/recall";
 
 type RecallQuestionV1 = PayloadV1["recall_questions"][number];
 import { encodeBase64url } from "@/lib/seal-format";
@@ -143,7 +143,7 @@ describe("backup key path, end to end (R17.6 to R17.10, R21.6)", () => {
     const begun = state;
     if (begun.tag !== "recall") return;
 
-    const built = buildRecallRecord([], begun.drafts);
+    const built = buildRecallRecordV2([], begun.drafts, {});
     expect(built.ok).toBe(true);
     if (!built.ok) return;
     const sealedRecord = await crypto.encryptOpeningRecord(

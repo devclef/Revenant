@@ -9,8 +9,9 @@
  */
 
 import { describe, it, expect } from "vitest";
-import type { RecallRecordV1 } from "@/lib/recall";
+import type { RecallRecordV2 } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
+import { PAYLOAD_TEXT_3, PAYLOAD_TEXT_4 } from "@/lib/recall/fixtures.test-data";
 import {
   INITIAL_STATE,
   reduce,
@@ -51,8 +52,8 @@ const OPENED: Opened = {
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 };
 
-const RECORD: RecallRecordV1 = {
-  version: 1,
+const RECORD: RecallRecordV2 = {
+  version: 2,
   answers: [
     { question_id: "q1", kind: "number", value: "3.41" },
     { question_id: "q2", kind: "no_answer" },
@@ -234,6 +235,44 @@ describe("single recall path (spec 10 C1)", () => {
     const viaVerify = reduce({ tag: "verifying" }, { type: "OPENED", opened: OPENED });
     expect(viaUnlock).toEqual(viaVerify);
     expect(viaUnlock.tag).toBe("recall");
+  });
+});
+
+// --- text question cap (spec 10 C3.9) ----------------------------------------
+
+describe("text question cap (spec 10 C3.9)", () => {
+  const withPayload = (payload: PayloadV1): Opened => ({ ...OPENED, payload });
+  const unlocking: FlowState = {
+    tag: "unlocking",
+    envelope: {},
+    envelopeHash: "h",
+    unlock: { passkey: null, backup: true },
+  };
+
+  it("enters recall with one draft per question at three text questions", () => {
+    const next = reduce(unlocking, {
+      type: "OPENED",
+      opened: withPayload(PAYLOAD_TEXT_3),
+    });
+    if (next.tag !== "recall") throw new Error("expected recall");
+    expect(Object.keys(next.drafts).sort()).toEqual(
+      PAYLOAD_TEXT_3.recall_questions.map((q) => q.id).sort(),
+    );
+  });
+
+  it("returns invalid_payload from unlocking with four text questions", () => {
+    expect(
+      reduce(unlocking, { type: "OPENED", opened: withPayload(PAYLOAD_TEXT_4) }),
+    ).toEqual({ tag: "open_failed", kind: "invalid_payload" });
+  });
+
+  it("returns invalid_payload from verifying with four text questions", () => {
+    expect(
+      reduce(
+        { tag: "verifying" },
+        { type: "OPENED", opened: withPayload(PAYLOAD_TEXT_4) },
+      ),
+    ).toEqual({ tag: "open_failed", kind: "invalid_payload" });
   });
 });
 

@@ -39,7 +39,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { CEREMONY_COPY } from "./copy";
 import { REVEAL_COPY } from "../reveal/copy";
 import type { FlowState, Opened } from "../reveal/opening-machine";
-import type { Draft, RecallRecordV1 } from "@/lib/recall";
+import type { Draft, RecallRecordV2 } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
 
 // --- the mocked flow hook ----------------------------------------------------
@@ -165,8 +165,8 @@ const DRAFTS: Record<string, Draft> = {
   "q-fuel": { text: "3.50", noAnswer: false },
 };
 
-const RECORD: RecallRecordV1 = {
-  version: 1,
+const RECORD: RecallRecordV2 = {
+  version: 2,
   answers: [{ question_id: "q-fuel", kind: "number", value: "3.50" }],
 };
 

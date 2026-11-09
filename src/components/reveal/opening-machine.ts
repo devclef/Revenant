@@ -26,13 +26,17 @@
  * - Error states hold no payload (R7.6, R7.7, R7.9): `verification_failed`,
  *   `open_failed`, `not_placed` and `unreachable` carry no `Opened`.
  *
- * This module imports no runtime values. It imports only the types
- * `RecallRecordV1` and `Draft` from `@/lib/recall` and `PayloadV1` from
+ * This module imports one runtime value, `TEXT_ANSWERS_MAX` from
+ * `@/lib/recall/limits` (a pure constant file with no Zod). It imports only the
+ * types `RecallRecordV2` and `Draft` from `@/lib/recall` and `PayloadV1` from
  * `@/lib/seal-format`. It never imports `@/lib/crypto` or
  * `@/lib/recall/generate`.
  */
 
-import type { RecallRecordV1, Draft } from "@/lib/recall";
+import type { RecallRecordV2, Draft } from "@/lib/recall";
+// The cap is read from limits.ts, not the barrel, so this module imports no
+// Zod-backed runtime value (spec 10 C3.9).
+import { TEXT_ANSWERS_MAX } from "@/lib/recall/limits";
 import type { PayloadV1 } from "@/lib/seal-format";
 
 /**
@@ -127,17 +131,17 @@ export type FlowState =
       tag: "submitting";
       opened: Opened;
       drafts: Record<string, Draft>;
-      record: RecallRecordV1;
+      record: RecallRecordV2;
       sealed: SealedRecord;
     }
   | {
       tag: "submit_failed";
       opened: Opened;
       drafts: Record<string, Draft>;
-      record: RecallRecordV1;
+      record: RecallRecordV2;
       sealed: SealedRecord;
     }
-  | { tag: "reveal"; opened: Opened; record: RecallRecordV1; stage: 1 | 2 | 3 }
+  | { tag: "reveal"; opened: Opened; record: RecallRecordV2; stage: 1 | 2 | 3 }
   | { tag: "not_placed" }
   | { tag: "unreachable" }
   | { tag: "verification_failed" }
@@ -183,7 +187,7 @@ export type FlowEvent =
   | { type: "SUBMIT_INVALID"; invalid: string[] }
   | {
       type: "RECORD_SEALED";
-      record: RecallRecordV1;
+      record: RecallRecordV2;
       sealed: SealedRecord;
     }
   | { type: "POST_OK" }
@@ -212,6 +216,16 @@ function enterRecall(
   opened: Opened,
   samples: Readonly<Record<string, string>>,
 ): FlowState {
+  // More text questions than a Recall_Record_V2 can hold (C3.9) means the
+  // payload is not one Revenant sealed. Show the invalid payload error, with
+  // no question and no draft.
+  const textQuestions = opened.payload.recall_questions.filter(
+    (question) => question.answer_type === "text",
+  ).length;
+  if (textQuestions > TEXT_ANSWERS_MAX) {
+    return { tag: "open_failed", kind: "invalid_payload" };
+  }
+
   const drafts: Record<string, Draft> = {};
   for (const question of opened.payload.recall_questions) {
     drafts[question.id] = { text: samples[question.id] ?? "", noAnswer: false };
