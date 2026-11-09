@@ -127,6 +127,12 @@ export type FlowState =
       opened: Opened;
       drafts: Record<string, Draft>;
       invalid: string[];
+      /**
+       * Each number question's Sample_Answer, by question ID (spec 10 C5). Absent
+       * or empty for Live_Letters and Real_Letters, so no field is prefilled and
+       * no Sample_Note shows.
+       */
+      samples?: Readonly<Record<string, string>>;
     }
   | {
       tag: "submitting";
@@ -134,6 +140,7 @@ export type FlowState =
       drafts: Record<string, Draft>;
       record: RecallRecordV2;
       sealed: SealedRecord;
+      samples?: Readonly<Record<string, string>>;
     }
   | {
       tag: "submit_failed";
@@ -141,6 +148,7 @@ export type FlowState =
       drafts: Record<string, Draft>;
       record: RecallRecordV2;
       sealed: SealedRecord;
+      samples?: Readonly<Record<string, string>>;
     }
   | { tag: "reveal"; opened: Opened; record: RecallRecordV2; stage: 1 | 2 | 3 }
   | { tag: "not_placed" }
@@ -231,7 +239,7 @@ function enterRecall(
   for (const question of opened.payload.recall_questions) {
     drafts[question.id] = { text: samples[question.id] ?? "", noAnswer: false };
   }
-  return { tag: "recall", opened, drafts, invalid: [] };
+  return { tag: "recall", opened, drafts, invalid: [], samples };
 }
 
 /**
@@ -248,7 +256,13 @@ function withDraft(
   const current = state.drafts[id] ?? emptyDraft();
   const drafts = { ...state.drafts, [id]: { ...current, ...change } };
   const invalid = state.invalid.filter((x) => x !== id);
-  return { tag: "recall", opened: state.opened, drafts, invalid };
+  return {
+    tag: "recall",
+    opened: state.opened,
+    drafts,
+    invalid,
+    samples: state.samples,
+  };
 }
 
 /**
@@ -375,6 +389,7 @@ export function reduce(state: FlowState, event: FlowEvent): FlowState {
             opened: state.opened,
             drafts: state.drafts,
             invalid: event.invalid,
+            samples: state.samples,
           };
         case "RECORD_SEALED":
           // Every answer validated and the record encrypted: move to
@@ -385,6 +400,7 @@ export function reduce(state: FlowState, event: FlowEvent): FlowState {
             drafts: state.drafts,
             record: event.record,
             sealed: event.sealed,
+            samples: state.samples,
           };
         default:
           return state;
@@ -410,6 +426,7 @@ export function reduce(state: FlowState, event: FlowEvent): FlowState {
             drafts: state.drafts,
             record: state.record,
             sealed: state.sealed,
+            samples: state.samples,
           };
         default:
           return state;
@@ -426,6 +443,7 @@ export function reduce(state: FlowState, event: FlowEvent): FlowState {
           drafts: state.drafts,
           record: state.record,
           sealed: state.sealed,
+          samples: state.samples,
         };
       }
       return state;

@@ -177,6 +177,18 @@ export const REVEAL_COPY = {
   yourAnswer: "Your answer",
 
   /**
+   * The note under a field that holds its Sample_Answer (spec 10 C5.5). The
+   * field counts as answered, and the judge can change or clear it.
+   */
+  sampleNote: "A sample answer is filled in. Change it if you remember differently.",
+
+  /**
+   * The label after a submitted answer that is a Kept_Sample (spec 10 C5.8).
+   * It sits in the row's text colour and appears nowhere else.
+   */
+  sampleLabel: "· sample answer",
+
+  /**
    * The control that reveals every hidden stage at once, in order. Shown
    * alongside the next-stage button while a stage is still hidden (R9.4).
    */

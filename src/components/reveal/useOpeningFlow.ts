@@ -618,12 +618,13 @@ export function useOpeningFlow(
       return;
     }
     const { opened, drafts } = current;
-    // Every letter posts a Recall_Record_V2 (spec 10 C3.8). No samples are
-    // passed yet; task 9 (C5) supplies them.
+    // Every letter posts a Recall_Record_V2 (spec 10 C3.8). The samples come
+    // from the recall state, so a draft that still equals its Sample_Answer is
+    // stored with `sample: true` (C5.8). Live and real letters have none.
     const built = buildRecallRecordV2(
       opened.payload.recall_questions,
       drafts,
-      {},
+      current.samples ?? {},
     );
     if (!built.ok) {
       safeDispatch({ type: "SUBMIT_INVALID", invalid: built.invalid });

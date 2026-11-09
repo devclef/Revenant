@@ -318,6 +318,17 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* The Sample_Label after a Kept_Sample (spec 10 C5.8). It takes its row's text
+   colour, set here on the row, and never inherits from another surface. */
+.rememberedAnswer .sampleLabel {
+  color: var(--ink);
+}
+
+.yourAnswerValue .sampleLabel {
+  color: var(--text);
+  font-weight: 400;
+}
+
 /* Each stage fades in; disabled under reduced motion (see the block below). */
 .fade {
   animation: reveal-fade-in 600ms ease both;

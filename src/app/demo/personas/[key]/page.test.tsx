@@ -47,7 +47,10 @@ const notFound = vi.fn(() => {
  */
 async function loadPage(personas: ReadonlyArray<typeof PERSONA>) {
   vi.resetModules();
-  vi.doMock("@/lib/personas", () => ({ PERSONAS: personas }));
+  vi.doMock("@/lib/personas", () => ({
+    PERSONAS: personas,
+    sampleCandidatesFor: () => ({}),
+  }));
   vi.doMock("next/navigation", () => ({ notFound }));
   vi.doMock("@/components/reveal/OpeningFlow", () => ({
     OpeningFlow: ({
@@ -168,7 +171,10 @@ describe("persona letter route: Demo_2_On (spec 07 task 6, R15.8, R15.9)", () =>
 
   it("is force-dynamic so RP_ID is read per request", async () => {
     vi.resetModules();
-    vi.doMock("@/lib/personas", () => ({ PERSONAS: [PERSONA] }));
+    vi.doMock("@/lib/personas", () => ({
+      PERSONAS: [PERSONA],
+      sampleCandidatesFor: () => ({}),
+    }));
     const mod = await import("./page");
     expect(mod.dynamic).toBe("force-dynamic");
   });

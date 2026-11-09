@@ -73,6 +73,12 @@ export type RecallPagerProps = {
   onSubmit: () => void;
   /** The index shown first. Clamped to the payload. Used by tests. */
   initialIndex?: number;
+  /**
+   * Each number question's Sample_Answer, by question ID (spec 10 C5.5). A
+   * persona letter passes them; a Live_Letter passes none. While a field's draft
+   * still equals its sample, the Sample_Note shows under the field.
+   */
+  samples?: Readonly<Record<string, string>>;
 };
 
 /** The empty draft used for a question the judge has not touched yet. */
@@ -98,6 +104,7 @@ export function RecallPager({
   onToggleNoAnswer,
   onSubmit,
   initialIndex = 0,
+  samples = {},
 }: RecallPagerProps) {
   const questions = payload.recall_questions;
   const total = questions.length;
@@ -254,6 +261,14 @@ export function RecallPager({
   const unreadableId = `recall-${question.id}-unreadable`;
   const errorId = `recall-${question.id}-error`;
   const noAnswerId = `recall-${question.id}-no-answer`;
+  const sampleNoteId = `recall-${question.id}-sample-note`;
+  // The Sample_Note shows only while the field still holds its Sample_Answer
+  // (C5.5). Any other text, or "No answer", hides it.
+  const sampleAnswer = isNumber ? samples[question.id] : undefined;
+  const showSampleNote =
+    sampleAnswer !== undefined &&
+    !draft.noAnswer &&
+    draft.text === sampleAnswer;
   const rescaleNote =
     sealedUnit === undefined ? null : rescaleNoteFor(sealedUnit);
 
@@ -286,6 +301,7 @@ export function RecallPager({
     resolved === null ? null : parsedId,
     reading === null ? null : readingsId,
     unreadable ? unreadableId : null,
+    showSampleNote ? sampleNoteId : null,
     isInvalid ? errorId : null,
   ]
     .filter((id): id is string => id !== null)
@@ -424,6 +440,12 @@ export function RecallPager({
                 </div>
               </div>
             )}
+
+            {showSampleNote ? (
+              <p id={sampleNoteId} className={styles.sampleNote}>
+                {REVEAL_COPY.sampleNote}
+              </p>
+            ) : null}
 
             {isNumber ? (
               <label className={styles.noAnswer} htmlFor={noAnswerId}>

@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { OpeningFlow } from "@/components/reveal/OpeningFlow";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { PersonaIntro } from "@/components/ceremony/intro/PersonaIntro";
-import { PERSONAS } from "@/lib/personas";
+import { PERSONAS, sampleCandidatesFor } from "@/lib/personas";
 import { pageMetadata } from "@/lib/page-metadata";
 import { UI_COPY } from "@/components/ui/copy";
 import type { Metadata } from "next";
@@ -114,6 +114,7 @@ export default async function PersonaLetterPage({
           opens_at: persona.opens_at,
         }}
         demo2On={demo2On}
+        sampleCandidates={sampleCandidatesFor(persona.key)}
       />
     </SceneShell>
   );
