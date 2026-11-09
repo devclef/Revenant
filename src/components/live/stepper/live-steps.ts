@@ -14,7 +14,7 @@ import type { FlowState } from "@/components/reveal/opening-machine";
 import { LIVE_COPY } from "../copy";
 import type { WriteMode } from "../form";
 import {
-  INITIAL_WRITE_DRAFT,
+  CLEARED_WRITE_DRAFT,
   initialWriteDraft,
   reduceWriteDraft,
   type WriteDraft,
@@ -146,7 +146,7 @@ export function reduceStepper(
       return { ...state, draft: reduceWriteDraft(state.draft, action.event) };
     }
     case "SEALED":
-      return { ...state, sealed: true, draft: INITIAL_WRITE_DRAFT };
+      return { ...state, sealed: true, draft: CLEARED_WRITE_DRAFT };
     case "GOTO": {
       // Forward only. A step at or before the current one changes nothing, and
       // returning the same state keeps React from re-rendering.

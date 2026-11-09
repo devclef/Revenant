@@ -107,7 +107,7 @@ describe("Property 12: buildLivePayload copies the then figures and nothing else
         sealedDateArb,
         letterTextArb,
         (ids, figures, sealedDate, text) => {
-          const result = buildLivePayload({ text, metricIds: ids, sealedDate, figures });
+          const result = buildLivePayload({ text, metricIds: ids, authorQuestions: [], sealedDate, figures });
 
           const firstMissing = ids.find((id) => oracleThen(figures, id, sealedDate) === undefined);
           if (firstMissing !== undefined) {
@@ -177,6 +177,7 @@ describe("Property 12: buildLivePayload copies the then figures and nothing else
     const result = buildLivePayload({
       text: "Dear future me.",
       metricIds: ["us-diesel", "us-gasoline-regular"],
+      authorQuestions: [],
       sealedDate: "2020-01-06",
       figures,
     });
@@ -194,6 +195,7 @@ describe("Property 12: buildLivePayload copies the then figures and nothing else
     const input = {
       text: "Same letter.",
       metricIds: ["eu-diesel"],
+      authorQuestions: [],
       sealedDate: "2026-11-02",
       figures,
     };
@@ -214,6 +216,7 @@ describe("Property 12: buildLivePayload copies the then figures and nothing else
     const result = buildLivePayload({
       text: "EU letter.",
       metricIds: ["eu-petrol-euro95"],
+      authorQuestions: [],
       sealedDate: "2026-11-02",
       figures,
     });

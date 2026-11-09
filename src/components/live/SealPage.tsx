@@ -194,11 +194,12 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
     () => ({
       text: writeDraft.text,
       metricIds: writeDraft.metricIds,
+      questions: writeDraft.questions,
       figures: sealedFigures,
       backupCard: writeDraft.backupCardTicked,
       ...(mode === "real" ? { real: { opensOn, timeZone: timeZone.timeZone } } : {}),
     }),
-    [writeDraft.text, writeDraft.metricIds, writeDraft.backupCardTicked, sealedFigures, mode, opensOn, timeZone],
+    [writeDraft.text, writeDraft.metricIds, writeDraft.questions, writeDraft.backupCardTicked, sealedFigures, mode, opensOn, timeZone],
   );
 
   const flow = useSealFlow(sealDeps, draft);

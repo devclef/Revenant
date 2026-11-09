@@ -44,6 +44,19 @@ export function initialWriteDraft(mode: WriteMode): WriteDraft {
 /** The demo draft. Kept as the value the stepper and the tests start from. */
 export const INITIAL_WRITE_DRAFT: WriteDraft = initialWriteDraft("demo");
 
+/**
+ * The draft after a 201. Nothing is kept: no letter text, no figures, no
+ * Author_Question rows (spec 10, C2.11). Unlike the demo draft, it has no
+ * Live_Prefill row, so no question shows again until the letter opens.
+ */
+export const CLEARED_WRITE_DRAFT: WriteDraft = {
+  text: "",
+  metricIds: [],
+  warningTicked: false,
+  backupCardTicked: false,
+  questions: [],
+};
+
 export type WriteDraftEvent =
   | { type: "TEXT_CHANGED"; text: string }
   | { type: "FIGURE_TOGGLED"; metricId: string; limit?: number }

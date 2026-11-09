@@ -16,6 +16,7 @@ import type { CryptoModule } from "./crypto-module";
 import type { SealApi } from "./api";
 import { computeSealTimes } from "./clock";
 import { buildLivePayload } from "./build-payload";
+import { questionsForSeal } from "./author-questions";
 import { checkRealOpening, type RealOpening } from "./real-opening";
 import type { SealEvent, SealFailureKind } from "./seal-machine";
 
@@ -50,6 +51,12 @@ export interface SealDraft {
   text: string;
   metricIds: readonly string[];
   figures: LoadedFigures;
+  /**
+   * The Author_Question rows as typed (spec 10, C2). Sealed only after
+   * `questionsForSeal`: empty rows are dropped and the rest trimmed. Omitted
+   * means no author questions.
+   */
+  questions?: readonly string[];
   /**
    * Whether the visitor asked for a backup key card (R21.1). Read at the
    * Confirm_Press; the key itself is generated there, not here.
@@ -228,6 +235,7 @@ async function runSeal(
     const built = buildLivePayload({
       text: draft.text,
       metricIds: draft.metricIds,
+      authorQuestions: questionsForSeal(draft.questions ?? []),
       sealedDate: times.sealedAt.slice(0, 10),
       figures: draft.figures,
     });

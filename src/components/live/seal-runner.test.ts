@@ -405,3 +405,29 @@ describe("sealWithPasskey with the optional backup wrap (R21.1)", () => {
     expect(body.envelope.wrappedDeks.map((w) => w.factor)).toEqual(["passkey"]);
   });
 });
+
+describe("the Author_Question rows in the sealed payload (spec 10, C2.3, C2.7)", () => {
+  it("seals the trimmed rows first as a1, a2 and drops rows that are empty after trimming", async () => {
+    const crypto = await import("@/lib/crypto");
+    const sealedPayloads: unknown[] = [];
+    const recording = {
+      sealLetter: async (input: Parameters<CryptoModule["sealLetter"]>[0]) => {
+        sealedPayloads.push(input.payload);
+        return crypto.sealLetter(input);
+      },
+    } as Partial<CryptoModule>;
+    const h = await makeHarness({ cryptoPatch: recording });
+    h.draft.questions = ["  What is on my mind?  ", "   ", "Second?"];
+
+    const { outcome } = await runFlow(h);
+    expect(outcome?.ok).toBe(true);
+
+    expect(sealedPayloads).toHaveLength(1);
+    const payload = sealedPayloads[0] as { recall_questions: { id: string; answer_type: string; text: string }[] };
+    expect(payload.recall_questions.slice(0, 2)).toEqual([
+      { id: "a1", answer_type: "text", text: "What is on my mind?" },
+      { id: "a2", answer_type: "text", text: "Second?" },
+    ]);
+    expect(payload.recall_questions[2]?.id).toMatch(/^q\d+$/);
+  });
+});

@@ -45,15 +45,22 @@ function pickMetricDefinition(metric: MetricDefinitionV1): MetricDefinitionV1 {
  * throws on any shape error. The caller passes a unique, listable selection, so
  * a missing subject or a duplicate id throws instead of building a bad letter.
  *
+ * The Author_Question rows come first (C2.7, C2.8). `authorQuestions` must already
+ * be trimmed with empty rows dropped (`questionsForSeal`). Row i becomes the
+ * text question `a<i+1>` with no `metric_id`, so it can't collide with the
+ * generator's `q<n>` IDs. A Real_Letter with no figures still builds, because
+ * the schema has no minimum for metrics or figures (C2.9).
+ *
  * @param sealedDate the sealing day as "YYYY-MM-DD" (UTC), the reference date.
  */
 export function buildLivePayload(input: {
   text: string;
   metricIds: readonly string[];
+  authorQuestions: readonly string[];
   sealedDate: string;
   figures: LoadedFigures;
 }): { ok: true; payload: PayloadV1 } | { ok: false; metricId: string } {
-  const { text, metricIds, sealedDate, figures } = input;
+  const { text, metricIds, authorQuestions, sealedDate, figures } = input;
 
   const metrics: MetricDefinitionV1[] = [];
   const payloadFigures: PayloadV1["figures"] = [];
@@ -78,12 +85,21 @@ export function buildLivePayload(input: {
     subjects.push(RECALL_SUBJECTS[metricId]);
   }
 
-  const recall_questions = generateRecallQuestions(
-    metrics.map((metric, i) => ({
-      metric,
-      recall_subject: subjects[i],
-    })),
-  );
+  const authorItems = authorQuestions.map((questionText, i) => ({
+    id: `a${i + 1}`,
+    answer_type: "text" as const,
+    text: questionText,
+  }));
+
+  const recall_questions = [
+    ...authorItems,
+    ...generateRecallQuestions(
+      metrics.map((metric, i) => ({
+        metric,
+        recall_subject: subjects[i],
+      })),
+    ),
+  ];
 
   // No written_as_of: a live letter is sealed on its day, not written "as of" one.
   const payload = payloadV1Schema.parse({

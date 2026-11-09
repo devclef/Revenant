@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { BRAND_COPY } from "@/components/brand/copy";
 
 import { LIVE_COPY } from "../copy";
-import { INITIAL_WRITE_DRAFT } from "../write-draft";
+import { CLEARED_WRITE_DRAFT, INITIAL_WRITE_DRAFT } from "../write-draft";
 
 import {
   LIVE_STEPS,
@@ -150,7 +150,7 @@ describe("reduceStepper", () => {
     state = reduceStepper(state, { type: "SEALED" });
 
     expect(state.sealed).toBe(true);
-    expect(state.draft).toEqual(INITIAL_WRITE_DRAFT);
+    expect(state.draft).toEqual(CLEARED_WRITE_DRAFT);
     expect(reduceStepper(state, { type: "BACK" }).step).toBe("seal");
   });
 
