@@ -65,6 +65,14 @@ export const REVEAL_COPY = {
    */
   memoryLine: "You lived through {month} too. Answer from your own memory of it.",
 
+  // --- Author_Testimony (spec 10 C8.2) ---
+
+  /** The Author_Testimony_Heading: the block of the author's own questions above the letter. */
+  authorTestimonyTitle: "Questions you left for yourself",
+
+  /** The label above each Text_Answer on the Author_Testimony (spec 10 C8.2). */
+  saidJustNow: "What you said just now",
+
   // --- Errors ---
 
   /** The letter record has not been placed yet (404). */

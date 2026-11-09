@@ -904,3 +904,41 @@
     background-color: var(--bg);
   }
 }
+
+/* --- Spec 10 C8.2: the Author_Testimony above the letter ---
+ *
+ * The block sets its own ink, as every panel does, so its text never inherits
+ * the desk colour. The question and answer text keep their line breaks
+ * (`pre-wrap`), and the answer is the judge's own words, shown in full. */
+.authorTestimony {
+  --ink: #1f1b16;
+  color: var(--ink);
+  margin: 0 0 1.25rem;
+}
+
+.authorTestimonyHeading {
+  margin: 0 0 0.75rem;
+}
+
+.authorTestimonyItem {
+  margin: 0 0 1rem;
+}
+
+.authorTestimonyQuestion {
+  margin: 0;
+  white-space: pre-wrap;
+  font-weight: 600;
+}
+
+.authorTestimonyLabel {
+  margin: 0.25rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted);
+}
+
+.authorTestimonyAnswer {
+  margin: 0.25rem 0 0;
+  padding-left: 0.6rem;
+  border-left: 3px solid var(--accent);
+  white-space: pre-wrap;
+}
