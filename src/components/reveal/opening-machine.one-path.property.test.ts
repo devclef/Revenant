@@ -6,9 +6,9 @@
 // when the payload has more than TEXT_ANSWERS_MAX text questions (C3.9).
 // Otherwise it is `recall` with one empty draft per question.
 //
-// The sample map (C5.4) is not an input to the reducer yet. Both OPENED arms
-// pass `{}` to enterRecall, so this property checks the empty-draft case. Task
-// 9 extends it when samples reach the reducer.
+// The sample map (C5.4) is an input: OPENED carries the samples, and each
+// number question's draft starts from its Sample_Answer. The first property
+// checks the empty-draft case; the samples case is checked below it.
 //
 // Validates: Requirements C1.1, C1.2, C3.9.
 
@@ -87,6 +87,53 @@ describe("Property 7: opening goes straight to Testify on one path", () => {
           expect(draft).toEqual({ text: "", noAnswer: false });
         }
       }),
+      { numRuns: 100 },
+    );
+  });
+});
+
+// Property 7, extended with samples (spec 10 C5.4). A Sample_Answer for a number
+// question seeds that question's draft; every other draft stays empty. Both
+// OPENED arms give the same state, so the Sample_Pick never makes the path
+// differ.
+describe("Property 7 with samples: both arms seed the same drafts", () => {
+  it("prefills only the number questions that have a sample", () => {
+    fc.assert(
+      fc.property(
+        fc.array(KIND, { maxLength: 8 }),
+        fc.array(fc.constantFrom("3.59", "1.20", "0.00"), { maxLength: 8 }),
+        (kinds, values) => {
+          const opened = openedFor(kinds);
+          const samples: Record<string, string> = {};
+          kinds.forEach((kind, i) => {
+            const value = values[i];
+            if (kind === "number" && value !== undefined) {
+              samples[`n${i}`] = value;
+            }
+          });
+          const viaVerify = reduce(
+            { tag: "verifying" },
+            { type: "OPENED", opened, samples },
+          );
+          const viaUnlock = reduce(UNLOCKING, {
+            type: "OPENED",
+            opened,
+            samples,
+          });
+          expect(viaUnlock).toEqual(viaVerify);
+          // More than TEXT_ANSWERS_MAX text questions goes to open_failed, which
+          // has no drafts to seed (C3.9). Both arms still agree, checked above.
+          if (viaVerify.tag !== "recall") {
+            return;
+          }
+          for (const [id, text] of Object.entries(viaVerify.drafts)) {
+            expect(text).toEqual({
+              text: samples[id] ?? "",
+              noAnswer: false,
+            });
+          }
+        },
+      ),
       { numRuns: 100 },
     );
   });

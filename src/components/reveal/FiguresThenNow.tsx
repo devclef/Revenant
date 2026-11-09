@@ -9,6 +9,7 @@ import { FigureEntry } from "./FigureEntry";
 import { receiptFigureOf, receiptSourceOf, type LetterKind } from "./FigureLine";
 import { FixtureNote } from "./FixtureNote";
 import { ReceiptCard } from "./ReceiptCard";
+import { keptSampleFor } from "./kept-sample";
 import { REVEAL_COPY } from "./copy";
 import { nowMessageFor } from "./now-message";
 import styles from "./reveal.module.css";
@@ -193,6 +194,7 @@ export function FiguresThenNow({
     rescale: Readonly<DisplayRescale> | undefined;
     change: ReturnType<typeof computeChange> | undefined;
     markValue: string | undefined;
+    sample: boolean;
     /** The answer in the shown unit, for a branch with no Number_Line. */
     answerValue: string | undefined;
     answerUnit: string;
@@ -238,6 +240,7 @@ export function FiguresThenNow({
       rescale,
       change,
       markValue,
+      sample: keptSampleFor(then.metric_id, payload.recall_questions, record),
       // The typed answer is stored per litre already (C8.3), so it is shown as
       // typed. Only the unit changes.
       answerValue: markValue,
@@ -274,6 +277,7 @@ export function FiguresThenNow({
                 name={entry.name}
                 region={entry.then.region}
                 markValue={answer.markValue}
+                sample={entry.sample}
                 unit={answer.unit}
                 then={thenRow}
                 now={{ message: entry.nowMissing }}
@@ -297,6 +301,7 @@ export function FiguresThenNow({
                 rescale={entry.rescale}
                 letterKind={letterKind}
                 markValue={entry.markValue}
+                sample={entry.sample}
                 nowNote={entry.nowNote ?? undefined}
                 primary={primary}
               />
@@ -317,6 +322,7 @@ export function FiguresThenNow({
               name={entry.name}
               region={entry.then.region}
               markValue={answer.markValue}
+              sample={entry.sample}
               unit={answer.unit}
               then={thenRow}
               now={receiptFigureOf(entry.now, "now", letterKind, entry.rescale)}

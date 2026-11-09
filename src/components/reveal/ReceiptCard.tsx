@@ -62,6 +62,8 @@ export type ReceiptCardProps = {
   region: string;
   /** The judge's answer in the shown unit, or `undefined` for "No answer". */
   markValue?: string;
+  /** True when the answer is a Kept_Sample: the label shows after it (C5.8). */
+  sample?: boolean;
   /** The unit shown with the answer. */
   unit: string;
   /** The then figure row. */
@@ -157,6 +159,7 @@ export function ReceiptCard({
   name,
   region,
   markValue,
+  sample = false,
   unit,
   then,
   now,
@@ -185,7 +188,15 @@ export function ReceiptCard({
 
       <div className={styles.yourAnswer} data-your-answer="">
         <span className={styles.yourAnswerLabel}>{REVEAL_COPY.yourAnswer}</span>
-        <span className={styles.yourAnswerValue}>{answer}</span>
+        <span className={styles.yourAnswerValue}>
+          {answer}
+          {sample ? (
+            <span className={styles.sampleLabel} data-sample-label="">
+              {" "}
+              {REVEAL_COPY.sampleLabel}
+            </span>
+          ) : null}
+        </span>
       </div>
 
       <FigureRow role="then" figure={then} />

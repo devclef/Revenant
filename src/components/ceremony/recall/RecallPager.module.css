@@ -263,6 +263,14 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* The Sample_Note under a field that holds its Sample_Answer (spec 10 C5.5).
+   It sits on the paper panel, so it sets --ink itself. */
+.sampleNote {
+  margin: 0;
+  font-size: 0.875rem;
+  color: var(--ink);
+}
+
 /* The Unit_Helper_Line under the unit label (R7.8). */
 .unitHelp {
   margin: 0;

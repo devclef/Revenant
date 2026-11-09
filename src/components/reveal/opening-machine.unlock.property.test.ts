@@ -352,6 +352,7 @@ describe("Property 17: the Opening_Flow additions keep the gates (R17.3, R17.8, 
         ]),
       ),
       invalid: [],
+      samples: {},
     });
     expect(reduce(unlocking, { type: "VERIFICATION_FAILED" })).toEqual({
       tag: "verification_failed",

@@ -61,6 +61,13 @@ import {
   type FlowState,
   type OpenFailedKind,
 } from "./opening-machine";
+import { drawSampleSeed } from "./sample-seed";
+import {
+  pickSamples,
+  type PickCandidates,
+  type PickQuestion,
+  type SampleAnswers,
+} from "./sample-pick";
 import { getLetter, getSecret, postOpening } from "./api";
 import {
   noticeForAssertFailure,
@@ -85,7 +92,15 @@ const LETTER_ID_BYTES = 16;
 export type OpeningFlowOptions = {
   keySource?: "demo" | "user";
   port?: AuthenticatorPort;
+  /**
+   * The persona's Sample_Candidates, keyed by metric ID. Used only in `"demo"`
+   * mode: live letters get no samples (spec 10 C5.10). Omitted means no
+   * sample answers are picked.
+   */
+  sampleCandidates?: PickCandidates;
 };
+
+const NO_CANDIDATES: PickCandidates = {};
 
 /** Live-letter controls. Defined only in `"user"` mode. */
 export type LiveFlow = {
@@ -164,6 +179,40 @@ export function useOpeningFlow(
       dispatch(event);
     }
   }, []);
+
+  // --- mount: draw this visit's Sample_Pick seed (spec 10 C5.4, C5.6) --------
+  //
+  // Declared before the loading effect, so effects run in declaration order and
+  // the seed exists before `getLetter` starts. It is drawn once per mount, here
+  // and never in render. When `getRandomValues` is missing, the seed stays null
+  // and the flow runs with no samples. Math.random is never used instead.
+  const seedRef = useRef<number | null>(null);
+  const seedDrawn = useRef(false);
+  useEffect(() => {
+    if (seedDrawn.current) {
+      return;
+    }
+    seedDrawn.current = true;
+    try {
+      seedRef.current = drawSampleSeed();
+    } catch {
+      seedRef.current = null;
+    }
+  }, []);
+
+  // The Sample_Pick for one opened letter (C5.4, C5.10). Demo letters only:
+  // live letters, and any visit with no seed, get an empty map. Read from the
+  // seed ref at dispatch time, so it always sees the seed drawn on mount.
+  const sampleCandidates = options.sampleCandidates ?? NO_CANDIDATES;
+  const sampleAnswersFor = (
+    questions: readonly PickQuestion[],
+  ): SampleAnswers => {
+    const seed = seedRef.current;
+    if (keySource !== "demo" || seed === null) {
+      return {};
+    }
+    return pickSamples(sampleCandidates, questions, seed);
+  };
 
   // --- One-attempt-per-occurrence guard -------------------------------------
   //
@@ -362,6 +411,7 @@ export function useOpeningFlow(
           // returns ok only after its constant-time check passed (R14.5).
           envelopeHash: snapshot.envelopeHash,
         },
+        samples: sampleAnswersFor(result.payload.recall_questions),
       });
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -455,6 +505,7 @@ export function useOpeningFlow(
           // returns ok only after its constant-time check passed (R14.5).
           envelopeHash,
         },
+        samples: sampleAnswersFor(result.payload.recall_questions),
       });
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -567,12 +618,13 @@ export function useOpeningFlow(
       return;
     }
     const { opened, drafts } = current;
-    // Every letter posts a Recall_Record_V2 (spec 10 C3.8). No samples are
-    // passed yet; task 9 (C5) supplies them.
+    // Every letter posts a Recall_Record_V2 (spec 10 C3.8). The samples come
+    // from the recall state, so a draft that still equals its Sample_Answer is
+    // stored with `sample: true` (C5.8). Live and real letters have none.
     const built = buildRecallRecordV2(
       opened.payload.recall_questions,
       drafts,
-      {},
+      current.samples ?? {},
     );
     if (!built.ok) {
       safeDispatch({ type: "SUBMIT_INVALID", invalid: built.invalid });

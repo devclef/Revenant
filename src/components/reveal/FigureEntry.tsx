@@ -56,6 +56,8 @@ export type FigureEntryProps = {
    * `undefined` for "No answer" (or no answer to this metric at all).
    */
   markValue?: string;
+  /** True when the judge's answer is a Kept_Sample (spec 10 C5.8). */
+  sample?: boolean;
   /**
    * A line shown under the now row, for a now figure that is a bundled
    * fallback (issue #250, A3.3). Absent for a stored figure.
@@ -73,6 +75,7 @@ export function FigureEntry({
   rescale,
   letterKind = "persona",
   markValue,
+  sample = false,
   nowNote,
   primary = false,
 }: FigureEntryProps) {
@@ -96,6 +99,7 @@ export function FigureEntry({
         name={name}
         region={then.region}
         markValue={markForLine}
+        sample={sample}
         unit={unit}
         then={receiptFigureOf(then, "then", letterKind, rescale)}
         now={receiptFigureOf(now, "now", letterKind, rescale)}

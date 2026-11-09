@@ -47,3 +47,25 @@ export const PERSONAS: readonly Persona[] = PERSONA_LIST.personas;
  */
 export const RETIRED_LETTER_IDS: readonly string[] =
   PERSONA_LIST.retired_letter_ids;
+
+export {
+  SAMPLE_CANDIDATES,
+  SAMPLE_CANDIDATES_MAX,
+  SAMPLE_CANDIDATES_MIN,
+  SAMPLE_DECIMALS,
+  parseSampleCandidates,
+  sampleCandidatesFor,
+  type SampleCandidates,
+} from "./samples";
+export {
+  SPREAD_ABOVE_MIN_PCT,
+  SPREAD_BELOW_MAX_PCT,
+  SPREAD_NEAR_PCT,
+  classifyCandidate,
+  type SpreadClass,
+} from "./spread";
+export {
+  recordCandidate,
+  shownThenValue,
+  type RecordCandidateFigure,
+} from "./record-candidate";

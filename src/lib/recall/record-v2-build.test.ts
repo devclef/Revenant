@@ -66,7 +66,12 @@ function expectedOutcome(
       kind: "number",
       value: text,
     };
-    if (samples[q.id] !== undefined && samples[q.id] === text) {
+    // A Kept_Sample is the untrimmed draft equal to the sample (C5.8).
+    if (
+      samples[q.id] !== undefined &&
+      samples[q.id] === text &&
+      (draft?.text ?? "") === samples[q.id]
+    ) {
       answer.sample = true;
     }
     answers.push(answer);
@@ -205,7 +210,7 @@ describe("buildRecallRecordV2 — rules by example", () => {
   });
 
   it("sets sample only when the submitted number equals the sample exactly", () => {
-    const kept = buildRecallRecordV2(
+    const padded = buildRecallRecordV2(
       q,
       {
         a1: { text: "x", noAnswer: false },
@@ -214,14 +219,32 @@ describe("buildRecallRecordV2 — rules by example", () => {
       },
       { q1: "3.59", q2: "3.59" },
     );
-    expect(kept).toEqual({
+    // The untrimmed draft is not the Sample_Answer, so no flag (C5.8).
+    expect(padded).toEqual({
       ok: true,
       record: {
         version: 2,
         answers: [
           { question_id: "a1", kind: "text", value: "x" },
-          { question_id: "q1", kind: "number", value: "3.59", sample: true },
+          { question_id: "q1", kind: "number", value: "3.59" },
           { question_id: "q2", kind: "number", value: "3.590" },
+        ],
+      },
+    });
+  });
+
+  it("flags an exact sample draft as a Kept_Sample", () => {
+    const kept = buildRecallRecordV2(
+      [{ id: "q1", answer_type: "number" }],
+      { q1: { text: "3.59", noAnswer: false } },
+      { q1: "3.59" },
+    );
+    expect(kept).toEqual({
+      ok: true,
+      record: {
+        version: 2,
+        answers: [
+          { question_id: "q1", kind: "number", value: "3.59", sample: true },
         ],
       },
     });

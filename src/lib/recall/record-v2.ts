@@ -177,7 +177,8 @@ export type BuildRecallRecordV2Result =
  * - a `number` question takes the trimmed text under the v1 number rule
  *   (`numberAnswerSchema`). It is invalid when that rule fails. When the
  *   stored value equals `samples[id]` exactly, the answer is a Kept_Sample and
- *   carries `sample: true`; otherwise it carries no flag.
+ *   carries `sample: true`; otherwise it carries no flag. The untrimmed draft
+ *   text must also equal the sample, so a padded draft is not a sample.
  *
  * `samples` maps a question ID to its Sample_Answer text. A question with no
  * entry is never a Kept_Sample. The drafts are never mutated.
@@ -230,7 +231,13 @@ export function buildRecallRecordV2(
 
     const value = parsed.data;
     const sample = samples[question.id];
-    if (sample !== undefined && value === sample) {
+    // A Kept_Sample is the draft exactly as it was offered (C5.8): the untrimmed
+    // draft text must equal the Sample_Answer, not only the trimmed value.
+    if (
+      sample !== undefined &&
+      (draft?.text ?? "") === sample &&
+      value === sample
+    ) {
       answers.push({
         question_id: question.id,
         kind: "number",

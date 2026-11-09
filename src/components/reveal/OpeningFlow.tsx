@@ -84,6 +84,7 @@ import type { TestifyContextProps } from "@/components/ceremony/intro/TestifyCon
 import { Reveal } from "./Reveal";
 import { FlowError, type FlowErrorKind } from "./FlowError";
 import type { FlowState, OpenFailedKind } from "./opening-machine";
+import type { PickCandidates } from "./sample-pick";
 import { holdsEnvelope } from "./held-envelope";
 import { useViewportWidth } from "./viewport-width";
 import styles from "./reveal.module.css";
@@ -195,6 +196,11 @@ export type OpeningFlowProps = {
    * only embedding hook; the flow's states and requests are unchanged.
    */
   embedded?: { onPhase: (tag: FlowState["tag"]) => void };
+  /**
+   * Persona mode only: the persona's Sample_Candidates, keyed by metric ID
+   * (spec 10 C5.4). A Live_Letter passes none, so no field is prefilled.
+   */
+  sampleCandidates?: PickCandidates;
 };
 
 /**
@@ -219,12 +225,17 @@ export function OpeningFlow({
   initialBackupKey,
   demo2On = false,
   embedded,
+  sampleCandidates,
 }: OpeningFlowProps) {
   // Live mode reads the key from the reader (keySource "user"). Persona mode
   // passes no options, so the hook behaves exactly as before.
   const flow = useOpeningFlow(
     letterId,
-    mode === "live" ? { keySource: "user", port } : undefined,
+    mode === "live"
+      ? { keySource: "user", port }
+      : sampleCandidates === undefined
+        ? undefined
+        : { sampleCandidates },
   );
   const { state, retry } = flow;
   const KeyStep = useKeyStep(state.tag === "awaiting_key");
@@ -451,6 +462,7 @@ function selectView(
           opened={state.opened}
           drafts={state.drafts}
           invalid={state.invalid}
+          samples={state.samples}
           submitting={false}
           onEdit={flow.editDraft}
           onToggleNoAnswer={flow.toggleNoAnswer}
@@ -467,6 +479,7 @@ function selectView(
           opened={state.opened}
           drafts={state.drafts}
           invalid={[]}
+          samples={state.samples}
           submitting={true}
           onEdit={flow.editDraft}
           onToggleNoAnswer={flow.toggleNoAnswer}
@@ -483,6 +496,7 @@ function selectView(
           opened={state.opened}
           drafts={state.drafts}
           invalid={[]}
+          samples={state.samples}
           submitting={false}
           onEdit={flow.editDraft}
           onToggleNoAnswer={flow.toggleNoAnswer}

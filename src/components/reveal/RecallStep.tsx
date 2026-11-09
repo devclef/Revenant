@@ -46,6 +46,11 @@ export type RecallStepProps = {
   /** True in `submit_failed`: shows the submit-failed message (R8.7, R11.12). */
   failed?: boolean;
   /**
+   * Each number question's Sample_Answer, by question ID (spec 10 C5.5). Absent
+   * for a Live_Letter, which has no samples.
+   */
+  samples?: Readonly<Record<string, string>>;
+  /**
    * The persona's written-as-of date (`YYYY-MM-DD`). Set only on a persona
    * letter, so the counter shows it (R11.5). Absent on a Live_Letter.
    */
@@ -68,6 +73,7 @@ export function RecallStep({
   failed = false,
   writtenAsOf,
   testify,
+  samples,
 }: RecallStepProps) {
   return (
     <>
@@ -83,6 +89,7 @@ export function RecallStep({
           onEdit={onEdit}
           onToggleNoAnswer={onToggleNoAnswer}
           onSubmit={onSubmit}
+          samples={samples}
         />
       </section>
     </>

@@ -3,6 +3,7 @@
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV1, RecallRecordV2 } from "@/lib/recall";
 import { REVEAL_COPY } from "./copy";
+import { isKeptSample } from "./kept-sample";
 import styles from "./reveal.module.css";
 import { answerText } from "@/components/ceremony/recall/answer-text";
 import { displayUnitFor } from "@/components/ceremony/recall/unit-ranges";
@@ -79,7 +80,15 @@ export function RememberedAnswers({ opened, record }: RememberedAnswersProps) {
                   <span className={styles.unit}> {unitText}</span>
                 )}
               </dt>
-              <dd className={styles.rememberedAnswer}>{shownAnswer}</dd>
+              <dd className={styles.rememberedAnswer}>
+                {shownAnswer}
+                {isKeptSample(answer) ? (
+                  <span className={styles.sampleLabel} data-sample-label="">
+                    {" "}
+                    {REVEAL_COPY.sampleLabel}
+                  </span>
+                ) : null}
+              </dd>
             </div>
           );
         })}
