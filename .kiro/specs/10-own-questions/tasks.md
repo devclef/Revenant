@@ -294,7 +294,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
   - _Requirements: C2.1–C2.13, C9.5, S2.4_
 
-- [ ] 9. C5 · Sample answers for the persona figure questions
+- [x] 9. C5 · Sample answers for the persona figure questions
   - Agent: `frontend-dev` · Depends on: 8 · Estimated size: ~1,200 changed lines
   - Before this task: steering updated (S1 Owner_Patch on `main`). Task 8 is on `main`.
   - Scope: `content/personas/letters/samples.json` (new), `src/lib/personas/samples.ts` (new), `src/lib/personas/spread.ts` (new), `src/lib/personas/record-candidate.ts` (new), `src/lib/personas/index.ts`, `src/components/reveal/sample-seed.ts` (new), `src/components/reveal/sample-pick.ts` (new), `src/components/reveal/useOpeningFlow.ts`, `src/components/reveal/opening-machine.ts`, `src/components/reveal/OpeningFlow.tsx`, `src/components/reveal/RememberedAnswers.tsx`, `src/components/reveal/FigureEntry.tsx` and `src/components/reveal/ReceiptCard.tsx` (the "Your answer" row only), `src/components/reveal/copy.ts`, `src/components/reveal/reveal.module.css`, `src/components/ceremony/recall/RecallPager.tsx` and `RecallPager.module.css` (the Sample_Note only), `src/app/demo/personas/[key]/page.tsx` (the `sampleCandidates` prop), and the `*.test.ts(x)` for each file above
