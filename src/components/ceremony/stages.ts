@@ -64,6 +64,11 @@ export const DEFAULT_LOCAL_VIEW: LocalView = {
   figures: "settled",
 };
 
+/** Whether the opened letter in a reveal state has at least one sealed figure. */
+function hasFigures(state: Extract<FlowState, { tag: "reveal" }>): boolean {
+  return state.opened.payload.figures.length > 0;
+}
+
 /**
  * Resolve the Stage for a `(flow state, local view)` pair, exactly per the
  * design.md "Stage resolution" table. Pure: no side effects, no data-driven
@@ -89,13 +94,15 @@ export function stageFor(state: FlowState, local: LocalView): Stage {
       return "recall";
 
     case "reveal": {
+      // A letter with no figures has no figures stage: stages 2 and 3 both
+      // resolve to `close`, the letter and the Close (spec 10 C8.6).
       switch (state.stage) {
         case 1:
           return local.sealing ? "seal" : "marks";
         case 2:
-          return "letter";
+          return hasFigures(state) ? "letter" : "close";
         case 3:
-          return local.figures === "settled" ? "close" : "figures";
+          return !hasFigures(state) || local.figures === "settled" ? "close" : "figures";
       }
     }
 
@@ -151,8 +158,8 @@ export type FocusShape = { authorQuestions: boolean; figures: boolean };
  * The shape of the letter in a flow state. Only the states that hold an opened
  * payload carry a shape; every other state reports both values as false.
  *
- * The payload has no Author_Question field yet (spec 10 C2 adds it), so
- * `authorQuestions` is always false here until that lands.
+ * `authorQuestions` is true when the sealed recall questions include a text
+ * question (an Author_Question, spec 10 C2).
  */
 export function letterShape(state: FlowState): FocusShape {
   switch (state.tag) {
@@ -161,7 +168,9 @@ export function letterShape(state: FlowState): FocusShape {
     case "submit_failed":
     case "reveal":
       return {
-        authorQuestions: false,
+        authorQuestions: state.opened.payload.recall_questions.some(
+          (question) => question.answer_type === "text",
+        ),
         figures: state.opened.payload.figures.length > 0,
       };
     default:

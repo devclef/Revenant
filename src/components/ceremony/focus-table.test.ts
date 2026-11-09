@@ -113,16 +113,41 @@ describe("letterShape", () => {
   it("reads figures from the opened payload on recall and reveal", () => {
     const withFigures = {
       tag: "recall",
-      opened: { payload: { figures: [{}] } },
+      opened: { payload: { figures: [{}], recall_questions: [] } },
       drafts: {},
       invalid: [],
     } as unknown as FlowState;
     const withoutFigures = {
       tag: "reveal",
       stage: 1,
-      opened: { payload: { figures: [] } },
+      opened: { payload: { figures: [], recall_questions: [] } },
     } as unknown as FlowState;
     expect(letterShape(withFigures)).toEqual(FIGURES);
     expect(letterShape(withoutFigures)).toEqual(NONE);
+  });
+
+  it("reads authorQuestions from a text recall question on the opened payload", () => {
+    const withText = {
+      tag: "reveal",
+      stage: 1,
+      opened: {
+        payload: {
+          figures: [],
+          recall_questions: [{ id: "q-note", answer_type: "text", text: "Note" }],
+        },
+      },
+    } as unknown as FlowState;
+    const numberOnly = {
+      tag: "reveal",
+      stage: 1,
+      opened: {
+        payload: {
+          figures: [],
+          recall_questions: [{ id: "q-fuel", answer_type: "number", metric_id: "fuel", text: "Fuel" }],
+        },
+      },
+    } as unknown as FlowState;
+    expect(letterShape(withText)).toEqual(AUTHOR);
+    expect(letterShape(numberOnly)).toEqual(NONE);
   });
 });

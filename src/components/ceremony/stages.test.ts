@@ -40,15 +40,16 @@ import {
 // --- fixtures ----------------------------------------------------------------
 //
 // The payload-bearing FlowState variants need an `Opened`/record/drafts slice
-// to type-check. `stageFor` reads none of it — it switches on `state.tag` and,
-// for `reveal`, on `state.stage` — so these are minimal shells cast to the
-// variant. The Stage never depends on any payload value (R3.1).
+// to type-check. `stageFor` reads none of it except the sealed figure count
+// (stages 2 and 3 of a reveal, spec 10 C8.6), so these are minimal shells cast
+// to the variant. The payload carries one figure so the letter counts as one
+// with figures.
 
-// A bare Opened stand-in; its fields are never read by stageFor.
+// A bare Opened stand-in. Only `payload.figures.length` is read by stageFor.
 const OPENED_STUB: Opened = {
   letterId: "letter-1",
   header: { sealedAt: "2024-10-01T00:00:00.000Z", opensAt: "2024-11-05T00:00:00.000Z" },
-  payload: {} as never,
+  payload: { figures: [{}] } as never,
   openingKey: {} as never,
   envelopeHash:
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
@@ -197,6 +198,27 @@ describe("Property 6: every Flow state and local view maps to exactly one Stage 
       record: RECORD,
       stage: 3,
     };
+    expect(stageFor(stage3, DEFAULT_LOCAL_VIEW)).toBe("close");
+  });
+
+  it("resolves stages 2 and 3 of a reveal with no figures both to close (spec 10 C8.6)", () => {
+    const noFigures = {
+      ...OPENED_STUB,
+      payload: { figures: [] } as never,
+    } as Opened;
+    const stage2: FlowState = {
+      tag: "reveal",
+      opened: noFigures,
+      record: RECORD,
+      stage: 2,
+    };
+    const stage3: FlowState = {
+      tag: "reveal",
+      opened: noFigures,
+      record: RECORD,
+      stage: 3,
+    };
+    expect(stageFor(stage2, DEFAULT_LOCAL_VIEW)).toBe("close");
     expect(stageFor(stage3, DEFAULT_LOCAL_VIEW)).toBe("close");
   });
 

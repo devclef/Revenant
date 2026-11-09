@@ -9,7 +9,8 @@ import type { RecallRecordV1, RecallRecordV2 } from "@/lib/recall";
 import { LetterBlock } from "@/components/ceremony/letter/LetterBlock";
 import { SoundEnabledContext } from "@/components/ceremony/sound/SoundEnabledContext";
 import { FiguresThenNow } from "./FiguresThenNow";
-import { useFigures } from "./figures-api";
+import { useFigures, type FiguresState } from "./figures-api";
+import { AuthorTestimony } from "./AuthorTestimony";
 import { Fingerprint } from "./Fingerprint";
 import { FiguresFadeUp } from "@/components/ceremony/figures/FiguresFadeUp";
 import { Close, type CloseProps } from "@/components/ceremony/close/Close";
@@ -164,7 +165,33 @@ export type RevealProps = {
   heldSlot?: HTMLElement | null;
 };
 
-export function Reveal({
+/**
+ * The reveal body, given the figures state. `figures` is null for a letter with
+ * no sealed figures: nothing is fetched and no figures stage is drawn.
+ */
+type RevealBodyProps = RevealProps & { figures: FiguresState | null };
+
+/**
+ * Picks the reveal body. The Figures_API is read only when the letter has
+ * sealed figures (spec 10 C8.6): a letter with none never calls `useFigures()`.
+ * Figure count is fixed by the sealed payload, so the choice never changes
+ * within one reveal.
+ */
+export function Reveal(props: RevealProps) {
+  if (props.opened.payload.figures.length === 0) {
+    return <RevealBody {...props} figures={null} />;
+  }
+  return <RevealWithFigures {...props} />;
+}
+
+function RevealWithFigures(props: RevealProps) {
+  // The Figures_API is read once per reveal (figures-api.ts). Stage 3 picks each
+  // Now_Figure from this response, not from DEMO_FIGURES.
+  const figures = useFigures();
+  return <RevealBody {...props} figures={figures} />;
+}
+
+function RevealBody({
   opened,
   record,
   personaName,
@@ -178,7 +205,8 @@ export function Reveal({
   close,
   phone,
   heldSlot = null,
-}: RevealProps) {
+  figures,
+}: RevealBodyProps) {
   // The local-view context lets stage 1's SealBreak report its `sealing` flag
   // up to CeremonyRoot, so `stageFor(state, local)` resolves `seal` while a
   // break is in progress and `marks` otherwise (design.md "Stage resolution").
@@ -196,10 +224,6 @@ export function Reveal({
   const viewportWidth = useViewportWidth();
   const sealOnEnvelope = sealPlacement({ viewportWidth, slotReady: heldSlot !== null });
   const envelopeSlot = sealOnEnvelope === "envelope" && !isPhone ? heldSlot : null;
-
-  // The Figures_API is read once per reveal (figures-api.ts). Stage 3 picks each
-  // Now_Figure from this response, not from DEMO_FIGURES.
-  const figures = useFigures();
 
   // "See the receipts" starts the figures fade-up. The fade runs in FiguresFadeUp.
   const onSeeNumbers = useCallback(() => {
@@ -334,7 +358,8 @@ export function Reveal({
   });
 
   // Stage 2 still shows its own next control; "Show everything" sits beside it.
-  const stage2HasHidden = stage === 2;
+  // With no figures, stage 2 is the last view: no next control is offered.
+  const stage2HasHidden = stage === 2 && figureCount > 0;
 
   // Show everything jumps from stage 1 straight to stage 3 (R12.8). The seal
   // stays on the split seal in that case, and the letter mounts still. Both are
@@ -368,7 +393,11 @@ export function Reveal({
 
   // Once the Close shows, the figures no longer hold the Stage's primary
   // control: the Close is the last Stage and its own view sets the first viewport.
-  const closeShown = stage >= 3 && localView.figures === "settled" && close !== undefined;
+  // A letter with no figures has no figures stage, so its Close shows at stage 2.
+  const closeShown =
+    (figureCount === 0
+      ? stage >= 2
+      : stage >= 3 && localView.figures === "settled") && close !== undefined;
 
   const marksBlock = (
           <SoundEnabledContext.Provider value={soundOn}>
@@ -433,6 +462,10 @@ export function Reveal({
                 A persona letter gets the verdict and a closed disclosure; a live
                 or real letter gets the open block with the card sentence (R14.8).
                 A failed check never reaches the Reveal (R14.6). */}
+            <AuthorTestimony
+              questions={opened.payload.recall_questions}
+              record={record}
+            />
             <LetterBlock
               opened={opened}
               personaName={personaName}
@@ -450,7 +483,7 @@ export function Reveal({
             />
           </div>
 
-          {stage >= 3 ? (
+          {stage >= 3 && figures !== null ? (
             <div
               className={`${styles.stage} ${styles.fade} ${styles.figuresCol}`}
               data-figures-panel=""
