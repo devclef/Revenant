@@ -51,10 +51,12 @@
   cursor: pointer;
 }
 
-/* The paper: flat --paper, the Letter_Text alone. */
+/* The paper: flat --paper, the Letter_Text alone. The paper's top and bottom
+   padding are at most 1.5 rem each, so the empty space above and below the
+   letter is at most 48 px (spec 10 C7.3). */
 .paper {
   --ink: #1f1b16;
-  --paper-pad: clamp(1rem, 3vw, 2rem);
+  --paper-pad: clamp(1rem, 3vw, 1.5rem);
   position: relative;
   color: var(--ink);
   background-color: var(--paper, #f4ecd8);
@@ -62,6 +64,13 @@
   padding: var(--paper-pad);
   margin: 0;
   text-align: left;
+}
+
+/* The global `p` rule adds a 1.25em bottom margin. Inside the paper that margin
+   is empty space under the letter, so the paper's Letter_Text paragraph sets it
+   to 0 and the paper's padding alone sets the space below the text (C7.3). */
+.paper > p {
+  margin: 0;
 }
 
 /* The sheet holds the paper, the Light_Shaft and the creases. It is as tall as
