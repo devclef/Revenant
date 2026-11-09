@@ -100,7 +100,7 @@ The agent below ran the neutrality.md checklist on each sentence. This self-chec
 
 | Question (neutrality.md) | Sentence 1: unleaded | Sentence 2: diesel |
 |---|---|---|
-| Sentence text | "The news said the EU average for unleaded was about €1.79 a litre this week." | "Diesel was about €1.65 a litre in the same report." |
+| Sentence text | "The news said the EU average for unleaded was about €1.79 a litre in the first week of May." | "Diesel was about €1.65 a litre that same week." |
 | 1. Reads the same to the opposite view? | Yes | Yes |
 | 2. Names a party, candidate, official or movement? | No | No |
 | 3. Says who the persona votes for or whether they vote? | No | No |
@@ -111,3 +111,5 @@ The agent below ran the neutrality.md checklist on each sentence. This self-chec
 | 8. Fixed figure comes from the sealed figures file and no other figure is stated? | Yes | Yes |
 
 Agent self-check result: all answers match the expected answer. Pending a named human pass from Jacob Morgan.
+
+Wording change: the first version said "this week", which gave the reader no period for the figure. The sentences now name the period of the sealed figure: the first week of May (the figure's period is 2024-05-06, and digits are not allowed outside price phrases). Jacob Morgan reviews the sentences as quoted here.
