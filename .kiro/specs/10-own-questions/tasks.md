@@ -450,7 +450,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
 
 ### Group R: self-reported numbers
 
-- [ ] 15. R1 · Self-reported numbers on the Write step and in the Reveal (spec 08 later-tasks task 23, moved in)
+- [x] 15. R1 · Self-reported numbers on the Write step and in the Reveal (spec 08 later-tasks task 23, moved in)
   - Agent: `frontend-dev` · Depends on: 14 · Estimated size: ~1,500 changed lines
   - Before this task: steering updated (S1 Owner_Patch on `main`). Task 14 is on `main`. This task replaces spec 08 `later-tasks.md` task 23 and its dependency on spec 08 task 22; it ships (R1.1).
   - Scope: `src/components/live/SelfReportedRows.tsx` (new), `src/components/live/WriteForm.tsx`, `src/components/live/write-draft.ts`, `src/components/live/form.ts`, `src/components/live/build-payload.ts`, `src/components/live/seal-runner.ts`, `src/components/live/copy.ts`, `src/components/live/live.module.css`, `src/components/reveal/FiguresThenNow.tsx`, `src/components/reveal/copy.ts`, `src/components/reveal/reveal.module.css`, `src/components/ceremony/scene/copy.ts` (landing wording, only as spec 08 R26.5 allows), and the `*.test.ts(x)` for each file above
