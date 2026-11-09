@@ -13,9 +13,11 @@
 import { describe, expect, it } from "vitest";
 
 import { MAX_FIGURES } from "./constants";
+import { LIVE_COPY } from "./copy";
 import { sealReducer, INITIAL_SEAL_STATE } from "./seal-machine";
 import {
   INITIAL_WRITE_DRAFT,
+  initialWriteDraft,
   reduceWriteDraft,
   type WriteDraft,
 } from "./write-draft";
@@ -25,12 +27,23 @@ function typeLetter(draft: WriteDraft, text: string): WriteDraft {
 }
 
 describe("the write draft starts empty", () => {
-  it("has no letter, no figures and an unticked warning", () => {
+  it("has no letter, no figures, an unticked warning and the demo prefill row", () => {
     expect(INITIAL_WRITE_DRAFT).toEqual({
       text: "",
       metricIds: [],
       warningTicked: false,
       backupCardTicked: false,
+      questions: [LIVE_COPY.livePrefill],
+    });
+  });
+
+  it("starts a real letter with no question rows (C2.13, C9.5)", () => {
+    expect(initialWriteDraft("real")).toEqual({
+      text: "",
+      metricIds: [],
+      warningTicked: false,
+      backupCardTicked: false,
+      questions: [],
     });
   });
 });

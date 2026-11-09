@@ -860,3 +860,26 @@
   color: var(--ink);
   text-decoration: underline;
 }
+
+/*
+ * One Author_Question row (spec 10, C2.1). The label and the remove button sit
+ * on one line and the text field takes the full width below. Text colour is
+ * --ink, which the paper sets, so the row never inherits text from the desk.
+ */
+.questionRow {
+  margin: 0.75rem 0;
+  color: var(--ink);
+}
+
+.questionHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+}
+
+.questionHead .label {
+  margin: 0;
+}

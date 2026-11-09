@@ -11,7 +11,12 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 
-import { INITIAL_WRITE_DRAFT, reduceWriteDraft, type WriteDraft } from "../write-draft";
+import {
+  CLEARED_WRITE_DRAFT,
+  INITIAL_WRITE_DRAFT,
+  reduceWriteDraft,
+  type WriteDraft,
+} from "../write-draft";
 
 import {
   canGoBack,
@@ -64,7 +69,7 @@ describe("Property 11: Back keeps the draft; nothing goes back after the seal", 
 
           if (sealed) {
             // The draft is dropped at the seal and never refilled.
-            expect(state.draft).toEqual(INITIAL_WRITE_DRAFT);
+            expect(state.draft).toEqual(CLEARED_WRITE_DRAFT);
             // Nothing moves the visitor back once the seal is stored.
             expect(canGoBack(state.step, state.sealed)).toBe(false);
             expect(stepIndex(state.step)).toBeGreaterThanOrEqual(
@@ -106,13 +111,13 @@ describe("the page's draft path (SealPage dispatches DRAFT through reduceStepper
     state = reduceStepper(state, { type: "NEXT" });
     state = reduceStepper(state, { type: "SEALED" });
     expect(state.sealed).toBe(true);
-    expect(state.draft).toEqual(INITIAL_WRITE_DRAFT);
+    expect(state.draft).toEqual(CLEARED_WRITE_DRAFT);
 
     // A late draft event after the seal changes nothing.
     const after = reduceStepper(state, {
       type: "DRAFT",
       event: { type: "TEXT_CHANGED", text: "Too late." },
     });
-    expect(after.draft).toEqual(INITIAL_WRITE_DRAFT);
+    expect(after.draft).toEqual(CLEARED_WRITE_DRAFT);
   });
 });

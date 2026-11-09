@@ -12,8 +12,10 @@ import { BRAND_COPY } from "@/components/brand/copy";
 import type { FlowState } from "@/components/reveal/opening-machine";
 
 import { LIVE_COPY } from "../copy";
+import type { WriteMode } from "../form";
 import {
-  INITIAL_WRITE_DRAFT,
+  CLEARED_WRITE_DRAFT,
+  initialWriteDraft,
   reduceWriteDraft,
   type WriteDraft,
   type WriteDraftEvent,
@@ -113,8 +115,15 @@ export type StepperAction =
   | { type: "SEALED" }
   | { type: "GOTO"; step: LiveStep };
 
-export function initialStepperState(step: LiveStep = "write"): StepperState {
-  return { step, draft: INITIAL_WRITE_DRAFT, sealed: false };
+/**
+ * The stepper state before anything is typed. `mode` picks the draft: demo
+ * starts with the Live_Prefill row, real (`/seal`) with no row (spec 10, C2).
+ */
+export function initialStepperState(
+  step: LiveStep = "write",
+  mode: WriteMode = "demo",
+): StepperState {
+  return { step, draft: initialWriteDraft(mode), sealed: false };
 }
 
 export function reduceStepper(
@@ -137,7 +146,7 @@ export function reduceStepper(
       return { ...state, draft: reduceWriteDraft(state.draft, action.event) };
     }
     case "SEALED":
-      return { ...state, sealed: true, draft: INITIAL_WRITE_DRAFT };
+      return { ...state, sealed: true, draft: CLEARED_WRITE_DRAFT };
     case "GOTO": {
       // Forward only. A step at or before the current one changes nothing, and
       // returning the same state keeps React from re-rendering.

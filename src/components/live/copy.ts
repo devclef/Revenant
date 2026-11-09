@@ -186,6 +186,22 @@ export const LIVE_COPY = {
   stepAnnounce: "Step {n} of {total}: {label}",
   back: "Back",
   next: "Next",
+  /** The Author_Question rows on the Write step (spec 10, C2.1). */
+  authorQuestionsLegend: "Questions for your future self",
+  authorQuestionsHint:
+    "When the letter opens, you'll answer these from memory before you read it.",
+  /** `{n}` is the row number, starting at 1. */
+  authorQuestionLabel: "Question {n}",
+  authorQuestionRemove: "Remove question {n}",
+  authorQuestionAdd: "Add a question",
+  /** Shown after the rows, so the author knows they can answer in the letter too. */
+  answerInLetter: "Answer them in your letter too, in your own words.",
+  /** Shown after the row was touched or a seal was attempted (C2.3). */
+  questionTooLong: "Keep each question to 200 characters or fewer.",
+  /** The first row of /demo/live, which the judge can edit, clear or remove (C9.5). */
+  livePrefill: "What's on your mind right now?",
+  /** The label of the group of Question_Starter buttons (C2.4). */
+  questionStartersLabel: "Start from one:",
 } as const;
 
 /**
@@ -206,6 +222,26 @@ export const promptStarters: readonly [string, string, string] = [
   "Right now, the thing on my mind is",
   "Today, the thing I most want to remember is",
   "Over the past few months, I have been",
+] as const;
+
+/**
+ * The Question_Starters (spec 10, C2.6): neutral lead-ins about the author's
+ * everyday life. They do not lead toward an answer and contain no digit, no
+ * figure, no party, policy or election term, and no direction word. A press
+ * puts one into the first empty Author_Question row (author-questions.ts).
+ */
+export const questionStarters: readonly [
+  string,
+  string,
+  string,
+  string,
+  string,
+] = [
+  "What was on your mind most days?",
+  "Who did you spend your evenings with?",
+  "What were you saving for?",
+  "What did a normal Saturday look like?",
+  "What were you looking forward to?",
 ] as const;
 
 /**
@@ -233,4 +269,13 @@ export const REAL_COPY = {
     "Revenant could not seal the letter with that date. Choose another date and try again. Nothing was sealed, and your letter is still here.",
   dateMissing: "Choose an opening date before you seal.",
   stillSealed: "This letter is still sealed.",
+  /**
+   * The figure hint on /seal (spec 10, C2.13). A real letter with a question
+   * may seal with no figure, so the hint says so. `{max}` is the most figures.
+   */
+  figuresHintReal:
+    "Choose up to {max} figures, or none if you write a question above. Each is sealed as published, with its period and source.",
+  /** The same hint when the stated maximum is 1. */
+  figuresHintRealOne:
+    "Choose 1 figure, or none if you write a question above. It is sealed as published, with its period and source.",
 } as const;

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { MAX_LETTER_CODE_POINTS } from "./constants";
-import { countCodePoints, figureLimit, validateWrite } from "./form";
+import { countCodePoints, figureLimit, minFiguresFor, validateWrite } from "./form";
 
 const VALID = {
   text: "Dear future me, the rent was high.",
@@ -105,5 +105,70 @@ describe("validateWrite", () => {
     expect(
       validateWrite({ text: "", metricIds: [], warningTicked: false }),
     ).toEqual(["letter_empty", "figures_none", "warning_unticked"]);
+  });
+});
+
+describe("a real letter with a question needs no figure (C2.13)", () => {
+  it("accepts 0 figures on /seal when one question has text", () => {
+    expect(
+      validateWrite({
+        ...VALID,
+        metricIds: [],
+        mode: "real",
+        questions: ["What did the kitchen smell of?"],
+      }),
+    ).toEqual([]);
+  });
+
+  it("still needs a figure on /seal when every question is blank", () => {
+    expect(
+      validateWrite({
+        ...VALID,
+        metricIds: [],
+        mode: "real",
+        questions: ["", "   "],
+      }),
+    ).toEqual(["figures_none"]);
+  });
+
+  it("still needs a figure on /demo/live even with a question", () => {
+    expect(
+      validateWrite({
+        ...VALID,
+        metricIds: [],
+        mode: "demo",
+        questions: ["What did the kitchen smell of?"],
+      }),
+    ).toEqual(["figures_none"]);
+  });
+
+  it("keeps the minimum at 1 for /demo/live and 0 for /seal with a question", () => {
+    expect(minFiguresFor("demo", ["A question"])).toBe(1);
+    expect(minFiguresFor("real", ["A question"])).toBe(0);
+    expect(minFiguresFor("real", [])).toBe(1);
+  });
+});
+
+describe("an Author_Question over 200 code points blocks sealing (C2.2)", () => {
+  it("accepts a question of exactly 200 code points", () => {
+    expect(validateWrite({ ...VALID, questions: ["a".repeat(200)] })).toEqual(
+      [],
+    );
+  });
+
+  it("reports question_too_long for 201 code points, counting an emoji once", () => {
+    expect(validateWrite({ ...VALID, questions: ["a".repeat(201)] })).toEqual([
+      "question_too_long",
+    ]);
+    // 199 letters and one emoji is 200 code points, so it is still valid.
+    expect(
+      validateWrite({ ...VALID, questions: [`${"a".repeat(199)}\u{1F600}`] }),
+    ).toEqual([]);
+  });
+
+  it("ignores surrounding spaces when counting", () => {
+    expect(
+      validateWrite({ ...VALID, questions: [`  ${"a".repeat(200)}  `] }),
+    ).toEqual([]);
   });
 });
