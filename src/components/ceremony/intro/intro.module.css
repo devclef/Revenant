@@ -162,3 +162,24 @@
     line-height: 1.25;
   }
 }
+
+/* At 430 px and narrower (390 x 844 is the reference phone), the Memory_Line
+   pushes the recall stage down far enough that the page's bottom controls
+   ("Turn off motion", "Turn sound on") land inside the Ghost_Body_Box when the
+   page scrolls to the bottom. The gaps and line spacing are tightened here so
+   the block is shorter. Only margins and line spacing change: no height, no
+   padding and no clip, so the text still reflows with its content. */
+@media (max-width: 430px) {
+  .testify {
+    gap: 0;
+    margin-bottom: 0.125rem;
+  }
+
+  .testifyNotice,
+  .testifyFrom,
+  .testifyDates,
+  .testifySeal,
+  .testifyMemory {
+    line-height: 1.2;
+  }
+}
