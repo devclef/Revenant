@@ -1,0 +1,161 @@
+/**
+ * Recall_Record_V2 (design.md "C3. Recall_Record_V2").
+ *
+ * Version 2 of the Recall_Record. It adds two things to version 1: a Text_Answer
+ * (kind `text`, at most 3 per record) and the Sample_Flag (`sample: true` on a
+ * number answer that is a Kept_Sample). Version 1 is never edited; a v2 record is
+ * a separate schema with `version` fixed at `2`.
+ *
+ * This module is pure and imports nothing from src/lib/crypto or src/lib/db, so
+ * it is safe to import from either the browser or the server.
+ */
+
+import { z } from "zod";
+import { numberAnswerSchema } from "./record";
+import { TEXT_ANSWERS_MAX, TEXT_ANSWER_MAX_CODE_POINTS } from "./limits";
+
+/**
+ * A Text_Answer value: 1 to 1,000 code points, already trimmed, with at least
+ * one non-whitespace character (C3.2). Unlike the number answer, the schema does
+ * not trim for the judge; an untrimmed value is rejected, so the stored text is
+ * exactly what the builder produced.
+ */
+const textAnswerValue = z
+  .string()
+  .refine(
+    (s) =>
+      s === s.trim() &&
+      s.length > 0 &&
+      [...s].length <= TEXT_ANSWER_MAX_CODE_POINTS,
+    {
+      message: `text answer must be 1-${TEXT_ANSWER_MAX_CODE_POINTS} code points, trimmed`,
+    },
+  );
+
+/**
+ * A number answer. It uses the v1 rule (`numberAnswerSchema`, imported from
+ * record.ts so the rule has one definition) and may carry the Sample_Flag.
+ * `sample` is only accepted as the literal `true`.
+ */
+const numberAnswerV2 = z.strictObject({
+  question_id: z.string().min(1).max(200),
+  kind: z.literal("number"),
+  value: numberAnswerSchema,
+  sample: z.literal(true).optional(),
+});
+
+/** A Text_Answer. `sample` is an unknown key here (C3.4). */
+const textAnswerV2 = z.strictObject({
+  question_id: z.string().min(1).max(200),
+  kind: z.literal("text"),
+  value: textAnswerValue,
+});
+
+/** An explicit "no answer". `sample` is an unknown key here (C3.4). */
+const noAnswerV2 = z.strictObject({
+  question_id: z.string().min(1).max(200),
+  kind: z.literal("no_answer"),
+});
+
+const answerV2 = z.discriminatedUnion("kind", [
+  numberAnswerV2,
+  textAnswerV2,
+  noAnswerV2,
+]);
+
+/** One answer as it is stored in a version 2 record. */
+export type AnswerV2 = z.infer<typeof answerV2>;
+
+/**
+ * Version 2 of the Recall_Record: a strict object with `version` fixed at `2`,
+ * at most 20 answers and at most {@link TEXT_ANSWERS_MAX} of kind `text`
+ * (C3.1, C3.3). Any unknown key, at any level, is rejected.
+ */
+export const recallRecordV2Schema = z
+  .strictObject({
+    version: z.literal(2),
+    answers: z.array(answerV2).max(20),
+  })
+  .refine(
+    (record) =>
+      record.answers.filter((a) => a.kind === "text").length <=
+      TEXT_ANSWERS_MAX,
+    { message: `at most ${TEXT_ANSWERS_MAX} text answers per record` },
+  );
+
+/** The Recall_Record value, version 2. */
+export type RecallRecordV2 = z.infer<typeof recallRecordV2Schema>;
+
+/**
+ * The question shape the bound schema needs: an ID and the answer type the
+ * question was sealed with. A recall question from the sealed payload satisfies
+ * this structurally, so this module does not import the seal format.
+ */
+export type BoundQuestion = {
+  id: string;
+  answer_type: "number" | "text";
+};
+
+/**
+ * The Recall_Record_V2 schema bound to one letter's questions (C3.5).
+ *
+ * On top of {@link recallRecordV2Schema} it requires:
+ * - exactly one answer per question ID: no duplicate, and no ID that is not a
+ *   sealed question;
+ * - for a `text` question, a text answer or "no answer" (not a number answer);
+ * - for a `number` question, a number answer or "no answer" (not a text answer).
+ *
+ * The order of the answers is not checked. A value that breaks any rule is
+ * rejected with a validation error and never returned as a partial record.
+ */
+export function recallRecordV2SchemaFor(
+  questions: readonly BoundQuestion[],
+): z.ZodType<RecallRecordV2> {
+  const typeById = new Map<string, BoundQuestion["answer_type"]>();
+  for (const question of questions) {
+    typeById.set(question.id, question.answer_type);
+  }
+
+  return recallRecordV2Schema.superRefine((record, ctx) => {
+    const seen = new Set<string>();
+    for (const answer of record.answers) {
+      const type = typeById.get(answer.question_id);
+      if (type === undefined) {
+        ctx.addIssue({
+          code: "custom",
+          message: `answer for unknown question id: ${answer.question_id}`,
+          path: ["answers"],
+        });
+      } else if (seen.has(answer.question_id)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `duplicate answer for question id: ${answer.question_id}`,
+          path: ["answers"],
+        });
+      } else if (answer.kind === "text" && type !== "text") {
+        ctx.addIssue({
+          code: "custom",
+          message: `text answer for a number question id: ${answer.question_id}`,
+          path: ["answers"],
+        });
+      } else if (answer.kind === "number" && type !== "number") {
+        ctx.addIssue({
+          code: "custom",
+          message: `number answer for a text question id: ${answer.question_id}`,
+          path: ["answers"],
+        });
+      }
+      seen.add(answer.question_id);
+    }
+
+    for (const id of typeById.keys()) {
+      if (!seen.has(id)) {
+        ctx.addIssue({
+          code: "custom",
+          message: `missing answer for question id: ${id}`,
+          path: ["answers"],
+        });
+      }
+    }
+  }) as z.ZodType<RecallRecordV2>;
+}
