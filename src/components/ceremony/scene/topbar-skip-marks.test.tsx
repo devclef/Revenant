@@ -108,7 +108,7 @@ describe("Skip to the receipts (Skip_Link at marks)", () => {
     const stage = stageFor(
       {
         tag: "reveal",
-        opened: undefined as never,
+        opened: { payload: { figures: [{}] } } as never,
         record: undefined as never,
         stage: 3,
       },
