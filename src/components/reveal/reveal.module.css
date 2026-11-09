@@ -911,8 +911,6 @@
  * the desk colour. The question and answer text keep their line breaks
  * (`pre-wrap`), and the answer is the judge's own words, shown in full. */
 .authorTestimony {
-  --ink: #1f1b16;
-  color: var(--ink);
   margin: 0 0 1.25rem;
 }
 
@@ -926,6 +924,7 @@
 
 .authorTestimonyQuestion {
   margin: 0;
+  color: var(--text);
   white-space: pre-wrap;
   font-weight: 600;
 }
@@ -940,5 +939,6 @@
   margin: 0.25rem 0 0;
   padding-left: 0.6rem;
   border-left: 3px solid var(--accent);
+  color: var(--text);
   white-space: pre-wrap;
 }
