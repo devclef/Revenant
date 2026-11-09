@@ -267,7 +267,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
   - _Requirements: C4.1–C4.10, C7.2, G3.1_
 
-- [ ] 8. C2 · Author_Question rows on the Write step, sealing them, and the `/seal` figure minimum
+- [x] 8. C2 · Author_Question rows on the Write step, sealing them, and the `/seal` figure minimum
   - Agent: `frontend-dev` · Depends on: 7 · Estimated size: ~1,200 changed lines
   - Before this task: steering updated (S1 Owner_Patch on `main`). Tasks 6 and 7 are on `main` and live in production, so Testify can answer a text question before any letter seals one (G3.1).
   - Scope: `src/components/live/AuthorQuestions.tsx` (new), `src/components/live/author-questions.ts` (new), `src/components/live/write-draft.ts`, `src/components/live/WriteForm.tsx`, `src/components/live/form.ts`, `src/components/live/build-payload.ts`, `src/components/live/seal-runner.ts`, `src/components/live/FigurePicker.tsx`, `src/components/live/copy.ts`, `src/components/live/live.module.css`, `src/components/live/stepper/**` (Back and Next only, if the draft needs it), and the `*.test.ts(x)` for each file above
