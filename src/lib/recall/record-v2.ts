@@ -11,7 +11,7 @@
  */
 
 import { z } from "zod";
-import { numberAnswerSchema } from "./record";
+import { numberAnswerSchema, type Draft } from "./record";
 import { TEXT_ANSWERS_MAX, TEXT_ANSWER_MAX_CODE_POINTS } from "./limits";
 
 /**
@@ -158,4 +158,101 @@ export function recallRecordV2SchemaFor(
       }
     }
   }) as z.ZodType<RecallRecordV2>;
+}
+
+/** The result of {@link buildRecallRecordV2}. */
+export type BuildRecallRecordV2Result =
+  { ok: true; record: RecallRecordV2 } | { ok: false; invalid: string[] };
+
+/**
+ * Assemble a {@link RecallRecordV2} from the sealed questions, the judge's
+ * drafts and the sample map, in question order (C3.4, C4.6).
+ *
+ * For each question:
+ * - if its draft has `noAnswer: true`, it becomes `{ kind: "no_answer" }`,
+ *   whatever the text holds;
+ * - a `text` question takes the trimmed text. It is invalid when the trimmed
+ *   text is empty, is over {@link TEXT_ANSWER_MAX_CODE_POINTS} code points, or
+ *   would be the fourth text answer;
+ * - a `number` question takes the trimmed text under the v1 number rule
+ *   (`numberAnswerSchema`). It is invalid when that rule fails. When the
+ *   stored value equals `samples[id]` exactly, the answer is a Kept_Sample and
+ *   carries `sample: true`; otherwise it carries no flag.
+ *
+ * `samples` maps a question ID to its Sample_Answer text. A question with no
+ * entry is never a Kept_Sample. The drafts are never mutated.
+ *
+ * Returns `{ ok: true, record }` when every question is answered or marked "no
+ * answer". Otherwise returns `{ ok: false, invalid }` with the question IDs
+ * that failed, in order. The assembled record is checked against
+ * {@link recallRecordV2SchemaFor} before it is returned. The per-question rules
+ * above already cover that schema, so a failure there is reported as every
+ * question ID.
+ */
+export function buildRecallRecordV2(
+  questions: readonly BoundQuestion[],
+  drafts: Readonly<Record<string, Draft>>,
+  samples: Readonly<Record<string, string>>,
+): BuildRecallRecordV2Result {
+  const answers: AnswerV2[] = [];
+  const invalid: string[] = [];
+  let textAnswers = 0;
+
+  for (const question of questions) {
+    const draft = drafts[question.id];
+
+    if (draft?.noAnswer) {
+      answers.push({ question_id: question.id, kind: "no_answer" });
+      continue;
+    }
+
+    const trimmed = (draft?.text ?? "").trim();
+
+    if (question.answer_type === "text") {
+      const fits =
+        trimmed.length > 0 &&
+        [...trimmed].length <= TEXT_ANSWER_MAX_CODE_POINTS &&
+        textAnswers < TEXT_ANSWERS_MAX;
+      if (!fits) {
+        invalid.push(question.id);
+        continue;
+      }
+      textAnswers += 1;
+      answers.push({ question_id: question.id, kind: "text", value: trimmed });
+      continue;
+    }
+
+    const parsed = numberAnswerSchema.safeParse(trimmed);
+    if (!parsed.success) {
+      invalid.push(question.id);
+      continue;
+    }
+
+    const value = parsed.data;
+    const sample = samples[question.id];
+    if (sample !== undefined && value === sample) {
+      answers.push({
+        question_id: question.id,
+        kind: "number",
+        value,
+        sample: true,
+      });
+    } else {
+      answers.push({ question_id: question.id, kind: "number", value });
+    }
+  }
+
+  if (invalid.length > 0) {
+    return { ok: false, invalid };
+  }
+
+  const result = recallRecordV2SchemaFor(questions).safeParse({
+    version: 2,
+    answers,
+  });
+  if (!result.success) {
+    return { ok: false, invalid: questions.map((q) => q.id) };
+  }
+
+  return { ok: true, record: result.data };
 }
