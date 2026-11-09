@@ -89,3 +89,41 @@ describe("Close card (C7.3)", () => {
     expect(emptyPx).toBeLessThanOrEqual(MAX_EMPTY_PX);
   });
 });
+
+describe("Close controls next to what they act on (C7.2)", () => {
+  it("sets the Close controls in a column with a 1 rem gap and 44 px targets", () => {
+    expect(ruleBody(close, ".close")).toMatch(/gap:\s*1rem;/);
+    expect(ruleBody(close, ".cta")).toMatch(/min-height:\s*44px;/);
+    expect(ruleBody(close, ".quietLink")).toMatch(/min-height:\s*44px;/);
+  });
+});
+
+describe("Letter controls next to what they act on (C7.2)", () => {
+  it("puts the letter caption 1 rem above the paper, within 48 px", () => {
+    expect(ruleBody(letterBlock, ".caption")).toMatch(/margin:\s*0 0 1rem;/);
+  });
+
+  it("puts the phone letter disclosure summary directly on the paper, with no gap", () => {
+    expect(ruleBody(letterBlock, ".sheet")).not.toMatch(/margin/);
+    expect(ruleBody(letterBlock, ".letterDisclosure > summary")).toMatch(
+      /min-height:\s*44px;/,
+    );
+  });
+});
+
+describe("No Stage renders a card of controls only (C7.3)", () => {
+  it("never imports StagePanel from a Stage, so its paper padding cannot hold a control-only card", () => {
+    const stageFiles = [
+      "../../reveal/Reveal.tsx",
+      "../../reveal/SealedLetter.tsx",
+      "../../reveal/FiguresThenNow.tsx",
+      "../close/Close.tsx",
+      "./LetterBlock.tsx",
+      "../figures/FiguresFadeUp.tsx",
+    ];
+    for (const rel of stageFiles) {
+      const src = readFileSync(resolve(here, rel), "utf8");
+      expect(src).not.toMatch(/StagePanel/);
+    }
+  });
+});
