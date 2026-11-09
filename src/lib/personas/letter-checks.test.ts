@@ -29,6 +29,7 @@ import { DEMO_FIGURES } from "@/lib/figures/demo";
 
 import { PERSONAS } from "./index";
 import { checkLetterText } from "./letter-checks";
+import { expectedPrices } from "./price-lines";
 import { CURRENCY_WORDS, ELECTION_PARTY_TERMS } from "./banned-terms";
 
 // This test file lives at src/lib/personas/, so the repository root is four
@@ -65,7 +66,9 @@ describe("persona letter files", () => {
 
       it("passes checkLetterText with no problems", () => {
         const text = readLetter(persona.letter_path);
-        expect(checkLetterText(persona.key, text)).toEqual([]);
+        expect(
+          checkLetterText(persona.key, text, expectedPrices(persona)),
+        ).toEqual([]);
       });
     });
   }

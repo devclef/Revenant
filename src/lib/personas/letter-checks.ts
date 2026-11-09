@@ -8,6 +8,7 @@
 // Pure module: no I/O, no third-party dependencies.
 
 import { firstCurrencyWord, firstPoliticalTerm } from "./banned-terms";
+import { PRICE_RE } from "./price-lines";
 
 // Currency symbols forbidden by R1.8.
 const CURRENCY_SYMBOLS = ["$", "€", "£"] as const;
@@ -21,9 +22,30 @@ const CURRENCY_SYMBOLS = ["$", "€", "£"] as const;
  * @param text the raw letter text
  * @returns a list of problem strings; empty when the text is valid
  */
-export function checkLetterText(key: string, text: string): string[] {
+export function checkLetterText(
+  key: string,
+  text: string,
+  prices?: string[],
+): string[] {
   const problems: string[] = [];
   const prefix = `persona "${key}": letter_text`;
+
+  // Letter_Price_Line phrases are the only digits and currency symbols a
+  // letter may hold. When the expected prices are given, each phrase must
+  // match them exactly, in order, and is then removed before the R1.8 scan.
+  let scanned = text;
+  if (prices !== undefined) {
+    const found = [...text.matchAll(PRICE_RE)].map((m) => m[1]);
+    if (
+      found.length !== prices.length ||
+      found.some((value, i) => value !== prices[i])
+    ) {
+      problems.push(
+        `${prefix}: price lines ${JSON.stringify(found)} do not match expected ${JSON.stringify(prices)}`,
+      );
+    }
+    scanned = text.replace(PRICE_RE, " ");
+  }
 
   // R1.6: 1-5,000 code points, counted with [...text].length so that astral
   // characters count once, matching payloadV1Schema's rule.
@@ -38,20 +60,20 @@ export function checkLetterText(key: string, text: string): string[] {
   }
 
   // R1.8: no digit 0-9.
-  const digitMatch = /[0-9]/.exec(text);
+  const digitMatch = /[0-9]/.exec(scanned);
   if (digitMatch) {
     problems.push(`${prefix}: contains digit "${digitMatch[0]}"`);
   }
 
   // R1.8: none of the currency symbols $ € £.
   for (const symbol of CURRENCY_SYMBOLS) {
-    if (text.includes(symbol)) {
+    if (scanned.includes(symbol)) {
       problems.push(`${prefix}: contains currency symbol "${symbol}"`);
     }
   }
 
   // R1.8: no currency word (whole-word, case-insensitive).
-  const currencyWord = firstCurrencyWord(text);
+  const currencyWord = firstCurrencyWord(scanned);
   if (currencyWord !== null) {
     problems.push(`${prefix}: contains currency word "${currencyWord}"`);
   }
