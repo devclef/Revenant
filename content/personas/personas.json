@@ -5,7 +5,7 @@
       "display_name": "Maya",
       "intro_line": "Maya, who works early shifts at a clinic, writes on a May Sunday about her commute, filling the tank and Saturday deliveries.",
       "region": "United States",
-      "letter_id": "ydsos6hcjdEUOs3sK42RQg",
+      "letter_id": "NvKu8C4wTJsMYe8uv1AkAQ",
       "written_as_of": "2024-05-12",
       "opens_at": "2024-11-05T00:00:00.000Z",
       "metrics": [
@@ -25,7 +25,7 @@
       "display_name": "Tomás",
       "intro_line": "Tomás, who works shifts at a hospital pharmacy, writes on a May Sunday about his commute, the car and the market with Inês.",
       "region": "European Union",
-      "letter_id": "8t6Bz4bWlaUky-byt1mzGg",
+      "letter_id": "zGQh3PULIzdSxkyu9elzUA",
       "written_as_of": "2024-05-12",
       "opens_at": "2024-06-09T00:00:00.000Z",
       "metrics": [
@@ -44,6 +44,8 @@
   "retired_letter_ids": [
     "wom_GdH6gqP6AGgnyhIMgA",
     "GNUIStxJIx6BBmZXHGHBnA",
-    "Qbm5FLgjOC6vJiRAy5Wh0g"
+    "Qbm5FLgjOC6vJiRAy5Wh0g",
+    "ydsos6hcjdEUOs3sK42RQg",
+    "8t6Bz4bWlaUky-byt1mzGg"
   ]
 }
