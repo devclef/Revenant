@@ -38,6 +38,7 @@ import type { RecallRecordV2, Draft } from "@/lib/recall";
 // Zod-backed runtime value (spec 10 C3.9).
 import { TEXT_ANSWERS_MAX } from "@/lib/recall/limits";
 import type { PayloadV1 } from "@/lib/seal-format";
+import type { SampleAnswers } from "./sample-pick";
 
 /**
  * A recall question exactly as it was sealed, read from the frozen payload
@@ -179,7 +180,7 @@ export type FlowEvent =
   | { type: "UNREACHABLE" }
   | { type: "SECRET_FORBIDDEN"; opensAt: string }
   | { type: "SECRET_OK" }
-  | { type: "OPENED"; opened: Opened }
+  | { type: "OPENED"; opened: Opened; samples?: SampleAnswers }
   | { type: "VERIFICATION_FAILED" }
   | { type: "OPEN_FAILED"; kind: OpenFailedKind }
   | { type: "EDIT_DRAFT"; id: string; text: string }
@@ -328,7 +329,7 @@ export function reduce(state: FlowState, event: FlowEvent): FlowState {
     case "unlocking": {
       switch (event.type) {
         case "OPENED":
-          return enterRecall(event.opened, {});
+          return enterRecall(event.opened, event.samples ?? {});
         case "VERIFICATION_FAILED":
           return { tag: "verification_failed" };
         case "OPEN_FAILED":
@@ -352,7 +353,7 @@ export function reduce(state: FlowState, event: FlowEvent): FlowState {
     case "verifying": {
       switch (event.type) {
         case "OPENED":
-          return enterRecall(event.opened, {});
+          return enterRecall(event.opened, event.samples ?? {});
         case "VERIFICATION_FAILED":
           return { tag: "verification_failed" };
         case "OPEN_FAILED":

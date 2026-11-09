@@ -203,6 +203,19 @@ describe("verifying", () => {
     });
   });
 
+  it("OPENED with samples prefills those drafts and leaves the rest empty (spec 10 C5.4)", () => {
+    const next = reduce(verifying, {
+      type: "OPENED",
+      opened: OPENED,
+      samples: { q1: "3.59" },
+    });
+    if (next.tag !== "recall") throw new Error("unreachable");
+    expect(next.drafts).toEqual({
+      q1: { text: "3.59", noAnswer: false },
+      q2: { text: "", noAnswer: false },
+    });
+  });
+
   it("VERIFICATION_FAILED -> verification_failed with no Opened", () => {
     const next = reduce(verifying, { type: "VERIFICATION_FAILED" });
     expect(next).toEqual({ tag: "verification_failed" });
