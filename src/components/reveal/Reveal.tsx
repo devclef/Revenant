@@ -48,7 +48,7 @@ function usePhone(): boolean {
 
 /**
  * Used when no controller is passed (static renders in the tests). The seal
- * shows intact and its controls do nothing. OpeningFlow always passes the real
+ * shows as whole and its controls do nothing. OpeningFlow always passes the real
  * controller from `useSealBreak`.
  */
 const INERT_SEAL: SealController = {
@@ -128,7 +128,7 @@ export type RevealProps = {
   /**
    * The Seal_Break controller from OpeningFlow's `useSealBreak` (called once
    * there). Stage 1's SealBreak reads and drives it. Optional: without it the
-   * seal shows intact and its controls do nothing.
+   * seal shows as whole and its controls do nothing.
    */
   seal?: SealController;
   /**

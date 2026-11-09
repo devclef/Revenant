@@ -24,7 +24,14 @@ describe("phone intact stage scroll offset is removed (scene.module.css, spec 10
 // Spec 10 C1.5: the phone Ghost layer is anchored to the top of the document and
 // scrolls with the persona page. It is not a fixed or 100 % height box.
 describe("phone Ghost layer is anchored to the document (spec 10 C1.5)", () => {
-  const phoneBlock = css.match(/@media \(max-width: 599\.98px\) \{\s*\.personaColumn \.ghostLayer \{([^}]*)\}/)?.[1] ?? "";
+  const phoneBlock = css.match(/@media \(max-width: 599\.98px\) \{\s*\.scene:has\(\[data-persona-column\]\) > \.ghostLayer \{([^}]*)\}/)?.[1] ?? "";
+
+  it("targets the Ghost layer as a direct child of the Scene that holds the persona column", () => {
+    // SceneBackdrop renders the layer as a sibling of main, not inside
+    // .personaColumn, so a .personaColumn descendant selector never matched.
+    expect(css).not.toMatch(/\.personaColumn \.ghostLayer/);
+    expect(phoneBlock).not.toBe("");
+  });
 
   it("is absolute, inset to the top and full width, at 100vh", () => {
     expect(phoneBlock).toMatch(/position:\s*absolute;/);

@@ -370,13 +370,15 @@
 }
 
 /* Below 600 px the persona layer scrolls with the page. The landing Ghost and
-   the live demo keep the fixed layer above. Its containing block is the Scene
-   (position: relative, starts at the top of the document), so the Ghost stays
-   at its document position and scrolls away when the card is read to the
-   bottom. Recall text then never sits over the Ghost body box (x 58 to 142 px,
+   the live demo keep the fixed layer above. The layer is a direct child of the
+   Scene (a sibling of main, see SceneBackdrop), so the rule targets the Scene
+   that holds the persona column. The containing block is the Scene (position:
+   relative, starts at the top of the document), so the Ghost stays at its
+   document position and scrolls away when the card is read to the bottom.
+   Recall text then never sits over the Ghost body box (x 58 to 142 px,
    y 259 to 362 px at 360 x 640, GT1). */
 @media (max-width: 599.98px) {
-  .personaColumn .ghostLayer {
+  .scene:has([data-persona-column]) > .ghostLayer {
     position: absolute;
     inset: 0 0 auto 0;
     height: 100vh;

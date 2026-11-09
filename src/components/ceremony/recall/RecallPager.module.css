@@ -197,7 +197,7 @@
     flex-wrap: wrap;
   }
 
-  /* Question text is a body heading, smaller than the intact headline at every
+  /* Question text is a body heading, smaller than the headline at every
      width (R8.1). Three lines at 360 px is the most the card can spare. */
   .qTitle {
     font-size: 1rem;

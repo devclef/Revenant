@@ -7,8 +7,8 @@
 //
 // Placement of the handed stages (design.md "Narrow layout during `recall` and
 // `marks`", R10.15): below 900 px the recall, marks and seal cards are pinned
-// below the Soil strip by CSS (scene.module.css), the same rule the intact
-// stage uses, so the backdrop no longer translates as a whole and the card
+// below the Soil strip by CSS (scene.module.css), the same rule the
+// pinned stages use, so the backdrop no longer translates as a whole and the card
 // never lands on the strip (issue #166). At or above 900 px the column is
 // width-capped and reserves the lower band in CSS. The Ghost pose (risen vs
 // handed) is still set per Stage in Ghost.tsx; only the big layer lift is gone.
@@ -57,7 +57,7 @@ export function SceneBackdrop({
   // The Stage still drives the Ghost pose (risen vs handed) in Ghost.tsx, but
   // the backdrop no longer translates as a whole. Below 900 px the handed
   // stages (recall, marks, seal) are placed by CSS: scene.module.css pins their
-  // region below the Soil strip, the same proven rule the intact stage uses, so
+  // region below the Soil strip, the same proven rule the pinned stages use, so
   // the card clears the strip (F1, F2) and the risen Ghost (G1) with no
   // measure-once JS. Earlier the narrow lift placed the card by a live
   // measurement that landed it on the Soil strip at 360x640 (issue #166). The

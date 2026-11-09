@@ -164,7 +164,7 @@ hr {
  * wrapper creates a stacking context at z-index 0, below `main` (z-index 1) and
  * the Top_Bar, so page content that overlaps the footer paints on top of it.
  * The spacer keeps the footer clear of Stage content that overflows the scene
- * bottom.
+ * bottom (persona Stage, 360x640: "Pick up the letter" button).
  */
 .site-footer {
   position: relative;
