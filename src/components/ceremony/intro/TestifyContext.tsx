@@ -12,7 +12,7 @@
 import { CEREMONY_COPY } from "../copy";
 import { SCENE_COPY } from "../scene/copy";
 import { REVEAL_COPY } from "@/components/reveal/copy";
-import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-date";
+import { formatCalendarDate, formatCalendarMonth, formatLetterDate } from "@/components/ui/letter-date";
 
 import styles from "./intro.module.css";
 
@@ -60,6 +60,9 @@ export function TestifyContext(props: TestifyContextProps) {
       <p className={styles.testifyFrom}>{fillName(REVEAL_COPY.contextFrom, props.personaName)}</p>
       <p className={styles.testifyDates}>{`${writtenText}${DATE_SEPARATOR}${opensText}`}</p>
       <p className={styles.testifySeal}>{REVEAL_COPY.sealIntact}</p>
+      <p className={styles.testifyMemory} data-memory-line="">
+        {REVEAL_COPY.memoryLine.replace("{month}", formatCalendarMonth(props.writtenAsOf))}
+      </p>
     </section>
   );
 }

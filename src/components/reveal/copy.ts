@@ -58,6 +58,13 @@ export const REVEAL_COPY = {
   /** The Testify_Context line naming the persona. `{name}` is the persona's name. */
   contextFrom: "A letter from {name}",
 
+  /**
+   * The Memory_Line on a persona letter (spec 10 C4.2): it frames the testimony
+   * as the reader's own memory of the written-as-of month. `{month}` is that
+   * month in en-GB, e.g. "May 2024".
+   */
+  memoryLine: "You lived through {month} too. Answer from your own memory of it.",
+
   // --- Errors ---
 
   /** The letter record has not been placed yet (404). */
@@ -137,6 +144,13 @@ export const REVEAL_COPY = {
   /** The inline error shown under an invalid recall answer (R8.4). */
   answerInvalid:
     "Enter a number, such as 3.50, or mark this question as no answer.",
+
+  /** The live count under a text answer. `{count}` is the trimmed length in code points. */
+  textCount: "{count} of 1,000 characters",
+
+  /** The inline error under a text answer that is empty or too long (C4.6). */
+  textAnswerInvalid:
+    "Write an answer of up to 1,000 characters, or choose No answer.",
 
   /** The submit control for the recall step. */
   submit: "Record my answers",

@@ -88,6 +88,28 @@ export function formatCalendarDate(date: string): string {
   return formatWith(UTC_FORMATTER, new Date(ms));
 }
 
+/** The UTC month-and-year formatter, reused by `formatCalendarMonth`. */
+const UTC_MONTH_FORMATTER = new Intl.DateTimeFormat("en-GB", {
+  month: "long",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+/**
+ * Format a plain calendar date given as `YYYY-MM-DD` as its month and year in
+ * en-GB, e.g. "May 2024" for "2024-05-12" (spec 10 C4.2, the Memory_Line). Read
+ * at UTC midnight, so the month never shifts under the viewer's timezone.
+ * Returns "" when the input is not a date.
+ */
+export function formatCalendarMonth(date: string): string {
+  const ms = Date.parse(`${date}T00:00:00.000Z`);
+  if (Number.isNaN(ms)) return "";
+  const parts = UTC_MONTH_FORMATTER.formatToParts(new Date(ms));
+  const by = (type: Intl.DateTimeFormatPartTypes): string =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${by("month")} ${by("year")}`;
+}
+
 /**
  * The runtime's own IANA zone (the browser's zone on the client), for passing
  * to `letterZoneFor` for a Live_Letter. Kept here so callers never construct

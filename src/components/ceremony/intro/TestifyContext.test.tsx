@@ -62,6 +62,31 @@ describe("TestifyContext: persona letter", () => {
   });
 });
 
+describe("TestifyContext: Memory_Line (spec 10 C4.2)", () => {
+  it("shows the Memory_Line with the written-as-of month in en-GB, exactly", () => {
+    const html = render(persona);
+    expect(html).toContain(
+      "You lived through May 2024 too. Answer from your own memory of it.",
+    );
+  });
+
+  it("puts the Memory_Line after the seal-verified statement, directly above the first question", () => {
+    const html = render(persona);
+    expect(html.indexOf("You lived through May 2024")).toBeGreaterThan(
+      html.indexOf(REVEAL_COPY.sealIntact),
+    );
+  });
+
+  it("is not shown on a Live_Letter or Real_Letter", () => {
+    expect(render({ kind: "letter" })).not.toContain("You lived through");
+  });
+
+  it("is a plain line, not a card, and joins the phone size rule", () => {
+    expect(desktopRules).toMatch(/\.testifyMemory \{[^}]*font-size: 0\.9rem/);
+    expect(phoneRules).toMatch(/\.testifyNotice,[\s\S]*\.testifyMemory[\s\S]*font-size: 0\.9375rem/);
+  });
+});
+
 describe("TestifyContext: Live_Letter or Real_Letter", () => {
   it("shows only the seal-verified statement", () => {
     const html = render({ kind: "letter" });
@@ -95,7 +120,8 @@ describe("TestifyContext: width rules", () => {
     // A fixed height or a clip would move the text under the Ghost or hide it,
     // and a fixed height would make the page scroll differently at 360 x 640
     // and 390 x 844 (FC1). The phone rules size the lines and nothing else.
-    expect(phoneRules).not.toMatch(/\bheight\s*:/);
+    // The height check skips line-height, which is a line spacing, not a box height.
+    expect(phoneRules).not.toMatch(/(?<![\w-])height\s*:/);
     expect(phoneRules).not.toMatch(/min-height\s*:/);
     expect(phoneRules).not.toMatch(/overflow\s*:\s*hidden/);
     expect(phoneRules).not.toMatch(/position\s*:\s*(absolute|fixed)/);

@@ -2,10 +2,26 @@ import { afterEach, describe, expect, it } from "vitest";
 
 import {
   formatCalendarDate,
+  formatCalendarMonth,
   formatLetterDate,
   letterZoneFor,
   type LetterZone,
 } from "./letter-date";
+
+describe("formatCalendarMonth", () => {
+  it('formats a YYYY-MM-DD date as its en-GB month and year, e.g. "May 2024"', () => {
+    expect(formatCalendarMonth("2024-05-12")).toBe("May 2024");
+  });
+
+  it("reads the month at UTC midnight, so the first and last day keep their month", () => {
+    expect(formatCalendarMonth("2024-05-01")).toBe("May 2024");
+    expect(formatCalendarMonth("2024-05-31")).toBe("May 2024");
+  });
+
+  it("returns an empty string for input that is not a date", () => {
+    expect(formatCalendarMonth("not a date")).toBe("");
+  });
+});
 
 describe("formatCalendarDate", () => {
   it('formats a YYYY-MM-DD calendar date as "12 May 2024"', () => {

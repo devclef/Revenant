@@ -1,3 +1,5 @@
+import { canAdvance, canAdvanceText, type FieldState } from "./recall-field";
+
 /**
  * Pure paging rules for the Recall_Pager (design.md "Recall_Pager", R11).
  *
@@ -57,4 +59,25 @@ export function firstInvalidIndex(
 ): number {
   const invalidSet = new Set(invalid);
   return ids.findIndex((id) => invalidSet.has(id));
+}
+
+/**
+ * The kind of a recall question, as the payload's `answer_type` writes it
+ * (spec 10 C4.1). A number question takes the Recall_Number_Parser and the
+ * Recall_Scale; a text question takes a Text_Answer (C4.5).
+ */
+export type QuestionKind = "number" | "text";
+
+/** What the readiness check reads for a question. */
+export type ReadyInput =
+  { kind: "number"; field: FieldState } | { kind: "text"; text: string };
+
+/**
+ * Whether a question's next control may be used (R32.13, C4.6). "No answer"
+ * always allows it. A number question is ready when its field resolves; a text
+ * question is ready when its text is valid.
+ */
+export function isReady(input: ReadyInput, noAnswer: boolean): boolean {
+  if (input.kind === "text") return canAdvanceText(input.text, noAnswer);
+  return canAdvance(input.field, noAnswer);
 }

@@ -144,6 +144,57 @@
   color: var(--ink);
 }
 
+/* The text answer group (C4.5): the textarea, its count, the invalid message and
+   "No answer" sit above the Next button. The count and message are plain paper
+   ink, and the message is bold, so both pass AA on the paper. */
+.textGroup {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.5rem;
+  max-width: 100%;
+  color: var(--ink);
+}
+
+.textGroup textarea {
+  font: inherit;
+  font-size: 1rem;
+  line-height: 1.4;
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 0;
+  color: var(--ink);
+  background-color: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 2px;
+  padding: 0.4rem 0.5rem;
+  resize: vertical;
+}
+
+.textGroup p {
+  margin: 0;
+  color: var(--ink);
+}
+
+.textGroup p[id$="-invalid"] {
+  font-weight: 700;
+}
+
+.textGroup label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  /* The label is the touch target for the checkbox (layout-check PH7). */
+  min-height: 44px;
+  color: var(--ink);
+}
+
+.textGroup textarea:focus-visible,
+.textGroup label input:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
 .fieldError {
   display: block;
   /* Error text is the paper's ink, in bold, so it passes AA on the paper. The
