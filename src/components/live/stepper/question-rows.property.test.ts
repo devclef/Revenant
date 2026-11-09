@@ -1,17 +1,18 @@
-// Property 5: the Author_Question rows survive every way back (spec 10, C2.10,
-// C2.12, C9.5).
+// Property 5: the Author_Question rows and the self-reported rows survive every
+// way back (spec 10, C2.10, C2.12, C9.5; spec 08 later-tasks, R26.1).
 //
 // SealPage holds the rows in the stepper's draft and moves between steps with
 // reduceStepper. An oracle folds the same row events with reduceWriteDraft from
 // the mode's starting draft, so the expected rows do not come from the reducer
-// under test. After every action, the stepper's rows equal the oracle's. The
-// cancelled, failed, cannot_lock and Try again screens are driven through the
-// flow reducer, which must not change the rows either.
+// under test. After every action, the stepper's question rows and self-reported
+// rows equal the oracle's. The cancelled, failed, cannot_lock and Try again
+// screens are driven through the flow reducer, which must not change either.
 
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 
 import { LIVE_COPY, questionStarters } from "../copy";
+import { SELF_REPORTED_FIELDS } from "../form";
 import { sealReducer, INITIAL_SEAL_STATE } from "../seal-machine";
 import {
   initialWriteDraft,
@@ -46,14 +47,40 @@ const questionEventArb: fc.Arbitrary<WriteDraftEvent> = fc.oneof(
     .map((text): WriteDraftEvent => ({ type: "QUESTION_STARTER", text })),
 );
 
+// Self-reported events (spec 08 later-tasks, R26.1). Rows are added, typed in
+// field by field and removed, and their text is kept as typed (Property 5).
+const selfReportedEventArb: fc.Arbitrary<WriteDraftEvent> = fc.oneof(
+  fc.constant<WriteDraftEvent>({ type: "SELF_REPORTED_ADDED" }),
+  fc
+    .integer({ min: 0, max: 11 })
+    .map((index): WriteDraftEvent => ({ type: "SELF_REPORTED_REMOVED", index })),
+  fc
+    .record({
+      index: fc.integer({ min: 0, max: 11 }),
+      field: fc.constantFrom(...SELF_REPORTED_FIELDS),
+      text: fc.string({ maxLength: 12 }),
+    })
+    .map(({ index, field, text }): WriteDraftEvent => ({
+      type: "SELF_REPORTED_CHANGED",
+      index,
+      field,
+      text,
+    })),
+);
+
+const draftEventArb: fc.Arbitrary<WriteDraftEvent> = fc.oneof(
+  questionEventArb,
+  selfReportedEventArb,
+);
+
 const actionArb: fc.Arbitrary<StepperAction> = fc.oneof(
   fc.constant<StepperAction>({ type: "NEXT" }),
   fc.constant<StepperAction>({ type: "BACK" }),
-  questionEventArb.map((event): StepperAction => ({ type: "DRAFT", event })),
+  draftEventArb.map((event): StepperAction => ({ type: "DRAFT", event })),
 );
 
 describe("Property 5: the question rows survive every way back", () => {
-  it("the rows match the oracle after every action, for both modes", () => {
+  it("the rows and the self-reported rows match the oracle after every action, for both modes", () => {
     fc.assert(
       fc.property(
         fc.constantFrom("demo" as const, "real" as const),
@@ -68,6 +95,7 @@ describe("Property 5: the question rows survive every way back", () => {
             }
             state = reduceStepper(state, action);
             expect(state.draft.questions).toEqual(oracle.questions);
+            expect(state.draft.selfReported).toEqual(oracle.selfReported);
           }
         },
       ),
@@ -98,6 +126,26 @@ describe("Property 5: the question rows survive every way back", () => {
     const rows = ["Kept row", "Second row"];
     expect(state.draft.questions).toEqual(rows);
 
+    // Self-reported rows (R26.1) are kept the same way: a row added and typed
+    // in on the write step is still there after every flow screen.
+    state = reduceStepper(state, {
+      type: "DRAFT",
+      event: { type: "SELF_REPORTED_ADDED" },
+    });
+    state = reduceStepper(state, {
+      type: "DRAFT",
+      event: {
+        type: "SELF_REPORTED_CHANGED",
+        index: 0,
+        field: "value",
+        text: " 3.4125 ",
+      },
+    });
+    const selfRows = [
+      { name: "", value: " 3.4125 ", unit: "", region: "", period: "" },
+    ];
+    expect(state.draft.selfReported).toEqual(selfRows);
+
     // Each flow screen is reached and left through the flow reducer. The
     // stepper's draft is not touched by any of them.
     let flow = sealReducer(INITIAL_SEAL_STATE, { type: "CREATE_PRESS" });
@@ -105,6 +153,7 @@ describe("Property 5: the question rows survive every way back", () => {
     flow = sealReducer(flow, { type: "RETRY" });
     expect(flow.tag).toBe("write");
     expect(state.draft.questions).toEqual(rows);
+    expect(state.draft.selfReported).toEqual(selfRows);
 
     flow = sealReducer(flow, { type: "CREATE_PRESS" });
     flow = sealReducer(flow, {
@@ -115,11 +164,13 @@ describe("Property 5: the question rows survive every way back", () => {
     flow = sealReducer(flow, { type: "RETRY" });
     expect(flow.tag).toBe("write");
     expect(state.draft.questions).toEqual(rows);
+    expect(state.draft.selfReported).toEqual(selfRows);
 
     flow = sealReducer(flow, { type: "CREATE_PRESS" });
     flow = sealReducer(flow, { type: "CANNOT_LOCK", passkeyCreated: false });
     flow = sealReducer(flow, { type: "RETRY" });
     expect(flow.tag).toBe("write");
     expect(state.draft.questions).toEqual(rows);
+    expect(state.draft.selfReported).toEqual(selfRows);
   });
 });

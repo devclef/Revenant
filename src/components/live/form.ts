@@ -25,7 +25,8 @@ export type WriteProblem =
   | "question_too_long"
   | "figures_none"
   | "figures_too_many"
-  | "warning_unticked";
+  | "warning_unticked"
+  | "self_reported_invalid";
 
 /**
  * Which seal the write belongs to. `demo` is `/demo/live`, `real` is `/seal`.
@@ -154,6 +155,20 @@ export function selfReportedRowProblems(
   return problems;
 }
 
+/**
+ * True when every self-reported row passes its rules. An empty list passes. A
+ * row that is left empty fails, so a new row blocks sealing until it is filled
+ * in or removed.
+ */
+export function selfReportedRowsOk(
+  rows: readonly SelfReportedRow[],
+  sealingDay: string,
+): boolean {
+  return rows.every(
+    (row) => Object.keys(selfReportedRowProblems(row, sealingDay)).length === 0,
+  );
+}
+
 /** The touched-state key for one field of one self-reported row. */
 export function selfReportedFieldKey(
   index: number,
@@ -197,6 +212,13 @@ export function validateWrite(input: {
   questions?: readonly string[];
   /** The seal mode. Defaults to `demo`. */
   mode?: WriteMode;
+  /** The visitor's own numbers (spec 08 later-tasks, R1). Defaults to none. */
+  selfReported?: readonly SelfReportedRow[];
+  /**
+   * The sealing day as YYYY-MM-DD, which a self-reported period may not pass.
+   * Omitted means no period is accepted, so any row blocks sealing (fail closed).
+   */
+  sealingDay?: string;
 }): WriteProblem[] {
   const maxFigures = input.maxFigures ?? MAX_FIGURES;
   const questions = input.questions ?? [];
@@ -221,6 +243,12 @@ export function validateWrite(input: {
 
   if (!input.warningTicked && input.backupCardTicked !== true) {
     problems.push("warning_unticked");
+  }
+
+  if (
+    !selfReportedRowsOk(input.selfReported ?? [], input.sealingDay ?? "")
+  ) {
+    problems.push("self_reported_invalid");
   }
 
   return problems;

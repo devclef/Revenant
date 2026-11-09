@@ -24,7 +24,10 @@ import { type PrfHint } from "./prf-hint";
 import { RealDatePicker } from "./RealDatePicker";
 import { INITIAL_TOUCHED, showsFieldMessage, type TouchedState } from "./touched";
 import type { SealState } from "./seal-machine";
+import { SelfReportedRows } from "./SelfReportedRows";
 import { StepStatus } from "./StepStatus";
+import { selfReportedRowsOk } from "./form";
+import type { SelfReportedField, SelfReportedRow } from "./write-draft";
 
 /**
  * Which part of the write flow a WriteForm renders (spec 09, D2). `all` is the
@@ -82,6 +85,26 @@ export interface WriteFormProps {
   onQuestionRemove?: (index: number) => void;
   /** The visitor pressed a Question_Starter. */
   onQuestionStarter?: (text: string) => void;
+  /**
+   * The visitor's own numbers, in order (spec 08 later-tasks, R26.1). Held by
+   * the page. Defaults to no rows.
+   */
+  selfReported?: readonly SelfReportedRow[];
+  /** The visitor added a self-reported row. */
+  onSelfReportedAdd?: () => void;
+  /** The visitor typed in one field of self-reported row `index`. */
+  onSelfReportedChange?: (
+    index: number,
+    field: SelfReportedField,
+    text: string,
+  ) => void;
+  /** The visitor removed self-reported row `index`. */
+  onSelfReportedRemove?: (index: number) => void;
+  /**
+   * The sealing day as YYYY-MM-DD, which a self-reported period may not pass.
+   * Defaults to today in UTC.
+   */
+  sealingDay?: string;
   /** The visitor picked or unpicked a figure. */
   onToggleFigure: (metricId: string) => void;
   /** The visitor ticked or unticked the warning box. */
@@ -130,6 +153,7 @@ export const TOUCH_FIELDS = {
   figures: "figures",
   warning: "warning",
   date: "date",
+  selfReported: "self-reported",
 } as const;
 
 /** The message shown for each write problem that the form renders. */
@@ -200,12 +224,20 @@ export function WriteForm({
   onQuestionAdd = () => {},
   onQuestionRemove = () => {},
   onQuestionStarter = () => {},
+  selfReported = [],
+  onSelfReportedAdd = () => {},
+  onSelfReportedChange = () => {},
+  onSelfReportedRemove = () => {},
+  sealingDay,
 }: WriteFormProps) {
   const letterCount = countCodePoints(text);
   const letterRef = useRef<HTMLTextAreaElement>(null);
   const limit = figureLimit(series.length);
   // A real letter (`/seal`) is the one that carries the date picker (spec 08).
   const mode: WriteMode = realDate === undefined ? "demo" : "real";
+  // The sealing day for the self-reported period rule: today in UTC unless the
+  // page gives one.
+  const today = sealingDay ?? new Date().toISOString().slice(0, 10);
   const problems = validateWrite({
     text,
     metricIds,
@@ -214,6 +246,8 @@ export function WriteForm({
     maxFigures: limit,
     questions,
     mode,
+    selfReported,
+    sealingDay: today,
   });
   const atLimit = metricIds.length >= limit;
   const all = section === "all";
@@ -299,6 +333,9 @@ export function WriteForm({
   );
   const figuresValid =
     figuresStatus === "ready" && !problems.includes("figures_none");
+  // The write step's Next also checks the self-reported rows, so an invalid row
+  // keeps the judge on the step where its messages show.
+  const selfReportedValid = selfReportedRowsOk(selfReported, today);
   function pressNext(valid: boolean, field: string) {
     if (!valid) {
       onTouch(field);
@@ -402,6 +439,26 @@ export function WriteForm({
           onStarter={(next) => {
             onTouch(TOUCH_FIELDS.questions);
             onQuestionStarter(next);
+          }}
+        />
+      ) : null}
+
+      {shows("write") ? (
+        <SelfReportedRows
+          rows={selfReported}
+          sealingDay={today}
+          touched={touched}
+          onTouch={onTouch}
+          onAdd={() => {
+            onTouch(TOUCH_FIELDS.selfReported);
+            onSelfReportedAdd();
+          }}
+          onChange={(index, field, next) => {
+            onSelfReportedChange(index, field, next);
+          }}
+          onRemove={(index) => {
+            onTouch(TOUCH_FIELDS.selfReported);
+            onSelfReportedRemove(index);
           }}
         />
       ) : null}
@@ -526,8 +583,12 @@ export function WriteForm({
             className={styles.primary}
             onClick={() =>
               pressNext(
-                letterValid && questionsValid,
-                letterValid ? TOUCH_FIELDS.questions : TOUCH_FIELDS.letter,
+                letterValid && questionsValid && selfReportedValid,
+                letterValid
+                  ? selfReportedValid
+                    ? TOUCH_FIELDS.questions
+                    : TOUCH_FIELDS.selfReported
+                  : TOUCH_FIELDS.letter,
               )
             }
           >

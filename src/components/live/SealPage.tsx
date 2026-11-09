@@ -195,11 +195,12 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
       text: writeDraft.text,
       metricIds: writeDraft.metricIds,
       questions: writeDraft.questions,
+      selfReported: writeDraft.selfReported,
       figures: sealedFigures,
       backupCard: writeDraft.backupCardTicked,
       ...(mode === "real" ? { real: { opensOn, timeZone: timeZone.timeZone } } : {}),
     }),
-    [writeDraft.text, writeDraft.metricIds, writeDraft.questions, writeDraft.backupCardTicked, sealedFigures, mode, opensOn, timeZone],
+    [writeDraft.text, writeDraft.metricIds, writeDraft.questions, writeDraft.selfReported, writeDraft.backupCardTicked, sealedFigures, mode, opensOn, timeZone],
   );
 
   const flow = useSealFlow(sealDeps, draft);
@@ -354,6 +355,14 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
         }
         onQuestionStarter={(text) =>
           dispatchDraft({ type: "QUESTION_STARTER", text })
+        }
+        selfReported={writeDraft.selfReported}
+        onSelfReportedAdd={() => dispatchDraft({ type: "SELF_REPORTED_ADDED" })}
+        onSelfReportedChange={(index, field, text) =>
+          dispatchDraft({ type: "SELF_REPORTED_CHANGED", index, field, text })
+        }
+        onSelfReportedRemove={(index) =>
+          dispatchDraft({ type: "SELF_REPORTED_REMOVED", index })
         }
         onToggleFigure={(metricId) =>
           dispatchDraft({ type: "FIGURE_TOGGLED", metricId, limit: figureMax })

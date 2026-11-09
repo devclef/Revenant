@@ -208,6 +208,20 @@ export const LIVE_COPY = {
     "Use a month, such as 2026-09, or a date, such as 2026-09-30. It cannot be after today.",
   /** Shown when the visitor has reached the limit on their own numbers. */
   selfReportedLimit: "You can add up to 10 numbers of your own.",
+  /** The group heading on the Write step, after the questions (R26.1). */
+  selfReportedTitle: "Your own numbers",
+  /** Explains the group: sealed as typed, labelled self-reported, never official. */
+  selfReportedHint:
+    "Add numbers only you know, such as your own rent. They are sealed as you type them and labelled self-reported. Revenant does not check them against any source.",
+  selfReportedAdd: "Add a number of your own",
+  /** `{n}` is the row number, starting at 1. */
+  selfReportedRowLabel: "Number {n}",
+  selfReportedRemove: "Remove number {n}",
+  selfReportedNameLabel: "Name, such as Rent",
+  selfReportedValueLabel: "Value",
+  selfReportedUnitLabel: "Unit, such as per month",
+  selfReportedRegionLabel: "Region, such as your city",
+  selfReportedPeriodLabel: "Period, such as 2026-09 or 2026-09-30",
   /** The first row of /demo/live, which the judge can edit, clear or remove (C9.5). */
   livePrefill: "What's on your mind right now?",
   /** The label of the group of Question_Starter buttons (C2.4). */

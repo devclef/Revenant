@@ -19,6 +19,7 @@ import { buildLivePayload } from "./build-payload";
 import { questionsForSeal } from "./author-questions";
 import { checkRealOpening, type RealOpening } from "./real-opening";
 import type { SealEvent, SealFailureKind } from "./seal-machine";
+import type { SelfReportedRow } from "./write-draft";
 
 /** The browser port type, taken from the crypto module's own signature. */
 export type AuthenticatorPort = Parameters<CryptoModule["createPasskey"]>[0];
@@ -57,6 +58,11 @@ export interface SealDraft {
    * means no author questions.
    */
   questions?: readonly string[];
+  /**
+   * The visitor's own numbers as typed (spec 08 later-tasks, R26). Sealed as
+   * self-reported figures after the official ones. Omitted means none.
+   */
+  selfReported?: readonly SelfReportedRow[];
   /**
    * Whether the visitor asked for a backup key card (R21.1). Read at the
    * Confirm_Press; the key itself is generated there, not here.
@@ -238,6 +244,8 @@ async function runSeal(
       authorQuestions: questionsForSeal(draft.questions ?? []),
       sealedDate: times.sealedAt.slice(0, 10),
       figures: draft.figures,
+      selfReported: draft.selfReported ?? [],
+      sealedAt: times.sealedAt,
     });
     if (!built.ok) {
       return { ok: false, event: failure("missing_then", passkeyCreated, built.metricId) };

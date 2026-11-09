@@ -13,6 +13,7 @@ import {
   selfReportedRowProblems,
   selfReportedTextOk,
   selfReportedValueOk,
+  validateWrite,
 } from "./form";
 import {
   INITIAL_WRITE_DRAFT,
@@ -147,6 +148,42 @@ describe("Property 22: self-reported values are validated and kept as typed", ()
         );
         expect(problems.value === undefined).toBe(oracleValueOk(value));
       }),
+      { numRuns: 200 },
+    );
+  });
+
+  it("blocks sealing exactly when some row breaks a rule", () => {
+    fc.assert(
+      fc.property(
+        fc.array(
+          fc.record({
+            name: textArb,
+            value: valueArb,
+            unit: textArb,
+            region: textArb,
+            period: fc.constantFrom("2026-10", "2026-11", "2026-11-09", "2026-12", "2026-02-30", ""),
+          }),
+          { maxLength: 4 },
+        ),
+        (rows) => {
+          const blocked = validateWrite({
+            text: "A letter.",
+            metricIds: ["m"],
+            warningTicked: true,
+            selfReported: rows,
+            sealingDay: SEALING_DAY,
+          }).includes("self_reported_invalid");
+          const someRowBroken = rows.some(
+            (row) =>
+              !oracleTextOk(row.name) ||
+              !oracleValueOk(row.value) ||
+              !oracleTextOk(row.unit) ||
+              !oracleTextOk(row.region) ||
+              !["2026-10", "2026-11", "2026-11-09"].includes(row.period.trim()),
+          );
+          expect(blocked).toBe(someRowBroken);
+        },
+      ),
       { numRuns: 200 },
     );
   });
