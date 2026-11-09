@@ -119,9 +119,13 @@ function HeldEnvelope({
   // Desktop_Sizes and the Wide_Size; at phones the Compact_Ghost carries it
   // instead (spec 09 C5.1, C5.5). The rule lives in held-envelope.ts.
   if (!holdsEnvelope({ tag, stage, viewportWidth })) return null;
+  // In reveal stage 1 (`marks` and `seal`) the Envelope is turned: the back
+  // face, flap down, no date lines, with the pressable seal portalled onto the
+  // flap (spec 10 C6.1, C6.2). Through the pre-reveal Stages it rests closed.
+  const state = tag === "reveal" && stage === 1 ? "turned" : "closed";
   return (
     <div className={heldStyles.heldEnvelope} ref={slotRef}>
-      <Envelope state="closed" layout="responsive" persona={persona} />
+      <Envelope state={state} layout="responsive" persona={persona} />
     </div>
   );
 }

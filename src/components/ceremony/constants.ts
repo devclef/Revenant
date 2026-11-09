@@ -210,6 +210,28 @@ export const COMPACT_GHOST_SCALE = 0.58;
 // the square is 44 px on screen (P8.4, the 44x44 seal target).
 export const COMPACT_SEAL_HIT_PX = 76;
 
+// --- Break the seal, the Seal_Group at the Ghost (spec 10 C6.3, C6.1, C6.10) ---
+// The one Seal_Group (hint, Seal_Button, Skip_Link) sits SEAL_GROUP_GAP_PX
+// outside the Ghost_Body_Box edge facing the Content_Column, centred on the
+// WaxSeal, at 900 px and wider (C6.3). scene.module.css reads --seal-group-gap;
+// constants-css.test.ts checks the two agree.
+export const SEAL_GROUP_GAP_PX = 20; // C6.3: at most 24
+// The Seal_Group's own width at 900 px and wider. Repeated in scene.module.css.
+export const SEAL_GROUP_WIDTH = "14rem"; // C6.3
+// The Content_Column cap in `marks` and `seal` at 900 px and wider: narrower
+// than the pre-reveal column, so the Seal_Group fits between it and the Ghost.
+export const MARKS_COLUMN_MAX = "min(28rem, 40vw)"; // C6.3
+// The pressable seal on the turned Envelope's flap (C6.1). The back face's own
+// drawn WaxSeal centres at 50 % x 55.3 % of the Envelope box; the seal target
+// covers it fully at 28 % wide. scene.module.css repeats these three.
+export const SEAL_ON_FLAP_LEFT_PCT = 50; // C6.1
+export const SEAL_ON_FLAP_TOP_PCT = 55.3; // C6.1
+export const SEAL_ON_FLAP_WIDTH_PCT = 28; // C6.1
+// The WaxSeal's size in the phone Seal_Group, in the Content_Column (C6.1).
+export const PHONE_SEAL_SIZE = "6.5rem"; // C6.1
+// A Text_Answer in the Answer_List is clamped to this many lines (C6.10).
+export const ANSWER_TEXT_CLAMP_LINES = 3; // C6.10
+
 // --- Ghost size and sink (spec 09 P4.2, D1) ---
 export const GHOST_SIZE_FULL = "full";
 export const GHOST_SIZE_COMPACT = "compact"; // the Compact_Ghost, at both Phone_Sizes after the First_Step

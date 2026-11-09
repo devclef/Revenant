@@ -171,9 +171,9 @@ function isInsideLetterPaper(html: string, heading: string): boolean {
 }
 
 describe("reveal stages sit on a paper panel", () => {
-  it("wraps stage 1 (the seal break) in a panel", () => {
+  it("renders stage 1 (the seal break) on the dark desk, outside a StagePanel (spec 10 C6.7)", () => {
     const html = renderReveal(1);
-    expect(isInsidePanel(html, CEREMONY_COPY.sealButton)).toBe(true);
+    expect(isInsidePanel(html, CEREMONY_COPY.sealButton)).toBe(false);
   });
 
   it("puts stage 2 (What was written then) in the Caption_Block, above the paper (spec 09 L6.2, L6.4)", () => {
@@ -202,11 +202,11 @@ describe("reveal stages sit on a paper panel", () => {
     expect(isInsidePanel(html, REVEAL_COPY.stage3Title)).toBe(false);
   });
 
-  it("keeps the paper panel to stage 1, so the letter stage's paper holds only the letter (spec 09 L6.1)", () => {
-    // Stage 1 uses StagePanel; stage 2 uses the letter block's paper only;
-    // stage 3 sits on the desk (spec 07 R14.1).
+  it("renders no StagePanel at any reveal stage (spec 10 C6.7, spec 09 L6.1)", () => {
+    // Stage 1 renders no StagePanel (C6.7); stage 2 uses the letter block's
+    // paper only; stage 3 sits on the desk (spec 07 R14.1).
     const stage1 = renderReveal(1);
-    expect(stage1.split(styles.stagePanel).length - 1).toBe(1);
+    expect(stage1.split(styles.stagePanel).length - 1).toBe(0);
     const stage3 = renderReveal(3);
     expect(stage3.split(styles.stagePanel).length - 1).toBe(0);
     const paper = stage3.split(blockStyles.paper).length - 1;

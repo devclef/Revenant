@@ -21,6 +21,18 @@ export function skipLinkVisible(showAll: boolean, broken: boolean): boolean {
 }
 
 /**
+ * The Skip_Link's label (spec 10 C6.6, C8.9). "Skip to the receipts" when the
+ * letter has figures, "Skip to the letter" when it has none, since a letter
+ * with no figures has no receipts to reach.
+ */
+export function skipLinkLabel(
+  copy: { skipToReceipts: string; skipToLetter: string },
+  hasFigures: boolean,
+): string {
+  return hasFigures ? copy.skipToReceipts : copy.skipToLetter;
+}
+
+/**
  * Whether the seal is a registered Skip sequence. It is registered only from
  * the button press (`breaking`) until the seal has broken. At the marks, before
  * any press, nothing is registered, so the Top_Bar shows no Skip.

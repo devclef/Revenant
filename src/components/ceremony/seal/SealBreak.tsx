@@ -63,12 +63,14 @@ import {
 import { HeldSeal } from "./HeldSeal";
 import {
   activateSkipLink,
+  skipLinkLabel,
   skipLinkVisible,
   skipRegisteredFor,
 } from "./skip-link";
 import { holdSegmentsLit } from "./hold";
 import type { SealController } from "./useSealBreak";
 import styles from "./SealBreak.module.css";
+import buttonStyles from "@/components/ui/buttons.module.css";
 
 /** The WaxSeal's fixed 100×100 user space, shared by the crack overlay. */
 const VIEWBOX = SEAL_CENTER * 2;
@@ -112,6 +114,12 @@ export type SealBreakProps = {
   calm?: boolean;
   /** Show the "Show everything" control (R6.8). */
   showAll?: boolean;
+  /**
+   * Whether the letter has at least one sealed figure (spec 10 C6.6). The
+   * Skip_Link reads `skipToReceipts` when true and `skipToLetter` when false,
+   * because a letter with no figures has no receipts to skip to.
+   */
+  hasFigures?: boolean;
   /**
    * Report the local view's `sealing` flag up to CeremonyRoot so
    * `stageFor(state, local)` resolves `seal` while a break is in progress and
@@ -221,6 +229,7 @@ export function SealBreak({
   seal,
   calm: calmProp,
   showAll = false,
+  hasFigures = true,
   onSealingChange,
   envelopeSlot = null,
 }: SealBreakProps): ReactElement {
@@ -326,21 +335,19 @@ export function SealBreak({
     </HeldSeal>
   );
 
-  const instruction = (
-    <p
-      className={onEnvelope ? undefined : styles.instruction}
-      data-envelope-instruction={onEnvelope ? "" : undefined}
-    >
-      {CEREMONY_COPY.sealInstruction}
-    </p>
-  );
+  const hint = <p className={styles.hint}>{CEREMONY_COPY.sealHint}</p>;
 
+  // The Seal_Group's controls: the Seal_Button (the Stage's one orange primary
+  // button, spec 10 C6.5) directly under the hint, and the quiet Skip_Link
+  // under it (C6.6). The Skip_Link reads skipToReceipts, or skipToLetter when
+  // the letter has no figures.
   const controls = (
     <>
       <button
         type="button"
-        className={styles.button}
+        className={buttonStyles.primary}
         data-primary-control=""
+        data-seal-button=""
         onClick={onButton}
       >
         {CEREMONY_COPY.sealButton}
@@ -352,43 +359,44 @@ export function SealBreak({
           data-skip-link=""
           onClick={() => activateSkipLink(seal)}
         >
-          {CEREMONY_COPY.skipToReceipts}
+          {skipLinkLabel(CEREMONY_COPY, hasFigures)}
         </button>
       ) : null}
     </>
   );
 
   if (envelopeSlot !== null) {
-    // The seal and its instruction line go into the held Envelope's slot, beside
-    // the Envelope (C5.1). The layer is positioned by the Envelope's box, so the
-    // timing variables travel with it. The controls stay in the Content_Column
-    // (C5.2).
-    return (
+    // At the Desktop_Sizes and the Wide_Size the pressable seal sits on the
+    // turned Envelope's flap, and the one Seal_Group (hint, Seal_Button,
+    // Skip_Link) sits beside it, both portalled into the Envelope's slot so the
+    // scene stylesheet can place them against the Ghost (spec 10 C6.1, C6.3).
+    // Nothing is left in the Content_Column.
+    return createPortal(
       <>
-        {createPortal(
-          <>
-            <div
-              style={TIMING_VARS}
-              data-broken={broken}
-              data-envelope-seal=""
-            >
-              {sealDrawing}
-            </div>
-            {instruction}
-          </>,
-          envelopeSlot,
-        )}
-        <section className={styles.stage} data-broken={broken} data-seal-controls="">
+        <div style={TIMING_VARS} data-broken={broken} data-envelope-seal="">
+          {sealDrawing}
+        </div>
+        <div className={styles.sealGroup} data-broken={broken} data-seal-group="">
+          {hint}
           {controls}
-        </section>
-      </>
+        </div>
+      </>,
+      envelopeSlot,
     );
   }
 
+  // The phone and the sub-900 px band: the whole Seal_Group sits in the
+  // Content_Column, the WaxSeal first (at PHONE_SEAL_SIZE), then the hint, the
+  // Seal_Button and the Skip_Link (spec 10 C6.1, C6.8).
   return (
-    <section className={styles.stage} style={TIMING_VARS} data-broken={broken}>
+    <section
+      className={styles.stage}
+      style={TIMING_VARS}
+      data-broken={broken}
+      data-seal-group=""
+    >
       {sealDrawing}
-      {instruction}
+      {hint}
       {controls}
     </section>
   );

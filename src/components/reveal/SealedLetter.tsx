@@ -70,7 +70,9 @@ export function SealedLetterCaption({
   if (variant === "live") {
     return (
       <>
-        <h2 tabIndex={-1}>{REVEAL_COPY.stage2Title}</h2>
+        <h2 tabIndex={-1} data-letter-heading="">
+          {REVEAL_COPY.stage2Title}
+        </h2>
 
         {letterId === undefined ? null : <WaxSeal patternKey={letterId} size={48} />}
 
@@ -98,7 +100,9 @@ export function SealedLetterCaption({
 
   return (
     <>
-      <h2 tabIndex={-1}>{REVEAL_COPY.stage2Title}</h2>
+      <h2 tabIndex={-1} data-letter-heading="">
+        {REVEAL_COPY.stage2Title}
+      </h2>
 
       {disclosure === undefined ? null : (
         <p className={styles.period} data-persona-disclosure="">

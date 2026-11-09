@@ -18,9 +18,9 @@ function render(items: readonly AnswerListItem[]): string {
 describe("AnswerList", () => {
   it("renders one list item per answer, in the order given", () => {
     const html = render([
-      { name: "Regular gasoline", markValue: "3.90", unit: "USD per gallon" },
-      { name: "Eggs", markValue: "4", unit: "USD per dozen" },
-      { name: "Rent", markValue: "1200", unit: "USD per month" },
+      { kind: "number", name: "Regular gasoline", markValue: "3.90", unit: "USD per gallon" },
+      { kind: "number", name: "Eggs", markValue: "4", unit: "USD per dozen" },
+      { kind: "number", name: "Rent", markValue: "1200", unit: "USD per month" },
     ]);
     expect(html.match(/<li /g)?.length).toBe(3);
     const gas = html.indexOf("Regular gasoline");
@@ -32,25 +32,25 @@ describe("AnswerList", () => {
   });
 
   it("shows the answer with its unit, as the Answer_Text", () => {
-    const html = render([{ name: "Regular gasoline", markValue: "3.90", unit: "USD per gallon" }]);
+    const html = render([{ kind: "number", name: "Regular gasoline", markValue: "3.90", unit: "USD per gallon" }]);
     expect(html).toContain("3.90 USD per gallon");
   });
 
   it("groups the integer part of a large answer and keeps every digit", () => {
-    const html = render([{ name: "Rent", markValue: "1585.70", unit: "USD per month" }]);
+    const html = render([{ kind: "number", name: "Rent", markValue: "1585.70", unit: "USD per month" }]);
     expect(html).toContain("1,585.70 USD per month");
   });
 
   it("shows 'No answer' and no unit for an unanswered question", () => {
-    const html = render([{ name: "Eggs", unit: "USD per dozen" }]);
+    const html = render([{ kind: "number", name: "Eggs", unit: "USD per dozen" }]);
     expect(html).toContain(REVEAL_COPY.noAnswer);
     expect(html).not.toContain("USD per dozen");
   });
 
   it("shows no figure value, period, source or series next to an answer", () => {
     const html = render([
-      { name: "Regular gasoline", markValue: "3.90", unit: "USD per gallon" },
-      { name: "Eggs", unit: "USD per dozen" },
+      { kind: "number", name: "Regular gasoline", markValue: "3.90", unit: "USD per gallon" },
+      { kind: "number", name: "Eggs", unit: "USD per dozen" },
     ]);
     expect(html).not.toContain(REVEAL_COPY.then);
     expect(html).not.toContain(REVEAL_COPY.now);
@@ -64,5 +64,38 @@ describe("AnswerList", () => {
     const html = render([]);
     expect(html).toContain("<ul");
     expect(html).not.toContain("<li");
+  });
+
+  it("renders a text item's question and its answer", () => {
+    const html = render([
+      {
+        kind: "text",
+        question: "What did the street smell like?",
+        answer: "Bread from the corner bakery.",
+      },
+    ]);
+    expect(html).toContain('data-user-content="">What did the street smell like?<');
+    expect(html).toContain('data-user-content="">Bread from the corner bakery.<');
+    expect(html).not.toContain(REVEAL_COPY.noAnswer);
+  });
+
+  it("shows 'No answer' under a text item's question when the answer is null", () => {
+    const html = render([
+      { kind: "text", question: "Anything else to add?", answer: null },
+    ]);
+    expect(html).toContain("Anything else to add?");
+    expect(html).toContain(REVEAL_COPY.noAnswer);
+  });
+
+  it("lists text items before number items when both are passed in that order", () => {
+    const html = render([
+      { kind: "text", question: "What did the street smell like?", answer: "Bread." },
+      { kind: "number", name: "Eggs", markValue: "4", unit: "USD per dozen" },
+    ]);
+    const text = html.indexOf("What did the street smell like?");
+    const eggs = html.indexOf("Eggs");
+    expect(text).toBeGreaterThanOrEqual(0);
+    expect(eggs).toBeGreaterThan(text);
+    expect(html.match(/<li /g)?.length).toBe(2);
   });
 });

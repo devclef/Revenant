@@ -555,6 +555,14 @@
     padding-bottom: calc(26vh + 2rem);
   }
 
+  /* Break the seal (spec 10 C6.3): in `marks` and `seal` the column is capped
+     at MARKS_COLUMN_MAX, narrower than the pre-reveal column, so the Seal_Group
+     fits between the column and the Ghost at every Desktop_Size.
+     constants-css.test.ts checks this value equals MARKS_COLUMN_MAX. */
+  .personaColumn:has(> :is([data-ceremony="marks"], [data-ceremony="seal"])) {
+    max-width: min(28rem, 40vw);
+  }
+
   /* Spec 08 R3.2: after the Ghost leaves (letter, figures, close) the column
      cap is lifted, so the reveal can use the width beside the Ghost. */
   .personaColumn:has(> :is([data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"])) {
@@ -695,13 +703,19 @@
   pointer-events: none;
 }
 
-/* The held Envelope's seal and instruction line are placed by scene.module.css,
-   keyed on data-envelope-seal and data-envelope-instruction (spec 09 C5.1). */
+/* The held Envelope's pressable seal and the Seal_Group are placed by
+   scene.module.css, keyed on data-envelope-seal and data-seal-group
+   (spec 10 C6.1, C6.3). */
+
+/* SEAL_ON_FLAP (C6.1): the pressable seal sits on the turned Envelope's flap.
+   The back face's drawn WaxSeal centres at 50 % x 55.3 % of the Envelope box;
+   at 28 % wide the target covers it fully. constants.ts holds the three
+   numbers (SEAL_ON_FLAP_*); constants-css.test.ts checks the two agree. */
 .heldEnvelope [data-envelope-seal] {
   position: absolute;
   left: 50%;
-  top: 53%;
-  width: 46%;
+  top: 55.3%;
+  width: 28%;
   aspect-ratio: 1 / 1;
   /* The seal's pointer target stays at least 44 by 44 px (spec 09 C5.2). */
   min-width: 44px;
@@ -710,34 +724,26 @@
   pointer-events: none;
 }
 
-.heldEnvelope [data-envelope-instruction] {
+/* The one Seal_Group (hint, Seal_Button, Skip_Link) at 900 px and wider
+   (spec 10 C6.3). It sits SEAL_GROUP_GAP_PX (20) outside the Ghost_Body_Box
+   edge facing the Content_Column, centred on the WaxSeal, left-aligned. The
+   Envelope starts 6 % of the Ghost_Box (9.375 % of its own width) right of the
+   Ghost_Body_Box's left edge (body 12 %, Envelope 18 %), so the group's right
+   edge is that far plus the gap left of the Envelope's own left edge. */
+.heldEnvelope [data-seal-group] {
+  --seal-group-gap: 20px; /* SEAL_GROUP_GAP_PX */
   position: absolute;
-  right: calc(100% + 1rem);
-  top: 50%;
-  /* Explicit stacking above the Ghost's glow layer and body SVG inside the
-     held slot. Unverified as the QA blocker's fix: a static harness with this
-     stylesheet showed no body coverage of the glyphs with or without this
-     z-index. The layout check in the next step decides whether the blocker is
-     fixed. */
-  z-index: 3;
+  right: calc(109.375% + var(--seal-group-gap));
+  top: 55.3%; /* the WaxSeal's centre */
   transform: translateY(-50%);
-  width: max-content;
-  max-width: 14rem;
-  margin: 0;
-  color: var(--text);
-  line-height: 1.4;
-  text-align: right;
-  pointer-events: none;
-}
-
-/* At or above 900 px the Ghost body is wide and white, and the instruction
-   line's right end reached into it (x 770 to 778 at 1280 x 800), where the light
-   text cannot be read. The line sits one more step to the left so its right end
-   clears the Ghost body box and stays on the dark background. */
-@media (min-width: 900px) {
-  .heldEnvelope [data-envelope-instruction] {
-    right: calc(100% + 2.5rem);
-  }
+  width: 14rem; /* SEAL_GROUP_WIDTH */
+  display: grid;
+  justify-items: start;
+  gap: 0.75rem;
+  text-align: left;
+  /* Above the Ghost's glow layer and body SVG inside the held slot. */
+  z-index: 3;
+  pointer-events: auto;
 }
 
 /* The held Envelope's placement in the Ghost's slot (design.md "Held in the
