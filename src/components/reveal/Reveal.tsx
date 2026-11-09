@@ -300,10 +300,22 @@ function RevealBody({
 
   // The Answer_List (spec 09 A9, P6.4; spec 10 C6.10) shows the recall answers,
   // Author_Questions first (text), then the number questions with the metric
-  // name, the Answer_Text and the unit, or "No answer". The payload has no
-  // Author_Question field yet (spec 10 C2 adds it), so only number items appear
-  // until that lands; the text branch is ready for when it does.
-  const textItems: AnswerListItem[] = [];
+  // name, the Answer_Text and the unit, or "No answer". Text items come from the
+  // sealed `text` questions in payload order (C9.3: the receipts lead with them).
+  const textItems: AnswerListItem[] = opened.payload.recall_questions.flatMap(
+    (question) => {
+      if (question.answer_type !== "text") return [];
+      const answer = answerByQuestionId.get(question.id);
+      return [
+        {
+          kind: "text" as const,
+          question: question.text,
+          answer:
+            answer !== undefined && answer.kind === "text" ? answer.value : null,
+        },
+      ];
+    },
+  );
   const numberItems: AnswerListItem[] = opened.payload.recall_questions.flatMap(
     (question) => {
       if (question.answer_type !== "number") return [];

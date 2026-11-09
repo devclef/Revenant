@@ -299,10 +299,13 @@ describe("reveal marks stage on the phone and the collapsed card (spec 09 P6, C3
     expect(html).toContain(`${REVEAL_COPY.noAnswer}`);
   });
 
-  it("lists each number question once in the phone Answer_List, with its answer or No answer", () => {
+  it("lists every answer once in the phone Answer_List, Author_Questions first, each with its answer or No answer (spec 10 C6.10)", () => {
     const html = renderMarks(RECORD, { phone: true });
     const items = html.match(/<li class="[^"]*">/g) ?? [];
-    expect(items).toHaveLength(2);
+    expect(items).toHaveLength(3);
+    expect(html.indexOf("What were you spending most on then?")).toBeLessThan(
+      html.indexOf("2.50 USD per gallon"),
+    );
     expect(html).toContain("2.50 USD per gallon");
     expect(html).toContain("Milk");
     expect(html).not.toContain("data-recorded-scale");

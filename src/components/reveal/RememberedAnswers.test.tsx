@@ -207,11 +207,16 @@ describe("Reveal stage 1 is the marks Stage", () => {
     expect(html).toContain(REVEAL_COPY.stage1Title);
   });
 
-  it("shows no recall question wording at stage 1 (spec 09 C4.1)", () => {
+  it("shows no number question wording at stage 1, and each Author_Question wording (spec 10 C6.10)", () => {
     const html = renderReveal(RECORD);
-    // The Answer_List shows the metric name, not the sealed question wording.
+    // A number answer shows the metric name, not its sealed wording. An
+    // Author_Question is the judge's own text, so its wording is listed.
     for (const question of OPENED.payload.recall_questions) {
-      expect(html).not.toContain(question.text);
+      if (question.answer_type === "number") {
+        expect(html).not.toContain(question.text);
+      } else {
+        expect(html).toContain(question.text);
+      }
     }
     expect(html).not.toContain(">2.50</span>");
   });
