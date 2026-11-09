@@ -201,6 +201,27 @@ describe("Property 6: every Flow state and local view maps to exactly one Stage 
     expect(stageFor(stage3, DEFAULT_LOCAL_VIEW)).toBe("close");
   });
 
+  it("resolves stages 2 and 3 of a reveal with no figures both to close (spec 10 C8.6)", () => {
+    const noFigures = {
+      ...OPENED_STUB,
+      payload: { figures: [] } as never,
+    } as Opened;
+    const stage2: FlowState = {
+      tag: "reveal",
+      opened: noFigures,
+      record: RECORD,
+      stage: 2,
+    };
+    const stage3: FlowState = {
+      tag: "reveal",
+      opened: noFigures,
+      record: RECORD,
+      stage: 3,
+    };
+    expect(stageFor(stage2, DEFAULT_LOCAL_VIEW)).toBe("close");
+    expect(stageFor(stage3, DEFAULT_LOCAL_VIEW)).toBe("close");
+  });
+
   it("maps the emerging and sealed flow states to their own Stages, whatever the local view", () => {
     fc.assert(
       fc.property(localViewArb, (local) => {
