@@ -237,22 +237,18 @@ describe("Scene headings and check hooks (F7, C1, P2)", () => {
     expect(ceremonyRoot).toContain("<div data-stage-content>{children}</div>");
   });
 
-  it("the Pick_Up_Button carries data-primary-control", () => {
+  it("the Pick_Up_Button is retired: EnvelopeView draws no pick-up control (spec 10 C1.3)", () => {
     const envelopeView = readFileSync(
       resolve(__dirname, "../envelope/EnvelopeView.tsx"),
       "utf8",
     );
-    expect(envelopeView).toContain("data-primary-control onClick={onBegin}");
+    expect(envelopeView).not.toContain("onClick={onBegin}");
+    expect(envelopeView).not.toContain("REVEAL_COPY.pickUp");
   });
 
-  it("the Persona_Intro and the intact block carry data-block", () => {
+  it("the Persona_Intro keeps its data-block marker", () => {
     const intro = readFileSync(resolve(__dirname, "../intro/PersonaIntro.tsx"), "utf8");
-    const envelopeView = readFileSync(
-      resolve(__dirname, "../envelope/EnvelopeView.tsx"),
-      "utf8",
-    );
     expect(intro).toContain('data-block="persona-intro"');
-    expect(envelopeView).toContain('data-block="intact"');
   });
 
   it("the phone headline clamp and text-wrap: balance sit below 600 px", () => {

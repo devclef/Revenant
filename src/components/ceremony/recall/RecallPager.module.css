@@ -61,8 +61,9 @@
   color: var(--ink-soft);
 }
 
-/* The typed number and the Next or submit control share one wrapping row at and
-   above RECALL_STACK_BELOW_PX (640 px). Below it they stack (spec 09 A8.3). */
+/* The typed number and the Next or submit control share one wrapping row at every
+   width. Keeping them on one row is what lets the primary control sit inside the
+   360 x 640 First_Viewport at scrollY 0 (spec 10 C1.5). */
 .answerRow {
   display: flex;
   align-items: center;
@@ -159,36 +160,18 @@
   outline-offset: 2px;
 }
 
-/* Below 640 px (RECALL_STACK_BELOW_PX) the typed number and the Next control stack,
-   each at the full card width (spec 09 A8.3). The number and button keep their
-   own sizes; only the layout changes. */
-@media (max-width: 639.98px) {
-  .answerRow {
-    flex-direction: column;
-    align-items: stretch;
-    /* Tighter stack, so the 44 px field still leaves the Next control inside
-       the 640 px viewport at 360 px wide (layout-check R1). */
-    gap: 0.2rem;
-  }
-
-  .input {
-    width: 100%;
-  }
-
-  .cta {
-    width: 100%;
-  }
-}
-
+/* Below 640 px the number and the Next control stay on one row (spec 10 C1.5).
+   The rule that stacked them is gone, so only the 360 px layout values remain. */
 /* Below 900 px the intro moves under the answer controls, so the field and the
    button stay above the fold (R11.15). The number and the button shrink to fit. */
 @media (max-width: 899px) {
-  .intro {
+  .intro,
+  .unitHelp {
     order: 11;
   }
 
   .input {
-    font-size: 1.5rem;
+    font-size: 1.25rem;
   }
 
   .cta {
@@ -214,7 +197,7 @@
     flex-wrap: wrap;
   }
 
-  /* Question text is a body heading, smaller than the intact headline at every
+  /* Question text is a body heading, smaller than the headline at every
      width (R8.1). Three lines at 360 px is the most the card can spare. */
   .qTitle {
     font-size: 1rem;

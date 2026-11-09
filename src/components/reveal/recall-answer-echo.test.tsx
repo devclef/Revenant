@@ -65,8 +65,10 @@ const OPENED = {
 
 /** Type `text` into the question `id` through the reducer, then build the record. */
 function typeAnswers(entries: ReadonlyArray<readonly [string, string]>) {
-  let state: FlowState = { tag: "verified", opened: OPENED };
-  state = reduce(state, { type: "BEGIN" });
+  let state: FlowState = reduce(
+    { tag: "verifying" },
+    { type: "OPENED", opened: OPENED },
+  );
   for (const [id, text] of entries) {
     state = reduce(state, { type: "EDIT_DRAFT", id, text });
   }

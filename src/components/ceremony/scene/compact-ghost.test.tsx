@@ -78,8 +78,8 @@ function ghostAt(stage: Stage): string {
 }
 
 describe("the Compact_Ghost is switched on from the First_Step (P4.2)", () => {
-  it("is off in intact and on from recall, through close", () => {
-    expect(ghostAt("intact")).toContain('data-compact="false"');
+  it("is off in emerging and on from recall, through close", () => {
+    expect(ghostAt("emerging")).toContain('data-compact="false"');
     for (const stage of ["recall", "marks", "seal", "letter", "figures", "close"] as const) {
       expect(ghostAt(stage), stage).toContain('data-compact="true"');
     }

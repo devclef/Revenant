@@ -135,13 +135,12 @@ describe("backup key path, end to end (R17.6 to R17.10, R21.6)", () => {
         envelopeHash: sealed.envelopeHash,
       },
     });
-    expect(state.tag).toBe("verified");
+    expect(state.tag).toBe("recall");
 
-    // Step 5: the verified state holds no reveal. Beginning recall, sealing the
-    // record and posting it are the only way to reach the reveal.
+    // Step 5: the recall step holds no reveal. Sealing the record and posting
+    // it are the only way to reach the reveal.
     expect(state.tag).not.toBe("reveal");
-    const begun = reduce(state, { type: "BEGIN" });
-    expect(begun.tag).toBe("recall");
+    const begun = state;
     if (begun.tag !== "recall") return;
 
     const built = buildRecallRecord([], begun.drafts);

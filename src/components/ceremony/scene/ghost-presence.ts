@@ -12,7 +12,7 @@ import { GHOST_EXIT_FALLBACK_MS } from "../constants";
 
 /** The inputs that decide whether the Ghost is mounted. */
 export type GhostPresenceInput = {
-  /** The Opening_Flow state tag, for example `reveal` or `verified`. */
+  /** The Opening_Flow state tag, for example `reveal` or `recall`. */
   tag: string;
   /** The reveal stage. Only meaningful when `tag` is `reveal`. */
   stage: 1 | 2 | 3 | null;

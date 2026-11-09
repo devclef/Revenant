@@ -16,11 +16,6 @@
 //     `role="status"` region; `openable` is a silent transition.
 //   - `sealed` shows the opening date, the time remaining and "Try again", and
 //     NOTHING about the contents (R7.2).
-//   - `verified` (intact) shows the seal-is-intact statement and a Begin
-//     control, and does so with NO recall question, Mark or letter present
-//     (Property 2's envelope clauses: the envelope scene precedes every later
-//     Stage). The envelope stays `closed` until BEGIN; it only turns over when
-//     a later Stage drives `envelopeState`.
 //   - R8.7: every scene draws the envelope at the resting geometry — the
 //     literals from constants.ts appear in the rendered inline style.
 //   - With no persona: the default seal pattern and no dates (spec 03 renders).
@@ -147,68 +142,12 @@ describe("EnvelopeView — sealed shows the date and countdown, nothing about co
   });
 });
 
-describe("EnvelopeView — verified is the intact Stage, before any recall or letter (Property 2)", () => {
-  const html = render({ variant: "verified", persona: PERSONA, onBegin: () => {} });
-
-  it("shows the seal-is-intact statement and the Pick up the letter control", () => {
-    expect(html).toContain(REVEAL_COPY.sealIntact);
-    expect(html).toContain(REVEAL_COPY.pickUp);
-    expect(html).toMatch(/<button[^>]*>Pick up the letter<\/button>/);
-  });
-
-  it("precedes every later Stage: no Mark, no recall question, no letter (Property 2)", () => {
-    const lower = html.toLowerCase();
-    // The intact statement comes BEFORE the recall step and the reveal stages;
-    // none of their copy may be present in this scene.
-    const laterStageStrings = [
-      REVEAL_COPY.recallTitle, // "Before you read it"
-      REVEAL_COPY.recallIntro.replace("{date}", ""),
-      REVEAL_COPY.submit, // the recall submit
-      REVEAL_COPY.stage1Title, // "What you remembered"
-      REVEAL_COPY.stage2Title, // "What was written then"
-      REVEAL_COPY.stage3Title, // "The numbers, then and now"
-    ];
-    for (const needle of laterStageStrings) {
-      expect(
-        lower,
-        `intact scene must not contain later-stage copy "${needle}"`,
-      ).not.toContain(needle.toLowerCase());
-    }
-    // And no sealed letter body or figures leak onto this scene.
-    for (const needle of ["letter text", "usd per gallon", "self-reported"]) {
-      expect(lower).not.toContain(needle);
-    }
-  });
-
-  it("holds the envelope closed until BEGIN is sent (the turn comes later)", () => {
-    // With the default envelopeState the paper rests closed on the intact Stage;
-    // the turn-over (closed -> turned / open) is driven by the later Stages only
-    // after BEGIN (R7.5, product.md "Recall first").
-    expect(html).toContain('data-envelope-state="closed"');
-    expect(html).not.toContain('data-envelope-state="turned"');
-    expect(html).not.toContain('data-envelope-state="open"');
-  });
-
-  it("turns the envelope over only when a later Stage drives envelopeState", () => {
-    // Once BEGIN has been sent, the caller advances envelopeState; the view then
-    // draws the turned face. This proves the closed-until-BEGIN hold above is a
-    // real gate, not a hardcoded closed envelope.
-    const turned = render({
-      variant: "verified",
-      persona: PERSONA,
-      envelopeState: "turned",
-    });
-    expect(turned).toContain('data-envelope-state="turned"');
-  });
-});
-
 describe("EnvelopeView — every scene draws the envelope at the resting geometry (R8.7)", () => {
   const variants: readonly EnvelopeViewVariant[] = [
     "loading",
     "openable",
     "verifying",
     "sealed",
-    "verified",
   ] as const;
 
   it("sets the frame width and top offset to the resting geometry", () => {
@@ -239,13 +178,6 @@ describe("EnvelopeView — no persona means the default pattern and no dates (sp
       // The demo note is a persona field too.
       expect(html).not.toContain("Prepared later as a demo.");
     }
-  });
-
-  it("renders the verified scene with no dates when no persona is given", () => {
-    const html = render({ variant: "verified" });
-    expect(html).toContain(REVEAL_COPY.sealIntact);
-    expect(html).not.toContain("Written as of");
-    expect(html).not.toContain("Opens ");
   });
 
   it("shows no still-sealed panel for sealed with no persona (no opening date to show)", () => {

@@ -19,7 +19,9 @@ const HELD_TAGS: ReadonlySet<FlowState["tag"]> = new Set<FlowState["tag"]>([
   "awaiting_key",
   "unlocking",
   "sealed",
-  "verified",
+  "recall",
+  "submitting",
+  "submit_failed",
 ]);
 
 export type HeldEnvelopeInput = {

@@ -18,41 +18,12 @@
 
 /* --- Stages --- */
 
-.envelopeStage,
-.intactStage {
+.envelopeStage {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
   gap: 1.25rem;
-}
-
-/* The verified stage's statement and Begin control sit in the space above the
-   envelope's frame offset, so they stay clear of the Soil strip. The frame keeps
-   its resting top offset, so the envelope does not move. */
-.intactStage {
-  position: relative;
-}
-
-.intactTop {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.6rem;
-}
-
-/* Persona page (the Ghost holds the envelope, no in-column frame): the statement
-   and button flow inside the card so it grows to contain them and the text never
-   spills onto the dark background. */
-.intactFlow {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.6rem;
 }
 
 /* --- The envelope's resting frame (R8.7) --- */
@@ -71,7 +42,7 @@
      width, so the SVG scales without distortion. */
 }
 
-/* --- Statements (loading / verifying / seal-is-intact) --- */
+/* --- Statements (loading / verifying) --- */
 
 .statement {
   margin: 0;
@@ -98,26 +69,6 @@
   background-color: var(--paper);
 }
 
-/* The Pick_Up_Button (design.md "Pick up and the status line"): the Accent,
-   at least 56 px high. The Accent marks "you" (tone.md), never a figure. */
-.pickUp {
-  font: inherit;
-  font-weight: 700;
-  color: var(--on-accent);
-  background-color: var(--accent);
-  border: 0;
-  border-radius: 2px;
-  min-height: 56px;
-  min-width: 44px;
-  padding: 0.6rem 1.4rem;
-  cursor: pointer;
-}
-
-.pickUp:focus-visible {
-  outline: 3px solid var(--accent);
-  outline-offset: 3px;
-}
-
 /* --- The still-sealed panel wrapper (R7.2). The reused StillSealed view
        carries its own heading, body, countdown and retry styling; this only
        bounds and centres it inside the envelope stage. --- */
@@ -131,8 +82,7 @@
 
 /* --- Focus (R9.6) --- */
 
-.envelopeStage :focus-visible,
-.intactStage :focus-visible {
+.envelopeStage :focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 2px;
 }

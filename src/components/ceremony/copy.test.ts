@@ -108,7 +108,6 @@ const ALL_STAGES = [
   "emerging",
   "sealed",
   "envelope",
-  "intact",
   "recall",
   "marks",
   "seal",

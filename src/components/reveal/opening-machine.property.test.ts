@@ -206,7 +206,6 @@ const eventArb: fc.Arbitrary<FlowEvent> = fc.oneof(
   ...OPEN_FAILED_KINDS.map((kind) =>
     fc.constant<FlowEvent>({ type: "OPEN_FAILED", kind }),
   ),
-  fc.constant<FlowEvent>({ type: "BEGIN" }),
   fc.constant<FlowEvent>({ type: "EDIT_DRAFT", id: "q-fuel", text: "3.50" }),
   fc.constant<FlowEvent>({
     type: "TOGGLE_NO_ANSWER",
@@ -240,10 +239,11 @@ describe("Property 17: reducer never reveals before answers are stored", () => {
           const prev = state;
           const next = reduce(prev, event);
 
-          // R7.5: recall is reached only from a verified open via BEGIN.
+          // R7.5 (spec 10 C1.2): recall is reached only from a successful open,
+          // the `OPENED` event from `verifying` (persona) or `unlocking` (live).
           if (next.tag === "recall" && prev.tag !== "recall") {
-            expect(prev.tag).toBe("verified");
-            expect(event.type).toBe("BEGIN");
+            expect(["verifying", "unlocking"]).toContain(prev.tag);
+            expect(event.type).toBe("OPENED");
           }
 
           // R8.1, R8.6, R9.1: reveal is entered only directly after POST_OK in
@@ -383,12 +383,6 @@ const RENDER_CASES: RenderCase[] = [
   },
   {
     state: { tag: "verifying" },
-    revealsQuestion: false,
-    revealsLetter: false,
-    revealsFigures: false,
-  },
-  {
-    state: { tag: "verified", opened: OPENED },
     revealsQuestion: false,
     revealsLetter: false,
     revealsFigures: false,
@@ -687,7 +681,6 @@ const PRE_RECALL_TAGS = new Set([
   "sealed",
   "openable",
   "verifying",
-  "verified",
   "not_placed",
   "unreachable",
   "verification_failed",

@@ -158,8 +158,6 @@ export const CEREMONY_COPY = {
     sealed: "The letter is still sealed.",
     /** The sealed envelope resting on the desk. */
     envelope: "The envelope is on the desk.",
-    /** The intact seal, before it is broken. */
-    intact: "The seal is intact.",
     /** The recall step, before the letter is opened. */
     recall: "Testify. Say what you remember.",
     /** The remembered answers, placed as ink marks. */

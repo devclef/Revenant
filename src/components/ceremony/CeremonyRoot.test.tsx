@@ -282,12 +282,6 @@ describe("CeremonyRoot data-ceremony is the Stage for the state (R3.1)", () => {
       stage: "emerging",
     },
     { name: "verifying", state: { tag: "verifying" }, stage: "emerging" },
-    // verified -> intact.
-    {
-      name: "verified",
-      state: { tag: "verified", opened: OPENED },
-      stage: "intact",
-    },
     // recall -> recall.
     {
       name: "recall",
@@ -342,9 +336,9 @@ describe("CeremonyRoot data-ceremony-motion", () => {
 
 describe("CeremonyRoot live region", () => {
   it.skipIf(!CEREMONY_ROOT_PRESENT)("announces the Stage line for the current state (R3.1)", () => {
-    // verified -> intact Stage, whose live line is CEREMONY_COPY.stageLive.intact.
-    const html = render({ tag: "verified", opened: OPENED });
-    const line = CEREMONY_COPY.stageLive.intact;
+    // sealed -> sealed: the still-sealed line for the live region.
+    const html = render({ tag: "sealed", opensAt: "2030-01-01T00:00:00.000Z" });
+    const line = CEREMONY_COPY.stageLive.sealed;
     expect(html).toContain(esc(line));
     // The line sits in a polite live region.
     expect(html).toContain('aria-live="polite"');
@@ -396,7 +390,6 @@ function countButtons(html: string, text: string): number {
 describe("CeremonyRoot desk-token controls render once per state", () => {
   const flowStates: Array<{ name: string; state: FlowState }> = [
     { name: "loading", state: { tag: "loading" } },
-    { name: "verified", state: { tag: "verified", opened: OPENED } },
     {
       name: "reveal stage 3",
       state: { tag: "reveal", opened: OPENED, record: RECORD, stage: 3 },
@@ -439,7 +432,7 @@ describe("CeremonyRoot desk-token controls render once per state", () => {
 describe("CeremonyRoot render is I/O-free", () => {
   it("never fetches during render (the guard would throw otherwise)", () => {
     render({ tag: "loading" });
-    render({ tag: "verified", opened: OPENED });
+    render({ tag: "verifying" });
     render({ tag: "reveal", opened: OPENED, record: RECORD, stage: 3 });
     expect(fetch).not.toHaveBeenCalled();
   });
@@ -533,32 +526,39 @@ describe("CeremonyRoot controls prop", () => {
 // environment, so a source scan pins that CeremonyRoot calls the table, sets the
 // scroll check and clears it.
 
+const NO_LETTER = { authorQuestions: false, figures: false };
+const FIGURES = { authorQuestions: false, figures: true };
+
 describe("CeremonyRoot focus rule (spec 08, focusTargetFor table)", () => {
   it("moves focus to the Figures_Heading on See the numbers (letter to figures)", () => {
-    expect(focusTargetFor("letter", "figures")).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("letter", "figures", FIGURES)).toEqual({ kind: "figures-heading" });
   });
 
   it("moves focus to the Figures_Heading on Show everything from letter, marks and seal", () => {
-    expect(focusTargetFor("letter", "close")).toEqual({ kind: "figures-heading" });
-    expect(focusTargetFor("marks", "close")).toEqual({ kind: "figures-heading" });
-    expect(focusTargetFor("seal", "close")).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("letter", "close", FIGURES)).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("marks", "close", FIGURES)).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("seal", "close", FIGURES)).toEqual({ kind: "figures-heading" });
   });
 
   it("moves nothing on the settle from figures to close (R2.4)", () => {
-    expect(focusTargetFor("figures", "close")).toEqual({ kind: "none" });
+    expect(focusTargetFor("figures", "close", FIGURES)).toEqual({ kind: "none" });
   });
 
   it("keeps the spec 07 rule for the first mount and for a tag change inside one Stage", () => {
-    expect(focusTargetFor(null, "marks")).toEqual({ kind: "default" });
-    expect(focusTargetFor(null, "close")).toEqual({ kind: "default" });
-    expect(focusTargetFor("recall", "recall")).toEqual({ kind: "default" });
-    expect(focusTargetFor("figures", "figures")).toEqual({ kind: "default" });
+    expect(focusTargetFor(null, "marks", FIGURES)).toEqual({ kind: "default" });
+    expect(focusTargetFor(null, "close", FIGURES)).toEqual({ kind: "default" });
+    expect(focusTargetFor("recall", "recall", FIGURES)).toEqual({ kind: "default" });
+    expect(focusTargetFor("figures", "figures", FIGURES)).toEqual({ kind: "default" });
   });
 
   it("keeps the spec 07 rule for every other pair", () => {
-    expect(focusTargetFor("recall", "marks")).toEqual({ kind: "default" });
-    expect(focusTargetFor("marks", "letter")).toEqual({ kind: "default" });
-    expect(focusTargetFor("intact", "recall")).toEqual({ kind: "default" });
+    expect(focusTargetFor("recall", "marks", FIGURES)).toEqual({ kind: "default" });
+    expect(focusTargetFor("marks", "letter", NO_LETTER)).toEqual({ kind: "default" });
+    expect(focusTargetFor("envelope", "recall", NO_LETTER)).toEqual({ kind: "default" });
+  });
+
+  it("moves to the stage heading without scroll on a Load_Entry into recall", () => {
+    expect(focusTargetFor("emerging", "recall", NO_LETTER)).toEqual({ kind: "stage-heading" });
   });
 
   it("rescues focus only when the focused element was removed and the target is none", () => {
@@ -570,12 +570,26 @@ describe("CeremonyRoot focus rule (spec 08, focusTargetFor table)", () => {
 
   it("wires the table, the scroll check and its cleanup into CeremonyRoot", () => {
     const source = readFileSync(join(__dirname, "CeremonyRoot.tsx"), "utf8");
-    expect(source).toContain("focusTargetFor(prev, stage)");
+    expect(source).toContain("focusTargetFor(prev, stage, {");
     expect(source).toContain("shouldRescueFocus(activeIsBody, target)");
     expect(source).toContain("FOCUS_SCROLL_CHECK_MS");
     expect(source).toContain('focus({ preventScroll: true })');
     expect(source).toContain('"smooth" : "auto"');
     expect(source).toContain("clearTimeout(timer)");
+  });
+
+  it("passes preventScroll to every focus call a Load_Entry into recall can reach", () => {
+    const source = readFileSync(join(__dirname, "CeremonyRoot.tsx"), "utf8");
+    // The recall field and the recall heading are both focused without a scroll.
+    expect(source).toContain("stageFocus.focus({ preventScroll: options.preventScroll });");
+    expect(source).toContain("target.focus({ preventScroll: options.preventScroll });");
+    expect(source).toContain("focusStageDefault(region, { preventScroll: !target.scroll });");
+    // The default rule moves the page only on a Stage change (Gesture_Entry).
+    // The first mount and a rerun inside one Stage (the emerging tags) pass true.
+    expect(source).toContain("focusStageDefault(region, { preventScroll: prev === null || prev === stage });");
+    expect(source).not.toContain("focusStageDefault(region, { preventScroll: false });");
+    expect(source).not.toMatch(/focusStageDefault\(region\);/);
+    expect(source).not.toMatch(/stageFocus\.focus\(\);/);
   });
 
   it("keeps the Figures_Heading focusable without a positive tabindex", () => {
@@ -640,13 +654,13 @@ describe("CeremonyRoot persona Step_Indicator", () => {
     expect(html).not.toContain("data-step-indicator");
   });
 
-  it("renders the Step_Indicator from intact on, with the current step marked", () => {
+  it("renders the Step_Indicator from the first recall render on, with the current step marked", () => {
     const html = render(LETTER_STATE, "persona");
     expect(html).toContain("data-step-indicator");
     expect(html).toContain('aria-current="step"');
   });
 
-  it("renders no Step_Indicator while loading (before intact)", () => {
+  it("renders no Step_Indicator while loading (before recall)", () => {
     const html = render({ tag: "loading" }, "persona");
     expect(html).not.toContain("data-step-indicator");
   });

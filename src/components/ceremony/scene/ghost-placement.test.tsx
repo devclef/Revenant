@@ -23,7 +23,7 @@ import { PersonaGhost } from "./PersonaGhost";
 const here = dirname(fileURLToPath(import.meta.url));
 const css = readFileSync(join(here, "scene.module.css"), "utf8");
 
-const PLACED_STAGES: Stage[] = ["intact", "recall", "marks", "seal"];
+const PLACED_STAGES: Stage[] = ["emerging", "recall", "marks", "seal"];
 
 function ghostAt(stage: Stage): string {
   return renderToStaticMarkup(
@@ -49,23 +49,23 @@ const withoutPose = (html: string) =>
   html.replace(/ data-pose="(?:risen|handed)"/g, "").replace(/ data-compact="(?:true|false)"/g, "").replace(/ data-size="(?:full|compact)"/g, "");
 
 describe("Property 10: the Ghost's horizontal placement is the same in every placed Stage", () => {
-  it("renders identical classes, styles and horizontal values in intact, recall, marks and seal", () => {
+  it("renders identical classes, styles and horizontal values in emerging, recall, marks and seal", () => {
     const [first, ...rest] = PLACED_STAGES.map((stage) => withoutPose(ghostAt(stage)));
     for (const html of rest) {
       expect(html).toBe(first);
     }
   });
 
-  it("changes only the pose attribute between intact and recall", () => {
-    const risen = ghostAt("intact");
+  it("changes only the pose attribute between emerging and recall", () => {
+    const risen = ghostAt("emerging");
     const handed = ghostAt("recall");
     expect(risen).toContain('data-pose="risen"');
     expect(handed).toContain('data-pose="handed"');
     expect(withoutPose(risen)).toBe(withoutPose(handed));
   });
 
-  it("hands the Ghost from recall through seal, and keeps it risen in intact", () => {
-    expect(ghostHanded("intact")).toBe(false);
+  it("hands the Ghost from recall through seal, and keeps it risen in emerging", () => {
+    expect(ghostHanded("emerging")).toBe(false);
     expect(ghostHanded("recall")).toBe(true);
     expect(ghostHanded("marks")).toBe(true);
     expect(ghostHanded("seal")).toBe(true);

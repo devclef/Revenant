@@ -121,7 +121,6 @@ const FLOW_STATES: FlowState[] = [
   { tag: "sealed", opensAt: "2024-11-05T00:00:00.000Z" },
   { tag: "openable", envelope: {}, envelopeHash: "h" },
   { tag: "verifying" },
-  { tag: "verified", opened: OPENED },
   { tag: "recall", opened: OPENED, drafts: DRAFTS, invalid: [] },
   {
     tag: "submitting",
@@ -396,7 +395,6 @@ describe("Property 20: the /l/[id] live flow has no Ghost and no Soil (spec 07 t
   it("renders no Ghost, no Soil strip and no canvas in any live Stage", () => {
     const states: FlowState[] = [
       { tag: "loading" },
-      { tag: "verified", opened: OPENED },
       { tag: "reveal", opened: OPENED, record: RECORD, stage: 1 },
       { tag: "reveal", opened: OPENED, record: RECORD, stage: 3 },
     ];

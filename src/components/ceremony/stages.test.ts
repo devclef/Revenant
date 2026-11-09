@@ -11,7 +11,7 @@
 // the table row by row, so a change to either side is caught. It covers:
 //   - loading / openable / verifying -> emerging (any local view, spec 07);
 //   - sealed -> sealed (any local view, spec 07);
-//   - verified -> intact (any local view);
+//   - verifying -> recall (OPENED, spec 10 C1.2; the intact Stage is removed);
 //   - recall / submitting / submit_failed -> recall (any local view);
 //   - awaiting_key / unlocking -> envelope (spec 06, /l/[id] only);
 //   - reveal stage 1 -> "seal" when sealing is true, else "marks";
@@ -90,7 +90,6 @@ const nonRevealStateArbs: fc.Arbitrary<FlowState>[] = [
     unlock: { passkey: null, backup: true },
   }),
   fc.constant<FlowState>({ tag: "verifying" }),
-  fc.constant<FlowState>({ tag: "verified", opened: OPENED_STUB }),
   fc.constant<FlowState>({
     tag: "recall",
     opened: OPENED_STUB,
@@ -153,8 +152,7 @@ function expectedStage(state: FlowState, local: LocalView): Stage {
     case "awaiting_key":
     case "unlocking":
       return "envelope";
-    case "verified":
-      return "intact";
+
     case "recall":
     case "submitting":
     case "submit_failed":
@@ -236,7 +234,6 @@ const ALL_STAGES: Stage[] = [
   "emerging",
   "sealed",
   "envelope",
-  "intact",
   "recall",
   "marks",
   "seal",
@@ -246,47 +243,51 @@ const ALL_STAGES: Stage[] = [
   "error",
 ];
 
-describe("focusTargetFor (spec 08 focus table)", () => {
+describe("focusTargetFor (spec 08 focus table, spec 10 shape)", () => {
+  const FIGURES = { authorQuestions: false, figures: true };
+
   it("returns figures-heading for letter to figures (See the numbers)", () => {
-    expect(focusTargetFor("letter", "figures")).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("letter", "figures", FIGURES)).toEqual({ kind: "figures-heading" });
   });
 
-  it("returns figures-heading for letter, marks and seal to close (Show everything)", () => {
-    expect(focusTargetFor("letter", "close")).toEqual({ kind: "figures-heading" });
-    expect(focusTargetFor("marks", "close")).toEqual({ kind: "figures-heading" });
-    expect(focusTargetFor("seal", "close")).toEqual({ kind: "figures-heading" });
+  it("returns figures-heading for letter, marks and seal to close when there are figures (Show everything)", () => {
+    expect(focusTargetFor("letter", "close", FIGURES)).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("marks", "close", FIGURES)).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("seal", "close", FIGURES)).toEqual({ kind: "figures-heading" });
   });
 
   it("returns figures-heading for marks and seal to figures (Skip to the receipts)", () => {
-    expect(focusTargetFor("marks", "figures")).toEqual({ kind: "figures-heading" });
-    expect(focusTargetFor("seal", "figures")).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("marks", "figures", FIGURES)).toEqual({ kind: "figures-heading" });
+    expect(focusTargetFor("seal", "figures", FIGURES)).toEqual({ kind: "figures-heading" });
   });
 
   it("returns none for the settle from figures to close", () => {
-    expect(focusTargetFor("figures", "close")).toEqual({ kind: "none" });
+    expect(focusTargetFor("figures", "close", FIGURES)).toEqual({ kind: "none" });
   });
 
   it("returns default for the same Stage and for a null previous (first mount)", () => {
     for (const stage of ALL_STAGES) {
-      expect(focusTargetFor(stage, stage)).toEqual({ kind: "default" });
-      expect(focusTargetFor(null, stage)).toEqual({ kind: "default" });
+      expect(focusTargetFor(stage, stage, FIGURES)).toEqual({ kind: "default" });
+      expect(focusTargetFor(null, stage, FIGURES)).toEqual({ kind: "default" });
     }
   });
 
-  it("returns default for every other pair", () => {
-    expect(focusTargetFor("intact", "recall")).toEqual({ kind: "default" });
-    expect(focusTargetFor("recall", "marks")).toEqual({ kind: "default" });
-    expect(focusTargetFor("marks", "seal")).toEqual({ kind: "default" });
-    expect(focusTargetFor("seal", "letter")).toEqual({ kind: "default" });
-    expect(focusTargetFor("letter", "letter")).toEqual({ kind: "default" });
-    expect(focusTargetFor("figures", "letter")).toEqual({ kind: "default" });
+  it("returns default for the other pairs, and stage-heading only for emerging to recall", () => {
+    expect(focusTargetFor("emerging", "recall", FIGURES)).toEqual({ kind: "stage-heading" });
+    expect(focusTargetFor("recall", "marks", FIGURES)).toEqual({ kind: "default" });
+    expect(focusTargetFor("marks", "seal", FIGURES)).toEqual({ kind: "default" });
+    expect(focusTargetFor("seal", "letter", FIGURES)).toEqual({ kind: "default" });
+    expect(focusTargetFor("letter", "letter", FIGURES)).toEqual({ kind: "default" });
+    expect(focusTargetFor("figures", "letter", FIGURES)).toEqual({ kind: "default" });
   });
 
-  it("follows Property 10 for every pair of Stages", () => {
+  it("follows the spec 10 table for every pair of Stages with figures", () => {
     for (const prev of [null, ...ALL_STAGES] as (Stage | null)[]) {
       for (const next of ALL_STAGES) {
         let expected: FocusTarget = { kind: "default" };
-        if (
+        if (prev === "emerging" && next === "recall") {
+          expected = { kind: "stage-heading" };
+        } else if (
           next === "figures" &&
           (prev === "letter" || prev === "marks" || prev === "seal")
         ) {
@@ -299,7 +300,7 @@ describe("focusTargetFor (spec 08 focus table)", () => {
         } else if (prev === "figures" && next === "close") {
           expected = { kind: "none" };
         }
-        expect(focusTargetFor(prev, next)).toEqual(expected);
+        expect(focusTargetFor(prev, next, FIGURES)).toEqual(expected);
       }
     }
   });
@@ -312,8 +313,8 @@ describe("afterFirstStep (spec 08 hero table)", () => {
     }
   });
 
-  it("is false for emerging, sealed, envelope, intact and error", () => {
-    for (const stage of ["emerging", "sealed", "envelope", "intact", "error"] as Stage[]) {
+  it("is false for emerging, sealed, envelope and error", () => {
+    for (const stage of ["emerging", "sealed", "envelope", "error"] as Stage[]) {
       expect(afterFirstStep(stage)).toBe(false);
     }
   });
@@ -327,7 +328,7 @@ describe("afterGhost (spec 08 reveal layout table)", () => {
   });
 
   it("is false before the Ghost leaves", () => {
-    for (const stage of ["emerging", "sealed", "envelope", "intact", "recall", "marks", "seal", "error"] as Stage[]) {
+    for (const stage of ["emerging", "sealed", "envelope", "recall", "marks", "seal", "error"] as Stage[]) {
       expect(afterGhost(stage)).toBe(false);
     }
   });

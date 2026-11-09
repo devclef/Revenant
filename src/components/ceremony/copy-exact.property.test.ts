@@ -96,8 +96,7 @@ describe("Property 23, example checks: the R24.3 table matches exactly", () => {
     expect(CEREMONY_COPY.envelopeOpens.replace(" {date}", "")).toBe("Opens");
   });
 
-  it("holds the Pick_Up_Button, Figure_Entry and Recall_Pager strings", () => {
-    expect(REVEAL_COPY.pickUp).toBe("Pick up the letter");
+  it("holds the Figure_Entry and Recall_Pager strings", () => {
     expect(REVEAL_COPY.yourAnswer).toBe("Your answer");
     expect(REVEAL_COPY.noAnswer).toBe("No answer");
     expect(REVEAL_COPY.nextQuestion).toBe("Next question");

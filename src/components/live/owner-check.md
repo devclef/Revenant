@@ -12,7 +12,7 @@ Do this by hand on `https://revenant.devclef.se` with a device that supports PRF
 - [ ] 2. Approve the first prompt, press "Confirm your passkey", approve the second. Check a passkey named "Revenant demo" appears in the passkey manager.
 - [ ] 3. Check the sealed state counts down from 30 seconds and shows no letter text.
 - [ ] 4. Press the letter link before the countdown ends. Check it says "still sealed" and shows the time remaining.
-- [ ] 5. After the countdown, press "Unlock with your passkey". Check the seal-is-intact statement comes before the recall questions.
+- [ ] 5. After the countdown, press "Unlock with your passkey". Check the first recall question appears straight after unlock, with no other step before it.
 - [ ] 6. Answer the questions and finish the reveal. Check the letter text matches what was typed, each figure shows its period, and the change is 0.
 - [ ] 7. Open the Letter_Page on a device without the passkey, or in a browser without PRF, and check the message is clear. Then, in a browser without PRF, choose "Seal with a backup key instead", save the key, tick "I have saved this key", seal, and after the countdown paste the key and open the letter.
 - [ ] 8. Open `/demo/personas/us-maya` and check Demo 1 opens as before.
@@ -54,14 +54,14 @@ The QA agent runs these steps against a local build. No authenticator exists in 
 | 06 | Order | Read `__qa.log`. Check the order is `create`, `get`, `fetch /api/letters/demo/prepare`, `fetch /api/letters/demo/seal` and nothing else. | the log |
 | 07 | Sealed | Check the sealed statement, the local opening time, the countdown, the link as text with Copy, and no letter text or figure value anywhere in the DOM (search the typed text). Screenshot. | `[data-live-step="sealed"]` |
 | 08 | Early | Within 30 seconds open the letter link in a new browser tab, and keep the sealed page open in the first tab. Check "Still sealed", the date, the time remaining, and nothing about contents. | `[data-ceremony="envelope"]` |
-| 09 | Unlock | After 31 seconds, return to the first tab and press "Go to your letter" on the sealed page. This is a client-side `next/link` navigation, so the stub and `__qa.rawId` survive. Press "Unlock with your passkey". | `[data-ceremony="intact"]` |
-| 10 | Intact first | Check the seal-is-intact statement came before any recall question. Press "Begin". | `[data-ceremony="recall"]` |
+| 09 | Unlock | After 31 seconds, return to the first tab and press "Go to your letter" on the sealed page. This is a client-side `next/link` navigation, so the stub and `__qa.rawId` survive. Press "Unlock with your passkey". | `[data-ceremony="recall"]` |
+| 10 | Recall first | Check the first recall question shows straight after unlock, with no other step before it. Answer the first question. | `[data-ceremony="recall"]` |
 | 11 | Recall and reveal | Answer, submit, break the seal, read the letter and the numbers. Check the letter text equals what was typed, each figure shows period, region and unit, the change is 0, and "Sealed on" shows. No "Prepared later as a demo". The live note links to `/demo`. | `[data-ceremony="close"]` |
 | 12 | Calm | Repeat 04 to 11 with "Turn off motion" on and the keyboard only. | each stage |
 | 13 | Unsupported | Reload `/demo/live`, install the stub, set `__qa.mode = "no-prf"`, fill the form and press both buttons. Check the cannot-lock screen, the fallback control, the passkey-deletion note, and no fetch in the log. Repeat with `"short"`. (`"get-only"` still passes.) | `[data-live-step="cannot_lock"]` |
 | 14 | Cancelled | `__qa.mode = "cancel"`. Check the calm message, the text kept, and "Try again". Repeat with `"cancel-get"`. | `[data-live-step="cancelled"]` |
 | 15 | Backup fallback | From 13, press "Seal with a backup key instead". Check the key in groups of four, the loss warning, and that the seal button is disabled until "I have saved this key" is ticked. Tick it, then seal. | `[data-live-step="sealed"]` |
-| 16 | Backup open | Copy the key before sealing. After 31 seconds open the letter through "Go to your letter". Check there is no passkey control, only the key field. Paste the key (grouped, lower case). | `[data-ceremony="intact"]` |
+| 16 | Backup open | Copy the key before sealing. After 31 seconds open the letter through "Go to your letter". Check there is no passkey control, only the key field. Paste the key (grouped, lower case). | `[data-ceremony="recall"]` |
 | 17 | Mistyped | Change one character of the key. Check the mistyped message and that `__qa.log` shows no new fetch. | the message |
 | 18 | Wrong key | Paste a valid key from another letter. Check "That key does not match this letter." and that the field stays. | the message |
 | 19 | Wrong domain | Seal on `localhost`. Open `http://127.0.0.1:<port>/l/<id>`, install the stub, then press the passkey control. Check the message names `localhost` and `__qa.gets === 0`. | the message |

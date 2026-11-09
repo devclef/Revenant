@@ -57,6 +57,7 @@ import {
   emergingStatus,
   focusTargetFor,
   ghostHanded,
+  letterShape,
   shouldRescueFocus,
   stageFor,
   type Stage,
@@ -109,12 +110,12 @@ export function stageHeadingIndex(tagNames: readonly string[]): number {
  * its own target, else the newest `h1`/`h2`, else the region itself. A view
  * without a heading (the envelope, the loading statement) takes the region.
  */
-function focusStageDefault(region: HTMLElement): void {
+function focusStageDefault(region: HTMLElement, options: { preventScroll: boolean }): void {
   // A view can name its own focus target (spec 07 R11.2): the recall field.
   // It wins over the newest heading.
   const stageFocus = region.querySelector<HTMLElement>("[data-stage-focus]");
   if (stageFocus !== null) {
-    stageFocus.focus();
+    stageFocus.focus({ preventScroll: options.preventScroll });
     return;
   }
   const headings = Array.from(region.querySelectorAll<HTMLElement>("h1, h2"));
@@ -124,28 +125,39 @@ function focusStageDefault(region: HTMLElement): void {
   if (target !== region && !target.hasAttribute("tabindex")) {
     target.tabIndex = -1;
   }
-  target.focus();
+  target.focus({ preventScroll: options.preventScroll });
 }
 
 /**
- * Focus the Figures_Heading after "See the numbers" or "Show everything" (spec 08,
- * R2.1 to R2.3). Focus moves with `preventScroll`, then the heading scrolls to
- * the top of the view. The scroll is `smooth` only in full motion without
- * reduced motion. One timer, `FOCUS_SCROLL_CHECK_MS` later, re-checks the
- * heading against the Top_Bar's bottom and the viewport's bottom and jumps once
- * with `auto` if it is hidden. The returned cleanup clears that timer, so the
- * next Stage change cancels it.
+ * Focus a heading for a Stage change (spec 08 R2.1 to R2.3, spec 10 C1.12).
+ * Focus moves with `preventScroll`. When `scroll` is set, the heading then
+ * scrolls to the top of the view, `smooth` only in full motion without reduced
+ * motion, and one timer, `FOCUS_SCROLL_CHECK_MS` later, re-checks the heading
+ * against the Top_Bar's bottom and the viewport's bottom and jumps once with
+ * `auto` if it is hidden. The returned cleanup clears that timer.
+ *
+ * If the heading is missing, it tries `fallback` (for the author and letter
+ * headings, the Figures_Heading), then the default rule.
  */
-function focusFiguresHeading(
+function focusHeading(
   region: HTMLElement,
+  target: { selector: string; fallback?: string; scroll: boolean },
   mode: MotionMode,
 ): (() => void) | undefined {
-  const heading = region.querySelector<HTMLElement>("[data-figures-heading]");
+  const heading =
+    region.querySelector<HTMLElement>(target.selector) ??
+    (target.fallback === undefined
+      ? null
+      : region.querySelector<HTMLElement>(target.fallback));
   if (heading === null) {
-    focusStageDefault(region);
+    // The fallback follows the same scroll rule as the heading it replaces: a
+    // Load_Entry (scroll false) must not scroll the page to the field.
+    focusStageDefault(region, { preventScroll: !target.scroll });
     return undefined;
   }
+  if (!heading.hasAttribute("tabindex")) heading.tabIndex = -1;
   heading.focus({ preventScroll: true });
+  if (!target.scroll) return undefined;
   const reduced =
     typeof window.matchMedia === "function" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -232,8 +244,9 @@ function CeremonyRegion({
       : stage === "emerging"
         ? emergingStatus(state.tag)
         : CEREMONY_COPY.stageLive[stage];
-  // The Step_Indicator shows from `intact` to `close` on the persona page (C2.1).
-  const showSteps = controls === "topbar" && (stage === "intact" || stepNow !== null);
+  // The Step_Indicator shows from the first `recall` render to `close` on the
+  // persona page (C2.1, spec 10 C1.7): a step is current in each of those Stages.
+  const showSteps = controls === "topbar" && stepNow !== null;
 
   // Move focus when the view or the Stage changes (R9.6, R11, spec 08 focus
   // table). `focusTargetFor` reads the previous Stage and the next one:
@@ -252,14 +265,38 @@ function CeremonyRegion({
   useEffect(() => {
     motionRef.current = mode;
   }, [mode]);
+  // The letter's shape, read as two booleans so the effect re-runs only when
+  // one of them changes, not on every flow update (the table reads nothing else).
+  const letterAuthorQuestions = letterShape(state).authorQuestions;
+  const letterFigures = letterShape(state).figures;
   useEffect(() => {
     const prev = previousStageRef.current;
     previousStageRef.current = stage;
     const region = regionRef.current;
     if (region === null) return undefined;
-    const target = focusTargetFor(prev, stage);
+    const target = focusTargetFor(prev, stage, {
+      authorQuestions: letterAuthorQuestions,
+      figures: letterFigures,
+    });
+    if (target.kind === "stage-heading") {
+      return focusHeading(region, { selector: "[data-stage-heading]", scroll: false }, motionRef.current);
+    }
     if (target.kind === "figures-heading") {
-      return focusFiguresHeading(region, motionRef.current);
+      return focusHeading(region, { selector: "[data-figures-heading]", scroll: true }, motionRef.current);
+    }
+    if (target.kind === "author-testimony-heading") {
+      return focusHeading(
+        region,
+        { selector: "[data-author-testimony-heading]", fallback: "[data-figures-heading]", scroll: true },
+        motionRef.current,
+      );
+    }
+    if (target.kind === "letter-heading") {
+      return focusHeading(
+        region,
+        { selector: "[data-letter-heading]", fallback: "[data-figures-heading]", scroll: true },
+        motionRef.current,
+      );
     }
     if (target.kind === "none") {
       const active = document.activeElement;
@@ -271,9 +308,13 @@ function CeremonyRegion({
       }
       return undefined;
     }
-    focusStageDefault(region);
+    // The effect also reruns when the flow tag changes inside one Stage (the
+    // loading, openable and verifying tags all show `emerging`), and it runs on
+    // the first mount. Neither may scroll the page, or the Load_Entry page jumps
+    // before recall starts (spec 10 C1.12). Only a Stage change scrolls.
+    focusStageDefault(region, { preventScroll: prev === null || prev === stage });
     return undefined;
-  }, [state.tag, stage]);
+  }, [state.tag, stage, letterAuthorQuestions, letterFigures]);
 
   // The dust ceiling depends on the backdrop's lift. Once the pick-up move has
   // finished, a resize tells the Soil_Canvas to read the ceiling again (its own

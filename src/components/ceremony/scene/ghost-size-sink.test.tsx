@@ -95,8 +95,8 @@ describe("the Compact_Ghost size (P4.2)", () => {
     expect(html).not.toContain(`data-size="${GHOST_SIZE_FULL}"`);
   });
 
-  it("is compact from recall on, and full in intact, at every Phone_Size", () => {
-    expect(personaGhostAt("intact")).toContain(`data-size="${GHOST_SIZE_FULL}"`);
+  it("is compact from recall on, and full in emerging, at every Phone_Size", () => {
+    expect(personaGhostAt("emerging")).toContain(`data-size="${GHOST_SIZE_FULL}"`);
     for (const stage of ["recall", "marks", "seal", "letter", "figures", "close"] as const) {
       expect(personaGhostAt(stage), stage).toContain(`data-size="${GHOST_SIZE_COMPACT}"`);
     }

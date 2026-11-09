@@ -15,7 +15,7 @@ export type SkipLinkSeal = {
   showAll: () => void;
 };
 
-/** The Skip_Link shows while the parent asks for it and the seal is intact. */
+/** The Skip_Link shows while the parent asks for it and the seal is not broken. */
 export function skipLinkVisible(showAll: boolean, broken: boolean): boolean {
   return showAll && !broken;
 }

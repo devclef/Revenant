@@ -9,7 +9,7 @@
 // Stage visibility is CSS, not props: the persona page places this card before
 // OpeningFlow, and scene.module.css hides it once a later Stage (recall, marks,
 // letter, figures, close) is on the page. So it shows in `emerging`, `sealed`
-// and `intact`, the states the spec names.
+// the states the spec names.
 //
 // The first line is the fictional-persona notice at every width (P5.3). Below
 // 600 px the Compact_Top_Bar does not render it, so this card is the only place

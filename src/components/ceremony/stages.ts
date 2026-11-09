@@ -29,7 +29,6 @@ export type Stage =
   | "emerging"
   | "sealed"
   | "envelope"
-  | "intact"
   | "recall"
   | "marks"
   | "seal"
@@ -84,9 +83,6 @@ export function stageFor(state: FlowState, local: LocalView): Stage {
     case "unlocking":
       return "envelope";
 
-    case "verified":
-      return "intact";
-
     case "recall":
     case "submitting":
     case "submit_failed":
@@ -112,19 +108,10 @@ export function stageFor(state: FlowState, local: LocalView): Stage {
 }
 
 /**
- * Whether the Pick_Up_Button renders (design.md "The Pick_Up_Button gate", R9.8
- * to R9.10). Only the `verified` tag shows it, and only once the Emergence is
- * `"done"`, so the button never appears while the Ghost is still rising.
- */
-export function showPickUp(tag: FlowState["tag"], local: LocalView): boolean {
-  return tag === "verified" && local.emergence === "done";
-}
-
-/**
  * Whether the Ghost holds the handed pose (design.md "The Ghost", the pose
  * table). The Ghost lifts once the reader has picked the letter up, so it is
- * handed from `recall` through `seal`. It stays risen in `intact` and in every
- * Stage before it. The horizontal placement never depends on this value.
+ * handed from `recall` through `seal`. It stays risen in every Stage before
+ * `recall`. The horizontal placement never depends on this value.
  */
 export function ghostHanded(stage: Stage): boolean {
   return stage === "recall" || stage === "marks" || stage === "seal";
@@ -132,36 +119,87 @@ export function ghostHanded(stage: Stage): boolean {
 
 /**
  * Where keyboard focus moves after a Stage change (spec 08 design.md, "Focus
- * after \"See the numbers\"").
+ * after \"See the numbers\""; spec 10 design.md, "Focus: Load_Entry and
+ * Gesture_Entry").
  *
+ * - `stage-heading`: the first question's heading (`[data-stage-heading]`),
+ *   focused with `preventScroll` and no scroll. Used on a Load_Entry into
+ *   `recall`, so the page stays where it loaded.
+ * - `author-testimony-heading`: the Author_Testimony_Heading, with a scroll.
+ * - `letter-heading`: the Caption_Block heading (`[data-letter-heading]`).
+ * - `figures-heading`: the Figures_Heading, `[data-figures-heading]`.
  * - `none`: move nothing (the settle from `figures` to `close`).
- * - `figures-heading`: focus the Figures_Heading, `[data-figures-heading]`.
  * - `default`: the spec 07 rule (`[data-stage-focus]`, else the newest heading,
  *   else the region).
  */
 export type FocusTarget =
-  | { kind: "none" }
+  | { kind: "stage-heading" }
+  | { kind: "author-testimony-heading" }
+  | { kind: "letter-heading" }
   | { kind: "figures-heading" }
+  | { kind: "none" }
   | { kind: "default" };
 
 /**
- * The focus target for a Stage change, from the previous Stage and the next
- * one. The pair alone tells the cause apart, so no third argument is needed.
- * `prev` is `null` on first mount.
+ * The shape of the letter that the focus table reads. `authorQuestions` is true
+ * when the letter has Author_Questions; `figures` when it has at least one
+ * sealed figure. Both are false before `recall`, where no letter is open yet.
  */
-export function focusTargetFor(prev: Stage | null, next: Stage): FocusTarget {
+export type FocusShape = { authorQuestions: boolean; figures: boolean };
+
+/**
+ * The shape of the letter in a flow state. Only the states that hold an opened
+ * payload carry a shape; every other state reports both values as false.
+ *
+ * The payload has no Author_Question field yet (spec 10 C2 adds it), so
+ * `authorQuestions` is always false here until that lands.
+ */
+export function letterShape(state: FlowState): FocusShape {
+  switch (state.tag) {
+    case "recall":
+    case "submitting":
+    case "submit_failed":
+    case "reveal":
+      return {
+        authorQuestions: false,
+        figures: state.opened.payload.figures.length > 0,
+      };
+    default:
+      return { authorQuestions: false, figures: false };
+  }
+}
+
+/**
+ * The focus target for a Stage change, from the previous Stage, the next one and
+ * the letter's shape. `prev` is `null` on first mount. The table is the one in
+ * spec 10 design.md, "Focus: Load_Entry and Gesture_Entry".
+ */
+export function focusTargetFor(
+  prev: Stage | null,
+  next: Stage,
+  shape: FocusShape,
+): FocusTarget {
+  // Load_Entry: the persona page reaches `recall` from `emerging`.
+  if (prev === "emerging" && next === "recall") return { kind: "stage-heading" };
+  // Gesture_Entry: a Live_Letter or Real_Letter reaches `recall` from `envelope`.
+  if (prev === "envelope" && next === "recall") return { kind: "default" };
   if (prev === "figures" && next === "close") return { kind: "none" };
   if (prev === "letter" && next === "figures") return { kind: "figures-heading" };
-  // Skip to the receipts jumps from marks or seal to the figures stage first,
-  // then settles to close.
-  if ((prev === "marks" || prev === "seal") && next === "figures") {
+  if (prev === "letter" && next === "close" && shape.figures) {
     return { kind: "figures-heading" };
   }
-  if (
-    (prev === "letter" || prev === "marks" || prev === "seal") &&
-    next === "close"
-  ) {
-    return { kind: "figures-heading" };
+  // Skip from marks or seal jumps to the letter, the figures or the close.
+  if (prev === "marks" || prev === "seal") {
+    if (next === "letter") {
+      return shape.authorQuestions
+        ? { kind: "author-testimony-heading" }
+        : { kind: "default" };
+    }
+    if (next === "figures" || next === "close") {
+      if (shape.authorQuestions) return { kind: "author-testimony-heading" };
+      if (shape.figures) return { kind: "figures-heading" };
+      if (next === "close") return { kind: "letter-heading" };
+    }
   }
   return { kind: "default" };
 }

@@ -297,7 +297,7 @@ export function RecallPager({
       </p>
 
       <form noValidate onSubmit={handleSubmit} className={styles.form}>
-        <h2 id={headingId} className={styles.qTitle} data-fit="question">
+        <h2 id={headingId} className={styles.qTitle} data-fit="question" data-stage-heading="">
           {question.text}
         </h2>
 

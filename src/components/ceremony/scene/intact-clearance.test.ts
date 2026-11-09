@@ -1,11 +1,10 @@
 // Feature: 07-judge-journey (spec 07 task 2 fix, G1 and G2)
 //
-// Layout rules for the narrow intact stage in scene.module.css. The seal card
-// must sit below the Ghost's eyes and held Envelope at 360 x 640 (G1, no text on
-// the Ghost_Body_Box). These tests read the rules from the CSS and check the
-// values the fix relies on, so reverting or changing them fails a test. The
-// overlap itself is checked in a real browser (see the commit message), not here.
-// Pure file read, no DOM.
+// Spec 10 C1.3 removes the intact Stage. The narrow and wide rules that placed
+// the intact seal card are gone with it. These tests read scene.module.css and
+// check that no intact rule is left, that the rules for recall, marks and seal
+// (the pinned stages) are kept, and that the step-row reserve stays out of the
+// narrow block. Pure file read, no DOM.
 
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
@@ -18,9 +17,11 @@ const css = readFileSync(resolve(here, "scene.module.css"), "utf8").replace(
   "",
 );
 
-/** The narrow (max-width 899.98px) block that holds the intact rules. */
-function narrowIntactBlock(): string {
-  const start = css.indexOf("@media (max-width: 899.98px) {\n  .personaColumn:has(");
+/** The narrow (max-width 899.98px) block that holds the pinned stage rules. */
+function narrowBlock(): string {
+  const start = css.indexOf(
+    '@media (max-width: 899.98px) {\n  .personaColumn:has(> [data-ceremony="recall"]),',
+  );
   expect(start).toBeGreaterThan(-1);
   const end = css.indexOf("\n}\n", start);
   return css.slice(start, end);
@@ -32,77 +33,51 @@ function declaration(block: string, property: string): string | null {
   return match === null ? null : match[1].trim();
 }
 
-describe("narrow intact stage rules (scene.module.css)", () => {
-  it("applies only to the intact stage, through :has() on the persona column", () => {
-    const block = narrowIntactBlock();
-    expect(block).toContain('.personaColumn:has(> [data-ceremony="intact"])');
+describe("the intact Stage is removed from scene.module.css (spec 10 C1.3)", () => {
+  it("has no rule that names the intact Stage", () => {
+    expect(css).not.toContain('data-ceremony="intact"');
   });
 
-  it("keeps the intact stage in the flow, below the Persona_Intro, not pinned", () => {
-    // The card is in flow after the intro (spec 09 C1), so the intact stage has
-    // no absolute rule of its own. recall, marks and seal stay pinned.
-    const block = narrowIntactBlock();
-    expect(block).not.toContain('.personaColumn > [data-ceremony="intact"]');
-    expect(block).toContain('.personaColumn > [data-ceremony="recall"],');
+  it("has no wide intact headline size, so the headline keeps its base size in emerging", () => {
+    expect(css).not.toContain("13ch");
+    expect(css).not.toContain("clamp(2.5rem, 4.4vw, 3.5rem)");
+  });
+});
+
+describe("narrow pinned stage rules (scene.module.css)", () => {
+  it("applies the pinned rules to recall, marks and seal only, through :has() on the persona column", () => {
+    const block = narrowBlock();
+    expect(block).toContain('.personaColumn:has(> [data-ceremony="recall"])');
+    expect(block).toContain('.personaColumn:has(> [data-ceremony="marks"])');
+    expect(block).toContain('.personaColumn:has(> [data-ceremony="seal"])');
+  });
+
+  it("keeps recall, marks and seal pinned, not the flow layout", () => {
+    expect(narrowBlock()).toContain('.personaColumn > [data-ceremony="recall"],');
+    expect(declaration(narrowBlock(), "position")).toBe("absolute");
   });
 
   it("fills the window below the Top_Bar: min-height is the window less the main padding-top", () => {
     // `.main` sets padding-top: 6rem, so the column starts 6rem down the window.
     const mainPaddingTop = css.match(/\.main \{[^}]*padding-top:\s*([^;]+);/);
     expect(mainPaddingTop?.[1].trim()).toBe("6rem");
-    expect(declaration(narrowIntactBlock(), "min-height")).toBe("calc(100vh - 6rem)");
+    expect(declaration(narrowBlock(), "min-height")).toBe("calc(100vh - 6rem)");
   });
 
-  it("pins the recall, marks and seal regions below the Soil strip instead of the flow layout", () => {
-    expect(declaration(narrowIntactBlock(), "position")).toBe("absolute");
-  });
-
-  it("places the region top at the Soil strip bottom (soil-top + soil-band), less the main padding", () => {
-    expect(declaration(narrowIntactBlock(), "top")).toBe(
+  it("places the pinned region top at the Soil strip bottom (soil-top + soil-band), less the main padding", () => {
+    expect(declaration(narrowBlock(), "top")).toBe(
       "calc(var(--soil-top) + var(--soil-band) + 0.25rem - 6rem)",
     );
-  });
-
-  it("does not change the wide layout: the only intact rule there is the headline size", () => {
-    const wide = css.slice(css.indexOf("@media (min-width: 900px)"));
-    const selectors = (wide.match(/[^{}]*\[data-ceremony="intact"\][^{}]*\{/g) ?? []).map((m) => m.trim());
-    expect(selectors).toEqual(['.personaColumn:has(> [data-ceremony="intact"]) .headline {']);
-  });
-});
-
-describe("wide intact headline rule (scene.module.css)", () => {
-  // At 1280 x 800 the seal card must end above soilTopPx (592). The headline
-  // size on the intact stage is what brings the card up; these values are the
-  // ones the browser check measured (card bottom near y 575).
-  function intactHeadlineRule(): string {
-    const wide = css.slice(css.indexOf("@media (min-width: 900px)"));
-    const start = wide.indexOf('.personaColumn:has(> [data-ceremony="intact"]) .headline');
-    expect(start).toBeGreaterThan(-1);
-    return wide.slice(start, wide.indexOf("}", start));
-  }
-
-  it("applies only to the intact stage, through :has() on the persona column", () => {
-    expect(intactHeadlineRule()).toContain('.personaColumn:has(> [data-ceremony="intact"]) .headline');
-  });
-
-  it("caps the intact headline at 13ch so it wraps to three lines", () => {
-    expect(declaration(intactHeadlineRule(), "max-width")).toBe("13ch");
-  });
-
-  it("sizes the intact headline at most 3.5rem so the card clears the soil strip", () => {
-    expect(declaration(intactHeadlineRule(), "font-size")).toBe("clamp(2.5rem, 4.4vw, 3.5rem)");
   });
 });
 
 // Spec 10 X2.1 and G3: this step adds the step-row reserve below 600 px only.
-// The intact stage's own rules (the seal card's clearance) are not changed here,
-// so the intact block must not reference the step row.
-describe("intact stage is untouched by the step-row reserve (spec 10 X2)", () => {
-  it("keeps the step-row reserve inside the phone block, not the intact block", () => {
+describe("the step-row reserve stays out of the narrow pinned block (spec 10 X2)", () => {
+  it("keeps the step-row reserve inside the phone block, not the narrow block", () => {
     const reserveAt = css.indexOf("[data-step-indicator]");
     expect(reserveAt).toBeGreaterThan(-1);
     const mediaStart = css.lastIndexOf("@media", reserveAt);
     expect(css.slice(mediaStart, reserveAt)).toContain("(max-width: 599.98px)");
-    expect(narrowIntactBlock()).not.toContain("[data-step-indicator]");
+    expect(narrowBlock()).not.toContain("[data-step-indicator]");
   });
 });

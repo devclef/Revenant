@@ -9,9 +9,8 @@ import { personaStepFor } from "./steps";
 import type { Stage } from "./stages";
 import { StepIndicator } from "../ui/StepIndicator";
 
-// The Stages the persona page passes through, in order (C2.1: intact to close).
+// The Stages the persona page passes through, in order (C2.1: recall to close).
 const PATH: readonly Stage[] = [
-  "intact",
   "recall",
   "marks",
   "seal",
@@ -20,7 +19,7 @@ const PATH: readonly Stage[] = [
   "close",
 ];
 
-const PRE_RECALL: readonly Stage[] = ["emerging", "sealed", "envelope", "intact"];
+const PRE_RECALL: readonly Stage[] = ["emerging", "sealed", "envelope"];
 
 /** The index of the aria-current item in the rendered indicator, or -1. */
 function currentIndex(step: number | null): number {
