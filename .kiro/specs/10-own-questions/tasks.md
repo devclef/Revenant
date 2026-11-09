@@ -381,7 +381,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
 
 ### Group C, continued
 
-- [ ] 12. C7 · The other Stages: the Ghost clear of text, controls next to what they act on, no empty cards
+- [x] 12. C7 · The other Stages: the Ghost clear of text, controls next to what they act on, no empty cards
   - Agent: `frontend-dev` · Depends on: 10 · Estimated size: ~600 changed lines
   - Before this task: steering updated (S1 Owner_Patch on `main`). Task 10 is on `main`.
   - Scope: `src/components/reveal/Reveal.tsx`, `src/components/reveal/reveal.module.css`, `src/components/reveal/StagePanel.tsx`, `src/components/ceremony/ceremony.module.css`, `src/components/ceremony/scene/scene.module.css`, `src/components/ceremony/recall/RecallPager.module.css`, `src/components/ceremony/letter/LetterBlock.module.css`, `src/components/ceremony/figures/figures.module.css`, `src/components/ceremony/close/**`, and the `*.test.ts(x)` for each file above
