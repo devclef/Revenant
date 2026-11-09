@@ -133,6 +133,7 @@ describe("reduceStepper", () => {
       warningTicked: false,
       backupCardTicked: true,
       questions: [LIVE_COPY.livePrefill],
+      selfReported: [],
     });
   });
 

@@ -883,3 +883,30 @@
 .questionHead .label {
   margin: 0;
 }
+
+/*
+ * One self-reported row (spec 08 later-tasks, R26.1). The row title and the
+ * remove button share a line; the five fields stack on a phone and sit two to a
+ * line from 40rem. Text colour is --ink, which the paper sets.
+ */
+.selfRow {
+  margin: 0.75rem 0;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--ink-soft);
+  color: var(--ink);
+}
+
+.selfFields {
+  display: grid;
+  gap: 0.5rem;
+}
+
+.selfField {
+  min-width: 0;
+}
+
+@media (min-width: 40rem) {
+  .selfFields {
+    grid-template-columns: 1fr 1fr;
+  }
+}

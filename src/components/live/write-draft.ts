@@ -10,8 +10,24 @@
 
 import { applyStarter, AUTHOR_QUESTIONS_MAX } from "./author-questions";
 import { LIVE_COPY } from "./copy";
-import { MAX_FIGURES } from "./constants";
+import { MAX_FIGURES, SELF_REPORTED_MAX } from "./constants";
 import type { WriteMode } from "./form";
+
+/**
+ * A number the visitor types in as their own (spec 08 later-tasks, R1). Every
+ * field is the text as typed; validation lives in form.ts and nothing here
+ * trims, rescales or parses it.
+ */
+export interface SelfReportedRow {
+  name: string;
+  value: string;
+  unit: string;
+  region: string;
+  period: string;
+}
+
+/** The text fields of a SelfReportedRow, by name. */
+export type SelfReportedField = keyof SelfReportedRow;
 
 export interface WriteDraft {
   text: string;
@@ -24,6 +40,13 @@ export interface WriteDraft {
    * the Live_Prefill row (C9.5); a real draft starts with none.
    */
   questions: string[];
+  /** The visitor's own numbers, in order, at most SELF_REPORTED_MAX rows. */
+  selfReported: SelfReportedRow[];
+}
+
+/** A row with every field empty, as a new row starts. */
+export function emptySelfReportedRow(): SelfReportedRow {
+  return { name: "", value: "", unit: "", region: "", period: "" };
 }
 
 /**
@@ -38,6 +61,7 @@ export function initialWriteDraft(mode: WriteMode): WriteDraft {
     warningTicked: false,
     backupCardTicked: false,
     questions: mode === "demo" ? [LIVE_COPY.livePrefill] : [],
+    selfReported: [],
   };
 }
 
@@ -46,8 +70,9 @@ export const INITIAL_WRITE_DRAFT: WriteDraft = initialWriteDraft("demo");
 
 /**
  * The draft after a 201. Nothing is kept: no letter text, no figures, no
- * Author_Question rows (spec 10, C2.11). Unlike the demo draft, it has no
- * Live_Prefill row, so no question shows again until the letter opens.
+ * Author_Question rows, no self-reported numbers (spec 10, C2.11). Unlike the
+ * demo draft, it has no Live_Prefill row, so no question shows again until the
+ * letter opens.
  */
 export const CLEARED_WRITE_DRAFT: WriteDraft = {
   text: "",
@@ -55,6 +80,7 @@ export const CLEARED_WRITE_DRAFT: WriteDraft = {
   warningTicked: false,
   backupCardTicked: false,
   questions: [],
+  selfReported: [],
 };
 
 export type WriteDraftEvent =
@@ -65,7 +91,15 @@ export type WriteDraftEvent =
   | { type: "QUESTION_CHANGED"; index: number; text: string }
   | { type: "QUESTION_ADDED" }
   | { type: "QUESTION_REMOVED"; index: number }
-  | { type: "QUESTION_STARTER"; text: string };
+  | { type: "QUESTION_STARTER"; text: string }
+  | { type: "SELF_REPORTED_ADDED" }
+  | {
+      type: "SELF_REPORTED_CHANGED";
+      index: number;
+      field: SelfReportedField;
+      text: string;
+    }
+  | { type: "SELF_REPORTED_REMOVED"; index: number };
 
 /**
  * Applies one form event. Picking a figure adds it, unless it is already
@@ -99,6 +133,24 @@ export function reduceWriteDraft(
       };
     case "QUESTION_STARTER":
       return { ...state, questions: applyStarter(state.questions, event.text) };
+    case "SELF_REPORTED_ADDED":
+      if (state.selfReported.length >= SELF_REPORTED_MAX) return state;
+      return {
+        ...state,
+        selfReported: [...state.selfReported, emptySelfReportedRow()],
+      };
+    case "SELF_REPORTED_CHANGED":
+      return {
+        ...state,
+        selfReported: state.selfReported.map((row, i) =>
+          i === event.index ? { ...row, [event.field]: event.text } : row,
+        ),
+      };
+    case "SELF_REPORTED_REMOVED":
+      return {
+        ...state,
+        selfReported: state.selfReported.filter((_, i) => i !== event.index),
+      };
     case "FIGURE_TOGGLED": {
       const { metricId } = event;
       if (state.metricIds.includes(metricId)) {

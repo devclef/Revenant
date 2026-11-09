@@ -16,6 +16,7 @@ import { MAX_FIGURES } from "./constants";
 import { LIVE_COPY } from "./copy";
 import { sealReducer, INITIAL_SEAL_STATE } from "./seal-machine";
 import {
+  CLEARED_WRITE_DRAFT,
   INITIAL_WRITE_DRAFT,
   initialWriteDraft,
   reduceWriteDraft,
@@ -34,6 +35,7 @@ describe("the write draft starts empty", () => {
       warningTicked: false,
       backupCardTicked: false,
       questions: [LIVE_COPY.livePrefill],
+      selfReported: [],
     });
   });
 
@@ -44,7 +46,76 @@ describe("the write draft starts empty", () => {
       warningTicked: false,
       backupCardTicked: false,
       questions: [],
+      selfReported: [],
     });
+  });
+});
+
+describe("the self-reported rows (R1)", () => {
+  const row = (name: string) => ({
+    name,
+    value: "3.4125",
+    unit: "USD per gallon",
+    region: "U.S. city average",
+    period: "2026-09",
+  });
+
+  it("adds an empty row, edits it as typed and removes it", () => {
+    let draft = reduceWriteDraft(INITIAL_WRITE_DRAFT, { type: "SELF_REPORTED_ADDED" });
+    expect(draft.selfReported).toEqual([
+      { name: "", value: "", unit: "", region: "", period: "" },
+    ]);
+    draft = reduceWriteDraft(draft, {
+      type: "SELF_REPORTED_CHANGED",
+      index: 0,
+      field: "name",
+      text: "  My rent  ",
+    });
+    expect(draft.selfReported[0]?.name).toBe("  My rent  ");
+    draft = reduceWriteDraft(draft, { type: "SELF_REPORTED_REMOVED", index: 0 });
+    expect(draft.selfReported).toEqual([]);
+  });
+
+  it("changes only the named row and field", () => {
+    let draft = { ...INITIAL_WRITE_DRAFT, selfReported: [row("a"), row("b")] };
+    draft = reduceWriteDraft(draft, {
+      type: "SELF_REPORTED_CHANGED",
+      index: 1,
+      field: "value",
+      text: "10",
+    });
+    expect(draft.selfReported[0]).toEqual(row("a"));
+    expect(draft.selfReported[1]).toEqual({ ...row("b"), value: "10" });
+  });
+
+  it("refuses an eleventh row (at most 10)", () => {
+    let draft = INITIAL_WRITE_DRAFT;
+    for (let i = 0; i < 10; i += 1) {
+      draft = reduceWriteDraft(draft, { type: "SELF_REPORTED_ADDED" });
+    }
+    expect(draft.selfReported).toHaveLength(10);
+    const full = reduceWriteDraft(draft, { type: "SELF_REPORTED_ADDED" });
+    expect(full.selfReported).toHaveLength(10);
+  });
+
+  it("keeps the rows through Try again, as the other draft fields do (R15.7)", () => {
+    let draft = reduceWriteDraft(INITIAL_WRITE_DRAFT, { type: "SELF_REPORTED_ADDED" });
+    draft = reduceWriteDraft(draft, {
+      type: "SELF_REPORTED_CHANGED",
+      index: 0,
+      field: "unit",
+      text: "USD per gallon",
+    });
+    let flow = sealReducer(INITIAL_SEAL_STATE, { type: "CREATE_PRESS" });
+    flow = sealReducer(flow, { type: "CANCELLED" });
+    flow = sealReducer(flow, { type: "RETRY" });
+    expect(flow.tag).toBe("write");
+    expect(draft.selfReported[0]?.unit).toBe("USD per gallon");
+  });
+
+  it("starts a real letter with no rows and clears them after a 201", () => {
+    expect(initialWriteDraft("real").selfReported).toEqual([]);
+    expect(CLEARED_WRITE_DRAFT.selfReported).toEqual([]);
   });
 });
 
