@@ -2,10 +2,12 @@ import { describe, expect, it } from "vitest";
 import {
   firstInvalidIndex,
   isLastIndex,
+  isReady,
   nextIndex,
   previousIndex,
   submitAction,
 } from "./recall-pager";
+import { initialField, typeText } from "./recall-field";
 
 // Feature: 07-judge-journey, task 3: the Recall_Pager's paging rules (R11.3,
 // R11.4, R11.5, R11.10, R11.11). Pure functions, so no DOM is needed.
@@ -78,5 +80,38 @@ describe("a form submit does nothing while the question is not ready (R32.13)", 
 
   it("ignores a single question that is not ready", () => {
     expect(submitAction(0, 1, false, false)).toBe("ignore");
+  });
+});
+
+// Feature: spec 10 (own questions), task 1: a text question is a kind of its own
+// with its own readiness (C4.1, C4.6). Number readiness is unchanged.
+
+describe("isReady decides a question's readiness by its kind (C4.6, R32.13)", () => {
+  const emptyNumber = initialField({ text: "", noAnswer: false });
+  const resolvedNumber = typeText(emptyNumber, "3.47");
+
+  it("a number question is ready when its field resolves, as before", () => {
+    expect(isReady({ kind: "number", field: resolvedNumber }, false)).toBe(
+      true,
+    );
+    expect(isReady({ kind: "number", field: emptyNumber }, false)).toBe(false);
+    expect(isReady({ kind: "number", field: emptyNumber }, true)).toBe(true);
+  });
+
+  it("a text question is ready for valid text", () => {
+    expect(isReady({ kind: "text", text: "A short memory." }, false)).toBe(
+      true,
+    );
+  });
+
+  it("a text question is not ready for empty text, unless No answer is set", () => {
+    expect(isReady({ kind: "text", text: "" }, false)).toBe(false);
+    expect(isReady({ kind: "text", text: "" }, true)).toBe(true);
+  });
+
+  it("a text question is not ready for over-1,000-code-point text, unless No answer is set", () => {
+    const tooLong = "\u{1F600}".repeat(1001);
+    expect(isReady({ kind: "text", text: tooLong }, false)).toBe(false);
+    expect(isReady({ kind: "text", text: tooLong }, true)).toBe(true);
   });
 });

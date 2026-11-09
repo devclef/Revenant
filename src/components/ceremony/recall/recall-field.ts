@@ -7,6 +7,7 @@
 // Pure module: each function takes the previous state and returns the next one.
 
 import type { Draft } from "@/lib/recall/record";
+import { TEXT_ANSWER_MAX_CODE_POINTS } from "@/lib/recall/limits";
 import {
   parseRecallNumber,
   type RecallNumberParse,
@@ -100,4 +101,38 @@ export function draftTextFor(s: FieldState): string {
 /** Whether the next control may be used. "No answer" always allows it. */
 export function canAdvance(s: FieldState, noAnswer: boolean): boolean {
   return noAnswer || resolvedValue(s) !== null;
+}
+
+// ---------------------------------------------------------------------------
+// Text answers (spec 10 C4.5, C4.6). A text question holds plain text, not a
+// number, so it has its own rules. The count and the limit use the trimmed
+// text: that is the text the Recall_Record stores (record-v2.ts), so the count
+// the judge sees matches what is kept.
+// ---------------------------------------------------------------------------
+
+/** The validity of a text answer before "No answer" is considered. */
+export type TextValidity = "empty" | "too-long" | "valid";
+
+/** The number of Unicode code points in the trimmed text. Astral characters count once. */
+export function textCodePoints(text: string): number {
+  return [...text.trim()].length;
+}
+
+/**
+ * Whether a text answer is valid on its own: 1 to 1,000 code points after
+ * trimming. "No answer" makes any text acceptable, so this is separate.
+ */
+export function textValidity(text: string): TextValidity {
+  const count = textCodePoints(text);
+  if (count === 0) return "empty";
+  if (count > TEXT_ANSWER_MAX_CODE_POINTS) return "too-long";
+  return "valid";
+}
+
+/**
+ * Whether the next control may be used for a text question. "No answer"
+ * always allows it; otherwise the text must be valid (C4.6).
+ */
+export function canAdvanceText(text: string, noAnswer: boolean): boolean {
+  return noAnswer || textValidity(text) === "valid";
 }

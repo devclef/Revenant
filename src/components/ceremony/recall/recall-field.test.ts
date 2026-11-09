@@ -2,14 +2,19 @@ import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import {
   canAdvance,
+  canAdvanceText,
   draftTextFor,
   initialField,
   pickReading,
   resolvedValue,
   setFromScale,
+  textCodePoints,
+  textValidity,
   typeText,
   type FieldState,
 } from "./recall-field";
+import { TEXT_ANSWER_MAX_CODE_POINTS } from "@/lib/recall/limits";
+import { PAYLOAD_TEXT_1 } from "@/lib/recall/fixtures.test-data";
 
 // Feature: 08-judge-polish, Task 1 (field state and Mark rules, R32).
 // Property 30: The recall field never stores an unresolved number.
@@ -173,5 +178,65 @@ describe("Property 30: the field never stores an unresolved number", () => {
       }),
       { numRuns: NUM_RUNS },
     );
+  });
+});
+
+// Feature: spec 10 (own questions), task 1: text answer validity (C4.5, C4.6).
+// Uses the astral-character cases the count must get right: a code point is
+// one character here, even when JavaScript counts it as two UTF-16 units.
+
+describe("textCodePoints counts code points of the trimmed text (C4.5)", () => {
+  it("counts an astral character once", () => {
+    expect(textCodePoints("\u{1F600}")).toBe(1);
+    expect(textCodePoints("a\u{1F600}b")).toBe(3);
+  });
+
+  it("ignores leading and trailing whitespace", () => {
+    expect(textCodePoints("  a\u{1F600}  ")).toBe(2);
+    expect(textCodePoints("   ")).toBe(0);
+  });
+});
+
+describe("textValidity: empty and over-limit are invalid (C4.6)", () => {
+  it("is empty for a blank text", () => {
+    expect(textValidity("")).toBe("empty");
+    expect(textValidity(" \n\t ")).toBe("empty");
+  });
+
+  it("is valid up to 1,000 code points, even when that is 2,000 UTF-16 units", () => {
+    const max = "\u{1F600}".repeat(TEXT_ANSWER_MAX_CODE_POINTS);
+    expect(max.length).toBe(2 * TEXT_ANSWER_MAX_CODE_POINTS);
+    expect(textValidity(max)).toBe("valid");
+  });
+
+  it("is too long at 1,001 code points", () => {
+    expect(
+      textValidity("a".repeat(TEXT_ANSWER_MAX_CODE_POINTS + 1)),
+    ).toBe("too-long");
+  });
+});
+
+describe("canAdvanceText: a text question is ready when valid or No answer is set (C4.6)", () => {
+  it("is not ready for an empty answer without No answer", () => {
+    expect(canAdvanceText("", false)).toBe(false);
+  });
+
+  it("is ready for a valid answer", () => {
+    expect(canAdvanceText("My rent was 900.", false)).toBe(true);
+  });
+
+  it("is not ready for an over-limit answer without No answer", () => {
+    expect(canAdvanceText("a".repeat(1001), false)).toBe(false);
+  });
+
+  it("is ready for an empty or over-limit answer when No answer is set", () => {
+    expect(canAdvanceText("", true)).toBe(true);
+    expect(canAdvanceText("a".repeat(1001), true)).toBe(true);
+  });
+
+  it("uses the author's question fixture text without changing it", () => {
+    const question = PAYLOAD_TEXT_1.recall_questions[0];
+    expect(question.answer_type).toBe("text");
+    expect(canAdvanceText(question.text, false)).toBe(true);
   });
 });
