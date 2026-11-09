@@ -4,9 +4,9 @@ import { REVEAL_COPY } from "@/components/reveal/copy";
 import { formatLetterDate } from "@/components/ui/letter-date";
 
 import type { PickableSeries } from "./catalogue-list";
-import { LIVE_COPY } from "./copy";
+import { LIVE_COPY, REAL_COPY } from "./copy";
 import { pickerHint } from "./figure-hint";
-import { figureLimit } from "./form";
+import { figureLimit, type WriteMode } from "./form";
 import styles from "./live.module.css";
 
 /**
@@ -46,6 +46,8 @@ export interface FigurePickerProps {
    * unit, region and period only; no value is invented for it.
    */
   details?: ReadonlyMap<string, FigureDetail>;
+  /** `real` (`/seal`) shows the hint that a question allows no figure. */
+  mode?: WriteMode;
 }
 
 /**
@@ -69,6 +71,7 @@ export function FigurePicker({
   atLimit,
   onToggle,
   details,
+  mode = "demo",
 }: FigurePickerProps) {
   const limit = figureLimit(series.length);
   const hint = pickerHint(limit);
@@ -91,9 +94,13 @@ export function FigurePicker({
   }
 
   const hintText =
-    hint.key === "one"
-      ? LIVE_COPY.figuresHintOne
-      : LIVE_COPY.figuresHint.replace("{max}", String(hint.max));
+    mode === "real"
+      ? hint.key === "one"
+        ? REAL_COPY.figuresHintRealOne
+        : REAL_COPY.figuresHintReal.replace("{max}", String(hint.max))
+      : hint.key === "one"
+        ? LIVE_COPY.figuresHintOne
+        : LIVE_COPY.figuresHint.replace("{max}", String(hint.max));
   const tooManyText =
     hint.key === "one"
       ? LIVE_COPY.figuresTooManyOne

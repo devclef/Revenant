@@ -1,3 +1,4 @@
+import { questionRowProblem, questionsForSeal } from "./author-questions";
 import { MAX_FIGURES, MAX_LETTER_CODE_POINTS, MIN_FIGURES } from "./constants";
 
 /**
@@ -12,9 +13,28 @@ import { MAX_FIGURES, MAX_LETTER_CODE_POINTS, MIN_FIGURES } from "./constants";
 export type WriteProblem =
   | "letter_empty"
   | "letter_too_long"
+  | "question_too_long"
   | "figures_none"
   | "figures_too_many"
   | "warning_unticked";
+
+/**
+ * Which seal the write belongs to. `demo` is `/demo/live`, `real` is `/seal`.
+ * Only a real letter may skip figures (C2.13).
+ */
+export type WriteMode = "demo" | "real";
+
+/**
+ * The fewest figures a write needs (C2.13). A real letter with at least one
+ * non-empty Author_Question needs none. Every other write needs MIN_FIGURES.
+ */
+export function minFiguresFor(
+  mode: WriteMode,
+  questions: readonly string[],
+): number {
+  if (mode === "real" && questionsForSeal(questions).length > 0) return 0;
+  return MIN_FIGURES;
+}
 
 /**
  * Count the letter length in Unicode code points, so an emoji or an accented
@@ -48,8 +68,14 @@ export function validateWrite(input: {
   backupCardTicked?: boolean;
   /** The figure maximum for this picker. Defaults to MAX_FIGURES. */
   maxFigures?: number;
+  /** The Author_Question rows, in order. Defaults to none. */
+  questions?: readonly string[];
+  /** The seal mode. Defaults to `demo`. */
+  mode?: WriteMode;
 }): WriteProblem[] {
   const maxFigures = input.maxFigures ?? MAX_FIGURES;
+  const questions = input.questions ?? [];
+  const mode = input.mode ?? "demo";
   const problems: WriteProblem[] = [];
 
   if (input.text.trim().length === 0) {
@@ -58,7 +84,11 @@ export function validateWrite(input: {
     problems.push("letter_too_long");
   }
 
-  if (input.metricIds.length < MIN_FIGURES) {
+  if (questions.some((row) => questionRowProblem(row) !== null)) {
+    problems.push("question_too_long");
+  }
+
+  if (input.metricIds.length < minFiguresFor(mode, questions)) {
     problems.push("figures_none");
   } else if (input.metricIds.length > maxFigures) {
     problems.push("figures_too_many");

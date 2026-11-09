@@ -269,4 +269,13 @@ export const REAL_COPY = {
     "Revenant could not seal the letter with that date. Choose another date and try again. Nothing was sealed, and your letter is still here.",
   dateMissing: "Choose an opening date before you seal.",
   stillSealed: "This letter is still sealed.",
+  /**
+   * The figure hint on /seal (spec 10, C2.13). A real letter with a question
+   * may seal with no figure, so the hint says so. `{max}` is the most figures.
+   */
+  figuresHintReal:
+    "Choose up to {max} figures, or none if you write a question above. Each is sealed as published, with its period and source.",
+  /** The same hint when the stated maximum is 1. */
+  figuresHintRealOne:
+    "Choose 1 figure, or none if you write a question above. It is sealed as published, with its period and source.",
 } as const;

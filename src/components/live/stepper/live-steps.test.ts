@@ -132,6 +132,7 @@ describe("reduceStepper", () => {
       metricIds: ["us-gasoline-regular"],
       warningTicked: false,
       backupCardTicked: true,
+      questions: [LIVE_COPY.livePrefill],
     });
   });
 

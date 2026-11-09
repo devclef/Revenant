@@ -5,10 +5,18 @@ import { useLayoutEffect, useRef } from "react";
 import { DemoLabel } from "@/components/demo/DemoLabel";
 
 import type { PickableSeries } from "./catalogue-list";
+import { AuthorQuestions } from "./AuthorQuestions";
+import { questionRowProblem } from "./author-questions";
 import { LETTER_FIELD_ROWS } from "./constants";
 import { LIVE_COPY, REAL_COPY } from "./copy";
 import { FigurePicker, type FigureDetail } from "./FigurePicker";
-import { countCodePoints, figureLimit, validateWrite, type WriteProblem } from "./form";
+import {
+  countCodePoints,
+  figureLimit,
+  validateWrite,
+  type WriteMode,
+  type WriteProblem,
+} from "./form";
 import styles from "./live.module.css";
 import { letterFieldHeightPx } from "./phone";
 import { PromptStarters } from "./PromptStarters";
@@ -61,6 +69,19 @@ export interface WriteFormProps {
   onAttempt?: () => void;
   /** The visitor typed in the letter. */
   onTextChange: (text: string) => void;
+  /**
+   * The Author_Question rows, in order (spec 10, C2). Held by the page. Defaults
+   * to no rows, so callers without questions need not pass it.
+   */
+  questions?: readonly string[];
+  /** The visitor typed in question row `index`. */
+  onQuestionChange?: (index: number, text: string) => void;
+  /** The visitor added an empty question row. */
+  onQuestionAdd?: () => void;
+  /** The visitor removed question row `index`. */
+  onQuestionRemove?: (index: number) => void;
+  /** The visitor pressed a Question_Starter. */
+  onQuestionStarter?: (text: string) => void;
   /** The visitor picked or unpicked a figure. */
   onToggleFigure: (metricId: string) => void;
   /** The visitor ticked or unticked the warning box. */
@@ -105,6 +126,7 @@ export interface WriteFormProps {
 /** Field names used with `touched` and `onTouch`. */
 export const TOUCH_FIELDS = {
   letter: "letter",
+  questions: "questions",
   figures: "figures",
   warning: "warning",
   date: "date",
@@ -173,16 +195,25 @@ export function WriteForm({
   onCreatePress,
   onConfirmPress,
   realDate,
+  questions = [],
+  onQuestionChange = () => {},
+  onQuestionAdd = () => {},
+  onQuestionRemove = () => {},
+  onQuestionStarter = () => {},
 }: WriteFormProps) {
   const letterCount = countCodePoints(text);
   const letterRef = useRef<HTMLTextAreaElement>(null);
   const limit = figureLimit(series.length);
+  // A real letter (`/seal`) is the one that carries the date picker (spec 08).
+  const mode: WriteMode = realDate === undefined ? "demo" : "real";
   const problems = validateWrite({
     text,
     metricIds,
     warningTicked,
     backupCardTicked,
     maxFigures: limit,
+    questions,
+    mode,
   });
   const atLimit = metricIds.length >= limit;
   const all = section === "all";
@@ -220,6 +251,14 @@ export function WriteForm({
     TOUCH_FIELDS.warning,
     problemText("warning_unticked"),
   );
+  // A row over 200 code points names its own message, and only once the rows
+  // were touched or a seal was attempted. The text stays as typed (C2.3).
+  const tooLongIndices = showsFieldMessage(touched, TOUCH_FIELDS.questions)
+    ? questions.flatMap((row, index) =>
+        questionRowProblem(row) !== null ? [index] : [],
+      )
+    : [];
+  const questionsValid = !problems.includes("question_too_long");
   const dateMissing =
     realDate !== undefined && realDate.value === null && state.tag === "write";
   const dateProblem = shownFor(
@@ -344,6 +383,29 @@ export function WriteForm({
         </div>
       ) : null}
 
+      {shows("write") ? (
+        <AuthorQuestions
+          questions={questions}
+          tooLongIndices={tooLongIndices}
+          onAdd={() => {
+            onTouch(TOUCH_FIELDS.questions);
+            onQuestionAdd();
+          }}
+          onChange={(index, next) => {
+            onTouch(TOUCH_FIELDS.questions);
+            onQuestionChange(index, next);
+          }}
+          onRemove={(index) => {
+            onTouch(TOUCH_FIELDS.questions);
+            onQuestionRemove(index);
+          }}
+          onStarter={(next) => {
+            onTouch(TOUCH_FIELDS.questions);
+            onQuestionStarter(next);
+          }}
+        />
+      ) : null}
+
       {all && realDate !== undefined ? (
         <>
           <p className={styles.explain}>{REAL_COPY.testNotice}</p>
@@ -369,6 +431,7 @@ export function WriteForm({
               selected={metricIds}
               atLimit={atLimit}
               details={figureDetails}
+              mode={mode}
               onToggle={(metricId) => {
                 onTouch(TOUCH_FIELDS.figures);
                 onToggleFigure(metricId);
@@ -461,7 +524,12 @@ export function WriteForm({
           <button
             type="button"
             className={styles.primary}
-            onClick={() => pressNext(letterValid, TOUCH_FIELDS.letter)}
+            onClick={() =>
+              pressNext(
+                letterValid && questionsValid,
+                letterValid ? TOUCH_FIELDS.questions : TOUCH_FIELDS.letter,
+              )
+            }
           >
             {LIVE_COPY.nextButton}
           </button>

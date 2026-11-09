@@ -151,8 +151,8 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
   // No passkey or key material is kept here.
   const [stepper, dispatchStepper] = useReducer(
     reduceStepper,
-    "write",
-    initialStepperState,
+    mode,
+    (initialMode: SealPageMode) => initialStepperState("write", initialMode),
   );
   const writeDraft = stepper.draft;
   const dispatchDraft = useCallback(
@@ -343,6 +343,17 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
         onTouch={onTouch}
         onAttempt={onAttempt}
         onTextChange={(text) => dispatchDraft({ type: "TEXT_CHANGED", text })}
+        questions={writeDraft.questions}
+        onQuestionChange={(index, text) =>
+          dispatchDraft({ type: "QUESTION_CHANGED", index, text })
+        }
+        onQuestionAdd={() => dispatchDraft({ type: "QUESTION_ADDED" })}
+        onQuestionRemove={(index) =>
+          dispatchDraft({ type: "QUESTION_REMOVED", index })
+        }
+        onQuestionStarter={(text) =>
+          dispatchDraft({ type: "QUESTION_STARTER", text })
+        }
         onToggleFigure={(metricId) =>
           dispatchDraft({ type: "FIGURE_TOGGLED", metricId, limit: figureMax })
         }
