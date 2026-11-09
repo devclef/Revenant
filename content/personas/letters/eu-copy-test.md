@@ -88,3 +88,26 @@ The opening date is a plain public calendar date. It does not follow the event i
 - Reviewer: Jacob Morgan (named in issue #300).
 - Result: pending: Jacob Morgan has not yet recorded a pass or fail for the persona copy after this removal.
 - Retired phrase: "European Parliament election" is in `RETIRED_PHRASES` in `src/test/retired-phrases.test.ts`. This record quotes it and is excluded from that scan.
+
+## Price sentences added to eu-tomas (issue #307)
+
+Two sentences in `content/personas/letters/eu-tomas.txt` quote a figure from the sealed figures file. They are the only new text in this change.
+
+- Reviewer requested: Jacob Morgan (copy-test reviewer named in issue #307).
+- Result: pending: Jacob Morgan has not yet recorded a pass or fail for these sentences.
+
+The agent below ran the neutrality.md checklist on each sentence. This self-check is not a human review and does not count as a pass. Only the named reviewer records the pass.
+
+| Question (neutrality.md) | Sentence 1: unleaded | Sentence 2: diesel |
+|---|---|---|
+| Sentence text | "The news said the EU average for unleaded was about €1.79 a litre this week." | "Diesel was about €1.65 a litre in the same report." |
+| 1. Reads the same to the opposite view? | Yes | Yes |
+| 2. Names a party, candidate, official or movement? | No | No |
+| 3. Says who the persona votes for or whether they vote? | No | No |
+| 4. Attributes a price change to a cause, policy or government? | No | No |
+| 5. Calls a cost good or bad, or rising or falling in a loaded way? | No | No |
+| 6. Avoids stereotypes tied to region, class, age, nationality or background? | Yes | Yes |
+| 7. About everyday life only? | Yes | Yes |
+| 8. Fixed figure comes from the sealed figures file and no other figure is stated? | Yes | Yes |
+
+Agent self-check result: all answers match the expected answer. Pending a named human pass from Jacob Morgan.
