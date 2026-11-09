@@ -221,7 +221,7 @@ describe("Letter_Text computed widths (spec 08, R3.2, R3.3)", () => {
   function letterTextPx(columnPx: number, viewportPx: number): number {
     const narrow = viewportPx < C.LETTER_NARROW_PX;
     const blockPad = narrow ? 8 : clamp(14.4, viewportPx * 0.03, 38.4); // 0.5rem | clamp(0.9rem, 3vw, 2.4rem)
-    const paperPad = narrow ? 14 : clamp(16, viewportPx * 0.03, 32); // 0.875rem | clamp(1rem, 3vw, 2rem)
+    const paperPad = narrow ? 14 : clamp(16, viewportPx * 0.03, 24); // 0.875rem | clamp(1rem, 3vw, 1.5rem)
     return Math.min(columnPx - 2 * blockPad - 2 * paperPad, C.LETTER_TEXT_MAX_EM * LETTER_PX);
   }
 
@@ -231,9 +231,9 @@ describe("Letter_Text computed widths (spec 08, R3.2, R3.3)", () => {
   });
 
   it.each([
-    { viewport: 1366, column: 703.5, text: 562.7, em: 33.1 },
-    { viewport: 1280, column: 655.2, text: 514.4, em: 30.3 },
-    { viewport: 1200, column: 611.3, text: 475.3, em: 28.0 },
+    { viewport: 1366, column: 703.5, text: 578, em: 34 },
+    { viewport: 1280, column: 655.2, text: 530.4, em: 31.2 },
+    { viewport: 1200, column: 611.3, text: 491.3, em: 28.9 },
   ])(
     "side by side at $viewport px: Letter_Text $text px, $em em, inside 28 to 40 em",
     ({ viewport, column, text, em }) => {
