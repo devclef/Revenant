@@ -239,7 +239,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
   - _Requirements: C3.1–C3.12, G1.6, G3.1_
 
-- [ ] 7. C4 · Testify text fields, the Memory_Line, and "No answer" under its field
+- [x] 7. C4 · Testify text fields, the Memory_Line, and "No answer" under its field
   - Agent: `frontend-dev` · Depends on: 6 · Estimated size: ~1,000 changed lines
   - Before this task: steering updated (S1 Owner_Patch on `main`). Task 6 is on `main` (its fixtures).
   - Scope: `src/components/ceremony/recall/RecallPager.tsx`, `src/components/ceremony/recall/RecallPager.module.css`, `src/components/ceremony/recall/TextAnswerField.tsx` (new), `src/components/ceremony/recall/recall-pager.ts`, `src/components/ceremony/recall/recall-field.ts`, `src/components/ceremony/intro/TestifyContext.tsx`, `src/components/ceremony/intro/intro.module.css`, `src/components/reveal/RecallStep.tsx`, `src/components/reveal/copy.ts`, and the `*.test.ts(x)` for each file above
