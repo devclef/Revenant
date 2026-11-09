@@ -83,7 +83,7 @@ describe("TestifyContext: Memory_Line (spec 10 C4.2)", () => {
 
   it("is a plain line, not a card, and joins the phone size rule", () => {
     expect(desktopRules).toMatch(/\.testifyMemory \{[^}]*font-size: 0\.9rem/);
-    expect(phoneRules).toMatch(/\.testifyNotice,[\s\S]*\.testifyMemory[\s\S]*font-size: 0\.9375rem/);
+    expect(phoneRules).toMatch(/\.testifyFrom,[\s\S]*\.testifyMemory[\s\S]*font-size: 0\.875rem/);
   });
 });
 
@@ -112,15 +112,17 @@ describe("TestifyContext: width rules", () => {
     expect(phoneRules).not.toMatch(/\.testify \{[^}]*padding/);
   });
 
-  it("sets the phone lines at 0.9375 rem below 600 px", () => {
-    expect(phoneRules).toMatch(/\.testifyNotice,[\s\S]*font-size: 0\.9375rem/);
+  it("sets the phone lines at 0.875 rem below 600 px, the notice at 0.8 rem", () => {
+    expect(phoneRules).toMatch(/\.testifyNotice \{[^}]*font-size: 0\.8rem/);
+    expect(phoneRules).toMatch(/\.testifyFrom,[\s\S]*font-size: 0\.875rem/);
   });
 
   it("fixes no height and clips nothing at phone widths, so the block reflows with its text", () => {
     // A fixed height or a clip would move the text under the Ghost or hide it,
     // and a fixed height would make the page scroll differently at 360 x 640
     // and 390 x 844 (FC1). The phone rules size the lines and nothing else.
-    expect(phoneRules).not.toMatch(/\bheight\s*:/);
+    // The height check skips line-height, which is a line spacing, not a box height.
+    expect(phoneRules).not.toMatch(/(?<![\w-])height\s*:/);
     expect(phoneRules).not.toMatch(/min-height\s*:/);
     expect(phoneRules).not.toMatch(/overflow\s*:\s*hidden/);
     expect(phoneRules).not.toMatch(/position\s*:\s*(absolute|fixed)/);
