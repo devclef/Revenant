@@ -324,6 +324,20 @@
     gap: 0.25rem;
   }
 
+  /* GT1 (spec 10 X2.1): on the phone the Ghost sits at the right of the frame,
+     and its layer scrolls with the page, so it rises under the fixed bar when
+     the page is scrolled down. The controls move to the left and the brand
+     follows them, which keeps every control clear of the Ghost body at any
+     scroll position. The DOM order is unchanged, so the Tab order is too. */
+  .controls {
+    order: 0;
+    margin-left: 0;
+  }
+
+  .brand {
+    order: 1;
+  }
+
   .control {
     display: inline-flex;
     align-items: center;
