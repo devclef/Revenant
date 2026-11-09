@@ -11,7 +11,7 @@ import type {
   Opened,
   OpenFailedKind,
 } from "./opening-machine";
-import type { RecallRecordV1, Draft } from "@/lib/recall";
+import type { RecallRecordV2, Draft } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
 
 /**
@@ -172,8 +172,8 @@ const DRAFTS: Record<string, Draft> = {
   "q-fuel": { text: "3.50", noAnswer: false },
 };
 
-const RECORD: RecallRecordV1 = {
-  version: 1,
+const RECORD: RecallRecordV2 = {
+  version: 2,
   answers: [{ question_id: "q-fuel", kind: "number", value: "3.50" }],
 };
 

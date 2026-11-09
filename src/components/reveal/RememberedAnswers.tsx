@@ -1,7 +1,7 @@
 "use client";
 
 import type { Opened } from "./opening-machine";
-import type { RecallRecordV1 } from "@/lib/recall";
+import type { RecallRecordV1, RecallRecordV2 } from "@/lib/recall";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
 import { answerText } from "@/components/ceremony/recall/answer-text";
@@ -31,7 +31,7 @@ export type RememberedAnswersProps = {
   /** The opened letter; its payload holds the sealed questions and metrics. */
   opened: Opened;
   /** The stored recall record: the judge's answers, keyed by question ID. */
-  record: RecallRecordV1;
+  record: RecallRecordV1 | RecallRecordV2;
 };
 
 export function RememberedAnswers({ opened, record }: RememberedAnswersProps) {

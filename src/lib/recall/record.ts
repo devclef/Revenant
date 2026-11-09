@@ -36,6 +36,8 @@ const numberAnswer = z
   .max(40)
   .regex(/^[0-9]+(\.[0-9]+)?$/);
 
+export const numberAnswerSchema = numberAnswer;
+
 /**
  * One answer entry: either a number answer carrying its decimal string, or an
  * explicit "no answer". Both are strict objects on the discriminant `kind`, so

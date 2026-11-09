@@ -4,7 +4,7 @@ import { computeChange, displayRescaleForUnit, isFixtureFigure } from "@/lib/fig
 import { pickNow } from "@/lib/figures/now";
 import type { FiguresState } from "./figures-api";
 import type { Opened } from "./opening-machine";
-import type { RecallRecordV1 } from "@/lib/recall";
+import type { RecallRecordV1, RecallRecordV2 } from "@/lib/recall";
 import { FigureEntry } from "./FigureEntry";
 import { receiptFigureOf, receiptSourceOf, type LetterKind } from "./FigureLine";
 import { FixtureNote } from "./FixtureNote";
@@ -80,7 +80,7 @@ export type FiguresThenNowProps = {
    * The stored recall record. Its answer for each number question gives the
    * Mark on that metric's Number_Line. Without it, no entry has a Mark.
    */
-  record?: RecallRecordV1;
+  record?: RecallRecordV1 | RecallRecordV2;
   /**
    * Live letters only (spec 06, R18). When true, a then and a now figure with
    * the same period end and value are comparable and show a change of zero.
@@ -153,7 +153,7 @@ function nowLookup(
 function markValueFor(
   metricId: string,
   questions: Opened["payload"]["recall_questions"],
-  record: RecallRecordV1 | undefined,
+  record: RecallRecordV1 | RecallRecordV2 | undefined,
 ): string | undefined {
   if (record === undefined) return undefined;
   const question = questions.find(

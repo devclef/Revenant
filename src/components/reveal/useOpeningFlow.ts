@@ -27,7 +27,7 @@
  *                    POST_OK / POST_FAILED. The encrypt step happened in
  *                    `submit` (below), which built the sealed bytes.
  *
- * A valid `submit` (R3.4, R8.3, R8.4): `buildRecallRecord(questions, drafts)`,
+ * A valid `submit` (R3.4, R8.3, R8.4): `buildRecallRecordV2(questions, drafts, {})`,
  * and on `ok` `encryptOpeningRecord(openingKey, letterIdBytes, record)`, then
  * dispatch RECORD_SEALED (which moves the reducer to `submitting`). On an
  * invalid build, dispatch SUBMIT_INVALID with the failing question IDs; the
@@ -53,7 +53,7 @@
 import { useCallback, useEffect, useReducer, useRef, useState } from "react";
 import type { CryptoModule } from "@/components/live/crypto-module";
 import { decodeBase64url, parseEnvelope } from "@/lib/seal-format";
-import { buildRecallRecord, type RecallRecordV1 } from "@/lib/recall";
+import { buildRecallRecordV2, type RecallRecordV2 } from "@/lib/recall";
 import {
   INITIAL_STATE,
   reduce,
@@ -567,12 +567,18 @@ export function useOpeningFlow(
       return;
     }
     const { opened, drafts } = current;
-    const built = buildRecallRecord(opened.payload.recall_questions, drafts);
+    // Every letter posts a Recall_Record_V2 (spec 10 C3.8). No samples are
+    // passed yet; task 9 (C5) supplies them.
+    const built = buildRecallRecordV2(
+      opened.payload.recall_questions,
+      drafts,
+      {},
+    );
     if (!built.ok) {
       safeDispatch({ type: "SUBMIT_INVALID", invalid: built.invalid });
       return;
     }
-    const record: RecallRecordV1 = built.record;
+    const record: RecallRecordV2 = built.record;
     // The opening-record AAD is the letter's 16 ID bytes, the same bytes
     // `openLetter` used. The public `letterId` is the canonical base64url of
     // those 16 bytes, so decode it here rather than carrying bytes in state.

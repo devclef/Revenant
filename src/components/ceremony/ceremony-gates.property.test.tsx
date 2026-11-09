@@ -26,7 +26,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
 import fc from "fast-check";
 
-import type { RecallRecordV1, Draft } from "@/lib/recall";
+import type { RecallRecordV2, Draft } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
 import { formatPeriod } from "@/lib/figures";
 import { CEREMONY_COPY } from "./copy";
@@ -100,8 +100,8 @@ const OPENED: Opened = {
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
 };
 
-const RECORD: RecallRecordV1 = {
-  version: 1,
+const RECORD: RecallRecordV2 = {
+  version: 2,
   answers: [
     { question_id: "q-fuel", kind: "number", value: "3.50" },
     { question_id: "q-milk", kind: "no_answer" },

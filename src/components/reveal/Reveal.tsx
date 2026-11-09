@@ -5,7 +5,7 @@ import type { Opened } from "./opening-machine";
 import { AnswerList, type AnswerListItem } from "./AnswerList";
 import { PHONE_QUERY } from "@/components/ceremony/scene/TopBar";
 import type { LetterKind } from "./FigureLine";
-import type { RecallRecordV1 } from "@/lib/recall";
+import type { RecallRecordV1, RecallRecordV2 } from "@/lib/recall";
 import { LetterBlock } from "@/components/ceremony/letter/LetterBlock";
 import { SoundEnabledContext } from "@/components/ceremony/sound/SoundEnabledContext";
 import { FiguresThenNow } from "./FiguresThenNow";
@@ -111,7 +111,7 @@ export type RevealProps = {
   /** The opened letter; its payload holds the sealed content. */
   opened: Opened;
   /** The stored recall record: what the judge remembered. */
-  record: RecallRecordV1;
+  record: RecallRecordV1 | RecallRecordV2;
   /** The persona's display name, passed to `SealedLetter` for its demo label. */
   personaName: string;
   /**

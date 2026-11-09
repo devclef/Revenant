@@ -26,4 +26,16 @@ export {
 } from "./record";
 export type { RecallRecordV1, Draft } from "./record";
 
+export {
+  recallRecordV2Schema,
+  recallRecordV2SchemaFor,
+  buildRecallRecordV2,
+} from "./record-v2";
+export type { RecallRecordV2, AnswerV2, BoundQuestion } from "./record-v2";
+
+export { parseRecallRecord } from "./parse-record";
+export type { ParseRecallRecordResult } from "./parse-record";
+
+export { TEXT_ANSWERS_MAX, TEXT_ANSWER_MAX_CODE_POINTS } from "./limits";
+
 export { BANNED_DIRECTION_WORDS } from "./banned-words";
