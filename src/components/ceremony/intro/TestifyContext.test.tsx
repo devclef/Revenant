@@ -83,7 +83,7 @@ describe("TestifyContext: Memory_Line (spec 10 C4.2)", () => {
 
   it("is a plain line, not a card, and joins the phone size rule", () => {
     expect(desktopRules).toMatch(/\.testifyMemory \{[^}]*font-size: 0\.9rem/);
-    expect(phoneRules).toMatch(/\.testifyFrom,[\s\S]*\.testifyMemory[\s\S]*font-size: 0\.875rem/);
+    expect(phoneRules).toMatch(/\.testifyNotice,[\s\S]*\.testifyMemory[\s\S]*font-size: 0\.9375rem/);
   });
 });
 
@@ -112,9 +112,8 @@ describe("TestifyContext: width rules", () => {
     expect(phoneRules).not.toMatch(/\.testify \{[^}]*padding/);
   });
 
-  it("sets the phone lines at 0.875 rem below 600 px, the notice at 0.8 rem", () => {
-    expect(phoneRules).toMatch(/\.testifyNotice \{[^}]*font-size: 0\.8rem/);
-    expect(phoneRules).toMatch(/\.testifyFrom,[\s\S]*font-size: 0\.875rem/);
+  it("sets the phone lines at 0.9375 rem below 600 px", () => {
+    expect(phoneRules).toMatch(/\.testifyNotice,[\s\S]*font-size: 0\.9375rem/);
   });
 
   it("fixes no height and clips nothing at phone widths, so the block reflows with its text", () => {

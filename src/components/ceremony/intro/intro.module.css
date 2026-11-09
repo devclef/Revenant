@@ -143,9 +143,9 @@
 }
 
 /* Below 600 px the Testify_Context is nine short lines above the first question.
-   They are set a little tighter so the question, the field and the Next button
-   stay inside the 360 x 640 First_Viewport at scrollY 0 (layout check R1). Sizes
-   and spacing only; the colours are unchanged. */
+   Their line spacing and gaps are tightened so the question, the field and the
+   Next button stay inside the 360 x 640 First_Viewport at scrollY 0 (layout check
+   R1). The size stays at the phone size rule; the colours are unchanged. */
 @media (max-width: 599.98px) {
   .testify {
     gap: 0.1rem;
@@ -153,16 +153,12 @@
     margin-bottom: 0.25rem;
   }
 
-  .testifyNotice {
-    font-size: 0.8rem;
-    line-height: 1.25;
-  }
-
+  .testifyNotice,
   .testifyFrom,
   .testifyDates,
   .testifySeal,
   .testifyMemory {
-    font-size: 0.875rem;
-    line-height: 1.3;
+    font-size: 0.9375rem;
+    line-height: 1.25;
   }
 }
