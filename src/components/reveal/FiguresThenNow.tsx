@@ -277,6 +277,7 @@ export function FiguresThenNow({
                 name={entry.name}
                 region={entry.then.region}
                 markValue={answer.markValue}
+                sample={entry.sample}
                 unit={answer.unit}
                 then={thenRow}
                 now={{ message: entry.nowMissing }}
@@ -321,6 +322,7 @@ export function FiguresThenNow({
               name={entry.name}
               region={entry.then.region}
               markValue={answer.markValue}
+              sample={entry.sample}
               unit={answer.unit}
               then={thenRow}
               now={receiptFigureOf(entry.now, "now", letterKind, entry.rescale)}

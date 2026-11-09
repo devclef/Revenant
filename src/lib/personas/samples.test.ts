@@ -3,6 +3,7 @@
 // in samples.ts: a file with a missing, unknown or malformed entry must fail.
 
 import { describe, expect, it } from "vitest";
+import fc from "fast-check";
 
 import { parseRecallNumber } from "@/components/ceremony/recall/parse-number";
 import {
@@ -67,6 +68,31 @@ describe("persona Sample_Candidates file (Property 15)", () => {
     }
   });
 
+  // Property 15, as a fast-check property (G2.2): for any persona Figure_Question
+  // and any stored candidate, the candidate is written with two decimals inside
+  // the Unit_Range_Table range, and reads back as itself through the recall
+  // parser and the Recall_Record rule.
+  it("Property 15: every stored candidate is a valid answer (numRuns 100)", () => {
+    const withCandidates = all.filter((q) => q.candidates.length > 0);
+    fc.assert(
+      fc.property(fc.constantFrom(...withCandidates), fc.nat(), (q, pick) => {
+        const range = scaleRangeFor(displayUnitFor(q.figure.unit));
+        const c = q.candidates[pick % q.candidates.length];
+        expect(c).toMatch(new RegExp(`^[0-9]+\\.[0-9]{${SAMPLE_DECIMALS}}$`));
+        const n = Number(c);
+        expect(n).toBeGreaterThanOrEqual(range.min);
+        expect(n).toBeLessThanOrEqual(range.max);
+        expect(parseRecallNumber(c)).toEqual({
+          kind: "value",
+          value: c,
+          format: "point",
+        });
+        expect(numberAnswerSchema.safeParse(c).success).toBe(true);
+      }),
+      { numRuns: 100 },
+    );
+  });
+
   for (const q of all) {
     describe(`${q.persona.key} ${q.metricId}`, () => {
       const then = shownThen(q.figure.value, q.figure.unit);
@@ -90,27 +116,6 @@ describe("persona Sample_Candidates file (Property 15)", () => {
         const matches = list.filter((c) => c === record);
         expect(matches.length).toBe(1);
         expect(classifyCandidate(record, then)).toBe("near");
-      });
-
-      it("writes every candidate with two decimals inside the Unit_Range_Table range", () => {
-        const range = scaleRangeFor(displayUnitFor(q.figure.unit));
-        for (const c of list) {
-          expect(c).toMatch(new RegExp(`^[0-9]+\\.[0-9]{${SAMPLE_DECIMALS}}$`));
-          const n = Number(c);
-          expect(n).toBeGreaterThanOrEqual(range.min);
-          expect(n).toBeLessThanOrEqual(range.max);
-        }
-      });
-
-      it("reads every candidate back as itself through the recall parser and the Recall_Record rule", () => {
-        for (const c of list) {
-          expect(parseRecallNumber(c)).toEqual({
-            kind: "value",
-            value: c,
-            format: "point",
-          });
-          expect(numberAnswerSchema.safeParse(c).success).toBe(true);
-        }
       });
     });
   }
