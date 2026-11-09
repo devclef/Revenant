@@ -1,6 +1,12 @@
 import type { FigureV1, MetricDefinitionV1 } from "@/lib/seal-format";
 import type { DisplayRescale } from "@/lib/figures";
-import { computeChange, displayRescaleForUnit, isFixtureFigure } from "@/lib/figures";
+import {
+  computeChange,
+  displayRescaleForUnit,
+  formatPeriod,
+  isFixtureFigure,
+} from "@/lib/figures";
+import { FIG_VALUE_SIZE } from "@/components/ceremony/constants";
 import { pickNow } from "@/lib/figures/now";
 import type { FiguresState } from "./figures-api";
 import type { Opened } from "./opening-machine";
@@ -203,7 +209,10 @@ export function FiguresThenNow({
   const entries: Entry[] = [];
   let anyFixture = false;
 
+  // Self-reported figures are listed after the official ones, with no now
+  // figure, no change and no Number_Line (spec 08 later-tasks, R26.6).
   payload.figures.forEach((then, index) => {
+    if (then.kind === "self-reported") return;
     const metric = metricById.get(then.metric_id);
     // A figure with no matching metric cannot occur for a validly sealed letter
     // (the schema enforces it); skip defensively rather than invent a name.
@@ -246,6 +255,19 @@ export function FiguresThenNow({
       answerValue: markValue,
       answerUnit: rescale === undefined ? then.unit : rescale.unit,
     });
+  });
+
+  const selfReported = payload.figures.flatMap((figure, index) => {
+    if (figure.kind !== "self-reported") return [];
+    const metric = metricById.get(figure.metric_id);
+    if (metric === undefined) return [];
+    return [
+      {
+        key: `${figure.metric_id}-${index}`,
+        name: metric.display_name,
+        figure,
+      },
+    ];
   });
 
   return (
@@ -342,6 +364,75 @@ export function FiguresThenNow({
           </div>
         );
       })}
+
+      {selfReported.length === 0 ? null : (
+        <section
+          className={styles.selfReportedGroup}
+          data-self-reported-group=""
+        >
+          <h3 className={styles.selfReportedHeading}>
+            {REVEAL_COPY.selfReportedTitle}
+          </h3>
+          <p className={styles.period}>{REVEAL_COPY.selfReportedHint}</p>
+          {selfReported.map((entry) => (
+            <div key={entry.key} className={styles.figureGroup}>
+              <SelfReportedFigure
+                name={entry.name}
+                figure={entry.figure}
+              />
+            </div>
+          ))}
+        </section>
+      )}
+    </section>
+  );
+}
+
+/**
+ * One self-reported figure as the judge typed it: the name, region, value, unit
+ * and period, labelled "self-reported". The value is shown exactly as typed
+ * (data-integrity.md). There is no now figure, no change and no Number_Line
+ * (spec 08 later-tasks, R26.6). Every typed field carries data-user-content.
+ */
+function SelfReportedFigure({
+  name,
+  figure,
+}: {
+  name: string;
+  figure: Readonly<FigureV1>;
+}) {
+  return (
+    <section
+      className={styles.fig}
+      aria-label={`${name}, ${figure.region}`}
+      data-self-reported=""
+    >
+      <h4 className={styles.figName}>
+        <span data-user-content="">{name}</span> ·{" "}
+        <span data-user-content="">{figure.region}</span>
+      </h4>
+      <p className={styles.figRow} data-self-reported-row="">
+        <span className={styles.rowLabel}>{REVEAL_COPY.then}:</span>{" "}
+        <span className={styles.valueLine}>
+          <span
+            className={styles.figValue}
+            style={{ fontSize: FIG_VALUE_SIZE }}
+            data-user-content=""
+          >
+            {figure.value}
+          </span>{" "}
+          <span data-user-content="">{figure.unit}</span>
+        </span>{" "}
+        <span className={styles.metaLine}>
+          <span className={styles.period}>
+            {formatPeriod(figure.period, figure.region)}
+          </span>
+          {" · "}
+          <span className={styles.period}>
+            {REVEAL_COPY.labelSelfReported}
+          </span>
+        </span>
+      </p>
     </section>
   );
 }

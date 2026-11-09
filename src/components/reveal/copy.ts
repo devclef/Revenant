@@ -311,6 +311,19 @@ export const REVEAL_COPY = {
    */
   labelSelfReported: "self-reported",
 
+  /**
+   * The heading over the self-reported figures, after the official figures
+   * (spec 08 later-tasks, R26.6). Only the figures the judge typed sit under it.
+   */
+  selfReportedTitle: "Your own numbers",
+
+  /**
+   * The line under the heading. It says what the numbers are, with no
+   * comment on them (neutrality.md).
+   */
+  selfReportedHint:
+    "Numbers you typed in when you sealed the letter. They are not official figures, and nothing here has been checked against a source.",
+
   /** The retrieved label on a now figure. `{date}` is the retrieved date in UTC. */
   labelRetrieved: "retrieved {date}",
 

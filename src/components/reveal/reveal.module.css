@@ -942,3 +942,17 @@
   color: var(--text);
   white-space: pre-wrap;
 }
+
+/* --- Spec 08 later-tasks R26.6: the self-reported figures, after the official
+ * ones. The group sets its own ink, as every panel does. It uses the same
+ * figure classes as the official figures, with no now row and no Number_Line. */
+.selfReportedGroup {
+  margin: 1.5rem 0 1.25rem;
+  color: var(--ink);
+}
+
+.selfReportedHeading {
+  margin: 0 0 0.5rem;
+  color: var(--ink);
+  font-family: var(--font-sans);
+}
