@@ -212,7 +212,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
   - _Requirements: C1.1–C1.13, C4.3, C4.10, S3.1, S3.3_
 
-- [ ] 6. C3 · Recall_Record_V2, its builder and parser, the size test, the text cap and the text-question fixtures
+- [x] 6. C3 · Recall_Record_V2, its builder and parser, the size test, the text cap and the text-question fixtures
   - Agent: `frontend-dev` · Depends on: 5 · Estimated size: ~900 changed lines
   - Before this task: steering updated (S1 Owner_Patch on `main`). Task 5 is on `main`.
   - Scope: `src/lib/recall/record.ts` (one export line), `src/lib/recall/record-v2.ts` (new), `src/lib/recall/parse-record.ts` (new), `src/lib/recall/limits.ts` (new), `src/lib/recall/index.ts`, `src/lib/recall/fixtures.test-data.ts` (new, imported by tests only), `src/lib/recall/record-v2-size.test.ts` (new), `src/components/reveal/opening-machine.ts` (the cap in `enterRecall` and the record type), `src/components/reveal/useOpeningFlow.ts` (`submit`), `src/components/reveal/OpeningFlow.tsx` (types only), and the `*.test.ts(x)` for each file above
