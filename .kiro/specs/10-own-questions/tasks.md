@@ -352,7 +352,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
 
 ### Group P: persona letters with the price
 
-- [ ] 11. P1, P2 · Persona letters that carry the price, and new letter IDs
+- [x] 11. P1, P2 · Persona letters that carry the price, and new letter IDs
   - Agent: `frontend-dev` · Depends on: 9 · Estimated size: ~600 changed lines
   - Before this task: steering updated (S1 Owner_Patch on `main`). Task 9 is on `main` (`recordCandidate`). The owner has written the copy-test reviewer's name into this issue's body, and has checked that the GitOps values keep `demo.sealPersonas: true` (or plans the manual seal in the P2 deploy order).
   - Scope: `content/personas/letters/us-maya.txt`, `content/personas/letters/eu-tomas.txt`, `content/personas/letters/us-copy-test.md`, `content/personas/letters/eu-copy-test.md`, `content/personas/personas.json`, `src/lib/personas/letter-checks.ts`, `src/lib/personas/price-lines.ts` (new), `src/lib/personas/index.ts`, `src/lib/personas/letter-prices.test.ts` (new), and the `*.test.ts(x)` for each file above, including `src/lib/personas/intro-line.test.ts` and `index.test.ts`, which name the current letter IDs
