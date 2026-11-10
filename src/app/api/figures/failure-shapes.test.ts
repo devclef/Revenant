@@ -156,7 +156,9 @@ describe("failure shape: stored row with a null retrieved_at (fixed in step 3)",
 });
 
 describe("failure shape: stored row for a series outside the Catalogue", () => {
-  it("answers 200 with the bundled figures, leaves the row out, and logs nothing", async () => {
+  // A success path: the route logs only on failure, so this shape writes zero
+  // log lines by design. The "one line" rule covers the failure shapes above.
+  it("answers 200 with the bundled figures, leaves the row out, and writes no log line", async () => {
     state.store = rowsStore([OUTSIDE_CATALOGUE_ROW]);
 
     const response = await GET();
