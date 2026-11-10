@@ -39,3 +39,6 @@ __pycache__/
 
 # Layout check screenshots (npm run layout-check)
 layout-check-shots/
+
+# Walk and QA screenshots (live-walk replay output)
+qa-shots/
