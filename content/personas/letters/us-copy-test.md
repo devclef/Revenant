@@ -73,3 +73,29 @@ The opening date is a plain public calendar date. It does not follow the event i
 - Reviewer: Jacob Morgan (named in issue #300).
 - Result: pending: Jacob Morgan has not yet recorded a pass or fail for the persona copy after this removal.
 - Retired phrase: "U.S. presidential election day" is in `RETIRED_PHRASES` in `src/test/retired-phrases.test.ts`. This record quotes it and is excluded from that scan.
+
+## Price lines added to us-maya (issue #307)
+
+Two sentences in `content/personas/letters/us-maya.txt` quote a figure from the sealed figures file. They are the only new text in this change.
+
+- Reviewer requested: Jacob Morgan (copy-test reviewer named in issue #307).
+- Result: pending: Jacob Morgan has not yet recorded a pass or fail for these sentences.
+
+The agent below ran the neutrality.md checklist on each sentence. This self-check is not a human review and does not count as a pass. Only the named reviewer records the pass.
+
+| Question (neutrality.md) | Sentence 1: regular | Sentence 2: diesel |
+|---|---|---|
+| Sentence text | "On the radio this morning they said the national average for regular was about $3.64 a gallon in the first week of May." | "The radio put diesel at about $3.89 a gallon in the first week of May, which is what the van runs on." |
+| 1. Reads the same to the opposite view? | Yes | Yes |
+| 2. Names a party, candidate, official or movement? | No | No |
+| 3. Says who the persona votes for or whether they vote? | No | No |
+| 4. Attributes a price change to a cause, policy or government? | No | No |
+| 5. Calls a cost good or bad, or rising or falling in a loaded way? | No | No |
+| 6. Avoids stereotypes tied to region, class, age, nationality or background? | Yes | Yes |
+| 7. About everyday life only? | Yes | Yes |
+
+Question 8 (`opening_event`) does not apply to these sentences. Both figures are shown with their own period and unit in the sealed figures file; the letter-prices test in issue #307 checks that they match it.
+
+Agent self-check result: all answers match the expected answer. Pending a named human pass from Jacob Morgan.
+
+Wording change: the first version said "this week", which gave the reader no period for the figure. The sentences now name the period of the sealed figure: the first week of May (the figure's period is 2024-05-06, and digits are not allowed outside price phrases). Jacob Morgan reviews the sentences as quoted here.

@@ -11,7 +11,9 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import { PERSONAS } from "./index";
 import { checkLetterText } from "./letter-checks";
+import { expectedPrices } from "./price-lines";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const LETTER_PATH = resolve(
@@ -34,6 +36,8 @@ describe("EU persona letter text (eu-tomas.txt)", () => {
   });
 
   it("passes checkLetterText with no problems", () => {
-    expect(checkLetterText(KEY, text)).toEqual([]);
+    const persona = PERSONAS.find((p) => p.key === KEY);
+    if (!persona) throw new Error(`no persona ${KEY}`);
+    expect(checkLetterText(KEY, text, expectedPrices(persona))).toEqual([]);
   });
 });

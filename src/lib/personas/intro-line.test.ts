@@ -8,6 +8,8 @@ import { describe, expect, it } from "vitest";
 
 import rawPersonaList from "../../../content/personas/personas.json";
 
+import { isLetterId } from "../seal-format/base64url";
+
 import { parsePersonaList } from "./schema";
 
 // A valid 22-char base64url letter ID (16 bytes).
@@ -114,10 +116,13 @@ describe("committed Persona_List intro_line and opening date", () => {
     expect("opening_event" in (maya ?? {})).toBe(false);
   });
 
-  it("keeps the us-maya letter ID as it is in personas.json", () => {
-    const maya = parsePersonaList(rawPersonaList).personas.find(
-      (p) => p.key === "us-maya",
-    );
-    expect(maya?.letter_id).toBe("ydsos6hcjdEUOs3sK42RQg");
+  it("gives us-maya a valid letter ID that is not retired", () => {
+    // Read from the Persona_List, not hard-coded: the letter ID was rotated
+    // (spec 10 P2.1), so the test checks the rule instead of a fixed value.
+    const parsed = parsePersonaList(rawPersonaList);
+    const maya = parsed.personas.find((p) => p.key === "us-maya");
+    expect(maya).toBeDefined();
+    expect(isLetterId(maya?.letter_id ?? "")).toBe(true);
+    expect(parsed.retired_letter_ids).not.toContain(maya?.letter_id);
   });
 });

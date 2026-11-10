@@ -118,8 +118,9 @@ describe("index — loads without any letter .txt file", () => {
 // Example checks against the committed personas.json for issue #82: Maya moved
 // to catalogue metrics and her letter ID was rotated. The old ID is retired.
 describe("index — committed list: Maya after the catalogue move (#82)", () => {
-  const OLD_LETTER_ID = "wom_GdH6gqP6AGgnyhIMgA";
-  const NEW_LETTER_ID = "ydsos6hcjdEUOs3sK42RQg";
+  // The IDs this rotation retired are the last two entries of
+  // retired_letter_ids in the Persona_List, so they are read from there.
+  const RETIRED_BY_ROTATION = RETIRED_LETTER_IDS.slice(-2);
 
   function maya() {
     const entry = PERSONAS.find((p) => p.key === "us-maya");
@@ -138,19 +139,22 @@ describe("index — committed list: Maya after the catalogue move (#82)", () => 
   });
 
   it("retires the old letter ID and does not use it as a current letter_id", () => {
-    expect(RETIRED_LETTER_IDS).toContain(OLD_LETTER_ID);
-    expect(PERSONAS.map((p) => p.letter_id)).not.toContain(OLD_LETTER_ID);
+    expect(RETIRED_BY_ROTATION).toHaveLength(2);
+    for (const id of RETIRED_BY_ROTATION) {
+      expect(RETIRED_LETTER_IDS).toContain(id);
+      expect(PERSONAS.map((p) => p.letter_id)).not.toContain(id);
+    }
   });
 
   it("uses a new letter_id that passes isLetterId and is unique across entries and retired IDs", () => {
-    expect(maya().letter_id).toBe(NEW_LETTER_ID);
     expect(isLetterId(maya().letter_id)).toBe(true);
+    expect(RETIRED_BY_ROTATION).not.toContain(maya().letter_id);
 
     const all = [
       ...PERSONAS.map((p) => p.letter_id),
       ...RETIRED_LETTER_IDS,
     ];
-    expect(all.filter((id) => id === NEW_LETTER_ID)).toHaveLength(1);
+    expect(all.filter((id) => id === maya().letter_id)).toHaveLength(1);
   });
 
   it("keeps key, written_as_of, opens_at and letter_path unchanged", () => {
