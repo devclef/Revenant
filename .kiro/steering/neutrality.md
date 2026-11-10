@@ -35,6 +35,10 @@ Persona letters are written by us, so they speak for Revenant. They must:
 - Avoid stereotypes tied to region, class, age or background. Across all personas, cover a range of situations without implying any group is better or worse off because of politics.
 - Be reviewed against the copy test below before they are sealed.
 
+A persona's pre-written answers follow the same rules as her letter: everyday life only, no price, no party, policy or election term. They differ from her letter only in ordinary, neutral ways (a different detail, a different order, a different emphasis). The page does not point at, mark, count or explain any difference, and no wording calls an answer right, wrong, close, off or accurate.
+
+Occasion starters and questions follow the same rules: everyday life only, no leading wording, no party, policy or election term.
+
 ## Predictions (not in the MVP; rules for when they are added)
 
 - Predictions must be resolvable against a named source and a specific figure ("Average U.S. gasoline price in Nov 2028 will be above $4.00/gal, per EIA").

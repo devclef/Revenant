@@ -22,6 +22,8 @@ Revenant is the wax seal, resurrected. A sealed letter comes back out of the dar
 - Testimony words stay calm and never accuse. Never use "cross-examine", "caught", "wrong", "you misremembered" or anything that grades the testimony in the UI.
 - Data copy stays literal and neutral (see `neutrality.md`). Atmosphere never bends a number or adds a judgement.
 - Errors and empty states stay in voice but stay clear: say what happened and what the user can do.
+- A question is written for the reader on the opening day and names the sealing day ("when you wrote this", "the day you sealed this"). It never says "right now", "today" or "currently".
+- **Rehearsal:** the 30-second demo says plainly that it is a rehearsal of a letter that would normally stay sealed for months.
 
 ## Visual direction
 
@@ -40,7 +42,7 @@ Revenant is the wax seal, resurrected. A sealed letter comes back out of the dar
 - **Emergence:** the ghost rises out of the soil holding the letter while the seal is really checked. The letter is offered only once the check has passed.
 - **Sealing:** feels final and a little solemn. Make it clear the letter can't be changed after this.
 - **Waiting:** the sealed letter is visible but unreadable, held and unopened.
-- **Testify:** one question at a time, gentle prompts, no hints about what's inside. One exception, for persona letters only: each figure question may come with one sample answer, labelled as a sample, because the judge never lived the persona's life.
+- **Testify:** one question at a time, gentle prompts, no hints about what's inside. One exception, for persona letters only: each figure question may come with one sample answer, labelled as a sample, because the judge never lived the persona's life. For the text persona the step shows one question and her answer at a time, with a plain control to go on. Her answers are labelled as fictional. The wording never grades them.
 - **See the receipts:** testimony first, then the letter, then the numbers. Breaking the seal is the reader's own act. The ghost delivers the letter and leaves; the letter unfolds.
 - **Ending:** quiet. Nothing is added to what the reader remembered, what was written, or the record.
 - **Locking:** the passkey prompt is the wax seal being pressed. Warnings about lost keys stay plain and unmissable. Atmosphere never softens a warning that could cost the user their letter.

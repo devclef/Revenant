@@ -24,7 +24,8 @@ Planned layout. Update this file when the structure changes.
 ├── Dockerfile               # One image for web, migrations and the fetch job
 ├── content/
 │   └── personas/            # Demo persona letters (text only, reviewed against neutrality.md)
-│       └── letters/samples.json  # Sample_Candidates for persona figure questions; shown on the Testify step, never sealed
+│       ├── letters/samples.json  # Sample_Candidates for persona figure questions; shown on the Testify step, never sealed
+│       └── letters/answers.json  # Pre-written, fictional answers for the text persona; shown on the Testify step, never sealed or stored
 ├── drizzle/                 # SQL migrations, including immutability triggers
 ├── scripts/                 # fetch-figures (run by the CronJob), prefetch demo-window data, seal-personas
 ├── src/
@@ -43,9 +44,12 @@ Planned layout. Update this file when the structure changes.
 │   ├── components/
 │   │   ├── seal/            # Sealing ceremony UI
 │   │   ├── reveal/          # Unsealing sequence, then vs now views
+│   │   │   └── short-names.ts  # Short everyday names for receipts, keyed by sealed metric_id
 │   │   ├── ceremony/        # The reveal Ceremony: Stages, motion, seal, recall scale, figures, close
 │   │   │   └── scene/       # The Scene: tokens, Top_Bar, light, Soil, Soil_Canvas, Ghost (browser-only canvas chunk)
+│   │   ├── landing/         # Landing sections below the hero: ritual, resurrection, no-seal, and a static Coven strip (one line, two links, no counts). No SampleReceipt.
 │   │   ├── live/            # Live demo UI: write, seal with a passkey, 30-second wait, unlock
+│   │   │   └── occasions.ts # Occasions: letter starters and questions, client-side only, never stored
 │   │   └── ui/              # Shared primitives (buttons, parchment surfaces, typography)
 │   │       └── buttons.module.css  # the shared primary button
 │   └── lib/
