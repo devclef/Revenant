@@ -14,7 +14,7 @@ import { afterEach, beforeEach, describe, expect, it, vi, type MockInstance } fr
 
 import { bundledLatestFigure } from "@/lib/figures/bundled-latest";
 import { CATALOGUE } from "@/lib/figures/catalogue";
-import { chooseFigure, type ChosenFigure } from "@/lib/figures/choose";
+import { chooseFigure } from "@/lib/figures/choose";
 import type { CatalogueSeries } from "@/lib/figures/types";
 import type { FigureV1 } from "@/lib/seal-format";
 
@@ -198,9 +198,12 @@ describe("Property 3: invalid stored rows are skipped and logged once per metric
           const entry = body.series[i];
           expect(entry.metric.id).toBe(cat.metric.id);
           const stored = latestValid(cat, validRows);
-          const expected: ChosenFigure = chooseFigure(stored, bundledLatestFigure(cat));
-          expect(entry.figure).toEqual(expected.figure);
-          expect(entry.fallback).toBe(expected.fallback);
+          const bundled = bundledLatestFigure(cat);
+          // Written out here, not via chooseFigure, so this check does not reuse the code under test.
+          const expectedFigure = stored ?? bundled;
+          const expectedFallback = stored === null && bundled !== null;
+          expect(entry.figure).toEqual(expectedFigure);
+          expect(entry.fallback).toBe(expectedFallback);
         });
 
         // One log line per distinct metric with an invalid row, and no value in it.
