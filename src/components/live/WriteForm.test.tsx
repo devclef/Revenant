@@ -293,24 +293,33 @@ describe("SealPage", () => {
 });
 
 describe("WriteForm — figures request state", () => {
-  it("shows the failure and blocks creating a passkey when the request failed", () => {
+  it("shows the unavailable line and no picker when the request failed, and does not block the passkey press", () => {
     const html = renderWriteForm({
       figuresStatus: "failed",
+      series: [],
       text: "A letter",
       metricIds: [],
       warningTicked: true,
       cryptoLoaded: true,
     });
 
-    expect(html).toContain(esc(LIVE_COPY.figuresLoadFailed));
+    expect(html).toContain(esc(LIVE_COPY.receiptsUnavailable));
+    expect(html).not.toContain(esc(LIVE_COPY.receiptsLoading));
     expect(html).not.toContain('id="figure-');
-    expect(/<button[^>]*disabled/.test(html)).toBe(true);
+    expect(html).not.toContain("Check your connection");
+    // The figures state never disables the create press (spec 11, X2.9).
+    const createTag = html.match(
+      new RegExp(`<button[^>]*>${esc(LIVE_COPY.createButton)}</button>`),
+    );
+    expect(createTag).not.toBeNull();
+    expect(createTag?.[0]).not.toMatch(/disabled=""/);
   });
 
-  it("shows the loading message and no picker while the request is in flight", () => {
+  it("shows the loading line and no picker while the request is in flight", () => {
     const html = renderWriteForm({ figuresStatus: "loading", series: [] });
 
-    expect(html).toContain(esc(LIVE_COPY.figuresLoading));
+    expect(html).toContain(esc(LIVE_COPY.receiptsLoading));
+    expect(html).not.toContain(esc(LIVE_COPY.receiptsUnavailable));
     expect(html).not.toContain('id="figure-');
   });
 });

@@ -36,13 +36,22 @@ export type WriteMode = "demo" | "real";
 
 /**
  * The fewest figures a write needs (C2.13). A real letter with at least one
- * non-empty Author_Question needs none. Every other write needs MIN_FIGURES.
+ * non-empty Author_Question needs none. So does any write while the figures
+ * request is loading or has failed (X2.4): the picker is not there, so one
+ * non-empty question is the only way to seal. Every other write needs
+ * MIN_FIGURES.
  */
 export function minFiguresFor(
   mode: WriteMode,
   questions: readonly string[],
+  figuresUnavailable = false,
 ): number {
-  if (mode === "real" && questionsForSeal(questions).length > 0) return 0;
+  if (
+    (mode === "real" || figuresUnavailable) &&
+    questionsForSeal(questions).length > 0
+  ) {
+    return 0;
+  }
   return MIN_FIGURES;
 }
 
@@ -219,6 +228,11 @@ export function validateWrite(input: {
    * Omitted means no period is accepted, so any row blocks sealing (fail closed).
    */
   sealingDay?: string;
+  /**
+   * True while the figures request is loading or has failed (X2.4). The write
+   * then needs one non-empty question instead of one figure. Defaults to false.
+   */
+  figuresUnavailable?: boolean;
 }): WriteProblem[] {
   const maxFigures = input.maxFigures ?? MAX_FIGURES;
   const questions = input.questions ?? [];
@@ -235,7 +249,10 @@ export function validateWrite(input: {
     problems.push("question_too_long");
   }
 
-  if (input.metricIds.length < minFiguresFor(mode, questions)) {
+  if (
+    input.metricIds.length <
+    minFiguresFor(mode, questions, input.figuresUnavailable === true)
+  ) {
     problems.push("figures_none");
   } else if (input.metricIds.length > maxFigures) {
     problems.push("figures_too_many");

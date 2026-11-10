@@ -322,3 +322,42 @@ describe("an Author_Question over 200 code points blocks sealing (C2.2)", () => 
     ).toEqual([]);
   });
 });
+
+describe("figures unavailable: one non-empty question is enough (spec 11, X2.4)", () => {
+  it("needs no figure in demo mode when the figures are loading or failed and a question is written", () => {
+    expect(minFiguresFor("demo", ["What do you expect?"], true)).toBe(0);
+  });
+
+  it("still needs one figure in demo mode when the figures are ready", () => {
+    expect(minFiguresFor("demo", ["What do you expect?"], false)).toBe(1);
+  });
+
+  it("still needs one figure when no question is written, even with figures unavailable", () => {
+    expect(minFiguresFor("demo", [""], true)).toBe(1);
+    expect(minFiguresFor("demo", [], true)).toBe(1);
+  });
+
+  it("does not let a figures outage pass a letter with a blank question", () => {
+    const problems = validateWrite({
+      text: "A letter",
+      metricIds: [],
+      warningTicked: true,
+      questions: ["   "],
+      mode: "demo",
+      figuresUnavailable: true,
+    });
+    expect(problems).toContain("figures_none");
+  });
+
+  it("lets a letter with a question seal with no figure when figures are unavailable", () => {
+    const problems = validateWrite({
+      text: "A letter",
+      metricIds: [],
+      warningTicked: true,
+      questions: ["What do you expect?"],
+      mode: "demo",
+      figuresUnavailable: true,
+    });
+    expect(problems).not.toContain("figures_none");
+  });
+});
