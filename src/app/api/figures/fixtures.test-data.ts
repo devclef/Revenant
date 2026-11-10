@@ -64,11 +64,25 @@ export const OUTSIDE_CATALOGUE_ROW: StoredFigureRow = {
   retrieved_at: new Date("2026-01-15T00:00:00Z"),
 };
 
-/** The error a Postgres statement timeout raises (SQLSTATE 57014). */
-export const POSTGRES_TIMEOUT_ERROR = { name: "PostgresError", code: "57014" } as const;
+/**
+ * The error a Postgres statement timeout raises (SQLSTATE 57014). It is an Error
+ * instance named PostgresError, as the postgres client builds it, so the failure
+ * line reads the name the way production does.
+ */
+export const POSTGRES_TIMEOUT_ERROR = Object.assign(
+  new Error("canceling statement due to statement timeout"),
+  { name: "PostgresError", code: "57014" },
+);
 
-/** The error a dropped database connection raises. */
-export const CONNECTION_CLOSED_ERROR = { name: "Error", code: "CONNECTION_CLOSED" } as const;
+/**
+ * The error a dropped database connection raises. Its message carries a fake
+ * connection string on purpose, so the tests can check that neither the log line
+ * nor the body echoes it.
+ */
+export const CONNECTION_CLOSED_ERROR = Object.assign(
+  new Error("write CONNECTION_CLOSED postgres://user:secret@host/db"),
+  { code: "CONNECTION_CLOSED" },
+);
 
 /** A read store whose latestFigures rejects with the given error. */
 export function rejectingLatestFiguresStore(err: unknown): FigureReadStore {
