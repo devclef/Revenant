@@ -74,10 +74,9 @@ describe("failure step label", () => {
     expect(loggedLines()).toEqual(["figures_unavailable step=read error=Error"]);
   });
 
-  it("logs step=shape when the shaping step throws", async () => {
-    // An invalid retrieved_at makes toISOString throw a RangeError inside the
-    // shape step. The read step only passes the row through, so the failure is
-    // in shaping.
+  it("skips a row with an invalid retrieved_at, answers 200, and logs one figures_row_skipped line", async () => {
+    // An invalid retrieved_at no longer throws in the shape step: the row is
+    // skipped and its metric is logged once, so the route still answers 200.
     const badRow: StoredFigureRow = {
       metric_id: "us-gasoline-regular",
       kind: "official",
@@ -95,8 +94,10 @@ describe("failure step label", () => {
       store({ latest: async () => [badRow] }),
     );
 
-    expect(response.status).toBe(500);
-    expect(loggedLines()).toEqual(["figures_unavailable step=shape error=RangeError"]);
+    expect(response.status).toBe(200);
+    expect(loggedLines()).toEqual([
+      "figures_row_skipped metric_id=us-gasoline-regular",
+    ]);
   });
 });
 
@@ -199,26 +200,6 @@ describe("one line per failure", () => {
       [
         "lastSuccessTimes rejects",
         () => store({ success: () => Promise.reject(new Error("x")) }),
-      ],
-      [
-        "shape throws",
-        () =>
-          store({
-            latest: async () => [
-              {
-                metric_id: "us-gasoline-regular",
-                kind: "official",
-                value: "1.0",
-                unit: "USD per gallon",
-                region: "U.S.",
-                period: "2026-10-05",
-                source: "U.S. EIA",
-                series_id: "EMM_EPMR_PTE_NUS_DPG",
-                source_url: "https://test.invalid/fake-figure",
-                retrieved_at: new Date(Number.NaN),
-              },
-            ],
-          }),
       ],
     ];
 
