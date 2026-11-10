@@ -30,6 +30,14 @@
  *
  * It needs headless Chromium, so it cannot run in CI without a browser. Without
  * WALK=1 the whole suite is skipped and exits 0.
+ *
+ * Run record:
+ *   - First full Walk run (figures-available, both viewports): not recorded yet.
+ *     The owner adds the date here after the first run on a real build.
+ *   - figures-unavailable re-run: not recorded yet. Re-run it with
+ *     WALK_VARIANT=figures-unavailable once task 6 merges, and note the
+ *     result here. Until then, EXPECTED-BLOCKED at the figures step is the
+ *     expected outcome.
  */
 import { mkdirSync } from "node:fs";
 import path from "node:path";
