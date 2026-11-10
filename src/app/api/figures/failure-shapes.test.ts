@@ -5,9 +5,8 @@
 // test checks the status, the body, the Cache-Control header and the log lines,
 // and that no connection string reaches the log or the body.
 //
-// Tests marked `it.fails` describe what step 3 must deliver: a bad stored row is
-// skipped and logged once as figures_row_skipped. Today such a row throws, so the
-// test fails, and `it.fails` keeps the suite green until step 3 switches it to `it`.
+// The invalid-row tests check that a bad stored row is skipped and logged once as
+// figures_row_skipped (step 3).
 //
 // The fixtures are fake. Their figures are not published numbers.
 
@@ -111,48 +110,42 @@ describe("failure shape: store rejects with a closed connection", () => {
   });
 });
 
-describe("failure shape: stored row with an invalid retrieved_at (fixed in step 3)", () => {
-  it.fails(
-    "answers 200, skips the row, and logs one figures_row_skipped line for it",
-    async () => {
-      state.store = rowsStore([INVALID_RETRIEVED_AT_ROW]);
+describe("failure shape: stored row with an invalid retrieved_at ", () => {
+  it("answers 200, skips the row, and logs one figures_row_skipped line for it", async () => {
+    state.store = rowsStore([INVALID_RETRIEVED_AT_ROW]);
 
-      const response = await GET();
-      const text = await response.text();
+    const response = await GET();
+    const text = await response.text();
 
-      expect(response.status).toBe(200);
-      expect(response.headers.get("Cache-Control")).toBe(CACHE_CONTROL);
-      const parsed = parseFiguresResponse(JSON.parse(text));
-      expect(parsed.ok).toBe(true);
-      expect(text).not.toContain(INVALID_RETRIEVED_AT_ROW.metric_id);
-      expect(loggedLines()).toEqual([
-        "figures_row_skipped metric_id=fixture-metric-invalid-time",
-      ]);
-      expectNoSecret(loggedLines().join("\n"));
-    },
-  );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe(CACHE_CONTROL);
+    const parsed = parseFiguresResponse(JSON.parse(text));
+    expect(parsed.ok).toBe(true);
+    expect(text).not.toContain(INVALID_RETRIEVED_AT_ROW.metric_id);
+    expect(loggedLines()).toEqual([
+      "figures_row_skipped metric_id=fixture-metric-invalid-time",
+    ]);
+    expectNoSecret(loggedLines().join("\n"));
+  });
 });
 
-describe("failure shape: stored row with a null retrieved_at (fixed in step 3)", () => {
-  it.fails(
-    "answers 200, skips the row, and logs one figures_row_skipped line for it",
-    async () => {
-      state.store = rowsStore([NULL_RETRIEVED_AT_ROW]);
+describe("failure shape: stored row with a null retrieved_at ", () => {
+  it("answers 200, skips the row, and logs one figures_row_skipped line for it", async () => {
+    state.store = rowsStore([NULL_RETRIEVED_AT_ROW]);
 
-      const response = await GET();
-      const text = await response.text();
+    const response = await GET();
+    const text = await response.text();
 
-      expect(response.status).toBe(200);
-      expect(response.headers.get("Cache-Control")).toBe(CACHE_CONTROL);
-      const parsed = parseFiguresResponse(JSON.parse(text));
-      expect(parsed.ok).toBe(true);
-      expect(text).not.toContain(NULL_RETRIEVED_AT_ROW.metric_id);
-      expect(loggedLines()).toEqual([
-        "figures_row_skipped metric_id=fixture-metric-null-time",
-      ]);
-      expectNoSecret(loggedLines().join("\n"));
-    },
-  );
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe(CACHE_CONTROL);
+    const parsed = parseFiguresResponse(JSON.parse(text));
+    expect(parsed.ok).toBe(true);
+    expect(text).not.toContain(NULL_RETRIEVED_AT_ROW.metric_id);
+    expect(loggedLines()).toEqual([
+      "figures_row_skipped metric_id=fixture-metric-null-time",
+    ]);
+    expectNoSecret(loggedLines().join("\n"));
+  });
 });
 
 describe("failure shape: stored row for a series outside the Catalogue", () => {

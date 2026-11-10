@@ -16,7 +16,7 @@ import { bundledLatestFigure } from "@/lib/figures/bundled-latest";
 import { isFixtureFigure } from "@/lib/figures/fixture";
 import type { FiguresResponseV1 } from "@/lib/figures/now";
 import type { CatalogueSeries, LoadedSeries } from "@/lib/figures/types";
-import type { FigureV1 } from "@/lib/seal-format";
+import { figureV1Schema, type FigureV1 } from "@/lib/seal-format";
 
 import { buildFiguresResponse } from "./build-response";
 
@@ -69,6 +69,45 @@ function toFigure(row: StoredFigureRow): FigureV1 {
   };
 }
 
+/**
+ * The figure a stored row stands for, or null when the row is not a valid figure.
+ * A row with a missing or invalid retrieved_at, or any field that fails the
+ * figure schema, is not used. Nothing is repaired or filled in.
+ */
+function rowToFigure(row: StoredFigureRow): FigureV1 | null {
+  if (
+    !(row.retrieved_at instanceof Date) ||
+    Number.isNaN(row.retrieved_at.getTime())
+  ) {
+    return null;
+  }
+  const parsed = figureV1Schema.safeParse(toFigure(row));
+  return parsed.success ? parsed.data : null;
+}
+
+/**
+ * Keeps the valid rows. Each invalid row is dropped, and its metric is logged once
+ * as `figures_row_skipped metric_id=<id>`. The line carries no value, message or
+ * stack, only the metric ID.
+ */
+function validFigures(rows: readonly StoredFigureRow[]): FigureV1[] {
+  const figures: FigureV1[] = [];
+  const logged = new Set<string>();
+  for (const row of rows) {
+    const figure = rowToFigure(row);
+    if (figure !== null) {
+      figures.push(figure);
+      continue;
+    }
+    const id = typeof row.metric_id === "string" ? row.metric_id : "unknown";
+    if (!logged.has(id)) {
+      logged.add(id);
+      console.error(`figures_row_skipped metric_id=${id}`);
+    }
+  }
+  return figures;
+}
+
 /** The figure a series answers with, and whether it came from the bundled file. */
 export interface ChosenFigure {
   readonly figure: FigureV1 | null;
@@ -109,8 +148,9 @@ export async function readDbFigures(store: FigureReadStore): Promise<DbFigureRea
 }
 
 /**
- * The shape step: builds the FiguresResponseV1 from the read answers. Each series
- * gets its figure from chooseFigure. last_success_at still comes only from
+ * The shape step: builds the FiguresResponseV1 from the read answers. Invalid
+ * stored rows are skipped (see validFigures). Each series gets its figure from
+ * chooseFigure. last_success_at still comes only from
  * figure_fetch_runs, never from a bundled or stored figure.
  */
 export function shapeDbFiguresResponse(
@@ -119,7 +159,7 @@ export function shapeDbFiguresResponse(
   generatedAt: string,
 ): FiguresResponseV1 {
   const { rows, successTimes } = reads;
-  const figures = rows.map(toFigure);
+  const figures = validFigures(rows);
 
   // A catalogue series owns the rows whose four series fields all match it.
   const series = new Map<string, LoadedSeries>();
