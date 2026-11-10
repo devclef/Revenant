@@ -5,8 +5,19 @@
  * virtual WebAuthn authenticator that reports PRF support, and records whether
  * each step reaches its expected outcome. Each viewport (1366x800 and 390x844)
  * walks the steps in order and stops at the first failing step. Screenshots go
- * to `qa-shots/walk/<viewport>/`. At the end the test prints a Walk_Findings
- * block for the owner to paste into the issue body. Nothing is posted to GitHub.
+ * to `qa-shots/walk/<variant>/<viewport>/`. At the end the test prints a
+ * Walk_Findings block for the owner to paste into the issue body. Nothing is
+ * posted to GitHub.
+ *
+ * Variants (each runs at both viewports):
+ *   - figures-available: the full Walk with figures.
+ *   - figures-unavailable: /api/figures is forced to fail. Recorded as
+ *     EXPECTED-BLOCKED at the figures step until task 6 merges.
+ *   - backup-key: unlocks with the backup key (needs WALK_BACKUP_KEY).
+ *   - no-figure: one question and no figure. Recorded as EXPECTED-BLOCKED at
+ *     the press-seal step until task 10 merges.
+ * Set WALK_VARIANT=<id> to run one variant only, for example
+ * WALK_VARIANT=figures-unavailable after task 6 merges.
  *
  * How to run by hand:
  *   1. npm run build
@@ -128,17 +139,39 @@ type WalkContext = {
   dir: string;
 };
 
+type WalkVariantId =
+  "figures-available" | "figures-unavailable" | "backup-key" | "no-figure";
+
+type WalkAction = (ctx: WalkContext) => Promise<string>;
+
+type WalkVariant = {
+  id: WalkVariantId;
+  label: string;
+  actions: readonly WalkAction[];
+  /** Runs before the first navigation, for example to force a route to fail. */
+  setup?: (page: Page) => Promise<void>;
+  /** A failure at this 1-based step is recorded as expected, with its task. */
+  expectedBlocked?: { step: number; task: number; reason: string };
+};
+
+type StepStatus = "pass" | "fail" | "expected-blocked" | "not-run";
+
 type StepResult = {
+  variant: WalkVariantId;
   step: number;
   name: string;
   viewport: string;
-  passed: boolean;
+  status: StepStatus;
   observed: string;
   screenshots: string[];
+  blocked?: { task: number; reason: string };
   defect?: { expected: string; observed: string; suspectedFile: string };
 };
 
 const results: StepResult[] = [];
+
+/** Every screenshot must land under this folder. */
+const QA_SHOTS_ROOT = path.resolve("qa-shots");
 
 function errorMessage(error: unknown): string {
   return error instanceof Error ? error.message : String(error);
@@ -157,15 +190,19 @@ async function takeShot(
   name: string,
 ): Promise<string> {
   const file = `${String(index + 1).padStart(2, "0")}-${slug(name)}.png`;
+  const target = path.resolve(ctx.dir, file);
+  if (!target.startsWith(QA_SHOTS_ROOT + path.sep)) {
+    throw new Error(`Refusing to write a screenshot outside ${QA_SHOTS_ROOT}.`);
+  }
   await ctx.page.screenshot({
-    path: path.join(ctx.dir, file),
+    path: target,
     fullPage: false,
   });
   return file;
 }
 
 /** The step actions, in order. Each returns what it observed, or throws on a defect. */
-const WALK_ACTIONS: readonly ((ctx: WalkContext) => Promise<string>)[] = [
+const FULL_WALK_ACTIONS: readonly WalkAction[] = [
   async (c) => {
     await c.page.goto(`${BASE_URL}/demo/live`);
     const area = c.page.locator('[data-live-step="write"] textarea').first();
@@ -324,10 +361,107 @@ const WALK_ACTIONS: readonly ((ctx: WalkContext) => Promise<string>)[] = [
   },
 ];
 
+/** Step 2 for a letter with no figure. The Walk writes one question and nothing else. */
+const NO_FIGURE_ACTION: WalkAction = async () =>
+  "Skipped for this variant: the letter holds no figure.";
+
+/** Step 7 for the backup-key variant: open the letter, then unlock with the key from the card. */
+const BACKUP_KEY_UNLOCK: WalkAction = async (c) => {
+  const key = process.env.WALK_BACKUP_KEY;
+  if (!key) {
+    throw new Error(
+      "Set WALK_BACKUP_KEY to the key from the backup key card before running the backup-key variant.",
+    );
+  }
+  const goTo = c.page
+    .getByRole("link", { name: /go to your letter/i })
+    .or(c.page.getByRole("button", { name: /go to your letter/i }));
+  await goTo.first().click();
+  await c.page.waitForURL(/\/l\//, { timeout: STEP_TIMEOUT_MS });
+  await c.page
+    .getByRole("button", { name: /backup key/i })
+    .or(c.page.getByRole("link", { name: /backup key/i }))
+    .first()
+    .click();
+  await c.page
+    .getByLabel(/backup key/i)
+    .first()
+    .fill(key);
+  await c.page
+    .getByRole("button", { name: /unlock|open/i })
+    .first()
+    .click();
+  await c.page
+    .locator('[data-ceremony="recall"]')
+    .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+  return "Unlocked with the backup key. Recall stage shown.";
+};
+
+const WALK_VARIANTS: readonly WalkVariant[] = [
+  {
+    id: "figures-available",
+    label: "figures available, full walk",
+    actions: FULL_WALK_ACTIONS,
+  },
+  {
+    id: "figures-unavailable",
+    label: "figures endpoint forced to fail",
+    actions: FULL_WALK_ACTIONS,
+    setup: async (page) => {
+      await page.route(/\/api\/figures([/?#]|$)/, (route) =>
+        route.fulfill({
+          status: 500,
+          contentType: "application/json",
+          body: JSON.stringify({ error: "forced by live-walk" }),
+        }),
+      );
+    },
+    expectedBlocked: {
+      step: 2,
+      task: 6,
+      reason:
+        "/api/figures is forced to fail. Expected to be blocked at the figures step until task 6 merges.",
+    },
+  },
+  {
+    id: "backup-key",
+    label: "unlock with the backup key",
+    actions: FULL_WALK_ACTIONS.map((action, i) =>
+      i === 6 ? BACKUP_KEY_UNLOCK : action,
+    ),
+  },
+  {
+    id: "no-figure",
+    label: "one question, no figure",
+    actions: FULL_WALK_ACTIONS.map((action, i) =>
+      i === 1 ? NO_FIGURE_ACTION : action,
+    ),
+    expectedBlocked: {
+      step: 3,
+      task: 10,
+      reason:
+        "A letter with one question and no figure. Expected to be blocked at the press-seal step until task 10 merges.",
+    },
+  },
+];
+
+/** Picks the variants to run. WALK_VARIANT=<id> runs one; unset runs all. */
+function selectWalkVariants(requested: string | undefined): WalkVariant[] {
+  if (!requested) return [...WALK_VARIANTS];
+  const match = WALK_VARIANTS.filter((v) => v.id === requested);
+  if (match.length === 0) {
+    throw new Error(
+      `Unknown WALK_VARIANT "${requested}". Use one of: ${WALK_VARIANTS.map((v) => v.id).join(", ")}.`,
+    );
+  }
+  return match;
+}
+
 async function runViewport(
+  variant: WalkVariant,
   viewport: (typeof VIEWPORTS)[number],
 ): Promise<void> {
-  const dir = path.resolve("qa-shots", "walk", viewport.name);
+  const dir = path.resolve(QA_SHOTS_ROOT, "walk", variant.id, viewport.name);
   mkdirSync(dir, { recursive: true });
 
   const browser = await chromium.launch({
@@ -339,6 +473,7 @@ async function runViewport(
       viewport: { width: viewport.width, height: viewport.height },
     });
     const page = await context.newPage();
+    await variant.setup?.(page);
 
     // Virtual authenticator: CTAP2 internal, user-verified, PRF reported, auto-presence.
     const cdp = await context.newCDPSession(page);
@@ -359,17 +494,21 @@ async function runViewport(
     )) as { authenticatorId: string };
 
     const ctx: WalkContext = { page, cdp, authenticatorId, dir };
-    let failed = false;
+    let stopped = false;
 
     for (let i = 0; i < WALK_STEPS.length; i += 1) {
       const step = WALK_STEPS[i];
-      if (failed) {
+      const base = {
+        variant: variant.id,
+        step: i + 1,
+        name: step.name,
+        viewport: viewport.name,
+      };
+      if (stopped) {
         results.push({
-          step: i + 1,
-          name: step.name,
-          viewport: viewport.name,
-          passed: false,
-          observed: "Not run: an earlier step failed.",
+          ...base,
+          status: "not-run",
+          observed: "Not run: an earlier step stopped the walk.",
           screenshots: [],
         });
         continue;
@@ -378,7 +517,7 @@ async function runViewport(
       let observed: string;
       let passed = true;
       try {
-        observed = await WALK_ACTIONS[i](ctx);
+        observed = await variant.actions[i](ctx);
       } catch (error) {
         passed = false;
         observed = `Failed: ${errorMessage(error)}`;
@@ -392,20 +531,24 @@ async function runViewport(
       }
 
       const result: StepResult = {
-        step: i + 1,
-        name: step.name,
-        viewport: viewport.name,
-        passed,
+        ...base,
+        status: passed ? "pass" : "fail",
         observed,
         screenshots,
       };
       if (!passed) {
-        result.defect = {
-          expected: step.expected,
-          observed,
-          suspectedFile: SUSPECTED_FILES[i],
-        };
-        failed = true;
+        const blocked = variant.expectedBlocked;
+        if (blocked && blocked.step === i + 1) {
+          result.status = "expected-blocked";
+          result.blocked = { task: blocked.task, reason: blocked.reason };
+        } else {
+          result.defect = {
+            expected: step.expected,
+            observed,
+            suspectedFile: SUSPECTED_FILES[i],
+          };
+        }
+        stopped = true;
       }
       results.push(result);
     }
@@ -421,21 +564,35 @@ function formatFindings(all: readonly StepResult[]): string {
     `Issue: ${ISSUE}`,
     `Run date: ${new Date().toISOString().slice(0, 10)}`,
   ];
-  for (const viewport of VIEWPORTS) {
-    const rows = all.filter((r) => r.viewport === viewport.name);
-    if (rows.length === 0) continue;
-    lines.push("", `Viewport ${viewport.name}`);
-    for (const r of rows) {
-      lines.push(
-        `- Step ${r.step} ${r.name}: ${r.passed ? "PASS" : "FAIL"}. ${r.observed}` +
-          (r.screenshots.length > 0
-            ? ` Screenshots: ${r.screenshots.join(", ")}.`
-            : ""),
+  for (const variant of WALK_VARIANTS) {
+    for (const viewport of VIEWPORTS) {
+      const rows = all.filter(
+        (r) => r.variant === variant.id && r.viewport === viewport.name,
       );
-      if (r.defect) {
+      if (rows.length === 0) continue;
+      lines.push("", `Variant ${variant.id}: ${variant.label}`);
+      lines.push(`Viewport ${viewport.name}`);
+      for (const r of rows) {
+        const label = {
+          pass: "PASS",
+          fail: "FAIL",
+          "expected-blocked": `EXPECTED-BLOCKED (task ${r.blocked?.task ?? "?"})`,
+          "not-run": "NOT RUN",
+        }[r.status];
         lines.push(
-          `  Defect. Expected: ${r.defect.expected} Observed: ${r.defect.observed} Suspected file: ${r.defect.suspectedFile}`,
+          `- Step ${r.step} ${r.name}: ${label}. ${r.observed}` +
+            (r.screenshots.length > 0
+              ? ` Screenshots: ${r.screenshots.join(", ")}.`
+              : ""),
         );
+        if (r.blocked) {
+          lines.push(`  Expected block: ${r.blocked.reason}`);
+        }
+        if (r.defect) {
+          lines.push(
+            `  Defect. Expected: ${r.defect.expected} Observed: ${r.defect.observed} Suspected file: ${r.defect.suspectedFile}`,
+          );
+        }
       }
     }
   }
@@ -444,6 +601,12 @@ function formatFindings(all: readonly StepResult[]): string {
 }
 
 describe.skipIf(process.env.WALK !== "1")("live walk replay", () => {
+  // Read only when WALK=1; with WALK unset the suite is skipped and nothing is selected.
+  const variants =
+    process.env.WALK === "1"
+      ? selectWalkVariants(process.env.WALK_VARIANT)
+      : [];
+
   afterAll(() => {
     if (results.length > 0) {
       console.log(formatFindings(results));
@@ -456,22 +619,30 @@ describe.skipIf(process.env.WALK !== "1")("live walk replay", () => {
       expect(step.name.length).toBeGreaterThan(0);
       expect(step.expected.length).toBeGreaterThan(0);
     }
-    expect(WALK_ACTIONS.length).toBe(WALK_STEPS.length);
     expect(SUSPECTED_FILES.length).toBe(WALK_STEPS.length);
+    for (const variant of WALK_VARIANTS) {
+      expect(variant.actions.length).toBe(WALK_STEPS.length);
+    }
   });
 
-  for (const viewport of VIEWPORTS) {
-    it(
-      `walks the live path at ${viewport.name}`,
-      async () => {
-        await runViewport(viewport);
-        const failures = results.filter(
-          (r) => r.viewport === viewport.name && !r.passed,
-        );
-        // Findings are recorded, not hidden: a defect fails the run so it shows in the output.
-        expect(failures.map((f) => `step ${f.step} ${f.name}`)).toEqual([]);
-      },
-      VIEWPORT_TIMEOUT_MS,
-    );
+  for (const variant of variants) {
+    for (const viewport of VIEWPORTS) {
+      it(
+        `walks the live path: ${variant.label} at ${viewport.name}`,
+        async () => {
+          await runViewport(variant, viewport);
+          const failures = results.filter(
+            (r) =>
+              r.variant === variant.id &&
+              r.viewport === viewport.name &&
+              r.status === "fail",
+          );
+          // Findings are recorded, not hidden: a defect fails the run so it shows in the output.
+          // Expected-blocked steps are recorded in the findings and do not fail the run.
+          expect(failures.map((f) => `step ${f.step} ${f.name}`)).toEqual([]);
+        },
+        VIEWPORT_TIMEOUT_MS,
+      );
+    }
   }
 });
