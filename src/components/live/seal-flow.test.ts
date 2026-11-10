@@ -40,6 +40,16 @@ import {
 } from "./seal-machine";
 import { LIVE_COPY } from "./copy";
 import { validateWrite } from "./form";
+import { BRAND_COPY } from "@/components/brand/copy";
+import { loadFigures } from "@/components/reveal/figures-api";
+import { FIGURES_TIMEOUT_MS } from "./figures-state";
+import {
+  initialStepperState,
+  reduceStepper,
+  stepName,
+  type StepperAction,
+  type StepperState,
+} from "./stepper/live-steps";
 
 const T0 = Date.parse("2026-11-02T10:00:00.000Z");
 
@@ -297,5 +307,129 @@ describe("the warning gate before the first press (R15.11, R22.7)", () => {
     expect(LIVE_COPY.warning).toContain("can never be opened");
     expect(LIVE_COPY.warning).not.toContain("!");
     expect(LIVE_COPY.warningLabel).toContain("can never be opened");
+  });
+});
+
+// The Live_Stepper with a figures request that fails, and the seal that follows.
+// Sealing, waiting, testifying and reading never wait on /api/figures (spec 11,
+// X2.4, X2.8). Each case runs the real loadFigures with one failing fetch, walks
+// the stepper reducer to the "Press the seal" step, then seals through the real
+// runner with the draft the stepper holds. The page's own React tree is not
+// mounted here (the project has no DOM library); WriteForm.test.tsx covers its
+// markup.
+
+const FIGURES_LETTER = "A letter sealed while the receipts could not load.";
+
+/** A fetch that rejects, as offline or DNS failures do. */
+const rejectingFetch = (async () => {
+  throw new TypeError("Failed to fetch");
+}) as typeof fetch;
+
+/** A fetch that answers 500 with a body the figures route never sends. */
+const serverErrorFetch = (async () =>
+  new Response("Internal error", { status: 500 })) as typeof fetch;
+
+/** A fetch that answers 200 with a body parseFiguresResponse rejects. */
+const malformedBodyFetch = (async () =>
+  new Response(JSON.stringify({ format: "not-revenant-figures" }), {
+    status: 200,
+    headers: { "content-type": "application/json" },
+  })) as typeof fetch;
+
+/** A fetch that never answers, so only the 30 second abort ends it. */
+const neverAnsweringFetch = ((_url: string, init?: RequestInit) =>
+  new Promise<Response>((_resolve, reject) => {
+    init?.signal?.addEventListener("abort", () =>
+      reject(new DOMException("The request was aborted.", "AbortError")),
+    );
+  })) as typeof fetch;
+
+/**
+ * The stepper as the visitor leaves the Write step: the demo's default question
+ * kept, the letter typed, and the figures step passed without a figure.
+ */
+function stepperAtPressTheSeal(): StepperState {
+  const actions: StepperAction[] = [
+    { type: "DRAFT", event: { type: "QUESTION_CHANGED", index: 0, text: FIGURES_LETTER } },
+    { type: "GOTO", step: "figures" },
+    { type: "GOTO", step: "seal" },
+  ];
+  return actions.reduce(reduceStepper, initialStepperState("write", "demo"));
+}
+
+describe("the figures copy the reader sees while the request is in flight or failed", () => {
+  it("uses the exact loading and unavailable lines (X2.2, X2.3)", () => {
+    expect(LIVE_COPY.receiptsLoading).toBe("Loading the receipts you can add.");
+    expect(LIVE_COPY.receiptsUnavailable).toBe(
+      "Receipts can't be added right now. Your letter doesn't need one.",
+    );
+  });
+
+  it("names the seal step Press the seal, as Brand_Copy does", () => {
+    expect(BRAND_COPY.ritualSteps[2]?.name).toBe("Press the seal");
+  });
+});
+
+describe("each failed figures request still reaches Press the seal and stores a seal (X2.8)", () => {
+  it.each<[string, typeof fetch]>([
+    ["the fetch rejects", rejectingFetch],
+    ["the route answers 500", serverErrorFetch],
+    ["the body is malformed", malformedBodyFetch],
+  ])("%s: the figures state is failed and the seal is stored", async (_label, fetchImpl) => {
+    const state = await loadFigures(fetchImpl);
+    expect(state.status).toBe("failed");
+
+    const stepper = stepperAtPressTheSeal();
+    expect(stepName(stepper.step)).toBe("Press the seal");
+
+    const h = await makeHarness();
+    h.draft = {
+      text: FIGURES_LETTER,
+      metricIds: [],
+      figures: makeFigures([]),
+      questions: stepper.draft.questions,
+    };
+    // The figures state never blocks the write (X2.4).
+    expect(
+      validateWrite({
+        text: h.draft.text,
+        metricIds: h.draft.metricIds,
+        warningTicked: true,
+        questions: h.draft.questions,
+        mode: "demo",
+        figuresUnavailable: state.status !== "ready",
+      }),
+    ).toEqual([]);
+
+    const { state: sealed } = await runFlow(h);
+    expect(h.api.seal).toHaveBeenCalledTimes(1);
+    expect(sealed.tag).toBe("sealed");
+  });
+
+  it("a request that never answers is aborted at 30 seconds, and the seal is still stored", async () => {
+    vi.useFakeTimers({ toFake: ["setTimeout", "clearTimeout"] });
+    let state: Awaited<ReturnType<typeof loadFigures>>;
+    try {
+      const pending = loadFigures(neverAnsweringFetch);
+      await vi.advanceTimersByTimeAsync(FIGURES_TIMEOUT_MS);
+      state = await pending;
+    } finally {
+      vi.useRealTimers();
+    }
+    expect(state.status).toBe("failed");
+
+    const stepper = stepperAtPressTheSeal();
+    expect(stepName(stepper.step)).toBe("Press the seal");
+
+    const h = await makeHarness();
+    h.draft = {
+      text: FIGURES_LETTER,
+      metricIds: [],
+      figures: makeFigures([]),
+      questions: stepper.draft.questions,
+    };
+    const { state: sealed } = await runFlow(h);
+    expect(h.api.seal).toHaveBeenCalledTimes(1);
+    expect(sealed.tag).toBe("sealed");
   });
 });
