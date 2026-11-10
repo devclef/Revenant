@@ -110,7 +110,7 @@ describe("failure shape: store rejects with a closed connection", () => {
   });
 });
 
-describe("failure shape: stored row with an invalid retrieved_at ", () => {
+describe("failure shape: stored row with an invalid retrieved_at", () => {
   it("answers 200, skips the row, and logs one figures_row_skipped line for it", async () => {
     state.store = rowsStore([INVALID_RETRIEVED_AT_ROW]);
 
@@ -129,7 +129,7 @@ describe("failure shape: stored row with an invalid retrieved_at ", () => {
   });
 });
 
-describe("failure shape: stored row with a null retrieved_at ", () => {
+describe("failure shape: stored row with a null retrieved_at", () => {
   it("answers 200, skips the row, and logs one figures_row_skipped line for it", async () => {
     state.store = rowsStore([NULL_RETRIEVED_AT_ROW]);
 
