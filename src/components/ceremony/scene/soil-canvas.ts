@@ -204,7 +204,10 @@ export function clodPoint(c: Clod, g: SoilGeometry, ceiling: number, tauS: numbe
   }
   const bounceY = g.y0 + CLOD_BOUNCE_BELOW_TOP_PX;
   let x = c.x;
-  let y = c.y;
+  // A clod launches at the soil top. When the ceiling sits below that point,
+  // clamp the launch so the clod is never drawn above the ceiling, even at
+  // tauS = 0 where the loop below does not run (R6.16).
+  let y = Math.max(c.y, ceiling);
   let vy = c.vy;
   let bounces = 0;
   let t = 0;

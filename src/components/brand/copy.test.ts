@@ -14,7 +14,7 @@ describe("BRAND_COPY", () => {
 
   it("has the hero sentence exactly (OD18)", () => {
     expect(BRAND_COPY.heroSentence).toBe(
-      "Seal a letter to your future self with real fuel prices from the US or the EU. When it opens, you testify first, then see the receipts.",
+      "Seal a letter to your future self with fuel prices from the US or the EU. When it opens, you testify first, then see the receipts.",
     );
   });
 
@@ -31,7 +31,7 @@ describe("BRAND_COPY", () => {
       },
       {
         name: "Press the seal",
-        line: "Choose an opening date at least three months away and lock it with your passkey.",
+        line: "Lock the letter with your passkey. The live demo locks it for 30 seconds.",
       },
       {
         name: "Testify",

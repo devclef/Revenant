@@ -12,7 +12,7 @@ export const BRAND_COPY = {
   eyebrow: "The wax seal, resurrected.",
   tagline: "Memory rewrites itself. Revenant doesn't.",
   heroSentence:
-    "Seal a letter to your future self with real fuel prices from the US or the EU. When it opens, you testify first, then see the receipts.",
+    "Seal a letter to your future self with fuel prices from the US or the EU. When it opens, you testify first, then see the receipts.",
   ritualSteps: [
     {
       name: "Write",
@@ -24,7 +24,7 @@ export const BRAND_COPY = {
     },
     {
       name: "Press the seal",
-      line: "Choose an opening date at least three months away and lock it with your passkey.",
+      line: "Lock the letter with your passkey. The live demo locks it for 30 seconds.",
     },
     {
       name: "Testify",

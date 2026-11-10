@@ -21,6 +21,13 @@ const splitSentences = (value: string): string[] =>
     .filter((s) => s.length > 0);
 
 describe("LIVE_COPY", () => {
+  it("describes the demo letter as sealed in the browser, not as a real sealed letter", () => {
+    expect(LIVE_COPY.intro).toBe(
+      "This letter is sealed in your browser with your own passkey. It is locked for 30 seconds only because this is a demo.",
+    );
+    expect(LIVE_COPY.intro).not.toContain("real sealed letter");
+  });
+
   it("has no exclamation mark in any string", () => {
     for (const [key, value] of ENTRIES) {
       expect(value, `${key} contains "!"`).not.toContain("!");
