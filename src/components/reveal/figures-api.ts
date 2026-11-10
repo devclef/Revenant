@@ -20,15 +20,15 @@
 import { useEffect, useRef, useState } from "react";
 
 import {
-  parseFiguresResponse,
-  type FiguresResponseV1,
-} from "@/lib/figures/now";
+  figuresStateFrom,
+  FIGURES_TIMEOUT_MS,
+  type FiguresState,
+} from "@/components/live/figures-state";
+
+export { FIGURES_TIMEOUT_MS, type FiguresState };
 
 /** The fixed relative route. No origin, no query. */
 export const FIGURES_URL = "/api/figures";
-
-/** How long one request may take before it is aborted and treated as failed. */
-export const FIGURES_TIMEOUT_MS = 30_000;
 
 /** The request options every figures call shares. */
 const FIGURES_INIT = {
@@ -36,11 +36,6 @@ const FIGURES_INIT = {
   credentials: "same-origin",
   referrerPolicy: "no-referrer",
 } as const satisfies RequestInit;
-
-export type FiguresState =
-  | { status: "loading" }
-  | { status: "ready"; figures: FiguresResponseV1 }
-  | { status: "failed" };
 
 /**
  * Sends one `GET /api/figures` and resolves with its outcome. It never rejects.
@@ -56,13 +51,17 @@ export async function loadFigures(
       ...FIGURES_INIT,
       signal: controller.signal,
     });
-    if (!response.ok) return { status: "failed" };
-    const parsed = parseFiguresResponse(await response.json());
-    return parsed.ok
-      ? { status: "ready", figures: parsed.value }
-      : { status: "failed" };
+    // A body that is not JSON throws here and is mapped to `rejected` below.
+    const body = response.status === 200 ? await response.json() : undefined;
+    return figuresStateFrom({
+      kind: "response",
+      status: response.status,
+      body,
+    });
   } catch {
-    return { status: "failed" };
+    return figuresStateFrom({
+      kind: controller.signal.aborted ? "aborted" : "rejected",
+    });
   } finally {
     clearTimeout(timer);
   }
