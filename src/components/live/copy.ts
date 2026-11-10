@@ -19,7 +19,7 @@
 export const LIVE_COPY = {
   heading: "Seal a letter of your own",
   intro:
-    "This is a real sealed letter. It is locked for 30 seconds only because this is a demo. It opens with your own passkey.",
+    "This letter is sealed in your browser with your own passkey. It is locked for 30 seconds only because this is a demo.",
   letterLabel: "Your letter",
   letterHint: "Plain text. Up to 5,000 characters.",
   /** The label of the group of starter buttons under the letter field. */
