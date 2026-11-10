@@ -477,7 +477,7 @@ Follow `design.md` in this folder for file names, constants, copy, values and al
 
 ### Group E: final audit and presentation
 
-- [ ] 16. E1 · Promise audit, no trace of the retired persona IDs, and the presentation patches
+- [x] 16. E1 · Promise audit, no trace of the retired persona IDs, and the presentation patches
   - Agent: `frontend-dev` · Depends on: 11, 15 · Estimated size: ~300 changed lines
   - Before this task: steering updated (S1 Owner_Patch on `main`). Tasks 1 to 15 merged, or closed unmerged with the reason (G3.7). The 20 November decision is recorded. Spec 09 patches o, t, u and v are on `main`.
   - Scope: the frontend-dev copy modules (`src/components/**/copy.ts`), `src/app/opengraph-image.tsx` (only if it names a retired ID), `src/components/retired-ids-scan.test.ts` (new), any `*.test.ts(x)` that names `ydsos6hcjdEUOs3sK42RQg` or `8t6Bz4bWlaUky-byt1mzGg`, and the `*.test.ts(x)` for each copy module changed
