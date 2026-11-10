@@ -61,46 +61,35 @@ const questionsArb = fc.array(
 );
 
 describe("Property 5: sealing never depends on figures (X2.1, X2.4, X2.5, X2.6, X2.9)", () => {
-  it("a loading or failed figures state never adds a problem to a letter with a question", () => {
+  it("the figures state decides the figure rule, and a letter with a question never waits on it", () => {
     fc.assert(
       fc.property(
-        stateArb.filter((state) => state.status !== "ready"),
+        stateArb,
         letterArb,
         questionsArb,
-        (_state, text, questions) => {
+        (state, text, questions) => {
           const hasQuestion = questionsForSeal(questions).length > 0;
+          // The figures state feeds the write exactly as SealPage does (X2.4).
+          const figuresUnavailable = sealFiguresFrom(state).status !== "ready";
           const problems = validateWrite({
             text,
             metricIds: [],
             warningTicked: true,
             questions,
             mode: "demo",
-            figuresUnavailable: true,
+            figuresUnavailable,
           });
-          if (hasQuestion) {
-            // The write needs no figure while the figures are not ready (X2.4).
+          if (figuresUnavailable && hasQuestion) {
+            // Loading or failed: a written question is enough, so no figure is needed.
             expect(problems).toEqual([]);
+          }
+          if (!figuresUnavailable) {
+            // Ready: /demo/live still needs one figure, whatever the questions (C2.13).
+            expect(problems).toContain("figures_none");
           }
         },
       ),
-      { numRuns: 200 },
-    );
-  });
-
-  it("a ready figures state still needs one figure in demo mode (C2.13)", () => {
-    fc.assert(
-      fc.property(letterArb, questionsArb, (text, questions) => {
-        const problems = validateWrite({
-          text,
-          metricIds: [],
-          warningTicked: true,
-          questions,
-          mode: "demo",
-          figuresUnavailable: false,
-        });
-        expect(problems).toContain("figures_none");
-      }),
-      { numRuns: 100 },
+      { numRuns: 300 },
     );
   });
 
@@ -121,30 +110,26 @@ describe("Property 5: sealing never depends on figures (X2.1, X2.4, X2.5, X2.6, 
 
   it("builds a letter with 0 official figures for every state that is not ready", () => {
     fc.assert(
-      fc.property(
-        stateArb.filter((state) => state.status !== "ready"),
-        letterArb,
-        questionArb,
-        (_state, text, question) => {
-          // The seal sends the metric IDs the visitor picked, which is none
-          // while the figures are not ready (SealPage never offers a picker).
-          const built = buildLivePayload({
-            text,
-            metricIds: [],
-            authorQuestions: questionsForSeal([question]),
-            sealedDate: SEALED_AT.slice(0, 10),
-            figures: NO_FIGURES,
-            sealedAt: SEALED_AT,
-          });
-          expect(built.ok).toBe(true);
-          if (!built.ok) return;
-          const officialFigures = built.payload.figures.filter(
-            (figure) => figure.kind === "official",
-          );
-          expect(officialFigures).toHaveLength(0);
-          expect(built.payload.metrics).toHaveLength(0);
-        },
-      ),
+      fc.property(stateArb, letterArb, questionArb, (state, text, question) => {
+        // The state must give no figures before the payload is built from none.
+        const sealFigures = sealFiguresFrom(state);
+        fc.pre(sealFigures.status !== "ready");
+        const built = buildLivePayload({
+          text,
+          metricIds: [],
+          authorQuestions: questionsForSeal([question]),
+          sealedDate: SEALED_AT.slice(0, 10),
+          figures: NO_FIGURES,
+          sealedAt: SEALED_AT,
+        });
+        expect(built.ok).toBe(true);
+        if (!built.ok) return;
+        const officialFigures = built.payload.figures.filter(
+          (figure) => figure.kind === "official",
+        );
+        expect(officialFigures).toHaveLength(0);
+        expect(built.payload.metrics).toHaveLength(0);
+      }),
       { numRuns: 100 },
     );
   });
