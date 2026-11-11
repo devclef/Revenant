@@ -99,19 +99,37 @@
    moves in front of them: the actions take order 1, and the box, which is
    sized so the actions start 20 px below the drawn ghost, takes the space
    between the Hero_Sentence and the actions. The box keeps the same CLS
-   reservation. Its height is 71vh less 380 px, which the Hero_Sentence bottom
-   (about 353 to 358 px at these heights) fixes. Above 600 px nothing changes. */
+   reservation. Its height is 71vh less 300 px. At 360x640 the Hero_Sentence
+   now ends at 322 px (the top of the Ghost_Body_Box is at 323 px), so the
+   actions start at 474 px, 20 px below the drawn ghost. Above 600 px nothing
+   changes. */
 /* The phone box rule is `.hero .ghost`, not `.ghost`: the base `.ghost` rule
    below sets 30svh (at most 190 px), and at equal specificity that later rule
    wins. With the base height the actions sat at 591 px at 360x640, past the
    fold (layout-check PH1). */
 @media (max-width: 599.98px) {
+  .hero {
+    gap: 1rem;
+    padding-top: 1rem;
+  }
+
+  .sentence {
+    line-height: 1.5;
+  }
+
   .actions {
     order: 1;
   }
 
   .hero .ghost {
-    height: max(0px, calc(71vh - 380px));
+    height: max(0px, calc(71vh - 300px));
+  }
+
+  /* The drawn Landing_Ghost is narrower here, so its body clears the Hero_Sentence.
+     The width variable belongs to the shared Scene placement (scene.module.css),
+     which this file does not own. The selector only matches the landing Ghost. */
+  :global([data-ghost-pit]) > div {
+    --ghost-w: min(20vh, 128px);
   }
 }
 
