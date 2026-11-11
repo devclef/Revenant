@@ -27,3 +27,14 @@ export const StageReportContext = createContext<
 export function useStageReport(): ((stage: Stage) => void) | null {
   return useContext(StageReportContext);
 }
+
+/**
+ * The persona page's current Stage, as SceneShell holds it for the Top_Bar. It
+ * reaches the persona intro, which sits in the page content, not in the Ceremony
+ * region. Undefined until the region has reported its Stage.
+ */
+export const PersonaStageContext = createContext<Stage | undefined>(undefined);
+
+export function usePersonaStage(): Stage | undefined {
+  return useContext(PersonaStageContext);
+}

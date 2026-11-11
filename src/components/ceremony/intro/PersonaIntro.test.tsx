@@ -20,6 +20,7 @@ const base: PersonaIntroProps = {
   writtenAsOf: "2024-05-12",
   opensAt: "2024-11-05T00:00:00.000Z",
   questionCount: 2,
+  stage: "emerging",
 };
 
 function render(props: Partial<PersonaIntroProps> = {}): string {
@@ -105,4 +106,43 @@ describe("PersonaIntro stages (spec 09 C1, emerging and sealed)", () => {
     expect(notice).not.toMatch(/display:\s*none/);
     expect(css).not.toMatch(/\.notice \{\s*display:/);
   });
+});
+
+// P3.1 moves the fictional-persona note and the written-as-of and opens lines
+// to TestifyContext for the recall Stage. The content tests above use the
+// `emerging` fixture, so they check what the card shows before recall.
+describe("PersonaIntro lines by stage (spec 09 P3.1)", () => {
+  const notice = CEREMONY_COPY.personaNotice.replace("{name}", "Maya");
+  const written = CEREMONY_COPY.envelopeWrittenAsOf.replace("{date}", "12 May 2024");
+  const opens = CEREMONY_COPY.envelopeOpens.replace("{date}", "5 November 2024");
+
+  it.each(["emerging", "sealed"] as const)("shows the note and both date lines in %s", (stage) => {
+    const html = render({ stage });
+    expect(html).toContain(notice);
+    expect(html).toContain(written);
+    expect(html).toContain(opens);
+  });
+
+  it("hides the note and both date lines during recall", () => {
+    const html = render({ stage: "recall" });
+    expect(html).not.toContain(notice);
+    expect(html).not.toContain(written);
+    expect(html).not.toContain(opens);
+  });
+
+  it("keeps the intro line and the question count during recall", () => {
+    const html = render({ stage: "recall" });
+    expect(html).toContain("writes on a May Sunday");
+    expect(html).toContain("answer 2 questions");
+  });
+
+  it.each(["marks", "seal", "letter", "figures", "close"] as const)(
+    "shows the note and both date lines in %s",
+    (stage) => {
+      const html = render({ stage });
+      expect(html).toContain(notice);
+      expect(html).toContain(written);
+      expect(html).toContain(opens);
+    },
+  );
 });

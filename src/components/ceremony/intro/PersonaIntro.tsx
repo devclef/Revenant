@@ -19,6 +19,7 @@
 // lib/seal-format.
 
 import { CEREMONY_COPY } from "../copy";
+import type { Stage } from "../stages";
 import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-date";
 
 import styles from "./intro.module.css";
@@ -39,6 +40,11 @@ export type PersonaIntroProps = {
    * Until then the caller leaves it out and the time line does not show.
    */
   flowMinutes?: number;
+  /**
+   * The current Stage. From `recall` on, the notice and the two date lines
+   * are not shown here: TestifyContext carries them during recall (spec 09 P3.1).
+   */
+  stage: Stage;
 };
 
 /** The question count line for `n` questions. */
@@ -55,6 +61,7 @@ export function PersonaIntro({
   opensAt,
   questionCount,
   flowMinutes,
+  stage,
 }: PersonaIntroProps) {
   const notice = CEREMONY_COPY.personaNotice.replace("{name}", personaName);
   const writtenText = CEREMONY_COPY.envelopeWrittenAsOf.replace(
@@ -66,12 +73,14 @@ export function PersonaIntro({
 
   return (
     <section className={styles.intro} data-persona-intro data-block="persona-intro">
-      <p className={styles.notice}>{notice}</p>
+      {stage === "recall" ? null : <p className={styles.notice}>{notice}</p>}
       <p className={styles.line}>{introLine}</p>
-      <p className={styles.dates}>
-        <span>{writtenText}</span>
-        <span>{opensText}</span>
-      </p>
+      {stage === "recall" ? null : (
+        <p className={styles.dates}>
+          <span>{writtenText}</span>
+          <span>{opensText}</span>
+        </p>
+      )}
       <p className={styles.meta}>
         <span>{introQuestionsText(questionCount)}</span>
         {flowMinutes === undefined ? null : (

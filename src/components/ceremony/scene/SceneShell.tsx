@@ -12,7 +12,7 @@
 // the Soil backdrop from the shell, with no Ghost. On the persona page the
 // Ceremony region carries it instead, so the shell adds none.
 
-import { StageReportContext } from "../stage-context";
+import { PersonaStageContext, StageReportContext } from "../stage-context";
 import type { Stage } from "../stages";
 import { useMotion, MotionProvider } from "../motion";
 import { LocalViewProvider } from "../local-view";
@@ -107,6 +107,7 @@ function SceneFrame(props: SceneShellProps) {
     <StageReportContext.Provider
       value={props.variant === "persona" ? setTopBarStage : null}
     >
+    <PersonaStageContext.Provider value={topBarStage}>
     <div
       className={
         props.variant === "plain"
@@ -141,6 +142,7 @@ function SceneFrame(props: SceneShellProps) {
         )}
       </main>
     </div>
+    </PersonaStageContext.Provider>
     </StageReportContext.Provider>
     </SoundEnabledContext.Provider>
   );
