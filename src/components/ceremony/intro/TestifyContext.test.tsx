@@ -12,8 +12,10 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { REVEAL_COPY } from "@/components/reveal/copy";
+import { showsHeldDates } from "@/components/reveal/held-envelope";
 import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-date";
 import { CEREMONY_COPY } from "../copy";
+import { Envelope } from "../envelope/Envelope";
 import { PersonaIntro } from "./PersonaIntro";
 import { TopBar, personaNoticeText, topBarShowsNotice } from "../scene/TopBar";
 import { TestifyContext, type TestifyContextProps } from "./TestifyContext";
@@ -138,7 +140,17 @@ describe("TestifyContext: the four recall items appear once (spec 11 P3.5)", () 
       writtenAsOf: p.written_as_of,
       opensAt: p.opens_at,
     });
-    return `${top}${intro}${testify}`;
+    // The held Envelope on the recall card. Its date lines are switched off on
+    // this tag (spec 11 P3.5), so the dates appear once, in TestifyContext.
+    const held = renderToStaticMarkup(
+      createElement(Envelope, {
+        state: "closed",
+        layout: "responsive",
+        persona: { key: p.key, written_as_of: p.written_as_of, opens_at: p.opens_at, demo: true },
+        showDates: showsHeldDates("recall"),
+      }),
+    );
+    return `${top}${intro}${testify}${held}`;
   }
 
   function countOf(html: string, needle: string): number {
