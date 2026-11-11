@@ -17,6 +17,7 @@ import { FixtureNote } from "./FixtureNote";
 import { ReceiptCard } from "./ReceiptCard";
 import { keptSampleFor } from "./kept-sample";
 import { REVEAL_COPY } from "./copy";
+import { shortNameFor } from "./short-names";
 import { nowMessageFor } from "./now-message";
 import styles from "./reveal.module.css";
 
@@ -192,7 +193,10 @@ export function FiguresThenNow({
   // figure actually shown, then render.
   type Entry = {
     key: string;
+    /** The card heading: the Short_Name, or the sealed display_name. */
     name: string;
+    /** The sealed display_name, shown under Source (P5.4). */
+    seriesName: string;
     then: Readonly<FigureV1>;
     now: Readonly<FigureV1> | undefined;
     nowMissing: string | null;
@@ -217,7 +221,8 @@ export function FiguresThenNow({
     // A figure with no matching metric cannot occur for a validly sealed letter
     // (the schema enforces it); skip defensively rather than invent a name.
     if (metric === undefined) return;
-    const name = metric.display_name;
+    const seriesName = metric.display_name;
+    const name = shortNameFor(then.metric_id, seriesName);
 
     // The display rescale comes from the sealed unit string (C8.2), so it holds
     // whatever the Catalogue carries.
@@ -242,6 +247,7 @@ export function FiguresThenNow({
       // that ever changes.
       key: `${then.metric_id}-${index}`,
       name,
+      seriesName,
       then,
       now,
       nowMissing,
@@ -304,7 +310,7 @@ export function FiguresThenNow({
                 then={thenRow}
                 now={{ message: entry.nowMissing }}
                 primary={primary}
-                source={receiptSourceOf(entry.then)}
+                source={receiptSourceOf(entry.then, entry.seriesName)}
               />
             </div>
           );
@@ -317,6 +323,7 @@ export function FiguresThenNow({
             <div key={entry.key} className={styles.figureGroup} data-figure-entry="">
               <FigureEntry
                 name={entry.name}
+                seriesName={entry.seriesName}
                 then={entry.then}
                 now={entry.now}
                 change={entry.change}
@@ -350,8 +357,8 @@ export function FiguresThenNow({
               now={receiptFigureOf(entry.now, "now", letterKind, entry.rescale)}
               nowNote={entry.nowNote ?? undefined}
               primary={primary}
-              source={receiptSourceOf(entry.then)}
-              nowSource={receiptSourceOf(entry.now)}
+              source={receiptSourceOf(entry.then, entry.seriesName)}
+              nowSource={receiptSourceOf(entry.now, entry.seriesName)}
               change={
                 <>
                   <p className={styles.period}>{REVEAL_COPY.notComparable}</p>

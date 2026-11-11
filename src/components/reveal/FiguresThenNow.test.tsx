@@ -283,6 +283,18 @@ describe("FiguresThenNow markup", () => {
     expect(html).toContain(formatPeriod(GASOLINE_THEN.period, GASOLINE_THEN.region));
   });
 
+  it("shows the as-published value, the rounding note and the sealed name under Source (P5.2 to P5.4)", () => {
+    const html = render();
+    // The source details carry the exact sealed value and unit (P5.2).
+    expect(html).toContain(`As published: ${GASOLINE_THEN.value} ${GASOLINE_THEN.unit}`);
+    // One line says the card's values are rounded for display (P5.3).
+    expect(html).toContain(REVEAL_COPY.roundedNote);
+    // The heading falls back to the sealed name, because this fixture metric_id
+    // is not in the Short_Name lookup (P5.4, P5.7). The series name sits under Source.
+    expect(html).toContain(`>${GASOLINE_METRIC.display_name} · ${GASOLINE_THEN.region}</h3>`);
+    expect(html).toContain(`<p>${GASOLINE_METRIC.display_name}</p>`);
+  });
+
   it("sources the now figure from the Figures_API response (pickNow)", () => {
     const html = render();
     // The now value is the latest figure of the series in the response, not

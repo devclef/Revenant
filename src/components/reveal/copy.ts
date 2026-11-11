@@ -347,6 +347,18 @@ export const REVEAL_COPY = {
    */
   rescaledNote: "Shown per {toUnit}. Published per {fromUnit}.",
 
+  /**
+   * The source-details line with the exact sealed value (P5.2). `{value}` and
+   * `{unit}` are the sealed figure's value and unit, unrescaled.
+   */
+  asPublished: "As published: {value} {unit}",
+
+  /**
+   * The one line on a card whose values are rounded for display (P5.3). It
+   * points to the published values in the source details.
+   */
+  roundedNote: "Values here are rounded for display. The published values are under Source.",
+
   /** Label before the then-vs-now formula (R12.9). */
   formulaLabel: "Formula",
 

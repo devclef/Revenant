@@ -8,6 +8,7 @@ import {
 } from "@/lib/figures";
 import { formatLetterDate } from "@/components/ui/letter-date";
 import { REVEAL_COPY } from "./copy";
+import { displayPrecisionForUnit } from "./display-precision";
 import type { ReceiptFigure, ReceiptSource } from "./ReceiptCard";
 
 /**
@@ -78,13 +79,17 @@ export function receiptFigureOf(
   letterKind: LetterKind = "persona",
   displayRescale?: Readonly<DisplayRescale>,
 ): ReceiptFigure {
-  const value =
+  // The precision is decided on the shown unit (after any rescale), so an EU
+  // price shown per litre gets the fuel precision (P5.1). The stored value is
+  // not changed; only the displayed digits are.
+  const shownUnit =
+    displayRescale === undefined ? figure.unit : displayRescale.unit;
+  const precision = displayPrecisionForUnit(shownUnit);
+  const shownValue =
     displayRescale === undefined
-      ? formatValue(figure.value, figure.region)
-      : formatValue(
-          rescaleForDisplay(figure.value, displayRescale.divisor),
-          figure.region,
-        );
+      ? figure.value
+      : rescaleForDisplay(figure.value, displayRescale.divisor);
+  const value = formatValue(shownValue, figure.region, precision);
   const note =
     displayRescale === undefined
       ? undefined
@@ -93,7 +98,7 @@ export function receiptFigureOf(
           .replace("{fromUnit}", figure.unit);
   return {
     value,
-    unit: displayRescale === undefined ? figure.unit : displayRescale.unit,
+    unit: shownUnit,
     period: formatPeriod(figure.period, figure.region),
     region: figure.region,
     label: figureLabel(figure, role, letterKind),
@@ -107,11 +112,22 @@ function sourceUrlOf(figure: Readonly<FigureV1>): string | undefined {
   return figure.kind === "official" ? figure.source_url : undefined;
 }
 
-/** The source control data for one sealed figure. */
-export function receiptSourceOf(figure: Readonly<FigureV1>): ReceiptSource {
+/**
+ * The source control data for one sealed figure. `seriesName` is the sealed
+ * display_name, shown under Source (P5.4). The As_Published line carries the
+ * exact sealed value and unit (P5.2).
+ */
+export function receiptSourceOf(
+  figure: Readonly<FigureV1>,
+  seriesName?: string,
+): ReceiptSource {
   return {
+    seriesName,
     source: figure.source,
     seriesId: figure.series_id,
     sourceUrl: sourceUrlOf(figure),
+    asPublished: REVEAL_COPY.asPublished
+      .replace("{value}", figure.value)
+      .replace("{unit}", figure.unit),
   };
 }
