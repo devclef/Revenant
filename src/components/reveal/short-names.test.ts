@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { CATALOGUE } from "@/lib/figures";
 import { SHORT_NAME_TABLE, shortNameFor } from "./short-names";
 
 const DIRECTION_WORDS = [
@@ -34,6 +35,13 @@ describe("short names (P5.4, P5.5, P5.7)", () => {
     expect(shortNameFor("us-diesel", "x")).toBe("Diesel");
     expect(shortNameFor("eu-petrol-euro95", "x")).toBe("Unleaded petrol");
     expect(shortNameFor("eu-diesel", "x")).toBe("Diesel");
+  });
+
+  it("every key is a real Catalogue metric id (checked in the test only)", () => {
+    const catalogueIds = new Set(CATALOGUE.map((series) => series.metric.id));
+    for (const key of SHORT_NAME_TABLE.keys()) {
+      expect(catalogueIds.has(key)).toBe(true);
+    }
   });
 
   it("covers exactly the four catalogue metric_ids", () => {
