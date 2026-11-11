@@ -39,7 +39,6 @@ describe("LiveLockNote (R18.6)", () => {
     expect(LIVE_COPY.lockNoteLink).toBe("Open a persona letter");
   });
 
-
   it("says nothing about whether any number changed", () => {
     const text = render().replace(/<[^>]+>/g, " ").toLowerCase();
     const changeWords = [
