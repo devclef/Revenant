@@ -7,8 +7,12 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { bundledLatestFigure } from "@/lib/figures/bundled-latest";
+import { CATALOGUE } from "@/lib/figures/catalogue";
+import { isFixtureFigure } from "@/lib/figures/fixture";
+
 import type { FigureReadStore, StoredFigureRow } from "./db-response";
-import { figuresFailureLine, respondFigures } from "./respond";
+import { figuresFailureLine, fallbackResponse, respondFigures } from "./respond";
 
 const GENERATED = new Date("2026-11-05T15:00:00Z");
 const SECRET_URL = "postgres://user:secret@host/db";
@@ -210,5 +214,45 @@ describe("one line per failure", () => {
       expect(loggedLines(), label).toHaveLength(1);
       expect(loggedLines()[0], label).not.toContain("\n");
     }
+  });
+});
+
+// --- fallbackResponse (X3): bundled figures only, never invented -----------
+
+describe("fallbackResponse", () => {
+  it("lists every catalogue series in catalogue order with last_success_at null", () => {
+    const body = fallbackResponse("2026-11-05T15:00:00Z");
+
+    expect(body.series.map((entry) => entry.metric.id)).toEqual(
+      CATALOGUE.map((series) => series.metric.id),
+    );
+    for (const entry of body.series) {
+      expect(entry.last_success_at).toBeNull();
+    }
+  });
+
+  it("Property 1 (fallback part): each figure is the bundled figure field for field, marked fallback, and nothing is invented", () => {
+    const body = fallbackResponse("2026-11-05T15:00:00Z");
+
+    for (const series of CATALOGUE) {
+      const entry = body.series.find((e) => e.metric.id === series.metric.id);
+      const bundled = bundledLatestFigure(series);
+
+      expect(entry, series.metric.id).toBeDefined();
+      expect(entry?.figure, series.metric.id).toEqual(bundled);
+      if (bundled === null) {
+        expect(entry?.fallback ?? false, series.metric.id).toBe(false);
+      } else {
+        expect(entry?.fallback, series.metric.id).toBe(true);
+        expect(isFixtureFigure(entry!.figure!), series.metric.id).toBe(false);
+      }
+    }
+  });
+
+  it("uses the generated_at it was given and the revenant-figures-v1 format", () => {
+    const body = fallbackResponse("2026-11-05T15:00:00Z");
+
+    expect(body.format).toBe("revenant-figures-v1");
+    expect(body.generated_at).toBe("2026-11-05T15:00:00Z");
   });
 });

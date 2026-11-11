@@ -21,6 +21,20 @@ import {
   type FigureReadStore,
 } from "./db-response";
 
+/**
+ * The body answered when the database read or shape step fails: no stored rows
+ * and no success times, so every series takes its bundled figure (fallback: true)
+ * or null. Each bundled figure is copied field for field from fuel-figures.json,
+ * and last_success_at is null everywhere.
+ */
+export function fallbackResponse(generatedAt: string): FiguresResponseV1 {
+  return shapeDbFiguresResponse(
+    { rows: [], successTimes: new Map() },
+    CATALOGUE,
+    generatedAt,
+  );
+}
+
 /** The step that failed: the database or file read, or the response shaping. */
 type FiguresStep = "read" | "shape";
 

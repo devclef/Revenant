@@ -22,6 +22,8 @@ import type { FigureV1 } from "@/lib/seal-format";
 
 import {
   chooseFigure,
+  hasAnyBundled,
+  shapeDbFiguresResponse,
   readDbFigures,
   toUtcSeconds,
   type FigureReadStore,
@@ -475,5 +477,27 @@ describe("Property 1: stored, else bundled, else null", () => {
     expect(entry?.figure).toEqual(asFigure(storedRow));
     expect(entry?.fallback).toBe(false);
     expect(entry?.figure).not.toEqual(bundledFigure);
+  });
+});
+
+describe("hasAnyBundled", () => {
+  it("is false when no series in the body holds a figure", () => {
+    const body = shapeDbFiguresResponse(
+      { rows: [], successTimes: new Map() },
+      [],
+      "2026-11-05T15:00:00Z",
+    );
+    expect(hasAnyBundled(body)).toBe(false);
+  });
+
+  it("is true when at least one series holds a bundled figure", () => {
+    const body = shapeDbFiguresResponse(
+      { rows: [], successTimes: new Map() },
+      CATALOGUE,
+      "2026-11-05T15:00:00Z",
+    );
+    const anyBundled = CATALOGUE.some((s) => bundledLatestFigure(s) !== null);
+    expect(anyBundled).toBe(true);
+    expect(hasAnyBundled(body)).toBe(true);
   });
 });

@@ -186,6 +186,14 @@ export function shapeDbFiguresResponse(
 }
 
 /**
+ * True when at least one series in the body holds a figure. A figure here may be
+ * a stored one or a bundled fallback; the caller does not need to tell them apart.
+ */
+export function hasAnyBundled(body: FiguresResponseV1): boolean {
+  return body.series.some((entry) => entry.figure !== null);
+}
+
+/**
  * Reads the latest figures and the success times, then shapes the response. The
  * store may reject; the caller decides what to answer (respond.ts answers 500).
  */
