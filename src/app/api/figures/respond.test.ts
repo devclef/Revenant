@@ -10,9 +10,32 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import { bundledLatestFigure } from "@/lib/figures/bundled-latest";
 import { CATALOGUE } from "@/lib/figures/catalogue";
 import { isFixtureFigure } from "@/lib/figures/fixture";
+import { parseFiguresResponse } from "@/lib/figures/now";
 
 import type { FigureReadStore, StoredFigureRow } from "./db-response";
 import { figuresFailureLine, fallbackResponse, respondFigures } from "./respond";
+
+// The shape step can be made to throw for the next N calls. Calls that pass
+// through unchanged keep every other test in this file on the real code.
+const { shapeCalls } = vi.hoisted(() => ({
+  shapeCalls: { failNext: 0 },
+}));
+
+vi.mock("./db-response", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./db-response")>();
+  return {
+    ...actual,
+    shapeDbFiguresResponse: (
+      ...args: Parameters<typeof actual.shapeDbFiguresResponse>
+    ) => {
+      if (shapeCalls.failNext > 0) {
+        shapeCalls.failNext -= 1;
+        throw new Error("shape failed");
+      }
+      return actual.shapeDbFiguresResponse(...args);
+    },
+  };
+});
 
 const GENERATED = new Date("2026-11-05T15:00:00Z");
 const SECRET_URL = "postgres://user:secret@host/db";
@@ -39,6 +62,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  shapeCalls.failNext = 0;
   vi.restoreAllMocks();
 });
 
@@ -262,5 +286,90 @@ describe("fallbackResponse", () => {
 
     expect(body.format).toBe("revenant-figures-v1");
     expect(body.generated_at).toBe("2026-11-05T15:00:00Z");
+  });
+});
+
+// --- Property 2 (X3): a failing read or shape step still answers ------------
+
+describe("Property 2: a failing read or shape step still answers and logs only the line", () => {
+  const FAILURES: Array<{
+    label: string;
+    step: "read" | "shape";
+    readStore: () => FigureReadStore;
+    failShapeFirst: boolean;
+  }> = [
+    {
+      label: "readStore throws",
+      step: "read",
+      readStore: () => {
+        throw new Error("x");
+      },
+      failShapeFirst: false,
+    },
+    {
+      label: "latestFigures rejects",
+      step: "read",
+      readStore: () => store({ latest: () => Promise.reject(new Error("x")) }),
+      failShapeFirst: false,
+    },
+    {
+      label: "lastSuccessTimes rejects",
+      step: "read",
+      readStore: () => store({ success: () => Promise.reject(new Error("x")) }),
+      failShapeFirst: false,
+    },
+    {
+      label: "the shape step throws",
+      step: "shape",
+      readStore: () => store({}),
+      failShapeFirst: true,
+    },
+  ];
+
+  for (const failure of FAILURES) {
+    it(`answers 200 with the fallback and one ${failure.step}-step line when ${failure.label}`, async () => {
+      shapeCalls.failNext = failure.failShapeFirst ? 1 : 0;
+
+      const response = await failingRespond(failure.readStore);
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
+      expect(await response.json()).toEqual(
+        fallbackResponse("2026-11-05T15:00:00Z"),
+      );
+      expect(loggedLines()).toEqual([
+        `figures_unavailable step=${failure.step} error=Error`,
+      ]);
+    });
+  }
+});
+
+// --- Fallback_Response examples (X3) ----------------------------------------
+
+describe("Fallback_Response examples", () => {
+  it("sets Cache-Control no-store on the fallback answer", async () => {
+    const response = await failingRespond(() => {
+      throw new Error("x");
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+  });
+
+  it("is accepted by parseFiguresResponse after a JSON round trip", async () => {
+    const response = await failingRespond(() => {
+      throw new Error("x");
+    });
+    const parsed = parseFiguresResponse(await response.json());
+
+    expect(parsed.ok).toBe(true);
+  });
+
+  it("parses the fallback body built directly from fallbackResponse", () => {
+    const body = JSON.parse(
+      JSON.stringify(fallbackResponse("2026-11-05T15:00:00Z")),
+    );
+
+    expect(parseFiguresResponse(body).ok).toBe(true);
   });
 });
