@@ -789,6 +789,16 @@
   color: var(--muted);
 }
 
+/* The label above a Persona_Answer (the Fictional_Label, spec 11 P1.7). It
+   sits on the same surface as the question, so it takes the same colour. */
+.answerLabel {
+  display: block;
+  margin: 0.15rem 0 0;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--muted);
+}
+
 .answerText {
   display: block;
   margin: 0.25rem 0 0;

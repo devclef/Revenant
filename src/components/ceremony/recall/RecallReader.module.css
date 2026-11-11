@@ -1,0 +1,66 @@
+/*
+ * The Text_Persona reader (RecallReader.tsx). It sits on the paper panel, which
+ * sets --ink, and every text colour here comes from the panel's own tokens, so
+ * no text inherits the desk's colour. The counter and the Fictional_Label use
+ * --ink-soft. The question and her answer use --ink. The button is the shared
+ * primary (buttons.module.css), --on-accent on --accent.
+ *
+ * Nothing here colours a figure, a change or a direction (neutrality.md).
+ */
+
+.reader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  text-align: left;
+  max-width: 44rem;
+  margin-inline: auto;
+}
+
+.counter {
+  margin: 0;
+  color: var(--ink-soft);
+  font-variant-numeric: tabular-nums;
+}
+
+.nowrap {
+  white-space: nowrap;
+}
+
+.question {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-weight: 800;
+  font-size: clamp(1.3rem, 2.4vw, 1.9rem);
+  line-height: 1.2;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.question:focus:not(:focus-visible) {
+  outline: none;
+}
+
+.label {
+  margin: 0.5rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.answer {
+  margin: 0;
+  padding-left: 0.75rem;
+  border-left: 3px solid var(--accent);
+  color: var(--ink);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 0.75rem;
+}

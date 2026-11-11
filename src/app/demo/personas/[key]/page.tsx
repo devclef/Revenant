@@ -3,9 +3,23 @@ import { OpeningFlow } from "@/components/reveal/OpeningFlow";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { PersonaIntroForStage } from "@/components/ceremony/intro/PersonaIntroForStage";
 import { PERSONAS, sampleCandidatesFor } from "@/lib/personas";
+import answersFile from "../../../../../content/personas/letters/answers.json";
 import { pageMetadata } from "@/lib/page-metadata";
 import { UI_COPY } from "@/components/ui/copy";
 import type { Metadata } from "next";
+
+/**
+ * A Text_Persona's pre-written answers, by persona key (spec 11 P1.2). They are
+ * content, not a record: never sealed, stored or posted. A persona with no
+ * entry gets undefined, so the walk never starts for her.
+ */
+const PERSONA_ANSWERS = answersFile as Record<string, readonly string[] | undefined>;
+
+function personaAnswersFor(key: string): readonly string[] | undefined {
+  return Object.prototype.hasOwnProperty.call(PERSONA_ANSWERS, key)
+    ? PERSONA_ANSWERS[key]
+    : undefined;
+}
 
 /**
  * Title for one persona letter: "{name}'s letter". An unknown key gets the
@@ -103,7 +117,9 @@ export default async function PersonaLetterPage({
         introLine={persona.intro_line}
         writtenAsOf={persona.written_as_of}
         opensAt={persona.opens_at}
-        questionCount={persona.metrics.length}
+        questionCount={
+          persona.metrics.length + (persona.author_questions?.length ?? 0)
+        }
       />
       <OpeningFlow
         letterId={persona.letter_id}
@@ -115,6 +131,7 @@ export default async function PersonaLetterPage({
         }}
         demo2On={demo2On}
         sampleCandidates={sampleCandidatesFor(persona.key)}
+        personaAnswers={personaAnswersFor(persona.key)}
       />
     </SceneShell>
   );
