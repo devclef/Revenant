@@ -149,11 +149,17 @@ describe("SealBreak source (Property 21, and the hold has moved out)", () => {
   });
 });
 
-describe("SealBreak hint colour", () => {
-  it("sets the hint line to the paper ink, not the desk ink", () => {
+describe("SealBreak hint and Skip_Link colour", () => {
+  it("sets the hint line to the on-purple text token, not the paper ink", () => {
     const css = readFileSync(join(__dirname, "SealBreak.module.css"), "utf8");
-    expect(css).toMatch(/\.hint\s*\{[^}]*color:\s*var\(--ink\)/);
+    expect(css).toMatch(/\.hint\s*\{[^}]*color:\s*var\(--on-purple\)/);
+    expect(css).not.toMatch(/\.hint\s*\{[^}]*color:\s*var\(--ink\)/);
     expect(css).not.toMatch(/\.hint\s*\{[^}]*color:\s*var\(--desk-ink/);
+  });
+  it("sets the Skip_Link text to the on-purple text token, not the paper ink", () => {
+    const css = readFileSync(join(__dirname, "SealBreak.module.css"), "utf8");
+    expect(css).toMatch(/\.textLink\s*\{[^}]*color:\s*var\(--on-purple\)/);
+    expect(css).not.toMatch(/\.textLink\s*\{[^}]*color:\s*var\(--ink\)/);
   });
 });
 

@@ -373,3 +373,51 @@ describe("Spec 07 R4 and Property 9: Scene token pairs", () => {
     expect(r.ratio).toBeLessThan(WCAG_AA_NORMAL);
   });
 });
+
+// ---------------------------------------------------------------------------
+// Seal_Group text (spec 10 X5.1): the hint line and the Skip_Link sit on the
+// dark Scene, not on paper. Their text colour is --on-purple. This block checks
+// it on --bg (the plain background, narrow and wide) and on the lightest stop
+// of the shaft (--purple at the .light opacity, composited over --bg). Both
+// values are read from the CSS, and each ratio is printed.
+
+const sceneModuleCssPath = resolve(here, "scene", "scene.module.css");
+
+/** The .light shaft's opacity, read from scene.module.css. */
+function readLightOpacity(css: string): number {
+  const block = css.match(/\.light\s*\{([^}]*)\}/);
+  if (!block) throw new Error("the .light block was not found in scene.module.css");
+  const opacity = block[1].match(/opacity:\s*([0-9.]+)/);
+  if (!opacity) throw new Error("the .light block sets no opacity in scene.module.css");
+  return Number(opacity[1]);
+}
+
+describe("X5.1: Seal_Group text (--on-purple) clears AA on the dark Scene", () => {
+  const tokensCss = readFileSync(tokensCssPath, "utf8");
+  const sceneCss = readFileSync(sceneModuleCssPath, "utf8");
+  const scene = (token: string): Colour => readColourToken(tokensCss, token, "tokens.css");
+
+  const bg = scene("--bg");
+  const onPurple = scene("--on-purple");
+  // The lightest shaft stop: the purple at its brightest point (the Soil edge),
+  // at the .light opacity, composited over --bg.
+  const lightOpacity = readLightOpacity(sceneCss);
+  const lightestStop = composite({ ...scene("--purple"), alpha: lightOpacity }, bg);
+
+  const pairs: Array<{ pair: string; fg: Rgb; bg: Rgb }> = [
+    { pair: "--on-purple on --bg (Seal_Group hint and Skip_Link)", fg: onPurple.rgb, bg: bg.rgb },
+    {
+      pair: `--on-purple on the lightest shaft stop (--purple at ${lightOpacity} over --bg)`,
+      fg: onPurple.rgb,
+      bg: lightestStop,
+    },
+  ];
+
+  for (const { pair, fg, bg: surface } of pairs) {
+    it(`${pair} clears ${WCAG_AA_NORMAL}:1`, () => {
+      const r = checkPair(pair, fg, surface, WCAG_AA_NORMAL);
+      console.log(`[contrast] ${pair}: ${r.ratio.toFixed(2)}:1 (needs ${WCAG_AA_NORMAL}:1)`);
+      expect(r.ok, describeResult(r)).toBe(true);
+    });
+  }
+});
