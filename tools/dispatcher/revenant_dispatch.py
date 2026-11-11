@@ -1119,6 +1119,9 @@ class Tick:
                     and self._no_new_commits(marker["task_id"], pr)):
                 self.fix_made_no_commits(issue, pr, marker)
                 continue
+            if pr is None and self._nothing_ahead_of_main(local):
+                self.dev_run_made_no_commits(issue, marker, branch)
+                continue
             git(DEV_CLONE, "push", "--force-with-lease", "origin",
                 f"{local}:refs/heads/{branch}", token=self.token)
             if pr is None:
@@ -1137,6 +1140,27 @@ class Tick:
                              {"body": pr_body_with_notes(pr.get("body"), notes)})
             self.gh.set_status(n, L_REVIEW, L_PROGRESS)
             self.say(f"#{n}: run passed, PR #{pr['number']} needs QA")
+
+    def _nothing_ahead_of_main(self, local: str) -> bool:
+        """True when the run's branch has no commits that main lacks. GitHub refuses a PR
+        for such a branch (422 "No commits between main and ..."), and the refusal would
+        repeat every tick. If git can't tell, return False and let the normal path run."""
+        try:
+            ahead = git(DEV_CLONE, "rev-list", "--count", f"origin/main..{local}", token=self.token)
+            return int(ahead.strip()) == 0
+        except (RuntimeError, ValueError, AttributeError):
+            return False
+
+    def dev_run_made_no_commits(self, issue: dict, marker: dict, branch: str) -> None:
+        """A dev run that passed but left its branch level with main: nothing to open a PR
+        for. Usually the ticket's change is already on main. Hand it to a human once."""
+        n = issue["number"]
+        self.gh.set_status(n, L_BLOCKED, L_PROGRESS)
+        self.gh.comment(n, f"The `{marker['role']}` run `{marker['task_id']}` passed but made no "
+                           f"commits ahead of `main`, so there is no PR to open for `{branch}`. "
+                           "Usually the change is already on `main`. A human needs to check, "
+                           "then close this issue or re-queue it.")
+        self.notify(f"Revenant #{n} blocked: run made no commits ahead of main")
 
     def _branch_notes(self, local: str) -> str:
         """Commit message bodies on the run's branch that are not on main."""
