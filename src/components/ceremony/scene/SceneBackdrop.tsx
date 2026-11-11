@@ -47,12 +47,19 @@ export type SceneBackdropProps = {
    * REVEAL_DIM_MS. Show everything, Skip and Calm dim at once with no motion.
    */
   animateDim?: boolean;
+  /**
+   * Receives the marks layer, a sibling of the Ghost layer (spec 10 C6.3). The
+   * Seal_Group's controls are drawn here, outside the aria-hidden Ghost layer.
+   * Omitted, no marks layer is drawn.
+   */
+  marksLayerRef?: (element: HTMLDivElement | null) => void;
 };
 
 export function SceneBackdrop({
   children,
   dimmed = false,
   animateDim = false,
+  marksLayerRef,
 }: SceneBackdropProps) {
   // The Stage still drives the Ghost pose (risen vs handed) in Ghost.tsx, but
   // the backdrop no longer translates as a whole. Below 900 px the handed
@@ -94,6 +101,13 @@ export function SceneBackdrop({
         <div className={styles.ghostLayer} aria-hidden="true" data-ghost-layer>
           {children}
         </div>
+      )}
+      {marksLayerRef === undefined ? null : (
+        // The marks layer (spec 10 C6.3). A sibling of the Ghost layer and not
+        // aria-hidden, so the Seal_Group's Seal_Button and Skip_Link stay in the
+        // accessibility tree. It sits in the same stacking order as the Ghost
+        // layer and passes pointer events through; only the controls take them.
+        <div className={styles.marksLayer} ref={marksLayerRef} data-marks-layer="" />
       )}
     </>
   );

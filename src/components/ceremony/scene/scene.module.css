@@ -724,26 +724,61 @@
   pointer-events: none;
 }
 
+/* The marks layer (spec 10 C6.3): a sibling of the aria-hidden Ghost layer,
+   drawn above the Stage cards and below the Top_Bar, like the Ghost layer. It
+   passes pointer events through; only the Seal_Group takes them. */
+.marksLayer {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
 /* The one Seal_Group (hint, Seal_Button, Skip_Link) at 900 px and wider
    (spec 10 C6.3). It sits SEAL_GROUP_GAP_PX (20) outside the Ghost_Body_Box
-   edge facing the Content_Column, centred on the WaxSeal, left-aligned. The
-   Envelope starts 6 % of the Ghost_Box (9.375 % of its own width) right of the
-   Ghost_Body_Box's left edge (body 12 %, Envelope 18 %), so the group's right
-   edge is that far plus the gap left of the Envelope's own left edge. */
-.heldEnvelope [data-seal-group] {
-  --seal-group-gap: 20px; /* SEAL_GROUP_GAP_PX */
-  position: absolute;
-  right: calc(109.375% + var(--seal-group-gap));
-  top: 55.3%; /* the WaxSeal's centre */
-  transform: translateY(-50%);
-  width: 14rem; /* SEAL_GROUP_WIDTH */
-  display: grid;
-  justify-items: start;
-  gap: 0.75rem;
-  text-align: left;
-  /* Above the Ghost's glow layer and body SVG inside the held slot. */
-  z-index: 3;
-  pointer-events: auto;
+   edge facing the Content_Column, centred on the WaxSeal, left-aligned.
+
+   The position repeats the Ghost's placement from the same scene variables:
+   - Ghost_Box width W is --ghost-w (ghostPlace); its left edge is
+     --ghost-x - W / 2 (pit, translateX(-50 %)).
+   - The Ghost_Body_Box edge is 12 % of W from that left edge, so the group's
+     right edge is that minus the gap.
+   - Vertically the box bottom sits at --soil-top + 3vh (ghostPlace bottom
+     -3vh), the box is 1.2 W tall, and the handed pose lifts it 12 % of its
+     height. The held Envelope starts at 48 % of the box height, is 64 % of W
+     wide and 188 / 300 of its width tall (the Envelope viewBox). The WaxSeal
+     centre is 55.3 % down the Envelope.
+   Sum, from --soil-top: 3vh + W * (-1.2 * 1.12 + 0.48 * 1.2 + 0.553 * 0.64 *
+   188 / 300) = 3vh - 0.54621 W. The marks and seal stages are always handed,
+   so only the handed lift is used. The gap and width repeat constants.ts. */
+@media (min-width: 900px) {
+  .marksLayer {
+    --ghost-w: min(50vh, 560px);
+  }
+
+  .marksLayer [data-seal-group] {
+    --seal-group-gap: 20px; /* SEAL_GROUP_GAP_PX */
+    position: absolute;
+    left: calc(
+      var(--ghost-x) - var(--ghost-w) / 2 + var(--ghost-w) * 0.12 - var(--seal-group-gap) -
+        14rem
+    );
+    top: calc(var(--soil-top) + 3vh - var(--ghost-w) * 0.54621);
+    transform: translateY(-50%);
+    width: 14rem; /* SEAL_GROUP_WIDTH */
+    display: grid;
+    justify-items: start;
+    gap: 0.75rem;
+    text-align: left;
+    pointer-events: auto;
+  }
+}
+
+/* The Idle_Bob holds still in `marks` and `seal` (spec 10 C6). The Seal_Group
+   is placed from the Ghost's geometry, so a bobbing Ghost would drift it. */
+.scene:has(:is([data-ceremony="marks"], [data-ceremony="seal"])) .bob {
+  animation: none;
 }
 
 /* The held Envelope's placement in the Ghost's slot (design.md "Held in the

@@ -133,6 +133,14 @@ export type SealBreakProps = {
    * Absent or null, the whole view renders in place, as before.
    */
   envelopeSlot?: HTMLElement | null;
+  /**
+   * The marks layer, a sibling of the aria-hidden Ghost layer (spec 10 C6.3).
+   * When set with `envelopeSlot`, the one Seal_Group (hint, Seal_Button,
+   * Skip_Link) is drawn here, so the controls stay in the accessibility tree.
+   * The pressable seal stays on the Envelope inside the Ghost layer. Absent or
+   * null, the whole view renders in place.
+   */
+  marksSlot?: HTMLElement | null;
 };
 
 /**
@@ -232,6 +240,7 @@ export function SealBreak({
   hasFigures = true,
   onSealingChange,
   envelopeSlot = null,
+  marksSlot = null,
 }: SealBreakProps): ReactElement {
   const { mode } = useMotion();
   const calm = calmProp ?? mode === "calm";
@@ -280,7 +289,7 @@ export function SealBreak({
   // The pressable seal: the HeldSeal target with its hold ring, crack overlay
   // and flakes. Drawn where the placement puts it (C5.1). In the Content_Column
   // it takes the fixed in-place size; on the held Envelope it fills the layer.
-  const onEnvelope = envelopeSlot !== null;
+  const onEnvelope = envelopeSlot !== null && marksSlot !== null;
   const sealDrawing = (
     <HeldSeal
       controller={seal}
@@ -365,23 +374,29 @@ export function SealBreak({
     </>
   );
 
-  if (envelopeSlot !== null) {
+  if (envelopeSlot !== null && marksSlot !== null) {
     // At the Desktop_Sizes and the Wide_Size the pressable seal sits on the
-    // turned Envelope's flap, and the one Seal_Group (hint, Seal_Button,
-    // Skip_Link) sits beside it, both portalled into the Envelope's slot so the
-    // scene stylesheet can place them against the Ghost (spec 10 C6.1, C6.3).
-    // Nothing is left in the Content_Column.
-    return createPortal(
+    // turned Envelope's flap, portalled into the Envelope's slot inside the
+    // aria-hidden Ghost layer. The one Seal_Group (hint, Seal_Button, Skip_Link)
+    // goes to the marks layer, a sibling of the Ghost layer, so the controls
+    // stay reachable and the scene stylesheet places them against the Ghost
+    // (spec 10 C6.1, C6.3). Nothing is left in the Content_Column.
+    return (
       <>
-        <div style={TIMING_VARS} data-broken={broken} data-envelope-seal="">
-          {sealDrawing}
-        </div>
-        <div className={styles.sealGroup} data-broken={broken} data-seal-group="">
-          {hint}
-          {controls}
-        </div>
-      </>,
-      envelopeSlot,
+        {createPortal(
+          <div style={TIMING_VARS} data-broken={broken} data-envelope-seal="">
+            {sealDrawing}
+          </div>,
+          envelopeSlot,
+        )}
+        {createPortal(
+          <div className={styles.sealGroup} data-broken={broken} data-seal-group="">
+            {hint}
+            {controls}
+          </div>,
+          marksSlot,
+        )}
+      </>
     );
   }
 

@@ -208,12 +208,18 @@
   stroke-linecap: butt;
 }
 
+/*
+ * The Skip_Link sits on the dark Scene (--bg, or the lightest shaft stop at
+ * 900 px and wider), not on paper, so it takes the white on-purple text token.
+ * contrast.test.ts checks this pair against both surfaces.
+ */
+
 /* --- The Skip_Link (spec 09 C4.2): quiet underlined text, 44 px target --- */
 
 .textLink {
   font: inherit;
   font-size: 0.95rem;
-  color: var(--ink);
+  color: var(--on-purple);
   background: none;
   border: 0;
   padding: 0.6rem 0.5rem;
@@ -224,11 +230,15 @@
   cursor: pointer;
 }
 
-/* --- The hint line (spec 10 C6.4) --- */
+/*
+ * The hint line (spec 10 C6.4). It sits on the dark Scene, beside the Ghost
+ * at 900 px and wider and below the Soil strip on narrow, so it takes the white
+ * on-purple text token rather than the paper ink.
+ */
 
 .hint {
   margin: 0;
-  color: var(--ink);
+  color: var(--on-purple);
   line-height: 1.4;
   max-width: var(--measure);
 }
