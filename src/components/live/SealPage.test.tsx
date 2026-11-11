@@ -117,17 +117,33 @@ describe("SealPage in real mode", () => {
   });
 
   it("renders the /seal form outside the demo scope the two-column rule needs", () => {
-    const html = renderToStaticMarkup(
+    const real = renderToStaticMarkup(
       createElement(SealPage, {
         rpId: "revenant.devclef.se",
         appOrigin: "https://revenant.devclef.se",
         mode: "real",
       }),
     );
-    // The panel is the single form, and no ancestor carries data-seal-mode="demo".
-    expect(html).toContain('data-card="live-write"');
-    expect(html).toContain('data-seal-mode="real"');
-    expect(html).not.toContain('data-seal-mode="demo"');
+    // The /seal panel is the single form and carries the occasion control, but
+    // no ancestor has data-seal-mode="demo", so the two-column rule cannot match.
+    expect(real).toContain('data-card="live-write"');
+    expect(real).toMatch(/<fieldset class="[^"]*occasions[^"]*"/);
+    expect(real).not.toContain('data-seal-mode="demo"');
+  });
+
+  it("puts the demo Write step's occasion control inside the data-seal-mode=demo root", () => {
+    // /demo/live renders SealPage with no mode (demo by default). The root div
+    // opens before its children, so the occasion control follows that marker.
+    const demo = renderToStaticMarkup(
+      createElement(SealPage, {
+        rpId: "revenant.devclef.se",
+        appOrigin: "https://revenant.devclef.se",
+      }),
+    );
+    const root = demo.indexOf('data-seal-mode="demo"');
+    expect(root).toBeGreaterThanOrEqual(0);
+    const occasions = demo.search(/<fieldset class="[^"]*occasions[^"]*"/);
+    expect(occasions).toBeGreaterThan(root);
   });
 
   it("defaults to demo mode when no mode is given", () => {

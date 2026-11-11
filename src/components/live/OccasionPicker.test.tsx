@@ -38,6 +38,11 @@ describe("OccasionPicker (spec 11, L2.1, L2.9)", () => {
     expect(html).not.toContain('aria-pressed="true"');
   });
 
+  it("renders the occasion control as a fieldset with the occasions class the Write-step rule targets", () => {
+    const html = render(null);
+    expect(html).toMatch(/<fieldset class="[^"]*occasions[^"]*"/);
+  });
+
   it("marks only the chosen Occasion as pressed", () => {
     const html = render("work");
     expect((html.match(/aria-pressed="true"/g) ?? []).length).toBe(1);

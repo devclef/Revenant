@@ -270,6 +270,17 @@ describe("Seal_Page panel", () => {
     expect(panel).not.toMatch(/\bborder\s*:/);
     expect(panel).not.toContain("gold-leaf");
   });
+
+  it("gives the /seal whole-form panel the occasion control and no demo marker", () => {
+    // The /seal form is the panel the two-column rule would also match on its
+    // own. Its markup must carry the occasion control but no demo scope.
+    const html = renderToStaticMarkup(
+      createElement(WriteForm, formProps()),
+    );
+    expect(html).toContain('data-card="live-write"');
+    expect(html).toMatch(/<fieldset class="[^"]*occasions[^"]*"/);
+    expect(html).not.toContain('data-seal-mode="demo"');
+  });
 });
 
 describe("SealPage", () => {
