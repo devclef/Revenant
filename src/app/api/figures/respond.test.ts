@@ -1,4 +1,4 @@
-// Tests for the failure log line and the 500 answer in respond.ts (issue #313).
+// Tests for the failure log line and the fallback answer in respond.ts (issues #313, #337).
 // They drive respondFigures with stub read stores and check which step failed,
 // the one console.error line, and that no connection string reaches the log,
 // the body or the headers.
@@ -56,7 +56,8 @@ describe("failure step label", () => {
       throw new Error("no DATABASE_URL");
     });
 
-    expect(response.status).toBe(500);
+    // X3: a failed read answers the bundled fallback (200), not 500. The log line is unchanged.
+    expect(response.status).toBe(200);
     expect(loggedLines()).toEqual(["figures_unavailable step=read error=Error"]);
   });
 
@@ -65,7 +66,8 @@ describe("failure step label", () => {
       store({ latest: () => Promise.reject(new Error("latest failed")) }),
     );
 
-    expect(response.status).toBe(500);
+    // X3: a failed read answers the bundled fallback (200), not 500. The log line is unchanged.
+    expect(response.status).toBe(200);
     expect(loggedLines()).toEqual(["figures_unavailable step=read error=Error"]);
   });
 
@@ -74,7 +76,8 @@ describe("failure step label", () => {
       store({ success: () => Promise.reject(new Error("runs failed")) }),
     );
 
-    expect(response.status).toBe(500);
+    // X3: a failed read answers the bundled fallback (200), not 500. The log line is unchanged.
+    expect(response.status).toBe(200);
     expect(loggedLines()).toEqual(["figures_unavailable step=read error=Error"]);
   });
 
@@ -113,7 +116,8 @@ describe("failure code label", () => {
       }),
     );
 
-    expect(response.status).toBe(500);
+    // X3: a failed read answers the bundled fallback (200), not 500. The log line is unchanged.
+    expect(response.status).toBe(200);
     expect(loggedLines()).toEqual([
       "figures_unavailable step=read error=Error code=42P01",
     ]);
@@ -168,7 +172,10 @@ describe("secret redaction", () => {
 
     expect(text).not.toContain("secret");
     expect(text).not.toContain("postgres");
-    expect(JSON.parse(text)).toEqual({ error: "figures_unavailable" });
+    // X3: the body is the fallback, not an error. It must still carry no secret.
+    expect(JSON.parse(text)).toEqual(
+      fallbackResponse("2026-11-05T15:00:00Z"),
+    );
 
     for (const [name, value] of response.headers.entries()) {
       expect(name, name).not.toMatch(/secret|postgres/i);
@@ -210,7 +217,8 @@ describe("one line per failure", () => {
     for (const [label, readStore] of cases) {
       errorSpy.mockClear();
       const response = await failingRespond(readStore);
-      expect(response.status, label).toBe(500);
+      // X3: a failed read answers the bundled fallback (200), not 500.
+      expect(response.status, label).toBe(200);
       expect(loggedLines(), label).toHaveLength(1);
       expect(loggedLines()[0], label).not.toContain("\n");
     }

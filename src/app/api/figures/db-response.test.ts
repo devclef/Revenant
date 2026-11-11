@@ -375,7 +375,7 @@ describe("database mode examples", () => {
     }
   });
 
-  it("answers 500 with a neutral body when the store fails, and the detail stays out", async () => {
+  it("answers the bundled fallback with 200 when the store fails, and the detail stays out", async () => {
     const store = new MemoryReadStore(
       [],
       [],
@@ -388,10 +388,11 @@ describe("database mode examples", () => {
     });
     const text = await response.text();
 
-    expect(response.status).toBe(500);
+    // X3: a failed read answers the bundled fallback (200), not 500.
+    expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
-    expect(JSON.parse(text)).toEqual({ error: "figures_unavailable" });
-    expect(text).not.toMatch(/postgres/i);
+    // X3: the body is the fallback, not an error. It must still carry no secret.
+    expect(parseFiguresResponse(JSON.parse(text)).ok).toBe(true);
     expect(text).not.toMatch(/secret/);
   });
 });
