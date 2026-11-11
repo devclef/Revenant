@@ -30,10 +30,6 @@ export const SCENE_COPY = {
   /** The chip beside the wordmark that marks the demo, shown in capitals by CSS. */
   demoChip: "Demo",
 
-  /** The notice on the persona page. `{name}` is the persona's name. */
-  personaNotice:
-    "{name} is fictional. This letter was prepared later as a demo.",
-
   /** The persona page's headline (spec 09 F7). `{name}` is the persona's name. */
   personaHeading: "{name}'s letter",
 

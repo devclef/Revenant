@@ -9,7 +9,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { holdsEnvelope } from "./held-envelope";
+import { holdsEnvelope, showsHeldDates } from "./held-envelope";
 
 const PHONE_WIDTHS = [360, 390];
 const DESKTOP_AND_WIDE_WIDTHS = [900, 1280, 1366, 2560];
@@ -82,4 +82,26 @@ describe("holdsEnvelope before the reveal is unchanged by width (spec 09 C5.5)",
       );
     }
   });
+});
+
+// Spec 11 P3.1: the held Envelope's date lines are off on the recall card tags,
+// because TestifyContext states the dates there, and on for every other tag.
+describe("showsHeldDates (spec 11 P3.1)", () => {
+  for (const tag of ["recall", "submitting", "submit_failed"] as const) {
+    it(`hides the held Envelope dates on the ${tag} card`, () => {
+      expect(showsHeldDates(tag)).toBe(false);
+    });
+  }
+
+  for (const tag of [
+    "loading",
+    "sealed",
+    "openable",
+    "verifying",
+    "reveal",
+  ] as const) {
+    it(`shows the held Envelope dates on ${tag}`, () => {
+      expect(showsHeldDates(tag)).toBe(true);
+    });
+  }
 });

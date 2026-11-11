@@ -52,7 +52,7 @@ import { useSequence } from "./skip";
 import { SoundToggle } from "./sound/SoundToggle";
 import { SoundEnabledContext } from "./sound/SoundEnabledContext";
 import { soundCues } from "./sound/cues";
-import { StageContext } from "./stage-context";
+import { StageContext, useStageReport } from "./stage-context";
 import {
   emergingStatus,
   focusTargetFor,
@@ -228,6 +228,14 @@ function CeremonyRegion({
   // it after mount, so `data-ceremony` tracks `seal` while a break is in
   // progress, then settles.
   const stage = stageFor(state, localView);
+
+  // Report the Stage up to SceneShell, so the Top_Bar above this region can
+  // show the persona notice from `marks` onward. Runs after mount only, like
+  // the other reads of the live Stage.
+  const reportStage = useStageReport();
+  useEffect(() => {
+    reportStage?.(stage);
+  }, [reportStage, stage]);
 
   // `light` counts as `full` for the attribute: Stages still change by motion,
   // only lighter (R3.2). Only `calm` turns motion off.

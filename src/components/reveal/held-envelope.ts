@@ -24,6 +24,22 @@ const HELD_TAGS: ReadonlySet<FlowState["tag"]> = new Set<FlowState["tag"]>([
   "submit_failed",
 ]);
 
+/**
+ * The tags of the recall card. TestifyContext states the persona's written-as-of
+ * and opens dates there, so the held Envelope must not repeat them (spec 11 P3.1).
+ */
+const RECALL_CARD_TAGS: ReadonlySet<FlowState["tag"]> = new Set<
+  FlowState["tag"]
+>(["recall", "submitting", "submit_failed"]);
+
+/**
+ * Whether the held Envelope shows its two date lines. False on the recall card
+ * tags, true on every other tag.
+ */
+export function showsHeldDates(tag: FlowState["tag"]): boolean {
+  return !RECALL_CARD_TAGS.has(tag);
+}
+
 export type HeldEnvelopeInput = {
   tag: FlowState["tag"];
   /** The reveal stage, or null outside the reveal. */

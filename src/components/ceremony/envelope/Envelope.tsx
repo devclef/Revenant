@@ -79,6 +79,12 @@ export type EnvelopeProps = {
   animate?: boolean;
   /** Optional extra class on the root <svg>. */
   className?: string;
+  /**
+   * Whether the closed front shows the two persona date lines. Defaults to
+   * `true`. The held Envelope passes `false` during the recall card, because
+   * TestifyContext already states both dates there (spec 11 P3.1).
+   */
+  showDates?: boolean;
 };
 
 /**
@@ -282,6 +288,7 @@ export function Envelope({
   persona,
   animate = true,
   className,
+  showDates = true,
 }: EnvelopeProps): ReactElement {
   const rootClass = [
     styles.envelope,
@@ -373,7 +380,7 @@ export function Envelope({
 
       {/* The date lines, as selectable HTML text over the front. They show only
           on the closed front (R3.7), and never a sealed-on date. */}
-      {state === "closed" && persona !== undefined ? (
+      {state === "closed" && persona !== undefined && showDates ? (
         <div className={styles.lines}>
           <p className={`${styles.line} ${styles.date}`} data-date>
             {writtenAsOf}

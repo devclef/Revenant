@@ -85,7 +85,7 @@ import { Reveal } from "./Reveal";
 import { FlowError, type FlowErrorKind } from "./FlowError";
 import type { FlowState, OpenFailedKind } from "./opening-machine";
 import type { PickCandidates } from "./sample-pick";
-import { holdsEnvelope } from "./held-envelope";
+import { holdsEnvelope, showsHeldDates } from "./held-envelope";
 import { useViewportWidth } from "./viewport-width";
 import styles from "./reveal.module.css";
 
@@ -125,7 +125,12 @@ function HeldEnvelope({
   const state = tag === "reveal" && stage === 1 ? "turned" : "closed";
   return (
     <div className={heldStyles.heldEnvelope} ref={slotRef}>
-      <Envelope state={state} layout="responsive" persona={persona} />
+      <Envelope
+        state={state}
+        layout="responsive"
+        persona={persona}
+        showDates={showsHeldDates(tag)}
+      />
     </div>
   );
 }
