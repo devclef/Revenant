@@ -86,6 +86,7 @@ export type PersonaResult =
  */
 export type FailureReason =
   | "missing_then_figure"
+  | "invalid_payload"
   | "stored_letter_differs"
   | "real_letter_collision"
   | "store_rejected"
@@ -140,6 +141,16 @@ function pickMetricDefinition(metric: MetricDefinitionV1): MetricDefinitionV1 {
 }
 
 /**
+ * The result of {@link buildPersonaPayload}. `missing_then_figure` carries the
+ * metric ID without a "then" figure; `invalid_payload` means the no-metrics
+ * payload failed payloadV1Schema and must not be stored.
+ */
+export type BuildResult =
+  | { ok: true; payload: PayloadV1 }
+  | { ok: false; reason: "missing_then_figure"; metricId: string }
+  | { ok: false; reason: "invalid_payload" };
+
+/**
  * Build the sealed payload for one persona (R4.1, R4.2, R4.4, R2.8).
  *
  * For each tracked metric, in list order, it takes the "then" figure from
@@ -159,7 +170,7 @@ export function buildPersonaPayload(
   p: Persona,
   text: string,
   figures: LoadedFigures,
-): { ok: true; payload: PayloadV1 } | { ok: false; metricId: string } {
+): BuildResult {
   // A persona with no metrics (the Text_Persona) carries only the questions its
   // author wrote. Its payload has no metrics and no figures, and each author
   // question is sealed as a text question with id a1, a2, ... by position.
@@ -169,7 +180,9 @@ export function buildPersonaPayload(
       answer_type: "text" as const,
       text: question,
     }));
-    const payload = payloadV1Schema.parse({
+    // safeParse, not parse: a payload that fails payloadV1Schema returns a
+    // reason here and is never stored (spec 10 P2.2).
+    const checked = payloadV1Schema.safeParse({
       format_version: 1,
       letter_text: text,
       written_as_of: p.written_as_of,
@@ -177,7 +190,10 @@ export function buildPersonaPayload(
       figures: [],
       recall_questions: text_questions,
     });
-    return { ok: true, payload };
+    if (!checked.success) {
+      return { ok: false, reason: "invalid_payload" };
+    }
+    return { ok: true, payload: checked.data };
   }
 
   const metrics: MetricDefinitionV1[] = [];
@@ -187,7 +203,7 @@ export function buildPersonaPayload(
     const then = thenAndNow(metric_id, p.written_as_of, figures).then;
     if (!then.found) {
       // The first metric without a "then" figure fails the whole build (R4.3).
-      return { ok: false, metricId: metric_id };
+      return { ok: false, reason: "missing_then_figure", metricId: metric_id };
     }
 
     // Copy the figure with a plain spread: no field changed or added, and the
@@ -198,7 +214,7 @@ export function buildPersonaPayload(
     if (series === undefined) {
       // thenAndNow found a figure, so the series exists; this is unreachable in
       // practice. Fail the same metric rather than build an invalid payload.
-      return { ok: false, metricId: metric_id };
+      return { ok: false, reason: "missing_then_figure", metricId: metric_id };
     }
     metrics.push(pickMetricDefinition(series.metric));
   }
@@ -349,7 +365,11 @@ async function sealOne(
     // Step 1: build the payload. A missing "then" figure fails this persona.
     const text = deps.readLetterText(persona.letter_path);
     const built = buildPersonaPayload(persona, text, deps.figures);
-    if (!built.ok) {
+    if (!built.ok && built.reason === "invalid_payload") {
+      // The payload failed payloadV1Schema: nothing is stored (spec 10 P2.2).
+      return { key, letterId, result: "failed", reason: "invalid_payload" };
+    }
+    if (!built.ok && built.reason === "missing_then_figure") {
       return {
         key,
         letterId,
@@ -438,6 +458,8 @@ export function formatResultLine(r: PersonaResult): string {
       return `${prefix} failed: no then figure for ${r.metricId ?? ""} at ${
         r.writtenAsOf ?? ""
       }`;
+    case "invalid_payload":
+      return `${prefix} failed: the persona payload does not match the v1 schema`;
     case "stored_letter_differs":
       return `${prefix} failed: the stored letter can't be reused; give this persona a new letter ID`;
     case "real_letter_collision":
