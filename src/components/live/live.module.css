@@ -1092,3 +1092,13 @@
     margin: 0;
   }
 }
+
+/* Below 480 px the label and remove button fill the first line of a question
+   row, so the field is 58 to 88 px wide. The field takes the second line
+   at full width instead. Wider phones and desktop keep the one-line row above. */
+@media (max-width: 480px) {
+  .questionRow .textarea {
+    grid-row: 2;
+    grid-column: 1 / -1;
+  }
+}
