@@ -116,6 +116,20 @@ describe("SealPage in real mode", () => {
     expect(html).toContain('data-live-step="write"');
   });
 
+  it("renders the /seal form outside the demo scope the two-column rule needs", () => {
+    const html = renderToStaticMarkup(
+      createElement(SealPage, {
+        rpId: "revenant.devclef.se",
+        appOrigin: "https://revenant.devclef.se",
+        mode: "real",
+      }),
+    );
+    // The panel is the single form, and no ancestor carries data-seal-mode="demo".
+    expect(html).toContain('data-card="live-write"');
+    expect(html).toContain('data-seal-mode="real"');
+    expect(html).not.toContain('data-seal-mode="demo"');
+  });
+
   it("defaults to demo mode when no mode is given", () => {
     const html = renderToStaticMarkup(
       createElement(SealPage, {

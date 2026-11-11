@@ -66,28 +66,46 @@ describe("Write step fallback 1: one-line question rows", () => {
 
 describe("Write step fallback 2: two columns at 900 px and wider", () => {
   const block = mediaBlock("(min-width: 900px) and (max-height: 900px)");
+  const DEMO = '[data-seal-mode="demo"] .panel:has(> .occasions)';
 
-  it("only applies to the Write step panel, which holds the occasion control", () => {
-    expect(block).toContain(".panel:has(> .occasions) {");
+  it("only applies to the demo Write step, which holds the occasion control", () => {
+    expect(block).toContain(`${DEMO} {`);
     expect(block).toMatch(
-      /\.panel:has\(> \.occasions\) \{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\)/,
+      /\[data-seal-mode="demo"\] \.panel:has\(> \.occasions\) \{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\)/,
     );
+  });
+
+  it("scopes every rule in the block to the demo page, so /seal keeps one column", () => {
+    const code = block.replace(/\/\*[\s\S]*?\*\//g, "");
+    const selectors = [...code.matchAll(/([^{}]+)\{/g)].map(
+      (m) => m[1]?.trim() ?? "",
+    );
+    expect(selectors.length).toBeGreaterThan(0);
+    for (const selector of selectors) {
+      expect(selector.startsWith(DEMO)).toBe(true);
+    }
+  });
+
+  it("keeps the rule to the demo scope, not the /seal real-mode panel", () => {
+    // SealPage renders the real form under data-seal-mode="real" (SealPage.test.tsx).
+    expect(block).toContain(DEMO);
+    expect(block).not.toContain('[data-seal-mode="real"]');
   });
 
   it("places the letter under the occasion control in the left column", () => {
     expect(block).toMatch(
-      /\.panel:has\(> \.occasions\) > div\.field \{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/,
+      /\[data-seal-mode="demo"\] \.panel:has\(> \.occasions\) > div\.field \{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/,
     );
   });
 
   it("places the questions beside the left column, spanning two rows", () => {
     expect(block).toMatch(
-      /\.panel:has\(> \.occasions\) > fieldset\.field \{[^}]*grid-column:\s*2;[^}]*grid-row:\s*2 \/ span 2;/,
+      /\[data-seal-mode="demo"\] \.panel:has\(> \.occasions\) > fieldset\.field \{[^}]*grid-column:\s*2;[^}]*grid-row:\s*2 \/ span 2;/,
     );
   });
 
   it("closes the left column with Next, in the row after the letter", () => {
-    const next = ruleBody(block, ".panel:has(> .occasions) > .actions");
+    const next = ruleBody(block, `${DEMO} > .actions`);
     expect(next).toMatch(/grid-column:\s*1;/);
     expect(next).toMatch(/grid-row:\s*4;/);
   });
