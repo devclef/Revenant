@@ -9,11 +9,26 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { REVEAL_COPY } from "@/components/reveal/copy";
+import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-date";
 import { CEREMONY_COPY } from "../copy";
+import { PersonaIntro } from "./PersonaIntro";
+import { TopBar, personaNoticeText, topBarShowsNotice } from "../scene/TopBar";
 import { TestifyContext, type TestifyContextProps } from "./TestifyContext";
+
+// TopBar reads the motion and skip contexts. The count test renders the static
+// markup only, so the hooks return fixed values here (as scene-shell.test does).
+vi.mock("../motion", () => ({
+  useMotion: () => ({ mode: "full", setCalm: vi.fn() }),
+  MotionProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
+
+vi.mock("../skip", () => ({
+  useSequence: () => ({ hasActive: false, register: () => () => {}, skipAll: vi.fn() }),
+  SkipProvider: ({ children }: { children: React.ReactNode }) => children,
+}));
 
 const persona: TestifyContextProps = {
   kind: "persona",
@@ -84,6 +99,83 @@ describe("TestifyContext: Memory_Line (spec 10 C4.2)", () => {
   it("is a plain line, not a card, and joins the phone size rule", () => {
     expect(desktopRules).toMatch(/\.testifyMemory \{[^}]*font-size: 0\.9rem/);
     expect(phoneRules).toMatch(/\.testifyNotice,[\s\S]*\.testifyMemory[\s\S]*font-size: 0\.9375rem/);
+  });
+});
+
+describe("TestifyContext: the four recall items appear once (spec 11 P3.5)", () => {
+  type PersonaListEntry = {
+    key: string;
+    display_name: string;
+    intro_line: string;
+    written_as_of: string;
+    opens_at: string;
+    metrics: unknown[];
+  };
+  const personaList = (
+    JSON.parse(
+      readFileSync(resolve(__dirname, "../../../../content/personas/personas.json"), "utf8"),
+    ) as { personas: PersonaListEntry[] }
+  ).personas;
+
+  /** Every persona's recall markup: the Top_Bar, PersonaIntro and TestifyContext. */
+  function recallMarkup(p: PersonaListEntry): string {
+    const top = renderToStaticMarkup(
+      createElement(TopBar, { personaName: p.display_name, stage: "recall" }),
+    );
+    const intro = renderToStaticMarkup(
+      createElement(PersonaIntro, {
+        personaName: p.display_name,
+        introLine: p.intro_line,
+        writtenAsOf: p.written_as_of,
+        opensAt: p.opens_at,
+        questionCount: p.metrics.length,
+        stage: "recall",
+      }),
+    );
+    const testify = render({
+      kind: "persona",
+      personaName: p.display_name,
+      writtenAsOf: p.written_as_of,
+      opensAt: p.opens_at,
+    });
+    return `${top}${intro}${testify}`;
+  }
+
+  function countOf(html: string, needle: string): number {
+    return html.split(needle).length - 1;
+  }
+
+  it("reads at least one persona from the Persona_List", () => {
+    expect(personaList.length).toBeGreaterThan(0);
+  });
+
+  it.each(personaList.map((p) => [p.key, p] as const))(
+    "%s: counts each recall item exactly once in recall",
+    (_key, p) => {
+      const html = recallMarkup(p);
+      const writtenText = CEREMONY_COPY.envelopeWrittenAsOf.replace(
+        "{date}",
+        formatCalendarDate(p.written_as_of),
+      );
+      const opensText = CEREMONY_COPY.envelopeOpens.replace(
+        "{date}",
+        formatLetterDate(p.opens_at, { kind: "utc" }),
+      );
+      const counts = {
+        fictionalNote: countOf(html, personaNoticeText(p.display_name)),
+        writtenAsOf: countOf(html, writtenText),
+        opens: countOf(html, opensText),
+        sealIntact: countOf(html, REVEAL_COPY.sealIntact),
+      };
+      expect(counts).toEqual({ fictionalNote: 1, writtenAsOf: 1, opens: 1, sealIntact: 1 });
+    },
+  );
+
+  it("shows no fictional-persona note in the Top_Bar during recall at either width", () => {
+    for (const p of personaList) {
+      expect(topBarShowsNotice(p.display_name, false, "recall")).toBe(false);
+      expect(topBarShowsNotice(p.display_name, true, "recall")).toBe(false);
+    }
   });
 });
 

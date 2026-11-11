@@ -5,9 +5,10 @@
 // The Top_Bar (design.md "Providers and the Top_Bar", R8.1 to R8.6). Fixed to
 // the top of the window. It holds the wordmark and the Demo chip, and on the
 // persona page the notice, Calm and Skip, in that order. The notice shows at
-// 600 px and wider on the persona page. Below 600 px it shows only once the
-// Stage is after `recall` (the Compact_Top_Bar). Before that, PersonaIntro
-// carries the notice at that width.
+// 600 px and wider on the persona page, except during `recall`, where
+// TestifyContext holds it. Below 600 px it shows only once the Stage is after
+// `recall` (the Compact_Top_Bar). Before that, PersonaIntro carries the notice
+// at that width.
 //
 // Skip shows only while a sequence is registered (`useSequence().hasActive`),
 // so it is in the Tab order only then. It is a native button, so Enter and
@@ -83,8 +84,9 @@ export type TopBarProps = {
   sound?: TopBarSound;
   /**
    * The current Stage of the persona page, reported up from the Ceremony.
-   * The notice shows below 600 px only once this is a Stage after `recall`.
-   * Undefined before the first report (the server markup).
+   * The notice is not shown during `recall` (TestifyContext holds it). Below
+   * 600 px it shows only once this is a Stage after `recall`. Undefined before
+   * the first report (the server markup).
    */
   stage?: Stage;
 };
@@ -102,8 +104,10 @@ export function personaNoticeText(personaName: string): string {
 
 /**
  * Whether the Top_Bar renders the persona notice. It needs a persona page.
- * At 600 px and wider it always shows. Below 600 px (`compact`) it shows only
- * for a Stage after `recall`, so PersonaIntro carries it before that.
+ * During `recall` it never shows: TestifyContext holds the one notice there
+ * (spec 11 P3.1, P3.5). Otherwise at 600 px and wider it shows. Below 600 px
+ * (`compact`) it shows only for a Stage after `recall`, so PersonaIntro carries
+ * it before that.
  */
 export function topBarShowsNotice(
   personaName: string | undefined,
@@ -111,6 +115,7 @@ export function topBarShowsNotice(
   stage?: Stage,
 ): boolean {
   if (personaName === undefined) return false;
+  if (stage === "recall") return false;
   if (!compact) return true;
   return stage !== undefined && stageIsAfterRecall(stage);
 }

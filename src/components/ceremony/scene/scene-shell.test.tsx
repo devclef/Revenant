@@ -154,16 +154,22 @@ describe("TopBar (R8.1 to R8.6)", () => {
     expect(html).toContain(personaNoticeText("Maya"));
   });
 
-  it("shows the note at both widths in every non-recall Stage, and at 600 px and wider in recall", () => {
-    // At 600 px and wider the Top_Bar always shows the note. Below 600 px it
-    // shows the note only from `marks` onward, so PersonaIntro carries it
-    // before that and the recall Stage keeps its one note, in TestifyContext.
+  it("shows the note at both widths in every non-recall Stage, and never in recall (spec 11 P3.1)", () => {
+    // At 600 px and wider the Top_Bar shows the note in every Stage except
+    // `recall`, where TestifyContext holds the one note. Below 600 px it shows
+    // the note only from `marks` onward, so PersonaIntro carries it before that.
     for (const stage of ALL_STAGES) {
+      if (stage === "recall") {
+        expect(topBarShowsNotice("Maya", false, stage), "recall wide").toBe(false);
+        expect(topBarShowsNotice("Maya", true, stage), "recall compact").toBe(false);
+        const html = render(createElement(TopBar, { personaName: "Maya", stage }));
+        expect(html, "recall markup").not.toContain(personaNoticeText("Maya"));
+        continue;
+      }
       expect(topBarShowsNotice("Maya", false, stage), `${stage} wide`).toBe(true);
       const html = render(createElement(TopBar, { personaName: "Maya", stage }));
       expect(html, `${stage} markup`).toContain(personaNoticeText("Maya"));
     }
-    expect(topBarShowsNotice("Maya", true, "recall")).toBe(false);
   });
 
   it("shows the persona notice when given a persona name, and no notice otherwise", () => {
