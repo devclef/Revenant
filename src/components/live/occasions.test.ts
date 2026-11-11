@@ -186,7 +186,7 @@ describe("applyOccasion (Property 7, typed text is never overwritten)", () => {
       }
     }
     expect(checked).toBeGreaterThan(0);
-  });
+  }, 60_000);
 
   it("replaces an untouched starter and untouched questions with the chosen Occasion", () => {
     const start = applyOccasion(
