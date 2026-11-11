@@ -4,6 +4,7 @@
 // character, and no Scene_Copy_Module string holds a scoring word (R24.6, R24.7).
 // Only string values are checked, never identifiers.
 
+import { CEREMONY_COPY } from "../copy";
 import { describe, expect, it } from "vitest";
 
 import { SCENE_COPY } from "./copy";
@@ -40,10 +41,11 @@ describe("SCENE_COPY is exact (Property 23)", () => {
     expect(SCENE_COPY.demoChip).toBe("Demo");
   });
 
-  it("holds the persona notice", () => {
-    expect(SCENE_COPY.personaNotice).toBe(
+  it("holds the persona notice in CEREMONY_COPY, not in SCENE_COPY", () => {
+    expect(CEREMONY_COPY.personaNotice).toBe(
       "{name} is fictional. This letter was prepared later as a demo.",
     );
+    expect(SCENE_COPY).not.toHaveProperty("personaNotice");
   });
 
   it("holds the demo link copy", () => {

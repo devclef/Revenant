@@ -30,6 +30,14 @@ export const CEREMONY_COPY = {
   /** Skips the current stage's motion and settles it at once. */
   skip: "Skip",
 
+  // --- Persona notice (Top_Bar and Persona_Intro) ---
+
+  /**
+   * The fictional-persona notice. `{name}` is the persona's name. It shows in
+   * the Top_Bar and on the Persona_Intro, and it is the same text in both.
+   */
+  personaNotice: "{name} is fictional. This letter was prepared later as a demo.",
+
   // --- Persona_Intro (spec 09 C1.1, P5.3) ---
 
   /** The question count line. `{n}` is the number of recall questions (two or more). */

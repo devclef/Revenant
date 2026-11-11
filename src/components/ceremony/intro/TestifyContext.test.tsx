@@ -12,7 +12,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { REVEAL_COPY } from "@/components/reveal/copy";
-import { SCENE_COPY } from "../scene/copy";
+import { CEREMONY_COPY } from "../copy";
 import { TestifyContext, type TestifyContextProps } from "./TestifyContext";
 
 const persona: TestifyContextProps = {
@@ -40,7 +40,7 @@ describe("TestifyContext: persona letter", () => {
 
   it("shows the fictional-persona notice and the A letter from line", () => {
     const html = render(persona);
-    expect(html).toContain(SCENE_COPY.personaNotice.replace("{name}", "Maya"));
+    expect(html).toContain(CEREMONY_COPY.personaNotice.replace("{name}", "Maya"));
     expect(html).toContain(REVEAL_COPY.contextFrom.replace("{name}", "Maya"));
   });
 

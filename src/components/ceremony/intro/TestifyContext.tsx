@@ -10,7 +10,6 @@
 // Server-safe: no hooks, no browser APIs, no import from lib/crypto.
 
 import { CEREMONY_COPY } from "../copy";
-import { SCENE_COPY } from "../scene/copy";
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import { formatCalendarDate, formatCalendarMonth, formatLetterDate } from "@/components/ui/letter-date";
 
@@ -56,7 +55,7 @@ export function TestifyContext(props: TestifyContextProps) {
 
   return (
     <section className={styles.testify} data-testify-context="" data-block="testify-context">
-      <p className={styles.testifyNotice}>{fillName(SCENE_COPY.personaNotice, props.personaName)}</p>
+      <p className={styles.testifyNotice}>{fillName(CEREMONY_COPY.personaNotice, props.personaName)}</p>
       <p className={styles.testifyFrom}>{fillName(REVEAL_COPY.contextFrom, props.personaName)}</p>
       <p className={styles.testifyDates}>{`${writtenText}${DATE_SEPARATOR}${opensText}`}</p>
       <p className={styles.testifySeal}>{REVEAL_COPY.sealIntact}</p>

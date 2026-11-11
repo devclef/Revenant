@@ -302,10 +302,10 @@
 /* The Compact_Top_Bar (spec 09 P5, OD13 a). Below 600 px (PHONE_BELOW_PX; the
    largest width under it is 599.98px) the bar is one row, 56 px tall. Motion
    and Skip are 44 x 44 icon controls, named by aria-label and title. The
-   notice is not in the bar here: TopBar does not render it below 600 px, and
-   PersonaIntro shows it as its first line. Declared after the 900 px block, so
-   it wins below 600 px. The bar's 56 px height is COMPACT_TOP_BAR_PX in
-   constants.ts. */
+   notice is in the bar here from `marks` onward: TopBar shows it at this width
+   only for a Stage after `recall`. Before that, PersonaIntro shows it as its
+   first line. Declared after the 900 px block, so it wins below 600 px. The
+   bar's 56 px height is COMPACT_TOP_BAR_PX in constants.ts. */
 @media (max-width: 599.98px) {
   .topbar {
     flex-wrap: nowrap;

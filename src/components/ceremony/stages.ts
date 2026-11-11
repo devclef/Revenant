@@ -37,6 +37,25 @@ export type Stage =
   | "close"
   | "error";
 
+/** The Stages in the order the reveal reaches them. `error` can follow any of them, so it sorts last. */
+const STAGE_ORDER: readonly Stage[] = [
+  "emerging",
+  "sealed",
+  "envelope",
+  "recall",
+  "marks",
+  "seal",
+  "letter",
+  "figures",
+  "close",
+  "error",
+];
+
+/** True for every Stage after `recall` (`marks` onward, and `error`). */
+export function stageIsAfterRecall(stage: Stage): boolean {
+  return STAGE_ORDER.indexOf(stage) > STAGE_ORDER.indexOf("recall");
+}
+
 /**
  * View-local animation state, held by the running views and reported up to
  * `CeremonyRoot` so `data-ceremony` can name the Stage. It is not flow state.

@@ -19,7 +19,6 @@
 // lib/seal-format.
 
 import { CEREMONY_COPY } from "../copy";
-import { SCENE_COPY } from "../scene/copy";
 import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-date";
 
 import styles from "./intro.module.css";
@@ -57,7 +56,7 @@ export function PersonaIntro({
   questionCount,
   flowMinutes,
 }: PersonaIntroProps) {
-  const notice = SCENE_COPY.personaNotice.replace("{name}", personaName);
+  const notice = CEREMONY_COPY.personaNotice.replace("{name}", personaName);
   const writtenText = CEREMONY_COPY.envelopeWrittenAsOf.replace(
     "{date}",
     formatCalendarDate(writtenAsOf),

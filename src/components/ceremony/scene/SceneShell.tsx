@@ -12,6 +12,8 @@
 // the Soil backdrop from the shell, with no Ghost. On the persona page the
 // Ceremony region carries it instead, so the shell adds none.
 
+import { StageReportContext } from "../stage-context";
+import type { Stage } from "../stages";
 import { useMotion, MotionProvider } from "../motion";
 import { LocalViewProvider } from "../local-view";
 import { SkipProvider } from "../skip";
@@ -75,6 +77,11 @@ function SceneFrame(props: SceneShellProps) {
         }
       : undefined;
 
+  // The current Stage of the persona page's Ceremony region, reported up by
+  // CeremonyRegion through StageReportContext. The Top_Bar reads it to show the
+  // persona notice after `recall`. Undefined until the region has reported.
+  const [topBarStage, setTopBarStage] = useState<Stage | undefined>(undefined);
+
   // The landing and index roots carry the page's one data-ceremony. `light`
   // counts as `full`, because only `calm` turns motion off (design.md "Motion
   // modes"). The index root is marked "index" (R26.4).
@@ -97,6 +104,9 @@ function SceneFrame(props: SceneShellProps) {
 
   return (
     <SoundEnabledContext.Provider value={soundOn}>
+    <StageReportContext.Provider
+      value={props.variant === "persona" ? setTopBarStage : null}
+    >
     <div
       className={
         props.variant === "plain"
@@ -108,7 +118,7 @@ function SceneFrame(props: SceneShellProps) {
       {/* The index variant gets the Soil backdrop from the shell, with no Ghost. */}
       {props.variant === "index" || plainBackdrop ? <SceneBackdrop /> : null}
       {props.variant === "persona" ? (
-        <TopBar personaName={props.personaName} sound={sound} />
+        <TopBar personaName={props.personaName} sound={sound} stage={topBarStage} />
       ) : props.variant === "plain" ? (
         <TopBar demo={props.demo ?? true} controls={props.controls ?? "calm"} />
       ) : (
@@ -131,6 +141,7 @@ function SceneFrame(props: SceneShellProps) {
         )}
       </main>
     </div>
+    </StageReportContext.Provider>
     </SoundEnabledContext.Provider>
   );
 }

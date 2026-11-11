@@ -11,7 +11,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { CEREMONY_COPY } from "../copy";
-import { SCENE_COPY } from "../scene/copy";
 import { PersonaIntro, introQuestionsText, type PersonaIntroProps } from "./PersonaIntro";
 
 const base: PersonaIntroProps = {
@@ -66,7 +65,7 @@ describe("PersonaIntro content (spec 09 C1.1)", () => {
 
   it("puts the fictional-persona notice first, with the name filled in", () => {
     const html = render();
-    const notice = SCENE_COPY.personaNotice.replace("{name}", "Maya");
+    const notice = CEREMONY_COPY.personaNotice.replace("{name}", "Maya");
     expect(html).toContain(notice);
     expect(html.indexOf(notice)).toBeLessThan(html.indexOf("writes on a May Sunday"));
     expect(html.indexOf(notice)).toBeLessThan(html.indexOf("Written as of"));
