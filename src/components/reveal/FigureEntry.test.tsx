@@ -9,8 +9,9 @@ import { FigureEntry, type FigureEntryProps } from "./FigureEntry";
 import { REVEAL_COPY } from "./copy";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
 import { FIG_VALUE_SIZE } from "@/components/ceremony/constants";
-import { computeChange, type DisplayRescale } from "@/lib/figures";
+import { computeChange, formatPeriod, type DisplayRescale } from "@/lib/figures";
 import type { FigureV1 } from "@/lib/seal-format";
+import { nowMessageFor } from "./now-message";
 
 // Feature: 09-demo-polish, task 16 (issue #263). FigureEntry renders one
 // Receipt_Card (C3.1 to C3.3). These tests replace the spec 07 FigureEntry
@@ -241,6 +242,63 @@ describe("FigureEntry carries its own source, the nowNote and the primary hook",
   it("marks the card as the primary control only when asked", () => {
     expect(render({ primary: true })).toContain('data-primary-control=""');
     expect(render()).not.toContain("data-primary-control");
+  });
+});
+
+// Issue #339 (X3): a Now_Figure that is a bundled fallback shows its own period
+// and retrieved date through the Bundled_Note. Reason for this block: the
+// fallback path was rendered by FigureEntry but had no test pinning the now
+// period and the note to the now row. FigureEntry itself is unchanged.
+describe("FigureEntry shows a fallback Now_Figure with its own period and the Bundled_Note", () => {
+  const FALLBACK_NOW: Readonly<FigureV1> = {
+    ...NOW,
+    period: "2026-09",
+    retrieved_at: "2026-10-30T14:02:11Z",
+  };
+  const BUNDLED_NOTE = nowMessageFor({
+    kind: "found",
+    fallback: true,
+    retrievedAt: FALLBACK_NOW.retrieved_at,
+  });
+
+  it("shows the fallback figure's own period, not the then period, in the now row", () => {
+    const html = plain(
+      render({
+        now: FALLBACK_NOW,
+        change: comparable(THEN, FALLBACK_NOW),
+        nowNote: BUNDLED_NOTE ?? undefined,
+      }),
+    );
+    expect(html).toContain(formatPeriod(FALLBACK_NOW.period, FALLBACK_NOW.region));
+    expect(html).toContain(formatPeriod(THEN.period, THEN.region));
+  });
+
+  it("draws the Bundled_Note under the now row, after it", () => {
+    const html = plain(
+      render({
+        now: FALLBACK_NOW,
+        change: comparable(THEN, FALLBACK_NOW),
+        nowNote: BUNDLED_NOTE ?? undefined,
+      }),
+    );
+    expect(BUNDLED_NOTE).not.toBeNull();
+    // Static markup entity-encodes the apostrophe in "hasn't".
+    const noteAt = html.indexOf((BUNDLED_NOTE ?? "").replace(/'/g, "&#x27;"));
+    expect(noteAt).toBeGreaterThan(-1);
+    expect(noteAt).toBeGreaterThan(html.indexOf('data-role="now"'));
+    expect(html).toContain("30 October 2026");
+  });
+
+  it("keeps the then figure and its period when the now figure is a fallback", () => {
+    const html = plain(
+      render({
+        now: FALLBACK_NOW,
+        change: comparable(THEN, FALLBACK_NOW),
+        nowNote: BUNDLED_NOTE ?? undefined,
+      }),
+    );
+    expect(html).toContain('data-role="then"');
+    expect(html).toContain(REVEAL_COPY.then);
   });
 });
 

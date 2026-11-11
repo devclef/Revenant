@@ -49,6 +49,12 @@ const RETIRED_PHRASES: readonly RetiredPhrase[] = [
     pattern: /European Parliament election/i,
   },
   { name: "\"Pick up the letter\"", pattern: /pick up the letter/i },
+  // Issue #339 (X3): the generic failed-request line retired this phrase. The
+  // now row says only that no newer figure could be reached.
+  {
+    name: "\"Check your connection and reload the page\"",
+    pattern: /check your connection and reload the page/i,
+  },
   {
     name: "the old seal instruction \"Press and hold the seal to break it, or use the button below.\"",
     pattern: /press and hold the seal to break it, or use the button below\./i,
