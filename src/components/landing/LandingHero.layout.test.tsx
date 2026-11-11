@@ -16,6 +16,16 @@ import { LandingHero } from "./LandingHero";
 import { RitualSection } from "./RitualSection";
 
 const here = __dirname;
+
+/** The escapes React applies to text nodes in static markup. */
+function escapeHtml(text: string): string {
+  return text
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#x27;");
+}
 const css = readFileSync(resolve(here, "landing.module.css"), "utf8").replace(
   /\/\*[\s\S]*?\*\//g,
   "",
@@ -33,9 +43,12 @@ describe("LandingHero copy from BRAND_COPY", () => {
     const html = renderToStaticMarkup(
       <LandingHero personaCount={1} demo2On={false} />,
     );
-    const sentence = html.match(/<p [^>]*data-block="sentence"[^>]*>([^<]*)<\/p>/);
+    const sentence = html.match(
+      /<p [^>]*data-block="sentence"[^>]*>([^<]*)<\/p>/,
+    );
     expect(sentence).not.toBeNull();
-    expect(sentence?.[1]).toBe(BRAND_COPY.heroSentence);
+    // renderToStaticMarkup escapes text, so compare against the escaped sentence.
+    expect(sentence?.[1]).toBe(escapeHtml(BRAND_COPY.heroSentence));
   });
 });
 
@@ -46,7 +59,10 @@ describe("RitualSection renders the four ritual step names from BRAND_COPY", () 
     let at = -1;
     for (const step of BRAND_COPY.ritualSteps) {
       const next = html.indexOf(step.name, at + 1);
-      expect(next, `step name "${step.name}" should render after the previous one`).toBeGreaterThan(at);
+      expect(
+        next,
+        `step name "${step.name}" should render after the previous one`,
+      ).toBeGreaterThan(at);
       at = next;
     }
   });
