@@ -7,7 +7,7 @@ import { firstPoliticalTerm } from "@/lib/personas/banned-terms";
 import { checkRecallSubject } from "@/lib/recall";
 
 import { AuthorQuestions, type AuthorQuestionsProps } from "./AuthorQuestions";
-import { LIVE_COPY, questionStarters } from "./copy";
+import { LIVE_COPY } from "./copy";
 
 const noop = () => {};
 
@@ -18,13 +18,12 @@ function render(overrides: Partial<AuthorQuestionsProps> = {}): string {
       onAdd: noop,
       onChange: noop,
       onRemove: noop,
-      onStarter: noop,
       ...overrides,
     }),
   );
 }
 
-describe("AuthorQuestions copy (spec 10, C2.1, C2.3 to C2.6)", () => {
+describe("AuthorQuestions copy (spec 10, C2.1, C2.3 to C2.5)", () => {
   it("uses the exact strings", () => {
     expect(LIVE_COPY.authorQuestionsLegend).toBe(
       "Questions for your future self",
@@ -35,46 +34,35 @@ describe("AuthorQuestions copy (spec 10, C2.1, C2.3 to C2.6)", () => {
     expect(LIVE_COPY.authorQuestionLabel).toBe("Question {n}");
     expect(LIVE_COPY.authorQuestionRemove).toBe("Remove question {n}");
     expect(LIVE_COPY.authorQuestionAdd).toBe("Add a question");
-    expect(LIVE_COPY.questionStartersLabel).toBe("Start from one:");
     expect(LIVE_COPY.answerInLetter).toBe(
       "Answer them in your letter too, in your own words.",
     );
     expect(LIVE_COPY.questionTooLong).toBe(
       "Keep each question to 200 characters or fewer.",
     );
-    expect(LIVE_COPY.livePrefill).toBe("What's on your mind right now?");
-  });
-
-  it("has the five Question_Starters exactly as the design lists them", () => {
-    expect([...questionStarters]).toEqual([
-      "What was on your mind most days?",
-      "Who did you spend your evenings with?",
-      "What were you saving for?",
-      "What did a normal Saturday look like?",
-      "What were you looking forward to?",
-    ]);
+    expect(LIVE_COPY.livePrefill).toBe(
+      "Before you read it, what do you remember about the day you sealed this?",
+    );
   });
 });
 
-describe("Question_Starters and Live_Prefill pass the recall and neutrality checks", () => {
-  const starterTexts = [...questionStarters, LIVE_COPY.livePrefill];
+describe("Live_Prefill passes the recall and neutrality checks", () => {
+  const text = LIVE_COPY.livePrefill;
 
-  for (const text of starterTexts) {
-    it(`"${text}" has no digit, no "!" and no political term`, () => {
-      expect(text).not.toMatch(/\d/);
-      expect(text).not.toContain("!");
-      expect(firstPoliticalTerm(text)).toBeNull();
-    });
+  it('has no digit, no "!" and no political term', () => {
+    expect(text).not.toMatch(/\d/);
+    expect(text).not.toContain("!");
+    expect(firstPoliticalTerm(text)).toBeNull();
+  });
 
-    it(`"${text}" passes checkRecallSubject for every catalogue metric`, () => {
-      for (const series of CATALOGUE) {
-        expect(
-          checkRecallSubject(text, series.metric),
-          series.metric.id,
-        ).toBeNull();
-      }
-    });
-  }
+  it("passes checkRecallSubject for every catalogue metric", () => {
+    for (const series of CATALOGUE) {
+      expect(
+        checkRecallSubject(text, series.metric),
+        series.metric.id,
+      ).toBeNull();
+    }
+  });
 });
 
 describe("AuthorQuestions rendering", () => {
@@ -108,12 +96,10 @@ describe("AuthorQuestions rendering", () => {
     expect(html).not.toContain("Question 3");
   });
 
-  it("shows the starter buttons, five of them", () => {
+  it("renders no starter buttons: the only button is Add (spec 11, L2.7)", () => {
     const html = render();
-    for (const starter of questionStarters) {
-      expect(html).toContain(starter.replace(/'/g, "&#x27;"));
-    }
-    expect((html.match(/type="button"/g) ?? []).length).toBe(5 + 1);
+    expect((html.match(/type="button"/g) ?? []).length).toBe(1);
+    expect(html).not.toContain("Start from one:");
   });
 
   it("marks a row whose text differs from the Live_Prefill with data-user-content", () => {

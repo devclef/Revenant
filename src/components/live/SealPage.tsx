@@ -366,8 +366,8 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
         onQuestionRemove={(index) =>
           dispatchDraft({ type: "QUESTION_REMOVED", index })
         }
-        onQuestionStarter={(text) =>
-          dispatchDraft({ type: "QUESTION_STARTER", text })
+        onOccasionApplied={(text, questions) =>
+          dispatchDraft({ type: "OCCASION_APPLIED", text, questions })
         }
         selfReported={writeDraft.selfReported}
         onSelfReportedAdd={() => dispatchDraft({ type: "SELF_REPORTED_ADDED" })}

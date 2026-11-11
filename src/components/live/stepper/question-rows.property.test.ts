@@ -11,7 +11,6 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 
-import { questionStarters } from "../copy";
 import { SELF_REPORTED_FIELDS } from "../form";
 import { sealReducer, INITIAL_SEAL_STATE } from "../seal-machine";
 import {
@@ -43,9 +42,6 @@ const questionEventArb: fc.Arbitrary<WriteDraftEvent> = fc.oneof(
   fc
     .integer({ min: 0, max: 3 })
     .map((index): WriteDraftEvent => ({ type: "QUESTION_REMOVED", index })),
-  fc
-    .constantFrom(...questionStarters)
-    .map((text): WriteDraftEvent => ({ type: "QUESTION_STARTER", text })),
 );
 
 // Self-reported events (spec 08 later-tasks, R26.1). Rows are added, typed in
