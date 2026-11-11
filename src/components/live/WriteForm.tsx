@@ -262,6 +262,10 @@ export function WriteForm({
   const limit = figureLimit(series.length);
   // A real letter (`/seal`) is the one that carries the date picker (spec 08).
   const mode: WriteMode = realDate === undefined ? "demo" : "real";
+  // Only the live demo Write step gets the two-column class (spec 09, L3). /seal
+  // keeps the plain panel, so the two-column rule cannot match it.
+  const panelClass =
+    mode === "demo" ? `${styles.panel} ${styles.liveWrite}` : styles.panel;
   // The sealing day for the self-reported period rule: today in UTC unless the
   // page gives one.
   const today = sealingDay ?? new Date().toISOString().slice(0, 10);
@@ -648,7 +652,7 @@ export function WriteForm({
     return (
       <form
         data-card="live-write"
-        className={styles.panel}
+        className={panelClass}
         aria-labelledby="live-seal-heading"
         onSubmit={(event) => event.preventDefault()}
       >
@@ -657,7 +661,7 @@ export function WriteForm({
     );
   }
   return (
-    <div data-card={`live-step-${section}`} className={styles.panel}>
+    <div data-card={`live-step-${section}`} className={panelClass}>
       {body}
     </div>
   );

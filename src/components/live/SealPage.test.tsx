@@ -129,6 +129,7 @@ describe("SealPage in real mode", () => {
     expect(real).toContain('data-card="live-write"');
     expect(real).toMatch(/<fieldset class="[^"]*occasions[^"]*"/);
     expect(real).not.toContain('data-seal-mode="demo"');
+    expect(real).not.toMatch(/class="[^"]*liveWrite[^"]*"/);
   });
 
   it("puts the demo Write step's occasion control inside the data-seal-mode=demo root", () => {
@@ -144,6 +145,8 @@ describe("SealPage in real mode", () => {
     expect(root).toBeGreaterThanOrEqual(0);
     const occasions = demo.search(/<fieldset class="[^"]*occasions[^"]*"/);
     expect(occasions).toBeGreaterThan(root);
+    // The live Write step panel carries the liveWrite class the two-column rule matches.
+    expect(demo).toMatch(/data-card="live-step-write" class="[^"]*liveWrite[^"]*"/);
   });
 
   it("defaults to demo mode when no mode is given", () => {

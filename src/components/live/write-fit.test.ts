@@ -10,6 +10,7 @@ import { describe, expect, it } from "vitest";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const css = readFileSync(resolve(here, "live.module.css"), "utf8");
+const writeForm = readFileSync(resolve(here, "WriteForm.tsx"), "utf8");
 
 /** The text inside the @media block whose header starts with `query`. */
 function mediaBlock(query: string): string {
@@ -66,16 +67,16 @@ describe("Write step fallback 1: one-line question rows", () => {
 
 describe("Write step fallback 2: two columns at 900 px and wider", () => {
   const block = mediaBlock("(min-width: 900px) and (max-height: 900px)");
-  const DEMO = '[data-seal-mode="demo"] .panel:has(> .occasions)';
+  const DEMO = ".liveWrite:has(> .occasions)";
 
-  it("only applies to the demo Write step, which holds the occasion control", () => {
+  it("only applies to the live Write step, which holds the occasion control", () => {
     expect(block).toContain(`${DEMO} {`);
     expect(block).toMatch(
-      /\[data-seal-mode="demo"\] \.panel:has\(> \.occasions\) \{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\)/,
+      /\.liveWrite:has\(> \.occasions\) \{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\)/,
     );
   });
 
-  it("scopes every rule in the block to the demo page, so /seal keeps one column", () => {
+  it("scopes every rule in the block to the liveWrite class, so /seal keeps one column", () => {
     const code = block.replace(/\/\*[\s\S]*?\*\//g, "");
     const selectors = [...code.matchAll(/([^{}]+)\{/g)].map(
       (m) => m[1]?.trim() ?? "",
@@ -86,21 +87,23 @@ describe("Write step fallback 2: two columns at 900 px and wider", () => {
     }
   });
 
-  it("keeps the rule to the demo scope, not the /seal real-mode panel", () => {
-    // SealPage renders the real form under data-seal-mode="real" (SealPage.test.tsx).
-    expect(block).toContain(DEMO);
-    expect(block).not.toContain('[data-seal-mode="real"]');
+  it("does not depend on a data-seal-mode attribute, and WriteForm adds the class only in demo mode", () => {
+    expect(block).not.toContain("data-seal-mode");
+    // WriteForm adds styles.liveWrite to its panel only when mode is "demo".
+    expect(writeForm).toMatch(
+      /mode === "demo"\s*\?\s*`\$\{styles\.panel\} \$\{styles\.liveWrite\}`\s*:\s*styles\.panel/,
+    );
   });
 
   it("places the letter under the occasion control in the left column", () => {
     expect(block).toMatch(
-      /\[data-seal-mode="demo"\] \.panel:has\(> \.occasions\) > div\.field \{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/,
+      /\.liveWrite:has\(> \.occasions\) > div\.field \{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/,
     );
   });
 
   it("places the questions beside the left column, spanning two rows", () => {
     expect(block).toMatch(
-      /\[data-seal-mode="demo"\] \.panel:has\(> \.occasions\) > fieldset\.field \{[^}]*grid-column:\s*2;[^}]*grid-row:\s*2 \/ span 2;/,
+      /\.liveWrite:has\(> \.occasions\) > fieldset\.field \{[^}]*grid-column:\s*2;[^}]*grid-row:\s*2 \/ span 2;/,
     );
   });
 
