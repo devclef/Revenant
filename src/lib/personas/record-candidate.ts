@@ -1,11 +1,12 @@
-// The Record_Candidate of a persona Figure_Question (spec 10 design.md, "C5.
-// Sample answers"; requirements C5.2).
+// The sealed Then_Value as the Testify field shows it, written with two decimals
+// (spec 10 design.md, "C5. Sample answers").
 //
-// The Record_Candidate is the sealed Then_Value as the Testify field shows it,
-// written with two decimals. It is the number part of
-// `formatValue(shown, region, 2)`, where `shown` is the sealed value after the
-// unit's Display_Rescale (or the sealed value when the unit has none). P1's
-// letter prices use this same function, so the two cannot drift apart.
+// No persona Figure_Question holds a Record_Candidate any more. The sample
+// lists in content/personas/letters/samples.json never contain the sealed
+// Then_Value. This function remains only for the letter price lines (P1), which
+// print the Then_Value as "about $3.64 a gallon". `formatValue(shown, region, 2)`
+// is the number part of that line, where `shown` is the sealed value after the
+// unit's Display_Rescale (or the sealed value when the unit has none).
 //
 // Pure module: no DOM, clock or randomness.
 

@@ -11,6 +11,9 @@
 // All arithmetic is exact: each decimal string becomes a BigInt on one common
 // scale, and the comparisons are integer comparisons. No floats, no rounding.
 //
+// The rule takes only the candidate and the Then_Value. It does not read a
+// Record_Candidate, and it computes with BigInt only, so no float is involved.
+//
 // Pure module: no DOM, clock, randomness or I/O.
 
 /** Within this many percent of the Then_Value, a candidate is near. */

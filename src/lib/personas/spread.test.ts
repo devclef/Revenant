@@ -117,3 +117,23 @@ describe("classifyCandidate (Property 14)", () => {
     expect(() => classifyCandidate("1.5", "3.")).toThrow(RangeError);
   });
 });
+
+describe("classifyCandidate with BigInt beyond float precision", () => {
+  it("keeps a boundary exact where a float would round it onto the threshold", () => {
+    // 85 % of 1e20 is exactly 8.5e19: on the boundary, so below.
+    expect(
+      classifyCandidate("85000000000000000000", "100000000000000000000"),
+    ).toBe("below");
+    // One unit above that boundary is not below: the float 0.85 cannot tell them apart.
+    expect(
+      classifyCandidate("85000000000000000001", "100000000000000000000"),
+    ).toBe("between");
+    // 115 % of 1e20 is exactly 1.15e20: on the boundary, so above.
+    expect(
+      classifyCandidate("115000000000000000000", "100000000000000000000"),
+    ).toBe("above");
+    expect(
+      classifyCandidate("114999999999999999999", "100000000000000000000"),
+    ).toBe("between");
+  });
+});

@@ -1,5 +1,6 @@
-// Property 23: each question has exactly one Record_Candidate (spec 10
-// design.md; requirements C5.2, C5.11). The P1 half of the property (the
+// Property 23: no question's sample list holds the Record_Candidate (spec 10
+// design.md; requirements C5.2, C5.11). The Record_Candidate is still computed
+// for the P1 letter price lines. The P1 half of the property (the
 // Letter_Price_Line) is checked with expectedPrices, which P1 adds later.
 
 import fc from "fast-check";
@@ -109,7 +110,7 @@ describe("recordCandidate (Property 23)", () => {
 
   for (const persona of PERSONAS) {
     for (const metric of persona.metrics) {
-      it(`${persona.key} ${metric.metric_id}: exactly one stored candidate is the Record_Candidate`, () => {
+      it(`${persona.key} ${metric.metric_id}: no stored candidate is the Record_Candidate`, () => {
         const result = thenAndNow(
           metric.metric_id,
           persona.written_as_of,
@@ -118,7 +119,7 @@ describe("recordCandidate (Property 23)", () => {
         if (!result.then.found) throw new Error("no then figure");
         const record = recordCandidate(result.then.figure);
         const list = SAMPLE_CANDIDATES[persona.key][metric.metric_id];
-        expect(list.filter((c) => c === record)).toHaveLength(1);
+        expect(list.filter((c) => c === record)).toHaveLength(0);
         expect(record).toMatch(TWO_DECIMALS);
       });
     }

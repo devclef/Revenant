@@ -111,11 +111,9 @@ describe("persona Sample_Candidates file (Property 15)", () => {
         expect(classes.has("above")).toBe(true);
       });
 
-      it("has exactly one Record_Candidate, which counts as the Near_Candidate", () => {
+      it("holds no Record_Candidate: no candidate equals the sealed Then_Value", () => {
         const record = recordCandidate(q.figure);
-        const matches = list.filter((c) => c === record);
-        expect(matches.length).toBe(1);
-        expect(classifyCandidate(record, then)).toBe("near");
+        expect(list.filter((c) => c === record)).toHaveLength(0);
       });
     });
   }
@@ -211,4 +209,43 @@ describe("parseSampleCandidates strictness (C5.1, C5.3)", () => {
       expect(() => parseSampleCandidates(copy, personas)).toThrow();
     }
   });
+});
+
+// Property 16: no sample answer equals the Then_Value at display precision after
+// the Display_Rescale (spec 10 design.md, "C5. Sample answers"; requirements
+// C5.2, C5.11). The four Then_Values are the design's values for the four
+// persona Figure_Questions.
+describe("Property 16: no sample answer equals the Then_Value at display precision", () => {
+  const DESIGN_THEN_VALUES = ["1.65", "1.79", "3.64", "3.89"];
+
+  it("writes the four persona Then_Values at display precision as the design names them", () => {
+    const shown = questions()
+      .map((q) => recordCandidate(q.figure))
+      .sort();
+    expect(shown).toEqual(DESIGN_THEN_VALUES);
+  });
+
+  it("holds no candidate equal to its Then_Value in any of the four lists", () => {
+    for (const q of questions()) {
+      const then = recordCandidate(q.figure);
+      expect(DESIGN_THEN_VALUES).toContain(then);
+      expect(q.candidates).not.toContain(then);
+    }
+  });
+});
+
+describe("a typed value equal to the Then_Value is an ordinary answer", () => {
+  for (const q of questions()) {
+    it(`${q.persona.key} ${q.metricId}: the Then_Value parses as a plain value and is near`, () => {
+      const then = recordCandidate(q.figure);
+      const shownThenText = shownThen(q.figure.value, q.figure.unit);
+      expect(parseRecallNumber(then)).toEqual({
+        kind: "value",
+        value: then,
+        format: "point",
+      });
+      // Classified by the same Spread_Rule as any other typed number.
+      expect(classifyCandidate(then, shownThenText)).toBe("near");
+    });
+  }
 });
