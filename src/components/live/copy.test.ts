@@ -131,3 +131,19 @@ describe("promptStarters", () => {
     }
   });
 });
+
+// Spec 11, L1.2 and L1.4: the block message and the disclosure copy, exactly.
+describe("LIVE_COPY for the receipts and the block message (spec 11)", () => {
+  it("has the exact nothing-to-testify block message", () => {
+    expect(LIVE_COPY.nothingToTestify).toBe(
+      "Add a question or a receipt, so there is something to answer when the letter opens.",
+    );
+  });
+
+  it("has the receipts summary and the one-sentence explain line", () => {
+    expect(LIVE_COPY.receiptsSummary).toBe("Add a receipt");
+    expect(LIVE_COPY.receiptsExplain).toBe(
+      "A receipt is a number sealed with its source and date, so you can compare it when the letter opens.",
+    );
+  });
+});

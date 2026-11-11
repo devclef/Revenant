@@ -44,23 +44,29 @@ export interface WriteDraft {
   selfReported: SelfReportedRow[];
 }
 
+/** The one Author_Question a new letter starts with (C9.5, the Live_Prefill row). */
+export const DEFAULT_QUESTION: string = LIVE_COPY.livePrefill;
+
 /** A row with every field empty, as a new row starts. */
 export function emptySelfReportedRow(): SelfReportedRow {
   return { name: "", value: "", unit: "", region: "", period: "" };
 }
 
 /**
- * The draft a seal starts from. `demo` (`/demo/live`) starts with the one
- * Live_Prefill row, which the judge may edit, clear or remove. `real` (`/seal`)
- * starts with no row and prefills nothing.
+ * The draft a seal starts from, in both modes. It starts with the one
+ * DEFAULT_QUESTION row, which the visitor may edit, clear or remove, so a new
+ * letter is never blocked by the something-to-testify rule.
  */
-export function initialWriteDraft(mode: WriteMode): WriteDraft {
+// The seal mode is accepted so existing callers still pass it. The draft is the
+// same in both modes, so the parameter is not read.
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export function initialWriteDraft(_mode: WriteMode): WriteDraft {
   return {
     text: "",
     metricIds: [],
     warningTicked: false,
     backupCardTicked: false,
-    questions: mode === "demo" ? [LIVE_COPY.livePrefill] : [],
+    questions: [DEFAULT_QUESTION],
     selfReported: [],
   };
 }

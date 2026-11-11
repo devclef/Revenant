@@ -4,7 +4,7 @@ import { MAX_LETTER_CODE_POINTS } from "./constants";
 import {
   countCodePoints,
   figureLimit,
-  minFiguresFor,
+  hasSomethingToTestify,
   selfReportedPeriodOk,
   selfReportedRowProblems,
   selfReportedTextOk,
@@ -210,8 +210,14 @@ describe("validateWrite", () => {
     expect(validateWrite({ ...VALID, text })).toEqual([]);
   });
 
-  it("reports figures_none when no figure is chosen", () => {
-    expect(validateWrite({ ...VALID, metricIds: [] })).toEqual(["figures_none"]);
+  it("reports nothing_to_testify when no figure and no question is chosen", () => {
+    expect(validateWrite({ ...VALID, metricIds: [] })).toEqual(["nothing_to_testify"]);
+  });
+
+  it("accepts a letter with no figure when one question has text", () => {
+    expect(
+      validateWrite({ ...VALID, metricIds: [], questions: ["What did the kitchen smell of?"] }),
+    ).toEqual([]);
   });
 
   it("accepts one and six figures", () => {
@@ -254,48 +260,61 @@ describe("validateWrite", () => {
   it("reports every problem in the fixed order when everything fails", () => {
     expect(
       validateWrite({ text: "", metricIds: [], warningTicked: false }),
-    ).toEqual(["letter_empty", "figures_none", "warning_unticked"]);
+    ).toEqual(["letter_empty", "nothing_to_testify", "warning_unticked"]);
   });
 });
 
-describe("a real letter with a question needs no figure (C2.13)", () => {
-  it("accepts 0 figures on /seal when one question has text", () => {
+describe("hasSomethingToTestify (one question or one official figure)", () => {
+  it("is true with one non-empty question and no figure", () => {
+    expect(
+      hasSomethingToTestify({ questions: ["What did you expect?"], officialFigureCount: 0 }),
+    ).toBe(true);
+  });
+
+  it("is true with one official figure and no question", () => {
+    expect(hasSomethingToTestify({ questions: [], officialFigureCount: 1 })).toBe(true);
+  });
+
+  it("is false when every question is blank and no figure is chosen", () => {
+    expect(
+      hasSomethingToTestify({ questions: ["", "   "], officialFigureCount: 0 }),
+    ).toBe(false);
+    expect(hasSomethingToTestify({ questions: [], officialFigureCount: 0 })).toBe(false);
+  });
+});
+
+describe("nothing_to_testify is the same rule in demo and real mode", () => {
+  for (const mode of ["demo", "real"] as const) {
+    it(`accepts 0 figures in ${mode} mode when one question has text`, () => {
+      expect(
+        validateWrite({
+          ...VALID,
+          metricIds: [],
+          mode,
+          questions: ["What did the kitchen smell of?"],
+        }),
+      ).toEqual([]);
+    });
+
+    it(`reports nothing_to_testify in ${mode} mode when every question is blank`, () => {
+      expect(
+        validateWrite({ ...VALID, metricIds: [], mode, questions: ["", "   "] }),
+      ).toEqual(["nothing_to_testify"]);
+    });
+  }
+});
+
+describe("self-reported rows never count as something to testify", () => {
+  it("still reports nothing_to_testify with only a self-reported row", () => {
     expect(
       validateWrite({
         ...VALID,
         metricIds: [],
-        mode: "real",
-        questions: ["What did the kitchen smell of?"],
+        questions: [],
+        selfReported: [GOOD_ROW],
+        sealingDay: SEALING_DAY,
       }),
-    ).toEqual([]);
-  });
-
-  it("still needs a figure on /seal when every question is blank", () => {
-    expect(
-      validateWrite({
-        ...VALID,
-        metricIds: [],
-        mode: "real",
-        questions: ["", "   "],
-      }),
-    ).toEqual(["figures_none"]);
-  });
-
-  it("still needs a figure on /demo/live even with a question", () => {
-    expect(
-      validateWrite({
-        ...VALID,
-        metricIds: [],
-        mode: "demo",
-        questions: ["What did the kitchen smell of?"],
-      }),
-    ).toEqual(["figures_none"]);
-  });
-
-  it("keeps the minimum at 1 for /demo/live and 0 for /seal with a question", () => {
-    expect(minFiguresFor("demo", ["A question"])).toBe(1);
-    expect(minFiguresFor("real", ["A question"])).toBe(0);
-    expect(minFiguresFor("real", [])).toBe(1);
+    ).toEqual(["nothing_to_testify"]);
   });
 });
 
@@ -323,41 +342,15 @@ describe("an Author_Question over 200 code points blocks sealing (C2.2)", () => 
   });
 });
 
-describe("figures unavailable: one non-empty question is enough (spec 11, X2.4)", () => {
-  it("needs no figure in demo mode when the figures are loading or failed and a question is written", () => {
-    expect(minFiguresFor("demo", ["What do you expect?"], true)).toBe(0);
-  });
-
-  it("still needs one figure in demo mode when the figures are ready", () => {
-    expect(minFiguresFor("demo", ["What do you expect?"], false)).toBe(1);
-  });
-
-  it("still needs one figure when no question is written, even with figures unavailable", () => {
-    expect(minFiguresFor("demo", [""], true)).toBe(1);
-    expect(minFiguresFor("demo", [], true)).toBe(1);
-  });
-
-  it("does not let a figures outage pass a letter with a blank question", () => {
-    const problems = validateWrite({
-      text: "A letter",
-      metricIds: [],
-      warningTicked: true,
-      questions: ["   "],
-      mode: "demo",
-      figuresUnavailable: true,
-    });
-    expect(problems).toContain("figures_none");
-  });
-
-  it("lets a letter with a question seal with no figure when figures are unavailable", () => {
+describe("a letter with a question seals with no figure, in any mode", () => {
+  it("does not report nothing_to_testify while a question has text", () => {
     const problems = validateWrite({
       text: "A letter",
       metricIds: [],
       warningTicked: true,
       questions: ["What do you expect?"],
       mode: "demo",
-      figuresUnavailable: true,
     });
-    expect(problems).not.toContain("figures_none");
+    expect(problems).not.toContain("nothing_to_testify");
   });
 });

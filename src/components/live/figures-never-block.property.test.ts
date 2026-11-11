@@ -61,32 +61,23 @@ const questionsArb = fc.array(
 );
 
 describe("Property 5: sealing never depends on figures (X2.1, X2.4, X2.5, X2.6, X2.9)", () => {
-  it("the figures state decides the figure rule, and a letter with a question never waits on it", () => {
+  it("the figures request state never changes the write rule; a question alone is enough", () => {
     fc.assert(
       fc.property(
-        stateArb,
         letterArb,
         questionsArb,
-        (state, text, questions) => {
+        (text, questions) => {
           const hasQuestion = questionsForSeal(questions).length > 0;
-          // The figures state feeds the write exactly as SealPage does (X2.4).
-          const figuresUnavailable = sealFiguresFrom(state).status !== "ready";
           const problems = validateWrite({
             text,
             metricIds: [],
             warningTicked: true,
             questions,
             mode: "demo",
-            figuresUnavailable,
           });
-          if (figuresUnavailable && hasQuestion) {
-            // Loading or failed: a written question is enough, so no figure is needed.
-            expect(problems).toEqual([]);
-          }
-          if (!figuresUnavailable) {
-            // Ready: /demo/live still needs one figure, whatever the questions (C2.13).
-            expect(problems).toContain("figures_none");
-          }
+          // A written question is enough, and without one a letter needs a
+          // figure, whatever the figures request is doing (C2.13, X2.4).
+          expect(problems.includes("nothing_to_testify")).toBe(!hasQuestion);
         },
       ),
       { numRuns: 300 },

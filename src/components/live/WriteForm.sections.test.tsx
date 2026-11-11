@@ -41,28 +41,32 @@ const render = (overrides: Partial<WriteFormProps> = {}) =>
   renderToStaticMarkup(createElement(WriteForm, props(overrides)));
 
 describe("WriteForm sections (spec 09, D2)", () => {
-  it("the write section holds the letter and a Next, and nothing else", () => {
+  it("the write section holds the letter, the question rows, the closed receipts and a Next", () => {
     const html = render({ section: "write", onNext: () => {} });
     expect(html).toContain('id="live-letter"');
     expect(html).not.toContain('id="live-warning"');
-    expect(html).not.toContain('data-card="live-figures"');
+    expect(html).toContain("data-receipts-disclosure");
+    expect(html).toContain('data-card="live-figures"');
     expect(html).not.toContain(LIVE_COPY.createButton);
     expect(html).toContain(LIVE_COPY.nextButton);
     expect(html).not.toContain(LIVE_COPY.backButton);
   });
 
-  it("the figures section holds the picker, with Back only when Back is offered", () => {
-    const withBack = render({
-      section: "figures",
-      onNext: () => {},
-      onBack: () => {},
-    });
-    expect(withBack).toContain('data-card="live-figures"');
-    expect(withBack).not.toContain('id="live-letter"');
-    expect(withBack).toContain(LIVE_COPY.backButton);
-    expect(withBack).toContain(LIVE_COPY.nextButton);
+  // L1.4: the disclosure sits after the question rows, not before them.
+  it("puts the Receipts_Disclosure after the question rows", () => {
+    const html = render({ section: "write", onNext: () => {} });
+    const rows = html.indexOf(LIVE_COPY.authorQuestionAdd);
+    const receipts = html.indexOf("data-receipts-disclosure");
+    expect(rows).toBeGreaterThanOrEqual(0);
+    expect(receipts).toBeGreaterThan(rows);
+  });
 
-    const noBack = render({ section: "figures", onNext: () => {} });
+  // L1.6: the figures step is gone, so Back is offered only from the seal step.
+  it("offers Back on the seal section only when Back is passed", () => {
+    const withBack = render({ section: "seal", onBack: () => {} });
+    expect(withBack).toContain(LIVE_COPY.backButton);
+
+    const noBack = render({ section: "seal" });
     expect(noBack).not.toContain(LIVE_COPY.backButton);
   });
 

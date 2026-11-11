@@ -35,7 +35,7 @@ import type { SelfReportedField, SelfReportedRow } from "./write-draft";
  * whole form, as on the page before the Live_Stepper. The other three render
  * one step each inside the stepper, with that step's Next or Back control.
  */
-export type WriteSection = "all" | "write" | "figures" | "seal";
+export type WriteSection = "all" | "write" | "seal";
 
 export interface WriteFormProps {
   /** The figures the visitor can pick from. */
@@ -115,7 +115,7 @@ export interface WriteFormProps {
   onBackupCardChange: (ticked: boolean) => void;
   /**
    * Which part to render. Defaults to `all`, the whole form. The stepper passes
-   * `write`, `figures` or `seal` (spec 09, D2).
+   * `write` or `seal` (spec 09, D2; spec 11, L1.6).
    */
   section?: WriteSection;
   /** Section mode: moves to the next step once this step is valid. */
@@ -162,7 +162,7 @@ export const TOUCH_FIELDS = {
 export const PROBLEM_COPY: Partial<Record<WriteProblem, string>> = {
   letter_empty: LIVE_COPY.letterEmpty,
   letter_too_long: LIVE_COPY.letterTooLong,
-  figures_none: LIVE_COPY.figuresNone,
+  nothing_to_testify: LIVE_COPY.nothingToTestify,
   warning_unticked: LIVE_COPY.warningUnticked,
 };
 
@@ -247,10 +247,8 @@ export function WriteForm({
     backupCardTicked,
     maxFigures: limit,
     questions,
-    mode,
     selfReported,
     sealingDay: today,
-    figuresUnavailable: figuresStatus !== "ready",
   });
   const atLimit = metricIds.length >= limit;
   const all = section === "all";
@@ -280,10 +278,14 @@ export function WriteForm({
     TOUCH_FIELDS.letter,
     problemText("letter_empty") || problemText("letter_too_long"),
   );
-  const figuresProblem = shownFor(
-    TOUCH_FIELDS.figures,
-    problemText("figures_none"),
-  );
+  // The block message names what is missing: a question or a receipt (L1.2).
+  // It shows once the question rows or the receipts were touched, or after a
+  // seal attempt. Self-reported numbers never count toward it.
+  const nothingToTestifyProblem =
+    showsFieldMessage(touched, TOUCH_FIELDS.questions) ||
+    showsFieldMessage(touched, TOUCH_FIELDS.figures)
+      ? problemText("nothing_to_testify")
+      : "";
   const warningProblem = shownFor(
     TOUCH_FIELDS.warning,
     problemText("warning_unticked"),
@@ -329,15 +331,17 @@ export function WriteForm({
   }
 
   // Section mode: Next checks only this step's own input. A failed check shows
-  // the step's messages and moves nothing.
+  // The write step's Next checks the letter, the question rows, the nothing-to-
+  // testify rule (L1.2) and the self-reported rows, so an invalid one keeps the
+  // judge on the step where its messages show. The figures request never blocks
+  // here (spec 11, X2.4).
   const letterValid = !problems.some(
     (problem) => problem === "letter_empty" || problem === "letter_too_long",
   );
-  // The figures minimum already accounts for a loading or failed request, so
-  // Next checks only the problem list (spec 11, X2.4).
-  const figuresValid = !problems.includes("figures_none");
-  // The write step's Next also checks the self-reported rows, so an invalid row
-  // keeps the judge on the step where its messages show.
+  const figuresValid = !problems.some(
+    (problem) =>
+      problem === "nothing_to_testify" || problem === "figures_too_many",
+  );
   const selfReportedValid = selfReportedRowsOk(selfReported, today);
   function pressNext(valid: boolean, field: string) {
     if (!valid) {
@@ -447,23 +451,46 @@ export function WriteForm({
       ) : null}
 
       {shows("write") ? (
-        <SelfReportedRows
-          rows={selfReported}
-          sealingDay={today}
-          touched={touched}
-          onTouch={onTouch}
-          onAdd={() => {
-            onTouch(TOUCH_FIELDS.selfReported);
-            onSelfReportedAdd();
-          }}
-          onChange={(index, field, next) => {
-            onSelfReportedChange(index, field, next);
-          }}
-          onRemove={(index) => {
-            onTouch(TOUCH_FIELDS.selfReported);
-            onSelfReportedRemove(index);
-          }}
-        />
+        <>
+          <ReceiptsDisclosure
+            status={figuresStatus}
+            picker={
+              <FigurePicker
+                series={series}
+                selected={metricIds}
+                atLimit={atLimit}
+                details={figureDetails}
+                mode={mode}
+                onToggle={(metricId) => {
+                  onTouch(TOUCH_FIELDS.figures);
+                  onToggleFigure(metricId);
+                }}
+              />
+            }
+            selfReported={
+              <SelfReportedRows
+                rows={selfReported}
+                sealingDay={today}
+                touched={touched}
+                onTouch={onTouch}
+                onAdd={() => {
+                  onTouch(TOUCH_FIELDS.selfReported);
+                  onSelfReportedAdd();
+                }}
+                onChange={(index, field, next) => {
+                  onSelfReportedChange(index, field, next);
+                }}
+                onRemove={(index) => {
+                  onTouch(TOUCH_FIELDS.selfReported);
+                  onSelfReportedRemove(index);
+                }}
+              />
+            }
+          />
+          <p id="live-figures-problem" className={styles.problem}>
+            {nothingToTestifyProblem}
+          </p>
+        </>
       ) : null}
 
       {all && realDate !== undefined ? (
@@ -480,27 +507,6 @@ export function WriteForm({
             }}
             onTouch={() => onTouch(TOUCH_FIELDS.date)}
           />
-        </>
-      ) : null}
-
-      {shows("figures") ? (
-        <>
-          <ReceiptsDisclosure status={figuresStatus}>
-            <FigurePicker
-              series={series}
-              selected={metricIds}
-              atLimit={atLimit}
-              details={figureDetails}
-              mode={mode}
-              onToggle={(metricId) => {
-                onTouch(TOUCH_FIELDS.figures);
-                onToggleFigure(metricId);
-              }}
-            />
-          </ReceiptsDisclosure>
-          <p id="live-figures-problem" className={styles.problem}>
-            {figuresProblem}
-          </p>
         </>
       ) : null}
 
@@ -578,33 +584,22 @@ export function WriteForm({
           <button
             type="button"
             className={styles.primary}
-            onClick={() =>
+            onClick={() => {
+              const field = !letterValid
+                ? TOUCH_FIELDS.letter
+                : !questionsValid
+                  ? TOUCH_FIELDS.questions
+                  : !selfReportedValid
+                    ? TOUCH_FIELDS.selfReported
+                    : TOUCH_FIELDS.figures;
               pressNext(
-                letterValid && questionsValid && selfReportedValid,
-                letterValid
-                  ? selfReportedValid
-                    ? TOUCH_FIELDS.questions
-                    : TOUCH_FIELDS.selfReported
-                  : TOUCH_FIELDS.letter,
-              )
-            }
-          >
-            {LIVE_COPY.nextButton}
-          </button>
-        </div>
-      ) : null}
-
-      {section === "figures" ? (
-        <div className={styles.actions}>
-          {onBack ? (
-            <button type="button" className={styles.secondary} onClick={onBack}>
-              {LIVE_COPY.backButton}
-            </button>
-          ) : null}
-          <button
-            type="button"
-            className={styles.primary}
-            onClick={() => pressNext(figuresValid, TOUCH_FIELDS.figures)}
+                letterValid &&
+                  questionsValid &&
+                  selfReportedValid &&
+                  figuresValid,
+                field,
+              );
+            }}
           >
             {LIVE_COPY.nextButton}
           </button>

@@ -11,10 +11,11 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 
-import { LIVE_COPY, questionStarters } from "../copy";
+import { questionStarters } from "../copy";
 import { SELF_REPORTED_FIELDS } from "../form";
 import { sealReducer, INITIAL_SEAL_STATE } from "../seal-machine";
 import {
+  DEFAULT_QUESTION,
   initialWriteDraft,
   reduceWriteDraft,
   type WriteDraft,
@@ -102,11 +103,13 @@ describe("Property 5: the question rows survive every way back", () => {
     );
   });
 
-  it("a demo draft starts with the Live_Prefill row and a real draft with none", () => {
+  it("a demo draft and a real draft both start with the DEFAULT_QUESTION row, so neither is blocked", () => {
     expect(initialStepperState("write", "demo").draft.questions).toEqual([
-      LIVE_COPY.livePrefill,
+      DEFAULT_QUESTION,
     ]);
-    expect(initialStepperState("write", "real").draft.questions).toEqual([]);
+    expect(initialStepperState("write", "real").draft.questions).toEqual([
+      DEFAULT_QUESTION,
+    ]);
   });
 
   it("keeps the rows through cancelled, failed, cannot_lock and Try again", () => {

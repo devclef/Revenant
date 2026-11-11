@@ -7,9 +7,6 @@
 /** Longest letter the form accepts, counted in Unicode code points (R12.4). */
 export const MAX_LETTER_CODE_POINTS = 5000;
 
-/** Fewest figures a letter must carry (R13.2). */
-export const MIN_FIGURES = 1;
-
 /** Most figures a letter may carry (R13.2). */
 export const MAX_FIGURES = 6;
 

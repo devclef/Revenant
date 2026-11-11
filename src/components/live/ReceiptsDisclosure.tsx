@@ -10,32 +10,47 @@ export type ReceiptsStatus = "loading" | "ready" | "failed";
 
 export interface ReceiptsDisclosureProps {
   status: ReceiptsStatus;
-  /** The picker. Shown only when the request is ready. */
-  children?: ReactNode;
+  /** The figure picker. Shown only when the request is ready. */
+  picker?: ReactNode;
+  /** The visitor's own numbers. Shown whatever the figures status is. */
+  selfReported?: ReactNode;
 }
 
 /**
- * The receipts part of the write step (spec 11, X2.2 and X2.3). It shows the
- * loading line while the figures request is in flight, the unavailable line
- * and no picker when it failed, and the picker when it is ready.
+ * The one closed Receipts_Disclosure on the Write step (spec 11, L1.4 and
+ * L1.5). It is a native `details`, closed by default, and its content stays in
+ * the document. It opens with one neutral sentence, then the figure picker,
+ * then the visitor's own numbers.
  *
- * It never gates sealing or Next. A failed or loading request only changes
- * what this part shows; the letter can still be sealed with one question.
+ * The figures request only changes what the disclosure shows about official
+ * figures (X2.2 and X2.3): a loading line while it is in flight, one plain
+ * unavailable line when it failed, and the picker when it is ready. Your own
+ * numbers are not official figures, so they stay in every state. Nothing here
+ * gates sealing or Next.
  */
-export function ReceiptsDisclosure({ status, children }: ReceiptsDisclosureProps) {
-  if (status === "loading") {
-    return (
-      <p className={styles.hint} role="status">
-        {LIVE_COPY.receiptsLoading}
-      </p>
-    );
-  }
-  if (status === "failed") {
-    return (
-      <p className={styles.hint} role="status">
-        {LIVE_COPY.receiptsUnavailable}
-      </p>
-    );
-  }
-  return <>{children}</>;
+export function ReceiptsDisclosure({
+  status,
+  picker,
+  selfReported,
+}: ReceiptsDisclosureProps) {
+  return (
+    <details className={styles.more} data-receipts-disclosure>
+      <summary className={styles.moreSummary}>
+        {LIVE_COPY.receiptsSummary}
+      </summary>
+      <p className={styles.hint}>{LIVE_COPY.receiptsExplain}</p>
+      {status === "loading" ? (
+        <p className={styles.hint} role="status">
+          {LIVE_COPY.receiptsLoading}
+        </p>
+      ) : null}
+      {status === "failed" ? (
+        <p className={styles.hint} role="status">
+          {LIVE_COPY.receiptsUnavailable}
+        </p>
+      ) : null}
+      {status === "ready" ? picker : null}
+      {selfReported}
+    </details>
+  );
 }

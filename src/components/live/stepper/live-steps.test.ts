@@ -16,11 +16,12 @@ import {
   type LiveStep,
 } from "./live-steps";
 
+// Changed in L1.6 (spec 11): the figures step is gone, so the stepper has five
+// steps. The old six-step expectations were replaced with this order.
 describe("step order and names", () => {
-  it("lists the six steps in the spec order", () => {
+  it("lists the five steps in the spec order", () => {
     expect([...LIVE_STEPS]).toEqual([
       "write",
-      "figures",
       "seal",
       "wait",
       "testify",
@@ -28,10 +29,9 @@ describe("step order and names", () => {
     ]);
   });
 
-  it("names the steps Write, Seal the figures, Press the seal, Wait, Testify, See the receipts", () => {
+  it("names the steps Write, Press the seal, Wait, Testify, See the receipts", () => {
     expect([...LIVE_STEP_NAMES]).toEqual([
       "Write",
-      "Seal the figures",
       "Press the seal",
       "Wait",
       "Testify",
@@ -39,13 +39,12 @@ describe("step order and names", () => {
     ]);
   });
 
-  it("takes the five names other than Wait from Brand_Copy", () => {
+  it("takes the four names other than Wait from Brand_Copy", () => {
     const ritual = BRAND_COPY.ritualSteps.map((step) => step.name);
     expect(LIVE_STEP_NAMES[0]).toBe(ritual[0]);
-    expect(LIVE_STEP_NAMES[1]).toBe(ritual[1]);
-    expect(LIVE_STEP_NAMES[2]).toBe(ritual[2]);
-    expect(LIVE_STEP_NAMES[4]).toBe(ritual[3]);
-    expect(LIVE_STEP_NAMES[5]).toBe(ritual[4]);
+    expect(LIVE_STEP_NAMES[1]).toBe(ritual[2]);
+    expect(LIVE_STEP_NAMES[3]).toBe(ritual[3]);
+    expect(LIVE_STEP_NAMES[4]).toBe(ritual[4]);
   });
 
   it("gives each step its name", () => {
@@ -63,8 +62,7 @@ describe("canGoBack", () => {
     expect(canGoBack("write", false)).toBe(false);
   });
 
-  it("offers Back from figures and from the seal before sealing", () => {
-    expect(canGoBack("figures", false)).toBe(true);
+  it("offers Back from the seal step before sealing", () => {
     expect(canGoBack("seal", false)).toBe(true);
   });
 
@@ -84,7 +82,7 @@ describe("canGoBack", () => {
 
 describe("movesFocus", () => {
   it("moves focus only when the step changes", () => {
-    expect(movesFocus("write", "figures")).toBe(true);
+    expect(movesFocus("write", "seal")).toBe(true);
     expect(movesFocus("seal", "seal")).toBe(false);
   });
 });
@@ -105,13 +103,16 @@ describe("reduceStepper", () => {
     expect(state.step).toBe("receipts");
   });
 
+  // Changed in L1.6: there is no figures step, so Back from the seal step
+  // reaches Write in one press. The draft (text, receipts and backup decision)
+  // must survive the round trip.
   it("keeps the text, figures and backup decision across Back", () => {
+    const initialQuestions = initialStepperState().draft.questions;
     let state = initialStepperState();
     state = reduceStepper(state, {
       type: "DRAFT",
       event: { type: "TEXT_CHANGED", text: "Dear me" },
     });
-    state = reduceStepper(state, { type: "NEXT" });
     state = reduceStepper(state, {
       type: "DRAFT",
       event: { type: "FIGURE_TOGGLED", metricId: "us-gasoline-regular" },
@@ -124,17 +125,16 @@ describe("reduceStepper", () => {
     expect(state.step).toBe("seal");
 
     state = reduceStepper(state, { type: "BACK" });
-    state = reduceStepper(state, { type: "BACK" });
 
     expect(state.step).toBe("write");
-    expect(state.draft).toEqual({
+    expect(state.draft).toMatchObject({
       text: "Dear me",
       metricIds: ["us-gasoline-regular"],
       warningTicked: false,
       backupCardTicked: true,
-      questions: [LIVE_COPY.livePrefill],
       selfReported: [],
     });
+    expect(state.draft.questions).toEqual(initialQuestions);
   });
 
   it("does not go back past the first step", () => {

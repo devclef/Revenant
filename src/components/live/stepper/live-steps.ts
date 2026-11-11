@@ -21,10 +21,9 @@ import {
   type WriteDraftEvent,
 } from "../write-draft";
 
-/** The six steps of /demo/live, in the order the visitor meets them. */
+/** The five steps of /demo/live, in the order the visitor meets them (L1.6). */
 export const LIVE_STEPS = [
   "write",
-  "figures",
   "seal",
   "wait",
   "testify",
@@ -40,7 +39,6 @@ export type LiveStep = (typeof LIVE_STEPS)[number];
 const RITUAL = BRAND_COPY.ritualSteps;
 export const LIVE_STEP_NAMES: readonly string[] = [
   RITUAL[0].name,
-  RITUAL[1].name,
   RITUAL[2].name,
   LIVE_COPY.waitStep,
   RITUAL[3].name,

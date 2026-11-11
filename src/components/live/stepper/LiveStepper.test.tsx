@@ -39,7 +39,7 @@ function indicatorNames(html: string): string[] {
 }
 
 describe("Step_Indicator", () => {
-  it("lists the six steps in order", () => {
+  it("lists the five steps in order", () => {
     const html = renderToStaticMarkup(
       createElement(StepIndicator, { current: "write" }),
     );
@@ -59,7 +59,7 @@ describe("Step_Indicator", () => {
     const html = renderToStaticMarkup(
       createElement(StepIndicator, { current: "testify" }),
     );
-    expect(html.match(/data-state="done"/g)).toHaveLength(4);
+    expect(html.match(/data-state="done"/g)).toHaveLength(3);
     expect(html.match(/data-state="todo"/g)).toHaveLength(1);
   });
 
@@ -76,7 +76,14 @@ describe("Step_Indicator", () => {
       createElement(StepIndicator, { current: "seal" }),
     );
     expect(html).toContain('aria-live="polite"');
-    expect(html).toContain("Step 3 of 6: Press the seal");
+    expect(html).toContain("Step 2 of 5: Press the seal");
+  });
+
+  it("announces Wait as step 3 of 5", () => {
+    const html = renderToStaticMarkup(
+      createElement(StepIndicator, { current: "wait" }),
+    );
+    expect(html).toContain("Step 3 of 5: Wait");
   });
 });
 

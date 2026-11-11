@@ -50,7 +50,7 @@ describe("Property 29: the figure picker never offers more than it says", () => 
           // The "too many" rule agrees with N, both at N and one past it.
           const ids = Array.from({ length: limit + 1 }, (_, i) => `x-${i}`);
           // At N the form reports no "too many" problem. With N = 0 it reports
-          // figures_none instead, which is a different rule.
+          // nothing_to_testify instead, which is a different rule.
           expect(
             validateWrite({
               text: "a letter",
