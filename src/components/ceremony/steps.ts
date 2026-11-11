@@ -18,10 +18,15 @@ export type PersonaStep = 0 | 1 | 2 | 3;
  * - `recall`: 0, Testify.
  * - `marks` and `seal`: 1, Break the seal.
  * - `letter`: 2, Read.
- * - `figures` and `close`: 3, See the receipts.
+ * - `figures`: 3, See the receipts.
+ * - `close`: 3, See the receipts, or 2, Read, when the letter has no figures
+ *   (spec 10 L5.3). A text-only letter has no figures Stage.
  * - `emerging`, `sealed`, `envelope` and `error`: null.
+ *
+ * `hasFigures` defaults to true, so callers that do not know the letter's shape
+ * keep the four-step behaviour.
  */
-export function personaStepFor(stage: Stage): PersonaStep | null {
+export function personaStepFor(stage: Stage, hasFigures = true): PersonaStep | null {
   switch (stage) {
     case "recall":
       return 0;
@@ -31,11 +36,21 @@ export function personaStepFor(stage: Stage): PersonaStep | null {
     case "letter":
       return 2;
     case "figures":
-    case "close":
       return 3;
+    case "close":
+      return hasFigures ? 3 : 2;
     default:
       return null;
   }
+}
+
+/**
+ * The Step_Indicator names for a letter. A letter with figures shows all four
+ * steps. A text-only letter shows exactly Testify, Break the seal and Read
+ * (spec 10 L5.3).
+ */
+export function personaStepLabels(hasFigures: boolean): readonly string[] {
+  return hasFigures ? CEREMONY_COPY.steps : CEREMONY_COPY.steps.slice(0, 3);
 }
 
 /**
