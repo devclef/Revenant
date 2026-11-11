@@ -7,6 +7,9 @@
 
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 
@@ -90,6 +93,38 @@ describe("AuthorTestimony", () => {
       answers: [{ question_id: "q1", kind: "text", value: "line one\nline two" }],
     });
     expect(html).toContain("line one\nline two");
+  });
+
+  // Feature: 11-any-letter, task 1 (issue #349, P4.2): the two-line clamp.
+  it("clamps the answer to two lines and keeps the full text in the markup", () => {
+    const long =
+      "The kitchen window was open and the radio was on, and I kept meaning to write down the song before it ended, which I never did.";
+    const html = render(
+      [textQuestion("q1", "Where were you?")],
+      { version: 2, answers: [{ question_id: "q1", kind: "text", value: long }] },
+    );
+    expect(html).toContain(long);
+    expect(html).toContain("answerClamped");
+    expect(html).toContain(`>${REVEAL_COPY.answerShowFull}</button>`);
+    expect(html).toContain('aria-expanded="false"');
+  });
+
+  it("gives the clamp class two lines in the reveal CSS", () => {
+    const css = readFileSync(
+      join(dirname(fileURLToPath(import.meta.url)), "reveal.module.css"),
+      "utf8",
+    );
+    expect(css).toMatch(/\.answerClamped\s*\{[^}]*-webkit-line-clamp:\s*2;/);
+    expect(css).toMatch(/\.answerClamped\s*\{[^}]*line-clamp:\s*2;/);
+  });
+
+  it("keeps the heading as the focus target: tabindex -1, no autofocus on the control", () => {
+    const html = render(
+      [textQuestion("q1", "Where were you?")],
+      { version: 2, answers: [{ question_id: "q1", kind: "text", value: "At home." }] },
+    );
+    expect(html).toMatch(/<h2[^>]*tabindex="-1"[^>]*data-author-testimony-heading=""/);
+    expect(html).not.toContain("autofocus");
   });
 
   it("marks the question and answer as the judge's own content", () => {

@@ -202,6 +202,11 @@ export const REVEAL_COPY = {
    */
   showAll: "Show everything",
 
+  /** Shown under a clamped answer. It shows the full text (spec 11 P4.2). */
+  answerShowFull: "Show full answer",
+  /** Shown under an expanded answer. It clamps the text again (spec 11 P4.2). */
+  answerShowLess: "Show less",
+
   // --- Reveal, stage 2: the sealed letter ---
 
   /** Heading for stage 2 of the reveal: what was written then. */

@@ -389,7 +389,7 @@ describe("Break-the-seal (C6) constants and CSS (spec 10 C6)", () => {
     expect(C.SEAL_ON_FLAP_TOP_PCT).toBe(55.3);
     expect(C.SEAL_ON_FLAP_WIDTH_PCT).toBe(28);
     expect(C.PHONE_SEAL_SIZE).toBe("6.5rem");
-    expect(C.ANSWER_TEXT_CLAMP_LINES).toBe(3);
+    expect(C.ANSWER_CLAMP_LINES_LETTER).toBe(2);
   });
 
   it("places the Seal_Group with SEAL_GROUP_GAP_PX and SEAL_GROUP_WIDTH in the scene CSS", () => {
@@ -414,8 +414,8 @@ describe("Break-the-seal (C6) constants and CSS (spec 10 C6)", () => {
     expect(sealBreak).toContain(`height: ${C.PHONE_SEAL_SIZE};`);
   });
 
-  it("clamps the Text_Answer to ANSWER_TEXT_CLAMP_LINES lines in the reveal CSS", () => {
-    expect(reveal).toContain(`-webkit-line-clamp: ${C.ANSWER_TEXT_CLAMP_LINES};`);
-    expect(reveal).toContain(`line-clamp: ${C.ANSWER_TEXT_CLAMP_LINES};`);
+  it("clamps a displayed answer to ANSWER_CLAMP_LINES_LETTER lines in the reveal CSS", () => {
+    expect(reveal).toContain(`-webkit-line-clamp: ${C.ANSWER_CLAMP_LINES_LETTER};`);
+    expect(reveal).toContain(`line-clamp: ${C.ANSWER_CLAMP_LINES_LETTER};`);
   });
 });
