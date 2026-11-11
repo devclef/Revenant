@@ -689,6 +689,22 @@ describe("reading (Text_Persona walk)", () => {
     });
   });
 
+  it("reaches the close stage for a letter with no figures (stage 3, after the letter)", () => {
+    const read = run(
+      { type: "LETTER_OPENABLE", envelope: {}, envelopeHash: "h" },
+      { type: "SECRET_OK" },
+      { type: "OPENED", opened: TEXT_OPENED, personaAnswers: PERSONA_ANSWERS },
+      { type: "NEXT_QUESTION" },
+      { type: "READ_DONE" },
+    );
+    const letter = reduce(read, { type: "ADVANCE" });
+    const close = reduce(letter, { type: "ADVANCE" });
+
+    expect(letter).toMatchObject({ tag: "reveal", stage: 2, record: null });
+    expect(close).toMatchObject({ tag: "reveal", stage: 3, record: null });
+    expect(close).toMatchObject({ testimony: expect.any(Array) });
+  });
+
   it("posts nothing: no /api/openings request while the walk runs to close", () => {
     const fetchStub = vi.fn<(url: string, init?: unknown) => Promise<Response>>(
       () => Promise.resolve(new Response(null, { status: 200 })),
