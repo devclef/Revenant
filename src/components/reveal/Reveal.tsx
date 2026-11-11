@@ -1,14 +1,14 @@
 "use client";
 
 import { useCallback, useContext, useEffect, useState } from "react";
-import type { Opened } from "./opening-machine";
+import type { Opened, TestimonyEntry } from "./opening-machine";
 import { AnswerList, type AnswerListItem } from "./AnswerList";
 import { PHONE_QUERY } from "@/components/ceremony/scene/TopBar";
 import type { LetterKind } from "./FigureLine";
 import type { RecallRecordV1, RecallRecordV2 } from "@/lib/recall";
 import { LetterBlock } from "@/components/ceremony/letter/LetterBlock";
 import { SoundEnabledContext } from "@/components/ceremony/sound/SoundEnabledContext";
-import { FiguresThenNow } from "./FiguresThenNow";
+import { FiguresThenNow, SelfReportedOnly } from "./FiguresThenNow";
 import { useFigures, type FiguresState } from "./figures-api";
 import { AuthorTestimony } from "./AuthorTestimony";
 import { Fingerprint } from "./Fingerprint";
@@ -110,8 +110,17 @@ const INERT_SEAL: SealController = {
 export type RevealProps = {
   /** The opened letter; its payload holds the sealed content. */
   opened: Opened;
-  /** The stored recall record: what the judge remembered. */
-  record: RecallRecordV1 | RecallRecordV2;
+  /**
+   * The stored recall record: what the judge remembered. Null on the
+   * Text_Persona walk, which stores no record (spec 11 P1.5); its testimony
+   * comes from `testimony` instead.
+   */
+  record: RecallRecordV1 | RecallRecordV2 | null;
+  /**
+   * The Text_Persona's testimony, one entry per question in order, shown with
+   * the Fictional_Label (spec 11 P1.7). Present only on that walk.
+   */
+  testimony?: readonly TestimonyEntry[];
   /** The persona's display name, passed to `SealedLetter` for its demo label. */
   personaName: string;
   /**
@@ -172,19 +181,25 @@ export type RevealProps = {
 };
 
 /**
- * The reveal body, given the figures state. `figures` is null for a letter with
- * no sealed figures: nothing is fetched and no figures stage is drawn.
+ * The reveal body, given the figures state. `figures` is null when the letter
+ * has no official figures: nothing is fetched and no "The receipts" stage is
+ * drawn. A letter whose only figures are self-reported still has its figures
+ * stage, which shows just "Your own numbers" (spec L5.1).
  */
 type RevealBodyProps = RevealProps & { figures: FiguresState | null };
 
 /**
  * Picks the reveal body. The Figures_API is read only when the letter has
- * sealed figures (spec 10 C8.6): a letter with none never calls `useFigures()`.
- * Figure count is fixed by the sealed payload, so the choice never changes
- * within one reveal.
+ * sealed official figures (spec 10 C8.6, spec L5.1): a letter with none, or
+ * with only self-reported figures, never calls `useFigures()`. Official figure
+ * count is fixed by the sealed payload, so the choice never changes within one
+ * reveal.
  */
 export function Reveal(props: RevealProps) {
-  if (props.opened.payload.figures.length === 0) {
+  const hasOfficialFigures = props.opened.payload.figures.some(
+    (figure) => figure.kind !== "self-reported",
+  );
+  if (!hasOfficialFigures) {
     return <RevealBody {...props} figures={null} />;
   }
   return <RevealWithFigures {...props} />;
@@ -200,6 +215,7 @@ function RevealWithFigures(props: RevealProps) {
 function RevealBody({
   opened,
   record,
+  testimony,
   personaName,
   letterId,
   stage,
@@ -277,7 +293,7 @@ function RevealBody({
     nameByMetricId.set(metric.id, metric.display_name);
   }
   const answerByQuestionId = new Map(
-    record.answers.map((answer) => [answer.question_id, answer] as const),
+    (record?.answers ?? []).map((answer) => [answer.question_id, answer] as const),
   );
   const recordedScales = opened.payload.recall_questions.flatMap((question) => {
     const unit =
@@ -309,20 +325,29 @@ function RevealBody({
   // Author_Questions first (text), then the number questions with the metric
   // name, the Answer_Text and the unit, or "No answer". Text items come from the
   // sealed `text` questions in payload order (C9.3: the receipts lead with them).
-  const textItems: AnswerListItem[] = opened.payload.recall_questions.flatMap(
-    (question) => {
-      if (question.answer_type !== "text") return [];
-      const answer = answerByQuestionId.get(question.id);
-      return [
-        {
+  // Text items come from the sealed `text` questions in payload order (C9.3:
+  // the receipts lead with them). On the Text_Persona walk they come from her
+  // testimony instead, each labelled with the Fictional_Label (spec 11 P1.7).
+  const textItems: AnswerListItem[] =
+    testimony !== undefined
+      ? testimony.map((entry) => ({
           kind: "text" as const,
-          question: question.text,
-          answer:
-            answer !== undefined && answer.kind === "text" ? answer.value : null,
-        },
-      ];
-    },
-  );
+          question: entry.question,
+          answer: entry.answer,
+          label: REVEAL_COPY.personaAnswerLabel,
+        }))
+      : opened.payload.recall_questions.flatMap((question) => {
+          if (question.answer_type !== "text") return [];
+          const answer = answerByQuestionId.get(question.id);
+          return [
+            {
+              kind: "text" as const,
+              question: question.text,
+              answer:
+                answer !== undefined && answer.kind === "text" ? answer.value : null,
+            },
+          ];
+        });
   const numberItems: AnswerListItem[] = opened.payload.recall_questions.flatMap(
     (question) => {
       if (question.answer_type !== "number") return [];
@@ -434,7 +459,11 @@ function RevealBody({
                 {/* Stage 1 sits on the dark with no paper panel (spec 10 C6.7):
                     the "Your testimony" heading, then the Answer_List at every
                     Evidence_Size (C6.10), then the Seal_Group. */}
-                <h2 className={styles.marksHeading}>{REVEAL_COPY.stage1Title}</h2>
+                <h2 className={styles.marksHeading}>
+                  {testimony !== undefined
+                    ? REVEAL_COPY.personaTestimonyTitle
+                    : REVEAL_COPY.stage1Title}
+                </h2>
                 <AnswerList items={answerItems} />
                 {showSeal ? (
                   <div className={styles.marksBreak} data-fit="break">
@@ -485,6 +514,13 @@ function RevealBody({
             <AuthorTestimony
               questions={opened.payload.recall_questions}
               record={record}
+              {...(testimony === undefined
+                ? {}
+                : {
+                    testimony,
+                    answerLabel: REVEAL_COPY.personaAnswerLabel,
+                    title: REVEAL_COPY.personaTestimonyTitle,
+                  })}
             />
             <LetterBlock
               opened={opened}
@@ -514,7 +550,7 @@ function RevealBody({
             />
           </div>
 
-          {stage >= 3 && figures !== null ? (
+          {stage >= 3 && figures !== null && record !== null ? (
             <div
               className={`${styles.stage} ${styles.fade} ${styles.figuresCol}`}
               data-figures-panel=""
@@ -531,6 +567,16 @@ function RevealBody({
               </FiguresFadeUp>
             </div>
           ) : null}
+          {stage >= 3 && figures === null && figureCount > 0 ? (
+            <div
+              className={`${styles.stage} ${styles.fade} ${styles.figuresCol}`}
+              data-figures-panel=""
+            >
+              <FiguresFadeUp count={figureCount}>
+                <SelfReportedOnly payload={opened.payload} />
+              </FiguresFadeUp>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -539,7 +585,10 @@ function RevealBody({
           appears while the figures are still fading in. */}
       {closeShown ? (
         <div className={`${styles.stage} ${styles.fade}`}>
-          <Close {...close} />
+          <Close
+            {...close}
+            {...(close?.kind === "persona" ? { hasFigures: figureCount > 0 } : {})}
+          />
         </div>
       ) : null}
 

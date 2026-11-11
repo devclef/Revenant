@@ -155,6 +155,7 @@ function expectedStage(state: FlowState, local: LocalView): Stage {
       return "envelope";
 
     case "recall":
+    case "reading":
     case "submitting":
     case "submit_failed":
       return "recall";

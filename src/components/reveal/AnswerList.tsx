@@ -34,6 +34,11 @@ export type AnswerListItem =
       question: string;
       /** The free-text answer the judge gave, or null for "No answer". */
       answer: string | null;
+      /**
+       * A label shown above the answer. The Text_Persona passes the
+       * Fictional_Label here (spec 11 P1.7). Absent for the judge's own answers.
+       */
+      label?: string;
     }
   | {
       kind: "number";
@@ -61,6 +66,9 @@ export function AnswerList({ items }: AnswerListProps) {
             <span className={styles.answerQuestion} data-user-content="">
               {item.question}
             </span>
+            {item.label === undefined ? null : (
+              <span className={styles.answerLabel}>{item.label}</span>
+            )}
             {item.answer === null ? (
               <span className={styles.answerValue}>{REVEAL_COPY.noAnswer}</span>
             ) : (

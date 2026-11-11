@@ -73,6 +73,16 @@ export const REVEAL_COPY = {
   /** The label above each Text_Answer on the Author_Testimony (spec 10 C8.2). */
   saidJustNow: "What you said just now",
 
+  /**
+   * The Fictional_Label (spec 11 P1.7): shown next to every Persona_Answer on
+   * every screen that shows one, so a reader never takes her answer for the
+   * judge's own.
+   */
+  personaAnswerLabel: "Her answer (fictional)",
+
+  /** The testimony heading for the Text_Persona: her questions, not the judge's. */
+  personaTestimonyTitle: "Her questions to herself",
+
   // --- Errors ---
 
   /** The letter record has not been placed yet (404). */
@@ -346,6 +356,18 @@ export const REVEAL_COPY = {
    * `{fromUnit}` is the published unit.
    */
   rescaledNote: "Shown per {toUnit}. Published per {fromUnit}.",
+
+  /**
+   * The source-details line with the exact sealed value (P5.2). `{value}` and
+   * `{unit}` are the sealed figure's value and unit, unrescaled.
+   */
+  asPublished: "As published: {value} {unit}",
+
+  /**
+   * The one line on a card whose values are rounded for display (P5.3). It
+   * points to the published values in the source details.
+   */
+  roundedNote: "Values here are rounded for display. The published values are under Source.",
 
   /** Label before the then-vs-now formula (R12.9). */
   formulaLabel: "Formula",

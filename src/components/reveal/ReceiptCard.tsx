@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { answerText } from "@/components/ceremony/recall/answer-text";
 import { FIG_VALUE_SIZE } from "@/components/ceremony/constants";
 import { REVEAL_COPY } from "./copy";
+import { displayPrecisionForUnit } from "./display-precision";
 import styles from "./reveal.module.css";
 
 /**
@@ -47,12 +48,16 @@ export type ReceiptFigure = {
 
 /** The source control at the foot of the card. */
 export type ReceiptSource = {
+  /** The official series name, the sealed display_name (P5.4). */
+  seriesName?: string;
   /** The publisher and source name, as sealed. */
   source: string;
   /** The series identifier, as sealed. */
   seriesId: string;
   /** A link to check the figure at its source, when one was sealed. */
   sourceUrl?: string;
+  /** The exact sealed value and unit, "As published: …" (P5.2). */
+  asPublished?: string;
 };
 
 export type ReceiptCardProps = {
@@ -101,10 +106,12 @@ function SourceControl({ source }: { source: ReceiptSource }) {
   return (
     <details className={styles.src}>
       <summary>{REVEAL_COPY.sourceSummary}</summary>
+      {source.seriesName === undefined ? null : <p>{source.seriesName}</p>}
       <p>{source.source}</p>
       <p>
         {REVEAL_COPY.seriesLabel}: {source.seriesId}
       </p>
+      {source.asPublished === undefined ? null : <p>{source.asPublished}</p>}
       {source.sourceUrl === undefined ? null : (
         <p>
           <a href={source.sourceUrl} rel="noreferrer noopener" target="_blank">
@@ -218,6 +225,12 @@ export function ReceiptCard({
 
       {nowNote === undefined ? null : (
         <p className={styles.period}>{nowNote}</p>
+      )}
+
+      {displayPrecisionForUnit(unit) === undefined ? null : (
+        <p className={styles.period} data-rounded-note="">
+          {REVEAL_COPY.roundedNote}
+        </p>
       )}
 
       {numberLine}

@@ -13,7 +13,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
 import { parsePersonaList, type PersonaList } from "./schema";
-import { PERSONAS } from "./index";
+import { PERSONAS, RETIRED_LETTER_IDS } from "./index";
 
 // --- Formatting a ZodError the way design.md asks for ------------------------
 
@@ -257,12 +257,21 @@ describe("parsePersonaList — opens_at must be after written_as_of midnight", (
 // --- Metrics rules -----------------------------------------------------------
 
 describe("parsePersonaList — metrics rules", () => {
-  it("rejects zero metrics", () => {
+  it("rejects zero metrics when the persona has no author_questions", () => {
     const list = validList();
     list.personas[0].metrics = [];
     expect(
-      problemsFor(list).some((p) => p.startsWith('persona "us-maya": metrics:')),
+      problemsFor(list).some((p) =>
+        p.startsWith('persona "us-maya": metrics: persona needs at least one'),
+      ),
     ).toBe(true);
+  });
+
+  it("accepts zero metrics when the persona has author_questions", () => {
+    const list = validList();
+    list.personas[0].metrics = [];
+    list.personas[0].author_questions = ["On the day you sealed this, what were you looking forward to most?"];
+    expect(() => parsePersonaList(list)).not.toThrow();
   });
 
   it("rejects more than 20 metrics", () => {
@@ -317,6 +326,124 @@ describe("parsePersonaList — metrics rules", () => {
     ).toBe(true);
   });
 });
+
+// --- author_questions rules --------------------------------------------------
+
+describe("parsePersonaList — author_questions rules", () => {
+  function textPersona(): PersonaList {
+    const list = validList();
+    list.personas[0].metrics = [];
+    list.personas[0].author_questions = ["On the day you sealed this, what did you plan?"];
+    return list;
+  }
+
+  it("accepts a text persona with one to three questions", () => {
+    for (const count of [1, 2, 3]) {
+      const list = textPersona();
+      list.personas[0].author_questions = Array.from(
+        { length: count },
+        (_, n) => `Question ${n + 1} about the day you sealed this?`,
+      );
+      expect(() => parsePersonaList(list)).not.toThrow();
+    }
+  });
+
+  it("rejects more than three questions", () => {
+    const list = textPersona();
+    list.personas[0].author_questions = ["a", "b", "c", "d"];
+    expect(
+      problemsFor(list).some((p) =>
+        p.startsWith('persona "us-maya": author_questions:'),
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects an empty question list", () => {
+    const list = textPersona();
+    list.personas[0].author_questions = [];
+    expect(
+      problemsFor(list).some((p) =>
+        p.startsWith('persona "us-maya": author_questions:'),
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects an empty question", () => {
+    const list = textPersona();
+    list.personas[0].author_questions = [""];
+    expect(
+      problemsFor(list).some((p) =>
+        p.startsWith('persona "us-maya": author_questions.0:'),
+      ),
+    ).toBe(true);
+  });
+
+  it("rejects a question over 200 code points", () => {
+    const list = textPersona();
+    list.personas[0].author_questions = ["x".repeat(201)];
+    expect(
+      problemsFor(list).some((p) =>
+        p.startsWith('persona "us-maya": author_questions.0:'),
+      ),
+    ).toBe(true);
+  });
+
+  it("counts code points, not UTF-16 units, so 200 astral characters pass", () => {
+    const list = textPersona();
+    // Each emoji is two UTF-16 units but one code point: 200 of them is 400 units.
+    list.personas[0].author_questions = ["\u{1F56F}".repeat(200)];
+    expect(() => parsePersonaList(list)).not.toThrow();
+    list.personas[0].author_questions = ["\u{1F56F}".repeat(201)];
+    expect(() => parsePersonaList(list)).toThrow();
+  });
+
+  it("rejects a persona with neither author_questions nor metrics", () => {
+    const list = validList();
+    list.personas[0].metrics = [];
+    expect(
+      problemsFor(list).some((p) =>
+        p.startsWith('persona "us-maya": metrics: persona needs at least one'),
+      ),
+    ).toBe(true);
+  });
+});
+
+// --- Text_Persona and fuel personas in the real list -------------------------
+
+describe("the real Persona_List — Text_Persona and fuel personas", () => {
+  it("parses the Text_Persona with metrics [] and her questions", () => {
+    const priya = PERSONAS.find((p) => p.key === "us-priya");
+    expect(priya).toBeDefined();
+    expect(priya?.metrics).toEqual([]);
+    expect(priya?.author_questions).toHaveLength(2);
+    expect(priya?.opens_at).toBe("2024-11-05T00:00:00.000Z");
+    expect(RETIRED_LETTER_IDS).not.toContain(priya?.letter_id);
+  });
+
+  it("keeps the two fuel personas unchanged and metric-bearing", () => {
+    const fuel = PERSONAS.filter((p) => p.metrics.length > 0).map((p) => p.key);
+    expect(fuel.sort()).toEqual(["eu-tomas", "us-maya"]);
+    const maya = PERSONAS.find((p) => p.key === "us-maya");
+    expect(maya?.metrics.map((m) => m.metric_id)).toEqual([
+      "us-gasoline-regular",
+      "us-diesel",
+    ]);
+    expect(maya?.author_questions).toBeUndefined();
+  });
+});
+
+// --- Retired opening_event keeps being rejected ------------------------------
+
+describe("parsePersonaList — opening_event stays rejected with questions present", () => {
+  it("rejects opening_event on a text persona", () => {
+    const list = validList() as unknown as { personas: Record<string, unknown>[] };
+    list.personas[0].metrics = [];
+    list.personas[0].author_questions = ["On the day you sealed this, what did you plan?"];
+    list.personas[0].opening_event = { name: "x", date: "2024-11-05" };
+    expect(() => parsePersonaList(list)).toThrow();
+  });
+});
+
 
 // --- Cross-persona and retired-list rules ------------------------------------
 

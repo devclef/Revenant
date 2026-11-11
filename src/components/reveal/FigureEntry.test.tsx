@@ -163,8 +163,9 @@ describe("FigureEntry shows the figures in the display rescale (R11.10)", () => 
         rescale,
       }),
     );
-    expect(html).toContain("3.412");
-    expect(html).toContain("3.9<");
+    // Display precision for fuel per litre (P5.1): 3.412 reads 3.41, 3.9 reads 3.90.
+    expect(html).toContain("3.41<");
+    expect(html).toContain("3.90<");
     expect(html).toContain("EUR per litre");
     const note = REVEAL_COPY.rescaledNote
       .replace("{toUnit}", "EUR per litre")

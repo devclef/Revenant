@@ -79,6 +79,16 @@ const metricSchema = z.strictObject({
   recall_subject: z.string().min(1),
 });
 
+// author_questions: one Author_Question, 1 to 200 code points. Counted by code
+// point, not UTF-16 unit, so an astral character counts once.
+const authorQuestionSchema = z.string().refine(
+  (s) => {
+    const n = [...s].length;
+    return n >= 1 && n <= 200;
+  },
+  { message: "author_questions entries must be 1 to 200 code points" },
+);
+
 const personaSchema = z.strictObject({
   key: keySchema,
   display_name: nameSchema,
@@ -86,7 +96,13 @@ const personaSchema = z.strictObject({
   letter_id: letterIdSchema,
   written_as_of: writtenAsOfSchema,
   opens_at: opensAtSchema,
-  metrics: z.array(metricSchema).min(1).max(20),
+  // A Text_Persona has no metrics (metrics: []). The fuel personas have metrics.
+  // The "at least one question or one metric" rule is checked in
+  // personaListSchema, so the error names the persona.
+  metrics: z.array(metricSchema).max(20),
+  // The questions the author wrote for their future self (1 to 3). Only the
+  // Text_Persona carries them.
+  author_questions: z.array(authorQuestionSchema).min(1).max(3).optional(),
   intro_line: introLineSchema,
   letter_path: letterPathSchema,
 });
@@ -109,6 +125,20 @@ export const personaListSchema = personaListBaseSchema.superRefine(
 
     for (let i = 0; i < list.personas.length; i++) {
       const persona = list.personas[i];
+
+      // A persona needs at least one question or one metric (the Text_Persona
+      // has questions and no metrics; a fuel persona has metrics).
+      if (
+        persona.metrics.length === 0 &&
+        (persona.author_questions === undefined ||
+          persona.author_questions.length === 0)
+      ) {
+        ctx.addIssue({
+          code: "custom",
+          message: "persona needs at least one author_question or one metric",
+          path: ["personas", i, "metrics"],
+        });
+      }
 
       // Unique keys (R1.5).
       if (seenKeys.has(persona.key)) {

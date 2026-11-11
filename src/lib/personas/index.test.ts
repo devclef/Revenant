@@ -165,13 +165,14 @@ describe("index — committed list: Maya after the catalogue move (#82)", () => 
   });
 });
 
-// The demo shows exactly two persona letters: one US and one EU. Any other
-// key, a missing key or a duplicate key makes this fail, so a list change has
-// to update this test on purpose (issue #205).
-describe("index — Persona_List keys are exactly the US and EU keys", () => {
-  it("lists exactly us-maya and eu-tomas, once each", () => {
+// The demo shows exactly three persona letters: two fuel letters (one US, one
+// EU) and the Text_Persona (US). Any other key, a missing key or a duplicate
+// key makes this fail, so a list change has to update this test on purpose
+// (issue #205, issue #351).
+describe("index — Persona_List keys are exactly the US, EU and Text_Persona keys", () => {
+  it("lists exactly us-maya, eu-tomas and us-priya, once each", () => {
     const keys = PERSONAS.map((p) => p.key).sort();
-    expect(keys).toEqual(["eu-tomas", "us-maya"]);
+    expect(keys).toEqual(["eu-tomas", "us-maya", "us-priya"]);
     expect(new Set(keys).size).toBe(keys.length);
   });
 });

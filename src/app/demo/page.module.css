@@ -54,6 +54,18 @@
   max-width: 40rem;
 }
 
+/*
+ * The index headline is sized here, not in the shared Scene headline, so the
+ * envelopes sit inside the First_Viewport at 1366x800 and 1280x800 (spec 11
+ * P1.10, DX1). At the old size the headline wrapped to two lines and pushed the
+ * open links below the fold.
+ */
+.page h1 {
+  max-width: none;
+  font-size: clamp(2.5rem, 5.5vw, 4.5rem);
+  line-height: 1;
+}
+
 .list {
   list-style: none;
   margin: 0;

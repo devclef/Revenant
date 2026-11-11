@@ -39,6 +39,21 @@
         }
       ],
       "letter_path": "letters/eu-tomas.txt"
+    },
+    {
+      "key": "us-priya",
+      "display_name": "Priya",
+      "intro_line": "Priya, who teaches a Saturday class, writes in May about her week, a plan with her sister and a choice at work.",
+      "region": "United States",
+      "letter_id": "CFtrFrKUnj-R-71e819chQ",
+      "written_as_of": "2024-05-12",
+      "opens_at": "2024-11-05T00:00:00.000Z",
+      "metrics": [],
+      "author_questions": [
+        "On the day you sealed this, what were you looking forward to most?",
+        "On the day you sealed this, what were you worried about?"
+      ],
+      "letter_path": "letters/us-priya.txt"
     }
   ],
   "retired_letter_ids": [

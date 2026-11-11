@@ -51,6 +51,14 @@ const STAGE_ORDER: readonly Stage[] = [
   "error",
 ];
 
+/**
+ * The Stages a letter can reach, in order. A letter with no official figures
+ * has no `figures` Stage (spec 10 L5.1), so it is left out of the list.
+ */
+export function stageListFor(hasFigures: boolean): readonly Stage[] {
+  return hasFigures ? STAGE_ORDER : STAGE_ORDER.filter((stage) => stage !== "figures");
+}
+
 /** True for every Stage after `recall` (`marks` onward, and `error`). */
 export function stageIsAfterRecall(stage: Stage): boolean {
   return STAGE_ORDER.indexOf(stage) > STAGE_ORDER.indexOf("recall");
@@ -108,6 +116,7 @@ export function stageFor(state: FlowState, local: LocalView): Stage {
       return "envelope";
 
     case "recall":
+    case "reading":
     case "submitting":
     case "submit_failed":
       return "recall";
