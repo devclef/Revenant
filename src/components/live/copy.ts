@@ -159,8 +159,10 @@ export const LIVE_COPY = {
   noticeMistyped: "That key does not look right. Check it and try again.",
   noticeWrongBackup: "That key does not match this letter.",
   sealedOn: "Sealed on {sealedAt}",
-  lockNote:
-    "This letter was locked for 30 seconds. For a longer comparison, open a persona letter.",
+  /** The Close note after a live letter's reveal. */
+  lockNote: "This letter was locked for 30 seconds.",
+  /** Shown with the link only when the letter holds official figures. */
+  lockNoteComparison: "For a longer comparison, open a persona letter.",
   lockNoteLink: "Open a persona letter",
   /** Heading of the /l/[id] not-found page. */
   letterNotFoundTitle: "No letter here",
@@ -230,8 +232,12 @@ export const LIVE_COPY = {
   selfReportedUnitLabel: "Unit, such as per month",
   selfReportedRegionLabel: "Region, such as your city",
   selfReportedPeriodLabel: "Period, such as 2026-09 or 2026-09-30",
-  /** The first row of /demo/live, which the judge can edit, clear or remove (C9.5). */
-  livePrefill: "Before you read it, what do you remember about the day you sealed this?",
+  /**
+   * Shown under the Write heading and next to the Wait countdown on /demo/live
+   * only, so the judge knows the 30 seconds is a rehearsal.
+   */
+  rehearsalLine:
+    "This is a rehearsal. A real letter stays sealed for months. This one opens in 30 seconds.",
   /** The legend of the Occasion buttons above the letter field (L2.1). */
   occasionLegend: "What is it about?",
   /** The Occasion button labels, keyed by Occasion id (L2.1, L2.8). */

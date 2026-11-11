@@ -588,6 +588,13 @@ function RevealBody({
           <Close
             {...close}
             {...(close?.kind === "persona" ? { hasFigures: figureCount > 0 } : {})}
+            {...(close?.kind === "live"
+              ? {
+                  hasFigures: opened.payload.figures.some(
+                    (figure) => figure.kind !== "self-reported",
+                  ),
+                }
+              : {})}
           />
         </div>
       ) : null}

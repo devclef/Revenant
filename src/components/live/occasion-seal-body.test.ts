@@ -2,8 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { questionsForSeal } from "./author-questions";
 import { buildLivePayload } from "./build-payload";
-import { LIVE_COPY } from "./copy";
-import { applyOccasion, OCCASIONS, type OccasionDraft } from "./occasions";
+import { applyOccasion, DEFAULT_QUESTION, OCCASIONS, type OccasionDraft } from "./occasions";
 import { makeFigures } from "./test-figures";
 import {
   initialWriteDraft,
@@ -34,10 +33,10 @@ describe("seal request bodies carry no Occasion identifier (spec 11, L2.5)", () 
     it(`builds the same body for ${occasion.label} as for its text and rows alone`, () => {
       const start: OccasionDraft = {
         text: "A letter I wrote myself.",
-        questions: [LIVE_COPY.livePrefill],
+        questions: [DEFAULT_QUESTION],
         occasion: "blank",
         appliedStarter: "",
-        appliedQuestions: [LIVE_COPY.livePrefill],
+        appliedQuestions: [DEFAULT_QUESTION],
       };
       const next = applyOccasion(start, occasion.id);
       const body = seal(next.text, next.questions);

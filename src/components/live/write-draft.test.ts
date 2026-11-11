@@ -13,7 +13,6 @@
 import { describe, expect, it } from "vitest";
 
 import { MAX_FIGURES } from "./constants";
-import { LIVE_COPY } from "./copy";
 import { sealReducer, INITIAL_SEAL_STATE } from "./seal-machine";
 import {
   CLEARED_WRITE_DRAFT,
@@ -35,7 +34,7 @@ describe("the write draft starts empty", () => {
       metricIds: [],
       warningTicked: false,
       backupCardTicked: false,
-      questions: [LIVE_COPY.livePrefill],
+      questions: [DEFAULT_QUESTION],
       selfReported: [],
     });
   });

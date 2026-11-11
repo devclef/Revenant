@@ -318,3 +318,25 @@ describe("SealPage passes each figure's value and source into the picker", () =>
     expect(html).not.toContain(`id="figure-${first.metric.id}"`);
   });
 });
+
+describe("SealPage rehearsal line (spec 11, L4.1, L4.3)", () => {
+  const base = { rpId: "revenant.devclef.se", appOrigin: "https://revenant.devclef.se" };
+
+  it("shows the rehearsal line under the Write heading with the rehearsal prop", () => {
+    const html = renderToStaticMarkup(createElement(SealPage, { ...base, rehearsal: true }));
+    expect(html).toContain('data-live-rehearsal=""');
+    expect(html).toContain(LIVE_COPY.rehearsalLine);
+  });
+
+  it("shows no rehearsal line without the prop, the default", () => {
+    const html = renderToStaticMarkup(createElement(SealPage, base));
+    expect(html).not.toContain("data-live-rehearsal");
+    expect(html).not.toContain(LIVE_COPY.rehearsalLine);
+  });
+
+  it("shows no rehearsal line on the real /seal page", () => {
+    const html = renderToStaticMarkup(createElement(SealPage, { ...base, mode: "real" }));
+    expect(html).toContain('data-live-step="write"');
+    expect(html).not.toContain(LIVE_COPY.rehearsalLine);
+  });
+});

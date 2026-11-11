@@ -12,6 +12,7 @@ import { DEMO_FIGURES } from "@/lib/figures/demo";
 import { listPickableSeries } from "./catalogue-list";
 import { LIVE_COPY, REAL_COPY } from "./copy";
 import { figureLimit } from "./form";
+import { DEFAULT_QUESTION } from "./occasions";
 import type { SealState } from "./seal-machine";
 import { INITIAL_TOUCHED, type TouchedState } from "./touched";
 import { WriteForm, type WriteFormProps } from "./WriteForm";
@@ -52,10 +53,10 @@ function render(over: Partial<WriteFormProps>): string {
 
 describe("Author_Question rows on the Write step", () => {
   it("shows the demo prefill row on /demo/live", () => {
-    const html = render({ questions: [LIVE_COPY.livePrefill] });
+    const html = render({ questions: [DEFAULT_QUESTION] });
     expect(html).toContain(LIVE_COPY.authorQuestionsLegend);
     // Static markup escapes the apostrophe in the prefill text.
-    expect(html).toContain(LIVE_COPY.livePrefill.replace(/'/g, "&#x27;"));
+    expect(html).toContain(DEFAULT_QUESTION.replace(/'/g, "&#x27;"));
   });
 
   it("shows no question row on /seal, which prefills nothing", () => {

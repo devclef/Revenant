@@ -219,3 +219,18 @@ describe("LIVE_COPY for the receipts and the block message (spec 11)", () => {
     );
   });
 });
+
+describe("LIVE_COPY rehearsal line (spec 11, L4.1)", () => {
+  it("reads exactly as the ticket says", () => {
+    expect(LIVE_COPY.rehearsalLine).toBe(
+      "This is a rehearsal. A real letter stays sealed for months. This one opens in 30 seconds.",
+    );
+  });
+
+  it("carries no exclamation mark and no time word", () => {
+    expect(LIVE_COPY.rehearsalLine).not.toContain("!");
+    for (const word of TIME_WORDS) {
+      expect(LIVE_COPY.rehearsalLine.toLowerCase()).not.toContain(word);
+    }
+  });
+});

@@ -9,9 +9,9 @@
  */
 
 import { AUTHOR_QUESTIONS_MAX } from "./author-questions";
-import { LIVE_COPY } from "./copy";
 import { MAX_FIGURES, SELF_REPORTED_MAX } from "./constants";
 import type { WriteMode } from "./form";
+import { DEFAULT_QUESTION as OCCASION_DEFAULT_QUESTION } from "./occasions";
 
 /**
  * A number the visitor types in as their own (spec 08 later-tasks, R1). Every
@@ -45,7 +45,7 @@ export interface WriteDraft {
 }
 
 /** The one Author_Question a new letter starts with (C9.5, the Live_Prefill row). */
-export const DEFAULT_QUESTION: string = LIVE_COPY.livePrefill;
+export const DEFAULT_QUESTION: string = OCCASION_DEFAULT_QUESTION;
 
 /** A row with every field empty, as a new row starts. */
 export function emptySelfReportedRow(): SelfReportedRow {

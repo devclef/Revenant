@@ -72,3 +72,29 @@ describe("LiveWaitStep on the Wait card (D5.1)", () => {
     expect(html).not.toContain('data-live-countdown="ticking"');
   });
 });
+
+describe("LiveWaitStep rehearsal line (spec 11, L4)", () => {
+  function renderWith(rehearsal: boolean | undefined): string {
+    return renderToStaticMarkup(
+      createElement(LiveWaitStep, {
+        state: sealed,
+        appOrigin: "https://revenant.example",
+        step: "wait",
+        advanceTo: () => undefined,
+        nowMs: () => OPENS_MS - 60_000,
+        rehearsal,
+      }),
+    );
+  }
+
+  it("shows the rehearsal line beside the countdown when the prop is set", () => {
+    const html = renderWith(true);
+    expect(html).toContain('data-live-rehearsal=""');
+    expect(html).toContain(LIVE_COPY.rehearsalLine);
+  });
+
+  it("shows no rehearsal line when the prop is not set", () => {
+    expect(renderWith(undefined)).not.toContain("data-live-rehearsal");
+    expect(renderWith(false)).not.toContain(LIVE_COPY.rehearsalLine);
+  });
+});

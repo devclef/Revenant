@@ -12,6 +12,7 @@ import { DEMO_FIGURES } from "@/lib/figures/demo";
 import { listPickableSeries } from "../catalogue-list";
 import { questionsForSeal } from "../author-questions";
 import { LIVE_COPY } from "../copy";
+import { DEFAULT_QUESTION } from "../occasions";
 import type { SealState } from "../seal-machine";
 import { WriteForm, type WriteFormProps } from "../WriteForm";
 import { LiveStepper, type StepView } from "./LiveStepper";
@@ -71,12 +72,12 @@ function rowValues(html: string): string[] {
 describe("Write step: Author_Question rows on the Live_Stepper", () => {
   it("keeps the Live_Prefill row as the first row by default", () => {
     const state = initialStepperState("write", "demo");
-    expect(state.draft.questions).toEqual([LIVE_COPY.livePrefill]);
+    expect(state.draft.questions).toEqual([DEFAULT_QUESTION]);
 
     const html = renderWriteStep(state);
     // Static markup escapes the apostrophe in the prefill text.
     expect(rowValues(html)).toEqual([
-      LIVE_COPY.livePrefill.replace(/'/g, "&#x27;"),
+      DEFAULT_QUESTION.replace(/'/g, "&#x27;"),
     ]);
     expect(html).toContain(LIVE_COPY.authorQuestionLabel.replace("{n}", "1"));
     expect(html).not.toContain(
@@ -93,11 +94,11 @@ describe("Write step: Author_Question rows on the Live_Stepper", () => {
         event: { type: "QUESTION_CHANGED", index: 1, text: STARTER },
       },
     );
-    expect(state.draft.questions).toEqual([LIVE_COPY.livePrefill, STARTER]);
+    expect(state.draft.questions).toEqual([DEFAULT_QUESTION, STARTER]);
 
     const html = renderWriteStep(state);
     expect(rowValues(html)).toEqual([
-      LIVE_COPY.livePrefill.replace(/'/g, "&#x27;"),
+      DEFAULT_QUESTION.replace(/'/g, "&#x27;"),
       STARTER.replace(/'/g, "&#x27;"),
     ]);
     expect(html).toContain(LIVE_COPY.authorQuestionLabel.replace("{n}", "2"));
@@ -163,7 +164,7 @@ describe("Write step: Author_Question rows on the Live_Stepper", () => {
   it("seals the demo prefill as the only question when nothing else is typed", () => {
     const state = initialStepperState("write", "demo");
     expect(questionsForSeal(state.draft.questions)).toEqual([
-      LIVE_COPY.livePrefill,
+      DEFAULT_QUESTION,
     ]);
   });
 });

@@ -11,7 +11,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
-import { LIVE_COPY } from "@/components/reveal/copy";
+import { LIVE_COPY } from "@/components/live/copy";
 import { Close, DEMO_2_HREF, startOverHref } from "./Close";
 
 const KEY = "us-maya";
@@ -111,6 +111,24 @@ describe("Close, live kind", () => {
     expect(html).toContain('href="/demo"');
     expect(html).not.toContain(CEREMONY_COPY.closeLine);
     expect(html).not.toContain(CEREMONY_COPY.startOver);
+  });
+
+  it("shows the lock note and the persona link with official figures, plus the comparison line (L4.4)", () => {
+    const html = renderToStaticMarkup(createElement(Close, { kind: "live", hasFigures: true }));
+    expect(html).toContain(LIVE_COPY.lockNote);
+    expect(html).toContain(LIVE_COPY.lockNoteComparison);
+    expect(html).toContain(LIVE_COPY.lockNoteLink);
+    expect(html).toContain('href="/demo"');
+  });
+
+  it("shows the lock note and the persona link without official figures, with no comparison line (L4.4)", () => {
+    for (const props of [{ kind: "live" as const, hasFigures: false }, { kind: "live" as const }]) {
+      const html = renderToStaticMarkup(createElement(Close, props));
+      expect(html).toContain(LIVE_COPY.lockNote);
+      expect(html).not.toContain(LIVE_COPY.lockNoteComparison);
+      expect(html).toContain(LIVE_COPY.lockNoteLink);
+      expect(html).toContain('href="/demo"');
+    }
   });
 });
 
