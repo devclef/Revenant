@@ -63,7 +63,7 @@ import {
   type Stage,
 } from "./stages";
 import { FOCUS_SCROLL_CHECK_MS, LETTER_NARROW_PX, PICKUP_MOVE_MS } from "./constants";
-import { personaStepFor, stepAnnouncement } from "./steps";
+import { personaStepFor, personaStepLabels, stepAnnouncement } from "./steps";
 import { StepIndicator } from "../ui/StepIndicator";
 import type { FlowState } from "../reveal/opening-machine";
 import styles from "./ceremony.module.css";
@@ -334,7 +334,9 @@ function CeremonyRegion({
   // The emerging line is the same string the envelope shows (emergingStatus).
   // On the persona page (`topbar`), a Stage on a Step_Indicator step announces
   // that step instead (spec 09 C2.3), so the line changes once per step.
-  const stepNow = controls === "topbar" ? personaStepFor(stage) : null;
+  // A letter with no figures has three steps, not four (spec 10 L5.3).
+  const stepFigures = letterShape(state).figures;
+  const stepNow = controls === "topbar" ? personaStepFor(stage, stepFigures) : null;
   const liveLine =
     stepNow !== null
       ? stepAnnouncement(stepNow)
@@ -482,7 +484,7 @@ function CeremonyRegion({
         ) : null}
         {showSteps ? (
           <StepIndicator
-            steps={CEREMONY_COPY.steps}
+            steps={personaStepLabels(stepFigures)}
             current={stepNow}
             label={CEREMONY_COPY.stepsLabel}
           />

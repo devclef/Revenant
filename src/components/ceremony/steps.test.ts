@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 
 import { CEREMONY_COPY } from "./copy";
 import { COMPACT_GHOST_MAX_PX, PERSONA_STEPS } from "./constants";
-import { personaStepFor } from "./steps";
+import { personaStepFor, personaStepLabels } from "./steps";
 import type { Stage } from "./stages";
 
 const ALL_STAGES: readonly Stage[] = [
@@ -27,6 +27,28 @@ describe("personaStepFor (C2.2)", () => {
     expect(personaStepFor("letter")).toBe(2);
     expect(personaStepFor("figures")).toBe(3);
     expect(personaStepFor("close")).toBe(3);
+  });
+
+  it("ends a text-only letter on Read (step 2), with no See the receipts step (L5.3)", () => {
+    expect(personaStepFor("close", false)).toBe(2);
+    expect(personaStepFor("letter", false)).toBe(2);
+    expect(personaStepFor("marks", false)).toBe(1);
+    expect(personaStepFor("recall", false)).toBe(0);
+  });
+
+  it("keeps step 3 for a letter with figures", () => {
+    expect(personaStepFor("close", true)).toBe(3);
+    expect(personaStepFor("close")).toBe(3);
+  });
+
+  it("names exactly Testify, Break the seal and Read for a text-only letter", () => {
+    expect([...personaStepLabels(false)]).toEqual([
+      CEREMONY_COPY.steps[0],
+      CEREMONY_COPY.steps[1],
+      CEREMONY_COPY.steps[2],
+    ]);
+    expect(personaStepLabels(false)).toHaveLength(3);
+    expect(personaStepLabels(true)).toHaveLength(PERSONA_STEPS);
   });
 
   it("has no current step in emerging, sealed, envelope or any Stage before them", () => {

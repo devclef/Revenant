@@ -8,7 +8,7 @@ import type { LetterKind } from "./FigureLine";
 import type { RecallRecordV1, RecallRecordV2 } from "@/lib/recall";
 import { LetterBlock } from "@/components/ceremony/letter/LetterBlock";
 import { SoundEnabledContext } from "@/components/ceremony/sound/SoundEnabledContext";
-import { FiguresThenNow } from "./FiguresThenNow";
+import { FiguresThenNow, SelfReportedOnly } from "./FiguresThenNow";
 import { useFigures, type FiguresState } from "./figures-api";
 import { AuthorTestimony } from "./AuthorTestimony";
 import { Fingerprint } from "./Fingerprint";
@@ -172,19 +172,25 @@ export type RevealProps = {
 };
 
 /**
- * The reveal body, given the figures state. `figures` is null for a letter with
- * no sealed figures: nothing is fetched and no figures stage is drawn.
+ * The reveal body, given the figures state. `figures` is null when the letter
+ * has no official figures: nothing is fetched and no "The receipts" stage is
+ * drawn. A letter whose only figures are self-reported still has its figures
+ * stage, which shows just "Your own numbers" (spec L5.1).
  */
 type RevealBodyProps = RevealProps & { figures: FiguresState | null };
 
 /**
  * Picks the reveal body. The Figures_API is read only when the letter has
- * sealed figures (spec 10 C8.6): a letter with none never calls `useFigures()`.
- * Figure count is fixed by the sealed payload, so the choice never changes
- * within one reveal.
+ * sealed official figures (spec 10 C8.6, spec L5.1): a letter with none, or
+ * with only self-reported figures, never calls `useFigures()`. Official figure
+ * count is fixed by the sealed payload, so the choice never changes within one
+ * reveal.
  */
 export function Reveal(props: RevealProps) {
-  if (props.opened.payload.figures.length === 0) {
+  const hasOfficialFigures = props.opened.payload.figures.some(
+    (figure) => figure.kind !== "self-reported",
+  );
+  if (!hasOfficialFigures) {
     return <RevealBody {...props} figures={null} />;
   }
   return <RevealWithFigures {...props} />;
@@ -531,6 +537,16 @@ function RevealBody({
               </FiguresFadeUp>
             </div>
           ) : null}
+          {stage >= 3 && figures === null && figureCount > 0 ? (
+            <div
+              className={`${styles.stage} ${styles.fade} ${styles.figuresCol}`}
+              data-figures-panel=""
+            >
+              <FiguresFadeUp count={figureCount}>
+                <SelfReportedOnly payload={opened.payload} />
+              </FiguresFadeUp>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -539,7 +555,10 @@ function RevealBody({
           appears while the figures are still fading in. */}
       {closeShown ? (
         <div className={`${styles.stage} ${styles.fade}`}>
-          <Close {...close} />
+          <Close
+            {...close}
+            {...(close?.kind === "persona" ? { hasFigures: figureCount > 0 } : {})}
+          />
         </div>
       ) : null}
 

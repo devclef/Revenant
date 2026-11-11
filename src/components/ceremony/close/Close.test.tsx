@@ -123,3 +123,42 @@ describe("Close, real kind", () => {
     expect(html).not.toContain("/demo/live");
   });
 });
+
+describe("Close, persona kind with no figures (spec 11 L5.2)", () => {
+  it("uses the exact no-figures closing line", () => {
+    expect(CEREMONY_COPY.closeLineNoFigures).toBe(
+      "Her testimony and her letter are side by side. What they say is yours to read.",
+    );
+  });
+
+  it("renders the no-figures line in place of the closing line when hasFigures is false", () => {
+    const html = renderToStaticMarkup(
+      createElement(Close, { kind: "persona", personaKey: KEY, demo2On: false, hasFigures: false }),
+    );
+    expect(html).toContain(CEREMONY_COPY.closeLineNoFigures);
+    expect(html).not.toContain(CEREMONY_COPY.closeLine);
+    expect(html).toMatch(/<h2[^>]*data-close-line=""[^>]*>/);
+  });
+
+  it("names no number, figure or price in the no-figures line", () => {
+    expect(CEREMONY_COPY.closeLineNoFigures).not.toMatch(/\d|figure|number|price|record/i);
+  });
+
+  it("keeps the figures line when hasFigures is true or omitted", () => {
+    const withFigures = renderToStaticMarkup(
+      createElement(Close, { kind: "persona", personaKey: KEY, demo2On: false, hasFigures: true }),
+    );
+    const omitted = renderToStaticMarkup(
+      createElement(Close, { kind: "persona", personaKey: KEY, demo2On: false }),
+    );
+    expect(withFigures).toContain(CEREMONY_COPY.closeLine);
+    expect(omitted).toContain(CEREMONY_COPY.closeLine);
+  });
+});
+
+describe("Skip_Link copy for a letter with no figures (spec 11 L5.4)", () => {
+  it("uses the exact skipToLetter text", () => {
+    expect(CEREMONY_COPY.skipToLetter).toBe("Skip to the letter");
+    expect(CEREMONY_COPY.skipToReceipts).toBe("Skip to the receipts");
+  });
+});
