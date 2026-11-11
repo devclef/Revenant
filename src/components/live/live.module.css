@@ -1037,9 +1037,9 @@
  * The letter and the occasion control sit in the left column; the questions and
  * the receipt disclosure sit in the right one; Next spans both. The rules are
  * scoped to the demo page (`data-seal-mode="demo"`, set by SealPage on
- * /demo/live). /seal renders the single form with the same panel and occasion
- * control, so it keeps its single column. Only the demo Write step matches,
- * because the demo seal step has no occasion control.
+ * /demo/live, which passes no mode). /seal renders the same panel and occasion
+ * control under `data-seal-mode="real"`, so the rule does not match there and
+ * /seal keeps its single column.
  */
 @media (min-width: 900px) and (max-height: 900px) {
   [data-seal-mode="demo"] .panel:has(> .occasions) {
