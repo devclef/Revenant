@@ -523,6 +523,9 @@ function selectView(
       );
 
     case "reveal":
+      // The Text_Persona walk reaches reveal with no record. Its view belongs to
+      // task 4 (Reveal with her testimony), so nothing renders here until then.
+      if (state.record === null) return null;
       // The close (design.md "Close"): the live note for a Live_Letter, or the
       // persona close with Demo_2_On and the persona key. Reveal shows it only
       // once the figures have settled. A persona with no list entry gets no

@@ -47,6 +47,13 @@ import type { SampleAnswers } from "./sample-pick";
 export type RecallQuestion = PayloadV1["recall_questions"][number];
 
 /**
+ * One question with the answer written for it, shown on the Text_Persona walk
+ * (design.md "Text_Persona flow"). Display only: it carries no draft and no
+ * record. The answer is the persona's pre-written content, never the judge's.
+ */
+export type TestimonyEntry = { question: string; answer: string };
+
+/**
  * An opened letter held in memory only (R7.10). The `openingKey` is a
  * non-extractable `CryptoKey` and never leaves the browser.
  */
@@ -135,6 +142,16 @@ export type FlowState =
       samples?: Readonly<Record<string, string>>;
     }
   | {
+      /**
+       * The Text_Persona walk: one question at a time, each with her answer. No
+       * draft, no record and no POST (design.md "Text_Persona flow").
+       */
+      tag: "reading";
+      opened: Opened;
+      index: number;
+      testimony: readonly TestimonyEntry[];
+    }
+  | {
       tag: "submitting";
       opened: Opened;
       drafts: Record<string, Draft>;
@@ -150,7 +167,15 @@ export type FlowState =
       sealed: SealedRecord;
       samples?: Readonly<Record<string, string>>;
     }
-  | { tag: "reveal"; opened: Opened; record: RecallRecordV2; stage: 1 | 2 | 3 }
+  | {
+      tag: "reveal";
+      opened: Opened;
+      /** Null on the Text_Persona walk, which stores no Recall_Record. */
+      record: RecallRecordV2 | null;
+      stage: 1 | 2 | 3;
+      /** Present only on the Text_Persona walk: her testimony, display only. */
+      testimony?: readonly TestimonyEntry[];
+    }
   | { tag: "not_placed" }
   | { tag: "unreachable" }
   | { tag: "verification_failed" }
@@ -188,7 +213,16 @@ export type FlowEvent =
   | { type: "UNREACHABLE" }
   | { type: "SECRET_FORBIDDEN"; opensAt: string }
   | { type: "SECRET_OK" }
-  | { type: "OPENED"; opened: Opened; samples?: SampleAnswers }
+  | {
+      type: "OPENED";
+      opened: Opened;
+      samples?: SampleAnswers;
+      /**
+       * The Persona_Answers for a Text_Persona, one per sealed question. Present
+       * only when the page opens a Text_Persona; it routes the walk to `reading`.
+       */
+      personaAnswers?: readonly string[];
+    }
   | { type: "VERIFICATION_FAILED" }
   | { type: "OPEN_FAILED"; kind: OpenFailedKind }
   | { type: "EDIT_DRAFT"; id: string; text: string }
@@ -207,7 +241,9 @@ export type FlowEvent =
   | { type: "NEEDS_KEY"; unlock: UnlockInfo }
   | { type: "KEY_NOTICE"; notice: KeyNotice }
   | { type: "UNLOCK" }
-  | { type: "KEY_REJECTED"; factor: "passkey" | "backup" };
+  | { type: "KEY_REJECTED"; factor: "passkey" | "backup" }
+  | { type: "NEXT_QUESTION" }
+  | { type: "READ_DONE" };
 
 /** A fresh draft for a question that has not been touched yet. */
 function emptyDraft(): Draft {
@@ -224,7 +260,33 @@ function emptyDraft(): Draft {
 function enterRecall(
   opened: Opened,
   samples: Readonly<Record<string, string>>,
+  personaAnswers: readonly string[] | undefined,
 ): FlowState {
+  // A Text_Persona walk (design.md "Text_Persona flow"): the page passed her
+  // answers, so the letter is read, not answered. Every sealed question must be
+  // a text question and each must have one answer. Anything else is not a
+  // payload Revenant sealed for her, so it fails closed with no question shown.
+  if (personaAnswers !== undefined) {
+    const questions = opened.payload.recall_questions;
+    const textOnly = questions.every((q) => q.answer_type === "text");
+    if (
+      questions.length === 0 ||
+      !textOnly ||
+      questions.length !== personaAnswers.length
+    ) {
+      return { tag: "open_failed", kind: "invalid_payload" };
+    }
+    return {
+      tag: "reading",
+      opened,
+      index: 0,
+      testimony: questions.map((question, i) => ({
+        question: question.text,
+        answer: personaAnswers[i],
+      })),
+    };
+  }
+
   // More text questions than a Recall_Record_V2 can hold (C3.9) means the
   // payload is not one Revenant sealed. Show the invalid payload error, with
   // no question and no draft.
@@ -343,7 +405,11 @@ export function reduce(state: FlowState, event: FlowEvent): FlowState {
     case "unlocking": {
       switch (event.type) {
         case "OPENED":
-          return enterRecall(event.opened, event.samples ?? {});
+          return enterRecall(
+            event.opened,
+            event.samples ?? {},
+            event.personaAnswers,
+          );
         case "VERIFICATION_FAILED":
           return { tag: "verification_failed" };
         case "OPEN_FAILED":
@@ -367,11 +433,39 @@ export function reduce(state: FlowState, event: FlowEvent): FlowState {
     case "verifying": {
       switch (event.type) {
         case "OPENED":
-          return enterRecall(event.opened, event.samples ?? {});
+          return enterRecall(
+            event.opened,
+            event.samples ?? {},
+            event.personaAnswers,
+          );
         case "VERIFICATION_FAILED":
           return { tag: "verification_failed" };
         case "OPEN_FAILED":
           return { tag: "open_failed", kind: event.kind };
+        default:
+          return state;
+      }
+    }
+
+    case "reading": {
+      // The Text_Persona walk. Each activation moves one question on; the last
+      // question's control is "Break the seal", which reaches reveal at stage 1.
+      // No event here posts anything (design.md "Text_Persona flow").
+      switch (event.type) {
+        case "NEXT_QUESTION":
+          return state.index < state.testimony.length - 1
+            ? { ...state, index: state.index + 1 }
+            : state;
+        case "READ_DONE":
+          return state.index === state.testimony.length - 1
+            ? {
+                tag: "reveal",
+                opened: state.opened,
+                record: null,
+                stage: 1,
+                testimony: state.testimony,
+              }
+            : state;
         default:
           return state;
       }
@@ -457,6 +551,9 @@ export function reduce(state: FlowState, event: FlowEvent): FlowState {
             opened: state.opened,
             record: state.record,
             stage: state.stage < 3 ? ((state.stage + 1) as 2 | 3) : 3,
+            ...(state.testimony === undefined
+              ? {}
+              : { testimony: state.testimony }),
           };
         case "SHOW_ALL":
           return {
@@ -464,6 +561,9 @@ export function reduce(state: FlowState, event: FlowEvent): FlowState {
             opened: state.opened,
             record: state.record,
             stage: 3,
+            ...(state.testimony === undefined
+              ? {}
+              : { testimony: state.testimony }),
           };
         default:
           return state;

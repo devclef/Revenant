@@ -98,6 +98,12 @@ export type OpeningFlowOptions = {
    * sample answers are picked.
    */
   sampleCandidates?: PickCandidates;
+  /**
+   * The Persona_Answers of a Text_Persona, one per sealed question, in order.
+   * Demo mode only. Passing them routes the opened letter to the `reading`
+   * walk, which posts nothing (design.md "Text_Persona flow").
+   */
+  personaAnswers?: readonly string[];
 };
 
 const NO_CANDIDATES: PickCandidates = {};
@@ -133,6 +139,10 @@ export type OpeningFlow = {
   advance: () => void;
   /** Reveal pacing: show every stage at once. */
   showAll: () => void;
+  /** Reading walk (Text_Persona): show the next question with her answer. */
+  nextQuestion: () => void;
+  /** Reading walk: break the seal after the last question. */
+  readDone: () => void;
   /** Live-letter controls. `undefined` in demo mode. */
   live?: LiveFlow;
 };
@@ -412,6 +422,8 @@ export function useOpeningFlow(
           envelopeHash: snapshot.envelopeHash,
         },
         samples: sampleAnswersFor(result.payload.recall_questions),
+        personaAnswers:
+          keySource === "demo" ? options.personaAnswers : undefined,
       });
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -550,6 +562,11 @@ export function useOpeningFlow(
   );
   const advance = useCallback(() => safeDispatch({ type: "ADVANCE" }), [safeDispatch]);
   const showAll = useCallback(() => safeDispatch({ type: "SHOW_ALL" }), [safeDispatch]);
+  const nextQuestion = useCallback(
+    () => safeDispatch({ type: "NEXT_QUESTION" }),
+    [safeDispatch],
+  );
+  const readDone = useCallback(() => safeDispatch({ type: "READ_DONE" }), [safeDispatch]);
 
   // Passkey prompt. Everything before the port call is synchronous, and
   // `startPasskeyAssertion` is called without `await`, so the port's `get` runs
@@ -655,6 +672,8 @@ export function useOpeningFlow(
     retryPost,
     advance,
     showAll,
+    nextQuestion,
+    readDone,
     live,
   };
 }

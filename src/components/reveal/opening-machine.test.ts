@@ -8,7 +8,7 @@
  * design.md rule cited in the reducer's own comments.
  */
 
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
 import type { RecallRecordV2 } from "@/lib/recall";
 import type { PayloadV1 } from "@/lib/seal-format";
 import { PAYLOAD_TEXT_3, PAYLOAD_TEXT_4 } from "@/lib/recall/fixtures.test-data";
@@ -531,5 +531,220 @@ describe("unreachable", () => {
   it("ignores every other event", () => {
     expect(reduce(unreachable, { type: "SECRET_OK" })).toBe(unreachable);
     expect(reduce(unreachable, { type: "POST_OK" })).toBe(unreachable);
+  });
+});
+
+// --- Text_Persona walk (design.md "Text_Persona flow") -----------------------
+
+const TEXT_QUESTIONS: PayloadV1["recall_questions"] = [
+  {
+    id: "a1",
+    answer_type: "text",
+    text: "On the day you sealed this, what were you looking forward to most?",
+  },
+  {
+    id: "a2",
+    answer_type: "text",
+    text: "On the day you sealed this, what were you worried about?",
+  },
+];
+
+const TEXT_OPENED: Opened = {
+  ...OPENED,
+  payload: {
+    recall_questions: TEXT_QUESTIONS,
+    metrics: [],
+    figures: [],
+  } as unknown as PayloadV1,
+};
+
+const PERSONA_ANSWERS = [
+  "The trip to the coast with my sister.",
+  "The extra morning shift at work.",
+];
+
+/** Run the verifying path to an OPENED event with the given Persona_Answers. */
+function readingFrom(
+  opened: Opened,
+  personaAnswers: readonly string[] | undefined,
+): FlowState {
+  return run(
+    { type: "LETTER_OPENABLE", envelope: {}, envelopeHash: "h" },
+    { type: "SECRET_OK" },
+    { type: "OPENED", opened, personaAnswers },
+  );
+}
+
+describe("reading (Text_Persona walk)", () => {
+  it("OPENED with persona answers enters reading at question 1 with her answers", () => {
+    const state = readingFrom(TEXT_OPENED, PERSONA_ANSWERS);
+
+    expect(state.tag).toBe("reading");
+    if (state.tag !== "reading") return;
+    expect(state.index).toBe(0);
+    expect(state.testimony).toEqual([
+      { question: TEXT_QUESTIONS[0].text, answer: PERSONA_ANSWERS[0] },
+      { question: TEXT_QUESTIONS[1].text, answer: PERSONA_ANSWERS[1] },
+    ]);
+  });
+
+  it("carries no drafts, no record and no sample", () => {
+    const state = readingFrom(TEXT_OPENED, PERSONA_ANSWERS);
+
+    expect(state).not.toHaveProperty("drafts");
+    expect(state).not.toHaveProperty("record");
+    expect(state).not.toHaveProperty("samples");
+  });
+
+  it("NEXT_QUESTION moves one question on and stops at the last", () => {
+    const first = readingFrom(TEXT_OPENED, PERSONA_ANSWERS);
+    const second = reduce(first, { type: "NEXT_QUESTION" });
+    const still = reduce(second, { type: "NEXT_QUESTION" });
+
+    expect(second).toMatchObject({ tag: "reading", index: 1 });
+    expect(still).toBe(second);
+  });
+
+  it("READ_DONE before the last question is ignored", () => {
+    const first = readingFrom(TEXT_OPENED, PERSONA_ANSWERS);
+
+    expect(reduce(first, { type: "READ_DONE" })).toBe(first);
+  });
+
+  it("READ_DONE on the last question reaches reveal at stage 1 with no record", () => {
+    const last = run(
+      { type: "LETTER_OPENABLE", envelope: {}, envelopeHash: "h" },
+      { type: "SECRET_OK" },
+      { type: "OPENED", opened: TEXT_OPENED, personaAnswers: PERSONA_ANSWERS },
+      { type: "NEXT_QUESTION" },
+    );
+    const done = reduce(last, { type: "READ_DONE" });
+
+    expect(done).toEqual({
+      tag: "reveal",
+      opened: TEXT_OPENED,
+      record: null,
+      stage: 1,
+      testimony: [
+        { question: TEXT_QUESTIONS[0].text, answer: PERSONA_ANSWERS[0] },
+        { question: TEXT_QUESTIONS[1].text, answer: PERSONA_ANSWERS[1] },
+      ],
+    });
+  });
+
+  it("takes one activation per question plus Break the seal", () => {
+    let state = readingFrom(TEXT_OPENED, PERSONA_ANSWERS);
+    let activations = 0;
+    while (state.tag === "reading") {
+      const isLast = state.index === state.testimony.length - 1;
+      state = reduce(
+        state,
+        isLast ? { type: "READ_DONE" } : { type: "NEXT_QUESTION" },
+      );
+      activations += 1;
+    }
+
+    expect(state.tag).toBe("reveal");
+    expect(activations).toBe(TEXT_QUESTIONS.length);
+  });
+
+  it("ignores every answer, record and post event", () => {
+    const first = readingFrom(TEXT_OPENED, PERSONA_ANSWERS);
+    const events: FlowEvent[] = [
+      { type: "EDIT_DRAFT", id: "a1", text: "x" },
+      { type: "TOGGLE_NO_ANSWER", id: "a1", noAnswer: true },
+      { type: "SUBMIT_INVALID", invalid: ["a1"] },
+      { type: "RECORD_SEALED", record: RECORD, sealed: SEALED },
+      { type: "POST_OK" },
+      { type: "POST_FAILED" },
+      { type: "RETRY_POST" },
+      { type: "ADVANCE" },
+      { type: "SHOW_ALL" },
+      { type: "START" },
+    ];
+    for (const event of events) {
+      expect(reduce(first, event)).toBe(first);
+    }
+  });
+
+  it("keeps the testimony through reveal pacing", () => {
+    const revealed = run(
+      { type: "LETTER_OPENABLE", envelope: {}, envelopeHash: "h" },
+      { type: "SECRET_OK" },
+      { type: "OPENED", opened: TEXT_OPENED, personaAnswers: PERSONA_ANSWERS },
+      { type: "NEXT_QUESTION" },
+      { type: "READ_DONE" },
+    );
+
+    expect(reduce(revealed, { type: "ADVANCE" })).toMatchObject({
+      tag: "reveal",
+      stage: 2,
+      record: null,
+      testimony: expect.any(Array),
+    });
+    expect(reduce(revealed, { type: "SHOW_ALL" })).toMatchObject({
+      tag: "reveal",
+      stage: 3,
+      testimony: expect.any(Array),
+    });
+  });
+
+  it("posts nothing: no /api/openings request while the walk runs to close", () => {
+    const fetchStub = vi.fn<(url: string, init?: unknown) => Promise<Response>>(
+      () => Promise.resolve(new Response(null, { status: 200 })),
+    );
+    vi.stubGlobal("fetch", fetchStub);
+    try {
+      const closed = run(
+        { type: "LETTER_OPENABLE", envelope: {}, envelopeHash: "h" },
+        { type: "SECRET_OK" },
+        { type: "OPENED", opened: TEXT_OPENED, personaAnswers: PERSONA_ANSWERS },
+        { type: "NEXT_QUESTION" },
+        { type: "READ_DONE" },
+        { type: "ADVANCE" },
+        { type: "SHOW_ALL" },
+      );
+
+      expect(closed.tag).toBe("reveal");
+      const openingCalls = fetchStub.mock.calls.filter((call) =>
+        String(call[0]).includes("/api/openings"),
+      );
+      expect(openingCalls).toHaveLength(0);
+      expect(fetchStub).toHaveBeenCalledTimes(0);
+    } finally {
+      vi.unstubAllGlobals();
+    }
+  });
+
+  it("with no persona answers, a text-only letter still takes the recall path", () => {
+    const state = readingFrom(TEXT_OPENED, undefined);
+
+    expect(state.tag).toBe("recall");
+  });
+
+  it("fails closed as invalid_payload when the answer count does not match", () => {
+    expect(readingFrom(TEXT_OPENED, ["only one"])).toEqual({
+      tag: "open_failed",
+      kind: "invalid_payload",
+    });
+  });
+
+  it("fails closed as invalid_payload when a sealed question is a number question", () => {
+    expect(readingFrom(OPENED, PERSONA_ANSWERS)).toEqual({
+      tag: "open_failed",
+      kind: "invalid_payload",
+    });
+  });
+
+  it("fails closed as invalid_payload when the letter has no questions", () => {
+    const empty: Opened = {
+      ...OPENED,
+      payload: { recall_questions: [], metrics: [], figures: [] } as unknown as PayloadV1,
+    };
+
+    expect(readingFrom(empty, [])).toEqual({
+      tag: "open_failed",
+      kind: "invalid_payload",
+    });
   });
 });
