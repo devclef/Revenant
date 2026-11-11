@@ -60,4 +60,12 @@ describe("marks layer (spec 10 C6.3)", () => {
     expect(layer).toMatch(/z-index:\s*2;/);
     expect(layer).toMatch(/pointer-events:\s*none;/);
   });
+
+  it("portals the Seal_Group into the marks layer, and the HeldSeal stays in the Ghost", () => {
+    const sealSource = readFileSync(join(__dirname, "..", "seal", "SealBreak.tsx"), "utf8");
+    expect(sealSource).toMatch(/marksSlot,\s*\)/);
+    const heldSource = readFileSync(join(__dirname, "..", "seal", "HeldSeal.tsx"), "utf8");
+    expect(heldSource).toMatch(/aria-hidden="true"/);
+    expect(heldSource).not.toMatch(/tabIndex=\{?0/);
+  });
 });
