@@ -55,6 +55,20 @@ describe("LandingHero with one persona", () => {
   });
 });
 
+describe("LandingHero secondary call to action while Demo_2_On", () => {
+  // Pins the current wording. The Rehearsal_Line the spec names is not in
+  // src/components/live yet, so the text is kept unchanged.
+  it("renders the outlined link to /demo/live with the current wording", () => {
+    const html = markup(1, true);
+    const link = html.match(
+      /<a ([^>]*)>Seal your own\. It opens 30 seconds after you seal it\.<\/a>/,
+    );
+    expect(link).not.toBeNull();
+    expect(link?.[1]).toContain('href="/demo/live"');
+    expect(link?.[1]).toContain('data-cta="secondary"');
+  });
+});
+
 describe("LandingHero with two personas", () => {
   it("renders exactly one Accent button to /demo with the plural label", () => {
     const html = markup(2);
