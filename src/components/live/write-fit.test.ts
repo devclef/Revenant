@@ -127,7 +127,7 @@ describe("Write step: the phone page height", () => {
 
   it("drops the panel's bottom padding, since Next is its last child", () => {
     expect(ruleBody(phone, ".panel")).toMatch(
-      /padding:\s*0\.375rem 0\.875rem 0;/,
+      /padding:\s*0\.25rem 0\.875rem 0;/,
     );
   });
 
