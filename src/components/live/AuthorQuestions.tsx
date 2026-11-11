@@ -2,8 +2,8 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
-import { AUTHOR_QUESTIONS_MAX, starterTargetIndex } from "./author-questions";
-import { LIVE_COPY, questionStarters } from "./copy";
+import { AUTHOR_QUESTIONS_MAX } from "./author-questions";
+import { LIVE_COPY } from "./copy";
 import styles from "./live.module.css";
 
 export interface AuthorQuestionsProps {
@@ -15,12 +15,6 @@ export interface AuthorQuestionsProps {
   onAdd: () => void;
   onChange: (index: number, text: string) => void;
   onRemove: (index: number) => void;
-  /**
-   * A Question_Starter was pressed. Its text goes in the row the component
-   * names, which is the first empty row or a new row. Not called when 3 rows
-   * are full.
-   */
-  onStarter: (text: string) => void;
 }
 
 /** Replaces `{n}` in a copy string with a number. */
@@ -29,8 +23,8 @@ const withNumber = (template: string, n: number): string =>
 
 /**
  * The Author_Question rows on the Write step (spec 10, C2.1 to C2.5). Each row
- * is a text field with a visible label and a remove button. Starters fill the
- * first empty row and move focus to it.
+ * is a text field with a visible label and a remove button. The Question
+ * Starters retired in spec 11 (L2.7), so only Add moves focus to a new row.
  */
 export function AuthorQuestions({
   questions,
@@ -38,11 +32,10 @@ export function AuthorQuestions({
   onAdd,
   onChange,
   onRemove,
-  onStarter,
 }: AuthorQuestionsProps) {
   const baseId = useId();
   const inputRefs = useRef<Map<number, HTMLInputElement>>(new Map());
-  // The row to focus after the next render, set by a starter or by Add.
+  // The row to focus after the next render, set by Add.
   const [pendingFocus, setPendingFocus] = useState<number | null>(null);
 
   useEffect(() => {
@@ -50,13 +43,6 @@ export function AuthorQuestions({
     inputRefs.current.get(pendingFocus)?.focus();
     setPendingFocus(null);
   }, [pendingFocus, questions.length]);
-
-  function pressStarter(text: string) {
-    const target = starterTargetIndex(questions);
-    if (target === null) return;
-    setPendingFocus(target);
-    onStarter(text);
-  }
 
   function pressAdd() {
     setPendingFocus(questions.length);
@@ -126,24 +112,6 @@ export function AuthorQuestions({
           </button>
         </div>
       ) : null}
-
-      <div
-        role="group"
-        aria-label={LIVE_COPY.questionStartersLabel}
-        className={styles.starters}
-      >
-        <span className={styles.hint}>{LIVE_COPY.questionStartersLabel}</span>
-        {questionStarters.map((starter) => (
-          <button
-            key={starter}
-            type="button"
-            className={`${styles.secondary} ${styles.starter}`}
-            onClick={() => pressStarter(starter)}
-          >
-            {starter}
-          </button>
-        ))}
-      </div>
 
       <p className={styles.hint}>{LIVE_COPY.answerInLetter}</p>
     </fieldset>

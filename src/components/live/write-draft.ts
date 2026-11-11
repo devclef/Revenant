@@ -8,7 +8,7 @@
  * Pure module: no React, safe in the browser and in tests.
  */
 
-import { applyStarter, AUTHOR_QUESTIONS_MAX } from "./author-questions";
+import { AUTHOR_QUESTIONS_MAX } from "./author-questions";
 import { LIVE_COPY } from "./copy";
 import { MAX_FIGURES, SELF_REPORTED_MAX } from "./constants";
 import type { WriteMode } from "./form";
@@ -97,7 +97,7 @@ export type WriteDraftEvent =
   | { type: "QUESTION_CHANGED"; index: number; text: string }
   | { type: "QUESTION_ADDED" }
   | { type: "QUESTION_REMOVED"; index: number }
-  | { type: "QUESTION_STARTER"; text: string }
+  | { type: "OCCASION_APPLIED"; text: string; questions: string[] }
   | { type: "SELF_REPORTED_ADDED" }
   | {
       type: "SELF_REPORTED_CHANGED";
@@ -137,8 +137,10 @@ export function reduceWriteDraft(
         ...state,
         questions: state.questions.filter((_, i) => i !== event.index),
       };
-    case "QUESTION_STARTER":
-      return { ...state, questions: applyStarter(state.questions, event.text) };
+    case "OCCASION_APPLIED":
+      // The text and rows come from applyOccasion, which already keeps what the
+      // visitor typed (L2.2). No Occasion identifier is stored here (L2.5).
+      return { ...state, text: event.text, questions: [...event.questions] };
     case "SELF_REPORTED_ADDED":
       if (state.selfReported.length >= SELF_REPORTED_MAX) return state;
       return {

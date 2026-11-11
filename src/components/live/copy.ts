@@ -22,8 +22,6 @@ export const LIVE_COPY = {
     "This letter is sealed in your browser with your own passkey. It is locked for 30 seconds only because this is a demo.",
   letterLabel: "Your letter",
   letterHint: "Plain text. Up to 5,000 characters.",
-  /** The label of the group of starter buttons under the letter field. */
-  starterGroup: "Start with one of these sentences, or write your own",
   letterCount: "{count} of 5,000 characters",
   figuresLegend: "Choose the figures to seal with it",
   figuresHint:
@@ -234,49 +232,17 @@ export const LIVE_COPY = {
   selfReportedPeriodLabel: "Period, such as 2026-09 or 2026-09-30",
   /** The first row of /demo/live, which the judge can edit, clear or remove (C9.5). */
   livePrefill: "What's on your mind right now?",
-  /** The label of the group of Question_Starter buttons (C2.4). */
-  questionStartersLabel: "Start from one:",
+  /** The legend of the Occasion buttons above the letter field (L2.1). */
+  occasionLegend: "What is it about?",
+  /** The Occasion button labels, keyed by Occasion id (L2.1, L2.8). */
+  occasionLabels: {
+    year: "The year ahead",
+    work: "Work",
+    family: "Family",
+    decision: "A decision",
+    blank: "Blank",
+  },
 } as const;
-
-/**
- * Opening sentences offered on the Write step. Pressing one inserts it at the
- * cursor in the letter.
- *
- * Copy review (neutrality.md copy test, tone.md copy rules). Each sentence was
- * read as if by someone who holds the opposite political view:
- * - "Right now, the thing on my mind is": open, personal, no subject matter
- *   named, so it reads the same to any reader. No digits, no "!".
- * - "Today, the thing I most want to remember is": asks for a memory, takes no
- *   side and names no party, candidate, policy or election. No digits, no "!".
- * - "Over the past few months, I have been": a neutral lead-in about the
- *   writer's own life. No judgement word, no digits, no "!".
- * copy.test.ts checks the digit and "!" rules for all three.
- */
-export const promptStarters: readonly [string, string, string] = [
-  "Right now, the thing on my mind is",
-  "Today, the thing I most want to remember is",
-  "Over the past few months, I have been",
-] as const;
-
-/**
- * The Question_Starters (spec 10, C2.6): neutral lead-ins about the author's
- * everyday life. They do not lead toward an answer and contain no digit, no
- * figure, no party, policy or election term, and no direction word. A press
- * puts one into the first empty Author_Question row (author-questions.ts).
- */
-export const questionStarters: readonly [
-  string,
-  string,
-  string,
-  string,
-  string,
-] = [
-  "What was on your mind most days?",
-  "Who did you spend your evenings with?",
-  "What were you saving for?",
-  "What did a normal Saturday look like?",
-  "What were you looking forward to?",
-] as const;
 
 /**
  * User-facing strings for the Real_Seal_Page at `/seal` (spec 08, R15.1). Kept

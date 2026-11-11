@@ -21,7 +21,7 @@ import { DEMO_FIGURES } from "@/lib/figures/demo";
 import { thenAndNow } from "@/lib/figures/then-now";
 import { listPickableSeries } from "../catalogue-list";
 import { questionsForSeal } from "../author-questions";
-import { LIVE_COPY, questionStarters } from "../copy";
+import { LIVE_COPY } from "../copy";
 import type { SealState } from "../seal-machine";
 import { WriteForm, type WriteFormProps } from "../WriteForm";
 import { LiveStepper, type StepView } from "./LiveStepper";
@@ -46,7 +46,7 @@ vi.mock("@/components/reveal/figures-api", async (importOriginal) => {
 });
 
 const SERIES = listPickableSeries(DEMO_FIGURES);
-const STARTER = questionStarters[0];
+const STARTER = "Who were you thinking about most when you wrote this?";
 const TYPED = "Where was the bakery?";
 const LETTER = "A letter from the past that says the same thing as before.";
 const FIGURE_QUESTION = "What did a gallon of gas cost then?";
@@ -108,7 +108,8 @@ function renderWriteStep(state: StepperState): string {
 // The Write step: Live_Prefill kept, one starter added, one row removed.
 const WRITTEN = run(
   initialStepperState("write", "demo"),
-  { type: "DRAFT", event: { type: "QUESTION_STARTER", text: STARTER } },
+  { type: "DRAFT", event: { type: "QUESTION_ADDED" } },
+  { type: "DRAFT", event: { type: "QUESTION_CHANGED", index: 1, text: STARTER } },
   { type: "DRAFT", event: { type: "QUESTION_ADDED" } },
   { type: "DRAFT", event: { type: "QUESTION_CHANGED", index: 2, text: TYPED } },
   { type: "DRAFT", event: { type: "QUESTION_REMOVED", index: 1 } },

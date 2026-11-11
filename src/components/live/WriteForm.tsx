@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import { DemoLabel } from "@/components/demo/DemoLabel";
 
@@ -19,8 +19,9 @@ import {
   type WriteProblem,
 } from "./form";
 import styles from "./live.module.css";
+import { OccasionPicker } from "./OccasionPicker";
+import { applyOccasion, type OccasionDraft, type OccasionId } from "./occasions";
 import { letterFieldHeightPx } from "./phone";
-import { PromptStarters } from "./PromptStarters";
 import { type PrfHint } from "./prf-hint";
 import { RealDatePicker } from "./RealDatePicker";
 import { INITIAL_TOUCHED, showsFieldMessage, type TouchedState } from "./touched";
@@ -28,7 +29,7 @@ import type { SealState } from "./seal-machine";
 import { SelfReportedRows } from "./SelfReportedRows";
 import { StepStatus } from "./StepStatus";
 import { selfReportedRowsOk } from "./form";
-import type { SelfReportedField, SelfReportedRow } from "./write-draft";
+import { DEFAULT_QUESTION, type SelfReportedField, type SelfReportedRow } from "./write-draft";
 
 /**
  * Which part of the write flow a WriteForm renders (spec 09, D2). `all` is the
@@ -85,8 +86,11 @@ export interface WriteFormProps {
   onQuestionAdd?: () => void;
   /** The visitor removed question row `index`. */
   onQuestionRemove?: (index: number) => void;
-  /** The visitor pressed a Question_Starter. */
-  onQuestionStarter?: (text: string) => void;
+  /**
+   * The visitor chose an Occasion (L2.2). The page receives the letter text and
+   * the question rows the Occasion produced. The choice itself is not passed on.
+   */
+  onOccasionApplied?: (text: string, questions: string[]) => void;
   /**
    * The visitor's own numbers, in order (spec 08 later-tasks, R26.1). Held by
    * the page. Defaults to no rows.
@@ -225,7 +229,7 @@ export function WriteForm({
   onQuestionChange = () => {},
   onQuestionAdd = () => {},
   onQuestionRemove = () => {},
-  onQuestionStarter = () => {},
+  onOccasionApplied = () => {},
   selfReported = [],
   onSelfReportedAdd = () => {},
   onSelfReportedChange = () => {},
@@ -234,6 +238,27 @@ export function WriteForm({
 }: WriteFormProps) {
   const letterCount = countCodePoints(text);
   const letterRef = useRef<HTMLTextAreaElement>(null);
+  // The Occasion last chosen and the rows it applied (L2.2). Memory only: it
+  // is never sent, stored, put in the URL or in cookies (L2.5). A fresh form
+  // treats the default question as the untouched row, so the first Occasion
+  // replaces it.
+  const [occasionMemory, setOccasionMemory] = useState<OccasionDraft | null>(
+    null,
+  );
+  const chosenOccasion: OccasionId | null = occasionMemory?.occasion ?? null;
+
+  function chooseOccasion(id: OccasionId) {
+    const base: OccasionDraft = occasionMemory ?? {
+      text: "",
+      questions: [],
+      occasion: id,
+      appliedStarter: "",
+      appliedQuestions: [DEFAULT_QUESTION],
+    };
+    const next = applyOccasion({ ...base, text, questions: [...questions] }, id);
+    setOccasionMemory(next);
+    onOccasionApplied(next.text, next.questions);
+  }
   const limit = figureLimit(series.length);
   // A real letter (`/seal`) is the one that carries the date picker (spec 08).
   const mode: WriteMode = realDate === undefined ? "demo" : "real";
@@ -393,6 +418,16 @@ export function WriteForm({
       ) : null}
 
       {shows("write") ? (
+        <OccasionPicker
+          chosen={chosenOccasion}
+          onChoose={(id) => {
+            onTouch(TOUCH_FIELDS.letter);
+            chooseOccasion(id);
+          }}
+        />
+      ) : null}
+
+      {shows("write") ? (
         <div className={styles.field}>
           <label htmlFor="live-letter" className={styles.label}>
             {LIVE_COPY.letterLabel}
@@ -410,13 +445,6 @@ export function WriteForm({
               onTextChange(event.target.value);
             }}
             onBlur={() => onTouch(TOUCH_FIELDS.letter)}
-          />
-          <PromptStarters
-            fieldRef={letterRef}
-            onInsert={(next) => {
-              onTouch(TOUCH_FIELDS.letter);
-              onTextChange(next);
-            }}
           />
           <p id="live-letter-count" className={styles.count}>
             {LIVE_COPY.letterCount.replace("{count}", String(letterCount))}
@@ -442,10 +470,6 @@ export function WriteForm({
           onRemove={(index) => {
             onTouch(TOUCH_FIELDS.questions);
             onQuestionRemove(index);
-          }}
-          onStarter={(next) => {
-            onTouch(TOUCH_FIELDS.questions);
-            onQuestionStarter(next);
           }}
         />
       ) : null}

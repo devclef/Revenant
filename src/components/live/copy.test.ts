@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { LIVE_COPY, promptStarters } from "./copy";
+import { firstPoliticalTerm } from "@/lib/personas/banned-terms";
+
+import { LIVE_COPY } from "./copy";
+import { DEFAULT_QUESTION, OCCASIONS } from "./occasions";
 
 /**
  * Plain string checks on LIVE_COPY, following the rules in
@@ -8,9 +11,16 @@ import { LIVE_COPY, promptStarters } from "./copy";
  * over 25 words, no cliché) and the copy test in design.md.
  */
 
-const ENTRIES = Object.entries(LIVE_COPY) as ReadonlyArray<
-  readonly [keyof typeof LIVE_COPY, string]
->;
+/** Every string in LIVE_COPY, nested objects flattened as `key.sub`. */
+const ENTRIES: ReadonlyArray<readonly [string, string]> = Object.entries(
+  LIVE_COPY,
+).flatMap(([key, value]): Array<readonly [string, string]> =>
+  typeof value === "string"
+    ? [[key, value]]
+    : Object.entries(value as Record<string, string>).map(
+        ([sub, text]): readonly [string, string] => [`${key}.${sub}`, text],
+      ),
+);
 
 const CLICHES = ["boo", "spook", "skull", "mwahaha", "blood", "gore"] as const;
 
@@ -110,24 +120,86 @@ describe("LIVE_COPY claims with code behind them", () => {
 });
 
 /**
- * promptStarters: the three opening sentences on the Write step. Checked for
- * shape only here; the neutrality copy test is done by reading the strings.
+ * Occasion strings (spec 11, L2.1, L2.8). The exact copy, then every Occasion
+ * string through the neutrality checks: no digit, no "!", no party, policy or
+ * election term, and none of the time words the question rules forbid.
  */
-describe("promptStarters", () => {
-  it("has exactly three strings", () => {
-    expect(promptStarters).toHaveLength(3);
+describe("Occasion copy (spec 11, L2.1)", () => {
+  it("has the exact legend and button labels", () => {
+    expect(LIVE_COPY.occasionLegend).toBe("What is it about?");
+    expect(LIVE_COPY.occasionLabels).toEqual({
+      year: "The year ahead",
+      work: "Work",
+      family: "Family",
+      decision: "A decision",
+      blank: "Blank",
+    });
   });
 
-  it("has no digits in any string", () => {
-    for (const starter of promptStarters) {
-      expect(starter, `"${starter}" contains a digit`).not.toMatch(/\d/);
+  it("keeps the answer-in-letter line and drops the retired starter keys", () => {
+    expect(LIVE_COPY.answerInLetter).toBe(
+      "Answer them in your letter too, in your own words.",
+    );
+    const retired = [
+      "starterGroup",
+      "questionStartersLabel",
+    ] as const;
+    for (const key of retired) {
+      expect(LIVE_COPY, key).not.toHaveProperty(key);
+    }
+  });
+});
+
+const TIME_WORDS = ["right now", "today", "currently", "this year"] as const;
+
+describe("Occasion_Table through firstPoliticalTerm (spec 11, L2.3, L2.4)", () => {
+  const occasionTexts = OCCASIONS.flatMap((occasion) => [
+    occasion.starter,
+    ...occasion.questions,
+  ]).filter((text) => text.length > 0);
+
+  it("has the five Occasions in order", () => {
+    expect(OCCASIONS.map((o) => o.label)).toEqual([
+      "The year ahead",
+      "Work",
+      "Family",
+      "A decision",
+      "Blank",
+    ]);
+  });
+
+  it("puts the default question first in every Occasion", () => {
+    for (const occasion of OCCASIONS) {
+      expect(occasion.questions[0], occasion.id).toBe(DEFAULT_QUESTION);
     }
   });
 
-  it("has a non-empty string with no exclamation mark in each entry", () => {
-    for (const starter of promptStarters) {
-      expect(starter.trim().length, `"${starter}" is empty`).toBeGreaterThan(0);
-      expect(starter, `"${starter}" contains "!"`).not.toContain("!");
+  for (const text of occasionTexts) {
+    it(`"${text}" has no digit, no "!", no political term and no time word`, () => {
+      expect(text, "digit").not.toMatch(/\d/);
+      expect(text, "!").not.toContain("!");
+      expect(firstPoliticalTerm(text)).toBeNull();
+      for (const word of TIME_WORDS) {
+        expect(text.toLowerCase(), word).not.toContain(word);
+      }
+    });
+  }
+});
+
+describe("LIVE_COPY has no Question_Starter or Prompt_Starter text", () => {
+  it("contains none of the retired starter sentences", () => {
+    const retired = [
+      "Right now, the thing on my mind is",
+      "What was on your mind most days?",
+      "What were you looking forward to?",
+    ];
+    const values = Object.values(LIVE_COPY).map((value) =>
+      typeof value === "string" ? value : JSON.stringify(value),
+    );
+    for (const sentence of retired) {
+      expect(values.some((value) => value.includes(sentence)), sentence).toBe(
+        false,
+      );
     }
   });
 });

@@ -11,7 +11,7 @@ import { DEMO_FIGURES } from "@/lib/figures/demo";
 
 import { listPickableSeries } from "../catalogue-list";
 import { questionsForSeal } from "../author-questions";
-import { LIVE_COPY, questionStarters } from "../copy";
+import { LIVE_COPY } from "../copy";
 import type { SealState } from "../seal-machine";
 import { WriteForm, type WriteFormProps } from "../WriteForm";
 import { LiveStepper, type StepView } from "./LiveStepper";
@@ -23,7 +23,7 @@ import {
 } from "./live-steps";
 
 const SERIES = listPickableSeries(DEMO_FIGURES);
-const STARTER = questionStarters[0];
+const STARTER = "Who were you thinking about most when you wrote this?";
 
 /** Folds actions into the stepper state, as SealPage does. */
 function run(state: StepperState, ...actions: StepperAction[]): StepperState {
@@ -84,11 +84,15 @@ describe("Write step: Author_Question rows on the Live_Stepper", () => {
     );
   });
 
-  it("adds a starter as a new row after the Live_Prefill row", () => {
-    const state = run(initialStepperState("write", "demo"), {
-      type: "DRAFT",
-      event: { type: "QUESTION_STARTER", text: STARTER },
-    });
+  it("adds a row typed after the Live_Prefill row", () => {
+    const state = run(
+      initialStepperState("write", "demo"),
+      { type: "DRAFT", event: { type: "QUESTION_ADDED" } },
+      {
+        type: "DRAFT",
+        event: { type: "QUESTION_CHANGED", index: 1, text: STARTER },
+      },
+    );
     expect(state.draft.questions).toEqual([LIVE_COPY.livePrefill, STARTER]);
 
     const html = renderWriteStep(state);
