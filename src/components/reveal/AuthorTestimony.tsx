@@ -1,12 +1,14 @@
 import type { RecallRecordV1, RecallRecordV2 } from "@/lib/recall";
 import type { RecallQuestion } from "./opening-machine";
+import { ClampedAnswer } from "./ClampedAnswer";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
 
 /**
- * The Author_Testimony (spec 10 C8.2 to C8.8): the questions the author wrote
- * for their future self, each followed by "What you said just now" and the
- * Text_Answer as recorded, in full, or "No answer". It sits in the `letter`
+ * The Author_Testimony (spec 10 C8.2 to C8.8; spec 11 P4.2): the questions the
+ * author wrote for their future self, each followed by "What you said just now"
+ * and the Text_Answer as recorded, clamped to two lines with a show-full control
+ * (ClampedAnswer), or "No answer". It sits in the `letter`
  * Stage above the paper and outside it (C4.9).
  *
  * Only Author_Questions (`answer_type: "text"`) appear here, in payload order.
@@ -66,12 +68,11 @@ export function AuthorTestimony({ questions, record }: AuthorTestimonyProps) {
               {REVEAL_COPY.saidJustNow}
             </p>
             {answer !== undefined && answer.kind === "text" ? (
-              <p
+              <ClampedAnswer
+                text={answer.value}
+                as="p"
                 className={styles.authorTestimonyAnswer}
-                data-user-content=""
-              >
-                {answer.value}
-              </p>
+              />
             ) : (
               <p className={styles.authorTestimonyAnswer}>
                 {REVEAL_COPY.noAnswer}

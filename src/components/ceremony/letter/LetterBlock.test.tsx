@@ -224,6 +224,11 @@ describe("Property 17: the letter is shown verbatim with nothing against it (R13
     expect(css).not.toMatch(/#ffffff/i);
   });
 
+  it("scrolls the letter heading below the fixed Top_Bar with a scroll margin (spec 11 P4.4)", () => {
+    const css = withoutComments(readFileSync(join(HERE, "LetterBlock.module.css"), "utf8"));
+    expect(css).toMatch(/\.caption > h2\s*\{[^}]*scroll-margin-top:\s*calc\(96px \+ 0\.75rem\)/);
+  });
+
 
   it("keeps the letter as one text node with white-space: pre-wrap", () => {
     const revealCss = withoutComments(readFileSync(join(REVEAL_DIR, "reveal.module.css"), "utf8"));

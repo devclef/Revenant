@@ -495,10 +495,21 @@ function RevealBody({
               collapsible={stage >= 3 && isPhone}
               letterKind={letterKind}
               caption={
-                <Fingerprint
-                  envelopeHash={opened.envelopeHash}
-                  letterKind={letterKind}
-                />
+                letterKind === "persona" ? (
+                  // P4.3: a persona's Seal_Verdict and its fingerprint control
+                  // share one row above the paper (see reveal.module.css).
+                  <div className={styles.sealRow} data-seal-row="">
+                    <Fingerprint
+                      envelopeHash={opened.envelopeHash}
+                      letterKind={letterKind}
+                    />
+                  </div>
+                ) : (
+                  <Fingerprint
+                    envelopeHash={opened.envelopeHash}
+                    letterKind={letterKind}
+                  />
+                )
               }
             />
           </div>

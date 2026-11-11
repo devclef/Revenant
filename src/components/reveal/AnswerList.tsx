@@ -1,17 +1,19 @@
 import { answerText } from "@/components/ceremony/recall/answer-text";
+import { ClampedAnswer } from "./ClampedAnswer";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
 
 /**
- * The Answer_List (spec 09 A9, C4.1, P6.4; spec 10 C6.10): the judge's recorded
- * answers as a compact text list, Author_Questions first. It takes items of two
- * kinds:
+ * The Answer_List (spec 09 A9, C4.1, P6.4; spec 10 C6.10; spec 11 P4.2): the
+ * judge's recorded answers as a compact text list, Author_Questions first. It
+ * takes items of two kinds:
  *
  * - `text`: an Author_Question and the free-text answer the judge gave (or "No
  *   answer"). The question and the answer are the judge's own content, so each
- *   carries `data-user-content`; the answer is clamped to
- *   `ANSWER_TEXT_CLAMP_LINES` lines with a 3 px Accent left border, which marks
- *   "you" without colouring the paragraph text orange (tone.md, C8.1).
+ *   carries `data-user-content`. The answer is clamped to
+ *   `ANSWER_CLAMP_LINES_LETTER` lines with a show-full control (ClampedAnswer),
+ *   and has a 3 px Accent left border, which marks "you" without colouring the
+ *   paragraph text orange (tone.md, C8.1).
  * - `number`: a figure question, shown as the metric's name then the
  *   Answer_Text and unit, or "No answer". A Kept_Sample carries the
  *   Sample_Label (C5.8, Property 17).
@@ -62,9 +64,11 @@ export function AnswerList({ items }: AnswerListProps) {
             {item.answer === null ? (
               <span className={styles.answerValue}>{REVEAL_COPY.noAnswer}</span>
             ) : (
-              <span className={styles.answerText} data-user-content="">
-                {item.answer}
-              </span>
+              <ClampedAnswer
+                text={item.answer}
+                as="span"
+                className={styles.answerText}
+              />
             )}
           </li>
         ) : (

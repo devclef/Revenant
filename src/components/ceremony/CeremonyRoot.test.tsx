@@ -109,7 +109,7 @@ vi.mock("./skip", () => ({
 
 // Imported after the mocks are declared (vi.mock is hoisted, so this is safe).
 import { OpeningFlow } from "../reveal/OpeningFlow";
-import { CeremonyRoot, type CeremonyRootProps } from "./CeremonyRoot";
+import { CeremonyRoot, letterPaperScrollTarget, type CeremonyRootProps } from "./CeremonyRoot";
 import { focusTargetFor, shouldRescueFocus } from "./stages";
 
 // --- fixtures ----------------------------------------------------------------
@@ -613,6 +613,70 @@ describe("CeremonyRoot focus rule (spec 08, focusTargetFor table)", () => {
     expect(css).toContain(
       "scroll-margin-top: calc(var(--topbar-clear) + 0.75rem)",
     );
+  });
+});
+
+// --- Letter first lines in view (spec 11 P4.1, P4.4) -----------------------
+
+describe("letterPaperScrollTarget (spec 11 P4.1, P4.4)", () => {
+  const DESKTOP_IN_VIEW = {
+    paperTop: 400,
+    textTop: 420,
+    linesBottom: 470,
+    barHeight: 56,
+    viewportHeight: 800,
+    scrollY: 0,
+    phone: false,
+  };
+
+  it("leaves the scroll alone on a desktop when the first three lines are in view below the bar", () => {
+    expect(letterPaperScrollTarget(DESKTOP_IN_VIEW)).toBeNull();
+  });
+
+  it("moves the paper just below the Top_Bar on a desktop when the first lines are below the fold", () => {
+    expect(
+      letterPaperScrollTarget({ ...DESKTOP_IN_VIEW, paperTop: 880, textTop: 900, linesBottom: 950 }),
+    ).toBe(880 - 56 - 12);
+  });
+
+  it("moves the paper when the first lines sit under the Top_Bar", () => {
+    expect(
+      letterPaperScrollTarget({ ...DESKTOP_IN_VIEW, scrollY: 200, paperTop: 30, textTop: 50, linesBottom: 80 }),
+    ).toBe(200 + 30 - 56 - 12);
+  });
+
+  it("moves the paper when the last of the first lines would fall below the viewport", () => {
+    expect(
+      letterPaperScrollTarget({ ...DESKTOP_IN_VIEW, paperTop: 700, textTop: 720, linesBottom: 820 }),
+    ).toBe(700 - 56 - 12);
+  });
+
+  it("always moves the paper below the Top_Bar at the Phone_Sizes, even when the lines are visible", () => {
+    expect(letterPaperScrollTarget({ ...DESKTOP_IN_VIEW, phone: true })).toBe(400 - 56 - 12);
+  });
+
+  it("adds the current scroll offset, so the target is an absolute document position", () => {
+    expect(
+      letterPaperScrollTarget({ ...DESKTOP_IN_VIEW, phone: true, scrollY: 500, paperTop: 300 }),
+    ).toBe(500 + 300 - 56 - 12);
+  });
+
+  it("never scrolls to a negative offset", () => {
+    expect(
+      letterPaperScrollTarget({ ...DESKTOP_IN_VIEW, phone: true, paperTop: 20, scrollY: 0 }),
+    ).toBe(0);
+  });
+
+  it("wires the placement into the letter Stage and keeps focus on the heading", () => {
+    const source = readFileSync(join(__dirname, "CeremonyRoot.tsx"), "utf8");
+    expect(source).toContain("return focusLetterStage(region, motionRef.current);");
+    expect(source).toContain("letterPaperScrollTarget({");
+    expect(source).toContain("window.scrollTo({ top: target, behavior });");
+    // The heading keeps focus: the letter focus uses preventScroll and never
+    // calls focus again after the paper moves.
+    const body = source.slice(source.indexOf("function focusLetterStage"), source.indexOf("/**\n * The default focus rule"));
+    expect(body).toContain("heading.focus({ preventScroll: true });");
+    expect(body).not.toMatch(/\.focus\(\)/);
   });
 });
 

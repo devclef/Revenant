@@ -229,8 +229,9 @@ export const SEAL_ON_FLAP_TOP_PCT = 55.3; // C6.1
 export const SEAL_ON_FLAP_WIDTH_PCT = 28; // C6.1
 // The WaxSeal's size in the phone Seal_Group, in the Content_Column (C6.1).
 export const PHONE_SEAL_SIZE = "6.5rem"; // C6.1
-// A Text_Answer in the Answer_List is clamped to this many lines (C6.10).
-export const ANSWER_TEXT_CLAMP_LINES = 3; // C6.10
+// A displayed answer (Answer_List and Author_Testimony) is clamped to this many
+// lines until the reader asks for the full text (spec 11 P4.2).
+export const ANSWER_CLAMP_LINES_LETTER = 2; // P4.2
 
 // --- Ghost size and sink (spec 09 P4.2, D1) ---
 export const GHOST_SIZE_FULL = "full";
