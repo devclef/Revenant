@@ -159,4 +159,51 @@ describe("loadFigures: success", () => {
       figures: VALID_BODY,
     });
   });
+
+  // Issue #339 (X3): the reveal shows a Bundled_Note only when the series
+  // carries `fallback: true`, so the client must keep that flag and the figure
+  // exactly as the server sent them. Reason for this test: it pins the input
+  // that FiguresThenNow passes to pickNow. No client code changed.
+  it("keeps the fallback flag and the figure of a bundled series", async () => {
+    const figure = {
+      kind: "official",
+      metric_id: "fuel",
+      value: "3.412",
+      unit: "USD per gallon",
+      region: "U.S. city average",
+      period: "2026-09",
+      source: "U.S. EIA",
+      series_id: "EMM_EPMR_PTE_NUS_DPG",
+      retrieved_at: "2026-10-30T14:02:11Z",
+      source_url: "https://www.eia.gov/series",
+    };
+    const body = {
+      ...VALID_BODY,
+      series: [
+        {
+          metric: {
+            id: "fuel",
+            display_name: "Regular gasoline",
+            source: "U.S. EIA",
+            series_id: "EMM_EPMR_PTE_NUS_DPG",
+            unit: "USD per gallon",
+            region: "U.S. city average",
+          },
+          period_type: "monthly",
+          last_success_at: null,
+          figure,
+          fallback: true,
+        },
+      ],
+    };
+    const fetchImpl = vi.fn(async () =>
+      jsonResponse(body),
+    ) as unknown as typeof fetch;
+
+    const state = await loadFigures(fetchImpl);
+    expect(state.status).toBe("ready");
+    if (state.status !== "ready") return;
+    expect(state.figures.series[0]?.fallback).toBe(true);
+    expect(state.figures.series[0]?.figure).toEqual(figure);
+  });
 });
