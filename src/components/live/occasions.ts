@@ -21,7 +21,7 @@ export interface Occasion {
 
 /** The question every row starts with (L1.2). Names the sealing day. */
 export const DEFAULT_QUESTION =
-  "Before you read it, what do you remember writing?";
+  "Before you read it, what do you remember about the day you sealed this?";
 
 /** The most Author_Questions a letter may hold (L1.1, L2.8). */
 export const OCCASION_QUESTIONS_MAX = 3;

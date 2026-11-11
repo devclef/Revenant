@@ -41,7 +41,7 @@ describe("AuthorQuestions copy (spec 10, C2.1, C2.3 to C2.5)", () => {
       "Keep each question to 200 characters or fewer.",
     );
     expect(LIVE_COPY.livePrefill).toBe(
-      "Before you read it, what do you remember writing?",
+      "Before you read it, what do you remember about the day you sealed this?",
     );
   });
 });

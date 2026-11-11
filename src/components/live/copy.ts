@@ -231,7 +231,7 @@ export const LIVE_COPY = {
   selfReportedRegionLabel: "Region, such as your city",
   selfReportedPeriodLabel: "Period, such as 2026-09 or 2026-09-30",
   /** The first row of /demo/live, which the judge can edit, clear or remove (C9.5). */
-  livePrefill: "Before you read it, what do you remember writing?",
+  livePrefill: "Before you read it, what do you remember about the day you sealed this?",
   /** The legend of the Occasion buttons above the letter field (L2.1). */
   occasionLegend: "What is it about?",
   /** The Occasion button labels, keyed by Occasion id (L2.1, L2.8). */
