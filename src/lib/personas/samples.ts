@@ -12,8 +12,9 @@
 //     decimal places, is a value that the Recall_Number_Parser reads back as
 //     the same text, and passes the v1 number rule (C5.3).
 //
-// The Spread_Rule and the Record_Candidate need the sealed Then_Value, so they
-// are checked against DEMO_FIGURES in the tests, not here.
+// The Spread_Rule needs the sealed Then_Value, so it is checked against
+// DEMO_FIGURES in the tests, not here. No list holds the sealed Then_Value
+// itself (the Record_Candidate was removed from the samples).
 //
 // Pure module: imports the persona list, Zod and the recall number parser only.
 
