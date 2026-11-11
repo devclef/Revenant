@@ -40,7 +40,9 @@ describe("AuthorQuestions copy (spec 10, C2.1, C2.3 to C2.5)", () => {
     expect(LIVE_COPY.questionTooLong).toBe(
       "Keep each question to 200 characters or fewer.",
     );
-    expect(LIVE_COPY.livePrefill).toBe("What's on your mind right now?");
+    expect(LIVE_COPY.livePrefill).toBe(
+      "Before you read it, what do you remember writing?",
+    );
   });
 });
 
