@@ -1057,6 +1057,43 @@ class ResumedRuns(unittest.TestCase):
         self.assertIn("was resumed `kirocrew`, not `frontend-dev`", note)
         self.assertIn("No PR was opened", note)
 
+    def test_dev_run_level_with_main_blocks_without_push_or_pr(self):
+        from unittest import mock
+        gh = RecGH()
+        gh.comments_by[105] = [{"body": d.make_marker({"kind": "dev", "task_id": "T1",
+                                                       "role": "platform-dev"}), "_trusted": True}]
+        tick, notes = make_tick(gh)
+        git_calls = []
+
+        def fake_git(cwd, *args, token=None):
+            git_calls.append(args)
+            return "0\n" if args[0] == "rev-list" else ""
+
+        with mock.patch.object(d, "git", fake_git):
+            tick.finish_dev_runs([issue(105, ["status:in-progress", "agent:platform-dev"])], [],
+                                 {"T1": {"status": "completed"}})
+        self.assertFalse(any(a[0] == "push" for a in git_calls))
+        self.assertFalse([e for e in gh.events if e[:2] == ("POST", "/pulls")])
+        self.assertIn(("status", 105, "status:blocked", ("status:in-progress",)), gh.events)
+        self.assertIn("no commits ahead of `main`", gh.has("comment", 105)[0][2])
+
+    def test_dev_run_ahead_of_main_opens_pr(self):
+        from unittest import mock
+        gh = RecGH()
+        gh.comments_by[105] = [{"body": d.make_marker({"kind": "dev", "task_id": "T1",
+                                                       "role": "platform-dev"}), "_trusted": True}]
+        gh.call = lambda m, p, b=None: gh.events.append((m, p)) or {"number": 9, "body": ""}
+        tick, _ = make_tick(gh)
+
+        def fake_git(cwd, *args, token=None):
+            return "2\n" if args[0] == "rev-list" else ""
+
+        with mock.patch.object(d, "git", fake_git):
+            tick.finish_dev_runs([issue(105, ["status:in-progress", "agent:platform-dev"])], [],
+                                 {"T1": {"status": "completed"}})
+        self.assertIn(("POST", "/pulls"), gh.events)
+        self.assertIn(("status", 105, "status:in-review", ("status:in-progress",)), gh.events)
+
     def test_resumed_as_right_agent_pushes_base_branch(self):
         from unittest import mock
         gh = RecGH()
