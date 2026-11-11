@@ -62,7 +62,7 @@ import {
   stageFor,
   type Stage,
 } from "./stages";
-import { FOCUS_SCROLL_CHECK_MS, PICKUP_MOVE_MS } from "./constants";
+import { FOCUS_SCROLL_CHECK_MS, LETTER_NARROW_PX, PICKUP_MOVE_MS } from "./constants";
 import { personaStepFor, stepAnnouncement } from "./steps";
 import { StepIndicator } from "../ui/StepIndicator";
 import type { FlowState } from "../reveal/opening-machine";
@@ -103,6 +103,95 @@ export function stageHeadingIndex(tagNames: readonly string[]): number {
     if (tag === "h1" || tag === "h2") return index;
   }
   return -1;
+}
+
+/** Space between the Top_Bar's bottom edge and the paper's top edge (spec 11 P4.4). */
+export const LETTER_PAPER_GAP_PX = 12;
+
+/** The number of Letter_Text lines that must be inside the First_Viewport (spec 11 P4.1). */
+export const LETTER_FIRST_LINES = 3;
+
+export interface LetterPaperPlacement {
+  /** The paper's top edge, in viewport pixels. */
+  paperTop: number;
+  /** The top of the Letter_Text paragraph, in viewport pixels. */
+  textTop: number;
+  /** The bottom of the first Letter_Text lines, in viewport pixels. */
+  linesBottom: number;
+  /** The Top_Bar's height, in pixels. Zero when no bar is on the page. */
+  barHeight: number;
+  /** The viewport's height, in pixels. */
+  viewportHeight: number;
+  /** The window's current vertical scroll offset, in pixels. */
+  scrollY: number;
+  /** True at the Phone_Sizes (the viewport is narrower than LETTER_NARROW_PX). */
+  phone: boolean;
+}
+
+/**
+ * The scroll offset that puts the paper's top edge just below the Top_Bar, or
+ * `null` when the first lines already sit inside the First_Viewport below the
+ * bar and the viewport is not a phone (spec 11 P4.1, P4.4). At the Phone_Sizes
+ * the paper always moves to that position on entry.
+ */
+export function letterPaperScrollTarget(placement: LetterPaperPlacement): number | null {
+  const linesInView =
+    placement.textTop >= placement.barHeight &&
+    placement.linesBottom <= placement.viewportHeight;
+  if (!placement.phone && linesInView) return null;
+  const target =
+    placement.scrollY + placement.paperTop - placement.barHeight - LETTER_PAPER_GAP_PX;
+  return Math.max(0, target);
+}
+
+/**
+ * Focus the letter heading for the `letter` Stage (spec 08 R2.1, spec 11 P4.1,
+ * P4.4). The heading takes focus with `preventScroll` and scrolls to the top
+ * of the view, as the figures heading does. After `FOCUS_SCROLL_CHECK_MS`, the
+ * first Letter_Text lines are checked: at the Phone_Sizes, or when those lines
+ * are out of view, the paper's top edge moves just below the Top_Bar. Focus
+ * stays on the heading. The placement uses absolute document positions, so a
+ * smooth scroll still in flight does not change the target.
+ */
+function focusLetterStage(region: HTMLElement, mode: MotionMode): (() => void) | undefined {
+  const heading =
+    region.querySelector<HTMLElement>("[data-letter-heading]") ??
+    region.querySelector<HTMLElement>("[data-figures-heading]");
+  if (heading === null) {
+    // The letter caption always renders its heading. Without one, focus alone
+    // moves, so the page does not jump.
+    focusStageDefault(region, { preventScroll: true });
+    return undefined;
+  }
+  if (!heading.hasAttribute("tabindex")) heading.tabIndex = -1;
+  heading.focus({ preventScroll: true });
+  const reduced =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const behavior: ScrollBehavior = mode === "full" && !reduced ? "smooth" : "auto";
+  heading.scrollIntoView({ block: "start", behavior });
+  const timer = setTimeout(() => {
+    if (!heading.isConnected) return;
+    const text = region.querySelector<HTMLElement>("[data-letter-text]");
+    const paper = text?.parentElement ?? null;
+    if (text === null || paper === null) return;
+    const topBar = document.querySelector<HTMLElement>("[data-topbar]");
+    const textRect = text.getBoundingClientRect();
+    const style = window.getComputedStyle(text);
+    const lineHeight = parseFloat(style.lineHeight) || parseFloat(style.fontSize) * 1.2;
+    const target = letterPaperScrollTarget({
+      paperTop: paper.getBoundingClientRect().top,
+      textTop: textRect.top,
+      linesBottom: textRect.top + Math.min(LETTER_FIRST_LINES * lineHeight, textRect.height),
+      barHeight: topBar === null ? 0 : topBar.getBoundingClientRect().height,
+      viewportHeight: window.innerHeight,
+      scrollY: window.scrollY,
+      phone: window.innerWidth < LETTER_NARROW_PX,
+    });
+    if (target === null) return;
+    window.scrollTo({ top: target, behavior });
+  }, FOCUS_SCROLL_CHECK_MS);
+  return () => clearTimeout(timer);
 }
 
 /**
@@ -300,11 +389,7 @@ function CeremonyRegion({
       );
     }
     if (target.kind === "letter-heading") {
-      return focusHeading(
-        region,
-        { selector: "[data-letter-heading]", fallback: "[data-figures-heading]", scroll: true },
-        motionRef.current,
-      );
+      return focusLetterStage(region, motionRef.current);
     }
     if (target.kind === "none") {
       const active = document.activeElement;

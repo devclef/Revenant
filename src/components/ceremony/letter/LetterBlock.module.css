@@ -30,6 +30,13 @@
   color: var(--muted, #bdb4dc);
 }
 
+/* The letter Stage focuses this heading and scrolls it into view (spec 11 P4.4).
+   The Top_Bar is fixed and at most 96 px tall (reveal.module.css --topbar-clear),
+   so the heading clears it with the same margin as the Figures_Heading. */
+.caption > h2 {
+  scroll-margin-top: calc(96px + 0.75rem);
+}
+
 /* Focus in the caption is the desk's light ring, since the caption is on the
    dark. The selector is 0,3,0 (.letterBlock .caption plus :focus-visible), so
    it wins over the ink ring from .flow :focus-visible (0,2,0) in
