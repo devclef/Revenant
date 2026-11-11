@@ -111,11 +111,9 @@ describe("persona Sample_Candidates file (Property 15)", () => {
         expect(classes.has("above")).toBe(true);
       });
 
-      it("has exactly one Record_Candidate, which counts as the Near_Candidate", () => {
+      it("holds no Record_Candidate: no candidate equals the sealed Then_Value", () => {
         const record = recordCandidate(q.figure);
-        const matches = list.filter((c) => c === record);
-        expect(matches.length).toBe(1);
-        expect(classifyCandidate(record, then)).toBe("near");
+        expect(list.filter((c) => c === record)).toHaveLength(0);
       });
     });
   }

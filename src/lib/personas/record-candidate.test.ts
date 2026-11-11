@@ -109,7 +109,7 @@ describe("recordCandidate (Property 23)", () => {
 
   for (const persona of PERSONAS) {
     for (const metric of persona.metrics) {
-      it(`${persona.key} ${metric.metric_id}: exactly one stored candidate is the Record_Candidate`, () => {
+      it(`${persona.key} ${metric.metric_id}: no stored candidate is the Record_Candidate`, () => {
         const result = thenAndNow(
           metric.metric_id,
           persona.written_as_of,
@@ -118,7 +118,7 @@ describe("recordCandidate (Property 23)", () => {
         if (!result.then.found) throw new Error("no then figure");
         const record = recordCandidate(result.then.figure);
         const list = SAMPLE_CANDIDATES[persona.key][metric.metric_id];
-        expect(list.filter((c) => c === record)).toHaveLength(1);
+        expect(list.filter((c) => c === record)).toHaveLength(0);
         expect(record).toMatch(TWO_DECIMALS);
       });
     }
