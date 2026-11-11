@@ -109,6 +109,11 @@ export interface SealPageProps {
   /** `demo` (default) for `/demo/live`; `real` for `/seal`. */
   mode?: SealPageMode;
   /**
+   * True only on `/demo/live`. It shows the rehearsal line under the Write
+   * heading and beside the Wait countdown (spec 11, L4).
+   */
+  rehearsal?: boolean;
+  /**
    * The one injection point for the port, routes, figures and clock (R11.5).
    * Any field left out falls back to the real default: the loaded crypto
    * module's `browserAuthenticatorPort`, the mode's seal API, `DEMO_FIGURES` and
@@ -134,7 +139,7 @@ interface WriteNav {
  * Demo mode (`/demo/live`) runs inside the Live_Stepper (spec 09, D2). Real
  * mode (`/seal`) keeps the single form.
  */
-export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps) {
+export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, deps }: SealPageProps) {
   const crypto = useCryptoModule();
   const prfHint = usePrfHint();
   const figuresState = useFigures(deps?.fetchFigures);
@@ -273,6 +278,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
             nowMs={deps?.nowMs ?? Date.now}
             getBackupKeyText={flow.getBackupKeyText}
             port={deps?.port}
+            rehearsal={rehearsal}
           />
         </SealedStep>
       );
@@ -287,12 +293,22 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
         break;
     }
     const section: WriteSection = view.step === "write" ? "write" : "seal";
-    return writeForm({
+    const form = writeForm({
       section,
       onNext: view.next,
       // Back is offered only before a passkey prompt has started (spec 09, D2.2).
       onBack: view.canGoBack && state.tag === "write" ? view.back : undefined,
     });
+    // The rehearsal line sits under the Write heading, before the fields.
+    if (!rehearsal || view.step !== "write") return form;
+    return (
+      <>
+        <p className={styles.intro} data-live-rehearsal="">
+          {LIVE_COPY.rehearsalLine}
+        </p>
+        {form}
+      </>
+    );
   }
 
   function renderState() {

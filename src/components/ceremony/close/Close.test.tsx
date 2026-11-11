@@ -11,7 +11,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
-import { LIVE_COPY } from "@/components/reveal/copy";
+import { LIVE_COPY } from "@/components/live/copy";
 import { Close, DEMO_2_HREF, startOverHref } from "./Close";
 
 const KEY = "us-maya";

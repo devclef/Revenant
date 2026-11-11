@@ -30,7 +30,7 @@ export default function LiveDemoPage() {
       {rpId === "" ? (
         <Unavailable />
       ) : (
-        <SealPage rpId={rpId} appOrigin={appOrigin} />
+        <SealPage rpId={rpId} appOrigin={appOrigin} rehearsal />
       )}
     </SceneShell>
   );

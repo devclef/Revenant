@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
+import { DEFAULT_QUESTION } from "./occasions";
 import { AUTHOR_QUESTIONS_MAX } from "./author-questions";
 import { LIVE_COPY } from "./copy";
 import styles from "./live.module.css";
@@ -65,7 +66,7 @@ export function AuthorQuestions({
           <div
             key={index}
             className={styles.questionRow}
-            {...(text !== LIVE_COPY.livePrefill
+            {...(text !== DEFAULT_QUESTION
               ? { "data-user-content": "" }
               : {})}
           >

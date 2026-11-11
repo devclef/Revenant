@@ -52,6 +52,8 @@ export interface LiveWaitStepProps {
   getBackupKeyText?: () => string | null;
   /** The authenticator port for the flow. Defaults to the browser's. */
   port?: AuthenticatorPort;
+  /** Shows the rehearsal line next to the countdown. Set only on /demo/live. */
+  rehearsal?: boolean;
 }
 
 /**
@@ -85,6 +87,7 @@ export function LiveWaitStep({
   nowMs = Date.now,
   getBackupKeyText = () => null,
   port,
+  rehearsal = false,
 }: LiveWaitStepProps) {
   const opensAtMs = Date.parse(state.opensAt);
   const seconds = useSecondsLeft(opensAtMs, nowMs, state.offsetMs);
@@ -119,6 +122,11 @@ export function LiveWaitStep({
               {LIVE_COPY.countdown.replace("{seconds}", String(seconds))}
             </p>
           )}
+          {rehearsal ? (
+            <p className={styles.intro} data-live-rehearsal="">
+              {LIVE_COPY.rehearsalLine}
+            </p>
+          ) : null}
           {/* The key reminder sits with the unlock control it describes (D1.5). */}
           {showKeyReminder ? (
             <p className={`${styles.intro} ${styles.noPrint}`}>{LIVE_COPY.keyReminder}</p>

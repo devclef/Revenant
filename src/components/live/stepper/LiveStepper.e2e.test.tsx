@@ -21,7 +21,7 @@ import { DEMO_FIGURES } from "@/lib/figures/demo";
 import { thenAndNow } from "@/lib/figures/then-now";
 import { listPickableSeries } from "../catalogue-list";
 import { questionsForSeal } from "../author-questions";
-import { LIVE_COPY } from "../copy";
+import { DEFAULT_QUESTION } from "../occasions";
 import type { SealState } from "../seal-machine";
 import { WriteForm, type WriteFormProps } from "../WriteForm";
 import { LiveStepper, type StepView } from "./LiveStepper";
@@ -235,19 +235,19 @@ describe("Live_Stepper end to end: Write to Receipts (spec 10 C2, C9.2, C9.3)", 
 
   it("the Write step keeps the Live_Prefill first, shows the starter row, and drops the removed row", () => {
     expect(WRITTEN.step).toBe("write");
-    expect(WRITTEN.draft.questions).toEqual([LIVE_COPY.livePrefill, TYPED]);
+    expect(WRITTEN.draft.questions).toEqual([DEFAULT_QUESTION, TYPED]);
 
     const html = renderWriteStep(WRITTEN);
-    expect(rowValues(html)).toEqual([escaped(LIVE_COPY.livePrefill), TYPED]);
+    expect(rowValues(html)).toEqual([escaped(DEFAULT_QUESTION), TYPED]);
     // The starter buttons always render. Only the row inputs hold sealed text.
     expect(rowValues(html)).not.toContain(escaped(STARTER));
-    expect(indexOfOrFail(html, escaped(LIVE_COPY.livePrefill))).toBeLessThan(
+    expect(indexOfOrFail(html, escaped(DEFAULT_QUESTION))).toBeLessThan(
       indexOfOrFail(html, TYPED),
     );
   });
 
   it("seals only the kept rows, in row order, and clears the draft once sealed", () => {
-    expect(SEALED_QUESTIONS).toEqual([LIVE_COPY.livePrefill, TYPED]);
+    expect(SEALED_QUESTIONS).toEqual([DEFAULT_QUESTION, TYPED]);
     expect(AT_TESTIFY.sealed).toBe(true);
     expect(AT_TESTIFY.draft.questions).toEqual([]);
   });
@@ -256,13 +256,13 @@ describe("Live_Stepper end to end: Write to Receipts (spec 10 C2, C9.2, C9.3)", 
     expect(AT_TESTIFY.step).toBe("testify");
 
     const first = renderTestify(0);
-    expect(first).toContain(escaped(LIVE_COPY.livePrefill));
+    expect(first).toContain(escaped(DEFAULT_QUESTION));
     expect(first).not.toContain(TYPED);
     expect(first).not.toContain(FIGURE_QUESTION);
 
     const second = renderTestify(1);
     expect(second).toContain(TYPED);
-    expect(second).not.toContain(escaped(LIVE_COPY.livePrefill));
+    expect(second).not.toContain(escaped(DEFAULT_QUESTION));
 
     const third = renderTestify(2);
     expect(third).toContain(FIGURE_QUESTION);
@@ -273,7 +273,7 @@ describe("Live_Stepper end to end: Write to Receipts (spec 10 C2, C9.2, C9.3)", 
 
     const markup = renderReceipts(2);
     const list = indexOfOrFail(markup, "data-answer-list");
-    const prefill = indexOfOrFail(markup, escaped(LIVE_COPY.livePrefill));
+    const prefill = indexOfOrFail(markup, escaped(DEFAULT_QUESTION));
     const typed = indexOfOrFail(markup, TYPED);
     const testimony = indexOfOrFail(markup, "data-author-testimony");
     const letter = indexOfOrFail(markup, "data-letter-text");

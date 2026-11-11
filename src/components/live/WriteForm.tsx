@@ -241,11 +241,11 @@ export function WriteForm({
   // The Occasion last chosen and the rows it applied (L2.2). Memory only: it
   // is never sent, stored, put in the URL or in cookies (L2.5). A fresh form
   // treats the default question as the untouched row, so the first Occasion
-  // replaces it.
+  // replaces it. Blank is the default Occasion until the visitor picks another.
   const [occasionMemory, setOccasionMemory] = useState<OccasionDraft | null>(
     null,
   );
-  const chosenOccasion: OccasionId | null = occasionMemory?.occasion ?? null;
+  const chosenOccasion: OccasionId = occasionMemory?.occasion ?? "blank";
 
   function chooseOccasion(id: OccasionId) {
     const base: OccasionDraft = occasionMemory ?? {

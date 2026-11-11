@@ -30,7 +30,11 @@ export type CloseProps =
        */
       hasFigures?: boolean;
     }
-  | { kind: "live" }
+  | {
+      kind: "live";
+      /** True when the letter holds at least one official figure (spec 06). */
+      hasFigures?: boolean;
+    }
   | { kind: "real" };
 
 /** Where the Demo_2_On link leads: the passkey demo's seal page. */
@@ -43,7 +47,7 @@ export function startOverHref(personaKey: string): string {
 
 export function Close(props: CloseProps) {
   if (props.kind === "live") {
-    return <LiveLockNote />;
+    return <LiveLockNote hasOfficialFigures={props.hasFigures === true} />;
   }
   if (props.kind === "real") {
     // A Real_Letter gets no close: no 30-second note and no demo links (spec 08, R24.11).

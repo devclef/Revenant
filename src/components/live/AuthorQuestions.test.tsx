@@ -7,6 +7,7 @@ import { firstPoliticalTerm } from "@/lib/personas/banned-terms";
 import { checkRecallSubject } from "@/lib/recall";
 
 import { AuthorQuestions, type AuthorQuestionsProps } from "./AuthorQuestions";
+import { DEFAULT_QUESTION } from "./occasions";
 import { LIVE_COPY } from "./copy";
 
 const noop = () => {};
@@ -40,14 +41,14 @@ describe("AuthorQuestions copy (spec 10, C2.1, C2.3 to C2.5)", () => {
     expect(LIVE_COPY.questionTooLong).toBe(
       "Keep each question to 200 characters or fewer.",
     );
-    expect(LIVE_COPY.livePrefill).toBe(
+    expect(DEFAULT_QUESTION).toBe(
       "Before you read it, what do you remember about the day you sealed this?",
     );
   });
 });
 
 describe("Live_Prefill passes the recall and neutrality checks", () => {
-  const text = LIVE_COPY.livePrefill;
+  const text = DEFAULT_QUESTION;
 
   it('has no digit, no "!" and no political term', () => {
     expect(text).not.toMatch(/\d/);
@@ -107,7 +108,7 @@ describe("AuthorQuestions rendering", () => {
   });
 
   it("marks a row whose text differs from the Live_Prefill with data-user-content", () => {
-    const html = render({ questions: [LIVE_COPY.livePrefill, "My own words"] });
+    const html = render({ questions: [DEFAULT_QUESTION, "My own words"] });
     // CSS module class names carry a hash suffix, so match the stem.
     const rows = html.split(/<div class="[^"]*questionRow[^"]*"/).slice(1);
     expect(rows).toHaveLength(2);
