@@ -29,24 +29,27 @@ function ruleBody(css: string, selector: string): string {
   return match[1];
 }
 
-describe("held Envelope Seal_Group placement (spec 10 C6.3)", () => {
-  const body = ruleBody(sceneCss, ".heldEnvelope [data-seal-group]");
+describe("Seal_Group placement in the marks layer (spec 10 C6.3)", () => {
+  const body = ruleBody(sceneCss, ".marksLayer [data-seal-group]");
 
-  it("offsets the group from the Envelope by the SEAL_GROUP_GAP_PX gap", () => {
-    expect(body).toMatch(
-      /right:\s*calc\(109\.375%\s*\+\s*var\(--seal-group-gap\)\)/,
-    );
+  it("offsets the group from the Ghost body by the SEAL_GROUP_GAP_PX gap", () => {
     expect(body).toMatch(/--seal-group-gap:\s*20px/);
+    expect(body).toMatch(
+      /left:\s*calc\(\s*var\(--ghost-x\)[^;]*var\(--seal-group-gap\)/,
+    );
   });
 
-  it("raises the group above the Ghost body with a positive z-index", () => {
-    const match = body.match(/z-index:\s*(-?\d+)/);
-    expect(match).not.toBeNull();
-    expect(Number(match?.[1])).toBeGreaterThan(0);
+  it("sits in the marks layer, a sibling of the Ghost layer, above the cards", () => {
+    const layer = ruleBody(sceneCss, ".marksLayer");
+    expect(layer).toMatch(/position:\s*fixed;/);
+    expect(layer).toMatch(/pointer-events:\s*none;/);
+    expect(Number(layer.match(/z-index:\s*(\d+)/)?.[1])).toBeGreaterThanOrEqual(2);
   });
 
-  it("places the group at the WaxSeal's vertical centre", () => {
-    expect(body).toMatch(/top:\s*55\.3%;/);
+  it("places the group at the WaxSeal's vertical centre from the scene variables", () => {
+    expect(body).toMatch(
+      /top:\s*calc\(var\(--soil-top\)\s*\+\s*3vh\s*-\s*var\(--ghost-w\)\s*\*\s*0\.54621\);/,
+    );
     expect(body).toMatch(/transform:\s*translateY\(-50%\);/);
   });
 

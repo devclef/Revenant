@@ -163,6 +163,12 @@ export type RevealProps = {
    * the Skip_Link. Omitted or null, the seal stays in the Content_Column.
    */
   heldSlot?: HTMLElement | null;
+  /**
+   * The marks layer, a sibling of the Ghost layer (spec 10 C6.3). With
+   * `heldSlot`, the stage 1 Seal_Group's controls are drawn here, outside the
+   * aria-hidden Ghost. Omitted or null, the Seal_Group stays where it was.
+   */
+  marksSlot?: HTMLElement | null;
 };
 
 /**
@@ -205,6 +211,7 @@ function RevealBody({
   close,
   phone,
   heldSlot = null,
+  marksSlot = null,
   figures,
 }: RevealBodyProps) {
   // The local-view context lets stage 1's SealBreak report its `sealing` flag
@@ -442,6 +449,7 @@ function RevealBody({
                       hasFigures={figureCount > 0}
                       onSealingChange={onSealingChange}
                       envelopeSlot={envelopeSlot}
+                      marksSlot={marksSlot}
                     />
                   </div>
                 ) : null}

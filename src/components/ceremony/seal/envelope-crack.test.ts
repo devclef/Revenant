@@ -86,9 +86,14 @@ describe("the crack trigger on the held Envelope (spec 09 C5.1)", () => {
 
   it("portals the seal drawing into the held Envelope's slot when one is mounted", () => {
     expect(sealSource).toMatch(
-      /createPortal\(\s*<>\s*<div\s+style=\{TIMING_VARS\}\s+data-broken=\{broken\}\s+data-envelope-seal=""\s*>\s*\{sealDrawing\}/,
+      /createPortal\(\s*<div\s+style=\{TIMING_VARS\}\s+data-broken=\{broken\}\s+data-envelope-seal=""\s*>\s*\{sealDrawing\}\s*<\/div>,\s*envelopeSlot,\s*\)/,
     );
-    expect(sealSource).toMatch(/envelopeSlot,\s*\)/);
+  });
+
+  it("portals the Seal_Group into the marks layer, outside the Ghost", () => {
+    expect(sealSource).toMatch(
+      /createPortal\(\s*<div\s+className=\{styles\.sealGroup\}[^>]*data-seal-group=""\s*>[\s\S]*?<\/div>,\s*marksSlot,\s*\)/,
+    );
   });
 
   it("attaches the crack overlay ref to the one overlay the button animates", () => {

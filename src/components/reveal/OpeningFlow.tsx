@@ -263,6 +263,10 @@ export function OpeningFlow({
   // draws the stage 1 seal on it at the Desktop_Sizes (spec 09 C5.1).
   const [heldSlot, setHeldSlot] = useState<HTMLDivElement | null>(null);
   const onHeldSlot = useCallback((element: HTMLDivElement | null) => setHeldSlot(element), []);
+  // The marks layer, a sibling of the Ghost layer, holds the Seal_Group's
+  // controls so they stay outside the aria-hidden Ghost (spec 10 C6.3).
+  const [marksSlot, setMarksSlot] = useState<HTMLDivElement | null>(null);
+  const onMarksSlot = useCallback((element: HTMLDivElement | null) => setMarksSlot(element), []);
   // The width decides whether reveal stage 1 holds the Envelope (spec 09 C5.1).
   const viewportWidth = useViewportWidth();
 
@@ -313,6 +317,7 @@ export function OpeningFlow({
             <SceneBackdrop
               dimmed={state.tag === "reveal" && state.stage >= 2}
               animateDim={ghostLeaving}
+              marksLayerRef={onMarksSlot}
             >
               {ghostPresent({
                 tag: state.tag,
@@ -337,7 +342,7 @@ export function OpeningFlow({
             {selectView(state, flow, letterId, personaName, persona, mode, retryAtZero, KeyStep, {
               keyText,
               onKeyTextChange: setKeyText,
-            }, seal, demo2On, heldSlot)}
+            }, seal, demo2On, heldSlot, marksSlot)}
           </div>
         </CeremonyRoot>
       </SkipProvider>
@@ -365,6 +370,7 @@ function selectView(
   seal: SealController,
   demo2On: boolean,
   heldSlot: HTMLElement | null,
+  marksSlot: HTMLElement | null,
 ): React.ReactNode {
   // The envelope's per-letter inputs: the persona list fields plus the demo
   // flag. These are always demo persona letters, so `demo` is true whenever a
@@ -527,6 +533,7 @@ function selectView(
           onShowAll={flow.showAll}
           seal={seal}
           heldSlot={heldSlot}
+          marksSlot={marksSlot}
           variant={mode}
           letterKind={
             // persona route -> persona; live route -> live for a demo letter,
