@@ -1,5 +1,6 @@
-// Property 23: each question has exactly one Record_Candidate (spec 10
-// design.md; requirements C5.2, C5.11). The P1 half of the property (the
+// Property 23: no question's sample list holds the Record_Candidate (spec 10
+// design.md; requirements C5.2, C5.11). The Record_Candidate is still computed
+// for the P1 letter price lines. The P1 half of the property (the
 // Letter_Price_Line) is checked with expectedPrices, which P1 adds later.
 
 import fc from "fast-check";
