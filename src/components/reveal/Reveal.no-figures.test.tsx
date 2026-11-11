@@ -142,13 +142,14 @@ describe("Reveal with no sealed figures (spec 10 C8.6)", () => {
 
   it("reaches the Close at stage 2", () => {
     const html = renderReveal({ stage: 2 });
-    expect(html).toContain(CEREMONY_COPY.closeLine);
+    expect(html).toContain(CEREMONY_COPY.closeLineNoFigures);
+    expect(html).not.toContain(CEREMONY_COPY.closeLine);
     expect(html).toContain("data-close-line");
   });
 
   it("reaches the Close at stage 3 too, with no figures panel", () => {
     const html = renderReveal({ stage: 3 });
-    expect(html).toContain(CEREMONY_COPY.closeLine);
+    expect(html).toContain(CEREMONY_COPY.closeLineNoFigures);
     expect(html).not.toContain("data-figures-panel");
   });
 });

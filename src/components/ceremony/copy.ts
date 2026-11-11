@@ -204,6 +204,11 @@ export const CEREMONY_COPY = {
    * testimony and the record, and leaves what lies between them to the reader.
    */
   closeLine: "Your testimony sits beside the record. What lies between them is yours to read.",
+  /**
+   * The persona close's heading for a letter with no official figures (spec 11
+   * L5.2). It names no numbers and no prices.
+   */
+  closeLineNoFigures: "Her testimony and her letter are side by side. What they say is yours to read.",
   /** The Accent link to /demo/live, shown only while Demo_2_On is true. */
   closeLink: "Seal your own. It opens 30 seconds after you seal it.",
   /** The smaller note under the link. */

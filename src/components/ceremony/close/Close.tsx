@@ -20,7 +20,16 @@ import { CEREMONY_COPY } from "@/components/ceremony/copy";
 import styles from "./close.module.css";
 
 export type CloseProps =
-  | { kind: "persona"; personaKey: string; demo2On: boolean }
+  | {
+      kind: "persona";
+      personaKey: string;
+      demo2On: boolean;
+      /**
+       * False for a letter with no official figures: the heading then reads
+       * `closeLineNoFigures` (spec 11 L5.2). Defaults to true.
+       */
+      hasFigures?: boolean;
+    }
   | { kind: "live" }
   | { kind: "real" };
 
@@ -43,7 +52,9 @@ export function Close(props: CloseProps) {
 
   return (
     <section className={styles.close}>
-      <h2 className={styles.heading} data-close-line="">{CEREMONY_COPY.closeLine}</h2>
+      <h2 className={styles.heading} data-close-line="">
+        {props.hasFigures === false ? CEREMONY_COPY.closeLineNoFigures : CEREMONY_COPY.closeLine}
+      </h2>
       {props.demo2On ? (
         <a className={styles.cta} href={DEMO_2_HREF}>
           {CEREMONY_COPY.closeLink}

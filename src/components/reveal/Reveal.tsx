@@ -555,7 +555,10 @@ function RevealBody({
           appears while the figures are still fading in. */}
       {closeShown ? (
         <div className={`${styles.stage} ${styles.fade}`}>
-          <Close {...close} />
+          <Close
+            {...close}
+            {...(close?.kind === "persona" ? { hasFigures: figureCount > 0 } : {})}
+          />
         </div>
       ) : null}
 
