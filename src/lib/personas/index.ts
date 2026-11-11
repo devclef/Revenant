@@ -13,10 +13,11 @@
 import rawPersonaList from "../../../content/personas/personas.json";
 
 import { parsePersonaList, type Persona, type PersonaList } from "./schema";
-import { checkLetterText } from "./letter-checks";
+import { checkAnswerText, checkLetterText } from "./letter-checks";
 
 export type { Persona, PersonaList };
-export { parsePersonaList, checkLetterText };
+export { parsePersonaList, checkLetterText, checkAnswerText };
+export { validatePersonaAnswers } from "./answers";
 
 /**
  * Recursively freeze a value and everything reachable from it, so neither the
