@@ -1,4 +1,4 @@
-// Tests for the failure log line and the 500 answer in respond.ts (issue #313).
+// Tests for the failure log line and the fallback answer in respond.ts (issues #313, #337).
 // They drive respondFigures with stub read stores and check which step failed,
 // the one console.error line, and that no connection string reaches the log,
 // the body or the headers.
@@ -7,8 +7,35 @@
 
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+import { bundledLatestFigure } from "@/lib/figures/bundled-latest";
+import { CATALOGUE } from "@/lib/figures/catalogue";
+import { isFixtureFigure } from "@/lib/figures/fixture";
+import { parseFiguresResponse } from "@/lib/figures/now";
+
 import type { FigureReadStore, StoredFigureRow } from "./db-response";
-import { figuresFailureLine, respondFigures } from "./respond";
+import { figuresFailureLine, fallbackResponse, respondFigures } from "./respond";
+
+// The shape step can be made to throw for the next N calls. Calls that pass
+// through unchanged keep every other test in this file on the real code.
+const { shapeCalls } = vi.hoisted(() => ({
+  shapeCalls: { failNext: 0 },
+}));
+
+vi.mock("./db-response", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./db-response")>();
+  return {
+    ...actual,
+    shapeDbFiguresResponse: (
+      ...args: Parameters<typeof actual.shapeDbFiguresResponse>
+    ) => {
+      if (shapeCalls.failNext > 0) {
+        shapeCalls.failNext -= 1;
+        throw new Error("shape failed");
+      }
+      return actual.shapeDbFiguresResponse(...args);
+    },
+  };
+});
 
 const GENERATED = new Date("2026-11-05T15:00:00Z");
 const SECRET_URL = "postgres://user:secret@host/db";
@@ -35,6 +62,7 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  shapeCalls.failNext = 0;
   vi.restoreAllMocks();
 });
 
@@ -52,7 +80,8 @@ describe("failure step label", () => {
       throw new Error("no DATABASE_URL");
     });
 
-    expect(response.status).toBe(500);
+    // X3: a failed read answers the bundled fallback (200), not 500. The log line is unchanged.
+    expect(response.status).toBe(200);
     expect(loggedLines()).toEqual(["figures_unavailable step=read error=Error"]);
   });
 
@@ -61,7 +90,8 @@ describe("failure step label", () => {
       store({ latest: () => Promise.reject(new Error("latest failed")) }),
     );
 
-    expect(response.status).toBe(500);
+    // X3: a failed read answers the bundled fallback (200), not 500. The log line is unchanged.
+    expect(response.status).toBe(200);
     expect(loggedLines()).toEqual(["figures_unavailable step=read error=Error"]);
   });
 
@@ -70,7 +100,8 @@ describe("failure step label", () => {
       store({ success: () => Promise.reject(new Error("runs failed")) }),
     );
 
-    expect(response.status).toBe(500);
+    // X3: a failed read answers the bundled fallback (200), not 500. The log line is unchanged.
+    expect(response.status).toBe(200);
     expect(loggedLines()).toEqual(["figures_unavailable step=read error=Error"]);
   });
 
@@ -109,7 +140,8 @@ describe("failure code label", () => {
       }),
     );
 
-    expect(response.status).toBe(500);
+    // X3: a failed read answers the bundled fallback (200), not 500. The log line is unchanged.
+    expect(response.status).toBe(200);
     expect(loggedLines()).toEqual([
       "figures_unavailable step=read error=Error code=42P01",
     ]);
@@ -164,7 +196,10 @@ describe("secret redaction", () => {
 
     expect(text).not.toContain("secret");
     expect(text).not.toContain("postgres");
-    expect(JSON.parse(text)).toEqual({ error: "figures_unavailable" });
+    // X3: the body is the fallback, not an error. It must still carry no secret.
+    expect(JSON.parse(text)).toEqual(
+      fallbackResponse("2026-11-05T15:00:00Z"),
+    );
 
     for (const [name, value] of response.headers.entries()) {
       expect(name, name).not.toMatch(/secret|postgres/i);
@@ -206,9 +241,135 @@ describe("one line per failure", () => {
     for (const [label, readStore] of cases) {
       errorSpy.mockClear();
       const response = await failingRespond(readStore);
-      expect(response.status, label).toBe(500);
+      // X3: a failed read answers the bundled fallback (200), not 500.
+      expect(response.status, label).toBe(200);
       expect(loggedLines(), label).toHaveLength(1);
       expect(loggedLines()[0], label).not.toContain("\n");
     }
+  });
+});
+
+// --- fallbackResponse (X3): bundled figures only, never invented -----------
+
+describe("fallbackResponse", () => {
+  it("lists every catalogue series in catalogue order with last_success_at null", () => {
+    const body = fallbackResponse("2026-11-05T15:00:00Z");
+
+    expect(body.series.map((entry) => entry.metric.id)).toEqual(
+      CATALOGUE.map((series) => series.metric.id),
+    );
+    for (const entry of body.series) {
+      expect(entry.last_success_at).toBeNull();
+    }
+  });
+
+  it("Property 1 (fallback part): each figure is the bundled figure field for field, marked fallback, and nothing is invented", () => {
+    const body = fallbackResponse("2026-11-05T15:00:00Z");
+
+    for (const series of CATALOGUE) {
+      const entry = body.series.find((e) => e.metric.id === series.metric.id);
+      const bundled = bundledLatestFigure(series);
+
+      expect(entry, series.metric.id).toBeDefined();
+      expect(entry?.figure, series.metric.id).toEqual(bundled);
+      if (bundled === null) {
+        expect(entry?.fallback ?? false, series.metric.id).toBe(false);
+      } else {
+        expect(entry?.fallback, series.metric.id).toBe(true);
+        expect(isFixtureFigure(entry!.figure!), series.metric.id).toBe(false);
+      }
+    }
+  });
+
+  it("uses the generated_at it was given and the revenant-figures-v1 format", () => {
+    const body = fallbackResponse("2026-11-05T15:00:00Z");
+
+    expect(body.format).toBe("revenant-figures-v1");
+    expect(body.generated_at).toBe("2026-11-05T15:00:00Z");
+  });
+});
+
+// --- Property 2 (X3): a failing read or shape step still answers ------------
+
+describe("Property 2: a failing read or shape step still answers and logs only the line", () => {
+  const FAILURES: Array<{
+    label: string;
+    step: "read" | "shape";
+    readStore: () => FigureReadStore;
+    failShapeFirst: boolean;
+  }> = [
+    {
+      label: "readStore throws",
+      step: "read",
+      readStore: () => {
+        throw new Error("x");
+      },
+      failShapeFirst: false,
+    },
+    {
+      label: "latestFigures rejects",
+      step: "read",
+      readStore: () => store({ latest: () => Promise.reject(new Error("x")) }),
+      failShapeFirst: false,
+    },
+    {
+      label: "lastSuccessTimes rejects",
+      step: "read",
+      readStore: () => store({ success: () => Promise.reject(new Error("x")) }),
+      failShapeFirst: false,
+    },
+    {
+      label: "the shape step throws",
+      step: "shape",
+      readStore: () => store({}),
+      failShapeFirst: true,
+    },
+  ];
+
+  for (const failure of FAILURES) {
+    it(`answers 200 with the fallback and one ${failure.step}-step line when ${failure.label}`, async () => {
+      shapeCalls.failNext = failure.failShapeFirst ? 1 : 0;
+
+      const response = await failingRespond(failure.readStore);
+
+      expect(response.status).toBe(200);
+      expect(response.headers.get("Cache-Control")).toBe("no-store");
+      expect(await response.json()).toEqual(
+        fallbackResponse("2026-11-05T15:00:00Z"),
+      );
+      expect(loggedLines()).toEqual([
+        `figures_unavailable step=${failure.step} error=Error`,
+      ]);
+    });
+  }
+});
+
+// --- Fallback_Response examples (X3) ----------------------------------------
+
+describe("Fallback_Response examples", () => {
+  it("sets Cache-Control no-store on the fallback answer", async () => {
+    const response = await failingRespond(() => {
+      throw new Error("x");
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.headers.get("Cache-Control")).toBe("no-store");
+  });
+
+  it("is accepted by parseFiguresResponse after a JSON round trip", async () => {
+    const response = await failingRespond(() => {
+      throw new Error("x");
+    });
+    const parsed = parseFiguresResponse(await response.json());
+
+    expect(parsed.ok).toBe(true);
+  });
+
+  it("parses the fallback body built directly from fallbackResponse", () => {
+    const body = JSON.parse(
+      JSON.stringify(fallbackResponse("2026-11-05T15:00:00Z")),
+    );
+
+    expect(parseFiguresResponse(body).ok).toBe(true);
   });
 });

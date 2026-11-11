@@ -3,9 +3,11 @@
 // may export only route fields, and the tests need to drive this with their own
 // read store.
 //
-// Failure rule (design, "Error Handling"): if the database read fails in db mode,
-// the response is 500 with a neutral body and no-store. It never returns a partial
-// list, and it never falls back to the bundled file.
+// Failure rule (spec 08, design "Error Handling"): if the database read or the
+// response shaping fails, the response is 200 with the fallback body (bundled
+// figures only, last_success_at null) and no-store. If no series has a bundled
+// figure, or building the fallback throws, the response is 500 with a neutral
+// body and no-store. It never returns a partial list and never invents a figure.
 
 import { NextResponse } from "next/server";
 
@@ -16,10 +18,25 @@ import fetchStatus from "@/lib/figures/real/fetch-status.json";
 
 import { buildFiguresResponse, type FiguresSourceMode } from "./build-response";
 import {
+  hasAnyBundled,
   readDbFigures,
   shapeDbFiguresResponse,
   type FigureReadStore,
 } from "./db-response";
+
+/**
+ * The body answered when the database read or shape step fails: no stored rows
+ * and no success times, so every series takes its bundled figure (fallback: true)
+ * or null. Each bundled figure is copied field for field from fuel-figures.json,
+ * and last_success_at is null everywhere.
+ */
+export function fallbackResponse(generatedAt: string): FiguresResponseV1 {
+  return shapeDbFiguresResponse(
+    { rows: [], successTimes: new Map() },
+    CATALOGUE,
+    generatedAt,
+  );
+}
 
 /** The step that failed: the database or file read, or the response shaping. */
 type FiguresStep = "read" | "shape";
@@ -46,6 +63,32 @@ export interface FiguresRequestDeps {
   readStore: () => FigureReadStore;
   /** The server clock, read once per request for `generated_at`. */
   now: () => Date;
+}
+
+/**
+ * The answer after a failed read or shape step: the fallback body with 200 when
+ * at least one series has a bundled figure, otherwise 500. Both are no-store.
+ */
+function answerFallback(generatedAt: string): NextResponse {
+  const unavailable = () =>
+    NextResponse.json(
+      { error: "figures_unavailable" },
+      { status: 500, headers: { "Cache-Control": "no-store" } },
+    );
+
+  let body: FiguresResponseV1;
+  try {
+    body = fallbackResponse(generatedAt);
+  } catch {
+    return unavailable();
+  }
+  if (!hasAnyBundled(body)) {
+    return unavailable();
+  }
+  return NextResponse.json(body, {
+    status: 200,
+    headers: { "Cache-Control": "no-store" },
+  });
 }
 
 export async function respondFigures(
@@ -76,10 +119,7 @@ export async function respondFigures(
     // Only the step, error name and Postgres code are logged. The message is
     // dropped: it may carry the connection string.
     console.error(figuresFailureLine(step, err));
-    return NextResponse.json(
-      { error: "figures_unavailable" },
-      { status: 500, headers: { "Cache-Control": "no-store" } },
-    );
+    return answerFallback(generatedAt);
   }
 
   return NextResponse.json(body, {

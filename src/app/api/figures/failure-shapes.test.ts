@@ -75,15 +75,16 @@ function expectNoSecret(text: string): void {
 }
 
 describe("failure shape: store rejects with a Postgres statement timeout", () => {
-  it("answers 500 with a neutral body and no-store, and logs one read-step line", async () => {
+  it("answers the fallback with 200 and no-store, and logs one read-step line", async () => {
     state.store = STATEMENT_TIMEOUT_STORE;
 
     const response = await GET();
     const text = await response.text();
 
-    expect(response.status).toBe(500);
+    // X3: a failed read answers the bundled fallback (200), not 500. The log line is unchanged.
+    expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
-    expect(JSON.parse(text)).toEqual({ error: "figures_unavailable" });
+    expect(parseFiguresResponse(JSON.parse(text)).ok).toBe(true);
     expect(loggedLines()).toEqual([
       "figures_unavailable step=read error=PostgresError code=57014",
     ]);
@@ -93,15 +94,16 @@ describe("failure shape: store rejects with a Postgres statement timeout", () =>
 });
 
 describe("failure shape: store rejects with a closed connection", () => {
-  it("answers 500 with a neutral body and no-store, and logs one read-step line with no connection string", async () => {
+  it("answers the fallback with 200 and no-store, and logs one read-step line with no connection string", async () => {
     state.store = CONNECTION_CLOSED_STORE;
 
     const response = await GET();
     const text = await response.text();
 
-    expect(response.status).toBe(500);
+    // X3: a failed read answers the bundled fallback (200), not 500. The log line is unchanged.
+    expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
-    expect(JSON.parse(text)).toEqual({ error: "figures_unavailable" });
+    expect(parseFiguresResponse(JSON.parse(text)).ok).toBe(true);
     expect(loggedLines()).toEqual([
       "figures_unavailable step=read error=Error code=CONNECTION_CLOSED",
     ]);

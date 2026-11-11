@@ -274,16 +274,17 @@ describe("figuresSourceMode (FIGURES_SOURCE)", () => {
     expect((await getBody()).source_mode).toBe("file");
   });
 
-  it("with FIGURES_SOURCE unset the route reads the database, and answers 500 with no DATABASE_URL", async () => {
+  it("with FIGURES_SOURCE unset the route reads the database, and answers the fallback with 200 with no DATABASE_URL", async () => {
     vi.stubEnv("FIGURES_SOURCE", "");
     vi.stubEnv("DATABASE_URL", "");
 
     const response = await GET();
     const text = await response.text();
 
-    expect(response.status).toBe(500);
+    // X3: no DATABASE_URL is a failed read, so the route answers the bundled fallback (200).
+    expect(response.status).toBe(200);
     expect(response.headers.get("Cache-Control")).toBe("no-store");
-    expect(JSON.parse(text)).toEqual({ error: "figures_unavailable" });
+    expect(JSON.parse(text).series.length).toBeGreaterThan(0);
     expect(text).not.toMatch(/postgres/i);
   });
 });
