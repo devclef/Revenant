@@ -683,6 +683,40 @@
   text-decoration: underline;
 }
 
+/* P4.3: a persona's Seal_Verdict and its fingerprint control share one row
+   directly above the paper, on the desk (--bg), so the row takes the desk text
+   tokens. The verdict sits on the left and the control on the right. The row
+   wraps only on a narrow width. An open disclosure takes a full row beneath
+   the verdict. The Fingerprint section is laid out as `display: contents`, so
+   its verdict and disclosure become the row's two items. */
+.sealRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 1rem;
+  margin: 1.5rem 0 0;
+  color: var(--text);
+}
+
+.sealRow > .fingerprint {
+  display: contents;
+}
+
+.sealRow > .fingerprint > .sealVerdict {
+  flex: 1 1 14rem;
+  min-width: 0;
+  margin: 0;
+}
+
+.sealRow > .fingerprint > .fingerprintDisclosure {
+  flex: 0 0 auto;
+}
+
+.sealRow > .fingerprint > .fingerprintDisclosure[open] {
+  flex-basis: 100%;
+}
+
 /* The "demo letter" label uses the shared bordered label, re-coloured for the
    desk so it reads on --bg (the paper-ink .fixtureLabel would be invisible). */
 .fingerprint .fixtureLabel {
@@ -907,6 +941,10 @@
   }
 
   .fingerprint {
+    margin-top: 0.75rem;
+  }
+
+  .sealRow {
     margin-top: 0.75rem;
   }
 
