@@ -160,6 +160,26 @@ export function buildPersonaPayload(
   text: string,
   figures: LoadedFigures,
 ): { ok: true; payload: PayloadV1 } | { ok: false; metricId: string } {
+  // A persona with no metrics (the Text_Persona) carries only the questions its
+  // author wrote. Its payload has no metrics and no figures, and each author
+  // question is sealed as a text question with id a1, a2, ... by position.
+  if (p.metrics.length === 0) {
+    const text_questions = (p.author_questions ?? []).map((question, i) => ({
+      id: `a${i + 1}`,
+      answer_type: "text" as const,
+      text: question,
+    }));
+    const payload = payloadV1Schema.parse({
+      format_version: 1,
+      letter_text: text,
+      written_as_of: p.written_as_of,
+      metrics: [],
+      figures: [],
+      recall_questions: text_questions,
+    });
+    return { ok: true, payload };
+  }
+
   const metrics: MetricDefinitionV1[] = [];
   const payloadFigures: PayloadV1["figures"] = [];
 
