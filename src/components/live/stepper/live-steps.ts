@@ -39,10 +39,10 @@ export type LiveStep = (typeof LIVE_STEPS)[number];
 const RITUAL = BRAND_COPY.ritualSteps;
 export const LIVE_STEP_NAMES: readonly string[] = [
   RITUAL[0].name,
-  RITUAL[2].name,
+  RITUAL[1].name,
   LIVE_COPY.waitStep,
+  RITUAL[2].name,
   RITUAL[3].name,
-  RITUAL[4].name,
 ];
 
 /** The position of a step in LIVE_STEPS, counted from 0. */

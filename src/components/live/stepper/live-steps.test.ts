@@ -42,9 +42,9 @@ describe("step order and names", () => {
   it("takes the four names other than Wait from Brand_Copy", () => {
     const ritual = BRAND_COPY.ritualSteps.map((step) => step.name);
     expect(LIVE_STEP_NAMES[0]).toBe(ritual[0]);
-    expect(LIVE_STEP_NAMES[1]).toBe(ritual[2]);
-    expect(LIVE_STEP_NAMES[3]).toBe(ritual[3]);
-    expect(LIVE_STEP_NAMES[4]).toBe(ritual[4]);
+    expect(LIVE_STEP_NAMES[1]).toBe(ritual[1]);
+    expect(LIVE_STEP_NAMES[3]).toBe(ritual[2]);
+    expect(LIVE_STEP_NAMES[4]).toBe(ritual[3]);
   });
 
   it("gives each step its name", () => {

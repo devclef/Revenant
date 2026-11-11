@@ -34,7 +34,7 @@ describe("LandingHero with zero personas", () => {
     const html = markup(0);
     expect(html).toContain("The wax seal, resurrected.");
     expect(html).toMatch(/<h1[^>]*>Memory rewrites itself\. <span[^>]*>Revenant\u00a0doesn&#x27;t\.<\/span><\/h1>/);
-    expect(html).toContain("Seal a letter to your future self");
+    expect(html).toContain("Seal what you believe now");
   });
 });
 
@@ -52,6 +52,20 @@ describe("LandingHero with one persona", () => {
     const html = markup(1);
     expect(html).not.toContain('data-cta="secondary"');
     expect(html).not.toContain("/demo/live");
+  });
+});
+
+describe("LandingHero secondary call to action while Demo_2_On", () => {
+  // Pins the current wording. The Rehearsal_Line the spec names is not in
+  // src/components/live yet, so the text is kept unchanged.
+  it("renders the outlined link to /demo/live with the current wording", () => {
+    const html = markup(1, true);
+    const link = html.match(
+      /<a ([^>]*)>Seal your own\. It opens 30 seconds after you seal it\.<\/a>/,
+    );
+    expect(link).not.toBeNull();
+    expect(link?.[1]).toContain('href="/demo/live"');
+    expect(link?.[1]).toContain('data-cta="secondary"');
   });
 });
 

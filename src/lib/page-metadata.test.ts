@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { BRAND_COPY } from "../components/brand/copy";
 import { HOME_DESCRIPTION, SITE_NAME, pageMetadata } from "./page-metadata";
 
 describe("pageMetadata", () => {
@@ -30,6 +31,10 @@ describe("pageMetadata", () => {
       "The wax seal, resurrected. Memory rewrites itself. Revenant doesn't.",
     );
     expect(HOME_DESCRIPTION).not.toContain("Your past self returns with the receipts.");
+  });
+
+  it("builds HOME_DESCRIPTION from the Brand_Copy eyebrow and tagline", () => {
+    expect(HOME_DESCRIPTION).toBe(`${BRAND_COPY.eyebrow} ${BRAND_COPY.tagline}`);
   });
 
   it("uses HOME_DESCRIPTION for the landing page when there is no page info", () => {

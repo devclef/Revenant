@@ -59,7 +59,7 @@ const css = readFileSync(resolve(here, "landing.module.css"), "utf8").replace(
 
 /** The text of the phone block (max-width 599.98px) that sets the actions order. */
 function phoneBlock(): string {
-  const start = css.indexOf("@media (max-width: 599.98px) {\n  .actions {");
+  const start = css.indexOf("@media (max-width: 599.98px) {\n");
   expect(start).toBeGreaterThan(-1);
   return css.slice(start, css.indexOf("\n}\n", start) + 3);
 }
@@ -71,16 +71,16 @@ describe("landing hero below 600 px (landing.module.css)", () => {
     expect(block).not.toMatch(/position:\s*absolute/);
   });
 
-  it("sizes the reserved ghost box to 71vh less 380px, never below zero", () => {
+  it("sizes the reserved ghost box to 71vh less 300px, never below zero", () => {
     const block = phoneBlock();
-    expect(block).toMatch(/\.ghost \{\s*height: max\(0px, calc\(71vh - 380px\)\);\s*\}/);
+    expect(block).toMatch(/\.ghost \{\s*height: max\(0px, calc\(71vh - 300px\)\);\s*\}/);
   });
 });
 
 describe("landing Landing_Ghost box below 600 px (spec 10 X2.5)", () => {
   it("sets the phone ghost box rule inside the phone block, and keeps the base ghost rule outside it", () => {
     const block = phoneBlock();
-    expect(block).toMatch(/\.hero \.ghost \{\s*height: max\(0px, calc\(71vh - 380px\)\);\s*\}/);
+    expect(block).toMatch(/\.hero \.ghost \{\s*height: max\(0px, calc\(71vh - 300px\)\);\s*\}/);
     // Outside the phone block, the wide ghost rule is still the base 30svh rule.
     expect(css).toMatch(/\.ghost \{\s*width: 100%;\s*height: 30vh;/);
   });
@@ -115,6 +115,6 @@ describe("landing Landing_Ghost on the first screen below 600 px (measured, X4)"
 
   it("keeps the phone rule that reserves the ghost box, so the page does not move", () => {
     const block = phoneBlock();
-    expect(block).toMatch(/\.hero \.ghost \{\s*height: max\(0px, calc\(71vh - 380px\)\);\s*\}/);
+    expect(block).toMatch(/\.hero \.ghost \{\s*height: max\(0px, calc\(71vh - 300px\)\);\s*\}/);
   });
 });

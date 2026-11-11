@@ -34,9 +34,9 @@ function sentenceCount(text: string): number {
 }
 
 describe("RitualSection", () => {
-  it("renders five cards with number, name and line from Brand_Copy", () => {
+  it("renders four cards with number, name and line from Brand_Copy", () => {
     const html = render(<RitualSection />);
-    expect(html.match(/<li class="[^"]*ritualCard/g)?.length).toBe(5);
+    expect(html.match(/<li class="[^"]*ritualCard/g)?.length).toBe(4);
     BRAND_COPY.ritualSteps.forEach((step, index) => {
       expect(html).toContain(step.name);
       expect(html).toContain(step.line);

@@ -366,7 +366,7 @@ describe("the figures copy the reader sees while the request is in flight or fai
   });
 
   it("names the seal step Press the seal, as Brand_Copy does", () => {
-    expect(BRAND_COPY.ritualSteps[2]?.name).toBe("Press the seal");
+    expect(BRAND_COPY.ritualSteps[1]?.name).toBe("Press the seal");
   });
 });
 

@@ -59,6 +59,13 @@ const RETIRED_PHRASES: readonly RetiredPhrase[] = [
     name: "the old seal instruction \"Press and hold the seal to break it, or use the button below.\"",
     pattern: /press and hold the seal to break it, or use the button below\./i,
   },
+  // Brand_Copy H2 (#353): the four-step ritual no longer has a "Seal the figures" step.
+  { name: "\"Seal the figures\" as a step name", pattern: /seal the figures/i },
+  // Brand_Copy H2 (#353): a letter holds any part of life, not fuel prices from the US or the EU.
+  {
+    name: "\"fuel prices from the US or the EU\" as what a letter holds",
+    pattern: /fuel prices from the US or the EU/i,
+  },
 ];
 
 /**

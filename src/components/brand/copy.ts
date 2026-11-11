@@ -1,7 +1,7 @@
 // Feature: 09-demo-polish (Brand_Copy, framing F1 to F4)
 //
 // The one source of the framing strings: the eyebrow, the tagline, the hero
-// sentence, the five ritual steps and the four seal mapping rows. Copied from
+// sentence, the four ritual steps and the four seal mapping rows. Copied from
 // design.md "Copy" (brand/copy.ts row) and "F. Framing".
 //
 // Pure module: no React import, so `src/lib/page-metadata.ts` and
@@ -12,15 +12,11 @@ export const BRAND_COPY = {
   eyebrow: "The wax seal, resurrected.",
   tagline: "Memory rewrites itself. Revenant doesn't.",
   heroSentence:
-    "Seal a letter to your future self with fuel prices from the US or the EU. When it opens, you testify first, then see the receipts.",
+    "Seal what you believe now, a goal, a worry, a decision. When it opens, you testify first, then read what you wrote.",
   ritualSteps: [
     {
       name: "Write",
-      line: "A letter to your future self, plain text, up to 5,000 characters.",
-    },
-    {
-      name: "Seal the figures",
-      line: "Fuel prices from official sources, each with its source, period, unit and region.",
+      line: "A letter to your future self, plain text. Add up to three questions and an optional receipt.",
     },
     {
       name: "Press the seal",
@@ -32,7 +28,7 @@ export const BRAND_COPY = {
     },
     {
       name: "See the receipts",
-      line: "Your testimony, then what you wrote, then the numbers then and now.",
+      line: "Your testimony, then what you wrote, then any numbers then and now.",
     },
   ],
   sealMapping: [
