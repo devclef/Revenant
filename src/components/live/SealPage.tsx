@@ -160,11 +160,11 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
     [],
   );
 
-  // SealDeps for the runner, built once the crypto module is loaded and the
-  // figures response is ready. Null until both, which keeps the flow's presses
-  // disabled. A failed figures request therefore blocks sealing.
+  // SealDeps for the runner, built once the crypto module is loaded. Null until
+  // then, which keeps the flow's presses disabled. The figures request does not
+  // enter this condition (spec 11, X2.1).
   const sealDeps: SealDeps | null = useMemo(() => {
-    if (crypto === null || !figuresReady) return null;
+    if (crypto === null) return null;
     return {
       crypto,
       port: deps?.port ?? crypto.browserAuthenticatorPort,
@@ -172,12 +172,15 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
       rpId,
       now: deps?.nowMs ?? Date.now,
     };
-  }, [crypto, figuresReady, deps?.port, deps?.api, deps?.nowMs, rpId, mode]);
+  }, [crypto, deps?.port, deps?.api, deps?.nowMs, rpId, mode]);
 
-  // The flow reads the draft at Confirm_Press; memoised so the handlers keep
-  // their identity while the form is unchanged. The figures are the response's,
-  // and the empty set stands in only while sealDeps is null.
-  const sealedFigures = sealFigures.status === "ready" ? sealFigures.figures : NO_FIGURES;
+  // The figures the seal uses. Until the Create_Press they are the response's
+  // figures, or none when the response is not ready. The Create_Press freezes
+  // them in `pressedFigures`, so a response that arrives after the press never
+  // changes the seal (spec 11, X2.6).
+  const [pressedFigures, setPressedFigures] = useState<LoadedFigures | null>(null);
+  const liveFigures: LoadedFigures = figuresReady ? sealFigures.figures : NO_FIGURES;
+  const sealedFigures = pressedFigures ?? liveFigures;
   // Real mode only: the opening date (held here, so Try again keeps it) and the
   // zone it opens in. The zone falls back to UTC when the browser's is unknown.
   const [opensOn, setOpensOn] = useState<string | null>(null);
@@ -205,6 +208,17 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
 
   const flow = useSealFlow(sealDeps, draft);
   const { state } = flow;
+  const flowCreatePress = flow.onCreatePress;
+
+  // The Create_Press is the seal control's press. It freezes the figures as
+  // they are on that press. A press the flow refuses (crypto not loaded, or the
+  // flow is past the write step) freezes nothing.
+  const onCreatePress = useCallback(() => {
+    if (crypto !== null && state.tag === "write") {
+      setPressedFigures(liveFigures);
+    }
+    flowCreatePress();
+  }, [crypto, state.tag, liveFigures, flowCreatePress]);
 
   // Once the seal is stored, the draft is dropped from the stepper state and
   // Back is no longer offered (spec 09, D2.3). Every mode does this once.
@@ -373,7 +387,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
         onBackupCardChange={(ticked) =>
           dispatchDraft({ type: "BACKUP_CARD_CHANGED", ticked })
         }
-        onCreatePress={flow.onCreatePress}
+        onCreatePress={onCreatePress}
         onConfirmPress={flow.onConfirmPress}
         realDate={
           mode === "real"

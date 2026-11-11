@@ -49,14 +49,14 @@ export const LIVE_COPY = {
   /** A Fallback_Figure is not the latest, so it never says "Latest" (A1.8). */
   figurePeriod: "Period: {period}",
   fixtureLabel: "fixture data",
-  /** Shown in place of the figure list while the figures request is in flight. */
-  figuresLoading: "Loading the figures you can seal with.",
+  /** Shown in place of the receipts while the figures request is in flight (X2.2). */
+  receiptsLoading: "Loading the receipts you can add.",
   /**
-   * The figures request failed. Sealing stays blocked: there is no bundled list
-   * to fall back to.
+   * The figures request failed or timed out (X2.3). Sealing does not wait for
+   * it, and no picker is shown.
    */
-  figuresLoadFailed:
-    "The figures could not be loaded, so you cannot seal a letter yet. Check your connection and reload the page.",
+  receiptsUnavailable:
+    "Receipts can't be added right now. Your letter doesn't need one.",
   passkeySteps:
     'Your device will ask for the passkey twice. Each time, you press a button first. The passkey will be named "Revenant demo" in your passkey manager.',
   crossDeviceSummary: "Opening on another device",

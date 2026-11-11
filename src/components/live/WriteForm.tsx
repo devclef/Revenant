@@ -10,6 +10,7 @@ import { questionRowProblem } from "./author-questions";
 import { LETTER_FIELD_ROWS } from "./constants";
 import { LIVE_COPY, REAL_COPY } from "./copy";
 import { FigurePicker, type FigureDetail } from "./FigurePicker";
+import { ReceiptsDisclosure } from "./ReceiptsDisclosure";
 import {
   countCodePoints,
   figureLimit,
@@ -41,8 +42,9 @@ export interface WriteFormProps {
   series: readonly PickableSeries[];
   /**
    * The state of the figures request (issue #202). Only `ready` shows the
-   * picker and allows sealing. Defaults to `ready` so callers with a list
-   * already in hand need not pass it.
+   * picker. `loading` and `failed` never disable Next or the passkey press; they
+   * only lower the minimum to one non-empty question (spec 11, X2.1, X2.4).
+   * Defaults to `ready` so callers with a list already in hand need not pass it.
    */
   figuresStatus?: "loading" | "ready" | "failed";
   /** The current sealing state, from useSealFlow in the page. */
@@ -248,6 +250,7 @@ export function WriteForm({
     mode,
     selfReported,
     sealingDay: today,
+    figuresUnavailable: figuresStatus !== "ready",
   });
   const atLimit = metricIds.length >= limit;
   const all = section === "all";
@@ -308,13 +311,12 @@ export function WriteForm({
   const buttonLabel = inCreated
     ? LIVE_COPY.confirmButton
     : LIVE_COPY.createButton;
-  // Hard blocks (crypto not loaded, figures not ready, mid-flow state) use the
-  // disabled attribute. Input problems use aria-disabled, so a press still
-  // registers as an attempt and the messages then show (spec 09, A4.4).
+  // Hard blocks (crypto not loaded, mid-flow state) use the disabled attribute.
+  // The figures request never blocks here (spec 11, X2.9). Input problems use
+  // aria-disabled, so a press still registers as an attempt and the messages
+  // then show (spec 09, A4.4).
   const formReady =
-    cryptoLoaded &&
-    figuresStatus === "ready" &&
-    (state.tag === "write" || inCreated);
+    cryptoLoaded && (state.tag === "write" || inCreated);
   const inputBlocked =
     formReady && !inCreated && (!buttonLive(state, problems) || dateMissing);
   const onButtonPress = inCreated ? onConfirmPress : onCreatePress;
@@ -331,8 +333,9 @@ export function WriteForm({
   const letterValid = !problems.some(
     (problem) => problem === "letter_empty" || problem === "letter_too_long",
   );
-  const figuresValid =
-    figuresStatus === "ready" && !problems.includes("figures_none");
+  // The figures minimum already accounts for a loading or failed request, so
+  // Next checks only the problem list (spec 11, X2.4).
+  const figuresValid = !problems.includes("figures_none");
   // The write step's Next also checks the self-reported rows, so an invalid row
   // keeps the judge on the step where its messages show.
   const selfReportedValid = selfReportedRowsOk(selfReported, today);
@@ -482,7 +485,7 @@ export function WriteForm({
 
       {shows("figures") ? (
         <>
-          {figuresStatus === "ready" ? (
+          <ReceiptsDisclosure status={figuresStatus}>
             <FigurePicker
               series={series}
               selected={metricIds}
@@ -494,13 +497,7 @@ export function WriteForm({
                 onToggleFigure(metricId);
               }}
             />
-          ) : (
-            <p className={styles.hint} role="status">
-              {figuresStatus === "failed"
-                ? LIVE_COPY.figuresLoadFailed
-                : LIVE_COPY.figuresLoading}
-            </p>
-          )}
+          </ReceiptsDisclosure>
           <p id="live-figures-problem" className={styles.problem}>
             {figuresProblem}
           </p>
