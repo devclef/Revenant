@@ -254,3 +254,26 @@ describe("spec 09 persona disclosure, verdict and Fingerprint copy (C6, C4.2)", 
     }
   });
 });
+
+// Feature: 09-demo-polish, issue #339 (X3). The reveal shows one honest now
+// line for a failed figures request. "Check your connection" retires, because
+// the request failure is not the reader's connection to fix: Revenant could
+// not reach a newer figure. The line says so, and it never claims the series
+// is gone (only nowRetired may say "no longer publish").
+describe("nowRequestFailed copy (issue #339, X3)", () => {
+  it("gives the failed-request line its exact text", () => {
+    expect(REVEAL_COPY.nowRequestFailed).toBe(
+      "No newer figure could be reached for this series.",
+    );
+  });
+
+  it("no longer carries the retired 'Check your connection and reload' line", () => {
+    const all = JSON.stringify(REVEAL_COPY);
+    expect(all).not.toContain("Check your connection and reload the page");
+    expect("nowUnavailableFetch" in REVEAL_COPY).toBe(false);
+  });
+
+  it("does not say the series is gone", () => {
+    expect(REVEAL_COPY.nowRequestFailed).not.toMatch(/no longer publish/i);
+  });
+});

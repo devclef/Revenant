@@ -31,7 +31,7 @@ import type { FigureV1, MetricDefinitionV1, PayloadV1 } from "@/lib/seal-format"
  * - the "now" figure picked with `pickNow` from the Figures_API response,
  *   stubbed here as GET /api/figures built from DEMO_FIGURES (the same figure
  *   `thenAndNow` reported as now). A missing series shows `nowRetired`, a series with no figure shows `nowNotYet`,
- *   a failed request shows `nowUnavailableFetch`, and no change is drawn;
+ *   a failed request shows `nowRequestFailed`, and no change is drawn;
  * - a single neutral change line + formula when the two figures are comparable;
  * - both figures with their own periods plus the one neutral reason sentence
  *   when they are not (including `reason.unreadable_period`).
@@ -318,7 +318,7 @@ describe("FiguresThenNow markup", () => {
 
     expect(html).toContain(REVEAL_COPY.nowRetired);
     // The missing figure never invents a now value or a fetch message.
-    expect(html).not.toContain(REVEAL_COPY.nowUnavailableFetch);
+    expect(html).not.toContain(REVEAL_COPY.nowRequestFailed);
     expect(html).not.toContain(REVEAL_COPY.nowLoading);
   });
 
@@ -346,9 +346,9 @@ describe("FiguresThenNow markup", () => {
     expect(gasolineGroup).not.toContain('data-role="now"');
   });
 
-  it("shows nowUnavailableFetch and no change when the request failed", () => {
+  it("shows nowRequestFailed and no change when the request failed", () => {
     const html = render(OPENED, { status: "failed" });
-    expect(html).toContain(REVEAL_COPY.nowUnavailableFetch);
+    expect(html).toContain(REVEAL_COPY.nowRequestFailed);
     expect(html).not.toContain(REVEAL_COPY.nowRetired);
     expect(html).not.toContain(CHANGE_FORMULA_ID);
     // The then figure is still shown with its own period.
