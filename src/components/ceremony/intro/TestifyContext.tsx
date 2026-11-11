@@ -35,16 +35,7 @@ function fillName(template: string, name: string): string {
   return template.replace("{name}", name);
 }
 
-export type TestifyContextRenderProps = TestifyContextProps & {
-  /**
-   * Shows the Memory_Line under a persona letter. Default true. The
-   * Text_Persona reading view turns it off (spec 11 P1.6): it has no memory
-   * prompt, because the judge answers nothing there.
-   */
-  memoryLine?: boolean;
-};
-
-export function TestifyContext({ memoryLine = true, ...props }: TestifyContextRenderProps) {
+export function TestifyContext(props: TestifyContextProps) {
   if (props.kind === "letter") {
     return (
       <section className={styles.testify} data-testify-context="" data-block="testify-context">
@@ -68,11 +59,9 @@ export function TestifyContext({ memoryLine = true, ...props }: TestifyContextRe
       <p className={styles.testifyFrom}>{fillName(REVEAL_COPY.contextFrom, props.personaName)}</p>
       <p className={styles.testifyDates}>{`${writtenText}${DATE_SEPARATOR}${opensText}`}</p>
       <p className={styles.testifySeal}>{REVEAL_COPY.sealIntact}</p>
-      {memoryLine ? (
-        <p className={styles.testifyMemory} data-memory-line="">
-          {REVEAL_COPY.memoryLine.replace("{month}", formatCalendarMonth(props.writtenAsOf))}
-        </p>
-      ) : null}
+      <p className={styles.testifyMemory} data-memory-line="">
+        {REVEAL_COPY.memoryLine.replace("{month}", formatCalendarMonth(props.writtenAsOf))}
+      </p>
     </section>
   );
 }

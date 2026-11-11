@@ -13,7 +13,9 @@ import { RecallReader } from "./RecallReader";
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import { CEREMONY_COPY } from "../copy";
 import { formatCalendarDate } from "@/components/ui/letter-date";
-import { TestifyContext, type TestifyContextProps } from "../intro/TestifyContext";
+import { RecallStep } from "@/components/reveal/RecallStep";
+import type { Opened } from "@/components/reveal/opening-machine";
+import type { TestifyContextProps } from "../intro/TestifyContext";
 
 const PERSONA_TESTIFY: TestifyContextProps = {
   kind: "persona",
@@ -116,14 +118,38 @@ describe("RecallReader Memory_Line (spec 11 P1.6)", () => {
     expect(html).toContain(TESTIMONY[0].answer);
   });
 
-  it("keeps the Memory_Line in the recall walk, which renders the same Testify_Context with the default", () => {
-    // RecallStep renders <TestifyContext {...testify} /> with no memoryLine
-    // flag. That default must still show the line for fuel persona recall.
-    const html = renderToStaticMarkup(createElement(TestifyContext, PERSONA_TESTIFY));
-    expect(html).toContain("data-memory-line");
-    expect(html).toContain(
-      REVEAL_COPY.memoryLine.replace("{month}", "May 2024"),
+  it("keeps the Memory_Line in the recall walk: RecallStep still renders it for a persona", () => {
+    // The real recall step (RecallStep renders <TestifyContext {...testify} />
+    // with no memoryLine flag). The fuel persona recall walk must still show it.
+    const opened = {
+      letterId: "letter-1",
+      header: { sealedAt: "2024-10-01T00:00:00.000Z", opensAt: "2024-11-05T00:00:00.000Z" },
+      openingKey: {} as unknown as CryptoKey,
+      envelopeHash: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+      payload: {
+        format_version: 1,
+        letter_text: "A short letter.",
+        metrics: [],
+        figures: [],
+        recall_questions: [
+          { id: "q-note", answer_type: "text", text: "What do you remember most about that autumn?" },
+        ],
+      },
+    } as unknown as Opened;
+    const html = renderToStaticMarkup(
+      createElement(RecallStep, {
+        opened,
+        drafts: {},
+        invalid: [],
+        submitting: false,
+        onEdit: () => {},
+        onToggleNoAnswer: () => {},
+        onSubmit: () => {},
+        testify: PERSONA_TESTIFY,
+      }),
     );
+    expect(html).toContain("data-memory-line");
+    expect(html).toContain(REVEAL_COPY.memoryLine.replace("{month}", "May 2024"));
   });
 
   it("keeps the Memory_Line off for a letter Testify_Context on the reading walk without a persona", () => {

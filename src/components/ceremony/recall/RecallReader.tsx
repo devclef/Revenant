@@ -16,12 +16,49 @@
 
 import paper from "@/components/ui/paper.module.css";
 import buttons from "@/components/ui/buttons.module.css";
-import { formatCalendarDate } from "@/components/ui/letter-date";
+import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-date";
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import { CEREMONY_COPY } from "../copy";
 import { TestifyContext, type TestifyContextProps } from "../intro/TestifyContext";
+import introStyles from "../intro/intro.module.css";
 import type { TestimonyEntry } from "@/components/reveal/opening-machine";
 import styles from "./RecallReader.module.css";
+
+type PersonaTestify = Extract<TestifyContextProps, { kind: "persona" }>;
+
+/**
+ * The persona Testify_Context for the reading walk (spec 11 P1.6). It has the
+ * same lines as TestifyContext, the notice, "A letter from", the two dates and
+ * the seal line, but no Memory_Line: the judge answers nothing on this walk.
+ * It is written here, not in TestifyContext, so the recall walk keeps its
+ * Memory_Line unchanged.
+ */
+function ReadingTestify({ testify }: { testify: PersonaTestify }) {
+  const writtenText = CEREMONY_COPY.envelopeWrittenAsOf.replace(
+    "{date}",
+    formatCalendarDate(testify.writtenAsOf),
+  );
+  const opensText = CEREMONY_COPY.envelopeOpens.replace(
+    "{date}",
+    formatLetterDate(testify.opensAt, { kind: "utc" }),
+  );
+  return (
+    <section
+      className={introStyles.testify}
+      data-testify-context=""
+      data-block="testify-context"
+    >
+      <p className={introStyles.testifyNotice}>
+        {CEREMONY_COPY.personaNotice.replace("{name}", testify.personaName)}
+      </p>
+      <p className={introStyles.testifyFrom}>
+        {REVEAL_COPY.contextFrom.replace("{name}", testify.personaName)}
+      </p>
+      <p className={introStyles.testifyDates}>{`${writtenText} · ${opensText}`}</p>
+      <p className={introStyles.testifySeal}>{REVEAL_COPY.sealIntact}</p>
+    </section>
+  );
+}
 
 export type RecallReaderProps = {
   /** Her questions and answers, in payload order. */
@@ -64,7 +101,11 @@ export function RecallReader({
 
   return (
     <>
-      {testify === undefined ? null : <TestifyContext {...testify} memoryLine={false} />}
+      {testify === undefined ? null : testify.kind === "persona" ? (
+        <ReadingTestify testify={testify} />
+      ) : (
+        <TestifyContext {...testify} />
+      )}
       <section className={`${paper.paper} ${styles.reader}`} data-paper="" data-recall-reader="">
         <p className={styles.counter} data-fit="counter">
           {asOf === null ? (
