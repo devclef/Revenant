@@ -54,6 +54,19 @@ describe("How_Page headings", () => {
     }
   });
 
+  it("renders the Seal_Mapping rows in Brand_Copy order as the lead of the page", () => {
+    const text = html.replace(/&#x27;/g, "'");
+    const rows = [...text.matchAll(/<tr><td>([^<]*)<\/td><td>([^<]*)<\/td><\/tr>/g)].map(
+      (m) => [m[1], m[2]],
+    );
+    const firstRowAt = text.indexOf(`<td>${BRAND_COPY.sealMapping[0].seal}</td>`);
+    expect(firstRowAt).toBeGreaterThan(text.indexOf(`>${HOW_COPY.heading}</h1>`));
+    expect(firstRowAt).toBeLessThan(text.indexOf("<h2"));
+    expect(rows.slice(-BRAND_COPY.sealMapping.length)).toEqual(
+      BRAND_COPY.sealMapping.map((row) => [row.seal, row.revenant]),
+    );
+  });
+
   it("renders the six section headings as h2", () => {
     expect(html.match(/<h2[\s>]/g)).toHaveLength(6);
     for (const section of HOW_COPY.sections) {
