@@ -80,6 +80,7 @@ import { DemoLabel } from "@/components/demo/DemoLabel";
 import { useOpeningFlow } from "./useOpeningFlow";
 import { onceOnly, type AuthenticatorPort } from "@/components/live/unlock";
 import { RecallStep } from "./RecallStep";
+import { RecallReader } from "@/components/ceremony/recall/RecallReader";
 import type { TestifyContextProps } from "@/components/ceremony/intro/TestifyContext";
 import { Reveal } from "./Reveal";
 import { FlowError, type FlowErrorKind } from "./FlowError";
@@ -210,6 +211,12 @@ export type OpeningFlowProps = {
    * (spec 10 C5.4). A Live_Letter passes none, so no field is prefilled.
    */
   sampleCandidates?: PickCandidates;
+  /**
+   * Persona mode only: a Text_Persona's answers, one per sealed question, in
+   * order (spec 11 P1.5). Passing them routes the walk to the reading view,
+   * which posts nothing and stores nothing. Absent for every other persona.
+   */
+  personaAnswers?: readonly string[];
 };
 
 /**
@@ -235,6 +242,7 @@ export function OpeningFlow({
   demo2On = false,
   embedded,
   sampleCandidates,
+  personaAnswers,
 }: OpeningFlowProps) {
   // Live mode reads the key from the reader (keySource "user"). Persona mode
   // passes no options, so the hook behaves exactly as before.
@@ -242,9 +250,12 @@ export function OpeningFlow({
     letterId,
     mode === "live"
       ? { keySource: "user", port }
-      : sampleCandidates === undefined
+      : sampleCandidates === undefined && personaAnswers === undefined
         ? undefined
-        : { sampleCandidates },
+        : {
+            ...(sampleCandidates === undefined ? {} : { sampleCandidates }),
+            ...(personaAnswers === undefined ? {} : { personaAnswers }),
+          },
   );
   const { state, retry } = flow;
   const KeyStep = useKeyStep(state.tag === "awaiting_key");
@@ -522,10 +533,25 @@ function selectView(
         />
       );
 
+    case "reading":
+      // The Text_Persona walk: one question at a time with her answer. Nothing
+      // is posted and no record is stored (spec 11 P1.5, P1.6).
+      return (
+        <RecallReader
+          key="reading"
+          testimony={state.testimony}
+          index={state.index}
+          onNext={flow.nextQuestion}
+          onReadDone={flow.readDone}
+          writtenAsOf={writtenAsOf}
+          testify={testify}
+        />
+      );
+
     case "reveal":
-      // The Text_Persona walk reaches reveal with no record. Its view belongs to
-      // task 4 (Reveal with her testimony), so nothing renders here until then.
-      if (state.record === null) return null;
+      // The Text_Persona walk reaches reveal with no record: her testimony
+      // stands in for the record (spec 11 P1.5). Nothing renders without either.
+      if (state.record === null && state.testimony === undefined) return null;
       // The close (design.md "Close"): the live note for a Live_Letter, or the
       // persona close with Demo_2_On and the persona key. Reveal shows it only
       // once the figures have settled. A persona with no list entry gets no
@@ -534,6 +560,7 @@ function selectView(
         <Reveal
           opened={state.opened}
           record={state.record}
+          testimony={state.testimony}
           personaName={personaName}
           letterId={letterId}
           stage={state.stage}

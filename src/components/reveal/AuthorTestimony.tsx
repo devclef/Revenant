@@ -1,5 +1,5 @@
 import type { RecallRecordV1, RecallRecordV2 } from "@/lib/recall";
-import type { RecallQuestion } from "./opening-machine";
+import type { RecallQuestion, TestimonyEntry } from "./opening-machine";
 import { ClampedAnswer } from "./ClampedAnswer";
 import { REVEAL_COPY } from "./copy";
 import styles from "./reveal.module.css";
@@ -27,15 +27,66 @@ import styles from "./reveal.module.css";
 export type AuthorTestimonyProps = {
   /** The sealed recall questions, in payload order. */
   questions: readonly RecallQuestion[];
-  /** The stored recall record: the judge's answers, keyed by question ID. */
-  record: RecallRecordV1 | RecallRecordV2;
+  /**
+   * The stored recall record: the judge's answers, keyed by question ID. Null
+   * on the Text_Persona walk, which stores no record (spec 11 P1.5).
+   */
+  record: RecallRecordV1 | RecallRecordV2 | null;
+  /**
+   * The Text_Persona's testimony, one entry per question in order. Set only on
+   * the walk, where it stands in for `record`. Each entry is shown with
+   * `answerLabel`.
+   */
+  testimony?: readonly TestimonyEntry[];
+  /** The label above each answer. Defaults to "What you said just now". */
+  answerLabel?: string;
+  /** The heading. Defaults to "Questions you left for yourself". */
+  title?: string;
 };
 
-export function AuthorTestimony({ questions, record }: AuthorTestimonyProps) {
+export function AuthorTestimony({
+  questions,
+  record,
+  testimony,
+  answerLabel,
+  title,
+}: AuthorTestimonyProps) {
+  const label = answerLabel ?? REVEAL_COPY.saidJustNow;
+  const heading = title ?? REVEAL_COPY.authorTestimonyTitle;
+
+  // The Text_Persona path: her entries, in order, labelled as fictional.
+  if (testimony !== undefined) {
+    if (testimony.length === 0) return null;
+    return (
+      <section className={styles.authorTestimony} data-author-testimony="">
+        <h2
+          tabIndex={-1}
+          className={styles.authorTestimonyHeading}
+          data-author-testimony-heading=""
+        >
+          {heading}
+        </h2>
+        {testimony.map((entry, index) => (
+          <div key={index} className={styles.authorTestimonyItem}>
+            <p className={styles.authorTestimonyQuestion} data-user-content="">
+              {entry.question}
+            </p>
+            <p className={styles.authorTestimonyLabel}>{label}</p>
+            <ClampedAnswer
+              text={entry.answer}
+              as="p"
+              className={styles.authorTestimonyAnswer}
+            />
+          </div>
+        ))}
+      </section>
+    );
+  }
+
   const textQuestions = questions.filter(
     (question) => question.answer_type === "text",
   );
-  if (textQuestions.length === 0) {
+  if (textQuestions.length === 0 || record === null) {
     return null;
   }
 
@@ -51,7 +102,7 @@ export function AuthorTestimony({ questions, record }: AuthorTestimonyProps) {
         className={styles.authorTestimonyHeading}
         data-author-testimony-heading=""
       >
-        {REVEAL_COPY.authorTestimonyTitle}
+        {heading}
       </h2>
 
       {textQuestions.map((question) => {
@@ -64,9 +115,7 @@ export function AuthorTestimony({ questions, record }: AuthorTestimonyProps) {
             >
               {question.text}
             </p>
-            <p className={styles.authorTestimonyLabel}>
-              {REVEAL_COPY.saidJustNow}
-            </p>
+            <p className={styles.authorTestimonyLabel}>{label}</p>
             {answer !== undefined && answer.kind === "text" ? (
               <ClampedAnswer
                 text={answer.value}
