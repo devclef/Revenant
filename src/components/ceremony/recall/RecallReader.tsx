@@ -34,7 +34,7 @@ export type RecallReaderProps = {
   onReadDone: () => void;
   /** The persona's written-as-of date (`YYYY-MM-DD`), for the counter. */
   writtenAsOf?: string;
-  /** The Testify_Context above the card, the same as the answering step. */
+  /** The Testify_Context above the card. The Memory_Line is always off here. */
   testify?: TestifyContextProps;
 };
 
@@ -64,7 +64,7 @@ export function RecallReader({
 
   return (
     <>
-      {testify === undefined ? null : <TestifyContext {...testify} />}
+      {testify === undefined ? null : <TestifyContext {...testify} memoryLine={false} />}
       <section className={`${paper.paper} ${styles.reader}`} data-paper="" data-recall-reader="">
         <p className={styles.counter} data-fit="counter">
           {asOf === null ? (

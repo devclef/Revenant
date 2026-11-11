@@ -13,6 +13,14 @@ import { RecallReader } from "./RecallReader";
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import { CEREMONY_COPY } from "../copy";
 import { formatCalendarDate } from "@/components/ui/letter-date";
+import { TestifyContext, type TestifyContextProps } from "../intro/TestifyContext";
+
+const PERSONA_TESTIFY: TestifyContextProps = {
+  kind: "persona",
+  personaName: "Priya",
+  writtenAsOf: "2024-05-12",
+  opensAt: "2024-11-05T00:00:00.000Z",
+};
 
 const TESTIMONY = [
   { question: "What were you looking forward to most?", answer: "The coast trip." },
@@ -85,5 +93,42 @@ describe("RecallReader (Text_Persona reading view)", () => {
 
   it("renders nothing for an index outside the testimony", () => {
     expect(render(5)).toBe("");
+  });
+});
+
+describe("RecallReader Memory_Line (spec 11 P1.6)", () => {
+  it("renders the persona Testify_Context without a Memory_Line in the reading walk", () => {
+    const html = render(0, { testify: PERSONA_TESTIFY });
+    expect(html).toContain("data-testify-context");
+    expect(html).toContain(CEREMONY_COPY.personaNotice.replace("{name}", "Priya"));
+    expect(html).not.toContain("data-memory-line");
+    expect(html).not.toContain("Answer from your own memory");
+  });
+
+  it("keeps the reading walk free of an answer field, a sample and a record control", () => {
+    const html = render(0, { testify: PERSONA_TESTIFY });
+    expect(html).not.toMatch(/<input/);
+    expect(html).not.toMatch(/<textarea/);
+    expect(html).not.toContain("data-sample");
+    expect(html).not.toContain(REVEAL_COPY.submit);
+    expect(html).not.toContain(REVEAL_COPY.noAnswer);
+    expect(html).toContain(REVEAL_COPY.personaAnswerLabel);
+    expect(html).toContain(TESTIMONY[0].answer);
+  });
+
+  it("keeps the Memory_Line in the recall walk, which renders the same Testify_Context with the default", () => {
+    // RecallStep renders <TestifyContext {...testify} /> with no memoryLine
+    // flag. That default must still show the line for fuel persona recall.
+    const html = renderToStaticMarkup(createElement(TestifyContext, PERSONA_TESTIFY));
+    expect(html).toContain("data-memory-line");
+    expect(html).toContain(
+      REVEAL_COPY.memoryLine.replace("{month}", "May 2024"),
+    );
+  });
+
+  it("keeps the Memory_Line off for a letter Testify_Context on the reading walk without a persona", () => {
+    const html = render(0, { testify: { kind: "letter" } });
+    expect(html).not.toContain("data-memory-line");
+    expect(html).toContain(REVEAL_COPY.sealIntact);
   });
 });
