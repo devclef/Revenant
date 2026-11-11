@@ -500,7 +500,7 @@ describe("buildPersonaPayload", () => {
             figures.loaded,
           );
           expect(built.ok).toBe(false);
-          if (built.ok) return;
+          if (built.ok || built.reason !== "missing_then_figure") return;
 
           // It names the FIRST metric (in list order) that has no "then"
           // figure. Every real tracked metric does have one, so the first
