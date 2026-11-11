@@ -61,6 +61,36 @@ describe("WriteForm sections (spec 09, D2)", () => {
     expect(receipts).toBeGreaterThan(rows);
   });
 
+  // L3.5 (spec 11): above Next the write step holds, in this order, the
+  // Occasion control, the letter field, the question rows with Add, one hint
+  // line and the closed Receipts_Disclosure.
+  it("holds the write markup in the spec 11 order, with the disclosure closed", () => {
+    const html = render({ section: "write", onNext: () => {} });
+    const occasion = html.indexOf(LIVE_COPY.occasionLegend);
+    const letter = html.indexOf('id="live-letter"');
+    const add = html.indexOf(LIVE_COPY.authorQuestionAdd);
+    const hint = html.indexOf(
+      LIVE_COPY.authorQuestionsHint.replace(/'/g, "&#x27;"),
+    );
+    const receipts = html.indexOf("data-receipts-disclosure");
+    const next = html.indexOf(LIVE_COPY.nextButton);
+    for (const index of [occasion, letter, add, hint, receipts, next]) {
+      expect(index).toBeGreaterThan(-1);
+    }
+    expect(occasion).toBeLessThan(letter);
+    expect(letter).toBeLessThan(add);
+    expect(add).toBeLessThan(hint);
+    expect(hint).toBeLessThan(receipts);
+    expect(receipts).toBeLessThan(next);
+
+    // The disclosure renders closed: no `open` attribute on its details.
+    const details = html.match(/<details[^>]*data-receipts-disclosure[^>]*>/);
+    expect(details).not.toBeNull();
+    expect(details?.[0]).not.toMatch(/\sopen(\s|=|>)/);
+    // No Rehearsal_Line above Next (it belongs to the heading, task 13).
+    expect(html).not.toContain("rehearsal");
+  });
+
   // L1.6: the figures step is gone, so Back is offered only from the seal step.
   it("offers Back on the seal section only when Back is passed", () => {
     const withBack = render({ section: "seal", onBack: () => {} });

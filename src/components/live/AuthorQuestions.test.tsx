@@ -66,15 +66,19 @@ describe("Live_Prefill passes the recall and neutrality checks", () => {
 });
 
 describe("AuthorQuestions rendering", () => {
-  it("renders a fieldset with the legend, hint and answer-in-letter line", () => {
+  it("renders a fieldset with the legend and one hint line after the Add control", () => {
     const html = render();
     expect(html).toContain("<fieldset");
     expect(html).toContain(`<legend`);
     expect(html).toContain(LIVE_COPY.authorQuestionsLegend);
-    expect(html).toContain(
+    const hint = html.indexOf(
       LIVE_COPY.authorQuestionsHint.replace(/'/g, "&#x27;"),
     );
-    expect(html).toContain(LIVE_COPY.answerInLetter);
+    expect(hint).toBeGreaterThan(-1);
+    expect(hint).toBeGreaterThan(html.indexOf(LIVE_COPY.authorQuestionAdd));
+    // Above Next the step holds one hint line only (L3.5), so the
+    // answer-in-letter line is not rendered.
+    expect(html).not.toContain(LIVE_COPY.answerInLetter);
   });
 
   it("offers Add a question while fewer than 3 rows exist, and not at 3", () => {

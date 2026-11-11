@@ -56,8 +56,6 @@ export function AuthorQuestions({
       <legend className={styles.legend}>
         {LIVE_COPY.authorQuestionsLegend}
       </legend>
-      <p className={styles.hint}>{LIVE_COPY.authorQuestionsHint}</p>
-
       {questions.map((text, index) => {
         const n = index + 1;
         const inputId = `${baseId}-q${index}`;
@@ -113,7 +111,7 @@ export function AuthorQuestions({
         </div>
       ) : null}
 
-      <p className={styles.hint}>{LIVE_COPY.answerInLetter}</p>
+      <p className={styles.hint}>{LIVE_COPY.authorQuestionsHint}</p>
     </fieldset>
   );
 }

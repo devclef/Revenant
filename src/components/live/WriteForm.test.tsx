@@ -270,6 +270,39 @@ describe("Seal_Page panel", () => {
     expect(panel).not.toMatch(/\bborder\s*:/);
     expect(panel).not.toContain("gold-leaf");
   });
+
+  it("gives the /seal whole-form panel the occasion control and no demo marker", () => {
+    // The /seal form is the panel the two-column rule would also match on its
+    // own. Its markup must carry the occasion control but no demo scope.
+    const html = renderToStaticMarkup(
+      createElement(WriteForm, formProps()),
+    );
+    expect(html).toContain('data-card="live-write"');
+    expect(html).toMatch(/<fieldset class="[^"]*occasions[^"]*"/);
+    expect(html).not.toContain('data-seal-mode="demo"');
+  });
+
+  it("adds the liveWrite class only to the demo Write panel, never to /seal", () => {
+    // Demo mode: no realDate, so WriteForm renders the live Write step panel.
+    const demo = renderToStaticMarkup(createElement(WriteForm, formProps()));
+    expect(demo).toMatch(/class="[^"]*liveWrite[^"]*"/);
+    // /seal: a realDate is passed, so the panel keeps the plain class.
+    const real = renderToStaticMarkup(
+      createElement(
+        WriteForm,
+        formProps({
+          realDate: {
+            value: null,
+            min: "2027-01-01",
+            timeZoneFallback: false,
+            onChange: () => {},
+          },
+        }),
+      ),
+    );
+    expect(real).toContain('data-card="live-write"');
+    expect(real).not.toMatch(/liveWrite/);
+  });
 });
 
 describe("SealPage", () => {
