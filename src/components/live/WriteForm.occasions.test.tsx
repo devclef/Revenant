@@ -76,8 +76,11 @@ describe("WriteForm Occasion row above the letter field (spec 11, L2.1)", () => 
     }
   });
 
-  it("keeps the answer-in-letter line under the question rows", () => {
+  it("drops the answer-in-letter line and keeps the one question hint under the rows", () => {
     const html = render();
-    expect(html).toContain(LIVE_COPY.answerInLetter);
+    expect(html).not.toContain(LIVE_COPY.answerInLetter);
+    expect(html).toContain(
+      LIVE_COPY.authorQuestionsHint.replace(/'/g, "&#x27;"),
+    );
   });
 });

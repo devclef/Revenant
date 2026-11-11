@@ -432,7 +432,6 @@ export function WriteForm({
           <label htmlFor="live-letter" className={styles.label}>
             {LIVE_COPY.letterLabel}
           </label>
-          <p className={styles.hint}>{LIVE_COPY.letterHint}</p>
           <textarea
             id="live-letter"
             ref={letterRef}
