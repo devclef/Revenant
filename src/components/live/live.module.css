@@ -967,6 +967,14 @@
     white-space: nowrap;
   }
 
+  /* At 360 px the remove button must stay on one line inside the card, so the
+     field keeps a usable width. The button keeps its 44 px touch height. */
+  .questionRow .questionHead .secondary {
+    font-size: 0.8125rem;
+    padding: 0.375rem 0.5rem;
+    min-height: 44px;
+  }
+
   /* The DOM order is label, remove button, field. Pin each one to its column so
      the button does not land in the flexible middle track. */
   .questionRow .label {
