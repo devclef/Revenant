@@ -80,6 +80,15 @@ describe("ResurrectionSection", () => {
     const text = LANDING_SECTION_COPY.resurrectedBody.join(" ").toLowerCase();
     for (const word of BANNED) expect(text).not.toContain(word);
   });
+
+  // H1.4: the story is about a letter in general. The last sentence changed from
+  // the seal-part sentence to the any-part-of-life sentence, so this asserts the
+  // new wording and that no fuel price is named as what a letter holds.
+  it("says a letter can hold any part of life and names no fuel price", () => {
+    const text = LANDING_SECTION_COPY.resurrectedBody.join(" ").toLowerCase();
+    expect(text).toContain("a letter in it can hold any part of life");
+    expect(text).not.toMatch(/fuel|gallon|petrol|gasoline/);
+  });
 });
 
 describe("NoSealSection", () => {

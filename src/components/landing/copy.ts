@@ -54,7 +54,7 @@ export const LANDING_SECTION_COPY = {
     "The French Académie des sciences has kept plis cachetés for centuries: sealed envelopes that people deposit to prove what they knew, and when.",
     "A classroom time capsule works the same way: a letter to your future self, sealed and mailed back years later.",
     "The seal carries the meaning: this was written then, by you, and nobody has touched it since.",
-    "Revenant is that envelope rebuilt for the browser, with each part of the old seal given a modern replacement.",
+    "Revenant rebuilds that envelope for the browser, and a letter in it can hold any part of life.",
   ],
 
   /** The heading of the section on what no wax seal could do (F6.2). */
