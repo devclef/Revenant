@@ -86,7 +86,10 @@ function selfReportedEntry(
  * be trimmed with empty rows dropped (`questionsForSeal`). Row i becomes the
  * text question `a<i+1>` with no `metric_id`, so it can't collide with the
  * generator's `q<n>` IDs. A Real_Letter with no figures still builds, because
- * the schema has no minimum for metrics or figures (C2.9).
+ * the schema has no minimum for metrics or figures (C2.9). A letter with no
+ * official figure is still format version 1: its questions are v1 text
+ * questions, and metrics and figures hold only the self-reported entries
+ * (L1.7, Property 9).
  *
  * @param sealedDate the sealing day as "YYYY-MM-DD" (UTC), the reference date.
  */
