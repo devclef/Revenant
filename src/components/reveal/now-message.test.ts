@@ -41,7 +41,7 @@ describe("nowMessageFor (Property 3, A3.1 to A3.4)", () => {
             expect(message).toBe(REVEAL_COPY.nowNotYet);
             break;
           case "request_failed":
-            expect(message).toBe(REVEAL_COPY.nowUnavailableFetch);
+            expect(message).toBe(REVEAL_COPY.nowRequestFailed);
             break;
           case "found":
             if (reason.fallback) {
@@ -89,6 +89,68 @@ describe("nowMessageFor (Property 3, A3.1 to A3.4)", () => {
 });
 
 const BANNED = ["today", "current", "latest", "live"] as const;
+
+describe("nowMessageFor exact outcome per branch (issue #339, X3.1)", () => {
+  it("returns the nowRequestFailed line when the request failed", () => {
+    expect(nowMessageFor({ kind: "request_failed" })).toBe(
+      "No newer figure could be reached for this series.",
+    );
+  });
+
+  it("returns nowRetired only when the series is missing from the response", () => {
+    expect(nowMessageFor({ kind: "series_missing" })).toBe(
+      "Revenant no longer publishes this series. The sealed figure is shown on its own.",
+    );
+  });
+
+  it("returns nowNotYet when the series is listed but has no figure", () => {
+    expect(nowMessageFor({ kind: "no_figure" })).toBe(
+      "Revenant hasn't fetched a figure for this series yet. The sealed figure is shown on its own.",
+    );
+  });
+
+  it("returns the Bundled_Note with its retrieved date for a fallback figure", () => {
+    expect(
+      nowMessageFor({
+        kind: "found",
+        fallback: true,
+        retrievedAt: "2026-10-30T14:02:11Z",
+      }),
+    ).toBe(
+      "Revenant hasn't fetched a newer figure yet. This one was retrieved 30 October 2026.",
+    );
+  });
+
+  it("returns nothing for a plain stored figure", () => {
+    expect(
+      nowMessageFor({
+        kind: "found",
+        fallback: false,
+        retrievedAt: "2026-10-30T14:02:11Z",
+      }),
+    ).toBeNull();
+  });
+
+  it("never returns the retired 'could not be loaded' line", () => {
+    const reasons: NowMessageReason[] = [
+      { kind: "series_missing" },
+      { kind: "no_figure" },
+      { kind: "request_failed" },
+      { kind: "found", fallback: true, retrievedAt: "2026-10-30T14:02:11Z" },
+      { kind: "found", fallback: false, retrievedAt: "2026-10-30T14:02:11Z" },
+    ];
+    for (const reason of reasons) {
+      expect(nowMessageFor(reason) ?? "").not.toContain("could not be loaded");
+    }
+  });
+
+  it("keeps the request-failed line free of today, current, latest and live", () => {
+    const text = nowMessageFor({ kind: "request_failed" }) ?? "";
+    for (const word of BANNED) {
+      expect(new RegExp(`\\b${word}\\b`, "i").test(text)).toBe(false);
+    }
+  });
+});
 
 describe("Now_Figure message copy (A3.6)", () => {
   const NOW_MESSAGES = {

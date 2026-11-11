@@ -15,7 +15,7 @@ import { REVEAL_COPY } from "./copy";
 const NOW_FIGURE_KEYS = [
   "nowLoading",
   "nowUnavailableMissing",
-  "nowUnavailableFetch",
+  "nowRequestFailed",
   "labelRetrieved",
 ] as const;
 

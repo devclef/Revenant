@@ -53,7 +53,7 @@ function rescaleFor(sealedUnit: string): Readonly<DisplayRescale> | undefined {
  *   the sealed metric's source, series, unit and region only. While the request
  *   is in flight the entry shows `nowLoading`. A series that is missing, or has
  *   no figure, shows `nowRetired` (series missing) or `nowNotYet` (no figure), via nowMessageFor, plus a "Your answer" line when no Number_Line is drawn (issue #250). A failed request shows
- *   `nowUnavailableFetch`. In every missing case there is no change and no
+ *   `nowRequestFailed`. In every missing case there is no change and no
  *   Number_Line (R6.5, R6.6, data-integrity.md). An honest gap, never a filled
  *   one.
  * - When both figures are present, {@link computeChange} decides comparability.

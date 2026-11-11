@@ -367,10 +367,11 @@ export const REVEAL_COPY = {
 
   /**
    * The figures request failed: a network error, a non-2xx status or a body
-   * that could not be read. The then figure above stays.
+   * that could not be read. The then figure above stays. It says only that no
+   * newer figure was reached, so it never claims the series is gone (issue
+   * #339, X3).
    */
-  nowUnavailableFetch:
-    "This figure could not be loaded. Check your connection and reload the page.",
+  nowRequestFailed: "No newer figure could be reached for this series.",
 
   /**
    * The series is no longer in Revenant's catalogue or published, so the figure
