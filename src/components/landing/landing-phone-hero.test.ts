@@ -4,6 +4,43 @@
 // bottom at about 71vh. Below 600 px the calls to action stay in the flow and
 // the reserved ghost box comes before them, so the actions start below the
 // drawn ghost (LG1). These tests read landing.module.css and check that rule.
+//
+// Journey_Check reconciliation (issue #341, X4). Measured on a local production
+// build (npm run build, next start, no database, Chromium 1280 headless). The
+// Landing_Ghost box numbers below come from commit 7f7c325, not from this file.
+//
+// Checks that fail on a healthy production today, and the decision for each:
+//
+//   J5 scroll-width, persona pages (us-maya, eu-tomas) at every Evidence_Size:
+//     decision: fix the check. The check waits for data-ceremony "intact", which
+//     the app never renders. src/components/ceremony/stages.ts renders "sealed"
+//     or "recall". Without a database the pages stop at data-ceremony="error", so
+//     the persona pages were not measured past that point. Owner_Patch 97b73ba.
+//     J2 uses the same wait, so it fails for the same reason.
+//
+//   J6 PH1 on / at 360x640 (PH1_LANDING):
+//     decision: fix the check, not the page. The check reads the Landing_Ghost box
+//     about 0.5 s after load, while the entry transform runs. Measured box, CSS px:
+//       t=0 ms      471 to 670   (the check reads here)
+//       t=1000 ms   404 to 604
+//       t=3000 ms   254 to 454   (settled)
+//       t=6000 ms   255 to 455
+//       t=10000 ms  254 to 454
+//     The settled box is inside the 640 px viewport, and the primary call to action
+//     is at 475 to 531, also inside. landing.module.css is unchanged. The Owner_Patch
+//     for tools/qa/layout-check.mjs (runPhoneChecks) reads the box after the
+//     transform settles, about 3 s.
+//
+//   J6 PH1 on / at 390x844: passes once settled (box 397 to 601 in 844 px). Not a
+//     failing line. The same too-early read applies.
+//
+//   J6 PH1 on /demo/live at 390x844 and 360x640:
+//     decision: fix the page, in task 12 (L3), which owns the Write-step height.
+//     Not measured or changed in this reconciliation.
+//
+// Pages that pass today, with no change: J5 on /, /demo, /demo/live and
+// /how-it-is-sealed at 2560x1440, 1366x800, 1280x800, 390x844 and 360x640.
+//
 // Pure file read, no DOM.
 
 import { readFileSync } from "node:fs";
