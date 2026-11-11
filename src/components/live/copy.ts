@@ -49,6 +49,11 @@ export const LIVE_COPY = {
   /** A Fallback_Figure is not the latest, so it never says "Latest" (A1.8). */
   figurePeriod: "Period: {period}",
   fixtureLabel: "fixture data",
+  /** The summary of the closed Receipts_Disclosure on the Write step (L1.4). */
+  receiptsSummary: "Add a receipt",
+  /** The first line inside the Receipts_Disclosure, before any picker (L1.5). */
+  receiptsExplain:
+    "A receipt is a number sealed with its source and date, so you can compare it when the letter opens.",
   /** Shown in place of the receipts while the figures request is in flight (X2.2). */
   receiptsLoading: "Loading the receipts you can add.",
   /**
@@ -80,7 +85,12 @@ export const LIVE_COPY = {
     "Write something first. A letter needs at least one character that is not a space.",
   letterTooLong:
     "This letter is longer than 5,000 characters. Shorten it and try again.",
-  nothingToTestify: "Write a question or choose a figure before you seal.",
+  /**
+   * Shown when the author has removed every question and has no official
+   * figure (L1.2). Self-reported numbers do not count.
+   */
+  nothingToTestify:
+    "Add a question or a receipt, so there is something to answer when the letter opens.",
   figuresTooMany: "Choose no more than {max} figures.",
   prfHint:
     "This device may not be able to lock the letter with a passkey. If so, you will need a backup key card.",

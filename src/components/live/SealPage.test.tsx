@@ -35,7 +35,7 @@ vi.mock("./prf-hint", async (importOriginal) => ({
 // page behaves as before: no response yet, and the real stepper on Write.
 const pageStub = vi.hoisted(() => ({
   figures: null as import("@/components/reveal/figures-api").FiguresState | null,
-  step: null as null | "figures",
+  step: null as null | "write",
 }));
 
 vi.mock("@/components/reveal/figures-api", async (importOriginal) => ({
@@ -238,10 +238,10 @@ describe("SealPage passes each figure's value and source into the picker", () =>
     pageStub.step = null;
   });
 
-  it("shows the published value and source of every official series on the figures step", () => {
+  it("shows the published value and source of every official series in the receipts on the Write step", () => {
     const response = figuresResponseFrom(DEMO_FIGURES);
     pageStub.figures = { status: "ready", figures: response };
-    pageStub.step = "figures";
+    pageStub.step = "write";
 
     const html = renderToStaticMarkup(
       createElement(SealPage, {
@@ -272,7 +272,7 @@ describe("SealPage passes each figure's value and source into the picker", () =>
       series: [{ ...first, figure: null }, ...response.series.slice(1)],
     };
     pageStub.figures = { status: "ready", figures: emptied as typeof response };
-    pageStub.step = "figures";
+    pageStub.step = "write";
 
     const html = renderToStaticMarkup(
       createElement(SealPage, {

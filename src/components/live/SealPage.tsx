@@ -286,8 +286,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", deps }: SealPageProps
       default:
         break;
     }
-    const section: WriteSection =
-      view.step === "write" ? "write" : view.step === "figures" ? "figures" : "seal";
+    const section: WriteSection = view.step === "write" ? "write" : "seal";
     return writeForm({
       section,
       onNext: view.next,

@@ -346,12 +346,12 @@ const neverAnsweringFetch = ((_url: string, init?: RequestInit) =>
 
 /**
  * The stepper as the visitor leaves the Write step: the demo's default question
- * kept, the letter typed, and the figures step passed without a figure.
+ * kept and the letter typed. The Write step has no figures step any more (L1.6),
+ * so the next step is Press the seal.
  */
 function stepperAtPressTheSeal(): StepperState {
   const actions: StepperAction[] = [
     { type: "DRAFT", event: { type: "QUESTION_CHANGED", index: 0, text: FIGURES_LETTER } },
-    { type: "GOTO", step: "figures" },
     { type: "GOTO", step: "seal" },
   ];
   return actions.reduce(reduceStepper, initialStepperState("write", "demo"));

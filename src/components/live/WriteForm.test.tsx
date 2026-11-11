@@ -408,3 +408,50 @@ describe("WriteForm — create button label and state", () => {
     expect(html).not.toContain(esc(LIVE_COPY.confirmButton));
   });
 });
+
+// Spec 11, L1.2 and L1.4. The receipts sit in one closed disclosure after the
+// question rows, and the nothing-to-testify block shows only after a touch or a
+// seal attempt.
+describe("WriteForm — receipts and the nothing-to-testify block (spec 11)", () => {
+  it("renders one closed Receipts_Disclosure after the question rows", () => {
+    const html = renderWriteForm({ questions: ["What do you remember?"] });
+    const details = html.match(/<details[^>]*data-receipts-disclosure[^>]*>/g);
+    expect(details).toHaveLength(1);
+    expect(details?.[0]).not.toMatch(/\sopen(\s|=|>)/);
+    expect(html.indexOf(LIVE_COPY.authorQuestionAdd)).toBeLessThan(
+      html.indexOf("data-receipts-disclosure"),
+    );
+  });
+
+  it("holds the picker and the own-numbers group inside the disclosure", () => {
+    const html = renderWriteForm({ questions: ["What do you remember?"] });
+    const open = html.indexOf("data-receipts-disclosure");
+    const close = html.indexOf("</details>", open);
+    expect(html.indexOf('data-card="live-figures"')).toBeGreaterThan(open);
+    expect(html.indexOf('data-card="live-figures"')).toBeLessThan(close);
+  });
+
+  it("shows the block message after the question rows are touched with none left", () => {
+    const html = renderWriteForm({
+      questions: [],
+      touched: { touched: { questions: true }, attempted: false },
+    });
+    expect(html).toContain(esc(LIVE_COPY.nothingToTestify));
+  });
+
+  it("shows the block message after the receipts are touched with none left", () => {
+    const html = renderWriteForm({
+      questions: [],
+      touched: { touched: { figures: true }, attempted: false },
+    });
+    expect(html).toContain(esc(LIVE_COPY.nothingToTestify));
+  });
+
+  it("does not show the block message when a question is present", () => {
+    const html = renderWriteForm({
+      questions: ["What do you remember?"],
+      touched: { touched: { questions: true }, attempted: true },
+    });
+    expect(html).not.toContain(esc(LIVE_COPY.nothingToTestify));
+  });
+});
