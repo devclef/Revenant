@@ -12,15 +12,17 @@
 // Checks that fail on a healthy production today, and the decision for each:
 //
 //   J5 scroll-width, persona pages (us-maya, eu-tomas) at every Evidence_Size:
-//     decision: fix the check. The check waits for data-ceremony "intact", which
-//     the app never renders. src/components/ceremony/stages.ts renders "sealed"
-//     or "recall". Without a database the pages stop at data-ceremony="error", so
-//     the persona pages were not measured past that point. Owner_Patch 97b73ba.
-//     J2 uses the same wait, so it fails for the same reason.
+//     decision: fix the check. Not measured on a healthy production. The conclusion
+//     comes from reading the code: the check waits for data-ceremony "intact", and
+//     src/components/ceremony/stages.ts has no such stage (it renders "sealed" or
+//     "recall"). The local run had no database, so the persona pages stopped at
+//     data-ceremony="error" and J5 was not reached. Owner_Patch 97b73ba (the walk
+//     opens on recall). J2 uses the same wait, so it fails for the same reason.
 //
 //   J6 PH1 on / at 360x640 (PH1_LANDING):
 //     decision: fix the check, not the page. The check reads the Landing_Ghost box
-//     about 0.5 s after load, while the entry transform runs. Measured box, CSS px:
+//     about 0.5 s after load, while the entry transform runs. Box as recorded in
+//     commit 7f7c325 (local production build), CSS px:
 //       t=0 ms      471 to 670   (the check reads here)
 //       t=1000 ms   404 to 604
 //       t=3000 ms   254 to 454   (settled)
@@ -31,8 +33,9 @@
 //     for tools/qa/layout-check.mjs (runPhoneChecks) reads the box after the
 //     transform settles, about 3 s.
 //
-//   J6 PH1 on / at 390x844: passes once settled (box 397 to 601 in 844 px). Not a
-//     failing line. The same too-early read applies.
+//   J6 PH1 on / at 390x844: passes once settled. Box 397 to 601 in 844 px, as
+//     recorded in commit 7f7c325 (not re-measured here). Not a failing line. The
+//     same too-early read applies.
 //
 //   J6 PH1 on /demo/live at 390x844 and 360x640:
 //     decision: fix the page, in task 12 (L3), which owns the Write-step height.
