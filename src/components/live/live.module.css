@@ -675,10 +675,31 @@
     margin: 0;
   }
 
-  /* The question rows sit inside the panel. This selector outranks the 900 px
-     short-viewport fallback's margin, so only a phone takes the tighter rows. */
+  /* The question rows sit inside the panel. These selectors outrank the 900 px
+     short-viewport fallback, so only a phone takes the tighter rows. The row
+     stays one 44 px line; the trims only widen the question field, so the word
+     "Before" in "Before you read it" shows at 360 px instead of "Befo". */
   .panel .questionRow {
     margin: 0;
+    gap: 0.375rem;
+  }
+
+  fieldset:has(.questionRow) {
+    padding: 0.25rem 0.5rem 0.375rem;
+  }
+
+  .panel .questionRow .label {
+    font-size: 0.8125rem;
+  }
+
+  .panel .questionRow .questionHead .secondary {
+    font-size: 0.75rem;
+    padding: 0.375rem 0.25rem;
+  }
+
+  .panel .questionRow .textarea {
+    font-size: 0.9375rem;
+    padding: 0 0.25rem;
   }
 
   /* The Write step's occasion control and legends sit closer on a phone, so
