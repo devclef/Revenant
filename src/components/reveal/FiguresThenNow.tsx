@@ -1,4 +1,4 @@
-import type { FigureV1, MetricDefinitionV1 } from "@/lib/seal-format";
+import type { FigureV1, MetricDefinitionV1, PayloadV1 } from "@/lib/seal-format";
 import type { DisplayRescale } from "@/lib/figures";
 import {
   computeChange,
@@ -384,6 +384,61 @@ export function FiguresThenNow({
           ))}
         </section>
       )}
+    </section>
+  );
+}
+
+/**
+ * Stage 3 for a letter whose only figures are self-reported (spec L5.1). There
+ * is no official figure, so no Figures_API request is made and no "The receipts"
+ * heading is drawn: the section holds only "Your own numbers". Its heading is
+ * the Figures_Heading, so focus moves there when stage 3 opens. Each group
+ * carries `data-figure-entry` so the fade-up runs as it does for official
+ * figures.
+ */
+export function SelfReportedOnly({ payload }: { payload: PayloadV1 }) {
+  const metricById = new Map<string, MetricDefinitionV1>();
+  for (const metric of payload.metrics) {
+    metricById.set(metric.id, metric);
+  }
+
+  const entries = payload.figures.flatMap((figure, index) => {
+    if (figure.kind !== "self-reported") return [];
+    const metric = metricById.get(figure.metric_id);
+    if (metric === undefined) return [];
+    return [
+      {
+        key: `${figure.metric_id}-${index}`,
+        name: metric.display_name,
+        figure,
+      },
+    ];
+  });
+
+  if (entries.length === 0) return null;
+
+  return (
+    <section
+      className={styles.selfReportedGroup}
+      data-self-reported-group=""
+    >
+      <h3
+        className={styles.selfReportedHeading}
+        tabIndex={-1}
+        data-figures-heading=""
+      >
+        {REVEAL_COPY.selfReportedTitle}
+      </h3>
+      <p className={styles.period}>{REVEAL_COPY.selfReportedHint}</p>
+      {entries.map((entry) => (
+        <div
+          key={entry.key}
+          className={styles.figureGroup}
+          data-figure-entry=""
+        >
+          <SelfReportedFigure name={entry.name} figure={entry.figure} />
+        </div>
+      ))}
     </section>
   );
 }
