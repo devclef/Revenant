@@ -45,3 +45,36 @@ describe("landing Landing_Ghost box below 600 px (spec 10 X2.5)", () => {
     expect(css).toMatch(/\.ghost \{\s*width: 100%;\s*height: 30vh;/);
   });
 });
+
+/**
+ * The settled Landing_Ghost box (data-ghost-pit [data-ghost-box]) on the phone,
+ * measured on a local production build (Chromium, after the entry transform
+ * settled, about 3 s). Source: the X4 measurement in commit 7f7c325. CSS px.
+ */
+const MEASURED_PHONE_GHOST = [
+  { width: 360, height: 640, top: 254, bottom: 454 },
+  { width: 390, height: 844, top: 397, bottom: 601 },
+] as const;
+
+describe("landing Landing_Ghost on the first screen below 600 px (measured, X4)", () => {
+  for (const size of MEASURED_PHONE_GHOST) {
+    const label = `${size.width}x${size.height}`;
+
+    it(`keeps the whole drawn ghost inside the first screen at ${label}`, () => {
+      expect(size.top).toBeGreaterThanOrEqual(0);
+      expect(size.bottom).toBeLessThanOrEqual(size.height);
+    });
+
+    it(`draws the ghost bottom at about 71vh at ${label}`, () => {
+      // The CSS comment says the bottom is about 71vh. The measured bottoms are
+      // 454 px (71vh is 454.4 px) and 601 px (71vh is 599.2 px). Allow 2 px.
+      const seventyOneVh = size.height * 0.71;
+      expect(Math.abs(size.bottom - seventyOneVh)).toBeLessThanOrEqual(2);
+    });
+  }
+
+  it("keeps the phone rule that reserves the ghost box, so the page does not move", () => {
+    const block = phoneBlock();
+    expect(block).toMatch(/\.hero \.ghost \{\s*height: max\(0px, calc\(71vh - 380px\)\);\s*\}/);
+  });
+});
