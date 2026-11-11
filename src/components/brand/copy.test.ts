@@ -12,22 +12,18 @@ describe("BRAND_COPY", () => {
     expect(BRAND_COPY.tagline).toBe("Memory rewrites itself. Revenant doesn't.");
   });
 
-  it("has the hero sentence exactly (OD18)", () => {
+  it("has the hero sentence exactly", () => {
     expect(BRAND_COPY.heroSentence).toBe(
-      "Seal a letter to your future self with fuel prices from the US or the EU. When it opens, you testify first, then see the receipts.",
+      "Seal what you believe now, a goal, a worry, a decision. When it opens, you testify first, then read what you wrote.",
     );
   });
 
-  it("has five ritual steps in README order, with their lines", () => {
-    expect(BRAND_COPY.ritualSteps).toHaveLength(5);
+  it("has four ritual steps in order, with their lines", () => {
+    expect(BRAND_COPY.ritualSteps).toHaveLength(4);
     expect(BRAND_COPY.ritualSteps).toEqual([
       {
         name: "Write",
-        line: "A letter to your future self, plain text, up to 5,000 characters.",
-      },
-      {
-        name: "Seal the figures",
-        line: "Fuel prices from official sources, each with its source, period, unit and region.",
+        line: "A letter to your future self, plain text. Add up to three questions and an optional receipt.",
       },
       {
         name: "Press the seal",
@@ -39,9 +35,15 @@ describe("BRAND_COPY", () => {
       },
       {
         name: "See the receipts",
-        line: "Your testimony, then what you wrote, then the numbers then and now.",
+        line: "Your testimony, then what you wrote, then any numbers then and now.",
       },
     ]);
+  });
+
+  it("does not offer Seal the figures as a step name", () => {
+    expect(BRAND_COPY.ritualSteps.map((step) => step.name)).not.toContain(
+      "Seal the figures",
+    );
   });
 
   it("has four seal mapping rows in README order", () => {
