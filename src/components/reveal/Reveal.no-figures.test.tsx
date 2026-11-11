@@ -153,3 +153,62 @@ describe("Reveal with no sealed figures (spec 10 C8.6)", () => {
     expect(html).not.toContain("data-figures-panel");
   });
 });
+
+// Spec 11 L5.5: the markup of a reveal with no figures holds none of these, for
+// each letter kind. The headings are matched by tag, so body copy cannot trip it.
+const FIGURES_MARKERS = [
+  REVEAL_COPY.stage3Title,
+  "data-receipt-card",
+  "data-line-axis",
+  "data-line-tick",
+  "data-figures-heading",
+  "data-figures-panel",
+  REVEAL_COPY.stage2Next,
+  "See the numbers",
+];
+
+const FIGURES_HEADING = /<h[1-6][^>]*>[^<]*(then and now|figures)[^<]*<\/h[1-6]>/i;
+
+type Kind = "persona" | "live" | "real";
+
+function kindProps(kind: Kind): Partial<RevealProps> {
+  if (kind === "live") {
+    return { variant: "live", letterKind: "live", close: { kind: "live" } };
+  }
+  if (kind === "real") {
+    return { letterKind: "real", close: { kind: "real" } };
+  }
+  return { letterKind: "persona", close: CLOSE };
+}
+
+describe("Reveal with no figures has no figures markup (spec 11 L5.5)", () => {
+  for (const kind of ["persona", "live", "real"] as const) {
+    for (const stage of [2, 3] as const) {
+      it(`${kind} letter at stage ${stage}: no then and now heading, receipt, number line or figures heading`, () => {
+        const html = renderReveal({ ...kindProps(kind), stage });
+        for (const marker of FIGURES_MARKERS) {
+          expect(html, marker).not.toContain(marker);
+        }
+        expect(html).not.toMatch(FIGURES_HEADING);
+      });
+    }
+  }
+
+  it("persona letter at stage 2 ends on the no-figures line, the letter and no figures control", () => {
+    const html = renderReveal({ ...kindProps("persona"), stage: 2 });
+    expect(html).toContain(CEREMONY_COPY.closeLineNoFigures);
+    expect(html).toContain("<article");
+  });
+
+  it("real letter at stage 3 ends with no demo links", () => {
+    const html = renderReveal({ ...kindProps("real"), stage: 3 });
+    expect(html).not.toContain("/demo/live");
+    expect(html).not.toContain("/demo\"");
+  });
+
+  it("offers Skip to the letter, not Skip to the receipts, on the marks Stage", () => {
+    const html = renderReveal({ stage: 1 });
+    expect(html).toContain(CEREMONY_COPY.skipToLetter);
+    expect(html).not.toContain(CEREMONY_COPY.skipToReceipts);
+  });
+});
