@@ -33,6 +33,7 @@ import { maskLineLabels } from "./line-label-mask";
 import { FigureEntry, type FigureEntryProps } from "./FigureEntry";
 import { FigureRow } from "./ReceiptCard";
 import { receiptFigureOf } from "./FigureLine";
+import { displayPrecisionForUnit } from "./display-precision";
 import { FiguresThenNow } from "./FiguresThenNow";
 import type { Opened } from "./opening-machine";
 import {
@@ -705,7 +706,7 @@ describe("Property 15: the static render is the final state (R9.1, R9.7, R9.8, R
           // .figValue span and the now value on the now row, each with its unit.
           expect(html).toContain('data-role="then"');
           expect(plain.replace(/<[^>]+>/g, "")).toContain(
-            `${formatValue(GAS_NOW.value, GAS_NOW.region)} ${GAS_NOW.unit}`,
+            `${formatValue(GAS_NOW.value, GAS_NOW.region, displayPrecisionForUnit(GAS_NOW.unit))} ${GAS_NOW.unit}`,
           );
           expect(html).toContain(figureLineMarkup(dieselBadUnit(), "then"));
           expect(html).toContain(figureLineMarkup(DIESEL_NOW, "now"));
@@ -714,7 +715,7 @@ describe("Property 15: the static render is the final state (R9.1, R9.7, R9.8, R
           // Stamp face and source name for the comparable entry.
           // The then value is a .figValue span; its unit sits next to it.
           expect(plain).toContain(
-            `data-role="then">${formatValue(comparableThen.value, comparableThen.region)}<`,
+            `data-role="then">${formatValue(comparableThen.value, comparableThen.region, displayPrecisionForUnit(comparableThen.unit))}<`,
           );
           expect(plain).toContain(`<span>${comparableThen.unit}</span>`);
           expect(plain).toContain(GAS_NOW.source);

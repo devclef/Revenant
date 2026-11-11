@@ -277,3 +277,16 @@ describe("nowRequestFailed copy (issue #339, X3)", () => {
     expect(REVEAL_COPY.nowRequestFailed).not.toMatch(/no longer publish/i);
   });
 });
+
+// Receipt copy for the display precision and the as-published line (P5.2, P5.3).
+describe("receipt precision copy (P5.2, P5.3)", () => {
+  it("names the sealed value and unit in the As published line", () => {
+    expect(REVEAL_COPY.asPublished).toContain("{value}");
+    expect(REVEAL_COPY.asPublished).toContain("{unit}");
+  });
+
+  it("says in one line that the card's values are rounded for display", () => {
+    expect(REVEAL_COPY.roundedNote).not.toContain("\n");
+    expect(REVEAL_COPY.roundedNote).toMatch(/rounded for display/);
+  });
+});

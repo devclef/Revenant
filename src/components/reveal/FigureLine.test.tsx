@@ -82,7 +82,8 @@ describe("provenance labels (R13.1 to R13.4)", () => {
 describe("receiptFigureOf builds the Then and Now row (C3.1, R11.1 to R11.3)", () => {
   it("carries the value, unit, period, region and label of the figure", () => {
     const row = receiptFigureOf(OFFICIAL, "then", "persona");
-    expect(row.value).toBe("3.412");
+    // A USD per gallon figure is shown at display precision (P5.1).
+    expect(row.value).toBe("3.41");
     expect(row.unit).toBe("USD per gallon");
     expect(row.period).toBe(formatPeriod("2024-10", "U.S. city average"));
     expect(row.region).toBe("U.S. city average");
@@ -94,7 +95,7 @@ describe("receiptFigureOf builds the Then and Now row (C3.1, R11.1 to R11.3)", (
     const rescale: DisplayRescale = { divisor: 1000, unit: "EUR per litre" };
     const eu: Readonly<FigureV1> = { ...OFFICIAL, value: "3412", unit: "EUR per 1,000 litres" };
     const row = receiptFigureOf(eu, "now", "persona", rescale);
-    expect(row.value).toBe("3.412");
+    expect(row.value).toBe("3.41");
     expect(row.unit).toBe("EUR per litre");
     expect(row.note).toBe(
       REVEAL_COPY.rescaledNote
@@ -117,6 +118,7 @@ describe("receiptSourceOf builds the source control (R11.2)", () => {
       source: "U.S. EIA",
       seriesId: "EMM_EPMR_PTE_NUS_DPG",
       sourceUrl: "https://www.eia.gov/series",
+      asPublished: "As published: 3.412 USD per gallon",
     });
   });
 

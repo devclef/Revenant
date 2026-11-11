@@ -15,6 +15,9 @@ import fc from "fast-check";
 import { ChangeLine } from "./ChangeLine";
 import { ReceiptCard, type ReceiptCardProps, type ReceiptFigure } from "./ReceiptCard";
 import { REVEAL_COPY } from "./copy";
+import { displayPrecisionForUnit } from "./display-precision";
+import { receiptFigureOf, receiptSourceOf } from "./FigureLine";
+import { SHORT_NAME_TABLE, shortNameFor } from "./short-names";
 import {
   computeChange,
   formatPeriod,
@@ -56,7 +59,7 @@ function figure(value: string, period: string): Official {
 
 function receiptFigure(fig: Official, label: string): ReceiptFigure {
   return {
-    value: formatValue(fig.value, fig.region),
+    value: formatValue(fig.value, fig.region, displayPrecisionForUnit(fig.unit)),
     unit: fig.unit,
     period: formatPeriod(fig.period, fig.region),
     region: fig.region,
@@ -151,5 +154,122 @@ describe("ReceiptCard, Property 4: 'Your answer' appears once in every card", ()
     );
     expect(countOccurrences(html, REVEAL_COPY.yourAnswer)).toBe(1);
     expect(html).toContain(REVEAL_COPY.noAnswer);
+  });
+});
+
+/** Thousandths rounded half away from zero to cents, as "d.dd" (integer maths). */
+function centsOf(thousandths: number): string {
+  const cents = Math.floor((thousandths + 5) / 10);
+  return `${Math.floor(cents / 100)}.${String(cents % 100).padStart(2, "0")}`;
+}
+
+/** The thousandths of a "d.ddd" value string produced by fmt. */
+function thousandthsOf(value: string): number {
+  return Number(value.replace(".", ""));
+}
+
+/** The ReceiptCard props built the way FiguresThenNow builds them (P5.1 to P5.4). */
+function receiptPropsFor(then: Official, now: Official, markValue?: string): ReceiptCardProps {
+  const change = computeChange(then, now);
+  if (!change.comparable) {
+    throw new Error(`test setup: figures must be comparable (${change.reason})`);
+  }
+  return {
+    name: shortNameFor(then.metric_id, "Regular gasoline"),
+    region: REGION,
+    markValue,
+    unit: then.unit,
+    then: receiptFigureOf(then, "then", "persona"),
+    now: receiptFigureOf(now, "now", "persona"),
+    change: createElement(ChangeLine, { result: change, region: REGION, then, now }),
+    source: receiptSourceOf(then, "Regular gasoline"),
+  };
+}
+
+// The renderer puts a comment between adjacent text nodes; strip them so a
+// sentence such as "Formula: (…)" is compared as the reader reads it.
+const plainHtml = (html: string): string => html.replace(/<!-- -->/g, "");
+
+describe("ReceiptCard, Property 17: receipt values use display precision and the source keeps the published value", () => {
+  it("shows fuel values at two decimals, the source shows the published value, and the formula shows the published values", () => {
+    fc.assert(
+      fc.property(pairArb, answerArb, ({ then, now }, markValue) => {
+        const html = plainHtml(
+          renderToStaticMarkup(createElement(ReceiptCard, receiptPropsFor(then, now, markValue))),
+        );
+        const thenValue = thousandthsOf(then.value);
+        const nowValue = thousandthsOf(now.value);
+        expect(html).toContain(`data-role="then">${centsOf(thenValue)}<`);
+        expect(html).toContain(`data-role="now">${centsOf(nowValue)}<`);
+        expect(html).toContain(`As published: ${then.value} USD per gallon`);
+        expect(html).toContain(`Formula: (${now.value} - ${then.value}) / ${then.value} x 100`);
+        expect(html).toContain(REVEAL_COPY.roundedNote);
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  it("keeps the published precision for a unit without a display precision, and draws no rounding line", () => {
+    fc.assert(
+      fc.property(valueArb, valueArb, (thenValue, nowValue) => {
+        const unit = "index points";
+        const then: Official = { ...figure(thenValue, THEN_PERIOD), unit };
+        const now: Official = { ...figure(nowValue, NOW_PERIOD), unit };
+        const html = plainHtml(
+          renderToStaticMarkup(createElement(ReceiptCard, receiptPropsFor(then, now))),
+        );
+        expect(html).toContain(`data-role="then">${formatValue(thenValue, REGION)}<`);
+        expect(html).not.toContain("data-rounded-note");
+        expect(html).not.toContain(REVEAL_COPY.roundedNote);
+      }),
+      { numRuns: 100 },
+    );
+  });
+});
+
+describe("ReceiptCard, Property 18: the Short_Name falls back to the sealed name", () => {
+  const knownIds = [...SHORT_NAME_TABLE.keys()];
+  const idArb = fc.oneof(
+    fc.constantFrom(...knownIds),
+    fc.stringMatching(/^[a-z][a-z0-9-]{0,30}$/),
+  );
+  const nameArb = fc.stringMatching(/^[A-Za-z][A-Za-z ]{0,30}[A-Za-z]$/);
+
+  it("heads the card with the lookup entry or the sealed display_name, and shows the series name under Source", () => {
+    fc.assert(
+      fc.property(idArb, nameArb, (metricId, displayName) => {
+        const heading = shortNameFor(metricId, displayName);
+        expect(heading).toBe(SHORT_NAME_TABLE.get(metricId) ?? displayName);
+
+        const html = renderToStaticMarkup(
+          createElement(ReceiptCard, {
+            name: heading,
+            region: REGION,
+            unit: "USD per gallon",
+            then: receiptFigure(figure("3.611", THEN_PERIOD), THEN_LABEL),
+            now: { message: null },
+            source: { seriesName: displayName, source: "U.S. EIA", seriesId: "SERIES" },
+          }),
+        );
+        expect(html).toContain(`>${heading} · ${REGION}</h3>`);
+        expect(html).toContain(`<p>${displayName}</p>`);
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  it("renders a metric_id that is not in the lookup with the sealed display_name (P5.7)", () => {
+    const html = renderToStaticMarkup(
+      createElement(ReceiptCard, {
+        name: shortNameFor("fixture-unlisted-series", "Sealed series name"),
+        region: REGION,
+        unit: "USD per gallon",
+        then: receiptFigure(figure("3.611", THEN_PERIOD), THEN_LABEL),
+        now: { message: null },
+        source: { seriesName: "Sealed series name", source: "U.S. EIA", seriesId: "SERIES" },
+      }),
+    );
+    expect(html).toContain(`>Sealed series name · ${REGION}</h3>`);
+    expect(html).toContain("<p>Sealed series name</p>");
   });
 });

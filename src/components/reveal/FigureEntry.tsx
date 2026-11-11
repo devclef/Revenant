@@ -5,6 +5,7 @@ import { MotionProvider } from "@/components/ceremony/motion";
 import { NumberLine } from "@/components/ceremony/figures/NumberLine";
 import { ChangeLine } from "./ChangeLine";
 import { rescaledChangeInputs } from "./change-display";
+import { displayPrecisionForUnit } from "./display-precision";
 import { ReceiptCard } from "./ReceiptCard";
 import {
   receiptFigureOf,
@@ -35,8 +36,13 @@ import {
  */
 
 export type FigureEntryProps = {
-  /** The metric's display name, from the sealed payload. */
+  /** The card heading: the Short_Name, or the sealed display_name (P5.4). */
   name: string;
+  /**
+   * The sealed display_name, shown under Source as the Series_Name (P5.4).
+   * Absent, the Series_Name line is not drawn.
+   */
+  seriesName?: string;
   /** The sealed then figure. */
   then: Readonly<FigureV1>;
   /** The now figure, from the same series and comparable with `then`. */
@@ -69,6 +75,7 @@ export type FigureEntryProps = {
 
 export function FigureEntry({
   name,
+  seriesName,
   then,
   now,
   change,
@@ -85,10 +92,14 @@ export function FigureEntry({
   const toDisplay = (value: string): string =>
     rescale === undefined ? value : rescaleForDisplay(value, rescale.divisor);
 
-  const shownValue = (figure: Readonly<FigureV1>): string =>
-    formatValue(toDisplay(figure.value), figure.region);
-
   const unit = rescale === undefined ? then.unit : rescale.unit;
+  // The printed values share the card's display precision (P5.1), so the
+  // Number_Line labels match the Then and Now rows.
+  const precision = displayPrecisionForUnit(unit);
+
+  const shownValue = (figure: Readonly<FigureV1>): string =>
+    formatValue(toDisplay(figure.value), figure.region, precision);
+
   // The typed answer is already in the shown unit: FiguresThenNow passes the
   // per-litre value it stored (C8.3). Rescaling it again here would divide twice.
   const markForLine = markValue;
@@ -130,7 +141,7 @@ export function FigureEntry({
             }
           />
         }
-        source={receiptSourceOf(then)}
+        source={receiptSourceOf(then, seriesName)}
       />
     </MotionProvider>
   );
