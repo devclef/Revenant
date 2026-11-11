@@ -162,7 +162,7 @@ export const TOUCH_FIELDS = {
 export const PROBLEM_COPY: Partial<Record<WriteProblem, string>> = {
   letter_empty: LIVE_COPY.letterEmpty,
   letter_too_long: LIVE_COPY.letterTooLong,
-  figures_none: LIVE_COPY.figuresNone,
+  nothing_to_testify: LIVE_COPY.nothingToTestify,
   warning_unticked: LIVE_COPY.warningUnticked,
 };
 
@@ -247,10 +247,8 @@ export function WriteForm({
     backupCardTicked,
     maxFigures: limit,
     questions,
-    mode,
     selfReported,
     sealingDay: today,
-    figuresUnavailable: figuresStatus !== "ready",
   });
   const atLimit = metricIds.length >= limit;
   const all = section === "all";
@@ -282,7 +280,7 @@ export function WriteForm({
   );
   const figuresProblem = shownFor(
     TOUCH_FIELDS.figures,
-    problemText("figures_none"),
+    problemText("nothing_to_testify"),
   );
   const warningProblem = shownFor(
     TOUCH_FIELDS.warning,
@@ -333,9 +331,12 @@ export function WriteForm({
   const letterValid = !problems.some(
     (problem) => problem === "letter_empty" || problem === "letter_too_long",
   );
-  // The figures minimum already accounts for a loading or failed request, so
-  // Next checks only the problem list (spec 11, X2.4).
-  const figuresValid = !problems.includes("figures_none");
+  // Next on the figures step stops only when nothing is left to testify about
+  // or the picker is over its limit. The figures request never blocks (X2.4).
+  const figuresValid = !problems.some(
+    (problem) =>
+      problem === "nothing_to_testify" || problem === "figures_too_many",
+  );
   // The write step's Next also checks the self-reported rows, so an invalid row
   // keeps the judge on the step where its messages show.
   const selfReportedValid = selfReportedRowsOk(selfReported, today);

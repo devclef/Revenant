@@ -80,7 +80,7 @@ export const LIVE_COPY = {
     "Write something first. A letter needs at least one character that is not a space.",
   letterTooLong:
     "This letter is longer than 5,000 characters. Shorten it and try again.",
-  figuresNone: "Choose at least one figure before you seal.",
+  nothingToTestify: "Write a question or choose a figure before you seal.",
   figuresTooMany: "Choose no more than {max} figures.",
   prfHint:
     "This device may not be able to lock the letter with a passkey. If so, you will need a backup key card.",

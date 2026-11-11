@@ -43,37 +43,73 @@ const metricIdsArb: fc.Arbitrary<string[]> = fc.array(fc.string({ maxLength: 12 
   maxLength: MAX_FIGURES + 3,
 });
 
+// Author_Question rows, short enough that none is too long (question_too_long
+// is a separate rule and is not checked here).
+const questionsArb: fc.Arbitrary<string[]> = fc.array(
+  fc.oneof(fc.string({ maxLength: 16 }), fc.constantFrom("", "   ")),
+  { maxLength: 3 },
+);
+
 describe("Property 13: validateWrite matches the write rules", () => {
   it("reports each problem exactly when its rule holds, in the fixed order", () => {
     fc.assert(
-      fc.property(letterArb, metricIdsArb, fc.boolean(), (text, metricIds, warningTicked) => {
-        const problems = validateWrite({ text, metricIds, warningTicked });
+      fc.property(
+        letterArb,
+        metricIdsArb,
+        fc.boolean(),
+        questionsArb,
+        fc.constantFrom("demo" as const, "real" as const),
+        (text, metricIds, warningTicked, questions, mode) => {
+          const problems = validateWrite({ text, metricIds, warningTicked, questions, mode });
 
-        const codePoints = [...text].length;
-        const blank = text.trim().length === 0;
+          const codePoints = [...text].length;
+          const blank = text.trim().length === 0;
 
-        const expectLetterEmpty = blank;
-        const expectLetterTooLong = !blank && codePoints > MAX_LETTER_CODE_POINTS;
-        const expectFiguresNone = metricIds.length === 0;
-        const expectFiguresTooMany = metricIds.length > MAX_FIGURES;
-        const expectWarningUnticked = !warningTicked;
+          const expectLetterEmpty = blank;
+          const expectLetterTooLong = !blank && codePoints > MAX_LETTER_CODE_POINTS;
+          // Something to testify about: a non-blank question or one official figure.
+          const hasQuestion = questions.some((row) => row.trim() !== "");
+          const expectNothingToTestify = !hasQuestion && metricIds.length === 0;
+          const expectFiguresTooMany = metricIds.length > MAX_FIGURES;
+          const expectWarningUnticked = !warningTicked;
 
-        expect(problems.includes("letter_empty")).toBe(expectLetterEmpty);
-        expect(problems.includes("letter_too_long")).toBe(expectLetterTooLong);
-        expect(problems.includes("figures_none")).toBe(expectFiguresNone);
-        expect(problems.includes("figures_too_many")).toBe(expectFiguresTooMany);
-        expect(problems.includes("warning_unticked")).toBe(expectWarningUnticked);
+          expect(problems.includes("letter_empty")).toBe(expectLetterEmpty);
+          expect(problems.includes("letter_too_long")).toBe(expectLetterTooLong);
+          expect(problems.includes("nothing_to_testify")).toBe(expectNothingToTestify);
+          expect(problems.includes("figures_too_many")).toBe(expectFiguresTooMany);
+          expect(problems.includes("warning_unticked")).toBe(expectWarningUnticked);
 
-        const expected: WriteProblem[] = [];
-        if (expectLetterEmpty) expected.push("letter_empty");
-        if (expectLetterTooLong) expected.push("letter_too_long");
-        if (expectFiguresNone) expected.push("figures_none");
-        if (expectFiguresTooMany) expected.push("figures_too_many");
-        if (expectWarningUnticked) expected.push("warning_unticked");
-        expect(problems).toEqual(expected);
-      }),
+          const expected: WriteProblem[] = [];
+          if (expectLetterEmpty) expected.push("letter_empty");
+          if (expectLetterTooLong) expected.push("letter_too_long");
+          if (expectNothingToTestify) expected.push("nothing_to_testify");
+          if (expectFiguresTooMany) expected.push("figures_too_many");
+          if (expectWarningUnticked) expected.push("warning_unticked");
+          expect(problems).toEqual(expected);
+        },
+      ),
       { numRuns: 100 },
     );
+  });
+
+  it("reports nothing_to_testify with zero figures and no question, in both modes", () => {
+    for (const mode of ["demo", "real"] as const) {
+      expect(
+        validateWrite({ text: "A letter.", metricIds: [], warningTicked: true, questions: [], mode }),
+      ).toEqual(["nothing_to_testify"]);
+      expect(
+        validateWrite({ text: "A letter.", metricIds: [], warningTicked: true, questions: ["  "], mode }),
+      ).toEqual(["nothing_to_testify"]);
+      expect(
+        validateWrite({
+          text: "A letter.",
+          metricIds: [],
+          warningTicked: true,
+          questions: ["What did you expect?"],
+          mode,
+        }),
+      ).toEqual([]);
+    }
   });
 
   it("accepts a letter of exactly 5000 code points and rejects 5001", () => {

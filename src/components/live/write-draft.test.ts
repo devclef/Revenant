@@ -17,6 +17,7 @@ import { LIVE_COPY } from "./copy";
 import { sealReducer, INITIAL_SEAL_STATE } from "./seal-machine";
 import {
   CLEARED_WRITE_DRAFT,
+  DEFAULT_QUESTION,
   INITIAL_WRITE_DRAFT,
   initialWriteDraft,
   reduceWriteDraft,
@@ -39,13 +40,13 @@ describe("the write draft starts empty", () => {
     });
   });
 
-  it("starts a real letter with no question rows (C2.13, C9.5)", () => {
+  it("starts a real letter with the default question row, so it is never blocked (C2.13, C9.5)", () => {
     expect(initialWriteDraft("real")).toEqual({
       text: "",
       metricIds: [],
       warningTicked: false,
       backupCardTicked: false,
-      questions: [],
+      questions: [DEFAULT_QUESTION],
       selfReported: [],
     });
   });

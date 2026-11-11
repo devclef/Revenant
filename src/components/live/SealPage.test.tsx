@@ -135,7 +135,7 @@ describe("SealPage in real mode", () => {
       }),
     );
     expect(html).not.toContain(esc(LIVE_COPY.letterEmpty));
-    expect(html).not.toContain(esc(LIVE_COPY.figuresNone));
+    expect(html).not.toContain(esc(LIVE_COPY.nothingToTestify));
     expect(html).not.toContain(esc(LIVE_COPY.warningUnticked));
   });
 
@@ -148,7 +148,7 @@ describe("SealPage in real mode", () => {
       }),
     );
     expect(html).not.toContain(esc(LIVE_COPY.letterEmpty));
-    expect(html).not.toContain(esc(LIVE_COPY.figuresNone));
+    expect(html).not.toContain(esc(LIVE_COPY.nothingToTestify));
     expect(html).not.toContain(esc(LIVE_COPY.warningUnticked));
     expect(html).not.toContain(esc(REAL_COPY.dateMissing));
   });

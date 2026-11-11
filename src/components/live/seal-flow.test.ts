@@ -396,8 +396,6 @@ describe("each failed figures request still reaches Press the seal and stores a 
         metricIds: h.draft.metricIds,
         warningTicked: true,
         questions: h.draft.questions,
-        mode: "demo",
-        figuresUnavailable: state.status !== "ready",
       }),
     ).toEqual([]);
 

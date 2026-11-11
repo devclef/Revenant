@@ -2,7 +2,6 @@ import { questionRowProblem, questionsForSeal } from "./author-questions";
 import {
   MAX_FIGURES,
   MAX_LETTER_CODE_POINTS,
-  MIN_FIGURES,
   SELF_REPORTED_DECIMALS_MAX,
   SELF_REPORTED_TEXT_MAX,
   SELF_REPORTED_VALUE_MAX,
@@ -23,36 +22,31 @@ export type WriteProblem =
   | "letter_empty"
   | "letter_too_long"
   | "question_too_long"
-  | "figures_none"
+  | "nothing_to_testify"
   | "figures_too_many"
   | "warning_unticked"
   | "self_reported_invalid";
 
 /**
  * Which seal the write belongs to. `demo` is `/demo/live`, `real` is `/seal`.
- * Only a real letter may skip figures (C2.13).
+ * The seal mode does not change the write rules: both need something to
+ * testify about (see hasSomethingToTestify).
  */
 export type WriteMode = "demo" | "real";
 
 /**
- * The fewest figures a write needs (C2.13). A real letter with at least one
- * non-empty Author_Question needs none. So does any write while the figures
- * request is loading or has failed (X2.4): the picker is not there, so one
- * non-empty question is the only way to seal. Every other write needs
- * MIN_FIGURES.
+ * True when a letter has something to testify about: at least one
+ * Author_Question with text after trimming, or at least one official figure.
+ * Self-reported rows never count. The same rule holds in demo and real mode.
  */
-export function minFiguresFor(
-  mode: WriteMode,
-  questions: readonly string[],
-  figuresUnavailable = false,
-): number {
-  if (
-    (mode === "real" || figuresUnavailable) &&
-    questionsForSeal(questions).length > 0
-  ) {
-    return 0;
-  }
-  return MIN_FIGURES;
+export function hasSomethingToTestify(input: {
+  questions: readonly string[];
+  officialFigureCount: number;
+}): boolean {
+  return (
+    questionsForSeal(input.questions).length > 0 ||
+    input.officialFigureCount > 0
+  );
 }
 
 /**
@@ -219,7 +213,10 @@ export function validateWrite(input: {
   maxFigures?: number;
   /** The Author_Question rows, in order. Defaults to none. */
   questions?: readonly string[];
-  /** The seal mode. Defaults to `demo`. */
+  /**
+   * The seal mode. Accepted so callers can pass it, but it does not change the
+   * rule: demo and real mode need the same something to testify about.
+   */
   mode?: WriteMode;
   /** The visitor's own numbers (spec 08 later-tasks, R1). Defaults to none. */
   selfReported?: readonly SelfReportedRow[];
@@ -228,15 +225,9 @@ export function validateWrite(input: {
    * Omitted means no period is accepted, so any row blocks sealing (fail closed).
    */
   sealingDay?: string;
-  /**
-   * True while the figures request is loading or has failed (X2.4). The write
-   * then needs one non-empty question instead of one figure. Defaults to false.
-   */
-  figuresUnavailable?: boolean;
 }): WriteProblem[] {
   const maxFigures = input.maxFigures ?? MAX_FIGURES;
   const questions = input.questions ?? [];
-  const mode = input.mode ?? "demo";
   const problems: WriteProblem[] = [];
 
   if (input.text.trim().length === 0) {
@@ -250,11 +241,15 @@ export function validateWrite(input: {
   }
 
   if (
-    input.metricIds.length <
-    minFiguresFor(mode, questions, input.figuresUnavailable === true)
+    !hasSomethingToTestify({
+      questions,
+      officialFigureCount: input.metricIds.length,
+    })
   ) {
-    problems.push("figures_none");
-  } else if (input.metricIds.length > maxFigures) {
+    problems.push("nothing_to_testify");
+  }
+
+  if (input.metricIds.length > maxFigures) {
     problems.push("figures_too_many");
   }
 

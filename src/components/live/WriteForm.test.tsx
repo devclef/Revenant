@@ -207,7 +207,7 @@ describe("WriteForm", () => {
     // A new form has an empty letter, no figures and an unticked warning, but
     // nothing has been touched or attempted yet, so no message shows.
     expect(html).not.toContain(esc(LIVE_COPY.letterEmpty));
-    expect(html).not.toContain(esc(LIVE_COPY.figuresNone));
+    expect(html).not.toContain(esc(LIVE_COPY.nothingToTestify));
     expect(html).not.toContain(esc(LIVE_COPY.warningUnticked));
   });
 
@@ -216,7 +216,7 @@ describe("WriteForm", () => {
       touched: { touched: { letter: true }, attempted: false },
     });
     expect(onlyLetter).toContain(esc(LIVE_COPY.letterEmpty));
-    expect(onlyLetter).not.toContain(esc(LIVE_COPY.figuresNone));
+    expect(onlyLetter).not.toContain(esc(LIVE_COPY.nothingToTestify));
     expect(onlyLetter).not.toContain(esc(LIVE_COPY.warningUnticked));
   });
 
@@ -225,12 +225,12 @@ describe("WriteForm", () => {
       touched: { touched: {}, attempted: true },
     });
     expect(attempted).toContain(esc(LIVE_COPY.letterEmpty));
-    expect(attempted).toContain(esc(LIVE_COPY.figuresNone));
+    expect(attempted).toContain(esc(LIVE_COPY.nothingToTestify));
     expect(attempted).toContain(esc(LIVE_COPY.warningUnticked));
     expect(attempted.indexOf(esc(LIVE_COPY.letterEmpty))).toBeLessThan(
       attempted.indexOf('id="live-figures-problem"'),
     );
-    expect(attempted.indexOf(esc(LIVE_COPY.figuresNone))).toBeLessThan(
+    expect(attempted.indexOf(esc(LIVE_COPY.nothingToTestify))).toBeLessThan(
       attempted.indexOf('id="live-warning"'),
     );
   });
@@ -245,7 +245,7 @@ describe("WriteForm", () => {
   it("maps each rendered write problem to its message", () => {
     expect(PROBLEM_COPY.letter_empty).toBe(LIVE_COPY.letterEmpty);
     expect(PROBLEM_COPY.letter_too_long).toBe(LIVE_COPY.letterTooLong);
-    expect(PROBLEM_COPY.figures_none).toBe(LIVE_COPY.figuresNone);
+    expect(PROBLEM_COPY.nothing_to_testify).toBe(LIVE_COPY.nothingToTestify);
     expect(PROBLEM_COPY.warning_unticked).toBe(LIVE_COPY.warningUnticked);
   });
 
