@@ -63,10 +63,12 @@ export default function Home() {
         <div style={HERO_STYLE}>
           <LandingHero personaCount={personaCount} demo2On={demo2On} />
         </div>
-        <RitualSection />
-        <ResurrectionSection />
-        <NoSealSection />
-        <CovenStrip />
+        <div className="landingBelow">
+          <RitualSection />
+          <ResurrectionSection />
+          <NoSealSection />
+          <CovenStrip />
+        </div>
       </SceneShell>
     </>
   );

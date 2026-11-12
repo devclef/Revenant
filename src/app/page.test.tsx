@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { fileURLToPath } from "node:url";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
@@ -178,5 +180,70 @@ describe("landing page render on / (H1)", () => {
     const footer = renderToStaticMarkup(createElement(Footer));
     expect(footer).not.toContain(COVEN_LINKS.kiro);
     expect(footer).not.toContain(COVEN_LINKS.loop);
+  });
+});
+
+describe("landing sections wrapper and heading colour (H1)", () => {
+  beforeEach(() => {
+    vi.stubEnv("RP_ID", "");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("wraps the four sections in one landingBelow element after the hero", () => {
+    const html = renderPage();
+    const wrapperStart = html.indexOf('class="landingBelow"');
+    expect(wrapperStart).toBeGreaterThan(-1);
+    expect(countOf(html, 'class="landingBelow"')).toBe(1);
+
+    // The hero stays outside the wrapper.
+    expect(html.indexOf("data-landing-hero")).toBeLessThan(wrapperStart);
+
+    // Each section sits inside the wrapper, which closes after the Coven_Strip.
+    const wrapperBody = html.slice(wrapperStart);
+    const wrapperEnd = wrapperBody.indexOf(
+      "</section>",
+      wrapperBody.indexOf('id="coven-title"'),
+    );
+    expect(wrapperEnd).toBeGreaterThan(-1);
+    const inside = wrapperBody.slice(0, wrapperEnd);
+    for (const id of [
+      "ritual-title",
+      "resurrected-title",
+      "no-seal-title",
+      "coven-title",
+    ]) {
+      expect(inside).toContain(`id="${id}"`);
+    }
+  });
+
+  it("keeps the section order inside the wrapper", () => {
+    const html = renderPage();
+    const wrapperStart = html.indexOf('class="landingBelow"');
+    const below = html.slice(wrapperStart);
+    const positions = [
+      below.indexOf('id="ritual-title"'),
+      below.indexOf('id="resurrected-title"'),
+      below.indexOf('id="no-seal-title"'),
+      below.indexOf('id="coven-title"'),
+    ];
+    for (const position of positions) {
+      expect(position).toBeGreaterThan(-1);
+    }
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+  });
+});
+
+describe("landing heading colour in globals.css (H1)", () => {
+  it("scopes the h2 and h3 colour to landingBelow and uses var(--text)", () => {
+    const css = readFileSync(
+      fileURLToPath(new URL("./globals.css", import.meta.url)),
+      "utf8",
+    );
+    const rule =
+      /\.landingBelow h2,\s*\.landingBelow h3\s*\{\s*color:\s*var\(--text\);?\s*\}/;
+    expect(css).toMatch(rule);
   });
 });
