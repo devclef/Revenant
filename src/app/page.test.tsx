@@ -6,6 +6,7 @@ import Home from "./page";
 import { Footer } from "@/components/ui/Footer";
 import { BRAND_COPY } from "@/components/brand/copy";
 import { LANDING_COPY } from "@/components/landing/copy";
+import { COVEN_LINKS } from "@/components/landing/CovenStrip";
 import { PERSONAS } from "@/lib/personas";
 
 // page.tsx imports feature-flags.ts, which imports `server-only`.
@@ -104,5 +105,72 @@ describe("landing page hero markup (B1)", () => {
 
   it("links the GitHub repository exactly once", () => {
     expect(countOf(render(), `href="${GITHUB_HREF}"`)).toBe(1);
+  });
+});
+
+/** Markup of the page alone, without the footer the root layout adds. */
+function renderPage(): string {
+  return renderToStaticMarkup(createElement(Home));
+}
+
+describe("landing page render on / (H1)", () => {
+  beforeEach(() => {
+    vi.stubEnv("RP_ID", "");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("renders the sections in order: hero, ritual, resurrection, no-seal, coven", () => {
+    const html = renderPage();
+    const positions = [
+      html.indexOf("data-landing-hero"),
+      html.indexOf('id="ritual-title"'),
+      html.indexOf('id="resurrected-title"'),
+      html.indexOf('id="no-seal-title"'),
+      html.indexOf('id="coven-title"'),
+    ];
+    for (const position of positions) {
+      expect(position).toBeGreaterThan(-1);
+    }
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+  });
+
+  it("renders each landing section exactly once", () => {
+    const html = renderPage();
+    for (const id of [
+      "ritual-title",
+      "resurrected-title",
+      "no-seal-title",
+      "coven-title",
+    ]) {
+      expect(countOf(html, `id="${id}"`)).toBe(1);
+    }
+    expect(countOf(html, "data-landing-hero")).toBe(1);
+  });
+
+  it("keeps the How_Page and GitHub repository links out of the page body", () => {
+    const html = renderPage();
+    expect(countOf(html, `href="${HOW_HREF}"`)).toBe(0);
+    expect(countOf(html, `href="${GITHUB_HREF}"`)).toBe(0);
+  });
+
+  it("places the Coven_Strip links only inside the strip", () => {
+    const html = renderPage();
+    const stripStart = html.indexOf('id="coven-title"');
+    expect(stripStart).toBeGreaterThan(-1);
+    const beforeStrip = html.slice(0, stripStart);
+
+    for (const href of [COVEN_LINKS.kiro, COVEN_LINKS.loop]) {
+      expect(countOf(html, `href="${href}"`)).toBe(1);
+      expect(countOf(beforeStrip, `href="${href}"`)).toBe(0);
+      expect(html.indexOf(`href="${href}"`)).toBeGreaterThan(stripStart);
+    }
+
+    // The footer carries no Coven link either.
+    const footer = renderToStaticMarkup(createElement(Footer));
+    expect(footer).not.toContain(COVEN_LINKS.kiro);
+    expect(footer).not.toContain(COVEN_LINKS.loop);
   });
 });
