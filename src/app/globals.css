@@ -111,9 +111,11 @@ h3 {
 
 /*
  * The landing sections below the hero sit on the near-black Scene, so their
- * h2 and h3 use the light Scene text token (--text, tokens.css). The wrapper
- * class is set on the page. The paper and ink colours stay on the letter text.
- * The h1 rule is unchanged.
+ * h2 and h3 use the light Scene text token (--text, tokens.css). No element
+ * carries this class yet: the page wraps the four sections in a `landingBelow`
+ * element in the next step (src/app/page.tsx). Until then this rule matches
+ * nothing. The paper and ink colours stay on the letter text. The h1 rule is
+ * unchanged.
  */
 .landingBelow h2,
 .landingBelow h3 {
