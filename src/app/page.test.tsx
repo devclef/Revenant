@@ -156,6 +156,12 @@ describe("landing page render on / (H1)", () => {
     expect(countOf(html, `href="${GITHUB_HREF}"`)).toBe(0);
   });
 
+  it("renders the How_Page and GitHub repository links exactly once, in the footer", () => {
+    const footer = renderToStaticMarkup(createElement(Footer));
+    expect(countOf(footer, `href="${HOW_HREF}"`)).toBe(1);
+    expect(countOf(footer, `href="${GITHUB_HREF}"`)).toBe(1);
+  });
+
   it("places the Coven_Strip links only inside the strip", () => {
     const html = renderPage();
     const stripStart = html.indexOf('id="coven-title"');
