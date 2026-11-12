@@ -2,7 +2,11 @@ import type { CSSProperties } from "react";
 
 import { Ghost } from "@/components/ceremony/scene/Ghost";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
+import { CovenStrip } from "@/components/landing/CovenStrip";
 import { LandingHero } from "@/components/landing/LandingHero";
+import { NoSealSection } from "@/components/landing/NoSealSection";
+import { ResurrectionSection } from "@/components/landing/ResurrectionSection";
+import { RitualSection } from "@/components/landing/RitualSection";
 import { PERSONAS } from "@/lib/personas";
 import { pageMetadata } from "@/lib/page-metadata";
 
@@ -59,6 +63,10 @@ export default function Home() {
         <div style={HERO_STYLE}>
           <LandingHero personaCount={personaCount} demo2On={demo2On} />
         </div>
+        <RitualSection />
+        <ResurrectionSection />
+        <NoSealSection />
+        <CovenStrip />
       </SceneShell>
     </>
   );
