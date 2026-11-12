@@ -54,7 +54,7 @@ export const LANDING_SECTION_COPY = {
     "The French Académie des sciences has kept plis cachetés for centuries: sealed envelopes that people deposit to prove what they knew, and when.",
     "A classroom time capsule works the same way: a letter to your future self, sealed and mailed back years later.",
     "The seal carries the meaning: this was written then, by you, and nobody has touched it since.",
-    "Revenant is that envelope rebuilt for the browser, with each part of the old seal given a modern replacement.",
+    "Revenant rebuilds that envelope for the browser, and a letter in it can hold any part of life.",
   ],
 
   /** The heading of the section on what no wax seal could do (F6.2). */
@@ -70,30 +70,8 @@ export const LANDING_SECTION_COPY = {
   /** The four seal mapping rows from Brand_Copy (F6.1). */
   sealMapping: BRAND_COPY.sealMapping,
 
-  /** The heading above the Sample_Receipt (B3.4). */
-  receiptTitle: "A receipt from the record",
-
-  /** Shown when the request fails or the first series has no figure (B3.4). */
-  receiptNone: "No figure is available to show right now.",
-
-  /** Labels for the provenance rows under the Sample_Receipt figure. */
-  receiptSource: "Source",
-  receiptSeries: "Series",
-  receiptRetrieved: "Retrieved",
-
-  /** The link to the publisher's page for the Sample_Receipt figure. */
-  receiptCheck: "Check the figure at its source",
-
-  /** The heading above the Coven_Strip (B3.5). `{n}` is the count. */
+  /** The heading above the Coven_Strip (B3.5). */
   covenTitle: "Built by a coven of Kiro agents",
-
-  /** The Coven_Strip count labels, singular and plural (B3.5). */
-  covenCounts: {
-    specs: { one: "{n} spec", other: "{n} specs" },
-    steering: { one: "{n} steering doc", other: "{n} steering docs" },
-    agents: { one: "{n} custom agent", other: "{n} custom agents" },
-    hooks: { one: "{n} hook", other: "{n} hooks" },
-  },
 
   /** The two Coven_Strip links to GitHub (B3.5). */
   covenKiroLink: "Browse the .kiro folder on GitHub",

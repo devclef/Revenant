@@ -4,7 +4,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { LANDING_COPY } from "./copy";
+import { LANDING_COPY, LANDING_SECTION_COPY } from "./copy";
 
 describe("LANDING_COPY", () => {
   it("has the primary call to action for one persona and for two or more", () => {
@@ -27,6 +27,28 @@ describe("LANDING_COPY", () => {
   it("has no exclamation mark", () => {
     for (const text of Object.values(LANDING_COPY)) {
       expect(text).not.toContain("!");
+    }
+  });
+});
+
+describe("LANDING_SECTION_COPY after the Coven_Strip counts and Sample_Receipt were removed", () => {
+  it("keeps the Coven_Strip heading and link labels", () => {
+    expect(LANDING_SECTION_COPY.covenTitle).toBe(
+      "Built by a coven of Kiro agents",
+    );
+    expect(LANDING_SECTION_COPY.covenKiroLink).toBe(
+      "Browse the .kiro folder on GitHub",
+    );
+    expect(LANDING_SECTION_COPY.covenLoopLink).toBe(
+      "Read how the agent loop works",
+    );
+  });
+
+  it("no longer has the count labels or the receipt keys", () => {
+    const keys: string[] = Object.keys(LANDING_SECTION_COPY);
+    expect(keys).not.toContain("covenCounts");
+    for (const key of keys) {
+      expect(key.startsWith("receipt")).toBe(false);
     }
   });
 });
