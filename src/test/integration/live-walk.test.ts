@@ -296,6 +296,8 @@ async function readPage(
     const current = document.querySelector(
       "[data-live-stepper] [data-step-indicator] [aria-current='step']",
     );
+    // Matches StepIndicator.tsx: the ol inside [data-step-indicator] marks the
+    // current li with aria-current="step" (LiveStepper.tsx wraps it in data-live-stepper).
     return {
       scrollWidth: document.documentElement.scrollWidth,
       clientWidth: document.documentElement.clientWidth,
@@ -611,7 +613,11 @@ function fiveStageActions(figure: boolean): readonly StageAction[] {
               `${filled.length} own-number row input(s) hold text, so the rows are not blank.`,
             );
           }
-          return `Receipts_Disclosure opened. Own-number rows left blank (${typed.length} input(s), all empty).`;
+          // The walk adds no own-number row, so zero inputs is the normal state.
+          // The message reports the count it saw and never claims rows it did not find.
+          return typed.length === 0
+            ? "Receipts_Disclosure opened. No own-number rows added."
+            : `Receipts_Disclosure opened. Own-number rows blank (${typed.length} input(s), all empty).`;
         }
         return `Receipts_Disclosure opened. Figure selected: ${await tickOneFigure(c.page)}.`;
       },
@@ -739,6 +745,8 @@ function remainingStageActions(method: BreakMethod): readonly StageAction[] {
       step: "figures",
       act: async (c) => {
         if ((await currentStage(c.page)) === "letter") {
+          // The letter stage's button is REVEAL_COPY.stage2Next, "See the receipts"
+          // (reveal/copy.ts, rendered by Reveal.tsx). /see the receipts/i matches it.
           const next = c.page
             .getByRole("button", { name: /see the receipts/i })
             .first();
