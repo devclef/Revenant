@@ -84,9 +84,12 @@ export type CeremonyRootProps = {
   /**
    * Where the Calm and Skip controls render. `"region"` (the default, live
    * mode) renders them inside the region. `"topbar"` (persona mode) renders
-   * neither, because the Top_Bar holds them (spec 07, R8.3).
+   * neither, because the Top_Bar holds them (spec 07, R8.3). `"host"` (the
+   * embedded Live_Reveal, spec X2) renders no Calm and no Skip in the region,
+   * because the page holds the one motion control. It keeps the sound toggle
+   * and the default Stage announcement, as `"region"` does.
    */
-  controls?: "topbar" | "region";
+  controls?: "topbar" | "region" | "host";
   /** The one view for the current Stage, rendered inside the region. */
   children: ReactNode;
 };
@@ -434,8 +437,12 @@ function CeremonyRegion({
   const controlClass = `${styles.desk} ${styles.deskControl}`;
 
   // Calm and Skip render here only in `region` mode. In `topbar` mode the
-  // Top_Bar renders them (spec 07, R8.3), so the page has one of each.
+  // Top_Bar renders them (spec 07, R8.3), so the page has one of each. In `host`
+  // mode the page holds the one motion control (spec X2), so neither renders.
   const showRegionControls = controls === "region";
+  // The sound toggle renders in `region` and `host` mode. Only `topbar` hands
+  // the sound state to the Top_Bar (spec 07 task 5).
+  const ownsSound = controls !== "topbar";
 
   return (
     <div
@@ -447,7 +454,7 @@ function CeremonyRegion({
       data-ceremony-motion={motionAttr}
       className={`${styles.desk} ${className ? `${styles.ceremony} ${className}` : styles.ceremony}`}
     >
-      <SoundEnabledContext.Provider value={showRegionControls ? soundOn : inheritedSound}>
+      <SoundEnabledContext.Provider value={ownsSound ? soundOn : inheritedSound}>
         <StageContext.Provider value={stage}>
         <LiveRegion message={liveLine} />
         {showRegionControls ? (
@@ -464,7 +471,7 @@ function CeremonyRegion({
             design.md "Sound toggle placement" moves them into the `marks`
             column (spec 07 task 5). Rendering them here would also fill the
             narrow band above the Soil strip and push the status card onto it. */}
-        {showRegionControls ? (
+        {ownsSound ? (
           <>
             <SoundToggle
               onChange={(next) => {

@@ -5,6 +5,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { REVEAL_COPY } from "./copy";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
+import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { DEMO_COPY } from "@/components/demo/copy";
 import type {
   FlowState,
@@ -629,5 +630,90 @@ describe("OpeningFlow controls placement (spec 07 task 2)", () => {
       }),
     );
     expect(countCalmButtons(html)).toBe(1);
+  });
+});
+
+// --- embedded host root and the one motion control (spec X1, X2, X2.7) -------
+//
+// An embedded flow (the Live_Reveal inside the stepper) carries `flowLive` and
+// renders no Calm and no Skip in its region, because the page holds the one
+// motion control. A persona page holds exactly one Calm, in its Top_Bar.
+
+const EMBEDDED = { onPhase: () => {} };
+
+function renderEmbedded(state: FlowState): string {
+  setState(state);
+  return renderToStaticMarkup(
+    createElement(OpeningFlow, {
+      letterId: "letter-1",
+      personaName: "Maya",
+      mode: "live",
+      embedded: EMBEDDED,
+    }),
+  );
+}
+
+/** The persona page: the SceneShell Top_Bar wraps the flow, as the route does. */
+function renderPersonaPage(state: FlowState): string {
+  setState(state);
+  return renderToStaticMarkup(
+    createElement(
+      SceneShell,
+      {
+        variant: "persona",
+        personaName: "Maya",
+        children: createElement(OpeningFlow, {
+          letterId: "letter-1",
+          personaName: "Maya",
+          persona: PERSONA,
+        }),
+      } as ComponentProps<typeof SceneShell>,
+    ),
+  );
+}
+
+/** One row per Stage the Live_Reveal and the persona page both reach. */
+const STAGE_STATES: ReadonlyArray<readonly [string, FlowState]> = [
+  ["loading", { tag: "loading" }],
+  ["sealed", { tag: "sealed", opensAt: "2024-11-05T00:00:00.000Z" }],
+  ["recall", { tag: "recall", opened: OPENED, drafts: DRAFTS, invalid: [] }],
+  ["reveal stage 1", { tag: "reveal", opened: OPENED, record: RECORD, stage: 1 }],
+];
+
+describe("OpeningFlow embedded root (spec X1, X2)", () => {
+  it("the embedded root carries flowLive", () => {
+    setMotionMode("full");
+    expect(renderEmbedded({ tag: "loading" })).toMatch(/class="[^"]*flowLive/);
+  });
+
+  it("the persona root does not carry flowLive", () => {
+    setMotionMode("full");
+    const html = renderWithPersona({ tag: "loading" });
+    expect(html).toContain("aria-label=\"Maya\"");
+    expect(html).not.toContain("flowLive");
+  });
+
+  it("the standalone live root (no embedded prop) does not carry flowLive", () => {
+    setMotionMode("full");
+    setState({ tag: "loading" });
+    const html = renderToStaticMarkup(
+      createElement(OpeningFlow, { letterId: "letter-1", personaName: "Maya", mode: "live" }),
+    );
+    expect(html).not.toContain("flowLive");
+  });
+});
+
+describe("OpeningFlow one motion control per Stage (spec X2.7)", () => {
+  it.each(STAGE_STATES)("the embedded flow at %s renders no Calm and no Skip", (_name, state) => {
+    setMotionMode("full");
+    const html = renderEmbedded(state);
+    expect(countCalmButtons(html), `Calm count at ${_name}`).toBe(0);
+    expect(html).not.toContain(`>${CEREMONY_COPY.skip}<`);
+  });
+
+  it.each(STAGE_STATES)("the persona page at %s renders exactly one Calm (the Top_Bar)", (_name, state) => {
+    setMotionMode("full");
+    const html = renderPersonaPage(state);
+    expect(countCalmButtons(html), `Calm count at ${_name}`).toBe(1);
   });
 });

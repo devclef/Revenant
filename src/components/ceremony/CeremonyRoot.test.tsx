@@ -110,7 +110,7 @@ vi.mock("./skip", () => ({
 // Imported after the mocks are declared (vi.mock is hoisted, so this is safe).
 import { OpeningFlow } from "../reveal/OpeningFlow";
 import { CeremonyRoot, letterPaperScrollTarget, type CeremonyRootProps } from "./CeremonyRoot";
-import { focusTargetFor, shouldRescueFocus } from "./stages";
+import { focusTargetFor, emergingStatus, shouldRescueFocus } from "./stages";
 
 // --- fixtures ----------------------------------------------------------------
 
@@ -468,7 +468,7 @@ describe("CeremonyRoot controls use the desk control style (R11.2, R11.4)", () =
 // before. `controls="topbar"` renders neither, because the Top_Bar holds them.
 // The region contract is the same in both modes.
 
-function rootMarkup(extra: { controls?: "topbar" | "region" } = {}): string {
+function rootMarkup(extra: { controls?: "topbar" | "region" | "host" } = {}): string {
   const props: CeremonyRootProps = {
     state: { tag: "loading" },
     personaName: "Maya",
@@ -515,6 +515,48 @@ describe("CeremonyRoot controls prop", () => {
     } finally {
       setHasActive(false);
     }
+  });
+});
+
+// --- host mode (spec X2) -----------------------------------------------------
+//
+// `controls="host"` is the embedded Live_Reveal. The page holds the one motion
+// control, so the region renders no Calm and no Skip, even while a sequence
+// runs. The sound toggle and the default Stage announcement stay as in region
+// mode; the persona step lines never appear.
+
+describe("CeremonyRoot host mode (spec X2)", () => {
+  it("renders no Calm and no Skip, even while a sequence runs", () => {
+    setHasActive(true);
+    try {
+      const markup = rootMarkup({ controls: "host" });
+      expect(markup).not.toContain(CEREMONY_COPY.calmOn);
+      expect(markup).not.toContain(CEREMONY_COPY.calmOff);
+      expect(markup).not.toContain(`>${CEREMONY_COPY.skip}<`);
+    } finally {
+      setHasActive(false);
+    }
+  });
+
+  it("keeps the sound toggle and its note, as region mode does", () => {
+    expect(rootMarkup({ controls: "host" })).toContain(CEREMONY_COPY.soundNote);
+    expect(rootMarkup({ controls: "region" })).toContain(CEREMONY_COPY.soundNote);
+  });
+
+  it("announces the Stage line unchanged, with no persona step line", () => {
+    const hostLine = emergingStatus("loading");
+    expect(rootMarkup({ controls: "host" })).toContain(hostLine);
+    expect(rootMarkup({ controls: "region" })).toContain(hostLine);
+    expect(rootMarkup({ controls: "host" })).not.toContain(CEREMONY_COPY.stepsLabel);
+  });
+
+  it("keeps the region contract in host mode", () => {
+    const markup = rootMarkup({ controls: "host" });
+    expect(markup).toContain('role="region"');
+    expect(markup).toContain('aria-label="Maya"');
+    expect(markup).toContain('tabindex="-1"');
+    expect(markup.match(/data-ceremony="/g)?.length).toBe(1);
+    expect(markup.match(/data-ceremony-motion="/g)?.length).toBe(1);
   });
 });
 
