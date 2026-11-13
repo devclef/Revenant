@@ -500,17 +500,19 @@ export function checkStepSnapshot(
     checks.push(checkStepIndicator(snapshot.currentStep, indicator));
   }
 
+  // A run that could not be measured is a defect here, not a pass: the walk
+  // cannot show the contrast floor was met for that text.
   const contrast = snapshot.contrastSamples.map(checkContrast);
-  const failing = contrast.filter((c) => c.measured && !c.ok);
+  const failing = contrast.filter((c) => !c.measured || !c.ok);
   const unmeasured = contrast.filter((c) => !c.measured).length;
-  const measured = contrast.length - unmeasured;
   checks.push({
     ok: failing.length === 0,
-    expected: "text meets the G1.8 contrast floor on its measured background",
+    expected:
+      "every text run is measured and meets the G1.8 contrast floor on its background",
     message:
       failing.length === 0
-        ? `PASS contrast on ${measured} measured text run(s), ${unmeasured} unmeasured`
-        : `FAIL ${failing.length} text run(s) below the G1.8 floor: ${failing
+        ? `PASS contrast on ${contrast.length} measured text run(s), 0 unmeasured`
+        : `FAIL ${failing.length} text run(s) not verified against the G1.8 floor (${unmeasured} unmeasured): ${failing
             .slice(0, 3)
             .map((c) => c.message)
             .join("; ")}`,

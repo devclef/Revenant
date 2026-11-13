@@ -523,6 +523,55 @@ describe("checkStepSnapshot and defectsFromChecks", () => {
   });
 });
 
+describe("checkStepSnapshot contrast run states", () => {
+  const sample = (fg: string, bg: string | null) => ({
+    text: "Break the seal",
+    fg,
+    bg,
+    fontSizePx: 16,
+    fontWeight: 400,
+  });
+  const contrastCheck = (contrastSamples: PageSnapshot["contrastSamples"]) =>
+    checkStepSnapshot("write", { ...CLEAN_SNAPSHOT, contrastSamples }).find(
+      (c) => c.expected.includes("contrast floor"),
+    );
+
+  it("passes a measured run that is above its floor", () => {
+    const check = contrastCheck([sample("rgb(0, 0, 0)", "rgb(255, 255, 255)")]);
+    expect(check?.ok).toBe(true);
+    expect(check?.message).toBe(
+      "PASS contrast on 1 measured text run(s), 0 unmeasured",
+    );
+  });
+
+  it("fails a measured run that is below its floor", () => {
+    const check = contrastCheck([
+      sample("rgb(150, 150, 150)", "rgb(255, 255, 255)"),
+    ]);
+    expect(check?.ok).toBe(false);
+    expect(check?.message.startsWith("FAIL 1 text run(s)")).toBe(true);
+    expect(check?.message).toContain("(0 unmeasured)");
+  });
+
+  it("fails an unmeasured run as a visible defect, not a PASS with a count", () => {
+    const check = contrastCheck([sample("rgb(255, 255, 255)", null)]);
+    expect(check?.ok).toBe(false);
+    expect(check?.message.startsWith("FAIL 1 text run(s)")).toBe(true);
+    expect(check?.message).toContain("(1 unmeasured)");
+    expect(check?.message).toContain("UNMEASURED");
+    expect(check?.message.startsWith("PASS")).toBe(false);
+  });
+
+  it("reports a mixed snapshot as a defect and counts the unmeasured run", () => {
+    const check = contrastCheck([
+      sample("rgb(0, 0, 0)", "rgb(255, 255, 255)"),
+      sample("rgb(255, 255, 255)", null),
+    ]);
+    expect(check?.ok).toBe(false);
+    expect(check?.message).toContain("(1 unmeasured)");
+  });
+});
+
 describe("walkShotName", () => {
   it("keeps the spec name for the default hold method", () => {
     expect(
