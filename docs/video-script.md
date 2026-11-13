@@ -2,7 +2,7 @@
 
 *The wax seal, resurrected. Memory rewrites itself. Revenant doesn't.*
 
-A beat sheet for the Kiroween 2026 submission video. It runs under 3 minutes and uses the ritual steps: Write, Seal the figures, Press the seal, Testify, See the receipts.
+A beat sheet for the Kiroween 2026 submission video. It runs under 3 minutes and uses the ritual steps: Write, Press the seal, Testify, See the receipts.
 
 | Time | Beat | On screen |
 |---|---|---|
