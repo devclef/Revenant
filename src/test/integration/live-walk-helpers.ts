@@ -551,3 +551,78 @@ export function defectsFromChecks(
       suspectedFile: STEP_SUSPECTED_FILES[step],
     }));
 }
+
+/* ---------------------------------------------------------------------------
+ * Per-run checks used by live-walk.test.ts (Q1, Q2).
+ * ------------------------------------------------------------------------- */
+
+/**
+ * The missing-Step_Shot check for one browser run. The walk calls it right
+ * after that run, before the next run can overwrite the same file names in
+ * `qa-shots/live-walk/`, so a FAIL always belongs to the run that produced it.
+ */
+export function checkRunShots(
+  expected: readonly string[],
+  present: readonly string[],
+): { ok: boolean; missing: string[]; lines: string[] } {
+  const report = reportMissingShots(expected, present);
+  return { ok: report.missing.length === 0, ...report };
+}
+
+/**
+ * The own-number blank check (Q1.2 receipts step). `values` are the text of
+ * every own-number input inside the open Receipts_Disclosure. A walk with no
+ * figure adds no own-number row, so zero inputs is the normal state. The
+ * message reports the count it saw and never claims rows it did not find.
+ */
+export function checkOwnNumberRowsBlank(
+  values: readonly string[],
+): StepCheck & {
+  count: number;
+} {
+  const expected = "every own-number row input inside the disclosure is empty";
+  const filled = values.filter((value) => value.trim() !== "").length;
+  if (filled > 0) {
+    return {
+      ok: false,
+      expected,
+      count: values.length,
+      message: `FAIL ${filled} own-number row input(s) hold text, so the rows are not blank`,
+    };
+  }
+  if (values.length === 0) {
+    return {
+      ok: true,
+      expected,
+      count: 0,
+      message: "PASS no own-number rows added",
+    };
+  }
+  return {
+    ok: true,
+    expected,
+    count: values.length,
+    message: `PASS own-number rows blank (${values.length} input(s), all empty)`,
+  };
+}
+
+/** Where the settle wait stands: the last state seen and when it first appeared. */
+export type SettleState = { last: string; since: number };
+
+/**
+ * One poll of the stable-wait condition (see `waitForStable` in
+ * live-walk.test.ts). `state` is the Stage name and the count of finite running
+ * animations. The screen is settled once that state has not changed for
+ * `settleMs`. A change restarts the clock and is never settled on the same poll.
+ */
+export function advanceSettle(
+  prev: SettleState,
+  state: string,
+  now: number,
+  settleMs: number,
+): { next: SettleState; settled: boolean } {
+  if (state !== prev.last) {
+    return { next: { last: state, since: now }, settled: false };
+  }
+  return { next: prev, settled: now - prev.since >= settleMs };
+}

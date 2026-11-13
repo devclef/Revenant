@@ -5,12 +5,15 @@ import {
   MOTION_CONTROL_SELECTOR,
   STEP_SUSPECTED_FILES,
   WALK_STEP_NAMES,
+  advanceSettle,
   checkClippedText,
   checkConsoleErrors,
   checkContrast,
   checkForbiddenFinalText,
   checkHorizontalScroll,
   checkMotionControlCount,
+  checkOwnNumberRowsBlank,
+  checkRunShots,
   checkStepIndicator,
   checkStepSnapshot,
   contrastFloor,
@@ -589,5 +592,102 @@ describe("walkShotName", () => {
         method: "skip",
       }),
     ).toBe("live-10-close-390x844-reduced-via-skip.png");
+  });
+});
+
+describe("checkRunShots (per-run missing Step_Shot check)", () => {
+  it("passes for one run whose shots are all present", () => {
+    const expected = expectedShotNames("no-figure");
+    const result = checkRunShots(expected, expected);
+    expect(result.ok).toBe(true);
+    expect(result.missing).toEqual([]);
+    expect(result.lines).toEqual([
+      `PASS all ${expected.length} Step_Shots present`,
+    ]);
+  });
+
+  it("fails and names the missing file when a run wrote fewer shots", () => {
+    const expected = [
+      stepShotName({ step: "write", width: 390, height: 844 }),
+      stepShotName({ step: "seal", width: 390, height: 844 }),
+    ];
+    const result = checkRunShots(expected, [expected[0]]);
+    expect(result.ok).toBe(false);
+    expect(result.lines).toEqual([
+      "FAIL missing Step_Shot live-03-seal-390x844.png",
+    ]);
+  });
+
+  it("checks each variant against its own run, so the other run's files do not count", () => {
+    // The no-figure run wrote every shot. The one-figure run then wrote none.
+    // Checked straight after each run, the one-figure check must fail even
+    // though the same file names exist from the earlier run.
+    const names = expectedShotNames("one-figure");
+    const afterNoFigure = checkRunShots(names, names);
+    expect(afterNoFigure.ok).toBe(true);
+    const afterOneFigure = checkRunShots(names, []);
+    expect(afterOneFigure.ok).toBe(false);
+    expect(afterOneFigure.missing).toHaveLength(names.length);
+  });
+});
+
+describe("checkOwnNumberRowsBlank", () => {
+  it("passes with no own-number inputs, and says so without claiming rows", () => {
+    const result = checkOwnNumberRowsBlank([]);
+    expect(result.ok).toBe(true);
+    expect(result.count).toBe(0);
+    expect(result.message).toBe("PASS no own-number rows added");
+    expect(result.message).not.toContain("all empty");
+  });
+
+  it("passes with blank inputs and reports the count it saw", () => {
+    const result = checkOwnNumberRowsBlank(["", "   "]);
+    expect(result.ok).toBe(true);
+    expect(result.count).toBe(2);
+    expect(result.message).toBe(
+      "PASS own-number rows blank (2 input(s), all empty)",
+    );
+  });
+
+  it("fails when any own-number input holds text", () => {
+    const result = checkOwnNumberRowsBlank(["", "1200", ""]);
+    expect(result.ok).toBe(false);
+    expect(result.count).toBe(3);
+    expect(result.message).toBe(
+      "FAIL 1 own-number row input(s) hold text, so the rows are not blank",
+    );
+  });
+});
+
+describe("advanceSettle (stable-wait condition)", () => {
+  const start = { last: "", since: 0 };
+
+  it("never settles on the poll where the state first appears", () => {
+    const step = advanceSettle(start, "write|0", 1000, 300);
+    expect(step.settled).toBe(false);
+    expect(step.next).toEqual({ last: "write|0", since: 1000 });
+  });
+
+  it("settles once the same state has held for the full window", () => {
+    const first = advanceSettle(start, "letter|0", 1000, 300);
+    const early = advanceSettle(first.next, "letter|0", 1299, 300);
+    expect(early.settled).toBe(false);
+    const late = advanceSettle(early.next, "letter|0", 1300, 300);
+    expect(late.settled).toBe(true);
+  });
+
+  it("restarts the clock when a running animation count changes", () => {
+    const first = advanceSettle(start, "figures|0", 1000, 300);
+    const moving = advanceSettle(first.next, "figures|2", 1400, 300);
+    expect(moving.settled).toBe(false);
+    expect(moving.next).toEqual({ last: "figures|2", since: 1400 });
+    const still = advanceSettle(moving.next, "figures|2", 1600, 300);
+    expect(still.settled).toBe(false);
+  });
+
+  it("does not settle on a stage change even if the window has passed", () => {
+    const first = advanceSettle(start, "recall|0", 0, 300);
+    const changed = advanceSettle(first.next, "marks|0", 5000, 300);
+    expect(changed.settled).toBe(false);
   });
 });

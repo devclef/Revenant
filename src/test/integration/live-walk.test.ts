@@ -33,12 +33,15 @@ import {
   MOTION_CONTROL_SELECTOR,
   STEP_SUSPECTED_FILES,
   WALK_SIZES,
+  advanceSettle,
+  checkOwnNumberRowsBlank,
+  checkRunShots,
   checkStepSnapshot,
   defectsFromChecks,
   recordStepResult,
-  reportMissingShots,
   walkShotName,
   type BreakMethod,
+  type SettleState,
   type ClippedSample,
   type ContrastSample,
   type PageSnapshot,
@@ -206,8 +209,7 @@ async function currentStage(page: Page): Promise<string> {
  */
 async function waitForStable(page: Page): Promise<void> {
   const deadline = Date.now() + STEP_TIMEOUT_MS;
-  let last = "";
-  let since = Date.now();
+  let settle: SettleState = { last: "", since: Date.now() };
   while (Date.now() < deadline) {
     const state = await page.evaluate(() => {
       const stage =
@@ -223,16 +225,13 @@ async function waitForStable(page: Page): Promise<void> {
         ).length;
       return `${stage}|${running}`;
     });
-    if (state !== last) {
-      last = state;
-      since = Date.now();
-    } else if (Date.now() - since >= SETTLE_MS) {
-      return;
-    }
+    const step = advanceSettle(settle, state, Date.now(), SETTLE_MS);
+    settle = step.next;
+    if (step.settled) return;
     await page.waitForTimeout(50);
   }
   throw new Error(
-    `The screen did not settle within ${STEP_TIMEOUT_MS} ms (last state ${last}).`,
+    `The screen did not settle within ${STEP_TIMEOUT_MS} ms (last state ${settle.last}).`,
   );
 }
 
@@ -504,12 +503,16 @@ function runShotNames(run: WalkRun, steps: readonly WalkStepName[]): string[] {
   );
 }
 
-/** Which expected Step_Shots exist. Missing ones print `FAIL missing Step_Shot`. */
+/**
+ * Which expected Step_Shots exist. Missing ones print `FAIL missing Step_Shot`.
+ * Each call site runs it straight after its own browser run and before the next
+ * run starts, so the next run cannot overwrite the files this one should have written.
+ */
 function shotReport(expected: readonly string[]) {
   const present = expected.filter((name) =>
     existsSync(path.join(LIVE_WALK_SHOTS, name)),
   );
-  return reportMissingShots(expected, present);
+  return checkRunShots(expected, present);
 }
 
 /** The recall stage: answer every question in turn, then go on to `marks`. Returns the count answered. */
@@ -607,17 +610,9 @@ function fiveStageActions(figure: boolean): readonly StageAction[] {
             .evaluateAll((inputs) =>
               inputs.map((input) => (input as HTMLInputElement).value),
             );
-          const filled = typed.filter((value) => value.trim() !== "");
-          if (filled.length > 0) {
-            throw new Error(
-              `${filled.length} own-number row input(s) hold text, so the rows are not blank.`,
-            );
-          }
-          // The walk adds no own-number row, so zero inputs is the normal state.
-          // The message reports the count it saw and never claims rows it did not find.
-          return typed.length === 0
-            ? "Receipts_Disclosure opened. No own-number rows added."
-            : `Receipts_Disclosure opened. Own-number rows blank (${typed.length} input(s), all empty).`;
+          const check = checkOwnNumberRowsBlank(typed);
+          if (!check.ok) throw new Error(check.message);
+          return `Receipts_Disclosure opened. ${check.message.replace(/^PASS /, "")}.`;
         }
         return `Receipts_Disclosure opened. Figure selected: ${await tickOneFigure(c.page)}.`;
       },
