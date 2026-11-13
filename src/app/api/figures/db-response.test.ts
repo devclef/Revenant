@@ -25,6 +25,7 @@ import {
   hasAnyBundled,
   shapeDbFiguresResponse,
   readDbFigures,
+  toInstant,
   toUtcSeconds,
   type FigureReadStore,
   type StoredFigureRow,
@@ -50,10 +51,15 @@ function isLatestOver(
   bIndex: number,
 ): boolean {
   if (a.period !== b.period) return a.period > b.period;
-  if (a.retrieved_at.getTime() !== b.retrieved_at.getTime()) {
-    return a.retrieved_at.getTime() > b.retrieved_at.getTime();
+  if (timeOf(a) !== timeOf(b)) {
+    return timeOf(a) > timeOf(b);
   }
   return aIndex > bIndex;
+}
+
+/** The retrieved_at of a row as milliseconds. NaN when it is not a valid timestamp. */
+function timeOf(row: StoredFigureRow): number {
+  return toInstant(row.retrieved_at)?.getTime() ?? NaN;
 }
 
 /** An in-memory store with the same answers as the Postgres queries. */
@@ -121,7 +127,7 @@ function oracleFigure(metricId: string, rows: readonly StoredFigureRow[]): Figur
   if (owned.length === 0) return null;
   const sorted = [...owned].sort((a, b) =>
     a.period === b.period
-      ? b.retrieved_at.getTime() - a.retrieved_at.getTime()
+      ? timeOf(b) - timeOf(a)
       : a.period < b.period
         ? 1
         : -1,
