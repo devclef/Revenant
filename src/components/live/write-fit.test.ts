@@ -87,6 +87,11 @@ describe("Write step fallback 2: two columns at 900 px and wider", () => {
     }
   });
 
+  it("applies the Letter_Field class to the letter textarea", () => {
+    expect(writeForm).toContain('import letterField from "./letter-field.module.css";');
+    expect(writeForm).toContain("${letterField.letterField}");
+  });
+
   it("does not depend on a data-seal-mode attribute, and WriteForm adds the class only in demo mode", () => {
     expect(block).not.toContain("data-seal-mode");
     // WriteForm adds styles.liveWrite to its panel only when mode is "demo".

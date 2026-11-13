@@ -19,6 +19,7 @@ import {
   type WriteProblem,
 } from "./form";
 import styles from "./live.module.css";
+import letterField from "./letter-field.module.css";
 import { OccasionPicker } from "./OccasionPicker";
 import { applyOccasion, type OccasionDraft, type OccasionId } from "./occasions";
 import { letterFieldHeightPx } from "./phone";
@@ -439,7 +440,7 @@ export function WriteForm({
           <textarea
             id="live-letter"
             ref={letterRef}
-            className={styles.textarea}
+            className={`${styles.textarea} ${letterField.letterField}`}
             rows={LETTER_FIELD_ROWS}
             value={text}
             aria-describedby="live-letter-count live-letter-problem"

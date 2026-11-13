@@ -76,6 +76,17 @@ describe("Property 19: no other page or component can show the line", () => {
     ]);
   });
 
+  it("only the Write step (SealPage) and the Wait step (LiveWaitStep) render the line", () => {
+    const rendering = files
+      .filter((file) => file.text.includes("LIVE_COPY.rehearsalLine"))
+      .map((file) => file.path)
+      .sort();
+    expect(rendering).toEqual([
+      "src/components/live/SealPage.tsx",
+      "src/components/live/stepper/LiveWaitStep.tsx",
+    ]);
+  });
+
   it("only /demo/live passes the rehearsal prop, so /seal, /l/[id] and persona pages never get it", () => {
     const routeFiles = files
       .filter((file) => file.path.startsWith("src/app/"))

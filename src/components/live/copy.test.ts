@@ -31,11 +31,16 @@ const splitSentences = (value: string): string[] =>
     .filter((s) => s.length > 0);
 
 describe("LIVE_COPY", () => {
-  it("describes the demo letter as sealed in the browser, not as a real sealed letter", () => {
+  it("describes the letter as sealed in the browser with the author's own passkey", () => {
     expect(LIVE_COPY.intro).toBe(
-      "This letter is sealed in your browser with your own passkey. It is locked for 30 seconds only because this is a demo.",
+      "This letter is sealed in your browser with your own passkey.",
     );
     expect(LIVE_COPY.intro).not.toContain("real sealed letter");
+  });
+
+  it("does not say on the Write step that the demo is short", () => {
+    expect(LIVE_COPY.intro).not.toContain("30 seconds");
+    expect(LIVE_COPY.intro).not.toContain("only because this is a demo");
   });
 
   it("has no exclamation mark in any string", () => {
@@ -223,8 +228,15 @@ describe("LIVE_COPY for the receipts and the block message (spec 11)", () => {
 describe("LIVE_COPY rehearsal line (spec 11, L4.1)", () => {
   it("reads exactly as the ticket says", () => {
     expect(LIVE_COPY.rehearsalLine).toBe(
-      "This is a rehearsal. A real letter stays sealed for months. This one opens in 30 seconds.",
+      "This is a rehearsal: a real letter stays sealed for months, and this one opens in 30 seconds.",
     );
+  });
+
+  it("is one sentence of at most 25 words", () => {
+    const line = LIVE_COPY.rehearsalLine;
+    expect(splitSentences(line)).toHaveLength(1);
+    expect(line.trim().endsWith(".")).toBe(true);
+    expect(line.split(/\s+/).length).toBeLessThanOrEqual(25);
   });
 
   it("carries no exclamation mark and no time word", () => {
