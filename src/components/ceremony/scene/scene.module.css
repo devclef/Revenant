@@ -1074,6 +1074,30 @@
   }
 }
 
+/* The full-width frame under the landing column (SceneShell `below`, ticket H1).
+   This frame takes the start edge of the content box with no inline offset, so
+   `margin-inline: auto` would centre it and move it right of the hero at 1440 px.
+   The section text inside gets its 1.25 rem start padding from
+   landing.module.css (.section at 600 px and wider), which matches the hero's
+   1.25 rem side padding, so the section text and hero text share one left edge. */
+.landingBelowFrame {
+  max-width: 1200px;
+  width: 100%;
+  margin-inline-start: 0;
+  margin-inline-end: auto;
+}
+
+/* Below 900 px the fixed Ghost layer (.ghostLayer, z-index 2) sits over the
+   page. The frame paints above it, so the section text is not covered by the
+   Ghost body as the page scrolls. The ritual cards take an opaque surface in
+   landing.module.css. */
+@media (max-width: 899.98px) {
+  .landingBelowFrame {
+    position: relative;
+    z-index: 3;
+  }
+}
+
 /* The landing calls to action (LandingHero's actions block, data-block
    "actions"). Below 900 px they are taken out of the flow and placed under the
    Soil strip: the top is the strip's bottom edge plus 1.5 rem, measured from the

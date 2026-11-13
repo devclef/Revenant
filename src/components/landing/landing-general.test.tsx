@@ -17,6 +17,7 @@ import { CovenStrip } from "./CovenStrip";
 import { NoSealSection } from "./NoSealSection";
 import { ResurrectionSection } from "./ResurrectionSection";
 import { RitualSection } from "./RitualSection";
+import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 const srcRoot = resolve(here, "../..");
@@ -45,6 +46,44 @@ describe("touch targets and one column (H1)", () => {
     const rule = css.match(/\.covenLink \{([^}]*)\}/)?.[1] ?? "";
     expect(rule).toMatch(/min-height:\s*2\.75rem/);
     expect(rule).toMatch(/min-width:\s*2\.75rem/);
+  });
+});
+
+describe("section text measure clear of the Ghost (H1 step 1)", () => {
+  const landingCss = readFileSync(join(here, "landing.module.css"), "utf8");
+  const sceneCss = readFileSync(
+    join(here, "../ceremony/scene/scene.module.css"),
+    "utf8",
+  );
+
+  it("keeps the 1200 px full-width frame under the landing column", () => {
+    const rule = sceneCss.match(/\.landingBelowFrame \{([^}]*)\}/)?.[1] ?? "";
+    expect(rule).toMatch(/max-width:\s*1200px/);
+    expect(rule).toMatch(/width:\s*100%/);
+  });
+
+  it("aligns the section text with the hero text at 600 px and wider", () => {
+    const media =
+      landingCss.match(
+        /@media \(min-width: 600px\) \{\n  \.section \{([^}]*)\}/,
+      )?.[1] ?? "";
+    expect(media).toMatch(/padding-left:\s*1\.25rem/);
+  });
+
+  it("keeps the full-width section box", () => {
+    const rule = landingCss.match(/\n\.section \{([^}]*)\}/)?.[1] ?? "";
+    expect(rule).toMatch(/width:\s*100%/);
+  });
+
+  it("ends the section text at the Ghost's visible left edge at 900 px and wider", () => {
+    const media =
+      landingCss.match(
+        /@media \(min-width: 900px\) \{\n  \.section \{([^}]*)\}/,
+      )?.[1] ?? "";
+    expect(media).toMatch(/--text-right:\s*calc\(\s*var\(--ghost-x\)/);
+    expect(media).toMatch(/min\(50vh,\s*560px\)\s*\*\s*0\.12/);
+    expect(media).toMatch(/padding-inline-end:\s*max\(\s*0px,\s*calc\(/);
+    expect(media).toMatch(/var\(--section-right\)\s*-\s*var\(--text-right\)/);
   });
 });
 
@@ -100,5 +139,117 @@ describe("general-letter section copy (H1)", () => {
 
   it("names no fuel price as what a letter holds", () => {
     expect(sectionText).not.toMatch(/fuel|gallon|petrol|gasoline|per litre/);
+  });
+});
+
+// H1 step 3: example tests for the SceneShell `below` slot that carries the four
+// sections (see src/components/ceremony/scene/SceneShell.tsx, variant "landing").
+describe("SceneShell below slot (H1)", () => {
+  it("renders below outside the landing column and inside main", () => {
+    const html = renderToStaticMarkup(
+      <SceneShell variant="landing" below={<p data-below="">below</p>}>
+        <p data-child="">child</p>
+      </SceneShell>,
+    );
+    const mainStart = html.indexOf("<main");
+    const mainEnd = html.indexOf("</main>");
+    const child = html.indexOf("data-child");
+    const below = html.indexOf("data-below");
+    expect(html.indexOf("data-landing-column")).toBeGreaterThan(-1);
+    expect(mainStart).toBeLessThan(below);
+    expect(below).toBeLessThan(mainEnd);
+    // The column's closing </div> sits between the child and the below content,
+    // so below is not inside the column.
+    expect(child).toBeLessThan(below);
+    expect(html.slice(child, below)).toContain("</div>");
+  });
+
+  it("keeps the four sections in order, after the landing column", () => {
+    const html = renderToStaticMarkup(
+      <SceneShell
+        variant="landing"
+        below={
+          <>
+            <RitualSection />
+            <ResurrectionSection />
+            <NoSealSection />
+            <CovenStrip />
+          </>
+        }
+      >
+        <p>hero</p>
+      </SceneShell>,
+    );
+    const ids = [
+      "ritual-title",
+      "resurrected-title",
+      "no-seal-title",
+      "coven-title",
+    ];
+    const positions = ids.map((id) => html.indexOf(`id="${id}"`));
+    for (const position of positions) expect(position).toBeGreaterThan(-1);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+    // Added in step 3 as a check on the wiring: the sections come after the column opens.
+    expect(positions[0]).toBeGreaterThan(html.indexOf("data-landing-column"));
+  });
+
+  it("adds no client-only import to the landing sections or SceneShell", () => {
+    // SceneShell is already a client module ("use client"), so only the
+    // browser-only Soil canvas and dynamic imports are checked here.
+    const files = [
+      join(here, "RitualSection.tsx"),
+      join(here, "ResurrectionSection.tsx"),
+      join(here, "NoSealSection.tsx"),
+      join(here, "CovenStrip.tsx"),
+      resolve(here, "../ceremony/scene/SceneShell.tsx"),
+    ];
+    for (const file of files) {
+      const text = readFileSync(file, "utf8");
+      expect(text, file).not.toMatch(/from\s+["'][^"']*soil-canvas/);
+      expect(text, file).not.toMatch(/next\/dynamic/);
+      expect(text, file).not.toMatch(/\bimport\s*\(/);
+    }
+  });
+});
+
+// H1 step 1 (phones): the landing sections clear the fixed Ghost layer below 900 px.
+describe("landing sections clear the Ghost below 900 px (H1)", () => {
+  const landingCss = readFileSync(join(here, "landing.module.css"), "utf8");
+  const sceneCss = readFileSync(
+    resolve(here, "../ceremony/scene/scene.module.css"),
+    "utf8",
+  );
+
+  /** The body of the first `@media (max-width: 899.98px)` block that holds `selector`. */
+  function phoneBlockFor(css: string, selector: string): string {
+    const media = "@media (max-width: 899.98px) {";
+    let index = css.indexOf(media);
+    while (index !== -1) {
+      const start = index + media.length;
+      let depth = 1;
+      let end = start;
+      while (end < css.length && depth > 0) {
+        if (css[end] === "{") depth++;
+        if (css[end] === "}") depth--;
+        end++;
+      }
+      const body = css.slice(start, end - 1);
+      if (body.includes(selector)) return body;
+      index = css.indexOf(media, end);
+    }
+    return "";
+  }
+
+  it("gives the ritual cards an opaque page background below 900 px", () => {
+    const block = phoneBlockFor(landingCss, ".ritualCard");
+    expect(block).toMatch(/background:\s*var\(--bg\)/);
+  });
+
+  it("paints the below-the-fold frame above the Ghost layer below 900 px", () => {
+    const block = phoneBlockFor(sceneCss, ".landingBelowFrame");
+    expect(block).toMatch(/position:\s*relative/);
+    expect(block).toMatch(/z-index:\s*3/);
+    // The Ghost layer sits at z-index 2 in scene.module.css.
+    expect(sceneCss).toMatch(/\.ghostLayer \{[^}]*z-index:\s*2/);
   });
 });

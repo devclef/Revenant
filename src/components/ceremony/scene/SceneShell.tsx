@@ -29,7 +29,16 @@ import { SCENE_COPY } from "./copy";
 import { SceneBackdrop } from "./SceneBackdrop";
 
 export type SceneShellProps =
-  | { variant: "landing"; children: ReactNode }
+  | {
+      variant: "landing";
+      /**
+       * Content drawn full width under the landing column, inside `main`. It
+       * sits in its own frame (`.landingBelowFrame`), so it is not limited by
+       * the column's width.
+       */
+      below?: ReactNode;
+      children: ReactNode;
+    }
   | { variant: "index"; children: ReactNode }
   | { variant: "persona"; personaName: string; children: ReactNode }
   | {
@@ -134,9 +143,14 @@ function SceneFrame(props: SceneShellProps) {
             {props.children}
           </div>
         ) : props.variant === "landing" ? (
-          <div className={styles.landingColumn} data-landing-column>
-            {props.children}
-          </div>
+          <>
+            <div className={styles.landingColumn} data-landing-column>
+              {props.children}
+            </div>
+            {props.below ? (
+              <div className={styles.landingBelowFrame}>{props.below}</div>
+            ) : null}
+          </>
         ) : (
           props.children
         )}

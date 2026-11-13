@@ -185,19 +185,23 @@
   }
 }
 
-/* Below-the-fold sections (B3, F6). Text is --text on the page background.
+/* Below-the-fold sections (B3, F6). Each section fills the full-width frame
+   the Scene gives them (SceneShell `below`, .landingBelowFrame), so it is not
+   capped at the hero's reading width. Text is --text on the page background.
    Accent is not used here: orange means "you" (tone.md). */
 .section {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-width: 40rem;
+  width: 100%;
   padding: 2rem 1.25rem 0;
   color: var(--text);
 }
 
 .sectionTitle {
   margin: 0;
+  /* The global h2 rule uses the paper ink, which is unreadable on this desk. */
+  color: var(--text);
   font-size: 1.5rem;
   font-weight: 800;
   line-height: 1.2;
@@ -237,6 +241,8 @@
 
 .ritualName {
   margin: 0;
+  /* The global h3 rule uses the paper ink, which is unreadable on this desk. */
+  color: var(--text);
   font-size: 1.05rem;
   font-weight: 700;
 }
@@ -299,7 +305,7 @@
 
 @media (min-width: 600px) {
   .section {
-    padding-left: 0;
+    padding-left: 1.25rem;
     padding-right: 0;
   }
 
@@ -310,6 +316,37 @@
 
   .ritualCard {
     flex: 1 1 10rem;
+  }
+}
+
+/* H1 step 1 (phones): below 900 px the Ghost layer is fixed to the window, so
+   ritual cards that scroll under it would show its glow behind their text. The
+   cards take the page background, so the Ghost does not show through steps 3
+   and 4. The frame that holds the sections sits above the Ghost layer in
+   scene.module.css (.landingBelowFrame). */
+@media (max-width: 899.98px) {
+  .ritualCard {
+    background: var(--bg);
+  }
+}
+
+/* H1 step 1: keep the text measure clear of the fixed Ghost at 900 px and
+   wider. The section box keeps the full frame width (up to 1200 px, set in
+   scene.module.css .landingBelowFrame). Only its right padding changes, so
+   the text ends at the Ghost's visible left edge (box left + 12 % inset, the
+   Ghost_Body_Box) minus 1 rem. At 1440 x 900 that is about x=850. */
+@media (min-width: 900px) {
+  .section {
+    --section-right: calc(
+      var(--frame-l) + var(--pad) + min(1200px, var(--frame-w) - 2 * var(--pad))
+    );
+    --text-right: calc(
+      var(--ghost-x) - min(50vh, 560px) / 2 + min(50vh, 560px) * 0.12 - 1rem
+    );
+    padding-inline-end: max(
+      0px,
+      calc(var(--section-right) - var(--text-right))
+    );
   }
 }
 

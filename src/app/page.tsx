@@ -56,18 +56,22 @@ export default function Home() {
         <style>{LANDING_NOSCRIPT_STYLE}</style>
       </noscript>
 
-      <SceneShell variant="landing">
+      <SceneShell
+        variant="landing"
+        below={
+          <>
+            <RitualSection />
+            <ResurrectionSection />
+            <NoSealSection />
+            <CovenStrip />
+          </>
+        }
+      >
         <LandingBackdrop>
           <Ghost gradientId="ghost-body-landing" />
         </LandingBackdrop>
         <div style={HERO_STYLE}>
           <LandingHero personaCount={personaCount} demo2On={demo2On} />
-        </div>
-        <div className="landingBelow">
-          <RitualSection />
-          <ResurrectionSection />
-          <NoSealSection />
-          <CovenStrip />
         </div>
       </SceneShell>
     </>
