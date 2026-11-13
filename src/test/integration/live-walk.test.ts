@@ -147,14 +147,27 @@ const FIVE_STAGE_BLOCKED: Partial<
   Record<WalkStepName, { task: number; reason: string }>
 > = {};
 
-/** One run: the width, whether motion is reduced, and how the seal is broken. */
+/**
+ * One run: the width, whether motion is reduced, whether one figure is picked,
+ * and how the seal is broken.
+ */
 type WalkRun = {
   size: { width: number; height: number };
   reduced: boolean;
+  figure: boolean;
   method: BreakMethod;
 };
 
-type StageAction = { step: WalkStepName; act: WalkAction };
+/**
+ * One stage. `act` runs first; the stage is then checked and its Step_Shot is
+ * taken. `afterShot`, if set, runs only when the stage passed, after its shot,
+ * and belongs to the same step.
+ */
+type StageAction = {
+  step: WalkStepName;
+  act: WalkAction;
+  afterShot?: WalkAction;
+};
 
 type StageRow = {
   result: WalkStepResult;
@@ -410,6 +423,20 @@ async function runWalk(
         observed += ` (screenshot failed: ${errorMessage(error)})`;
       }
 
+      // The follow-on action runs only after the stage has been checked and shot.
+      if (stage.afterShot && !actionFailed && defects.length === 0) {
+        try {
+          observed += ` ${await stage.afterShot(ctx)}`;
+        } catch (error) {
+          defects.push({
+            step: stage.step,
+            expected: `The ${stage.step} stage's follow-on action completes and the next stage is reached.`,
+            observed: `Failed: ${errorMessage(error)}`,
+            suspectedFile,
+          });
+        }
+      }
+
       const blocked = actionFailed ? FIVE_STAGE_BLOCKED[stage.step] : undefined;
       rows.push({
         result: recordStepResult({
@@ -634,8 +661,34 @@ async function openLetterAndUnlock(
 }
 
 /**
- * Stages Break the seal through Close. The seal is broken with the given method;
- * the Stage that follows is checked the same way as the others.
+ * Breaks the seal with the given method, then waits for the letter stage. The
+ * marks stage is checked and shot before this runs.
+ */
+async function breakSeal(c: WalkContext, method: BreakMethod): Promise<string> {
+  if (method === "hold") {
+    const target = c.page.locator("[data-seal-target]").first();
+    const box = await target.boundingBox();
+    if (!box) {
+      throw new Error("The seal target has no size on screen.");
+    }
+    await c.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+    await c.page.mouse.down();
+    await c.page.waitForTimeout(HOLD_MS);
+    await c.page.mouse.up();
+  } else if (method === "button") {
+    await c.page.locator("[data-seal-button]").click();
+  } else {
+    await c.page.locator("[data-skip-link]").click();
+  }
+  await c.page
+    .locator('[data-ceremony="letter"]')
+    .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+  return `Seal broken with ${BREAK_LABELS[method]}. Letter stage shown.`;
+}
+
+/**
+ * Stages Break the seal through Close. The marks Step_Shot and its Q1.6 checks
+ * run while `data-ceremony` is `marks`; the break is a separate action after them.
  */
 function remainingStageActions(method: BreakMethod): readonly StageAction[] {
   return [
@@ -645,29 +698,9 @@ function remainingStageActions(method: BreakMethod): readonly StageAction[] {
         await c.page
           .locator('[data-ceremony="marks"]')
           .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-        if (method === "hold") {
-          const target = c.page.locator("[data-seal-target]").first();
-          const box = await target.boundingBox();
-          if (!box) {
-            throw new Error("The seal target has no size on screen.");
-          }
-          await c.page.mouse.move(
-            box.x + box.width / 2,
-            box.y + box.height / 2,
-          );
-          await c.page.mouse.down();
-          await c.page.waitForTimeout(HOLD_MS);
-          await c.page.mouse.up();
-        } else if (method === "button") {
-          await c.page.locator("[data-seal-button]").click();
-        } else {
-          await c.page.locator("[data-skip-link]").click();
-        }
-        await c.page
-          .locator('[data-ceremony="letter"]')
-          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-        return `Seal broken with ${BREAK_LABELS[method]}. Letter stage shown.`;
+        return "Break the seal stage shown, seal not yet touched.";
       },
+      afterShot: (c) => breakSeal(c, method),
     },
     {
       step: "letter",
@@ -730,9 +763,10 @@ describe.skipIf(!walkEnabled(process.env))(
         const run: WalkRun = {
           size: matrix.size,
           reduced: matrix.reduced,
+          figure: matrix.figure,
           method: "hold",
         };
-        const stages = fiveStageActions(matrix.figure);
+        const stages = fiveStageActions(run.figure);
         const rows = await runWalk(run, stages);
         console.log(formatStageRows(rows));
 
@@ -758,24 +792,28 @@ describe.skipIf(!walkEnabled(process.env))(
 describe.skipIf(!walkEnabled(process.env))(
   "live walk: Break the seal through Close",
   () => {
-    // Each width, with and without reduced motion, with each way of breaking the seal (Q1.4, Q1.2).
+    // Each width, with and without reduced motion, with and without one figure,
+    // with each way of breaking the seal (Q1.4, Q1.2).
     const runs: WalkRun[] = WALK_SIZES.flatMap((size) =>
       [false, true].flatMap((reduced) =>
-        BREAK_METHODS.map((method) => ({ size, reduced, method })),
+        [false, true].flatMap((figure) =>
+          BREAK_METHODS.map((method) => ({ size, reduced, figure, method })),
+        ),
       ),
     );
 
     it.each(
       runs.map((run) => {
         const motion = run.reduced ? "reduced motion" : "motion on";
-        const label = `${run.size.width}x${run.size.height}, ${motion}, break with ${run.method}`;
+        const figures = run.figure ? "one figure" : "no figure";
+        const label = `${run.size.width}x${run.size.height}, ${motion}, ${figures}, break with ${run.method}`;
         return [label, run] as const;
       }),
     )(
       "walks the whole flow: %s",
       async (_label, run) => {
         const stages = [
-          ...fiveStageActions(false),
+          ...fiveStageActions(run.figure),
           ...remainingStageActions(run.method),
         ];
         const rows = await runWalk(run, stages);
