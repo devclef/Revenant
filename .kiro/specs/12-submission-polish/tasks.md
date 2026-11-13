@@ -292,7 +292,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
 
 ### Group K: the receipt picker (P1)
 
-- [ ] 10. K1, K2 and K3 · Picker precision, Short_Dates and one note
+- [x] 10. K1, K2 and K3 · Picker precision, Short_Dates and one note
   - Agent: `frontend-dev` · Depends on: 9 · Estimated size: ~700 changed lines
   - Scope: `src/components/reveal/display-figure.ts` (new), `src/components/ui/letter-date.ts` (new, or the shared date module on `main`), `src/components/reveal/ReceiptCard.tsx` (call sites only), `src/components/live/FigurePicker.tsx`, `src/components/live/copy.ts` (`pickerNote`, `pickerRetrieved`, `pickerPeriod`), and the `*.test.ts(x)` for each file above.
   - Design sections: "K1 to K3. The picker's numbers, dates and note", "Copy".
