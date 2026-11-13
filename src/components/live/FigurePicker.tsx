@@ -4,7 +4,12 @@ import { displayFigureValue } from "@/components/reveal/display-figure";
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import { formatShortDate } from "@/components/ui/letter-date";
 
-import type { PickableSeries } from "./catalogue-list";
+import {
+  groupPickable,
+  regionGroupFor,
+  type PickableSeries,
+  type RegionGroup,
+} from "./catalogue-list";
 import { LIVE_COPY, REAL_COPY } from "./copy";
 import { pickerHint } from "./figure-hint";
 import { figureLimit, type WriteMode } from "./form";
@@ -51,6 +56,12 @@ export interface FigurePickerProps {
   mode?: WriteMode;
 }
 
+/** The heading of each region group, from the copy file. */
+const GROUP_HEADING: Record<RegionGroup, string> = {
+  us: LIVE_COPY.regionUs,
+  eu: LIVE_COPY.regionEu,
+};
+
 /**
  * Lists the figures a visitor can seal with: name, value, unit, region, the
  * period and the source name. The source details (series ID, source link and
@@ -58,13 +69,18 @@ export interface FigurePickerProps {
  * "fixture data" label. Items keep catalogue order and are never sorted or
  * styled by value or direction (R13.7).
  *
+ * Figures sit under a fieldset per region (United States, then European
+ * Union). A figure with no region heading stays in a plain list below them, so
+ * no figure is ever hidden. With no region groups at all, the picker is one
+ * plain list, as before.
+ *
  * A Fallback_Figure shows its own period and the retrieved date with the
  * Fallback_Note (spec 09, A1.8). With no series to offer, the picker shows the
  * none message and links to the demo, and states no range (A4.1, A4.2).
  *
  * Controlled component: the parent owns the selection. Unchecked boxes are
  * disabled once the limit is reached, so the picker never holds more than the
- * allowed number of figures.
+ * allowed number of figures. The limit counts figures across every group.
  */
 export function FigurePicker({
   series,
@@ -107,6 +123,95 @@ export function FigurePicker({
       ? LIVE_COPY.figuresTooManyOne
       : LIVE_COPY.figuresTooMany.replace("{max}", String(hint.max));
 
+  const renderItem = (item: PickableSeries) => {
+    const checked = selected.includes(item.metricId);
+    const disabled = !checked && atLimit;
+    const inputId = `figure-${item.metricId}`;
+    const isFallback = item.fallbackRetrievedAt !== undefined;
+    const detail = details?.get(item.metricId);
+    const shown =
+      detail === undefined
+        ? undefined
+        : displayFigureValue(detail.value, detail.unit, detail.region);
+    return (
+      <li key={item.metricId} className={styles.figureItem}>
+        <label htmlFor={inputId} className={styles.figureLabel}>
+          <input
+            id={inputId}
+            type="checkbox"
+            className={styles.checkbox}
+            checked={checked}
+            disabled={disabled}
+            onChange={() => onToggle(item.metricId)}
+          />
+          <span className={styles.figureName}>{item.displayName}</span>
+          {shown !== undefined ? (
+            <span className={styles.figureValue}>
+              {LIVE_COPY.figureValue.replace("{value}", shown.text)}{" "}
+              {shown.unit}
+            </span>
+          ) : null}
+          <span className={styles.figureMeta}>
+            {item.unit} · {item.region}
+          </span>
+          <span className={styles.figureMeta}>
+            {LIVE_COPY.pickerPeriod.replace(
+              "{period}",
+              formatShortDate(item.latestPeriod),
+            )}
+          </span>
+          {detail !== undefined ? (
+            <span className={styles.figureMeta}>
+              {LIVE_COPY.figureSource.replace("{source}", detail.sourceName)}
+            </span>
+          ) : null}
+          {isFallback ? (
+            <span className={styles.figureMeta}>
+              {LIVE_COPY.pickerRetrieved.replace(
+                "{date}",
+                formatShortDate(item.fallbackRetrievedAt ?? ""),
+              )}
+            </span>
+          ) : null}
+          {item.isFixture ? (
+            <span className={styles.fixture}>{LIVE_COPY.fixtureLabel}</span>
+          ) : null}
+        </label>
+        {detail !== undefined ? (
+          <details className={styles.sourceDetails}>
+            <summary className={styles.sourceSummary}>
+              {LIVE_COPY.figureSourceDetails}
+            </summary>
+            <dl className={styles.sourceList}>
+              <dt>{LIVE_COPY.figureSourceName}</dt>
+              <dd>{detail.sourceName}</dd>
+              <dt>{LIVE_COPY.figureSeriesId}</dt>
+              <dd>{detail.seriesId}</dd>
+              <dt>{LIVE_COPY.figureSourceLink}</dt>
+              <dd>
+                <a href={detail.sourceUrl} rel="noopener noreferrer">
+                  {detail.sourceUrl}
+                </a>
+              </dd>
+              <dt>{LIVE_COPY.figureRetrieved}</dt>
+              <dd>{formatShortDate(detail.retrievedAt)}</dd>
+            </dl>
+            <p className={styles.figureMeta}>
+              {REVEAL_COPY.asPublished
+                .replace("{value}", detail.value)
+                .replace("{unit}", detail.unit)}
+            </p>
+          </details>
+        ) : null}
+      </li>
+    );
+  };
+
+  const groups = groupPickable(series);
+  const ungrouped = series.filter(
+    (item) => regionGroupFor(item.region) === null,
+  );
+
   return (
     <fieldset className={styles.figures} data-card="live-figures">
       <legend className={styles.legend}>{LIVE_COPY.figuresLegend}</legend>
@@ -114,96 +219,23 @@ export function FigurePicker({
       {series.some((item) => item.fallbackRetrievedAt !== undefined) ? (
         <p className={styles.hint}>{LIVE_COPY.pickerNote}</p>
       ) : null}
-      <ul className={styles.figureList}>
-        {series.map((item) => {
-          const checked = selected.includes(item.metricId);
-          const disabled = !checked && atLimit;
-          const inputId = `figure-${item.metricId}`;
-          const isFallback = item.fallbackRetrievedAt !== undefined;
-          const detail = details?.get(item.metricId);
-          const shown =
-            detail === undefined
-              ? undefined
-              : displayFigureValue(detail.value, detail.unit, detail.region);
-          return (
-            <li key={item.metricId} className={styles.figureItem}>
-              <label htmlFor={inputId} className={styles.figureLabel}>
-                <input
-                  id={inputId}
-                  type="checkbox"
-                  className={styles.checkbox}
-                  checked={checked}
-                  disabled={disabled}
-                  onChange={() => onToggle(item.metricId)}
-                />
-                <span className={styles.figureName}>{item.displayName}</span>
-                {shown !== undefined ? (
-                  <span className={styles.figureValue}>
-                    {LIVE_COPY.figureValue.replace("{value}", shown.text)}{" "}
-                    {shown.unit}
-                  </span>
-                ) : null}
-                <span className={styles.figureMeta}>
-                  {item.unit} · {item.region}
-                </span>
-                <span className={styles.figureMeta}>
-                  {LIVE_COPY.pickerPeriod.replace(
-                    "{period}",
-                    formatShortDate(item.latestPeriod),
-                  )}
-                </span>
-                {detail !== undefined ? (
-                  <span className={styles.figureMeta}>
-                    {LIVE_COPY.figureSource.replace(
-                      "{source}",
-                      detail.sourceName,
-                    )}
-                  </span>
-                ) : null}
-                {isFallback ? (
-                  <span className={styles.figureMeta}>
-                    {LIVE_COPY.pickerRetrieved.replace(
-                      "{date}",
-                      formatShortDate(item.fallbackRetrievedAt ?? ""),
-                    )}
-                  </span>
-                ) : null}
-                {item.isFixture ? (
-                  <span className={styles.fixture}>
-                    {LIVE_COPY.fixtureLabel}
-                  </span>
-                ) : null}
-              </label>
-              {detail !== undefined ? (
-                <details className={styles.sourceDetails}>
-                  <summary className={styles.sourceSummary}>
-                    {LIVE_COPY.figureSourceDetails}
-                  </summary>
-                  <dl className={styles.sourceList}>
-                    <dt>{LIVE_COPY.figureSourceName}</dt>
-                    <dd>{detail.sourceName}</dd>
-                    <dt>{LIVE_COPY.figureSeriesId}</dt>
-                    <dd>{detail.seriesId}</dd>
-                    <dt>{LIVE_COPY.figureSourceLink}</dt>
-                    <dd>
-                      <a href={detail.sourceUrl} rel="noopener noreferrer">
-                        {detail.sourceUrl}
-                      </a>
-                    </dd>
-                    <dt>{LIVE_COPY.figureRetrieved}</dt>
-                    <dd>{formatShortDate(detail.retrievedAt)}</dd>
-                  </dl>
-                  <p className={styles.figureMeta}>
-                    {REVEAL_COPY.asPublished
-                      .replace("{value}", detail.value)
-                      .replace("{unit}", detail.unit)}
-                  </p>
-                </details>
-              ) : null}
-            </li>
-          );
-        })}
-      </ul>
+      {groups.length > 0 ? (
+        <div className={styles.regionGroups}>
+          {groups.map((group) => (
+            <fieldset key={group.group} className={styles.regionGroup}>
+              <legend className={styles.regionLegend}>
+                {GROUP_HEADING[group.group]}
+              </legend>
+              <ul className={styles.figureList}>
+                {group.series.map(renderItem)}
+              </ul>
+            </fieldset>
+          ))}
+        </div>
+      ) : null}
+      {ungrouped.length > 0 ? (
+        <ul className={styles.figureList}>{ungrouped.map(renderItem)}</ul>
+      ) : null}
       {atLimit ? <p className={styles.hint}>{tooManyText}</p> : null}
     </fieldset>
   );

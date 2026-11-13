@@ -393,3 +393,86 @@ describe("FigurePicker property: Picker_Note appears once or not at all", () => 
     }
   }
 });
+
+describe("FigurePicker region groups (K4)", () => {
+  const EU: PickableSeries = {
+    metricId: "eu-diesel",
+    displayName: "Diesel",
+    unit: "EUR per 1,000 litres",
+    region: "EU27, weighted average",
+    latestPeriod: "2026-10-26",
+    isFixture: false,
+  };
+
+  const EU_TWO: PickableSeries = { ...EU, metricId: "eu-petrol", displayName: "Petrol" };
+
+  it("renders a fieldset per region with its heading, United States first", () => {
+    const html = render([EU, REAL]);
+
+    expect(html).toContain('<legend class="');
+    expect(html).toContain("regionLegend");
+    expect(countOf(html, "<fieldset")).toBe(3);
+    expect(html.indexOf(LIVE_COPY.regionUs)).toBeLessThan(
+      html.indexOf(LIVE_COPY.regionEu),
+    );
+    expect(html).toContain(LIVE_COPY.regionUs);
+    expect(html).toContain(LIVE_COPY.regionEu);
+  });
+
+  it("puts each figure under its own region heading", () => {
+    const html = render([REAL, EU]);
+
+    const euStart = html.indexOf(LIVE_COPY.regionEu);
+    expect(html.indexOf("Regular gasoline")).toBeLessThan(euStart);
+    expect(html.indexOf("Diesel")).toBeGreaterThan(euStart);
+  });
+
+  it("keeps catalogue order within a group", () => {
+    const html = render([EU, EU_TWO]);
+
+    expect(html.indexOf("Diesel")).toBeLessThan(html.indexOf("Petrol"));
+  });
+
+  it("counts the limit across every group", () => {
+    const four = [REAL, FIXTURE, EU, EU_TWO];
+
+    expect(render(four)).toContain("Choose between 1 and 4.");
+  });
+
+  it("disables unchecked boxes in every group once the limit is reached", () => {
+    const html = render([REAL, EU], ["us-gasoline-regular"], true);
+
+    expect(html.match(/disabled=""/g)).toHaveLength(1);
+  });
+
+  it("keeps a series with no region heading in a plain list, not hidden", () => {
+    const other: PickableSeries = { ...REAL, metricId: "other", displayName: "Other series", region: "Elsewhere" };
+    const html = render([REAL, other]);
+
+    expect(html).toContain("Other series");
+    expect(html).toContain(LIVE_COPY.regionUs);
+    expect(html).not.toContain(LIVE_COPY.regionEu);
+  });
+
+  it("shows one plain list and no region headings when no figure has a group", () => {
+    const other: PickableSeries = { ...REAL, region: "Elsewhere" };
+    const html = render([other]);
+
+    expect(html).toContain("Regular gasoline");
+    expect(html).not.toContain(LIVE_COPY.regionUs);
+    expect(html).not.toContain(LIVE_COPY.regionEu);
+    expect(countOf(html, "<ul")).toBe(1);
+  });
+
+  it("shows the Picker_Note once above every group", () => {
+    const fallback: PickableSeries = {
+      ...EU,
+      fallbackRetrievedAt: "2026-10-30T14:02:11Z",
+    };
+    const html = render([REAL, fallback]);
+
+    const note = escapeHtml(LIVE_COPY.pickerNote);
+    expect(countOf(html, note)).toBe(1);
+    expect(html.indexOf(note)).toBeLessThan(html.indexOf(LIVE_COPY.regionUs));
+  });
+});

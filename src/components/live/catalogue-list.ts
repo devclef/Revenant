@@ -135,3 +135,45 @@ export function sealFiguresFrom(state: FiguresState): SealFigures {
     figures: loadedFiguresFromResponse(state.figures),
   };
 }
+
+/** The region headings the picker groups figures under, in display order. */
+export type RegionGroup = "us" | "eu";
+
+/**
+ * The group a series' region belongs to, or null when the picker has no
+ * heading for it (for example Sweden). `"U.S."` maps to `us`, and any region
+ * starting with `"EU"` maps to `eu`. An unknown region is never given an
+ * invented heading.
+ */
+export function regionGroupFor(region: string): RegionGroup | null {
+  if (region === "U.S.") return "us";
+  if (region.startsWith("EU")) return "eu";
+  return null;
+}
+
+/** A region group with the pickable series that belong to it. */
+export interface PickableGroup {
+  group: RegionGroup;
+  series: PickableSeries[];
+}
+
+const GROUP_ORDER: readonly RegionGroup[] = ["us", "eu"];
+
+/**
+ * Split pickable series into region groups. The groups come in a fixed order
+ * (United States, then European Union), and series keep their Catalogue order
+ * within each group. Empty groups are left out, and series with no group are
+ * left out too.
+ */
+export function groupPickable(
+  series: readonly PickableSeries[],
+): PickableGroup[] {
+  const groups: PickableGroup[] = [];
+
+  for (const group of GROUP_ORDER) {
+    const members = series.filter((s) => regionGroupFor(s.region) === group);
+    if (members.length > 0) groups.push({ group, series: members });
+  }
+
+  return groups;
+}
