@@ -118,7 +118,10 @@ docs/agent-loop.md
 tools/dispatcher/:
 bootstrap.py
 issues
-...
+pr_policy.py
+revenant_dispatch.py
+spec_sync.py
+tests
 
 $ gh pr list --state all --limit 1000 --json headRefName -q '[.[]|select(.headRefName|startswith("agent/"))]|length'
 164
@@ -127,7 +130,7 @@ $ gh pr list --state all --limit 1000 --json headRefName -q '[.[]|select(.headRe
 1
 
 $ gh pr list --state all --limit 1000 --json headRefName -q '[.[].headRefName]|map(split("/")[0:2]|join("/"))|group_by(.)|map([.[0],length])'
-[["agent/crypto-dev",13],["agent/data-dev",23],["agent/frontend-dev",103],["agent/platform-dev",25], ...]
+[["agent/crypto-dev",13],["agent/data-dev",23],["agent/frontend-dev",103],["agent/platform-dev",25],["dependabot/npm_and_yarn",2],["deps/next-16-budget",1],["dispatcher-sync-global-agents",1],["docs/update-concept-image",1],["fix/212-213-soil-and-recall-ticks",1],["fix/212-213-soil-recall-ticks",1],["fix/budget-skip-unbuilt-routes",1],["fix/dispatcher-empty-pr-guard",1],["fix/dispatcher-feedback-attempts",1],["fix/dispatcher-fewer-blocks",1],["fix/dispatcher-follow-resumed-runs",1],["fix/dispatcher-max-dev-runs-1",1],["fix/dispatcher-one-qa",1],["fix/dispatcher-one-run-followups",1],["fix/landing-test-copy-decouple",1],["kirocrew/fix",1],["owner/357-final-patches",1],["owner/agent-hooks",1],["owner/demo-figures-design",1],["owner/demo-figures-reqs",1],["owner/desk-fix",1],["owner/dev-image-tag",2],["owner/dev-runs-3",1],["owner/dispatcher-close-merged-issue",1],["owner/dispatcher-hardening",1],["owner/dispatcher-pr-notes",1],["owner/dispatcher-scope-aware",1],["owner/dispatcher-transient-errors",1],["owner/dockerignore-seal-personas",1],["owner/env-example-figures-source",1],["owner/finish-task18-serif-scope",1],["owner/fix-size-test",1],["owner/issue-169-landing",1],["owner/issue-48-part1",2],["owner/issue-48-part2",1],["owner/js-budget-190",1],["owner/next16-next-env",1],["owner/period-tests-format-period",1],["owner/process-fixes",1],["owner/qa-browser",1],["owner/restore-stray-paths",1],["owner/seal-format-exports",1],["owner/spec-02",2],["owner/spec-03",1],["owner/spec-tick",1],["owner/spec04-task-11",1],["owner/task19-retired-tokens-guards",1],["owner/unblock-layout",1],["owner/vitest-integration-serial",1],["pr13-policy-fix",1],["spec/05-design-tasks",1],["spec/05-requirements",1]]
 
 $ ls .kiro/hooks/
 agents-check-on-save.json
