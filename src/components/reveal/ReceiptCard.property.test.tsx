@@ -15,6 +15,7 @@ import fc from "fast-check";
 import { ChangeLine } from "./ChangeLine";
 import { ReceiptCard, type ReceiptCardProps, type ReceiptFigure } from "./ReceiptCard";
 import { REVEAL_COPY } from "./copy";
+import { displayFigureValue } from "./display-figure";
 import { displayPrecisionForUnit } from "./display-precision";
 import { receiptFigureOf, receiptSourceOf } from "./FigureLine";
 import { SHORT_NAME_TABLE, shortNameFor } from "./short-names";
@@ -218,7 +219,9 @@ describe("ReceiptCard, Property 17: receipt values use display precision and the
         const html = plainHtml(
           renderToStaticMarkup(createElement(ReceiptCard, receiptPropsFor(then, now))),
         );
-        expect(html).toContain(`data-role="then">${formatValue(thenValue, REGION)}<`);
+        expect(html).toContain(
+          `data-role="then">${displayFigureValue(thenValue, unit, REGION).text}<`,
+        );
         expect(html).not.toContain("data-rounded-note");
         expect(html).not.toContain(REVEAL_COPY.roundedNote);
       }),

@@ -247,3 +247,26 @@ describe("LIVE_COPY rehearsal line (spec 11, L4.1)", () => {
     }
   });
 });
+
+describe("LIVE_COPY picker keys (spec 12 K2, K3)", () => {
+  it("pickerNote is the plain note about figures not yet fetched, without judgement", () => {
+    expect(LIVE_COPY.pickerNote).toBe(
+      "Revenant hasn't fetched newer figures yet. Each figure below shows the date it was retrieved.",
+    );
+    expect(LIVE_COPY.pickerNote).not.toMatch(/\b(rose|fell|soar|good|bad|up|down)\b/i);
+  });
+
+  it("pickerRetrieved fills {date} with a Short_Date", () => {
+    expect(LIVE_COPY.pickerRetrieved).toContain("{date}");
+    expect(LIVE_COPY.pickerRetrieved.replace("{date}", "26 Oct 2026")).toBe(
+      "Retrieved 26 Oct 2026",
+    );
+  });
+
+  it("pickerPeriod fills {period} and keeps the period label", () => {
+    expect(LIVE_COPY.pickerPeriod).toContain("{period}");
+    expect(LIVE_COPY.pickerPeriod.replace("{period}", "Oct 2026")).toBe(
+      "Period: Oct 2026",
+    );
+  });
+});

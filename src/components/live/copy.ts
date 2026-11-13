@@ -45,6 +45,13 @@ export const LIVE_COPY = {
   figureRetrieved: "Retrieved",
   /** A Fallback_Figure is not the latest, so it never says "Latest" (A1.8). */
   figurePeriod: "Period: {period}",
+  /** The Picker_Note: shown once above the picker list when any figure is a fallback (spec 12 K3.1). */
+  pickerNote:
+    "Revenant hasn't fetched newer figures yet. Each figure below shows the date it was retrieved.",
+  /** The retrieved date on a fallback row, as a Short_Date (spec 12 K2.4). `{date}` is the Short_Date. */
+  pickerRetrieved: "Retrieved {date}",
+  /** The period on a picker row, as a Short_Date or the period's own form (spec 12 K2.4). `{period}` is that text. */
+  pickerPeriod: "Period: {period}",
   fixtureLabel: "fixture data",
   /** The summary of the closed Receipts_Disclosure on the Write step (L1.4). */
   receiptsSummary: "Receipts",

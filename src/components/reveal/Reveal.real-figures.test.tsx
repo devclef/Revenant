@@ -56,9 +56,9 @@ beforeEach(() => {
 
 // Formats an ISO instant as the reveal does, in UTC, independently of the
 // component's own formatter so the expected label is not read back from it.
-const UTC_LONG_DATE = new Intl.DateTimeFormat("en-GB", {
+const UTC_SHORT_DATE = new Intl.DateTimeFormat("en-GB", {
   day: "numeric",
-  month: "long",
+  month: "short",
   year: "numeric",
   timeZone: "UTC",
 });
@@ -85,9 +85,9 @@ function shownUnit(figure: Readonly<FigureV1>): string {
   return rescale === undefined ? figure.unit : rescale.unit;
 }
 
-// The UTC calendar date of an ISO instant, formatted in the reveal's long form.
-function utcLongDate(retrievedAt: string): string {
-  return UTC_LONG_DATE.format(
+// The UTC calendar date of an ISO instant, formatted in the reveal's short form.
+function utcShortDate(retrievedAt: string): string {
+  return UTC_SHORT_DATE.format(
     new Date(`${retrievedAt.slice(0, 10)}T00:00:00.000Z`),
   );
 }
@@ -126,7 +126,7 @@ function openedFor(
     // Then group: the label carries the UTC calendar date of retrieved_at.
     expected.push({
       kind: "then",
-      label: `historical record, retrieved ${utcLongDate(then.figure.retrieved_at)}`,
+      label: `historical record, retrieved ${utcShortDate(then.figure.retrieved_at)}`,
       period: formatPeriod(then.figure.period, then.figure.region),
       unit: shownUnit(then.figure),
       region: then.figure.region,
@@ -136,7 +136,7 @@ function openedFor(
     if (now.found) {
       expected.push({
         kind: "now",
-        label: `retrieved ${utcLongDate(now.figure.retrieved_at)}`,
+        label: `retrieved ${utcShortDate(now.figure.retrieved_at)}`,
         period: formatPeriod(now.figure.period, now.figure.region),
         unit: shownUnit(now.figure),
         region: now.figure.region,
