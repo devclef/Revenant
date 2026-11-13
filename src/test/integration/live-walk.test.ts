@@ -25,6 +25,8 @@ import path from "node:path";
 import { chromium, type BrowserContext, type Page } from "playwright-core";
 import { describe, expect, it } from "vitest";
 
+import { LIVE_COPY } from "../../components/live/copy";
+
 import {
   BREAK_METHODS,
   FULL_PAGE_STEPS,
@@ -194,7 +196,13 @@ async function currentStage(page: Page): Promise<string> {
 /**
  * Wait until the Stage has not changed, and no finite animation is running, for
  * SETTLE_MS. Infinite animations (the Ghost's idle motion) are left out, or the
- * screen would never settle. The Skip_Link is not part of the wait: it stays up on `marks`.
+ * screen would never settle.
+ *
+ * The Skip_Link is not part of the wait. Decision: its visibility stays the
+ * shared rule `skipLinkVisible(showAll, broken)` in ceremony/seal/skip-link.ts
+ * (shown when showAll is set and the seal is not broken). The walk does not
+ * change that rule and does not wait for the link to appear. The "skip" break
+ * method clicks it only after the marks Step_Shot has been saved.
  */
 async function waitForStable(page: Page): Promise<void> {
   const deadline = Date.now() + STEP_TIMEOUT_MS;
@@ -589,7 +597,21 @@ function fiveStageActions(figure: boolean): readonly StageAction[] {
           throw new Error("The Receipts_Disclosure did not open.");
         }
         if (!figure) {
-          return "Receipts_Disclosure opened. Own-number rows left blank.";
+          // Check the rows rather than claim it: the own-number inputs inside
+          // the open disclosure must all be empty. Only SelfReportedRows sets
+          // data-user-content inside the disclosure, so the selector is exact.
+          const typed = await c.page
+            .locator("[data-receipts-disclosure] input[data-user-content]")
+            .evaluateAll((inputs) =>
+              inputs.map((input) => (input as HTMLInputElement).value),
+            );
+          const filled = typed.filter((value) => value.trim() !== "");
+          if (filled.length > 0) {
+            throw new Error(
+              `${filled.length} own-number row input(s) hold text, so the rows are not blank.`,
+            );
+          }
+          return `Receipts_Disclosure opened. Own-number rows left blank (${typed.length} input(s), all empty).`;
         }
         return `Receipts_Disclosure opened. Figure selected: ${await tickOneFigure(c.page)}.`;
       },
@@ -598,8 +620,10 @@ function fiveStageActions(figure: boolean): readonly StageAction[] {
       step: "seal",
       act: async (c) => {
         await c.page.getByRole("checkbox", { name: /lost|passkey/i }).check();
+        // The live button is LIVE_COPY.createButton (WriteForm.tsx), not the
+        // older "create your passkey" wording.
         await c.page
-          .getByRole("button", { name: /create your passkey/i })
+          .getByRole("button", { name: LIVE_COPY.createButton })
           .click();
         await c.page
           .locator('[data-live-step="created"]')
