@@ -4,6 +4,7 @@
 
 > **Judge quick path**
 > - [Open a sealed letter](https://revenant.devclef.se/demo/personas/us-maya) · about 2 minutes · no sign-up, no passkey
+> - [Open a letter with no numbers](https://revenant.devclef.se/demo/personas/us-priya) · about 2 minutes · text only, no receipts
 > - [Seal your own](https://revenant.devclef.se/demo/live) · about 2 minutes · opens 30 seconds after you seal it · needs a passkey with PRF, or use the backup key
 > - [How it is sealed](https://revenant.devclef.se/how-it-is-sealed) · 3 minutes to read
 >
@@ -20,6 +21,8 @@
 </p>
 
 Built for Kiroween 2026, Resurrection category. Letters survived the move to digital, but the seal didn't. Revenant resurrects it with cryptography: no one else can read your letter, tampering is detectable, and no key can open it early. Then it adds what no wax seal ever could: it makes you testify before you read.
+
+Seal what you believe now: a goal, a worry, a decision. When it opens, you testify first, then read what you wrote.
 
 ## What we resurrected
 
@@ -40,28 +43,28 @@ A wax seal proves the letter wasn't changed. It can't stop you changing your mem
 
 Every time you recall something, you edit it a little, and the edits favour the story you'd rather be true. You can't cross-examine your own past, because the only witness is a memory that has already been rewritten.
 
-So Revenant adds one step the Académie never needed. Before the seal breaks, you testify: you say what you remember, and your answer is recorded. Only then do you see what you wrote and what things cost. The gap between your testimony and the record is the whole product. Revenant never tells you what that gap means. It just doesn't let your memory have the last word.
+So Revenant adds one step the Académie never needed. Before the seal breaks, you testify: you say what you remember, and your answer is recorded. Only then do you see what you wrote and, if you added receipts, what things cost. The gap between your testimony and the record is the whole product. Revenant never tells you what that gap means. It just doesn't let your memory have the last word.
 
 ## The ritual
 
-1. **Write.** Write down what you believe: a letter to your future self, plain text, up to 5,000 characters.
-2. **Seal the figures.** Pick the metrics you care about from official sources for your region. Every figure keeps its value, source, period, unit and region.
-3. **Press the seal.** Choose an opening date at least three months away and lock the letter with your passkey. From then on it is sealed and unreadable, even to you, and nothing inside can change.
-4. **Testify.** After the opening date you unlock the letter. Before a single word is shown, Revenant asks what you remember. Your testimony is recorded first.
-5. **See the receipts.** What you remembered, then what you actually wrote, then the numbers then and now with the plain change between them. No commentary. No "soared", no "finally". Just the record.
+1. **Write.** A letter to your future self, plain text, up to 5,000 characters. Pick an Occasion if it helps. Add up to three questions and an optional receipt: a price figure from an official source for your region, with its value, source, period, unit and region. A letter with no figures seals the same way.
+2. **Press the seal.** Choose an opening date at least three months away and lock the letter with your passkey. The live demo locks it for 30 seconds and says it is a rehearsal. From then on the letter is sealed and unreadable, even to you, and nothing inside can change.
+3. **Testify.** After the opening date you unlock the letter. Before a single word is shown, Revenant asks what you remember. Your testimony is recorded first.
+4. **See the receipts.** What you remembered, then what you actually wrote, then any numbers then and now with the plain change between them. A letter with no figures ends with what you wrote. No commentary. No "soared", no "finally". Just the record.
 
 ## What's actually built
 
-This is not a slide deck. It runs. The sealing-and-opening ceremony, the live passkey demo, the pre-sealed persona demo, and the real-data figure pipeline are all implemented and tested.
+This is not a slide deck. It runs. The sealing-and-opening ceremony, the live passkey demo, the pre-sealed persona demos, and the real-data figure pipeline are all implemented and tested.
 
 - **The reveal ceremony** — the dark room, the light finding the soil, the ghost rising with your letter, the recall scale, the seal breaking, and the then-vs-now figures. It degrades gracefully: the first render is the settled scene with no JavaScript, and `prefers-reduced-motion` turns the whole sequence off.
 - **Browser-side crypto** — WebAuthn passkeys with the PRF extension, a double-wrapped content key, a per-letter server time lock, an optional backup key card, and an SHA-256 hash over the canonical envelope that's verified again at opening.
-- **The persona demo** at [`/demo/personas/us-maya`](https://revenant.devclef.se/demo/personas/us-maya) — a fictional author's letter, pre-sealed for a real US election window, openable by a judge in two minutes with no passkey.
-- **The live demo** at [`/demo/live`](https://revenant.devclef.se/demo/live) — seal a letter with your own passkey and a 30-second lock, then unlock it. The passkey is real and shows up in your password manager, named so it's obviously a Revenant demo.
+- **The persona demos** — three fictional authors whose letters were written as of 12 May 2024 and sealed in advance, each openable by a judge in two minutes with no passkey. [Maya](https://revenant.devclef.se/demo/personas/us-maya) (opens 5 November 2024) and [Tomás](https://revenant.devclef.se/demo/personas/eu-tomas) (opens 9 June 2024) carry price receipts. [Priya](https://revenant.devclef.se/demo/personas/us-priya) (opens 5 November 2024) is a text letter with two questions she left for herself and no figures.
+- **Occasions, optional receipts and the rehearsal** — the Write step offers five Occasions (the year ahead, work, family, a decision, blank), a letter seals with no figures at all, and the 30-second live demo labels itself a rehearsal.
+- **The live demo** at [`/demo/live`](https://revenant.devclef.se/demo/live) — seal a letter with your own passkey and a 30-second rehearsal lock, then unlock it. The passkey is real and shows up in your password manager, named so it's obviously a Revenant demo.
 - **Real figures** — adapters for the US EIA and the European Commission Weekly Oil Bulletin, each returning figures with full provenance and never inventing, interpolating or currency-converting anything.
 - **The database** — PostgreSQL with `BEFORE UPDATE OR DELETE` triggers that make sealed rows physically immutable. Application code *cannot* change a sealed letter; the trigger raises an exception.
 
-Specs 01 through 07 are complete; spec 08 (judge polish) is in progress. See `.kiro/specs/` for the task-level status.
+Specs 01 to 10 are complete and spec 11 (any letter) is in progress, as of 13 November 2026. See `.kiro/specs/` for the task-level status.
 
 ## How the seal works
 
@@ -111,7 +114,7 @@ The Helm chart lives in `deploy/helm/revenant` and includes PostgreSQL. The imag
 
 ## Built by a coven of agents
 
-Here's the part we're genuinely proud of: **almost none of this code was written by a human sitting at a keyboard.** Revenant was built by a team of specialist AI agents orchestrated by [Kiro Crew](https://kiro.dev/docs/crew.md), running an autonomous build loop that ran for 168 merged pull requests.
+Here's the part we're genuinely proud of: **almost none of this code was written by a human sitting at a keyboard.** Revenant was built by a team of specialist AI agents orchestrated by [Kiro Crew](https://kiro.dev/docs/crew.md), running an autonomous build loop that has merged 206 pull requests (`gh pr list --state merged --limit 1000 --json number -q length`, 13 November 2026).
 
 ```mermaid
 flowchart TB
