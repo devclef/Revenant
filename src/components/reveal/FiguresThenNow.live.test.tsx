@@ -16,10 +16,10 @@ import type { Opened } from "./opening-machine";
 import type { FigureV1, MetricDefinitionV1, PayloadV1 } from "@/lib/seal-format";
 
 /**
- * Live letters on stage 3 (spec 06, R18.2). A live letter whose then figure is
- * the same figure as the now figure (same period and value) shows both figures
- * with their own periods, a change of zero, the formula line, and no extra
- * words. Both Number_Line pins sit at the centre.
+ * Live letters on stage 3 (spec 06, R18.2, spec 12 Z2). A live letter whose then
+ * figure is the same record as the now figure (same period and value) is a
+ * Same_Figure. It gets the Single_Figure_View: the figure once with its period,
+ * the nothing-to-compare line, and no now row, Number_Line, change or formula.
  */
 
 // The same mock as FiguresThenNow.test.tsx: the reveal reads the fixture
@@ -84,44 +84,40 @@ function render(allowSamePeriod?: boolean): string {
 }
 
 describe("FiguresThenNow, live same-figure zero change (R18.2)", () => {
-  it("shows the change line and formula with a zero change", () => {
+  it("shows the single card with the nothing-to-compare line and no change", () => {
     const html = render(true);
-    const v = NOW_FIGURE.value;
-    // The formula line uses the same value on both sides, so it reads 0 change.
-    expect(html).toContain(
-      `${REVEAL_COPY.formulaLabel}: (${v} - ${v}) / ${v} x 100`,
-    );
-    expect(html).toContain("unchanged");
+    expect(html).toContain("data-single-figure");
+    expect(html).toContain(REVEAL_COPY.nothingToCompare);
+    expect(html).not.toContain(REVEAL_COPY.formulaLabel);
+    expect(html).not.toContain("unchanged");
     expect(html).not.toContain(REVEAL_COPY.notComparable);
   });
 
-  it("shows both figures with their own periods", () => {
+  it("shows the sealed figure once with its own period", () => {
     const html = render(true);
     expect(html).toContain(REVEAL_COPY.then);
-    expect(html).toContain(REVEAL_COPY.now);
+    expect(html).not.toContain('data-receipt-row="now"');
     expect(html).toContain(formatPeriod(NOW_FIGURE.period, NOW_FIGURE.region));
   });
 
-  it("without allowSamePeriod the same figure is not comparable", () => {
+  it("with allowSamePeriod off the Same_Figure is still a single card", () => {
+    // The single card depends on Same_Figure alone, not on allowSamePeriod.
     const html = render(false);
-    // The apostrophe in the copy is escaped in markup, so match the reason copy.
-    expect(html).toContain(REVEAL_COPY.reason.no_newer_figure);
+    expect(html).toContain("data-single-figure");
+    expect(html).toContain(REVEAL_COPY.nothingToCompare);
+    expect(html).not.toContain(REVEAL_COPY.reason.no_newer_figure);
     expect(html).not.toContain(REVEAL_COPY.formulaLabel);
     expect(html).not.toContain("unchanged");
   });
 
-  it("draws both Number_Line pins at the centre", () => {
+  it("draws no Number_Line on the single card, and the pin geometry is centred", () => {
     const geometry = numberLineGeometry(SAME_THEN.value, NOW_FIGURE.value);
     expect(geometry.posThen).toBeCloseTo(0.5, 12);
     expect(geometry.posNow).toBeCloseTo(0.5, 12);
 
-    // The rendered custom properties carry the same centred positions.
+    // The single card has no Number_Line, so no pin custom properties render.
     const html = render(true);
-    const then = /--pos-then:([0-9.eE+-]+)/.exec(html);
-    const now = /--pos-now:([0-9.eE+-]+)/.exec(html);
-    expect(then).not.toBeNull();
-    expect(now).not.toBeNull();
-    expect(Number(then?.[1])).toBeCloseTo(0.5, 12);
-    expect(Number(now?.[1])).toBeCloseTo(0.5, 12);
+    expect(/--pos-then:/.test(html)).toBe(false);
+    expect(/--pos-now:/.test(html)).toBe(false);
   });
 });

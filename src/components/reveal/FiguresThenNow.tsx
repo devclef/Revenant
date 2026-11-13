@@ -15,6 +15,7 @@ import { FigureEntry } from "./FigureEntry";
 import { receiptFigureOf, receiptSourceOf, type LetterKind } from "./FigureLine";
 import { FixtureNote } from "./FixtureNote";
 import { ReceiptCard } from "./ReceiptCard";
+import { receiptKindFor } from "./receipt-kind";
 import { keptSampleFor } from "./kept-sample";
 import { REVEAL_COPY } from "./copy";
 import { shortNameFor } from "./short-names";
@@ -203,6 +204,8 @@ export function FiguresThenNow({
     nowNote: string | null;
     rescale: Readonly<DisplayRescale> | undefined;
     change: ReturnType<typeof computeChange> | undefined;
+    /** The card this figure gets (spec 12 Z2). See receiptKindFor. */
+    kind: ReturnType<typeof receiptKindFor>;
     markValue: string | undefined;
     sample: boolean;
     /** The answer in the shown unit, for a branch with no Number_Line. */
@@ -254,6 +257,7 @@ export function FiguresThenNow({
       nowNote,
       rescale,
       change,
+      kind: receiptKindFor(then, now, change),
       markValue,
       sample: keptSampleFor(then.metric_id, payload.recall_questions, record),
       // The typed answer is stored per litre already (C8.3), so it is shown as
@@ -311,6 +315,28 @@ export function FiguresThenNow({
                 now={{ message: entry.nowMissing }}
                 primary={primary}
                 source={receiptSourceOf(entry.then, entry.seriesName)}
+              />
+            </div>
+          );
+        }
+
+        if (entry.kind === "single") {
+          // Single_Figure_View (spec 12 Z2): the sealed figure and its own
+          // nothing-to-compare line. No now row, no Number_Line, no change.
+          // The card does not draw `now`, so it gets an empty message.
+          return (
+            <div key={entry.key} className={styles.figureGroup} data-figure-entry="">
+              <ReceiptCard
+                name={entry.name}
+                region={entry.then.region}
+                markValue={answer.markValue}
+                sample={entry.sample}
+                unit={answer.unit}
+                then={thenRow}
+                now={{ message: null }}
+                primary={primary}
+                source={receiptSourceOf(entry.then, entry.seriesName)}
+                single
               />
             </div>
           );
