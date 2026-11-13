@@ -1,7 +1,13 @@
+import { spawnSync } from "node:child_process";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import { WALK_STEP_NAMES } from "./live-walk-helpers";
 import { WALK_MATRIX, matrixShotNames, walkEnabled } from "./live-walk-matrix";
+
+const ROOT = fileURLToPath(new URL("../../..", import.meta.url));
+const REPLAY = "src/test/integration/live-walk.test.ts";
 
 describe("WALK_MATRIX", () => {
   it("has six runs: no figure, one figure and one reduced run at each width", () => {
@@ -64,5 +70,33 @@ describe("walkEnabled", () => {
 
   it("is true only when WALK is 1", () => {
     expect(walkEnabled({ WALK: "1" })).toBe(true);
+  });
+});
+
+describe("live-walk.test.ts with WALK unset", () => {
+  it("is skipped, runs no browser step, and exits 0", () => {
+    const env: NodeJS.ProcessEnv = { ...process.env };
+    delete env.WALK;
+    delete env.WALK_VARIANT;
+    const run = spawnSync(
+      process.execPath,
+      [
+        "node_modules/vitest/vitest.mjs",
+        "run",
+        "--project",
+        "integration",
+        REPLAY,
+      ],
+      { cwd: ROOT, env, encoding: "utf8", timeout: 240_000 },
+    );
+    const output = `${run.stdout}\n${run.stderr}`.replace(
+      /\u001b\[[0-9;]*m/g,
+      "",
+    );
+    expect(run.error).toBeUndefined();
+    expect(run.status).toBe(0);
+    expect(output).toMatch(/Tests\s+\d+ skipped \(\d+\)/);
+    expect(output).not.toMatch(/\d+ passed/);
+    expect(output).not.toMatch(/\bfailed\b/);
   });
 });

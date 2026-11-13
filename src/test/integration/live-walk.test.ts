@@ -610,12 +610,11 @@ function formatFindings(all: readonly StepResult[]): string {
   return lines.join("\n");
 }
 
-describe.skipIf(process.env.WALK !== "1")("live walk replay", () => {
+describe.skipIf(!walkEnabled(process.env))("live walk replay", () => {
   // Read only when WALK=1; with WALK unset the suite is skipped and nothing is selected.
-  const variants =
-    process.env.WALK === "1"
-      ? selectWalkVariants(process.env.WALK_VARIANT)
-      : [];
+  const variants = walkEnabled(process.env)
+    ? selectWalkVariants(process.env.WALK_VARIANT)
+    : [];
 
   afterAll(() => {
     if (results.length > 0) {
