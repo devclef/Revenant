@@ -39,3 +39,25 @@ export function questionRowProblem(text: string): QuestionRowProblem | null {
 export function questionsForSeal(rows: readonly string[]): string[] {
   return rows.map((row) => row.trim()).filter((row) => row.length > 0);
 }
+
+/**
+ * Where focus goes after a row is removed (spec 10, C2). `row` is the index in
+ * the list after removal. `add` means no rows remain, so focus goes to the
+ * Add a question control.
+ */
+export type FocusAfterRemove = { kind: "row"; index: number } | { kind: "add" };
+
+/**
+ * The row that takes focus after removing the row at `removedIndex` from a list
+ * of `countBefore` rows. It is the row now at `removedIndex`. When the last row
+ * was removed, it is the row before it. When no rows remain, it is Add.
+ */
+export function focusAfterRemove(
+  countBefore: number,
+  removedIndex: number,
+): FocusAfterRemove {
+  const countAfter = Math.max(0, countBefore - 1);
+  if (countAfter === 0) return { kind: "add" };
+  if (removedIndex < countAfter) return { kind: "row", index: removedIndex };
+  return { kind: "row", index: countAfter - 1 };
+}

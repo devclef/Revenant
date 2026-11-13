@@ -3,7 +3,11 @@
 import { useEffect, useId, useRef, useState } from "react";
 
 import { DEFAULT_QUESTION } from "./occasions";
-import { AUTHOR_QUESTIONS_MAX } from "./author-questions";
+import {
+  AUTHOR_QUESTIONS_MAX,
+  focusAfterRemove,
+  type FocusAfterRemove,
+} from "./author-questions";
 import { LIVE_COPY } from "./copy";
 import styles from "./live.module.css";
 
@@ -47,14 +51,22 @@ export function AuthorQuestions({
 }: AuthorQuestionsProps) {
   const baseId = useId();
   const textareaRefs = useRef<Map<number, HTMLTextAreaElement>>(new Map());
-  // The row to focus after the next render, set by Add.
-  const [pendingFocus, setPendingFocus] = useState<number | null>(null);
+  const addRef = useRef<HTMLButtonElement | null>(null);
+  // Where focus goes after the next render: the new row after Add, or the row
+  // (or Add) that takes over after a removal (focusAfterRemove).
+  const [pendingFocus, setPendingFocus] = useState<FocusAfterRemove | null>(
+    null,
+  );
   // The removal announced to screen readers after a row is removed.
   const [announcement, setAnnouncement] = useState("");
 
   useEffect(() => {
     if (pendingFocus === null) return;
-    textareaRefs.current.get(pendingFocus)?.focus();
+    if (pendingFocus.kind === "add") {
+      addRef.current?.focus();
+    } else {
+      textareaRefs.current.get(pendingFocus.index)?.focus();
+    }
     setPendingFocus(null);
   }, [pendingFocus, questions.length]);
 
@@ -70,12 +82,13 @@ export function AuthorQuestions({
   }, [questions]);
 
   function pressAdd() {
-    setPendingFocus(questions.length);
+    setPendingFocus({ kind: "row", index: questions.length });
     onAdd();
   }
 
   function pressRemove(index: number) {
     setAnnouncement(withNumber(LIVE_COPY.authorQuestionRemoved, index + 1));
+    setPendingFocus(focusAfterRemove(questions.length, index));
     onRemove(index);
   }
 
@@ -131,13 +144,18 @@ export function AuthorQuestions({
           </div>
         );
       })}
-      <p role="status" className={styles.visuallyHidden}>
+      <p role="status" aria-live="polite" className={styles.visuallyHidden}>
         {announcement}
       </p>
 
       {canAdd ? (
         <div className={styles.actions}>
-          <button type="button" className={styles.secondary} onClick={pressAdd}>
+          <button
+            type="button"
+            ref={addRef}
+            className={styles.addQuestion}
+            onClick={pressAdd}
+          >
             {LIVE_COPY.authorQuestionAdd}
           </button>
         </div>
