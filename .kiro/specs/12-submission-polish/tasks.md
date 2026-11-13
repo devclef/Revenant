@@ -119,7 +119,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
   - _Requirements: Z1.1–Z1.6_
 
-- [ ] 3. X3 · The Close is honest and legible
+- [x] 3. X3 · The Close is honest and legible
   - Agent: `frontend-dev` · Depends on: 1 · Estimated size: ~400 changed lines
   - Scope: `src/components/live/LiveLockNote.tsx`, `src/components/live/live.module.css` (remove `.lockNote` and `.lockNote p` only; `.lockNoteLink` stays), `src/components/ceremony/close/close.module.css`, `src/components/reveal/copy.ts` (delete `lockNote` and `lockNoteLink` only), and the `*.test.ts(x)` for each file above.
   - Design sections: "X3. The Close".
