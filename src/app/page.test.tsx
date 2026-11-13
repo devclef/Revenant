@@ -194,7 +194,7 @@ describe("landing sections below the hero and heading colour (H1)", () => {
     vi.unstubAllEnvs();
   });
 
-  it("renders the four sections after the hero, in the full-width frame", () => {
+  it("renders the four sections after the hero, with no landingBelow wrapper", () => {
     const html = renderPage();
     // The sections are passed as SceneShell `below`, not wrapped in a page div.
     expect(countOf(html, 'class="landingBelow"')).toBe(0);
