@@ -109,19 +109,6 @@ h3 {
   letter-spacing: -0.01em;
 }
 
-/*
- * The landing sections below the hero sit on the near-black Scene, so their
- * h2 and h3 use the light Scene text token (--text, tokens.css). No element
- * carries this class yet: the page wraps the four sections in a `landingBelow`
- * element in the next step (src/app/page.tsx). Until then this rule matches
- * nothing. The paper and ink colours stay on the letter text. The h1 rule is
- * unchanged.
- */
-.landingBelow h2,
-.landingBelow h3 {
-  color: var(--text);
-}
-
 p {
   margin: 0 0 1.25em;
   max-width: var(--measure);
