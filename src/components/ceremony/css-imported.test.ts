@@ -13,7 +13,10 @@ const REPO = resolve(SRC, "..");
  * must be removed as soon as a non-test file imports the module, which the
  * test below enforces.
  */
-const NOT_IMPORTED_YET: Record<string, string> = {};
+const NOT_IMPORTED_YET: Record<string, string> = {
+  "src/components/live/letter-field.module.css":
+    "spec 09 W1: the stylesheet and its tests land first; WriteForm imports it in the next step, and this entry is removed then",
+};
 
 function walk(dir: string): string[] {
   return readdirSync(dir).flatMap((name) => {
