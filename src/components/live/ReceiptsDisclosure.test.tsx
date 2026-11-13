@@ -102,3 +102,38 @@ describe("ReceiptsDisclosure status", () => {
     }
   });
 });
+
+// The openRequest counter opens the disclosure and moves focus in an effect,
+// which static markup never runs. The markup must still stay closed and the
+// same whatever the counter holds, so the page can raise it at any time.
+describe("ReceiptsDisclosure openRequest", () => {
+  function renderWith(openRequest: number | undefined) {
+    return renderToStaticMarkup(
+      createElement(ReceiptsDisclosure, {
+        status: "ready",
+        picker: createElement("span", { "data-picker": "" }, "picker"),
+        selfReported: createElement("span", { "data-own-numbers": "" }, "own"),
+        openRequest,
+      }),
+    );
+  }
+
+  it("is closed in the markup whatever the counter holds", () => {
+    const closedMarkup = renderWith(undefined);
+    expect(renderWith(0)).toBe(closedMarkup);
+    expect(renderWith(3)).toBe(closedMarkup);
+    expect(renderWith(3).match(/<details[^>]*>/)?.[0]).not.toMatch(
+      /\sopen(\s|=|>)/,
+    );
+  });
+
+  it("keeps the picker and own-numbers rows inside the details with the counter set", () => {
+    const html = renderWith(1);
+    expect(html.indexOf("data-picker")).toBeGreaterThan(
+      html.indexOf("<details"),
+    );
+    expect(html.indexOf("data-own-numbers")).toBeLessThan(
+      html.indexOf("</details>"),
+    );
+  });
+});

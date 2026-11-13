@@ -247,6 +247,9 @@ export function WriteForm({
     null,
   );
   const chosenOccasion: OccasionId = occasionMemory?.occasion ?? "blank";
+  // Raised by the Add a receipt action to open the Receipts_Disclosure and move
+  // focus into it (spec 11, L1.4). Each press is a new request.
+  const [receiptsRequest, setReceiptsRequest] = useState(0);
 
   function chooseOccasion(id: OccasionId) {
     const base: OccasionDraft = occasionMemory ?? {
@@ -482,6 +485,7 @@ export function WriteForm({
         <>
           <ReceiptsDisclosure
             status={figuresStatus}
+            openRequest={receiptsRequest}
             picker={
               <FigurePicker
                 series={series}
@@ -609,7 +613,11 @@ export function WriteForm({
 
       {section === "write" ? (
         <div className={`${styles.actions} ${styles.writeActions}`}>
-          <button type="button" className={styles.secondary}>
+          <button
+            type="button"
+            className={styles.secondary}
+            onClick={() => setReceiptsRequest((count) => count + 1)}
+          >
             {LIVE_COPY.receiptsAction}
           </button>
           <button
