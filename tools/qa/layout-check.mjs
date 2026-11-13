@@ -56,6 +56,15 @@
 //   FONT1 fonts-loaded        the sans face loaded and on <body> on every page; the serif face
 //                             loaded and on the Letter_Text where the letter shows (runFontCheck,
 //                             exported). FONT2 fonts-sans-ui: every h1 to h3 and button in sans.
+// Spec 12 Write-step checks (spec 12 design.md "W1.6: viewport arithmetic"), on /demo/live.
+// They replace the spec 11 L3 thresholds, which needed every primary control, Next
+// included, in view at phone sizes. Next's bottom is printed as a note, never asserted.
+//   W1.6  write-step        at 1440x900: the Letter_Field shows 10 lines in view, its top is
+//                           in view and the Occasion chips are in view. At phone sizes PH1
+//                           asks for the field's top and 6 lines in view instead.
+//   W1.7  write-step        at 390x844 and below 600 px: Next's bottom is at most one window
+//                           height below the fold (2 x the window height). At 360x640 the
+//                           document and the Write card have no sideways scroll.
 // A spec 09 check prints BLOCKER only when its ID is passed with --require; any other
 // failure prints polish. A spec 09 check whose element is not on the page prints a note.
 //
@@ -167,6 +176,15 @@ const PH_HEADLINE_LINES_OTHER = 2;
 const PH6_SIZE = "390x844";
 const PH6_SCREENS = 3;
 const ST_LINES_PHONE_MAX = 2;
+// Spec 12 W1.6 and W1.7 (design.md "W1.6: viewport arithmetic"). The Write step is
+// the first card of /demo/live. Lines are counted only where the whole line is in
+// the window. Next is reported, not asserted, at 1440x900 and at the phone sizes.
+const WRITE_CARD = '[data-card="live-step-write"]';
+const W16_SIZE = "1440x900";
+const W16_LINES_DESKTOP = 10;
+const W16_LINES_PHONE = 6;
+const W17_SIDEWAYS_SIZE = "360x640";
+const W17_NEXT_SCREENS_MAX = 2;
 // Spec 08 thresholds (spec 08 requirements R2, R3, R8, R27).
 const PHONE_WIDTH_MAX = 600;
 const LETTER_EM_MIN = 28;
@@ -1093,6 +1111,37 @@ const PH1_STAGE_SCROLL = () => {
   return true;
 };
 
+// W1.6 and W1.7 (spec 12): the Write step's Letter_Field, Occasion chips and Next on
+// /demo/live. Returns { missing: true } when the Write card or its field is absent.
+// Lines in view are counted from the field's top, down to the window bottom.
+const WRITE_READ = (cardSelector) => {
+  const card = document.querySelector(cardSelector);
+  const field = card?.querySelector("textarea");
+  if (!card || !field) return { missing: true };
+  const cs = getComputedStyle(field);
+  const padTop = parseFloat(cs.paddingTop) || 0;
+  const padBottom = parseFloat(cs.paddingBottom) || 0;
+  const border = (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
+  let lh = parseFloat(cs.lineHeight);
+  if (!Number.isFinite(lh)) lh = (parseFloat(cs.fontSize) || 16) * 1.2;
+  const r = field.getBoundingClientRect();
+  const fieldLines = Math.round((r.height - padTop - padBottom - border) / lh);
+  const linesInView = r.top >= 0 ? Math.min(fieldLines, Math.max(0, Math.floor((innerHeight - r.top - padTop) / lh + 0.01))) : 0;
+  const inWindow = (b) => b.width > 0 && b.height > 0 && b.top >= 0 && b.left >= 0 && b.bottom <= innerHeight && b.right <= innerWidth;
+  const chipButtons = [...(card.querySelector("fieldset")?.querySelectorAll("button") ?? [])];
+  const chips = chipButtons.map((b) => b.getBoundingClientRect());
+  const nextButton = [...card.querySelectorAll("button")].find((b) => b.textContent.trim() === "Next");
+  const nextRect = nextButton ? nextButton.getBoundingClientRect() : null;
+  return {
+    missing: false,
+    field: { top: r.top, bottom: r.bottom, topInView: r.top >= 0 && r.top < innerHeight, lines: fieldLines, linesInView, lineHeight: lh },
+    chips: { count: chips.length, inView: chips.length > 0 && chips.every(inWindow), top: chips.length ? Math.min(...chips.map((c) => c.top)) : null, bottom: chips.length ? Math.max(...chips.map((c) => c.bottom)) : null },
+    next: nextRect ? { top: nextRect.top, bottom: nextRect.bottom } : null,
+    doc: { scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth },
+    card: { scrollWidth: card.scrollWidth, clientWidth: card.clientWidth },
+  };
+};
+
 // PH1 on the persona page and /demo/live: every visible [data-primary-control] in view.
 const PH1_CONTROLS = () => {
   const els = [...document.querySelectorAll("[data-primary-control]")].filter((el) => {
@@ -1758,8 +1807,15 @@ export async function runPhoneChecks(page, size, route) {
         await toTop();
         r = await page.evaluate(PH1_LANDING);
       } else if (kind === "live") {
+        // W1.6: the Write step's field top and its first 6 lines are in view. Next is not asserted here (W1.7 reads its reach).
         await toTop();
-        r = await page.evaluate(PH1_CONTROLS);
+        const w6 = await page.evaluate(WRITE_READ, WRITE_CARD);
+        r = w6.missing
+          ? { missing: [WRITE_CARD], items: [] }
+          : {
+              missing: [],
+              items: [{ name: `Letter_Field ${w6.field.linesInView} of ${W16_LINES_PHONE} lines`, top: w6.field.top, bottom: w6.field.bottom, inView: w6.field.topInView && w6.field.linesInView >= W16_LINES_PHONE }],
+            };
       } else {
         const scrolled = await page.evaluate(PH1_STAGE_SCROLL);
         await sleep(150);
@@ -1767,7 +1823,8 @@ export async function runPhoneChecks(page, size, route) {
         where = `scrollY ${Math.round(await page.evaluate(() => window.scrollY))} (top of [data-stage-content])`;
       }
       const parts = r.items.map((i) => `${i.name}=${px(i.top)}..${px(i.bottom)}${i.inView ? "" : "(out)"}`);
-      const detail = `${parts.join(" ")}${r.missing.length ? ` missing=${r.missing.join(",")}` : ""} viewport=${w}x${h} at ${where} threshold=inside viewport`;
+      const threshold = kind === "live" ? `threshold=field top and ${W16_LINES_PHONE} lines inside viewport (W1.6), Next not asserted` : "threshold=inside viewport";
+      const detail = `${parts.join(" ")}${r.missing.length ? ` missing=${r.missing.join(",")}` : ""} viewport=${w}x${h} at ${where} ${threshold}`;
       out.push(result("PH1", "first-viewport", r.missing.length ? "missing" : r.items.every((i) => i.inView) ? "pass" : "fail", detail));
     }
     await toTop();
@@ -2645,6 +2702,40 @@ async function showAll(context, ctx) {
   }
 }
 
+// W1.6 and W1.7 (spec 12 design.md "W1.6: viewport arithmetic") on /demo/live at
+// the Write step. The phone field rule (PH1) runs through checkPhone. Failures are
+// BLOCKERs, like the spec 08 checks: the Write step must fit the thresholds on every run.
+async function checkWriteStep(page, ctx) {
+  const r = await page.evaluate(WRITE_READ, WRITE_CARD);
+  if (r.missing) {
+    ctx.rep.add("note", "W1.6", `no Write card with a Letter_Field on /demo/live (${WRITE_CARD})`, "write-step");
+    return;
+  }
+  const next = r.next ? `Next=${px(r.next.top)}..${px(r.next.bottom)} (note, not asserted)` : "Next not found (note)";
+  ctx.rep.add("note", "W1.6", `${next} at ${ctx.size}`, "write-step");
+  const w16 = [];
+  if (ctx.size === W16_SIZE) {
+    if (!r.field.topInView) w16.push(`Letter_Field top ${px(r.field.top)} is outside the window`);
+    if (r.field.linesInView < W16_LINES_DESKTOP) w16.push(`Letter_Field shows ${r.field.linesInView} lines in view, need ${W16_LINES_DESKTOP}`);
+    if (!r.chips.inView) w16.push(`Occasion chips ${r.chips.count ? `${px(r.chips.top)}..${px(r.chips.bottom)} are not all inside the window` : "not found"}`);
+    const detail = `field=${px(r.field.top)}..${px(r.field.bottom)} lines=${r.field.linesInView} of ${r.field.lines} in view chips=${r.chips.count} inView=${r.chips.inView} threshold=field top in view, ${W16_LINES_DESKTOP} lines in view, chips in view`;
+    ctx.rep.add(w16.length ? "blocker" : "ok", "W1.6", w16.length ? `${detail} (${w16.join("; ")})` : detail, "write-step");
+  }
+  const w17 = [];
+  if (isPhone(ctx) && r.next) {
+    const limit = W17_NEXT_SCREENS_MAX * ctx.h;
+    if (r.next.bottom > limit) w17.push(`Next bottom ${px(r.next.bottom)} is past ${px(limit)}, more than one short scroll`);
+  }
+  if (ctx.size === W17_SIDEWAYS_SIZE) {
+    if (r.doc.scrollWidth > r.doc.clientWidth) w17.push(`document scrollWidth ${r.doc.scrollWidth}px > clientWidth ${r.doc.clientWidth}px`);
+    if (r.card.scrollWidth > r.card.clientWidth) w17.push(`Write card scrollWidth ${r.card.scrollWidth}px > clientWidth ${r.card.clientWidth}px`);
+  }
+  if (isPhone(ctx) || ctx.size === W17_SIDEWAYS_SIZE) {
+    const detail = `next=${r.next ? `${px(r.next.top)}..${px(r.next.bottom)}` : "none"} viewport=${ctx.w}x${ctx.h} docScroll=${r.doc.scrollWidth}/${r.doc.clientWidth} cardScroll=${r.card.scrollWidth}/${r.card.clientWidth} threshold=Next bottom <= ${W17_NEXT_SCREENS_MAX} x window height, no sideways scroll at ${W17_SIDEWAYS_SIZE}`;
+    ctx.rep.add(w17.length ? "blocker" : "ok", "W1.7", w17.length ? `${detail} (${w17.join("; ")})` : detail, "write-step");
+  }
+}
+
 // X1 on the other letter pages (R27.4). /l/[id] needs a sealed live letter, which
 // this walk does not create, so it measures the page an unknown id renders.
 async function otherPages(context, ctx) {
@@ -2660,6 +2751,7 @@ async function otherPages(context, ctx) {
       await guard(ctx, "FT1", () => checkFooter(page, ctx));
       await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
       if (path === LIVE_PATH) {
+        await guard(ctx, "W1.6", () => checkWriteStep(page, ctx));
         // Only the steps before the first passkey prompt are reachable here.
         const step = await page.evaluate(() => document.querySelector("[data-live-step]")?.getAttribute("data-live-step") ?? null);
         ctx.rep.add(step ? "ok" : "note", "walk", step ? `/demo/live step "${step}" reached` : "no [data-live-step] on /demo/live");
