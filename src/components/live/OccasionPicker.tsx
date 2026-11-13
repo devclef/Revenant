@@ -36,7 +36,7 @@ export function OccasionPicker({ chosen, onChoose }: OccasionPickerProps) {
             onClick={() => onChoose(occasion.id)}
           >
             <span aria-hidden="true" className={styles.occasionMark}>
-              [x]
+              {LIVE_COPY.occasionMark}
             </span>
             {LIVE_COPY.occasionLabels[occasion.id]}
           </button>
