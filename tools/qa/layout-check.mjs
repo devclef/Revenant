@@ -65,6 +65,8 @@
 //   W1.7  write-step        at 390x844 and below 600 px: Next's bottom is at most one window
 //                           height below the fold (2 x the window height). At 360x640 the
 //                           document and the Write card have no sideways scroll.
+//   H1.6  landing-sections  at 1440x900 on /: every section's content box is at least 60%
+//                           of the viewport width. Below 60% is a BLOCKER.
 // A spec 09 check prints BLOCKER only when its ID is passed with --require; any other
 // failure prints polish. A spec 09 check whose element is not on the page prints a note.
 //
@@ -185,6 +187,10 @@ const W16_LINES_DESKTOP = 10;
 const W16_LINES_PHONE = 6;
 const W17_SIDEWAYS_SIZE = "360x640";
 const W17_NEXT_SCREENS_MAX = 2;
+// H1.6 (spec 11 H1.6, spec 12 design.md "Layout checks"): on / at 1440x900, no section's
+// content box may be narrower than 60% of the viewport width.
+const H16_SIZE = "1440x900";
+const H16_RATIO_MIN = 0.6;
 // Spec 08 thresholds (spec 08 requirements R2, R3, R8, R27).
 const PHONE_WIDTH_MAX = 600;
 const LETTER_EM_MIN = 28;
@@ -766,6 +772,23 @@ const CTA1_READ = () => {
     secondary: s ? { top: s.top, bottom: s.bottom, inView: inView(s) } : null,
   };
 };
+
+// H1.6: the content box width of every visible section on /, in px. The content box is
+// the border box less padding and borders.
+const H16_READ = () =>
+  [...document.querySelectorAll("section")]
+    .filter((el) => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    })
+    .map((el) => {
+      const cs = getComputedStyle(el);
+      const edges = ["paddingLeft", "paddingRight", "borderLeftWidth", "borderRightWidth"].reduce((sum, k) => sum + (parseFloat(cs[k]) || 0), 0);
+      return {
+        name: (el.getAttribute("aria-labelledby") ?? (el.hasAttribute("data-landing-hero") ? "hero" : "section")).slice(0, 30),
+        width: el.getBoundingClientRect().width - edges,
+      };
+    });
 
 // DX1 (B2.4): every persona open link on /demo inside the viewport at the top.
 const DX1_READ = () => {
@@ -1977,6 +2000,29 @@ async function checkLandingCtas(page, ctx) {
   report(ctx, result("CTA1", "landing-ctas", problems.length ? "fail" : "pass", `primary=${px(r.primary.top)}..${px(r.primary.bottom)} href=${r.href} secondary=${sec} viewport=${ctx.w}x${ctx.h} threshold=in view at the top, href=/demo`));
 }
 
+// The sections narrower than H1.6's minimum (60% of the viewport width). A section
+// exactly at the minimum passes. Pure, so tests/unit checks use it without a browser.
+export function narrowSections(sections, viewportWidth) {
+  const min = viewportWidth * H16_RATIO_MIN;
+  return sections.filter((s) => s.width < min);
+}
+
+// H1.6 on / at 1440x900. Other sizes are not checked.
+async function checkLandingSections(page, ctx) {
+  if (ctx.size !== H16_SIZE) return;
+  const sections = await page.evaluate(H16_READ);
+  if (!sections.length) {
+    ctx.rep.add("note", "H1.6", "no visible section on / to measure", "landing-sections");
+    return;
+  }
+  const min = ctx.w * H16_RATIO_MIN;
+  const narrow = narrowSections(sections, ctx.w);
+  const parts = sections.map((s) => `${s.name}=${px(s.width)}`);
+  const detail = `${parts.join(" ")} viewport=${ctx.w}x${ctx.h} threshold=content box at least ${px(min)} (${Math.round(H16_RATIO_MIN * 100)}% of width)`;
+  const failures = narrow.map((s) => `${s.name} ${px(s.width)} is narrower than ${px(min)}`);
+  ctx.rep.add(narrow.length ? "blocker" : "ok", "H1.6", narrow.length ? `${detail} (${failures.join("; ")})` : detail, "landing-sections");
+}
+
 async function checkDemoCards(page, ctx) {
   if (!DESKTOP_SIZES.includes(ctx.size) && ctx.size !== WIDE_SIZE) return;
   const r = await page.evaluate(DX1_READ);
@@ -2333,6 +2379,7 @@ async function landing(context, ctx) {
       await guard(ctx, "FT1", () => checkFooter(page, ctx));
       await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
       await guard(ctx, "CTA1", () => checkLandingCtas(page, ctx));
+      await guard(ctx, "H1.6", () => checkLandingSections(page, ctx));
       await guard(ctx, "HW1", () => checkHeroWide(page, ctx));
       await checkEveryPage(page, ctx, "/", { fonts: true });
     }
