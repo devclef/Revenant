@@ -7,7 +7,11 @@ import { LIVE_COPY } from "./copy";
 import { selfReportedFieldKey } from "./form";
 import { SelfReportedRows, type SelfReportedRowsProps } from "./SelfReportedRows";
 import { INITIAL_TOUCHED, markAttempted, markTouched } from "./touched";
-import type { SelfReportedRow } from "./write-draft";
+import {
+  INITIAL_WRITE_DRAFT,
+  initialWriteDraft,
+  type SelfReportedRow,
+} from "./write-draft";
 
 const noop = () => {};
 const SEALING_DAY = "2026-11-09";
@@ -156,7 +160,10 @@ describe("SelfReportedRows blank and partly filled rows (spec 08 later-tasks, R2
     LIVE_COPY.selfReportedMissing.replace("{fields}", text);
 
   it("starts with no row, so a new letter shows no number", () => {
-    expect(rowsOf(render({ rows: [] }))).toHaveLength(0);
+    const draft = initialWriteDraft("real");
+    expect(draft.selfReported).toEqual([]);
+    expect(INITIAL_WRITE_DRAFT.selfReported).toEqual([]);
+    expect(rowsOf(render({ rows: draft.selfReported }))).toHaveLength(0);
   });
 
   it("flags nothing for a blank row, even after a seal attempt", () => {
