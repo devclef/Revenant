@@ -159,16 +159,34 @@ export function selfReportedRowProblems(
 }
 
 /**
+ * True when every field of a self-reported row is empty after trimming. A blank
+ * row is a row the visitor added and did not fill in. It changes nothing: it
+ * passes validation and is left out of the payload.
+ */
+export function isEmptySelfReportedRow(row: SelfReportedRow): boolean {
+  return SELF_REPORTED_FIELDS.every((field) => row[field].trim() === "");
+}
+
+/** The fields of a row that are empty after trimming, in form order. */
+export function missingSelfReportedFields(
+  row: SelfReportedRow,
+): SelfReportedField[] {
+  return SELF_REPORTED_FIELDS.filter((field) => row[field].trim() === "");
+}
+
+/**
  * True when every self-reported row passes its rules. An empty list passes. A
- * row that is left empty fails, so a new row blocks sealing until it is filled
- * in or removed.
+ * blank row passes, because it changes nothing. A partly filled row fails, so it
+ * blocks sealing until every field is filled in or the row is removed.
  */
 export function selfReportedRowsOk(
   rows: readonly SelfReportedRow[],
   sealingDay: string,
 ): boolean {
   return rows.every(
-    (row) => Object.keys(selfReportedRowProblems(row, sealingDay)).length === 0,
+    (row) =>
+      isEmptySelfReportedRow(row) ||
+      Object.keys(selfReportedRowProblems(row, sealingDay)).length === 0,
   );
 }
 
@@ -258,7 +276,10 @@ export function validateWrite(input: {
   }
 
   if (
-    !selfReportedRowsOk(input.selfReported ?? [], input.sealingDay ?? "")
+    !selfReportedRowsOk(
+      (input.selfReported ?? []).filter((row) => !isEmptySelfReportedRow(row)),
+      input.sealingDay ?? "",
+    )
   ) {
     problems.push("self_reported_invalid");
   }

@@ -42,6 +42,14 @@ function oracleValueOk(raw: string): boolean {
   return frac === undefined || /^0*$/.test(frac);
 }
 
+// Oracle: a row with every field blank after trimming is a blank row. It is not
+// a broken row, because it changes nothing.
+function isBlankRow(row: SelfReportedRow): boolean {
+  return [row.name, row.value, row.unit, row.region, row.period].every(
+    (text) => text.trim() === "",
+  );
+}
+
 // Oracle: 1 to 60 characters, counted in code points, after trimming.
 function oracleTextOk(raw: string): boolean {
   const n = [...raw.trim()].length;
@@ -175,11 +183,14 @@ describe("Property 22: self-reported values are validated and kept as typed", ()
           }).includes("self_reported_invalid");
           const someRowBroken = rows.some(
             (row) =>
-              !oracleTextOk(row.name) ||
-              !oracleValueOk(row.value) ||
-              !oracleTextOk(row.unit) ||
-              !oracleTextOk(row.region) ||
-              !["2026-10", "2026-11", "2026-11-09"].includes(row.period.trim()),
+              !isBlankRow(row) &&
+              (!oracleTextOk(row.name) ||
+                !oracleValueOk(row.value) ||
+                !oracleTextOk(row.unit) ||
+                !oracleTextOk(row.region) ||
+                !["2026-10", "2026-11", "2026-11-09"].includes(
+                  row.period.trim(),
+                )),
           );
           expect(blocked).toBe(someRowBroken);
         },

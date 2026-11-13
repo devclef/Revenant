@@ -237,6 +237,8 @@ export const LIVE_COPY = {
   selfReportedUnitLabel: "Unit, such as per month",
   selfReportedRegionLabel: "Region, such as your city",
   selfReportedPeriodLabel: "Period, such as 2026-09 or 2026-09-30",
+  /** A partly filled row. `{fields}` is the names of the empty fields, in order. */
+  selfReportedMissing: "Still to fill in: {fields}. Fill them in, or remove this number.",
   /**
    * Shown under the Write heading and next to the Wait countdown on /demo/live
    * only, so the judge knows the 30 seconds is a rehearsal.
@@ -291,4 +293,13 @@ export const REAL_COPY = {
   /** The same hint when the stated maximum is 1. */
   figuresHintRealOne:
     "Choose 1 figure, or none if you write a question above. It is sealed as published, with its period and source.",
+} as const;
+
+/** The short field names used in the partly filled row message (selfReportedMissing). */
+export const SELF_REPORTED_FIELD_NAMES = {
+  name: "name",
+  value: "value",
+  unit: "unit",
+  region: "region",
+  period: "period",
 } as const;
