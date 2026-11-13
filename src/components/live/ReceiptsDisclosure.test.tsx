@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -134,6 +136,28 @@ describe("ReceiptsDisclosure openRequest", () => {
     );
     expect(html.indexOf("data-own-numbers")).toBeLessThan(
       html.indexOf("</details>"),
+    );
+  });
+});
+
+// The click cannot run under static markup, so the wiring is checked in the
+// source: Add a receipt raises the counter, and the disclosure receives it.
+describe("WriteForm wiring for Add a receipt", () => {
+  const source = readFileSync(
+    new URL("./WriteForm.tsx", import.meta.url),
+    "utf8",
+  );
+
+  it("passes the counter to the disclosure", () => {
+    expect(source).toContain("openRequest={receiptsRequest}");
+  });
+
+  it("raises the counter from the Add a receipt button", () => {
+    const button = source.slice(
+      source.indexOf("{LIVE_COPY.receiptsAction}") - 300,
+    );
+    expect(button).toMatch(
+      /onClick=\{\(\) => setReceiptsRequest\(nextOpenRequest\)\}/,
     );
   });
 });

@@ -4,6 +4,11 @@ import { type ReactNode, useEffect, useRef } from "react";
 
 import { LIVE_COPY } from "./copy";
 import styles from "./live.module.css";
+import {
+  focusIndex,
+  isNewOpenRequest,
+  type ReceiptsControlKind,
+} from "./receipts-focus";
 
 /** The state of the figures request, as the live seal page sees it (X2). */
 export type ReceiptsStatus = "loading" | "ready" | "failed";
@@ -52,13 +57,17 @@ export function ReceiptsDisclosure({
   const handledRequest = useRef(0);
 
   useEffect(() => {
-    if (openRequest === 0 || openRequest === handledRequest.current) return;
+    if (!isNewOpenRequest(openRequest, handledRequest.current)) return;
     handledRequest.current = openRequest;
     const details = detailsRef.current;
     if (details === null) return;
     details.open = true;
-    const target = firstTarget(details, status === "ready");
-    target?.focus({ preventScroll: true });
+    const controls = Array.from(
+      details.querySelectorAll<HTMLElement>(CONTROL_SELECTOR),
+    );
+    const kinds = controls.map(controlKind);
+    const index = focusIndex(kinds, status === "ready");
+    controls[index]?.focus({ preventScroll: true });
   }, [openRequest, status]);
 
   return (
@@ -83,23 +92,9 @@ export function ReceiptsDisclosure({
   );
 }
 
-/**
- * The control to focus when the disclosure opens: the first figure checkbox
- * when figures are ready, otherwise the first control after the summary. Falls
- * back to the first control of any kind when the preferred one is missing.
- */
-function firstTarget(
-  details: HTMLDetailsElement,
-  figuresReady: boolean,
-): HTMLElement | null {
-  if (figuresReady) {
-    const checkbox = details.querySelector<HTMLElement>(
-      'input[type="checkbox"]',
-    );
-    if (checkbox !== null) return checkbox;
-  }
-  const controls = Array.from(
-    details.querySelectorAll<HTMLElement>(CONTROL_SELECTOR),
-  );
-  return controls.find((el) => el.closest("summary") === null) ?? null;
+/** What a control is for the focus choice. The summary is never a target. */
+function controlKind(el: HTMLElement): ReceiptsControlKind {
+  if (el.closest("summary") !== null) return "summary";
+  if (el.getAttribute("type") === "checkbox") return "checkbox";
+  return "control";
 }

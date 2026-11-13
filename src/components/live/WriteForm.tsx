@@ -10,6 +10,7 @@ import { questionRowProblem } from "./author-questions";
 import { LETTER_FIELD_ROWS } from "./constants";
 import { LIVE_COPY, REAL_COPY } from "./copy";
 import { FigurePicker, type FigureDetail } from "./FigurePicker";
+import { nextOpenRequest } from "./receipts-focus";
 import { ReceiptsDisclosure } from "./ReceiptsDisclosure";
 import {
   countCodePoints,
@@ -616,7 +617,7 @@ export function WriteForm({
           <button
             type="button"
             className={styles.secondary}
-            onClick={() => setReceiptsRequest((count) => count + 1)}
+            onClick={() => setReceiptsRequest(nextOpenRequest)}
           >
             {LIVE_COPY.receiptsAction}
           </button>
