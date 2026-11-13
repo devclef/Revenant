@@ -43,6 +43,8 @@ export type { Decimal, RatioPercent } from "./decimal";
 export { computeChange, CHANGE_FORMULA_ID } from "./change";
 export type { ChangeResult, NotComparableReason } from "./change";
 
+export { isSameFigure } from "./same-figure";
+
 export { formatChange, formatValue, formatPeriod } from "./format-change";
 export type { ChangeDisplay } from "./format-change";
 
