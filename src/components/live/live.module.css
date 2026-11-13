@@ -754,7 +754,8 @@
 
   /* Occasion buttons on a phone: 13px text, 44 px tall, a 5 px gap. They
      wrap onto rows at 360 px rather than scroll (L2.9). The height is set in
-     .occasionButton, so only the type and side padding change here. */
+     .occasionButton, so only the type and side padding change here. The 4 px
+     side padding keeps the five chips on two rows in a 274 px row at 360 px. */
   .occasionRow {
     gap: 0.3125rem;
     margin: 0;
@@ -763,7 +764,7 @@
   .occasionButton {
     font-size: 0.8125rem;
     line-height: 1.25;
-    padding: 0 0.5rem;
+    padding: 0 0.25rem;
   }
 
   .count {
