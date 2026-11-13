@@ -17,6 +17,7 @@ import { CovenStrip } from "./CovenStrip";
 import { NoSealSection } from "./NoSealSection";
 import { ResurrectionSection } from "./ResurrectionSection";
 import { RitualSection } from "./RitualSection";
+import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
 const srcRoot = resolve(here, "../..");
@@ -100,5 +101,75 @@ describe("general-letter section copy (H1)", () => {
 
   it("names no fuel price as what a letter holds", () => {
     expect(sectionText).not.toMatch(/fuel|gallon|petrol|gasoline|per litre/);
+  });
+});
+
+// H1 step 3: example tests for the SceneShell `below` slot that carries the four
+// sections (see src/components/ceremony/scene/SceneShell.tsx, variant "landing").
+describe("SceneShell below slot (H1)", () => {
+  it("renders below outside the landing column and inside main", () => {
+    const html = renderToStaticMarkup(
+      <SceneShell variant="landing" below={<p data-below="">below</p>}>
+        <p data-child="">child</p>
+      </SceneShell>,
+    );
+    const mainStart = html.indexOf("<main");
+    const mainEnd = html.indexOf("</main>");
+    const child = html.indexOf("data-child");
+    const below = html.indexOf("data-below");
+    expect(html.indexOf("data-landing-column")).toBeGreaterThan(-1);
+    expect(mainStart).toBeLessThan(below);
+    expect(below).toBeLessThan(mainEnd);
+    // The column's closing </div> sits between the child and the below content,
+    // so below is not inside the column.
+    expect(child).toBeLessThan(below);
+    expect(html.slice(child, below)).toContain("</div>");
+  });
+
+  it("keeps the four sections in order, after the landing column", () => {
+    const html = renderToStaticMarkup(
+      <SceneShell
+        variant="landing"
+        below={
+          <>
+            <RitualSection />
+            <ResurrectionSection />
+            <NoSealSection />
+            <CovenStrip />
+          </>
+        }
+      >
+        <p>hero</p>
+      </SceneShell>,
+    );
+    const ids = [
+      "ritual-title",
+      "resurrected-title",
+      "no-seal-title",
+      "coven-title",
+    ];
+    const positions = ids.map((id) => html.indexOf(`id="${id}"`));
+    for (const position of positions) expect(position).toBeGreaterThan(-1);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+    // Added in step 3 as a check on the wiring: the sections come after the column opens.
+    expect(positions[0]).toBeGreaterThan(html.indexOf("data-landing-column"));
+  });
+
+  it("adds no client-only import to the landing sections or SceneShell", () => {
+    // SceneShell is already a client module ("use client"), so only the
+    // browser-only Soil canvas and dynamic imports are checked here.
+    const files = [
+      join(here, "RitualSection.tsx"),
+      join(here, "ResurrectionSection.tsx"),
+      join(here, "NoSealSection.tsx"),
+      join(here, "CovenStrip.tsx"),
+      resolve(here, "../ceremony/scene/SceneShell.tsx"),
+    ];
+    for (const file of files) {
+      const text = readFileSync(file, "utf8");
+      expect(text, file).not.toMatch(/from\s+["'][^"']*soil-canvas/);
+      expect(text, file).not.toMatch(/next\/dynamic/);
+      expect(text, file).not.toMatch(/\bimport\s*\(/);
+    }
   });
 });

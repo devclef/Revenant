@@ -183,7 +183,9 @@ describe("landing page render on / (H1)", () => {
   });
 });
 
-describe("landing sections wrapper and heading colour (H1)", () => {
+// H1 step 3: the describe was called "wrapper" when the sections sat in a
+// `landingBelow` div. They now go through SceneShell `below`, so it is renamed.
+describe("landing sections below the hero and heading colour (H1)", () => {
   beforeEach(() => {
     vi.stubEnv("RP_ID", "");
   });
