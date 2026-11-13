@@ -15,6 +15,8 @@
  * fetch, not a letter-zone date, so it always uses UTC.
  */
 
+import { formatPeriod } from "@/lib/figures/format-change";
+
 /**
  * The zone a letter's dates are shown in. `utc` for personas; a fixed offset
  * derived from a Real_Letter's `opens_at`; or an IANA zone for a Live_Letter
@@ -193,4 +195,46 @@ function isLocalMidnight(ms: number, timeZone: string): boolean {
   } catch {
     return false;
   }
+}
+
+/** A full ISO instant with a time and a `Z` or offset, e.g. `2026-10-26T23:30:00Z`. */
+const INSTANT_RE = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}(:\d{2}(\.\d+)?)?(Z|[+-]\d{2}:\d{2})$/;
+
+/** A period string: a year, a month or a day (see `formatPeriod`). */
+const PERIOD_RE = /^\d{4}(-\d{2}(-\d{2})?)?$/;
+
+/** The UTC short-date formatter, reused by `formatShortDate`. */
+const UTC_SHORT_FORMATTER = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  month: "short",
+  year: "numeric",
+  timeZone: "UTC",
+});
+
+/**
+ * The short date shown beside a figure on the picker and the Receipt_Card
+ * (spec 12 K2). Shared so the two cannot drift.
+ *
+ * - A full ISO instant becomes its UTC calendar date, e.g. "26 Oct 2026". The
+ *   viewer's timezone never enters the result.
+ * - A period string is shown in its own form through `formatPeriod`: a month
+ *   as "Oct 2026", a day as "26 Oct 2026", a year as "2026". No day is invented
+ *   for a month or a year.
+ * - Anything else returns "".
+ */
+export function formatShortDate(value: string): string {
+  if (INSTANT_RE.test(value)) {
+    const ms = Date.parse(value);
+    if (Number.isNaN(ms)) return "";
+    const parts = UTC_SHORT_FORMATTER.formatToParts(new Date(ms));
+    const by = (type: Intl.DateTimeFormatPartTypes): string =>
+      parts.find((part) => part.type === type)?.value ?? "";
+    return `${by("day")} ${by("month")} ${by("year")}`;
+  }
+
+  // Region does not change a period's output (see formatPeriod), so it is not
+  // needed here. Only a real period is passed on; formatPeriod would echo any
+  // other text back unchanged.
+  if (PERIOD_RE.test(value)) return formatPeriod(value, "");
+  return "";
 }
