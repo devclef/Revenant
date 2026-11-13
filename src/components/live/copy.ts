@@ -23,6 +23,10 @@ export const LIVE_COPY = {
   letterHint: "Plain text. Up to 5,000 characters.",
   letterCount: "{count} of 5,000 characters",
   figuresLegend: "Choose the figures to seal with it",
+  /** The heading of the United States figures group in the picker. */
+  regionUs: "United States",
+  /** The heading of the European Union figures group in the picker. */
+  regionEu: "European Union",
   figuresHint:
     "Choose between 1 and {max}. Each is sealed as published, with its period and source.",
   /** Shown instead of any range when no figure can be sealed (A4.1). */

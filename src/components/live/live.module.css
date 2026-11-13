@@ -190,6 +190,49 @@
   accent-color: var(--ink-soft);
 }
 
+/* Phones: every checkbox gets a 44 by 44 px hit area. The label around it is
+   already 44 px tall, so the box itself grows to match. */
+@media (max-width: 599px) {
+  .checkbox {
+    width: 2.75rem;
+    height: 2.75rem;
+    min-width: 2.75rem;
+    margin: 0;
+  }
+}
+
+/* Region groups: one column below 1024 px, two columns from 1024 px. Each
+   group is a fieldset with its own heading. */
+.regionGroups {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 1rem;
+  min-width: 0;
+  margin: 0.75rem 0 0;
+}
+
+.regionGroup {
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.regionLegend {
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+@media (min-width: 1024px) {
+  .regionGroups {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
+
 .figureName {
   grid-column: 2;
   font-weight: 600;

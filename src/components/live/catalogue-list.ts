@@ -165,7 +165,9 @@ const GROUP_ORDER: readonly RegionGroup[] = ["us", "eu"];
  * within each group. Empty groups are left out, and series with no group are
  * left out too.
  */
-export function groupPickable(series: PickableSeries[]): PickableGroup[] {
+export function groupPickable(
+  series: readonly PickableSeries[],
+): PickableGroup[] {
   const groups: PickableGroup[] = [];
 
   for (const group of GROUP_ORDER) {
