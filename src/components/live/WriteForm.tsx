@@ -608,7 +608,10 @@ export function WriteForm({
       ) : null}
 
       {section === "write" ? (
-        <div className={styles.actions}>
+        <div className={`${styles.actions} ${styles.writeActions}`}>
+          <button type="button" className={styles.secondary}>
+            {LIVE_COPY.receiptsAction}
+          </button>
           <button
             type="button"
             className={styles.primary}

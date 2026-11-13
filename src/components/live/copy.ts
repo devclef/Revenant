@@ -47,7 +47,9 @@ export const LIVE_COPY = {
   figurePeriod: "Period: {period}",
   fixtureLabel: "fixture data",
   /** The summary of the closed Receipts_Disclosure on the Write step (L1.4). */
-  receiptsSummary: "Add a receipt",
+  receiptsSummary: "Receipts",
+  /** The secondary action that opens the Receipts_Disclosure (L1.4). */
+  receiptsAction: "Add a receipt",
   /** The first line inside the Receipts_Disclosure, before any picker (L1.5). */
   receiptsExplain:
     "A receipt is a number sealed with its source and date, so you can compare it when the letter opens.",

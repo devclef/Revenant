@@ -20,6 +20,7 @@ import {
 import { listPickableSeries } from "./catalogue-list";
 import { validateWrite } from "./form";
 import { LIVE_COPY } from "./copy";
+import styles from "./live.module.css";
 import type { SealState } from "./seal-machine";
 import { SealPage } from "./SealPage";
 import { PROBLEM_COPY, WriteForm, type WriteFormProps } from "./WriteForm";
@@ -487,4 +488,65 @@ describe("WriteForm — receipts and the nothing-to-testify block (spec 11)", ()
     });
     expect(html).not.toContain(esc(LIVE_COPY.nothingToTestify));
   });
+});
+
+// Spec 11, L1.4 and X2.4. The Write step's last row holds the Add a receipt
+// action first, then Next. Next stays enabled whatever the figures request is.
+describe("WriteForm — action row on the Write step (spec 11, L1.4)", () => {
+  /** The opening tag of the button whose text is `label`. */
+  function buttonTag(html: string, label: string): string {
+    const end = html.indexOf(`>${esc(label)}</button>`);
+    expect(end).toBeGreaterThanOrEqual(0);
+    return html.slice(html.lastIndexOf("<button", end), end + 1);
+  }
+
+  it("puts Add a receipt before Next in the DOM", () => {
+    const html = renderWriteForm({ section: "write", onNext: () => {} });
+    expect(html.indexOf(esc(LIVE_COPY.receiptsAction))).toBeGreaterThanOrEqual(
+      0,
+    );
+    expect(html.indexOf(esc(LIVE_COPY.receiptsAction))).toBeLessThan(
+      html.indexOf(LIVE_COPY.nextButton),
+    );
+  });
+
+  it("labels the receipts action 'Add a receipt' and the summary 'Receipts'", () => {
+    expect(LIVE_COPY.receiptsAction).toBe("Add a receipt");
+    expect(LIVE_COPY.receiptsSummary).toBe("Receipts");
+    const html = renderWriteForm({ section: "write", onNext: () => {} });
+    expect(html).toContain(`>${esc(LIVE_COPY.receiptsSummary)}</summary>`);
+  });
+
+  it("keeps Next the only primary button and the receipts action secondary", () => {
+    const html = renderWriteForm({ section: "write", onNext: () => {} });
+    expect(buttonTag(html, LIVE_COPY.receiptsAction)).not.toContain(
+      "disabled",
+    );
+    expect(buttonTag(html, LIVE_COPY.nextButton)).toContain(
+      `class="${styles.primary}"`,
+    );
+    expect(buttonTag(html, LIVE_COPY.receiptsAction)).toContain(
+      `class="${styles.secondary}"`,
+    );
+  });
+
+  it("puts both buttons in the write action row", () => {
+    const html = renderWriteForm({ section: "write", onNext: () => {} });
+    expect(html).toContain(`class="${styles.actions} ${styles.writeActions}"`);
+  });
+
+  it.each(["loading", "failed", "ready"] as const)(
+    "keeps Next enabled while the figures request is %s",
+    (figuresStatus) => {
+      const html = renderWriteForm({
+        section: "write",
+        onNext: () => {},
+        figuresStatus,
+      });
+      expect(buttonTag(html, LIVE_COPY.nextButton)).not.toContain("disabled");
+      expect(buttonTag(html, LIVE_COPY.nextButton)).not.toContain(
+        "aria-disabled",
+      );
+    },
+  );
 });
