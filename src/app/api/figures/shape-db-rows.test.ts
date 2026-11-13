@@ -3,15 +3,22 @@
 // from the fallback.
 //
 // Every value in this file is a fake test value, not a published figure. The
-// source and series fields come from the real Catalogue so the rows own their
+// source and series fields come from the real Catalogue so each row owns its
 // series. No test touches a database or the network.
 //
-// Driver types. postgres.js 4.0.0 (the pinned `postgres` package) parses
-// timestamptz (OID 1184) into a Date, and the store reads `value::text` as a
-// string. The "string" cases below model what the reported production log implies
-// (the rows reach the shape step with string timestamps). Whether the live driver
-// really returns strings is not confirmed here; no database was reachable from
-// this sandbox.
+// Driver shapes. The store (src/app/api/figures/db-store.ts) reads `value::text`
+// and the timestamptz columns. Two shapes are modelled:
+//   - Date: what postgres.js 4.0.0 returns for timestamptz (OID 1184) by default.
+//   - string: Postgres's own text form for timestamptz, "YYYY-MM-DD HH:MM:SS+00".
+//     It is modelled because the reported production log implies the rows reach
+//     the shape step with string timestamps. Whether the live driver really does
+//     that is not confirmed: no database was reachable from this sandbox.
+// The figures table has no nullable column (drizzle/0002_figures.sql, every
+// column is NOT NULL), so no null-handling path is exercised here.
+//
+// The FigureReadStore type declares retrieved_at as Date. The string cases must
+// break that type on purpose, so the one cast at DRIVER_BOUNDARY is the only place
+// the test departs from the declared type.
 //
 // Tests marked it.fails assert the correct behaviour and fail while the bug
 // exists, so the suite stays green on main. Plain tests pin the current output.
@@ -27,13 +34,21 @@ const GENERATED = new Date("2026-11-13T10:00:00Z");
 const FAKE_SOURCE_URL = "https://test.invalid/fake-figure";
 const FAKE_VALUE = "3.4120";
 
-type TimeType = "Date" | "string";
+type DriverShape = "Date" | "postgres-text";
+
+/** The Postgres text form of a timestamptz, as a string driver would return it. */
+const PG_ROW_TIME = "2026-11-13 10:00:00+00";
+const PG_SUCCESS_TIME = "2026-11-13 09:00:00+00";
+
+/** A row as the driver hands it over: retrieved_at is a Date or a Postgres text string. */
+interface DriverRow extends Omit<StoredFigureRow, "retrieved_at"> {
+  retrieved_at: Date | string;
+}
 
 /** One stored row per Catalogue series, shaped as the store's SELECT returns it. */
-function storedRows(retrievedAs: TimeType): StoredFigureRow[] {
+function driverRows(shape: DriverShape): DriverRow[] {
   return CATALOGUE.map((cat) => {
     const m = cat.metric;
-    const retrievedAt = "2026-11-13T10:00:00Z";
     return {
       metric_id: m.id,
       kind: "official",
@@ -44,32 +59,31 @@ function storedRows(retrievedAs: TimeType): StoredFigureRow[] {
       source: m.source,
       series_id: m.series_id,
       source_url: FAKE_SOURCE_URL,
-      retrieved_at:
-        retrievedAs === "Date"
-          ? new Date(retrievedAt)
-          : (retrievedAt as unknown as Date),
+      retrieved_at: shape === "Date" ? new Date(PG_ROW_TIME) : PG_ROW_TIME,
     };
   });
 }
 
 /** Last successful run per metric, as lastSuccessTimes returns it. */
-function successTimes(as: TimeType): ReadonlyMap<string, Date> {
-  const at = "2026-11-13T09:00:00Z";
+function driverSuccessTimes(shape: DriverShape): ReadonlyMap<string, Date | string> {
   return new Map(
     CATALOGUE.map((cat) => [
       cat.metric.id,
-      as === "Date" ? new Date(at) : (at as unknown as Date),
+      shape === "Date" ? new Date(PG_SUCCESS_TIME) : PG_SUCCESS_TIME,
     ]),
   );
 }
 
-function storeFor(
-  rowTime: TimeType,
-  successAt: TimeType,
-): FigureReadStore {
+/**
+ * DRIVER_BOUNDARY: the only cast in this file. The driver can hand back a string
+ * where the declared type says Date, and this cast lets the test feed that shape.
+ */
+function storeFor(rowShape: DriverShape, successShape: DriverShape): FigureReadStore {
   return {
-    latestFigures: async () => storedRows(rowTime),
-    lastSuccessTimes: async () => successTimes(successAt),
+    latestFigures: async () =>
+      driverRows(rowShape) as unknown as readonly StoredFigureRow[],
+    lastSuccessTimes: async () =>
+      driverSuccessTimes(successShape) as unknown as ReadonlyMap<string, Date>,
   };
 }
 
@@ -110,9 +124,9 @@ describe("database rows with Date timestamps (the driver's default type)", () =>
   });
 });
 
-describe("database rows with string timestamps (current behaviour, bug #400)", () => {
+describe("database rows with postgres text timestamps (current behaviour, bug #400)", () => {
   it("logs one figures_row_skipped line per fuel series, then the shape TypeError", async () => {
-    const { status } = await runDb(storeFor("string", "string"));
+    const { status } = await runDb(storeFor("postgres-text", "postgres-text"));
 
     expect(status).toBe(200);
     expect(loggedLines()).toEqual([
@@ -124,10 +138,10 @@ describe("database rows with string timestamps (current behaviour, bug #400)", (
     ]);
   });
 
-  it.fails("should keep stored rows with string timestamps and log no skip", async () => {
-    // Desired behaviour: the rows are valid, so nothing is skipped and the
-    // stored figures are served. Fails while the bug exists.
-    const { status, body } = await runDb(storeFor("string", "Date"));
+  it.fails("should keep stored rows with text timestamps and log no skip", async () => {
+    // Desired behaviour: the rows are valid, so nothing is skipped and the stored
+    // figures are served. Fails while the bug exists.
+    const { status, body } = await runDb(storeFor("postgres-text", "Date"));
 
     expect(status).toBe(200);
     expect(loggedLines()).toEqual([]);
@@ -138,15 +152,15 @@ describe("database rows with string timestamps (current behaviour, bug #400)", (
 
   it.fails("should answer the stored figures without the shape fallback", async () => {
     // Desired behaviour: no figures_unavailable line. Fails while the bug exists.
-    await runDb(storeFor("string", "string"));
+    await runDb(storeFor("postgres-text", "postgres-text"));
 
     expect(loggedLines().some((line) => line.startsWith("figures_unavailable"))).toBe(false);
   });
 });
 
 describe("shape TypeError with Date rows", () => {
-  it("throws TypeError in the shape step when success times are strings", async () => {
-    const { status } = await runDb(storeFor("Date", "string"));
+  it("throws TypeError in the shape step when success times are text", async () => {
+    const { status } = await runDb(storeFor("Date", "postgres-text"));
 
     expect(status).toBe(200);
     expect(loggedLines()).toEqual(["figures_unavailable step=shape error=TypeError"]);
