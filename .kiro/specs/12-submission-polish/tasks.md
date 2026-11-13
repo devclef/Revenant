@@ -137,7 +137,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
   - _Requirements: X3.1–X3.4_
 
-- [ ] 4. X4 · The stepper says "Break the seal" until the seal is broken
+- [x] 4. X4 · The stepper says "Break the seal" until the seal is broken
   - Agent: `frontend-dev` · Depends on: 1 · Estimated size: ~700 changed lines
   - Scope: `src/components/live/stepper/live-steps.ts`, `src/components/live/stepper/LiveStepper.tsx`, `src/components/live/stepper/stepper.module.css` (only if six items need a rule), `src/components/live/SealPage.tsx` (or the path that holds it on `main`), and the `*.test.ts(x)` for each file above.
   - Design sections: "Stage to step", "Phone step names", "X4. Six steps", "Data Models" (Live_Stepper state).
