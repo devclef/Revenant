@@ -214,10 +214,14 @@
 }
 
 /* Five rectangular cards with rounded corners, stacked on the phone. */
+/* H2: one column below 600 px, two from 600 px, four from 1024 px. Equal row
+   and column gaps, and stretched cards so every card in a row is as tall as
+   the tallest one. */
 .ritualList {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
   gap: 0.75rem;
+  align-items: stretch;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -310,12 +314,13 @@
   }
 
   .ritualList {
-    flex-direction: row;
-    flex-wrap: wrap;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+}
 
-  .ritualCard {
-    flex: 1 1 10rem;
+@media (min-width: 1024px) {
+  .ritualList {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
