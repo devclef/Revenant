@@ -424,7 +424,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
   - Validation: `bash scripts/check.sh`.
   - _Requirements: D2.1–D2.10_
 
-- [ ] 16. D3 · Gaps_Report for the write-up
+- [x] 16. D3 · Gaps_Report for the write-up
   - Agent: `platform-dev` · Depends on: none · Estimated size: ~300 changed lines
   - Scope: `docs/writeup-gaps.md` (new) only. `docs/kiro-writeup.md` stays byte-identical, checked with `git diff --exit-code -- docs/kiro-writeup.md`.
   - Design sections: "D1 to D3. Paperwork" (D3).
