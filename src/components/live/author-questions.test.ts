@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   AUTHOR_QUESTION_MAX_CODE_POINTS,
   AUTHOR_QUESTIONS_MAX,
+  focusAfterRemove,
   questionRowProblem,
   questionsForSeal,
 } from "./author-questions";
@@ -97,5 +98,42 @@ describe("Property 3: empty rows are dropped and only long rows block", () => {
   it("does not flag a long row of whitespace, because it is empty after trimming", () => {
     expect(questionRowProblem(" ".repeat(500))).toBeNull();
     expect(questionsForSeal([" ".repeat(500)])).toEqual([]);
+  });
+});
+
+describe("Property 7: removing a question leaves focus on the nearest remaining row, or on Add", () => {
+  it("returns the row now at the removed index, else the row before it, else Add", () => {
+    fc.assert(
+      fc.property(
+        fc.integer({ min: 1, max: AUTHOR_QUESTIONS_MAX }),
+        fc.nat(AUTHOR_QUESTIONS_MAX - 1),
+        (countBefore, rawIndex) => {
+          const removedIndex = rawIndex % countBefore;
+          const countAfter = countBefore - 1;
+          const target = focusAfterRemove(countBefore, removedIndex);
+          if (countAfter === 0) {
+            expect(target).toEqual({ kind: "add" });
+            return;
+          }
+          expect(target.kind).toBe("row");
+          if (target.kind !== "row") return;
+          expect(target.index).toBeGreaterThanOrEqual(0);
+          expect(target.index).toBeLessThan(countAfter);
+          if (removedIndex < countAfter) {
+            expect(target.index).toBe(removedIndex);
+          } else {
+            expect(target.index).toBe(countAfter - 1);
+          }
+        },
+      ),
+    );
+  });
+
+  it("gives the expected focus for each case", () => {
+    expect(focusAfterRemove(1, 0)).toEqual({ kind: "add" });
+    expect(focusAfterRemove(2, 0)).toEqual({ kind: "row", index: 0 });
+    expect(focusAfterRemove(2, 1)).toEqual({ kind: "row", index: 0 });
+    expect(focusAfterRemove(3, 1)).toEqual({ kind: "row", index: 1 });
+    expect(focusAfterRemove(3, 2)).toEqual({ kind: "row", index: 1 });
   });
 });

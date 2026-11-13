@@ -34,6 +34,7 @@ describe("AuthorQuestions copy (spec 10, C2.1, C2.3 to C2.5)", () => {
     );
     expect(LIVE_COPY.authorQuestionLabel).toBe("Question {n}");
     expect(LIVE_COPY.authorQuestionRemove).toBe("Remove question {n}");
+    expect(LIVE_COPY.authorQuestionRemoved).toBe("Question {n} removed.");
     expect(LIVE_COPY.authorQuestionAdd).toBe("Add a question");
     expect(LIVE_COPY.answerInLetter).toBe(
       "Answer them in your letter too, in your own words.",
@@ -99,6 +100,56 @@ describe("AuthorQuestions rendering", () => {
     expect(html).toContain("Remove question 1");
     expect(html).toContain("Remove question 2");
     expect(html).not.toContain("Question 3");
+  });
+
+  it("renders each row as label, textarea and icon button, in that order", () => {
+    const html = render({ questions: ["first"] });
+    const row = html.split(/<div class="[^"]*questionRow[^"]*"/)[1] ?? "";
+    const label = row.indexOf("Question 1</label>");
+    const field = row.indexOf("<textarea");
+    const icon = row.indexOf("<button");
+    expect(label).toBeGreaterThan(-1);
+    expect(field).toBeGreaterThan(label);
+    expect(icon).toBeGreaterThan(field);
+  });
+
+  it("uses a one-line textarea that is not a text input", () => {
+    const html = render({ questions: ["first"] });
+    expect(html).toContain('rows="1"');
+    expect(html).not.toContain('type="text"');
+    expect(html).not.toContain("<input");
+  });
+
+  it("gives the icon button an aria-label and an aria-hidden x", () => {
+    const html = render({ questions: ["first", "second"] });
+    const buttons = html.match(/<button[^>]*>[\s\S]*?<\/button>/g) ?? [];
+    // Only the row remove icons carry a "Remove" label. The Add button does not.
+    const removes = buttons.filter((b) => b.includes('aria-label="Remove'));
+    expect(removes).toHaveLength(2);
+    expect(removes[0]).toContain('type="button"');
+    expect(removes[0]).toContain('aria-label="Remove question 1"');
+    expect(removes[0]).toContain('<span aria-hidden="true">x</span>');
+    expect(removes[1]).toContain('aria-label="Remove question 2"');
+  });
+
+  it("keeps a 200-character question whole, with no length limit on the field", () => {
+    const longQuestion = "word ".repeat(40).trimEnd();
+    expect(longQuestion).toHaveLength(199);
+    const exact200 = `${longQuestion}.`;
+    expect(exact200).toHaveLength(200);
+    const html = render({ questions: [exact200] });
+    expect(html).toContain(exact200);
+    expect(html).not.toContain("maxLength");
+    expect(html).not.toContain("maxlength");
+    expect(html).not.toContain(LIVE_COPY.questionTooLong);
+  });
+
+  it("announces a removal with the removed row's number", () => {
+    expect(LIVE_COPY.authorQuestionRemoved.replace("{n}", "2")).toBe(
+      "Question 2 removed.",
+    );
+    // The live region is always present, empty until a row is removed.
+    expect(render({ questions: ["a"] })).toContain('role="status"');
   });
 
   it("renders no starter buttons: the only button is Add (spec 11, L2.7)", () => {

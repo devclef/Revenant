@@ -59,12 +59,14 @@ function renderWriteStep(state: StepperState): string {
   );
 }
 
-/** The value of every Author_Question input, in row order. */
+/** The text of every Author_Question textarea, in row order. */
 function rowValues(html: string): string[] {
   const values: string[] = [];
-  for (const match of html.matchAll(/<input[^>]*id="[^"]*-q\d+"[^>]*>/g)) {
-    const value = match[0].match(/value="([^"]*)"/);
-    values.push(value?.[1] ?? "");
+  // A textarea renders its value as its text content, not as a value attribute.
+  for (const match of html.matchAll(
+    /<textarea[^>]*id="[^"]*-q\d+"[^>]*>([^<]*)<\/textarea>/g,
+  )) {
+    values.push(match[1] ?? "");
   }
   return values;
 }
