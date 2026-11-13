@@ -241,7 +241,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
   - _Requirements: W1.1–W1.9, W2.1–W2.6, W4.1–W4.5_
 
-- [ ] 8. W3 · Question rows and the Remove_Icon
+- [x] 8. W3 · Question rows and the Remove_Icon
   - Agent: `frontend-dev` · Depends on: 7 · Estimated size: ~600 changed lines
   - Scope: `src/components/live/AuthorQuestions.tsx`, `src/components/live/author-questions.ts`, `src/components/live/copy.ts` (`authorQuestionRemoved`, `authorQuestionRemove`), `src/components/live/live.module.css`, and the `*.test.ts(x)` for each file above.
   - Design sections: "W3. Question rows", "Data Models" (Write draft helpers), "Copy".
