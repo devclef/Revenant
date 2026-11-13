@@ -94,6 +94,13 @@ export type ReceiptCardProps = {
   nowSource?: ReceiptSource;
   /** Marks the card's primary control for the layout checks (data-primary-control). */
   primary?: boolean;
+  /**
+   * The Single_Figure_View (spec 12 Z2): the card holds a Same_Figure, so it
+   * draws the figure once with the nothing-to-compare line. Only `then` is
+   * drawn as the figure. `now`, `nowNote`, `numberLine`, `change` and
+   * `nowSource` are not drawn. The answer and the source control still are.
+   */
+  single?: boolean;
 };
 
 function isMessage(
@@ -124,20 +131,19 @@ function SourceControl({ source }: { source: ReceiptSource }) {
 }
 
 /**
- * One Then or Now row. Both roles render through this function, so they share
- * one element structure, one class and one size (C3.2).
+ * The figure's value, unit and meta line. The Then row, the Now row and the
+ * Single_Figure_View row all render through this function, so they share one
+ * class and one size (C3.2).
  */
-export function FigureRow({
+function FigureContent({
   role,
   figure,
 }: {
-  role: "then" | "now";
+  role: "then" | "now" | "single";
   figure: ReceiptFigure;
 }) {
-  const roleLabel = role === "then" ? REVEAL_COPY.then : REVEAL_COPY.now;
   return (
-    <p className={styles.figRow} data-receipt-row={role}>
-      <span className={styles.rowLabel}>{roleLabel}:</span>{" "}
+    <>
       <span className={styles.valueLine}>
         <span
           className={styles.figValue}
@@ -158,7 +164,57 @@ export function FigureRow({
           <span className={styles.period}> · {figure.note}</span>
         )}
       </span>
+    </>
+  );
+}
+
+/**
+ * One Then or Now row. Both roles render through this function, so they share
+ * one element structure, one class and one size (C3.2).
+ */
+export function FigureRow({
+  role,
+  figure,
+}: {
+  role: "then" | "now";
+  figure: ReceiptFigure;
+}) {
+  const roleLabel = role === "then" ? REVEAL_COPY.then : REVEAL_COPY.now;
+  return (
+    <p className={styles.figRow} data-receipt-row={role}>
+      <span className={styles.rowLabel}>{roleLabel}:</span>{" "}
+      <FigureContent role={role} figure={figure} />
     </p>
+  );
+}
+
+/** The "Your answer" block. It appears once on every card (C3.3). */
+function YourAnswer({
+  markValue,
+  sample,
+  unit,
+}: {
+  markValue: string | undefined;
+  sample: boolean;
+  unit: string;
+}) {
+  const answer =
+    markValue === undefined
+      ? REVEAL_COPY.noAnswer
+      : `${answerText(markValue)} ${unit}`;
+  return (
+    <div className={styles.yourAnswer} data-your-answer="">
+      <span className={styles.yourAnswerLabel}>{REVEAL_COPY.yourAnswer}</span>
+      <span className={styles.yourAnswerValue}>
+        {answer}
+        {sample ? (
+          <span className={styles.sampleLabel} data-sample-label="">
+            {" "}
+            {REVEAL_COPY.sampleLabel}
+          </span>
+        ) : null}
+      </span>
+    </div>
   );
 }
 
@@ -176,11 +232,41 @@ export function ReceiptCard({
   source,
   nowSource,
   primary = false,
+  single = false,
 }: ReceiptCardProps) {
-  const answer =
-    markValue === undefined
-      ? REVEAL_COPY.noAnswer
-      : `${answerText(markValue)} ${unit}`;
+  if (single) {
+    return (
+      <section
+        className={styles.fig}
+        aria-label={`${name}, ${region}`}
+        data-receipt-card=""
+        data-single-figure=""
+        data-primary-control={primary ? "" : undefined}
+      >
+        <h3 className={styles.figName}>
+          {name} · {region}
+        </h3>
+
+        <YourAnswer markValue={markValue} sample={sample} unit={unit} />
+
+        <p className={styles.figRow} data-receipt-row="single">
+          <FigureContent role="single" figure={then} />
+        </p>
+
+        {displayPrecisionForUnit(unit) === undefined ? null : (
+          <p className={styles.period} data-rounded-note="">
+            {REVEAL_COPY.roundedNote}
+          </p>
+        )}
+
+        <p className={styles.period} data-nothing-to-compare="">
+          {REVEAL_COPY.nothingToCompare}
+        </p>
+
+        <SourceControl source={source} />
+      </section>
+    );
+  }
 
   return (
     <section
@@ -193,18 +279,7 @@ export function ReceiptCard({
         {name} · {region}
       </h3>
 
-      <div className={styles.yourAnswer} data-your-answer="">
-        <span className={styles.yourAnswerLabel}>{REVEAL_COPY.yourAnswer}</span>
-        <span className={styles.yourAnswerValue}>
-          {answer}
-          {sample ? (
-            <span className={styles.sampleLabel} data-sample-label="">
-              {" "}
-              {REVEAL_COPY.sampleLabel}
-            </span>
-          ) : null}
-        </span>
-      </div>
+      <YourAnswer markValue={markValue} sample={sample} unit={unit} />
 
       <FigureRow role="then" figure={then} />
 

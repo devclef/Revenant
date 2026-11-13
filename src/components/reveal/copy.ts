@@ -422,6 +422,13 @@ export const REVEAL_COPY = {
   fallbackNote:
     "Revenant hasn't fetched a newer figure yet. This one was retrieved {date}.",
 
+  /**
+   * The one line on a Single_Figure_View card (spec 12 Z2.2): the sealed figure
+   * and the figure now are the same record, so there is nothing to compare.
+   */
+  nothingToCompare:
+    "This is the same record as the one you sealed, so there is nothing to compare yet.",
+
   /** The lead line shown when the then and now figures can't be compared. */
   notComparable:
     "These figures can't be compared, so no change is shown.",
