@@ -404,7 +404,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
 
 ### Group D: paperwork (P1)
 
-- [ ] 15. D2 · Video script
+- [x] 15. D2 · Video script
   - Agent: `platform-dev` · Depends on: 5, 9 · Estimated size: ~300 changed lines
   - Never cut: D2 (G3.4).
   - Scope: `docs/video-script.md` only.
