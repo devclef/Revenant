@@ -496,3 +496,7 @@ It returned one issue:
 - [Issue #318](https://github.com/devclef/Revenant/issues/318), "Journey check: failure", state `OPEN`, created 2026-11-08T22:31:46Z. This matches the write-up.
 
 The write-up links only the first run. The nine later failed runs have no issue of their own in this list.
+
+## Where this report goes
+
+This report is copied into the body of the commit that adds this section. The dispatcher copies commit message bodies into the pull request description, so the report reaches reviewers through the PR. `docs/kiro-writeup.md` is not changed by this report. The stale facts above (SHA `4b71564`, the 206 merged pull request count and the status line) are recorded as found and are not corrected here.
