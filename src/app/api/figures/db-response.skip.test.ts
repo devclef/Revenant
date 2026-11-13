@@ -20,6 +20,7 @@ import type { FigureV1 } from "@/lib/seal-format";
 
 import {
   shapeDbFiguresResponse,
+  toInstant,
   toUtcSeconds,
   type DbFigureReads,
   type StoredFigureRow,
@@ -130,7 +131,7 @@ function latestValid(cat: CatalogueSeries, validRows: readonly StoredFigureRow[]
 /** True when row `a` beats row `b`: greater period, then newer retrieved_at. Equal keys keep the earlier row. */
 function isNewer(a: StoredFigureRow, b: StoredFigureRow): boolean {
   if (a.period !== b.period) return a.period > b.period;
-  return a.retrieved_at.getTime() > b.retrieved_at.getTime();
+  return (toInstant(a.retrieved_at)?.getTime() ?? NaN) > (toInstant(b.retrieved_at)?.getTime() ?? NaN);
 }
 
 /** Builds the rows and the reads a mixed spec array stands for. */

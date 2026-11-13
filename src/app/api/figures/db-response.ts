@@ -21,7 +21,14 @@ import { figureV1Schema, type FigureV1 } from "@/lib/seal-format";
 
 import { buildFiguresResponse } from "./build-response";
 
-/** A figures row as the database returns it. `retrieved_at` is a Date. */
+/**
+ * A timestamptz as the driver may hand it over: a Date (postgres.js's default
+ * for OID 1184) or Postgres's own text form, e.g. "2026-11-13 10:00:00+00".
+ * Both are valid instants; the shape step accepts either.
+ */
+export type DriverTimestamp = Date | string;
+
+/** A figures row as the database returns it. `retrieved_at` is a DriverTimestamp. */
 export interface StoredFigureRow {
   metric_id: string;
   kind: "official";
@@ -32,7 +39,7 @@ export interface StoredFigureRow {
   source: string;
   series_id: string;
   source_url: string;
-  retrieved_at: Date;
+  retrieved_at: DriverTimestamp;
 }
 
 /** The two reads the Figures_API needs. Implemented by db-store.ts and by tests. */
@@ -47,15 +54,53 @@ export interface FigureReadStore {
    * metric_id to the newest run_started_at whose outcome is a success. A metric
    * with no success is absent from the map.
    */
-  lastSuccessTimes(): Promise<ReadonlyMap<string, Date>>;
+  lastSuccessTimes(): Promise<ReadonlyMap<string, DriverTimestamp>>;
 }
 
-/** A Date as `YYYY-MM-DDTHH:MM:SSZ`, the second-precision UTC form the figures use. */
-export function toUtcSeconds(at: Date): string {
-  return at.toISOString().replace(/\.\d{3}Z$/, "Z");
+const PG_TIMESTAMP =
+  /^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}:\d{2})(\.\d+)?(Z|[+-]\d{2}(?::?\d{2})?)$/i;
+
+/**
+ * The instant a driver timestamp stands for, or null when it is not a valid
+ * instant. Accepts a Date, or the text form Postgres prints for timestamptz
+ * ("2026-11-13 10:00:00+00", "2026-11-13T10:00:00.5+0530", or "...Z"). The
+ * offset is applied, so the result is always a real instant. Nothing is guessed:
+ * a value that matches neither form returns null.
+ */
+export function toInstant(value: unknown): Date | null {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+  if (typeof value !== "string") return null;
+  const m = PG_TIMESTAMP.exec(value.trim());
+  if (m === null) return null;
+  const [, date, time, fraction = "", zone] = m;
+  // Date.parse is strict about fractions: keep at most milliseconds.
+  const millis = fraction.slice(0, 4);
+  let offset = "Z";
+  if (zone.toUpperCase() !== "Z") {
+    const z = /^([+-])(\d{2})(?::?(\d{2}))?$/.exec(zone);
+    if (z === null) return null;
+    offset = `${z[1]}${z[2]}:${z[3] ?? "00"}`;
+  }
+  const instant = new Date(`${date}T${time}${millis}${offset}`);
+  return Number.isNaN(instant.getTime()) ? null : instant;
 }
 
-function toFigure(row: StoredFigureRow): FigureV1 {
+/**
+ * A driver timestamp as `YYYY-MM-DDTHH:MM:SSZ`, the second-precision UTC form the
+ * figures use. Throws a TypeError when the value is not a valid timestamp. Callers
+ * that must not throw check toInstant first.
+ */
+export function toUtcSeconds(at: DriverTimestamp): string {
+  const instant = toInstant(at);
+  if (instant === null) {
+    throw new TypeError("toUtcSeconds: not a valid timestamp");
+  }
+  return instant.toISOString().replace(/\.\d{3}Z$/, "Z");
+}
+
+function toFigure(row: StoredFigureRow, retrievedAt: string): FigureV1 {
   return {
     kind: "official",
     metric_id: row.metric_id,
@@ -65,7 +110,7 @@ function toFigure(row: StoredFigureRow): FigureV1 {
     period: row.period,
     source: row.source,
     series_id: row.series_id,
-    retrieved_at: toUtcSeconds(row.retrieved_at),
+    retrieved_at: retrievedAt,
     source_url: row.source_url,
   };
 }
@@ -76,13 +121,11 @@ function toFigure(row: StoredFigureRow): FigureV1 {
  * figure schema, is not used. Nothing is repaired or filled in.
  */
 function rowToFigure(row: StoredFigureRow): FigureV1 | null {
-  if (
-    !(row.retrieved_at instanceof Date) ||
-    Number.isNaN(row.retrieved_at.getTime())
-  ) {
+  const at = toInstant(row.retrieved_at);
+  if (at === null) {
     return null;
   }
-  const parsed = figureV1Schema.safeParse(toFigure(row));
+  const parsed = figureV1Schema.safeParse(toFigure(row, toUtcSeconds(at)));
   return parsed.success ? parsed.data : null;
 }
 
@@ -115,7 +158,7 @@ export { chooseFigure, type ChosenFigure };
 /** The raw answers of the read step, before any shaping. */
 export interface DbFigureReads {
   readonly rows: readonly StoredFigureRow[];
-  readonly successTimes: ReadonlyMap<string, Date>;
+  readonly successTimes: ReadonlyMap<string, DriverTimestamp>;
 }
 
 /**
@@ -160,7 +203,13 @@ export function shapeDbFiguresResponse(
 
   const fetchStatus: Record<string, string> = {};
   for (const [metricId, at] of successTimes) {
-    fetchStatus[metricId] = toUtcSeconds(at);
+    const instant = toInstant(at);
+    if (instant === null) {
+      // Only the metric ID is logged, as for a skipped row. The value is dropped.
+      console.error(`figures_success_time_skipped metric_id=${metricId}`);
+      continue;
+    }
+    fetchStatus[metricId] = toUtcSeconds(instant);
   }
 
   const body = buildFiguresResponse({
@@ -179,7 +228,9 @@ export function shapeDbFiguresResponse(
     series: body.series.map((entry) => {
       const cat = catalogue.find((c) => c.metric.id === entry.metric.id);
       const bundled =
-        entry.figure === null && cat !== undefined ? bundledLatestFigure(cat) : null;
+        entry.figure === null && cat !== undefined
+          ? bundledLatestFigure(cat)
+          : null;
       return { ...entry, ...chooseFigure(entry.figure, bundled) };
     }),
   };
