@@ -14,8 +14,10 @@ describe("stepForFlowPhase (D5.4)", () => {
     expect(stepForFlowPhase("submit_failed")).toBe("testify");
   });
 
-  it("moves to Receipts for reveal", () => {
-    expect(stepForFlowPhase("reveal")).toBe("receipts");
+  // Issue #385: reveal no longer moves the stepper. The reveal Stage moves it
+  // to Break and then Receipts (stepForStage), so Break shows until it is broken.
+  it("does not move the stepper for reveal", () => {
+    expect(stepForFlowPhase("reveal")).toBeNull();
   });
 
   it("does not move the stepper for the phases before and during unlock", () => {

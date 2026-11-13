@@ -63,11 +63,13 @@ describe("Step_Indicator", () => {
   });
 
   it("gives the earlier steps the done state and the later ones todo", () => {
+    // Six steps since issue #385: Testify is the fourth, so three are done and
+    // two (Break the seal, See the receipts) are todo.
     const html = renderToStaticMarkup(
       createElement(StepIndicator, { current: "testify" }),
     );
     expect(html.match(/data-state="done"/g)).toHaveLength(3);
-    expect(html.match(/data-state="todo"/g)).toHaveLength(1);
+    expect(html.match(/data-state="todo"/g)).toHaveLength(2);
   });
 
   it("sits under the data-step-indicator hook and names the list", () => {
@@ -83,14 +85,14 @@ describe("Step_Indicator", () => {
       createElement(StepIndicator, { current: "seal" }),
     );
     expect(html).toContain('aria-live="polite"');
-    expect(html).toContain("Step 2 of 5: Press the seal");
+    expect(html).toContain("Step 2 of 6: Press the seal");
   });
 
-  it("announces Wait as step 3 of 5", () => {
+  it("announces Wait as step 3 of 6", () => {
     const html = renderToStaticMarkup(
       createElement(StepIndicator, { current: "wait" }),
     );
-    expect(html).toContain("Step 3 of 5: Wait");
+    expect(html).toContain("Step 3 of 6: Wait");
   });
 });
 
