@@ -240,7 +240,7 @@ export const LIVE_COPY = {
   /** The legend of the Occasion buttons above the letter field (L2.1). */
   occasionLegend: "What is it about?",
   /** The marker on the pressed Occasion chip. Hidden from assistive tech. */
-  occasionMark: "[x]",
+  occasionMark: "✓",
   /** The Occasion button labels, keyed by Occasion id (L2.1, L2.8). */
   occasionLabels: {
     year: "The year ahead",

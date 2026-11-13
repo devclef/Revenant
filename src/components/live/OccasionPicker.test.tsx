@@ -98,16 +98,16 @@ describe("OccasionPicker (spec 11, L2.1, L2.9)", () => {
     );
   });
 
-  it("renders an aria-hidden [x] marker in the pressed chip and every other chip", () => {
+  it("renders an aria-hidden check mark marker in the pressed chip and every other chip", () => {
     const html = render("work");
     const pressed = chipFor(html, "Work");
     expect(pressed).toContain('aria-pressed="true"');
     expect(pressed).toMatch(
-      /<span aria-hidden="true" class="[^"]*occasionMark[^"]*">\[x\]<\/span>/,
+      /<span aria-hidden="true" class="[^"]*occasionMark[^"]*">\u2713<\/span>/,
     );
     // Every chip carries the marker so the labels line up. The pressed-only
     // display is CSS (aria-pressed="false" hides it).
-    expect((html.match(/\[x\]/g) ?? []).length).toBe(OCCASIONS.length);
+    expect((html.match(/\u2713/g) ?? []).length).toBe(OCCASIONS.length);
     expect((html.match(/aria-hidden="true"/g) ?? []).length).toBe(
       OCCASIONS.length,
     );
