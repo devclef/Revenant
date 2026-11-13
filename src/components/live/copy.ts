@@ -202,6 +202,8 @@ export const LIVE_COPY = {
   /** `{n}` is the row number, starting at 1. */
   authorQuestionLabel: "Question {n}",
   authorQuestionRemove: "Remove question {n}",
+  /** Announced to screen readers after a row is removed. `{n}` is its number. */
+  authorQuestionRemoved: "Question {n} removed.",
   authorQuestionAdd: "Add a question",
   /** Shown after the rows, so the author knows they can answer in the letter too. */
   answerInLetter: "Answer them in your letter too, in your own words.",

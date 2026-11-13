@@ -51,17 +51,30 @@ describe("Write step fallback 1: one-line question rows", () => {
   });
 
   it("keeps each question field at the 44 px touch target", () => {
-    const field = ruleBody(block, ".questionRow .textarea");
-    expect(field).toMatch(/height:\s*44px/);
+    // The field grows with its text, so the 44 px is a minimum, not a height.
+    const field = ruleBody(css, ".questionRow .textarea");
     expect(field).toMatch(/min-height:\s*44px/);
+    expect(field).not.toMatch(/(?:^|;)\s*height:\s*44px/);
   });
 
-  it("keeps the label and the remove button on one line", () => {
+  it("keeps the label and the remove icon on one line", () => {
     const nowrap = ruleBody(
       block,
-      ".questionRow .label,\n  .questionRow .questionHead .secondary",
+      ".questionRow .label,\n  .questionRow .removeIcon",
     );
     expect(nowrap).toMatch(/white-space:\s*nowrap/);
+  });
+
+  it("sizes the Remove_Icon at 44 px below 600 px and 32 px from 600 px", () => {
+    expect(ruleBody(css, ".removeIcon")).toMatch(/width:\s*44px/);
+    // mediaBlock finds the first 600 px query, which belongs to the occasion
+    // chips. The icon's own query is the one that opens on .removeIcon.
+    const iconWide = css.slice(
+      css.indexOf("@media (min-width: 600px) {\n  .removeIcon"),
+    );
+    expect(iconWide.length).toBeGreaterThan(0);
+    expect(ruleBody(iconWide, ".removeIcon")).toMatch(/width:\s*32px/);
+    expect(ruleBody(iconWide, ".removeIcon")).toMatch(/height:\s*32px/);
   });
 });
 
