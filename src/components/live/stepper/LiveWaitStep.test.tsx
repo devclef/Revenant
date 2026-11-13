@@ -101,6 +101,20 @@ describe("LiveWaitStep portals the flow into the Reveal_Host (X1)", () => {
   it("no longer wraps the flow in the letter column", () => {
     expect(source).not.toContain("letterColumn");
   });
+
+  // The portal sits in a fixed slot of the children, so its position never
+  // changes between steps. Only the target decides whether it renders, and the
+  // flow therefore mounts once and is not remounted on re-render (X1).
+  it("keeps the portal in one fixed slot, gated only by the target", () => {
+    expect(source).toMatch(/\{flowTarget !== null \? \(\s*createPortal\(/);
+    expect(source).not.toMatch(/createPortal\([\s\S]*?step === "/);
+    expect(source).not.toMatch(/createPortal\([\s\S]*?key=/);
+  });
+
+  it("takes the host only from the stepper's prop, never from a query", () => {
+    expect(source).toContain("host?: HTMLElement | null;");
+    expect(source).not.toMatch(/document\.(querySelector|getElementById)/);
+  });
 });
 
 describe("LiveWaitStep rehearsal line (spec 11, L4)", () => {

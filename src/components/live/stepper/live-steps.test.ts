@@ -9,6 +9,7 @@ import {
   LIVE_STEPS,
   LIVE_STEP_NAMES,
   canGoBack,
+  flowMounted,
   flowPortalTarget,
   hasPrimaryCard,
   initialStepperState,
@@ -208,5 +209,25 @@ describe("flowPortalTarget (X1)", () => {
   it("is null on the write and seal steps", () => {
     expect(flowPortalTarget(host, "write", true)).toBeNull();
     expect(flowPortalTarget(host, "seal", true)).toBeNull();
+  });
+
+  // Not remounted across re-renders (X1): once the flow is mounted, every later
+  // step gets the same host object, so the portal container never changes and
+  // the flow keeps its state from Wait through Testify to Receipts.
+  it("returns the identical host object for every step once mounted", () => {
+    const steps: LiveStep[] = ["wait", "testify", "receipts", "wait"];
+    const targets = steps.map((step) => flowPortalTarget(host, step, true));
+    for (const target of targets) {
+      expect(target).toBe(host);
+    }
+  });
+
+  it("never goes back to null once the flow has mounted", () => {
+    // Testify and Receipts keep the flow mounted even if the countdown state
+    // is reported as not done, so a later re-render cannot unmount it.
+    expect(flowMounted("testify", false)).toBe(true);
+    expect(flowMounted("receipts", false)).toBe(true);
+    expect(flowPortalTarget(host, "testify", false)).toBe(host);
+    expect(flowPortalTarget(host, "receipts", false)).toBe(host);
   });
 });

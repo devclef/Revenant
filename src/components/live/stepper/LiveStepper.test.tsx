@@ -4,6 +4,8 @@
 // not run here; the stepper's focus rule is tested through movesFocus in
 // live-steps.test.ts.
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { createElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -170,6 +172,38 @@ describe("LiveStepper Reveal_Host and Primary_Card (X1)", () => {
         /<\/section><div[^>]*data-reveal-host=""[^>]*><\/div><\/div>$/,
       );
     }
+  });
+
+  // The host is a sibling of the card's section, not a child of it, so the
+  // flow it holds never sits inside the Primary_Card (X1).
+  it("keeps the reveal host outside the card section and out of the primary control", () => {
+    for (const step of LIVE_STEPS) {
+      const html = render(step);
+      const host = html.indexOf("data-reveal-host");
+      expect(host).toBeGreaterThan(-1);
+      const sectionEnd = html.lastIndexOf("</section>", host);
+      const primaryStart = html.indexOf("data-primary-control");
+      if (primaryStart !== -1) {
+        expect(sectionEnd).toBeGreaterThan(primaryStart);
+      }
+      expect(html.slice(sectionEnd, host)).not.toContain(
+        "data-primary-control",
+      );
+    }
+  });
+
+  // The host element is set once by its ref and carries no key, so React keeps
+  // the same DOM node, and the portal target, across every re-render (X1).
+  it("sets the host from one ref and gives it no key", () => {
+    const source = readFileSync(
+      join(process.cwd(), "src/components/live/stepper/LiveStepper.tsx"),
+      "utf8",
+    );
+    expect(source.match(/ref=\{setHost\}/g)).toHaveLength(1);
+    expect(source).not.toMatch(/setHost\(/);
+    expect(source).toMatch(
+      /<div ref=\{setHost\} className=\{styles\.revealHost\} data-reveal-host="" \/>/,
+    );
   });
 
   it("draws the Primary_Card on write, seal and wait", () => {
