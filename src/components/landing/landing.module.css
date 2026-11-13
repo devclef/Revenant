@@ -319,6 +319,26 @@
   }
 }
 
+/* H1 step 1: keep the text measure clear of the fixed Ghost at 900 px and
+   wider. The section box keeps the full frame width (up to 1200 px, set in
+   scene.module.css .landingBelowFrame). Only its right padding changes, so
+   the text ends at the Ghost's visible left edge (box left + 12 % inset, the
+   Ghost_Body_Box) minus 1 rem. At 1440 x 900 that is about x=850. */
+@media (min-width: 900px) {
+  .section {
+    --section-right: calc(
+      var(--frame-l) + var(--pad) + min(1200px, var(--frame-w) - 2 * var(--pad))
+    );
+    --text-right: calc(
+      var(--ghost-x) - min(50vh, 560px) / 2 + min(50vh, 560px) * 0.12 - 1rem
+    );
+    padding-inline-end: max(
+      0px,
+      calc(var(--section-right) - var(--text-right))
+    );
+  }
+}
+
 /* Sample_Receipt (B3.4). The box is reserved in the server HTML so the page
    does not move when the figure arrives. Text is --text on --bg. No Accent and
    no direction marks on any figure element (tone.md, neutrality.md). */

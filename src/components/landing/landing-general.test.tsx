@@ -49,6 +49,36 @@ describe("touch targets and one column (H1)", () => {
   });
 });
 
+describe("section text measure clear of the Ghost (H1 step 1)", () => {
+  const landingCss = readFileSync(join(here, "landing.module.css"), "utf8");
+  const sceneCss = readFileSync(
+    join(here, "../ceremony/scene/scene.module.css"),
+    "utf8",
+  );
+
+  it("keeps the 1200 px full-width frame under the landing column", () => {
+    const rule = sceneCss.match(/\.landingBelowFrame \{([^}]*)\}/)?.[1] ?? "";
+    expect(rule).toMatch(/max-width:\s*1200px/);
+    expect(rule).toMatch(/width:\s*100%/);
+  });
+
+  it("keeps the full-width section box", () => {
+    const rule = landingCss.match(/\n\.section \{([^}]*)\}/)?.[1] ?? "";
+    expect(rule).toMatch(/width:\s*100%/);
+  });
+
+  it("ends the section text at the Ghost's visible left edge at 900 px and wider", () => {
+    const media =
+      landingCss.match(
+        /@media \(min-width: 900px\) \{\n  \.section \{([^}]*)\}/,
+      )?.[1] ?? "";
+    expect(media).toMatch(/--text-right:\s*calc\(\s*var\(--ghost-x\)/);
+    expect(media).toMatch(/min\(50vh,\s*560px\)\s*\*\s*0\.12/);
+    expect(media).toMatch(/padding-inline-end:\s*max\(\s*0px,\s*calc\(/);
+    expect(media).toMatch(/var\(--section-right\)\s*-\s*var\(--text-right\)/);
+  });
+});
+
 describe("Retired_Phrase search over the rendered sections (H1)", () => {
   const rendered = [
     renderToStaticMarkup(<RitualSection />),
