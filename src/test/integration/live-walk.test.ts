@@ -19,7 +19,7 @@
  * It needs headless Chromium, so it cannot run in CI without a browser. Without
  * WALK=1 the suites are skipped and exit 0.
  */
-import { existsSync, mkdirSync } from "node:fs";
+import { existsSync, mkdirSync, statSync } from "node:fs";
 import path from "node:path";
 
 import { chromium, type BrowserContext, type Page } from "playwright-core";
@@ -39,9 +39,12 @@ import {
   checkStepSnapshot,
   defectsFromChecks,
   recordStepResult,
+  shotsWrittenSince,
+  skipLinkBlocksSettle,
   walkShotName,
   type BreakMethod,
   type SettleState,
+  type ShotFile,
   type ClippedSample,
   type ContrastSample,
   type PageSnapshot,
@@ -201,11 +204,11 @@ async function currentStage(page: Page): Promise<string> {
  * SETTLE_MS. Infinite animations (the Ghost's idle motion) are left out, or the
  * screen would never settle.
  *
- * The Skip_Link is not part of the wait. Decision: its visibility stays the
- * shared rule `skipLinkVisible(showAll, broken)` in ceremony/seal/skip-link.ts
- * (shown when showAll is set and the seal is not broken). The walk does not
- * change that rule and does not wait for the link to appear. The "skip" break
- * method clicks it only after the marks Step_Shot has been saved.
+ * The Skip_Link is not part of the wait on the `marks` stage: it stays up there
+ * by design (the shared rule `skipLinkVisible(showAll, broken)` in
+ * ceremony/seal/skip-link.ts). On every other stage the wait holds until the
+ * Skip_Link is gone, so the screen is not checked while it is still up. The
+ * "skip" break method clicks it only after the marks Step_Shot has been saved.
  */
 async function waitForStable(page: Page): Promise<void> {
   const deadline = Date.now() + STEP_TIMEOUT_MS;
@@ -223,9 +226,23 @@ async function waitForStable(page: Page): Promise<void> {
             animation.playState === "running" &&
             animation.effect?.getTiming().iterations !== Infinity,
         ).length;
-      return `${stage}|${running}`;
+      const skip = document.querySelector("[data-skip-link]");
+      const skipLinkVisible =
+        skip !== null && skip.getBoundingClientRect().width > 0;
+      return { stage, running, skipLinkVisible };
     });
-    const step = advanceSettle(settle, state, Date.now(), SETTLE_MS);
+    if (skipLinkBlocksSettle(state.stage, state.skipLinkVisible)) {
+      // Still waiting for the Skip_Link to go: the clock restarts once it has gone.
+      settle = { last: "", since: Date.now() };
+      await page.waitForTimeout(50);
+      continue;
+    }
+    const step = advanceSettle(
+      settle,
+      `${state.stage}|${state.running}`,
+      Date.now(),
+      SETTLE_MS,
+    );
     settle = step.next;
     if (step.settled) return;
     await page.waitForTimeout(50);
@@ -504,15 +521,17 @@ function runShotNames(run: WalkRun, steps: readonly WalkStepName[]): string[] {
 }
 
 /**
- * Which expected Step_Shots exist. Missing ones print `FAIL missing Step_Shot`.
- * Each call site runs it straight after its own browser run and before the next
- * run starts, so the next run cannot overwrite the files this one should have written.
+ * Which expected Step_Shots this run wrote. Missing ones print `FAIL missing Step_Shot`.
+ * Only files with an mtime at or after `runStartMs` count, so a file from the other
+ * variant cannot satisfy the check. Each call site runs it straight after its own
+ * browser run and before the next run starts.
  */
-function shotReport(expected: readonly string[]) {
-  const present = expected.filter((name) =>
-    existsSync(path.join(LIVE_WALK_SHOTS, name)),
-  );
-  return checkRunShots(expected, present);
+function shotReport(expected: readonly string[], runStartMs: number) {
+  const files: ShotFile[] = expected.flatMap((name) => {
+    const file = path.join(LIVE_WALK_SHOTS, name);
+    return existsSync(file) ? [{ name, mtimeMs: statSync(file).mtimeMs }] : [];
+  });
+  return checkRunShots(expected, shotsWrittenSince(files, runStartMs));
 }
 
 /** The recall stage: answer every question in turn, then go on to `marks`. Returns the count answered. */
@@ -794,6 +813,7 @@ describe.skipIf(!walkEnabled(process.env))(
           method: "hold",
         };
         const stages = fiveStageActions(run.figure);
+        const runStartMs = Date.now();
         const rows = await runWalk(run, stages);
         console.log(formatStageRows(rows));
 
@@ -802,6 +822,7 @@ describe.skipIf(!walkEnabled(process.env))(
             entry,
             stages.map((stage) => stage.step),
           ),
+          runStartMs,
         );
         console.log(shots.lines.join("\n"));
 
@@ -843,6 +864,7 @@ describe.skipIf(!walkEnabled(process.env))(
           ...fiveStageActions(run.figure),
           ...remainingStageActions(run.method),
         ];
+        const runStartMs = Date.now();
         const rows = await runWalk(run, stages);
         console.log(formatStageRows(rows));
 
@@ -851,6 +873,7 @@ describe.skipIf(!walkEnabled(process.env))(
             run,
             stages.map((stage) => stage.step),
           ),
+          runStartMs,
         );
         console.log(shots.lines.join("\n"));
 

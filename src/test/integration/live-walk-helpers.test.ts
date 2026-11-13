@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   EXPECTED_STEPS,
   MOTION_CONTROL_SELECTOR,
+  SKIP_LINK_STAGE,
   STEP_SUSPECTED_FILES,
   WALK_STEP_NAMES,
   advanceSettle,
@@ -24,6 +25,8 @@ import {
   parseCssColor,
   recordStepResult,
   reportMissingShots,
+  shotsWrittenSince,
+  skipLinkBlocksSettle,
   stepShotName,
   walkShotName,
   type PageSnapshot,
@@ -628,6 +631,64 @@ describe("checkRunShots (per-run missing Step_Shot check)", () => {
     const afterOneFigure = checkRunShots(names, []);
     expect(afterOneFigure.ok).toBe(false);
     expect(afterOneFigure.missing).toHaveLength(names.length);
+  });
+});
+
+describe("shotsWrittenSince (run-scoped Step_Shot files)", () => {
+  const runStart = 1_700_000_000_000;
+
+  it("counts a file written at or after the run start", () => {
+    expect(
+      shotsWrittenSince(
+        [
+          { name: "a.png", mtimeMs: runStart },
+          { name: "b.png", mtimeMs: runStart + 4_000 },
+        ],
+        runStart,
+      ),
+    ).toEqual(["a.png", "b.png"]);
+  });
+
+  it("does not count a file written before the run start", () => {
+    expect(
+      shotsWrittenSince([{ name: "a.png", mtimeMs: runStart - 1 }], runStart),
+    ).toEqual([]);
+  });
+
+  it("fails the run when every file on disk is stale", () => {
+    const expected = expectedShotNames("one-figure");
+    const stale = expected.map((name) => ({
+      name,
+      mtimeMs: runStart - 60_000,
+    }));
+    const result = checkRunShots(expected, shotsWrittenSince(stale, runStart));
+    expect(result.ok).toBe(false);
+    expect(result.missing).toHaveLength(expected.length);
+  });
+
+  it("passes the run when every file is fresh, even if an old copy also exists", () => {
+    const expected = expectedShotNames("no-figure");
+    const files = expected.map((name) => ({ name, mtimeMs: runStart + 1 }));
+    const result = checkRunShots(expected, shotsWrittenSince(files, runStart));
+    expect(result.ok).toBe(true);
+  });
+});
+
+describe("skipLinkBlocksSettle (Skip_Link rule for the settle wait)", () => {
+  it("waits for a visible Skip_Link on every stage except marks", () => {
+    expect(SKIP_LINK_STAGE).toBe("marks");
+    expect(skipLinkBlocksSettle("letter", true)).toBe(true);
+    expect(skipLinkBlocksSettle("recall", true)).toBe(true);
+    expect(skipLinkBlocksSettle("close", true)).toBe(true);
+  });
+
+  it("ignores a visible Skip_Link on marks, where it stays up by design", () => {
+    expect(skipLinkBlocksSettle("marks", true)).toBe(false);
+  });
+
+  it("does not block once the Skip_Link is gone", () => {
+    expect(skipLinkBlocksSettle("letter", false)).toBe(false);
+    expect(skipLinkBlocksSettle("marks", false)).toBe(false);
   });
 });
 

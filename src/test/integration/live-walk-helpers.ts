@@ -569,6 +569,37 @@ export function checkRunShots(
   return { ok: report.missing.length === 0, ...report };
 }
 
+/** One file in `qa-shots/live-walk/` and when it was last written, in ms since the epoch. */
+export type ShotFile = { name: string; mtimeMs: number };
+
+/**
+ * The names of the files this run wrote: mtime at or after the run start. A
+ * file left by an earlier run, including the other variant's run, does not
+ * count, so a stale shot can never satisfy the check.
+ */
+export function shotsWrittenSince(
+  files: readonly ShotFile[],
+  runStartMs: number,
+): string[] {
+  return files
+    .filter((file) => file.mtimeMs >= runStartMs)
+    .map((file) => file.name);
+}
+
+/** The stage whose Skip_Link stays up by design, so the settle wait ignores it. */
+export const SKIP_LINK_STAGE = "marks";
+
+/**
+ * Whether the settle wait must keep waiting because the Skip_Link is still up.
+ * The wait covers every stage except `marks`, where the link stays visible.
+ */
+export function skipLinkBlocksSettle(
+  stage: string,
+  skipLinkVisible: boolean,
+): boolean {
+  return skipLinkVisible && stage !== SKIP_LINK_STAGE;
+}
+
 /**
  * The own-number blank check (Q1.2 receipts step). `values` are the text of
  * every own-number input inside the open Receipts_Disclosure. A walk with no
