@@ -225,9 +225,13 @@ async function scrollWidth(page) {
   return page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
 }
 
-/** The persona page's first Stage, the intact Stage with "Pick up the letter" (A6, J2). */
+/**
+ * The persona page's First_Step (spec 10 C1): the page opens straight on
+ * Testify, so the first Stage is `recall`, with the Testify_Context above the
+ * first question. There is no pick-up Stage and no "Pick up the letter" button.
+ */
 async function waitForFirstStage(page) {
-  return waitForStage(page, "intact");
+  return waitForStage(page, "recall");
 }
 
 async function checkJ1(ctx) {
