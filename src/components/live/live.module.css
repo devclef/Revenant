@@ -63,6 +63,17 @@
   line-height: 1.6;
 }
 
+/* The Wait step's panel once the card has dropped away (Testify and Receipts,
+   spec 12, X1). It sits on the desk, so it sets the desk text colour and no
+   paper. */
+.deskPanel {
+  position: relative;
+  color: var(--text);
+  font-family: var(--font-sans);
+  font-size: 1.125rem;
+  line-height: 1.6;
+}
+
 .heading {
   margin: 0.75rem 0 0.5rem;
   font-size: clamp(1.5rem, 4vw, 2rem);
@@ -600,20 +611,18 @@
 }
 
 /* The Live_Letter column on `/l/[id]`: one centred column, the envelope inline
-   at its top (the width is set on the envelope frame in OpeningFlow). */
+   at its top (the width is set on the envelope frame in OpeningFlow). The live
+   stepper no longer uses this class: its embedded flow mounts in the
+   Reveal_Host, which is a sibling of the Primary_Card (spec 12, X1). */
 .letterColumn {
   width: 100%;
   max-width: 40rem;
   margin: 0 auto;
   /* The embedded Opening_Flow (OpeningFlow mode="live") is written for the
-     full-viewport ceremony on /l/[id], where .scene owns the width. Inside the
-     live stepper's Wait step it has no .scene ancestor, so its .flow wrapper
-     falls back to the :root --measure (68ch ~= 544px), far wider than a
-     360x640 phone column. That let the Wait step's seal panel and the Turn off
-     motion / Turn sound on control row spill past the right edge and pushed the
-     countdown out of the First_Viewport (spec 09 D5, P10; QA PR #293).
-     Cap --measure to the column and clip any residual overflow so the embedded
-     flow can never exceed its container at a phone width. */
+     full-viewport ceremony on /l/[id], where .scene owns the width. Its .flow
+     wrapper falls back to the :root --measure (68ch ~= 544px) where no .scene
+     ancestor exists. Cap --measure to the column and clip any residual overflow
+     so the flow can never exceed a phone-width column (QA PR #293). */
   --measure: 100%;
   min-width: 0;
   overflow-x: clip;

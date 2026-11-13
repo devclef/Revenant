@@ -27,6 +27,25 @@ function render(envelopeHash: string, letterKind: LetterKind): string {
 }
 
 /** A generator of valid 64-char lowercase hex hashes. */
+/** The markup inside the live grid (the one `translate="no"` paragraph). */
+function gridBody(html: string): string {
+  const match = html.match(/translate="no">(.*?)<\/p>/);
+  if (match === null) throw new Error("no translate=\"no\" grid in the markup");
+  return match[1];
+}
+
+/** The grid's visible text, with the tags and the group separators removed. */
+function textOfGrid(html: string): string {
+  return gridBody(html).replace(/<[^>]+>/g, "");
+}
+
+/** Each group's own text, one per element, in order. */
+function groupSpans(html: string): string[] {
+  return [...gridBody(html).matchAll(/<span[^>]*>([^<]*)<\/span>/g)].map((m) =>
+    m[1].trim(),
+  );
+}
+
 const hexHash = fc
   .array(fc.integer({ min: 0, max: 15 }), { minLength: 64, maxLength: 64 })
   .map((digits) => digits.map((d) => d.toString(16)).join(""));
@@ -93,6 +112,13 @@ describe("Fingerprint markup", () => {
     expect(html).not.toContain(REVEAL_COPY.fingerprintPassedCard);
   });
 
+  it("a live letter lays the 16 groups out as one element each (R14.3, spec 12 X1)", () => {
+    const html = render(HASH, "live");
+    const groups = (formatFingerprint(HASH) ?? "").split(" ");
+    expect(groupSpans(html)).toEqual(groups);
+    expect(textOfGrid(html)).toBe(formatFingerprint(HASH));
+  });
+
   it("a live letter shows the card sentence and no demo label (R14.3)", () => {
     const html = render(HASH, "live");
     expect(html).toContain(REVEAL_COPY.fingerprintPassedCard);
@@ -126,11 +152,18 @@ describe("Property 16/17: the Reveal Fingerprint equals the sealed hash", () => 
           const groups = (fingerprint ?? "").split(" ");
           expect(groups).toHaveLength(16);
           const html = render(hash, kind);
-          // The exact formatted string, in two lines of 8, appears in the markup.
-          const lineOne = groups.slice(0, 8).join(" ");
-          const lineTwo = groups.slice(8).join(" ");
-          expect(html).toContain(`>${lineOne}</span>`);
-          expect(html).toContain(`>${lineTwo}</span>`);
+          if (kind === "persona") {
+            // The persona block keeps its two lines of 8 (C6.4, unchanged).
+            const lineOne = groups.slice(0, 8).join(" ");
+            const lineTwo = groups.slice(8).join(" ");
+            expect(html).toContain(`>${lineOne}</span>`);
+            expect(html).toContain(`>${lineTwo}</span>`);
+          } else {
+            // The live and real block: the exact formatted string, as text of
+            // the one grid, and one element per group so a group never splits.
+            expect(textOfGrid(html)).toBe(fingerprint);
+            expect(groupSpans(html)).toEqual(groups);
+          }
           // Every group is present, so the Reveal shows the whole fingerprint.
           for (const group of groups) {
             expect(html).toContain(group);

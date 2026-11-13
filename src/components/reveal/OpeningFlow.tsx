@@ -259,6 +259,8 @@ export function OpeningFlow({
   );
   const { state, retry } = flow;
   const KeyStep = useKeyStep(state.tag === "awaiting_key");
+  // An embedded flow is the Live_Reveal inside the stepper (spec X2).
+  const isEmbedded = embedded !== undefined;
 
   // Reports each phase to the embedding stepper. The latest callback is read
   // through a ref, so the effect runs only when the phase changes.
@@ -314,7 +316,10 @@ export function OpeningFlow({
   // The root is `CeremonyRoot`: it keeps the region role, the persona label and
   // the -1 tab stop, owns the focus effect (the Stage heading), and derives
   // `data-ceremony` / `data-ceremony-motion` plus the live-region announcement
-  // from the current flow state. `MotionProvider` and `SkipProvider` wrap it so
+  // from the current flow state. An embedded flow (the Live_Reveal inside the
+  // stepper, spec X1) carries `flowLive` and `controls="host"`, so the page's
+  // one motion control is the only Calm and Skip on it (spec X2).
+  // `MotionProvider` and `SkipProvider` wrap it so
   // `useMotion` and `useSequence` resolve for the root and the views; both
   // resolve `full` motion and no active sequence on the server and first
   // render, so the static markup is unchanged (design.md "Final state first").
@@ -325,8 +330,14 @@ export function OpeningFlow({
           state={state}
           personaName={personaName}
           persona={persona}
-          className={mode === "persona" ? `${styles.flow} ${styles.flowPersona}` : styles.flow}
-          controls={mode === "persona" ? "topbar" : "region"}
+          className={
+            isEmbedded
+              ? `${styles.flow} ${styles.flowLive}`
+              : mode === "persona"
+                ? `${styles.flow} ${styles.flowPersona}`
+                : styles.flow
+          }
+          controls={isEmbedded ? "host" : mode === "persona" ? "topbar" : "region"}
         >
           {flow.live?.demo === true && embedded === undefined ? <DemoLabel /> : null}
           {mode === "persona" ? (
