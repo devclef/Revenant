@@ -27,7 +27,10 @@ const sealed: SealedState = {
   envelopeHash: "a".repeat(64),
 };
 
-function render(step: "wait" | "testify" | "receipts", nowMs: number): string {
+function render(
+  step: "wait" | "testify" | "break" | "receipts",
+  nowMs: number,
+): string {
   return renderToStaticMarkup(
     createElement(LiveWaitStep, {
       state: sealed,
@@ -140,5 +143,16 @@ describe("LiveWaitStep rehearsal line (spec 11, L4)", () => {
   it("shows no rehearsal line when the prop is not set", () => {
     expect(renderWith(undefined)).not.toContain("data-live-rehearsal");
     expect(renderWith(false)).not.toContain(LIVE_COPY.rehearsalLine);
+  });
+});
+
+// Issue #385: the seal break is a step of its own. The Wait card is not drawn
+// there, so no countdown or key reminder shows, and the stepper passes the
+// break step through without remounting the flow (see live-steps.test.ts).
+describe("LiveWaitStep on the seal break step (issue #385)", () => {
+  it("draws no countdown on the break step", () => {
+    const html = render("break", OPENS_MS + 60_000);
+    expect(html).not.toContain("data-live-countdown");
+    expect(html).not.toContain("data-live-goto");
   });
 });

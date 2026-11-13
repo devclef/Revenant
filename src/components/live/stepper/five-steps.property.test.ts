@@ -1,10 +1,14 @@
-// Property 10: The Live_Stepper has five steps and one current step (spec 11,
+// Property 10: The Live_Stepper has six steps and one current step (spec 11,
 // L1.6 and design "Correctness Properties").
 //
+// Updated for issue #385: this file was "five steps" and now says six. The
+// seal break ("Break the seal") is its own step between Testify and See the
+// receipts, so the stepper does not jump from Testify to Receipts.
+//
 // For any sequence of stepper actions, before and after the seal:
-// - the Step_Indicator shows exactly five items, in the order Write, Press the
-//   seal, Wait, Testify, See the receipts, with exactly one current item at the
-//   index of the state's step;
+// - the Step_Indicator shows exactly six items, in the order Write, Press the
+//   seal, Wait, Testify, Break the seal, See the receipts, with exactly one
+//   current item at the index of the state's step;
 // - Back is offered only from the seal step, and only before the seal is stored;
 // - before the seal, the typed text survives every Next and Back.
 
@@ -45,20 +49,21 @@ function indicatorItems(html: string): string[] {
   return html.split("<li ").slice(1);
 }
 
-describe("Property 10: the Live_Stepper has five steps and one current step", () => {
-  it("lists the five steps in the spec order, with Wait from LIVE_COPY", () => {
+describe("Property 10: the Live_Stepper has six steps and one current step", () => {
+  it("lists the six steps in the spec order, with Wait from LIVE_COPY", () => {
     expect([...LIVE_STEPS]).toEqual([
       "write",
       "seal",
       "wait",
       "testify",
+      "break",
       "receipts",
     ]);
     expect(LIVE_STEP_NAMES[2]).toBe(LIVE_COPY.waitStep);
-    expect(LIVE_STEP_NAMES).toHaveLength(5);
+    expect(LIVE_STEP_NAMES).toHaveLength(6);
   });
 
-  it("shows five items with exactly one current item, at the state's step", () => {
+  it("shows six items with exactly one current item, at the state's step", () => {
     fc.assert(
       fc.property(fc.array(actionArb, { maxLength: 30 }), (actions) => {
         let state = initialStepperState();
@@ -68,7 +73,7 @@ describe("Property 10: the Live_Stepper has five steps and one current step", ()
           createElement(StepIndicator, { current: state.step }),
         );
         const items = indicatorItems(html);
-        expect(items).toHaveLength(5);
+        expect(items).toHaveLength(6);
 
         const currentItems = items.filter((item) =>
           item.includes('data-state="current"'),

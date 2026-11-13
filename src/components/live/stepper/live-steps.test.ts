@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
 import { BRAND_COPY } from "@/components/brand/copy";
+import { CEREMONY_COPY } from "@/components/ceremony/copy";
+import type { Stage } from "@/components/ceremony/stages";
+import type { FlowState } from "@/components/reveal/opening-machine";
 
 import { LIVE_COPY } from "../copy";
 import { CLEARED_WRITE_DRAFT, INITIAL_WRITE_DRAFT } from "../write-draft";
@@ -15,39 +18,46 @@ import {
   initialStepperState,
   movesFocus,
   reduceStepper,
+  stepForFlowPhase,
+  stepForStage,
   stepName,
   type LiveStep,
 } from "./live-steps";
 
-// Changed in L1.6 (spec 11): the figures step is gone, so the stepper has five
-// steps. The old six-step expectations were replaced with this order.
+// Changed in issue #385: the seal break ("Break the seal") is a sixth step
+// between Testify and See the receipts, so the stepper shows it until the seal
+// is broken. Spec 11 (L1.6) had five steps with no break step.
 describe("step order and names", () => {
-  it("lists the five steps in the spec order", () => {
+  it("lists the six steps in the order write, seal, wait, testify, break, receipts", () => {
     expect([...LIVE_STEPS]).toEqual([
       "write",
       "seal",
       "wait",
       "testify",
+      "break",
       "receipts",
     ]);
   });
 
-  it("names the steps Write, Press the seal, Wait, Testify, See the receipts", () => {
+  it("names the steps Write, Press the seal, Wait, Testify, Break the seal, See the receipts", () => {
     expect([...LIVE_STEP_NAMES]).toEqual([
       "Write",
       "Press the seal",
       "Wait",
       "Testify",
+      "Break the seal",
       "See the receipts",
     ]);
   });
 
-  it("takes the four names other than Wait from Brand_Copy", () => {
+  it("takes the names from Brand_Copy and CEREMONY_COPY, Wait from LIVE_COPY", () => {
     const ritual = BRAND_COPY.ritualSteps.map((step) => step.name);
     expect(LIVE_STEP_NAMES[0]).toBe(ritual[0]);
     expect(LIVE_STEP_NAMES[1]).toBe(ritual[1]);
+    expect(LIVE_STEP_NAMES[2]).toBe(LIVE_COPY.waitStep);
     expect(LIVE_STEP_NAMES[3]).toBe(ritual[2]);
-    expect(LIVE_STEP_NAMES[4]).toBe(ritual[3]);
+    expect(LIVE_STEP_NAMES[4]).toBe(CEREMONY_COPY.steps[1]);
+    expect(LIVE_STEP_NAMES[5]).toBe(ritual[3]);
   });
 
   it("gives each step its name", () => {
@@ -57,6 +67,61 @@ describe("step order and names", () => {
 
   it("uses the headline the spec gives for /demo/live", () => {
     expect(LIVE_COPY.liveHeading).toBe("Seal your own letter");
+  });
+});
+
+// Issue #385: stepForStage maps the reveal Stage to the Break and Receipts
+// steps. stepForFlowPhase no longer moves on reveal, so Break is reached from
+// the Stage (the seal break) and not from the flow phase.
+describe("stepForStage (issue #385)", () => {
+  it("maps marks and seal to the break step", () => {
+    expect(stepForStage("marks")).toBe("break");
+    expect(stepForStage("seal")).toBe("break");
+  });
+
+  it("maps letter, figures and close to the receipts step", () => {
+    expect(stepForStage("letter")).toBe("receipts");
+    expect(stepForStage("figures")).toBe("receipts");
+    expect(stepForStage("close")).toBe("receipts");
+  });
+
+  it("returns null for the Stages before the seal break and for error", () => {
+    const earlier: Stage[] = [
+      "emerging",
+      "sealed",
+      "envelope",
+      "recall",
+      "error",
+    ];
+    for (const stage of earlier) {
+      expect(stepForStage(stage), stage).toBeNull();
+    }
+  });
+});
+
+describe("stepForFlowPhase (issue #385)", () => {
+  it("keeps testify for recall, submitting and submit_failed", () => {
+    expect(stepForFlowPhase("recall")).toBe("testify");
+    expect(stepForFlowPhase("submitting")).toBe("testify");
+    expect(stepForFlowPhase("submit_failed")).toBe("testify");
+  });
+
+  it("returns null for reveal, so the reveal Stage moves the stepper", () => {
+    expect(stepForFlowPhase("reveal")).toBeNull();
+  });
+
+  it("returns null for every other phase", () => {
+    const others: FlowState["tag"][] = [
+      "loading",
+      "sealed",
+      "openable",
+      "awaiting_key",
+      "unlocking",
+      "verifying",
+    ];
+    for (const tag of others) {
+      expect(stepForFlowPhase(tag), tag).toBeNull();
+    }
   });
 });
 
@@ -70,7 +135,7 @@ describe("canGoBack", () => {
   });
 
   it("offers no Back from wait on", () => {
-    const later: LiveStep[] = ["wait", "testify", "receipts"];
+    const later: LiveStep[] = ["wait", "testify", "break", "receipts"];
     for (const step of later) {
       expect(canGoBack(step, false), step).toBe(false);
     }
@@ -223,11 +288,77 @@ describe("flowPortalTarget (X1)", () => {
   });
 
   it("never goes back to null once the flow has mounted", () => {
-    // Testify and Receipts keep the flow mounted even if the countdown state
-    // is reported as not done, so a later re-render cannot unmount it.
+    // Testify, the seal break and Receipts keep the flow mounted even if the
+    // countdown state is reported as not done, so a later re-render cannot
+    // unmount it.
     expect(flowMounted("testify", false)).toBe(true);
+    expect(flowMounted("break", false)).toBe(true);
     expect(flowMounted("receipts", false)).toBe(true);
     expect(flowPortalTarget(host, "testify", false)).toBe(host);
+    expect(flowPortalTarget(host, "break", false)).toBe(host);
     expect(flowPortalTarget(host, "receipts", false)).toBe(host);
   });
 });
+
+// Issue #385: a STAGE action stores the reveal Stage and moves the stepper
+// forward to the step that Stage maps to, in the same update.
+describe("reduceStepper STAGE (issue #385)", () => {
+  it("starts with the emerging Stage stored", () => {
+    expect(initialStepperState().stage).toBe("emerging");
+  });
+
+  it("moves to the seal break step at marks", () => {
+    const state = reduceStepper(initialStepperState("testify"), {
+      type: "STAGE",
+      stage: "marks",
+    });
+    expect(state.step).toBe("break");
+    expect(state.stage).toBe("marks");
+  });
+
+  // The Skip_Link on marks sends SHOW_ALL, so the Stage becomes letter. The
+  // indicator must reach See the receipts in that same update, not in two.
+  it("moves to See the receipts at letter, in one update", () => {
+    const state = reduceStepper(initialStepperState("break"), {
+      type: "STAGE",
+      stage: "letter",
+    });
+    expect(state.step).toBe("receipts");
+    expect(state.stage).toBe("letter");
+  });
+
+  it("keeps the step for a Stage that maps to no step, and stores the Stage", () => {
+    const state = reduceStepper(initialStepperState("testify"), {
+      type: "STAGE",
+      stage: "recall",
+    });
+    expect(state.step).toBe("testify");
+    expect(state.stage).toBe("recall");
+  });
+
+  it("never moves the step back for an earlier Stage", () => {
+    const state = reduceStepper(initialStepperState("receipts"), {
+      type: "STAGE",
+      stage: "marks",
+    });
+    expect(state.step).toBe("receipts");
+    expect(state.stage).toBe("marks");
+  });
+
+  it("returns the same state when nothing changes", () => {
+    const state = reduceStepper(initialStepperState("break"), {
+      type: "STAGE",
+      stage: "marks",
+    });
+    expect(reduceStepper(state, { type: "STAGE", stage: "marks" })).toBe(state);
+  });
+
+  it("keeps Back unavailable after the seal is stored, whatever the Stage", () => {
+    let state = initialStepperState("seal");
+    state = reduceStepper(state, { type: "SEALED" });
+    state = reduceStepper(state, { type: "STAGE", stage: "marks" });
+    expect(state.step).toBe("break");
+    expect(canGoBack(state.step, state.sealed)).toBe(false);
+  });
+});
+

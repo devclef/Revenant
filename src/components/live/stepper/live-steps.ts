@@ -9,6 +9,8 @@
  */
 
 import { BRAND_COPY } from "@/components/brand/copy";
+import { CEREMONY_COPY } from "@/components/ceremony/copy";
+import type { Stage } from "@/components/ceremony/stages";
 import type { FlowState } from "@/components/reveal/opening-machine";
 
 import { LIVE_COPY } from "../copy";
@@ -21,12 +23,18 @@ import {
   type WriteDraftEvent,
 } from "../write-draft";
 
-/** The five steps of /demo/live, in the order the visitor meets them (L1.6). */
+/**
+ * The six steps of /demo/live, in the order the visitor meets them. `break` is
+ * the reveal's seal break, so the stepper shows it between Testify and Receipts.
+ * Issue #385: there were five steps before, with no break step, so the stepper
+ * jumped from Testify to See the receipts. Spec 11 (L1.6) had the five.
+ */
 export const LIVE_STEPS = [
   "write",
   "seal",
   "wait",
   "testify",
+  "break",
   "receipts",
 ] as const;
 
@@ -34,7 +42,8 @@ export type LiveStep = (typeof LIVE_STEPS)[number];
 
 /**
  * The visible step names. The names come from Brand_Copy (spec 09 F2), except
- * "Wait", which Brand_Copy does not list, so it comes from LIVE_COPY.
+ * "Wait", which Brand_Copy does not list, so it comes from LIVE_COPY. "Break
+ * the seal" comes from CEREMONY_COPY.steps[1], the same name the reveal shows.
  */
 const RITUAL = BRAND_COPY.ritualSteps;
 export const LIVE_STEP_NAMES: readonly string[] = [
@@ -42,6 +51,7 @@ export const LIVE_STEP_NAMES: readonly string[] = [
   RITUAL[1].name,
   LIVE_COPY.waitStep,
   RITUAL[2].name,
+  CEREMONY_COPY.steps[1],
   RITUAL[3].name,
 ];
 
@@ -67,9 +77,10 @@ export function canGoBack(step: LiveStep, sealed: boolean): boolean {
 
 /**
  * The step the embedded Opening_Flow moves the stepper to (spec 09, D5.4). The
- * flow reaches Testify once the reader has unlocked and presses Begin (`recall`),
- * and Receipts once the reveal starts. Every other phase keeps the step where
- * it is, so the stepper never moves on its own.
+ * flow reaches Testify once the reader has unlocked and presses Begin (`recall`,
+ * `submitting`, `submit_failed`). `reveal` returns null: Break and Receipts
+ * follow the reveal Stage through `stepForStage`, not the flow phase. Every
+ * other phase keeps the step where it is, so the stepper never moves on its own.
  */
 export function stepForFlowPhase(tag: FlowState["tag"]): LiveStep | null {
   switch (tag) {
@@ -77,7 +88,24 @@ export function stepForFlowPhase(tag: FlowState["tag"]): LiveStep | null {
     case "submitting":
     case "submit_failed":
       return "testify";
-    case "reveal":
+    default:
+      return null;
+  }
+}
+
+/**
+ * The step for a reveal Stage (issue #385). `marks` and `seal` are the seal
+ * break. `letter`, `figures` and `close` are Receipts. Stages before the break
+ * and `error` return null, so the stepper does not move for them.
+ */
+export function stepForStage(stage: Stage): LiveStep | null {
+  switch (stage) {
+    case "marks":
+    case "seal":
+      return "break";
+    case "letter":
+    case "figures":
+    case "close":
       return "receipts";
     default:
       return null;
@@ -90,7 +118,9 @@ export function stepForFlowPhase(tag: FlowState["tag"]): LiveStep | null {
  * zero (D5.2). Testify and Receipts keep it mounted.
  */
 export function flowMounted(step: LiveStep, countdownDone: boolean): boolean {
-  if (step === "testify" || step === "receipts") return true;
+  // `break` is the seal break inside the reveal (issue #385). The flow must
+  // stay mounted there, or the reveal unmounts as the seal breaks.
+  if (step === "testify" || step === "break" || step === "receipts") return true;
   return step === "wait" && countdownDone;
 }
 
@@ -127,6 +157,8 @@ export interface StepperState {
   draft: WriteDraft;
   /** True once the seal is stored. The draft is dropped at that point. */
   sealed: boolean;
+  /** The reveal Stage last reported by the Ceremony (issue #385). */
+  stage: Stage;
 }
 
 export type StepperAction =
@@ -134,7 +166,8 @@ export type StepperAction =
   | { type: "BACK" }
   | { type: "DRAFT"; event: WriteDraftEvent }
   | { type: "SEALED" }
-  | { type: "GOTO"; step: LiveStep };
+  | { type: "GOTO"; step: LiveStep }
+  | { type: "STAGE"; stage: Stage };
 
 /**
  * The stepper state before anything is typed. `mode` picks the draft: demo
@@ -144,7 +177,12 @@ export function initialStepperState(
   step: LiveStep = "write",
   mode: WriteMode = "demo",
 ): StepperState {
-  return { step, draft: initialWriteDraft(mode), sealed: false };
+  return {
+    step,
+    draft: initialWriteDraft(mode),
+    sealed: false,
+    stage: "emerging",
+  };
 }
 
 export function reduceStepper(
@@ -173,6 +211,18 @@ export function reduceStepper(
       // returning the same state keeps React from re-rendering.
       if (stepIndex(action.step) <= stepIndex(state.step)) return state;
       return { ...state, step: action.step };
+    }
+    case "STAGE": {
+      // One update stores the Stage and, when the Stage maps to a step, moves
+      // forward to it (issue #385). A Stage that maps to an earlier step, or to
+      // no step, leaves the step where it is. The step never moves back.
+      const target = stepForStage(action.stage);
+      const next =
+        target !== null && stepIndex(target) > stepIndex(state.step)
+          ? target
+          : state.step;
+      if (next === state.step && state.stage === action.stage) return state;
+      return { ...state, stage: action.stage, step: next };
     }
   }
 }
