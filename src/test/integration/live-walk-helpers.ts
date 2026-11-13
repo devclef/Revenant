@@ -180,3 +180,372 @@ export function recordStepResult(input: {
     defects: input.defects.map((defect) => ({ ...defect })),
   };
 }
+
+/* ---------------------------------------------------------------------------
+ * Break the seal through Close (Q1.2, Q1.6, Q2.1 to Q2.6).
+ * The browser collects raw values per step; the functions below decide.
+ * ------------------------------------------------------------------------- */
+
+/** The three ways the seal can be broken (Q1.2): press and hold, the Seal_Button, the Skip_Link. */
+export const BREAK_METHODS = ["hold", "button", "skip"] as const;
+
+export type BreakMethod = (typeof BREAK_METHODS)[number];
+
+/**
+ * The Step_Shot name for a step, with a suffix for the non-default break methods
+ * (`-via-button`, `-via-skip`). The default `hold` method keeps the exact name the
+ * spec gives (Q2.1), so only one run per width writes the canonical file.
+ */
+export function walkShotName(input: {
+  step: string;
+  width: number;
+  height: number;
+  reduced?: boolean;
+  method?: BreakMethod;
+}): string {
+  const base = stepShotName(input);
+  if (!input.method || input.method === "hold") return base;
+  return base.replace(/\.png$/, `-via-${input.method}.png`);
+}
+
+/** Steps whose Step_Shot is the full page, not only the First_Viewport (Q2.2). */
+export const FULL_PAGE_STEPS: ReadonlySet<WalkStepName> = new Set<WalkStepName>(
+  ["letter", "figures", "close"],
+);
+
+/**
+ * The Step_Indicator item that must be current at each step (Q1.6, spec 12 table
+ * row 07). These patterns follow the ceremony copy: "Break the seal" for `marks`,
+ * "See the receipts" from `letter` on. Steps not listed here are not checked.
+ */
+export const STEP_INDICATOR_EXPECTATIONS: Partial<
+  Record<WalkStepName, RegExp>
+> = {
+  marks: /^break the seal$/i,
+  letter: /^see the receipts$/i,
+  figures: /^see the receipts$/i,
+  close: /^see the receipts$/i,
+};
+
+/** The file a defect at each step most likely lives in. The owner confirms before fixing. */
+export const STEP_SUSPECTED_FILES: Record<WalkStepName, string> = {
+  write: "src/components/live/WriteForm.tsx",
+  "write-receipts": "src/components/live/FigurePicker.tsx",
+  seal: "src/components/live/SealPage.tsx",
+  wait: "src/components/live/SealPage.tsx",
+  unlock: "src/components/live/UnlockView.tsx",
+  testify: "src/components/ceremony/recall/RecallPager.tsx",
+  marks: "src/components/ceremony/seal/SealBreak.tsx",
+  letter: "src/components/ceremony/letter/",
+  figures: "src/components/ceremony/figures/",
+  close: "src/components/ceremony/close/",
+};
+
+/** One check's outcome. `expected` says what had to hold, so a defect can quote it. */
+export type StepCheck = {
+  ok: boolean;
+  expected: string;
+  message: string;
+};
+
+export type RgbaColor = { r: number; g: number; b: number; a: number };
+
+/**
+ * Parse a computed CSS colour (`rgb(...)` or `rgba(...)`, as `getComputedStyle`
+ * returns it). Returns null for anything else, so the caller can say it could not be measured.
+ */
+export function parseCssColor(input: string): RgbaColor | null {
+  const match = input
+    .trim()
+    .match(
+      /^rgba?\(\s*([\d.]+)[\s,]+([\d.]+)[\s,]+([\d.]+)(?:[\s,/]+([\d.]+)(%?))?\s*\)$/,
+    );
+  if (!match) return null;
+  const [r, g, b] = [match[1], match[2], match[3]].map(Number);
+  const a =
+    match[4] === undefined ? 1 : Number(match[4]) / (match[5] ? 100 : 1);
+  if ([r, g, b, a].some((value) => Number.isNaN(value))) return null;
+  return { r, g, b, a };
+}
+
+/** Put a translucent foreground over an opaque background, the way the screen paints it. */
+export function compositeOver(fg: RgbaColor, bg: RgbaColor): RgbaColor {
+  const mix = (f: number, b: number) => f * fg.a + b * (1 - fg.a);
+  return {
+    r: mix(fg.r, bg.r),
+    g: mix(fg.g, bg.g),
+    b: mix(fg.b, bg.b),
+    a: 1,
+  };
+}
+
+/** WCAG 2.x relative luminance of an opaque colour. */
+export function relativeLuminance(color: RgbaColor): number {
+  const linear = (channel: number) => {
+    const c = channel / 255;
+    return c <= 0.03928 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4;
+  };
+  return (
+    0.2126 * linear(color.r) +
+    0.7152 * linear(color.g) +
+    0.0722 * linear(color.b)
+  );
+}
+
+/** WCAG contrast ratio between two opaque colours, from 1 to 21. */
+export function contrastRatio(a: RgbaColor, b: RgbaColor): number {
+  const la = relativeLuminance(a);
+  const lb = relativeLuminance(b);
+  return (Math.max(la, lb) + 0.05) / (Math.min(la, lb) + 0.05);
+}
+
+/**
+ * The G1.8 floor for a text run: 4.5:1 for body text, 3:1 for large text
+ * (24 px or more, or 18.66 px or more and bold, per WCAG 2.2).
+ */
+export function contrastFloor(input: {
+  fontSizePx: number;
+  fontWeight: number;
+}): number {
+  const large =
+    input.fontSizePx >= 24 ||
+    (input.fontSizePx >= 18.66 && input.fontWeight >= 700);
+  return large ? 3 : 4.5;
+}
+
+/** One text run as the browser reports it. `bg` is null when no opaque background colour was found. */
+export type ContrastSample = {
+  text: string;
+  fg: string;
+  bg: string | null;
+  fontSizePx: number;
+  fontWeight: number;
+};
+
+/**
+ * Check one text run against its floor. A run with no measurable colours is
+ * reported as unmeasured, not as a pass and not as a fail.
+ */
+export function checkContrast(sample: ContrastSample): {
+  measured: boolean;
+  ok: boolean;
+  ratio: number | null;
+  message: string;
+} {
+  const floor = contrastFloor(sample);
+  const fg = parseCssColor(sample.fg);
+  const bg = sample.bg === null ? null : parseCssColor(sample.bg);
+  if (!fg || !bg) {
+    return {
+      measured: false,
+      ok: true,
+      ratio: null,
+      message: `UNMEASURED "${sample.text}": colours could not be read (${sample.fg} on ${sample.bg ?? "no opaque background"})`,
+    };
+  }
+  const ratio = contrastRatio(compositeOver(fg, bg), bg);
+  const ok = ratio >= floor;
+  return {
+    measured: true,
+    ok,
+    ratio,
+    message: `${ok ? "PASS" : "FAIL"} "${sample.text}" ${ratio.toFixed(2)}:1, floor ${floor}:1`,
+  };
+}
+
+/**
+ * The page facts one step's checks read. Filled in by the browser, then judged here.
+ * `motionControls` is the count of MOTION_CONTROL_SELECTOR matches.
+ */
+export type PageSnapshot = {
+  scrollWidth: number;
+  clientWidth: number;
+  /** Elements whose overflow is not visible and that hold text. The check decides which are clipped. */
+  clipCandidates: ClippedSample[];
+  contrastSamples: ContrastSample[];
+  /** The text of the current Step_Indicator item (`aria-current="step"`), or null. */
+  currentStep: string | null;
+  bodyText: string;
+  motionControls: number;
+  /** Console and page errors raised since the previous step. */
+  consoleErrors: string[];
+};
+
+export type ClippedSample = {
+  tag: string;
+  text: string;
+  scrollWidth: number;
+  clientWidth: number;
+  overflowX: string;
+};
+
+/** Horizontal scroll on the document (Q1.6). One pixel of subpixel rounding is allowed. */
+export function checkHorizontalScroll(
+  scrollWidth: number,
+  clientWidth: number,
+): StepCheck {
+  const expected = "no horizontal scroll on the document";
+  if (scrollWidth <= clientWidth + 1) {
+    return {
+      ok: true,
+      expected,
+      message: `PASS ${expected} (${scrollWidth} <= ${clientWidth})`,
+    };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL horizontal scroll: scrollWidth ${scrollWidth} is wider than clientWidth ${clientWidth}`,
+  };
+}
+
+/**
+ * Text clipped by its container (Q1.6): a container with overflow not visible
+ * whose content is wider than its box, by more than one pixel.
+ */
+export function checkClippedText(samples: readonly ClippedSample[]): StepCheck {
+  const expected = "no text clipped by its container";
+  const clipped = samples.filter(
+    (s) => s.overflowX !== "visible" && s.scrollWidth > s.clientWidth + 1,
+  );
+  if (clipped.length === 0) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  const first = clipped
+    .slice(0, 3)
+    .map((s) => `<${s.tag}> "${s.text}" (${s.scrollWidth} > ${s.clientWidth})`)
+    .join("; ");
+  return {
+    ok: false,
+    expected,
+    message: `FAIL ${clipped.length} clipped container(s): ${first}`,
+  };
+}
+
+/** Motion_Control count at a step (Q1.6). Wraps `checkMotionControlCount` in the StepCheck shape. */
+export function checkMotionControlStep(count: number): StepCheck {
+  const result = checkMotionControlCount(count);
+  return {
+    ok: result.ok,
+    expected: "exactly one Motion_Control",
+    message: result.message,
+  };
+}
+
+/** The Step_Indicator's current item must match the step (Q1.6). */
+export function checkStepIndicator(
+  current: string | null,
+  expected: RegExp,
+): StepCheck {
+  const label = `current Step_Indicator item matches ${expected}`;
+  if (current !== null && expected.test(current.trim())) {
+    return {
+      ok: true,
+      expected: label,
+      message: `PASS current item "${current}"`,
+    };
+  }
+  return {
+    ok: false,
+    expected: label,
+    message: `FAIL current Step_Indicator item is ${current === null ? "missing" : `"${current}"`}`,
+  };
+}
+
+/** Forbidden strings in the final reveal (Q1.6): "0.000", "0.0%" and "unchanged". */
+export function checkForbiddenFinalText(text: string): StepCheck {
+  const expected = 'none of "0.000", "0.0%", "unchanged" in the final reveal';
+  const found = findPlaceholderFigures(text);
+  if (found.length === 0) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL found ${found.map((term) => `"${term}"`).join(", ")} in the final reveal`,
+  };
+}
+
+/** Any console or page error fails the step (Q1.6). */
+export function checkConsoleErrors(messages: readonly string[]): StepCheck {
+  const expected = "no console error";
+  if (messages.length === 0) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL ${messages.length} console error(s): ${messages.slice(0, 3).join(" | ")}`,
+  };
+}
+
+/**
+ * Run every Q1.6 check that applies at one step, and return one StepCheck each.
+ * Contrast is one check: it fails if any measured run is below its floor, and
+ * lists how many runs could not be measured.
+ */
+export function checkStepSnapshot(
+  step: WalkStepName,
+  snapshot: PageSnapshot,
+  options: { letterText?: string } = {},
+): StepCheck[] {
+  const checks: StepCheck[] = [
+    checkHorizontalScroll(snapshot.scrollWidth, snapshot.clientWidth),
+    checkClippedText(snapshot.clipCandidates),
+    checkMotionControlStep(snapshot.motionControls),
+  ];
+
+  const indicator = STEP_INDICATOR_EXPECTATIONS[step];
+  if (indicator) {
+    checks.push(checkStepIndicator(snapshot.currentStep, indicator));
+  }
+
+  const contrast = snapshot.contrastSamples.map(checkContrast);
+  const failing = contrast.filter((c) => c.measured && !c.ok);
+  const unmeasured = contrast.filter((c) => !c.measured).length;
+  const measured = contrast.length - unmeasured;
+  checks.push({
+    ok: failing.length === 0,
+    expected: "text meets the G1.8 contrast floor on its measured background",
+    message:
+      failing.length === 0
+        ? `PASS contrast on ${measured} measured text run(s), ${unmeasured} unmeasured`
+        : `FAIL ${failing.length} text run(s) below the G1.8 floor: ${failing
+            .slice(0, 3)
+            .map((c) => c.message)
+            .join("; ")}`,
+  });
+
+  if (step === "figures" || step === "close") {
+    checks.push(checkForbiddenFinalText(snapshot.bodyText));
+  }
+
+  if (step === "letter" && options.letterText !== undefined) {
+    const present = snapshot.bodyText.includes(options.letterText);
+    checks.push({
+      ok: present,
+      expected: "the typed letter text is shown in full",
+      message: present
+        ? "PASS the typed letter text is shown"
+        : "FAIL the typed letter text is not shown on the letter stage",
+    });
+  }
+
+  checks.push(checkConsoleErrors(snapshot.consoleErrors));
+  return checks;
+}
+
+/** Turn the failing checks of one step into defects, with the suspected file. */
+export function defectsFromChecks(
+  step: WalkStepName,
+  checks: readonly StepCheck[],
+): WalkDefect[] {
+  return checks
+    .filter((check) => !check.ok)
+    .map((check) => ({
+      step,
+      expected: check.expected,
+      observed: check.message,
+      suspectedFile: STEP_SUSPECTED_FILES[step],
+    }));
+}

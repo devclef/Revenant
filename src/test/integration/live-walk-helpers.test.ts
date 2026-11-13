@@ -3,13 +3,27 @@ import { describe, expect, it } from "vitest";
 import {
   EXPECTED_STEPS,
   MOTION_CONTROL_SELECTOR,
+  STEP_SUSPECTED_FILES,
   WALK_STEP_NAMES,
+  checkClippedText,
+  checkConsoleErrors,
+  checkContrast,
+  checkForbiddenFinalText,
+  checkHorizontalScroll,
   checkMotionControlCount,
+  checkStepIndicator,
+  checkStepSnapshot,
+  contrastFloor,
+  contrastRatio,
+  defectsFromChecks,
   expectedShotNames,
   findPlaceholderFigures,
+  parseCssColor,
   recordStepResult,
   reportMissingShots,
   stepShotName,
+  walkShotName,
+  type PageSnapshot,
 } from "./live-walk-helpers";
 
 describe("stepShotName", () => {
@@ -258,5 +272,273 @@ describe("recordStepResult", () => {
         defects: [],
       }),
     ).toThrow("Unknown walk step: unknown");
+  });
+});
+
+const CLEAN_SNAPSHOT: PageSnapshot = {
+  scrollWidth: 390,
+  clientWidth: 390,
+  clipCandidates: [],
+  contrastSamples: [],
+  currentStep: "Break the seal",
+  bodyText: "Your letter.",
+  motionControls: 1,
+  consoleErrors: [],
+};
+
+describe("parseCssColor", () => {
+  it("reads rgb and rgba values, with alpha 1 when none is given", () => {
+    expect(parseCssColor("rgb(255, 255, 255)")).toEqual({
+      r: 255,
+      g: 255,
+      b: 255,
+      a: 1,
+    });
+    expect(parseCssColor("rgba(0, 0, 0, 0.5)")).toEqual({
+      r: 0,
+      g: 0,
+      b: 0,
+      a: 0.5,
+    });
+    expect(parseCssColor("rgba(10, 20, 30, 50%)")?.a).toBeCloseTo(0.5);
+  });
+
+  it("returns null for colours it cannot read", () => {
+    expect(parseCssColor("oklch(0.5 0.2 300)")).toBeNull();
+    expect(parseCssColor("transparent-ish")).toBeNull();
+  });
+});
+
+describe("contrastRatio and contrastFloor", () => {
+  it("gives 21:1 for black on white and 1:1 for a colour on itself", () => {
+    const white = { r: 255, g: 255, b: 255, a: 1 };
+    const black = { r: 0, g: 0, b: 0, a: 1 };
+    expect(contrastRatio(black, white)).toBeCloseTo(21, 5);
+    expect(contrastRatio(white, white)).toBeCloseTo(1, 5);
+  });
+
+  it("uses 4.5:1 for body text and 3:1 for large text", () => {
+    expect(contrastFloor({ fontSizePx: 16, fontWeight: 400 })).toBe(4.5);
+    expect(contrastFloor({ fontSizePx: 24, fontWeight: 400 })).toBe(3);
+    expect(contrastFloor({ fontSizePx: 18.66, fontWeight: 700 })).toBe(3);
+    expect(contrastFloor({ fontSizePx: 18.66, fontWeight: 400 })).toBe(4.5);
+  });
+});
+
+describe("checkContrast", () => {
+  it("passes dark text on a white surface", () => {
+    const result = checkContrast({
+      text: "Break the seal",
+      fg: "rgb(0, 0, 0)",
+      bg: "rgb(255, 255, 255)",
+      fontSizePx: 16,
+      fontWeight: 400,
+    });
+    expect(result).toMatchObject({ measured: true, ok: true });
+    expect(result.ratio).toBeCloseTo(21, 5);
+  });
+
+  it("fails grey text that is too close to its background", () => {
+    const result = checkContrast({
+      text: "Skip to the letter",
+      fg: "rgb(150, 150, 150)",
+      bg: "rgb(255, 255, 255)",
+      fontSizePx: 16,
+      fontWeight: 400,
+    });
+    expect(result.ok).toBe(false);
+    expect(result.message.startsWith("FAIL")).toBe(true);
+  });
+
+  it("blends a translucent foreground before measuring", () => {
+    // Opaque black at 0 alpha over white is white: contrast 1:1, a fail.
+    const result = checkContrast({
+      text: "ghost",
+      fg: "rgba(0, 0, 0, 0)",
+      bg: "rgb(255, 255, 255)",
+      fontSizePx: 16,
+      fontWeight: 400,
+    });
+    expect(result.ratio).toBeCloseTo(1, 5);
+    expect(result.ok).toBe(false);
+  });
+
+  it("reports unmeasured runs without failing them", () => {
+    const result = checkContrast({
+      text: "over a gradient",
+      fg: "rgb(255, 255, 255)",
+      bg: null,
+      fontSizePx: 16,
+      fontWeight: 400,
+    });
+    expect(result).toMatchObject({ measured: false, ok: true, ratio: null });
+    expect(result.message.startsWith("UNMEASURED")).toBe(true);
+  });
+});
+
+describe("checkHorizontalScroll and checkClippedText", () => {
+  it("fails when the document is wider than its viewport, allowing one pixel", () => {
+    expect(checkHorizontalScroll(390, 390).ok).toBe(true);
+    expect(checkHorizontalScroll(391, 390).ok).toBe(true);
+    const wide = checkHorizontalScroll(420, 390);
+    expect(wide.ok).toBe(false);
+    expect(wide.message).toContain("scrollWidth 420");
+  });
+
+  it("flags only overflow-hidden containers whose content is wider than the box", () => {
+    expect(
+      checkClippedText([
+        {
+          tag: "p",
+          text: "fits",
+          scrollWidth: 100,
+          clientWidth: 100,
+          overflowX: "hidden",
+        },
+        {
+          tag: "p",
+          text: "wide",
+          scrollWidth: 300,
+          clientWidth: 100,
+          overflowX: "visible",
+        },
+      ]).ok,
+    ).toBe(true);
+    const clipped = checkClippedText([
+      {
+        tag: "div",
+        text: "Cut off",
+        scrollWidth: 300,
+        clientWidth: 100,
+        overflowX: "hidden",
+      },
+    ]);
+    expect(clipped.ok).toBe(false);
+    expect(clipped.message).toContain('"Cut off"');
+  });
+});
+
+describe("checkStepIndicator", () => {
+  it("passes when the current item matches the step", () => {
+    expect(checkStepIndicator("Break the seal", /^break the seal$/i).ok).toBe(
+      true,
+    );
+  });
+
+  it("fails when the current item disagrees or is missing", () => {
+    expect(checkStepIndicator("Testify", /^break the seal$/i).ok).toBe(false);
+    expect(checkStepIndicator(null, /^break the seal$/i).message).toContain(
+      "missing",
+    );
+  });
+});
+
+describe("checkForbiddenFinalText and checkConsoleErrors", () => {
+  it("fails on each forbidden string in the final reveal", () => {
+    expect(checkForbiddenFinalText("Rent: 10.0% change").ok).toBe(true);
+    expect(checkForbiddenFinalText("unchanged").ok).toBe(false);
+    expect(checkForbiddenFinalText("Change 0.0%").ok).toBe(false);
+  });
+
+  it("fails on any console error", () => {
+    expect(checkConsoleErrors([]).ok).toBe(true);
+    const failed = checkConsoleErrors(["Failed to load resource"]);
+    expect(failed.ok).toBe(false);
+    expect(failed.message).toContain("1 console error");
+  });
+});
+
+describe("checkStepSnapshot and defectsFromChecks", () => {
+  it("passes a clean snapshot at a step with no extra expectation", () => {
+    const checks = checkStepSnapshot("write", CLEAN_SNAPSHOT);
+    expect(checks.every((c) => c.ok)).toBe(true);
+  });
+
+  it("fails a Motion_Control count of two at any step", () => {
+    const checks = checkStepSnapshot("write", {
+      ...CLEAN_SNAPSHOT,
+      motionControls: 2,
+    });
+    expect(defectsFromChecks("write", checks)).toHaveLength(1);
+  });
+
+  it("checks the Step_Indicator only at steps that have an expectation", () => {
+    const wrongItem = { ...CLEAN_SNAPSHOT, currentStep: "Testify" };
+    expect(
+      defectsFromChecks("marks", checkStepSnapshot("marks", wrongItem)).map(
+        (d) => d.observed,
+      ),
+    ).toHaveLength(1);
+    expect(
+      checkStepSnapshot("write", wrongItem).some((c) =>
+        c.expected.includes("Step_Indicator"),
+      ),
+    ).toBe(false);
+  });
+
+  it("checks forbidden strings only at figures and close", () => {
+    const withPlaceholder = {
+      ...CLEAN_SNAPSHOT,
+      currentStep: "See the receipts",
+      bodyText: "unchanged 0.000 0.0%",
+    };
+    expect(
+      defectsFromChecks("close", checkStepSnapshot("close", withPlaceholder)),
+    ).toHaveLength(1);
+    expect(
+      defectsFromChecks("letter", checkStepSnapshot("letter", withPlaceholder)),
+    ).toHaveLength(0);
+  });
+
+  it("checks the typed letter text on the letter stage only when given", () => {
+    const onLetter = { ...CLEAN_SNAPSHOT, currentStep: "See the receipts" };
+    const missing = checkStepSnapshot("letter", onLetter, {
+      letterText: "Walk letter",
+    });
+    expect(defectsFromChecks("letter", missing)).toHaveLength(1);
+    expect(
+      defectsFromChecks("letter", checkStepSnapshot("letter", onLetter)),
+    ).toHaveLength(0);
+  });
+
+  it("records each failing check as a defect with the step's suspected file", () => {
+    const defects = defectsFromChecks("figures", [
+      { ok: false, expected: "x", message: "FAIL y" },
+      { ok: true, expected: "z", message: "PASS z" },
+    ]);
+    expect(defects).toEqual([
+      {
+        step: "figures",
+        expected: "x",
+        observed: "FAIL y",
+        suspectedFile: STEP_SUSPECTED_FILES.figures,
+      },
+    ]);
+  });
+
+  it("names a suspected file for every step", () => {
+    for (const step of WALK_STEP_NAMES) {
+      expect(STEP_SUSPECTED_FILES[step].length).toBeGreaterThan(0);
+    }
+  });
+});
+
+describe("walkShotName", () => {
+  it("keeps the spec name for the default hold method", () => {
+    expect(
+      walkShotName({ step: "marks", width: 1440, height: 900, method: "hold" }),
+    ).toBe("live-07-marks-1440x900.png");
+  });
+
+  it("adds the method and the reduced suffix for the other runs", () => {
+    expect(
+      walkShotName({
+        step: "close",
+        width: 390,
+        height: 844,
+        reduced: true,
+        method: "skip",
+      }),
+    ).toBe("live-10-close-390x844-reduced-via-skip.png");
   });
 });

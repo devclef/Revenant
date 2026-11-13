@@ -46,9 +46,23 @@ import { chromium, type BrowserContext, type Page } from "playwright-core";
 import { afterAll, describe, expect, it } from "vitest";
 
 import {
+  BREAK_METHODS,
+  FULL_PAGE_STEPS,
+  MOTION_CONTROL_SELECTOR,
+  STEP_SUSPECTED_FILES,
   WALK_SIZES,
-  stepShotName,
+  checkStepSnapshot,
+  defectsFromChecks,
+  recordStepResult,
+  reportMissingShots,
+  walkShotName,
+  type BreakMethod,
+  type ClippedSample,
+  type ContrastSample,
+  type PageSnapshot,
+  type WalkDefect,
   type WalkStepName,
+  type WalkStepResult,
 } from "./live-walk-helpers";
 import { WALK_MATRIX, matrixShotNames, walkEnabled } from "./live-walk-matrix";
 
@@ -678,36 +692,67 @@ describe.skipIf(!walkEnabled(process.env))("live walk matrix plan", () => {
 });
 
 /*
- * First five stages (Write, Press the seal, Wait, Unlock, Testify), one run per
- * width. Each stage's Step_Shot goes to `qa-shots/live-walk/` under the name
- * from `stepShotName`. Skipped unless WALK=1, like the walk above.
+ * The walk from Write to Close (Q1, Q2). Skipped unless WALK=1.
+ *
+ * Each stage runs in one browser session per run. A run is one width, reduced or
+ * not, with one way of breaking the seal (press and hold, the Seal_Button or the
+ * Skip_Link). After every stage the page must settle, then the checks in Q1.6 run
+ * on the real page, then a Step_Shot is saved under `qa-shots/live-walk/` (named
+ * by `walkShotName`). The walk stops at the first stage with a defect. Missing
+ * Step_Shots print `FAIL missing Step_Shot <name>`.
  */
 
-/** Folder for the Step_Shots of the first five stages. Git-ignored. */
+/** Folder for the Step_Shots of the walk. Git-ignored. */
 const LIVE_WALK_SHOTS = path.resolve(QA_SHOTS_ROOT, "live-walk");
 /** How long the screen must hold still before a Step_Shot is taken. */
 const SETTLE_MS = 300;
+/** How long the seal is held down for the press-and-hold break. */
+const HOLD_MS = 2_500;
 
 /**
  * Steps that depend on a task not yet merged. A failure at one of these is
- * recorded as expected-blocked instead of failed. None of the first five
- * stages is listed: add an entry here with its task number when one is.
+ * recorded as expected-blocked instead of failed. None of the walk's stages is
+ * listed: add an entry here with its task number when one is.
  */
 const FIVE_STAGE_BLOCKED: Partial<
   Record<WalkStepName, { task: number; reason: string }>
 > = {};
 
-type FiveStageRow = {
-  step: WalkStepName;
-  status: "pass" | "fail" | "expected-blocked";
-  observed: string;
+/** One run: the width, whether motion is reduced, and how the seal is broken. */
+type WalkRun = {
+  size: (typeof WALK_SIZES)[number];
+  reduced: boolean;
+  method: BreakMethod;
+};
+
+type StageAction = { step: WalkStepName; act: WalkAction };
+
+type StageRow = {
+  result: WalkStepResult;
   shot?: string;
   blocked?: { task: number; reason: string };
 };
 
+const BREAK_LABELS: Record<BreakMethod, string> = {
+  hold: "press and hold",
+  button: "the Seal_Button",
+  skip: "the Skip_Link",
+};
+
+/** The `data-ceremony` value of the Stage on screen, or an empty string. */
+async function currentStage(page: Page): Promise<string> {
+  return page.evaluate(
+    () =>
+      document
+        .querySelector("[data-ceremony]")
+        ?.getAttribute("data-ceremony") ?? "",
+  );
+}
+
 /**
- * Wait until the Skip control is gone and `data-ceremony` has not changed for
- * SETTLE_MS. Only then is a Step_Shot taken, so no motion is caught mid-way.
+ * Wait until the Stage has not changed, and no finite animation is running, for
+ * SETTLE_MS. Infinite animations (the Ghost's idle motion) are left out, or the
+ * screen would never settle. The Skip_Link is not part of the wait: it stays up on `marks`.
  */
 async function waitForStable(page: Page): Promise<void> {
   const deadline = Date.now() + STEP_TIMEOUT_MS;
@@ -719,15 +764,19 @@ async function waitForStable(page: Page): Promise<void> {
         document
           .querySelector("[data-ceremony]")
           ?.getAttribute("data-ceremony") ?? "";
-      const skipShown = Array.from(document.querySelectorAll("button")).some(
-        (button) => button.textContent?.trim() === "Skip",
-      );
-      return `${stage}|${skipShown}`;
+      const running = document
+        .getAnimations()
+        .filter(
+          (animation) =>
+            animation.playState === "running" &&
+            animation.effect?.getTiming().iterations !== Infinity,
+        ).length;
+      return `${stage}|${running}`;
     });
     if (state !== last) {
       last = state;
       since = Date.now();
-    } else if (!state.endsWith("|true") && Date.now() - since >= SETTLE_MS) {
+    } else if (Date.now() - since >= SETTLE_MS) {
       return;
     }
     await page.waitForTimeout(50);
@@ -737,20 +786,305 @@ async function waitForStable(page: Page): Promise<void> {
   );
 }
 
-async function openLetterAndUnlock(
+/** Read the page facts that the Q1.6 checks need. The browser only collects; checks.ts decides. */
+async function readPage(
   c: WalkContext,
-  label: RegExp,
-): Promise<void> {
-  const goTo = c.page
-    .getByRole("link", { name: /go to your letter/i })
-    .or(c.page.getByRole("button", { name: /go to your letter/i }));
-  await goTo.first().click();
-  await c.page.waitForURL(/\/l\//, { timeout: STEP_TIMEOUT_MS });
-  await c.page.getByRole("button", { name: label }).click();
+  consoleErrors: string[],
+): Promise<PageSnapshot> {
+  const raw = (await c.page.evaluate(() => {
+    const isOpaque = (color: string): boolean => {
+      const match = color.match(/rgba?\(([^)]+)\)/);
+      if (!match) return false;
+      const parts = match[1].split(/[\s,/]+/).filter((part) => part.length > 0);
+      return parts.length < 4 || Number(parts[3]) === 1;
+    };
+    const clipCandidates: ClippedSample[] = [];
+    const contrastSamples: ContrastSample[] = [];
+    for (const el of Array.from(
+      document.querySelectorAll<HTMLElement>("body *"),
+    )) {
+      const text = Array.from(el.childNodes)
+        .filter((node) => node.nodeType === Node.TEXT_NODE)
+        .map((node) => node.textContent ?? "")
+        .join(" ")
+        .replace(/\s+/g, " ")
+        .trim();
+      if (text.length === 0) continue;
+      const style = getComputedStyle(el);
+      if (style.display === "none" || style.visibility === "hidden") continue;
+      const box = el.getBoundingClientRect();
+      if (box.width === 0 || box.height === 0) continue;
+      const label = text.slice(0, 80);
+      if (style.overflowX !== "visible") {
+        clipCandidates.push({
+          tag: el.tagName.toLowerCase(),
+          text: label,
+          scrollWidth: el.scrollWidth,
+          clientWidth: el.clientWidth,
+          overflowX: style.overflowX,
+        });
+      }
+      let background: string | null = null;
+      for (let node: HTMLElement | null = el; node; node = node.parentElement) {
+        const color = getComputedStyle(node).backgroundColor;
+        if (isOpaque(color)) {
+          background = color;
+          break;
+        }
+      }
+      contrastSamples.push({
+        text: label,
+        fg: style.color,
+        bg: background,
+        fontSizePx: parseFloat(style.fontSize),
+        fontWeight: Number(style.fontWeight),
+      });
+    }
+    const current = document.querySelector(
+      "[data-ceremony] [data-step-indicator] [aria-current='step']",
+    );
+    return {
+      scrollWidth: document.documentElement.scrollWidth,
+      clientWidth: document.documentElement.clientWidth,
+      clipCandidates,
+      contrastSamples,
+      currentStep: current?.textContent?.trim() ?? null,
+      bodyText: document.body.innerText,
+    };
+  })) as Omit<PageSnapshot, "motionControls" | "consoleErrors">;
+
+  const motionControls = await c.page.locator(MOTION_CONTROL_SELECTOR).count();
+  return { ...raw, motionControls, consoleErrors };
 }
 
-/** The five stages, as Step_Shot steps. Write has two shots: the form, then the opened receipts. */
-const FIVE_STAGE_ACTIONS: readonly { step: WalkStepName; act: WalkAction }[] = [
+/**
+ * Run stages in order in one browser session. Each stage: act, settle, check
+ * (Q1.6), record (Q1.5), save its Step_Shot (Q2.1, Q2.2). Stops at the first
+ * stage with a defect or an action that threw.
+ */
+async function runWalk(
+  run: WalkRun,
+  stages: readonly StageAction[],
+): Promise<StageRow[]> {
+  mkdirSync(LIVE_WALK_SHOTS, { recursive: true });
+  const rows: StageRow[] = [];
+  const { width, height } = run.size;
+
+  const browser = await chromium.launch({
+    headless: true,
+    executablePath: process.env.CHROMIUM_PATH || undefined,
+  });
+  try {
+    const context = await browser.newContext({
+      viewport: { width, height },
+      reducedMotion: run.reduced ? "reduce" : "no-preference",
+    });
+    const page = await context.newPage();
+
+    // Every console error and uncaught page error, in order. Each stage reads only its own.
+    const errors: string[] = [];
+    page.on("console", (message) => {
+      if (message.type() === "error") errors.push(message.text());
+    });
+    page.on("pageerror", (error) => {
+      errors.push(error.message);
+    });
+
+    // Virtual authenticator: CTAP2 internal, user-verified, PRF reported, auto-presence.
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("WebAuthn.enable");
+    const { authenticatorId } = (await cdp.send(
+      "WebAuthn.addVirtualAuthenticator",
+      {
+        options: {
+          protocol: "ctap2",
+          transport: "internal",
+          hasResidentKey: true,
+          hasUserVerification: true,
+          isUserVerified: true,
+          hasPrf: true,
+          automaticPresenceSimulation: true,
+        },
+      },
+    )) as { authenticatorId: string };
+
+    const ctx: WalkContext = {
+      page,
+      cdp,
+      authenticatorId,
+      dir: LIVE_WALK_SHOTS,
+    };
+    let seen = 0;
+
+    for (const stage of stages) {
+      const shotName = walkShotName({
+        step: stage.step,
+        width,
+        height,
+        reduced: run.reduced,
+        method: run.method,
+      });
+      const suspectedFile = STEP_SUSPECTED_FILES[stage.step];
+
+      let observed: string;
+      let actionFailed = false;
+      try {
+        observed = await stage.act(ctx);
+      } catch (error) {
+        actionFailed = true;
+        observed = `Failed: ${errorMessage(error)}`;
+      }
+
+      const defects: WalkDefect[] = [];
+      if (actionFailed) {
+        defects.push({
+          step: stage.step,
+          expected: `The ${stage.step} stage is reached and its action completes.`,
+          observed,
+          suspectedFile,
+        });
+      } else {
+        try {
+          await waitForStable(page);
+          const fresh = errors.slice(seen);
+          seen = errors.length;
+          const snapshot = await readPage(ctx, fresh);
+          defects.push(
+            ...defectsFromChecks(
+              stage.step,
+              checkStepSnapshot(stage.step, snapshot, {
+                letterText: LETTER_TEXT,
+              }),
+            ),
+          );
+        } catch (error) {
+          defects.push({
+            step: stage.step,
+            expected: "The screen settles after the stage's action.",
+            observed: `Failed: ${errorMessage(error)}`,
+            suspectedFile,
+          });
+        }
+      }
+
+      let shot: string | undefined;
+      try {
+        await page.screenshot({
+          path: path.join(LIVE_WALK_SHOTS, shotName),
+          fullPage: FULL_PAGE_STEPS.has(stage.step),
+        });
+        shot = shotName;
+      } catch (error) {
+        observed += ` (screenshot failed: ${errorMessage(error)})`;
+      }
+
+      const blocked = actionFailed ? FIVE_STAGE_BLOCKED[stage.step] : undefined;
+      rows.push({
+        result: recordStepResult({
+          step: stage.step,
+          observation: observed,
+          shots: shot ? [shot] : [],
+          defects,
+        }),
+        shot,
+        blocked,
+      });
+      if (defects.length > 0 && !blocked) break;
+    }
+    await context.close();
+  } finally {
+    await browser.close();
+  }
+  return rows;
+}
+
+/** One line per step, then one line per defect. Quoted by the owner in the QA verdict. */
+function formatStageRows(rows: readonly StageRow[]): string {
+  return rows
+    .flatMap((row) => {
+      const r = row.result;
+      const label = row.blocked
+        ? `EXPECTED-BLOCKED (task ${row.blocked.task})`
+        : r.pass
+          ? "PASS"
+          : "FAIL";
+      const lines = [
+        `${r.step}: ${label}. ${r.observation}` +
+          (row.shot ? ` Shot: qa-shots/live-walk/${row.shot}` : ""),
+      ];
+      for (const defect of r.defects) {
+        lines.push(
+          `  Defect. Expected: ${defect.expected} Observed: ${defect.observed} Suspected file: ${defect.suspectedFile}`,
+        );
+      }
+      return lines;
+    })
+    .join("\n");
+}
+
+/** Which expected Step_Shots of a run exist. Missing ones print `FAIL missing Step_Shot`. */
+function shotReport(run: WalkRun, steps: readonly WalkStepName[]) {
+  const expected = steps.map((step) =>
+    walkShotName({
+      step,
+      width: run.size.width,
+      height: run.size.height,
+      reduced: run.reduced,
+      method: run.method,
+    }),
+  );
+  const present = expected.filter((name) =>
+    existsSync(path.join(LIVE_WALK_SHOTS, name)),
+  );
+  return reportMissingShots(expected, present);
+}
+
+/** The recall stage: answer every question in turn, then go on to `marks`. Returns the count answered. */
+async function answerEveryQuestion(c: WalkContext): Promise<number> {
+  const recall = c.page.locator('[data-ceremony="recall"]');
+  let answered = 0;
+  for (let guard = 0; guard < 12; guard += 1) {
+    if ((await currentStage(c.page)) !== "recall") break;
+    const field = recall
+      .locator('textarea, input[type="text"], input[type="number"]')
+      .first();
+    if ((await field.count()) > 0) {
+      await field.fill(`Walk answer ${answered + 1}`);
+    } else {
+      // A scale control. The Motion_Control is excluded: it is not an answer.
+      const control = recall
+        .locator('button[aria-label]:not([aria-label*="motion" i])')
+        .first();
+      if ((await control.count()) === 0) {
+        throw new Error("No recall answer control found on the Testify stage.");
+      }
+      await control.click();
+    }
+    answered += 1;
+    const next = recall
+      .getByRole("button", {
+        name: /^(next question|next|continue|submit|save)$/i,
+      })
+      .first();
+    if ((await next.count()) > 0) {
+      await next.click();
+    } else {
+      const last = recall
+        .getByRole("button", { name: /break the seal|record|submit|save/i })
+        .first();
+      if ((await last.count()) > 0) await last.click();
+      else break;
+    }
+    await c.page.waitForTimeout(300);
+  }
+  if (answered === 0) {
+    throw new Error("No recall question field found.");
+  }
+  return answered;
+}
+
+/** Stages Write to Testify. Shared by the first-five run and the full run. */
+const FIVE_STAGE_ACTIONS: readonly StageAction[] = [
   {
     step: "write",
     act: async (c) => {
@@ -832,92 +1166,108 @@ const FIVE_STAGE_ACTIONS: readonly { step: WalkStepName; act: WalkAction }[] = [
   {
     step: "testify",
     act: async (c) => {
-      const recall = c.page.locator('[data-ceremony="recall"]');
-      const field = recall.locator('textarea, input[type="text"]').first();
-      if ((await field.count()) > 0) {
-        await field.fill("Walk answer 1");
-        return "First recall question answered in a text field.";
-      }
-      const control = recall.locator("button[aria-label]").first();
-      if ((await control.count()) === 0) {
-        throw new Error("No recall answer control found on the Testify stage.");
-      }
-      await control.click();
-      return "First recall question answered with a scale control.";
+      const answered = await answerEveryQuestion(c);
+      return `Answered ${answered} recall question(s).`;
     },
   },
 ];
 
-/** Runs the five stages at one width. Stops at the first failing stage. */
-async function walkFiveStages(size: {
-  width: number;
-  height: number;
-}): Promise<FiveStageRow[]> {
-  mkdirSync(LIVE_WALK_SHOTS, { recursive: true });
-  const rows: FiveStageRow[] = [];
+async function openLetterAndUnlock(
+  c: WalkContext,
+  label: RegExp,
+): Promise<void> {
+  const goTo = c.page
+    .getByRole("link", { name: /go to your letter/i })
+    .or(c.page.getByRole("button", { name: /go to your letter/i }));
+  await goTo.first().click();
+  await c.page.waitForURL(/\/l\//, { timeout: STEP_TIMEOUT_MS });
+  await c.page.getByRole("button", { name: label }).click();
+}
 
-  const browser = await chromium.launch({
-    headless: true,
-    executablePath: process.env.CHROMIUM_PATH || undefined,
-  });
-  try {
-    const context = await browser.newContext({
-      viewport: { width: size.width, height: size.height },
-    });
-    const page = await context.newPage();
-
-    // Virtual authenticator: CTAP2 internal, user-verified, PRF reported, auto-presence.
-    const cdp = await context.newCDPSession(page);
-    await cdp.send("WebAuthn.enable");
-    const { authenticatorId } = (await cdp.send(
-      "WebAuthn.addVirtualAuthenticator",
-      {
-        options: {
-          protocol: "ctap2",
-          transport: "internal",
-          hasResidentKey: true,
-          hasUserVerification: true,
-          isUserVerified: true,
-          hasPrf: true,
-          automaticPresenceSimulation: true,
-        },
+/**
+ * Stages Break the seal through Close. The seal is broken with the given method;
+ * the Stage that follows is checked the same way as the others.
+ */
+function remainingStageActions(method: BreakMethod): readonly StageAction[] {
+  return [
+    {
+      step: "marks",
+      act: async (c) => {
+        await c.page
+          .locator('[data-ceremony="marks"]')
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        if (method === "hold") {
+          const target = c.page.locator("[data-seal-target]").first();
+          const box = await target.boundingBox();
+          if (!box) {
+            throw new Error("The seal target has no size on screen.");
+          }
+          await c.page.mouse.move(
+            box.x + box.width / 2,
+            box.y + box.height / 2,
+          );
+          await c.page.mouse.down();
+          await c.page.waitForTimeout(HOLD_MS);
+          await c.page.mouse.up();
+        } else if (method === "button") {
+          await c.page.locator("[data-seal-button]").click();
+        } else {
+          await c.page.locator("[data-skip-link]").click();
+        }
+        await c.page
+          .locator('[data-ceremony="letter"]')
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        return `Seal broken with ${BREAK_LABELS[method]}. Letter stage shown.`;
       },
-    )) as { authenticatorId: string };
-
-    const ctx: WalkContext = {
-      page,
-      cdp,
-      authenticatorId,
-      dir: LIVE_WALK_SHOTS,
-    };
-
-    for (const stage of FIVE_STAGE_ACTIONS) {
-      try {
-        const observed = await stage.act(ctx);
-        await waitForStable(page);
-        const shot = stepShotName({
-          step: stage.step,
-          width: size.width,
-          height: size.height,
-        });
-        await page.screenshot({ path: path.join(LIVE_WALK_SHOTS, shot) });
-        rows.push({ step: stage.step, status: "pass", observed, shot });
-      } catch (error) {
-        const blocked = FIVE_STAGE_BLOCKED[stage.step];
-        rows.push({
-          step: stage.step,
-          status: blocked ? "expected-blocked" : "fail",
-          observed: `Failed: ${errorMessage(error)}`,
-          blocked,
-        });
-        break;
-      }
-    }
-    await context.close();
-  } finally {
-    await browser.close();
-  }
-  return rows;
+    },
+    {
+      step: "letter",
+      act: async (c) => {
+        await c.page
+          .locator('[data-ceremony="letter"]')
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        return `Letter stage shown (${LETTER_TEXT.length} characters typed).`;
+      },
+    },
+    {
+      step: "figures",
+      act: async (c) => {
+        if ((await currentStage(c.page)) === "letter") {
+          const next = c.page
+            .getByRole("button", { name: /see the receipts/i })
+            .first();
+          if ((await next.count()) === 0) {
+            throw new Error("No See the receipts control on the letter stage.");
+          }
+          await next.click();
+        }
+        await c.page
+          .locator('[data-ceremony="figures"], [data-ceremony="close"]')
+          .first()
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        return `Receipts stage reached: ${await currentStage(c.page)}.`;
+      },
+    },
+    {
+      step: "close",
+      act: async (c) => {
+        if ((await currentStage(c.page)) === "figures") {
+          // A letter with figures leaves the receipts by one more control.
+          const next = c.page
+            .getByRole("button", { name: /^(next|continue|close|done)$/i })
+            .first();
+          if ((await next.count()) === 0) {
+            throw new Error("No control leads from the receipts to the Close.");
+          }
+          await next.click();
+        }
+        await c.page
+          .locator('[data-ceremony="close"]')
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        return "Close stage shown.";
+      },
+    },
+  ];
 }
 
 describe.skipIf(!walkEnabled(process.env))(
@@ -928,25 +1278,64 @@ describe.skipIf(!walkEnabled(process.env))(
     )(
       "walks Write to Testify and saves Step_Shots at %s",
       async (_label, size) => {
-        const rows = await walkFiveStages(size);
-        console.log(
-          rows
-            .map(
-              (row) =>
-                `${row.step}: ${row.status.toUpperCase()}. ${row.observed}` +
-                (row.shot ? ` Shot: qa-shots/live-walk/${row.shot}` : ""),
-            )
-            .join("\n"),
+        const run: WalkRun = { size, reduced: false, method: "hold" };
+        const rows = await runWalk(run, FIVE_STAGE_ACTIONS);
+        console.log(formatStageRows(rows));
+
+        const shots = shotReport(
+          run,
+          FIVE_STAGE_ACTIONS.map((stage) => stage.step),
         );
+        console.log(shots.lines.join("\n"));
 
-        const failed = rows.filter((row) => row.status === "fail");
-        expect(failed.map((row) => `${row.step}: ${row.observed}`)).toEqual([]);
+        const failed = rows.filter((row) => !row.result.pass && !row.blocked);
+        expect(
+          failed.map((row) => `${row.result.step}: ${row.result.observation}`),
+        ).toEqual([]);
+        expect(shots.missing).toEqual([]);
+      },
+      VIEWPORT_TIMEOUT_MS,
+    );
+  },
+);
 
-        const missing = rows
-          .filter((row) => row.shot !== undefined)
-          .map((row) => row.shot as string)
-          .filter((shot) => !existsSync(path.join(LIVE_WALK_SHOTS, shot)));
-        expect(missing).toEqual([]);
+describe.skipIf(!walkEnabled(process.env))(
+  "live walk: Break the seal through Close",
+  () => {
+    // Each width, with and without reduced motion, with each way of breaking the seal (Q1.4, Q1.2).
+    const runs: WalkRun[] = WALK_SIZES.flatMap((size) =>
+      [false, true].flatMap((reduced) =>
+        BREAK_METHODS.map((method) => ({ size, reduced, method })),
+      ),
+    );
+
+    it.each(
+      runs.map((run) => {
+        const motion = run.reduced ? "reduced motion" : "motion on";
+        const label = `${run.size.width}x${run.size.height}, ${motion}, break with ${run.method}`;
+        return [label, run] as const;
+      }),
+    )(
+      "walks the whole flow: %s",
+      async (_label, run) => {
+        const stages = [
+          ...FIVE_STAGE_ACTIONS,
+          ...remainingStageActions(run.method),
+        ];
+        const rows = await runWalk(run, stages);
+        console.log(formatStageRows(rows));
+
+        const shots = shotReport(
+          run,
+          stages.map((stage) => stage.step),
+        );
+        console.log(shots.lines.join("\n"));
+
+        const failed = rows.filter((row) => !row.result.pass && !row.blocked);
+        expect(
+          failed.map((row) => `${row.result.step}: ${row.result.observation}`),
+        ).toEqual([]);
+        expect(shots.missing).toEqual([]);
       },
       VIEWPORT_TIMEOUT_MS,
     );
