@@ -7,7 +7,11 @@ import { LIVE_COPY } from "./copy";
 import { selfReportedFieldKey } from "./form";
 import { SelfReportedRows, type SelfReportedRowsProps } from "./SelfReportedRows";
 import { INITIAL_TOUCHED, markAttempted, markTouched } from "./touched";
-import type { SelfReportedRow } from "./write-draft";
+import {
+  INITIAL_WRITE_DRAFT,
+  initialWriteDraft,
+  type SelfReportedRow,
+} from "./write-draft";
 
 const noop = () => {};
 const SEALING_DAY = "2026-11-09";
@@ -140,5 +144,65 @@ describe("SelfReportedRows rendering", () => {
     });
     expect(html).toContain(LIVE_COPY.selfReportedPeriod);
     expect(html).toContain('aria-invalid="true"');
+  });
+});
+
+describe("SelfReportedRows blank and partly filled rows (spec 08 later-tasks, R26.1)", () => {
+  const BLANK_ROW: SelfReportedRow = {
+    name: "",
+    value: "",
+    unit: "",
+    region: "",
+    period: "",
+  };
+  const PARTIAL_ROW: SelfReportedRow = { ...GOOD_ROW, value: "", period: "" };
+  const missingLine = (text: string) =>
+    LIVE_COPY.selfReportedMissing.replace("{fields}", text);
+
+  it("starts with no row, so a new letter shows no number", () => {
+    const draft = initialWriteDraft("real");
+    expect(draft.selfReported).toEqual([]);
+    expect(INITIAL_WRITE_DRAFT.selfReported).toEqual([]);
+    expect(rowsOf(render({ rows: draft.selfReported }))).toHaveLength(0);
+  });
+
+  it("flags nothing for a blank row, even after a seal attempt", () => {
+    const html = render({
+      rows: [BLANK_ROW],
+      touched: markAttempted(INITIAL_TOUCHED),
+    });
+    expect(rowsOf(html)).toHaveLength(1);
+    expect(html).not.toContain("Still to fill in");
+    expect(html).not.toContain(LIVE_COPY.selfReportedTextLength);
+  });
+
+  it("names the empty fields of a partly filled row once the row was touched", () => {
+    const html = render({
+      rows: [PARTIAL_ROW],
+      touched: markTouched(INITIAL_TOUCHED, selfReportedFieldKey(0, "name")),
+    });
+    expect(html).toContain(missingLine("value, period"));
+  });
+
+  it("names the empty fields after a seal attempt, even untouched", () => {
+    const html = render({
+      rows: [PARTIAL_ROW],
+      touched: markAttempted(INITIAL_TOUCHED),
+    });
+    expect(html).toContain(missingLine("value, period"));
+  });
+
+  it("shows no missing line on first load for a partly filled row", () => {
+    const html = render({ rows: [PARTIAL_ROW] });
+    expect(html).not.toContain("Still to fill in");
+  });
+
+  it("does not repeat a length message for an empty field", () => {
+    const html = render({
+      rows: [{ ...GOOD_ROW, name: "" }],
+      touched: markAttempted(INITIAL_TOUCHED),
+    });
+    expect(html).toContain(missingLine("name"));
+    expect(html).not.toContain(LIVE_COPY.selfReportedTextLength);
   });
 });

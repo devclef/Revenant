@@ -3,15 +3,17 @@
 import { useId } from "react";
 
 import { SELF_REPORTED_MAX } from "./constants";
-import { LIVE_COPY } from "./copy";
+import { LIVE_COPY, SELF_REPORTED_FIELD_NAMES } from "./copy";
 import {
   SELF_REPORTED_FIELDS,
+  isEmptySelfReportedRow,
+  missingSelfReportedFields,
   selfReportedFieldKey,
   selfReportedRowProblems,
   visibleSelfReportedProblems,
 } from "./form";
 import styles from "./live.module.css";
-import type { TouchedState } from "./touched";
+import { showsFieldMessage, type TouchedState } from "./touched";
 import type { SelfReportedField, SelfReportedRow } from "./write-draft";
 
 export interface SelfReportedRowsProps {
@@ -84,6 +86,23 @@ export function SelfReportedRows({
           touched,
           index,
         );
+        // A partly filled row names its empty fields once the row was touched
+        // or a seal was attempted. A blank row is never flagged (it changes
+        // nothing). Empty fields show no per-field message; the line names them.
+        const missing = missingSelfReportedFields(row);
+        const rowShown = SELF_REPORTED_FIELDS.some((field) =>
+          showsFieldMessage(touched, selfReportedFieldKey(index, field)),
+        );
+        const missingText =
+          rowShown && missing.length > 0 && !isEmptySelfReportedRow(row)
+            ? LIVE_COPY.selfReportedMissing.replace(
+                "{fields}",
+                missing
+                  .map((field) => SELF_REPORTED_FIELD_NAMES[field])
+                  .join(", "),
+              )
+            : "";
+        const missingId = `${baseId}-${index}-missing`;
         return (
           <div key={index} className={styles.selfRow}>
             <div className={styles.questionHead}>
@@ -104,7 +123,9 @@ export function SelfReportedRows({
                 const problemId = `${inputId}-problem`;
                 const problem = shown[field];
                 const message =
-                  problem === undefined ? "" : PROBLEM_TEXT[problem];
+                  problem === undefined || row[field].trim() === ""
+                    ? ""
+                    : PROBLEM_TEXT[problem];
                 return (
                   <div key={field} className={styles.selfField}>
                     <label htmlFor={inputId} className={styles.label}>
@@ -134,6 +155,9 @@ export function SelfReportedRows({
                 );
               })}
             </div>
+            <p id={missingId} className={styles.problem}>
+              {missingText}
+            </p>
           </div>
         );
       })}

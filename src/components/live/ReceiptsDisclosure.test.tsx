@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -6,7 +8,7 @@ import { LIVE_COPY } from "./copy";
 import { ReceiptsDisclosure, type ReceiptsStatus } from "./ReceiptsDisclosure";
 
 // The disclosure is rewritten for L1.4 and L1.5 (spec 11): one closed native
-// details, titled "Add a receipt", with the explain line first and the picker
+// details, titled "Receipts", with the explain line first and the picker
 // and the self-reported rows inside the markup.
 function render(status: ReceiptsStatus) {
   return renderToStaticMarkup(
@@ -20,7 +22,8 @@ function render(status: ReceiptsStatus) {
 
 describe("ReceiptsDisclosure copy", () => {
   it("uses the exact copy strings from the spec", () => {
-    expect(LIVE_COPY.receiptsSummary).toBe("Add a receipt");
+    expect(LIVE_COPY.receiptsSummary).toBe("Receipts");
+    expect(LIVE_COPY.receiptsAction).toBe("Add a receipt");
     expect(LIVE_COPY.receiptsExplain).toBe(
       "A receipt is a number sealed with its source and date, so you can compare it when the letter opens.",
     );
@@ -32,7 +35,7 @@ describe("ReceiptsDisclosure copy", () => {
 });
 
 describe("ReceiptsDisclosure markup", () => {
-  it("is one native details, closed by default, titled Add a receipt", () => {
+  it("is one native details, closed by default, titled Receipts", () => {
     const html = render("ready");
     const match = html.match(/<details[^>]*>/);
     expect(match).not.toBeNull();
@@ -99,5 +102,62 @@ describe("ReceiptsDisclosure status", () => {
     for (const status of ["loading", "ready", "failed"] as const) {
       expect(render(status), status).toContain("data-own-numbers");
     }
+  });
+});
+
+// The openRequest counter opens the disclosure and moves focus in an effect,
+// which static markup never runs. The markup must still stay closed and the
+// same whatever the counter holds, so the page can raise it at any time.
+describe("ReceiptsDisclosure openRequest", () => {
+  function renderWith(openRequest: number | undefined) {
+    return renderToStaticMarkup(
+      createElement(ReceiptsDisclosure, {
+        status: "ready",
+        picker: createElement("span", { "data-picker": "" }, "picker"),
+        selfReported: createElement("span", { "data-own-numbers": "" }, "own"),
+        openRequest,
+      }),
+    );
+  }
+
+  it("is closed in the markup whatever the counter holds", () => {
+    const closedMarkup = renderWith(undefined);
+    expect(renderWith(0)).toBe(closedMarkup);
+    expect(renderWith(3)).toBe(closedMarkup);
+    expect(renderWith(3).match(/<details[^>]*>/)?.[0]).not.toMatch(
+      /\sopen(\s|=|>)/,
+    );
+  });
+
+  it("keeps the picker and own-numbers rows inside the details with the counter set", () => {
+    const html = renderWith(1);
+    expect(html.indexOf("data-picker")).toBeGreaterThan(
+      html.indexOf("<details"),
+    );
+    expect(html.indexOf("data-own-numbers")).toBeLessThan(
+      html.indexOf("</details>"),
+    );
+  });
+});
+
+// The click cannot run under static markup, so the wiring is checked in the
+// source: Add a receipt raises the counter, and the disclosure receives it.
+describe("WriteForm wiring for Add a receipt", () => {
+  const source = readFileSync(
+    new URL("./WriteForm.tsx", import.meta.url),
+    "utf8",
+  );
+
+  it("passes the counter to the disclosure", () => {
+    expect(source).toContain("openRequest={receiptsRequest}");
+  });
+
+  it("raises the counter from the Add a receipt button", () => {
+    const button = source.slice(
+      source.indexOf("{LIVE_COPY.receiptsAction}") - 300,
+    );
+    expect(button).toMatch(
+      /onClick=\{\(\) => setReceiptsRequest\(nextOpenRequest\)\}/,
+    );
   });
 });

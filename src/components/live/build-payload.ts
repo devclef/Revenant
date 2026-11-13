@@ -8,6 +8,7 @@
 // Pure module: no clock, no randomness, no I/O, so the same inputs always build
 // the same payload. Safe in the browser and in tests.
 
+import { isEmptySelfReportedRow } from "./form";
 import { RECALL_SUBJECTS } from "./recall-subjects";
 import type { SelfReportedRow } from "./write-draft";
 import { generateRecallQuestions } from "@/lib/recall";
@@ -113,9 +114,13 @@ export function buildLivePayload(input: {
   sealedAt?: string;
 }): { ok: true; payload: PayloadV1 } | { ok: false; metricId: string } {
   const { text, metricIds, authorQuestions, sealedDate, figures } = input;
-  const selfReported = input.selfReported ?? [];
-  if (selfReported.length > 0 && input.sealedAt === undefined) {
-    throw new Error("buildLivePayload: sealedAt is required with self-reported rows");
+  const selfReportedRows = (input.selfReported ?? []).filter(
+    (row) => !isEmptySelfReportedRow(row),
+  );
+  if (selfReportedRows.length > 0 && input.sealedAt === undefined) {
+    throw new Error(
+      "buildLivePayload: sealedAt is required with self-reported rows",
+    );
   }
 
   const metrics: MetricDefinitionV1[] = [];
@@ -160,7 +165,7 @@ export function buildLivePayload(input: {
   // No written_as_of: a live letter is sealed on its day, not written "as of" one.
   const selfMetrics: MetricDefinitionV1[] = [];
   const selfFigures: PayloadV1["figures"] = [];
-  selfReported.forEach((row, index) => {
+  selfReportedRows.forEach((row, index) => {
     const entry = selfReportedEntry(row, index, input.sealedAt ?? "");
     selfMetrics.push(entry.metric);
     selfFigures.push(entry.figure);

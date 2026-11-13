@@ -218,7 +218,8 @@ describe("LIVE_COPY for the receipts and the block message (spec 11)", () => {
   });
 
   it("has the receipts summary and the one-sentence explain line", () => {
-    expect(LIVE_COPY.receiptsSummary).toBe("Add a receipt");
+    expect(LIVE_COPY.receiptsSummary).toBe("Receipts");
+    expect(LIVE_COPY.receiptsAction).toBe("Add a receipt");
     expect(LIVE_COPY.receiptsExplain).toBe(
       "A receipt is a number sealed with its source and date, so you can compare it when the letter opens.",
     );

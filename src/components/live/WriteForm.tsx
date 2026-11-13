@@ -10,6 +10,7 @@ import { questionRowProblem } from "./author-questions";
 import { LETTER_FIELD_ROWS } from "./constants";
 import { LIVE_COPY, REAL_COPY } from "./copy";
 import { FigurePicker, type FigureDetail } from "./FigurePicker";
+import { nextOpenRequest } from "./receipts-focus";
 import { ReceiptsDisclosure } from "./ReceiptsDisclosure";
 import {
   countCodePoints,
@@ -247,6 +248,9 @@ export function WriteForm({
     null,
   );
   const chosenOccasion: OccasionId = occasionMemory?.occasion ?? "blank";
+  // Raised by the Add a receipt action to open the Receipts_Disclosure and move
+  // focus into it (spec 11, L1.4). Each press is a new request.
+  const [receiptsRequest, setReceiptsRequest] = useState(0);
 
   function chooseOccasion(id: OccasionId) {
     const base: OccasionDraft = occasionMemory ?? {
@@ -482,6 +486,7 @@ export function WriteForm({
         <>
           <ReceiptsDisclosure
             status={figuresStatus}
+            openRequest={receiptsRequest}
             picker={
               <FigurePicker
                 series={series}
@@ -608,7 +613,14 @@ export function WriteForm({
       ) : null}
 
       {section === "write" ? (
-        <div className={styles.actions}>
+        <div className={`${styles.actions} ${styles.writeActions}`}>
+          <button
+            type="button"
+            className={styles.secondary}
+            onClick={() => setReceiptsRequest(nextOpenRequest)}
+          >
+            {LIVE_COPY.receiptsAction}
+          </button>
           <button
             type="button"
             className={styles.primary}
