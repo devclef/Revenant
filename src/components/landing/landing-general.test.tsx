@@ -62,6 +62,14 @@ describe("section text measure clear of the Ghost (H1 step 1)", () => {
     expect(rule).toMatch(/width:\s*100%/);
   });
 
+  it("aligns the section text with the hero text at 600 px and wider", () => {
+    const media =
+      landingCss.match(
+        /@media \(min-width: 600px\) \{\n  \.section \{([^}]*)\}/,
+      )?.[1] ?? "";
+    expect(media).toMatch(/padding-left:\s*1\.25rem/);
+  });
+
   it("keeps the full-width section box", () => {
     const rule = landingCss.match(/\n\.section \{([^}]*)\}/)?.[1] ?? "";
     expect(rule).toMatch(/width:\s*100%/);

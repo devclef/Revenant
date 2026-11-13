@@ -1075,10 +1075,11 @@
 }
 
 /* The full-width frame under the landing column (SceneShell `below`, ticket H1).
-   Its left edge is the same as the hero content's left edge: `main` pads the
-   content box by frame-l + pad, and this frame takes that box's start edge with
-   no inline offset. `margin-inline: auto` would centre it, which moves it right
-   of the hero at 1440 px. */
+   This frame takes the start edge of the content box with no inline offset, so
+   `margin-inline: auto` would centre it and move it right of the hero at 1440 px.
+   The section text inside gets its 1.25 rem start padding from
+   landing.module.css (.section at 600 px and wider), which matches the hero's
+   1.25 rem side padding, so the section text and hero text share one left edge. */
 .landingBelowFrame {
   max-width: 1200px;
   width: 100%;

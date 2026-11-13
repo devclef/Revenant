@@ -305,7 +305,7 @@
 
 @media (min-width: 600px) {
   .section {
-    padding-left: 0;
+    padding-left: 1.25rem;
     padding-right: 0;
   }
 
