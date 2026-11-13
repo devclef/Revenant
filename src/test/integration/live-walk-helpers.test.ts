@@ -668,8 +668,15 @@ describe("shotsWrittenSince (run-scoped Step_Shot files)", () => {
 
   it("passes the run when every file is fresh, even if an old copy also exists", () => {
     const expected = expectedShotNames("no-figure");
-    const files = expected.map((name) => ({ name, mtimeMs: runStart + 1 }));
-    const result = checkRunShots(expected, shotsWrittenSince(files, runStart));
+    const stale = expected.map((name) => ({
+      name,
+      mtimeMs: runStart - 60_000,
+    }));
+    const fresh = expected.map((name) => ({ name, mtimeMs: runStart + 1 }));
+    const result = checkRunShots(
+      expected,
+      shotsWrittenSince([...stale, ...fresh], runStart),
+    );
     expect(result.ok).toBe(true);
   });
 });
