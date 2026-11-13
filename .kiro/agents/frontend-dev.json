@@ -78,7 +78,9 @@
         "match": [
           ".kiro/**",
           ".github/**",
-          "tools/**",
+          "tools/agents/**",
+          "tools/dispatcher/**",
+          "tools/hooks/**",
           "scripts/check.sh"
         ],
         "effect": "deny"

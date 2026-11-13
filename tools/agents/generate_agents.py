@@ -93,7 +93,7 @@ MCP_SERVERS = {role: {"playwright": playwright_server(d)} for role, d in SHOTS_D
 # using Auto.
 MODEL = "claude-haiku-5.5"
 MODELS = {role: MODEL for role in DESCRIPTIONS}
-OWNER_ONLY = [".kiro/**", ".github/**", "tools/**", "scripts/check.sh"]
+OWNER_ONLY = [".kiro/**", ".github/**", "tools/agents/**", "tools/dispatcher/**", "tools/hooks/**", "scripts/check.sh"]
 
 # Hooks (kiro-cli object form). The scripts live in tools/hooks/ (owner-only) and
 # always exit 0. each dev role's stop hook may ask for one more turn (once per

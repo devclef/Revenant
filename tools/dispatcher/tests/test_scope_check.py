@@ -37,9 +37,31 @@ class CheckFiles(unittest.TestCase):
         self.assertIn("outside `data-dev`'s owned paths", errs[0])
 
     def test_owner_only(self):
-        errs = pr_policy.check_files("platform-dev", [f("tools/x.py"), f(".kiro/a.md")], OWNERSHIP)
+        errs = pr_policy.check_files("platform-dev", [f("tools/hooks/x.py"), f(".kiro/a.md")], OWNERSHIP)
         self.assertEqual(len(errs), 2)
         self.assertTrue(all("owner-only" in e for e in errs))
+
+    def test_spec12_platform_dev_paths(self):
+        ok = ["README.md", "docs/video-script.md", "docs/writeup-gaps.md", "tools/qa/layout-check.mjs",
+              "scripts/check-js-budget.mjs"]
+        self.assertEqual(pr_policy.check_files("platform-dev", [f(x) for x in ok], OWNERSHIP), [])
+
+    def test_agent_tooling_stays_owner_only(self):
+        paths = ["tools/agents/generate_agents.py", "tools/dispatcher/pr_policy.py", "tools/hooks/scope-check.py",
+                 ".github/agents.json", ".kiro/agents/qa.json", "scripts/check.sh"]
+        errs = pr_policy.check_files("platform-dev", [f(x) for x in paths], OWNERSHIP)
+        self.assertEqual(len(errs), len(paths))
+        self.assertTrue(all("owner-only" in e for e in errs))
+
+    def test_no_role_can_write_kiro_writeup(self):
+        for role in OWNERSHIP["roles"]:
+            errs = pr_policy.check_files(role, [f("docs/kiro-writeup.md")], OWNERSHIP)
+            self.assertEqual(len(errs), 1, role)
+
+    def test_only_platform_dev_owns_tools_qa(self):
+        for role in OWNERSHIP["roles"]:
+            errs = pr_policy.check_files(role, [f("tools/qa/layout-check.mjs")], OWNERSHIP)
+            self.assertEqual(errs == [], role == "platform-dev", role)
 
     def test_size_limit_and_excluded_files(self):
         limit = OWNERSHIP["max_changed_lines"]
@@ -102,11 +124,11 @@ class Run(unittest.TestCase):
         self.assertEqual(self.logs[-1][2], "clean:no-files")
 
     def test_blocks_once_per_session_with_file_level_findings(self):
-        files = [f("src/components/a.tsx"), f("tools/x.py")]
+        files = [f("src/components/a.tsx"), f("tools/hooks/x.py")]
         out = json.loads(self.run_hook(files))
         self.assertEqual(out["decision"], "block")
         self.assertIn("`src/components/a.tsx` is outside", out["reason"])
-        self.assertIn("`tools/x.py` is owner-only", out["reason"])
+        self.assertIn("`tools/hooks/x.py` is owner-only", out["reason"])
         self.assertEqual(self.logs[-1][2], "block:2")
         second = self.run_hook(files)
         self.assertNotIn("decision", second)
@@ -116,20 +138,20 @@ class Run(unittest.TestCase):
         self.assertEqual(json.loads(self.run_hook(files, session="s2"))["decision"], "block")
 
     def test_no_session_id_never_blocks(self):
-        out = self.run_hook([f("tools/x.py")], session="")
+        out = self.run_hook([f("tools/hooks/x.py")], session="")
         self.assertIn("not blocking again", out)
 
     def test_bad_session_id_never_blocks(self):
-        out = self.run_hook([f("tools/x.py")], session="../etc")
+        out = self.run_hook([f("tools/hooks/x.py")], session="../etc")
         self.assertIn("not blocking again", out)
 
     def test_garbage_input(self):
-        self.assertIsNone(self.run_hook([f("tools/x.py")], raw="not json"))
+        self.assertIsNone(self.run_hook([f("tools/hooks/x.py")], raw="not json"))
         self.assertEqual(self.logs[-1][2], "skipped:bad-input")
-        self.assertIsNone(self.run_hook([f("tools/x.py")], raw="[1]"))
+        self.assertIsNone(self.run_hook([f("tools/hooks/x.py")], raw="[1]"))
 
     def test_unknown_role_skipped(self):
-        self.assertIsNone(self.run_hook([f("tools/x.py")], role="qa"))
+        self.assertIsNone(self.run_hook([f("tools/hooks/x.py")], role="qa"))
         self.assertEqual(self.logs[-1][2], "skipped:unknown-role")
 
     def test_git_error_skipped(self):

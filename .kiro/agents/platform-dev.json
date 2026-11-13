@@ -45,13 +45,17 @@
           ".gitignore",
           ".nvmrc",
           "Dockerfile",
+          "README.md",
           "deploy/**",
+          "docs/video-script.md",
+          "docs/writeup-gaps.md",
           "drizzle.config.*",
           "drizzle/**",
           "next-env.d.ts",
           "package-lock.json",
           "package.json",
           "public/**",
+          "scripts/check-js-budget.mjs",
           "scripts/migrate.mjs",
           "src/**/*.test.ts",
           "src/**/*.test.tsx",
@@ -66,6 +70,7 @@
           "src/middleware.ts",
           "src/test/**",
           "src/test/integration/**",
+          "tools/qa/**",
           "tsconfig.json"
         ],
         "effect": "allow"
@@ -75,7 +80,9 @@
         "match": [
           ".kiro/**",
           ".github/**",
-          "tools/**",
+          "tools/agents/**",
+          "tools/dispatcher/**",
+          "tools/hooks/**",
           "scripts/check.sh"
         ],
         "effect": "deny"

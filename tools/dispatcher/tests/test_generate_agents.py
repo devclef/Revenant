@@ -24,6 +24,12 @@ class Models(unittest.TestCase):
         with mock.patch.dict(ga.MODELS, clear=True):
             self.assertNotIn("model", ga.build("qa", OWNERSHIP))
 
+    def test_denies_cover_agent_tooling_but_not_tools_qa(self):
+        self.assertNotIn("tools/**", ga.OWNER_ONLY)
+        self.assertNotIn("tools/qa/**", ga.OWNER_ONLY)
+        for p in ("tools/agents/**", "tools/dispatcher/**", "tools/hooks/**"):
+            self.assertIn(p, ga.OWNER_ONLY)
+
     def test_committed_files_match(self):
         for role in ga.DESCRIPTIONS:
             text = json.dumps(ga.build(role, OWNERSHIP), indent=2) + "\n"

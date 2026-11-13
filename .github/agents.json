@@ -1,5 +1,5 @@
 {
-  "_comment": "Path ownership per role agent. Used by pr-policy CI and the dispatcher. Keep in sync with fs_write rules in .kiro/agents/*.json. Paths not owned by any role (.kiro/**, .github/**, tools/**, scripts/check.sh) are owner-only. Test files under src/ are shared so a ticket that changes behaviour can update the tests it outdates; pr_policy still refuses deleting another role's test.",
+  "_comment": "Path ownership per role agent. Used by pr-policy CI and the dispatcher. Keep in sync with fs_write rules in .kiro/agents/*.json. Paths not owned by any role (.kiro/**, .github/**, tools/agents/**, tools/dispatcher/**, tools/hooks/**, scripts/check.sh, docs/kiro-writeup.md) are owner-only or unowned. Test files under src/ are shared so a ticket that changes behaviour can update the tests it outdates; pr_policy still refuses deleting another role's test.",
   "shared": [
     "package.json",
     "package-lock.json",
@@ -31,7 +31,12 @@
       "src/lib/*.ts",
       "src/lib/*.test.ts",
       "src/test/**",
-      "public/**"
+      "public/**",
+      "README.md",
+      "docs/video-script.md",
+      "docs/writeup-gaps.md",
+      "tools/qa/**",
+      "scripts/check-js-budget.mjs"
     ],
     "frontend-dev": [
       "src/app/**/*.tsx",

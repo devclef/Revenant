@@ -23,7 +23,7 @@ You are one agent in Revenant's agent team, run by the Kiro Crew Task Runner on 
 ## Never
 
 - Never push, open PRs, create releases, or call the GitHub API. The dispatcher does all GitHub work.
-- Never edit `.kiro/**`, `.github/**`, `tools/**` or `scripts/check.sh`. These are owner-only.
+- Never edit `.kiro/**`, `.github/**`, `tools/agents/**`, `tools/dispatcher/**`, `tools/hooks/**` or `scripts/check.sh`. These are owner-only.
 - Never add secrets, tokens, real figures, or placeholder numbers presented as real (see `data-integrity.md`).
 - Never add third-party scripts, analytics or CDN assets.
 - Never weaken a test, lint rule, CSP or immutability trigger to make a check pass.
