@@ -1,9 +1,28 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { LiveLockNote } from "./LiveLockNote";
 import { LIVE_COPY } from "./copy";
+
+const CLOSE_CSS = readFileSync(
+  join(process.cwd(), "src/components/ceremony/close/close.module.css"),
+  "utf8",
+);
+
+/** The declarations inside the first `.liveNoteLink:focus-visible` block. */
+function focusRingDeclarations(css: string): string {
+  const match = css.match(/\.liveNoteLink:focus-visible\s*\{([^}]*)\}/);
+  return match ? match[1] : "";
+}
+
+/** The body of the `@media (max-width: 599px)` block, up to its closing brace at column 0. */
+function smallScreenBlock(css: string): string {
+  const match = css.match(/@media \(max-width: 599px\)\s*\{([\s\S]*?)\n\}/);
+  return match ? match[1] : "";
+}
 
 /**
  * The lock note in the live Close (spec 06, R18.6; issue #384 X3): the once-only
@@ -88,5 +107,23 @@ describe("LiveLockNote: copy rules", () => {
     for (const word of judgementWords) {
       expect(text, `judgement wording "${word}"`).not.toContain(word);
     }
+  });
+});
+
+describe("LiveLockNote: the link styles in close.module.css", () => {
+  it("makes the link at least 44 px tall below 600 px", () => {
+    const block = smallScreenBlock(CLOSE_CSS);
+    expect(block, "the max-width: 599px block exists").not.toBe("");
+    expect(block).toMatch(/\.liveNoteLink\s*\{[^}]*min-height:\s*44px/);
+  });
+
+  it("draws a 3 px solid accent focus ring with a 3 px offset", () => {
+    const declarations = focusRingDeclarations(CLOSE_CSS);
+    expect(declarations).toMatch(/outline:\s*3px solid var\(--accent\)/);
+    expect(declarations).toMatch(/outline-offset:\s*3px/);
+  });
+
+  it("is the class the component renders", () => {
+    expect(render()).toMatch(/class="[^"]*liveNoteLink/);
   });
 });
