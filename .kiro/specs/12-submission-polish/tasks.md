@@ -167,7 +167,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
 
 ### Group Z: one comparison rule (P0), target 18 November 2026
 
-- [ ] 5. Z2 · The Single_Figure_View
+- [x] 5. Z2 · The Single_Figure_View
   - Agent: `frontend-dev` · Depends on: 2 · Estimated size: ~700 changed lines
   - Scope: `src/components/reveal/receipt-kind.ts` (new), `src/components/reveal/ReceiptCard.tsx`, `src/components/reveal/FiguresThenNow.tsx`, `src/components/reveal/copy.ts` (add `nothingToCompare` only), `src/components/reveal/reveal.module.css` (only if the card needs a rule), and the `*.test.ts(x)` for each file above. `computeChange` and its `allowSamePeriod` option are not edited.
   - Design sections: "Single_Figure_View", "Z2. The Single_Figure_View", "Data Models" (Receipt kind), "Copy" (`nothingToCompare`).
