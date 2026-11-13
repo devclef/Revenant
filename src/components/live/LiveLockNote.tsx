@@ -1,6 +1,6 @@
 import Link from "next/link";
+import closeStyles from "@/components/ceremony/close/close.module.css";
 import { LIVE_COPY } from "./copy";
-import styles from "./live.module.css";
 
 export interface LiveLockNoteProps {
   /**
@@ -21,11 +21,11 @@ export interface LiveLockNoteProps {
  */
 export function LiveLockNote({ hasOfficialFigures = false }: LiveLockNoteProps) {
   return (
-    <div className={styles.lockNote}>
+    <div className={closeStyles.liveNote}>
       <p>{LIVE_COPY.lockNote}</p>
       {hasOfficialFigures ? <p>{LIVE_COPY.lockNoteComparison}</p> : null}
       <p>
-        <Link href="/demo" className={styles.lockNoteLink}>
+        <Link href="/demo" className={closeStyles.liveNoteLink}>
           {LIVE_COPY.lockNoteLink}
         </Link>
       </p>

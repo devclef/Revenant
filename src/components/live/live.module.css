@@ -14,25 +14,8 @@
  * (neutrality.md, tone.md).
  */
 
-/* Live reveal lock note (R18.6). A paper surface that sets its own colours,
-   so its text never inherits the desk's cream ink. Ink on paper is 13.17:1. */
-.lockNote {
-  margin: 2rem 0 0;
-  padding: 1rem 1.25rem;
-  color: var(--ink);
-  background-color: var(--paper);
-  border: 1px solid var(--ink-soft);
-  border-radius: 4px;
-  font-family: var(--font-sans);
-  font-size: 1rem;
-  line-height: 1.6;
-}
-
-.lockNote p {
-  margin: 0 0 0.5rem;
-  color: var(--ink);
-}
-
+/* Live reveal lock note link (R18.6). The note box itself is styled as .liveNote
+   in close/close.module.css. */
 .lockNote p:last-child {
   margin-bottom: 0;
 }
