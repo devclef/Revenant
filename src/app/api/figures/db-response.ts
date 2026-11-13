@@ -228,9 +228,7 @@ export function shapeDbFiguresResponse(
     series: body.series.map((entry) => {
       const cat = catalogue.find((c) => c.metric.id === entry.metric.id);
       const bundled =
-        entry.figure === null && cat !== undefined
-          ? bundledLatestFigure(cat)
-          : null;
+        entry.figure === null && cat !== undefined ? bundledLatestFigure(cat) : null;
       return { ...entry, ...chooseFigure(entry.figure, bundled) };
     }),
   };
