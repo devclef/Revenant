@@ -221,7 +221,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
 
 ### Group W: the Write step reads as a letter (P1)
 
-- [ ] 7. W1, W2 and W4 · Letter_Field, Occasion chips, one-sentence rehearsal
+- [x] 7. W1, W2 and W4 · Letter_Field, Occasion chips, one-sentence rehearsal
   - Agent: `frontend-dev` · Depends on: 5 · Estimated size: ~1,100 changed lines
   - Scope: `src/components/live/letter-field.module.css` (new), `src/components/live/WriteForm.tsx`, `src/components/live/OccasionPicker.tsx`, `src/components/live/constants.ts` (`LETTER_FIELD_ROWS`), `src/components/live/copy.ts` (`rehearsalLine`, `intro`), `src/components/live/live.module.css`, `src/test/serif-scope.test.ts` (shared; allow the second module), and the `*.test.ts(x)` for each file above.
   - Design sections: "W1. The Letter_Field", "W2. Occasion chips", "W4. One sentence", "W1.6: viewport arithmetic", "Constants", "Copy".
