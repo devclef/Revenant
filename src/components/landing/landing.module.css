@@ -185,13 +185,15 @@
   }
 }
 
-/* Below-the-fold sections (B3, F6). Text is --text on the page background.
+/* Below-the-fold sections (B3, F6). Each section fills the full-width frame
+   the Scene gives them (SceneShell `below`, .landingBelowFrame), so it is not
+   capped at the hero's reading width. Text is --text on the page background.
    Accent is not used here: orange means "you" (tone.md). */
 .section {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-  max-width: 40rem;
+  width: 100%;
   padding: 2rem 1.25rem 0;
   color: var(--text);
 }

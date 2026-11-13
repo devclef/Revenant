@@ -192,42 +192,31 @@ describe("landing sections wrapper and heading colour (H1)", () => {
     vi.unstubAllEnvs();
   });
 
-  it("wraps the four sections in one landingBelow element after the hero", () => {
+  it("renders the four sections after the hero, in the full-width frame", () => {
     const html = renderPage();
-    const wrapperStart = html.indexOf('class="landingBelow"');
-    expect(wrapperStart).toBeGreaterThan(-1);
-    expect(countOf(html, 'class="landingBelow"')).toBe(1);
+    // The sections are passed as SceneShell `below`, not wrapped in a page div.
+    expect(countOf(html, 'class="landingBelow"')).toBe(0);
 
-    // The hero stays outside the wrapper.
-    expect(html.indexOf("data-landing-hero")).toBeLessThan(wrapperStart);
-
-    // Each section sits inside the wrapper, which closes after the Coven_Strip.
-    const wrapperBody = html.slice(wrapperStart);
-    const wrapperEnd = wrapperBody.indexOf(
-      "</section>",
-      wrapperBody.indexOf('id="coven-title"'),
-    );
-    expect(wrapperEnd).toBeGreaterThan(-1);
-    const inside = wrapperBody.slice(0, wrapperEnd);
+    const heroStart = html.indexOf("data-landing-hero");
+    expect(heroStart).toBeGreaterThan(-1);
     for (const id of [
       "ritual-title",
       "resurrected-title",
       "no-seal-title",
       "coven-title",
     ]) {
-      expect(inside).toContain(`id="${id}"`);
+      const position = html.indexOf(`id="${id}"`);
+      expect(position).toBeGreaterThan(heroStart);
     }
   });
 
-  it("keeps the section order inside the wrapper", () => {
+  it("keeps the section order", () => {
     const html = renderPage();
-    const wrapperStart = html.indexOf('class="landingBelow"');
-    const below = html.slice(wrapperStart);
     const positions = [
-      below.indexOf('id="ritual-title"'),
-      below.indexOf('id="resurrected-title"'),
-      below.indexOf('id="no-seal-title"'),
-      below.indexOf('id="coven-title"'),
+      html.indexOf('id="ritual-title"'),
+      html.indexOf('id="resurrected-title"'),
+      html.indexOf('id="no-seal-title"'),
+      html.indexOf('id="coven-title"'),
     ];
     for (const position of positions) {
       expect(position).toBeGreaterThan(-1);
