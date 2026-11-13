@@ -6,7 +6,7 @@ import { LIVE_COPY } from "./copy";
 import { ReceiptsDisclosure, type ReceiptsStatus } from "./ReceiptsDisclosure";
 
 // The disclosure is rewritten for L1.4 and L1.5 (spec 11): one closed native
-// details, titled "Add a receipt", with the explain line first and the picker
+// details, titled "Receipts", with the explain line first and the picker
 // and the self-reported rows inside the markup.
 function render(status: ReceiptsStatus) {
   return renderToStaticMarkup(
@@ -20,7 +20,8 @@ function render(status: ReceiptsStatus) {
 
 describe("ReceiptsDisclosure copy", () => {
   it("uses the exact copy strings from the spec", () => {
-    expect(LIVE_COPY.receiptsSummary).toBe("Add a receipt");
+    expect(LIVE_COPY.receiptsSummary).toBe("Receipts");
+    expect(LIVE_COPY.receiptsAction).toBe("Add a receipt");
     expect(LIVE_COPY.receiptsExplain).toBe(
       "A receipt is a number sealed with its source and date, so you can compare it when the letter opens.",
     );
@@ -32,7 +33,7 @@ describe("ReceiptsDisclosure copy", () => {
 });
 
 describe("ReceiptsDisclosure markup", () => {
-  it("is one native details, closed by default, titled Add a receipt", () => {
+  it("is one native details, closed by default, titled Receipts", () => {
     const html = render("ready");
     const match = html.match(/<details[^>]*>/);
     expect(match).not.toBeNull();
