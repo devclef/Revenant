@@ -98,7 +98,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
   - _Requirements: X1.1–X1.11, X2.1–X2.7_
 
-- [ ] 2. Z1 · `isSameFigure`
+- [x] 2. Z1 · `isSameFigure`
   - Agent: `data-dev` · Depends on: none · Estimated size: ~250 changed lines
   - Scope: `src/lib/figures/same-figure.ts` (new), `src/lib/figures/index.ts` (export only), and the `*.test.ts` for each file above. `computeChange`, `format-change.ts` and `decimal.ts` are not edited.
   - Design sections: "Z1. `isSameFigure`", "Single_Figure_View" (the diagram), "Error Handling" (unparseable value, revised figure).
