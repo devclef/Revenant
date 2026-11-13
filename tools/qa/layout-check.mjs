@@ -67,6 +67,8 @@
 //                           document and the Write card have no sideways scroll.
 //   H1.6  landing-sections  at 1440x900 on /: every section's content box is at least 60%
 //                           of the viewport width. Below 60% is a BLOCKER.
+//   H2.7  ritual            at 1440x900 on /: the ritual list holds exactly four items in one
+//                           row. Any other count or row layout is a BLOCKER.
 // A spec 09 check prints BLOCKER only when its ID is passed with --require; any other
 // failure prints polish. A spec 09 check whose element is not on the page prints a note.
 //
@@ -191,6 +193,11 @@ const W17_NEXT_SCREENS_MAX = 2;
 // content box may be narrower than 60% of the viewport width.
 const H16_SIZE = "1440x900";
 const H16_RATIO_MIN = 0.6;
+// H2.7 (spec 12 design.md "Layout checks"): on / at 1440x900 the ritual list is four items
+// in one row. Items whose tops differ by at most H27_ROW_TOLERANCE_PX share a row.
+const H27_SIZE = "1440x900";
+const H27_ITEMS = 4;
+const H27_ROW_TOLERANCE_PX = 1;
 // Spec 08 thresholds (spec 08 requirements R2, R3, R8, R27).
 const PHONE_WIDTH_MAX = 600;
 const LETTER_EM_MIN = 28;
@@ -789,6 +796,19 @@ const H16_READ = () =>
         width: el.getBoundingClientRect().width - edges,
       };
     });
+
+// H2.7: the visible cards of the ritual list on /, with their tops. Missing when the page
+// has no ritual list.
+const H27_READ = () => {
+  const list = document.querySelector('[data-block="ritual"]');
+  if (!list) return { missing: true };
+  const items = [...list.children]
+    .filter((el) => el.tagName === "LI")
+    .map((el) => el.getBoundingClientRect())
+    .filter((r) => r.width > 0 && r.height > 0)
+    .map((r) => ({ top: r.top }));
+  return { missing: false, items };
+};
 
 // DX1 (B2.4): every persona open link on /demo inside the viewport at the top.
 const DX1_READ = () => {
@@ -2023,6 +2043,36 @@ async function checkLandingSections(page, ctx) {
   ctx.rep.add(narrow.length ? "blocker" : "ok", "H1.6", narrow.length ? `${detail} (${failures.join("; ")})` : detail, "landing-sections");
 }
 
+// Counts the rows of the given items by their tops. Items whose tops differ by at most
+// H27_ROW_TOLERANCE_PX share a row. The verdict passes only for exactly H27_ITEMS items in
+// one row. Pure, so unit tests use it without a browser.
+export function ritualRowVerdict(items) {
+  const tops = items.map((item) => item.top).sort((a, b) => a - b);
+  let rows = 0;
+  let rowTop = -Infinity;
+  for (const top of tops) {
+    if (top - rowTop > H27_ROW_TOLERANCE_PX) {
+      rows += 1;
+      rowTop = top;
+    }
+  }
+  return { count: items.length, rows, ok: items.length === H27_ITEMS && rows === 1 };
+}
+
+// H2.7 on / at 1440x900. Other sizes are not checked.
+async function checkRitualRow(page, ctx) {
+  if (ctx.size !== H27_SIZE) return;
+  const r = await page.evaluate(H27_READ);
+  if (r.missing) {
+    ctx.rep.add("note", "H2.7", "no ritual list on / to measure", "ritual");
+    return;
+  }
+  const verdict = ritualRowVerdict(r.items);
+  const tops = r.items.map((item) => px(item.top)).join(",");
+  const detail = `${verdict.count} items in ${verdict.rows} row(s) tops=${tops} viewport=${ctx.w}x${ctx.h} threshold=${H27_ITEMS} items in 1 row`;
+  ctx.rep.add(verdict.ok ? "ok" : "blocker", "H2.7", verdict.ok ? detail : `${detail} (expected one row of ${H27_ITEMS})`, "ritual");
+}
+
 async function checkDemoCards(page, ctx) {
   if (!DESKTOP_SIZES.includes(ctx.size) && ctx.size !== WIDE_SIZE) return;
   const r = await page.evaluate(DX1_READ);
@@ -2380,6 +2430,7 @@ async function landing(context, ctx) {
       await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
       await guard(ctx, "CTA1", () => checkLandingCtas(page, ctx));
       await guard(ctx, "H1.6", () => checkLandingSections(page, ctx));
+      await guard(ctx, "H2.7", () => checkRitualRow(page, ctx));
       await guard(ctx, "HW1", () => checkHeroWide(page, ctx));
       await checkEveryPage(page, ctx, "/", { fonts: true });
     }
