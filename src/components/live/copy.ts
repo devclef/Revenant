@@ -18,8 +18,7 @@
  */
 export const LIVE_COPY = {
   heading: "Seal a letter of your own",
-  intro:
-    "This letter is sealed in your browser with your own passkey. It is locked for 30 seconds only because this is a demo.",
+  intro: "This letter is sealed in your browser with your own passkey.",
   letterLabel: "Your letter",
   letterHint: "Plain text. Up to 5,000 characters.",
   letterCount: "{count} of 5,000 characters",
@@ -237,9 +236,11 @@ export const LIVE_COPY = {
    * only, so the judge knows the 30 seconds is a rehearsal.
    */
   rehearsalLine:
-    "This is a rehearsal. A real letter stays sealed for months. This one opens in 30 seconds.",
+    "This is a rehearsal: a real letter stays sealed for months, and this one opens in 30 seconds.",
   /** The legend of the Occasion buttons above the letter field (L2.1). */
   occasionLegend: "What is it about?",
+  /** The marker on the pressed Occasion chip. Hidden from assistive tech. */
+  occasionMark: "✓",
   /** The Occasion button labels, keyed by Occasion id (L2.1, L2.8). */
   occasionLabels: {
     year: "The year ahead",

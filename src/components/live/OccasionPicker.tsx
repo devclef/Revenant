@@ -13,14 +13,19 @@ export interface OccasionPickerProps {
 
 /**
  * The Occasion buttons above the letter field on the Write step (spec 11,
- * L2.1, L2.9). A row of toggle-style buttons with `aria-pressed`. The buttons
- * wrap on a phone rather than scroll, and each keeps the 44 by 44 CSS pixel
- * minimum from .secondary. The choice lives in React state only (L2.5).
+ * L2.1, L2.9). One wrapping row of toggle-style buttons with `aria-pressed`.
+ * The legend is visually hidden but stays in the accessibility tree. Each
+ * chip shows an [x] marker when pressed. The marker is aria-hidden, and CSS
+ * hides it on unpressed chips so the labels line up. Chip heights come from
+ * live.module.css (44px below 600px, 32px from 600px). The choice lives in
+ * React state only (L2.5).
  */
 export function OccasionPicker({ chosen, onChoose }: OccasionPickerProps) {
   return (
     <fieldset className={styles.occasions}>
-      <legend className={styles.legend}>{LIVE_COPY.occasionLegend}</legend>
+      <legend className={styles.visuallyHidden}>
+        {LIVE_COPY.occasionLegend}
+      </legend>
       <div className={styles.occasionRow}>
         {OCCASIONS.map((occasion) => (
           <button
@@ -30,6 +35,9 @@ export function OccasionPicker({ chosen, onChoose }: OccasionPickerProps) {
             className={`${styles.secondary} ${styles.occasionButton}`}
             onClick={() => onChoose(occasion.id)}
           >
+            <span aria-hidden="true" className={styles.occasionMark}>
+              {LIVE_COPY.occasionMark}
+            </span>
             {LIVE_COPY.occasionLabels[occasion.id]}
           </button>
         ))}

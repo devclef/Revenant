@@ -18,6 +18,15 @@ import { lineOf, readSourceFiles } from "./source-scan";
 
 const LETTER_TEXT_MODULE = "src/components/reveal/reveal.module.css";
 
+/**
+ * The serif modules: the sealed letter text (reveal) and the letter textarea on
+ * the live Write step (live/letter-field, spec 09 W1). Nothing else sets it.
+ */
+const SERIF_MODULES = new Set([
+  LETTER_TEXT_MODULE,
+  "src/components/live/letter-field.module.css",
+]);
+
 /** `--font-serif` used anywhere, or `font-family`/`font` shorthand naming a serif. */
 const SERIF_USE = /--font-serif|font-family\s*:[^;{}]*serif|font\s*:[^;{}]*serif/i;
 
@@ -40,10 +49,18 @@ describe("the serif stays in the Letter_Text module only", () => {
     expect(SERIF_USE.test(stripComments(letterText!.text))).toBe(true);
   });
 
+  it("the live letter field is the only other serif module", () => {
+    const field = cssFiles.find(
+      (f) => f.path === "src/components/live/letter-field.module.css",
+    );
+    expect(field, "letter-field.module.css is scanned").toBeDefined();
+    expect(SERIF_USE.test(stripComments(field!.text))).toBe(true);
+  });
+
   it("no other CSS file sets a serif or references --font-serif", () => {
     const hits: string[] = [];
     for (const file of cssFiles) {
-      if (file.path === LETTER_TEXT_MODULE) continue;
+      if (SERIF_MODULES.has(file.path)) continue;
       const body = stripComments(file.text);
       const match = SERIF_USE.exec(body);
       if (match) hits.push(`${file.path}:${lineOf(body, match.index)}`);

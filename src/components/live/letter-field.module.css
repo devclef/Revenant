@@ -1,0 +1,49 @@
+/*
+ * The letter textarea on the live Write step (spec 09 W1).
+ *
+ * The field is a serif surface, the one place outside the Letter_Text module
+ * that sets --font-serif (see src/test/serif-scope.test.ts). It reads --paper
+ * and --ink from the scene tokens, so its text keeps the same ink on every
+ * paper surface.
+ *
+ * The field shows a fixed number of lines at each width. WriteForm grows the
+ * field to its content with an inline height; the CSS minimum below keeps it
+ * at least as tall as --letter-lines, and the field scrolls inside itself past
+ * its cap.
+ */
+
+.letterField {
+  --letter-lines: 10;
+
+  font-family: var(--font-serif);
+  line-height: 1.6;
+  padding: 1rem;
+  background-color: var(--paper);
+  color: var(--ink);
+  min-height: calc(var(--letter-lines) * 1em * 1.6 + 2rem + 2px);
+  overflow-y: auto;
+}
+
+@supports (height: 1lh) {
+  .letterField {
+    min-height: calc(var(--letter-lines) * 1lh + 2rem + 2px);
+  }
+}
+
+@media (max-width: 599.98px) {
+  .letterField {
+    --letter-lines: 6;
+  }
+}
+
+@media (min-width: 600px) and (max-width: 1023.98px) {
+  .letterField {
+    --letter-lines: 8;
+  }
+}
+
+@media (min-width: 1024px) {
+  .letterField {
+    --letter-lines: 10;
+  }
+}
