@@ -106,9 +106,15 @@ describe("Write step fallback 2: two columns at 900 px and wider", () => {
     );
   });
 
-  it("places the questions beside the left column, spanning two rows", () => {
+  it("spans the occasion chips across both columns on their own row", () => {
     expect(block).toMatch(
-      /\.liveWrite:has\(> \.occasions\) > fieldset\.field \{[^}]*grid-column:\s*2;[^}]*grid-row:\s*2 \/ span 2;/,
+      /\.liveWrite:has\(> \.occasions\) > \.occasions \{[^}]*grid-column:\s*1 \/ -1;[^}]*grid-row:\s*2;/,
+    );
+  });
+
+  it("places the questions beside the left column, spanning two rows below the chips", () => {
+    expect(block).toMatch(
+      /\.liveWrite:has\(> \.occasions\) > fieldset\.field \{[^}]*grid-column:\s*2;[^}]*grid-row:\s*3 \/ span 2;/,
     );
   });
 

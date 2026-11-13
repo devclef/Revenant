@@ -401,11 +401,15 @@
   border-width: 2px;
 }
 
+/*
+ * From 600 px the chips use slightly less side padding so the five labels fit
+ * in one row in the single-column Write panel at 1024 px and wider.
+ */
 @media (min-width: 600px) {
   .occasionButton {
     height: 32px;
     min-height: 32px;
-    padding: 0 0.75rem;
+    padding: 0 0.5rem;
     font-size: 0.875rem;
   }
 }
@@ -1070,8 +1074,9 @@
 
 /*
  * Fallback 2: a two-column Write step at 900 px and wider on a short viewport.
- * The letter and the occasion control sit in the left column; the questions and
- * the receipt disclosure sit in the right one; Next spans both. The rules match
+ * The occasion chips span the full width on their own row. Below them the
+ * letter sits in the left column and the questions and the receipt disclosure
+ * sit in the right one; Next closes the left column. The rules match
  * only the live demo Write step: WriteForm adds the `liveWrite` class to its
  * panel when it renders in demo mode (/demo/live). /seal renders the same panel
  * and occasion control without that class, so it keeps its single column.
@@ -1091,8 +1096,9 @@
     margin: 0;
   }
 
+  /* The chip group spans both columns so the five chips share one row. */
   .liveWrite:has(> .occasions) > .occasions {
-    grid-column: 1;
+    grid-column: 1 / -1;
     grid-row: 2;
     margin: 0;
   }
@@ -1105,18 +1111,18 @@
 
   .liveWrite:has(> .occasions) > fieldset.field {
     grid-column: 2;
-    grid-row: 2 / span 2;
+    grid-row: 3 / span 2;
     margin: 0;
   }
 
   .liveWrite:has(> .occasions) > .more {
     grid-column: 2;
-    grid-row: 4;
+    grid-row: 5;
   }
 
   .liveWrite:has(> .occasions) > .problem {
     grid-column: 2;
-    grid-row: 5;
+    grid-row: 6;
   }
 
   /* Next closes the left column under the letter, beside the receipts row, so
