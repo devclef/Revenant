@@ -24,6 +24,12 @@
 //   J7 retired-phrases  no Retired_Phrase in the rendered HTML of any page opened.
 //   J8 fonts            FONT1 on every page opened (runFontCheck): the sans face
 //                       everywhere, the serif face where the Letter_Text shows.
+//   J9 live-walk        /demo/live at 1440x900 and 390x844: the Write step, then
+//                       the Press the seal step (data-live-step="seal") without
+//                       pressing the seal. Fails on sideways scroll, a
+//                       Motion_Control count other than 1, or a console error
+//                       (spec 12 Q1.8; the same walk as spec 11 J9). Writes to no
+//                       database: the draft stays in the browser.
 // A phone or font check whose element isn't on production yet prints a note,
 // not a FAIL (A6.2 item 6).
 //
@@ -43,7 +49,7 @@
 // Options:
 //   --url <origin>      Required. Production origin.
 //   --chromium <path>   Browser binary. Default $CHROMIUM_PATH, then /usr/bin/chromium.
-//   --require <ids>     Checks to run. Default all of J1 to J8.
+//   --require <ids>     Checks to run. Default all of J1 to J9.
 //   --reveal            Run J2 whatever the hour (the workflow sets it on manual runs
 //                       through GITHUB_EVENT_NAME=workflow_dispatch).
 //   --no-issue          Print results only; do not touch GitHub.
@@ -55,7 +61,11 @@ import { pathToFileURL } from "node:url";
 
 import { runFontCheck, runPhoneChecks } from "./layout-check.mjs";
 
-export const ALL_CHECKS = ["J1", "J2", "J3", "J4", "J5", "J6", "J7", "J8"];
+export const ALL_CHECKS = ["J1", "J2", "J3", "J4", "J5", "J6", "J7", "J8", "J9"];
+export const LIVE_WALK_SIZES = ["1440x900", "390x844"];
+export const LIVE_WALK_STEPS = ["write", "seal"];
+export const LIVE_LETTER = "Journey check: one sentence, typed in the browser and never sent.";
+export const MOTION_CONTROL_SELECTOR = 'button[aria-label*="motion" i]';
 export const EVIDENCE_SIZES = ["2560x1440", "1366x800", "1280x800", "390x844", "360x640"];
 export const PHONE_SIZES = ["390x844", "360x640"];
 export const REVEAL_SIZE = "390x844";
@@ -102,6 +112,30 @@ function res(id, where, status, measured, threshold) {
 export function formatLine(r) {
   const head = r.status === "pass" ? "PASS" : r.status === "fail" ? "FAIL" : "note";
   return `${head} ${r.id} ${r.where} ${r.measured} threshold=${r.threshold}`;
+}
+
+/**
+ * J9 verdict for one step of /demo/live. Pure. Fails when the page is not on the
+ * expected step, when the document scrolls sideways, when the Motion_Control
+ * count is not 1, or when the console logged an error since the last step.
+ * @returns {{status:"pass"|"fail", measured:string, threshold:string}}
+ */
+export function evaluateLiveStep({ expected, step, scrollWidth, clientWidth, motionCount, consoleErrors }) {
+  const fails = [];
+  if (step !== expected) fails.push(`reached step "${step ?? "none"}", need "${expected}"`);
+  if (scrollWidth > clientWidth) fails.push(`scrollWidth ${scrollWidth}px > clientWidth ${clientWidth}px`);
+  if (motionCount !== 1) fails.push(`Motion_Control count ${motionCount}, need 1`);
+  if (consoleErrors.length) {
+    const first = String(consoleErrors[0]).split("\n")[0].slice(0, 160);
+    fails.push(`${consoleErrors.length} console error(s), first: ${first}`);
+  }
+  const threshold = `step "${expected}", no sideways scroll, Motion_Control count 1, no console error`;
+  if (fails.length) return { status: "fail", measured: fails.join("; "), threshold };
+  return {
+    status: "pass",
+    measured: `step="${step}" scrollWidth=${scrollWidth} clientWidth=${clientWidth} motion=${motionCount} consoleErrors=0`,
+    threshold,
+  };
 }
 
 /** Whether this run includes J2 (OD8): manual runs, --reveal, or the 00:xx UTC run. */
@@ -273,6 +307,69 @@ async function checkJ3(page, ctx) {
   ctx.add(res("J3", "/demo/live", enabled > 0 ? "pass" : "fail", `enabled=${enabled}`, ">=1"));
 }
 
+async function waitForLiveStep(page, step, timeout) {
+  return page
+    .waitForFunction(
+      (s) => document.querySelector("[data-live-step]")?.getAttribute("data-live-step") === s,
+      step,
+      { timeout },
+    )
+    .then(() => true, () => false);
+}
+
+/** What the J9 verdict reads from the page at one step. Drains the console errors seen so far. */
+async function liveStepSnapshot(page, errors) {
+  const snap = await page.evaluate((motion) => ({
+    step: document.querySelector("[data-live-step]")?.getAttribute("data-live-step") ?? null,
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+    motionCount: document.querySelectorAll(motion).length,
+  }), MOTION_CONTROL_SELECTOR);
+  return { ...snap, consoleErrors: errors.splice(0) };
+}
+
+/**
+ * J9 (spec 12 Q1.8; spec 11 J9): opens /demo/live at each LIVE_WALK_SIZES, checks
+ * the Write step, types one sentence (the default question is already there),
+ * presses Next until the Press the seal step shows, and checks that step too.
+ * It never presses the seal control and writes nothing to the database.
+ */
+async function checkLiveWalk(browser, ctx) {
+  for (const size of LIVE_WALK_SIZES) {
+    const { context, page } = await newPage(browser, ctx.origin, size);
+    const errors = [];
+    page.on("console", (msg) => {
+      if (msg.type() === "error") errors.push(msg.text());
+    });
+    page.on("pageerror", (error) => errors.push(String(error?.message ?? error)));
+    try {
+      const r = await page.goto(`${ctx.origin}/demo/live`, { waitUntil: "load" });
+      if (!r || r.status() !== 200) {
+        ctx.add(res("J9", `/demo/live ${size}`, "fail", `HTTP ${r?.status() ?? "none"}`, "200"));
+        continue;
+      }
+      await page.locator("[data-live-step]").first().waitFor({ timeout: STAGE_TIMEOUT_MS }).catch(() => {});
+      const write = await liveStepSnapshot(page, errors);
+      const writeVerdict = evaluateLiveStep({ expected: "write", ...write });
+      ctx.add(res("J9", `/demo/live ${size} write`, writeVerdict.status, writeVerdict.measured, writeVerdict.threshold));
+
+      await page.locator("textarea").first().fill(LIVE_LETTER).catch(() => {});
+      const next = page.getByRole("button", { name: "Next", exact: true }).first();
+      for (let press = 0; press < 2; press += 1) {
+        await next.click({ timeout: STAGE_TIMEOUT_MS }).catch(() => {});
+        if (await waitForLiveStep(page, "seal", 5000)) break;
+      }
+      const seal = await liveStepSnapshot(page, errors);
+      const sealVerdict = evaluateLiveStep({ expected: "seal", ...seal });
+      ctx.add(res("J9", `/demo/live ${size} seal`, sealVerdict.status, sealVerdict.measured, sealVerdict.threshold));
+    } catch (error) {
+      ctx.add(res("J9", `/demo/live ${size}`, "fail", `walk error: ${String(error?.message ?? error).split("\n")[0]}`, LIVE_WALK_STEPS.join(" then ")));
+    } finally {
+      await context.close();
+    }
+  }
+}
+
 /**
  * J2 walk: open straight on the recall Stage (spec 10 C1, the persona First_Step),
  * "No answer" on every question, submit, break the seal, the figures button,
@@ -349,7 +446,7 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
   if (wanted.has("J1")) await checkJ1(ctx);
   if (wanted.has("J4")) await checkJ4(ctx);
 
-  const browserChecks = ["J2", "J3", "J5", "J6", "J7", "J8"].some((id) => wanted.has(id));
+  const browserChecks = ["J2", "J3", "J5", "J6", "J7", "J8", "J9"].some((id) => wanted.has(id));
   if (browserChecks) {
     const executablePath = opts.chromium ?? env.CHROMIUM_PATH ?? (existsSync("/usr/bin/chromium") ? "/usr/bin/chromium" : undefined);
     let chromium;
@@ -432,6 +529,7 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
           }
         }
       }
+      if (wanted.has("J9")) await checkLiveWalk(browser, ctx);
     } finally {
       await browser.close();
     }
