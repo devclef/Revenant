@@ -200,6 +200,8 @@
 
 .sectionTitle {
   margin: 0;
+  /* The global h2 rule uses the paper ink, which is unreadable on this desk. */
+  color: var(--text);
   font-size: 1.5rem;
   font-weight: 800;
   line-height: 1.2;
@@ -239,6 +241,8 @@
 
 .ritualName {
   margin: 0;
+  /* The global h3 rule uses the paper ink, which is unreadable on this desk. */
+  color: var(--text);
   font-size: 1.05rem;
   font-weight: 700;
 }
