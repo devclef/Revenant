@@ -264,7 +264,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
   - _Requirements: W3.1–W3.9_
 
-- [ ] 9. W5 and W6 · Action row, "Add a receipt", and a blank own number
+- [x] 9. W5 and W6 · Action row, "Add a receipt", and a blank own number
   - Agent: `frontend-dev` · Depends on: 8 · Estimated size: ~700 changed lines
   - Never cut: W5 (G3.4).
   - Scope: `src/components/live/WriteForm.tsx`, `src/components/live/ReceiptsDisclosure.tsx`, `src/components/live/SelfReportedRows.tsx`, `src/components/live/form.ts`, `src/components/live/build-payload.ts`, `src/components/live/write-draft.ts`, `src/components/live/copy.ts` (`receiptsSummary`, `receiptsAction`), `src/components/live/live.module.css`, and the `*.test.ts(x)` for each file above.
