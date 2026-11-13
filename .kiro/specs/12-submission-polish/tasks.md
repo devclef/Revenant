@@ -197,7 +197,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
 
 ### Group Q: the walk
 
-- [ ] 6. Q1 and Q2 · Live_Walk setup
+- [x] 6. Q1 and Q2 · Live_Walk setup
   - Agent: `platform-dev` · Depends on: none · Estimated size: ~800 changed lines
   - Queue position: after tasks 1 to 5. It is a dependency of none of them (G3.6). If it runs late, X and Z merge first and the walk runs on them afterwards.
   - Scope: `src/test/integration/live-walk.test.ts` (shared), `package.json` (one script; shared), and the `*.test.ts` for the walk helpers. No product file.
