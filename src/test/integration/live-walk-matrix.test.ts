@@ -4,7 +4,12 @@ import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
 import { WALK_STEP_NAMES } from "./live-walk-helpers";
-import { WALK_MATRIX, matrixShotNames, walkEnabled } from "./live-walk-matrix";
+import {
+  WALK_MATRIX,
+  matrixRun,
+  matrixShotNames,
+  walkEnabled,
+} from "./live-walk-matrix";
 
 const ROOT = fileURLToPath(new URL("../../..", import.meta.url));
 const REPLAY = "src/test/integration/live-walk.test.ts";
@@ -54,6 +59,63 @@ describe("WALK_MATRIX", () => {
         expect(name).toContain(`-${entry.width}x${entry.height}`);
       }
     }
+  });
+});
+
+describe("matrixRun", () => {
+  it("picks a figure only for the one-figure variant", () => {
+    const figures = WALK_MATRIX.map((e) => [e.variant, matrixRun(e).figure]);
+    expect(figures).toEqual([
+      ["no-figure", false],
+      ["one-figure", true],
+      ["one-figure", true],
+      ["no-figure", false],
+      ["one-figure", true],
+      ["one-figure", true],
+    ]);
+  });
+
+  it("takes width, height and motion from the entry", () => {
+    for (const entry of WALK_MATRIX) {
+      expect(matrixRun(entry)).toEqual({
+        size: { width: entry.width, height: entry.height },
+        reduced: entry.reduced,
+        figure: entry.variant === "one-figure",
+      });
+    }
+  });
+
+  it("gives each width both a no-figure and a one-figure run", () => {
+    for (const width of [1440, 390]) {
+      const runs = WALK_MATRIX.filter((e) => e.width === width).map(
+        (e) => matrixRun(e).figure,
+      );
+      expect(runs).toContain(false);
+      expect(runs).toContain(true);
+    }
+  });
+});
+
+describe("matrixShotNames with a step filter", () => {
+  it("keeps only the named steps, in walk order", () => {
+    const entry = WALK_MATRIX.find((e) => e.id === "390x844-one-figure");
+    expect(entry).toBeDefined();
+    const names = matrixShotNames(entry!, ["write", "seal", "testify"]);
+    expect(names).toEqual([
+      "live-01-write-390x844.png",
+      "live-03-seal-390x844.png",
+      "live-06-testify-390x844.png",
+    ]);
+  });
+
+  it("names the reduced run with the -reduced suffix", () => {
+    const entry = WALK_MATRIX.find(
+      (e) => e.id === "1440x900-one-figure-reduced",
+    );
+    expect(entry).toBeDefined();
+    expect(matrixShotNames(entry!, ["write"])).toEqual([
+      "live-01-write-1440x900-reduced.png",
+    ]);
   });
 });
 

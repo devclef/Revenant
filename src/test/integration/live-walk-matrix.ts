@@ -6,7 +6,9 @@
 import {
   EXPECTED_STEPS,
   WALK_SIZES,
+  WALK_STEP_NAMES,
   stepShotName,
+  type WalkStepName,
   type WalkVariant,
 } from "./live-walk-helpers";
 
@@ -45,14 +47,39 @@ export const WALK_MATRIX: readonly WalkMatrixEntry[] = WALK_SIZES.flatMap(
   },
 );
 
-/** The Step_Shot names one matrix entry must produce, in walk order. */
-export function matrixShotNames(entry: WalkMatrixEntry): string[] {
-  return EXPECTED_STEPS[entry.variant].map((step) =>
-    stepShotName({
-      step,
-      width: entry.width,
-      height: entry.height,
-      reduced: entry.reduced,
-    }),
-  );
+/** What one browser run of a matrix entry does: its width, motion and whether a figure is added. */
+export type WalkMatrixRun = {
+  size: { width: number; height: number };
+  reduced: boolean;
+  /** True for the one-figure variant: a figure is picked at the write-receipts stage. */
+  figure: boolean;
+};
+
+/** The run a matrix entry describes. Only the one-figure variant picks a figure. */
+export function matrixRun(entry: WalkMatrixEntry): WalkMatrixRun {
+  return {
+    size: { width: entry.width, height: entry.height },
+    reduced: entry.reduced,
+    figure: entry.variant === "one-figure",
+  };
+}
+
+/**
+ * The Step_Shot names one matrix entry must produce, in walk order. `steps`
+ * limits the set to the stages a run reaches; the default is the whole walk.
+ */
+export function matrixShotNames(
+  entry: WalkMatrixEntry,
+  steps: readonly WalkStepName[] = WALK_STEP_NAMES,
+): string[] {
+  return EXPECTED_STEPS[entry.variant]
+    .filter((step) => steps.includes(step))
+    .map((step) =>
+      stepShotName({
+        step,
+        width: entry.width,
+        height: entry.height,
+        reduced: entry.reduced,
+      }),
+    );
 }

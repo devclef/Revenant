@@ -64,7 +64,12 @@ import {
   type WalkStepName,
   type WalkStepResult,
 } from "./live-walk-helpers";
-import { WALK_MATRIX, matrixShotNames, walkEnabled } from "./live-walk-matrix";
+import {
+  WALK_MATRIX,
+  matrixRun,
+  matrixShotNames,
+  walkEnabled,
+} from "./live-walk-matrix";
 
 export type WalkStep = {
   name: string;
@@ -230,6 +235,27 @@ async function takeShot(
   return file;
 }
 
+/**
+ * Ticks the first figure checkbox on the write step (skipping the passkey
+ * warning) and returns its label. Shared by the full Walk and the matrix walk.
+ */
+async function tickOneFigure(page: Page): Promise<string> {
+  const boxes = page.locator('[data-live-step="write"] input[type="checkbox"]');
+  const count = await boxes.count();
+  for (let i = 0; i < count; i += 1) {
+    const label = await boxes.nth(i).evaluate((el) => {
+      const input = el as HTMLInputElement;
+      return (
+        input.labels?.[0]?.textContent ?? input.getAttribute("aria-label") ?? ""
+      );
+    });
+    if (/lost|passkey|saved|warning/i.test(label)) continue;
+    await boxes.nth(i).check();
+    return label.trim();
+  }
+  throw new Error("No figure checkbox found on the write step.");
+}
+
 /** The step actions, in order. Each returns what it observed, or throws on a defect. */
 const FULL_WALK_ACTIONS: readonly WalkAction[] = [
   async (c) => {
@@ -244,26 +270,7 @@ const FULL_WALK_ACTIONS: readonly WalkAction[] = [
     await question.fill(WALK_QUESTION);
     return `Letter typed (${LETTER_TEXT.length} characters). Question field filled.`;
   },
-  async (c) => {
-    const boxes = c.page.locator(
-      '[data-live-step="write"] input[type="checkbox"]',
-    );
-    const count = await boxes.count();
-    for (let i = 0; i < count; i += 1) {
-      const label = await boxes.nth(i).evaluate((el) => {
-        const input = el as HTMLInputElement;
-        return (
-          input.labels?.[0]?.textContent ??
-          input.getAttribute("aria-label") ??
-          ""
-        );
-      });
-      if (/lost|passkey|saved|warning/i.test(label)) continue;
-      await boxes.nth(i).check();
-      return `Figure selected: ${label.trim()}`;
-    }
-    throw new Error("No figure checkbox found on the write step.");
-  },
+  async (c) => `Figure selected: ${await tickOneFigure(c.page)}`,
   async (c) => {
     await c.page.getByRole("checkbox", { name: /lost|passkey/i }).check();
     await c.page.getByRole("button", { name: /create your passkey/i }).click();
@@ -720,7 +727,7 @@ const FIVE_STAGE_BLOCKED: Partial<
 
 /** One run: the width, whether motion is reduced, and how the seal is broken. */
 type WalkRun = {
-  size: (typeof WALK_SIZES)[number];
+  size: { width: number; height: number };
   reduced: boolean;
   method: BreakMethod;
 };
@@ -1022,9 +1029,9 @@ function formatStageRows(rows: readonly StageRow[]): string {
     .join("\n");
 }
 
-/** Which expected Step_Shots of a run exist. Missing ones print `FAIL missing Step_Shot`. */
-function shotReport(run: WalkRun, steps: readonly WalkStepName[]) {
-  const expected = steps.map((step) =>
+/** The Step_Shot names one run writes for the given steps. */
+function runShotNames(run: WalkRun, steps: readonly WalkStepName[]): string[] {
+  return steps.map((step) =>
     walkShotName({
       step,
       width: run.size.width,
@@ -1033,6 +1040,10 @@ function shotReport(run: WalkRun, steps: readonly WalkStepName[]) {
       method: run.method,
     }),
   );
+}
+
+/** Which expected Step_Shots exist. Missing ones print `FAIL missing Step_Shot`. */
+function shotReport(expected: readonly string[]) {
   const present = expected.filter((name) =>
     existsSync(path.join(LIVE_WALK_SHOTS, name)),
   );
@@ -1083,94 +1094,107 @@ async function answerEveryQuestion(c: WalkContext): Promise<number> {
   return answered;
 }
 
-/** Stages Write to Testify. Shared by the first-five run and the full run. */
-const FIVE_STAGE_ACTIONS: readonly StageAction[] = [
-  {
-    step: "write",
-    act: async (c) => {
-      await c.page.goto(`${BASE_URL}/demo/live`);
-      const write = c.page.locator('[data-live-step="write"]');
-      await write.waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-      await write.locator('button[aria-pressed="false"]').first().click();
-      await write.locator("textarea").first().fill(LETTER_TEXT);
-      await write.getByLabel("Question 1", { exact: true }).fill(WALK_QUESTION);
-      const removers = write.getByRole("button", {
-        name: /^Remove question \d+$/,
-      });
-      if ((await removers.count()) < 2) {
-        await write.getByRole("button", { name: /^Add a question$/ }).click();
-      }
-      const before = await removers.count();
-      await removers.last().click();
-      return `Occasion chosen, letter typed, question 1 edited, one question removed (${before} before).`;
+/**
+ * Stages Write to Testify. The write-receipts stage picks one figure when `figure`
+ * is true (the one-figure variant); otherwise it opens the receipts and adds none.
+ */
+function fiveStageActions(figure: boolean): readonly StageAction[] {
+  return [
+    {
+      step: "write",
+      act: async (c) => {
+        await c.page.goto(`${BASE_URL}/demo/live`);
+        const write = c.page.locator('[data-live-step="write"]');
+        await write.waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        await write.locator('button[aria-pressed="false"]').first().click();
+        await write.locator("textarea").first().fill(LETTER_TEXT);
+        await write
+          .getByLabel("Question 1", { exact: true })
+          .fill(WALK_QUESTION);
+        const removers = write.getByRole("button", {
+          name: /^Remove question \d+$/,
+        });
+        if ((await removers.count()) < 2) {
+          await write.getByRole("button", { name: /^Add a question$/ }).click();
+        }
+        const before = await removers.count();
+        await removers.last().click();
+        return `Occasion chosen, letter typed, question 1 edited, one question removed (${before} before).`;
+      },
     },
-  },
-  {
-    step: "write-receipts",
-    act: async (c) => {
-      await c.page.getByText("Add a receipt", { exact: true }).first().click();
-      const open = await c.page
-        .getByText("Add a receipt", { exact: true })
-        .first()
-        .evaluate((el) => el.closest("details")?.open ?? false);
-      if (!open) {
-        throw new Error("The Receipts_Disclosure did not open.");
-      }
-      return "Receipts_Disclosure opened. Own-number rows left blank.";
+    {
+      step: "write-receipts",
+      act: async (c) => {
+        await c.page
+          .getByText("Add a receipt", { exact: true })
+          .first()
+          .click();
+        const open = await c.page
+          .getByText("Add a receipt", { exact: true })
+          .first()
+          .evaluate((el) => el.closest("details")?.open ?? false);
+        if (!open) {
+          throw new Error("The Receipts_Disclosure did not open.");
+        }
+        if (!figure) {
+          return "Receipts_Disclosure opened. Own-number rows left blank.";
+        }
+        return `Receipts_Disclosure opened. Figure selected: ${await tickOneFigure(c.page)}.`;
+      },
     },
-  },
-  {
-    step: "seal",
-    act: async (c) => {
-      await c.page.getByRole("checkbox", { name: /lost|passkey/i }).check();
-      await c.page
-        .getByRole("button", { name: /create your passkey/i })
-        .click();
-      await c.page
-        .locator('[data-live-step="created"]')
-        .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-      await c.page
-        .getByRole("button", { name: /confirm your passkey/i })
-        .click();
-      await c.page
-        .locator('[data-live-step="sealed"]')
-        .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-      const { credentials } = (await c.cdp.send("WebAuthn.getCredentials", {
-        authenticatorId: c.authenticatorId,
-      })) as { credentials: unknown[] };
-      if (credentials.length === 0) {
-        throw new Error(
-          "The virtual authenticator holds no passkey after sealing.",
-        );
-      }
-      return `Sealed. Virtual passkeys stored: ${credentials.length}.`;
+    {
+      step: "seal",
+      act: async (c) => {
+        await c.page.getByRole("checkbox", { name: /lost|passkey/i }).check();
+        await c.page
+          .getByRole("button", { name: /create your passkey/i })
+          .click();
+        await c.page
+          .locator('[data-live-step="created"]')
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        await c.page
+          .getByRole("button", { name: /confirm your passkey/i })
+          .click();
+        await c.page
+          .locator('[data-live-step="sealed"]')
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        const { credentials } = (await c.cdp.send("WebAuthn.getCredentials", {
+          authenticatorId: c.authenticatorId,
+        })) as { credentials: unknown[] };
+        if (credentials.length === 0) {
+          throw new Error(
+            "The virtual authenticator holds no passkey after sealing.",
+          );
+        }
+        return `Sealed. Virtual passkeys stored: ${credentials.length}.`;
+      },
     },
-  },
-  {
-    step: "wait",
-    act: async (c) => {
-      await c.page.waitForTimeout(LOCK_WAIT_MS);
-      return `Waited ${LOCK_WAIT_MS / 1000} seconds on the sealed page.`;
+    {
+      step: "wait",
+      act: async (c) => {
+        await c.page.waitForTimeout(LOCK_WAIT_MS);
+        return `Waited ${LOCK_WAIT_MS / 1000} seconds on the sealed page.`;
+      },
     },
-  },
-  {
-    step: "unlock",
-    act: async (c) => {
-      await openLetterAndUnlock(c, /unlock with your passkey/i);
-      await c.page
-        .locator('[data-ceremony="recall"]')
-        .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-      return "Unlocked with the passkey. Recall stage shown.";
+    {
+      step: "unlock",
+      act: async (c) => {
+        await openLetterAndUnlock(c, /unlock with your passkey/i);
+        await c.page
+          .locator('[data-ceremony="recall"]')
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        return "Unlocked with the passkey. Recall stage shown.";
+      },
     },
-  },
-  {
-    step: "testify",
-    act: async (c) => {
-      const answered = await answerEveryQuestion(c);
-      return `Answered ${answered} recall question(s).`;
+    {
+      step: "testify",
+      act: async (c) => {
+        const answered = await answerEveryQuestion(c);
+        return `Answered ${answered} recall question(s).`;
+      },
     },
-  },
-];
+  ];
+}
 
 async function openLetterAndUnlock(
   c: WalkContext,
@@ -1273,18 +1297,25 @@ function remainingStageActions(method: BreakMethod): readonly StageAction[] {
 describe.skipIf(!walkEnabled(process.env))(
   "live walk: first five stages",
   () => {
-    it.each(
-      WALK_SIZES.map((size) => [`${size.width}x${size.height}`, size] as const),
-    )(
+    // Every WALK_MATRIX entry: each width, no figure or one figure, with and without reduced motion.
+    it.each(WALK_MATRIX.map((entry) => [entry.id, entry] as const))(
       "walks Write to Testify and saves Step_Shots at %s",
-      async (_label, size) => {
-        const run: WalkRun = { size, reduced: false, method: "hold" };
-        const rows = await runWalk(run, FIVE_STAGE_ACTIONS);
+      async (_id, entry) => {
+        const matrix = matrixRun(entry);
+        const run: WalkRun = {
+          size: matrix.size,
+          reduced: matrix.reduced,
+          method: "hold",
+        };
+        const stages = fiveStageActions(matrix.figure);
+        const rows = await runWalk(run, stages);
         console.log(formatStageRows(rows));
 
         const shots = shotReport(
-          run,
-          FIVE_STAGE_ACTIONS.map((stage) => stage.step),
+          matrixShotNames(
+            entry,
+            stages.map((stage) => stage.step),
+          ),
         );
         console.log(shots.lines.join("\n"));
 
@@ -1319,15 +1350,17 @@ describe.skipIf(!walkEnabled(process.env))(
       "walks the whole flow: %s",
       async (_label, run) => {
         const stages = [
-          ...FIVE_STAGE_ACTIONS,
+          ...fiveStageActions(false),
           ...remainingStageActions(run.method),
         ];
         const rows = await runWalk(run, stages);
         console.log(formatStageRows(rows));
 
         const shots = shotReport(
-          run,
-          stages.map((stage) => stage.step),
+          runShotNames(
+            run,
+            stages.map((stage) => stage.step),
+          ),
         );
         console.log(shots.lines.join("\n"));
 
