@@ -1,14 +1,9 @@
 import type { FigureV1 } from "@/lib/seal-format";
 import type { DisplayRescale } from "@/lib/figures";
-import {
-  formatPeriod,
-  formatValue,
-  isFixtureFigure,
-  rescaleForDisplay,
-} from "@/lib/figures";
-import { formatLetterDate } from "@/components/ui/letter-date";
+import { formatPeriod, isFixtureFigure } from "@/lib/figures";
+import { formatShortDate } from "@/components/ui/letter-date";
 import { REVEAL_COPY } from "./copy";
-import { displayPrecisionForUnit } from "./display-precision";
+import { displayFigureValue } from "./display-figure";
 import type { ReceiptFigure, ReceiptSource } from "./ReceiptCard";
 
 /**
@@ -55,7 +50,7 @@ export function figureLabel(
   // A self-reported number is the reader's own: never "retrieved" (R13.4).
   if (figure.kind === "self-reported") return REVEAL_COPY.labelSelfReported;
   // retrieved_at is a UTC instant, so it always reads the same in any zone.
-  const retrievedDate = formatLetterDate(figure.retrieved_at, { kind: "utc" });
+  const retrievedDate = formatShortDate(figure.retrieved_at);
   if (role === "now") {
     return REVEAL_COPY.labelRetrieved.replace("{date}", retrievedDate);
   }
@@ -69,36 +64,33 @@ export function figureLabel(
 }
 
 /**
- * The Then or Now row data for one figure. The value is rescaled for display
- * when a rescale applies, then formatted for the figure's region. The period is
- * formatted for the region too, so every displayed number shows its own period.
+ * The Then or Now row data for one figure. The value and unit come from
+ * {@link displayFigureValue}, the one display path for sealed values: it applies
+ * the unit's display rescale and the display precision for the shown unit. The
+ * period is formatted for the region too, so every displayed number shows its
+ * own period.
+ *
+ * `_displayRescale` is accepted so existing callers keep compiling. The rescale
+ * is now read from the sealed unit by `displayFigureValue`, so the argument is
+ * not used.
  */
 export function receiptFigureOf(
   figure: Readonly<FigureV1>,
   role: "then" | "now",
   letterKind: LetterKind = "persona",
-  displayRescale?: Readonly<DisplayRescale>,
+  _displayRescale?: Readonly<DisplayRescale>,
 ): ReceiptFigure {
-  // The precision is decided on the shown unit (after any rescale), so an EU
-  // price shown per litre gets the fuel precision (P5.1). The stored value is
-  // not changed; only the displayed digits are.
-  const shownUnit =
-    displayRescale === undefined ? figure.unit : displayRescale.unit;
-  const precision = displayPrecisionForUnit(shownUnit);
-  const shownValue =
-    displayRescale === undefined
-      ? figure.value
-      : rescaleForDisplay(figure.value, displayRescale.divisor);
-  const value = formatValue(shownValue, figure.region, precision);
+  const shown = displayFigureValue(figure.value, figure.unit, figure.region);
+  // A rescale applies exactly when the shown unit differs from the sealed unit.
   const note =
-    displayRescale === undefined
+    shown.unit === figure.unit
       ? undefined
       : REVEAL_COPY.rescaledNote
-          .replace("{toUnit}", displayRescale.unit)
+          .replace("{toUnit}", shown.unit)
           .replace("{fromUnit}", figure.unit);
   return {
-    value,
-    unit: shownUnit,
+    value: shown.text,
+    unit: shown.unit,
     period: formatPeriod(figure.period, figure.region),
     region: figure.region,
     label: figureLabel(figure, role, letterKind),

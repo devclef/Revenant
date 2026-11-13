@@ -44,20 +44,20 @@ const SELF: Readonly<FigureV1> = {
 describe("provenance labels (R13.1 to R13.4)", () => {
   it("reads historical record for a persona then figure", () => {
     expect(figureLabel(OFFICIAL, "then", "persona")).toBe(
-      "historical record, retrieved 30 October 2024",
+      "historical record, retrieved 30 Oct 2024",
     );
   });
 
   it("reads sealed with the letter for a live or real then figure", () => {
     expect(figureLabel(OFFICIAL, "then", "live")).toBe(
-      "sealed with the letter, retrieved 30 October 2024",
+      "sealed with the letter, retrieved 30 Oct 2024",
     );
     expect(figureLabel(OFFICIAL, "then", "real")).not.toContain("historical record");
   });
 
   it("reads retrieved for a now figure whatever the letter kind", () => {
     for (const kind of ["persona", "live", "real"] as const) {
-      expect(figureLabel(OFFICIAL, "now", kind)).toBe("retrieved 30 October 2024");
+      expect(figureLabel(OFFICIAL, "now", kind)).toBe("retrieved 30 Oct 2024");
     }
   });
 
@@ -75,7 +75,7 @@ describe("provenance labels (R13.1 to R13.4)", () => {
 
   it("uses the UTC date, so a late-evening retrieval never shifts a day", () => {
     const late = { ...OFFICIAL, retrieved_at: "2024-10-30T23:30:00Z" };
-    expect(figureLabel(late, "now", "persona")).toBe("retrieved 30 October 2024");
+    expect(figureLabel(late, "now", "persona")).toBe("retrieved 30 Oct 2024");
   });
 });
 
@@ -87,7 +87,7 @@ describe("receiptFigureOf builds the Then and Now row (C3.1, R11.1 to R11.3)", (
     expect(row.unit).toBe("USD per gallon");
     expect(row.period).toBe(formatPeriod("2024-10", "U.S. city average"));
     expect(row.region).toBe("U.S. city average");
-    expect(row.label).toBe("historical record, retrieved 30 October 2024");
+    expect(row.label).toBe("historical record, retrieved 30 Oct 2024");
     expect(row.note).toBeUndefined();
   });
 
@@ -124,5 +124,32 @@ describe("receiptSourceOf builds the source control (R11.2)", () => {
 
   it("has no source link for a self-reported figure (no source_url in the schema)", () => {
     expect(receiptSourceOf(SELF).sourceUrl).toBeUndefined();
+  });
+});
+
+describe("receiptFigureOf routes values through displayFigureValue (K1)", () => {
+  it("shows a 1954.037871213403 EUR per 1,000 litres figure as 1.95 EUR per litre", () => {
+    const eu: Readonly<FigureV1> = {
+      ...OFFICIAL,
+      value: "1954.037871213403",
+      unit: "EUR per 1,000 litres",
+      region: "EU27, weighted average",
+    };
+    const row = receiptFigureOf(eu, "now", "persona");
+    expect(row.value).toBe("1.95");
+    expect(row.unit).toBe("EUR per litre");
+    expect(row.note).toBe(
+      REVEAL_COPY.rescaledNote
+        .replace("{toUnit}", "EUR per litre")
+        .replace("{fromUnit}", "EUR per 1,000 litres"),
+    );
+  });
+
+  it("uses the short retrieved date in the label, e.g. 'retrieved 30 Oct 2026'", () => {
+    const recent = { ...OFFICIAL, retrieved_at: "2026-10-30T14:02:11Z" };
+    expect(receiptFigureOf(recent, "now", "persona").label).toBe("retrieved 30 Oct 2026");
+    expect(figureLabel(recent, "then", "live")).toBe(
+      "sealed with the letter, retrieved 30 Oct 2026",
+    );
   });
 });

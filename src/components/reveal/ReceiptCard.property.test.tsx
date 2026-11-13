@@ -218,7 +218,7 @@ describe("ReceiptCard, Property 17: receipt values use display precision and the
         const html = plainHtml(
           renderToStaticMarkup(createElement(ReceiptCard, receiptPropsFor(then, now))),
         );
-        expect(html).toContain(`data-role="then">${formatValue(thenValue, REGION)}<`);
+        expect(html).toContain(`data-role="then">${thenValue}<`);
         expect(html).not.toContain("data-rounded-note");
         expect(html).not.toContain(REVEAL_COPY.roundedNote);
       }),
