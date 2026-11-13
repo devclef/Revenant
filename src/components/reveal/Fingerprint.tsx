@@ -90,9 +90,16 @@ export function Fingerprint({ envelopeHash, letterKind }: FingerprintProps) {
       <h3 id="fp-title" className={styles.fingerprintTitle}>
         {REVEAL_COPY.fingerprintTitle}
       </h3>
-      <p className={styles.fingerprintGroups} translate="no">
-        <span className={styles.fingerprintLine}>{lineOne}</span>
-        <span className={styles.fingerprintLine}>{lineTwo}</span>
+      {/* Each group is its own element so the grid can place four per line
+          (two below 600 px) and never split one group across a line. The
+          spaces between groups are text nodes, which a grid does not render,
+          so they only matter when the text is copied. */}
+      <p className={styles.fingerprintGrid} translate="no">
+        {fingerprint.split(" ").map((group, index) => (
+          <span key={index} className={styles.fingerprintGroup}>
+            {index > 0 ? ` ${group}` : group}
+          </span>
+        ))}
       </p>
       <p className={styles.fingerprintStatement}>
         {REVEAL_COPY.fingerprintPassed}

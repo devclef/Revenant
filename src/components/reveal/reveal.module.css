@@ -49,6 +49,38 @@
   max-width: none;
 }
 
+/* Spec 12 X1: the Live_Reveal, embedded in the stepper's Reveal_Host (see
+   OpeningFlow.tsx `flowLive`). It is a centred column of at most 40 rem for the
+   Testify and Marks Stages. From the Letter Stage on it takes the full width of
+   the host, and below 900 px it has no side padding, so the Letter_Block and
+   the figures use the card's width. Only the three Stages after the Ghost has
+   left are changed; .flowPersona above is untouched. */
+.flowLive {
+  max-width: min(40rem, 100%);
+  min-width: 0;
+  margin: 0 auto;
+  overflow-wrap: break-word;
+}
+
+.flowLive:is([data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"]) {
+  max-width: none;
+}
+
+@media (max-width: 899.98px) {
+  .flowLive:is([data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"]) {
+    padding-inline: 0;
+  }
+}
+
+/* The Letter_Block is 560 px to 760 px wide when the host is wide enough, and
+   it fills a narrower host (a 390 px phone keeps at least 300 px). The paper
+   inside it keeps its own padding and word wrapping. */
+.flowLive .letterCol {
+  width: min(760px, 100%);
+  min-width: min(560px, 100%);
+  margin-inline: auto;
+}
+
 .view {
   margin: 0 auto;
 }
@@ -158,8 +190,10 @@
   min-width: 0;
 }
 
+/* The unit takes the colour of the line it sits in: the desk text on the
+   marks and remembered answers, the ink inside a paper panel (.stagePanel). */
 .unit {
-  color: var(--ink-soft);
+  color: inherit;
 }
 
 .fieldError {
@@ -226,7 +260,7 @@
 
 .marksHeading {
   font-family: var(--font-sans);
-  color: var(--ink);
+  color: var(--text);
 }
 
 .marksAnswers {
@@ -246,13 +280,15 @@
 .marksQuestion {
   margin: 0;
   font-family: var(--font-sans);
-  color: var(--ink);
+  color: var(--text);
 }
 
+/* The marks card sits on the desk (.marksOnDesk), so its text takes the desk
+   text colour. The paper ink here made the card unreadable (spec 12 X1). */
 .marksAnswer {
   margin: 0;
   flex-shrink: 0;
-  color: var(--ink);
+  color: var(--text);
   font-variant-numeric: tabular-nums;
 }
 
@@ -653,6 +689,32 @@
   display: block;
 }
 
+/* Spec 12 X1: the live Fingerprint as a grid of 16 groups, four per line from
+   600 px and wider and two below. Each group is one element (fingerprintGroup),
+   so a group never splits across a line. The persona block keeps the two
+   fingerprintLine spans above and is not styled by this grid. */
+.fingerprintGrid {
+  display: grid;
+  grid-template-columns: repeat(2, max-content);
+  justify-content: start;
+  gap: 0.25rem 1.25rem;
+  margin: 0 0 0.5rem;
+  font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+  color: var(--text);
+}
+
+@media (min-width: 600px) {
+  .fingerprintGrid {
+    grid-template-columns: repeat(4, max-content);
+  }
+}
+
+.fingerprintGroup {
+  white-space: nowrap;
+}
+
 .fingerprintStatement {
   margin: 0;
   color: var(--text);
@@ -985,6 +1047,7 @@
 
 .authorTestimonyHeading {
   margin: 0 0 0.75rem;
+  color: var(--text);
 }
 
 .authorTestimonyItem {
