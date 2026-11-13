@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { realLetterSealApi, realSealApi, REAL_PREPARE_PATH, REAL_SEAL_PATH, PREPARE_PATH } from "./api";
 import { LIVE_COPY, REAL_COPY } from "./copy";
 import { figuresResponseFrom } from "@/components/reveal/figures-stub";
+import { displayFigureValue } from "@/components/reveal/display-figure";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
 import { sealReducer, INITIAL_SEAL_STATE, type SealEvent, type SealState } from "./seal-machine";
 
@@ -291,7 +292,9 @@ describe("SealPage passes each figure's value and source into the picker", () =>
       const figure = entry.figure;
       if (figure === null || figure.kind !== "official") continue;
       checked += 1;
-      expect(html).toContain(esc(LIVE_COPY.figureValue.replace("{value}", figure.value)));
+      const shown = displayFigureValue(figure.value, figure.unit, figure.region);
+      expect(html).toContain(esc(LIVE_COPY.figureValue.replace("{value}", shown.text)));
+      expect(html).toContain(esc(`As published: ${figure.value} ${figure.unit}`));
       expect(html).toContain(esc(LIVE_COPY.figureSource.replace("{source}", figure.source)));
       expect(html).toContain(esc(figure.source_url));
     }

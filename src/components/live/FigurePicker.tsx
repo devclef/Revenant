@@ -1,7 +1,8 @@
 import Link from "next/link";
 
+import { displayFigureValue } from "@/components/reveal/display-figure";
 import { REVEAL_COPY } from "@/components/reveal/copy";
-import { formatLetterDate } from "@/components/ui/letter-date";
+import { formatShortDate } from "@/components/ui/letter-date";
 
 import type { PickableSeries } from "./catalogue-list";
 import { LIVE_COPY, REAL_COPY } from "./copy";
@@ -110,6 +111,9 @@ export function FigurePicker({
     <fieldset className={styles.figures} data-card="live-figures">
       <legend className={styles.legend}>{LIVE_COPY.figuresLegend}</legend>
       <p className={styles.hint}>{hintText}</p>
+      {series.some((item) => item.fallbackRetrievedAt !== undefined) ? (
+        <p className={styles.hint}>{LIVE_COPY.pickerNote}</p>
+      ) : null}
       <ul className={styles.figureList}>
         {series.map((item) => {
           const checked = selected.includes(item.metricId);
@@ -117,6 +121,10 @@ export function FigurePicker({
           const inputId = `figure-${item.metricId}`;
           const isFallback = item.fallbackRetrievedAt !== undefined;
           const detail = details?.get(item.metricId);
+          const shown =
+            detail === undefined
+              ? undefined
+              : displayFigureValue(detail.value, detail.unit, detail.region);
           return (
             <li key={item.metricId} className={styles.figureItem}>
               <label htmlFor={inputId} className={styles.figureLabel}>
@@ -129,20 +137,20 @@ export function FigurePicker({
                   onChange={() => onToggle(item.metricId)}
                 />
                 <span className={styles.figureName}>{item.displayName}</span>
-                {detail !== undefined ? (
+                {shown !== undefined ? (
                   <span className={styles.figureValue}>
-                    {LIVE_COPY.figureValue.replace("{value}", detail.value)}{" "}
-                    {item.unit}
+                    {LIVE_COPY.figureValue.replace("{value}", shown.text)}{" "}
+                    {shown.unit}
                   </span>
                 ) : null}
                 <span className={styles.figureMeta}>
                   {item.unit} · {item.region}
                 </span>
                 <span className={styles.figureMeta}>
-                  {(isFallback
-                    ? LIVE_COPY.figurePeriod
-                    : LIVE_COPY.figureLatest
-                  ).replace("{period}", item.latestPeriod)}
+                  {LIVE_COPY.pickerPeriod.replace(
+                    "{period}",
+                    formatShortDate(item.latestPeriod),
+                  )}
                 </span>
                 {detail !== undefined ? (
                   <span className={styles.figureMeta}>
@@ -154,11 +162,9 @@ export function FigurePicker({
                 ) : null}
                 {isFallback ? (
                   <span className={styles.figureMeta}>
-                    {REVEAL_COPY.fallbackNote.replace(
+                    {LIVE_COPY.pickerRetrieved.replace(
                       "{date}",
-                      formatLetterDate(item.fallbackRetrievedAt ?? "", {
-                        kind: "utc",
-                      }),
+                      formatShortDate(item.fallbackRetrievedAt ?? ""),
                     )}
                   </span>
                 ) : null}
@@ -185,10 +191,13 @@ export function FigurePicker({
                       </a>
                     </dd>
                     <dt>{LIVE_COPY.figureRetrieved}</dt>
-                    <dd>
-                      {formatLetterDate(detail.retrievedAt, { kind: "utc" })}
-                    </dd>
+                    <dd>{formatShortDate(detail.retrievedAt)}</dd>
                   </dl>
+                  <p className={styles.figureMeta}>
+                    {REVEAL_COPY.asPublished
+                      .replace("{value}", detail.value)
+                      .replace("{unit}", detail.unit)}
+                  </p>
                 </details>
               ) : null}
             </li>
