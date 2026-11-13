@@ -118,7 +118,9 @@ export function stepForStage(stage: Stage): LiveStep | null {
  * zero (D5.2). Testify and Receipts keep it mounted.
  */
 export function flowMounted(step: LiveStep, countdownDone: boolean): boolean {
-  if (step === "testify" || step === "receipts") return true;
+  // `break` is the seal break inside the reveal (issue #385). The flow must
+  // stay mounted there, or the reveal unmounts as the seal breaks.
+  if (step === "testify" || step === "break" || step === "receipts") return true;
   return step === "wait" && countdownDone;
 }
 
@@ -155,6 +157,8 @@ export interface StepperState {
   draft: WriteDraft;
   /** True once the seal is stored. The draft is dropped at that point. */
   sealed: boolean;
+  /** The reveal Stage last reported by the Ceremony (issue #385). */
+  stage: Stage;
 }
 
 export type StepperAction =
@@ -162,7 +166,8 @@ export type StepperAction =
   | { type: "BACK" }
   | { type: "DRAFT"; event: WriteDraftEvent }
   | { type: "SEALED" }
-  | { type: "GOTO"; step: LiveStep };
+  | { type: "GOTO"; step: LiveStep }
+  | { type: "STAGE"; stage: Stage };
 
 /**
  * The stepper state before anything is typed. `mode` picks the draft: demo
@@ -172,7 +177,12 @@ export function initialStepperState(
   step: LiveStep = "write",
   mode: WriteMode = "demo",
 ): StepperState {
-  return { step, draft: initialWriteDraft(mode), sealed: false };
+  return {
+    step,
+    draft: initialWriteDraft(mode),
+    sealed: false,
+    stage: "emerging",
+  };
 }
 
 export function reduceStepper(
@@ -201,6 +211,18 @@ export function reduceStepper(
       // returning the same state keeps React from re-rendering.
       if (stepIndex(action.step) <= stepIndex(state.step)) return state;
       return { ...state, step: action.step };
+    }
+    case "STAGE": {
+      // One update stores the Stage and, when the Stage maps to a step, moves
+      // forward to it (issue #385). A Stage that maps to an earlier step, or to
+      // no step, leaves the step where it is. The step never moves back.
+      const target = stepForStage(action.stage);
+      const next =
+        target !== null && stepIndex(target) > stepIndex(state.step)
+          ? target
+          : state.step;
+      if (next === state.step && state.stage === action.stage) return state;
+      return { ...state, stage: action.stage, step: next };
     }
   }
 }

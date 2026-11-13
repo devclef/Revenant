@@ -46,11 +46,13 @@ function indicatorNames(html: string): string[] {
 }
 
 describe("Step_Indicator", () => {
-  it("lists the five steps in order", () => {
+  // Issue #385: the list has six steps, the seal break included.
+  it("lists the six steps in order", () => {
     const html = renderToStaticMarkup(
       createElement(StepIndicator, { current: "write" }),
     );
     expect(indicatorNames(html)).toEqual([...LIVE_STEP_NAMES]);
+    expect(indicatorNames(html)).toHaveLength(6);
   });
 
   it('marks only the current step with aria-current="step"', () => {

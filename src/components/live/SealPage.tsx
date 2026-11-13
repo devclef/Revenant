@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useReducer, useState, type ReactNode }
 import Link from "next/link";
 
 import "@/components/ceremony/scene/tokens.css";
+import { StageReportContext } from "@/components/ceremony/stage-context";
+import type { Stage } from "@/components/ceremony/stages";
 import { useFigures, type FiguresState } from "@/components/reveal/figures-api";
 import type { LoadedFigures } from "@/lib/figures";
 
@@ -164,6 +166,14 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
     (event: WriteDraftEvent) => dispatchStepper({ type: "DRAFT", event }),
     [],
   );
+  // The reveal's Ceremony reports its Stage through StageReportContext. Each
+  // report moves the stepper (issue #385): the seal break at marks and seal,
+  // and See the receipts at letter, figures and close. The callback is stable,
+  // so the Ceremony's report effect runs only when the Stage changes.
+  const reportStage = useCallback(
+    (stage: Stage) => dispatchStepper({ type: "STAGE", stage }),
+    [],
+  );
 
   // SealDeps for the runner, built once the crypto module is loaded. Null until
   // then, which keeps the flow's presses disabled. The figures request does not
@@ -246,11 +256,13 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
       {mode === "demo" ? (
         <>
           <h1 className={styles.liveHeading}>{LIVE_COPY.liveHeading}</h1>
-          <LiveStepper
-            state={stepper}
-            dispatch={dispatchStepper}
-            renderStep={renderDemoStep}
-          />
+          <StageReportContext.Provider value={reportStage}>
+            <LiveStepper
+              state={stepper}
+              dispatch={dispatchStepper}
+              renderStep={renderDemoStep}
+            />
+          </StageReportContext.Provider>
         </>
       ) : (
         renderState()

@@ -288,11 +288,77 @@ describe("flowPortalTarget (X1)", () => {
   });
 
   it("never goes back to null once the flow has mounted", () => {
-    // Testify and Receipts keep the flow mounted even if the countdown state
-    // is reported as not done, so a later re-render cannot unmount it.
+    // Testify, the seal break and Receipts keep the flow mounted even if the
+    // countdown state is reported as not done, so a later re-render cannot
+    // unmount it.
     expect(flowMounted("testify", false)).toBe(true);
+    expect(flowMounted("break", false)).toBe(true);
     expect(flowMounted("receipts", false)).toBe(true);
     expect(flowPortalTarget(host, "testify", false)).toBe(host);
+    expect(flowPortalTarget(host, "break", false)).toBe(host);
     expect(flowPortalTarget(host, "receipts", false)).toBe(host);
   });
 });
+
+// Issue #385: a STAGE action stores the reveal Stage and moves the stepper
+// forward to the step that Stage maps to, in the same update.
+describe("reduceStepper STAGE (issue #385)", () => {
+  it("starts with the emerging Stage stored", () => {
+    expect(initialStepperState().stage).toBe("emerging");
+  });
+
+  it("moves to the seal break step at marks", () => {
+    const state = reduceStepper(initialStepperState("testify"), {
+      type: "STAGE",
+      stage: "marks",
+    });
+    expect(state.step).toBe("break");
+    expect(state.stage).toBe("marks");
+  });
+
+  // The Skip_Link on marks sends SHOW_ALL, so the Stage becomes letter. The
+  // indicator must reach See the receipts in that same update, not in two.
+  it("moves to See the receipts at letter, in one update", () => {
+    const state = reduceStepper(initialStepperState("break"), {
+      type: "STAGE",
+      stage: "letter",
+    });
+    expect(state.step).toBe("receipts");
+    expect(state.stage).toBe("letter");
+  });
+
+  it("keeps the step for a Stage that maps to no step, and stores the Stage", () => {
+    const state = reduceStepper(initialStepperState("testify"), {
+      type: "STAGE",
+      stage: "recall",
+    });
+    expect(state.step).toBe("testify");
+    expect(state.stage).toBe("recall");
+  });
+
+  it("never moves the step back for an earlier Stage", () => {
+    const state = reduceStepper(initialStepperState("receipts"), {
+      type: "STAGE",
+      stage: "marks",
+    });
+    expect(state.step).toBe("receipts");
+    expect(state.stage).toBe("marks");
+  });
+
+  it("returns the same state when nothing changes", () => {
+    const state = reduceStepper(initialStepperState("break"), {
+      type: "STAGE",
+      stage: "marks",
+    });
+    expect(reduceStepper(state, { type: "STAGE", stage: "marks" })).toBe(state);
+  });
+
+  it("keeps Back unavailable after the seal is stored, whatever the Stage", () => {
+    let state = initialStepperState("seal");
+    state = reduceStepper(state, { type: "SEALED" });
+    state = reduceStepper(state, { type: "STAGE", stage: "marks" });
+    expect(state.step).toBe("break");
+    expect(canGoBack(state.step, state.sealed)).toBe(false);
+  });
+});
+
