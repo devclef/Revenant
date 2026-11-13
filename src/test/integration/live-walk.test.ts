@@ -1,6 +1,11 @@
 /**
  * Live_Walk (Q1, Q2). Skipped unless WALK=1.
  *
+ * Scope: the walk covers Write, seal, Wait, unlock, Testify, Break the seal,
+ * letter, receipts and Close at 1440x900 and 390x844. The legacy W1 replay, its
+ * run record, the backup-key and figures-unavailable variants, and the helpers
+ * only it used are removed.
+ *
  * Drives the walk from Write to Close in headless Chromium, with a virtual
  * WebAuthn authenticator that reports PRF support. Each run is one width (1440x900
  * or 390x844), with motion on or reduced, and one way of breaking the seal.
