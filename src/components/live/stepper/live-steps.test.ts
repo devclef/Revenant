@@ -9,6 +9,8 @@ import {
   LIVE_STEPS,
   LIVE_STEP_NAMES,
   canGoBack,
+  flowPortalTarget,
+  hasPrimaryCard,
   initialStepperState,
   movesFocus,
   reduceStepper,
@@ -163,5 +165,48 @@ describe("reduceStepper", () => {
       event: { type: "TEXT_CHANGED", text: "Too late" },
     });
     expect(after.draft.text).toBe("");
+  });
+});
+
+// Spec 12, X1: the Primary_Card is drawn for Write, Seal and Wait only. Testify
+// and Receipts sit on the desk, inside the Reveal_Host below the card.
+describe("hasPrimaryCard (X1)", () => {
+  it("is true for write, seal and wait", () => {
+    expect(hasPrimaryCard("write")).toBe(true);
+    expect(hasPrimaryCard("seal")).toBe(true);
+    expect(hasPrimaryCard("wait")).toBe(true);
+  });
+
+  it("is false for testify and receipts", () => {
+    expect(hasPrimaryCard("testify")).toBe(false);
+    expect(hasPrimaryCard("receipts")).toBe(false);
+  });
+});
+
+// Spec 12, X1: the flow portals into the host only once the flow is mounted
+// (D5.2), so the target is null before zero and stays the host from zero on.
+describe("flowPortalTarget (X1)", () => {
+  const host = { name: "reveal-host" };
+
+  it("is null before the countdown ends, so no flow is portalled", () => {
+    expect(flowPortalTarget(host, "wait", false)).toBeNull();
+  });
+
+  it("is the host from zero on the wait step", () => {
+    expect(flowPortalTarget(host, "wait", true)).toBe(host);
+  });
+
+  it("is the same host on testify and receipts", () => {
+    expect(flowPortalTarget(host, "testify", true)).toBe(host);
+    expect(flowPortalTarget(host, "receipts", true)).toBe(host);
+  });
+
+  it("is null when the host has not mounted yet", () => {
+    expect(flowPortalTarget<typeof host>(null, "testify", true)).toBeNull();
+  });
+
+  it("is null on the write and seal steps", () => {
+    expect(flowPortalTarget(host, "write", true)).toBeNull();
+    expect(flowPortalTarget(host, "seal", true)).toBeNull();
   });
 });

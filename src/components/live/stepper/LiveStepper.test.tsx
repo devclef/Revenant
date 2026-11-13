@@ -11,7 +11,12 @@ import { describe, expect, it } from "vitest";
 import { LIVE_COPY } from "../copy";
 
 import { LiveStepper, type StepView } from "./LiveStepper";
-import { LIVE_STEP_NAMES, initialStepperState, type LiveStep } from "./live-steps";
+import {
+  LIVE_STEPS,
+  LIVE_STEP_NAMES,
+  initialStepperState,
+  type LiveStep,
+} from "./live-steps";
 import { StepIndicator } from "./StepIndicator";
 
 function render(
@@ -150,5 +155,53 @@ describe("LiveStepper", () => {
   it("renders the step names from Brand_Copy in order on the Step_Indicator", () => {
     const html = render("write");
     expect(indicatorNames(html)).toEqual([...LIVE_STEP_NAMES]);
+  });
+});
+
+// Spec 12, X1. The Reveal_Host is a sibling after the Primary_Card on every
+// step, so the portal target never moves. Testify and Receipts have no card.
+describe("LiveStepper Reveal_Host and Primary_Card (X1)", () => {
+  it("renders one reveal host as the last child after the card, on every step", () => {
+    for (const step of LIVE_STEPS) {
+      const html = render(step);
+      expect(html.match(/data-reveal-host=""/g)).toHaveLength(1);
+      // The host follows the section's closing tag and closes the stepper root.
+      expect(html).toMatch(
+        /<\/section><div[^>]*data-reveal-host=""[^>]*><\/div><\/div>$/,
+      );
+    }
+  });
+
+  it("draws the Primary_Card on write, seal and wait", () => {
+    for (const step of ["write", "seal", "wait"] as const) {
+      expect(render(step)).toMatch(
+        new RegExp(`<section[^>]*data-card=""[^>]*data-step="${step}"`),
+      );
+    }
+  });
+
+  it("draws no Primary_Card on testify or receipts", () => {
+    for (const step of ["testify", "receipts"] as const) {
+      const html = render(step);
+      expect(html).toContain(`data-step="${step}"`);
+      expect(html).not.toContain("data-card");
+      expect(html).not.toContain("data-primary-control");
+      expect(html).not.toContain("<h2");
+    }
+  });
+
+  it("keeps the heading only on the card steps", () => {
+    expect(render("wait")).toMatch(/<h2[^>]*>Wait<\/h2>/);
+    expect(render("testify")).not.toMatch(/<h2/);
+  });
+
+  it("gives the content no host before the host has mounted", () => {
+    let seen: StepView | null = null;
+    render("testify", (view) => {
+      seen = view;
+      return null;
+    });
+    const view = seen as unknown as StepView;
+    expect(view.host).toBeNull();
   });
 });

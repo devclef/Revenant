@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
 import { useCalmInForce } from "@/components/ceremony/motion";
 import { useKeepInVisualViewport } from "@/components/ui/use-keep-in-visual-viewport";
@@ -11,6 +11,7 @@ import styles from "./stepper.module.css";
 import { StepIndicator } from "./StepIndicator";
 import {
   canGoBack,
+  hasPrimaryCard,
   movesFocus,
   stepName,
   type LiveStep,
@@ -37,6 +38,11 @@ export interface StepView {
    * back and never moves the stepper on its own.
    */
   advanceTo: (step: LiveStep) => void;
+  /**
+   * The Reveal_Host, a sibling after the Primary_Card (spec 12, X1). The
+   * embedded Opening_Flow is portalled into it. Null until the host mounts.
+   */
+  host: HTMLElement | null;
 }
 
 export interface LiveStepperProps {
@@ -53,13 +59,18 @@ export interface LiveStepperProps {
 
 /**
  * The one-step-per-screen layout of /demo/live (spec 09 D2). It shows the
- * Step_Indicator and one card for the current step. Each card holds the step's
- * heading, its fields and its Next inside one `data-primary-control` group.
- * When the step changes, focus moves to the new heading.
+ * Step_Indicator and, for Write, Seal and Wait, one Primary_Card holding the
+ * step's heading, its fields and its Next inside one `data-primary-control`
+ * group. Testify and Receipts have no card. Below the card sits the
+ * Reveal_Host, where the embedded Opening_Flow mounts (spec 12, X1). When the
+ * step changes, focus moves to the new heading, if the step has one.
  */
 export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
   const primaryRef = useRef<HTMLDivElement>(null);
+  // The Reveal_Host element. It is set once on mount and never changes, so the
+  // portal target stays the same (spec 12, X1).
+  const [host, setHost] = useState<HTMLDivElement | null>(null);
   // Keeps the focused field and its Next above the on-screen keyboard (P9).
   useKeepInVisualViewport(primaryRef, useCalmInForce());
   const previousStep = useRef<LiveStep>(state.step);
@@ -79,19 +90,36 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
     back: () => dispatch({ type: "BACK" }),
     canGoBack: canGoBack(state.step, state.sealed),
     advanceTo: (step) => dispatch({ type: "GOTO", step }),
+    host,
   };
+
+  // The section keeps its element type and position on every step, so the
+  // content inside it (the Wait step with its flow) is not remounted when the
+  // card drops away on Testify and Receipts.
+  const card = hasPrimaryCard(state.step);
 
   return (
     <div className={styles.stepper} data-live-stepper>
       <StepIndicator current={state.step} />
-      <section className={styles.card} data-card data-step={state.step}>
-        <div ref={primaryRef} className={styles.primary} data-primary-control>
-          <h2 ref={headingRef} tabIndex={-1} className={styles.heading}>
-            {stepName(state.step)}
-          </h2>
+      <section
+        className={card ? styles.card : styles.bare}
+        data-card={card ? "" : undefined}
+        data-step={state.step}
+      >
+        <div
+          ref={primaryRef}
+          className={card ? styles.primary : styles.bareContent}
+          data-primary-control={card ? "" : undefined}
+        >
+          {card ? (
+            <h2 ref={headingRef} tabIndex={-1} className={styles.heading}>
+              {stepName(state.step)}
+            </h2>
+          ) : null}
           {renderStep(view)}
         </div>
       </section>
+      <div ref={setHost} className={styles.revealHost} data-reveal-host="" />
     </div>
   );
 }

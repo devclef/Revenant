@@ -79,6 +79,26 @@
   font-family: var(--font-sans);
 }
 
+/* The step section once the card has dropped away (Testify and Receipts). It
+   sits on the desk, so it sets the desk text colour and no paper. */
+.bare {
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
+.bareContent {
+  display: grid;
+  gap: 1rem;
+  color: var(--text);
+}
+
+/* The Reveal_Host, the sibling below the card where the embedded Opening_Flow
+   mounts (spec 12, X1). It sits on the desk, so it sets the desk text colour. */
+.revealHost {
+  color: var(--text);
+  font-family: var(--font-sans);
+}
+
 .primary {
   display: grid;
   gap: 1rem;

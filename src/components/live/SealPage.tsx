@@ -279,6 +279,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
             getBackupKeyText={flow.getBackupKeyText}
             port={deps?.port}
             rehearsal={rehearsal}
+            host={view.host}
           />
         </SealedStep>
       );

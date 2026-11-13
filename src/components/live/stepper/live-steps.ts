@@ -94,6 +94,29 @@ export function flowMounted(step: LiveStep, countdownDone: boolean): boolean {
   return step === "wait" && countdownDone;
 }
 
+/**
+ * Whether a step is drawn on the Primary_Card (spec 12, X1). Write, Seal and
+ * Wait are on the card. Testify and Receipts sit on the desk, below the card,
+ * inside the Reveal_Host.
+ */
+export function hasPrimaryCard(step: LiveStep): boolean {
+  return step === "write" || step === "seal" || step === "wait";
+}
+
+/**
+ * The element the embedded Opening_Flow is portalled into (spec 12, X1). It is
+ * the Reveal_Host once the flow is mounted, and null before that. The host
+ * never changes once it is set, so the portal target stays the same across
+ * Wait, Testify and Receipts.
+ */
+export function flowPortalTarget<T>(
+  host: T | null,
+  step: LiveStep,
+  countdownDone: boolean,
+): T | null {
+  return flowMounted(step, countdownDone) ? host : null;
+}
+
 /** A step change moves focus to the new step's heading (spec 09 D2.6). */
 export function movesFocus(from: LiveStep, to: LiveStep): boolean {
   return from !== to;

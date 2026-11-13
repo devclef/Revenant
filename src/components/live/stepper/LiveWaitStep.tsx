@@ -4,19 +4,21 @@
  * The Wait, Testify and Receipts content of the live stepper (spec 09, D5).
  *
  * On the Wait card it shows the opening time, the countdown and "Go to your
- * letter" below. When the countdown reaches zero it mounts the embedded
- * Opening_Flow in place of the countdown. Mounting the flow makes the one
- * letter request, so the request is made once, at zero (D5.2). The flow then
- * shows the unlock control in place (D5.3). The stepper moves to Testify and
- * then Receipts only when the flow reports those phases (D5.4). The page never
- * navigates by itself, and the passkey assertion runs only on the reader's
- * press, as the flow already enforces.
+ * letter" below. When the countdown reaches zero it portals the embedded
+ * Opening_Flow into the Reveal_Host, the sibling below the card (spec 12, X1).
+ * Mounting the flow makes the one letter request, so the request is made once,
+ * at zero (D5.2). The flow then shows the unlock control in place (D5.3). The
+ * stepper moves to Testify and then Receipts only when the flow reports those
+ * phases (D5.4). The page never navigates by itself, and the passkey assertion
+ * runs only on the reader's press, as the flow already enforces.
  *
- * The child positions stay the same across Wait, Testify and Receipts, so the
- * flow keeps its state when the stepper moves on.
+ * The position of this component stays the same across Wait, Testify and
+ * Receipts, and so does the Reveal_Host, so the flow keeps its state when the
+ * stepper moves on.
  */
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import Link from "next/link";
 
 import type { GhostSink } from "@/components/ceremony/scene/Ghost";
@@ -35,7 +37,7 @@ import { SealedKeepsakes } from "../SealedKeepsakes";
 import type { SealedState } from "../SealedView";
 
 import { LiveGhost } from "./LiveGhost";
-import { flowMounted, stepForFlowPhase, type LiveStep } from "./live-steps";
+import { flowPortalTarget, stepForFlowPhase, type LiveStep } from "./live-steps";
 
 export interface LiveWaitStepProps {
   /** The sealed state from the seal flow: letter id, opening time and factors. */
@@ -54,6 +56,11 @@ export interface LiveWaitStepProps {
   port?: AuthenticatorPort;
   /** Shows the rehearsal line next to the countdown. Set only on /demo/live. */
   rehearsal?: boolean;
+  /**
+   * The Reveal_Host (spec 12, X1). The embedded Opening_Flow is portalled into
+   * it once the flow is mounted. Null until the stepper's host has mounted.
+   */
+  host?: HTMLElement | null;
 }
 
 /**
@@ -88,12 +95,15 @@ export function LiveWaitStep({
   getBackupKeyText = () => null,
   port,
   rehearsal = false,
+  host = null,
 }: LiveWaitStepProps) {
   const opensAtMs = Date.parse(state.opensAt);
   const seconds = useSecondsLeft(opensAtMs, nowMs, state.offsetMs);
   const done = seconds <= 0;
   const waiting = step === "wait";
   const [showBackupCard, setShowBackupCard] = useState(false);
+  // The flow's portal target: the Reveal_Host once the flow is mounted (D5.2).
+  const flowTarget = flowPortalTarget(host, step, done);
 
   const showKeyReminder = state.factors === "backup" || state.factors === "both";
   const backupKeyText = getBackupKeyText();
@@ -107,7 +117,7 @@ export function LiveWaitStep({
   const sink: GhostSink = done ? "idle" : calm ? "sunk" : "sinking";
 
   return (
-    <div className={styles.panel} data-live-wait>
+    <div className={waiting ? styles.panel : styles.deskPanel} data-live-wait>
       <DemoLabel />
 
       {waiting ? <LiveGhost sink={sink} /> : null}
@@ -134,8 +144,8 @@ export function LiveWaitStep({
         </>
       ) : null}
 
-      {flowMounted(step, done) ? (
-        <div className={styles.letterColumn}>
+      {flowTarget !== null ? (
+        createPortal(
           <OpeningFlow
             mode="live"
             letterId={state.letterId}
@@ -147,8 +157,9 @@ export function LiveWaitStep({
                 if (next !== null) advanceTo(next);
               },
             }}
-          />
-        </div>
+          />,
+          flowTarget,
+        )
       ) : null}
 
       {waiting ? (

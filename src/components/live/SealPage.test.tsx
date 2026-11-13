@@ -58,6 +58,7 @@ vi.mock("./stepper/LiveStepper", async (importOriginal) => {
         back: () => {},
         canGoBack: false,
         advanceTo: () => {},
+        host: null,
       } as import("./stepper/LiveStepper").StepView);
     },
   };

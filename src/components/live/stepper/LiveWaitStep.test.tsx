@@ -3,6 +3,8 @@
 // run here, so the countdown's live ticking and the single letter request at
 // zero are pinned by the pure rules in unlock-in-place.test.ts.
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -53,10 +55,15 @@ describe("LiveWaitStep on the Wait card (D5.1)", () => {
     expect(html).not.toMatch(/<a [^>]*data-live-goto/);
   });
 
-  it("mounts the flow in place of the countdown at zero (D5.2, D5.3)", () => {
+  // Retired (spec 12, X1): this asserted that the flow's data-ceremony root
+  // rendered inside the Wait step's markup at zero. The flow now portals into
+  // the Reveal_Host, a sibling below the card, and react-dom/server cannot
+  // render portals. The portal target is pinned by flowPortalTarget in
+  // live-steps.test.ts, and the portal call by the source scan below.
+  it("drops the countdown at zero and leaves the flow to the Reveal_Host", () => {
     const html = render("wait", OPENS_MS + 1_000);
     expect(html).not.toContain('data-live-countdown="ticking"');
-    expect(html).toContain("data-ceremony");
+    expect(html).not.toContain("data-ceremony");
   });
 
   it("links to the letter page once the countdown has ended", () => {
@@ -65,11 +72,34 @@ describe("LiveWaitStep on the Wait card (D5.1)", () => {
     expect(html).toContain('href="/l/AAAAAAAAAAAAAAAAAAAAAA"');
   });
 
-  it("keeps the flow on Testify without the countdown or Go to your letter", () => {
+  // Retired (spec 12, X1): this asserted data-ceremony in the Testify markup,
+  // for the same reason as the zero case above. The rest of the check stays.
+  it("keeps the wait content off Testify without the countdown or Go to your letter", () => {
     const html = render("testify", OPENS_MS + 1_000);
-    expect(html).toContain("data-ceremony");
     expect(html).not.toContain("data-live-goto");
     expect(html).not.toContain('data-live-countdown="ticking"');
+    expect(html).not.toContain("data-card");
+  });
+});
+
+// Spec 12, X1. The flow is portalled into the Reveal_Host. The server renderer
+// cannot render portals, so the portal call is pinned by reading the source.
+describe("LiveWaitStep portals the flow into the Reveal_Host (X1)", () => {
+  const source = readFileSync(
+    join(process.cwd(), "src/components/live/stepper/LiveWaitStep.tsx"),
+    "utf8",
+  );
+
+  it("uses createPortal with the host target from flowPortalTarget", () => {
+    expect(source).toContain('import { createPortal } from "react-dom";');
+    expect(source).toMatch(/flowPortalTarget\(host, step, done\)/);
+    expect(source).toMatch(
+      /createPortal\(\s*<OpeningFlow[\s\S]*?flowTarget,\s*\)/,
+    );
+  });
+
+  it("no longer wraps the flow in the letter column", () => {
+    expect(source).not.toContain("letterColumn");
   });
 });
 
