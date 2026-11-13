@@ -211,3 +211,45 @@ describe("SceneShell below slot (H1)", () => {
     }
   });
 });
+
+// H1 step 1 (phones): the landing sections clear the fixed Ghost layer below 900 px.
+describe("landing sections clear the Ghost below 900 px (H1)", () => {
+  const landingCss = readFileSync(join(here, "landing.module.css"), "utf8");
+  const sceneCss = readFileSync(
+    resolve(here, "../ceremony/scene/scene.module.css"),
+    "utf8",
+  );
+
+  /** The body of the first `@media (max-width: 899.98px)` block that holds `selector`. */
+  function phoneBlockFor(css: string, selector: string): string {
+    const media = "@media (max-width: 899.98px) {";
+    let index = css.indexOf(media);
+    while (index !== -1) {
+      const start = index + media.length;
+      let depth = 1;
+      let end = start;
+      while (end < css.length && depth > 0) {
+        if (css[end] === "{") depth++;
+        if (css[end] === "}") depth--;
+        end++;
+      }
+      const body = css.slice(start, end - 1);
+      if (body.includes(selector)) return body;
+      index = css.indexOf(media, end);
+    }
+    return "";
+  }
+
+  it("gives the ritual cards an opaque page background below 900 px", () => {
+    const block = phoneBlockFor(landingCss, ".ritualCard");
+    expect(block).toMatch(/background:\s*var\(--bg\)/);
+  });
+
+  it("paints the below-the-fold frame above the Ghost layer below 900 px", () => {
+    const block = phoneBlockFor(sceneCss, ".landingBelowFrame");
+    expect(block).toMatch(/position:\s*relative/);
+    expect(block).toMatch(/z-index:\s*3/);
+    // The Ghost layer sits at z-index 2 in scene.module.css.
+    expect(sceneCss).toMatch(/\.ghostLayer \{[^}]*z-index:\s*2/);
+  });
+});

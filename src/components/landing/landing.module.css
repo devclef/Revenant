@@ -319,6 +319,17 @@
   }
 }
 
+/* H1 step 1 (phones): below 900 px the Ghost layer is fixed to the window, so
+   ritual cards that scroll under it would show its glow behind their text. The
+   cards take the page background, so the Ghost does not show through steps 3
+   and 4. The frame that holds the sections sits above the Ghost layer in
+   scene.module.css (.landingBelowFrame). */
+@media (max-width: 899.98px) {
+  .ritualCard {
+    background: var(--bg);
+  }
+}
+
 /* H1 step 1: keep the text measure clear of the fixed Ghost at 900 px and
    wider. The section box keeps the full frame width (up to 1200 px, set in
    scene.module.css .landingBelowFrame). Only its right padding changes, so

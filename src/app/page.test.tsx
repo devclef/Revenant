@@ -227,16 +227,18 @@ describe("landing sections below the hero and heading colour (H1)", () => {
   });
 });
 
-// H1 step 2: this block used to assert the `.landingBelow h2, h3` colour rule
-// in globals.css. That rule matched no element once the sections moved into
-// SceneShell `below`, so it was deleted. The per-class colour rules in
-// landing.module.css now cover every heading. This test keeps the rule gone.
-describe("no dead landingBelow heading colour in globals.css (H1)", () => {
-  it("does not carry the removed .landingBelow h2/h3 colour rule", () => {
+// H1 step 1 (restore): globals.css is back to its origin/main content, so the
+// `.landingBelow h2, h3` colour rule is in the file again. The rule is kept
+// unchanged. It matches nothing until a `landingBelow` element is rendered, so
+// the sections keep their colour from landing.module.css.
+describe("landing heading colour rule in globals.css (H1)", () => {
+  it("keeps the .landingBelow h2 and h3 colour rule with var(--text)", () => {
     const css = readFileSync(
       fileURLToPath(new URL("./globals.css", import.meta.url)),
       "utf8",
     );
-    expect(css).not.toContain(".landingBelow");
+    const rule =
+      /\.landingBelow h2,\s*\.landingBelow h3\s*\{\s*color:\s*var\(--text\);?\s*\}/;
+    expect(css).toMatch(rule);
   });
 });
