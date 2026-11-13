@@ -230,3 +230,54 @@ describe("formatShortDate", () => {
     expect(formatShortDate("not a date")).toBe("");
   });
 });
+
+/**
+ * Spec 12 K2.2 and K2.6: a Short_Date is formed from the UTC fields, so the
+ * same instant reads the same day under every viewer timezone. The check runs
+ * under several zones, and it first confirms that the zone really changes the
+ * local calendar day. Otherwise a local-field implementation would also pass.
+ */
+describe("formatShortDate is independent of the viewer timezone", () => {
+  const originalTz = process.env.TZ;
+  // Kiritimati is UTC+14 and Adak is UTC−10, so 23:30 UTC is the next day in
+  // one and the same day in the other. Kolkata adds a half-hour offset.
+  const timezones = [
+    "UTC",
+    "Pacific/Kiritimati",
+    "America/Adak",
+    "Asia/Kolkata",
+  ] as const;
+  const instants: ReadonlyArray<readonly [string, string]> = [
+    ["2026-10-26T23:30:00Z", "26 Oct 2026"],
+    ["2026-10-27T00:30:00Z", "27 Oct 2026"],
+    ["2026-01-01T00:00:00Z", "1 Jan 2026"],
+    ["2026-12-31T23:59:59Z", "31 Dec 2026"],
+  ];
+
+  afterEach(() => {
+    if (originalTz === undefined) {
+      delete process.env.TZ;
+    } else {
+      process.env.TZ = originalTz;
+    }
+  });
+
+  it("gives the UTC calendar day for each instant under every timezone", () => {
+    for (const [instant, expected] of instants) {
+      for (const tz of timezones) {
+        process.env.TZ = tz;
+        expect(formatShortDate(instant), `${instant} under ${tz}`).toBe(
+          expected,
+        );
+      }
+    }
+  });
+
+  it("is a real test: the local day differs from the UTC day in at least one zone", () => {
+    process.env.TZ = "Pacific/Kiritimati";
+    // 23:30 UTC on 26 October is 13:30 on 27 October in UTC+14.
+    const local = new Date("2026-10-26T23:30:00Z");
+    expect(local.getDate()).toBe(27);
+    expect(local.getUTCDate()).toBe(26);
+  });
+});
