@@ -72,7 +72,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
 
 ### Group X: the live reveal (P0), target 18 November 2026
 
-- [ ] 1. X1 and X2 · Reveal_Host, full-width dark reveal and one motion control
+- [x] 1. X1 and X2 · Reveal_Host, full-width dark reveal and one motion control
   - Agent: `frontend-dev` · Depends on: none · Estimated size: ~1,400 changed lines
   - Queue position: first. Nothing is queued ahead of this task, not even task 6.
   - Scope: `src/components/live/stepper/LiveStepper.tsx`, `src/components/live/stepper/live-steps.ts` (only `StepView.host`), `src/components/live/stepper/LiveWaitStep.tsx` (or the path that holds it on `main`), `src/components/live/live.module.css`, `src/components/live/stepper/stepper.module.css`, `src/components/reveal/OpeningFlow.tsx`, `src/components/reveal/reveal.module.css`, `src/components/ceremony/CeremonyRoot.tsx`, `src/components/ceremony/live-reveal-contrast.test.ts` (new), and the `*.test.ts(x)` for each file above.
