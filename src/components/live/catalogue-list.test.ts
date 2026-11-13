@@ -3,7 +3,12 @@ import { describe, expect, it } from "vitest";
 import { isFixtureFigure } from "@/lib/figures";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
 
-import { listPickableSeries } from "./catalogue-list";
+import {
+  groupPickable,
+  listPickableSeries,
+  regionGroupFor,
+  type PickableSeries,
+} from "./catalogue-list";
 import { catalogueMetric, figureFor, fixtureMetric, makeFigures } from "./test-figures";
 
 const US = catalogueMetric("us-gasoline-regular");
@@ -129,5 +134,70 @@ describe("listPickableSeries", () => {
       expect(entry.latestPeriod).toBe(latest.period);
       expect(entry.isFixture).toBe(isFixtureFigure(latest));
     }
+  });
+});
+
+describe("regionGroupFor", () => {
+  it("maps U.S. to us", () => {
+    expect(regionGroupFor("U.S.")).toBe("us");
+  });
+
+  it("maps any EU region to eu", () => {
+    expect(regionGroupFor("EU27, weighted average")).toBe("eu");
+    expect(regionGroupFor("EU")).toBe("eu");
+  });
+
+  it("returns null for Sweden and any unknown region", () => {
+    expect(regionGroupFor("Sweden")).toBeNull();
+    expect(regionGroupFor("Mars colony")).toBeNull();
+  });
+});
+
+describe("groupPickable", () => {
+  const item = (metricId: string, region: string): PickableSeries => ({
+    metricId,
+    displayName: metricId,
+    unit: "unit",
+    region,
+    latestPeriod: "2024-01-01",
+    isFixture: false,
+  });
+
+  it("returns US then EU, whatever the input order", () => {
+    const groups = groupPickable([
+      item("eu-a", "EU27, weighted average"),
+      item("us-a", "U.S."),
+    ]);
+
+    expect(groups.map((g) => g.group)).toEqual(["us", "eu"]);
+  });
+
+  it("keeps catalogue order within each group", () => {
+    const groups = groupPickable([
+      item("us-1", "U.S."),
+      item("eu-1", "EU27, weighted average"),
+      item("us-2", "U.S."),
+      item("eu-2", "EU27, weighted average"),
+    ]);
+
+    expect(groups[0].series.map((s) => s.metricId)).toEqual(["us-1", "us-2"]);
+    expect(groups[1].series.map((s) => s.metricId)).toEqual(["eu-1", "eu-2"]);
+  });
+
+  it("leaves out an empty group", () => {
+    const groups = groupPickable([item("us-1", "U.S.")]);
+
+    expect(groups.map((g) => g.group)).toEqual(["us"]);
+    expect(groupPickable([])).toEqual([]);
+  });
+
+  it("leaves out Sweden and unknown regions rather than inventing a heading", () => {
+    const groups = groupPickable([
+      item("se-1", "Sweden"),
+      item("xx-1", "Mars colony"),
+      item("us-1", "U.S."),
+    ]);
+
+    expect(groups).toEqual([{ group: "us", series: [item("us-1", "U.S.")] }]);
   });
 });
