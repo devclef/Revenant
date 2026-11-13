@@ -6,7 +6,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { ReceiptCard, type ReceiptCardProps } from "@/components/reveal/ReceiptCard";
-import { displayFigureValue } from "@/components/reveal/display-figure";
+import { receiptFigureOf, receiptSourceOf } from "@/components/reveal/FigureLine";
+import type { FigureV1 } from "@/lib/seal-format";
 import type { PickableSeries } from "./catalogue-list";
 import { LIVE_COPY } from "./copy";
 import { FigurePicker, type FigureDetail } from "./FigurePicker";
@@ -263,7 +264,18 @@ describe("FigurePicker property: picker value matches the Receipt_Card", () => {
         fc.constantFrom(...RECEIPT_UNITS),
         (thousandths, { unit, region }) => {
           const value = decimalOf(thousandths);
-          const shown = displayFigureValue(value, unit, region);
+          const figure: FigureV1 = {
+            kind: "official",
+            metric_id: "us-gasoline-regular",
+            value,
+            unit,
+            region,
+            period: "2026-09",
+            source: "U.S. EIA",
+            series_id: "EMM_EPMR_PTE_NUS_DPG",
+            retrieved_at: "2026-10-30T14:02:11Z",
+            source_url: "https://www.eia.gov/series",
+          };
           const detail: FigureDetail = {
             value,
             sourceName: "U.S. EIA",
@@ -287,15 +299,9 @@ describe("FigurePicker property: picker value matches the Receipt_Card", () => {
             name: "Regular gasoline",
             region,
             unit,
-            then: {
-              value: shown.text,
-              unit: shown.unit,
-              period: "Sep 2026",
-              region,
-              label: "historical record",
-            },
+            then: receiptFigureOf(figure, "then", "persona"),
             now: { message: null },
-            source: { source: "U.S. EIA", seriesId: "EMM_EPMR_PTE_NUS_DPG" },
+            source: receiptSourceOf(figure, "Regular gasoline"),
           };
           const receipt = renderToStaticMarkup(
             createElement(ReceiptCard, props),
@@ -305,9 +311,8 @@ describe("FigurePicker property: picker value matches the Receipt_Card", () => {
           const receiptValue = receipt.match(
             /data-role="then"[^>]*>([^<]*)</,
           )?.[1];
-          expect(pickerValue).toBe(`${shown.text} ${shown.unit}`);
-          expect(receiptValue).toBe(shown.text);
-          expect(pickerValue?.startsWith(`${receiptValue} `)).toBe(true);
+          expect(receiptValue).toBeTruthy();
+          expect(pickerValue).toBe(`${receiptValue} ${props.then.unit}`);
         },
       ),
     );
