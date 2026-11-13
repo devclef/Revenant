@@ -369,7 +369,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
   - _Requirements: H1.1–H1.5_
 
-- [ ] 13. H2 · Four ritual cards in one row (third to be cut)
+- [x] 13. H2 · Four ritual cards in one row (third to be cut)
   - Agent: `frontend-dev` · Depends on: 12 · Estimated size: ~250 changed lines
   - Cut order position 3. If cut, the cards stay as on `main`.
   - Scope: `src/components/landing/RitualSection.tsx`, `src/components/landing/landing.module.css`, and the `*.test.ts(x)` for each file above.
