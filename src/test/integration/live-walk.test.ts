@@ -39,12 +39,17 @@
  *     result here. Until then, EXPECTED-BLOCKED at the figures step is the
  *     expected outcome.
  */
-import { mkdirSync } from "node:fs";
+import { existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
 import { chromium, type BrowserContext, type Page } from "playwright-core";
 import { afterAll, describe, expect, it } from "vitest";
 
+import {
+  WALK_SIZES,
+  stepShotName,
+  type WalkStepName,
+} from "./live-walk-helpers";
 import { WALK_MATRIX, matrixShotNames, walkEnabled } from "./live-walk-matrix";
 
 export type WalkStep = {
@@ -671,3 +676,279 @@ describe.skipIf(!walkEnabled(process.env))("live walk matrix plan", () => {
     },
   );
 });
+
+/*
+ * First five stages (Write, Press the seal, Wait, Unlock, Testify), one run per
+ * width. Each stage's Step_Shot goes to `qa-shots/live-walk/` under the name
+ * from `stepShotName`. Skipped unless WALK=1, like the walk above.
+ */
+
+/** Folder for the Step_Shots of the first five stages. Git-ignored. */
+const LIVE_WALK_SHOTS = path.resolve(QA_SHOTS_ROOT, "live-walk");
+/** How long the screen must hold still before a Step_Shot is taken. */
+const SETTLE_MS = 300;
+
+/**
+ * Steps that depend on a task not yet merged. A failure at one of these is
+ * recorded as expected-blocked instead of failed. None of the first five
+ * stages is listed: add an entry here with its task number when one is.
+ */
+const FIVE_STAGE_BLOCKED: Partial<
+  Record<WalkStepName, { task: number; reason: string }>
+> = {};
+
+type FiveStageRow = {
+  step: WalkStepName;
+  status: "pass" | "fail" | "expected-blocked";
+  observed: string;
+  shot?: string;
+  blocked?: { task: number; reason: string };
+};
+
+/**
+ * Wait until the Skip control is gone and `data-ceremony` has not changed for
+ * SETTLE_MS. Only then is a Step_Shot taken, so no motion is caught mid-way.
+ */
+async function waitForStable(page: Page): Promise<void> {
+  const deadline = Date.now() + STEP_TIMEOUT_MS;
+  let last = "";
+  let since = Date.now();
+  while (Date.now() < deadline) {
+    const state = await page.evaluate(() => {
+      const stage =
+        document
+          .querySelector("[data-ceremony]")
+          ?.getAttribute("data-ceremony") ?? "";
+      const skipShown = Array.from(document.querySelectorAll("button")).some(
+        (button) => button.textContent?.trim() === "Skip",
+      );
+      return `${stage}|${skipShown}`;
+    });
+    if (state !== last) {
+      last = state;
+      since = Date.now();
+    } else if (!state.endsWith("|true") && Date.now() - since >= SETTLE_MS) {
+      return;
+    }
+    await page.waitForTimeout(50);
+  }
+  throw new Error(
+    `The screen did not settle within ${STEP_TIMEOUT_MS} ms (last state ${last}).`,
+  );
+}
+
+async function openLetterAndUnlock(
+  c: WalkContext,
+  label: RegExp,
+): Promise<void> {
+  const goTo = c.page
+    .getByRole("link", { name: /go to your letter/i })
+    .or(c.page.getByRole("button", { name: /go to your letter/i }));
+  await goTo.first().click();
+  await c.page.waitForURL(/\/l\//, { timeout: STEP_TIMEOUT_MS });
+  await c.page.getByRole("button", { name: label }).click();
+}
+
+/** The five stages, as Step_Shot steps. Write has two shots: the form, then the opened receipts. */
+const FIVE_STAGE_ACTIONS: readonly { step: WalkStepName; act: WalkAction }[] = [
+  {
+    step: "write",
+    act: async (c) => {
+      await c.page.goto(`${BASE_URL}/demo/live`);
+      const write = c.page.locator('[data-live-step="write"]');
+      await write.waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+      await write.locator('button[aria-pressed="false"]').first().click();
+      await write.locator("textarea").first().fill(LETTER_TEXT);
+      await write.getByLabel("Question 1", { exact: true }).fill(WALK_QUESTION);
+      const removers = write.getByRole("button", {
+        name: /^Remove question \d+$/,
+      });
+      if ((await removers.count()) < 2) {
+        await write.getByRole("button", { name: /^Add a question$/ }).click();
+      }
+      const before = await removers.count();
+      await removers.last().click();
+      return `Occasion chosen, letter typed, question 1 edited, one question removed (${before} before).`;
+    },
+  },
+  {
+    step: "write-receipts",
+    act: async (c) => {
+      await c.page.getByText("Add a receipt", { exact: true }).first().click();
+      const open = await c.page
+        .getByText("Add a receipt", { exact: true })
+        .first()
+        .evaluate((el) => el.closest("details")?.open ?? false);
+      if (!open) {
+        throw new Error("The Receipts_Disclosure did not open.");
+      }
+      return "Receipts_Disclosure opened. Own-number rows left blank.";
+    },
+  },
+  {
+    step: "seal",
+    act: async (c) => {
+      await c.page.getByRole("checkbox", { name: /lost|passkey/i }).check();
+      await c.page
+        .getByRole("button", { name: /create your passkey/i })
+        .click();
+      await c.page
+        .locator('[data-live-step="created"]')
+        .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+      await c.page
+        .getByRole("button", { name: /confirm your passkey/i })
+        .click();
+      await c.page
+        .locator('[data-live-step="sealed"]')
+        .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+      const { credentials } = (await c.cdp.send("WebAuthn.getCredentials", {
+        authenticatorId: c.authenticatorId,
+      })) as { credentials: unknown[] };
+      if (credentials.length === 0) {
+        throw new Error(
+          "The virtual authenticator holds no passkey after sealing.",
+        );
+      }
+      return `Sealed. Virtual passkeys stored: ${credentials.length}.`;
+    },
+  },
+  {
+    step: "wait",
+    act: async (c) => {
+      await c.page.waitForTimeout(LOCK_WAIT_MS);
+      return `Waited ${LOCK_WAIT_MS / 1000} seconds on the sealed page.`;
+    },
+  },
+  {
+    step: "unlock",
+    act: async (c) => {
+      await openLetterAndUnlock(c, /unlock with your passkey/i);
+      await c.page
+        .locator('[data-ceremony="recall"]')
+        .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+      return "Unlocked with the passkey. Recall stage shown.";
+    },
+  },
+  {
+    step: "testify",
+    act: async (c) => {
+      const recall = c.page.locator('[data-ceremony="recall"]');
+      const field = recall.locator('textarea, input[type="text"]').first();
+      if ((await field.count()) > 0) {
+        await field.fill("Walk answer 1");
+        return "First recall question answered in a text field.";
+      }
+      const control = recall.locator("button[aria-label]").first();
+      if ((await control.count()) === 0) {
+        throw new Error("No recall answer control found on the Testify stage.");
+      }
+      await control.click();
+      return "First recall question answered with a scale control.";
+    },
+  },
+];
+
+/** Runs the five stages at one width. Stops at the first failing stage. */
+async function walkFiveStages(size: {
+  width: number;
+  height: number;
+}): Promise<FiveStageRow[]> {
+  mkdirSync(LIVE_WALK_SHOTS, { recursive: true });
+  const rows: FiveStageRow[] = [];
+
+  const browser = await chromium.launch({
+    headless: true,
+    executablePath: process.env.CHROMIUM_PATH || undefined,
+  });
+  try {
+    const context = await browser.newContext({
+      viewport: { width: size.width, height: size.height },
+    });
+    const page = await context.newPage();
+
+    // Virtual authenticator: CTAP2 internal, user-verified, PRF reported, auto-presence.
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("WebAuthn.enable");
+    const { authenticatorId } = (await cdp.send(
+      "WebAuthn.addVirtualAuthenticator",
+      {
+        options: {
+          protocol: "ctap2",
+          transport: "internal",
+          hasResidentKey: true,
+          hasUserVerification: true,
+          isUserVerified: true,
+          hasPrf: true,
+          automaticPresenceSimulation: true,
+        },
+      },
+    )) as { authenticatorId: string };
+
+    const ctx: WalkContext = {
+      page,
+      cdp,
+      authenticatorId,
+      dir: LIVE_WALK_SHOTS,
+    };
+
+    for (const stage of FIVE_STAGE_ACTIONS) {
+      try {
+        const observed = await stage.act(ctx);
+        await waitForStable(page);
+        const shot = stepShotName({
+          step: stage.step,
+          width: size.width,
+          height: size.height,
+        });
+        await page.screenshot({ path: path.join(LIVE_WALK_SHOTS, shot) });
+        rows.push({ step: stage.step, status: "pass", observed, shot });
+      } catch (error) {
+        const blocked = FIVE_STAGE_BLOCKED[stage.step];
+        rows.push({
+          step: stage.step,
+          status: blocked ? "expected-blocked" : "fail",
+          observed: `Failed: ${errorMessage(error)}`,
+          blocked,
+        });
+        break;
+      }
+    }
+    await context.close();
+  } finally {
+    await browser.close();
+  }
+  return rows;
+}
+
+describe.skipIf(!walkEnabled(process.env))(
+  "live walk: first five stages",
+  () => {
+    it.each(
+      WALK_SIZES.map((size) => [`${size.width}x${size.height}`, size] as const),
+    )(
+      "walks Write to Testify and saves Step_Shots at %s",
+      async (_label, size) => {
+        const rows = await walkFiveStages(size);
+        console.log(
+          rows
+            .map(
+              (row) =>
+                `${row.step}: ${row.status.toUpperCase()}. ${row.observed}` +
+                (row.shot ? ` Shot: qa-shots/live-walk/${row.shot}` : ""),
+            )
+            .join("\n"),
+        );
+
+        const failed = rows.filter((row) => row.status === "fail");
+        expect(failed.map((row) => `${row.step}: ${row.observed}`)).toEqual([]);
+
+        const missing = rows
+          .filter((row) => row.shot !== undefined)
+          .map((row) => row.shot as string)
+          .filter((shot) => !existsSync(path.join(LIVE_WALK_SHOTS, shot)));
+        expect(missing).toEqual([]);
+      },
+      VIEWPORT_TIMEOUT_MS,
+    );
+  },
+);
