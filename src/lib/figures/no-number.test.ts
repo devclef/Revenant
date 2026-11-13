@@ -20,7 +20,7 @@ import { describe, expect, it } from "vitest";
 
 const HERE = join(process.cwd(), "src", "lib", "figures");
 
-const MODULES = ["decimal.ts", "change.ts", "format-change.ts"];
+const MODULES = ["decimal.ts", "change.ts", "format-change.ts", "same-figure.ts"];
 
 // Remove line comments, block comments and string/template literals from TS
 // source, so the scan sees only executable code. A character-by-character pass
