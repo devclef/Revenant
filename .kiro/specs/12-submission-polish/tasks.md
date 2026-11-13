@@ -350,7 +350,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
 
 ### Group H: landing (P1)
 
-- [ ] 12. H1 · Landing sections use the full width
+- [x] 12. H1 · Landing sections use the full width
   - Agent: `frontend-dev` · Depends on: 11 · Estimated size: ~500 changed lines
   - Never cut: H1 (G3.4).
   - Scope: `src/components/ceremony/scene/SceneShell.tsx` (the optional `below` prop), `src/components/ceremony/scene/scene.module.css` (`.landingBelowFrame`), `src/app/page.tsx` (pass the four sections as `below`; strings are not touched), `src/components/landing/landing.module.css`, and the `*.test.ts(x)` for each file above. `src/app/page.tsx` also matches platform-dev; the PR changes only this wiring and the owner of the role confirms it before the task is claimed if `pr_policy` objects.
