@@ -84,7 +84,6 @@ export const RETIRED_PHRASES = [
   },
 ];
 
-const PICK_UP = "Pick up the letter";
 const NEXT_QUESTION = "Next question";
 const RECORD = "Record my answers";
 const NO_ANSWER = "No answer";
@@ -225,9 +224,13 @@ async function scrollWidth(page) {
   return page.evaluate(() => ({ sw: document.documentElement.scrollWidth, cw: document.documentElement.clientWidth }));
 }
 
-/** The persona page's first Stage, the intact Stage with "Pick up the letter" (A6, J2). */
+/**
+ * The persona page's First_Step (spec 10 C1): the page opens straight on
+ * Testify, so the first Stage is `recall`, with the Testify_Context above the
+ * first question. There is no pick-up Stage and no "Pick up the letter" button.
+ */
 async function waitForFirstStage(page) {
-  return waitForStage(page, "intact");
+  return waitForStage(page, "recall");
 }
 
 async function checkJ1(ctx) {
@@ -271,9 +274,9 @@ async function checkJ3(page, ctx) {
 }
 
 /**
- * J2 walk: open, wait for intact, "Pick up the letter", "No answer" on every
- * question, submit, break the seal, the figures button, then close. Calls
- * `atStage` at each Stage start so J6, J7 and J8 run there.
+ * J2 walk: open straight on the recall Stage (spec 10 C1, the persona First_Step),
+ * "No answer" on every question, submit, break the seal, the figures button,
+ * then close. Calls `atStage` at each Stage start so J5, J6, J7 and J8 run there.
  */
 async function personaReveal(page, ctx, key, size, atStage) {
   const route = `/demo/personas/${key}`;
@@ -282,14 +285,6 @@ async function personaReveal(page, ctx, key, size, atStage) {
   const r = await page.goto(`${ctx.origin}${route}`, { waitUntil: "load" });
   if (!r || r.status() !== 200) return fail(`HTTP ${r?.status() ?? "none"}`);
   if (!(await waitForFirstStage(page))) return fail(`first Stage not reached (data-ceremony=${await stageOf(page)})`);
-  await atStage("intact");
-  const pickUp = page.getByRole("button", { name: PICK_UP, exact: true });
-  try {
-    await pickUp.click({ timeout: STAGE_TIMEOUT_MS });
-  } catch {
-    return fail(`no "${PICK_UP}" button in intact`);
-  }
-  if (!(await waitForStage(page, "recall"))) return fail(`"${PICK_UP}" does not reach recall`);
   await atStage("recall");
   for (let i = 0; i < 25; i += 1) {
     if ((await stageOf(page)) !== "recall") break;
@@ -423,8 +418,8 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
           const { context, page } = await newPage(browser, ctx.origin, REVEAL_SIZE);
           try {
             await personaReveal(page, ctx, key, REVEAL_SIZE, async (stage) => {
-              await sleep(stage === "intact" ? 2600 : 800);
-              if (stage === "intact") {
+              await sleep(stage === "recall" ? 2600 : 800);
+              if (stage === "recall") {
                 const w = await scrollWidth(page);
                 if (wanted.has("J5")) ctx.add(res("J5", `${route} ${stage} ${REVEAL_SIZE}`, w.sw <= w.cw ? "pass" : "fail", `scrollWidth=${w.sw} clientWidth=${w.cw}`, "scrollWidth<=clientWidth"));
               }
