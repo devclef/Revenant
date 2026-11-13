@@ -325,7 +325,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
   - _Requirements: K1.1–K1.5, K2.1–K2.6, K3.1–K3.6_
 
-- [ ] 11. K4 · Figures grouped by region (first to be cut)
+- [x] 11. K4 · Figures grouped by region (first to be cut)
   - Agent: `frontend-dev` · Depends on: 10 · Estimated size: ~400 changed lines
   - Cut order position 1. If cut, the picker keeps one list with the single Picker_Note.
   - Scope: `src/components/live/catalogue-list.ts`, `src/components/live/FigurePicker.tsx`, `src/components/live/copy.ts` (`regionUs`, `regionEu`), `src/components/live/live.module.css`, and the `*.test.ts(x)` for each file above.
