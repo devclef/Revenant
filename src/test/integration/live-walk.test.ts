@@ -45,6 +45,8 @@ import path from "node:path";
 import { chromium, type BrowserContext, type Page } from "playwright-core";
 import { afterAll, describe, expect, it } from "vitest";
 
+import { WALK_MATRIX, matrixShotNames, walkEnabled } from "./live-walk-matrix";
+
 export type WalkStep = {
   name: string;
   expected: string;
@@ -653,4 +655,20 @@ describe.skipIf(process.env.WALK !== "1")("live walk replay", () => {
       );
     }
   }
+});
+
+/**
+ * Replay plan (Q1 and Q2). Skipped unless WALK=1. Each run of the matrix lists
+ * the Step_Shot names it must produce. The browser walk for these runs is added
+ * in a later step; this block only checks the plan is complete.
+ */
+describe.skipIf(!walkEnabled(process.env))("live walk matrix plan", () => {
+  it.each(WALK_MATRIX.map((entry) => [entry.id, entry] as const))(
+    "plans every Step_Shot for %s",
+    (_id, entry) => {
+      const names = matrixShotNames(entry);
+      expect(names).toHaveLength(10);
+      expect(new Set(names).size).toBe(names.length);
+    },
+  );
 });
