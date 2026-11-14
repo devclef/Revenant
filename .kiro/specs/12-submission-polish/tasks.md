@@ -443,7 +443,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
   - Validation: `bash scripts/check.sh`; `git diff --exit-code -- docs/kiro-writeup.md`.
   - _Requirements: D3.1–D3.7_
 
-- [ ] 17. D1 · README (last task before the final walk)
+- [x] 17. D1 · README (last task before the final walk)
   - Agent: `platform-dev` · Depends on: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16 · Estimated size: ~200 changed lines
   - Queue position: last before task 18 (G3.1, D1.7). Every count it states is recomputed at the final SHA, so it waits for every other task, including any that was cut and closed unmerged.
   - Scope: `README.md` only. Edit the lines in place; do not re-create the file (D1.5).
