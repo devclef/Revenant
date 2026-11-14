@@ -424,6 +424,26 @@ describe("checkHorizontalScroll and checkClippedText", () => {
     expect(clipped.ok).toBe(false);
     expect(clipped.message).toContain('"Cut off"');
   });
+
+  it("does not flag a visually hidden 1px container (the stepper and the announcer)", () => {
+    const hidden = checkClippedText([
+      {
+        tag: "span",
+        text: "Press the seal",
+        scrollWidth: 86,
+        clientWidth: 1,
+        overflowX: "hidden",
+      },
+      {
+        tag: "p",
+        text: "Step 1 of 6: Write",
+        scrollWidth: 135,
+        clientWidth: 1,
+        overflowX: "hidden",
+      },
+    ]);
+    expect(hidden.ok).toBe(true);
+  });
 });
 
 describe("checkStepIndicator", () => {

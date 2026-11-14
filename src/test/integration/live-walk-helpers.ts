@@ -402,11 +402,20 @@ export function checkHorizontalScroll(
 /**
  * Text clipped by its container (Q1.6): a container with overflow not visible
  * whose content is wider than its box, by more than one pixel.
+ *
+ * A container only one pixel wide (clientWidth 1 or less) is visually hidden,
+ * not clipped. The live stepper hides the names of steps not yet reached, and
+ * the live announcer hides its text, both with a 1px box and `clip: rect(0 0 0 0)`
+ * (live.module.css `.visuallyHidden`; the stepper's `.name`). Nothing the reader
+ * sees is cut off there, so those containers are not flagged.
  */
 export function checkClippedText(samples: readonly ClippedSample[]): StepCheck {
   const expected = "no text clipped by its container";
   const clipped = samples.filter(
-    (s) => s.overflowX !== "visible" && s.scrollWidth > s.clientWidth + 1,
+    (s) =>
+      s.overflowX !== "visible" &&
+      s.clientWidth > 1 &&
+      s.scrollWidth > s.clientWidth + 1,
   );
   if (clipped.length === 0) {
     return { ok: true, expected, message: `PASS ${expected}` };
