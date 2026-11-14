@@ -5,13 +5,16 @@
 ## Code under test
 
 - `origin/main`: `d6e013d` ("Tick completed spec tasks [skip ci]"), fetched 2026-11-14.
-- Branch `kirocrew/task/TASK_f453c78a_1794617838611514918` before this record: `db5e038`.
-- The worktree is not at `origin/main` and cannot be fast-forwarded to it. `origin/main` is an ancestor of the branch. The branch has five commits that `origin/main` does not have:
+- Branch `kirocrew/task/TASK_f453c78a_1794617838611514918` before the commit that publishes this record: `693c1c0`.
+- The worktree is not at `origin/main` and cannot be fast-forwarded to it. `origin/main` is an ancestor of the branch. The branch has eight commits that `origin/main` does not have:
   - `55cdd6b` [platform-dev] Live_Walk: a step with no Step_Shot fails
   - `0c3f0f1` [platform-dev] Live_Walk: every expected Step_Shot must be named in the run record
   - `d245f47` [platform-dev] Live_Walk: visually hidden 1px containers are not clipped text
   - `466c72c` [platform-dev] Live_Walk: read the receipts disclosure and press Next before the seal
   - `db5e038` Q1.7 Final Live_Walk run record (issue #399)
+  - `13e3a3d` Q1.7 Live_Walk run record (issue #399): walk not run, main precondition failed
+  - `739f366` [platform-dev] Q1.7 Production_Check: Journey_Check run against revenant.devclef.se (issue #399)
+  - `693c1c0` [platform-dev] Q1.7 Production_Check: regenerate Journey_Check lines from full script output (issue #399)
 - Setup PRs: #407 (`d3dc80f`, Q1 and Q2 Live_Walk setup) and #420 (`bbc7e2b`, D1 README) are on `origin/main`.
 
 ## Why the walk did not run
