@@ -386,7 +386,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
   - Validation: `bash scripts/check.sh`; route budgets from `node scripts/check-js-budget.mjs` after `npm run build`.
   - _Requirements: H2.1–H2.7_
 
-- [ ] 14. Layout-check thresholds, landing and ritual checks, and the Q1.8 J-check
+- [x] 14. Layout-check thresholds, landing and ritual checks, and the Q1.8 J-check
   - Agent: `platform-dev` · Depends on: 7, 12, 13 · Estimated size: ~500 changed lines
   - Scope: `tools/qa/layout-check.mjs`, `tools/qa/journey-check.mjs`, and the tests that cover them. If task 13 was cut, the ritual check is omitted and the PR says so.
   - Design sections: "Testing Strategy" (layout checks), "Q1 and Q2" (Q1.8), "W1.6: viewport arithmetic".
