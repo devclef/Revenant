@@ -47,7 +47,7 @@ So Revenant adds one step the Académie never needed. Before the seal breaks, yo
 
 ## The ritual
 
-1. **Write.** A letter to your future self, plain text, up to 5,000 characters. Pick an Occasion if it helps. Add up to three questions and an optional receipt: a price figure from an official source for your region, with its value, source, period, unit and region. A letter with no figures seals the same way.
+1. **Write.** A letter to your future self, plain text, up to 5,000 characters <!-- 5000: letter length check in src/lib/personas/letter-checks.ts and src/lib/seal-format/v1/payload.ts; checked 14 November 2026, commit 7923112 -->. Pick an Occasion if it helps. Add up to three questions <!-- 3: AUTHOR_QUESTIONS_MAX in src/components/live/author-questions.ts; same date and commit --> and an optional receipt: a price figure from an official source for your region, with its value, source, period, unit and region. A letter with no figures seals the same way.
 2. **Press the seal.** Choose an opening date at least three months away and lock the letter with your passkey. The live demo locks it for 30 seconds and says it is a rehearsal. From then on the letter is sealed and unreadable, even to you, and nothing inside can change.
 3. **Testify.** After the opening date you unlock the letter. Before a single word is shown, Revenant asks what you remember. Your testimony is recorded first.
 4. **See the receipts.** What you remembered, then what you actually wrote, then any numbers then and now with the plain change between them. A letter with no figures ends with what you wrote. No commentary. No "soared", no "finally". Just the record.
@@ -58,9 +58,9 @@ This is not a slide deck. It runs. The sealing-and-opening ceremony, the live pa
 
 - **The reveal ceremony** — the dark room, the light finding the soil, the ghost rising with your letter, the recall scale, the seal breaking, and the then-vs-now figures. It degrades gracefully: the first render is the settled scene with no JavaScript, and `prefers-reduced-motion` turns the whole sequence off.
 - **Browser-side crypto** — WebAuthn passkeys with the PRF extension, a double-wrapped content key, a per-letter server time lock, an optional backup key card, and an SHA-256 hash over the canonical envelope that's verified again at opening.
-- **The persona demos** — three fictional authors <!-- 3: ls content/personas/letters/*.txt, 14 November 2026, commit 7923112 --> whose letters were written as of 12 May 2024 and sealed in advance, each openable by a judge in two minutes with no passkey. [Maya](https://revenant.devclef.se/demo/personas/us-maya) (opens 5 November 2024) and [Tomás](https://revenant.devclef.se/demo/personas/eu-tomas) (opens 9 June 2024) carry price receipts. [Priya](https://revenant.devclef.se/demo/personas/us-priya) (opens 5 November 2024) is a text letter with two questions she left for herself and no figures.
+- **The persona demos** — three fictional authors <!-- 3: ls content/personas/letters/*.txt, 14 November 2026, commit 7923112 --> whose letters were written as of 12 May 2024 and sealed in advance, each openable by a judge in two minutes with no passkey. [Maya](https://revenant.devclef.se/demo/personas/us-maya) (opens 5 November 2024) and [Tomás](https://revenant.devclef.se/demo/personas/eu-tomas) (opens 9 June 2024) carry price receipts. [Priya](https://revenant.devclef.se/demo/personas/us-priya) (opens 5 November 2024) is a text letter with two questions <!-- 2: author_questions for us-priya in content/personas/personas.json; checked 14 November 2026, commit 7923112 --> she left for herself and no figures.
 - **Occasions, optional receipts and the rehearsal** — the Write step offers five Occasions (the year ahead, work, family, a decision, blank) <!-- 5: id entries in src/components/live/occasions.ts, 14 November 2026, commit 7923112 -->, a letter seals with no figures at all, and the 30-second live demo labels itself a rehearsal.
-- **The live demo** at [`/demo/live`](https://revenant.devclef.se/demo/live) is a rehearsal of a letter that would normally stay sealed for months. It runs six steps: Write, Press the seal, Wait, Testify, Break the seal, See the receipts. The lock lasts 30 seconds, and the passkey is real: it shows up in your password manager, named so it's obviously a Revenant demo.
+- **The live demo** at [`/demo/live`](https://revenant.devclef.se/demo/live) is a rehearsal of a letter that would normally stay sealed for months. It runs six steps: Write, Press the seal, Wait, Testify, Break the seal, See the receipts. <!-- 6: LIVE_STEPS in src/components/live/stepper/live-steps.ts has six entries; 30 seconds: LOCK_DURATION_MS = 30_000 in src/lib/seal-format/live-constants.ts; checked 14 November 2026, commit 7923112 --> The lock lasts 30 seconds, and the passkey is real: it shows up in your password manager, named so it's obviously a Revenant demo.
 - **Real figures** — adapters for the US EIA and the European Commission Weekly Oil Bulletin, each returning figures with full provenance and never inventing, interpolating or currency-converting anything.
 - **The database** — PostgreSQL with `BEFORE UPDATE OR DELETE` triggers that make sealed rows physically immutable. Application code *cannot* change a sealed letter; the trigger raises an exception.
 
@@ -119,6 +119,7 @@ Here's the part we're genuinely proud of: **almost none of this code was written
 
 ```mermaid
 flowchart TB
+    %% 8 docs: ls .kiro/steering | wc -l; 3 fix runs: MAX_FIX_ATTEMPTS in tools/dispatcher/revenant_dispatch.py; checked 14 November 2026, commit 7923112. The 5 min cron interval is the operator's schedule, outside this repo, and is not computed.
     subgraph HUMANS["Humans write the rules"]
         direction LR
         STEER["📜 Steering<br/>8 docs of non-negotiables"]
@@ -177,7 +178,7 @@ The setup works like a real engineering org:
   - `data-dev` — source adapters, the figure catalogue, the figures API.
   - `frontend-dev` — pages, the ceremony, cards, `.ics`, and every word of user-facing copy.
   - `qa` — an independent reviewer with a real headless browser, who clicks through each PR and writes a verdict before anything merges.
-- **A dispatcher** (a Kiro Crew cron job) runs the loop: it claims ready issues, starts a build run as the right role, opens a pull request, waits for CI, then starts a QA run on the result. Pass and it squash-merges; fail and it feeds the logs back for a fix run. Three failed fixes and it stops and asks a human.
+- **A dispatcher** (a Kiro Crew cron job) runs the loop: it claims ready issues, starts a build run as the right role, opens a pull request, waits for CI, then starts a QA run on the result. Pass and it squash-merges; fail and it feeds the logs back for a fix run. Three failed fixes <!-- 3: MAX_FIX_ATTEMPTS in tools/dispatcher/revenant_dispatch.py; checked 14 November 2026, commit 7923112 --> and it stops and asks a human.
 - **Hooks** enforce the steering docs at the moment code is written — a tone check that blocks judgemental language, a path-scope check that keeps each agent inside its lane, and crypto-test and ceremony-truth checks.
 
 Commits are tagged by their author: `[frontend-dev]`, `[crypto-dev]`, `[data-dev]`, `[platform-dev]`. The humans wrote the steering, the specs and the dispatcher. The agents wrote the product.
