@@ -402,11 +402,20 @@ export function checkHorizontalScroll(
 /**
  * Text clipped by its container (Q1.6): a container with overflow not visible
  * whose content is wider than its box, by more than one pixel.
+ *
+ * A container only one pixel wide (clientWidth 1 or less) is visually hidden,
+ * not clipped. The live stepper hides the names of steps not yet reached, and
+ * the live announcer hides its text, both with a 1px box and `clip: rect(0 0 0 0)`
+ * (live.module.css `.visuallyHidden`; the stepper's `.name`). Nothing the reader
+ * sees is cut off there, so those containers are not flagged.
  */
 export function checkClippedText(samples: readonly ClippedSample[]): StepCheck {
   const expected = "no text clipped by its container";
   const clipped = samples.filter(
-    (s) => s.overflowX !== "visible" && s.scrollWidth > s.clientWidth + 1,
+    (s) =>
+      s.overflowX !== "visible" &&
+      s.clientWidth > 1 &&
+      s.scrollWidth > s.clientWidth + 1,
   );
   if (clipped.length === 0) {
     return { ok: true, expected, message: `PASS ${expected}` };
@@ -656,4 +665,37 @@ export function advanceSettle(
     return { next: { last: state, since: now }, settled: false };
   }
   return { next: prev, settled: now - prev.since >= settleMs };
+}
+
+/**
+ * A step with no saved Step_Shot fails (Q2.6, Q2.7): the walk never claims a
+ * step passed without its shot. Returns the defect, or null when the shot exists.
+ */
+export function missingShotDefect(input: {
+  step: WalkStepName;
+  shot: string | undefined;
+  expectedName: string;
+  suspectedFile: string;
+}): WalkDefect | null {
+  if (input.shot !== undefined) return null;
+  return {
+    step: input.step,
+    expected: `A Step_Shot named ${input.expectedName} is saved for this step.`,
+    observed: "No Step_Shot was saved for this step.",
+    suspectedFile: input.suspectedFile,
+  };
+}
+
+/** The prefix of each Step_Shot line in the run record. */
+export const RECORD_SHOT_PREFIX = "Shot: qa-shots/live-walk/";
+
+/**
+ * The expected Step_Shot names that the run record does not name. The run
+ * record is the printed line per step; a shot missing from it is a FAIL.
+ */
+export function shotsMissingFromRecord(
+  record: string,
+  expected: readonly string[],
+): string[] {
+  return expected.filter((name) => !record.includes(RECORD_SHOT_PREFIX + name));
 }

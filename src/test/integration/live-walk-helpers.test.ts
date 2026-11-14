@@ -22,6 +22,8 @@ import {
   defectsFromChecks,
   expectedShotNames,
   findPlaceholderFigures,
+  missingShotDefect,
+  shotsMissingFromRecord,
   parseCssColor,
   recordStepResult,
   reportMissingShots,
@@ -422,6 +424,26 @@ describe("checkHorizontalScroll and checkClippedText", () => {
     expect(clipped.ok).toBe(false);
     expect(clipped.message).toContain('"Cut off"');
   });
+
+  it("does not flag a visually hidden 1px container (the stepper and the announcer)", () => {
+    const hidden = checkClippedText([
+      {
+        tag: "span",
+        text: "Press the seal",
+        scrollWidth: 86,
+        clientWidth: 1,
+        overflowX: "hidden",
+      },
+      {
+        tag: "p",
+        text: "Step 1 of 6: Write",
+        scrollWidth: 135,
+        clientWidth: 1,
+        overflowX: "hidden",
+      },
+    ]);
+    expect(hidden.ok).toBe(true);
+  });
 });
 
 describe("checkStepIndicator", () => {
@@ -757,5 +779,57 @@ describe("advanceSettle (stable-wait condition)", () => {
     const first = advanceSettle(start, "recall|0", 0, 300);
     const changed = advanceSettle(first.next, "marks|0", 5000, 300);
     expect(changed.settled).toBe(false);
+  });
+});
+
+describe("missingShotDefect (a step with no Step_Shot fails)", () => {
+  it("returns null when the Step_Shot was saved", () => {
+    expect(
+      missingShotDefect({
+        step: "letter",
+        shot: "live-08-letter-1440x900.png",
+        expectedName: "live-08-letter-1440x900.png",
+        suspectedFile: "src/components/ceremony/letter/",
+      }),
+    ).toBeNull();
+  });
+
+  it("returns a defect naming the expected shot when none was saved", () => {
+    const defect = missingShotDefect({
+      step: "close",
+      shot: undefined,
+      expectedName: "live-10-close-390x844.png",
+      suspectedFile: "src/components/ceremony/close/",
+    });
+    expect(defect).toEqual({
+      step: "close",
+      expected: "A Step_Shot named live-10-close-390x844.png is saved for this step.",
+      observed: "No Step_Shot was saved for this step.",
+      suspectedFile: "src/components/ceremony/close/",
+    });
+  });
+});
+
+describe("shotsMissingFromRecord (each shot is named in the run record)", () => {
+  it("returns nothing when every expected shot is named", () => {
+    const record =
+      "write: PASS. Shot: qa-shots/live-walk/live-01-write-1440x900.png\n" +
+      "seal: PASS. Shot: qa-shots/live-walk/live-03-seal-1440x900.png";
+    expect(
+      shotsMissingFromRecord(record, [
+        "live-01-write-1440x900.png",
+        "live-03-seal-1440x900.png",
+      ]),
+    ).toEqual([]);
+  });
+
+  it("lists an expected shot that the record does not name", () => {
+    const record = "write: PASS. Shot: qa-shots/live-walk/live-01-write-1440x900.png";
+    expect(
+      shotsMissingFromRecord(record, [
+        "live-01-write-1440x900.png",
+        "live-10-close-1440x900.png",
+      ]),
+    ).toEqual(["live-10-close-1440x900.png"]);
   });
 });

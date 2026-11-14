@@ -43,6 +43,9 @@ import {
   checkRunShots,
   checkStepSnapshot,
   defectsFromChecks,
+  missingShotDefect,
+  RECORD_SHOT_PREFIX,
+  shotsMissingFromRecord,
   recordStepResult,
   shotsWrittenSince,
   skipLinkBlocksSettle,
@@ -453,6 +456,14 @@ async function runWalk(
       } catch (error) {
         observed += ` (screenshot failed: ${errorMessage(error)})`;
       }
+      // A step with no Step_Shot counts as failed, not passed (Q2.6, Q2.7).
+      const noShot = missingShotDefect({
+        step: stage.step,
+        shot,
+        expectedName: shotName,
+        suspectedFile: "src/test/integration/live-walk.test.ts",
+      });
+      if (noShot) defects.push(noShot);
 
       // The follow-on action runs only after the stage has been checked and shot.
       if (stage.afterShot && !actionFailed && defects.length === 0) {
@@ -500,7 +511,7 @@ function formatStageRows(rows: readonly StageRow[]): string {
           : "FAIL";
       const lines = [
         `${r.step}: ${label}. ${r.observation}` +
-          (row.shot ? ` Shot: qa-shots/live-walk/${row.shot}` : ""),
+          (row.shot ? ` ${RECORD_SHOT_PREFIX}${row.shot}` : ""),
       ];
       for (const defect of r.defects) {
         lines.push(
@@ -619,9 +630,9 @@ function fiveStageActions(figure: boolean): readonly StageAction[] {
           .first()
           .click();
         const open = await c.page
-          .getByText("Add a receipt", { exact: true })
+          .locator("details[data-receipts-disclosure]")
           .first()
-          .evaluate((el) => el.closest("details")?.open ?? false);
+          .evaluate((el) => (el as HTMLDetailsElement).open);
         if (!open) {
           throw new Error("The Receipts_Disclosure did not open.");
         }
@@ -644,7 +655,15 @@ function fiveStageActions(figure: boolean): readonly StageAction[] {
     {
       step: "seal",
       act: async (c) => {
-        await c.page.getByRole("checkbox", { name: /lost|passkey/i }).check();
+        // Write and receipts share one stepper step. Next moves the stepper to
+        // Press the seal, where the lost-passkey checkbox appears.
+        const lostBox = c.page.getByRole("checkbox", { name: /lost|passkey/i });
+        if (!(await lostBox.isVisible())) {
+          await c.page
+            .getByRole("button", { name: LIVE_COPY.nextButton, exact: true })
+            .click();
+        }
+        await lostBox.check();
         // The live button is LIVE_COPY.createButton (WriteForm.tsx), not the
         // older "create your passkey" wording.
         await c.page
@@ -820,22 +839,23 @@ describe.skipIf(!walkEnabled(process.env))(
         const stages = fiveStageActions(run.figure);
         const runStartMs = Date.now();
         const rows = await runWalk(run, stages);
-        console.log(formatStageRows(rows));
+        const record = formatStageRows(rows);
+        console.log(record);
 
-        const shots = shotReport(
-          matrixShotNames(
-            entry,
-            stages.map((stage) => stage.step),
-          ),
-          runStartMs,
+        const expected = matrixShotNames(
+          entry,
+          stages.map((stage) => stage.step),
         );
+        const shots = shotReport(expected, runStartMs);
         console.log(shots.lines.join("\n"));
+        const unnamed = shotsMissingFromRecord(record, expected);
 
         const failed = rows.filter((row) => !row.result.pass && !row.blocked);
         expect(
           failed.map((row) => `${row.result.step}: ${row.result.observation}`),
         ).toEqual([]);
         expect(shots.missing).toEqual([]);
+        expect(unnamed).toEqual([]);
       },
       VIEWPORT_TIMEOUT_MS,
     );
@@ -871,22 +891,23 @@ describe.skipIf(!walkEnabled(process.env))(
         ];
         const runStartMs = Date.now();
         const rows = await runWalk(run, stages);
-        console.log(formatStageRows(rows));
+        const record = formatStageRows(rows);
+        console.log(record);
 
-        const shots = shotReport(
-          runShotNames(
-            run,
-            stages.map((stage) => stage.step),
-          ),
-          runStartMs,
+        const expected = runShotNames(
+          run,
+          stages.map((stage) => stage.step),
         );
+        const shots = shotReport(expected, runStartMs);
         console.log(shots.lines.join("\n"));
+        const unnamed = shotsMissingFromRecord(record, expected);
 
         const failed = rows.filter((row) => !row.result.pass && !row.blocked);
         expect(
           failed.map((row) => `${row.result.step}: ${row.result.observation}`),
         ).toEqual([]);
         expect(shots.missing).toEqual([]);
+        expect(unnamed).toEqual([]);
       },
       VIEWPORT_TIMEOUT_MS,
     );
