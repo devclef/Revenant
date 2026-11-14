@@ -43,6 +43,7 @@ import {
   checkRunShots,
   checkStepSnapshot,
   defectsFromChecks,
+  missingShotDefect,
   recordStepResult,
   shotsWrittenSince,
   skipLinkBlocksSettle,
@@ -453,6 +454,14 @@ async function runWalk(
       } catch (error) {
         observed += ` (screenshot failed: ${errorMessage(error)})`;
       }
+      // A step with no Step_Shot counts as failed, not passed (Q2.6, Q2.7).
+      const noShot = missingShotDefect({
+        step: stage.step,
+        shot,
+        expectedName: shotName,
+        suspectedFile: "src/test/integration/live-walk.test.ts",
+      });
+      if (noShot) defects.push(noShot);
 
       // The follow-on action runs only after the stage has been checked and shot.
       if (stage.afterShot && !actionFailed && defects.length === 0) {

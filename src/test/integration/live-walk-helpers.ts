@@ -657,3 +657,22 @@ export function advanceSettle(
   }
   return { next: prev, settled: now - prev.since >= settleMs };
 }
+
+/**
+ * A step with no saved Step_Shot fails (Q2.6, Q2.7): the walk never claims a
+ * step passed without its shot. Returns the defect, or null when the shot exists.
+ */
+export function missingShotDefect(input: {
+  step: WalkStepName;
+  shot: string | undefined;
+  expectedName: string;
+  suspectedFile: string;
+}): WalkDefect | null {
+  if (input.shot !== undefined) return null;
+  return {
+    step: input.step,
+    expected: `A Step_Shot named ${input.expectedName} is saved for this step.`,
+    observed: "No Step_Shot was saved for this step.",
+    suspectedFile: input.suspectedFile,
+  };
+}

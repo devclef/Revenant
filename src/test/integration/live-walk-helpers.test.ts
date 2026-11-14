@@ -22,6 +22,7 @@ import {
   defectsFromChecks,
   expectedShotNames,
   findPlaceholderFigures,
+  missingShotDefect,
   parseCssColor,
   recordStepResult,
   reportMissingShots,
@@ -757,5 +758,33 @@ describe("advanceSettle (stable-wait condition)", () => {
     const first = advanceSettle(start, "recall|0", 0, 300);
     const changed = advanceSettle(first.next, "marks|0", 5000, 300);
     expect(changed.settled).toBe(false);
+  });
+});
+
+describe("missingShotDefect (a step with no Step_Shot fails)", () => {
+  it("returns null when the Step_Shot was saved", () => {
+    expect(
+      missingShotDefect({
+        step: "letter",
+        shot: "live-08-letter-1440x900.png",
+        expectedName: "live-08-letter-1440x900.png",
+        suspectedFile: "src/components/ceremony/letter/",
+      }),
+    ).toBeNull();
+  });
+
+  it("returns a defect naming the expected shot when none was saved", () => {
+    const defect = missingShotDefect({
+      step: "close",
+      shot: undefined,
+      expectedName: "live-10-close-390x844.png",
+      suspectedFile: "src/components/ceremony/close/",
+    });
+    expect(defect).toEqual({
+      step: "close",
+      expected: "A Step_Shot named live-10-close-390x844.png is saved for this step.",
+      observed: "No Step_Shot was saved for this step.",
+      suspectedFile: "src/components/ceremony/close/",
+    });
   });
 });
