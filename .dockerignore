@@ -21,7 +21,14 @@ dist/
 # Project tooling and docs not needed at build time
 .kiro/
 docs/
-tools/
+tools/*
+# ...except the two QA modules that src/ tests import. `next build` type-checks
+# every file under tsconfig's include, so these must be in the build context.
+# They import only Node built-ins and each other.
+!tools/qa
+tools/qa/*
+!tools/qa/layout-check.mjs
+!tools/qa/journey-check.mjs
 scripts/
 # ...except the migration entrypoint, which the runtime image invokes
 # (`node scripts/migrate.mjs`). Un-ignore just that one file.

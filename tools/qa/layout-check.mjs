@@ -56,6 +56,18 @@
 //   FONT1 fonts-loaded        the sans face loaded and on <body> on every page; the serif face
 //                             loaded and on the Letter_Text where the letter shows (runFontCheck,
 //                             exported). FONT2 fonts-sans-ui: every h1 to h3 and button in sans.
+// Spec 12 Write-step checks (spec 12 design.md "W1.6: viewport arithmetic"), on /demo/live.
+// They replace the spec 11 L3 thresholds, which needed every primary control, Next
+// included, in view at phone sizes. Next's bottom is printed as a note, never asserted.
+//   W1.6  write-step        at 1440x900: the Letter_Field shows 10 lines in view, its top is
+//                           in view and the Occasion chips are in view. At phone sizes PH1
+//                           asks for the field's top and 6 lines in view instead.
+//   W1.7  write-step        at 360x640: the document and the Write card have no sideways
+//                           scroll. Next's bottom is printed as a note at every size.
+//   H1.6  landing-sections  at 1440x900 on /: every section's content box is at least 60%
+//                           of the viewport width. Below 60% is a BLOCKER.
+//   H2.7  ritual            at 1440x900 on /: the ritual list holds exactly four items in one
+//                           row. Any other count or row layout is a BLOCKER.
 // A spec 09 check prints BLOCKER only when its ID is passed with --require; any other
 // failure prints polish. A spec 09 check whose element is not on the page prints a note.
 //
@@ -167,6 +179,23 @@ const PH_HEADLINE_LINES_OTHER = 2;
 const PH6_SIZE = "390x844";
 const PH6_SCREENS = 3;
 const ST_LINES_PHONE_MAX = 2;
+// Spec 12 W1.6 and W1.7 (design.md "W1.6: viewport arithmetic"). The Write step is
+// the first card of /demo/live. Lines are counted only where the whole line is in
+// the window. Next is reported, not asserted, at 1440x900 and at the phone sizes.
+const WRITE_CARD = '[data-card="live-step-write"]';
+const W16_SIZE = "1440x900";
+const W16_LINES_DESKTOP = 10;
+const W16_LINES_PHONE = 6;
+const W17_SIDEWAYS_SIZE = "360x640";
+// H1.6 (spec 11 H1.6, spec 12 design.md "Layout checks"): on / at 1440x900, no section's
+// content box may be narrower than 60% of the viewport width.
+const H16_SIZE = "1440x900";
+const H16_RATIO_MIN = 0.6;
+// H2.7 (spec 12 design.md "Layout checks"): on / at 1440x900 the ritual list is four items
+// in one row. Items whose tops differ by at most H27_ROW_TOLERANCE_PX share a row.
+const H27_SIZE = "1440x900";
+const H27_ITEMS = 4;
+const H27_ROW_TOLERANCE_PX = 1;
 // Spec 08 thresholds (spec 08 requirements R2, R3, R8, R27).
 const PHONE_WIDTH_MAX = 600;
 const LETTER_EM_MIN = 28;
@@ -749,6 +778,36 @@ const CTA1_READ = () => {
   };
 };
 
+// H1.6: the content box width of every visible section on /, in px. The content box is
+// the border box less padding and borders.
+const H16_READ = () =>
+  [...document.querySelectorAll("section")]
+    .filter((el) => {
+      const r = el.getBoundingClientRect();
+      return r.width > 0 && r.height > 0;
+    })
+    .map((el) => {
+      const cs = getComputedStyle(el);
+      const edges = ["paddingLeft", "paddingRight", "borderLeftWidth", "borderRightWidth"].reduce((sum, k) => sum + (parseFloat(cs[k]) || 0), 0);
+      return {
+        name: (el.getAttribute("aria-labelledby") ?? (el.hasAttribute("data-landing-hero") ? "hero" : "section")).slice(0, 30),
+        width: el.getBoundingClientRect().width - edges,
+      };
+    });
+
+// H2.7: the visible cards of the ritual list on /, with their tops. Missing when the page
+// has no ritual list.
+const H27_READ = () => {
+  const list = document.querySelector('[data-block="ritual"]');
+  if (!list) return { missing: true };
+  const items = [...list.children]
+    .filter((el) => el.tagName === "LI")
+    .map((el) => el.getBoundingClientRect())
+    .filter((r) => r.width > 0 && r.height > 0)
+    .map((r) => ({ top: r.top }));
+  return { missing: false, items };
+};
+
 // DX1 (B2.4): every persona open link on /demo inside the viewport at the top.
 const DX1_READ = () => {
   const links = [...document.querySelectorAll('a[href^="/demo/personas/"]')];
@@ -1091,6 +1150,37 @@ const PH1_STAGE_SCROLL = () => {
   const off = bar && (pos === "sticky" || pos === "fixed") ? bar.getBoundingClientRect().height : 0;
   window.scrollTo({ top: Math.max(0, sc.getBoundingClientRect().top + window.scrollY - off), behavior: "instant" });
   return true;
+};
+
+// W1.6 and W1.7 (spec 12): the Write step's Letter_Field, Occasion chips and Next on
+// /demo/live. Returns { missing: true } when the Write card or its field is absent.
+// Lines in view are counted from the field's top, down to the window bottom.
+const WRITE_READ = (cardSelector) => {
+  const card = document.querySelector(cardSelector);
+  const field = card?.querySelector("textarea");
+  if (!card || !field) return { missing: true };
+  const cs = getComputedStyle(field);
+  const padTop = parseFloat(cs.paddingTop) || 0;
+  const padBottom = parseFloat(cs.paddingBottom) || 0;
+  const border = (parseFloat(cs.borderTopWidth) || 0) + (parseFloat(cs.borderBottomWidth) || 0);
+  let lh = parseFloat(cs.lineHeight);
+  if (!Number.isFinite(lh)) lh = (parseFloat(cs.fontSize) || 16) * 1.2;
+  const r = field.getBoundingClientRect();
+  const fieldLines = Math.round((r.height - padTop - padBottom - border) / lh);
+  const linesInView = r.top >= 0 ? Math.min(fieldLines, Math.max(0, Math.floor((innerHeight - r.top - padTop) / lh + 0.01))) : 0;
+  const inWindow = (b) => b.width > 0 && b.height > 0 && b.top >= 0 && b.left >= 0 && b.bottom <= innerHeight && b.right <= innerWidth;
+  const chipButtons = [...(card.querySelector("fieldset")?.querySelectorAll("button") ?? [])];
+  const chips = chipButtons.map((b) => b.getBoundingClientRect());
+  const nextButton = [...card.querySelectorAll("button")].find((b) => b.textContent.trim() === "Next");
+  const nextRect = nextButton ? nextButton.getBoundingClientRect() : null;
+  return {
+    missing: false,
+    field: { top: r.top, bottom: r.bottom, topInView: r.top >= 0 && r.top < innerHeight, lines: fieldLines, linesInView, lineHeight: lh },
+    chips: { count: chips.length, inView: chips.length > 0 && chips.every(inWindow), top: chips.length ? Math.min(...chips.map((c) => c.top)) : null, bottom: chips.length ? Math.max(...chips.map((c) => c.bottom)) : null },
+    next: nextRect ? { top: nextRect.top, bottom: nextRect.bottom } : null,
+    doc: { scrollWidth: document.documentElement.scrollWidth, clientWidth: document.documentElement.clientWidth },
+    card: { scrollWidth: card.scrollWidth, clientWidth: card.clientWidth },
+  };
 };
 
 // PH1 on the persona page and /demo/live: every visible [data-primary-control] in view.
@@ -1758,8 +1848,15 @@ export async function runPhoneChecks(page, size, route) {
         await toTop();
         r = await page.evaluate(PH1_LANDING);
       } else if (kind === "live") {
+        // W1.6: the Write step's field top and its first 6 lines are in view. Next is not asserted here (W1.7 reads its reach).
         await toTop();
-        r = await page.evaluate(PH1_CONTROLS);
+        const w6 = await page.evaluate(WRITE_READ, WRITE_CARD);
+        r = w6.missing
+          ? { missing: [WRITE_CARD], items: [] }
+          : {
+              missing: [],
+              items: [{ name: `Letter_Field ${w6.field.linesInView} of ${W16_LINES_PHONE} lines`, top: w6.field.top, bottom: w6.field.bottom, inView: w6.field.topInView && w6.field.linesInView >= W16_LINES_PHONE }],
+            };
       } else {
         const scrolled = await page.evaluate(PH1_STAGE_SCROLL);
         await sleep(150);
@@ -1767,7 +1864,8 @@ export async function runPhoneChecks(page, size, route) {
         where = `scrollY ${Math.round(await page.evaluate(() => window.scrollY))} (top of [data-stage-content])`;
       }
       const parts = r.items.map((i) => `${i.name}=${px(i.top)}..${px(i.bottom)}${i.inView ? "" : "(out)"}`);
-      const detail = `${parts.join(" ")}${r.missing.length ? ` missing=${r.missing.join(",")}` : ""} viewport=${w}x${h} at ${where} threshold=inside viewport`;
+      const threshold = kind === "live" ? `threshold=field top and ${W16_LINES_PHONE} lines inside viewport (W1.6), Next not asserted` : "threshold=inside viewport";
+      const detail = `${parts.join(" ")}${r.missing.length ? ` missing=${r.missing.join(",")}` : ""} viewport=${w}x${h} at ${where} ${threshold}`;
       out.push(result("PH1", "first-viewport", r.missing.length ? "missing" : r.items.every((i) => i.inView) ? "pass" : "fail", detail));
     }
     await toTop();
@@ -1918,6 +2016,59 @@ async function checkLandingCtas(page, ctx) {
   if (r.href !== "/demo") problems.push(`primary href=${r.href}`);
   const sec = r.secondary ? `${px(r.secondary.top)}..${px(r.secondary.bottom)}` : "absent";
   report(ctx, result("CTA1", "landing-ctas", problems.length ? "fail" : "pass", `primary=${px(r.primary.top)}..${px(r.primary.bottom)} href=${r.href} secondary=${sec} viewport=${ctx.w}x${ctx.h} threshold=in view at the top, href=/demo`));
+}
+
+// The sections narrower than H1.6's minimum (60% of the viewport width). A section
+// exactly at the minimum passes. Pure, so tests/unit checks use it without a browser.
+export function narrowSections(sections, viewportWidth) {
+  const min = viewportWidth * H16_RATIO_MIN;
+  return sections.filter((s) => s.width < min);
+}
+
+// H1.6 on / at 1440x900. Other sizes are not checked.
+async function checkLandingSections(page, ctx) {
+  if (ctx.size !== H16_SIZE) return;
+  const sections = await page.evaluate(H16_READ);
+  if (!sections.length) {
+    ctx.rep.add("note", "H1.6", "no visible section on / to measure", "landing-sections");
+    return;
+  }
+  const min = ctx.w * H16_RATIO_MIN;
+  const narrow = narrowSections(sections, ctx.w);
+  const parts = sections.map((s) => `${s.name}=${px(s.width)}`);
+  const detail = `${parts.join(" ")} viewport=${ctx.w}x${ctx.h} threshold=content box at least ${px(min)} (${Math.round(H16_RATIO_MIN * 100)}% of width)`;
+  const failures = narrow.map((s) => `${s.name} ${px(s.width)} is narrower than ${px(min)}`);
+  ctx.rep.add(narrow.length ? "blocker" : "ok", "H1.6", narrow.length ? `${detail} (${failures.join("; ")})` : detail, "landing-sections");
+}
+
+// Counts the rows of the given items by their tops. Items whose tops differ by at most
+// H27_ROW_TOLERANCE_PX share a row. The verdict passes only for exactly H27_ITEMS items in
+// one row. Pure, so unit tests use it without a browser.
+export function ritualRowVerdict(items) {
+  const tops = items.map((item) => item.top).sort((a, b) => a - b);
+  let rows = 0;
+  let rowTop = -Infinity;
+  for (const top of tops) {
+    if (top - rowTop > H27_ROW_TOLERANCE_PX) {
+      rows += 1;
+      rowTop = top;
+    }
+  }
+  return { count: items.length, rows, ok: items.length === H27_ITEMS && rows === 1 };
+}
+
+// H2.7 on / at 1440x900. Other sizes are not checked.
+async function checkRitualRow(page, ctx) {
+  if (ctx.size !== H27_SIZE) return;
+  const r = await page.evaluate(H27_READ);
+  if (r.missing) {
+    ctx.rep.add("note", "H2.7", "no ritual list on / to measure", "ritual");
+    return;
+  }
+  const verdict = ritualRowVerdict(r.items);
+  const tops = r.items.map((item) => px(item.top)).join(",");
+  const detail = `${verdict.count} items in ${verdict.rows} row(s) tops=${tops} viewport=${ctx.w}x${ctx.h} threshold=${H27_ITEMS} items in 1 row`;
+  ctx.rep.add(verdict.ok ? "ok" : "blocker", "H2.7", verdict.ok ? detail : `${detail} (expected one row of ${H27_ITEMS})`, "ritual");
 }
 
 async function checkDemoCards(page, ctx) {
@@ -2276,6 +2427,8 @@ async function landing(context, ctx) {
       await guard(ctx, "FT1", () => checkFooter(page, ctx));
       await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
       await guard(ctx, "CTA1", () => checkLandingCtas(page, ctx));
+      await guard(ctx, "H1.6", () => checkLandingSections(page, ctx));
+      await guard(ctx, "H2.7", () => checkRitualRow(page, ctx));
       await guard(ctx, "HW1", () => checkHeroWide(page, ctx));
       await checkEveryPage(page, ctx, "/", { fonts: true });
     }
@@ -2645,6 +2798,49 @@ async function showAll(context, ctx) {
   }
 }
 
+// W1.6 and W1.7 (spec 12 design.md "W1.6: viewport arithmetic") on /demo/live at
+// the Write step. The phone field rule (PH1) runs through checkPhone. Failures are
+// BLOCKERs, like the spec 08 checks: the Write step must fit the thresholds on every run.
+async function checkWriteStep(page, ctx) {
+  const r = await page.evaluate(WRITE_READ, WRITE_CARD);
+  if (r.missing) {
+    ctx.rep.add("note", "W1.6", `no Write card with a Letter_Field on /demo/live (${WRITE_CARD})`, "write-step");
+    return;
+  }
+  const next = r.next ? `Next=${px(r.next.top)}..${px(r.next.bottom)} (note, not asserted)` : "Next not found (note)";
+  ctx.rep.add("note", "W1.6", `${next} at ${ctx.size}`, "write-step");
+  if (ctx.size === W16_SIZE) {
+    const w16 = write16Failures(r);
+    const detail = `W1.6 field=${px(r.field.top)}..${px(r.field.bottom)} lines=${r.field.linesInView} of ${r.field.lines} in view chips=${r.chips.count} inView=${r.chips.inView} threshold=field top in view, ${W16_LINES_DESKTOP} lines in view, chips in view`;
+    ctx.rep.add(w16.length ? "blocker" : "ok", "W1.6", w16.length ? `${detail} (${w16.join("; ")})` : detail, "write-step");
+  }
+  if (ctx.size === W17_SIDEWAYS_SIZE) {
+    const w17 = write17Failures(r);
+    const detail = `W1.7 docScroll=${r.doc.scrollWidth}/${r.doc.clientWidth} cardScroll=${r.card.scrollWidth}/${r.card.clientWidth} viewport=${ctx.w}x${ctx.h} threshold=no sideways scroll at ${W17_SIDEWAYS_SIZE}`;
+    ctx.rep.add(w17.length ? "blocker" : "ok", "W1.7", w17.length ? `${detail} (${w17.join("; ")})` : detail, "write-step");
+  }
+}
+
+// W1.6 at 1440x900: the Letter_Field's top is in view, it shows W16_LINES_DESKTOP lines
+// in view, and every Occasion chip is in view. Returns the failure reasons; an empty list
+// passes. Pure, so unit tests use it without a browser.
+export function write16Failures(r) {
+  const out = [];
+  if (!r.field.topInView) out.push(`Letter_Field top ${px(r.field.top)} is outside the window`);
+  if (r.field.linesInView < W16_LINES_DESKTOP) out.push(`Letter_Field shows ${r.field.linesInView} lines in view, need ${W16_LINES_DESKTOP}`);
+  if (!r.chips.inView) out.push(`Occasion chips ${r.chips.count ? `${px(r.chips.top)}..${px(r.chips.bottom)} are not all inside the window` : "not found"}`);
+  return out;
+}
+
+// W1.7 at 360x640: the document and the Write card have no sideways scroll. Next is not
+// asserted here; its bottom is printed as a note. Pure, like write16Failures.
+export function write17Failures(r) {
+  const out = [];
+  if (r.doc.scrollWidth > r.doc.clientWidth) out.push(`document scrollWidth ${r.doc.scrollWidth}px > clientWidth ${r.doc.clientWidth}px`);
+  if (r.card.scrollWidth > r.card.clientWidth) out.push(`Write card scrollWidth ${r.card.scrollWidth}px > clientWidth ${r.card.clientWidth}px`);
+  return out;
+}
+
 // X1 on the other letter pages (R27.4). /l/[id] needs a sealed live letter, which
 // this walk does not create, so it measures the page an unknown id renders.
 async function otherPages(context, ctx) {
@@ -2660,6 +2856,7 @@ async function otherPages(context, ctx) {
       await guard(ctx, "FT1", () => checkFooter(page, ctx));
       await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
       if (path === LIVE_PATH) {
+        await guard(ctx, "W1.6", () => checkWriteStep(page, ctx));
         // Only the steps before the first passkey prompt are reachable here.
         const step = await page.evaluate(() => document.querySelector("[data-live-step]")?.getAttribute("data-live-step") ?? null);
         ctx.rep.add(step ? "ok" : "note", "walk", step ? `/demo/live step "${step}" reached` : "no [data-live-step] on /demo/live");
