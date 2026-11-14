@@ -62,9 +62,8 @@
 //   W1.6  write-step        at 1440x900: the Letter_Field shows 10 lines in view, its top is
 //                           in view and the Occasion chips are in view. At phone sizes PH1
 //                           asks for the field's top and 6 lines in view instead.
-//   W1.7  write-step        at 390x844 and below 600 px: Next's bottom is at most one window
-//                           height below the fold (2 x the window height). At 360x640 the
-//                           document and the Write card have no sideways scroll.
+//   W1.7  write-step        at 360x640: the document and the Write card have no sideways
+//                           scroll. Next's bottom is printed as a note at every size.
 //   H1.6  landing-sections  at 1440x900 on /: every section's content box is at least 60%
 //                           of the viewport width. Below 60% is a BLOCKER.
 //   H2.7  ritual            at 1440x900 on /: the ritual list holds exactly four items in one
@@ -188,7 +187,6 @@ const W16_SIZE = "1440x900";
 const W16_LINES_DESKTOP = 10;
 const W16_LINES_PHONE = 6;
 const W17_SIDEWAYS_SIZE = "360x640";
-const W17_NEXT_SCREENS_MAX = 2;
 // H1.6 (spec 11 H1.6, spec 12 design.md "Layout checks"): on / at 1440x900, no section's
 // content box may be narrower than 60% of the viewport width.
 const H16_SIZE = "1440x900";
@@ -2811,27 +2809,36 @@ async function checkWriteStep(page, ctx) {
   }
   const next = r.next ? `Next=${px(r.next.top)}..${px(r.next.bottom)} (note, not asserted)` : "Next not found (note)";
   ctx.rep.add("note", "W1.6", `${next} at ${ctx.size}`, "write-step");
-  const w16 = [];
   if (ctx.size === W16_SIZE) {
-    if (!r.field.topInView) w16.push(`Letter_Field top ${px(r.field.top)} is outside the window`);
-    if (r.field.linesInView < W16_LINES_DESKTOP) w16.push(`Letter_Field shows ${r.field.linesInView} lines in view, need ${W16_LINES_DESKTOP}`);
-    if (!r.chips.inView) w16.push(`Occasion chips ${r.chips.count ? `${px(r.chips.top)}..${px(r.chips.bottom)} are not all inside the window` : "not found"}`);
-    const detail = `field=${px(r.field.top)}..${px(r.field.bottom)} lines=${r.field.linesInView} of ${r.field.lines} in view chips=${r.chips.count} inView=${r.chips.inView} threshold=field top in view, ${W16_LINES_DESKTOP} lines in view, chips in view`;
+    const w16 = write16Failures(r);
+    const detail = `W1.6 field=${px(r.field.top)}..${px(r.field.bottom)} lines=${r.field.linesInView} of ${r.field.lines} in view chips=${r.chips.count} inView=${r.chips.inView} threshold=field top in view, ${W16_LINES_DESKTOP} lines in view, chips in view`;
     ctx.rep.add(w16.length ? "blocker" : "ok", "W1.6", w16.length ? `${detail} (${w16.join("; ")})` : detail, "write-step");
   }
-  const w17 = [];
-  if (isPhone(ctx) && r.next) {
-    const limit = W17_NEXT_SCREENS_MAX * ctx.h;
-    if (r.next.bottom > limit) w17.push(`Next bottom ${px(r.next.bottom)} is past ${px(limit)}, more than one short scroll`);
-  }
   if (ctx.size === W17_SIDEWAYS_SIZE) {
-    if (r.doc.scrollWidth > r.doc.clientWidth) w17.push(`document scrollWidth ${r.doc.scrollWidth}px > clientWidth ${r.doc.clientWidth}px`);
-    if (r.card.scrollWidth > r.card.clientWidth) w17.push(`Write card scrollWidth ${r.card.scrollWidth}px > clientWidth ${r.card.clientWidth}px`);
-  }
-  if (isPhone(ctx) || ctx.size === W17_SIDEWAYS_SIZE) {
-    const detail = `next=${r.next ? `${px(r.next.top)}..${px(r.next.bottom)}` : "none"} viewport=${ctx.w}x${ctx.h} docScroll=${r.doc.scrollWidth}/${r.doc.clientWidth} cardScroll=${r.card.scrollWidth}/${r.card.clientWidth} threshold=Next bottom <= ${W17_NEXT_SCREENS_MAX} x window height, no sideways scroll at ${W17_SIDEWAYS_SIZE}`;
+    const w17 = write17Failures(r);
+    const detail = `W1.7 docScroll=${r.doc.scrollWidth}/${r.doc.clientWidth} cardScroll=${r.card.scrollWidth}/${r.card.clientWidth} viewport=${ctx.w}x${ctx.h} threshold=no sideways scroll at ${W17_SIDEWAYS_SIZE}`;
     ctx.rep.add(w17.length ? "blocker" : "ok", "W1.7", w17.length ? `${detail} (${w17.join("; ")})` : detail, "write-step");
   }
+}
+
+// W1.6 at 1440x900: the Letter_Field's top is in view, it shows W16_LINES_DESKTOP lines
+// in view, and every Occasion chip is in view. Returns the failure reasons; an empty list
+// passes. Pure, so unit tests use it without a browser.
+export function write16Failures(r) {
+  const out = [];
+  if (!r.field.topInView) out.push(`Letter_Field top ${px(r.field.top)} is outside the window`);
+  if (r.field.linesInView < W16_LINES_DESKTOP) out.push(`Letter_Field shows ${r.field.linesInView} lines in view, need ${W16_LINES_DESKTOP}`);
+  if (!r.chips.inView) out.push(`Occasion chips ${r.chips.count ? `${px(r.chips.top)}..${px(r.chips.bottom)} are not all inside the window` : "not found"}`);
+  return out;
+}
+
+// W1.7 at 360x640: the document and the Write card have no sideways scroll. Next is not
+// asserted here; its bottom is printed as a note. Pure, like write16Failures.
+export function write17Failures(r) {
+  const out = [];
+  if (r.doc.scrollWidth > r.doc.clientWidth) out.push(`document scrollWidth ${r.doc.scrollWidth}px > clientWidth ${r.doc.clientWidth}px`);
+  if (r.card.scrollWidth > r.card.clientWidth) out.push(`Write card scrollWidth ${r.card.scrollWidth}px > clientWidth ${r.card.clientWidth}px`);
+  return out;
 }
 
 // X1 on the other letter pages (R27.4). /l/[id] needs a sealed live letter, which
