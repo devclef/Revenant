@@ -40,12 +40,13 @@ The task's step 6 says to stop and record when the worktree is not a fast-forwar
 - Production URL: `https://revenant.devclef.se`
 - Command (the scheduled workflow's arguments, with local output only):
   `node tools/qa/journey-check.mjs --url https://revenant.devclef.se --chromium /usr/bin/chromium --require J1,J2,J3,J4,J5,J6,J7,J8 --no-issue`
-- Run at: 2026-11-14T01:59:00.011Z. Exit code: 0.
-- `--no-issue` was used, so GitHub was not touched. No Journey_Issue was opened or commented on.
+- Exit code: 0. The script printed the run time `2026-11-14T01:59:00.011Z`.
+- `--no-issue` was used, so GitHub was not touched and no Journey_Issue was opened or commented on.
 - No `--reveal` flag, so J2 (persona reveal) did not run. J2 runs on the 00:47 UTC schedule and on manual runs only (OD8), because each walk stores an encrypted "no answer" Recall_Record. J9 is not in the workflow's `--require` list, so it did not run either.
-- Verdict: **PASS** for J1, J3, J4, J5, J6, J7 and J8. J2 not run in this invocation. Checks: 128. Failed: 0. Notes: 4.
+- Verdict: **PASS** for every check that ran (J1, J3, J4, J5, J6, J7, J8). J2 did not run in this invocation.
+- Script summary: `Checks: 128. Failed: 0. Notes: 4.` (PASS lines: 124, FAIL lines: 0, note lines: 4).
 
-Result lines, verbatim from the script:
+Result lines: the complete saved output of the script, unedited. It has 131 lines, including the header and the summary.
 
 ```
 Revenant journey check: https://revenant.devclef.se at 2026-11-14T01:59:00.011Z. Checks: J1,J2,J3,J4,J5,J6,J7,J8. J2 this run: no (OD8)
@@ -181,4 +182,4 @@ PASS J6 /demo/personas/eu-tomas recall 360x640 PH7 targets=9 small=0 threshold=>
 Checks: 128. Failed: 0. Notes: 4.
 ```
 
-Notes explained: the four `note` lines are the PH3 check on the persona recall Stage (us-maya and eu-tomas, at 390x844 and 360x640). The script prints a note, not a FAIL, when a phone element is not on the page at that Stage. Here the h1 is visually hidden at the recall Stage.
+About the notes: the script prints a `note` instead of a FAIL when a phone check's element is not on production yet. The four notes are all PH3 on the persona recall Stage (us-maya and eu-tomas, at 390x844 and 360x640). Each note gives the reason "the h1 is visually hidden at this Stage".
