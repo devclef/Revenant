@@ -630,9 +630,9 @@ function fiveStageActions(figure: boolean): readonly StageAction[] {
           .first()
           .click();
         const open = await c.page
-          .getByText("Add a receipt", { exact: true })
+          .locator("details[data-receipts-disclosure]")
           .first()
-          .evaluate((el) => el.closest("details")?.open ?? false);
+          .evaluate((el) => (el as HTMLDetailsElement).open);
         if (!open) {
           throw new Error("The Receipts_Disclosure did not open.");
         }
@@ -655,7 +655,15 @@ function fiveStageActions(figure: boolean): readonly StageAction[] {
     {
       step: "seal",
       act: async (c) => {
-        await c.page.getByRole("checkbox", { name: /lost|passkey/i }).check();
+        // Write and receipts share one stepper step. Next moves the stepper to
+        // Press the seal, where the lost-passkey checkbox appears.
+        const lostBox = c.page.getByRole("checkbox", { name: /lost|passkey/i });
+        if (!(await lostBox.isVisible())) {
+          await c.page
+            .getByRole("button", { name: LIVE_COPY.nextButton, exact: true })
+            .click();
+        }
+        await lostBox.check();
         // The live button is LIVE_COPY.createButton (WriteForm.tsx), not the
         // older "create your passkey" wording.
         await c.page
