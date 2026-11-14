@@ -44,6 +44,8 @@ import {
   checkStepSnapshot,
   defectsFromChecks,
   missingShotDefect,
+  RECORD_SHOT_PREFIX,
+  shotsMissingFromRecord,
   recordStepResult,
   shotsWrittenSince,
   skipLinkBlocksSettle,
@@ -509,7 +511,7 @@ function formatStageRows(rows: readonly StageRow[]): string {
           : "FAIL";
       const lines = [
         `${r.step}: ${label}. ${r.observation}` +
-          (row.shot ? ` Shot: qa-shots/live-walk/${row.shot}` : ""),
+          (row.shot ? ` ${RECORD_SHOT_PREFIX}${row.shot}` : ""),
       ];
       for (const defect of r.defects) {
         lines.push(
@@ -829,22 +831,23 @@ describe.skipIf(!walkEnabled(process.env))(
         const stages = fiveStageActions(run.figure);
         const runStartMs = Date.now();
         const rows = await runWalk(run, stages);
-        console.log(formatStageRows(rows));
+        const record = formatStageRows(rows);
+        console.log(record);
 
-        const shots = shotReport(
-          matrixShotNames(
-            entry,
-            stages.map((stage) => stage.step),
-          ),
-          runStartMs,
+        const expected = matrixShotNames(
+          entry,
+          stages.map((stage) => stage.step),
         );
+        const shots = shotReport(expected, runStartMs);
         console.log(shots.lines.join("\n"));
+        const unnamed = shotsMissingFromRecord(record, expected);
 
         const failed = rows.filter((row) => !row.result.pass && !row.blocked);
         expect(
           failed.map((row) => `${row.result.step}: ${row.result.observation}`),
         ).toEqual([]);
         expect(shots.missing).toEqual([]);
+        expect(unnamed).toEqual([]);
       },
       VIEWPORT_TIMEOUT_MS,
     );
@@ -880,22 +883,23 @@ describe.skipIf(!walkEnabled(process.env))(
         ];
         const runStartMs = Date.now();
         const rows = await runWalk(run, stages);
-        console.log(formatStageRows(rows));
+        const record = formatStageRows(rows);
+        console.log(record);
 
-        const shots = shotReport(
-          runShotNames(
-            run,
-            stages.map((stage) => stage.step),
-          ),
-          runStartMs,
+        const expected = runShotNames(
+          run,
+          stages.map((stage) => stage.step),
         );
+        const shots = shotReport(expected, runStartMs);
         console.log(shots.lines.join("\n"));
+        const unnamed = shotsMissingFromRecord(record, expected);
 
         const failed = rows.filter((row) => !row.result.pass && !row.blocked);
         expect(
           failed.map((row) => `${row.result.step}: ${row.result.observation}`),
         ).toEqual([]);
         expect(shots.missing).toEqual([]);
+        expect(unnamed).toEqual([]);
       },
       VIEWPORT_TIMEOUT_MS,
     );

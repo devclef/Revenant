@@ -23,6 +23,7 @@ import {
   expectedShotNames,
   findPlaceholderFigures,
   missingShotDefect,
+  shotsMissingFromRecord,
   parseCssColor,
   recordStepResult,
   reportMissingShots,
@@ -786,5 +787,29 @@ describe("missingShotDefect (a step with no Step_Shot fails)", () => {
       observed: "No Step_Shot was saved for this step.",
       suspectedFile: "src/components/ceremony/close/",
     });
+  });
+});
+
+describe("shotsMissingFromRecord (each shot is named in the run record)", () => {
+  it("returns nothing when every expected shot is named", () => {
+    const record =
+      "write: PASS. Shot: qa-shots/live-walk/live-01-write-1440x900.png\n" +
+      "seal: PASS. Shot: qa-shots/live-walk/live-03-seal-1440x900.png";
+    expect(
+      shotsMissingFromRecord(record, [
+        "live-01-write-1440x900.png",
+        "live-03-seal-1440x900.png",
+      ]),
+    ).toEqual([]);
+  });
+
+  it("lists an expected shot that the record does not name", () => {
+    const record = "write: PASS. Shot: qa-shots/live-walk/live-01-write-1440x900.png";
+    expect(
+      shotsMissingFromRecord(record, [
+        "live-01-write-1440x900.png",
+        "live-10-close-1440x900.png",
+      ]),
+    ).toEqual(["live-10-close-1440x900.png"]);
   });
 });

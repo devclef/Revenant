@@ -676,3 +676,17 @@ export function missingShotDefect(input: {
     suspectedFile: input.suspectedFile,
   };
 }
+
+/** The prefix of each Step_Shot line in the run record. */
+export const RECORD_SHOT_PREFIX = "Shot: qa-shots/live-walk/";
+
+/**
+ * The expected Step_Shot names that the run record does not name. The run
+ * record is the printed line per step; a shot missing from it is a FAIL.
+ */
+export function shotsMissingFromRecord(
+  record: string,
+  expected: readonly string[],
+): string[] {
+  return expected.filter((name) => !record.includes(RECORD_SHOT_PREFIX + name));
+}
