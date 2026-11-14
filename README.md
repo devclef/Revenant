@@ -58,13 +58,14 @@ This is not a slide deck. It runs. The sealing-and-opening ceremony, the live pa
 
 - **The reveal ceremony** — the dark room, the light finding the soil, the ghost rising with your letter, the recall scale, the seal breaking, and the then-vs-now figures. It degrades gracefully: the first render is the settled scene with no JavaScript, and `prefers-reduced-motion` turns the whole sequence off.
 - **Browser-side crypto** — WebAuthn passkeys with the PRF extension, a double-wrapped content key, a per-letter server time lock, an optional backup key card, and an SHA-256 hash over the canonical envelope that's verified again at opening.
-- **The persona demos** — three fictional authors whose letters were written as of 12 May 2024 and sealed in advance, each openable by a judge in two minutes with no passkey. [Maya](https://revenant.devclef.se/demo/personas/us-maya) (opens 5 November 2024) and [Tomás](https://revenant.devclef.se/demo/personas/eu-tomas) (opens 9 June 2024) carry price receipts. [Priya](https://revenant.devclef.se/demo/personas/us-priya) (opens 5 November 2024) is a text letter with two questions she left for herself and no figures.
-- **Occasions, optional receipts and the rehearsal** — the Write step offers five Occasions (the year ahead, work, family, a decision, blank), a letter seals with no figures at all, and the 30-second live demo labels itself a rehearsal.
+- **The persona demos** — three fictional authors <!-- 3: ls content/personas/letters/*.txt, 14 November 2026, commit 7923112 --> whose letters were written as of 12 May 2024 and sealed in advance, each openable by a judge in two minutes with no passkey. [Maya](https://revenant.devclef.se/demo/personas/us-maya) (opens 5 November 2024) and [Tomás](https://revenant.devclef.se/demo/personas/eu-tomas) (opens 9 June 2024) carry price receipts. [Priya](https://revenant.devclef.se/demo/personas/us-priya) (opens 5 November 2024) is a text letter with two questions she left for herself and no figures.
+- **Occasions, optional receipts and the rehearsal** — the Write step offers five Occasions (the year ahead, work, family, a decision, blank) <!-- 5: id entries in src/components/live/occasions.ts, 14 November 2026, commit 7923112 -->, a letter seals with no figures at all, and the 30-second live demo labels itself a rehearsal.
 - **The live demo** at [`/demo/live`](https://revenant.devclef.se/demo/live) is a rehearsal of a letter that would normally stay sealed for months. It runs six steps: Write, Press the seal, Wait, Testify, Break the seal, See the receipts. The lock lasts 30 seconds, and the passkey is real: it shows up in your password manager, named so it's obviously a Revenant demo.
 - **Real figures** — adapters for the US EIA and the European Commission Weekly Oil Bulletin, each returning figures with full provenance and never inventing, interpolating or currency-converting anything.
 - **The database** — PostgreSQL with `BEFORE UPDATE OR DELETE` triggers that make sealed rows physically immutable. Application code *cannot* change a sealed letter; the trigger raises an exception.
 
-Specs 01 to 10 are complete and spec 11 (any letter) is in progress, as of 13 November 2026. See `.kiro/specs/` for the task-level status.
+Three spec folders still have open tasks, so the build is not complete as of 14 November 2026: 08-judge-polish, 09-demo-polish and 12-submission-polish. The other ten spec folders have no open task. See `.kiro/specs/` for the task-level status.
+<!-- Status, checked 14 November 2026 00:26 UTC at commit 7923112: grep -c -- '- [ ]' .kiro/specs/*/tasks.md gives 1 in 08-judge-polish, 1 in 09-demo-polish, 22 in 12-submission-polish, and 0 in the other ten spec folders. -->
 
 ## How the seal works
 
@@ -114,7 +115,7 @@ The Helm chart lives in `deploy/helm/revenant` and includes PostgreSQL. The imag
 
 ## Built by a coven of agents
 
-Here's the part we're genuinely proud of: **almost none of this code was written by a human sitting at a keyboard.** Revenant was built by a team of specialist AI agents orchestrated by [Kiro Crew](https://kiro.dev/docs/crew.md), running an autonomous build loop that has merged 206 pull requests (`gh pr list --state merged --limit 1000 --json number -q length`, 13 November 2026).
+Here's the part we're genuinely proud of: **almost none of this code was written by a human sitting at a keyboard.** Revenant was built by a team of specialist AI agents orchestrated by [Kiro Crew](https://kiro.dev/docs/crew.md), running an autonomous build loop that has merged 225 pull requests (`gh pr list --state merged --limit 1000 --json number -q length`, 14 November 2026, checked at commit 7923112).
 
 ```mermaid
 flowchart TB
@@ -168,7 +169,7 @@ flowchart TB
 
 The setup works like a real engineering org:
 
-- **Steering** (`.kiro/steering/`) is the team's constitution. Eight documents — data integrity, neutrality, tone, crypto, tech, deploy, product, structure — encode the non-negotiables. Every agent reads them, and the rules that matter most load automatically for the code they govern.
+- **Steering** (`.kiro/steering/`) is the team's constitution. Eight documents <!-- 8: ls .kiro/steering | wc -l, 14 November 2026, commit 7923112 --> — data integrity, neutrality, tone, crypto, tech, deploy, product, structure — encode the non-negotiables. Every agent reads them, and the rules that matter most load automatically for the code they govern.
 - **Specs** (`.kiro/specs/`) break the product into features, and each feature into tasks. One task becomes one GitHub issue.
 - **Role agents** (`.kiro/agents/`) are the engineers, each with its own system prompt, its own file-ownership boundary, and its own tools:
   - `platform-dev` — scaffold, config, health routes, DB client, migrations, Docker, Helm.
