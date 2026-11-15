@@ -28,10 +28,10 @@ The precondition for a merged-main run is not met. `origin/main` does not have t
 
 ## Results
 
-- Walk runs completed: 0 of 8. The eight runs are 1440x900 and 390x844, each with no figure or one figure, each with motion on and reduced motion.
+- Walk runs completed: 0 of 6. The six runs are three at 1440x900 and three at 390x844: no figure with motion, one figure with motion, and one figure with reduced motion.
 - Result lines printed by the script: none.
 - Per-step results: not produced. Every step is not passed, because no step ran.
-- Step_Shots: none saved. All expected shots are missing: `live-01-write` through `live-10-close`, in all eight runs. The full-page captures for letter, figures and close are missing too.
+- Step_Shots: none saved. All expected shots are missing: `live-01-write` through `live-10-close`, in all six runs. The full-page captures for letter, figures and close are missing too.
 - Single_Figure_View check and 0-figure close: not run.
 - Q1.6 verdict: not determined. No walk ran, so no Q1.6 condition was checked.
 - Defects: none recorded. The walk did not run, so it found nothing. This is not a pass.

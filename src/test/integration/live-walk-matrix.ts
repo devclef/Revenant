@@ -1,7 +1,13 @@
 /**
  * The Live_Walk variant matrix (Q1.3, Q2.1). Pure data and name builders, no
- * browser. Each width runs three times: with no figure, with one figure, and
- * once more with one figure under `prefers-reduced-motion: reduce`.
+ * browser. `WALK_MATRIX` lists three runs per width:
+ *
+ * 1. no figure, motion on;
+ * 2. one figure, motion on;
+ * 3. one figure, `prefers-reduced-motion: reduce`.
+ *
+ * The no-figure reduced-motion case is not in this matrix. It is covered only
+ * by the break-method suite in `live-walk.test.ts`.
  */
 import {
   EXPECTED_STEPS,
