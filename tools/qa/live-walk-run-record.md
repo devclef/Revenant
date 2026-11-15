@@ -1,16 +1,18 @@
 # Live_Walk run record (issue #399)
 
-**Task 18 status: FAIL under Q1.6.** No Live_Walk has run on merged `main`. No step is claimed as passed. The walk-stopped-before-unlock result below is reported, not verified in committed files.
+**Status: NOT RUN.** This record is an unrun template. No Live_Walk has run on merged `main`, so no step is passed. A step without a Step_Shot is not passed.
 
 ## Commit the walk must run on
 
-- pending: merged main SHA not yet produced. The walk must run on the merged `main` commit, which does not exist yet. No SHA is written here.
-- Branch tip when this record was last edited: `2ab5c25`. That is not the SHA the walk must run on. This file cannot contain its own SHA.
-- The walk script code that matters is in `d245f47`, `466c72c`, `55cdd6b` and `0c3f0f1`. None of them is on `origin/main` yet.
+- Commit SHA: (empty until a merged-main run exists)
+- The walk must run on the merged `main` commit. That commit does not exist yet. This file cannot contain its own SHA.
+- The walk prerequisite commits are `d245f47`, `466c72c`, `55cdd6b` and `0c3f0f1`. None of them is on `origin/main` yet. The owner merges them through a reviewed pull request (owner decision).
 
-## Cuts
+## Cut order
 
-No cuts. Commit `57bb707` changes the matrix and the stop rule, and removes no walk step. The owner should confirm this against the diff.
+Steps the cuts removed: none recorded so far.
+
+When a cut removes a walk step, add a line here with the step name, the commit that made the cut, and the reason. Commit `57bb707` changes the matrix and the stop rule and removes no walk step. The owner should confirm this against the diff.
 
 ## Walk changes in this PR
 
@@ -34,46 +36,62 @@ Each row is one Live_Walk run on merged `main`. None of the rows has been run on
 | 390x844 | one figure | motion on | NOT RUN |
 | 390x844 | one figure | reduced motion | NOT RUN |
 
-The two no-figure reduced-motion rows (1440x900 and 390x844) are in `WALK_MATRIX` (`src/test/integration/live-walk-matrix.ts`, `WALK_MATRIX` at lines 37-53, with the no-figure reduced-motion entry at line 41). Both stay NOT RUN. The break-method suite in `live-walk.test.ts` is a separate check and is not a walk run.
+The eight rows are the `WALK_MATRIX` entries in `src/test/integration/live-walk-matrix.ts`. The break-method suite in `live-walk.test.ts` is a separate check and is not a walk run.
 
-## 36-run result: reported from the task brief, not backed by saved output
+## Step_Shot names
 
-Label: this 36-run result is reported from the task brief. No saved output backs it, so it is not a verified result.
+Each run writes one Step_Shot per walk step. The name pattern is `live-<nn>-<step>-<width>x<height>.png`. The reduced-motion set adds `-reduced` before `.png`. The names come from `stepShotName` in `src/test/integration/live-walk-helpers.ts`.
 
-The task brief reports a 36-run attempt with this result: 6 passed, 30 failed, and the walk stopped before unlock. These counts come from the brief. The committed files do not contain the per-run output, so the table below is not verified.
+| Step | 1440x900, motion on | 1440x900, reduced | 390x844, motion on | 390x844, reduced |
+|---|---|---|---|---|
+| 01 write | `live-01-write-1440x900.png` | `live-01-write-1440x900-reduced.png` | `live-01-write-390x844.png` | `live-01-write-390x844-reduced.png` |
+| 02 write-receipts | `live-02-write-receipts-1440x900.png` | `live-02-write-receipts-1440x900-reduced.png` | `live-02-write-receipts-390x844.png` | `live-02-write-receipts-390x844-reduced.png` |
+| 03 seal | `live-03-seal-1440x900.png` | `live-03-seal-1440x900-reduced.png` | `live-03-seal-390x844.png` | `live-03-seal-390x844-reduced.png` |
+| 04 wait | `live-04-wait-1440x900.png` | `live-04-wait-1440x900-reduced.png` | `live-04-wait-390x844.png` | `live-04-wait-390x844-reduced.png` |
+| 05 unlock | `live-05-unlock-1440x900.png` | `live-05-unlock-1440x900-reduced.png` | `live-05-unlock-390x844.png` | `live-05-unlock-390x844-reduced.png` |
+| 06 testify | `live-06-testify-1440x900.png` | `live-06-testify-1440x900-reduced.png` | `live-06-testify-390x844.png` | `live-06-testify-390x844-reduced.png` |
+| 07 marks | `live-07-marks-1440x900.png` | `live-07-marks-1440x900-reduced.png` | `live-07-marks-390x844.png` | `live-07-marks-390x844-reduced.png` |
+| 08 letter (full page) | `live-08-letter-1440x900.png` | `live-08-letter-1440x900-reduced.png` | `live-08-letter-390x844.png` | `live-08-letter-390x844-reduced.png` |
+| 09 figures (full page) | `live-09-figures-1440x900.png` | `live-09-figures-1440x900-reduced.png` | `live-09-figures-390x844.png` | `live-09-figures-390x844-reduced.png` |
+| 10 close (full page) | `live-10-close-1440x900.png` | `live-10-close-1440x900-reduced.png` | `live-10-close-390x844.png` | `live-10-close-390x844-reduced.png` |
 
-| Item | Reported value | Verified in committed files |
-|---|---|---|
-| Runs attempted | 36 | No |
-| Passed | 6 | No |
-| Failed | 30 | No |
-| Walk stopped before unlock | yes | No |
+Row by row, each matrix row expects all ten shots above at its own width and motion setting:
+
+- No figure, motion on: the ten shots at the 1440x900 or 390x844 motion-on column. The figures shot shows the Nothing_To_Compare_Line, and the walk ends on the 0-figure close (`live-10-close`).
+- No figure, reduced motion: the ten shots in the reduced column for that width.
+- One figure, motion on: the ten shots at the motion-on column for that width. A figure is picked at the write-receipts step.
+- One figure, reduced motion: the ten shots in the reduced column for that width.
+
+The no-figure and one-figure rows at the same width and motion setting expect the same file names. Keep each run's shots in its own folder, or one run overwrites the other.
+
+The Single_Figure_View has no Step_Shot name in the walk code, and it is not one of the ten steps. The owner must give it a name before the run. Until then this record cannot say whether it was captured. The figures shot (`live-09-figures`) is the only shot for the figure view.
+
+Step_Shot results are NOT RUN in every row. Until a saved run produces a shot, the step is not passed.
+
+## Per-step results
+
+Result recorded for each step, across all eight matrix rows. Every result is NOT RUN, and no step is passed.
+
+| Step | Matrix rows run | Result | Saved output |
+|---|---|---|---|
+| 01 write | 0 of 8 | NOT RUN | none |
+| 02 write-receipts | 0 of 8 | NOT RUN | none |
+| 03 seal | 0 of 8 | NOT RUN | none |
+| 04 wait | 0 of 8 | NOT RUN | none |
+| 05 unlock | 0 of 8 | NOT RUN | none |
+| 06 testify | 0 of 8 | NOT RUN | none |
+| 07 marks | 0 of 8 | NOT RUN | none |
+| 08 letter | 0 of 8 | NOT RUN | none |
+| 09 figures | 0 of 8 | NOT RUN | none |
+| 10 close | 0 of 8 | NOT RUN | none |
 
 ## Defects handed to owners
 
-Every entry is reported, not verified on merged `main`. The brief names the J9 failure on both widths. Its observed text is not in any committed file or saved run, so the observed column does not invent one. The suspected file is either `src/components/live/` (a page defect) or `tools/qa/journey-check.mjs` (a script defect). Which one applies is not yet known.
+None recorded. No Live_Walk has run on merged `main`, so no walk defect is on record.
 
-| # | Step | Expected result | Observed result | Suspected file | Status |
-|---|---|---|---|---|---|
-| R1 | Wait stage on `/demo/live` after the seal, at 1440x900 and 390x844: text contrast (Q1.6 contrast check) | Text on the wait stage meets WCAG 2.2 AA contrast (`tone.md`) | Failure reported in the brief. Measured ratios and element are not saved. | `src/components/live/` (to confirm) | reported, not verified on merged main |
-| R2 | Wait stage on `/demo/live` at 390x844: horizontal scroll (Q1.6 J5 check) | `scrollWidth` no greater than `clientWidth` | Failure reported in the brief. Measured widths are not saved. | `src/components/live/` (to confirm) | reported, not verified on merged main |
-| R3 | Clipped text on the write-receipts step of `/demo/live` (Q1.6 clipped-text check) | No clipped text in the receipts | Failure reported in the brief. Element and measurements are not saved. | `src/components/live/` (to confirm) | reported, not verified on merged main |
-| D1 | J9 on `/demo/live` at 1440x900: write one sentence and one question, then reach "Press the seal" with 0 figures | Reaches "Press the seal" with 0 figures, with no write request (spec 11 J9) | Failure reported in the brief. Observed detail not saved. | `src/components/live/` or `tools/qa/journey-check.mjs` (to confirm) | reported, not verified on merged main |
-| D2 | J9 on `/demo/live` at 390x844: same steps as D1 | Same as D1 | Failure reported in the brief. Observed detail not saved. | `src/components/live/` or `tools/qa/journey-check.mjs` (to confirm) | reported, not verified on merged main |
-| D3 | Unlock on `/demo/live` after the 30-second lock (frontend-dev fix task) | Unlock completes with the passkey on the live letter | Not reached. The brief says the walk stopped before unlock, so this step is unverified. | `src/components/live/` | unverified, not reached |
-| D4 | Testify on `/demo/live` (frontend-dev fix task) | Recall questions are shown and answered before anything is revealed | Not reached. Unverified. | `src/components/live/` | unverified, not reached |
-| D5 | Marks step on `/demo/live` (frontend-dev fix task) | Marks step completes as the journey spec describes | Not reached. Unverified. | `src/components/live/` | unverified, not reached |
-| D6 | Letter step on `/demo/live` (frontend-dev fix task) | Letter is shown after the seal breaks | Not reached. Unverified. | `src/components/live/` | unverified, not reached |
-| D7 | Figures step on `/demo/live` (frontend-dev fix task) | Figures are shown with their then and now values after the letter | Not reached. Unverified. | `src/components/live/` | unverified, not reached |
-| D8 | Close step on `/demo/live` (frontend-dev fix task) | Walk ends at the close step with no error | Not reached. Unverified. | `src/components/live/` | unverified, not reached |
+Add a defect only from saved run output. Record the matrix row, the step, the expected result, the observed result, the Step_Shot name and the suspected file. The suspected file for each step is in `STEP_SUSPECTED_FILES` in `src/test/integration/live-walk-helpers.ts`. The owner confirms that file before any fix.
 
-D1 and D2 list `src/components/live/` as the frontend-dev suspect. `tools/qa/journey-check.mjs` becomes the suspect only if the page is shown to be correct for those steps.
-
-Other defects from the 36-run result (reported from the task brief, not backed by saved output) are not in the committed files, so they are not listed here. Add them when the report's per-defect details are copied in.
-
-Owner follow-ups, all to be done by frontend-dev in `src/components/live/` (none is started in this PR): fix R1, R2 and R3 after each is confirmed on merged `main`, and fix D1 and D2 if the page proves to be at fault.
-
-OUT OF SCOPE: the product files in `src/components/live/` (frontend-dev) and `tools/qa/journey-check.mjs`, which defines J9. This record does not change either file. Whether J9 or the page is wrong is still to confirm.
+OUT OF SCOPE: this record changes no product file. The product files in `src/components/live/` belong to frontend-dev.
 
 ## Open owner steps
 
@@ -81,7 +99,7 @@ These steps are open. None is done.
 
 1. Merge the prerequisite commits `d245f47`, `466c72c`, `55cdd6b` and `0c3f0f1` to `main` through a reviewed pull request. This is an owner decision.
 2. Run `npm run live-walk` from a checkout of the new `main` at 1440x900 and 390x844, covering the full matrix above.
-3. Replace the NOT RUN rows with the saved output of those runs, and rebuild the defect table from that output.
+3. Replace the NOT RUN rows with the saved output of those runs, and record each defect from that output.
 4. Run the Journey_Check against `https://revenant.devclef.se` with J9 and J2 included. The Production_Check below does not include them.
 5. Review the Production_Check below. The owner decides whether it counts for Q1.7.
 6. Real_Device_Check: not run.
