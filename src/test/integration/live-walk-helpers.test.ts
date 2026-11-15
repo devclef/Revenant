@@ -450,6 +450,22 @@ describe("checkHorizontalScroll and checkClippedText", () => {
     expect(hidden.ok).toBe(true);
   });
 
+  it("reports clipped text in a stepper-class container that is wider than 1px", () => {
+    const clipped = checkClippedText([
+      {
+        tag: "span",
+        text: "Press the seal",
+        scrollWidth: 300,
+        clientWidth: 100,
+        overflowX: "hidden",
+        className: "stepper_name__3xKa",
+      },
+    ]);
+    expect(clipped.ok).toBe(false);
+    expect(clipped.message).toContain('"Press the seal"');
+    expect(clipped.message).toContain("(300 > 100)");
+  });
+
   it("still reports clipped text in a 1px-wide container without a hidden-by-design class", () => {
     const clipped = checkClippedText([
       {

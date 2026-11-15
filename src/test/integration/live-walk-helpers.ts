@@ -428,7 +428,7 @@ export function checkClippedText(samples: readonly ClippedSample[]): StepCheck {
   const clipped = samples.filter(
     (s) =>
       s.overflowX !== "visible" &&
-      !isHiddenByDesign(s.className) &&
+      !(isHiddenByDesign(s.className) && s.clientWidth <= 1) &&
       s.scrollWidth > s.clientWidth + 1,
   );
   if (clipped.length === 0) {
