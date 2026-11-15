@@ -15,13 +15,15 @@ Each row is one Live_Walk run on merged `main`. None of the rows has been run on
 | Width | Figure | Motion | Status |
 |---|---|---|---|
 | 1440x900 | no figure | motion on | NOT RUN |
+| 1440x900 | no figure | reduced motion | NOT RUN |
 | 1440x900 | one figure | motion on | NOT RUN |
 | 1440x900 | one figure | reduced motion | NOT RUN |
 | 390x844 | no figure | motion on | NOT RUN |
+| 390x844 | no figure | reduced motion | NOT RUN |
 | 390x844 | one figure | motion on | NOT RUN |
 | 390x844 | one figure | reduced motion | NOT RUN |
 
-The no-figure reduced-motion case is not in `WALK_MATRIX` (`src/test/integration/live-walk-matrix.ts`). The break-method suite in `live-walk.test.ts` covers it. It is not a walk run.
+The no-figure reduced-motion rows are not in `WALK_MATRIX` (`src/test/integration/live-walk-matrix.ts`). The break-method suite in `live-walk.test.ts` covers that case. It is not a walk run, so both rows stay NOT RUN.
 
 ## Earlier 36-run brief (reported, not verified)
 
