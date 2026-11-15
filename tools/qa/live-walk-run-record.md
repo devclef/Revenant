@@ -36,7 +36,9 @@ Each row is one Live_Walk run on merged `main`. None of the rows has been run on
 
 The no-figure reduced-motion rows are not in `WALK_MATRIX` (`src/test/integration/live-walk-matrix.ts`). The break-method suite in `live-walk.test.ts` covers that case. It is not a walk run, so both rows stay NOT RUN.
 
-## Earlier 36-run brief (reported, not verified)
+## 36-run result: reported from the task brief, not backed by saved output
+
+Label: this 36-run result is reported from the task brief. No saved output backs it, so it is not a verified result.
 
 The task brief reports a 36-run attempt with this result: 6 passed, 30 failed, and the walk stopped before unlock. These counts come from the brief. The committed files do not contain the per-run output, so the table below is not verified.
 
@@ -67,7 +69,7 @@ Every entry is reported, not verified on merged `main`. The brief names the J9 f
 
 D1 and D2 list `src/components/live/` as the frontend-dev suspect. `tools/qa/journey-check.mjs` becomes the suspect only if the page is shown to be correct for those steps.
 
-Other defects from the 36-run report are not in the committed files, so they are not listed here. Add them when the report's per-defect details are copied in.
+Other defects from the 36-run result (reported from the task brief, not backed by saved output) are not in the committed files, so they are not listed here. Add them when the report's per-defect details are copied in.
 
 Owner follow-ups, all to be done by frontend-dev in `src/components/live/` (none is started in this PR): fix R1, R2 and R3 after each is confirmed on merged `main`, and fix D1 and D2 if the page proves to be at fault.
 
