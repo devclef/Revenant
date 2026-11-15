@@ -4,10 +4,11 @@
 
 ## Code under test
 
-- This record describes the branch at commit `049b252` ("Narrow the clipped-text exemption in checkClippedText (issue #399 review feedback)"). That commit is the code the walk would test. The commit that adds this record comes after it. A file cannot hold its own commit SHA, so the PR head is the commit whose message begins "Live_Walk run record (issue #399)" after `049b252`. Read it with `git log -1 --format=%H`.
+- This record describes the code at commit `049b252` ("Narrow the clipped-text exemption in checkClippedText (issue #399 review feedback)"). That is the code the walk would test.
+- The PR head is not `049b252`. It is the record commit that adds this file, which comes after `049b252`. This file cannot contain its own SHA, so the PR head SHA is the one the dispatcher reports for the branch tip, not a value written here.
 - No full Live_Walk ran on merged `main` in this task. The status stays NOT RUN.
 - `origin/main`: `d6e013d` ("Tick completed spec tasks [skip ci]"), fetched 2026-11-15.
-- Branch `kirocrew/task/TASK_b4cbaccf_1794760225849831715` is at `049b252`. It is not at `origin/main` and cannot be fast-forwarded to it. `origin/main` is an ancestor of the branch. The branch has 12 commits that `origin/main` does not have, from `55cdd6b` through `049b252`:
+- The branch `kirocrew/task/TASK_b4cbaccf_1794760225849831715` is not at `origin/main` and cannot be fast-forwarded to it. `origin/main` is an ancestor of the branch. The branch has 12 commits that `origin/main` does not have, from `55cdd6b` through `049b252`, followed by the record commit:
   - `55cdd6b` [platform-dev] Live_Walk: a step with no Step_Shot fails
   - `0c3f0f1` [platform-dev] Live_Walk: every expected Step_Shot must be named in the run record
   - `d245f47` [platform-dev] Live_Walk: visually hidden 1px containers are not clipped text
