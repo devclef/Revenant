@@ -4,9 +4,20 @@
 
 ## Commit the walk must run on
 
-- Walk commit SHA: **NOT RUN** (placeholder). The walk must run on the merged `main` commit, which does not exist yet. No SHA is written here.
+- pending: merged main SHA not yet produced. The walk must run on the merged `main` commit, which does not exist yet. No SHA is written here.
 - Branch tip when this record was last edited: `2ab5c25`. That is not the SHA the walk must run on. This file cannot contain its own SHA.
 - The walk script code that matters is in `d245f47`, `466c72c`, `55cdd6b` and `0c3f0f1`. None of them is on `origin/main` yet.
+
+## Cuts
+
+No cuts. Commit `57bb707` changes the matrix and the stop rule, and removes no walk step. The owner should confirm this against the diff.
+
+## Walk changes in this PR
+
+- The matrix grows from six runs to eight. Each width adds the no-figure reduced-motion run (commit `57bb707`). The eight rows are in the table below.
+- The walk keeps going after a stage defect. The defect is recorded, and the walk runs the next stage. It stops only when a stage's own action fails (commit `57bb707`, `src/test/integration/live-walk.test.ts`).
+- The seal step clicks Next when the lost-passkey checkbox is not visible, then checks the box (commit `466c72c`, `src/test/integration/live-walk.test.ts`).
+- Earlier-spec tests changed or retired: none. **This line is inaccurate for this PR.** Commit `57bb707` changes the expected matrix length and the stop rule in existing tests. The owner must record that change before merge.
 
 ## Required matrix
 
@@ -42,8 +53,11 @@ Every entry is reported, not verified on merged `main`. The brief names the J9 f
 
 | # | Step | Expected result | Observed result | Suspected file | Status |
 |---|---|---|---|---|---|
-| D1 | J9 on `/demo/live` at 1440x900: write one sentence and one question, then reach "Press the seal" with 0 figures | Reaches "Press the seal" with 0 figures, with no write request (spec 11 J9) | Failure reported in the brief. Observed detail not saved. | `src/components/live/` or `tools/qa/journey-check.mjs` | reported, not verified on merged main |
-| D2 | J9 on `/demo/live` at 390x844: same steps as D1 | Same as D1 | Failure reported in the brief. Observed detail not saved. | `src/components/live/` or `tools/qa/journey-check.mjs` | reported, not verified on merged main |
+| R1 | Wait stage on `/demo/live` after the seal, at 1440x900 and 390x844: text contrast (Q1.6 contrast check) | Text on the wait stage meets WCAG 2.2 AA contrast (`tone.md`) | Failure reported in the brief. Measured ratios and element are not saved. | `src/components/live/` (to confirm) | reported, not verified on merged main |
+| R2 | Wait stage on `/demo/live` at 390x844: horizontal scroll (Q1.6 J5 check) | `scrollWidth` no greater than `clientWidth` | Failure reported in the brief. Measured widths are not saved. | `src/components/live/` (to confirm) | reported, not verified on merged main |
+| R3 | Clipped text on the write-receipts step of `/demo/live` (Q1.6 clipped-text check) | No clipped text in the receipts | Failure reported in the brief. Element and measurements are not saved. | `src/components/live/` (to confirm) | reported, not verified on merged main |
+| D1 | J9 on `/demo/live` at 1440x900: write one sentence and one question, then reach "Press the seal" with 0 figures | Reaches "Press the seal" with 0 figures, with no write request (spec 11 J9) | Failure reported in the brief. Observed detail not saved. | `src/components/live/` or `tools/qa/journey-check.mjs` (to confirm) | reported, not verified on merged main |
+| D2 | J9 on `/demo/live` at 390x844: same steps as D1 | Same as D1 | Failure reported in the brief. Observed detail not saved. | `src/components/live/` or `tools/qa/journey-check.mjs` (to confirm) | reported, not verified on merged main |
 | D3 | Unlock on `/demo/live` after the 30-second lock (frontend-dev fix task) | Unlock completes with the passkey on the live letter | Not reached. The brief says the walk stopped before unlock, so this step is unverified. | `src/components/live/` | unverified, not reached |
 | D4 | Testify on `/demo/live` (frontend-dev fix task) | Recall questions are shown and answered before anything is revealed | Not reached. Unverified. | `src/components/live/` | unverified, not reached |
 | D5 | Marks step on `/demo/live` (frontend-dev fix task) | Marks step completes as the journey spec describes | Not reached. Unverified. | `src/components/live/` | unverified, not reached |
@@ -54,6 +68,10 @@ Every entry is reported, not verified on merged `main`. The brief names the J9 f
 D1 and D2 list `src/components/live/` as the frontend-dev suspect. `tools/qa/journey-check.mjs` becomes the suspect only if the page is shown to be correct for those steps.
 
 Other defects from the 36-run report are not in the committed files, so they are not listed here. Add them when the report's per-defect details are copied in.
+
+Owner follow-ups, all to be done by frontend-dev in `src/components/live/` (none is started in this PR): fix R1, R2 and R3 after each is confirmed on merged `main`, and fix D1 and D2 if the page proves to be at fault.
+
+OUT OF SCOPE: the product files in `src/components/live/` (frontend-dev) and `tools/qa/journey-check.mjs`, which defines J9. This record does not change either file. Whether J9 or the page is wrong is still to confirm.
 
 ## Open owner steps
 
