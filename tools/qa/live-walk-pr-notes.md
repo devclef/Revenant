@@ -12,6 +12,8 @@
 - Owner decision 1, clipped-text exemption: `checkClippedText` in `src/test/integration/live-walk-helpers.ts` skips a container only when its class matches `visuallyHidden` or `stepper` and its `clientWidth` is 1px or less. Those elements hide their text on purpose, so the Q1.6 check "text clipped by its container" does not report them. Any other clipped container still fails, including one only 1px wide. The owner must confirm this exemption before the final walk. Not confirmed.
 - Owner decision 2, changed stop rule: a stage defect no longer stops the walk. The defect is recorded and the walk runs the next stage. The walk still stops when a stage's own action fails (`src/test/integration/live-walk.test.ts`, commit `57bb707`). The owner must confirm this rule before the final walk. Not confirmed.
 - Production_Check: the command is copied exactly in the section below. J2 and J9 are not yet run against production. Real_Device_Check is not run and does not affect the verdict.
+- Owner step (owner-run, not done): on merged `main`, run `npm run live-walk` at 1440x900 and 390x844, with and without reduced motion. No merged `main` SHA exists yet. The full list is in "Open owner steps" below.
+- Owner step (owner-run, output not yet recorded): the Production_Check rerun, `node tools/qa/journey-check.mjs --url https://revenant.devclef.se --chromium /usr/bin/chromium --require J1,J2,J3,J4,J5,J6,J7,J8,J9 --reveal --no-issue`. Its result is not recorded yet. See the Production_Check section below.
 
 ## Run record summary
 
@@ -41,7 +43,7 @@ Copied from the run record section of the same name.
 - Exit code 0. Run time `2026-11-14T01:59:00.011Z`. Summary: `Checks: 128. Failed: 0. Notes: 4.`
 - Verdict: PASS for every check that ran (J1, J3, J4, J5, J6, J7, J8).
 - Required and not run against production: **J9 and J2**. J2 needs `--reveal` or the 00:47 UTC run (OD8). J9 was not in `--require`.
-- Rerun command, with J9 required and J2 forced by `--reveal` (OD8):
+- Rerun command, owner-run, output not yet recorded. J9 is required and J2 is forced by `--reveal` (OD8):
   `node tools/qa/journey-check.mjs --url https://revenant.devclef.se --chromium /usr/bin/chromium --require J1,J2,J3,J4,J5,J6,J7,J8,J9 --reveal --no-issue`
 - Result of that rerun: not yet recorded.
 - J2 and J9: not yet run against production. Neither is in the 2026-11-14 run.
