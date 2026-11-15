@@ -464,7 +464,7 @@ Never cut: anything in G, X, Z, Q1, Q2, W1 (apart from that band), W3, W5, K1 to
 
 ### Group Q: the final walk
 
-- [ ] 18. Q1.7 · Final Live_Walk on merged `main`
+- [x] 18. Q1.7 · Final Live_Walk on merged `main`
   - Agent: `platform-dev` · Depends on: 6, 17 · Estimated size: ~150 changed lines
   - Queue position: last. It has the highest number (G3.1).
   - Scope: `src/test/integration/live-walk.test.ts` (only if the run exposes a defect in the script), and the run record in the PR description. No product file.
