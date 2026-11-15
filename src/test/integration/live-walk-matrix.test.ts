@@ -15,8 +15,8 @@ const ROOT = fileURLToPath(new URL("../../..", import.meta.url));
 const REPLAY = "src/test/integration/live-walk.test.ts";
 
 describe("WALK_MATRIX", () => {
-  it("has six runs: no figure, one figure and one reduced run at each width", () => {
-    expect(WALK_MATRIX).toHaveLength(6);
+  it("has eight runs: no figure and one figure, motion on and reduced, at each width", () => {
+    expect(WALK_MATRIX).toHaveLength(8);
   });
 
   it("covers both widths with the expected variants", () => {
@@ -27,6 +27,7 @@ describe("WALK_MATRIX", () => {
       }));
     expect(at(1440)).toEqual([
       { variant: "no-figure", reduced: false },
+      { variant: "no-figure", reduced: true },
       { variant: "one-figure", reduced: false },
       { variant: "one-figure", reduced: true },
     ]);
@@ -35,6 +36,8 @@ describe("WALK_MATRIX", () => {
       [1440, 900],
       [1440, 900],
       [1440, 900],
+      [1440, 900],
+      [390, 844],
       [390, 844],
       [390, 844],
       [390, 844],
@@ -67,8 +70,10 @@ describe("matrixRun", () => {
     const figures = WALK_MATRIX.map((e) => [e.variant, matrixRun(e).figure]);
     expect(figures).toEqual([
       ["no-figure", false],
+      ["no-figure", false],
       ["one-figure", true],
       ["one-figure", true],
+      ["no-figure", false],
       ["no-figure", false],
       ["one-figure", true],
       ["one-figure", true],

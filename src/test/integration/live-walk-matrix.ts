@@ -1,7 +1,11 @@
 /**
  * The Live_Walk variant matrix (Q1.3, Q2.1). Pure data and name builders, no
- * browser. Each width runs three times: with no figure, with one figure, and
- * once more with one figure under `prefers-reduced-motion: reduce`.
+ * browser. `WALK_MATRIX` lists four runs per width (eight in all):
+ *
+ * 1. no figure, motion on;
+ * 2. no figure, `prefers-reduced-motion: reduce`;
+ * 3. one figure, motion on;
+ * 4. one figure, `prefers-reduced-motion: reduce`.
  */
 import {
   EXPECTED_STEPS,
@@ -29,11 +33,12 @@ export function walkEnabled(env: Record<string, string | undefined>): boolean {
   return env[WALK_ENV] === "1";
 }
 
-/** The matrix: each width, with no figure, one figure, and one reduced-motion run. */
+/** The matrix: each width, with no figure or one figure, each with motion on and reduced. */
 export const WALK_MATRIX: readonly WalkMatrixEntry[] = WALK_SIZES.flatMap(
   (size) => {
     const runs: { variant: WalkVariant; reduced: boolean }[] = [
       { variant: "no-figure", reduced: false },
+      { variant: "no-figure", reduced: true },
       { variant: "one-figure", reduced: false },
       { variant: "one-figure", reduced: true },
     ];

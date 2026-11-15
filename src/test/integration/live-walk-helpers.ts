@@ -377,6 +377,8 @@ export type ClippedSample = {
   scrollWidth: number;
   clientWidth: number;
   overflowX: string;
+  /** The element's `class` attribute. CSS module names keep their local name, e.g. `live_visuallyHidden__x`. */
+  className: string;
 };
 
 /** Horizontal scroll on the document (Q1.6). One pixel of subpixel rounding is allowed. */
@@ -400,13 +402,34 @@ export function checkHorizontalScroll(
 }
 
 /**
+ * Classes that hide text on purpose: the `.visuallyHidden` class (live.module.css)
+ * and the stepper module's classes (stepper.module.css, e.g. `.name` for steps not
+ * yet reached and `.announce` for the live announcer). Both use a 1px box with
+ * `clip: rect(0 0 0 0)`, so their text is not visible to the reader by design.
+ */
+const HIDDEN_BY_DESIGN_CLASS = /visuallyHidden|stepper/i;
+
+function isHiddenByDesign(className: string): boolean {
+  return className
+    .split(/\s+/)
+    .some((token) => HIDDEN_BY_DESIGN_CLASS.test(token));
+}
+
+/**
  * Text clipped by its container (Q1.6): a container with overflow not visible
  * whose content is wider than its box, by more than one pixel.
+ *
+ * Only containers that carry a `.visuallyHidden` or stepper class are exempt,
+ * because their 1px box hides text on purpose. Any other container, including
+ * one only 1px wide, that clips its text is reported.
  */
 export function checkClippedText(samples: readonly ClippedSample[]): StepCheck {
   const expected = "no text clipped by its container";
   const clipped = samples.filter(
-    (s) => s.overflowX !== "visible" && s.scrollWidth > s.clientWidth + 1,
+    (s) =>
+      s.overflowX !== "visible" &&
+      !(isHiddenByDesign(s.className) && s.clientWidth <= 1) &&
+      s.scrollWidth > s.clientWidth + 1,
   );
   if (clipped.length === 0) {
     return { ok: true, expected, message: `PASS ${expected}` };
@@ -656,4 +679,37 @@ export function advanceSettle(
     return { next: { last: state, since: now }, settled: false };
   }
   return { next: prev, settled: now - prev.since >= settleMs };
+}
+
+/**
+ * A step with no saved Step_Shot fails (Q2.6, Q2.7): the walk never claims a
+ * step passed without its shot. Returns the defect, or null when the shot exists.
+ */
+export function missingShotDefect(input: {
+  step: WalkStepName;
+  shot: string | undefined;
+  expectedName: string;
+  suspectedFile: string;
+}): WalkDefect | null {
+  if (input.shot !== undefined) return null;
+  return {
+    step: input.step,
+    expected: `A Step_Shot named ${input.expectedName} is saved for this step.`,
+    observed: "No Step_Shot was saved for this step.",
+    suspectedFile: input.suspectedFile,
+  };
+}
+
+/** The prefix of each Step_Shot line in the run record. */
+export const RECORD_SHOT_PREFIX = "Shot: qa-shots/live-walk/";
+
+/**
+ * The expected Step_Shot names that the run record does not name. The run
+ * record is the printed line per step; a shot missing from it is a FAIL.
+ */
+export function shotsMissingFromRecord(
+  record: string,
+  expected: readonly string[],
+): string[] {
+  return expected.filter((name) => !record.includes(RECORD_SHOT_PREFIX + name));
 }
