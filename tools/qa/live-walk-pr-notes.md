@@ -9,6 +9,8 @@
 - The required matrix in the run record lists all eight rows (1440x900 and 390x844, each with no figure and one figure, motion on and reduced motion). Every row is NOT RUN. The no-figure reduced-motion rows are not in `WALK_MATRIX`, so the record says so and does not count them as walked.
 - The run record states that the 36-run result (6 passed, 30 failed, walk stopped before unlock) comes from the task brief. The committed files do not hold its per-run output, so those counts are not verified.
 - The walk script code the walk depends on is in `d245f47`, `466c72c`, `55cdd6b` and `0c3f0f1`. None of these is on `origin/main` yet.
+- Clipped-text exemption: `checkClippedText` in `src/test/integration/live-walk-helpers.ts` skips a container only when its class matches `visuallyHidden` or `stepper` and its `clientWidth` is 1px or less. This relaxes the Q1.6 check "text clipped by its container" for those hidden-by-design elements. The owner must confirm this exemption before the final walk. Any other clipped container still fails.
+- Production_Check: the command is copied exactly in the section below. J2 and J9 are not yet run against production. Real_Device_Check is not run and does not affect the verdict.
 
 ## Run record summary
 
@@ -41,6 +43,8 @@ Copied from the run record section of the same name.
 - Rerun command, with J9 required and J2 forced by `--reveal` (OD8):
   `node tools/qa/journey-check.mjs --url https://revenant.devclef.se --chromium /usr/bin/chromium --require J1,J2,J3,J4,J5,J6,J7,J8,J9 --reveal --no-issue`
 - Result of that rerun: not yet recorded.
+- J2 and J9: not yet run against production. Neither is in the 2026-11-14 run.
+- Real_Device_Check: not run. It does not affect the verdict.
 
 ## Defects for frontend-dev
 
