@@ -402,6 +402,7 @@ describe("checkHorizontalScroll and checkClippedText", () => {
           scrollWidth: 100,
           clientWidth: 100,
           overflowX: "hidden",
+          className: "",
         },
         {
           tag: "p",
@@ -409,6 +410,7 @@ describe("checkHorizontalScroll and checkClippedText", () => {
           scrollWidth: 300,
           clientWidth: 100,
           overflowX: "visible",
+          className: "",
         },
       ]).ok,
     ).toBe(true);
@@ -419,6 +421,7 @@ describe("checkHorizontalScroll and checkClippedText", () => {
         scrollWidth: 300,
         clientWidth: 100,
         overflowX: "hidden",
+        className: "",
       },
     ]);
     expect(clipped.ok).toBe(false);
@@ -433,6 +436,7 @@ describe("checkHorizontalScroll and checkClippedText", () => {
         scrollWidth: 86,
         clientWidth: 1,
         overflowX: "hidden",
+        className: "stepper_name__3xKa",
       },
       {
         tag: "p",
@@ -440,9 +444,26 @@ describe("checkHorizontalScroll and checkClippedText", () => {
         scrollWidth: 135,
         clientWidth: 1,
         overflowX: "hidden",
+        className: "stepper_announce__9fQ2 live_visuallyHidden__Lw1",
       },
     ]);
     expect(hidden.ok).toBe(true);
+  });
+
+  it("still reports clipped text in a 1px-wide container without a hidden-by-design class", () => {
+    const clipped = checkClippedText([
+      {
+        tag: "span",
+        text: "Clipped label",
+        scrollWidth: 120,
+        clientWidth: 1,
+        overflowX: "hidden",
+        className: "live_label__Qz8",
+      },
+    ]);
+    expect(clipped.ok).toBe(false);
+    expect(clipped.message).toContain('"Clipped label"');
+    expect(clipped.message).toContain("(120 > 1)");
   });
 });
 

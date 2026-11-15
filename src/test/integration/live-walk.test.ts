@@ -291,6 +291,7 @@ async function readPage(
           scrollWidth: el.scrollWidth,
           clientWidth: el.clientWidth,
           overflowX: style.overflowX,
+          className: el.getAttribute("class") ?? "",
         });
       }
       const text = Array.from(el.childNodes)

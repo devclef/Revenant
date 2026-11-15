@@ -377,6 +377,8 @@ export type ClippedSample = {
   scrollWidth: number;
   clientWidth: number;
   overflowX: string;
+  /** The element's `class` attribute. CSS module names keep their local name, e.g. `live_visuallyHidden__x`. */
+  className: string;
 };
 
 /** Horizontal scroll on the document (Q1.6). One pixel of subpixel rounding is allowed. */
@@ -400,21 +402,33 @@ export function checkHorizontalScroll(
 }
 
 /**
+ * Classes that hide text on purpose: the `.visuallyHidden` class (live.module.css)
+ * and the stepper module's classes (stepper.module.css, e.g. `.name` for steps not
+ * yet reached and `.announce` for the live announcer). Both use a 1px box with
+ * `clip: rect(0 0 0 0)`, so their text is not visible to the reader by design.
+ */
+const HIDDEN_BY_DESIGN_CLASS = /visuallyHidden|stepper/i;
+
+function isHiddenByDesign(className: string): boolean {
+  return className
+    .split(/\s+/)
+    .some((token) => HIDDEN_BY_DESIGN_CLASS.test(token));
+}
+
+/**
  * Text clipped by its container (Q1.6): a container with overflow not visible
  * whose content is wider than its box, by more than one pixel.
  *
- * A container only one pixel wide (clientWidth 1 or less) is visually hidden,
- * not clipped. The live stepper hides the names of steps not yet reached, and
- * the live announcer hides its text, both with a 1px box and `clip: rect(0 0 0 0)`
- * (live.module.css `.visuallyHidden`; the stepper's `.name`). Nothing the reader
- * sees is cut off there, so those containers are not flagged.
+ * Only containers that carry a `.visuallyHidden` or stepper class are exempt,
+ * because their 1px box hides text on purpose. Any other container, including
+ * one only 1px wide, that clips its text is reported.
  */
 export function checkClippedText(samples: readonly ClippedSample[]): StepCheck {
   const expected = "no text clipped by its container";
   const clipped = samples.filter(
     (s) =>
       s.overflowX !== "visible" &&
-      s.clientWidth > 1 &&
+      !isHiddenByDesign(s.className) &&
       s.scrollWidth > s.clientWidth + 1,
   );
   if (clipped.length === 0) {
