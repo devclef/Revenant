@@ -55,16 +55,20 @@ Each run writes one Step_Shot per walk step. The name pattern is `live-<nn>-<ste
 | 09 figures (full page) | `live-09-figures-1440x900.png` | `live-09-figures-1440x900-reduced.png` | `live-09-figures-390x844.png` | `live-09-figures-390x844-reduced.png` |
 | 10 close (full page) | `live-10-close-1440x900.png` | `live-10-close-1440x900-reduced.png` | `live-10-close-390x844.png` | `live-10-close-390x844-reduced.png` |
 
-Row by row, each matrix row expects all ten shots above at its own width and motion setting:
+Expected Step_Shots per matrix row. Each row expects the ten shots above at its own width and motion setting. Each row also has the Single_Figure_View and the 0-figure close, as the table below shows:
 
-- No figure, motion on: the ten shots at the 1440x900 or 390x844 motion-on column. The figures shot shows the Nothing_To_Compare_Line, and the walk ends on the 0-figure close (`live-10-close`).
-- No figure, reduced motion: the ten shots in the reduced column for that width.
-- One figure, motion on: the ten shots at the motion-on column for that width. A figure is picked at the write-receipts step.
-- One figure, reduced motion: the ten shots in the reduced column for that width.
+- Row 1, 1440x900, no figure, motion on: `live-01` to `live-10` at 1440x900 without `-reduced`. Step 09 shows the Nothing_To_Compare_Line. Step 10 is the 0-figure close. Single_Figure_View: OPEN, no Step_Shot name in the walk code.
+- Row 2, 1440x900, no figure, reduced motion: `live-01` to `live-10` at 1440x900 with `-reduced`. Step 09 shows the Nothing_To_Compare_Line. Step 10 is the 0-figure close. Single_Figure_View: OPEN.
+- Row 3, 1440x900, one figure, motion on: `live-01` to `live-10` at 1440x900 without `-reduced`. A figure is picked at step 02. Single_Figure_View: OPEN.
+- Row 4, 1440x900, one figure, reduced motion: `live-01` to `live-10` at 1440x900 with `-reduced`. A figure is picked at step 02. Single_Figure_View: OPEN.
+- Row 5, 390x844, no figure, motion on: `live-01` to `live-10` at 390x844 without `-reduced`. Step 09 shows the Nothing_To_Compare_Line. Step 10 is the 0-figure close. Single_Figure_View: OPEN.
+- Row 6, 390x844, no figure, reduced motion: `live-01` to `live-10` at 390x844 with `-reduced`. Step 09 shows the Nothing_To_Compare_Line. Step 10 is the 0-figure close. Single_Figure_View: OPEN.
+- Row 7, 390x844, one figure, motion on: `live-01` to `live-10` at 390x844 without `-reduced`. A figure is picked at step 02. Single_Figure_View: OPEN.
+- Row 8, 390x844, one figure, reduced motion: `live-01` to `live-10` at 390x844 with `-reduced`. A figure is picked at step 02. Single_Figure_View: OPEN.
 
 The no-figure and one-figure rows at the same width and motion setting expect the same file names. Keep each run's shots in its own folder, or one run overwrites the other.
 
-The Single_Figure_View has no Step_Shot name in the walk code, and it is not one of the ten steps. The owner must give it a name before the run. Until then this record cannot say whether it was captured. The figures shot (`live-09-figures`) is the only shot for the figure view.
+Single_Figure_View, OPEN for all eight rows: the walk code defines no Step_Shot name for it, and it is not one of the ten steps in `WALK_STEP_NAMES`. The owner must give it a name and a step before the run. Until then no row can say whether it was captured. The figures shot (`live-09-figures`) is the only shot the walk writes for the figure view.
 
 Step_Shot results are NOT RUN in every row. Until a saved run produces a shot, the step is not passed.
 
