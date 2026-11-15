@@ -4,9 +4,10 @@
 
 ## Code under test
 
-- `origin/main`: `d6e013d` ("Tick completed spec tasks [skip ci]"), fetched 2026-11-14.
-- Branch `kirocrew/task/TASK_f453c78a_1794617838611514918` before the commit that publishes this record: `693c1c0`.
-- The worktree is not at `origin/main` and cannot be fast-forwarded to it. `origin/main` is an ancestor of the branch. The branch has eight commits that `origin/main` does not have:
+- This record describes the branch at commit `049b252` ("Narrow the clipped-text exemption in checkClippedText (issue #399 review feedback)"). That commit is the code the walk would test. The commit that adds this record comes after it. A file cannot hold its own commit SHA, so the PR head is the commit whose message begins "Live_Walk run record (issue #399)" after `049b252`. Read it with `git log -1 --format=%H`.
+- No full Live_Walk ran on merged `main` in this task. The status stays NOT RUN.
+- `origin/main`: `d6e013d` ("Tick completed spec tasks [skip ci]"), fetched 2026-11-15.
+- Branch `kirocrew/task/TASK_b4cbaccf_1794760225849831715` is at `049b252`. It is not at `origin/main` and cannot be fast-forwarded to it. `origin/main` is an ancestor of the branch. The branch has 12 commits that `origin/main` does not have, from `55cdd6b` through `049b252`:
   - `55cdd6b` [platform-dev] Live_Walk: a step with no Step_Shot fails
   - `0c3f0f1` [platform-dev] Live_Walk: every expected Step_Shot must be named in the run record
   - `d245f47` [platform-dev] Live_Walk: visually hidden 1px containers are not clipped text
@@ -15,11 +16,14 @@
   - `13e3a3d` Q1.7 Live_Walk run record (issue #399): walk not run, main precondition failed
   - `739f366` [platform-dev] Q1.7 Production_Check: Journey_Check run against revenant.devclef.se (issue #399)
   - `693c1c0` [platform-dev] Q1.7 Production_Check: regenerate Journey_Check lines from full script output (issue #399)
+  - `a19eaf1` and `b766396` Live_Walk run record (issue #399)
+  - `9c01d4b` Trigger CI (previous head message contained a skip-CI marker)
+  - `049b252` Narrow the clipped-text exemption in checkClippedText (issue #399 review feedback)
 - Setup PRs: #407 (`d3dc80f`, Q1 and Q2 Live_Walk setup) and #420 (`bbc7e2b`, D1 README) are on `origin/main`.
 
 ## Why the walk did not run
 
-The task's step 6 says to stop and record when the worktree is not a fast-forward of `origin/main`. Running on `origin/main` as it stands would test the walk script without the two script fixes (`d245f47`, `466c72c`) and without the missing-shot wiring (`55cdd6b`, `0c3f0f1`). Its output would not describe the current walk script. Running on the branch would not be a run on merged main.
+The precondition for a merged-main run is not met. `origin/main` does not have the commits that change the walk script (`d245f47`, `466c72c`) or wire in the missing Step_Shots (`55cdd6b`, `0c3f0f1`). A run on `origin/main` would test an older walk script and would not describe the current one. A run on the branch would not be a run on merged main.
 
 ## Results
 
@@ -31,12 +35,15 @@ The task's step 6 says to stop and record when the worktree is not a fast-forwar
 - Q1.6 verdict: not determined. No walk ran, so no Q1.6 condition was checked.
 - Defects: none recorded. The walk did not run, so it found nothing. This is not a pass.
 - Cut steps: not evaluated, because no walk ran.
-- Production_Check: not run. It depends on tasks 6 and 7.
+- Production_Check: a Journey_Check run against production is recorded below. It is not a Live_Walk on merged main, and it does not replace the owner step.
 
-## To unblock
+## Owner steps (open)
 
-1. Land the five branch commits on `main` through a reviewed pull request. This is an owner decision.
-2. Rerun this task from a worktree at the new `origin/main` that includes those commits, then replace this record.
+1. Land the prerequisite commits on `main` through a reviewed pull request. This is an owner decision.
+2. From a checkout of the new `main`, run `npm run live-walk` at 1440x900 and at 390x844, in both variants (motion on and reduced motion, with and without a figure).
+3. Replace this record with the saved output of those runs. Until then the status stays NOT RUN.
+4. Production_Check: the owner step stays open. The Journey_Check run above is recorded; the owner still has to review it and decide whether it counts for Q1.7.
+5. Real_Device_Check: the owner step stays open. No device check has been run.
 
 ## Production_Check (Journey_Check against production)
 
