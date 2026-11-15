@@ -58,7 +58,9 @@ These steps are open. None is done.
 5. Review the Production_Check below. The owner decides whether it counts for Q1.7.
 6. Real_Device_Check: not run.
 
-## Production_Check (Journey_Check against production)
+## Production_Check
+
+Journey_Check against production. This section covers the committed run only.
 
 - Production URL: `https://revenant.devclef.se`
 - Command (the scheduled workflow's arguments, with local output only):
