@@ -44,6 +44,14 @@ Every entry is reported, not verified on merged `main`. The brief names the J9 f
 |---|---|---|---|---|---|
 | D1 | J9 on `/demo/live` at 1440x900: write one sentence and one question, then reach "Press the seal" with 0 figures | Reaches "Press the seal" with 0 figures, with no write request (spec 11 J9) | Failure reported in the brief. Observed detail not saved. | `src/components/live/` or `tools/qa/journey-check.mjs` | reported, not verified on merged main |
 | D2 | J9 on `/demo/live` at 390x844: same steps as D1 | Same as D1 | Failure reported in the brief. Observed detail not saved. | `src/components/live/` or `tools/qa/journey-check.mjs` | reported, not verified on merged main |
+| D3 | Unlock on `/demo/live` after the 30-second lock (frontend-dev fix task) | Unlock completes with the passkey on the live letter | Not reached. The brief says the walk stopped before unlock, so this step is unverified. | `src/components/live/` | unverified, not reached |
+| D4 | Testify on `/demo/live` (frontend-dev fix task) | Recall questions are shown and answered before anything is revealed | Not reached. Unverified. | `src/components/live/` | unverified, not reached |
+| D5 | Marks step on `/demo/live` (frontend-dev fix task) | Marks step completes as the journey spec describes | Not reached. Unverified. | `src/components/live/` | unverified, not reached |
+| D6 | Letter step on `/demo/live` (frontend-dev fix task) | Letter is shown after the seal breaks | Not reached. Unverified. | `src/components/live/` | unverified, not reached |
+| D7 | Figures step on `/demo/live` (frontend-dev fix task) | Figures are shown with their then and now values after the letter | Not reached. Unverified. | `src/components/live/` | unverified, not reached |
+| D8 | Close step on `/demo/live` (frontend-dev fix task) | Walk ends at the close step with no error | Not reached. Unverified. | `src/components/live/` | unverified, not reached |
+
+D1 and D2 list `src/components/live/` as the frontend-dev suspect. `tools/qa/journey-check.mjs` becomes the suspect only if the page is shown to be correct for those steps.
 
 Other defects from the 36-run report are not in the committed files, so they are not listed here. Add them when the report's per-defect details are copied in.
 
@@ -69,11 +77,11 @@ Journey_Check against production. This section covers the committed run only.
 - `--no-issue` was used, so GitHub was not touched and no Journey_Issue was opened or commented on.
 - No `--reveal` flag, so J2 (persona reveal) did not run. J2 runs on the 00:47 UTC schedule and on manual runs only (OD8), because each walk stores an encrypted "no answer" Recall_Record. J9 is not in the workflow's `--require` list, so it did not run either.
 - Verdict: **PASS** for every check that ran (J1, J3, J4, J5, J6, J7, J8). J2 did not run in this invocation.
-- Not run against production: **J9 and J2**. The committed run omitted both. J9 was not in `--require`, and J2 needs `--reveal` or the 00:47 UTC run (OD8).
-- Rerun command, with J9 required and J2 forced by `--reveal`:
+- Required and not run against production: **J9 and J2**. Both are required for Q1.7. The committed run omitted both, so this check is open. J9 was not in `--require`, and J2 needs `--reveal` or the 00:47 UTC run (OD8).
+- Rerun command, with J9 required and J2 forced by `--reveal` (OD8):
   `node tools/qa/journey-check.mjs --url https://revenant.devclef.se --chromium /usr/bin/chromium --require J1,J2,J3,J4,J5,J6,J7,J8,J9 --reveal --no-issue`
   `--no-issue` keeps GitHub untouched. Drop it only if the owner wants a Journey_Issue opened.
-- This rerun has not been done. Its output is not saved, so no result from it is recorded here.
+- Result: not yet recorded. The rerun has not been done, and its output is not saved, so no result from it is recorded here.
 - Script summary: `Checks: 128. Failed: 0. Notes: 4.` (PASS lines: 124, FAIL lines: 0, note lines: 4).
 
 Result lines: the complete saved output of the script, unedited. It has 131 lines, including the header and the summary.
