@@ -6,10 +6,11 @@
 
 ## Notes from the agent
 
-- The required matrix in the run record lists all eight rows (1440x900 and 390x844, each with no figure and one figure, motion on and reduced motion). Every row is NOT RUN. The no-figure reduced-motion rows are not in `WALK_MATRIX`, so the record says so and does not count them as walked.
+- The required matrix in the run record lists all eight rows (1440x900 and 390x844, each with no figure and one figure, motion on and reduced motion). Every row is NOT RUN. The two no-figure reduced-motion rows (1440x900 and 390x844) are in `WALK_MATRIX` (`src/test/integration/live-walk-matrix.ts`, `WALK_MATRIX` at lines 37-53, with the no-figure reduced-motion entry at line 41). Both stay NOT RUN. The break-method suite in `live-walk.test.ts` is a separate check and is not a walk run.
 - The run record states that the 36-run result (6 passed, 30 failed, walk stopped before unlock) comes from the task brief. The committed files do not hold its per-run output, so those counts are not verified.
 - The walk script code the walk depends on is in `d245f47`, `466c72c`, `55cdd6b` and `0c3f0f1`. None of these is on `origin/main` yet.
-- Clipped-text exemption: `checkClippedText` in `src/test/integration/live-walk-helpers.ts` skips a container only when its class matches `visuallyHidden` or `stepper` and its `clientWidth` is 1px or less. This relaxes the Q1.6 check "text clipped by its container" for those hidden-by-design elements. The owner must confirm this exemption before the final walk. Any other clipped container still fails.
+- Owner decision 1, clipped-text exemption: `checkClippedText` in `src/test/integration/live-walk-helpers.ts` skips a container only when its class matches `visuallyHidden` or `stepper` and its `clientWidth` is 1px or less. Those elements hide their text on purpose, so the Q1.6 check "text clipped by its container" does not report them. Any other clipped container still fails, including one only 1px wide. The owner must confirm this exemption before the final walk. Not confirmed.
+- Owner decision 2, changed stop rule: a stage defect no longer stops the walk. The defect is recorded and the walk runs the next stage. The walk still stops when a stage's own action fails (`src/test/integration/live-walk.test.ts`, commit `57bb707`). The owner must confirm this rule before the final walk. Not confirmed.
 - Production_Check: the command is copied exactly in the section below. J2 and J9 are not yet run against production. Real_Device_Check is not run and does not affect the verdict.
 
 ## Run record summary
@@ -45,6 +46,16 @@ Copied from the run record section of the same name.
 - Result of that rerun: not yet recorded.
 - J2 and J9: not yet run against production. Neither is in the 2026-11-14 run.
 - Real_Device_Check: not run. It does not affect the verdict.
+
+## Open owner steps
+
+None of these is done.
+
+- Walk on merged `main`: not done. No merged `main` SHA exists yet.
+- J2 and J9 Production_Check runs: not done.
+- frontend-dev follow-up for R1 to R3 and D1 to D2: not started.
+- Real_Device_Check: not done.
+- Owner confirmation of the clipped-text exemption and the changed stop rule: not done.
 
 ## Defects for frontend-dev
 
