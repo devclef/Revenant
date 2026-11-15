@@ -10,6 +10,25 @@
 - The run record states that the 36-run result (6 passed, 30 failed, walk stopped before unlock) comes from the task brief. The committed files do not hold its per-run output, so those counts are not verified.
 - The walk script code the walk depends on is in `d245f47`, `466c72c`, `55cdd6b` and `0c3f0f1`. None of these is on `origin/main` yet.
 
+## Run record summary
+
+Quoted from `tools/qa/live-walk-run-record.md`.
+
+Required matrix (each row is one Live_Walk run on merged `main`; none has run):
+
+| Width | Figure | Motion | Status |
+|---|---|---|---|
+| 1440x900 | no figure | motion on | NOT RUN |
+| 1440x900 | no figure | reduced motion | NOT RUN |
+| 1440x900 | one figure | motion on | NOT RUN |
+| 1440x900 | one figure | reduced motion | NOT RUN |
+| 390x844 | no figure | motion on | NOT RUN |
+| 390x844 | no figure | reduced motion | NOT RUN |
+| 390x844 | one figure | motion on | NOT RUN |
+| 390x844 | one figure | reduced motion | NOT RUN |
+
+Earlier 36-run brief (reported, not verified): 36 runs attempted, 6 passed, 30 failed, walk stopped before unlock. The committed files do not contain the per-run output.
+
 ## Production_Check
 
 Copied from the run record section of the same name.
