@@ -126,6 +126,10 @@ async function tickOneFigure(page: Page): Promise<string> {
  * in a later step; this block only checks the plan is complete.
  */
 describe.skipIf(!walkEnabled(process.env))("live walk matrix plan", () => {
+  it("has eight runs: two widths, two variants, motion on and reduced", () => {
+    expect(WALK_MATRIX).toHaveLength(8);
+  });
+
   it.each(WALK_MATRIX.map((entry) => [entry.id, entry] as const))(
     "plans every Step_Shot for %s",
     (_id, entry) => {
@@ -143,7 +147,7 @@ describe.skipIf(!walkEnabled(process.env))("live walk matrix plan", () => {
  * not, with one way of breaking the seal (press and hold, the Seal_Button or the
  * Skip_Link). After every stage the page must settle, then the checks in Q1.6 run
  * on the real page, then a Step_Shot is saved under `qa-shots/live-walk/` (named
- * by `walkShotName`). The walk stops at the first stage with a defect. Missing
+ * by `walkShotName`). A defect on a stage is recorded and the walk goes on to the next stage, so every reachable stage is checked and shot. It stops only when a stage's own action fails. Missing
  * Step_Shots print `FAIL missing Step_Shot <name>`.
  */
 
@@ -467,7 +471,7 @@ async function runWalk(
       if (noShot) defects.push(noShot);
 
       // The follow-on action runs only after the stage has been checked and shot.
-      if (stage.afterShot && !actionFailed && defects.length === 0) {
+      if (stage.afterShot && !actionFailed) {
         try {
           observed += ` ${await stage.afterShot(ctx)}`;
         } catch (error) {
@@ -491,7 +495,7 @@ async function runWalk(
         shot,
         blocked,
       });
-      if (defects.length > 0 && !blocked) break;
+      if (actionFailed && !blocked) break;
     }
     await context.close();
   } finally {
