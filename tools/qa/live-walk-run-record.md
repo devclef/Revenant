@@ -1,50 +1,57 @@
 # Live_Walk run record (issue #399)
 
-**Status: NOT RUN.** The walk was not executed because the precondition for a merged-main run failed. This record replaces the earlier record in commit `db5e038`. None of that commit's content is used here.
+**Task 18 status: FAIL under Q1.6.** No Live_Walk has run on merged `main`. No step is claimed as passed. The walk-stopped-before-unlock result below is reported, not verified in committed files.
 
-## Code under test
+## Commit the walk must run on
 
-- This record describes the code at commit `049b252` ("Narrow the clipped-text exemption in checkClippedText (issue #399 review feedback)"). That is the code the walk would test.
-- The PR head is not `049b252`. It is the record commit that adds this file, which comes after `049b252`. This file cannot contain its own SHA, so the PR head SHA is the one the dispatcher reports for the branch tip, not a value written here.
-- No full Live_Walk ran on merged `main` in this task. The status stays NOT RUN.
-- `origin/main`: `d6e013d` ("Tick completed spec tasks [skip ci]"), fetched 2026-11-15.
-- The branch `kirocrew/task/TASK_b4cbaccf_1794760225849831715` is not at `origin/main` and cannot be fast-forwarded to it. `origin/main` is an ancestor of the branch. The branch has 12 commits that `origin/main` does not have, from `55cdd6b` through `049b252`, followed by the record commit:
-  - `55cdd6b` [platform-dev] Live_Walk: a step with no Step_Shot fails
-  - `0c3f0f1` [platform-dev] Live_Walk: every expected Step_Shot must be named in the run record
-  - `d245f47` [platform-dev] Live_Walk: visually hidden 1px containers are not clipped text
-  - `466c72c` [platform-dev] Live_Walk: read the receipts disclosure and press Next before the seal
-  - `db5e038` Q1.7 Final Live_Walk run record (issue #399)
-  - `13e3a3d` Q1.7 Live_Walk run record (issue #399): walk not run, main precondition failed
-  - `739f366` [platform-dev] Q1.7 Production_Check: Journey_Check run against revenant.devclef.se (issue #399)
-  - `693c1c0` [platform-dev] Q1.7 Production_Check: regenerate Journey_Check lines from full script output (issue #399)
-  - `a19eaf1` and `b766396` Live_Walk run record (issue #399)
-  - `9c01d4b` Trigger CI (previous head message contained a skip-CI marker)
-  - `049b252` Narrow the clipped-text exemption in checkClippedText (issue #399 review feedback)
-- Setup PRs: #407 (`d3dc80f`, Q1 and Q2 Live_Walk setup) and #420 (`bbc7e2b`, D1 README) are on `origin/main`.
+- Walk commit SHA: **NOT RUN** (placeholder). The walk must run on the merged `main` commit, which does not exist yet. No SHA is written here.
+- Branch tip when this record was last edited: `2ab5c25`. That is not the SHA the walk must run on. This file cannot contain its own SHA.
+- The walk script code that matters is in `d245f47`, `466c72c`, `55cdd6b` and `0c3f0f1`. None of them is on `origin/main` yet.
 
-## Why the walk did not run
+## Required matrix
 
-The precondition for a merged-main run is not met. `origin/main` does not have the commits that change the walk script (`d245f47`, `466c72c`) or wire in the missing Step_Shots (`55cdd6b`, `0c3f0f1`). A run on `origin/main` would test an older walk script and would not describe the current one. A run on the branch would not be a run on merged main.
+Each row is one Live_Walk run on merged `main`. None of the rows has been run on merged `main`.
 
-## Results
+| Width | Figure | Motion | Status |
+|---|---|---|---|
+| 1440x900 | no figure | motion on | NOT RUN |
+| 1440x900 | one figure | motion on | NOT RUN |
+| 1440x900 | one figure | reduced motion | NOT RUN |
+| 390x844 | no figure | motion on | NOT RUN |
+| 390x844 | one figure | motion on | NOT RUN |
+| 390x844 | one figure | reduced motion | NOT RUN |
 
-- Walk runs completed: 0 of 6. The six runs are three at 1440x900 and three at 390x844: no figure with motion, one figure with motion, and one figure with reduced motion.
-- Result lines printed by the script: none.
-- Per-step results: not produced. Every step is not passed, because no step ran.
-- Step_Shots: none saved. All expected shots are missing: `live-01-write` through `live-10-close`, in all six runs. The full-page captures for letter, figures and close are missing too.
-- Single_Figure_View check and 0-figure close: not run.
-- Q1.6 verdict: not determined. No walk ran, so no Q1.6 condition was checked.
-- Defects: none recorded. The walk did not run, so it found nothing. This is not a pass.
-- Cut steps: not evaluated, because no walk ran.
-- Production_Check: a Journey_Check run against production is recorded below. It is not a Live_Walk on merged main, and it does not replace the owner step.
+The no-figure reduced-motion case is not in `WALK_MATRIX` (`src/test/integration/live-walk-matrix.ts`). The break-method suite in `live-walk.test.ts` covers it. It is not a walk run.
 
-## Owner steps (open)
+## Earlier 36-run brief (reported, not verified)
 
-1. Land the prerequisite commits on `main` through a reviewed pull request. This is an owner decision.
-2. From a checkout of the new `main`, run `npm run live-walk` at 1440x900 and at 390x844, in both variants (motion on and reduced motion, with and without a figure).
-3. Replace this record with the saved output of those runs. Until then the status stays NOT RUN.
-4. Production_Check: the owner step stays open. The Journey_Check run above is recorded; the owner still has to review it and decide whether it counts for Q1.7.
-5. Real_Device_Check: the owner step stays open. No device check has been run.
+The task brief reports a 36-run attempt with this result: 6 passed, 30 failed, and the walk stopped before unlock. These counts come from the brief. The committed files do not contain the per-run output, so the table below is not verified.
+
+| Item | Reported value | Verified in committed files |
+|---|---|---|
+| Runs attempted | 36 | No |
+| Passed | 6 | No |
+| Failed | 30 | No |
+| Walk stopped before unlock | yes | No |
+
+## Defects (Q1.7)
+
+Each defect needs a step, an expected result, an observed result and a suspected file. The committed files do not contain the per-defect details from the 36-run report. The rows stay open until someone copies them from that report. No row is invented here.
+
+| # | Step | Expected result | Observed result | Suspected file |
+|---|---|---|---|---|
+| - | open | to be filled from the 36-run report | to be filled | to be filled |
+
+## Open owner steps
+
+These steps are open. None is done.
+
+1. Merge the prerequisite commits `d245f47`, `466c72c`, `55cdd6b` and `0c3f0f1` to `main` through a reviewed pull request. This is an owner decision.
+2. Run `npm run live-walk` from a checkout of the new `main` at 1440x900 and 390x844, covering the full matrix above.
+3. Replace the NOT RUN rows with the saved output of those runs, and rebuild the defect table from that output.
+4. Run the Journey_Check against `https://revenant.devclef.se` with J9 and J2 included. The Production_Check below does not include them.
+5. Review the Production_Check below. The owner decides whether it counts for Q1.7.
+6. Real_Device_Check: not run.
 
 ## Production_Check (Journey_Check against production)
 
