@@ -17,7 +17,7 @@ No cuts. Commit `57bb707` changes the matrix and the stop rule, and removes no w
 - The matrix grows from six runs to eight. Each width adds the no-figure reduced-motion run (commit `57bb707`). The eight rows are in the table below.
 - The walk keeps going after a stage defect. The defect is recorded, and the walk runs the next stage. It stops only when a stage's own action fails (commit `57bb707`, `src/test/integration/live-walk.test.ts`).
 - The seal step clicks Next when the lost-passkey checkbox is not visible, then checks the box (commit `466c72c`, `src/test/integration/live-walk.test.ts`).
-- Earlier-spec tests changed or retired: none. **This line is inaccurate for this PR.** Commit `57bb707` changes the expected matrix length and the stop rule in existing tests. The owner must record that change before merge.
+- Earlier-spec tests changed: `src/test/integration/live-walk-matrix.test.ts` and `src/test/integration/live-walk.test.ts` now expect 8 runs in `WALK_MATRIX` instead of 6. The stop rule in `live-walk.test.ts` changed: a stage defect no longer stops the walk, while a stage's own action failure still stops it (commit `57bb707`).
 
 ## Required matrix
 
@@ -34,7 +34,7 @@ Each row is one Live_Walk run on merged `main`. None of the rows has been run on
 | 390x844 | one figure | motion on | NOT RUN |
 | 390x844 | one figure | reduced motion | NOT RUN |
 
-The no-figure reduced-motion rows are not in `WALK_MATRIX` (`src/test/integration/live-walk-matrix.ts`). The break-method suite in `live-walk.test.ts` covers that case. It is not a walk run, so both rows stay NOT RUN.
+The two no-figure reduced-motion rows (1440x900 and 390x844) are in `WALK_MATRIX` (`src/test/integration/live-walk-matrix.ts`, `WALK_MATRIX` at lines 37-53, with the no-figure reduced-motion entry at line 41). Both stay NOT RUN. The break-method suite in `live-walk.test.ts` is a separate check and is not a walk run.
 
 ## 36-run result: reported from the task brief, not backed by saved output
 
