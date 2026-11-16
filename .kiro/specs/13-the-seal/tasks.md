@@ -76,7 +76,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
 
 ### Group P: pressing the seal, target 17 to 20 November 2026
 
-- [ ] 1. P1 to P4, P5.2 · Reproduce, JS budget baseline and the press model
+- [x] 1. P1 to P4, P5.2 · Reproduce, JS budget baseline and the press model
   - Agent: `frontend-dev` · Depends on: none · Estimated size: ~700 changed lines · Target: 17 November 2026
   - Never cut (apart from sub-task 1.3, which is Cuttable, cut order 4).
   - Scope: `src/components/live/press/press-hold.ts`, `press-pose.ts`, `constants.ts` (all new), and the `*.test.ts(x)` for each file. No existing file is edited. `hold.ts` and `seal-machine.ts` stay untouched.
