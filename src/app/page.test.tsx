@@ -95,9 +95,11 @@ describe("landing page hero markup (B1)", () => {
     }
   });
 
-  it("renders no Ghost Envelope and no envelope marker", () => {
+  it("renders no Ghost Envelope and no ghost-envelope marker", () => {
+    // The hero now draws the shared Envelope (issue #429), which carries
+    // data-envelope-state, so only the retired ghost marker is checked here.
     const html = render();
-    expect(html).not.toContain("data-envelope");
+    expect(html).not.toContain("data-ghost-envelope");
     expect(html).not.toMatch(/ghost[- ]envelope/i);
   });
 
