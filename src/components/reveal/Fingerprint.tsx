@@ -25,6 +25,7 @@
 // malformed fingerprint. Every string comes from copy.ts (R15.1).
 
 import Link from "next/link";
+import type { ReactNode } from "react";
 import { formatFingerprint } from "@/lib/seal-format";
 import type { LetterKind } from "./FigureLine";
 import { REVEAL_COPY } from "./copy";
@@ -48,9 +49,15 @@ export type FingerprintProps = {
    * label and no card wording; a live or real letter shows the card sentence.
    */
   letterKind: LetterKind;
+  /**
+   * The Tamper_Control slot (spec 13, A1.1). Rendered only in the persona
+   * section, after the "Show the fingerprint" disclosure. Reveal passes it for a
+   * persona letter only; a live or real letter leaves it unset.
+   */
+  tamper?: ReactNode;
 };
 
-export function Fingerprint({ envelopeHash, letterKind }: FingerprintProps) {
+export function Fingerprint({ envelopeHash, letterKind, tamper }: FingerprintProps) {
   const fingerprint = formatFingerprint(envelopeHash);
   // A letter that opened carries a verified 64-char lowercase hex hash, so this
   // is defensive: a malformed hash shows no block rather than a broken one.
@@ -81,6 +88,7 @@ export function Fingerprint({ envelopeHash, letterKind }: FingerprintProps) {
             </Link>
           </p>
         </details>
+        {tamper === undefined ? null : tamper}
       </section>
     );
   }

@@ -221,3 +221,60 @@ describe("the demo label has a desk-surface colour override (contrast on --bg)",
     expect(body).not.toContain("--ink");
   });
 });
+
+// Change (spec 13, task 2): Fingerprint gained an optional `tamper` slot. Reason:
+// the persona Read step shows the Tamper_Control beside the seal verdict and the
+// "Show the fingerprint" disclosure (A1.1). A live or real letter never gets it
+// (A1.2), so the slot is ignored for those kinds.
+describe("Fingerprint tamper slot (spec 13 A1.1, A1.2)", () => {
+  const TAMPER = createElement(
+    "button",
+    { type: "button" },
+    "Try to tamper with it",
+  );
+
+  it("renders the slot inside the persona section, after the disclosure", () => {
+    const html = renderToStaticMarkup(
+      createElement(Fingerprint, {
+        envelopeHash: HASH,
+        letterKind: "persona",
+        tamper: TAMPER,
+      }),
+    );
+    const section = html.slice(html.indexOf("data-fingerprint-persona"));
+    expect(section).toContain("Try to tamper with it");
+    expect(section.indexOf("<details")).toBeLessThan(
+      section.indexOf("Try to tamper with it"),
+    );
+  });
+
+  it("does not render the slot for a live letter, even when one is passed (A1.2)", () => {
+    const html = renderToStaticMarkup(
+      createElement(Fingerprint, {
+        envelopeHash: HASH,
+        letterKind: "live",
+        tamper: TAMPER,
+      }),
+    );
+    expect(html).not.toContain("Try to tamper with it");
+  });
+
+  it("does not render the slot for a real letter (A1.2)", () => {
+    const html = renderToStaticMarkup(
+      createElement(Fingerprint, {
+        envelopeHash: HASH,
+        letterKind: "real",
+        tamper: TAMPER,
+      }),
+    );
+    expect(html).not.toContain("Try to tamper with it");
+  });
+
+  it("leaves the persona markup unchanged when no slot is passed", () => {
+    const html = renderToStaticMarkup(
+      createElement(Fingerprint, { envelopeHash: HASH, letterKind: "persona" }),
+    );
+    expect(html).not.toContain("<button");
+    expect(html).toContain(REVEAL_COPY.sealVerdict);
+  });
+});

@@ -61,6 +61,7 @@ import {
   type FlowState,
   type OpenFailedKind,
 } from "./opening-machine";
+import type { TamperSource } from "./tamper/tamper-run";
 import { drawSampleSeed } from "./sample-seed";
 import {
   pickSamples,
@@ -145,6 +146,12 @@ export type OpeningFlow = {
   readDone: () => void;
   /** Live-letter controls. `undefined` in demo mode. */
   live?: LiveFlow;
+  /**
+   * The stored envelope and secret for the Tamper_Control (spec 13, A2.7). Set
+   * only in demo mode after `openLetter` has passed; null before that. Memory
+   * only: not in state, never serialised, never logged.
+   */
+  tamperSource: () => TamperSource | null;
 };
 
 /**
@@ -170,6 +177,9 @@ export function useOpeningFlow(
   // the loaded barrel and the one factor for the next unlock. None is in state.
   const cryptoRef = useRef<CryptoModule | null>(null);
   const secretRef = useRef<Uint8Array | null>(null);
+  // The Tamper_Control's source (spec 13, A2.7). Filled only after a demo
+  // letter's `openLetter` passed, from the same values it was given.
+  const tamperSourceRef = useRef<TamperSource | null>(null);
   const passkeyHeaderRef = useRef<PasskeyHeader | null>(null);
   const factorRef = useRef<UnlockFactor | null>(null);
 
@@ -394,6 +404,10 @@ export function useOpeningFlow(
         return;
       }
 
+      // A copy of the released secret for the Tamper_Control. `openLetter` gets
+      // its own bytes, so this copy is taken before the call.
+      const tamperSecret = serverSecret.slice();
+
       const result = await crypto.openLetter({
         envelope: snapshot.envelope,
         envelopeHash: snapshot.envelopeHash,
@@ -408,6 +422,16 @@ export function useOpeningFlow(
         }
         safeDispatch({ type: "OPEN_FAILED", kind: result.error.kind });
         return;
+      }
+
+      if (keySource === "demo") {
+        // A deep clone, so the reducer's envelope object is never frozen by the
+        // Tamper_Control. The secret is read through a fresh copy each time.
+        tamperSourceRef.current = {
+          envelope: structuredClone(snapshot.envelope),
+          envelopeHash: snapshot.envelopeHash,
+          readSecret: () => tamperSecret.slice(),
+        };
       }
 
       safeDispatch({
@@ -675,5 +699,6 @@ export function useOpeningFlow(
     nextQuestion,
     readDone,
     live,
+    tamperSource: () => tamperSourceRef.current,
   };
 }

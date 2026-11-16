@@ -12,6 +12,7 @@
 
 import { decodeBase64url, encodeBase64url } from "@/lib/seal-format/base64url";
 import { canonicalize } from "@/lib/seal-format/canonical-json";
+import { envelopeHash } from "@/lib/seal-format/hash";
 
 // `openLetter`'s result type. Written as `typeof import(...)` so no static import
 // of src/lib/crypto reaches this component (import-boundary test).
@@ -54,6 +55,11 @@ export interface TamperRun {
   /** `openLetter` on the Tamper_Copy. This is the verdict shown to the judge. */
   readonly result: OpenResult;
   readonly change: TamperChange;
+  /**
+   * SHA-256 of the Tamper_Copy's envelope, from `envelopeHash` (the same
+   * function the seal and `openLetter` use). Shown as the copy's Fingerprint.
+   */
+  readonly copyHash: string;
 }
 
 /**
@@ -111,6 +117,7 @@ export async function runTamper(src: TamperSource): Promise<TamperRun> {
 
   // Same call, same inputs. The changed byte is the only difference.
   const result = await openWith(copy, src);
+  const copyHash = await envelopeHash(copy);
 
   if (canonicalize(stored) !== before) {
     throw new Error("tamper: the stored envelope changed during the run");
@@ -125,6 +132,7 @@ export async function runTamper(src: TamperSource): Promise<TamperRun> {
       before: original,
       after: changed,
     },
+    copyHash,
   };
 }
 

@@ -4,6 +4,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { REVEAL_COPY } from "./copy";
+import { TAMPER_COPY } from "./tamper/tamper-copy";
 import { CEREMONY_COPY } from "@/components/ceremony/copy";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { DEMO_COPY } from "@/components/demo/copy";
@@ -715,5 +716,35 @@ describe("OpeningFlow one motion control per Stage (spec X2.7)", () => {
     setMotionMode("full");
     const html = renderPersonaPage(state);
     expect(countCalmButtons(html), `Calm count at ${_name}`).toBe(1);
+  });
+});
+
+// Change (spec 13, task 2): OpeningFlow passes `flow.tamperSource` to Reveal for
+// persona mode only. Reason: the Tamper_Control belongs to the persona Read step
+// and must not appear on the Testify step (A1.1) or the loading and sealed
+// views. These tests guard the selector's view for those states.
+describe("OpeningFlow Tamper_Control absence (spec 13 A1.1, A1.3)", () => {
+  it("renders no Tamper_Control on the Testify step (recall) in persona mode", () => {
+    const html = render({
+      tag: "recall",
+      opened: OPENED,
+      drafts: DRAFTS,
+      invalid: [],
+    });
+    expect(html).not.toContain(TAMPER_COPY.button);
+  });
+
+  it("renders no Tamper_Control while loading", () => {
+    expect(render({ tag: "loading" })).not.toContain(TAMPER_COPY.button);
+  });
+
+  it("keeps the region a -1 tab stop on the Testify step (A1.3)", () => {
+    const html = render({
+      tag: "recall",
+      opened: OPENED,
+      drafts: DRAFTS,
+      invalid: [],
+    });
+    expect(html).toContain('tabindex="-1"');
   });
 });
