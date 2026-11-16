@@ -387,8 +387,7 @@ describe("Break-the-seal (C6) constants and CSS (spec 10 C6)", () => {
     expect(C.MARKS_COLUMN_MAX).toBe("min(28rem, 40vw)");
     expect(C.SEAL_ON_FLAP_LEFT_PCT).toBe(50);
     expect(C.SEAL_ON_FLAP_TOP_PCT).toBe(55.3);
-    expect(C.SEAL_ON_FLAP_WIDTH_PCT).toBe(28);
-    expect(C.PHONE_SEAL_SIZE).toBe("6.5rem");
+    expect(C.BREAK_SEAL_D).toBe("clamp(120px, 12vw, 160px)");
     expect(C.ANSWER_CLAMP_LINES_LETTER).toBe(2);
   });
 
@@ -400,18 +399,20 @@ describe("Break-the-seal (C6) constants and CSS (spec 10 C6)", () => {
   it("puts the seal on the flap at the design percentages in the scene CSS", () => {
     expect(scene).toMatch(
       new RegExp(
-        `\\[data-envelope-seal\\] \\{[^}]*left: ${C.SEAL_ON_FLAP_LEFT_PCT}%;[^}]*top: ${C.SEAL_ON_FLAP_TOP_PCT}%;[^}]*width: ${C.SEAL_ON_FLAP_WIDTH_PCT}%;`,
+        `\\[data-envelope-seal\\] \\{[^}]*left: ${C.SEAL_ON_FLAP_LEFT_PCT}%;[^}]*top: ${C.SEAL_ON_FLAP_TOP_PCT}%;`,
       ),
     );
+    expect(scene).toContain("width: var(--break-seal-d);");
   });
 
   it("caps the marks Content_Column at MARKS_COLUMN_MAX in the scene CSS", () => {
     expect(scene).toContain(`max-width: ${C.MARKS_COLUMN_MAX};`);
   });
 
-  it("sizes the phone WaxSeal at PHONE_SEAL_SIZE in the SealBreak CSS", () => {
-    expect(sealBreak).toContain(`width: ${C.PHONE_SEAL_SIZE};`);
-    expect(sealBreak).toContain(`height: ${C.PHONE_SEAL_SIZE};`);
+  it("sizes the Break the seal WaxSeal at --break-seal-d in the SealBreak CSS", () => {
+    // U8.1, U8.2: was width/height 6.5rem (PHONE_SEAL_SIZE) before.
+    expect(sealBreak).toContain("width: var(--break-seal-d);");
+    expect(sealBreak).toContain("height: var(--break-seal-d);");
   });
 
   it("clamps a displayed answer to ANSWER_CLAMP_LINES_LETTER lines in the reveal CSS", () => {

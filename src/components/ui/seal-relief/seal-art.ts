@@ -18,6 +18,11 @@ export const WAX_PATH =
   "M50 4 C74 3 96 22 96 40 C97 56 95 70 85 84 C76 94 60 98 44 97 " +
   "C30 96 18 92 14 84 C6 72 3 62 4 52 C4 36 8 28 11 22 C22 10 34 5 50 4 Z";
 
+/** The pressed ghost: a head arc, straight sides and a zigzag hem. */
+export const GHOST_PATH =
+  "M38 50 A12 12 0 0 1 62 50 L63 70 L59 66 L55 71 L51 66 L47 71 L43 66 " +
+  "L39 71 L37 66 Z";
+
 /** The existing rim ring. The notches sit on it (radius 31.5 to 34.5). */
 export const RIM_RING = { cx: 50, cy: 50, r: 33, strokeWidth: 3 } as const;
 

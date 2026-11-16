@@ -250,9 +250,10 @@ function sliceBetween(html: string, start: string, end: string): string {
  * The seal body for one pattern key: everything from the `width` attribute on,
  * so the class list `SealBreak` adds does not hide the pattern being compared.
  */
+/** The break seal's markup for the fixture's hash (the relief is drawn from `Opened.envelopeHash`, U5.3). */
 function sealMarkup(patternKey: string): string {
   const markup = renderToStaticMarkup(
-    createElement(WaxSeal, { patternKey, size: 64 }),
+    createElement(WaxSeal, { patternKey, hash: OPENED.envelopeHash, size: 64 }),
   );
   return normaliseWaxSealIds(markup.slice(markup.indexOf("width=")));
 }

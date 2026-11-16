@@ -222,13 +222,14 @@ export const SEAL_GROUP_WIDTH = "14rem"; // C6.3
 // than the pre-reveal column, so the Seal_Group fits between it and the Ghost.
 export const MARKS_COLUMN_MAX = "min(28rem, 40vw)"; // C6.3
 // The pressable seal on the turned Envelope's flap (C6.1). The back face's own
-// drawn WaxSeal centres at 50 % x 55.3 % of the Envelope box; the seal target
-// covers it fully at 28 % wide. scene.module.css repeats these three.
+// drawn WaxSeal centres at 50 % x 55.3 % of the Envelope box. scene.module.css
+// repeats these two numbers.
 export const SEAL_ON_FLAP_LEFT_PCT = 50; // C6.1
 export const SEAL_ON_FLAP_TOP_PCT = 55.3; // C6.1
-export const SEAL_ON_FLAP_WIDTH_PCT = 28; // C6.1
-// The WaxSeal's size in the phone Seal_Group, in the Content_Column (C6.1).
-export const PHONE_SEAL_SIZE = "6.5rem"; // C6.1
+// The Break the seal wax width (U8.1, U8.2), used on the held Envelope and in
+// the Content_Column. It was 28 % of the Envelope and 6.5rem (C6.1) before;
+// scene/tokens.css holds --break-seal-d with this same value.
+export const BREAK_SEAL_D = "clamp(120px, 12vw, 160px)"; // U8.1, U8.2
 // A displayed answer (Answer_List and Author_Testimony) is clamped to this many
 // lines until the reader asks for the full text (spec 11 P4.2).
 export const ANSWER_CLAMP_LINES_LETTER = 2; // P4.2

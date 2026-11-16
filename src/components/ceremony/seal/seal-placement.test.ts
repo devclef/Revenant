@@ -1,6 +1,18 @@
+import { readFileSync } from "node:fs";
+import { resolve, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
-import { SEAL_ON_ENVELOPE_MIN_PX, sealPlacement } from "./seal-placement";
+import {
+  BREAK_SEAL_MAX_PX,
+  BREAK_SEAL_MIN_PX,
+  BREAK_SEAL_VW,
+  SEAL_ON_ENVELOPE_MIN_PX,
+  breakSealWidthPx,
+  sealPlacement,
+} from "./seal-placement";
+
+const here = dirname(fileURLToPath(import.meta.url));
 
 /**
  * The seal's width classes (spec 09 C5.1). Phone_Sizes are 360 and 390 CSS px;
@@ -54,5 +66,39 @@ describe("sealPlacement: no Envelope or no width yet (the fallback)", () => {
 
   it("keeps the seal in the Content_Column while the viewport width is unknown", () => {
     expect(sealPlacement({ viewportWidth: null, slotReady: true })).toBe("content");
+  });
+});
+
+/**
+ * The Break the seal width (spec 13 U8.1, U8.2). The seal is at least 160 CSS px
+ * wide at 1440 and at least 120 CSS px wide at 390. The same rule is in
+ * scene/tokens.css as --break-seal-d, and the last test checks the two agree.
+ */
+describe("breakSealWidthPx: the Break the seal size contract (U8.1, U8.2)", () => {
+  it("is at least 160 CSS px wide at 1440", () => {
+    expect(breakSealWidthPx(1440)).toBeGreaterThanOrEqual(160);
+    expect(breakSealWidthPx(1440)).toBe(160);
+  });
+
+  it("is at least 120 CSS px wide at the phone widths 360 and 390", () => {
+    expect(breakSealWidthPx(360)).toBeGreaterThanOrEqual(120);
+    expect(breakSealWidthPx(390)).toBeGreaterThanOrEqual(120);
+    expect(breakSealWidthPx(390)).toBe(120);
+  });
+
+  it("stays at the 160 px ceiling on the widest screens", () => {
+    expect(breakSealWidthPx(2560)).toBe(160);
+  });
+
+  it("switches from the floor to the fluid share at 12vw, and holds the ceiling from 1334 px", () => {
+    expect(breakSealWidthPx(899)).toBe(120);
+    expect(breakSealWidthPx(1100)).toBeCloseTo(132, 5);
+    expect(breakSealWidthPx(1333)).toBeCloseTo(159.96, 2);
+    expect(breakSealWidthPx(1334)).toBe(160);
+  });
+
+  it("agrees with the --break-seal-d token in scene/tokens.css", () => {
+    const tokens = readFileSync(resolve(here, "../scene/tokens.css"), "utf8");
+    expect(tokens).toContain(`--break-seal-d: clamp(${BREAK_SEAL_MIN_PX}px, ${BREAK_SEAL_VW}vw, ${BREAK_SEAL_MAX_PX}px);`);
   });
 });

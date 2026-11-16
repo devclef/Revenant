@@ -16,6 +16,7 @@
 // This module imports only `qr-svg` (pure). It is safe in the browser.
 
 import type { QrPath } from "./qr-svg";
+import { sealSvgGroup } from "@/components/ui/seal-relief/svg";
 
 /** The strings and QR path a letter card SVG is drawn from. */
 export interface LetterCardSvgInput {
@@ -31,14 +32,31 @@ export interface LetterCardSvgInput {
   fingerprintLabel: string;
   /** The Fingerprint: 16 space-separated groups of 4 hex characters, from `formatFingerprint`. */
   fingerprint: string;
+  /**
+   * The seal drawn at the top right of the title row, from the letter's hash.
+   * Without it the card keeps its plain layout (no seal, 560 units tall).
+   */
+  seal?: { hash: string };
 }
 
 // Card geometry, in user units. The viewBox is fixed; the QR is scaled to fit
 // its box, so a longer or shorter link never changes the card's size.
 const CARD_WIDTH = 480;
-const CARD_HEIGHT = 560;
 const PADDING = 32;
 const QR_BOX = CARD_WIDTH - PADDING * 2;
+
+/** Plain card: no seal. */
+const CARD_HEIGHT = 560;
+const QR_TOP_PLAIN = PADDING + 36;
+
+/** Card with a seal: the QR moves down 48 units and the card grows to match. */
+const CARD_HEIGHT_SEALED = 608;
+const QR_TOP_SEALED = PADDING + 84;
+
+/** The seal is 72 units across, at the top right of the title row. */
+const SEAL_SIZE = 72;
+const SEAL_X = CARD_WIDTH - PADDING - SEAL_SIZE;
+const SEAL_Y = PADDING;
 
 /** Escapes a value for XML text or an attribute: `&`, `<`, `>`, `"` and `'`. */
 export function escapeXml(value: string): string {
@@ -63,13 +81,16 @@ function fingerprintLines(fingerprint: string): [string, string] {
  * and no third-party asset.
  */
 export function letterCardSvg(input: LetterCardSvgInput): string {
-  const { qr, title, opensLabel, link, fingerprintLabel, fingerprint } = input;
+  const { qr, title, opensLabel, link, fingerprintLabel, fingerprint, seal } =
+    input;
   const [lineOne, lineTwo] = fingerprintLines(fingerprint);
+
+  const cardHeight = seal ? CARD_HEIGHT_SEALED : CARD_HEIGHT;
+  const qrTop = seal ? QR_TOP_SEALED : QR_TOP_PLAIN;
 
   // The QR path is in module units; scale it to QR_BOX and offset it below the
   // title. A quiet zone is already part of `qr.side`.
   const qrScale = QR_BOX / qr.side;
-  const qrTop = PADDING + 36;
 
   const sans =
     "system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif";
@@ -80,12 +101,17 @@ export function letterCardSvg(input: LetterCardSvgInput): string {
   const fpLineOneY = fpLabelY + 28;
   const fpLineTwoY = fpLineOneY + 24;
 
+  const sealMarkup = seal
+    ? [sealSvgGroup(seal.hash, SEAL_X, SEAL_Y, SEAL_SIZE)]
+    : [];
+
   return [
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CARD_WIDTH} ${CARD_HEIGHT}" `,
-    `width="${CARD_WIDTH}" height="${CARD_HEIGHT}" role="img" aria-label="${escapeXml(title)}">`,
-    `<rect x="0" y="0" width="${CARD_WIDTH}" height="${CARD_HEIGHT}" rx="8" fill="#ffffff"/>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${CARD_WIDTH} ${cardHeight}" `,
+    `width="${CARD_WIDTH}" height="${cardHeight}" role="img" aria-label="${escapeXml(title)}">`,
+    `<rect x="0" y="0" width="${CARD_WIDTH}" height="${cardHeight}" rx="8" fill="#ffffff"/>`,
     `<text x="${PADDING}" y="${PADDING + 20}" font-family="${sans}" font-size="22" font-weight="600" fill="#000000">`,
     `${escapeXml(title)}</text>`,
+    ...sealMarkup,
     // The QR on its own white box, scaled from module units to the card.
     `<g transform="translate(${PADDING} ${qrTop}) scale(${qrScale})">`,
     `<path fill="#000000" d="${qr.d}"/>`,

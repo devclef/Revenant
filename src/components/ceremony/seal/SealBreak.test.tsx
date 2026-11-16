@@ -185,3 +185,17 @@ describe("SealBreak Top_Bar Skip: registered only from a break until it settles"
     expect(code).toMatch(/const\s+onButton\s*=\s*\(\)\s*=>\s*\{\s*setBreaking\(true\);\s*breakNow\(/);
   });
 });
+
+describe("SealBreak — hash hand-over (U4.1, U5.3)", () => {
+  const HASH = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
+
+  it("draws the seal from envelopeHash, marked with data-seal-hash", () => {
+    const out = renderSealBreak({ envelopeHash: HASH });
+    expect(out).toContain(`data-seal-hash="${HASH}"`);
+  });
+
+  it("draws the Blank_Signet with no data-seal-hash when no hash is passed (U5.1)", () => {
+    const out = renderSealBreak();
+    expect(out).not.toContain("data-seal-hash");
+  });
+});

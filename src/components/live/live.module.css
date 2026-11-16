@@ -711,6 +711,11 @@
   line-height: 1.6;
 }
 
+.cardSeal {
+  display: block;
+  margin: 0 auto;
+}
+
 .cardTitle {
   margin: 0.75rem 0 0.75rem;
   font-size: 1.25rem;
