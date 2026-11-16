@@ -138,7 +138,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
 
 ### Group U: a seal unique to each letter, target 18 to 21 November 2026
 
-- [ ] 3. U1 to U6, U9, U10 · Seal_Relief, `WaxSeal` hash prop, persona seals at 96 px and the automated floors
+- [x] 3. U1 to U6, U9, U10 · Seal_Relief, `WaxSeal` hash prop, persona seals at 96 px and the automated floors
   - Agent: `frontend-dev` · Depends on: none · Estimated size: ~1,800 changed lines · Target: 18 November 2026
   - Never cut. This is the first relief-drawing task. Tasks 5, 6, 8 and 9 draw the relief with its code, so they depend on this task merging. The automated floors (N = 4, P = 3.0 % at 96 px, step 5) are the check. If a floor fails, change the relief derivation (the Coarse_Layer mapping or ranges), not the threshold, and continue.
   - Scope: `src/components/ui/seal-relief/relief.ts`, `slot-vectors.ts`, `seal-art.ts`, `raster.testing.ts` (new; `svg.ts` is task 5); `src/components/ui/WaxSeal.tsx`; `src/components/ui/Envelope.tsx` (`sealHash` prop; `seal` prop if task 2 has not added it); `src/components/demo/PersonaCard.tsx` and its CSS; `src/lib/personas/**` (validation of `envelope_hash`: 64 lowercase hex); `content/personas/personas.json` (`envelope_hash` per persona, read from `GET https://revenant.devclef.se/api/letters/<letter_id>`); `src/components/ceremony/scene/**` or the persona page file that draws the closed envelope before opening (pass the hash only; no layout change); and the `*.test.ts(x)` for each file.
