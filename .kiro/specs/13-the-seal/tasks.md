@@ -174,7 +174,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
   - Validation: `bash scripts/check.sh`; route budgets after `npm run build`.
   - _Requirements: U1–U6 (U7 does not exist), U9, U10, Q2.1, Q2.2, Q2.6, Q2.8_
 
-- [ ] 4. U9 · Persona hash Journey_Check step and the `/demo` seal-size layout row
+- [x] 4. U9 · Persona hash Journey_Check step and the `/demo` seal-size layout row
   - Agent: `platform-dev` · Depends on: 3 · Estimated size: ~350 changed lines · Target: 21 November 2026
   - Never cut. This task reads the seals' size and hash and draws no relief, so it needs task 3's `data-persona-seal` and `personas.json` `envelope_hash`.
   - Scope: `tools/qa/journey-check.mjs`, `tools/qa/layout-check.mjs`, and the tests that cover them.
