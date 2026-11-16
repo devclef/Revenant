@@ -473,6 +473,7 @@ function RevealBody({
                           ? (letterId ?? personaName)
                           : personaName
                       }
+                      envelopeHash={opened.envelopeHash}
                       seal={seal ?? INERT_SEAL}
                       showAll={stage === 1}
                       hasFigures={figureCount > 0}

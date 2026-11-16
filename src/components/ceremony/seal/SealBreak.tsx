@@ -104,6 +104,8 @@ const RING_PATHS: readonly string[] = Array.from({ length: HOLD_PROGRESS_SEGMENT
 export type SealBreakProps = {
   /** The persona key that seeds the WaxSeal's decorative pattern (R8.4). */
   patternKey: string;
+  /** The seal's Fingerprint hash: the relief is drawn from it. Absent keeps the Blank_Signet (U5.1). */
+  envelopeHash?: string;
   /** The seal controller from `useSealBreak`, owned by OpeningFlow. */
   seal: SealController;
   /**
@@ -234,6 +236,7 @@ function flakeStyle(index: number): CSSProperties {
  */
 export function SealBreak({
   patternKey,
+  envelopeHash,
   seal,
   calm: calmProp,
   showAll = false,
@@ -296,7 +299,7 @@ export function SealBreak({
       className={onEnvelope ? styles.envelopeSeal : styles.sealTarget}
       primary
     >
-      <WaxSeal patternKey={patternKey} className={styles.seal} />
+      <WaxSeal patternKey={patternKey} hash={envelopeHash} className={styles.seal} />
       <svg
         className={styles.ring}
         viewBox={RING_VIEWBOX}

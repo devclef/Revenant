@@ -4,6 +4,7 @@ import { useId, useMemo } from "react";
 
 import { DemoLabel } from "@/components/demo/DemoLabel";
 import paper from "@/components/ui/paper.module.css";
+import { WaxSeal } from "@/components/ui/WaxSeal";
 import { encodeQr, qrPath, letterCardSvg } from "@/lib/cards";
 import { formatFingerprint } from "@/lib/seal-format";
 
@@ -57,13 +58,23 @@ export function LetterCard({ letterId, appOrigin, opensAt, envelopeHash }: Lette
       link: linkText,
       fingerprintLabel: LIVE_COPY.letterCardFingerprint,
       fingerprint,
+      // The same seal the page draws, from the same hash (U4.3).
+      seal: { hash: envelopeHash },
     });
     downloadTextFile(svg, `revenant-letter-card-${letterId.replace(/[^A-Za-z0-9-]/g, "")}.svg`, "image/svg+xml;charset=utf-8");
   }
 
   return (
-    <section className={`${paper.paper} ${styles.card}`} aria-labelledby={headingId} data-live-letter-card data-paper="">
+    <section
+      className={`${paper.paper} ${styles.card}`}
+      aria-labelledby={headingId}
+      data-live-letter-card
+      data-seal-hash={fingerprint !== null ? envelopeHash : undefined}
+      data-paper=""
+    >
       <DemoLabel />
+      {/* The seal is drawn from the same hash as the Fingerprint below (U4.1, U5.4). */}
+      <WaxSeal hash={envelopeHash} size={72} className={styles.cardSeal} />
       <h2 id={headingId} className={styles.cardTitle}>
         {LIVE_COPY.letterCardTitle}
       </h2>

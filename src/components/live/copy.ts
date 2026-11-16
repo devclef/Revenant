@@ -191,6 +191,12 @@ export const LIVE_COPY = {
   letterCardTitle: "Letter card",
   letterCardOpens: "Opens {time}",
   letterCardFingerprint: "Fingerprint at sealing",
+  /**
+   * The one sentence near a seal on the Wait step (U6.1). It says where the
+   * relief comes from and nothing more: it never says the seal verifies or
+   * proves the letter.
+   */
+  sealDrawnFrom: "This seal is drawn from the letter's fingerprint.",
   saveCardImage: "Save the card as an image",
   printCard: "Print or save as PDF",
   downloadIcs: "Add to your calendar",

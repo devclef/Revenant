@@ -37,6 +37,7 @@ export function SealedKeepsakes({ letterId, appOrigin, opensAt, envelopeHash }: 
 
   return (
     <div className={styles.keepsakes} data-live-keepsakes>
+      <p className={styles.intro}>{LIVE_COPY.sealDrawnFrom}</p>
       <LetterCard
         letterId={letterId}
         appOrigin={appOrigin}

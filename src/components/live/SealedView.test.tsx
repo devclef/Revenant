@@ -231,3 +231,15 @@ describe("SealedView — backup key card offer (R21.3, R21.4)", () => {
     expect(html).not.toContain(KEY_TEXT);
   });
 });
+
+describe("SealedView — the U6 sentence", () => {
+  it("shows the seal sentence exactly once on the sealed page (U6.1)", () => {
+    const text = renderText();
+    const count = text.split(LIVE_COPY.sealDrawnFrom).length - 1;
+    expect(count).toBe(1);
+  });
+
+  it("never says the seal verifies, certifies or proves the letter (U6.2)", () => {
+    expect(LIVE_COPY.sealDrawnFrom).not.toMatch(/verif|certif|prove|proof|valid/i);
+  });
+});

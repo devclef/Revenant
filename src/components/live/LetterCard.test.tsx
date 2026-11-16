@@ -7,6 +7,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { DEMO_COPY } from "@/components/demo/copy";
+import { WaxSeal, normaliseWaxSealIds } from "@/components/ui/WaxSeal";
 import { formatFingerprint } from "@/lib/seal-format";
 
 import { LIVE_COPY } from "./copy";
@@ -50,9 +51,11 @@ describe("LetterCard", () => {
 
   it("draws the QR code as an SVG with a single path and crisp edges", () => {
     const out = html();
+    // The QR svg is the one under data-live-card-qr. The seal beside it adds paths of its own.
+    const qr = out.slice(out.indexOf("data-live-card-qr"), out.indexOf("</svg>", out.indexOf("data-live-card-qr")));
     expect(out).toContain("<svg");
-    expect(out.match(/<path/g)).toHaveLength(1);
-    expect(out).toContain('shape-rendering="crispEdges"');
+    expect(qr.match(/<path/g)).toHaveLength(1);
+    expect(qr).toContain('shape-rendering="crispEdges"');
   });
 
   it("hides the QR from assistive tech, since the link text sits beside it", () => {
@@ -89,5 +92,42 @@ describe("LetterCard", () => {
     expect(out).not.toContain("#k=");
     expect(out).not.toMatch(/[A-Z0-9]{4}-[A-Z0-9]{4}/);
     expect(out).not.toContain("<script");
+  });
+
+  it("marks the card with data-seal-hash, the hash the seal was drawn from", () => {
+    const out = html();
+    expect(out).toContain(`data-seal-hash="${ENVELOPE_HASH}"`);
+  });
+
+  it("draws the seal through WaxSeal, hidden from assistive tech", () => {
+    const out = html();
+    const seal = /<svg[^>]*data-seal-hash="[^"]*"[^>]*>/.exec(out);
+    expect(seal).not.toBeNull();
+    expect(seal?.[0]).toContain('aria-hidden="true"');
+  });
+
+  it("draws the same relief as WaxSeal for the same hash (U4.1, U4.2)", () => {
+    const out = html();
+    const card = /<svg[^>]*data-seal-hash="[^"]*"[^>]*>[\s\S]*?<\/svg>/.exec(out)?.[0];
+    expect(card).toBeDefined();
+    const page = renderToStaticMarkup(createElement(WaxSeal, { hash: ENVELOPE_HASH, size: 72 }));
+    // The card adds its own class (cardSeal) to the root; compare the drawn layers and the hash.
+    const layers = (svg: string): string => normaliseWaxSealIds(svg.replace(/^<svg[^>]*>/, ""));
+    expect(layers(card as string)).toBe(layers(page));
+    const hashOf = (svg: string): string | undefined => /data-seal-hash="([^"]*)"/.exec(svg)?.[1];
+    expect(hashOf(card as string)).toBe(hashOf(page));
+  });
+
+  it("draws the Blank_Signet and no data-seal-hash for a malformed hash (U5.1)", () => {
+    const out = renderToStaticMarkup(
+      createElement(LetterCard, {
+        letterId: LETTER_ID,
+        appOrigin: APP_ORIGIN,
+        opensAt: OPENS_AT,
+        envelopeHash: "not-a-hash",
+      }),
+    );
+    expect(out).not.toContain("data-seal-hash");
+    expect(out).toContain("<svg");
   });
 });
