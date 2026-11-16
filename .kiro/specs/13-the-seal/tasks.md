@@ -246,7 +246,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
   - Validation: `bash scripts/check.sh`; route budgets after `npm run build` (the design's ladder moves `TamperControl` behind `next/dynamic` if `/demo/personas/[key]` is short).
   - _Requirements: A1, A2, A4, Q2.3, Q2.5_
 
-- [ ] 7. A3 · "Also fix the fingerprint" (Cuttable, first cut)
+- [x] 7. A3 · "Also fix the fingerprint" (Cuttable, first cut)
   - Agent: `frontend-dev` · Depends on: 6 · Estimated size: ~250 changed lines · Target: 22 November 2026
   - **Cuttable, cut order 1.** If cut, the tamper control keeps the one-byte test and the README and video script do not claim a second layer.
   - Scope: `src/components/reveal/tamper/tamper-run.ts`, `TamperControl.tsx`, the reveal copy module, and the `*.test.ts(x)` for each file.
