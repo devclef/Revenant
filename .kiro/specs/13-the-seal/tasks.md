@@ -216,7 +216,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
 
 ### Group A: try to tamper with it, target 21 to 22 November 2026
 
-- [ ] 6. A1, A2, A4 · Tamper control on the Read step
+- [x] 6. A1, A2, A4 · Tamper control on the Read step
   - Agent: `frontend-dev` · Depends on: 3 · Estimated size: ~1,500 changed lines · Target: 21 November 2026
   - Never cut. The control draws two relief seals, so it needs task 3's code merged.
   - Scope: `src/components/reveal/tamper/tamper-run.ts`, `tamper-copy.ts`, `TamperControl.tsx`, `tamper.module.css` (new); `src/components/reveal/Fingerprint.tsx` (a `tamper?: ReactNode` slot), `Reveal.tsx`, `useOpeningFlow.ts` (hands over the stored envelope and the published demo key), `OpeningFlow.tsx`; the reveal copy module; and the `*.test.ts(x)` for each file. No file under `src/lib/crypto/` is edited; the control imports the existing exported `openLetter`.
