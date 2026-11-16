@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 import { formatFingerprint } from "@/lib/seal-format";
 
 import { LIVE_COPY } from "../copy";
+import { formatLocalDateTime } from "../format";
 import type { SealedState } from "../SealedView";
 
 import { LiveWaitStep } from "./LiveWaitStep";
@@ -204,7 +205,10 @@ describe("LiveWaitStep Wait layout markup", () => {
 
   it("shows the opening time once on the Wait screen", () => {
     const html = renderWait(false, OPENS_MS - 60_000);
-    expect(count(html, "data-live-opens-at")).toBe(1);
+    const opensText = formatLocalDateTime(OPENS_AT);
+    expect(opensText).not.toBe("");
+    expect(count(html, opensText)).toBe(1);
+    expect(html).not.toContain("data-live-opens-at");
   });
 
   it("shows the sealing Fingerprint once, in the Keep_Section", () => {

@@ -3,8 +3,9 @@
 /**
  * The Wait, Testify and Receipts content of the live stepper (spec 09, D5).
  *
- * On the Wait card it shows the opening time, the countdown and "Go to your
- * letter" below. When the countdown reaches zero it portals the embedded
+ * On the Wait card it shows the countdown and "Go to your
+ * letter" below. The opening time appears once, on the letter card in the
+ * Keep_Section. When the countdown reaches zero it portals the embedded
  * Opening_Flow into the Reveal_Host, the sibling below the card (spec 12, X1).
  * Mounting the flow makes the one letter request, so the request is made once,
  * at zero (D5.2). The flow then shows the unlock control in place (D5.3). The
@@ -29,7 +30,6 @@ import type { AuthenticatorPort } from "@/components/live/unlock";
 import { BackupKeyCard } from "../BackupKeyCard";
 import { COUNTDOWN_TICK_MS } from "../constants";
 import { LIVE_COPY } from "../copy";
-import { formatLocalDateTime } from "../format";
 import { remainingSeconds } from "../clock";
 import styles from "../live.module.css";
 import { SealedKeepsakes } from "../SealedKeepsakes";
@@ -126,9 +126,6 @@ export function LiveWaitStep({
           envelopeHash={state.envelopeHash}
           ghost={<LiveGhost sink={sink} />}
         >
-          <p className={styles.intro} data-live-opens-at="">
-            {LIVE_COPY.opensAt.replace("{time}", formatLocalDateTime(state.opensAt))}
-          </p>
           {done ? null : (
             <p className={styles.status} role="status" data-live-countdown="ticking">
               {LIVE_COPY.countdown.replace("{seconds}", String(seconds))}
