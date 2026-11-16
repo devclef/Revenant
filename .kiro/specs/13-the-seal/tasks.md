@@ -104,7 +104,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
   - Validation: `bash scripts/check.sh` (SHA, exit status, PASS or FAIL in the PR); route budgets after `npm run build`.
   - _Requirements: G2.5, G2.6, P2.1–P2.8, P3.1, P3.2, P4.1, P5.2_
 
-- [ ] 2. P1, P4 to P7 · Press UI: PressEnvelope, Backup_Choice, Seal step layout, Setting_State
+- [x] 2. P1, P4 to P7 · Press UI: PressEnvelope, Backup_Choice, Seal step layout, Setting_State
   - Agent: `frontend-dev` · Depends on: 1 · Estimated size: ~2,000 changed lines · Target: 20 November 2026
   - Never cut (apart from sub-task 2.2, Cuttable, cut order 4). This task draws the `WaxSeal` as it is today (the Blank_Signet) and draws no relief, so it does not depend on task 3. The hand-over that draws the relief on the Wait step is in task 5.
   - Scope: `src/components/live/press/PressEnvelope.tsx`, `usePressEnvelope.ts`, `press.module.css` (new); `src/components/live/BackupChoice.tsx` (new); `src/components/live/WriteForm.tsx`, `write-draft.ts`, `useSealFlow.ts` (mapping only), `copy.ts`, `live.module.css`; `src/components/ui/Envelope.tsx` (the `seal?: "seal" | "none"` prop only, default `"seal"`); and the `*.test.ts(x)` for each file. `seal-machine.ts`, `hold.ts` and everything under `src/lib/crypto/` are not edited.
