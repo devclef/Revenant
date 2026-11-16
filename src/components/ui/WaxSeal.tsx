@@ -28,6 +28,7 @@ import { useId, type CSSProperties, type ReactElement } from "react";
 
 import styles from "./WaxSeal.module.css";
 import {
+  GHOST_PATH,
   INNER_DISC_RADIUS,
   RIM_RING,
   TONE_FILL,
@@ -54,11 +55,6 @@ export function normaliseWaxSealIds(html: string): string {
 
 /** The seal is drawn in a fixed 100 x 100 user space and scaled to `size`. */
 const VIEWBOX = 100;
-
-/** The pressed ghost: a head arc, straight sides and a zigzag hem. */
-const GHOST_PATH =
-  "M38 50 A12 12 0 0 1 62 50 L63 70 L59 66 L55 71 L51 66 L47 71 L43 66 " +
-  "L39 71 L37 66 Z";
 
 /** The left half: everything left of the jagged seam (x about 44 to 50). */
 const LEFT_HALF = "0,0 46,0 44,24 50,48 45,74 49,100 0,100";
