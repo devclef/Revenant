@@ -3,8 +3,9 @@
 /**
  * The Wait, Testify and Receipts content of the live stepper (spec 09, D5).
  *
- * On the Wait card it shows the opening time, the countdown and "Go to your
- * letter" below. When the countdown reaches zero it portals the embedded
+ * On the Wait card it shows the countdown and "Go to your
+ * letter" below. The opening time appears once, on the letter card in the
+ * Keep_Section. When the countdown reaches zero it portals the embedded
  * Opening_Flow into the Reveal_Host, the sibling below the card (spec 12, X1).
  * Mounting the flow makes the one letter request, so the request is made once,
  * at zero (D5.2). The flow then shows the unlock control in place (D5.3). The
@@ -21,7 +22,6 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 
-import type { GhostSink } from "@/components/ceremony/scene/Ghost";
 import { useCalmInForce } from "@/components/ceremony/motion";
 import { DemoLabel } from "@/components/demo/DemoLabel";
 import { OpeningFlow } from "@/components/reveal/OpeningFlow";
@@ -30,13 +30,14 @@ import type { AuthenticatorPort } from "@/components/live/unlock";
 import { BackupKeyCard } from "../BackupKeyCard";
 import { COUNTDOWN_TICK_MS } from "../constants";
 import { LIVE_COPY } from "../copy";
-import { formatLocalDateTime } from "../format";
 import { remainingSeconds } from "../clock";
 import styles from "../live.module.css";
 import { SealedKeepsakes } from "../SealedKeepsakes";
 import type { SealedState } from "../SealedView";
 
 import { LiveGhost } from "./LiveGhost";
+import { SealedEnvelopeView } from "./SealedEnvelopeView";
+import { heldGhostSink } from "./HeldGhost";
 import { flowPortalTarget, stepForFlowPhase, type LiveStep } from "./live-steps";
 
 export interface LiveWaitStepProps {
@@ -110,23 +111,21 @@ export function LiveWaitStep({
   const offerBackupCard =
     showKeyReminder && backupKeyText !== null && backupKeyText.length > 0;
 
-  // The Ghost's sink (spec 09 D1.2 to D1.4). It sinks with the Envelope while
-  // the countdown runs. Calm shows the settled sunk pose with no motion. At zero
-  // it goes idle, so the CSS rise plays again: the Emergence on unlock in place.
+  // The held Ghost's sink (spec 09 D1.2 to D1.4). It sinks while the countdown
+  // runs. Calm shows the settled sunk pose with no motion. At zero it goes idle,
+  // so the CSS rise plays: the Emergence on unlock in place.
   const calm = useCalmInForce();
-  const sink: GhostSink = done ? "idle" : calm ? "sunk" : "sinking";
+  const sink = heldGhostSink(done, calm);
 
   return (
     <div className={waiting ? styles.panel : styles.deskPanel} data-live-wait>
       <DemoLabel />
 
-      {waiting ? <LiveGhost sink={sink} /> : null}
-
       {waiting ? (
-        <>
-          <p className={styles.intro}>
-            {LIVE_COPY.opensAt.replace("{time}", formatLocalDateTime(state.opensAt))}
-          </p>
+        <SealedEnvelopeView
+          envelopeHash={state.envelopeHash}
+          ghost={<LiveGhost sink={sink} />}
+        >
           {done ? null : (
             <p className={styles.status} role="status" data-live-countdown="ticking">
               {LIVE_COPY.countdown.replace("{seconds}", String(seconds))}
@@ -137,11 +136,7 @@ export function LiveWaitStep({
               {LIVE_COPY.rehearsalLine}
             </p>
           ) : null}
-          {/* The key reminder sits with the unlock control it describes (D1.5). */}
-          {showKeyReminder ? (
-            <p className={`${styles.intro} ${styles.noPrint}`}>{LIVE_COPY.keyReminder}</p>
-          ) : null}
-        </>
+        </SealedEnvelopeView>
       ) : null}
 
       {flowTarget !== null ? (
@@ -164,6 +159,10 @@ export function LiveWaitStep({
 
       {waiting ? (
         <>
+          {/* The key reminder sits with the unlock control it describes (D1.5). */}
+          {showKeyReminder ? (
+            <p className={`${styles.intro} ${styles.noPrint}`}>{LIVE_COPY.keyReminder}</p>
+          ) : null}
           <div className={`${styles.actions} ${styles.noPrint}`}>
             {done ? (
               <Link href={`/l/${state.letterId}`} className={styles.primary} data-live-goto>
@@ -180,30 +179,34 @@ export function LiveWaitStep({
               </span>
             )}
           </div>
-          {offerBackupCard && backupKeyText !== null ? (
-            showBackupCard ? (
-              <div className={styles.backupCard}>
-                <BackupKeyCard letterId={state.letterId} appOrigin={appOrigin} keyText={backupKeyText} />
-              </div>
-            ) : (
-              <div className={`${styles.backupOffer} ${styles.noPrint}`}>
-                <button
-                  type="button"
-                  className={styles.secondary}
-                  onClick={() => setShowBackupCard(true)}
-                  data-live-backup-offer
-                >
-                  {LIVE_COPY.backupCardShow}
-                </button>
-              </div>
-            )
-          ) : null}
-          <SealedKeepsakes
-            letterId={state.letterId}
-            appOrigin={appOrigin}
-            opensAt={state.opensAt}
-            envelopeHash={state.envelopeHash}
-          />
+          {/* The Keep_Section (U6): the letter card, its calendar file, and the
+              backup key card offer. It sits below the envelope view. */}
+          <section className={styles.keepSection} data-live-keep-section="">
+            {offerBackupCard && backupKeyText !== null ? (
+              showBackupCard ? (
+                <div className={styles.backupCard}>
+                  <BackupKeyCard letterId={state.letterId} appOrigin={appOrigin} keyText={backupKeyText} />
+                </div>
+              ) : (
+                <div className={`${styles.backupOffer} ${styles.noPrint}`}>
+                  <button
+                    type="button"
+                    className={styles.secondary}
+                    onClick={() => setShowBackupCard(true)}
+                    data-live-backup-offer
+                  >
+                    {LIVE_COPY.backupCardShow}
+                  </button>
+                </div>
+              )
+            ) : null}
+            <SealedKeepsakes
+              letterId={state.letterId}
+              appOrigin={appOrigin}
+              opensAt={state.opensAt}
+              envelopeHash={state.envelopeHash}
+            />
+          </section>
         </>
       ) : null}
     </div>

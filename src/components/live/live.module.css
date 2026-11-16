@@ -785,6 +785,97 @@
   margin-top: 2rem;
 }
 
+/*
+ * The sealed envelope on the Wait card (SealedEnvelopeView). The envelope is
+ * the largest element on the card. It sits on a dark Scene light, so the paper
+ * envelope reads against the desk. The lines beneath it sit on the paper card,
+ * so they set --ink themselves.
+ */
+.envelopeView {
+  display: grid;
+  gap: 1rem;
+  justify-items: center;
+}
+
+.envelopeLight {
+  position: relative;
+  width: min(100%, 24rem);
+  padding: clamp(0.75rem, 3vw, 1.25rem);
+  border-radius: 4px;
+  background: radial-gradient(
+    ellipse at 50% 35%,
+    rgba(143, 70, 255, 0.45),
+    var(--bg) 75%
+  );
+}
+
+/* The Envelope sits above the held Ghost (HeldGhost), so the Ghost reads as
+   behind it. */
+.envelopeFront {
+  position: relative;
+  z-index: 1;
+}
+
+/*
+ * The held Ghost (HeldGhost) fills the envelope's light box and is clipped to it,
+ * so its box never reaches the lines beneath the envelope or the Keep_Section.
+ * It is decorative and passes pointer events through.
+ */
+.heldGhost {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* The Ghost's pit takes the whole held box. The Scene's shake does not apply
+   here, so the sink is the only motion. Specificity outranks the Scene's pit
+   rules, which key on [data-ceremony-motion]. */
+.heldGhost [data-ghost-pit][data-held-pit] {
+  position: absolute;
+  inset: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
+  animation: none;
+}
+
+/* The Ghost's placement inside the box: 64 % of the box width, centred. Its
+   bottom edge sits below the box, so the hem is clipped at the box edge. */
+.heldGhost [data-held-pit] > div {
+  width: 64%;
+}
+
+/* The Idle_Bob does not apply to the held Ghost. */
+.heldGhost [data-held-pit] [data-ghost-bob] {
+  animation: none;
+}
+
+/* The sink on a stored seal, held in place. Full motion animates the sink on
+   the rise element. Reduced motion has no animation, so this holds the sunk
+   pose: the countdown then shows the Ghost settled, not risen. */
+.heldGhost [data-held-pit] [data-ghost-rise][data-sink="sinking"] {
+  transform: translateY(105%);
+}
+
+.envelopeLines {
+  width: 100%;
+  color: var(--ink);
+  text-align: center;
+}
+
+.envelopeLines p {
+  margin: 0.25rem 0;
+}
+
+/* The Keep_Section below the envelope view: the letter card, the calendar
+   file and the backup key card offer (U6). */
+.keepSection {
+  margin-top: 1.5rem;
+}
+
 /* Controls and the rest of the sealed page are hidden when the card is printed. */
 @media print {
   .noPrint {

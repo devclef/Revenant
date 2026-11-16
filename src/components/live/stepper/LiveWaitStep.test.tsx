@@ -9,7 +9,10 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { formatFingerprint } from "@/lib/seal-format";
+
 import { LIVE_COPY } from "../copy";
+import { formatLocalDateTime } from "../format";
 import type { SealedState } from "../SealedView";
 
 import { LiveWaitStep } from "./LiveWaitStep";
@@ -155,4 +158,121 @@ describe("LiveWaitStep on the seal break step (issue #385)", () => {
     expect(html).not.toContain("data-live-countdown");
     expect(html).not.toContain("data-live-goto");
   });
+});
+
+// Wait layout (spec 09): the sealed envelope view sits first, the countdown
+// sits beneath it, and the Keep_Section sits below the view. The Ghost is held
+// behind the envelope again (HeldGhost, the in-flow ghost). The fixed Wait ghost
+// stays retired, so no fixed layer is drawn here.
+describe("LiveWaitStep Wait layout markup", () => {
+  function renderWait(rehearsal: boolean, nowMs: number): string {
+    return renderToStaticMarkup(
+      createElement(LiveWaitStep, {
+        state: sealed,
+        appOrigin: "https://revenant.example",
+        step: "wait",
+        advanceTo: () => undefined,
+        nowMs: () => nowMs,
+        rehearsal,
+      }),
+    );
+  }
+
+  const count = (html: string, needle: string): number =>
+    html.split(needle).length - 1;
+
+  it("draws the sealed envelope view with no fixed Wait ghost", () => {
+    const html = renderWait(false, OPENS_MS - 60_000);
+    expect(html).toContain("data-sealed-envelope-view");
+    expect(html).not.toContain("data-live-ghost-layer");
+  });
+
+  it("orders the envelope view, then the countdown, then the Keep_Section", () => {
+    const html = renderWait(false, OPENS_MS - 60_000);
+    const view = html.indexOf("data-sealed-envelope-view");
+    const countdown = html.indexOf('data-live-countdown="ticking"');
+    const keep = html.indexOf("data-live-keep-section");
+    expect(view).toBeGreaterThan(-1);
+    expect(countdown).toBeGreaterThan(view);
+    expect(keep).toBeGreaterThan(countdown);
+  });
+
+  it("shows the rehearsal line exactly once", () => {
+    const html = renderWait(true, OPENS_MS - 60_000);
+    expect(count(html, LIVE_COPY.rehearsalLine)).toBe(1);
+    expect(count(html, "data-live-rehearsal")).toBe(1);
+  });
+
+  it("shows the opening time once on the Wait screen", () => {
+    const html = renderWait(false, OPENS_MS - 60_000);
+    const opensText = formatLocalDateTime(OPENS_AT);
+    expect(opensText).not.toBe("");
+    expect(count(html, opensText)).toBe(1);
+    expect(html).not.toContain("data-live-opens-at");
+  });
+
+  it("shows the sealing Fingerprint once, in the Keep_Section", () => {
+    const html = renderWait(false, OPENS_MS - 60_000);
+    const fingerprint = formatFingerprint(sealed.envelopeHash);
+    expect(fingerprint).not.toBeNull();
+    expect(count(html, fingerprint ?? "")).toBe(1);
+    expect(count(html, "data-live-card-fingerprint")).toBe(1);
+  });
+
+  it("shows no letter content, figures or recall questions", () => {
+    const html = renderWait(true, OPENS_MS - 60_000);
+    expect(html).not.toContain("<textarea");
+    expect(html).not.toContain("<input");
+    expect(html).not.toContain("data-figure");
+    expect(html).not.toContain("data-recall");
+  });
+});
+
+// Copy check for the rendered Wait step (spec 13, U6 and G1.7). Each Retired_Phrase
+// from src/test/retired-phrases.test.ts that can reach the Wait card is listed
+// here, so a regression on this page fails in this file.
+describe("LiveWaitStep copy on the rendered Wait step (U6, G1.7)", () => {
+  const RETIRED_ON_WAIT: readonly RegExp[] = [
+    /pick up the letter/i,
+    /seal the figures/i,
+    /check your connection and reload the page/i,
+    /fuel prices from the US or the EU/i,
+    /what['\u2019]s on your mind right now\?/i,
+    /rose[- ]tinted/i,
+    /U\.S\. presidential election day/i,
+    /European Parliament election/i,
+  ];
+
+  function visibleText(html: string): string {
+    return html
+      .replace(/<[^>]*>/g, " ")
+      .replace(/&#x27;|&#39;/g, "'")
+      .replace(/&amp;/g, "&")
+      .replace(/\s+/g, " ");
+  }
+
+  const states: readonly { name: string; html: string }[] = [
+    { name: "before zero, calm off", html: render("wait", OPENS_MS - 60_000) },
+    { name: "at zero", html: render("wait", OPENS_MS + 1_000) },
+  ];
+
+  for (const { name, html } of states) {
+    it(`shows no Retired_Phrase (${name})`, () => {
+      const text = visibleText(html);
+      for (const pattern of RETIRED_ON_WAIT) {
+        expect(text).not.toMatch(pattern);
+      }
+    });
+
+    it(`has no exclamation mark or scoring word (${name})`, () => {
+      const text = visibleText(html);
+      expect(text).not.toContain("!");
+      expect(text).not.toMatch(/\b(accuracy|accurate|score|off by)\b/i);
+    });
+
+    it(`shows the U6 sentence exactly once (${name})`, () => {
+      const text = visibleText(html);
+      expect(text.split(LIVE_COPY.sealDrawnFrom).length - 1).toBe(1);
+    });
+  }
 });
