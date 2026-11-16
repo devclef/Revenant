@@ -79,6 +79,29 @@
     scale(calc(0.15 + 0.85 * var(--press-progress)));
 }
 
+/*
+ * The three pool stages (P3). usePressEnvelope sets data-pool-stage only when
+ * the stage changes, so the shape swaps three times per hold. Progress still
+ * drives size through the transform on .wax alone.
+ *   bead: a small flat drop, the first wax to gather.
+ *   spread: a lobed blob, the wax spreading under the press.
+ *   full: the finished round pool, the same shape as the unstaged .wax.
+ */
+.press[data-pool-stage="bead"] .wax {
+  aspect-ratio: 2 / 1;
+  border-radius: 50%;
+}
+
+.press[data-pool-stage="spread"] .wax {
+  aspect-ratio: 1.15 / 1;
+  border-radius: 46% 54% 50% 50% / 52% 44% 56% 48%;
+}
+
+.press[data-pool-stage="full"] .wax {
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
 .line {
   box-sizing: border-box;
   min-height: 2lh;
