@@ -352,6 +352,46 @@
 }
 
 /*
+ * The Seal step's press slot (spec 13, P1). The press sits after the Warning_Text
+ * and the Backup_Choice, centred, so it is the largest element on the step.
+ */
+.sealStep > .pressSlot {
+  display: flex;
+  justify-content: center;
+  margin: 1.5rem 0;
+}
+
+/*
+ * From 900 px the Seal step is two columns: the Warning_Text, Backup_Choice and
+ * instruction on the left, the press on the right, so the press is the largest
+ * element and stays near the First_Viewport. Below 900 px the column is one stack.
+ */
+.sealPanel {
+  max-width: min(1040px, 100%);
+}
+
+@media (min-width: 900px) {
+  .sealStep {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 2rem;
+    align-items: start;
+  }
+
+  .sealStep > .pressSlot {
+    grid-column: 2;
+    grid-row: 1 / span 4;
+    align-self: center;
+    margin: 1.5rem 0;
+  }
+
+  .sealStep > :not(.pressSlot) {
+    grid-column: 1;
+    margin: 0 0 0.75rem;
+  }
+}
+
+/*
  * The Write step's last row: Add a receipt first, then Next, right-aligned. DOM
  * order is the order on screen, so no CSS reorders the buttons.
  */

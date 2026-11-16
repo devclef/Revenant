@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 
 import type { PickableSeries } from "./catalogue-list";
 import { LIVE_COPY } from "./copy";
+import { PRESS_COPY } from "./press/copy";
 import { WriteForm, type WriteFormProps } from "./WriteForm";
 import type { SealState } from "./seal-machine";
 
@@ -114,11 +115,39 @@ describe("WriteForm sections (spec 09, D2)", () => {
     const closeDetails = html.lastIndexOf("</details>", warningAt);
     expect(openDetails < 0 || closeDetails > openDetails).toBe(true);
     expect(html).toContain("Your device will ask for the passkey twice.");
-    expect(html).toContain(LIVE_COPY.createButton);
+    expect(html).toContain(PRESS_COPY.name);
     expect(html).toContain(LIVE_COPY.backButton);
     expect(html).not.toContain('id="live-letter"');
     expect(html).not.toContain('data-card="live-figures"');
     expect(html).not.toContain(LIVE_COPY.nextButton);
+  });
+
+  // P1 and P7: one press, the only orange control, and the Backup_Choice has
+  // two radios with none checked.
+  it("the seal section has one press, no primary button and two unchecked radios", () => {
+    const html = render({ section: "seal", onBack: () => {} });
+    expect(html.match(/aria-label="Press the seal"/g)).toHaveLength(1);
+    expect(html).not.toContain(LIVE_COPY.createButton);
+    expect(html.match(/type="radio"/g)).toHaveLength(2);
+    expect(html).not.toMatch(/checked=""/);
+    // Backup_Choice comes before the press, which stays disabled until a choice.
+    expect(html.indexOf("data-backup-choice")).toBeLessThan(
+      html.indexOf("aria-label=\"Press the seal\""),
+    );
+    expect(html).toMatch(/aria-label="Press the seal"[^>]*aria-disabled="true"/);
+  });
+
+  // P5: the Setting_State press has one plain line and no confirm label.
+  it("the Setting_State shows its plain line and no Confirm your passkey label", () => {
+    const html = render({
+      section: "seal",
+      onBack: () => {},
+      state: { tag: "created" } satisfies SealState,
+      backupChoice: "skip",
+    });
+    expect(html).toContain(PRESS_COPY.setting);
+    expect(html).not.toContain(LIVE_COPY.confirmButton);
+    expect(html).not.toContain("Confirm your passkey");
   });
 
   it("the default section is the whole form, as before", () => {

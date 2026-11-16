@@ -24,6 +24,7 @@ import {
 import styles from "./live.module.css";
 import letterField from "./letter-field.module.css";
 import { OccasionPicker } from "./OccasionPicker";
+import { PressEnvelope } from "./press/PressEnvelope";
 import { applyOccasion, type OccasionDraft, type OccasionId } from "./occasions";
 import { letterFieldHeightPx } from "./phone";
 import { type PrfHint } from "./prf-hint";
@@ -397,6 +398,19 @@ export function WriteForm({
     onNext?.();
   }
 
+  // The Seal step's press (P1). It is disabled until a Backup_Choice is made
+  // (P1.5). In `created` it is the Setting_State press, which confirms the
+  // passkey with one plain press (P5). Input problems also disable it, and its
+  // attempt then shows the field messages (A4.4).
+  const pressMode = inCreated ? "setting" : "write";
+  const pressBlocked =
+    !inCreated && (!formReady || backupChoice === null || inputBlocked);
+  // Only the choose-first line shows while no option is picked (P1.5). Once an
+  // option is picked, a blocked input leaves the press without a line, so the
+  // choose-first copy never reads as the reason. Setting_State keeps its own line.
+  const pressLine =
+    !inCreated && backupChoice !== null ? "" : undefined;
+
   const pressButton = (
     <button
       type="button"
@@ -628,6 +642,18 @@ export function WriteForm({
             problem={warningProblem ? LIVE_COPY.backupChoiceUnchosen : undefined}
           />
         )}
+        {all ? null : (
+          <div className={styles.pressSlot}>
+            <PressEnvelope
+              mode={pressMode}
+              disabled={pressBlocked}
+              line={pressLine}
+              onCreatePress={onCreatePress}
+              onConfirmPress={onConfirmPress}
+              onAttempt={onAttempt}
+            />
+          </div>
+        )}
         </div>
       ) : null}
 
@@ -681,7 +707,6 @@ export function WriteForm({
             </button>
           ) : null}
           {backupButton}
-          {pressButton}
           <StepStatus state={state} />
         </div>
       ) : null}
@@ -701,7 +726,12 @@ export function WriteForm({
     );
   }
   return (
-    <div data-card={`live-step-${section}`} className={panelClass}>
+    <div
+      data-card={`live-step-${section}`}
+      className={
+        section === "seal" ? `${panelClass} ${styles.sealPanel}` : panelClass
+      }
+    >
       {body}
     </div>
   );
