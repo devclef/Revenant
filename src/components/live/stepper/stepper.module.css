@@ -10,6 +10,10 @@
 .stepper {
   position: relative;
   display: grid;
+  /* One track no wider than the stepper. Without minmax(0, 1fr) the track grows
+     to the widest child's minimum width, so a wide envelope or card pushes the
+     whole page past a 390 px phone (see layout-check notes in the PR body). */
+  grid-template-columns: minmax(0, 1fr);
   gap: 1.25rem;
   color: var(--text);
   font-family: var(--font-sans);
