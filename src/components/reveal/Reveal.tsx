@@ -12,6 +12,8 @@ import { FiguresThenNow, SelfReportedOnly } from "./FiguresThenNow";
 import { useFigures, type FiguresState } from "./figures-api";
 import { AuthorTestimony } from "./AuthorTestimony";
 import { Fingerprint } from "./Fingerprint";
+import { TamperControl } from "./tamper/TamperControl";
+import type { TamperSource } from "./tamper/tamper-run";
 import { FiguresFadeUp } from "@/components/ceremony/figures/FiguresFadeUp";
 import { Close, type CloseProps } from "@/components/ceremony/close/Close";
 import { SealBreak } from "@/components/ceremony/seal/SealBreak";
@@ -178,6 +180,12 @@ export type RevealProps = {
    * aria-hidden Ghost. Omitted or null, the Seal_Group stays where it was.
    */
   marksSlot?: HTMLElement | null;
+  /**
+   * The Tamper_Control's source (spec 13, A2.7). OpeningFlow passes
+   * `flow.tamperSource`. Used only for a persona letter's Read step; a live or
+   * real letter never renders the control. Omitted, no control is rendered.
+   */
+  tamperSource?: () => TamperSource | null;
 };
 
 /**
@@ -229,6 +237,7 @@ function RevealBody({
   heldSlot = null,
   marksSlot = null,
   figures,
+  tamperSource,
 }: RevealBodyProps) {
   // The local-view context lets stage 1's SealBreak report its `sealing` flag
   // up to CeremonyRoot, so `stageFor(state, local)` resolves `seal` while a
@@ -539,6 +548,11 @@ function RevealBody({
                     <Fingerprint
                       envelopeHash={opened.envelopeHash}
                       letterKind={letterKind}
+                      tamper={
+                        tamperSource === undefined ? undefined : (
+                          <TamperControl getSource={tamperSource} />
+                        )
+                      }
                     />
                   </div>
                 ) : (

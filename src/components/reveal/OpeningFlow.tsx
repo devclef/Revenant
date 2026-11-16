@@ -585,6 +585,7 @@ function selectView(
           seal={seal}
           heldSlot={heldSlot}
           marksSlot={marksSlot}
+          tamperSource={mode === "persona" ? flow.tamperSource : undefined}
           variant={mode}
           letterKind={
             // persona route -> persona; live route -> live for a demo letter,

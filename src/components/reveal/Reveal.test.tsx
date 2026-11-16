@@ -172,3 +172,44 @@ describe("Reveal: the Seal_Verdict and fingerprint control share one row (P4.3)"
     expect(body).not.toMatch(/green|red|#0f0|#f00/i);
   });
 });
+
+// Change (spec 13, task 2): Reveal passes the Tamper_Control into the Fingerprint
+// slot for a persona letter only, from the `tamperSource` prop. Reason: the
+// control is for persona letters on the Read step (A1.1, A1.2). The tests below
+// check the persona placement and that live and real letters never get it.
+describe("Reveal Tamper_Control placement (spec 13 A1.1, A1.2)", () => {
+  it("renders the control on a persona letter's Read step, beside the seal verdict", () => {
+    const html = renderReveal({
+      letterKind: "persona",
+      tamperSource: () => null,
+    });
+    expect(html).toContain("Try to tamper with it");
+    expect(html).toContain('data-fingerprint-persona=""');
+    expect(html.indexOf("Try to tamper with it")).toBeGreaterThan(
+      html.indexOf('data-fingerprint-persona=""'),
+    );
+  });
+
+  it("renders no control when no tamperSource is passed", () => {
+    const html = renderReveal({ letterKind: "persona" });
+    expect(html).not.toContain("Try to tamper with it");
+  });
+
+  it("renders no control for a live letter (A1.2)", () => {
+    const html = renderReveal({
+      letterKind: "live",
+      variant: "live",
+      tamperSource: () => null,
+    });
+    expect(html).not.toContain("Try to tamper with it");
+  });
+
+  it("renders no control for a real letter (A1.2)", () => {
+    const html = renderReveal({
+      letterKind: "real",
+      variant: "live",
+      tamperSource: () => null,
+    });
+    expect(html).not.toContain("Try to tamper with it");
+  });
+});
