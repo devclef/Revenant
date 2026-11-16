@@ -21,6 +21,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 
+import { useCalmInForce } from "@/components/ceremony/motion";
 import { DemoLabel } from "@/components/demo/DemoLabel";
 import { OpeningFlow } from "@/components/reveal/OpeningFlow";
 import type { AuthenticatorPort } from "@/components/live/unlock";
@@ -34,7 +35,9 @@ import styles from "../live.module.css";
 import { SealedKeepsakes } from "../SealedKeepsakes";
 import type { SealedState } from "../SealedView";
 
+import { LiveGhost } from "./LiveGhost";
 import { SealedEnvelopeView } from "./SealedEnvelopeView";
+import { heldGhostSink } from "./HeldGhost";
 import { flowPortalTarget, stepForFlowPhase, type LiveStep } from "./live-steps";
 
 export interface LiveWaitStepProps {
@@ -108,12 +111,21 @@ export function LiveWaitStep({
   const offerBackupCard =
     showKeyReminder && backupKeyText !== null && backupKeyText.length > 0;
 
+  // The held Ghost's sink (spec 09 D1.2 to D1.4). It sinks while the countdown
+  // runs. Calm shows the settled sunk pose with no motion. At zero it goes idle,
+  // so the CSS rise plays: the Emergence on unlock in place.
+  const calm = useCalmInForce();
+  const sink = heldGhostSink(done, calm);
+
   return (
     <div className={waiting ? styles.panel : styles.deskPanel} data-live-wait>
       <DemoLabel />
 
       {waiting ? (
-        <SealedEnvelopeView envelopeHash={state.envelopeHash}>
+        <SealedEnvelopeView
+          envelopeHash={state.envelopeHash}
+          ghost={<LiveGhost sink={sink} />}
+        >
           <p className={styles.intro} data-live-opens-at="">
             {LIVE_COPY.opensAt.replace("{time}", formatLocalDateTime(state.opensAt))}
           </p>

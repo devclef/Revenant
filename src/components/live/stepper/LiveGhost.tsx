@@ -1,20 +1,15 @@
 "use client";
 
-// The Ghost on the live demo's wait card (spec 09, D1.2 and D1.3). The live
-// page is not a persona page, so this wrapper supplies the motion, Skip and
-// local-view providers that PersonaGhost reads. Under SceneShell those
-// providers already exist, and each one defers to its parent, so the page keeps
-// one Calm control and one Skip registry.
+// The Ghost on the live demo's Wait card (spec 09 D1.2 and D1.3). It is now the
+// held Ghost behind the sealed Envelope (HeldGhost), in the page flow. The fixed
+// Ghost layer it replaced is gone, so this component no longer needs the motion,
+// Skip or local-view providers.
 //
-// The Ghost sits in the Scene's Ghost layer (scene.module.css), above the
-// stepper card and below the Top_Bar. It passes pointer events through.
+// The sink state is passed in by LiveWaitStep, which reads Calm_Mode.
 
 import type { GhostSink } from "@/components/ceremony/scene/Ghost";
-import { PersonaGhost } from "@/components/ceremony/scene/PersonaGhost";
-import sceneStyles from "@/components/ceremony/scene/scene.module.css";
-import { LocalViewProvider } from "@/components/ceremony/local-view";
-import { MotionProvider } from "@/components/ceremony/motion";
-import { SkipProvider } from "@/components/ceremony/skip";
+
+import { HeldGhost } from "./HeldGhost";
 
 export interface LiveGhostProps {
   /**
@@ -25,17 +20,7 @@ export interface LiveGhostProps {
   sink: GhostSink;
 }
 
-/** The Ghost for the live demo's wait card, in the Scene's Ghost layer. */
+/** The Ghost for the live demo's Wait card, held behind the Envelope. */
 export function LiveGhost({ sink }: LiveGhostProps) {
-  return (
-    <MotionProvider>
-      <SkipProvider>
-        <LocalViewProvider>
-          <div className={sceneStyles.ghostLayer} aria-hidden="true" data-live-ghost-layer>
-            <PersonaGhost sink={sink} compact />
-          </div>
-        </LocalViewProvider>
-      </SkipProvider>
-    </MotionProvider>
-  );
+  return <HeldGhost sink={sink} />;
 }

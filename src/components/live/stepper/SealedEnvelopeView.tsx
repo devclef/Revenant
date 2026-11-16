@@ -19,18 +19,27 @@ import styles from "../live.module.css";
 export interface SealedEnvelopeViewProps {
   /** The sealing Fingerprint (SealedState.envelopeHash). Draws the seal only. */
   envelopeHash: string;
+  /**
+   * The Ghost held behind the Envelope (HeldGhost). It is drawn inside the light
+   * box, under the Envelope, and clipped to that box.
+   */
+  ghost?: ReactNode;
   /** The lines directly beneath the envelope: the opening time and the countdown. */
   children?: ReactNode;
 }
 
 export function SealedEnvelopeView({
   envelopeHash,
+  ghost,
   children,
 }: SealedEnvelopeViewProps) {
   return (
     <section className={styles.envelopeView} data-sealed-envelope-view="">
       <div className={styles.envelopeLight}>
-        <Envelope state="turned" animate={false} sealHash={envelopeHash} />
+        {ghost}
+        <div className={styles.envelopeFront}>
+          <Envelope state="turned" animate={false} sealHash={envelopeHash} />
+        </div>
       </div>
       <div className={styles.envelopeLines}>{children}</div>
     </section>

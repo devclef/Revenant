@@ -82,9 +82,10 @@ function wait(step: "wait" | "testify" | "receipts", nowMs: number, isCalm: bool
 }
 
 // Retired (spec 09, Wait layout): the fixed Wait ghost and its sink states
-// (D1.2 to D1.4) are gone from the Wait card. The Envelope now sits in the
-// flow (SealedEnvelopeView), and the in-flow ghost behind it returns with
-// HeldGhost. The key reminder stays with the unlock control (D1.5).
+// (D1.2 to D1.4) are gone from the Wait card. The Envelope sits in the flow
+// (SealedEnvelopeView), and the Ghost is held behind it (HeldGhost, in the
+// envelope's light box). The sink tests for the held Ghost live in
+// held-ghost.test.tsx. The key reminder stays with the unlock control (D1.5).
 describe("the live Wait card inside the Scene (D1.5)", () => {
   it("keeps the key reminder with the unlock control, before and after zero (D1.5)", () => {
     const before = wait("wait", OPENS_MS - 60_000, false);

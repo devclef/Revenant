@@ -160,8 +160,9 @@ describe("LiveWaitStep on the seal break step (issue #385)", () => {
 });
 
 // Wait layout (spec 09): the sealed envelope view sits first, the countdown
-// sits beneath it, and the Keep_Section sits below the view. The fixed Wait
-// ghost is retired here (the in-flow ghost returns with HeldGhost).
+// sits beneath it, and the Keep_Section sits below the view. The Ghost is held
+// behind the envelope again (HeldGhost, the in-flow ghost). The fixed Wait ghost
+// stays retired, so no fixed layer is drawn here.
 describe("LiveWaitStep Wait layout markup", () => {
   function renderWait(rehearsal: boolean, nowMs: number): string {
     return renderToStaticMarkup(
