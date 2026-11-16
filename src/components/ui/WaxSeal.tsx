@@ -1,24 +1,42 @@
-// Feature: 07-judge-journey
+// Feature: 13-the-seal (U1.3, U2, U4, U10)
 //
-// WaxSeal: the one orange wax seal on the Envelope's back (design.md "The wax
-// seal", R10.10, R10.11, R10.12). It replaces spec 05's per-persona seal
-// pattern. Every letter gets the same seal: an irregular round blob with a
-// ring, an inner disc and a pressed ghost silhouette, drawn in code.
+// WaxSeal: the orange wax seal on an envelope (design.md "1. Seal_Relief").
+// The one prop that changes its look is `hash`, the letter's 64-character
+// lowercase hex SHA-256 fingerprint.
 //
-// Neutrality (neutrality.md, R10.11): the seal carries no religious, national
-// or political symbol. It is one colour, one shape and one ghost, whatever the
-// persona or the figures. It takes no props that could vary its look, so the
-// markup cannot depend on a letter.
+// - Without a valid hash it draws the Blank_Signet: the same wax, rim ring,
+//   inner disc, pressed ghost and two eyes for every caller. Nothing about a
+//   letter shows, so a missing or bad hash never gives a placeholder relief
+//   (U1.3, U5.1).
+// - With a valid hash it also draws the relief layers from seal-relief, in
+//   draw order (design "Tone and draw order"): wax, coarse rings, the rim
+//   ring, coarse notches, the inner disc, fine ticks and dots, the ghost. The
+//   relief is derived from the hash only, so the same hash always draws the
+//   same seal and two different hashes draw different ones.
 //
 // The two halves are drawn twice, clipped by a left and a right polygon along a
-// jagged seam. At rest they sit together (R10.12). The seal is decoration, so it
-// is `aria-hidden`; the "Break the seal" button is the accessible control.
+// jagged seam, so the break and the crack overlays still work. At rest they sit
+// together (R10.12). The seal is decoration, so it is `aria-hidden`; the "Break
+// the seal" button is the accessible control.
+//
+// Neutrality (neutrality.md): every colour is an existing wax token. No colour
+// carries meaning, and the relief names no party, nation or belief.
 //
 // Pure presentation with no state, so it needs no "use client".
 
 import { useId, type CSSProperties, type ReactElement } from "react";
 
 import styles from "./WaxSeal.module.css";
+import {
+  INNER_DISC_RADIUS,
+  RIM_RING,
+  TONE_FILL,
+  WAX_PATH,
+  reliefArt,
+  type ArtTone,
+  type ReliefArt,
+} from "./seal-relief/seal-art";
+import { sealRelief } from "./seal-relief/relief";
 
 /** A clip id unique to one seal and one half, safe inside url(#...). */
 function clipId(reactId: string, half: "left" | "right"): string {
@@ -37,11 +55,6 @@ export function normaliseWaxSealIds(html: string): string {
 /** The seal is drawn in a fixed 100 x 100 user space and scaled to `size`. */
 const VIEWBOX = 100;
 
-/** The irregular wax blob, filled with the wax colour. */
-const WAX_PATH =
-  "M50 4 C74 3 96 22 96 40 C97 56 95 70 85 84 C76 94 60 98 44 97 " +
-  "C30 96 18 92 14 84 C6 72 3 62 4 52 C4 36 8 28 11 22 C22 10 34 5 50 4 Z";
-
 /** The pressed ghost: a head arc, straight sides and a zigzag hem. */
 const GHOST_PATH =
   "M38 50 A12 12 0 0 1 62 50 L63 70 L59 66 L55 71 L51 66 L47 71 L43 66 " +
@@ -59,20 +72,52 @@ const FILL_INNER: CSSProperties = { fill: "var(--wax-inner, #f26f12)" };
 const FILL_PRESS: CSSProperties = { fill: "var(--wax-press, #c4560a)" };
 const FILL_EYE: CSSProperties = { fill: "var(--wax-eye, #ff8d3a)" };
 
-/** The seal artwork, drawn once per half and clipped to that half. */
-function SealArt(): ReactElement {
+/** The fill for a relief path, from its tone token and literal fallback. */
+function toneFill(tone: ArtTone): CSSProperties {
+  const { token, fallback } = TONE_FILL[tone];
+  return { fill: `var(${token}, ${fallback})` };
+}
+
+/** The stroke for a relief ring, from its tone token and literal fallback. */
+function toneStroke(tone: ArtTone): CSSProperties {
+  const { token, fallback } = TONE_FILL[tone];
+  return { stroke: `var(${token}, ${fallback})` };
+}
+
+/**
+ * The seal artwork, drawn once per half and clipped to that half. `art` is
+ * empty for the Blank_Signet, so the blank markup has no relief elements.
+ */
+function SealArt({ art }: { art: ReliefArt }): ReactElement {
   return (
     <>
       <path d={WAX_PATH} style={FILL_WAX} />
+      {art.rings.map((ring, i) => (
+        <circle
+          key={`ring-${i}`}
+          cx={ring.cx}
+          cy={ring.cy}
+          r={ring.r}
+          fill="none"
+          strokeWidth={ring.strokeWidth}
+          style={toneStroke(ring.tone)}
+        />
+      ))}
       <circle
-        cx={50}
-        cy={50}
-        r={33}
+        cx={RIM_RING.cx}
+        cy={RIM_RING.cy}
+        r={RIM_RING.r}
         fill="none"
-        strokeWidth={3}
+        strokeWidth={RIM_RING.strokeWidth}
         style={STROKE_RIM}
       />
-      <circle cx={50} cy={50} r={27} style={FILL_INNER} />
+      {art.notches === null ? null : (
+        <path d={art.notches.d} style={toneFill(art.notches.tone)} />
+      )}
+      <circle cx={50} cy={50} r={INNER_DISC_RADIUS} style={FILL_INNER} />
+      {art.fine.map((mark, i) => (
+        <path key={`fine-${i}`} d={mark.d} style={toneFill(mark.tone)} />
+      ))}
       <path d={GHOST_PATH} style={FILL_PRESS} />
       <ellipse cx={45.5} cy={51} rx={2.2} ry={3.2} style={FILL_EYE} />
       <ellipse cx={54.5} cy={51} rx={2.2} ry={3.2} style={FILL_EYE} />
@@ -82,27 +127,46 @@ function SealArt(): ReactElement {
 
 export type WaxSealProps = {
   /**
-   * Deprecated and ignored. The seal is the same for every persona (R10.10).
-   * Kept only so the callers outside this ticket still compile; their own
-   * tasks remove it.
+   * Deprecated and ignored. Callers outside the seal still pass it. The seal
+   * now depends only on `hash`.
    */
   patternKey?: string;
-  /** Rendered size in CSS pixels (square). Does not change the markup. */
+  /**
+   * The letter's SHA-256 fingerprint: 64 lowercase hex characters. Anything
+   * else draws the Blank_Signet.
+   */
+  hash?: string;
+  /** Rendered size in CSS pixels (square). Does not change the artwork. */
   size?: number;
   /** Optional extra class on the root <svg>. */
   className?: string;
 };
 
 /**
- * The single orange wax seal. The markup is the same for every call: nothing
- * in it depends on a persona, a letter or a figure.
+ * The orange wax seal. With no valid `hash` the markup is the same for every
+ * call. With a valid `hash` the relief for that hash is drawn, and the root
+ * carries `data-seal-hash` and `data-coarse`.
  */
-export function WaxSeal({ size = 64, className }: WaxSealProps): ReactElement {
+export function WaxSeal({
+  hash,
+  size = 64,
+  className,
+}: WaxSealProps): ReactElement {
   // Each seal gets its own clip ids from useId, so two seals on one page never
   // share an id. React's id has characters that are awkward in url(#...), so
   // keep only letters, digits, underscores and hyphens.
   const leftId = clipId(useId(), "left");
   const rightId = clipId(useId(), "right");
+
+  const relief = sealRelief(hash);
+  const art = reliefArt(relief);
+  const reliefData =
+    relief.kind === "relief"
+      ? {
+          "data-seal-hash": relief.hash,
+          "data-coarse": relief.coarse.signature,
+        }
+      : {};
 
   const rootClass = [styles.seal, className].filter(Boolean).join(" ");
 
@@ -114,6 +178,7 @@ export function WaxSeal({ size = 64, className }: WaxSealProps): ReactElement {
       viewBox={`0 0 ${VIEWBOX} ${VIEWBOX}`}
       aria-hidden="true"
       focusable="false"
+      {...reliefData}
     >
       <defs>
         <clipPath id={leftId}>
@@ -124,10 +189,10 @@ export function WaxSeal({ size = 64, className }: WaxSealProps): ReactElement {
         </clipPath>
       </defs>
       <g className={styles.half} clipPath={`url(#${leftId})`}>
-        <SealArt />
+        <SealArt art={art} />
       </g>
       <g className={styles.half} clipPath={`url(#${rightId})`}>
-        <SealArt />
+        <SealArt art={art} />
       </g>
     </svg>
   );

@@ -77,6 +77,8 @@ function problemsFor(raw: unknown): string[] {
 // Two distinct, valid 22-char base64url letter IDs (16 bytes each).
 const ID_A = "wom_GdH6gqP6AGgnyhIMgA";
 const ID_B = "AAAAAAAAAAAAAAAAAAAAAA";
+// A valid envelope_hash: 64 lowercase hex characters (spec 13 U4.4).
+const HASH_A = "5925def5dd62f6719db9f9bbc05fbbf210eac1fdd3d4c3018b3b97cb84a4728f";
 
 /** A fresh, deep-cloned valid persona list for each test to mutate freely. */
 function validList(): PersonaList {
@@ -88,6 +90,7 @@ function validList(): PersonaList {
         intro_line: "Maya writes about work and the week ahead.",
         region: "United States",
         letter_id: ID_A,
+        envelope_hash: HASH_A,
         written_as_of: "2024-05-12",
         opens_at: "2024-11-05T00:00:00.000Z",
         metrics: [
@@ -179,6 +182,30 @@ describe("parsePersonaList — field rules reject bad input", () => {
     list.personas[0].letter_id = "too-short"; // not 22 base64url chars / 16 bytes
     expect(
       problemsFor(list).some((p) => p.startsWith('persona "us-maya": letter_id:')),
+    ).toBe(true);
+  });
+
+  it("accepts a 64-character lowercase hex envelope_hash", () => {
+    expect(() => parsePersonaList(validList())).not.toThrow();
+  });
+
+  it.each([
+    ["uppercase hex", HASH_A.toUpperCase()],
+    ["a 63-character hash", HASH_A.slice(0, 63)],
+    ["a 65-character hash", `${HASH_A}0`],
+    ["a non-hex character", `${HASH_A.slice(0, 63)}g`],
+    ["a missing hash", undefined],
+  ])("rejects %s as envelope_hash (spec 13 U4.4)", (_label, value) => {
+    const list = validList();
+    if (value === undefined) {
+      delete (list.personas[0] as Record<string, unknown>).envelope_hash;
+    } else {
+      list.personas[0].envelope_hash = value as string;
+    }
+    expect(
+      problemsFor(list).some((p) =>
+        p.startsWith('persona "us-maya": envelope_hash:'),
+      ),
     ).toBe(true);
   });
 

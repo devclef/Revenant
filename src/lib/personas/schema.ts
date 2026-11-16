@@ -55,6 +55,12 @@ const opensAtSchema = z
     message: "opens_at must be a real instant",
   });
 
+// envelope_hash: the SHA-256 fingerprint of the sealed envelope, exactly 64
+// lowercase hex characters (spec 13 U4.4). Anything else is refused.
+const envelopeHashSchema = z.string().regex(/^[0-9a-f]{64}$/, {
+  message: "envelope_hash must be 64 lowercase hex characters",
+});
+
 // letter_path: a .txt file inside the letters/ folder, no path escape.
 const letterPathSchema = z.string().regex(/^letters\/[a-z0-9-]+\.txt$/, {
   message: "letter_path must match letters/<name>.txt",
@@ -96,6 +102,9 @@ const personaSchema = z.strictObject({
   letter_id: letterIdSchema,
   written_as_of: writtenAsOfSchema,
   opens_at: opensAtSchema,
+  // The letter's envelope fingerprint: SHA-256 of the canonical envelope,
+  // 64 lowercase hex characters. It draws that persona's wax seal (spec 13 U4).
+  envelope_hash: envelopeHashSchema,
   // A Text_Persona has no metrics (metrics: []). The fuel personas have metrics.
   // The "at least one question or one metric" rule is checked in
   // personaListSchema, so the error names the persona.

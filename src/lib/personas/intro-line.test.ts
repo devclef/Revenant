@@ -25,6 +25,8 @@ function listWithIntro(introLine: unknown): unknown {
         intro_line: introLine,
         region: "United States",
         letter_id: ID_A,
+        envelope_hash:
+          "5925def5dd62f6719db9f9bbc05fbbf210eac1fdd3d4c3018b3b97cb84a4728f",
         written_as_of: "2024-05-12",
         opens_at: "2024-11-05T00:00:00.000Z",
         metrics: [

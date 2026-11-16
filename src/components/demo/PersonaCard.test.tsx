@@ -6,7 +6,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import Link from "next/link";
 import { Envelope } from "@/components/ceremony/envelope/Envelope";
-import { WaxSeal, normaliseWaxSealIds } from "@/components/ui/WaxSeal";
+import { normaliseWaxSealIds } from "@/components/ui/WaxSeal";
+import { MAYA_HASH, TOMAS_HASH } from "@/components/ui/seal-relief/hashes.testing";
 
 import { PersonaCard, type PersonaCardProps } from "./PersonaCard";
 import styles from "@/components/ceremony/envelope/Envelope.module.css";
@@ -43,6 +44,7 @@ const PROPS = {
   region: "United States",
   written_as_of: "2024-05-12",
   opens_at: "2024-11-05T00:00:00.000Z",
+  envelope_hash: MAYA_HASH,
 } as const;
 
 /** A second persona, to check the card keys its link and button by persona. */
@@ -52,6 +54,7 @@ const OTHER_PROPS: PersonaCardProps = {
   region: "European Union",
   written_as_of: "2024-03-01",
   opens_at: "2024-06-09T00:00:00.000Z",
+  envelope_hash: TOMAS_HASH,
 };
 
 const render = (props: PersonaCardProps = PROPS) =>
@@ -179,15 +182,31 @@ describe("PersonaCard markup", () => {
     expect(html.match(/<a /g)).toHaveLength(1);
   });
 
-  it("draws the closed envelope turned to its back, with the wax seal on the flap", () => {
+  it("draws the closed envelope turned to its back, with no seal of its own", () => {
     const envelopes = findElements(tree(), Envelope);
     expect(envelopes).toHaveLength(1);
     expect(envelopes[0]?.props.state).toBe("turned");
+    expect(envelopes[0]?.props.seal).toBe("none");
+  });
+
+  it("lays the persona's own 96 px wax seal over the flap tip, aria-hidden", () => {
     const html = render();
-    const sealSvg = normaliseWaxSealIds(
-      renderToStaticMarkup(createElement(WaxSeal, { size: 64 })),
-    );
-    expect(html).toContain(sealSvg);
+    expect(html).toMatch(/<span class="[^"]*seal[^"]*" data-persona-seal="" aria-hidden="true">/);
+    expect(html).toMatch(/data-persona-seal[^>]*>\s*<svg[^>]*width="96"[^>]*height="96"/);
+    expect(html).toContain(`data-seal-hash="${MAYA_HASH}"`);
+    expect(html).not.toContain(`data-seal-hash="${TOMAS_HASH}"`);
+  });
+
+  it("gives the persona seal the 96 px box, centred on the flap at 54 percent", () => {
+    const css = readFileSync(resolve(__dirname, "PersonaCard.module.css"), "utf8");
+    const rule = css.match(/\.seal\s*\{[^}]*\}/)?.[0] ?? "";
+    expect(rule).toContain("width: 96px");
+    expect(rule).toContain("height: 96px");
+    expect(rule).toContain("left: 50%");
+    expect(rule).toContain("top: 54%");
+    expect(rule).toContain("translate(-50%, -50%)");
+    expect(rule).toContain("pointer-events: none");
+    expect(css).toMatch(/\.art\s*\{[^}]*position: relative/);
   });
 
   it("hides the envelope drawing from assistive tech, since the link carries the name", () => {

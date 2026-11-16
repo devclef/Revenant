@@ -1,9 +1,9 @@
-// Markup tests for WaxSeal (07-judge-journey, design.md "The wax seal";
-// R10.10, R10.11, R10.12). Property 18's seal clause: the wax seal markup is
-// identical for every persona key.
+// Feature: 07-judge-journey (R10.10, R10.11, R10.12) and 13-the-seal (U1.3, U2)
 //
-// Rendered with `renderToStaticMarkup` so the full output is a string we can
-// scan and compare.
+// Markup tests for WaxSeal. Rendered with `renderToStaticMarkup` so the full
+// output is a string we can scan and compare. Without a hash the seal is the
+// Blank_Signet, the same for every persona (R10.10). With a valid hash the seal
+// draws that hash's relief (spec 13 U1 to U2).
 
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -14,6 +14,7 @@ import { Envelope } from "@/components/ceremony/envelope/Envelope";
 import { PersonaCard } from "@/components/demo/PersonaCard";
 
 import { WaxSeal, normaliseWaxSealIds } from "./WaxSeal";
+import { MAYA_HASH } from "./seal-relief/hashes.testing";
 
 // PersonaCard reads the router, which only exists inside the app. The stub is
 // hoisted so the mock factory can reach it.
@@ -45,7 +46,9 @@ const renderSeal = (size?: number): string =>
 
 const PERSONA_KEYS = ["us-maya", "eu-lotta", "se-erik", "us-dana"] as const;
 
-describe("WaxSeal — one seal for every persona (Property 18, R10.10)", () => {
+describe("WaxSeal — the Blank_Signet is one markup for every persona key (Property 18, R10.10)", () => {
+  // Without a hash the seal takes no letter-specific input, so the Blank_Signet
+  // is the same markup for every persona key. Spec 13 U1.3 keeps this.
   it("renders byte-identical markup for every persona key", () => {
     const baseline = renderSeal();
     for (const key of PERSONA_KEYS) {
@@ -134,17 +137,24 @@ describe("WaxSeal — one seal markup in each place it is used", () => {
     region: "United States",
     written_as_of: "2024-05-12",
     opens_at: "2024-11-05T00:00:00.000Z",
+    envelope_hash: MAYA_HASH,
   };
 
-  it("draws the same seal on the bare component, the persona card and the envelope back", () => {
-    const bare = sealShape(renderToStaticMarkup(createElement(WaxSeal, { size: 48 })));
-    const card = sealShape(
-      renderToStaticMarkup(createElement(PersonaCard, personaProps)),
+  it("draws the persona's own seal at 96 px in the card, the same as the bare component", () => {
+    const cardHtml = renderToStaticMarkup(createElement(PersonaCard, personaProps));
+    const overlay = cardHtml.match(/data-persona-seal[^>]*>(<svg[\s\S]*?<\/svg>)/);
+    expect(overlay, "persona seal overlay").not.toBeNull();
+    const bare = sealShape(
+      renderToStaticMarkup(createElement(WaxSeal, { hash: MAYA_HASH, size: 96 })),
     );
+    expect(sealShape(overlay?.[1] ?? "")).toBe(bare);
+  });
+
+  it("draws the blank seal on a bare envelope back, with no hash", () => {
+    const bare = sealShape(renderToStaticMarkup(createElement(WaxSeal, { size: 48 })));
     const envelope = sealShape(
       renderToStaticMarkup(createElement(Envelope, { state: "turned" })),
     );
-    expect(card).toBe(bare);
     expect(envelope).toBe(bare);
   });
 
@@ -184,5 +194,81 @@ describe("Envelope front — no postmark and no seal-like circle", () => {
   it("has no postmark rings or cancel bars", () => {
     expect(closed).not.toContain("cx=\"242\"");
     expect(closed).not.toMatch(/<line /);
+  });
+});
+
+// --- The hash prop (spec 13 U1.3, U2) ----------------------------------------
+
+const HASH_A = "5925def5dd62f6719db9f9bbc05fbbf210eac1fdd3d4c3018b3b97cb84a4728f";
+const HASH_B = "a0d025aef084492157f823e72b809b7c802a690bb2fbd75a07b467c0f02a54c6";
+
+const renderHashed = (hash: unknown): string =>
+  renderToStaticMarkup(createElement(WaxSeal, { hash: hash as string }));
+
+describe("WaxSeal — a missing or bad hash draws the Blank_Signet (U1.3, U5.1)", () => {
+  it.each([
+    ["no hash", undefined],
+    ["an empty string", ""],
+    ["an uppercase hash", HASH_A.toUpperCase()],
+    ["a 63-character hash", HASH_A.slice(0, 63)],
+    ["a non-hex character", `${HASH_A.slice(0, 63)}g`],
+    ["a number", 12345],
+  ])("%s gives the same markup as the bare seal", (_label, hash) => {
+    const html = renderHashed(hash);
+    expect(html).toBe(renderSeal());
+    expect(html).not.toContain("data-seal-hash");
+    expect(html).not.toContain("data-coarse");
+  });
+});
+
+describe("WaxSeal — a valid hash draws its relief (U1.3, U2)", () => {
+  it("sets data-seal-hash to the hash and data-coarse to a signature", () => {
+    const html = renderHashed(HASH_A);
+    expect(html).toContain(`data-seal-hash="${HASH_A}"`);
+    expect(html).toMatch(/data-coarse="[^"]+"/);
+  });
+
+  it("is deterministic: the same hash gives the same markup", () => {
+    expect(renderHashed(HASH_A)).toBe(renderHashed(HASH_A));
+  });
+
+  it("draws a different seal for a different hash", () => {
+    expect(renderHashed(HASH_A)).not.toBe(renderHashed(HASH_B));
+  });
+
+  it("adds relief elements on top of the Blank_Signet, and no text", () => {
+    const blank = renderSeal();
+    const hashed = renderHashed(HASH_A);
+    const count = (html: string, tag: string) =>
+      (html.match(new RegExp(`<${tag}[ />]`, "g")) ?? []).length;
+    expect(count(hashed, "path")).toBeGreaterThan(count(blank, "path"));
+    expect(hashed).not.toContain("<text");
+  });
+
+  it("keeps the two clipped halves and the aria-hidden root", () => {
+    const html = renderHashed(HASH_A);
+    expect(html.match(/<clipPath /g) ?? []).toHaveLength(2);
+    expect(html).toContain('aria-hidden="true"');
+  });
+});
+
+describe("Envelope — the flap seal takes the hash and can be turned off", () => {
+  it("passes sealHash to the flap seal", () => {
+    const html = renderToStaticMarkup(
+      createElement(Envelope, { state: "turned", sealHash: HASH_A }),
+    );
+    expect(html).toContain(`data-seal-hash="${HASH_A}"`);
+  });
+
+  it("draws the Blank_Signet on the flap when no sealHash is given", () => {
+    const html = renderToStaticMarkup(createElement(Envelope, { state: "turned" }));
+    expect(html).not.toContain("data-seal-hash");
+  });
+
+  it('draws no seal on the back with seal="none"', () => {
+    const html = renderToStaticMarkup(
+      createElement(Envelope, { state: "turned", seal: "none" }),
+    );
+    expect(html.match(/viewBox="0 0 100 100"/g) ?? []).toHaveLength(0);
   });
 });
