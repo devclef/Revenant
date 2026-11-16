@@ -43,6 +43,11 @@ describe("TamperControl closed markup (A1.1, A1.4, A4.1)", () => {
     expect(html).not.toContain("data-tamper-result");
     expect(html).not.toContain("The seal is cracked");
   });
+
+  it("shows no second-layer control until a cracked seal is shown (A3.1)", () => {
+    expect(html).not.toContain(TAMPER_COPY.secondLayerButton);
+    expect(html).not.toContain("data-tamper-second-layer");
+  });
 });
 
 describe("tamper copy follows tone.md and neutrality.md (A4.1, A4.2)", () => {

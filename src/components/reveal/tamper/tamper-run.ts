@@ -117,9 +117,65 @@ export async function runTamper(
 
   // Untouched run: the real open on the stored copy, with the same inputs the
   // tampered run gets.
-  const untampered = await openWith(stored, src);
+  const untampered = await openWith(stored, src, src.envelopeHash);
 
   // Tamper_Copy: a deep copy, with one payload ciphertext byte changed.
+  const { copy, change } = makeCopy(stored, options);
+
+  // Same call, same inputs. The changed byte is the only difference.
+  const result = await openWith(copy, src, src.envelopeHash);
+  const copyHash = await envelopeHash(copy);
+
+  assertStoredUnchanged(stored, before);
+
+  return { untampered, result, change, copyHash };
+}
+
+/** What `runRecomputedFingerprint` returns. Nothing here is persisted. */
+export interface RecomputedFingerprintRun {
+  /** The one changed byte, the same change `runTamper` reports for these options. */
+  readonly change: TamperChange;
+  /** SHA-256 of the Tamper_Copy's envelope, passed to `openLetter` as its hash. */
+  readonly recomputedHash: string;
+  /**
+   * `openLetter` on the Tamper_Copy with `recomputedHash`. The hash check passes
+   * because the hash now matches the copy, so a refusal here comes from the
+   * AES-GCM tag check and is `tampered`.
+   */
+  readonly result: OpenResult;
+}
+
+/**
+ * Second layer (spec 13, A3.1). Changes the same one byte as `runTamper`,
+ * recomputes the Tamper_Copy's envelope hash and opens the copy with that hash.
+ * The hash check then passes, so the refusal that remains is the authentication
+ * failure. The stored envelope is frozen and checked unchanged, as in
+ * `runTamper`.
+ */
+export async function runRecomputedFingerprint(
+  src: TamperSource,
+  options: TamperOptions = {},
+): Promise<RecomputedFingerprintRun> {
+  const stored = deepFreeze(src.envelope);
+  const before = canonicalize(stored);
+
+  const { copy, change } = makeCopy(stored, options);
+  const recomputedHash = await envelopeHash(copy);
+  const result = await openWith(copy, src, recomputedHash);
+
+  assertStoredUnchanged(stored, before);
+
+  return { change, recomputedHash, result };
+}
+
+/**
+ * A deep copy of the stored envelope with one payload ciphertext byte changed
+ * by XOR with the mask. Throws on a mask or byte index outside the allowed range.
+ */
+function makeCopy(
+  stored: unknown,
+  options: TamperOptions,
+): { copy: unknown; change: TamperChange } {
   const copy = structuredClone(stored) as unknown;
   const bytes = decodeBase64url(payloadCiphertextOf(copy));
   const mask = options.mask ?? TAMPER_BIT_MASK;
@@ -140,35 +196,33 @@ export async function runTamper(
   (copy as { payloadCiphertext: string }).payloadCiphertext =
     encodeBase64url(bytes);
 
-  // Same call, same inputs. The changed byte is the only difference.
-  const result = await openWith(copy, src);
-  const copyHash = await envelopeHash(copy);
-
-  if (canonicalize(stored) !== before) {
-    throw new Error("tamper: the stored envelope changed during the run");
-  }
-
   return {
-    untampered,
-    result,
+    copy,
     change: {
       byteIndex,
       total: bytes.length,
       before: original,
       after: changed,
     },
-    copyHash,
   };
 }
 
+/** Throw if the stored envelope no longer matches its canonical form from before the run. */
+function assertStoredUnchanged(stored: unknown, before: string): void {
+  if (canonicalize(stored) !== before) {
+    throw new Error("tamper: the stored envelope changed during the run");
+  }
+}
+
 /**
- * Open one envelope with the published demo key and the stored hash. The
+ * Open one envelope with the published demo key and the given hash. The
  * crypto sub-modules are loaded dynamically here. Only the crypto barrel is
  * restricted to two importers (crypto-barrel-scan), so the sub-modules are used.
  */
 async function openWith(
   envelope: unknown,
   src: TamperSource,
+  storedHash: string,
 ): Promise<OpenResult> {
   const { openLetter } = await import("@/lib/crypto/open");
   const { parseBackupKey } = await import("@/lib/crypto/backup-key");
@@ -181,7 +235,7 @@ async function openWith(
   }
   return openLetter({
     envelope,
-    envelopeHash: src.envelopeHash,
+    envelopeHash: storedHash,
     serverSecret: src.readSecret(),
     backupKey: parsed.key,
   });

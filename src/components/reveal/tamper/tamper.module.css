@@ -156,3 +156,37 @@
   outline: 3px solid var(--accent);
   outline-offset: 2px;
 }
+
+/* Second layer (spec 13, A3). Plain text on the desk. Its button is the shared
+   .button above. No motion, so reduced motion and Calm change nothing here. */
+.second {
+  margin: 1rem 0 0;
+  color: var(--text);
+}
+
+.attemptsBlock {
+  margin: 1rem 0 0;
+  color: var(--text);
+}
+
+.attempts {
+  margin: 0.5rem 0 0;
+  padding-left: 1.25rem;
+  color: var(--text);
+}
+
+.attempt {
+  margin: 0.25rem 0 0;
+  color: var(--text);
+}
+
+.attemptLabel {
+  display: block;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.attemptRefusal {
+  margin: 0;
+  color: var(--text);
+}

@@ -6,8 +6,9 @@
 
 import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { encodeBase64url, decodeBase64url } from "@/lib/seal-format/base64url";
-import { runTamper, tamperByteIndex, TAMPER_BIT_MASK } from "./tamper-run";
+import { runTamper, runRecomputedFingerprint, tamperByteIndex, TAMPER_BIT_MASK } from "./tamper-run";
 import { TAMPER_COPY, changeLine, tamperResultCopy } from "./tamper-copy";
+import { envelopeHash } from "@/lib/seal-format/hash";
 
 vi.mock("@/lib/crypto/open", () => ({
   openLetter: vi.fn(),
@@ -176,5 +177,60 @@ describe("changeLine", () => {
     expect(
       changeLine({ byteIndex: 32, total: 64, before: 0x3a, after: 0x3b }),
     ).toBe("Byte 32 of 64 changed from 0x3a to 0x3b.");
+  });
+});
+
+describe("runRecomputedFingerprint: the second layer", () => {
+  const tampered = {
+    ok: false as const,
+    error: { kind: "tampered" as const },
+  };
+
+  it("opens the copy with the hash recomputed from it, not the stored hash", async () => {
+    openMock.mockResolvedValueOnce(tampered);
+
+    const run = await runRecomputedFingerprint(source(fakeEnvelope()));
+
+    const copyEnvelope = openMock.mock.calls[0][0].envelope;
+    expect(run.recomputedHash).toBe(await envelopeHash(copyEnvelope));
+    expect(openMock.mock.calls[0][0].envelopeHash).toBe(run.recomputedHash);
+    expect(run.recomputedHash).not.toBe("a".repeat(64));
+  });
+
+  it("changes the same byte as the one-byte run, by the same mask", async () => {
+    openMock.mockResolvedValueOnce(tampered);
+
+    const run = await runRecomputedFingerprint(source(fakeEnvelope()));
+
+    const copy = decodeBase64url(
+      (openMock.mock.calls[0][0].envelope as { payloadCiphertext: string })
+        .payloadCiphertext,
+    );
+    expect(run.change).toEqual({
+      byteIndex: 32,
+      total: CIPHERTEXT_BYTES,
+      before: 32,
+      after: 33,
+    });
+    expect(copy[32]).toBe(originalBytes[32] ^ TAMPER_BIT_MASK);
+  });
+
+  it("returns the authentication refusal as its own result", async () => {
+    openMock.mockResolvedValueOnce(tampered);
+
+    const run = await runRecomputedFingerprint(source(fakeEnvelope()));
+
+    expect(run.result).toBe(tampered);
+  });
+
+  it("leaves the stored envelope frozen and unchanged", async () => {
+    openMock.mockResolvedValueOnce(tampered);
+    const stored = fakeEnvelope();
+    const before = JSON.stringify(stored);
+
+    await runRecomputedFingerprint(source(stored));
+
+    expect(Object.isFrozen(stored)).toBe(true);
+    expect(JSON.stringify(stored)).toBe(before);
   });
 });
