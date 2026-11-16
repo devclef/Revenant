@@ -4,18 +4,23 @@
 // and how each result branch is mapped. The property tests with a real seal
 // live in their own file.
 
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi, type Mock } from "vitest";
 import { encodeBase64url, decodeBase64url } from "@/lib/seal-format/base64url";
 import { runTamper, tamperByteIndex, TAMPER_BIT_MASK } from "./tamper-run";
 import { TAMPER_COPY, changeLine, tamperResultCopy } from "./tamper-copy";
 
-vi.mock("@/lib/crypto", async (importOriginal) => ({
-  ...(await importOriginal<typeof import("@/lib/crypto")>()),
+vi.mock("@/lib/crypto/open", () => ({
   openLetter: vi.fn(),
 }));
 
-import { openLetter } from "@/lib/crypto";
-const openMock = vi.mocked(openLetter);
+// Loaded dynamically: a static import of src/lib/crypto is forbidden under
+// src/components, test files included (import-boundary test).
+let openMock: Mock;
+beforeEach(async () => {
+  const { openLetter } = await import("@/lib/crypto/open");
+  openMock = vi.mocked(openLetter) as unknown as Mock;
+  openMock.mockReset();
+});
 
 const CIPHERTEXT_BYTES = 64;
 const originalBytes = Uint8Array.from(
@@ -47,10 +52,6 @@ const opened = {
   payload: {} as never,
   openingKey: {} as CryptoKey,
 };
-
-beforeEach(() => {
-  openMock.mockReset();
-});
 
 describe("tamperByteIndex", () => {
   it("picks the middle byte of a body long enough to hold a tag", () => {

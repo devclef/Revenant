@@ -10,9 +10,14 @@
 // The stored envelope is never written to. It is deep-frozen here, and it is
 // checked deep-equal before and after the run.
 
-import type { OpenResult } from "@/lib/crypto";
 import { decodeBase64url, encodeBase64url } from "@/lib/seal-format/base64url";
 import { canonicalize } from "@/lib/seal-format/canonical-json";
+
+// `openLetter`'s result type. Written as `typeof import(...)` so no static import
+// of src/lib/crypto reaches this component (import-boundary test).
+export type OpenResult = Awaited<
+  ReturnType<typeof import("@/lib/crypto/open").openLetter>
+>;
 
 /** XOR mask applied to the one changed byte: flips the lowest bit. */
 export const TAMPER_BIT_MASK = 0x01;
@@ -87,14 +92,12 @@ function payloadCiphertextOf(envelope: unknown): string {
  * `OpenResult` with `ok: false`.
  */
 export async function runTamper(src: TamperSource): Promise<TamperRun> {
-  const crypto = await import("@/lib/crypto");
-
   const stored = deepFreeze(src.envelope);
   const before = canonicalize(stored);
 
   // Untouched run: the real open on the stored copy, with the same inputs the
   // tampered run gets.
-  const untampered = await openWith(crypto, stored, src);
+  const untampered = await openWith(stored, src);
 
   // Tamper_Copy: a deep copy, with one payload ciphertext byte changed.
   const copy = structuredClone(stored) as unknown;
@@ -107,7 +110,7 @@ export async function runTamper(src: TamperSource): Promise<TamperRun> {
     encodeBase64url(bytes);
 
   // Same call, same inputs. The changed byte is the only difference.
-  const result = await openWith(crypto, copy, src);
+  const result = await openWith(copy, src);
 
   if (canonicalize(stored) !== before) {
     throw new Error("tamper: the stored envelope changed during the run");
@@ -125,21 +128,25 @@ export async function runTamper(src: TamperSource): Promise<TamperRun> {
   };
 }
 
-/** The part of `@/lib/crypto` the run uses, typed from the real module. */
-type CryptoModule = typeof import("@/lib/crypto");
-
-/** Open one envelope with the published demo key and the stored hash. */
+/**
+ * Open one envelope with the published demo key and the stored hash. The
+ * crypto sub-modules are loaded dynamically here. Only the crypto barrel is
+ * restricted to two importers (crypto-barrel-scan), so the sub-modules are used.
+ */
 async function openWith(
-  crypto: CryptoModule,
   envelope: unknown,
   src: TamperSource,
 ): Promise<OpenResult> {
+  const { openLetter } = await import("@/lib/crypto/open");
+  const { parseBackupKey } = await import("@/lib/crypto/backup-key");
+  const { PUBLIC_DEMO_BACKUP_KEY } = await import("@/lib/crypto/demo-key");
+
   // A fresh parse per call, so no key bytes are shared between the two runs.
-  const parsed = crypto.parseBackupKey(crypto.PUBLIC_DEMO_BACKUP_KEY);
+  const parsed = parseBackupKey(PUBLIC_DEMO_BACKUP_KEY);
   if (!parsed.ok) {
     throw new Error("tamper: the published demo key did not parse");
   }
-  return crypto.openLetter({
+  return openLetter({
     envelope,
     envelopeHash: src.envelopeHash,
     serverSecret: src.readSecret(),

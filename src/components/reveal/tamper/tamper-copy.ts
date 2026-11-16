@@ -5,7 +5,6 @@
 // cracked, copy, record. The copy never says caught, wrong, hacked, attack,
 // failed to break, congratulations or any score, and it never grades the judge.
 
-import type { OpenError } from "@/lib/crypto";
 import type { TamperChange, TamperRun } from "./tamper-run";
 
 export const TAMPER_COPY = {
@@ -61,9 +60,10 @@ export type TamperResultCopy =
     };
 
 /** Error kinds `openLetter` returns for a copy it refuses. */
-const REFUSAL_KINDS: ReadonlySet<OpenError["kind"]> = new Set<
-  OpenError["kind"]
->(["verification_failed", "tampered"]);
+const REFUSAL_KINDS: ReadonlySet<string> = new Set<string>([
+  "verification_failed",
+  "tampered",
+]);
 
 /**
  * Map a tamper run to the copy the judge sees. The cracked seal appears only
