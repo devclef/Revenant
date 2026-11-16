@@ -93,3 +93,45 @@ describe("PressEnvelope, modes and pose", () => {
     expect(render()).toContain('aria-hidden="true"');
   });
 });
+
+describe("PressEnvelope, Setting_State (P5.4 to P5.6)", () => {
+  it("shows the one plain Setting_State line", () => {
+    const html = render({ mode: "setting", pose: "setting" });
+    expect(html).toContain(PRESS_COPY.setting);
+    expect(html).toContain('data-seal-pose="setting"');
+    expect(html).toContain('data-press-mode="setting"');
+  });
+
+  it("never shows 'Confirm your passkey' and never a second button", () => {
+    const html = render({ mode: "setting", pose: "setting" });
+    expect(html).not.toMatch(/confirm your passkey/i);
+    expect(html.match(/<button/g)?.length).toBe(1);
+  });
+
+  it("keeps the setting line in a status region the button describes", () => {
+    const html = render({ mode: "setting", pose: "setting" });
+    expect(html).toContain('role="status"');
+    expect(html).toContain(`aria-describedby="${describedById(html)}"`);
+  });
+
+  it("does not show the choose-first line in the Setting_State", () => {
+    const html = render({ mode: "setting", pose: "setting", disabled: false });
+    expect(html).not.toContain(PRESS_COPY.chooseFirst);
+  });
+});
+
+describe("PressEnvelope, failure lift (P4.3, P4.4)", () => {
+  it("renders the lifted seal with no pool stage and no press", () => {
+    const html = render({ inert: true, pose: "lifted" });
+    expect(html).toContain('data-seal-pose="lifted"');
+    expect(html).toContain('data-press-mode="inert"');
+    expect(html).not.toContain("data-pool-stage");
+    expect(html).toContain('aria-disabled="true"');
+  });
+
+  it("shows no line and no Setting_State copy once lifted", () => {
+    const html = render({ inert: true, pose: "lifted", mode: "setting" });
+    expect(html).not.toContain(PRESS_COPY.setting);
+    expect(html).not.toContain(PRESS_COPY.chooseFirst);
+  });
+});

@@ -15,6 +15,7 @@ import { useId } from "react";
 
 import { PRESS_COPY } from "./copy";
 import type { SealPose } from "./press-pose";
+import { usePressSkip } from "./press-skip";
 import styles from "./press.module.css";
 import { usePressEnvelope } from "./usePressEnvelope";
 
@@ -31,6 +32,10 @@ export type PressEnvelopeProps = {
   pose?: SealPose;
   /** Replaces the default plain line under the envelope. */
   line?: string;
+  /** True while the Signet or Setting_State animation runs. Registers the page Skip (P2.6). */
+  animating?: boolean;
+  /** Moves the running animation to its final frame. Never answers a prompt. */
+  onSkip?: () => void;
   onCreatePress?: () => void;
   onConfirmPress?: () => void;
   onAttempt?: () => void;
@@ -45,6 +50,8 @@ export function PressEnvelope({
   inert = false,
   pose = "unpressed",
   line,
+  animating = false,
+  onSkip = NOOP,
   onCreatePress = NOOP,
   onConfirmPress = NOOP,
   onAttempt = NOOP,
@@ -58,10 +65,19 @@ export function PressEnvelope({
     onConfirmPress,
     onAttempt,
   });
+  usePressSkip(animating && !inert, onSkip);
 
   const blocked = disabled || inert;
-  const description =
-    line ?? (disabled && !inert ? PRESS_COPY.chooseFirst : "");
+  // The inert (failure) control shows no line. The setting press shows the
+  // one Setting_State line; the disabled press shows the choose-first line.
+  let description = "";
+  if (line !== undefined) {
+    description = line;
+  } else if (!inert && disabled) {
+    description = PRESS_COPY.chooseFirst;
+  } else if (!inert && mode === "setting") {
+    description = PRESS_COPY.setting;
+  }
 
   return (
     <div className={styles.wrap}>
@@ -84,7 +100,7 @@ export function PressEnvelope({
           <span className={styles.wax} />
         </span>
       </button>
-      <p id={lineId} className={styles.line} data-press-line="">
+      <p id={lineId} className={styles.line} data-press-line="" role="status">
         {description}
       </p>
     </div>

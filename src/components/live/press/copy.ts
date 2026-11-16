@@ -9,4 +9,6 @@ export const PRESS_COPY = {
   name: "Press the seal",
   /** The one plain line shown while the press is disabled (P1.5). */
   chooseFirst: "Choose what to do about the backup key first.",
+  /** The one plain line of the Setting_State (P5.5). No "Confirm your passkey". */
+  setting: "Your device will ask once more to set the seal. Press the wax.",
 } as const;
