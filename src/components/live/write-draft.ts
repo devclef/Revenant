@@ -10,7 +10,7 @@
 
 import { AUTHOR_QUESTIONS_MAX } from "./author-questions";
 import { MAX_FIGURES, SELF_REPORTED_MAX } from "./constants";
-import type { WriteMode } from "./form";
+import { validateWrite, type WriteMode } from "./form";
 import { DEFAULT_QUESTION as OCCASION_DEFAULT_QUESTION } from "./occasions";
 
 /**
@@ -196,4 +196,24 @@ export function reduceWriteDraft(
       return { ...state, metricIds: [...state.metricIds, metricId] };
     }
   }
+}
+
+/**
+ * Whether the Seal press may start (spec 13, design section 2, P1.5). It needs
+ * a Backup_Choice and a write draft with no write problem. Pure: it reads the
+ * draft and the sealing day, and nothing else.
+ */
+export function canPress(draft: WriteDraft, sealingDay: string): boolean {
+  if (draft.backupChoice === null) return false;
+  return (
+    validateWrite({
+      text: draft.text,
+      metricIds: draft.metricIds,
+      warningTicked: draft.warningTicked,
+      backupCardTicked: draft.backupCardTicked,
+      questions: draft.questions,
+      selfReported: draft.selfReported,
+      sealingDay,
+    }).length === 0
+  );
 }

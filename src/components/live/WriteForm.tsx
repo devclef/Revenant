@@ -30,6 +30,7 @@ import { letterFieldHeightPx } from "./phone";
 import { type PrfHint } from "./prf-hint";
 import { RealDatePicker } from "./RealDatePicker";
 import { INITIAL_TOUCHED, showsFieldMessage, type TouchedState } from "./touched";
+import { INITIAL_SEAL_STATE } from "./seal-machine";
 import type { SealState } from "./seal-machine";
 import { SelfReportedRows } from "./SelfReportedRows";
 import { StepStatus } from "./StepStatus";
@@ -707,7 +708,8 @@ export function WriteForm({
             </button>
           ) : null}
           {backupButton}
-          <StepStatus state={state} />
+          {/* In created, the Setting_State line under the press is the one line (P5.5). */}
+          <StepStatus state={inCreated ? INITIAL_SEAL_STATE : state} />
         </div>
       ) : null}
     </>
