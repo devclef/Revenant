@@ -93,11 +93,25 @@ function payloadCiphertextOf(envelope: unknown): string {
 }
 
 /**
+ * Test overrides for the one changed byte. The page never passes them, so the
+ * default byte and mask are the ones the spec fixes. `byteIndex` must index the
+ * payload ciphertext and `mask` must be an integer from 1 to 255, so the change
+ * is never a no-op.
+ */
+export interface TamperOptions {
+  readonly byteIndex?: number;
+  readonly mask?: number;
+}
+
+/**
  * Run the tamper check on one stored letter. Resolves with both `openLetter`
  * results and the byte change. Never throws for a failed open: a failure is an
  * `OpenResult` with `ok: false`.
  */
-export async function runTamper(src: TamperSource): Promise<TamperRun> {
+export async function runTamper(
+  src: TamperSource,
+  options: TamperOptions = {},
+): Promise<TamperRun> {
   const stored = deepFreeze(src.envelope);
   const before = canonicalize(stored);
 
@@ -108,9 +122,20 @@ export async function runTamper(src: TamperSource): Promise<TamperRun> {
   // Tamper_Copy: a deep copy, with one payload ciphertext byte changed.
   const copy = structuredClone(stored) as unknown;
   const bytes = decodeBase64url(payloadCiphertextOf(copy));
-  const byteIndex = tamperByteIndex(bytes.length);
+  const mask = options.mask ?? TAMPER_BIT_MASK;
+  if (!Number.isInteger(mask) || mask < 1 || mask > 255) {
+    throw new Error("tamper: mask must be an integer from 1 to 255");
+  }
+  const byteIndex = options.byteIndex ?? tamperByteIndex(bytes.length);
+  if (
+    !Number.isInteger(byteIndex) ||
+    byteIndex < 0 ||
+    byteIndex >= bytes.length
+  ) {
+    throw new Error("tamper: byteIndex is outside the payload ciphertext");
+  }
   const original = bytes[byteIndex];
-  const changed = original ^ TAMPER_BIT_MASK;
+  const changed = original ^ mask;
   bytes[byteIndex] = changed;
   (copy as { payloadCiphertext: string }).payloadCiphertext =
     encodeBase64url(bytes);
