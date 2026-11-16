@@ -188,7 +188,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
   - Validation: `bash scripts/check.sh`; `npm run layout-check` against a local build.
   - _Requirements: U4.5, U9.1, U9.7, Q2.6_
 
-- [ ] 5. U4, U5, U8, T1.5 · Letter-card seal, Break the seal size and the Seal-step hand-over
+- [x] 5. U4, U5, U8, T1.5 · Letter-card seal, Break the seal size and the Seal-step hand-over
   - Agent: `frontend-dev` · Depends on: 2, 3 · Estimated size: ~900 changed lines · Target: 21 November 2026
   - Never cut. This task draws the relief, so it needs task 3's code merged.
   - Scope: `src/components/ui/seal-relief/svg.ts` (new); `src/lib/cards/letter-card-svg.ts`; `src/components/live/LetterCard.tsx` (or the path that holds it on `main`); `src/components/ceremony/seal/seal-placement.ts`, `SealBreak.module.css`, the Scene tokens file (`--break-seal-d`); the `SealBreak` and `Opened` hash plumbing in `src/components/reveal/`; `src/components/live/seal-flow` files that pass `SealedState.envelopeHash` forward; `src/components/live/copy.ts` (the one U6 sentence); and the `*.test.ts(x)` for each file.
