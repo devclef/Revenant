@@ -179,7 +179,12 @@ export type OpeningFlowProps = {
    * so the spec 03 tests render as before. It feeds the scene only; it never
    * supplies the letter id, which always comes from `letterId` (R16.5).
    */
-  persona?: { key: string; written_as_of: string; opens_at: string };
+  persona?: {
+    key: string;
+    written_as_of: string;
+    opens_at: string;
+    envelope_hash?: string;
+  };
   /**
    * `"persona"` (default) is the demo persona route: the fixed demo key and no
    * passkey control. `"live"` is a Live_Letter: the reader unlocks with a

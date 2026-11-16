@@ -55,6 +55,12 @@ export type EnvelopePersona = {
   opens_at: string;
   /** Whether this is a demo letter. The front no longer shows a demo note (OD5). */
   demo: boolean;
+  /**
+   * The letter's envelope fingerprint (64 lowercase hex). Used as the flap's
+   * seal hash when `sealHash` is not given. Without a valid one the flap shows
+   * the Blank_Signet (U1.3).
+   */
+  envelope_hash?: string;
 };
 
 /**
@@ -331,6 +337,8 @@ export function Envelope({
 
   // The seal is the same for every letter (R10.10), so nothing here reads the
   // persona beyond its date lines.
+  const flapHash = sealHash ?? persona?.envelope_hash;
+
   const turning = state !== "closed";
   const animating = turning && animate;
   const turnerClass = [
@@ -388,7 +396,7 @@ export function Envelope({
                 state === "open" ? SEAL_Y_OPEN : SEAL_Y_TURNED
               })`}
             >
-              <WaxSeal size={SEAL_SIZE} hash={sealHash} />
+              <WaxSeal size={SEAL_SIZE} hash={flapHash} />
             </g>
           )}
         </svg>

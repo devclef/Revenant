@@ -28,7 +28,29 @@
 
 .art {
   display: block;
+  position: relative;
   width: 100%;
+}
+
+/*
+ * The 96 px persona seal, laid over the flap tip. Its centre sits at 54 percent
+ * from the top of the envelope drawing and at the horizontal centre. It is
+ * decoration only: pointer-events are off, so the whole card stays one link.
+ */
+.seal {
+  position: absolute;
+  left: 50%;
+  top: 54%;
+  width: 96px;
+  height: 96px;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.seal svg {
+  display: block;
+  width: 96px;
+  height: 96px;
 }
 
 .paper {

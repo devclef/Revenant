@@ -128,6 +128,7 @@ export default async function PersonaLetterPage({
           key: persona.key,
           written_as_of: persona.written_as_of,
           opens_at: persona.opens_at,
+          envelope_hash: persona.envelope_hash,
         }}
         demo2On={demo2On}
         sampleCandidates={sampleCandidatesFor(persona.key)}

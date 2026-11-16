@@ -14,6 +14,7 @@ import { Envelope } from "@/components/ceremony/envelope/Envelope";
 import { PersonaCard } from "@/components/demo/PersonaCard";
 
 import { WaxSeal, normaliseWaxSealIds } from "./WaxSeal";
+import { MAYA_HASH } from "./seal-relief/hashes.testing";
 
 // PersonaCard reads the router, which only exists inside the app. The stub is
 // hoisted so the mock factory can reach it.
@@ -136,17 +137,24 @@ describe("WaxSeal — one seal markup in each place it is used", () => {
     region: "United States",
     written_as_of: "2024-05-12",
     opens_at: "2024-11-05T00:00:00.000Z",
+    envelope_hash: MAYA_HASH,
   };
 
-  it("draws the same seal on the bare component, the persona card and the envelope back", () => {
-    const bare = sealShape(renderToStaticMarkup(createElement(WaxSeal, { size: 48 })));
-    const card = sealShape(
-      renderToStaticMarkup(createElement(PersonaCard, personaProps)),
+  it("draws the persona's own seal at 96 px in the card, the same as the bare component", () => {
+    const cardHtml = renderToStaticMarkup(createElement(PersonaCard, personaProps));
+    const overlay = cardHtml.match(/data-persona-seal[^>]*>(<svg[\s\S]*?<\/svg>)/);
+    expect(overlay, "persona seal overlay").not.toBeNull();
+    const bare = sealShape(
+      renderToStaticMarkup(createElement(WaxSeal, { hash: MAYA_HASH, size: 96 })),
     );
+    expect(sealShape(overlay?.[1] ?? "")).toBe(bare);
+  });
+
+  it("draws the blank seal on a bare envelope back, with no hash", () => {
+    const bare = sealShape(renderToStaticMarkup(createElement(WaxSeal, { size: 48 })));
     const envelope = sealShape(
       renderToStaticMarkup(createElement(Envelope, { state: "turned" })),
     );
-    expect(card).toBe(bare);
     expect(envelope).toBe(bare);
   });
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Envelope } from "@/components/ceremony/envelope/Envelope";
+import { WaxSeal } from "@/components/ui/WaxSeal";
 import { DEMO_COPY } from "./copy";
 import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-date";
 import styles from "./PersonaCard.module.css";
@@ -23,6 +24,8 @@ export type PersonaCardProps = {
   written_as_of: string;
   /** The ISO UTC instant the letter opens. */
   opens_at: string;
+  /** The letter's envelope fingerprint (64 lowercase hex), drawn as its seal. */
+  envelope_hash: string;
 };
 
 /**
@@ -46,6 +49,7 @@ export function PersonaCard({
   region,
   written_as_of,
   opens_at,
+  envelope_hash,
 }: PersonaCardProps) {
   const openedOn = formatLetterDate(opens_at, { kind: "utc" });
   const openLabel = DEMO_COPY.openLetterFor.replace("{name}", display_name);
@@ -58,8 +62,13 @@ export function PersonaCard({
       aria-labelledby={buttonId}
     >
       <span className={styles.art} aria-hidden="true">
-        {/* A static end pose: no turn animation, so the flap and seal show on first paint. */}
-        <Envelope state="turned" layout="narrow" animate={false} />
+        {/* A static end pose: no turn animation, so the flap shows on first paint.
+            The envelope draws no seal of its own; the persona's seal is laid over
+            the flap tip below, at 96 px. */}
+        <Envelope state="turned" layout="narrow" animate={false} seal="none" />
+        <span className={styles.seal} data-persona-seal="" aria-hidden="true">
+          <WaxSeal hash={envelope_hash} size={96} />
+        </span>
       </span>
       <span className={styles.paper}>
         <span className={styles.name}>{display_name}</span>
