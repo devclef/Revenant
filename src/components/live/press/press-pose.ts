@@ -9,9 +9,14 @@ import type { PressState } from "./press-hold";
  * current seal state straight away.
  */
 
+/**
+ * The wax pose. `bead` and `spread` are the two pooling stages before the full
+ * pool (P3). `armed` is the full pool, shown when the hold is complete.
+ */
 export type SealPose =
   | "unpressed"
-  | "pooling"
+  | "bead"
+  | "spread"
   | "armed"
   | "signet_down"
   | "setting"
@@ -71,8 +76,11 @@ export function sealPose(
     case "idle":
       return "unpressed";
     case "holding":
-    case "settling":
-      return "pooling";
+    case "settling": {
+      // Progress picks the stage, so a receding press drops back through the stages.
+      const stage = poolStage(press.progress);
+      return stage === "full" ? "armed" : stage;
+    }
     case "armed":
     case "pressed":
       return "armed";
