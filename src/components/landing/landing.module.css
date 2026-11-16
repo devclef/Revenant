@@ -126,6 +126,8 @@
    its top-left at (118, 72), so the 120-unit seal moves by (-28, -28) to stay
    centred at (150, 104). The selector is scoped to the seal box. */
 .sealBox {
+  position: relative;
+  isolation: isolate;
   display: flex;
   justify-content: center;
   width: 100%;
@@ -139,6 +141,64 @@
   width: 120px;
   height: 120px;
   transform: translate(-28px, -28px);
+}
+
+/* The wax glow behind the seal. It sits inside the seal box only (inset 0), so
+   it never reaches the text above or the ghost below. Its rest state is the
+   same at every motion setting: opacity 0.6 and no transform. Opacity and
+   transform only. */
+.sealBox::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse closest-side,
+    rgba(143, 70, 255, 0.5),
+    rgba(143, 70, 255, 0)
+  );
+  opacity: 0.6;
+}
+
+/* Full motion only: the glow warms once on arrival, from 0.2 to its rest state.
+   Reduced motion and no JavaScript show the rest state at once. */
+@keyframes waxGlow {
+  from {
+    opacity: 0.2;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sealBox::before {
+    animation: waxGlow 1600ms ease-out backwards;
+  }
+}
+
+/* The ghost settle (hero only): the landing Ghost fades in from 0.4 to full
+   opacity once, as the hero arrives. Opacity only. The rise and bob belong to
+   scene.module.css and are not changed here. Reduced motion and no JavaScript
+   show the Ghost at full opacity. */
+@keyframes ghostSettleFade {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The place around the Ghost, not the pit itself: the pit carries its own
+     shake animation in scene.module.css, which this rule must not replace. */
+  :global(body:has([data-landing-hero])) :global([data-ghost-pit]) > div {
+    animation: ghostSettleFade 320ms ease-out backwards;
+  }
 }
 
 /* Wide: the headline grows with the viewport up to 1920 px. From 1920 px it is
