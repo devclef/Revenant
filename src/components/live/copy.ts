@@ -106,6 +106,12 @@ export const LIVE_COPY = {
     "This device may not be able to lock the letter with a passkey. If so, you will need a backup key card.",
   warningUnticked:
     "Tick the box to confirm you understand, then create your passkey.",
+  /** The Backup_Choice legend and options (spec 13, P7.1). */
+  backupChoiceLegend: "The backup key",
+  backupChoiceCard: "Download a backup key card",
+  backupChoiceSkip: "Skip it. A lost passkey means a lost letter.",
+  /** The field message while no Backup_Choice is selected (P7.2). */
+  backupChoiceUnchosen: "Choose one option for the backup key first.",
   unavailable:
     "Sealing your own letter is not available on this server. Go back to the demo.",
   cannotLockTitle: "This device cannot lock a letter with a passkey",

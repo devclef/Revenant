@@ -9,6 +9,8 @@ import { AuthorQuestions } from "./AuthorQuestions";
 import { questionRowProblem } from "./author-questions";
 import { LETTER_FIELD_ROWS } from "./constants";
 import { LIVE_COPY, REAL_COPY } from "./copy";
+import { BackupChoice } from "./BackupChoice";
+import type { BackupChoiceValue } from "./write-draft";
 import { FigurePicker, type FigureDetail } from "./FigurePicker";
 import { nextOpenRequest } from "./receipts-focus";
 import { ReceiptsDisclosure } from "./ReceiptsDisclosure";
@@ -22,11 +24,13 @@ import {
 import styles from "./live.module.css";
 import letterField from "./letter-field.module.css";
 import { OccasionPicker } from "./OccasionPicker";
+import { PressEnvelope } from "./press/PressEnvelope";
 import { applyOccasion, type OccasionDraft, type OccasionId } from "./occasions";
 import { letterFieldHeightPx } from "./phone";
 import { type PrfHint } from "./prf-hint";
 import { RealDatePicker } from "./RealDatePicker";
 import { INITIAL_TOUCHED, showsFieldMessage, type TouchedState } from "./touched";
+import { INITIAL_SEAL_STATE } from "./seal-machine";
 import type { SealState } from "./seal-machine";
 import { SelfReportedRows } from "./SelfReportedRows";
 import { StepStatus } from "./StepStatus";
@@ -119,6 +123,13 @@ export interface WriteFormProps {
   onWarningChange: (ticked: boolean) => void;
   /** The visitor ticked or unticked the backup key card box. */
   onBackupCardChange: (ticked: boolean) => void;
+  /**
+   * The Backup_Choice on the Seal step (spec 13, P7). Null until the visitor
+   * picks one. Used in the `seal` section; the `all` form keeps the checkboxes.
+   */
+  backupChoice?: BackupChoiceValue | null;
+  /** The visitor picked a Backup_Choice option. */
+  onBackupChoice?: (choice: BackupChoiceValue) => void;
   /**
    * Which part to render. Defaults to `all`, the whole form. The stepper passes
    * `write` or `seal` (spec 09, D2; spec 11, L1.6).
@@ -221,6 +232,8 @@ export function WriteForm({
   onToggleFigure,
   onWarningChange,
   onBackupCardChange,
+  backupChoice = null,
+  onBackupChoice = () => {},
   section = "all",
   onNext,
   onBack,
@@ -386,6 +399,19 @@ export function WriteForm({
     onNext?.();
   }
 
+  // The Seal step's press (P1). It is disabled until a Backup_Choice is made
+  // (P1.5). In `created` it is the Setting_State press, which confirms the
+  // passkey with one plain press (P5). Input problems also disable it, and its
+  // attempt then shows the field messages (A4.4).
+  const pressMode = inCreated ? "setting" : "write";
+  const pressBlocked =
+    !inCreated && (!formReady || backupChoice === null || inputBlocked);
+  // Only the choose-first line shows while no option is picked (P1.5). Once an
+  // option is picked, a blocked input leaves the press without a line, so the
+  // choose-first copy never reads as the reason. Setting_State keeps its own line.
+  const pressLine =
+    !inCreated && backupChoice !== null ? "" : undefined;
+
   const pressButton = (
     <button
       type="button"
@@ -420,10 +446,8 @@ export function WriteForm({
           {LIVE_COPY.heading}
         </h1>
       ) : null}
-      {shows("write") ? (
-        <p className={styles.intro}>
-          {realDate === undefined ? LIVE_COPY.intro : REAL_COPY.intro}
-        </p>
+      {shows("write") && realDate !== undefined ? (
+        <p className={styles.intro}>{REAL_COPY.intro}</p>
       ) : null}
 
       {shows("write") ? (
@@ -551,6 +575,9 @@ export function WriteForm({
 
       {shows("seal") ? (
         <div className={styles.sealStep}>
+        {realDate === undefined ? (
+          <p className={styles.explain}>{LIVE_COPY.intro}</p>
+        ) : null}
         <div className={styles.explain}>
           <p>{LIVE_COPY.passkeySteps}</p>
           <details className={styles.more}>
@@ -563,6 +590,8 @@ export function WriteForm({
 
         <div className={styles.warning}>
           <p>{LIVE_COPY.warning}</p>
+          {all ? (
+            <>
           <label className={styles.warningLabel}>
             <input
               id="live-warning"
@@ -580,8 +609,11 @@ export function WriteForm({
           <p id="live-warning-problem" className={styles.problem}>
             {warningProblem}
           </p>
+            </>
+          ) : null}
         </div>
 
+        {all ? (
         <div className={styles.warning}>
           <label className={styles.warningLabel}>
             <input
@@ -601,6 +633,28 @@ export function WriteForm({
             {LIVE_COPY.backupCardOptionHint}
           </p>
         </div>
+        ) : (
+          <BackupChoice
+            value={backupChoice}
+            onChange={(choice) => {
+              onTouch(TOUCH_FIELDS.warning);
+              onBackupChoice(choice);
+            }}
+            problem={warningProblem ? LIVE_COPY.backupChoiceUnchosen : undefined}
+          />
+        )}
+        {all ? null : (
+          <div className={styles.pressSlot}>
+            <PressEnvelope
+              mode={pressMode}
+              disabled={pressBlocked}
+              line={pressLine}
+              onCreatePress={onCreatePress}
+              onConfirmPress={onConfirmPress}
+              onAttempt={onAttempt}
+            />
+          </div>
+        )}
         </div>
       ) : null}
 
@@ -654,8 +708,8 @@ export function WriteForm({
             </button>
           ) : null}
           {backupButton}
-          {pressButton}
-          <StepStatus state={state} />
+          {/* In created, the Setting_State line under the press is the one line (P5.5). */}
+          <StepStatus state={inCreated ? INITIAL_SEAL_STATE : state} />
         </div>
       ) : null}
     </>
@@ -674,7 +728,12 @@ export function WriteForm({
     );
   }
   return (
-    <div data-card={`live-step-${section}`} className={panelClass}>
+    <div
+      data-card={`live-step-${section}`}
+      className={
+        section === "seal" ? `${panelClass} ${styles.sealPanel}` : panelClass
+      }
+    >
       {body}
     </div>
   );

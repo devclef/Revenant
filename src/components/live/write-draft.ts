@@ -10,7 +10,7 @@
 
 import { AUTHOR_QUESTIONS_MAX } from "./author-questions";
 import { MAX_FIGURES, SELF_REPORTED_MAX } from "./constants";
-import type { WriteMode } from "./form";
+import { validateWrite, type WriteMode } from "./form";
 import { DEFAULT_QUESTION as OCCASION_DEFAULT_QUESTION } from "./occasions";
 
 /**
@@ -29,9 +29,22 @@ export interface SelfReportedRow {
 /** The text fields of a SelfReportedRow, by name. */
 export type SelfReportedField = keyof SelfReportedRow;
 
+/**
+ * The Backup_Choice on the Seal step (spec 13, P7): "card" asks for a backup key
+ * card, "skip" is the visitor's explicit confirmation that a lost passkey means
+ * a lost letter. Nothing is selected until the visitor picks one.
+ */
+export type BackupChoiceValue = "card" | "skip";
+
 export interface WriteDraft {
   text: string;
   metricIds: string[];
+  /**
+   * The Backup_Choice, or null when none is selected (P7.2). The two flags below
+   * are derived from it by the reducer, so validation and the seal flow read the
+   * same values as before.
+   */
+  backupChoice: BackupChoiceValue | null;
   warningTicked: boolean;
   /** Whether the visitor also asks for a backup key card (R21.1). */
   backupCardTicked: boolean;
@@ -64,6 +77,7 @@ export function initialWriteDraft(_mode: WriteMode): WriteDraft {
   return {
     text: "",
     metricIds: [],
+    backupChoice: null,
     warningTicked: false,
     backupCardTicked: false,
     questions: [DEFAULT_QUESTION],
@@ -83,6 +97,7 @@ export const INITIAL_WRITE_DRAFT: WriteDraft = initialWriteDraft("demo");
 export const CLEARED_WRITE_DRAFT: WriteDraft = {
   text: "",
   metricIds: [],
+  backupChoice: null,
   warningTicked: false,
   backupCardTicked: false,
   questions: [],
@@ -94,6 +109,7 @@ export type WriteDraftEvent =
   | { type: "FIGURE_TOGGLED"; metricId: string; limit?: number }
   | { type: "WARNING_CHANGED"; ticked: boolean }
   | { type: "BACKUP_CARD_CHANGED"; ticked: boolean }
+  | { type: "BACKUP_CHOICE_CHANGED"; choice: BackupChoiceValue | null }
   | { type: "QUESTION_CHANGED"; index: number; text: string }
   | { type: "QUESTION_ADDED" }
   | { type: "QUESTION_REMOVED"; index: number }
@@ -122,6 +138,15 @@ export function reduceWriteDraft(
       return { ...state, warningTicked: event.ticked };
     case "BACKUP_CARD_CHANGED":
       return { ...state, backupCardTicked: event.ticked };
+    case "BACKUP_CHOICE_CHANGED":
+      // One choice drives the two flags the rest of the form reads. Picking
+      // "skip" counts as the warning confirmation (P7.3); nothing else is kept.
+      return {
+        ...state,
+        backupChoice: event.choice,
+        warningTicked: event.choice !== null,
+        backupCardTicked: event.choice === "card",
+      };
     case "QUESTION_CHANGED":
       return {
         ...state,
@@ -171,4 +196,24 @@ export function reduceWriteDraft(
       return { ...state, metricIds: [...state.metricIds, metricId] };
     }
   }
+}
+
+/**
+ * Whether the Seal press may start (spec 13, design section 2, P1.5). It needs
+ * a Backup_Choice and a write draft with no write problem. Pure: it reads the
+ * draft and the sealing day, and nothing else.
+ */
+export function canPress(draft: WriteDraft, sealingDay: string): boolean {
+  if (draft.backupChoice === null) return false;
+  return (
+    validateWrite({
+      text: draft.text,
+      metricIds: draft.metricIds,
+      warningTicked: draft.warningTicked,
+      backupCardTicked: draft.backupCardTicked,
+      questions: draft.questions,
+      selfReported: draft.selfReported,
+      sealingDay,
+    }).length === 0
+  );
 }

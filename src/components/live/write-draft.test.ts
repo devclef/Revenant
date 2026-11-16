@@ -33,6 +33,7 @@ describe("the write draft starts empty", () => {
       text: "",
       metricIds: [],
       warningTicked: false,
+      backupChoice: null,
       backupCardTicked: false,
       questions: [DEFAULT_QUESTION],
       selfReported: [],
@@ -44,6 +45,7 @@ describe("the write draft starts empty", () => {
       text: "",
       metricIds: [],
       warningTicked: false,
+      backupChoice: null,
       backupCardTicked: false,
       questions: [DEFAULT_QUESTION],
       selfReported: [],
@@ -205,5 +207,34 @@ describe("figure picks", () => {
     });
     expect(full.metricIds).toHaveLength(MAX_FIGURES);
     expect(full.metricIds).not.toContain("one-too-many");
+  });
+});
+
+describe("the Backup_Choice (spec 13, P7)", () => {
+  it("starts with no choice selected", () => {
+    expect(INITIAL_WRITE_DRAFT.backupChoice).toBeNull();
+    expect(CLEARED_WRITE_DRAFT.backupChoice).toBeNull();
+  });
+
+  it("'card' ticks the backup card and counts as the warning tick", () => {
+    const next = reduceWriteDraft(INITIAL_WRITE_DRAFT, { type: "BACKUP_CHOICE_CHANGED", choice: "card" });
+    expect(next.backupChoice).toBe("card");
+    expect(next.backupCardTicked).toBe(true);
+    expect(next.warningTicked).toBe(true);
+  });
+
+  it("'skip' is the explicit confirmation: warning ticked, no backup card", () => {
+    const next = reduceWriteDraft(INITIAL_WRITE_DRAFT, { type: "BACKUP_CHOICE_CHANGED", choice: "skip" });
+    expect(next.backupChoice).toBe("skip");
+    expect(next.warningTicked).toBe(true);
+    expect(next.backupCardTicked).toBe(false);
+  });
+
+  it("clearing the choice unticks both flags", () => {
+    const chosen = reduceWriteDraft(INITIAL_WRITE_DRAFT, { type: "BACKUP_CHOICE_CHANGED", choice: "card" });
+    const cleared = reduceWriteDraft(chosen, { type: "BACKUP_CHOICE_CHANGED", choice: null });
+    expect(cleared.backupChoice).toBeNull();
+    expect(cleared.warningTicked).toBe(false);
+    expect(cleared.backupCardTicked).toBe(false);
   });
 });

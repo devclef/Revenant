@@ -1,0 +1,112 @@
+/*
+ * Feature: 13-the-seal. Press_Envelope styles (spec 13, design section 2).
+ *
+ * The envelope is one control. Its paper is cream and its text is --ink, set
+ * here on this surface. The wax is the only orange (--wax). The focus ring is
+ * --accent. Every focusable part is at least 44 CSS px square (P1.2).
+ *
+ * --press-progress (0 to 1) is written by usePressEnvelope each frame. The
+ * wax scales with it through `transform` only.
+ */
+
+.wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  color: var(--ink);
+}
+
+.press {
+  --press-progress: 0;
+  position: relative;
+  display: block;
+  box-sizing: border-box;
+  min-width: 44px;
+  min-height: 44px;
+  width: min(88vw, 30rem);
+  aspect-ratio: 4 / 3;
+  padding: 0;
+  margin: 0;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  background-color: var(--paper);
+  color: var(--ink);
+  cursor: pointer;
+  touch-action: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+.press[aria-disabled="true"] {
+  border-style: dashed;
+  cursor: default;
+}
+
+.press:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
+.envelope {
+  position: absolute;
+  inset: 8%;
+  border: 1px solid var(--ink);
+  background-color: var(--paper-deep);
+  pointer-events: none;
+}
+
+.flap {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 53%;
+  background-color: var(--paper);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+}
+
+.wax {
+  position: absolute;
+  top: 53%;
+  left: 50%;
+  width: 28%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background-color: var(--wax);
+  transform: translate(-50%, -50%)
+    scale(calc(0.15 + 0.85 * var(--press-progress)));
+}
+
+/*
+ * The three pool stages (P3). usePressEnvelope sets data-pool-stage only when
+ * the stage changes, so the shape swaps three times per hold. Progress still
+ * drives size through the transform on .wax alone.
+ *   bead: a small flat drop, the first wax to gather.
+ *   spread: a lobed blob, the wax spreading under the press.
+ *   full: the finished round pool, the same shape as the unstaged .wax.
+ */
+.press[data-pool-stage="bead"] .wax {
+  aspect-ratio: 2 / 1;
+  border-radius: 50%;
+}
+
+.press[data-pool-stage="spread"] .wax {
+  aspect-ratio: 1.15 / 1;
+  border-radius: 46% 54% 50% 50% / 52% 44% 56% 48%;
+}
+
+.press[data-pool-stage="full"] .wax {
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+.line {
+  box-sizing: border-box;
+  min-height: 2lh;
+  margin: 0;
+  max-width: 36ch;
+  text-align: center;
+  color: var(--ink);
+}
