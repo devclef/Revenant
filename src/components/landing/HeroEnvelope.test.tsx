@@ -59,9 +59,9 @@ describe("HeroEnvelope seal size (landing.module.css)", () => {
     expect(css).toMatch(/\.sealFrame \{\s*width: min\(100%, 420px\);\s*\}/);
   });
 
-  it("sets the seal to 120 user units, centred on the flap", () => {
+  it("scales the seal by 2 about its origin, centred on the flap tip", () => {
     expect(css).toMatch(
-      /\.sealFrame :global\(\[data-seal-hash\]\) \{\s*width: 120px;\s*height: 120px;\s*transform: translate\(-28px, -28px\);\s*\}/,
+      /\.sealFrame :global\(\[data-seal-hash\]\) \{\s*transform: translate\(-32px, -42px\) scale\(2\);\s*\}/,
     );
   });
 });

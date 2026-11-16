@@ -119,12 +119,13 @@
 }
 
 /* The hero seal (issue #429). The box is the envelope's own height, so the
-   server HTML holds its place (CLS 0). The envelope is at most 420 px wide and
-   the seal inside it is 120 user units. The envelope's viewBox is 300 wide, so
-   the seal is 120 * width / 300 CSS px: 168 px at 420 px wide, and 140 px at
-   the 350 px phone column at 390 px wide. The seal's own box is 64 units with
-   its top-left at (118, 72), so the 120-unit seal moves by (-28, -28) to stay
-   centred at (150, 104). The selector is scoped to the seal box. */
+   server HTML holds its place (CLS 0). The envelope frame is at most 420 px
+   wide. The seal's SVG keeps its width attribute (64 units), because a CSS
+   width on a nested SVG does not resize it, so the seal is scaled instead.
+   Scaling by 2 about its own origin gives 165.6 px at 420 px wide (1440 x 900)
+   and 125.4 px at 318 px wide (390 x 844), both measured in Chromium. The
+   translate puts the seal centre at (150, 104) in the envelope's 300 x 188
+   units, the flap tip. The selector is scoped to the seal box. */
 .sealBox {
   position: relative;
   isolation: isolate;
@@ -138,9 +139,7 @@
 }
 
 .sealFrame :global([data-seal-hash]) {
-  width: 120px;
-  height: 120px;
-  transform: translate(-28px, -28px);
+  transform: translate(-32px, -42px) scale(2);
 }
 
 /* The wax glow behind the seal. It sits inside the seal box only (inset 0), so
