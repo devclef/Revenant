@@ -285,7 +285,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
 
 ### Group T: the wait, target 24 to 25 November 2026
 
-- [ ] 9. T1 to T3 · Sealed_Envelope_View, in-flow ghost and Keep_Section
+- [x] 9. T1 to T3 · Sealed_Envelope_View, in-flow ghost and Keep_Section
   - Agent: `frontend-dev` · Depends on: 3, 5 · Estimated size: ~1,800 changed lines · Target: 25 November 2026
   - Never cut. Draws the relief, so it needs task 3's code merged.
   - Scope: `src/components/live/stepper/LiveWaitStep.tsx`, `SealedEnvelopeView.tsx`, `HeldGhost.tsx` (new), `stepper.module.css`, `src/components/live/live.module.css`, `LiveGhost.tsx`, `src/components/ceremony/scene/Ghost*.tsx` (one optional size prop with a byte-identical default), `scene.module.css`, `src/components/live/copy.ts`, and the `*.test.ts(x)` for each file.
