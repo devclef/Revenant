@@ -9,6 +9,7 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it, vi } from "vitest";
 
+import { createPressController } from "./usePressEnvelope";
 import { registerPressSkip } from "./press-skip";
 
 function fakeRegistrar() {
@@ -64,12 +65,29 @@ describe("registerPressSkip (P2.6)", () => {
       const { registered, registrar } = fakeRegistrar();
       const onCreatePress = vi.fn();
       const onConfirmPress = vi.fn();
+      const onAttempt = vi.fn();
+      // The real press controller, wired to the same callbacks PressEnvelope
+      // receives. Skip must reach none of them.
+      const press = createPressController(
+        () => ({
+          mode: "write",
+          disabled: false,
+          instant: false,
+          onCreatePress,
+          onConfirmPress,
+          onAttempt,
+        }),
+        () => undefined,
+      );
       registerPressSkip(registrar, true, () => undefined);
       registered[0]();
       expect(credentials.create).not.toHaveBeenCalled();
       expect(credentials.get).not.toHaveBeenCalled();
       expect(onCreatePress).not.toHaveBeenCalled();
       expect(onConfirmPress).not.toHaveBeenCalled();
+      expect(onAttempt).not.toHaveBeenCalled();
+      press.click(0);
+      expect(onCreatePress).toHaveBeenCalledTimes(1);
     } finally {
       vi.unstubAllGlobals();
     }

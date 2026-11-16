@@ -242,6 +242,23 @@ describe("createPressController, inert", () => {
   });
 });
 
+describe("createPressController, failure lift (P4.3, P4.4)", () => {
+  it("recedes the wax pool when a press is cut off by the inert failure state", () => {
+    const h = harness();
+    h.controller.down(0);
+    h.controller.tick(SEAL_PRESS_HOLD_MS / 2);
+    expect(h.frames.at(-1)?.[0]).toBeGreaterThan(0);
+    h.set({ mode: "inert" });
+    h.controller.tick(SEAL_PRESS_HOLD_MS);
+    // The mode change resets the press to zero with no pool stage.
+    expect(h.frames.at(-1)).toEqual([0, null]);
+    const before = h.frames.length;
+    h.controller.up(SEAL_PRESS_HOLD_MS * 2);
+    expect(h.frames.length).toBe(before);
+    expect(h.calls.create).toBe(0);
+  });
+});
+
 describe("createPressController, mode change and reset", () => {
   it("ends an earlier press when the mode changes, so the Setting_State press starts fresh", () => {
     const h = harness();
