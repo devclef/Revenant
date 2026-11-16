@@ -107,6 +107,12 @@ describe("WriteForm sections (spec 09, D2)", () => {
     expect(html).toContain('id="live-backup-choice-skip"');
     expect(html).not.toContain('id="live-warning"');
     expect(html).not.toContain('id="live-backup-card"');
+    // The Warning_Text stays as body text in the seal section, outside any details (P6.1, P6.2).
+    expect(html).toContain(LIVE_COPY.warning);
+    const warningAt = html.indexOf(LIVE_COPY.warning);
+    const openDetails = html.lastIndexOf("<details", warningAt);
+    const closeDetails = html.lastIndexOf("</details>", warningAt);
+    expect(openDetails < 0 || closeDetails > openDetails).toBe(true);
     expect(html).toContain("Your device will ask for the passkey twice.");
     expect(html).toContain(LIVE_COPY.createButton);
     expect(html).toContain(LIVE_COPY.backButton);
