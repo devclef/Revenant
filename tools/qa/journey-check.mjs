@@ -30,6 +30,11 @@
 //                       Motion_Control count other than 1, or a console error
 //                       (spec 12 Q1.8; the same walk as spec 11 J9). Writes to no
 //                       database: the draft stays in the browser.
+//   J10 persona-hash    For each persona in content/personas/personas.json,
+//                       GET /api/letters/<letter_id> answers 200 with status
+//                       "openable" and an envelopeHash equal to the envelope_hash
+//                       recorded in personas.json (U9, issue #425). Fetch only;
+//                       no browser.
 // A phone or font check whose element isn't on production yet prints a note,
 // not a FAIL (A6.2 item 6).
 //
@@ -56,12 +61,14 @@
 // Exit: 0 every check passed, 1 a check failed or the GitHub step failed,
 // 2 the check could not start.
 
-import { existsSync } from "node:fs";
-import { pathToFileURL } from "node:url";
+import { existsSync, readFileSync } from "node:fs";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { runFontCheck, runPhoneChecks } from "./layout-check.mjs";
 
-export const ALL_CHECKS = ["J1", "J2", "J3", "J4", "J5", "J6", "J7", "J8", "J9"];
+export const ALL_CHECKS = ["J1", "J2", "J3", "J4", "J5", "J6", "J7", "J8", "J9", "J10"];
+export const PERSONAS_PATH = new URL("../../content/personas/personas.json", import.meta.url);
+export const ENVELOPE_HASH_THRESHOLD = "HTTP 200, status openable, envelopeHash equal to envelope_hash in personas.json";
 export const LIVE_WALK_SIZES = ["1440x900", "390x844"];
 export const LIVE_WALK_STEPS = ["write", "seal"];
 export const LIVE_LETTER = "Journey check: one sentence, typed in the browser and never sent.";
@@ -136,6 +143,25 @@ export function evaluateLiveStep({ expected, step, scrollWidth, clientWidth, mot
     measured: `step="${step}" scrollWidth=${scrollWidth} clientWidth=${clientWidth} motion=${motionCount} consoleErrors=0`,
     threshold,
   };
+}
+
+/**
+ * J10 verdict for one persona letter. Pure. Production must answer 200 with
+ * status "openable" and an envelopeHash equal to the envelope_hash recorded in
+ * personas.json. `httpStatus` is null when the request itself failed.
+ * @returns {{status:"pass"|"fail", measured:string, threshold:string}}
+ */
+export function compareEnvelopeHash({ expectedHash, httpStatus, body }) {
+  const threshold = ENVELOPE_HASH_THRESHOLD;
+  const fail = (measured) => ({ status: "fail", measured, threshold });
+  if (httpStatus === null) return fail("request failed");
+  if (httpStatus !== 200) return fail(`HTTP ${httpStatus}`);
+  const status = body && typeof body === "object" ? body.status : undefined;
+  if (status !== "openable") return fail(`status="${status ?? "none"}", need "openable"`);
+  if (typeof expectedHash !== "string" || expectedHash.length === 0) return fail("personas.json has no envelope_hash");
+  const got = body.envelopeHash;
+  if (got !== expectedHash) return fail(`envelopeHash ${String(got ?? "none")} != envelope_hash ${expectedHash}`);
+  return { status: "pass", measured: `envelopeHash=${got}`, threshold };
 }
 
 /** Whether this run includes J2 (OD8): manual runs, --reveal, or the 00:xx UTC run. */
@@ -292,6 +318,36 @@ async function checkJ4(ctx) {
   }
 }
 
+/** J10 (issue #425): each persona letter's envelopeHash on production matches personas.json. Fetch only. */
+async function checkJ10(ctx) {
+  let personas;
+  try {
+    personas = JSON.parse(readFileSync(fileURLToPath(PERSONAS_PATH), "utf8")).personas;
+    if (!Array.isArray(personas) || personas.length === 0) throw new Error("no personas");
+  } catch {
+    return ctx.add(res("J10", "content/personas/personas.json", "fail", "file unreadable or has no personas", ENVELOPE_HASH_THRESHOLD));
+  }
+  for (const persona of personas) {
+    const letterId = String(persona?.letter_id);
+    const where = `${persona?.key ?? "?"} /api/letters/${letterId}`;
+    let httpStatus = null;
+    let body = null;
+    try {
+      const r = await fetch(`${ctx.origin}/api/letters/${encodeURIComponent(letterId)}`, {
+        headers: { Accept: "application/json" },
+        signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+        redirect: "error",
+      });
+      httpStatus = r.status;
+      if (r.ok) body = await r.json().catch(() => null);
+    } catch {
+      httpStatus = null;
+    }
+    const verdict = compareEnvelopeHash({ expectedHash: persona?.envelope_hash, httpStatus, body });
+    ctx.add(res("J10", where, verdict.status, verdict.measured, verdict.threshold));
+  }
+}
+
 async function checkJ3(page, ctx) {
   const picker = page.locator('[data-card="live-figures"]');
   if ((await picker.count()) === 0) {
@@ -445,6 +501,7 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
 
   if (wanted.has("J1")) await checkJ1(ctx);
   if (wanted.has("J4")) await checkJ4(ctx);
+  if (wanted.has("J10")) await checkJ10(ctx);
 
   const browserChecks = ["J2", "J3", "J5", "J6", "J7", "J8", "J9"].some((id) => wanted.has(id));
   if (browserChecks) {
