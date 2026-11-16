@@ -9,7 +9,7 @@
 
 import { beforeAll, describe, expect, it } from "vitest";
 import fc from "fast-check";
-import { runTamper, type TamperSource } from "./tamper-run";
+import { runTamper, runRecomputedFingerprint, type TamperSource } from "./tamper-run";
 import { tamperResultCopy } from "./tamper-copy";
 import {
   canonicalize,
@@ -162,6 +162,40 @@ describe("Property 10: the Tamper_Control result is what openLetter returned", (
           expect(tamperResultCopy(run).kind).toBe(
             direct.ok ? "not_as_expected" : "cracked",
           );
+        },
+      ),
+      { numRuns: RUNS },
+    );
+  });
+});
+
+// Feature: 13-the-seal, Property 11: A recomputed fingerprint is still refused at the authentication layer
+describe("Property 11: A recomputed fingerprint is still refused at the authentication layer", () => {
+  it("refuses every non-zero one-byte change as tampered once the copy's hash is recomputed", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.integer({ min: 0, max: fixture.ciphertextBytes - 1 }),
+        fc.integer({ min: 1, max: 255 }),
+        async (byteIndex, mask) => {
+          const stored = structuredClone(fixture.envelope) as EnvelopeV1;
+          const before = canonicalize(stored);
+
+          const run = await runRecomputedFingerprint(sourceFor(stored), {
+            byteIndex,
+            mask,
+          });
+
+          expect(run.change.byteIndex).toBe(byteIndex);
+          expect(run.change.after).toBe(run.change.before ^ mask);
+          expect(run.recomputedHash).not.toBe(fixture.hash);
+          expect(run.result.ok).toBe(false);
+          if (!run.result.ok) {
+            expect(run.result.error.kind).toBe("tampered");
+          }
+
+          // The stored envelope is untouched and frozen.
+          expect(Object.isFrozen(stored)).toBe(true);
+          expect(canonicalize(stored)).toBe(before);
         },
       ),
       { numRuns: RUNS },
