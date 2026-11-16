@@ -47,6 +47,8 @@
 //                             link in view at the top.
 //   U9    persona-seal-size   /demo at 1440x900 and 390x844: every [data-persona-seal] at least
 //                             96 px wide and inside its persona card; no sideways scroll.
+//                             Additive (issue #425): no existing layout-check row or test
+//                             was changed or retired by this row.
 //   HW1   hero-wide           2560x1440: the / h1 font size is at least 1.5 times its 1366x800 size.
 //   ST1   step-indicator      persona intact to close: [data-step-indicator] present; one
 //                             aria-current="step" from recall on; 1 line at 600 px and wider,
