@@ -121,6 +121,7 @@ interface RawPersona {
   intro_line: string;
   region: string;
   letter_id: string;
+  envelope_hash: string;
   written_as_of: string;
   opens_at: string;
   metrics: { metric_id: string; recall_subject: string }[];
@@ -135,6 +136,13 @@ const personaArb: fc.Arbitrary<RawPersona> = fc
     display_name: nameArb,
     region: nameArb,
     letter_id: letterIdArb,
+    // A 64-character lowercase hex fingerprint (spec 13 U4.4).
+    envelope_hash: fc
+      .array(fc.constantFrom(..."0123456789abcdef"), {
+        minLength: 64,
+        maxLength: 64,
+      })
+      .map((digits) => digits.join("")),
     written_as_of: dayArb,
     metricCount: fc.integer({ min: 1, max: METRICS.length }),
   })
@@ -147,6 +155,7 @@ const personaArb: fc.Arbitrary<RawPersona> = fc
       intro_line: "A short everyday line about the week ahead.",
       region: r.region,
       letter_id: r.letter_id,
+      envelope_hash: r.envelope_hash,
       written_as_of: r.written_as_of,
       opens_at: new Date(openMs).toISOString(),
       metrics,

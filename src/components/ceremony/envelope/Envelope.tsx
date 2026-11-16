@@ -10,10 +10,11 @@
 // size and every fold are fixed literals here. Nothing in the geometry or the
 // markup reads the letter's length, its figures, its metrics or its units. The
 // only thing that varies between two letters is the persona date lines (text
-// the reader must see). The wax seal is one fixed design for every letter
-// (R10.10). A property test renders this at many letter lengths and figure
+// the reader must see). The wax seal's relief depends only on the letter's
+// fingerprint (`sealHash`, a hash of the envelope), never on its contents.
+// A property test renders this at many letter lengths and figure
 // counts and asserts the markup is byte-identical once the persona list fields
-// are fixed.
+// and the fingerprint are fixed.
 //
 // R3.7 — the front shows only the persona list dates: "Written as of {date}"
 // and "Opens {date}". The "Prepared later as a demo." line was dropped at every
@@ -85,6 +86,17 @@ export type EnvelopeProps = {
    * TestifyContext already states both dates there (spec 11 P3.1).
    */
   showDates?: boolean;
+  /**
+   * The letter's SHA-256 fingerprint (64 lowercase hex), passed to the flap's
+   * WaxSeal. Without a valid one the flap shows the Blank_Signet (U1.3).
+   */
+  sealHash?: string;
+  /**
+   * Whether the flap carries the wax seal. Defaults to `"flap"`. `"none"`
+   * draws the back with no seal, for callers that draw their own seal over
+   * the envelope.
+   */
+  seal?: "flap" | "none";
 };
 
 /**
@@ -289,6 +301,8 @@ export function Envelope({
   animate = true,
   className,
   showDates = true,
+  sealHash,
+  seal = "flap",
 }: EnvelopeProps): ReactElement {
   const rootClass = [
     styles.envelope,
@@ -368,13 +382,15 @@ export function Envelope({
           {state === "open" ? <Open /> : <Back />}
           <TornEdge />
           <Dirt />
-          <g
-            transform={`translate(${SEAL_X} ${
-              state === "open" ? SEAL_Y_OPEN : SEAL_Y_TURNED
-            })`}
-          >
-            <WaxSeal size={SEAL_SIZE} />
-          </g>
+          {seal === "none" ? null : (
+            <g
+              transform={`translate(${SEAL_X} ${
+                state === "open" ? SEAL_Y_OPEN : SEAL_Y_TURNED
+              })`}
+            >
+              <WaxSeal size={SEAL_SIZE} hash={sealHash} />
+            </g>
+          )}
         </svg>
       </div>
 

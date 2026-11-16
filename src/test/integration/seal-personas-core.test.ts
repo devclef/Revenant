@@ -324,6 +324,11 @@ const subjectArb: fc.Arbitrary<string> = fc.constantFrom(
  * subject, and a written_as_of at or after every series' latest period end so
  * every tracked metric has a "then" figure.
  */
+/** A 64-character lowercase hex envelope_hash, derived from the seed (spec 13 U4.4). */
+function envelopeHashFromSeed(seed: number): string {
+  return seed.toString(16).padStart(8, "0").repeat(8);
+}
+
 function personaArb(figures: GeneratedFigures): fc.Arbitrary<Persona> {
   return fc
     .record({
@@ -353,6 +358,7 @@ function personaArb(figures: GeneratedFigures): fc.Arbitrary<Persona> {
         intro_line: "A short everyday line about the week ahead.",
         region: "United States",
         letter_id: letterIdFromSeed(seed),
+        envelope_hash: envelopeHashFromSeed(seed),
         written_as_of,
         opens_at,
         metrics: metricSubset.map((metric_id, i) => ({

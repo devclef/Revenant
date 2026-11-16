@@ -6,6 +6,7 @@
       "intro_line": "Maya, who works early shifts at a clinic, writes on a May Sunday about her commute, filling the tank and Saturday deliveries.",
       "region": "United States",
       "letter_id": "NvKu8C4wTJsMYe8uv1AkAQ",
+      "envelope_hash": "5925def5dd62f6719db9f9bbc05fbbf210eac1fdd3d4c3018b3b97cb84a4728f",
       "written_as_of": "2024-05-12",
       "opens_at": "2024-11-05T00:00:00.000Z",
       "metrics": [
@@ -26,6 +27,7 @@
       "intro_line": "Tomás, who works shifts at a hospital pharmacy, writes on a May Sunday about his commute, the car and the market with Inês.",
       "region": "European Union",
       "letter_id": "zGQh3PULIzdSxkyu9elzUA",
+      "envelope_hash": "a0d025aef084492157f823e72b809b7c802a690bb2fbd75a07b467c0f02a54c6",
       "written_as_of": "2024-05-12",
       "opens_at": "2024-06-09T00:00:00.000Z",
       "metrics": [
@@ -46,6 +48,7 @@
       "intro_line": "Priya, who teaches a Saturday class, writes in May about her week, a plan with her sister and a choice at work.",
       "region": "United States",
       "letter_id": "CFtrFrKUnj-R-71e819chQ",
+      "envelope_hash": "6524723dfb1ddefb0a4702bc4958fe74f60a9db3564148ec95986bc95e63e64c",
       "written_as_of": "2024-05-12",
       "opens_at": "2024-11-05T00:00:00.000Z",
       "metrics": [],
