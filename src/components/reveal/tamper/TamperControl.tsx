@@ -19,7 +19,15 @@ import {
 } from "@/components/ceremony/seal/cracks";
 import { formatFingerprint } from "@/lib/seal-format";
 import type { TamperRun, TamperSource } from "./tamper-run";
-import { TAMPER_COPY, tamperResultCopy, type TamperResultCopy } from "./tamper-copy";
+import {
+  TAMPER_COPY,
+  refusalLayer,
+  secondLayerCopy,
+  tamperResultCopy,
+  type RefusalLayer,
+  type SecondLayerCopy,
+  type TamperResultCopy,
+} from "./tamper-copy";
 import styles from "./tamper.module.css";
 
 /** Seal size in CSS px. Matches the persona seals (spec 13, U9). */
@@ -32,8 +40,19 @@ type View =
       readonly kind: "result";
       readonly copy: TamperResultCopy;
       /** Both hashes, when the run produced them. Absent for a failed setup. */
-      readonly hashes: { readonly stored: string; readonly copy: string } | null;
+      readonly hashes: {
+        readonly stored: string;
+        readonly copy: string;
+      } | null;
+      /** The check that refused the one-byte copy. Null when there was no refusal. */
+      readonly layer: RefusalLayer | null;
     };
+
+/** The second-layer control's own view. Cleared when the result closes. */
+type SecondView =
+  | { readonly kind: "idle" }
+  | { readonly kind: "busy" }
+  | { readonly kind: "done"; readonly copy: SecondLayerCopy };
 
 export type TamperControlProps = {
   /**
@@ -75,8 +94,40 @@ function CrackOverlay({ drawing }: { readonly drawing: boolean }) {
   );
 }
 
+/**
+ * The second-layer summary: one line per attempt, with the check that refused
+ * it. Exported so the markup can be tested without a press.
+ */
+export function SecondLayerResult({
+  copy,
+}: {
+  readonly copy: SecondLayerCopy;
+}) {
+  if (copy.kind === "not_as_expected") {
+    return (
+      <p className={styles.message} data-tamper-second="">
+        {copy.message}
+      </p>
+    );
+  }
+  return (
+    <div className={styles.attemptsBlock} data-tamper-second="">
+      <p className={styles.heading}>{copy.heading}</p>
+      <ol className={styles.attempts}>
+        {copy.attempts.map((attempt) => (
+          <li key={attempt.label} className={styles.attempt}>
+            <span className={styles.attemptLabel}>{attempt.label}</span>
+            <p className={styles.attemptRefusal}>{attempt.refusal}</p>
+          </li>
+        ))}
+      </ol>
+    </div>
+  );
+}
+
 export function TamperControl({ getSource }: TamperControlProps) {
   const [view, setView] = useState<View>({ kind: "idle" });
+  const [second, setSecond] = useState<SecondView>({ kind: "idle" });
   const buttonRef = useRef<HTMLButtonElement>(null);
   const calm = useCalmInForce();
 
@@ -85,11 +136,13 @@ export function TamperControl({ getSource }: TamperControlProps) {
   async function press() {
     const source = getSource();
     setView({ kind: "busy" });
+    setSecond({ kind: "idle" });
     if (source === null) {
       setView({
         kind: "result",
         copy: { kind: "not_as_expected", message: TAMPER_COPY.notAsExpected },
         hashes: null,
+        layer: null,
       });
       return;
     }
@@ -100,6 +153,7 @@ export function TamperControl({ getSource }: TamperControlProps) {
         kind: "result",
         copy: tamperResultCopy(run),
         hashes: { stored: source.envelopeHash, copy: run.copyHash },
+        layer: run.result.ok ? null : refusalLayer(run.result.error.kind),
       });
     } catch {
       // A thrown run is a broken setup. It is shown as the plain message, never
@@ -108,6 +162,32 @@ export function TamperControl({ getSource }: TamperControlProps) {
         kind: "result",
         copy: { kind: "not_as_expected", message: TAMPER_COPY.notAsExpected },
         hashes: null,
+        layer: null,
+      });
+    }
+  }
+
+  // Runs the second layer on the same stored letter: the copy's fingerprint is
+  // recomputed, so the refusal that remains is the tag check. Offered only
+  // under a cracked seal, and `first` is the layer that refused the one-byte copy.
+  async function pressSecond(first: RefusalLayer) {
+    const source = getSource();
+    setSecond({ kind: "busy" });
+    if (source === null) {
+      setSecond({
+        kind: "done",
+        copy: { kind: "not_as_expected", message: TAMPER_COPY.notAsExpected },
+      });
+      return;
+    }
+    try {
+      const { runRecomputedFingerprint } = await import("./tamper-run");
+      const run = await runRecomputedFingerprint(source);
+      setSecond({ kind: "done", copy: secondLayerCopy(first, run) });
+    } catch {
+      setSecond({
+        kind: "done",
+        copy: { kind: "not_as_expected", message: TAMPER_COPY.notAsExpected },
       });
     }
   }
@@ -115,10 +195,12 @@ export function TamperControl({ getSource }: TamperControlProps) {
   // Closing clears this control's view and returns focus to the control.
   function close() {
     setView({ kind: "idle" });
+    setSecond({ kind: "idle" });
     buttonRef.current?.focus();
   }
 
   const busy = view.kind === "busy";
+  const first = view.kind === "result" ? view.layer : null;
 
   return (
     <section className={styles.tamper} data-tamper="" aria-busy={busy}>
@@ -175,6 +257,25 @@ export function TamperControl({ getSource }: TamperControlProps) {
                 </li>
               </ul>
               <p className={styles.note}>{TAMPER_COPY.note}</p>
+              {first !== null ? (
+                <div className={styles.second} data-tamper-second-layer="">
+                  <button
+                    type="button"
+                    className={styles.button}
+                    aria-busy={second.kind === "busy"}
+                    aria-describedby="tamper-second-note"
+                    onClick={() => void pressSecond(first)}
+                  >
+                    {TAMPER_COPY.secondLayerButton}
+                  </button>
+                  <p id="tamper-second-note" className={styles.note}>
+                    {TAMPER_COPY.secondLayerNote}
+                  </p>
+                  {second.kind === "done" ? (
+                    <SecondLayerResult copy={second.copy} />
+                  ) : null}
+                </div>
+              ) : null}
             </>
           ) : (
             <p className={styles.message}>
