@@ -39,8 +39,8 @@ describe("landing constants", () => {
     expect(CSS).toContain("@media (min-width: 600px)");
   });
 
-  it("uses the same ghost cap in the stylesheet", () => {
-    expect(CSS).toContain(`min(30svh, ${C.LANDING_GHOST_PHONE_MAX_PX}px)`);
+  it("no longer caps a landing ghost box in the stylesheet (replaced by the hero seal, issue #429)", () => {
+    expect(CSS).not.toContain(`min(30svh, ${C.LANDING_GHOST_PHONE_MAX_PX}px)`);
   });
 
   it("uses the same touch target as a minimum size in the stylesheet", () => {
