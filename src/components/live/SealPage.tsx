@@ -415,6 +415,10 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
         onBackupCardChange={(ticked) =>
           dispatchDraft({ type: "BACKUP_CARD_CHANGED", ticked })
         }
+        backupChoice={writeDraft.backupChoice}
+        onBackupChoice={(choice) =>
+          dispatchDraft({ type: "BACKUP_CHOICE_CHANGED", choice })
+        }
         onCreatePress={onCreatePress}
         onConfirmPress={flow.onConfirmPress}
         realDate={

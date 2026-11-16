@@ -102,8 +102,11 @@ describe("WriteForm sections (spec 09, D2)", () => {
 
   it("the seal section holds the passkey explanation, the warning and the press, not the letter or the picker", () => {
     const html = render({ section: "seal", onBack: () => {} });
-    expect(html).toContain('id="live-warning"');
-    expect(html).toContain('id="live-backup-card"');
+    expect(html).toContain('data-backup-choice');
+    expect(html).toContain('id="live-backup-choice-card"');
+    expect(html).toContain('id="live-backup-choice-skip"');
+    expect(html).not.toContain('id="live-warning"');
+    expect(html).not.toContain('id="live-backup-card"');
     expect(html).toContain("Your device will ask for the passkey twice.");
     expect(html).toContain(LIVE_COPY.createButton);
     expect(html).toContain(LIVE_COPY.backButton);

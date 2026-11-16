@@ -9,6 +9,8 @@ import { AuthorQuestions } from "./AuthorQuestions";
 import { questionRowProblem } from "./author-questions";
 import { LETTER_FIELD_ROWS } from "./constants";
 import { LIVE_COPY, REAL_COPY } from "./copy";
+import { BackupChoice } from "./BackupChoice";
+import type { BackupChoiceValue } from "./write-draft";
 import { FigurePicker, type FigureDetail } from "./FigurePicker";
 import { nextOpenRequest } from "./receipts-focus";
 import { ReceiptsDisclosure } from "./ReceiptsDisclosure";
@@ -120,6 +122,13 @@ export interface WriteFormProps {
   /** The visitor ticked or unticked the backup key card box. */
   onBackupCardChange: (ticked: boolean) => void;
   /**
+   * The Backup_Choice on the Seal step (spec 13, P7). Null until the visitor
+   * picks one. Used in the `seal` section; the `all` form keeps the checkboxes.
+   */
+  backupChoice?: BackupChoiceValue | null;
+  /** The visitor picked a Backup_Choice option. */
+  onBackupChoice?: (choice: BackupChoiceValue) => void;
+  /**
    * Which part to render. Defaults to `all`, the whole form. The stepper passes
    * `write` or `seal` (spec 09, D2; spec 11, L1.6).
    */
@@ -221,6 +230,8 @@ export function WriteForm({
   onToggleFigure,
   onWarningChange,
   onBackupCardChange,
+  backupChoice = null,
+  onBackupChoice = () => {},
   section = "all",
   onNext,
   onBack,
@@ -420,10 +431,8 @@ export function WriteForm({
           {LIVE_COPY.heading}
         </h1>
       ) : null}
-      {shows("write") ? (
-        <p className={styles.intro}>
-          {realDate === undefined ? LIVE_COPY.intro : REAL_COPY.intro}
-        </p>
+      {shows("write") && realDate !== undefined ? (
+        <p className={styles.intro}>{REAL_COPY.intro}</p>
       ) : null}
 
       {shows("write") ? (
@@ -551,6 +560,9 @@ export function WriteForm({
 
       {shows("seal") ? (
         <div className={styles.sealStep}>
+        {realDate === undefined ? (
+          <p className={styles.explain}>{LIVE_COPY.intro}</p>
+        ) : null}
         <div className={styles.explain}>
           <p>{LIVE_COPY.passkeySteps}</p>
           <details className={styles.more}>
@@ -563,6 +575,8 @@ export function WriteForm({
 
         <div className={styles.warning}>
           <p>{LIVE_COPY.warning}</p>
+          {all ? (
+            <>
           <label className={styles.warningLabel}>
             <input
               id="live-warning"
@@ -580,8 +594,11 @@ export function WriteForm({
           <p id="live-warning-problem" className={styles.problem}>
             {warningProblem}
           </p>
+            </>
+          ) : null}
         </div>
 
+        {all ? (
         <div className={styles.warning}>
           <label className={styles.warningLabel}>
             <input
@@ -601,6 +618,16 @@ export function WriteForm({
             {LIVE_COPY.backupCardOptionHint}
           </p>
         </div>
+        ) : (
+          <BackupChoice
+            value={backupChoice}
+            onChange={(choice) => {
+              onTouch(TOUCH_FIELDS.warning);
+              onBackupChoice(choice);
+            }}
+            problem={warningProblem ? LIVE_COPY.backupChoiceUnchosen : undefined}
+          />
+        )}
         </div>
       ) : null}
 

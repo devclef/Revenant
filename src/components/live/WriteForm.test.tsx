@@ -76,9 +76,9 @@ describe("WriteForm", () => {
   it("renders the parts in the specified order", () => {
     const order = [
       LIVE_COPY.heading,
-      LIVE_COPY.intro,
       LIVE_COPY.letterLabel,
       LIVE_COPY.figuresLegend,
+      LIVE_COPY.intro,
       LIVE_COPY.passkeySteps,
       LIVE_COPY.crossDevice,
       LIVE_COPY.warningLabel,
