@@ -24,6 +24,12 @@ describe("landing constants", () => {
     expect(C.LANDING_WIDE_MIN_PX).toBe(1920);
   });
 
+  it("holds the landing seal hash, which belongs to no letter", () => {
+    expect(C.LANDING_SEAL_HASH).toBe(
+      "f7023f7534d9709bba90be98d8df835c724e7013d40202a0cb02db103a46b2a8",
+    );
+  });
+
   it("does not define FLOW_MINUTES until the owner's B1.7 timings are known", () => {
     expect(C).not.toHaveProperty("FLOW_MINUTES");
   });
