@@ -88,6 +88,7 @@ function sourceFor(stored: EnvelopeV1): TamperSource {
   };
 }
 
+// Feature: 13-the-seal, Property 9
 describe("Property 9: a tampered copy is always refused and the stored envelope never changes", () => {
   it("refuses every one-byte change, and leaves the stored envelope deep-equal and frozen", async () => {
     const { openLetter } = await import("@/lib/crypto/open");
@@ -128,6 +129,7 @@ describe("Property 9: a tampered copy is always refused and the stored envelope 
   });
 });
 
+// Feature: 13-the-seal, Property 10
 describe("Property 10: the Tamper_Control result is what openLetter returned", () => {
   it("gives exactly the result openLetter returns for the same changed copy", async () => {
     const { openLetter } = await import("@/lib/crypto/open");
