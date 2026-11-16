@@ -45,6 +45,8 @@
 //                             top; the primary links to /demo.
 //   DX1   demo-cards-in-view  /demo at the Desktop_Sizes and the Wide_Size: every persona open
 //                             link in view at the top.
+//   U9    persona-seal-size   /demo at 1440x900 and 390x844: every [data-persona-seal] at least
+//                             96 px wide and inside its persona card; no sideways scroll.
 //   HW1   hero-wide           2560x1440: the / h1 font size is at least 1.5 times its 1366x800 size.
 //   ST1   step-indicator      persona intact to close: [data-step-indicator] present; one
 //                             aria-current="step" from recall on; 1 line at 600 px and wider,
@@ -2869,6 +2871,84 @@ async function otherPages(context, ctx) {
   }
 }
 
+// U9 (persona seal size): the sizes at which /demo is measured for the seal row. They are
+// not in the walked sizes, so the row runs its own pass.
+const U9_SIZES = ["1440x900", "390x844"];
+const U9_SEAL_MIN_PX = 96;
+
+// U9: a seal width passes at 96 px and above. Pure, so unit tests use it without a browser.
+export function sealWidthOk(width) {
+  return width >= U9_SEAL_MIN_PX;
+}
+
+// U9: the inner rect sits inside the outer rect, within half a pixel of rounding.
+// Pure, so unit tests use it without a browser.
+export function rectInside(inner, outer) {
+  return inner.left >= outer.left - 0.5 && inner.top >= outer.top - 0.5 && inner.right <= outer.right + 0.5 && inner.bottom <= outer.bottom + 0.5;
+}
+
+// U9: the verdict for the measured seals and page widths. Each seal is { width, rect, card }
+// and card is the containing card's rect, or null when there is none. Pure.
+export function personaSealVerdict({ seals, scrollWidth, clientWidth }) {
+  const problems = [];
+  seals.forEach((s, i) => {
+    if (!sealWidthOk(s.width)) problems.push(`seal ${i + 1} is ${s.width.toFixed(1)}px wide, narrower than ${U9_SEAL_MIN_PX}px`);
+    if (!s.card || !rectInside(s.rect, s.card)) problems.push(`seal ${i + 1} is not inside its card`);
+  });
+  if (scrollWidth > clientWidth) problems.push(`the page scrolls sideways (scrollWidth ${scrollWidth}px, clientWidth ${clientWidth}px)`);
+  return { count: seals.length, problems, ok: seals.length > 0 && problems.length === 0 };
+}
+
+// U9: every [data-persona-seal] with its box and its containing card (the persona link),
+// and the page widths.
+const U9_READ = () => {
+  const rect = (r) => ({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
+  return {
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+    seals: [...document.querySelectorAll("[data-persona-seal]")].map((el) => {
+      const r = el.getBoundingClientRect();
+      const card = el.closest("a") ?? el.parentElement;
+      return { width: r.width, rect: rect(r), card: card ? rect(card.getBoundingClientRect()) : null };
+    }),
+  };
+};
+
+async function checkPersonaSealRow(browser, base, size, rep, required) {
+  const [w, h] = parseSize(size);
+  const context = await browser.newContext({ viewport: { width: w, height: h } });
+  const ctx = { size, w, h, base, rep, stage: null, required, memo: {}, ghostHook: false };
+  rep.setContext(ctx);
+  console.log(`\n==== ${size} (U9) ====`);
+  try {
+    rep.stage("demo-seals");
+    const page = await newPage(context);
+    try {
+      const res = await page.goto(`${base}/demo`, { waitUntil: "load" });
+      if (!res || res.status() !== 200) {
+        rep.add("note", "U9", `/demo answered HTTP ${res?.status() ?? "none"}; seal row not measured`, "persona-seal-size");
+        return;
+      }
+      await sleep(800);
+      const r = await page.evaluate(U9_READ);
+      if (r.seals.length === 0) {
+        rep.add("note", "U9", `no [data-persona-seal] on /demo at ${size}`, "persona-seal-size");
+        return;
+      }
+      const verdict = personaSealVerdict(r);
+      const widths = r.seals.map((s) => `${s.width.toFixed(1)}px`).join(" ");
+      const detail = `seals=${verdict.count} widths=${widths} viewport=${size} threshold=width>=${U9_SEAL_MIN_PX}px, inside its card, no sideways scroll${verdict.problems.length ? ` (${verdict.problems.join("; ")})` : ""}`;
+      rep.add(verdict.ok ? "ok" : "blocker", "U9", detail, "persona-seal-size");
+    } finally {
+      await page.close();
+    }
+  } catch (error) {
+    rep.add("note", "U9", `could not run: ${String(error.message ?? error).split("\n")[0]}`, "persona-seal-size");
+  } finally {
+    await context.close();
+  }
+}
+
 async function runSize(browser, base, size, opts, rep) {
   const [w, h] = size.split("x").map(Number);
   const context = await browser.newContext({ viewport: { width: w, height: h } });
@@ -2953,6 +3033,9 @@ async function main() {
   try {
     for (const size of opts.sizes) {
       await runSize(browser, opts.url, size, opts, rep);
+    }
+    for (const size of U9_SIZES) {
+      await checkPersonaSealRow(browser, opts.url, size, rep, opts.required);
     }
   } finally {
     await browser.close();
