@@ -32,3 +32,19 @@ export function sealPlacement({ viewportWidth, slotReady }: SealPlacementInput):
   if (!slotReady || viewportWidth === null) return "content";
   return viewportWidth >= SEAL_ON_ENVELOPE_MIN_PX ? "envelope" : "content";
 }
+
+/** The Break the seal wax width floor and ceiling in CSS px (spec 13 U8.1, U8.2). */
+export const BREAK_SEAL_MIN_PX = 120;
+export const BREAK_SEAL_MAX_PX = 160;
+/** The fluid share of the viewport width between the floor and the ceiling. */
+export const BREAK_SEAL_VW = 12;
+
+/**
+ * The Break the seal width in CSS px at a viewport width. It is the same rule as
+ * `--break-seal-d` in scene/tokens.css, `clamp(120px, 12vw, 160px)`: 120 px at
+ * the phone widths and 160 px from 1334 px wide up (so at 1440 it is 160 px).
+ */
+export function breakSealWidthPx(viewportWidth: number): number {
+  const fluid = (BREAK_SEAL_VW / 100) * viewportWidth;
+  return Math.min(BREAK_SEAL_MAX_PX, Math.max(BREAK_SEAL_MIN_PX, fluid));
+}

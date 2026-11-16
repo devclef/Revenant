@@ -57,4 +57,12 @@
 
   /* Envelope dirt (decoration) */
   --dirt: rgba(70, 48, 34, 0.55);
+
+  /*
+   * Break the seal wax width (U8.1, U8.2). 120 px at the phone widths, 160 px
+   * at 1440 and wider, and 12vw in between. It sizes the seal on the held
+   * Envelope and the Content_Column seal. seal-placement.ts (breakSealWidthPx)
+   * repeats this rule in code, and seal-placement.test.ts checks the two agree.
+   */
+  --break-seal-d: clamp(120px, 12vw, 160px);
 }

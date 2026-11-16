@@ -708,14 +708,16 @@
    (spec 10 C6.1, C6.3). */
 
 /* SEAL_ON_FLAP (C6.1): the pressable seal sits on the turned Envelope's flap.
-   The back face's drawn WaxSeal centres at 50 % x 55.3 % of the Envelope box;
-   at 28 % wide the target covers it fully. constants.ts holds the three
-   numbers (SEAL_ON_FLAP_*); constants-css.test.ts checks the two agree. */
+   The back face's drawn WaxSeal centres at 50 % x 55.3 % of the Envelope box.
+   Its width is the Break the seal token (U8.1, U8.2), not a share of the
+   Envelope, so the seal is 160 px at 1440 and 120 px at the phone widths.
+   constants.ts holds the three numbers (SEAL_ON_FLAP_*) and BREAK_SEAL_D;
+   constants-css.test.ts checks the two agree. */
 .heldEnvelope [data-envelope-seal] {
   position: absolute;
   left: 50%;
   top: 55.3%;
-  width: 28%;
+  width: var(--break-seal-d);
   aspect-ratio: 1 / 1;
   /* The seal's pointer target stays at least 44 by 44 px (spec 09 C5.2). */
   min-width: 44px;
