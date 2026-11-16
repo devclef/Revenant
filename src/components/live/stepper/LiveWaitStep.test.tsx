@@ -9,6 +9,8 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { formatFingerprint } from "@/lib/seal-format";
+
 import { LIVE_COPY } from "../copy";
 import type { SealedState } from "../SealedView";
 
@@ -154,5 +156,69 @@ describe("LiveWaitStep on the seal break step (issue #385)", () => {
     const html = render("break", OPENS_MS + 60_000);
     expect(html).not.toContain("data-live-countdown");
     expect(html).not.toContain("data-live-goto");
+  });
+});
+
+// Wait layout (spec 09): the sealed envelope view sits first, the countdown
+// sits beneath it, and the Keep_Section sits below the view. The fixed Wait
+// ghost is retired here (the in-flow ghost returns with HeldGhost).
+describe("LiveWaitStep Wait layout markup", () => {
+  function renderWait(rehearsal: boolean, nowMs: number): string {
+    return renderToStaticMarkup(
+      createElement(LiveWaitStep, {
+        state: sealed,
+        appOrigin: "https://revenant.example",
+        step: "wait",
+        advanceTo: () => undefined,
+        nowMs: () => nowMs,
+        rehearsal,
+      }),
+    );
+  }
+
+  const count = (html: string, needle: string): number =>
+    html.split(needle).length - 1;
+
+  it("draws the sealed envelope view with no fixed Wait ghost", () => {
+    const html = renderWait(false, OPENS_MS - 60_000);
+    expect(html).toContain("data-sealed-envelope-view");
+    expect(html).not.toContain("data-live-ghost-layer");
+  });
+
+  it("orders the envelope view, then the countdown, then the Keep_Section", () => {
+    const html = renderWait(false, OPENS_MS - 60_000);
+    const view = html.indexOf("data-sealed-envelope-view");
+    const countdown = html.indexOf('data-live-countdown="ticking"');
+    const keep = html.indexOf("data-live-keep-section");
+    expect(view).toBeGreaterThan(-1);
+    expect(countdown).toBeGreaterThan(view);
+    expect(keep).toBeGreaterThan(countdown);
+  });
+
+  it("shows the rehearsal line exactly once", () => {
+    const html = renderWait(true, OPENS_MS - 60_000);
+    expect(count(html, LIVE_COPY.rehearsalLine)).toBe(1);
+    expect(count(html, "data-live-rehearsal")).toBe(1);
+  });
+
+  it("shows the opening time once on the Wait screen", () => {
+    const html = renderWait(false, OPENS_MS - 60_000);
+    expect(count(html, "data-live-opens-at")).toBe(1);
+  });
+
+  it("shows the sealing Fingerprint once, in the Keep_Section", () => {
+    const html = renderWait(false, OPENS_MS - 60_000);
+    const fingerprint = formatFingerprint(sealed.envelopeHash);
+    expect(fingerprint).not.toBeNull();
+    expect(count(html, fingerprint ?? "")).toBe(1);
+    expect(count(html, "data-live-card-fingerprint")).toBe(1);
+  });
+
+  it("shows no letter content, figures or recall questions", () => {
+    const html = renderWait(true, OPENS_MS - 60_000);
+    expect(html).not.toContain("<textarea");
+    expect(html).not.toContain("<input");
+    expect(html).not.toContain("data-figure");
+    expect(html).not.toContain("data-recall");
   });
 });

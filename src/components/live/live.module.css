@@ -785,6 +785,45 @@
   margin-top: 2rem;
 }
 
+/*
+ * The sealed envelope on the Wait card (SealedEnvelopeView). The envelope is
+ * the largest element on the card. It sits on a dark Scene light, so the paper
+ * envelope reads against the desk. The lines beneath it sit on the paper card,
+ * so they set --ink themselves.
+ */
+.envelopeView {
+  display: grid;
+  gap: 1rem;
+  justify-items: center;
+}
+
+.envelopeLight {
+  width: min(100%, 24rem);
+  padding: clamp(0.75rem, 3vw, 1.25rem);
+  border-radius: 4px;
+  background: radial-gradient(
+    ellipse at 50% 35%,
+    rgba(143, 70, 255, 0.45),
+    var(--bg) 75%
+  );
+}
+
+.envelopeLines {
+  width: 100%;
+  color: var(--ink);
+  text-align: center;
+}
+
+.envelopeLines p {
+  margin: 0.25rem 0;
+}
+
+/* The Keep_Section below the envelope view: the letter card, the calendar
+   file and the backup key card offer (U6). */
+.keepSection {
+  margin-top: 1.5rem;
+}
+
 /* Controls and the rest of the sealed page are hidden when the card is printed. */
 @media print {
   .noPrint {

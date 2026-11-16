@@ -81,34 +81,11 @@ function wait(step: "wait" | "testify" | "receipts", nowMs: number, isCalm: bool
   );
 }
 
-describe("the live Wait card inside the Scene (D1.2)", () => {
-  it("sinks the Ghost with the Envelope in full motion while the countdown runs", () => {
-    const html = wait("wait", OPENS_MS - 60_000, false);
-    expect(html).toContain("data-live-ghost-layer");
-    expect(html).toContain('data-sink="sinking"');
-    expect(html).toContain('data-live-countdown="ticking"');
-  });
-
-  it("shows the settled sunk pose with no motion in Calm, and the countdown still runs (D1.4)", () => {
-    const html = wait("wait", OPENS_MS - 60_000, true);
-    expect(html).toContain('data-sink="sunk"');
-    expect(html).not.toContain('data-sink="sinking"');
-    expect(html).toContain('data-live-countdown="ticking"');
-  });
-
-  it("rises the Ghost again at zero, the Emergence on unlock in place (D1.3)", () => {
-    const html = wait("wait", OPENS_MS + 1_000, false);
-    expect(html).toContain("data-live-ghost-layer");
-    // Idle means no data-sink attribute, so the CSS rise plays.
-    expect(html).not.toContain("data-sink=");
-    expect(html).not.toContain('data-live-countdown="ticking"');
-  });
-
-  it("shows the same idle rise at zero in Calm, with no sink", () => {
-    const html = wait("wait", OPENS_MS + 1_000, true);
-    expect(html).not.toContain("data-sink=");
-  });
-
+// Retired (spec 09, Wait layout): the fixed Wait ghost and its sink states
+// (D1.2 to D1.4) are gone from the Wait card. The Envelope now sits in the
+// flow (SealedEnvelopeView), and the in-flow ghost behind it returns with
+// HeldGhost. The key reminder stays with the unlock control (D1.5).
+describe("the live Wait card inside the Scene (D1.5)", () => {
   it("keeps the key reminder with the unlock control, before and after zero (D1.5)", () => {
     const before = wait("wait", OPENS_MS - 60_000, false);
     const after = wait("wait", OPENS_MS + 1_000, false);
@@ -116,7 +93,12 @@ describe("the live Wait card inside the Scene (D1.2)", () => {
     expect(after).toContain(LIVE_COPY.keyReminder);
   });
 
-  it("drops the Ghost on Testify and Receipts, which keep the flow only", () => {
+  it("draws no fixed Wait ghost on the Wait card", () => {
+    expect(wait("wait", OPENS_MS - 60_000, false)).not.toContain("data-live-ghost-layer");
+    expect(wait("wait", OPENS_MS + 1_000, false)).not.toContain("data-live-ghost-layer");
+  });
+
+  it("drops any ghost layer on Testify and Receipts, which keep the flow only", () => {
     expect(wait("testify", OPENS_MS + 1_000, false)).not.toContain("data-live-ghost-layer");
     expect(wait("receipts", OPENS_MS + 1_000, false)).not.toContain("data-live-ghost-layer");
   });
