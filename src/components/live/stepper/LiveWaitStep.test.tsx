@@ -223,3 +223,52 @@ describe("LiveWaitStep Wait layout markup", () => {
     expect(html).not.toContain("data-recall");
   });
 });
+
+// Copy check for the rendered Wait step (spec 13, U6 and G1.7). Each Retired_Phrase
+// from src/test/retired-phrases.test.ts that can reach the Wait card is listed
+// here, so a regression on this page fails in this file.
+describe("LiveWaitStep copy on the rendered Wait step (U6, G1.7)", () => {
+  const RETIRED_ON_WAIT: readonly RegExp[] = [
+    /pick up the letter/i,
+    /seal the figures/i,
+    /check your connection and reload the page/i,
+    /fuel prices from the US or the EU/i,
+    /what['\u2019]s on your mind right now\?/i,
+    /rose[- ]tinted/i,
+    /U\.S\. presidential election day/i,
+    /European Parliament election/i,
+  ];
+
+  function visibleText(html: string): string {
+    return html
+      .replace(/<[^>]*>/g, " ")
+      .replace(/&#x27;|&#39;/g, "'")
+      .replace(/&amp;/g, "&")
+      .replace(/\s+/g, " ");
+  }
+
+  const states: readonly { name: string; html: string }[] = [
+    { name: "before zero, calm off", html: render("wait", OPENS_MS - 60_000) },
+    { name: "at zero", html: render("wait", OPENS_MS + 1_000) },
+  ];
+
+  for (const { name, html } of states) {
+    it(`shows no Retired_Phrase (${name})`, () => {
+      const text = visibleText(html);
+      for (const pattern of RETIRED_ON_WAIT) {
+        expect(text).not.toMatch(pattern);
+      }
+    });
+
+    it(`has no exclamation mark or scoring word (${name})`, () => {
+      const text = visibleText(html);
+      expect(text).not.toContain("!");
+      expect(text).not.toMatch(/\b(accuracy|accurate|score|off by)\b/i);
+    });
+
+    it(`shows the U6 sentence exactly once (${name})`, () => {
+      const text = visibleText(html);
+      expect(text.split(LIVE_COPY.sealDrawnFrom).length - 1).toBe(1);
+    });
+  }
+});
