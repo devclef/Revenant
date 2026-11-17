@@ -5,9 +5,12 @@ import { describe, expect, it } from "vitest";
 
 import { WALK_STEP_NAMES } from "./live-walk-helpers";
 import {
+  KEYBOARD_MATRIX_ENTRY,
   WALK_MATRIX,
   matrixRun,
   matrixShotNames,
+  TAMPER_MATRIX,
+  tamperShotNames,
   walkEnabled,
 } from "./live-walk-matrix";
 
@@ -109,7 +112,7 @@ describe("matrixShotNames with a step filter", () => {
     expect(names).toEqual([
       "live-01-write-390x844.png",
       "live-03-seal-390x844.png",
-      "live-06-testify-390x844.png",
+      "live-08-testify-390x844.png",
     ]);
   });
 
@@ -165,5 +168,75 @@ describe("live-walk.test.ts with WALK unset", () => {
     expect(output).toMatch(/Tests\s+\d+ skipped \(\d+\)/);
     expect(output).not.toMatch(/\d+ passed/);
     expect(output).not.toMatch(/\bfailed\b/);
+  });
+});
+
+describe("TAMPER_MATRIX (persona tamper runs)", () => {
+  it("has four runs: both widths, motion on and reduced", () => {
+    expect(TAMPER_MATRIX.map((e) => [e.width, e.reduced])).toEqual([
+      [1440, false],
+      [1440, true],
+      [390, false],
+      [390, true],
+    ]);
+  });
+
+  it("gives every run a unique id", () => {
+    const ids = TAMPER_MATRIX.map((e) => e.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("names one tamper Step_Shot, numbered 13 and with -reduced when reduced", () => {
+    expect(tamperShotNames(TAMPER_MATRIX[0])).toEqual([
+      "live-13-tamper-1440x900.png",
+    ]);
+    expect(tamperShotNames(TAMPER_MATRIX[1])).toEqual([
+      "live-13-tamper-1440x900-reduced.png",
+    ]);
+    expect(tamperShotNames(TAMPER_MATRIX[3])).toEqual([
+      "live-13-tamper-390x844-reduced.png",
+    ]);
+  });
+});
+
+describe("full walk plan includes the new steps", () => {
+  it("lists press-held, setting and tamper in the Step_Shot names", () => {
+    const names = matrixShotNames(WALK_MATRIX[0]);
+    expect(names.some((n) => n.includes("-press-held-"))).toBe(true);
+    expect(names.some((n) => n.includes("-setting-"))).toBe(true);
+    expect(names.some((n) => n.includes("-tamper-"))).toBe(true);
+  });
+});
+
+describe("KEYBOARD_MATRIX_ENTRY (the keyboard seal run, Q1.3)", () => {
+  it("is kept out of WALK_MATRIX, which still lists the eight mouse and touch runs", () => {
+    expect(WALK_MATRIX).toHaveLength(8);
+    expect(WALK_MATRIX.map((e) => e.id)).not.toContain(
+      KEYBOARD_MATRIX_ENTRY.id,
+    );
+  });
+
+  it("is the desktop no-figure run with motion on", () => {
+    expect(KEYBOARD_MATRIX_ENTRY).toEqual({
+      id: "1440x900-keyboard",
+      width: 1440,
+      height: 900,
+      variant: "no-figure",
+      reduced: false,
+    });
+    expect(matrixRun(KEYBOARD_MATRIX_ENTRY)).toEqual({
+      size: { width: 1440, height: 900 },
+      reduced: false,
+      figure: false,
+    });
+  });
+
+  it("plans the same Step_Shot names as the desktop mouse run, before the -keyboard suffix", () => {
+    // The walk adds the -keyboard suffix when it saves a file (walkShotFor).
+    const mouse = WALK_MATRIX.find((e) => e.id === "1440x900-no-figure");
+    expect(mouse).toBeDefined();
+    expect(matrixShotNames(KEYBOARD_MATRIX_ENTRY)).toEqual(
+      matrixShotNames(mouse!),
+    );
   });
 });

@@ -2,7 +2,17 @@ import { describe, expect, it } from "vitest";
 
 import {
   EXPECTED_STEPS,
+  MAX_PASSKEY_PROMPTS,
   MOTION_CONTROL_SELECTOR,
+  PASSKEY_INIT_SCRIPT,
+  NO_SEAL,
+  breakSealMinWidth,
+  checkBreakSealSize,
+  checkDemoSeals,
+  checkNoJsSeal,
+  checkSealMarks,
+  checkTamperRunNoPasskey,
+  reliefPathOf,
   SKIP_LINK_STAGE,
   STEP_SUSPECTED_FILES,
   WALK_STEP_NAMES,
@@ -10,13 +20,22 @@ import {
   checkClippedText,
   checkConsoleErrors,
   checkContrast,
+  checkEarlyRelease,
   checkForbiddenFinalText,
+  checkGhostClearOfKeep,
   checkHorizontalScroll,
   checkMotionControlCount,
   checkOwnNumberRowsBlank,
+  checkPasskeyCount,
+  checkPasskeyTotal,
+  checkQuickPressAddsNone,
   checkRunShots,
+  checkSealOrangeButtons,
+  checkStepHeadingClearOfTopBar,
   checkStepIndicator,
   checkStepSnapshot,
+  countPasskeyCalls,
+  rectsIntersect,
   contrastFloor,
   contrastRatio,
   defectsFromChecks,
@@ -27,10 +46,12 @@ import {
   parseCssColor,
   recordStepResult,
   reportMissingShots,
+  sealPressInput,
   shotsWrittenSince,
   skipLinkBlocksSettle,
   stepShotName,
   walkShotName,
+  type BoxRect,
   type PageSnapshot,
 } from "./live-walk-helpers";
 
@@ -39,8 +60,11 @@ describe("stepShotName", () => {
     expect(stepShotName({ step: "write", width: 1440, height: 900 })).toBe(
       "live-01-write-1440x900.png",
     );
+    expect(stepShotName({ step: "tamper", width: 390, height: 844 })).toBe(
+      "live-13-tamper-390x844.png",
+    );
     expect(stepShotName({ step: "close", width: 390, height: 844 })).toBe(
-      "live-10-close-390x844.png",
+      "live-12-close-390x844.png",
     );
   });
 
@@ -68,6 +92,27 @@ describe("stepShotName", () => {
       "live-08",
       "live-09",
       "live-10",
+      "live-11",
+      "live-12",
+      "live-13",
+    ]);
+  });
+
+  it("pins the walk's step names in order, with press-held and setting after seal and tamper last", () => {
+    expect([...WALK_STEP_NAMES]).toEqual([
+      "write",
+      "write-receipts",
+      "seal",
+      "press-held",
+      "setting",
+      "wait",
+      "unlock",
+      "testify",
+      "marks",
+      "letter",
+      "figures",
+      "close",
+      "tamper",
     ]);
   });
 
@@ -79,7 +124,7 @@ describe("stepShotName", () => {
         height: 900,
         reduced: true,
       }),
-    ).toBe("live-09-figures-1440x900-reduced.png");
+    ).toBe("live-11-figures-1440x900-reduced.png");
     expect(
       stepShotName({
         step: "figures",
@@ -87,7 +132,16 @@ describe("stepShotName", () => {
         height: 844,
         reduced: false,
       }),
-    ).toBe("live-09-figures-390x844.png");
+    ).toBe("live-11-figures-390x844.png");
+  });
+
+  it("names the press and setting steps after seal, in walk order", () => {
+    expect(stepShotName({ step: "press-held", width: 1440, height: 900 })).toBe(
+      "live-04-press-held-1440x900.png",
+    );
+    expect(stepShotName({ step: "setting", width: 390, height: 844 })).toBe(
+      "live-05-setting-390x844.png",
+    );
   });
 
   it("names the step, not the Stage, for write-receipts", () => {
@@ -106,9 +160,10 @@ describe("stepShotName", () => {
 describe("expectedShotNames", () => {
   it("lists every step at both widths, with and without the reduced suffix", () => {
     const names = expectedShotNames("one-figure");
-    expect(names).toHaveLength(10 * 2 * 2);
+    expect(names).toHaveLength(13 * 2 * 2);
     expect(names).toContain("live-01-write-1440x900.png");
-    expect(names).toContain("live-10-close-390x844-reduced.png");
+    expect(names).toContain("live-12-close-390x844-reduced.png");
+    expect(names).toContain("live-13-tamper-1440x900-reduced.png");
     expect(new Set(names).size).toBe(names.length);
   });
 
@@ -232,7 +287,7 @@ describe("recordStepResult", () => {
     const result = recordStepResult({
       step: "figures",
       observation: "Figure row is clipped.",
-      shots: ["live-09-figures-390x844.png"],
+      shots: ["live-11-figures-390x844.png"],
       defects: [
         {
           step: "figures",
@@ -641,7 +696,7 @@ describe("walkShotName", () => {
   it("keeps the spec name for the default hold method", () => {
     expect(
       walkShotName({ step: "marks", width: 1440, height: 900, method: "hold" }),
-    ).toBe("live-07-marks-1440x900.png");
+    ).toBe("live-09-marks-1440x900.png");
   });
 
   it("adds the method and the reduced suffix for the other runs", () => {
@@ -653,7 +708,7 @@ describe("walkShotName", () => {
         reduced: true,
         method: "skip",
       }),
-    ).toBe("live-10-close-390x844-reduced-via-skip.png");
+    ).toBe("live-12-close-390x844-reduced-via-skip.png");
   });
 });
 
@@ -824,8 +879,8 @@ describe("missingShotDefect (a step with no Step_Shot fails)", () => {
     expect(
       missingShotDefect({
         step: "letter",
-        shot: "live-08-letter-1440x900.png",
-        expectedName: "live-08-letter-1440x900.png",
+        shot: "live-10-letter-1440x900.png",
+        expectedName: "live-10-letter-1440x900.png",
         suspectedFile: "src/components/ceremony/letter/",
       }),
     ).toBeNull();
@@ -835,12 +890,12 @@ describe("missingShotDefect (a step with no Step_Shot fails)", () => {
     const defect = missingShotDefect({
       step: "close",
       shot: undefined,
-      expectedName: "live-10-close-390x844.png",
+      expectedName: "live-12-close-390x844.png",
       suspectedFile: "src/components/ceremony/close/",
     });
     expect(defect).toEqual({
       step: "close",
-      expected: "A Step_Shot named live-10-close-390x844.png is saved for this step.",
+      expected: "A Step_Shot named live-12-close-390x844.png is saved for this step.",
       observed: "No Step_Shot was saved for this step.",
       suspectedFile: "src/components/ceremony/close/",
     });
@@ -865,8 +920,348 @@ describe("shotsMissingFromRecord (each shot is named in the run record)", () => 
     expect(
       shotsMissingFromRecord(record, [
         "live-01-write-1440x900.png",
-        "live-10-close-1440x900.png",
+        "live-12-close-1440x900.png",
       ]),
-    ).toEqual(["live-10-close-1440x900.png"]);
+    ).toEqual(["live-12-close-1440x900.png"]);
+  });
+});
+
+/** Run the init script against a fake `window` with a `navigator.credentials` double. */
+function runPasskeyScript(credentials: Record<string, unknown> | null) {
+  const win: Record<string, unknown> = {
+    navigator: credentials === null ? {} : { credentials },
+  };
+  win.window = win;
+  // The script refers to `window` and `navigator` as free identifiers.
+  new Function("window", "navigator", PASSKEY_INIT_SCRIPT)(win, win.navigator);
+  return win;
+}
+
+describe("PASSKEY_INIT_SCRIPT (passkey prompt counter)", () => {
+  it("records create and get calls and still returns the real result", async () => {
+    const creds = {
+      create: async (opts: unknown) => `created:${String(opts)}`,
+      get: async () => "assertion",
+    };
+    const win = runPasskeyScript(creds);
+    expect(win.__passkeyCalls).toEqual([]);
+    await expect(creds.create("a")).resolves.toBe("created:a");
+    await (creds as unknown as { get: () => Promise<string> }).get();
+    expect(win.__passkeyCalls).toEqual(["create", "get"]);
+  });
+
+  it("counts a rejected prompt as well", async () => {
+    const creds = {
+      create: async () => {
+        throw new Error("NotAllowedError");
+      },
+    };
+    const win = runPasskeyScript(creds);
+    await expect(creds.create()).rejects.toThrow("NotAllowedError");
+    expect(win.__passkeyCalls).toEqual(["create"]);
+  });
+
+  it("sets an empty list and does not throw without navigator.credentials", () => {
+    const win = runPasskeyScript(null);
+    expect(win.__passkeyCalls).toEqual([]);
+  });
+});
+
+describe("countPasskeyCalls and the passkey checks", () => {
+  it("counts create, get and the total", () => {
+    expect(countPasskeyCalls(["create", "get", "get"])).toEqual({
+      create: 1,
+      get: 2,
+      total: 3,
+    });
+    expect(countPasskeyCalls(["bogus"])).toEqual({
+      create: 0,
+      get: 0,
+      total: 0,
+    });
+  });
+
+  it("an early release passes only with create 0 and no credential", () => {
+    const none = countPasskeyCalls([]);
+    expect(checkEarlyRelease(none, 0).ok).toBe(true);
+    expect(checkEarlyRelease(countPasskeyCalls(["create"]), 0).ok).toBe(false);
+    expect(checkEarlyRelease(none, 1).ok).toBe(false);
+  });
+
+  it("a release after the hold needs exactly one create", () => {
+    const one = countPasskeyCalls(["create"]);
+    expect(checkPasskeyCount(one, { create: 1 }, "release").ok).toBe(true);
+    const two = countPasskeyCalls(["create", "create"]);
+    const bad = checkPasskeyCount(two, { create: 1 }, "release");
+    expect(bad.ok).toBe(false);
+    expect(bad.message).toBe("FAIL release: create 2, expected 1");
+  });
+
+  it("the Setting_State press needs exactly one get", () => {
+    expect(
+      checkPasskeyCount(countPasskeyCalls(["get"]), { get: 1 }, "setting").ok,
+    ).toBe(true);
+    expect(
+      checkPasskeyCount(countPasskeyCalls([]), { get: 1 }, "setting").ok,
+    ).toBe(false);
+  });
+
+  it("checks only the kinds it is given", () => {
+    const counts = countPasskeyCalls(["get"]);
+    expect(checkPasskeyCount(counts, { create: 0 }, "x").ok).toBe(true);
+  });
+
+  it("fails above the two-prompt cap and passes at it", () => {
+    expect(MAX_PASSKEY_PROMPTS).toBe(2);
+    expect(checkPasskeyTotal(countPasskeyCalls(["create", "get"])).ok).toBe(
+      true,
+    );
+    const over = checkPasskeyTotal(countPasskeyCalls(["create", "get", "get"]));
+    expect(over.ok).toBe(false);
+    expect(over.message).toBe("FAIL more than two passkey prompts: 3 seen");
+  });
+
+  it("a second quick press during a prompt must add none", () => {
+    expect(checkQuickPressAddsNone(1, 1).ok).toBe(true);
+    const bad = checkQuickPressAddsNone(1, 2);
+    expect(bad.ok).toBe(false);
+    expect(bad.message).toBe(
+      "FAIL a second quick press added 1 passkey prompt(s)",
+    );
+  });
+});
+
+describe("rectsIntersect and the layout rules", () => {
+  const box = (
+    top: number,
+    left: number,
+    bottom: number,
+    right: number,
+  ): BoxRect => ({
+    top,
+    left,
+    bottom,
+    right,
+  });
+
+  it("detects overlap in both axes, and not edges that only touch", () => {
+    expect(rectsIntersect(box(0, 0, 10, 10), box(5, 5, 15, 15))).toBe(true);
+    expect(rectsIntersect(box(0, 0, 10, 10), box(10, 0, 20, 10))).toBe(false);
+    expect(rectsIntersect(box(0, 0, 10, 10), box(0, 10, 10, 20))).toBe(false);
+    expect(rectsIntersect(box(0, 0, 0, 10), box(0, 0, 10, 10))).toBe(false);
+  });
+
+  it("fails a Step_Heading box under the Top_Bar", () => {
+    const topBar = box(0, 0, 60, 390);
+    expect(checkStepHeadingClearOfTopBar(box(80, 0, 120, 390), topBar).ok).toBe(
+      true,
+    );
+    const under = checkStepHeadingClearOfTopBar(box(40, 0, 90, 390), topBar);
+    expect(under.ok).toBe(false);
+    expect(under.message).toBe(
+      "FAIL the Step_Heading box (top 40, bottom 90) overlaps the Top_Bar (bottom 60)",
+    );
+  });
+
+  it("fails a risen ghost that intersects the Keep_Section", () => {
+    const keep = box(500, 0, 600, 1440);
+    expect(checkGhostClearOfKeep(box(100, 500, 300, 900), keep).ok).toBe(true);
+    expect(checkGhostClearOfKeep(box(450, 500, 550, 900), keep).ok).toBe(false);
+  });
+
+  it("allows only the Press_Envelope as an orange button on the Seal step", () => {
+    expect(
+      checkSealOrangeButtons([
+        { label: "Press the seal", isPressEnvelope: true },
+      ]).ok,
+    ).toBe(true);
+    expect(checkSealOrangeButtons([]).ok).toBe(true);
+    const bad = checkSealOrangeButtons([
+      { label: "Press the seal", isPressEnvelope: true },
+      { label: "Lock it", isPressEnvelope: false },
+    ]);
+    expect(bad.ok).toBe(false);
+    expect(bad.message).toBe(
+      'FAIL 1 other orange button(s) on the Seal step: "Lock it"',
+    );
+  });
+});
+
+describe("reliefPathOf", () => {
+  it("reads the d attributes and ignores clip ids", () => {
+    const a = `<svg data-seal-hash="x"><clipPath id="wax-seal-r1-left"></clipPath><path clip-path="url(#wax-seal-r1-left)" d="M 0 0  L 1 1"/></svg>`;
+    const b = `<svg data-seal-hash="x"><clipPath id="wax-seal-r9-left"></clipPath><path clip-path="url(#wax-seal-r9-left)" d="M 0 0 L 1 1"/></svg>`;
+    expect(reliefPathOf(a)).toBe("M 0 0 L 1 1");
+    expect(reliefPathOf(a)).toBe(reliefPathOf(b));
+  });
+
+  it("returns an empty string when there is no path", () => {
+    expect(reliefPathOf("<svg></svg>")).toBe("");
+  });
+});
+
+describe("checkSealMarks (Q1.3)", () => {
+  const mark = {
+    hash: "a".repeat(64),
+    coarse: "n4-r1",
+    markup: '<svg><path d="M 0 0 L 2 2"/></svg>',
+  };
+
+  it("passes when the Wait step and Break the seal match", () => {
+    const check = checkSealMarks(mark, { ...mark });
+    expect(check.ok).toBe(true);
+    expect(check.message.startsWith("PASS")).toBe(true);
+  });
+
+  it("fails and names data-seal-hash when the hashes differ", () => {
+    const check = checkSealMarks(mark, { ...mark, hash: "b".repeat(64) });
+    expect(check.ok).toBe(false);
+    expect(check.message).toContain("data-seal-hash");
+  });
+
+  it("fails and names data-coarse when the coarse signatures differ", () => {
+    const check = checkSealMarks(mark, { ...mark, coarse: "n5-r1" });
+    expect(check.ok).toBe(false);
+    expect(check.message).toContain("data-coarse");
+  });
+
+  it("fails and names the relief path when the drawn paths differ", () => {
+    const check = checkSealMarks(mark, {
+      ...mark,
+      markup: '<svg><path d="M 0 0 L 3 3"/></svg>',
+    });
+    expect(check.ok).toBe(false);
+    expect(check.message).toContain("relief path");
+  });
+
+  it("fails when the seal is missing on one stage", () => {
+    const check = checkSealMarks(NO_SEAL, mark);
+    expect(check.ok).toBe(false);
+    expect(check.message).toContain("missing on one stage");
+  });
+});
+
+describe("checkNoJsSeal (Q1.4)", () => {
+  it("passes when the landing seal marker is in the server HTML", () => {
+    const html = '<div class="sealBox" data-landing-seal="">';
+    expect(checkNoJsSeal("/", html).ok).toBe(true);
+  });
+
+  it("passes when an svg with data-seal-hash is in the server HTML", () => {
+    const html = `<svg width="96" data-seal-hash="${"c".repeat(64)}" data-coarse="n4"></svg>`;
+    expect(checkNoJsSeal("/demo", html).ok).toBe(true);
+  });
+
+  it("fails when no seal marker is in the HTML", () => {
+    const check = checkNoJsSeal("/demo", "<main>Nothing drawn here</main>");
+    expect(check.ok).toBe(false);
+    expect(check.message).toContain("/demo");
+  });
+
+  it("does not count a seal hash on a non-svg element", () => {
+    const html = `<div data-seal-hash="${"c".repeat(64)}"></div>`;
+    expect(checkNoJsSeal("/l/x", html).ok).toBe(false);
+  });
+});
+
+describe("breakSealMinWidth and checkBreakSealSize (U8)", () => {
+  it("uses 160 px at 1440 and 120 px at 390", () => {
+    expect(breakSealMinWidth(1440)).toBe(160);
+    expect(breakSealMinWidth(390)).toBe(120);
+  });
+
+  const viewport = { width: 1440, height: 900 };
+  const box = (left: number, top: number, size: number) => ({
+    left,
+    top,
+    right: left + size,
+    bottom: top + size,
+  });
+
+  it("passes a seal at least the minimum and inside the viewport", () => {
+    expect(checkBreakSealSize(box(600, 200, 170), viewport, 160).ok).toBe(true);
+  });
+
+  it("fails a seal narrower than the minimum", () => {
+    const check = checkBreakSealSize(box(600, 200, 150), viewport, 160);
+    expect(check.ok).toBe(false);
+    expect(check.message).toContain("150 px");
+  });
+
+  it("fails a seal that sits outside the viewport", () => {
+    const check = checkBreakSealSize(box(1400, 200, 170), viewport, 160);
+    expect(check.ok).toBe(false);
+    expect(check.message).toContain("outside the viewport");
+  });
+
+  it("fails when no seal was measured", () => {
+    expect(checkBreakSealSize(null, viewport, 160).ok).toBe(false);
+  });
+});
+
+describe("checkDemoSeals (U9)", () => {
+  const seal = (coarse: string | null, width = 96) => ({ width, coarse });
+
+  it("passes three 96 px seals with three different data-coarse values", () => {
+    const check = checkDemoSeals([seal("a"), seal("b"), seal("c")]);
+    expect(check.ok).toBe(true);
+  });
+
+  it("fails when /demo does not draw three seals", () => {
+    expect(checkDemoSeals([seal("a"), seal("b")]).ok).toBe(false);
+  });
+
+  it("fails a seal that is not 96 px wide", () => {
+    const check = checkDemoSeals([seal("a"), seal("b"), seal("c", 60)]);
+    expect(check.ok).toBe(false);
+    expect(check.message).toContain("60 px");
+  });
+
+  it("fails when two seals share a data-coarse value", () => {
+    expect(checkDemoSeals([seal("a"), seal("a"), seal("c")]).ok).toBe(false);
+  });
+
+  it("fails when a seal has no data-coarse value", () => {
+    expect(checkDemoSeals([seal("a"), seal("b"), seal(null)]).ok).toBe(false);
+  });
+});
+
+describe("checkTamperRunNoPasskey", () => {
+  it("passes when the persona tamper run made no passkey prompt", () => {
+    expect(checkTamperRunNoPasskey({ create: 0, get: 0, total: 0 }).ok).toBe(
+      true,
+    );
+  });
+
+  it("fails when the run made a create or get call", () => {
+    expect(checkTamperRunNoPasskey({ create: 1, get: 0, total: 1 }).ok).toBe(
+      false,
+    );
+  });
+});
+
+describe("sealPressInput (how each walk run presses the seal, Q1.3)", () => {
+  it("presses Space on the keyboard run at every width and motion setting", () => {
+    expect(
+      sealPressInput({ width: 1440, reduced: false, keyboard: true }),
+    ).toBe("keyboard");
+    expect(sealPressInput({ width: 390, reduced: false, keyboard: true })).toBe(
+      "keyboard",
+    );
+    expect(sealPressInput({ width: 1440, reduced: true, keyboard: true })).toBe(
+      "keyboard",
+    );
+  });
+
+  it("holds with the mouse at desktop, touches at phone width, and clicks once when reduced", () => {
+    expect(
+      sealPressInput({ width: 1440, reduced: false, keyboard: false }),
+    ).toBe("hold");
+    expect(
+      sealPressInput({ width: 390, reduced: false, keyboard: false }),
+    ).toBe("touch");
+    expect(
+      sealPressInput({ width: 1440, reduced: true, keyboard: false }),
+    ).toBe("click");
   });
 });

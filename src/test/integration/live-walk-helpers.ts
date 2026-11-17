@@ -5,11 +5,17 @@
  * placeholder figures in the final reveal, and record each step's result.
  */
 
-/** The ten steps of the walk, in order. `<step>` in a Step_Shot name is one of these. */
+/**
+ * The thirteen steps of the walk, in order. `<step>` in a Step_Shot name is one of these.
+ * `press-held` and `setting` come straight after `seal`. `tamper` is the last step: it
+ * is a separate persona run on the Read step, so it follows the live walk.
+ */
 export const WALK_STEP_NAMES = [
   "write",
   "write-receipts",
   "seal",
+  "press-held",
+  "setting",
   "wait",
   "unlock",
   "testify",
@@ -17,6 +23,7 @@ export const WALK_STEP_NAMES = [
   "letter",
   "figures",
   "close",
+  "tamper",
 ] as const;
 
 export type WalkStepName = (typeof WALK_STEP_NAMES)[number];
@@ -191,6 +198,27 @@ export const BREAK_METHODS = ["hold", "button", "skip"] as const;
 
 export type BreakMethod = (typeof BREAK_METHODS)[number];
 
+/** The phone width. The walk presses the seal with touch here, and with the mouse at the desktop width. */
+export const PHONE_WIDTH = 390;
+
+/** How the Seal step's press is driven: a mouse hold, a touch hold, one click, or the Space key. */
+export type SealPressInput = "hold" | "touch" | "click" | "keyboard";
+
+/**
+ * Picks how the walk presses the seal (Q1.3). Reduced motion has no hold, so one
+ * click runs the press. The keyboard run presses Space on the focused control.
+ * Otherwise a phone width uses touch and every other width holds with the mouse.
+ */
+export function sealPressInput(run: {
+  width: number;
+  reduced: boolean;
+  keyboard: boolean;
+}): SealPressInput {
+  if (run.keyboard) return "keyboard";
+  if (run.reduced) return "click";
+  return run.width === PHONE_WIDTH ? "touch" : "hold";
+}
+
 /**
  * The Step_Shot name for a step, with a suffix for the non-default break methods
  * (`-via-button`, `-via-skip`). The default `hold` method keeps the exact name the
@@ -232,6 +260,8 @@ export const STEP_SUSPECTED_FILES: Record<WalkStepName, string> = {
   write: "src/components/live/WriteForm.tsx",
   "write-receipts": "src/components/live/FigurePicker.tsx",
   seal: "src/components/live/SealPage.tsx",
+  "press-held": "src/components/live/press/PressEnvelope.tsx",
+  setting: "src/components/live/press/PressEnvelope.tsx",
   wait: "src/components/live/SealPage.tsx",
   unlock: "src/components/live/UnlockView.tsx",
   testify: "src/components/ceremony/recall/RecallPager.tsx",
@@ -239,6 +269,7 @@ export const STEP_SUSPECTED_FILES: Record<WalkStepName, string> = {
   letter: "src/components/ceremony/letter/",
   figures: "src/components/ceremony/figures/",
   close: "src/components/ceremony/close/",
+  tamper: "src/components/reveal/tamper/TamperControl.tsx",
 };
 
 /** One check's outcome. `expected` says what had to hold, so a defect can quote it. */
@@ -712,4 +743,410 @@ export function shotsMissingFromRecord(
   expected: readonly string[],
 ): string[] {
   return expected.filter((name) => !record.includes(RECORD_SHOT_PREFIX + name));
+}
+
+/* ---------------------------------------------------------------------------
+ * Passkey prompt counting and the Q1.2 fail rules (live-walk.test.ts).
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Init script for `page.addInitScript`. It wraps `navigator.credentials.create`
+ * and `navigator.credentials.get`, and records each call in
+ * `window.__passkeyCalls` as `"create"` or `"get"` before the real call runs.
+ * A call is counted even when the browser rejects it, so a cancelled prompt
+ * still shows up. Plain string, so the page runs it unchanged.
+ */
+export const PASSKEY_INIT_SCRIPT = `(function () {
+  var w = window;
+  w.__passkeyCalls = [];
+  var creds = w.navigator && w.navigator.credentials;
+  if (!creds) return;
+  ["create", "get"].forEach(function (kind) {
+    var original = creds[kind];
+    if (typeof original !== "function") return;
+    creds[kind] = function () {
+      w.__passkeyCalls.push(kind);
+      return original.apply(this, arguments);
+    };
+  });
+})();`;
+
+export type PasskeyKind = "create" | "get";
+
+/** Passkey prompts counted per kind, and in total. */
+export type PasskeyCounts = { create: number; get: number; total: number };
+
+/** Count the recorded `window.__passkeyCalls` entries. Unknown values are ignored. */
+export function countPasskeyCalls(calls: readonly string[]): PasskeyCounts {
+  const create = calls.filter((kind) => kind === "create").length;
+  const get = calls.filter((kind) => kind === "get").length;
+  return { create, get, total: create + get };
+}
+
+/**
+ * Exact counts for one press. Only the kinds named in `expected` are checked.
+ * For example `{ create: 1 }` after a release that should create one passkey.
+ */
+export function checkPasskeyCount(
+  counts: PasskeyCounts,
+  expected: Partial<Pick<PasskeyCounts, "create" | "get">>,
+  label: string,
+): StepCheck {
+  const parts = (["create", "get"] as const)
+    .filter((kind) => expected[kind] !== undefined)
+    .map((kind) => ({
+      kind,
+      want: expected[kind] as number,
+      got: counts[kind],
+    }));
+  const expectedText = parts
+    .map((part) => `${part.kind} ${part.want}`)
+    .join(", ");
+  const expectation = `${label}: passkey prompts ${expectedText}`;
+  const bad = parts.filter((part) => part.got !== part.want);
+  if (bad.length === 0) {
+    return { ok: true, expected: expectation, message: `PASS ${expectation}` };
+  }
+  return {
+    ok: false,
+    expected: expectation,
+    message: `FAIL ${label}: ${bad
+      .map((part) => `${part.kind} ${part.got}, expected ${part.want}`)
+      .join("; ")}`,
+  };
+}
+
+/**
+ * An early release (the hold is let go before the timer fires) must not reach
+ * the passkey. It leaves no prompt (`create` is 0) and no credential is stored.
+ */
+export function checkEarlyRelease(
+  counts: PasskeyCounts,
+  storedCredentials: number,
+): StepCheck {
+  const expected =
+    "early release: passkey prompts create 0, and no credential is stored";
+  const createOk = counts.create === 0;
+  const credOk = storedCredentials === 0;
+  if (createOk && credOk) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL early release: create ${counts.create}, stored credentials ${storedCredentials}`,
+  };
+}
+
+/** The total passkey prompts across a walk step may never exceed two (Q1.2). */
+export const MAX_PASSKEY_PROMPTS = 2;
+
+export function checkPasskeyTotal(counts: PasskeyCounts): StepCheck {
+  const expected = `at most ${MAX_PASSKEY_PROMPTS} passkey prompts`;
+  if (counts.total <= MAX_PASSKEY_PROMPTS) {
+    return {
+      ok: true,
+      expected,
+      message: `PASS ${counts.total} passkey prompt(s), ${expected}`,
+    };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL more than two passkey prompts: ${counts.total} seen`,
+  };
+}
+
+/**
+ * A second quick press during an open prompt must add no prompt. `before` and
+ * `after` are the total counts either side of that press.
+ */
+export function checkQuickPressAddsNone(
+  before: number,
+  after: number,
+): StepCheck {
+  const expected =
+    "a second quick press during a prompt adds no passkey prompt";
+  if (after === before) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL a second quick press added ${after - before} passkey prompt(s)`,
+  };
+}
+
+/** A box in CSS pixels, as `getBoundingClientRect` reports it. */
+export type BoxRect = {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+};
+
+/**
+ * Whether two boxes overlap in both axes. Edges that only touch do not count,
+ * and an empty box (zero width or height) overlaps nothing.
+ */
+export function rectsIntersect(a: BoxRect, b: BoxRect): boolean {
+  if (a.right <= a.left || a.bottom <= a.top) return false;
+  if (b.right <= b.left || b.bottom <= b.top) return false;
+  return (
+    a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
+  );
+}
+
+/**
+ * After a step change, the Step_Heading box must not sit under the Top_Bar.
+ * Fails when the two boxes overlap.
+ */
+export function checkStepHeadingClearOfTopBar(
+  heading: BoxRect,
+  topBar: BoxRect,
+): StepCheck {
+  const expected =
+    "the Step_Heading box is not under the Top_Bar after a step change";
+  if (!rectsIntersect(heading, topBar)) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL the Step_Heading box (top ${heading.top}, bottom ${heading.bottom}) overlaps the Top_Bar (bottom ${topBar.bottom})`,
+  };
+}
+
+/** The risen ghost must not intersect the Keep_Section (Q1.2). */
+export function checkGhostClearOfKeep(
+  ghost: BoxRect,
+  keep: BoxRect,
+): StepCheck {
+  const expected = "the risen ghost does not intersect the Keep_Section";
+  if (!rectsIntersect(ghost, keep)) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: "FAIL the risen ghost intersects the Keep_Section",
+  };
+}
+
+/** One orange button found on the Seal step. */
+export type OrangeButton = { label: string; isPressEnvelope: boolean };
+
+/**
+ * On the Seal step the Press_Envelope is the only orange button (Q1.2). Any
+ * other orange button fails and is named in the message.
+ */
+export function checkSealOrangeButtons(
+  buttons: readonly OrangeButton[],
+): StepCheck {
+  const expected =
+    "the Press_Envelope is the only orange button on the Seal step";
+  const extra = buttons.filter((button) => !button.isPressEnvelope);
+  if (extra.length === 0) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL ${extra.length} other orange button(s) on the Seal step: ${extra
+      .map((button) => `"${button.label}"`)
+      .join(", ")}`,
+  };
+}
+
+/* ---------------------------------------------------------------------------
+ * Seal checks (spec 13, Q1.3, Q1.4, U8, U9). Pure: the walk reads the page and
+ * passes plain values in.
+ * ------------------------------------------------------------------------- */
+
+/** What the walk reads from one seal: its fingerprint, coarse signature and markup. */
+export type SealMark = {
+  hash: string | null;
+  coarse: string | null;
+  markup: string | null;
+};
+
+/** A seal with nothing read from it. Used when a stage could not read one. */
+export const NO_SEAL: SealMark = { hash: null, coarse: null, markup: null };
+
+/**
+ * The relief paths of a seal's markup, as one string. Clip ids are normalised
+ * the way `normaliseWaxSealIds` does it, so two seals with different React ids
+ * compare equal when their relief is equal. Only `d` attributes count (the
+ * notch, tick and ring paths).
+ */
+export function reliefPathOf(markup: string): string {
+  const normalised = markup.replace(
+    /wax-seal-[A-Za-z0-9_-]*-(left|right)/g,
+    "wax-seal-$1",
+  );
+  return Array.from(normalised.matchAll(/\sd="([^"]*)"/g), (match) =>
+    match[1].replace(/\s+/g, " ").trim(),
+  ).join("|");
+}
+
+/**
+ * Q1.3: the seal on the Wait step and the seal at Break the seal must have an
+ * equal `data-seal-hash`, an equal normalised relief path and an equal
+ * `data-coarse`. A missing value on either side fails.
+ */
+export function checkSealMarks(
+  waitSeal: SealMark,
+  breakSeal: SealMark,
+): StepCheck {
+  const expected =
+    "Q1.3: the Wait step and Break the seal show equal data-seal-hash, relief path and data-coarse";
+  const missing: string[] = [];
+  if (!waitSeal.hash || !breakSeal.hash) missing.push("data-seal-hash");
+  if (!waitSeal.coarse || !breakSeal.coarse) missing.push("data-coarse");
+  if (!waitSeal.markup || !breakSeal.markup) missing.push("relief path");
+  if (missing.length > 0) {
+    return {
+      ok: false,
+      expected,
+      message: `FAIL the seal is missing on one stage: ${missing.join(", ")}`,
+    };
+  }
+  const differ: string[] = [];
+  if (waitSeal.hash !== breakSeal.hash) differ.push("data-seal-hash");
+  if (waitSeal.coarse !== breakSeal.coarse) differ.push("data-coarse");
+  if (
+    reliefPathOf(waitSeal.markup ?? "") !== reliefPathOf(breakSeal.markup ?? "")
+  ) {
+    differ.push("relief path");
+  }
+  if (differ.length === 0) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL the Wait step and Break the seal differ in ${differ.join(", ")}`,
+  };
+}
+
+/**
+ * Q1.4: a page that draws a seal must have it in the server HTML, so it shows
+ * with JavaScript off. The marker is `data-landing-seal` (the Landing_Seal on
+ * `/`) or a `data-seal-hash` on an `svg` (the seals on `/demo`, the persona page
+ * and `/l/[id]`).
+ */
+export function checkNoJsSeal(label: string, html: string): StepCheck {
+  const expected = `Q1.4: ${label} shows a seal in the server HTML with JavaScript off`;
+  const found =
+    /\sdata-landing-seal(=|\s|>)/.test(html) ||
+    /<svg[^>]*\sdata-seal-hash="[^"]+"/.test(html);
+  if (found) return { ok: true, expected, message: `PASS ${expected}` };
+  return {
+    ok: false,
+    expected,
+    message: `FAIL ${label}: no data-landing-seal or data-seal-hash in the server HTML`,
+  };
+}
+
+/** U8: the seal at Break the seal is at least 160 px wide at 1440 and 120 px at 390. */
+export function breakSealMinWidth(viewportWidth: number): number {
+  return viewportWidth >= 1440 ? 160 : 120;
+}
+
+/**
+ * U8: the seal at Break the seal is at least `minWidth` px across and sits
+ * inside the viewport. `seal` is null when the page has no seal to measure.
+ */
+export function checkBreakSealSize(
+  seal: BoxRect | null,
+  viewport: { width: number; height: number },
+  minWidth: number,
+): StepCheck {
+  const expected = `U8: the seal at Break the seal is at least ${minWidth} px wide and inside the viewport`;
+  if (!seal) {
+    return {
+      ok: false,
+      expected,
+      message: "FAIL no seal found at Break the seal",
+    };
+  }
+  const width = seal.right - seal.left;
+  const inside =
+    seal.left >= 0 &&
+    seal.top >= 0 &&
+    seal.right <= viewport.width &&
+    seal.bottom <= viewport.height;
+  if (width >= minWidth && inside) {
+    return { ok: true, expected, message: `PASS ${expected} (${width} px)` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL the seal at Break the seal is ${width} px wide${inside ? "" : " and outside the viewport"}, expected at least ${minWidth} px inside the viewport`,
+  };
+}
+
+/** U9: each `/demo` persona seal is drawn at 96 CSS px. */
+export const DEMO_SEAL_SIZE = 96;
+
+/** U9: how many persona seals `/demo` draws. */
+export const DEMO_SEAL_COUNT = 3;
+
+/** One persona seal on `/demo`: its drawn width in CSS px and its `data-coarse`. */
+export type DemoSeal = { width: number; coarse: string | null };
+
+/**
+ * U9: the three persona seals are each 96 CSS px wide (to within half a pixel),
+ * and each has a different `data-coarse`, so they are told apart at a glance.
+ */
+export function checkDemoSeals(seals: readonly DemoSeal[]): StepCheck {
+  const expected = `U9: ${DEMO_SEAL_COUNT} persona seals on /demo, each ${DEMO_SEAL_SIZE} px wide, with different data-coarse values`;
+  if (seals.length !== DEMO_SEAL_COUNT) {
+    return {
+      ok: false,
+      expected,
+      message: `FAIL /demo draws ${seals.length} seal(s), expected ${DEMO_SEAL_COUNT}`,
+    };
+  }
+  const wrongWidth = seals.filter(
+    (seal) => Math.abs(seal.width - DEMO_SEAL_SIZE) > 0.5,
+  );
+  if (wrongWidth.length > 0) {
+    return {
+      ok: false,
+      expected,
+      message: `FAIL ${wrongWidth.length} persona seal(s) on /demo not ${DEMO_SEAL_SIZE} px: ${wrongWidth
+        .map((seal) => `${seal.width} px`)
+        .join(", ")}`,
+    };
+  }
+  const coarse = seals.map((seal) => seal.coarse ?? "");
+  const distinct = new Set(coarse.filter((value) => value.length > 0));
+  if (
+    coarse.some((value) => value.length === 0) ||
+    distinct.size !== DEMO_SEAL_COUNT
+  ) {
+    return {
+      ok: false,
+      expected,
+      message: `FAIL the persona seals on /demo do not have ${DEMO_SEAL_COUNT} different data-coarse values`,
+    };
+  }
+  return { ok: true, expected, message: `PASS ${expected}` };
+}
+
+/**
+ * The persona Tamper_Control run (A1, Q1.1 step `tamper`) makes no passkey
+ * prompt. Any create or get call fails the run.
+ */
+export function checkTamperRunNoPasskey(counts: PasskeyCounts): StepCheck {
+  const expected = "the persona tamper run makes no passkey prompt";
+  if (counts.total === 0) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL the persona tamper run made ${counts.total} passkey prompt(s)`,
+  };
 }
