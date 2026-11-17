@@ -225,13 +225,13 @@
  * CeremonyRoot imports this module on the reveal page, so the rule applies there.
  */
 @media (min-width: 900px) {
-  [data-letter-stage] {
+  .ceremony [data-letter-stage] {
     display: grid;
     grid-template-columns: minmax(0, 1fr);
     justify-items: center;
   }
 
-  [data-letter-stage] > * {
+  .ceremony [data-letter-stage] > * {
     width: 100%;
   }
 }
