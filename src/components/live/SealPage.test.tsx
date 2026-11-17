@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { realLetterSealApi, realSealApi, REAL_PREPARE_PATH, REAL_SEAL_PATH, PREPARE_PATH } from "./api";
 import { LIVE_COPY, REAL_COPY } from "./copy";
+import { DEMO_COPY } from "@/components/demo/copy";
 import { figuresResponseFrom } from "@/components/reveal/figures-stub";
 import { displayFigureValue } from "@/components/reveal/display-figure";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
@@ -330,6 +331,44 @@ describe("SealPage rehearsal line (spec 11, L4.1, L4.3)", () => {
     const html = renderToStaticMarkup(createElement(SealPage, { ...base, rehearsal: true }));
     expect(html).toContain('data-live-rehearsal=""');
     expect(html).toContain(LIVE_COPY.rehearsalLine);
+  });
+
+  it("shows the rehearsal line exactly once on the Write step", () => {
+    const html = renderToStaticMarkup(createElement(SealPage, { ...base, rehearsal: true }));
+    const count = html.split(LIVE_COPY.rehearsalLine).length - 1;
+    expect(count).toBe(1);
+    expect(html.split("data-live-rehearsal").length - 1).toBe(1);
+  });
+
+  it("places the rehearsal line below the Write action row, not above the field", () => {
+    const html = renderToStaticMarkup(createElement(SealPage, { ...base, rehearsal: true }));
+    const nextAt = html.lastIndexOf(`>${LIVE_COPY.nextButton}</button>`);
+    const lineAt = html.indexOf(LIVE_COPY.rehearsalLine);
+    expect(nextAt).toBeGreaterThan(-1);
+    expect(lineAt).toBeGreaterThan(nextAt);
+    expect(html.indexOf('id="live-letter"')).toBeLessThan(lineAt);
+  });
+
+  it("carries no retired starter phrase or time word on the Write step", () => {
+    const html = renderToStaticMarkup(createElement(SealPage, { ...base, rehearsal: true }));
+    const lower = html.toLowerCase();
+    for (const phrase of [
+      "right now, the thing on my mind is",
+      "what was on your mind most days?",
+      "what were you looking forward to?",
+    ]) {
+      expect(lower, phrase).not.toContain(phrase);
+    }
+    for (const word of ["right now", "today", "currently"]) {
+      expect(lower, word).not.toContain(word);
+    }
+  });
+
+  it("puts no Demo label above the letter field on the Write step", () => {
+    const html = renderToStaticMarkup(createElement(SealPage, { ...base, rehearsal: true }));
+    const fieldAt = html.indexOf('id="live-letter"');
+    expect(fieldAt).toBeGreaterThan(-1);
+    expect(html.slice(0, fieldAt)).not.toContain(`>${DEMO_COPY.demoLabel}</span>`);
   });
 
   it("shows no rehearsal line without the prop, the default", () => {

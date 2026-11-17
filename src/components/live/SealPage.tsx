@@ -312,14 +312,15 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
       // Back is offered only before a passkey prompt has started (spec 09, D2.2).
       onBack: view.canGoBack && state.tag === "write" ? view.back : undefined,
     });
-    // The rehearsal line sits under the Write heading, before the fields.
+    // The rehearsal line sits once, below the Write step's action row (spec 11,
+    // L4.1). The form ends with that row, so the line follows the form.
     if (!rehearsal || view.step !== "write") return form;
     return (
       <>
+        {form}
         <p className={styles.intro} data-live-rehearsal="">
           {LIVE_COPY.rehearsalLine}
         </p>
-        {form}
       </>
     );
   }
