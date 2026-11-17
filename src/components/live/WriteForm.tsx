@@ -280,8 +280,8 @@ export function WriteForm({
   const limit = figureLimit(series.length);
   // A real letter (`/seal`) is the one that carries the date picker (spec 08).
   const mode: WriteMode = realDate === undefined ? "demo" : "real";
-  // Only the live demo Write step gets the two-column class (spec 09, L3). /seal
-  // keeps the plain panel, so the two-column rule cannot match it.
+  // Only the live demo Write step gets the Writing_Column class (spec 11, W1):
+  // one column at most 44 rem wide. /seal keeps the plain panel.
   const panelClass =
     mode === "demo" ? `${styles.panel} ${styles.liveWrite}` : styles.panel;
   // The sealing day for the self-reported period rule: today in UTC unless the

@@ -78,63 +78,22 @@ describe("Write step fallback 1: one-line question rows", () => {
   });
 });
 
-describe("Write step fallback 2: two columns at 900 px and wider", () => {
-  const block = mediaBlock("(min-width: 900px) and (max-height: 900px)");
-  const DEMO = ".liveWrite:has(> .occasions)";
-
-  it("only applies to the live Write step, which holds the occasion control", () => {
-    expect(block).toContain(`${DEMO} {`);
-    expect(block).toMatch(
-      /\.liveWrite:has\(> \.occasions\) \{[^}]*grid-template-columns:\s*minmax\(0, 1fr\) minmax\(0, 1fr\)/,
-    );
+describe("Write step: one Writing_Column, no two-column grid", () => {
+  it("is one column at most 44 rem wide, with the paper as wide as the column", () => {
+    const column = ruleBody(css, ".liveWrite");
+    expect(column).toMatch(/max-width:\s*44rem;/);
+    expect(column).toMatch(/box-sizing:\s*border-box;/);
   });
 
-  it("scopes every rule in the block to the liveWrite class, so /seal keeps one column", () => {
-    const code = block.replace(/\/\*[\s\S]*?\*\//g, "");
-    const selectors = [...code.matchAll(/([^{}]+)\{/g)].map(
-      (m) => m[1]?.trim() ?? "",
-    );
-    expect(selectors.length).toBeGreaterThan(0);
-    for (const selector of selectors) {
-      expect(selector.startsWith(DEMO)).toBe(true);
-    }
+  it("has no two-column grid rule for the occasion control", () => {
+    expect(css).not.toContain(".liveWrite:has(> .occasions)");
+    expect(ruleBody(css, ".liveWrite")).not.toMatch(/grid-template-columns/);
   });
 
-  it("applies the Letter_Field class to the letter textarea", () => {
-    expect(writeForm).toContain('import letterField from "./letter-field.module.css";');
-    expect(writeForm).toContain("${letterField.letterField}");
-  });
-
-  it("does not depend on a data-seal-mode attribute, and WriteForm adds the class only in demo mode", () => {
-    expect(block).not.toContain("data-seal-mode");
-    // WriteForm adds styles.liveWrite to its panel only when mode is "demo".
+  it("applies the Writing_Column only through the demo liveWrite class", () => {
     expect(writeForm).toMatch(
       /mode === "demo"\s*\?\s*`\$\{styles\.panel\} \$\{styles\.liveWrite\}`\s*:\s*styles\.panel/,
     );
-  });
-
-  it("places the letter under the occasion control in the left column", () => {
-    expect(block).toMatch(
-      /\.liveWrite:has\(> \.occasions\) > div\.field \{[^}]*grid-column:\s*1;[^}]*grid-row:\s*3;/,
-    );
-  });
-
-  it("spans the occasion chips across both columns on their own row", () => {
-    expect(block).toMatch(
-      /\.liveWrite:has\(> \.occasions\) > \.occasions \{[^}]*grid-column:\s*1 \/ -1;[^}]*grid-row:\s*2;/,
-    );
-  });
-
-  it("places the questions beside the left column, spanning two rows below the chips", () => {
-    expect(block).toMatch(
-      /\.liveWrite:has\(> \.occasions\) > fieldset\.field \{[^}]*grid-column:\s*2;[^}]*grid-row:\s*3 \/ span 2;/,
-    );
-  });
-
-  it("closes the left column with Next, in the row after the letter", () => {
-    const next = ruleBody(block, `${DEMO} > .actions`);
-    expect(next).toMatch(/grid-column:\s*1;/);
-    expect(next).toMatch(/grid-row:\s*4;/);
   });
 });
 
@@ -168,7 +127,7 @@ describe("Write step: the fallbacks leave a tall desktop alone", () => {
     expect(css).not.toMatch(/@media \(max-height: 1[0-9]{3}px\)/);
   });
 
-  it("never gives the two-column grid to a tall viewport", () => {
-    expect(css).toContain("@media (min-width: 900px) and (max-height: 900px)");
+  it("keeps the Writing_Column one stack at every width, with no 900 px two-column query", () => {
+    expect(css).not.toContain("@media (min-width: 900px) and (max-height: 900px)");
   });
 });

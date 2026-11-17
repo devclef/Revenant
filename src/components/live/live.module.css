@@ -1405,66 +1405,14 @@
 }
 
 /*
- * Fallback 2: a two-column Write step at 900 px and wider on a short viewport.
- * The occasion chips span the full width on their own row. Below them the
- * letter sits in the left column and the questions and the receipt disclosure
- * sit in the right one; Next closes the left column. The rules match
- * only the live demo Write step: WriteForm adds the `liveWrite` class to its
- * panel when it renders in demo mode (/demo/live). /seal renders the same panel
- * and occasion control without that class, so it keeps its single column.
+ * The live demo Write step is one Writing_Column (spec 11 W1): one stack at every
+ * width, at most 44 rem wide, on the warm paper. The paper's border box is the
+ * column itself, so the paper is never wider than the column. WriteForm adds
+ * `liveWrite` only in demo mode (/demo/live). /seal keeps the plain panel.
  */
-@media (min-width: 900px) and (max-height: 900px) {
-  .liveWrite:has(> .occasions) {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-    align-items: start;
-    gap: 0.5rem 2rem;
-    max-width: 62rem;
-  }
-
-  .liveWrite:has(> .occasions) > .intro {
-    grid-column: 1 / -1;
-    grid-row: 1;
-    margin: 0;
-  }
-
-  /* The chip group spans both columns so the five chips share one row. */
-  .liveWrite:has(> .occasions) > .occasions {
-    grid-column: 1 / -1;
-    grid-row: 2;
-    margin: 0;
-  }
-
-  .liveWrite:has(> .occasions) > div.field {
-    grid-column: 1;
-    grid-row: 3;
-    margin: 0;
-  }
-
-  .liveWrite:has(> .occasions) > fieldset.field {
-    grid-column: 2;
-    grid-row: 3 / span 2;
-    margin: 0;
-  }
-
-  .liveWrite:has(> .occasions) > .more {
-    grid-column: 2;
-    grid-row: 5;
-  }
-
-  .liveWrite:has(> .occasions) > .problem {
-    grid-column: 2;
-    grid-row: 6;
-  }
-
-  /* Next closes the left column under the letter, beside the receipts row, so
-     the step ends inside a 800 px viewport (spec 09 L3). */
-  .liveWrite:has(> .occasions) > .actions {
-    grid-column: 1;
-    grid-row: 4;
-    align-self: start;
-    margin: 0;
-  }
+.liveWrite {
+  box-sizing: border-box;
+  max-width: 44rem;
 }
 
 /* Below 480 px the label and remove button fill the first line of a question
