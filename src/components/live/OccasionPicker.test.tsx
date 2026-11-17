@@ -32,6 +32,14 @@ function wideChipRule(): string {
   return m ? m[1] : "";
 }
 
+/** The `.occasionButton[aria-pressed="true"]` rule in live.module.css. */
+function pressedChipRule(): string {
+  const m = /\.occasionButton\[aria-pressed="true"\]\s*\{([^}]*)\}/.exec(
+    liveCss,
+  );
+  return m ? m[1] : "";
+}
+
 /** The chip `<button>` markup that contains the given label. */
 function chipFor(html: string, label: string): string {
   const end = html.indexOf(`${label}</button>`);
@@ -71,7 +79,7 @@ describe("OccasionPicker (spec 11, L2.1, L2.9)", () => {
 
   it("renders the occasion control as a fieldset with the occasions class the Write-step rule targets", () => {
     const html = render(null);
-    expect(html).toMatch(/<fieldset class="[^"]*occasions[^"]*"/);
+    expect(html).toMatch(/<fieldset class=\"[^\"]*occasions[^\"]*\"/);
   });
 
   it("keeps the legend in the markup with a visually-hidden class", () => {
@@ -82,7 +90,7 @@ describe("OccasionPicker (spec 11, L2.1, L2.9)", () => {
     );
     expect(html).toMatch(
       new RegExp(
-        `<legend class="[^"]*visuallyHidden[^"]*">${escaped}</legend>`,
+        `<legend class=\"[^\"]*visuallyHidden[^\"]*\">${escaped}</legend>`,
       ),
     );
   });
@@ -98,28 +106,26 @@ describe("OccasionPicker (spec 11, L2.1, L2.9)", () => {
     );
   });
 
-  it("renders an aria-hidden check mark marker in the pressed chip and every other chip", () => {
+  it("renders no check mark, tick or [x] marker in the Occasion markup", () => {
     const html = render("work");
+    expect(html).not.toMatch(/\u2713|\u2714|\[x\]/);
+    expect(html).not.toContain("occasionMark");
+    expect(html).not.toMatch(/aria-hidden="true"/);
     const pressed = chipFor(html, "Work");
     expect(pressed).toContain('aria-pressed="true"');
-    expect(pressed).toMatch(
-      /<span aria-hidden="true" class="[^"]*occasionMark[^"]*">\u2713<\/span>/,
-    );
-    // Every chip carries the marker so the labels line up. The pressed-only
-    // display is CSS (aria-pressed="false" hides it).
-    expect((html.match(/\u2713/g) ?? []).length).toBe(OCCASIONS.length);
-    expect((html.match(/aria-hidden="true"/g) ?? []).length).toBe(
-      OCCASIONS.length,
-    );
+    expect(pressed).not.toMatch(/<span/);
   });
 
-  it("shows the [x] marker before the label text of the pressed chip", () => {
-    const pressed = chipFor(render("family"), "Family");
-    expect(pressed.indexOf("[x]")).toBeLessThan(pressed.indexOf("Family"));
+  it("renders each Occasion as a button whose only child is its label", () => {
+    const html = render("family");
+    for (const occasion of OCCASIONS) {
+      const label = LIVE_COPY.occasionLabels[occasion.id];
+      expect(html).toContain(`>${label}</button>`);
+    }
   });
 });
 
-describe("Occasion chip sizes (spec 11, L2.9)", () => {
+describe("Occasion chip sizes (spec 11, L2.9; spec 12, W2)", () => {
   it("sets the chip height to 44px below 600px", () => {
     const rule = chipRule();
     expect(rule).toMatch(/height:\s*44px/);
@@ -131,13 +137,24 @@ describe("Occasion chip sizes (spec 11, L2.9)", () => {
     expect(rule).toMatch(/height:\s*32px/);
     expect(rule).toMatch(/min-height:\s*32px/);
   });
+});
 
-  it("keeps the pressed chip's 2px border and bold type", () => {
-    expect(liveCss).toMatch(
-      /\.occasionButton\[aria-pressed="true"\]\s*\{[^}]*border-width:\s*2px/,
-    );
-    expect(liveCss).toMatch(
-      /\.occasionButton\[aria-pressed="true"\]\s*\{[^}]*font-weight:\s*700/,
-    );
+describe("Occasion options as plain text (spec 12, W2)", () => {
+  it("draws each option with no box: no border, no background", () => {
+    const rule = chipRule();
+    expect(rule).toMatch(/border:\s*0/);
+    expect(rule).toMatch(/background:\s*none/);
+    expect(rule).not.toMatch(/border-width:\s*[1-9]/);
+  });
+
+  it("underlines and makes the pressed option heavier", () => {
+    const rule = pressedChipRule();
+    expect(rule).toMatch(/text-decoration:\s*underline/);
+    expect(rule).toMatch(/font-weight:\s*700/);
+  });
+
+  it("removes the old check mark marker rules from live.module.css", () => {
+    expect(liveCss).not.toContain(".occasionMark");
+    expect(liveCss).not.toMatch(/\[x\]/);
   });
 });

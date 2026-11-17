@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 import { DemoLabel } from "@/components/demo/DemoLabel";
 
@@ -25,7 +25,7 @@ import styles from "./live.module.css";
 import letterField from "./letter-field.module.css";
 import { OccasionPicker } from "./OccasionPicker";
 import { PressEnvelope } from "./press/PressEnvelope";
-import { applyOccasion, type OccasionDraft, type OccasionId } from "./occasions";
+import { applyOccasion, occasionPlaceholder, type OccasionDraft, type OccasionId } from "./occasions";
 import { letterFieldHeightPx } from "./phone";
 import { type PrfHint } from "./prf-hint";
 import { RealDatePicker } from "./RealDatePicker";
@@ -135,6 +135,11 @@ export interface WriteFormProps {
    * `write` or `seal` (spec 09, D2; spec 11, L1.6).
    */
   section?: WriteSection;
+  /**
+   * Section mode `write` only: content placed inside the paper, after the
+   * action row (SealPage passes the Rehearsal_Line here on /demo/live).
+   */
+  footer?: ReactNode;
   /** Section mode: moves to the next step once this step is valid. */
   onNext?: () => void;
   /** Section mode: moves back one step. Omit where Back is not offered. */
@@ -235,6 +240,7 @@ export function WriteForm({
   backupChoice = null,
   onBackupChoice = () => {},
   section = "all",
+  footer = null,
   onNext,
   onBack,
   onCreatePress,
@@ -280,8 +286,8 @@ export function WriteForm({
   const limit = figureLimit(series.length);
   // A real letter (`/seal`) is the one that carries the date picker (spec 08).
   const mode: WriteMode = realDate === undefined ? "demo" : "real";
-  // Only the live demo Write step gets the two-column class (spec 09, L3). /seal
-  // keeps the plain panel, so the two-column rule cannot match it.
+  // Only the live demo Write step gets the Writing_Column class (spec 11, W1):
+  // one column at most 44 rem wide. /seal keeps the plain panel.
   const panelClass =
     mode === "demo" ? `${styles.panel} ${styles.liveWrite}` : styles.panel;
   // The sealing day for the self-reported period rule: today in UTC unless the
@@ -470,6 +476,7 @@ export function WriteForm({
             ref={letterRef}
             className={`${styles.textarea} ${letterField.letterField}`}
             rows={LETTER_FIELD_ROWS}
+            placeholder={occasionPlaceholder(chosenOccasion)}
             value={text}
             aria-describedby="live-letter-count live-letter-problem"
             onChange={(event) => {
@@ -699,6 +706,8 @@ export function WriteForm({
           </button>
         </div>
       ) : null}
+
+      {section === "write" ? footer : null}
 
       {section === "seal" ? (
         <div className={styles.actions}>

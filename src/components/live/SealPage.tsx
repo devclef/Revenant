@@ -127,6 +127,8 @@ export interface SealPageProps {
 /** How the write form is shown for one stepper step (spec 09, D2). */
 interface WriteNav {
   section?: WriteSection;
+  /** Content inside the Write paper, after the action row. */
+  footer?: ReactNode;
   onNext?: () => void;
   onBack?: () => void;
 }
@@ -306,22 +308,21 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
         break;
     }
     const section: WriteSection = view.step === "write" ? "write" : "seal";
-    const form = writeForm({
+    // The rehearsal line sits once, below the Write step's action row, inside
+    // the paper (spec 11, L4.1). WriteForm places the footer after that row.
+    const rehearsalFooter =
+      rehearsal && view.step === "write" ? (
+        <p className={styles.intro} data-live-rehearsal="">
+          {LIVE_COPY.rehearsalLine}
+        </p>
+      ) : undefined;
+    return writeForm({
       section,
       onNext: view.next,
       // Back is offered only before a passkey prompt has started (spec 09, D2.2).
       onBack: view.canGoBack && state.tag === "write" ? view.back : undefined,
+      footer: rehearsalFooter,
     });
-    // The rehearsal line sits under the Write heading, before the fields.
-    if (!rehearsal || view.step !== "write") return form;
-    return (
-      <>
-        <p className={styles.intro} data-live-rehearsal="">
-          {LIVE_COPY.rehearsalLine}
-        </p>
-        {form}
-      </>
-    );
   }
 
   function renderState() {
@@ -371,6 +372,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
     return (
       <WriteForm
         section={nav?.section}
+        footer={nav?.footer}
         onNext={nav?.onNext}
         onBack={nav?.onBack}
         series={pickable}

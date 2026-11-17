@@ -15,6 +15,9 @@
 .letterField {
   --letter-lines: 10;
 
+  box-sizing: border-box;
+  /* Never wider than the Writing_Column that holds it (live.module.css). */
+  max-width: 100%;
   font-family: var(--font-serif);
   line-height: 1.6;
   padding: 1rem;
