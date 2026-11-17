@@ -310,7 +310,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
 
 ### Group W: the Write step, target 25 November 2026
 
-- [ ] 10. W1 to W3, W5 · One column on paper, short prompt, Occasion choices
+- [x] 10. W1 to W3, W5 · One column on paper, short prompt, Occasion choices
   - Agent: `frontend-dev` · Depends on: none · Estimated size: ~1,100 changed lines · Target: 25 November 2026
   - Never cut. It draws no relief and depends on nothing.
   - Scope: `src/components/live/WriteForm.tsx`, `OccasionPicker.tsx`, `letter-field.module.css`, `live.module.css`, `stepper.module.css` (Write rules only), `occasions.ts` (placeholder lines), `copy.ts`, and the `*.test.ts(x)` for each file.
