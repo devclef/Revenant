@@ -5,11 +5,17 @@
  * placeholder figures in the final reveal, and record each step's result.
  */
 
-/** The ten steps of the walk, in order. `<step>` in a Step_Shot name is one of these. */
+/**
+ * The thirteen steps of the walk, in order. `<step>` in a Step_Shot name is one of these.
+ * `press-held` and `setting` come straight after `seal`. `tamper` is the last step: it
+ * is a separate persona run on the Read step, so it follows the live walk.
+ */
 export const WALK_STEP_NAMES = [
   "write",
   "write-receipts",
   "seal",
+  "press-held",
+  "setting",
   "wait",
   "unlock",
   "testify",
@@ -17,6 +23,7 @@ export const WALK_STEP_NAMES = [
   "letter",
   "figures",
   "close",
+  "tamper",
 ] as const;
 
 export type WalkStepName = (typeof WALK_STEP_NAMES)[number];
@@ -253,6 +260,8 @@ export const STEP_SUSPECTED_FILES: Record<WalkStepName, string> = {
   write: "src/components/live/WriteForm.tsx",
   "write-receipts": "src/components/live/FigurePicker.tsx",
   seal: "src/components/live/SealPage.tsx",
+  "press-held": "src/components/live/press/PressEnvelope.tsx",
+  setting: "src/components/live/press/PressEnvelope.tsx",
   wait: "src/components/live/SealPage.tsx",
   unlock: "src/components/live/UnlockView.tsx",
   testify: "src/components/ceremony/recall/RecallPager.tsx",
@@ -260,6 +269,7 @@ export const STEP_SUSPECTED_FILES: Record<WalkStepName, string> = {
   letter: "src/components/ceremony/letter/",
   figures: "src/components/ceremony/figures/",
   close: "src/components/ceremony/close/",
+  tamper: "src/components/reveal/tamper/TamperControl.tsx",
 };
 
 /** One check's outcome. `expected` says what had to hold, so a defect can quote it. */

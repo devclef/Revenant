@@ -109,7 +109,7 @@ describe("matrixShotNames with a step filter", () => {
     expect(names).toEqual([
       "live-01-write-390x844.png",
       "live-03-seal-390x844.png",
-      "live-06-testify-390x844.png",
+      "live-08-testify-390x844.png",
     ]);
   });
 

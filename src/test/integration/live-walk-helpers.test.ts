@@ -39,8 +39,11 @@ describe("stepShotName", () => {
     expect(stepShotName({ step: "write", width: 1440, height: 900 })).toBe(
       "live-01-write-1440x900.png",
     );
+    expect(stepShotName({ step: "tamper", width: 390, height: 844 })).toBe(
+      "live-13-tamper-390x844.png",
+    );
     expect(stepShotName({ step: "close", width: 390, height: 844 })).toBe(
-      "live-10-close-390x844.png",
+      "live-12-close-390x844.png",
     );
   });
 
@@ -68,6 +71,9 @@ describe("stepShotName", () => {
       "live-08",
       "live-09",
       "live-10",
+      "live-11",
+      "live-12",
+      "live-13",
     ]);
   });
 
@@ -79,7 +85,7 @@ describe("stepShotName", () => {
         height: 900,
         reduced: true,
       }),
-    ).toBe("live-09-figures-1440x900-reduced.png");
+    ).toBe("live-11-figures-1440x900-reduced.png");
     expect(
       stepShotName({
         step: "figures",
@@ -87,7 +93,16 @@ describe("stepShotName", () => {
         height: 844,
         reduced: false,
       }),
-    ).toBe("live-09-figures-390x844.png");
+    ).toBe("live-11-figures-390x844.png");
+  });
+
+  it("names the press and setting steps after seal, in walk order", () => {
+    expect(stepShotName({ step: "press-held", width: 1440, height: 900 })).toBe(
+      "live-04-press-held-1440x900.png",
+    );
+    expect(stepShotName({ step: "setting", width: 390, height: 844 })).toBe(
+      "live-05-setting-390x844.png",
+    );
   });
 
   it("names the step, not the Stage, for write-receipts", () => {
@@ -106,9 +121,10 @@ describe("stepShotName", () => {
 describe("expectedShotNames", () => {
   it("lists every step at both widths, with and without the reduced suffix", () => {
     const names = expectedShotNames("one-figure");
-    expect(names).toHaveLength(10 * 2 * 2);
+    expect(names).toHaveLength(13 * 2 * 2);
     expect(names).toContain("live-01-write-1440x900.png");
-    expect(names).toContain("live-10-close-390x844-reduced.png");
+    expect(names).toContain("live-12-close-390x844-reduced.png");
+    expect(names).toContain("live-13-tamper-1440x900-reduced.png");
     expect(new Set(names).size).toBe(names.length);
   });
 
@@ -232,7 +248,7 @@ describe("recordStepResult", () => {
     const result = recordStepResult({
       step: "figures",
       observation: "Figure row is clipped.",
-      shots: ["live-09-figures-390x844.png"],
+      shots: ["live-11-figures-390x844.png"],
       defects: [
         {
           step: "figures",
@@ -641,7 +657,7 @@ describe("walkShotName", () => {
   it("keeps the spec name for the default hold method", () => {
     expect(
       walkShotName({ step: "marks", width: 1440, height: 900, method: "hold" }),
-    ).toBe("live-07-marks-1440x900.png");
+    ).toBe("live-09-marks-1440x900.png");
   });
 
   it("adds the method and the reduced suffix for the other runs", () => {
@@ -653,7 +669,7 @@ describe("walkShotName", () => {
         reduced: true,
         method: "skip",
       }),
-    ).toBe("live-10-close-390x844-reduced-via-skip.png");
+    ).toBe("live-12-close-390x844-reduced-via-skip.png");
   });
 });
 
@@ -824,8 +840,8 @@ describe("missingShotDefect (a step with no Step_Shot fails)", () => {
     expect(
       missingShotDefect({
         step: "letter",
-        shot: "live-08-letter-1440x900.png",
-        expectedName: "live-08-letter-1440x900.png",
+        shot: "live-10-letter-1440x900.png",
+        expectedName: "live-10-letter-1440x900.png",
         suspectedFile: "src/components/ceremony/letter/",
       }),
     ).toBeNull();
@@ -835,12 +851,12 @@ describe("missingShotDefect (a step with no Step_Shot fails)", () => {
     const defect = missingShotDefect({
       step: "close",
       shot: undefined,
-      expectedName: "live-10-close-390x844.png",
+      expectedName: "live-12-close-390x844.png",
       suspectedFile: "src/components/ceremony/close/",
     });
     expect(defect).toEqual({
       step: "close",
-      expected: "A Step_Shot named live-10-close-390x844.png is saved for this step.",
+      expected: "A Step_Shot named live-12-close-390x844.png is saved for this step.",
       observed: "No Step_Shot was saved for this step.",
       suspectedFile: "src/components/ceremony/close/",
     });
@@ -865,8 +881,8 @@ describe("shotsMissingFromRecord (each shot is named in the run record)", () => 
     expect(
       shotsMissingFromRecord(record, [
         "live-01-write-1440x900.png",
-        "live-10-close-1440x900.png",
+        "live-12-close-1440x900.png",
       ]),
-    ).toEqual(["live-10-close-1440x900.png"]);
+    ).toEqual(["live-12-close-1440x900.png"]);
   });
 });
