@@ -395,6 +395,20 @@
   }
 }
 
+/* F2: at 1440 px and wider the step number sits above the name and line in
+   one column, so the text gets the full card width (no 2.5 rem number column
+   and no 0.75 rem column gap). Card padding stays at 24 px. */
+@media (min-width: 1440px) {
+  .ritualCard {
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+
+  .ritualNumber {
+    grid-row: auto;
+  }
+}
+
 /* H1 step 1 (phones): below 900 px the Ghost layer is fixed to the window, so
    ritual cards that scroll under it would show its glow behind their text. The
    cards take the page background, so the Ghost does not show through steps 3

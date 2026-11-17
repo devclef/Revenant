@@ -80,6 +80,26 @@ describe("RitualSection list markup", () => {
     );
   });
 
+  it("puts the step number above the text in one column at 1440 px and wider", () => {
+    // F2: the 2.5rem number column and the 0.75rem column gap are removed
+    // from 1440 px, so .ritualLine gets the full card width.
+    const wide = blockAfter(
+      landingCss.slice(landingCss.indexOf("@media (min-width: 1440px)")),
+      ".ritualCard {",
+    );
+    expect(wide).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\);/);
+    expect(wide).toMatch(/column-gap:\s*0;/);
+
+    const number = blockAfter(
+      landingCss.slice(landingCss.indexOf("@media (min-width: 1440px)")),
+      ".ritualNumber {",
+    );
+    expect(number).toMatch(/grid-row:\s*auto;/);
+    // The card keeps at least 24 px of padding (the base rule sets 1.5rem).
+    const card = blockAfter(landingCss, ".ritualCard {");
+    expect(card).toMatch(/padding:\s*1\.5rem;/);
+  });
+
   it("gives no colour to the ritual grid or its cards", () => {
     const grid = blockAfter(landingCss, ".ritualList {");
     expect(grid).not.toMatch(/color|background/);
