@@ -191,6 +191,27 @@ export const BREAK_METHODS = ["hold", "button", "skip"] as const;
 
 export type BreakMethod = (typeof BREAK_METHODS)[number];
 
+/** The phone width. The walk presses the seal with touch here, and with the mouse at the desktop width. */
+export const PHONE_WIDTH = 390;
+
+/** How the Seal step's press is driven: a mouse hold, a touch hold, one click, or the Space key. */
+export type SealPressInput = "hold" | "touch" | "click" | "keyboard";
+
+/**
+ * Picks how the walk presses the seal (Q1.3). Reduced motion has no hold, so one
+ * click runs the press. The keyboard run presses Space on the focused control.
+ * Otherwise a phone width uses touch and every other width holds with the mouse.
+ */
+export function sealPressInput(run: {
+  width: number;
+  reduced: boolean;
+  keyboard: boolean;
+}): SealPressInput {
+  if (run.keyboard) return "keyboard";
+  if (run.reduced) return "click";
+  return run.width === PHONE_WIDTH ? "touch" : "hold";
+}
+
 /**
  * The Step_Shot name for a step, with a suffix for the non-default break methods
  * (`-via-button`, `-via-skip`). The default `hold` method keeps the exact name the

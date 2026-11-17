@@ -31,6 +31,8 @@ import { chromium, type BrowserContext, type Page } from "playwright-core";
 import { describe, expect, it } from "vitest";
 
 import { LIVE_COPY } from "../../components/live/copy";
+import { SEAL_PRESS_HOLD_MS } from "../../components/live/press/constants";
+import { PRESS_COPY } from "../../components/live/press/copy";
 
 import {
   BREAK_METHODS,
@@ -48,6 +50,7 @@ import {
   shotsMissingFromRecord,
   recordStepResult,
   shotsWrittenSince,
+  sealPressInput,
   skipLinkBlocksSettle,
   walkShotName,
   type BreakMethod,
@@ -157,6 +160,8 @@ const LIVE_WALK_SHOTS = path.resolve(QA_SHOTS_ROOT, "live-walk");
 const SETTLE_MS = 300;
 /** How long the seal is held down for the press-and-hold break. */
 const HOLD_MS = 2_500;
+/** How long the Seal step's press is held: the press threshold plus a margin (Q1.3). */
+const SEAL_HOLD_WAIT_MS = SEAL_PRESS_HOLD_MS + 200;
 
 /**
  * Steps that depend on a task not yet merged. A failure at one of these is
@@ -176,6 +181,8 @@ type WalkRun = {
   reduced: boolean;
   figure: boolean;
   method: BreakMethod;
+  /** True for the keyboard run: the seal is pressed with Space. No matrix entry sets it yet. */
+  keyboard: boolean;
 };
 
 /**
@@ -600,10 +607,60 @@ async function answerEveryQuestion(c: WalkContext): Promise<number> {
 }
 
 /**
- * Stages Write to Testify. The write-receipts stage picks one figure when `figure`
+ * Presses the Seal step's envelope in the way the run calls for (Q1.3). The press
+ * is the native button `PressEnvelope` renders (`[data-press-mode="write"]`, named
+ * PRESS_COPY.name). Touch and mouse holds last SEAL_HOLD_WAIT_MS, so the press
+ * passes its threshold before the release.
+ */
+async function pressSealEnvelope(c: WalkContext, run: WalkRun): Promise<void> {
+  const press = c.page.getByRole("button", {
+    name: PRESS_COPY.name,
+    exact: true,
+  });
+  const input = sealPressInput({
+    width: run.size.width,
+    reduced: run.reduced,
+    keyboard: run.keyboard,
+  });
+  if (input === "keyboard") {
+    await press.focus();
+    await c.page.keyboard.press("Space");
+    return;
+  }
+  if (input === "click") {
+    await press.click();
+    return;
+  }
+  const box = await press.boundingBox();
+  if (!box) {
+    throw new Error("The Press the seal control has no size on screen.");
+  }
+  const x = box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  if (input === "touch") {
+    await c.cdp.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ x, y }],
+    });
+    await c.page.waitForTimeout(SEAL_HOLD_WAIT_MS);
+    await c.cdp.send("Input.dispatchTouchEvent", {
+      type: "touchEnd",
+      touchPoints: [],
+    });
+    return;
+  }
+  await c.page.mouse.move(x, y);
+  await c.page.mouse.down();
+  await c.page.waitForTimeout(SEAL_HOLD_WAIT_MS);
+  await c.page.mouse.up();
+}
+
+/**
+ * Stages Write to Testify. The write-receipts stage picks one figure when `run.figure`
  * is true (the one-figure variant); otherwise it opens the receipts and adds none.
  */
-function fiveStageActions(figure: boolean): readonly StageAction[] {
+function fiveStageActions(run: WalkRun): readonly StageAction[] {
+  const figure = run.figure;
   return [
     {
       step: "write",
@@ -661,25 +718,23 @@ function fiveStageActions(figure: boolean): readonly StageAction[] {
       step: "seal",
       act: async (c) => {
         // Write and receipts share one stepper step. Next moves the stepper to
-        // Press the seal, where the lost-passkey checkbox appears.
-        const lostBox = c.page.getByRole("checkbox", { name: /lost|passkey/i });
-        if (!(await lostBox.isVisible())) {
+        // Press the seal, where the Backup_Choice and the press appear.
+        const backupChoice = c.page.locator("[data-backup-choice]");
+        if (!(await backupChoice.isVisible())) {
           await c.page
             .getByRole("button", { name: LIVE_COPY.nextButton, exact: true })
             .click();
         }
-        await lostBox.check();
-        // The live button is LIVE_COPY.createButton (WriteForm.tsx), not the
-        // older "create your passkey" wording.
+        // Skip it is the explicit confirmation that unlocks the press (P7, P1.5).
         await c.page
-          .getByRole("button", { name: LIVE_COPY.createButton })
-          .click();
+          .getByRole("radio", { name: LIVE_COPY.backupChoiceSkip, exact: true })
+          .check();
+        await pressSealEnvelope(c, run);
         await c.page
           .locator('[data-live-step="created"]')
           .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-        await c.page
-          .getByRole("button", { name: /confirm your passkey/i })
-          .click();
+        // The passkey is created. The Setting_State is one plain press, with no hold.
+        await c.page.locator('[data-press-mode="setting"]').click();
         await c.page
           .locator('[data-live-step="sealed"]')
           .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
@@ -840,8 +895,9 @@ describe.skipIf(!walkEnabled(process.env))(
           reduced: matrix.reduced,
           figure: matrix.figure,
           method: "hold",
+          keyboard: false,
         };
-        const stages = fiveStageActions(run.figure);
+        const stages = fiveStageActions(run);
         const runStartMs = Date.now();
         const rows = await runWalk(run, stages);
         const record = formatStageRows(rows);
@@ -875,7 +931,13 @@ describe.skipIf(!walkEnabled(process.env))(
     const runs: WalkRun[] = WALK_SIZES.flatMap((size) =>
       [false, true].flatMap((reduced) =>
         [false, true].flatMap((figure) =>
-          BREAK_METHODS.map((method) => ({ size, reduced, figure, method })),
+          BREAK_METHODS.map((method) => ({
+            size,
+            reduced,
+            figure,
+            method,
+            keyboard: false,
+          })),
         ),
       ),
     );
@@ -891,7 +953,7 @@ describe.skipIf(!walkEnabled(process.env))(
       "walks the whole flow: %s",
       async (_label, run) => {
         const stages = [
-          ...fiveStageActions(run.figure),
+          ...fiveStageActions(run),
           ...remainingStageActions(run.method),
         ];
         const runStartMs = Date.now();
