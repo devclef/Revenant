@@ -13,7 +13,13 @@ import fc from "fast-check";
 import type { FigureV1 } from "@/lib/seal-format";
 import { computeChange, isSameFigure } from "@/lib/figures";
 
-import { receiptKindFor } from "./receipt-kind";
+import {
+  receiptKindFor,
+  showsChangeLine,
+  type ReceiptKind,
+} from "./receipt-kind";
+import { REVEAL_COPY } from "./copy";
+import { samePeriodLine } from "./same-period";
 
 // A fixed official figure used by the named checks.
 function baseOfficial(overrides: Partial<FigureV1> = {}): FigureV1 {
@@ -116,5 +122,86 @@ describe("receiptKindFor (Property 4)", () => {
     const change = computeChange(then, now);
     expect(change.comparable).toBe(false);
     expect(receiptKindFor(then, now, change)).toBe("not_comparable");
+  });
+});
+
+// Spec 14 R7.1 and R7.4: the letter kind decides between single and same_period
+// for a Same_Figure, and only a compared card shows the change line.
+describe("receiptKindFor letter kind (spec 14 R7.1)", () => {
+  const then = baseOfficial({ value: "3.40", period: "2024-09" });
+  const sameNow = baseOfficial({ value: "3.40", period: "2024-09" });
+
+  it("keeps single for a persona Same_Figure, with or without the kind argument", () => {
+    const change = computeChange(then, sameNow);
+    expect(receiptKindFor(then, sameNow, change)).toBe("single");
+    expect(receiptKindFor(then, sameNow, change, "persona")).toBe("single");
+  });
+
+  it("gives same_period for a live or real Same_Figure", () => {
+    const change = computeChange(then, sameNow);
+    expect(receiptKindFor(then, sameNow, change, "live")).toBe("same_period");
+    expect(receiptKindFor(then, sameNow, change, "real")).toBe("same_period");
+  });
+
+  it("keeps a same-period revision as not_comparable for a live or real letter", () => {
+    const revised = baseOfficial({ value: "3.41", period: "2024-09" });
+    const change = computeChange(then, revised);
+    expect(receiptKindFor(then, revised, change, "live")).toBe(
+      "not_comparable",
+    );
+    expect(receiptKindFor(then, revised, change, "real")).toBe(
+      "not_comparable",
+    );
+  });
+
+  it("gives no_now for a live letter with no now figure", () => {
+    expect(receiptKindFor(then, undefined, undefined, "live")).toBe("no_now");
+  });
+});
+
+describe("showsChangeLine (spec 14 R7.4)", () => {
+  it("is true only for a compared card", () => {
+    const kinds: ReceiptKind[] = [
+      "no_now",
+      "single",
+      "same_period",
+      "compared",
+      "not_comparable",
+    ];
+    for (const kind of kinds) {
+      expect(showsChangeLine(kind)).toBe(kind === "compared");
+    }
+  });
+
+  it("is true for a comparable change and false for a Same_Figure on a live letter", () => {
+    const then = baseOfficial({ value: "3.40", period: "2024-09" });
+    const later = baseOfficial({ value: "3.50", period: "2024-10" });
+    const sameNow = baseOfficial({ value: "3.40", period: "2024-09" });
+    expect(
+      showsChangeLine(
+        receiptKindFor(then, later, computeChange(then, later), "live"),
+      ),
+    ).toBe(true);
+    expect(
+      showsChangeLine(
+        receiptKindFor(then, sameNow, computeChange(then, sameNow), "live"),
+      ),
+    ).toBe(false);
+  });
+});
+
+describe("samePeriodLine (spec 14 R7.2)", () => {
+  it("reads a YYYY-MM-DD period as a week", () => {
+    expect(samePeriodLine("2024-09-02")).toBe(REVEAL_COPY.samePeriodWeek);
+  });
+
+  it("reads a YYYY-MM period as a month", () => {
+    expect(samePeriodLine("2024-09")).toBe(REVEAL_COPY.samePeriodMonth);
+  });
+
+  it("reads any other period string as a plain period", () => {
+    expect(samePeriodLine("2024")).toBe(REVEAL_COPY.samePeriodOther);
+    expect(samePeriodLine("2024-Q3")).toBe(REVEAL_COPY.samePeriodOther);
+    expect(samePeriodLine("")).toBe(REVEAL_COPY.samePeriodOther);
   });
 });
