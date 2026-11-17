@@ -7,7 +7,7 @@ import { readFileSync } from "node:fs";
 import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { formatFingerprint } from "@/lib/seal-format";
 
@@ -16,6 +16,23 @@ import { formatLocalDateTime } from "../format";
 import type { SealedState } from "../SealedView";
 
 import { LiveWaitStep } from "./LiveWaitStep";
+
+// Calm_Mode is one switch in the motion context. Reduced motion turns it on as
+// well, so the calm case below covers both settled-pose cases (spec 13, F4.4).
+let calm = false;
+
+vi.mock("@/components/ceremony/motion", async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import("@/components/ceremony/motion")>();
+  return {
+    ...actual,
+    useCalmInForce: () => calm,
+    useMotion: () => ({
+      mode: calm ? "calm" : "full",
+      setCalm: () => undefined,
+    }),
+  };
+});
 
 const OPENS_AT = "2026-11-08T00:00:00.000Z";
 const OPENS_MS = Date.parse(OPENS_AT);
@@ -275,4 +292,73 @@ describe("LiveWaitStep copy on the rendered Wait step (U6, G1.7)", () => {
       expect(text.split(LIVE_COPY.sealDrawnFrom).length - 1).toBe(1);
     });
   }
+});
+
+// The Ghost on the live Testify step (spec 13, F4.1 and F4.4). It is drawn in a
+// box above the flow, with the risen pose (no sink attribute). Calm_Mode and
+// reduced motion show the same settled pose, with no rise to play.
+describe("LiveWaitStep draws the Ghost on the Testify step (F4)", () => {
+  afterEach(() => {
+    calm = false;
+  });
+
+  function renderTestify(nowMs: number): string {
+    return renderToStaticMarkup(
+      createElement(LiveWaitStep, {
+        state: sealed,
+        appOrigin: "https://revenant.example",
+        step: "testify",
+        advanceTo: () => undefined,
+        nowMs: () => nowMs,
+      }),
+    );
+  }
+
+  it("draws the held Ghost inside the Testify ghost box in full motion", () => {
+    const html = renderTestify(OPENS_MS + 1_000);
+    expect(html).toContain("data-live-testify-ghost");
+    expect(html).toContain("data-held-ghost");
+    expect(html).toContain("data-held-pit");
+  });
+
+  it("shows the risen pose with no sink attribute in full motion", () => {
+    const html = renderTestify(OPENS_MS + 1_000);
+    expect(html).not.toContain("data-sink=");
+  });
+
+  it("shows the same risen pose under Calm_Mode and reduced motion, with the Ghost still present", () => {
+    calm = true;
+    const html = renderTestify(OPENS_MS + 1_000);
+    expect(html).toContain("data-live-testify-ghost");
+    expect(html).toContain("data-held-ghost");
+    expect(html).not.toContain("data-sink=");
+    expect(html).not.toContain('data-sink="sinking"');
+    expect(html).not.toContain('data-sink="sunk"');
+  });
+
+  it("draws no Testify ghost on the Wait step", () => {
+    const html = renderToStaticMarkup(
+      createElement(LiveWaitStep, {
+        state: sealed,
+        appOrigin: "https://revenant.example",
+        step: "wait",
+        advanceTo: () => undefined,
+        nowMs: () => OPENS_MS - 60_000,
+      }),
+    );
+    expect(html).not.toContain("data-live-testify-ghost");
+  });
+
+  it("draws no Testify ghost on the seal break step", () => {
+    const html = renderToStaticMarkup(
+      createElement(LiveWaitStep, {
+        state: sealed,
+        appOrigin: "https://revenant.example",
+        step: "break",
+        advanceTo: () => undefined,
+        nowMs: () => OPENS_MS + 1_000,
+      }),
+    );
+    expect(html).not.toContain("data-live-testify-ghost");
+  });
 });

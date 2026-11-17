@@ -18,7 +18,7 @@
  * stepper moves on.
  */
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
 import Link from "next/link";
 
@@ -39,6 +39,20 @@ import { LiveGhost } from "./LiveGhost";
 import { SealedEnvelopeView } from "./SealedEnvelopeView";
 import { heldGhostSink } from "./HeldGhost";
 import { flowPortalTarget, stepForFlowPhase, type LiveStep } from "./live-steps";
+
+/**
+ * The box that holds the Ghost on the Testify step (spec 13, F4). The held Ghost
+ * fills this box and is clipped to it. The box is in the page flow above the
+ * flow's content, so it takes its own height and nothing below it is covered.
+ */
+const TESTIFY_GHOST_BOX: CSSProperties = {
+  position: "relative",
+  width: "min(100%, 16rem)",
+  height: "clamp(9rem, 24vh, 13rem)",
+  margin: "0 auto",
+  overflow: "hidden",
+  pointerEvents: "none",
+};
 
 export interface LiveWaitStepProps {
   /** The sealed state from the seal flow: letter id, opening time and factors. */
@@ -120,6 +134,17 @@ export function LiveWaitStep({
   return (
     <div className={waiting ? styles.panel : styles.deskPanel} data-live-wait>
       <DemoLabel />
+
+      {/* The Ghost on the Testify step (spec 13, F4.1). It stands in the first
+          viewport above the flow, as the persona Testify step draws it. Its box
+          has a fixed height, so the question, the answer control and the verdict
+          line below it are never covered (F4.3). Calm_Mode and reduced motion
+          show the risen pose with no rise (F4.4). */}
+      {step === "testify" ? (
+        <div style={TESTIFY_GHOST_BOX} data-live-testify-ghost="">
+          <LiveGhost sink={heldGhostSink(true, calm)} />
+        </div>
+      ) : null}
 
       {waiting ? (
         <SealedEnvelopeView
