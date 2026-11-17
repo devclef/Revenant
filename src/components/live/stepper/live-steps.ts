@@ -150,6 +150,15 @@ export function hasPrimaryCard(step: LiveStep): boolean {
 }
 
 /**
+ * Whether the stepper draws the step-name h2 above the step's content. Only
+ * Wait gets one here. Write and Seal bring their own heading from the page
+ * (SealPage, spec 14), and Testify and Receipts have none.
+ */
+export function stepperDrawsHeading(step: LiveStep): boolean {
+  return step === "wait";
+}
+
+/**
  * The element the embedded Opening_Flow is portalled into (spec 12, X1). It is
  * the Reveal_Host once the flow is mounted, and null before that. The host
  * never changes once it is set, so the portal target stays the same across

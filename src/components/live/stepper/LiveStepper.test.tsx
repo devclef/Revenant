@@ -99,17 +99,20 @@ describe("Step_Indicator", () => {
 });
 
 describe("LiveStepper", () => {
-  it("renders the current step's heading with focus support", () => {
-    const html = render("seal");
+  it("renders the Wait heading with focus support", () => {
+    const html = render("wait");
     expect(html).toContain('tabindex="-1"');
-    expect(html).toMatch(/<h2[^>]*tabindex="-1"[^>]*>Press the seal<\/h2>/);
+    expect(html).toMatch(
+      /<h2[^>]*data-step-heading=""[^>]*tabindex="-1"[^>]*>Wait<\/h2>/,
+    );
   });
 
   it("keeps the data-primary-control and data-card hooks on the Seal step", () => {
     const html = render("seal");
     expect(html).toMatch(/<section[^>]*data-card[^>]*data-step="seal"/);
     expect(html.match(/data-primary-control/g)).toHaveLength(1);
-    expect(html).toMatch(/<h2[^>]*>Press the seal<\/h2>/);
+    // Seal draws no h2 here; its heading comes from the page (task 7).
+    expect(html).not.toContain("<h2");
   });
 
   it("puts the step card on a data-card root", () => {
@@ -117,7 +120,7 @@ describe("LiveStepper", () => {
   });
 
   it("puts the heading, fields and Next inside one data-primary-control group", () => {
-    const html = render("write", () =>
+    const html = render("wait", () =>
       createElement("button", { type: "button" }, "Next"),
     );
     // The hook appears once. The group runs from its opening tag to the card's
@@ -127,7 +130,7 @@ describe("LiveStepper", () => {
     const end = html.indexOf("</section>", start);
     expect(end).toBeGreaterThan(start);
     const group = html.slice(start, end);
-    expect(group).toContain(">Write</h2>");
+    expect(group).toContain(">Wait</h2>");
     expect(group).toContain(">Next<");
   });
 
@@ -254,14 +257,15 @@ describe("LiveStepper heading focus (W8)", () => {
     "utf8",
   );
 
-  it("focuses the heading without the browser's own scroll", () => {
+  it("focuses the step heading without the browser's own scroll", () => {
     expect(stepperSource).toContain(
-      "headingRef.current?.focus({ preventScroll: true })",
+      '?.querySelector<HTMLElement>("[data-step-heading]")',
     );
+    expect(stepperSource).toContain("?.focus({ preventScroll: true })");
   });
 
   it("scrolls the Step_Track, not the heading, after focus", () => {
-    const focusAt = stepperSource.indexOf("headingRef.current?.focus(");
+    const focusAt = stepperSource.indexOf("?.focus({ preventScroll: true })");
     const scrollAt = stepperSource.indexOf("trackRef.current?.scrollIntoView(");
     expect(focusAt).toBeGreaterThan(-1);
     expect(scrollAt).toBeGreaterThan(focusAt);

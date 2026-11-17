@@ -14,6 +14,7 @@ import {
   hasPrimaryCard,
   movesFocus,
   stepName,
+  stepperDrawsHeading,
   type LiveStep,
   type StepperAction,
   type StepperState,
@@ -66,7 +67,6 @@ export interface LiveStepperProps {
  * step changes, focus moves to the new heading, if the step has one.
  */
 export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
-  const headingRef = useRef<HTMLHeadingElement>(null);
   // The Step_Track wrapper. The step change scrolls this, not the heading, so
   // the track and the card both land below the Top_Bar (baseline 98d49aa, cause a).
   const trackRef = useRef<HTMLDivElement>(null);
@@ -89,8 +89,12 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
     if (!movesFocus(previousStep.current, state.step)) return;
     previousStep.current = state.step;
     // Focus without the browser's own scroll. The scroll itself runs after one
-    // frame, so the new step has its height first (baseline cause a).
-    headingRef.current?.focus({ preventScroll: true });
+    // frame, so the new step has its height first (baseline cause a). The
+    // target is the step's [data-step-heading]: the h2 drawn for Wait here, or
+    // the page's own heading for Write and Seal (spec 14).
+    primaryRef.current
+      ?.querySelector<HTMLElement>("[data-step-heading]")
+      ?.focus({ preventScroll: true });
     if (scrollFrame.current !== null) cancelAnimationFrame(scrollFrame.current);
     scrollFrame.current = requestAnimationFrame(() => {
       scrollFrame.current = null;
@@ -140,8 +144,8 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
           className={card ? styles.primary : styles.bareContent}
           data-primary-control={card ? "" : undefined}
         >
-          {card ? (
-            <h2 ref={headingRef} tabIndex={-1} className={styles.heading}>
+          {stepperDrawsHeading(state.step) ? (
+            <h2 data-step-heading="" tabIndex={-1} className={styles.heading}>
               {stepName(state.step)}
             </h2>
           ) : null}

@@ -22,6 +22,7 @@ import {
   stepForStage,
   stepName,
   stepTrackStates,
+  stepperDrawsHeading,
   type LiveStep,
 } from "./live-steps";
 
@@ -181,6 +182,23 @@ describe("movesFocus", () => {
   it("moves focus only when the step changes", () => {
     expect(movesFocus("write", "seal")).toBe(true);
     expect(movesFocus("seal", "seal")).toBe(false);
+  });
+});
+
+// Task 6 (issue #468): the stepper draws the step-name h2 for Wait only. Write
+// and Seal get their heading from the page, and Testify, the break and Receipts
+// draw none.
+describe("stepperDrawsHeading", () => {
+  it("draws the h2 for wait only, across all six steps", () => {
+    const drawn = LIVE_STEPS.map((step) => [step, stepperDrawsHeading(step)]);
+    expect(drawn).toEqual([
+      ["write", false],
+      ["seal", false],
+      ["wait", true],
+      ["testify", false],
+      ["break", false],
+      ["receipts", false],
+    ]);
   });
 });
 
