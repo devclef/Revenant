@@ -744,3 +744,216 @@ export function shotsMissingFromRecord(
 ): string[] {
   return expected.filter((name) => !record.includes(RECORD_SHOT_PREFIX + name));
 }
+
+/* ---------------------------------------------------------------------------
+ * Passkey prompt counting and the Q1.2 fail rules (live-walk.test.ts).
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Init script for `page.addInitScript`. It wraps `navigator.credentials.create`
+ * and `navigator.credentials.get`, and records each call in
+ * `window.__passkeyCalls` as `"create"` or `"get"` before the real call runs.
+ * A call is counted even when the browser rejects it, so a cancelled prompt
+ * still shows up. Plain string, so the page runs it unchanged.
+ */
+export const PASSKEY_INIT_SCRIPT = `(function () {
+  var w = window;
+  w.__passkeyCalls = [];
+  var creds = w.navigator && w.navigator.credentials;
+  if (!creds) return;
+  ["create", "get"].forEach(function (kind) {
+    var original = creds[kind];
+    if (typeof original !== "function") return;
+    creds[kind] = function () {
+      w.__passkeyCalls.push(kind);
+      return original.apply(this, arguments);
+    };
+  });
+})();`;
+
+export type PasskeyKind = "create" | "get";
+
+/** Passkey prompts counted per kind, and in total. */
+export type PasskeyCounts = { create: number; get: number; total: number };
+
+/** Count the recorded `window.__passkeyCalls` entries. Unknown values are ignored. */
+export function countPasskeyCalls(calls: readonly string[]): PasskeyCounts {
+  const create = calls.filter((kind) => kind === "create").length;
+  const get = calls.filter((kind) => kind === "get").length;
+  return { create, get, total: create + get };
+}
+
+/**
+ * Exact counts for one press. Only the kinds named in `expected` are checked.
+ * For example `{ create: 1 }` after a release that should create one passkey.
+ */
+export function checkPasskeyCount(
+  counts: PasskeyCounts,
+  expected: Partial<Pick<PasskeyCounts, "create" | "get">>,
+  label: string,
+): StepCheck {
+  const parts = (["create", "get"] as const)
+    .filter((kind) => expected[kind] !== undefined)
+    .map((kind) => ({
+      kind,
+      want: expected[kind] as number,
+      got: counts[kind],
+    }));
+  const expectedText = parts
+    .map((part) => `${part.kind} ${part.want}`)
+    .join(", ");
+  const expectation = `${label}: passkey prompts ${expectedText}`;
+  const bad = parts.filter((part) => part.got !== part.want);
+  if (bad.length === 0) {
+    return { ok: true, expected: expectation, message: `PASS ${expectation}` };
+  }
+  return {
+    ok: false,
+    expected: expectation,
+    message: `FAIL ${label}: ${bad
+      .map((part) => `${part.kind} ${part.got}, expected ${part.want}`)
+      .join("; ")}`,
+  };
+}
+
+/**
+ * An early release (the hold is let go before the timer fires) must not reach
+ * the passkey. It leaves no prompt (`create` is 0) and no credential is stored.
+ */
+export function checkEarlyRelease(
+  counts: PasskeyCounts,
+  storedCredentials: number,
+): StepCheck {
+  const expected =
+    "early release: passkey prompts create 0, and no credential is stored";
+  const createOk = counts.create === 0;
+  const credOk = storedCredentials === 0;
+  if (createOk && credOk) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL early release: create ${counts.create}, stored credentials ${storedCredentials}`,
+  };
+}
+
+/** The total passkey prompts across a walk step may never exceed two (Q1.2). */
+export const MAX_PASSKEY_PROMPTS = 2;
+
+export function checkPasskeyTotal(counts: PasskeyCounts): StepCheck {
+  const expected = `at most ${MAX_PASSKEY_PROMPTS} passkey prompts`;
+  if (counts.total <= MAX_PASSKEY_PROMPTS) {
+    return {
+      ok: true,
+      expected,
+      message: `PASS ${counts.total} passkey prompt(s), ${expected}`,
+    };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL more than two passkey prompts: ${counts.total} seen`,
+  };
+}
+
+/**
+ * A second quick press during an open prompt must add no prompt. `before` and
+ * `after` are the total counts either side of that press.
+ */
+export function checkQuickPressAddsNone(
+  before: number,
+  after: number,
+): StepCheck {
+  const expected =
+    "a second quick press during a prompt adds no passkey prompt";
+  if (after === before) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL a second quick press added ${after - before} passkey prompt(s)`,
+  };
+}
+
+/** A box in CSS pixels, as `getBoundingClientRect` reports it. */
+export type BoxRect = {
+  top: number;
+  right: number;
+  bottom: number;
+  left: number;
+};
+
+/**
+ * Whether two boxes overlap in both axes. Edges that only touch do not count,
+ * and an empty box (zero width or height) overlaps nothing.
+ */
+export function rectsIntersect(a: BoxRect, b: BoxRect): boolean {
+  if (a.right <= a.left || a.bottom <= a.top) return false;
+  if (b.right <= b.left || b.bottom <= b.top) return false;
+  return (
+    a.left < b.right && b.left < a.right && a.top < b.bottom && b.top < a.bottom
+  );
+}
+
+/**
+ * After a step change, the Step_Heading box must not sit under the Top_Bar.
+ * Fails when the two boxes overlap.
+ */
+export function checkStepHeadingClearOfTopBar(
+  heading: BoxRect,
+  topBar: BoxRect,
+): StepCheck {
+  const expected =
+    "the Step_Heading box is not under the Top_Bar after a step change";
+  if (!rectsIntersect(heading, topBar)) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL the Step_Heading box (top ${heading.top}, bottom ${heading.bottom}) overlaps the Top_Bar (bottom ${topBar.bottom})`,
+  };
+}
+
+/** The risen ghost must not intersect the Keep_Section (Q1.2). */
+export function checkGhostClearOfKeep(
+  ghost: BoxRect,
+  keep: BoxRect,
+): StepCheck {
+  const expected = "the risen ghost does not intersect the Keep_Section";
+  if (!rectsIntersect(ghost, keep)) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: "FAIL the risen ghost intersects the Keep_Section",
+  };
+}
+
+/** One orange button found on the Seal step. */
+export type OrangeButton = { label: string; isPressEnvelope: boolean };
+
+/**
+ * On the Seal step the Press_Envelope is the only orange button (Q1.2). Any
+ * other orange button fails and is named in the message.
+ */
+export function checkSealOrangeButtons(
+  buttons: readonly OrangeButton[],
+): StepCheck {
+  const expected =
+    "the Press_Envelope is the only orange button on the Seal step";
+  const extra = buttons.filter((button) => !button.isPressEnvelope);
+  if (extra.length === 0) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL ${extra.length} other orange button(s) on the Seal step: ${extra
+      .map((button) => `"${button.label}"`)
+      .join(", ")}`,
+  };
+}

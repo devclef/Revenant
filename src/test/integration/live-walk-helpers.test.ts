@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   EXPECTED_STEPS,
+  MAX_PASSKEY_PROMPTS,
   MOTION_CONTROL_SELECTOR,
+  PASSKEY_INIT_SCRIPT,
   SKIP_LINK_STAGE,
   STEP_SUSPECTED_FILES,
   WALK_STEP_NAMES,
@@ -10,13 +12,22 @@ import {
   checkClippedText,
   checkConsoleErrors,
   checkContrast,
+  checkEarlyRelease,
   checkForbiddenFinalText,
+  checkGhostClearOfKeep,
   checkHorizontalScroll,
   checkMotionControlCount,
   checkOwnNumberRowsBlank,
+  checkPasskeyCount,
+  checkPasskeyTotal,
+  checkQuickPressAddsNone,
   checkRunShots,
+  checkSealOrangeButtons,
+  checkStepHeadingClearOfTopBar,
   checkStepIndicator,
   checkStepSnapshot,
+  countPasskeyCalls,
+  rectsIntersect,
   contrastFloor,
   contrastRatio,
   defectsFromChecks,
@@ -31,6 +42,7 @@ import {
   skipLinkBlocksSettle,
   stepShotName,
   walkShotName,
+  type BoxRect,
   type PageSnapshot,
 } from "./live-walk-helpers";
 
@@ -884,5 +896,166 @@ describe("shotsMissingFromRecord (each shot is named in the run record)", () => 
         "live-12-close-1440x900.png",
       ]),
     ).toEqual(["live-12-close-1440x900.png"]);
+  });
+});
+
+/** Run the init script against a fake `window` with a `navigator.credentials` double. */
+function runPasskeyScript(credentials: Record<string, unknown> | null) {
+  const win: Record<string, unknown> = {
+    navigator: credentials === null ? {} : { credentials },
+  };
+  win.window = win;
+  // The script refers to `window` and `navigator` as free identifiers.
+  new Function("window", "navigator", PASSKEY_INIT_SCRIPT)(win, win.navigator);
+  return win;
+}
+
+describe("PASSKEY_INIT_SCRIPT (passkey prompt counter)", () => {
+  it("records create and get calls and still returns the real result", async () => {
+    const creds = {
+      create: async (opts: unknown) => `created:${String(opts)}`,
+      get: async () => "assertion",
+    };
+    const win = runPasskeyScript(creds);
+    expect(win.__passkeyCalls).toEqual([]);
+    await expect(creds.create("a")).resolves.toBe("created:a");
+    await (creds as unknown as { get: () => Promise<string> }).get();
+    expect(win.__passkeyCalls).toEqual(["create", "get"]);
+  });
+
+  it("counts a rejected prompt as well", async () => {
+    const creds = {
+      create: async () => {
+        throw new Error("NotAllowedError");
+      },
+    };
+    const win = runPasskeyScript(creds);
+    await expect(creds.create()).rejects.toThrow("NotAllowedError");
+    expect(win.__passkeyCalls).toEqual(["create"]);
+  });
+
+  it("sets an empty list and does not throw without navigator.credentials", () => {
+    const win = runPasskeyScript(null);
+    expect(win.__passkeyCalls).toEqual([]);
+  });
+});
+
+describe("countPasskeyCalls and the passkey checks", () => {
+  it("counts create, get and the total", () => {
+    expect(countPasskeyCalls(["create", "get", "get"])).toEqual({
+      create: 1,
+      get: 2,
+      total: 3,
+    });
+    expect(countPasskeyCalls(["bogus"])).toEqual({
+      create: 0,
+      get: 0,
+      total: 0,
+    });
+  });
+
+  it("an early release passes only with create 0 and no credential", () => {
+    const none = countPasskeyCalls([]);
+    expect(checkEarlyRelease(none, 0).ok).toBe(true);
+    expect(checkEarlyRelease(countPasskeyCalls(["create"]), 0).ok).toBe(false);
+    expect(checkEarlyRelease(none, 1).ok).toBe(false);
+  });
+
+  it("a release after the hold needs exactly one create", () => {
+    const one = countPasskeyCalls(["create"]);
+    expect(checkPasskeyCount(one, { create: 1 }, "release").ok).toBe(true);
+    const two = countPasskeyCalls(["create", "create"]);
+    const bad = checkPasskeyCount(two, { create: 1 }, "release");
+    expect(bad.ok).toBe(false);
+    expect(bad.message).toBe("FAIL release: create 2, expected 1");
+  });
+
+  it("the Setting_State press needs exactly one get", () => {
+    expect(
+      checkPasskeyCount(countPasskeyCalls(["get"]), { get: 1 }, "setting").ok,
+    ).toBe(true);
+    expect(
+      checkPasskeyCount(countPasskeyCalls([]), { get: 1 }, "setting").ok,
+    ).toBe(false);
+  });
+
+  it("checks only the kinds it is given", () => {
+    const counts = countPasskeyCalls(["get"]);
+    expect(checkPasskeyCount(counts, { create: 0 }, "x").ok).toBe(true);
+  });
+
+  it("fails above the two-prompt cap and passes at it", () => {
+    expect(MAX_PASSKEY_PROMPTS).toBe(2);
+    expect(checkPasskeyTotal(countPasskeyCalls(["create", "get"])).ok).toBe(
+      true,
+    );
+    const over = checkPasskeyTotal(countPasskeyCalls(["create", "get", "get"]));
+    expect(over.ok).toBe(false);
+    expect(over.message).toBe("FAIL more than two passkey prompts: 3 seen");
+  });
+
+  it("a second quick press during a prompt must add none", () => {
+    expect(checkQuickPressAddsNone(1, 1).ok).toBe(true);
+    const bad = checkQuickPressAddsNone(1, 2);
+    expect(bad.ok).toBe(false);
+    expect(bad.message).toBe(
+      "FAIL a second quick press added 1 passkey prompt(s)",
+    );
+  });
+});
+
+describe("rectsIntersect and the layout rules", () => {
+  const box = (
+    top: number,
+    left: number,
+    bottom: number,
+    right: number,
+  ): BoxRect => ({
+    top,
+    left,
+    bottom,
+    right,
+  });
+
+  it("detects overlap in both axes, and not edges that only touch", () => {
+    expect(rectsIntersect(box(0, 0, 10, 10), box(5, 5, 15, 15))).toBe(true);
+    expect(rectsIntersect(box(0, 0, 10, 10), box(10, 0, 20, 10))).toBe(false);
+    expect(rectsIntersect(box(0, 0, 10, 10), box(0, 10, 10, 20))).toBe(false);
+    expect(rectsIntersect(box(0, 0, 0, 10), box(0, 0, 10, 10))).toBe(false);
+  });
+
+  it("fails a Step_Heading box under the Top_Bar", () => {
+    const topBar = box(0, 0, 60, 390);
+    expect(checkStepHeadingClearOfTopBar(box(80, 0, 120, 390), topBar).ok).toBe(
+      true,
+    );
+    const under = checkStepHeadingClearOfTopBar(box(40, 0, 90, 390), topBar);
+    expect(under.ok).toBe(false);
+    expect(under.message).toBe(
+      "FAIL the Step_Heading box (top 40, bottom 90) overlaps the Top_Bar (bottom 60)",
+    );
+  });
+
+  it("fails a risen ghost that intersects the Keep_Section", () => {
+    const keep = box(500, 0, 600, 1440);
+    expect(checkGhostClearOfKeep(box(100, 500, 300, 900), keep).ok).toBe(true);
+    expect(checkGhostClearOfKeep(box(450, 500, 550, 900), keep).ok).toBe(false);
+  });
+
+  it("allows only the Press_Envelope as an orange button on the Seal step", () => {
+    expect(
+      checkSealOrangeButtons([
+        { label: "Press the seal", isPressEnvelope: true },
+      ]).ok,
+    ).toBe(true);
+    expect(checkSealOrangeButtons([]).ok).toBe(true);
+    const bad = checkSealOrangeButtons([
+      { label: "Press the seal", isPressEnvelope: true },
+      { label: "Lock it", isPressEnvelope: false },
+    ]);
+    expect(bad.ok).toBe(false);
+    expect(bad.message).toBe(
+      'FAIL 1 other orange button(s) on the Seal step: "Lock it"',
+    );
   });
 });
