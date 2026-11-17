@@ -406,7 +406,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
   - Validation: `bash scripts/check.sh`; route budgets after `npm run build` (`/` at most 160 kB).
   - _Requirements: F1.1–F1.3, F2.1–F2.3_
 
-- [ ] 15. F3 · Persona Testify fits at 1440×900
+- [x] 15. F3 · Persona Testify fits at 1440×900
   - Agent: `frontend-dev` · Depends on: none · Estimated size: ~300 changed lines · Target: 26 November 2026
   - Never cut. This is the first F task if task 14 is cut, so it carries the Reproduce step for group F in that case; it carries it anyway.
   - Scope: `src/components/ceremony/scene/TopBar.tsx`, `src/components/ceremony/intro/*` (`PersonaIntro`, `TestifyContext`, `intro.module.css`), `src/components/ceremony/steps.ts` (only if the labels move), and the `*.test.ts(x)` for each file.
