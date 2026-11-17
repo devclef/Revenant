@@ -101,6 +101,8 @@ const SURFACE: Record<string, Surface> = {
   // The Reveal's own buttons carry their paper background (--paper-deep), so
   // their ink is checked on paper.
   button: "paper",
+  // "Show everything" is transparent, so its #ffffff ink sits on the desk.
+  outlineButton: "desk",
   // The judge's own answer chip is drawn on the orange Accent (--accent).
   marksValue: "accent",
   figureGroup: "desk",
