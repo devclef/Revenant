@@ -203,6 +203,19 @@ describe("wFailures (W1.1 to W1.3, W3.3, W4.4, W7.2)", () => {
     ]);
   });
 
+  it("passes W1.3 when the Letter_Field top is exactly 360 px from the top at 1440", () => {
+    const failures = wFailures({
+      ...DESKTOP,
+      field: rect(300, 360, 700, 200),
+      column: 600,
+      paper: 600,
+      occasions: [],
+      questions: [],
+      receipts: [],
+    });
+    expect(failures).toEqual([]);
+  });
+
   it("names W1.3 when the Letter_Field top is outside the viewport at 390", () => {
     const failures = wFailures({
       ...PHONE,
