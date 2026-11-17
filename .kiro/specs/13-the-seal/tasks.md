@@ -437,7 +437,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
 
 ### Checks, target 27 November 2026
 
-- [ ] 17. Layout-check rows and the landing-seal Journey_Check step
+- [x] 17. Layout-check rows and the landing-seal Journey_Check step
   - Agent: `platform-dev` · Depends on: 4, 5, 8, 9, 11, 15, 16 · Estimated size: ~700 changed lines · Target: 27 November 2026
   - Never cut. The F1 and F2 rows are added only if task 14 merged, and the P1, T, W and L1 rows read the same selectors regardless of whether tasks 12, 13 and 14 were cut.
   - Scope: `tools/qa/layout-check.mjs`, `tools/qa/journey-check.mjs`, and the tests that cover them.
