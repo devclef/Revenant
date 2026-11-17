@@ -90,6 +90,19 @@ export function matrixShotNames(
 }
 
 /**
+ * The one keyboard run (Q1.3): the seal is pressed with Space on the focused
+ * control. It is kept out of WALK_MATRIX, which lists eight mouse and touch runs.
+ * Its Step_Shot names carry a `-keyboard` suffix.
+ */
+export const KEYBOARD_MATRIX_ENTRY: WalkMatrixEntry = {
+  id: "1440x900-keyboard",
+  width: 1440,
+  height: 900,
+  variant: "no-figure",
+  reduced: false,
+};
+
+/**
  * The persona tamper runs (spec 13, A1): each width, with motion on and reduced.
  * Each run ends on the `tamper` Step_Shot. It needs no passkey.
  */

@@ -50,9 +50,12 @@ import {
   checkDemoSeals,
   checkNoJsSeal,
   checkOwnNumberRowsBlank,
+  checkPasskeyCount,
+  checkPasskeyTotal,
   checkSealMarks,
   checkTamperRunNoPasskey,
   countPasskeyCalls,
+  type PasskeyCounts,
   checkRunShots,
   checkStepSnapshot,
   defectsFromChecks,
@@ -79,6 +82,7 @@ import {
   type WalkStepResult,
 } from "./live-walk-helpers";
 import {
+  KEYBOARD_MATRIX_ENTRY,
   TAMPER_MATRIX,
   WALK_MATRIX,
   matrixRun,
@@ -216,6 +220,8 @@ type StageAction = {
   step: WalkStepName;
   act: WalkAction;
   afterShot?: WalkAction;
+  /** Checks the stage collected while it ran (passkey counts). Scored like the snapshot checks. */
+  checks?: StepCheck[];
 };
 
 type StageRow = {
@@ -376,7 +382,12 @@ async function readPage(
  * stage with a defect or an action that threw.
  */
 /** What a walk run returns: its stage rows, and the `/l/<id>` path if a letter was unlocked. */
-type WalkResult = { rows: StageRow[]; letterPath: string | null };
+type WalkResult = {
+  rows: StageRow[];
+  letterPath: string | null;
+  /** Q1.2: the run-wide passkey total, scored through defectsFromChecks. */
+  passkeyDefects: WalkDefect[];
+};
 
 async function runWalk(
   run: WalkRun,
@@ -385,6 +396,7 @@ async function runWalk(
   mkdirSync(LIVE_WALK_SHOTS, { recursive: true });
   const rows: StageRow[] = [];
   const letter: { path: string | null } = { path: null };
+  let passkeyDefects: WalkDefect[] = [];
   // The Wait step's seal, read so Break the seal can be compared with it (Q1.3).
   let waitSeal: SealMark | null = null;
   const { width, height } = run.size;
@@ -439,13 +451,7 @@ async function runWalk(
     let seen = 0;
 
     for (const stage of stages) {
-      const shotName = walkShotName({
-        step: stage.step,
-        width,
-        height,
-        reduced: run.reduced,
-        method: run.method,
-      });
+      const shotName = walkShotFor(run, stage.step);
       const suspectedFile = STEP_SUSPECTED_FILES[stage.step];
 
       let observed: string;
@@ -508,6 +514,9 @@ async function runWalk(
         }
       }
 
+      // Checks a stage collected while it ran (the seal and tamper passkey counts).
+      defects.push(...defectsFromChecks(stage.step, stage.checks ?? []));
+
       let shot: string | undefined;
       try {
         await page.screenshot({
@@ -554,11 +563,16 @@ async function runWalk(
       });
       if (actionFailed && !blocked) break;
     }
+    // Q1.2: the whole run makes at most two passkey prompts.
+    const lastStep = stages[stages.length - 1]?.step ?? WALK_STEP_NAMES[0];
+    passkeyDefects = defectsFromChecks(lastStep, [
+      checkPasskeyTotal(await readPasskeyCounts(page)),
+    ]);
     await context.close();
   } finally {
     await browser.close();
   }
-  return { rows, letterPath: letter.path };
+  return { rows, letterPath: letter.path, passkeyDefects };
 }
 
 /** One line per step, then one line per defect. Quoted by the owner in the QA verdict. */
@@ -586,16 +600,41 @@ function formatStageRows(rows: readonly StageRow[]): string {
 }
 
 /** The Step_Shot names one run writes for the given steps. */
-function runShotNames(run: WalkRun, steps: readonly WalkStepName[]): string[] {
-  return steps.map((step) =>
-    walkShotName({
-      step,
-      width: run.size.width,
-      height: run.size.height,
-      reduced: run.reduced,
-      method: run.method,
-    }),
+/** The Step_Shot name for one step of a run. The keyboard run adds a `-keyboard` suffix. */
+function walkShotFor(run: WalkRun, step: WalkStepName): string {
+  const name = walkShotName({
+    step,
+    width: run.size.width,
+    height: run.size.height,
+    reduced: run.reduced,
+    method: run.method,
+  });
+  return run.keyboard ? name.replace(/\.png$/, "-keyboard.png") : name;
+}
+
+/** The passkey prompts the page has made so far, from window.__passkeyCalls (Q1.2). */
+async function readPasskeyCounts(page: Page): Promise<PasskeyCounts> {
+  return countPasskeyCalls(
+    await page.evaluate(
+      () =>
+        (window as unknown as { __passkeyCalls?: string[] }).__passkeyCalls ??
+        [],
+    ),
   );
+}
+
+/** The prompts made between two reads. Only the create and get counts are differenced. */
+function passkeyDelta(
+  before: PasskeyCounts,
+  after: PasskeyCounts,
+): PasskeyCounts {
+  const create = after.create - before.create;
+  const get = after.get - before.get;
+  return { create, get, total: create + get };
+}
+
+function runShotNames(run: WalkRun, steps: readonly WalkStepName[]): string[] {
+  return steps.map((step) => walkShotFor(run, step));
 }
 
 /**
@@ -711,6 +750,7 @@ async function pressSealEnvelope(c: WalkContext, run: WalkRun): Promise<void> {
  */
 function fiveStageActions(run: WalkRun): readonly StageAction[] {
   const figure = run.figure;
+  const sealChecks: StepCheck[] = [];
   return [
     {
       step: "write",
@@ -783,11 +823,25 @@ function fiveStageActions(run: WalkRun): readonly StageAction[] {
         await c.page
           .locator('[data-live-step="created"]')
           .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        // Q1.2: a release past the hold makes exactly one create prompt.
+        const afterRelease = await readPasskeyCounts(c.page);
+        sealChecks.push(
+          checkPasskeyCount(afterRelease, { create: 1 }, "seal release"),
+        );
         // The passkey is created. The Setting_State is one plain press, with no hold.
         await c.page.locator('[data-press-mode="setting"]').click();
         await c.page
           .locator('[data-live-step="sealed"]')
           .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        // Q1.2: the Setting_State press makes exactly one get prompt.
+        const afterSetting = await readPasskeyCounts(c.page);
+        sealChecks.push(
+          checkPasskeyCount(
+            passkeyDelta(afterRelease, afterSetting),
+            { get: 1 },
+            "setting press",
+          ),
+        );
         const { credentials } = (await c.cdp.send("WebAuthn.getCredentials", {
           authenticatorId: c.authenticatorId,
         })) as { credentials: unknown[] };
@@ -798,6 +852,7 @@ function fiveStageActions(run: WalkRun): readonly StageAction[] {
         }
         return `Sealed. Virtual passkeys stored: ${credentials.length}.`;
       },
+      checks: sealChecks,
     },
     {
       step: "wait",
@@ -992,12 +1047,23 @@ describe.skipIf(!walkEnabled(process.env))(
         ),
       ),
     );
+    // Q1.3: one 1440 run presses the seal with Space and gets the same prompt checks.
+    runs.push({
+      size: {
+        width: KEYBOARD_MATRIX_ENTRY.width,
+        height: KEYBOARD_MATRIX_ENTRY.height,
+      },
+      reduced: false,
+      figure: false,
+      method: "hold",
+      keyboard: true,
+    });
 
     it.each(
       runs.map((run) => {
         const motion = run.reduced ? "reduced motion" : "motion on";
         const figures = run.figure ? "one figure" : "no figure";
-        const label = `${run.size.width}x${run.size.height}, ${motion}, ${figures}, break with ${run.method}`;
+        const label = `${run.size.width}x${run.size.height}, ${motion}, ${figures}, break with ${run.method}${run.keyboard ? ", Space key" : ""}`;
         return [label, run] as const;
       }),
     )(
@@ -1008,7 +1074,7 @@ describe.skipIf(!walkEnabled(process.env))(
           ...remainingStageActions(run.method),
         ];
         const runStartMs = Date.now();
-        const { rows, letterPath } = await runWalk(run, stages);
+        const { rows, letterPath, passkeyDefects } = await runWalk(run, stages);
         const pageChecks = await checkSealPages(run.size, letterPath);
         console.log(pageChecks.map((check) => check.message).join("\n"));
         expect(
@@ -1031,6 +1097,7 @@ describe.skipIf(!walkEnabled(process.env))(
         ).toEqual([]);
         expect(shots.missing).toEqual([]);
         expect(unnamed).toEqual([]);
+        expect(passkeyDefects.map((defect) => defect.observed)).toEqual([]);
       },
       VIEWPORT_TIMEOUT_MS,
     );
@@ -1166,6 +1233,7 @@ async function checkSealPages(
  * Tamper_Control and waits for its result. It must make no passkey prompt.
  */
 function tamperStage(): StageAction {
+  const tamperChecks: StepCheck[] = [];
   return {
     step: "tamper",
     act: async (c) => {
@@ -1202,21 +1270,21 @@ function tamperStage(): StageAction {
           "The Tamper_Control was not reached on the persona page.",
         );
       }
-      const counts = countPasskeyCalls(
-        await c.page.evaluate(
-          () =>
-            (window as unknown as { __passkeyCalls?: string[] })
-              .__passkeyCalls ?? [],
-        ),
+      const noPasskey = checkTamperRunNoPasskey(
+        await readPasskeyCounts(c.page),
       );
-      const noPasskey = checkTamperRunNoPasskey(counts);
       if (!noPasskey.ok) throw new Error(noPasskey.message);
       await tamper.first().click();
       await c.page
         .locator("[data-tamper-result]")
         .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+      // Q1.2: the press itself must not prompt, so the count is read again after it.
+      tamperChecks.push(
+        checkTamperRunNoPasskey(await readPasskeyCounts(c.page)),
+      );
       return `Tamper_Control opened on the Read step and its result shown. ${noPasskey.message.replace(/^PASS /, "")}.`;
     },
+    checks: tamperChecks,
   };
 }
 
@@ -1233,7 +1301,7 @@ describe.skipIf(!walkEnabled(process.env))("live walk: persona tamper", () => {
         keyboard: false,
       };
       const runStartMs = Date.now();
-      const { rows } = await runWalk(run, [tamperStage()]);
+      const { rows, passkeyDefects } = await runWalk(run, [tamperStage()]);
       const record = formatStageRows(rows);
       console.log(record);
 
@@ -1248,6 +1316,7 @@ describe.skipIf(!walkEnabled(process.env))("live walk: persona tamper", () => {
       ).toEqual([]);
       expect(shots.missing).toEqual([]);
       expect(unnamed).toEqual([]);
+      expect(passkeyDefects.map((defect) => defect.observed)).toEqual([]);
     },
     VIEWPORT_TIMEOUT_MS,
   );
