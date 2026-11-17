@@ -55,7 +55,7 @@ The ticket names `/home/dopey/kiro/revenant-crew/dev/tools/qa/patches/`. That pa
 
 ## Patch check
 
-Adds tools/qa/patches/spec-12-tasks.patch, one unified diff against .kiro/specs/12-submission-polish/tasks.md. It changes only checkbox markers on 10 lines. It does not edit tasks.md. Checked with git apply --check and git apply --check --recount on this worktree: both exit 0.
+Adds tools/qa/patches/spec-12-tasks.patch, one unified diff against .kiro/specs/12-submission-polish/tasks.md. It changes only checkbox markers on 10 lines. It does not edit tasks.md. Clean-checkout check: the index was loaded from HEAD (3c0dab4, which holds `.kiro/specs/12-submission-polish/tasks.md` at blob ab86963) into a temporary index file inside the git directory, then `git apply --cached --check` and `git apply --cached --check --recount` ran against it. Both exit 0. The working tree was not touched, and the temporary index was removed afterwards.
 
 Path note: the ticket names /home/dopey/kiro/revenant-crew/dev/tools/qa/patches/. That path is outside this task worktree, so the files are written under tools/qa/patches/ in the worktree instead, as the task rules require.
 
