@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -7,6 +9,7 @@ import { firstPoliticalTerm } from "@/lib/personas/banned-terms";
 import { checkRecallSubject } from "@/lib/recall";
 
 import { AuthorQuestions, type AuthorQuestionsProps } from "./AuthorQuestions";
+import { focusAfterRemove } from "./author-questions";
 import { DEFAULT_QUESTION } from "./occasions";
 import { LIVE_COPY } from "./copy";
 
@@ -120,16 +123,42 @@ describe("AuthorQuestions rendering", () => {
     expect(html).not.toContain("<input");
   });
 
-  it("gives the icon button an aria-label and an aria-hidden x", () => {
+  it("gives each Remove button a name with its row number and visible text Remove", () => {
     const html = render({ questions: ["first", "second"] });
     const buttons = html.match(/<button[^>]*>[\s\S]*?<\/button>/g) ?? [];
-    // Only the row remove icons carry a "Remove" label. The Add button does not.
+    // Only the row Remove controls carry a "Remove question" name. Add does not.
     const removes = buttons.filter((b) => b.includes('aria-label="Remove'));
     expect(removes).toHaveLength(2);
     expect(removes[0]).toContain('type="button"');
     expect(removes[0]).toContain('aria-label="Remove question 1"');
-    expect(removes[0]).toContain('<span aria-hidden="true">x</span>');
+    expect(removes[0]).toContain(">Remove</button>");
     expect(removes[1]).toContain('aria-label="Remove question 2"');
+    expect(removes[1]).toContain(">Remove</button>");
+    // The x icon from spec 12 W3 is gone.
+    expect(html).not.toContain('<span aria-hidden="true">x</span>');
+    expect(html).not.toContain("removeIcon");
+  });
+
+  it("keeps the Remove control after the field and before the problem line", () => {
+    const html = render({ questions: ["first"], tooLongIndices: [0] });
+    const row = html.split(/<div class="[^"]*questionRow[^"]*"/)[1] ?? "";
+    expect(row.indexOf("<textarea")).toBeLessThan(
+      row.indexOf("Remove</button>"),
+    );
+    expect(row.indexOf("Remove</button>")).toBeLessThan(
+      row.indexOf(LIVE_COPY.questionTooLong),
+    );
+  });
+
+  it("styles the Remove control as a text control with a 44 px touch target", () => {
+    const css = readFileSync(
+      new URL("./live.module.css", import.meta.url),
+      "utf8",
+    );
+    const body = css.match(/\.removeControl \{[^}]*\}/)?.[0] ?? "";
+    expect(body).toMatch(/min-width:\s*44px/);
+    expect(body).toMatch(/min-height:\s*44px/);
+    expect(body).toMatch(/white-space:\s*nowrap/);
   });
 
   it("keeps a 200-character question whole, with no length limit on the field", () => {
@@ -170,5 +199,33 @@ describe("AuthorQuestions rendering", () => {
   it("shows the too-long message only for the flagged row", () => {
     const html = render({ questions: ["short", "long"], tooLongIndices: [1] });
     expect(html.split(LIVE_COPY.questionTooLong)).toHaveLength(2);
+  });
+});
+
+// Spec 10, C2. Removing a row moves focus to the next row, or to Add a
+// question when the last row went. The rule is focusAfterRemove; the component
+// must use it on every remove, and the rendered Remove name stays exact.
+describe("AuthorQuestions remove focus (spec 10, C2)", () => {
+  const source = readFileSync(
+    new URL("./AuthorQuestions.tsx", import.meta.url),
+    "utf8",
+  );
+
+  it("names the second row's control Remove question 2", () => {
+    const html = render({ questions: ["first", "second"] });
+    expect(html).toContain('aria-label="Remove question 2"');
+  });
+
+  it("moves focus with focusAfterRemove on every removal", () => {
+    expect(source).toContain("focusAfterRemove(questions.length, index)");
+    expect(source).toContain(
+      "textareaRefs.current.get(pendingFocus.index)?.focus()",
+    );
+    expect(source).toContain("addRef.current?.focus()");
+  });
+
+  it("sends focus to the next row, or to Add a question after the last", () => {
+    expect(focusAfterRemove(3, 1)).toEqual({ kind: "row", index: 1 });
+    expect(focusAfterRemove(2, 1)).toEqual({ kind: "add" });
   });
 });

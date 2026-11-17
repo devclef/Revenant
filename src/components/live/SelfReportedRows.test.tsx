@@ -206,3 +206,64 @@ describe("SelfReportedRows blank and partly filled rows (spec 08 later-tasks, R2
     expect(html).not.toContain(LIVE_COPY.selfReportedTextLength);
   });
 });
+
+// W7 (spec 11): a filled own number reads as a Receipt_Row labelled
+// self-reported; a blank row shows none, so nothing about receipts renders.
+describe("SelfReportedRows receipt rows (spec 11, W7)", () => {
+  const BLANK = { name: "", value: "", unit: "", region: "", period: "" };
+  const RENT = {
+    name: "Rent",
+    value: "1200",
+    unit: "per month",
+    region: "your city",
+    period: "2026-09",
+  };
+
+  it("shows no Receipt_Row for a blank row", () => {
+    const html = render({ rows: [BLANK] });
+    expect(html).not.toContain("_selfReceipt_");
+    expect(html).not.toContain(`>${LIVE_COPY.selfReportedTag}</span>`);
+  });
+
+  it("shows a filled row as one Receipt_Row labelled self-reported", () => {
+    const html = render({ rows: [RENT] });
+    expect(html.split("_selfReceipt_").length - 1).toBe(1);
+    expect(html).toContain(`>${LIVE_COPY.selfReportedTag}</span>`);
+    expect(html).toContain("1200 per month");
+    expect(html).toContain(
+      LIVE_COPY.pickerPeriod.replace("{period}", "2026-09"),
+    );
+  });
+
+  it("renders nothing for the Receipt_Row when there are no rows", () => {
+    const html = render({ rows: [] });
+    expect(html).not.toContain("_selfReceipt_");
+  });
+});
+
+// Receipt_Row order for own numbers (spec 11, W7). The name and the
+// self-reported label share the first line. The value, period and region sit
+// on the second, the same order as a picker row (FigurePicker, spec 11 W4).
+describe("SelfReportedRows Receipt_Row order (spec 11, W7)", () => {
+  it("labels the own number self-reported and puts region after the period", () => {
+    const html = render({
+      rows: [
+        {
+          name: "Rent",
+          value: "1200",
+          unit: "per month",
+          region: "your city",
+          period: "2026-09",
+        },
+      ],
+    });
+    const label = html.indexOf(`>${LIVE_COPY.selfReportedTag}</span>`);
+    const value = html.indexOf("1200 per month");
+    const period = html.indexOf("Period:");
+    const region = html.indexOf("your city");
+    expect(label).toBeGreaterThanOrEqual(0);
+    expect(label).toBeLessThan(value);
+    expect(value).toBeLessThan(period);
+    expect(period).toBeLessThan(region);
+  });
+});

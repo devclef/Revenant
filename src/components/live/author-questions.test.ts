@@ -101,8 +101,8 @@ describe("Property 3: empty rows are dropped and only long rows block", () => {
   });
 });
 
-describe("Property 7: removing a question leaves focus on the nearest remaining row, or on Add", () => {
-  it("returns the row now at the removed index, else the row before it, else Add", () => {
+describe("Property 7: removing a question moves focus to the next row, or to Add", () => {
+  it("returns the row now at the removed index, else Add when no row follows", () => {
     fc.assert(
       fc.property(
         fc.integer({ min: 1, max: AUTHOR_QUESTIONS_MAX }),
@@ -111,19 +111,13 @@ describe("Property 7: removing a question leaves focus on the nearest remaining 
           const removedIndex = rawIndex % countBefore;
           const countAfter = countBefore - 1;
           const target = focusAfterRemove(countBefore, removedIndex);
-          if (countAfter === 0) {
+          if (removedIndex >= countAfter) {
+            // The last row went, so no row follows it: focus goes to Add.
             expect(target).toEqual({ kind: "add" });
             return;
           }
-          expect(target.kind).toBe("row");
-          if (target.kind !== "row") return;
-          expect(target.index).toBeGreaterThanOrEqual(0);
-          expect(target.index).toBeLessThan(countAfter);
-          if (removedIndex < countAfter) {
-            expect(target.index).toBe(removedIndex);
-          } else {
-            expect(target.index).toBe(countAfter - 1);
-          }
+          // The next row is now at the removed index.
+          expect(target).toEqual({ kind: "row", index: removedIndex });
         },
       ),
     );
@@ -132,8 +126,9 @@ describe("Property 7: removing a question leaves focus on the nearest remaining 
   it("gives the expected focus for each case", () => {
     expect(focusAfterRemove(1, 0)).toEqual({ kind: "add" });
     expect(focusAfterRemove(2, 0)).toEqual({ kind: "row", index: 0 });
-    expect(focusAfterRemove(2, 1)).toEqual({ kind: "row", index: 0 });
+    expect(focusAfterRemove(2, 1)).toEqual({ kind: "add" });
+    expect(focusAfterRemove(3, 0)).toEqual({ kind: "row", index: 0 });
     expect(focusAfterRemove(3, 1)).toEqual({ kind: "row", index: 1 });
-    expect(focusAfterRemove(3, 2)).toEqual({ kind: "row", index: 1 });
+    expect(focusAfterRemove(3, 2)).toEqual({ kind: "add" });
   });
 });

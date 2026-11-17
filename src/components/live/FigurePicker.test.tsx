@@ -210,10 +210,11 @@ describe("FigurePicker value and source details", () => {
     expect(html).toContain("<dd>30 Oct 2026</dd>");
   });
 
-  it("shows the source name beside the item and the details behind a control", () => {
+  it("keeps the source name in the details behind one tap, not on the row", () => {
     const html = renderWith([REAL], new Map([[REAL.metricId, DETAIL]]));
 
-    expect(html).toContain("Source: U.S. EIA");
+    expect(html).not.toContain("Source: U.S. EIA");
+    expect(html).toContain("<dd>U.S. EIA</dd>");
     expect(html).toContain("<details");
     expect(html).toContain(LIVE_COPY.figureSourceDetails);
     expect(html).toContain("EMM_EPMR_PTE_NUS_DPG");
@@ -474,5 +475,53 @@ describe("FigurePicker region groups (K4)", () => {
     const note = escapeHtml(LIVE_COPY.pickerNote);
     expect(countOf(html, note)).toBe(1);
     expect(html.indexOf(note)).toBeLessThan(html.indexOf(LIVE_COPY.regionUs));
+  });
+});
+
+describe("FigurePicker Receipt_Row (spec 11, W7)", () => {
+  it("renders each figure as one row with a head line and a facts line", () => {
+    const detail: FigureDetail = {
+      value: "3.412",
+      sourceName: "U.S. EIA",
+      seriesId: "EMM_EPMR_PTE_NUS_DPG",
+      sourceUrl: "https://www.eia.gov/series",
+      retrievedAt: "2026-10-30T14:02:11Z",
+      period: "2026-10-26",
+      unit: "USD per gallon",
+      region: "U.S.",
+    };
+    const html = renderToStaticMarkup(
+      createElement(FigurePicker, {
+        series: [REAL],
+        selected: [REAL.metricId],
+        atLimit: false,
+        onToggle: () => {},
+        details: new Map([[REAL.metricId, detail]]),
+      }),
+    );
+    expect(html.split("figureHead").length - 1).toBe(1);
+    expect(html.split("figureFacts").length - 1).toBe(1);
+    expect(html).toContain("Regular gasoline");
+    expect(html).toContain("Value: 3.41 USD per gallon");
+  });
+});
+
+// Receipt_Row order (spec 11, W4). Short_Name is on the first line. The value
+// and unit come next, with the period and region beside them on the second
+// line. Region moved off the name line so the row fits the two-line limit at
+// 1440 by 900 (the layout check reads these lines).
+describe("FigurePicker Receipt_Row order (spec 11, W4)", () => {
+  it("puts the region after the value and period, not beside the name", () => {
+    const html = render([REAL]);
+    const name = html.indexOf("Regular gasoline");
+    const unit = html.indexOf("USD per gallon");
+    const period = html.indexOf("Period:");
+    const region = html.indexOf("U.S.");
+    expect(name).toBeGreaterThanOrEqual(0);
+    expect(name).toBeLessThan(unit);
+    expect(unit).toBeLessThan(period);
+    expect(period).toBeLessThan(region);
+    expect(html.indexOf("figureHead")).toBeLessThan(html.indexOf("figureFacts"));
+    expect(html.indexOf("U.S.")).toBeGreaterThan(html.indexOf("figureFacts"));
   });
 });

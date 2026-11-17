@@ -296,7 +296,8 @@ describe("SealPage passes each figure's value and source into the picker", () =>
       const shown = displayFigureValue(figure.value, figure.unit, figure.region);
       expect(html).toContain(esc(LIVE_COPY.figureValue.replace("{value}", shown.text)));
       expect(html).toContain(esc(`As published: ${figure.value} ${figure.unit}`));
-      expect(html).toContain(esc(LIVE_COPY.figureSource.replace("{source}", figure.source)));
+      // The source name sits in the details list, one tap away (spec 11, W7).
+      expect(html).toContain(`<dd>${esc(figure.source)}</dd>`);
       expect(html).toContain(esc(figure.source_url));
     }
     expect(checked).toBeGreaterThan(0);

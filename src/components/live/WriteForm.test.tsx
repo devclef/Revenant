@@ -24,6 +24,7 @@ import styles from "./live.module.css";
 import type { SealState } from "./seal-machine";
 import { SealPage } from "./SealPage";
 import { PROBLEM_COPY, WriteForm, type WriteFormProps } from "./WriteForm";
+import { shortNameFor } from "@/components/reveal/short-names";
 
 const SERIES = listPickableSeries(DEMO_FIGURES);
 const DIR = join(fileURLToPath(new URL(".", import.meta.url)));
@@ -155,7 +156,7 @@ describe("WriteForm", () => {
 
   it("renders the picker with the series", () => {
     for (const item of SERIES) {
-      expect(html).toContain(item.displayName);
+      expect(html).toContain(shortNameFor(item.metricId, item.displayName));
     }
   });
 

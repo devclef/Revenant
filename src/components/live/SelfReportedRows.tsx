@@ -117,6 +117,27 @@ export function SelfReportedRows({
                 {withNumber(LIVE_COPY.selfReportedRemove, n)}
               </button>
             </div>
+            {isEmptySelfReportedRow(row) ? null : (
+              <div className={styles.selfReceipt}>
+                <p className={styles.selfReceiptHead}>
+                  <span className={styles.figureName}>{row.name}</span>
+                  <span className={styles.figureMeta}>
+                    {LIVE_COPY.selfReportedTag}
+                  </span>
+                </p>
+                <p className={styles.selfReceiptFacts}>
+                  <span className={styles.figureValue} data-user-content="">
+                    {row.value} {row.unit}
+                  </span>
+                  <span className={styles.figureMeta}>
+                    {LIVE_COPY.pickerPeriod.replace("{period}", row.period)}
+                  </span>
+                  <span className={styles.figureMeta} data-user-content="">
+                    {row.region}
+                  </span>
+                </p>
+              </div>
+            )}
             <div className={styles.selfFields}>
               {SELF_REPORTED_FIELDS.map((field) => {
                 const inputId = `${baseId}-${index}-${field}`;

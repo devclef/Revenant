@@ -111,6 +111,9 @@
 
 .heading {
   margin: 0;
+  /* Focus and scrollIntoView land the heading below the fixed Top_Bar. TopBar
+     keeps --topbar-clear at the bar's real height (96 px when it is unset). */
+  scroll-margin-top: calc(var(--topbar-clear, 96px) + 16px);
   color: var(--ink);
   font-size: clamp(1.5rem, 4vw, 2rem);
   font-weight: 800;
