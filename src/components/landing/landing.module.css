@@ -297,7 +297,9 @@
   display: grid;
   grid-template-columns: 2.5rem 1fr;
   gap: 0.25rem 0.75rem;
-  padding: 1rem;
+  /* F2: at least 24 px inside each card at 1440 px. The stacked phone cards
+     keep at least 20 px (this value is larger). */
+  padding: 1.5rem;
   border: 1px solid var(--text);
   border-radius: 8px;
 }
@@ -319,7 +321,8 @@
 
 .ritualLine {
   margin: 0;
-  font-size: 0.95rem;
+  /* F2: body text at least 16 px with line height at least 1.5. */
+  font-size: 1rem;
   line-height: 1.5;
 }
 
@@ -385,8 +388,24 @@
 }
 
 @media (min-width: 1024px) {
+  /* F2: at 1440 px the four cards keep at least 24 px between them. */
   .ritualList {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5rem;
+  }
+}
+
+/* F2: at 1440 px and wider the step number sits above the name and line in
+   one column, so the text gets the full card width (no 2.5 rem number column
+   and no 0.75 rem column gap). Card padding stays at 24 px. */
+@media (min-width: 1440px) {
+  .ritualCard {
+    grid-template-columns: minmax(0, 1fr);
+    column-gap: 0;
+  }
+
+  .ritualNumber {
+    grid-row: auto;
   }
 }
 
@@ -401,23 +420,54 @@
   }
 }
 
-/* H1 step 1: keep the text measure clear of the fixed Ghost at 900 px and
-   wider. The section box keeps the full frame width (up to 1200 px, set in
-   scene.module.css .landingBelowFrame). Only its right padding changes, so
-   the text ends at the Ghost's visible left edge (box left + 12 % inset, the
-   Ghost_Body_Box) minus 1 rem. At 1440 x 900 that is about x=850. */
+/* H1 step 1: the landing Ghost stops being fixed below the hero at 900 px and
+   wider (owner-accepted). The Ghost layer is `position: fixed` in
+   scene.module.css, which this file does not own. Here it is pinned to the top
+   of the document with the height of one viewport, so the first screen looks
+   the same and the Ghost scrolls away with the hero. The sections below then
+   use the full frame width instead of stopping at the Ghost's left edge. */
+@media (min-width: 900px) {
+  /* The containing block is the landing column, which starts 5rem down (the
+     scene's `main` padding-top at 900 px and wider). The negative top cancels
+     that offset, so the Ghost sits where the fixed layer sat at scroll 0. */
+  :global(body:has([data-landing-hero])) :global([data-ghost-layer]) {
+    position: absolute;
+    inset: calc(-1 * 5rem) 0 auto 0;
+    height: 100vh;
+  }
+}
+
+/* H1 step 2: at 900 px and wider each section uses both halves of the frame.
+   The heading (always the first child) takes the left half, and the body
+   takes the right half, stacked in one column. The ritual list spans the full
+   width under the heading, so its cards sit across both halves.
+
+   The Soil strip is fixed to the window, so below-the-fold text scrolls over
+   it. Each section takes the page background (opaque) so no section text sits
+   on the Soil or its glow. The section colour is --text on --bg, as before. */
 @media (min-width: 900px) {
   .section {
-    --section-right: calc(
-      var(--frame-l) + var(--pad) + min(1200px, var(--frame-w) - 2 * var(--pad))
-    );
-    --text-right: calc(
-      var(--ghost-x) - min(50vh, 560px) / 2 + min(50vh, 560px) * 0.12 - 1rem
-    );
-    padding-inline-end: max(
-      0px,
-      calc(var(--section-right) - var(--text-right))
-    );
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    column-gap: 3rem;
+    align-items: start;
+    padding-right: 0;
+    position: relative;
+    z-index: 1;
+    background: var(--bg);
+  }
+
+  .section > :first-child {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .section > * {
+    grid-column: 2;
+  }
+
+  .section > .ritualList {
+    grid-column: 1 / -1;
   }
 }
 

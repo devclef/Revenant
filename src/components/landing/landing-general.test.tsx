@@ -75,15 +75,18 @@ describe("section text measure clear of the Ghost (H1 step 1)", () => {
     expect(rule).toMatch(/width:\s*100%/);
   });
 
-  it("ends the section text at the Ghost's visible left edge at 900 px and wider", () => {
+  it("lets the section text use the full frame at 900 px and wider, and unfixes the Ghost layer below the hero", () => {
     const media =
       landingCss.match(
         /@media \(min-width: 900px\) \{\n  \.section \{([^}]*)\}/,
       )?.[1] ?? "";
-    expect(media).toMatch(/--text-right:\s*calc\(\s*var\(--ghost-x\)/);
-    expect(media).toMatch(/min\(50vh,\s*560px\)\s*\*\s*0\.12/);
-    expect(media).toMatch(/padding-inline-end:\s*max\(\s*0px,\s*calc\(/);
-    expect(media).toMatch(/var\(--section-right\)\s*-\s*var\(--text-right\)/);
+    expect(media).not.toMatch(/--text-right/);
+    expect(media).toMatch(/padding-right:\s*0/);
+    expect(media).toMatch(/background:\s*var\(--bg\)/);
+    expect(media).toMatch(/z-index:\s*1/);
+    expect(landingCss).toMatch(
+      /body:has\(\[data-landing-hero\]\)\) :global\(\[data-ghost-layer\]\) \{\s*position:\s*absolute;/,
+    );
   });
 });
 
