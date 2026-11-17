@@ -187,7 +187,7 @@ describe("reveal layout constants and CSS (spec 08, R3)", () => {
     expect(letterBlock).toContain("@media (max-width: 599.98px)");
     expect(C.LETTER_NARROW_PX).toBe(600);
     expect(letterBlock).toMatch(/\.letterBlock \{\s*padding: 0\.5rem;/);
-    expect(letterBlock).toMatch(/\.paper \{\s*--paper-pad: 0\.875rem;/);
+    expect(letterBlock).toMatch(/\.sheet \{\s*--paper-pad: 0\.875rem;/);
   });
 
   it("lets the long series ID wrap inside the source details", () => {
