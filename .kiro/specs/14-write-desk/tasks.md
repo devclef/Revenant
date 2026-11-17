@@ -356,7 +356,7 @@ Group D (tasks 15 and 16) is the only cuttable work. Whatever is merged on `main
   - Validation: `bash scripts/check.sh`; route budgets after `npm run build`.
   - _Requirements: R1, R2, R3, G2.6_
 
-- [ ] 10. R5.1 to R5.3 · `formatChange` gets a `differenceDigits` option
+- [x] 10. R5.1 to R5.3 · `formatChange` gets a `differenceDigits` option
   - Agent: `data-dev` · Depends on: none · Estimated size: S, ~150 changed lines · Target: 23 November 2026
   - Never cut. This is the only data-dev task in the spec.
   - Scope: `src/lib/figures/format-change.ts` and `src/lib/figures/format-change.test.ts`.
