@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 import { DemoLabel } from "@/components/demo/DemoLabel";
 
@@ -135,6 +135,11 @@ export interface WriteFormProps {
    * `write` or `seal` (spec 09, D2; spec 11, L1.6).
    */
   section?: WriteSection;
+  /**
+   * Section mode `write` only: content placed inside the paper, after the
+   * action row (SealPage passes the Rehearsal_Line here on /demo/live).
+   */
+  footer?: ReactNode;
   /** Section mode: moves to the next step once this step is valid. */
   onNext?: () => void;
   /** Section mode: moves back one step. Omit where Back is not offered. */
@@ -235,6 +240,7 @@ export function WriteForm({
   backupChoice = null,
   onBackupChoice = () => {},
   section = "all",
+  footer = null,
   onNext,
   onBack,
   onCreatePress,
@@ -700,6 +706,8 @@ export function WriteForm({
           </button>
         </div>
       ) : null}
+
+      {section === "write" ? footer : null}
 
       {section === "seal" ? (
         <div className={styles.actions}>

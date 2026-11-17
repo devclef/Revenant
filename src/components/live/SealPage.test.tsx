@@ -364,11 +364,20 @@ describe("SealPage rehearsal line (spec 11, L4.1, L4.3)", () => {
     }
   });
 
-  it("puts no Demo label above the letter field on the Write step", () => {
+  it("puts no Demo label above the letter field, from the Write paper's start", () => {
     const html = renderToStaticMarkup(createElement(SealPage, { ...base, rehearsal: true }));
+    const paperAt = html.indexOf('data-card="live-step-write"');
     const fieldAt = html.indexOf('id="live-letter"');
-    expect(fieldAt).toBeGreaterThan(-1);
-    expect(html.slice(0, fieldAt)).not.toContain(`>${DEMO_COPY.demoLabel}</span>`);
+    expect(paperAt).toBeGreaterThan(-1);
+    expect(fieldAt).toBeGreaterThan(paperAt);
+    const above = html.slice(paperAt, fieldAt);
+    expect(above).not.toContain(`>${DEMO_COPY.demoLabel}</span>`);
+    expect(above).toContain(LIVE_COPY.occasionLegend);
+  });
+
+  it("omits the sealed-in-the-browser sentence from the Write step", () => {
+    const html = renderToStaticMarkup(createElement(SealPage, { ...base, rehearsal: true }));
+    expect(html).not.toContain(LIVE_COPY.intro);
   });
 
   it("shows no rehearsal line without the prop, the default", () => {
