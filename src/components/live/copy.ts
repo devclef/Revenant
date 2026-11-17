@@ -215,6 +215,10 @@ export const LIVE_COPY = {
   liveHeading: "Seal your own letter",
   /** Brand_Copy has no Wait step, so the Live_Stepper takes its name from here. */
   waitStep: "Wait",
+  /** The last step on /demo/live, shown as "Receipts" in the Step_Track. */
+  receiptsStep: "Receipts",
+  /** The phone line under the Step_Track. `{n}` is the step number, `{label}` its name. */
+  stepTrackPhone: "Step {n} of 6 · {label}",
   stepsLabel: "Your progress",
   /** Announced once per step change. `{n}` is the step number, `{total}` the count. */
   stepAnnounce: "Step {n} of {total}: {label}",
