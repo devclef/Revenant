@@ -87,6 +87,19 @@ describe("R1: the letter Stage centres the column at 900 px and wider", () => {
       /\.letterFigures\s*\{[^}]*grid-template-columns/,
     );
   });
+
+  it("makes the letter grid one track at 900 px and wider while the letter is alone", () => {
+    const alone = wideBlockOf(
+      revealCss,
+      ".letterFigures:not(:has(> [data-figures-panel]))",
+    );
+    expect(alone).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\);/);
+  });
+
+  it("marks each figures column in Reveal.tsx with data-figures-panel, the selector the grid rules use", () => {
+    expect(revealTsx.match(/data-figures-panel=""/g)).toHaveLength(2);
+    expect(revealTsx).toMatch(/data-letter-stage=""/);
+  });
 });
 
 describe("R2: each crease is two side segments at 1/3 and 2/3 of the paper height", () => {

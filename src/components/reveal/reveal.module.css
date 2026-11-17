@@ -543,12 +543,19 @@
   min-width: 0;
 }
 
+/* At 900 px and wider, with the letter alone (no figures panel yet), the letter
+   grid is one track, so the letter Stage spans the whole grid and centres its
+   sheet (issue #476, R1). Below 900 px the spec 08 R3.3 stack is unchanged. */
+@media (min-width: 900px) {
+  .letterFigures:not(:has(> [data-figures-panel])) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* At or above 1,200 px (REVEAL_SIDE_BY_SIDE_PX): the Letter_Block on the left,
    the figures beside it. Below 1,200 px the figures stack under the
    Letter_Block (spec 08, R3.1). The two tracks apply only while a figures
-   panel is rendered (stage 3 and later). With the letter alone the grid has
-   one track, so the letter Stage spans the grid and its sheet centres on the
-   Scene_Frame (issue #476, R1). */
+   panel is rendered (stage 3 and later). */
 @media (min-width: 1200px) {
   .letterFigures:has(> [data-figures-panel]) {
     grid-template-columns: minmax(0, 1.4fr) minmax(20rem, 1fr);
