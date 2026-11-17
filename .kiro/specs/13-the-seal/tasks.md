@@ -266,7 +266,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
 
 ### Group L1: the landing seal, target 22 November 2026
 
-- [ ] 8. L1, L3 · Landing seal on the envelope
+- [x] 8. L1, L3 · Landing seal on the envelope
   - Agent: `frontend-dev` · Depends on: 3 · Estimated size: ~600 changed lines · Target: 22 November 2026
   - Never cut. Draws the relief, so it needs task 3's code merged. `src/app/page.tsx` is not edited (platform-dev).
   - Scope: `src/components/landing/HeroEnvelope.tsx` (new), `LandingHero.tsx`, `landing.module.css` (hero rules only), `constants.ts` (`LANDING_SEAL_HASH`), and the `*.test.ts(x)` for each file.
