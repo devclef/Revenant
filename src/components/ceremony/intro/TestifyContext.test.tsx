@@ -272,3 +272,83 @@ describe("TestifyContext: notice once and content order (spec 07 F3.1)", () => {
     expect(phoneRules).not.toMatch(/\.testifyNotice\s*\{[^}]*margin-top/);
   });
 });
+
+// F3.2 (spec 13): the question, its answer control and the control to go on lie
+// inside the First_Viewport at 1440x900 for Maya and Tomás. That is a measured
+// property (layout-check R1, read at scrollY 0 for us-maya and eu-tomas). These
+// tests guard the CSS and markup levers that set it: the notice keeps its one
+// 6 px top margin, and no other Testify line or the block itself gains box
+// space at 600 px and wider.
+describe("TestifyContext: First_Viewport fit at 1440x900 (spec 13 F3.2)", () => {
+  type FitEntry = {
+    key: string;
+    display_name: string;
+    written_as_of: string;
+    opens_at: string;
+  };
+  const fitPersonas = (
+    JSON.parse(
+      readFileSync(
+        resolve(__dirname, "../../../../content/personas/personas.json"),
+        "utf8",
+      ),
+    ) as { personas: FitEntry[] }
+  ).personas.filter((p) => p.key === "us-maya" || p.key === "eu-tomas");
+
+  it("covers both Maya and Tomás", () => {
+    expect(fitPersonas.map((p) => p.display_name)).toEqual(["Maya", "Tomás"]);
+  });
+
+  for (const p of ["Maya", "Tomás"]) {
+    it(`renders ${p}'s notice once and keeps the content in order`, () => {
+      const entry = fitPersonas.find((f) => f.display_name === p);
+      if (!entry) throw new Error(`no persona ${p}`);
+      const html = render({
+        kind: "persona",
+        personaName: entry.display_name,
+        writtenAsOf: entry.written_as_of,
+        opensAt: entry.opens_at,
+      });
+      const notice = CEREMONY_COPY.personaNotice.replace("{name}", p);
+      expect(html.split(notice).length - 1).toBe(1);
+      const parts = [
+        notice,
+        REVEAL_COPY.contextFrom.replace("{name}", p),
+        REVEAL_COPY.sealIntact,
+      ];
+      const positions = parts.map((part) => html.indexOf(part));
+      expect(positions.every((at) => at >= 0)).toBe(true);
+      expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+    });
+  }
+
+  it("keeps the Testify block free of padding and minimum height at 600 px and wider", () => {
+    const block = desktopRules.match(/\.testify \{([^}]*)\}/)?.[1] ?? "";
+    expect(block).not.toMatch(/padding/);
+    expect(block).not.toMatch(/min-height/);
+    expect(block).not.toMatch(/(?<![\w-])height\s*:/);
+  });
+
+  it("adds no box space to the question-side lines at 600 px and wider", () => {
+    for (const cls of [
+      "testifyFrom",
+      "testifySeal",
+      "testifyDates",
+      "testifyMemory",
+    ]) {
+      const body =
+        desktopRules.match(new RegExp(`\\.${cls} \\{([^}]*)\\}`))?.[1] ?? "";
+      expect(body).not.toMatch(/margin-top|padding|min-height/);
+    }
+  });
+
+  it("keeps the Memory_Line at 0.9 rem at 600 px and wider, the smallest line in the block", () => {
+    expect(desktopRules).toMatch(/\.testifyMemory \{[^}]*font-size: 0\.9rem/);
+  });
+
+  it("leaves the 390 x 844 phone rules with no top margin on any Testify line", () => {
+    expect(phoneRules).not.toMatch(
+      /\.testify(Notice|From|Seal|Dates|Memory)\s*\{[^}]*margin-top/,
+    );
+  });
+});
