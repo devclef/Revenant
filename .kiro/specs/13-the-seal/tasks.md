@@ -488,7 +488,7 @@ Group D changes documents only. It adds no feature and is never cut. D2 does not
   - Validation: `bash scripts/check.sh`; `git apply --check tools/qa/patches/spec-12-tasks.patch`.
   - _Requirements: D3.1–D3.3_
 
-- [ ] 20. D5 · Video script matches what merged (after the 27 November freeze)
+- [x] 20. D5 · Video script matches what merged (after the 27 November freeze)
   - Agent: `platform-dev` · Depends on: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18 (each merged or cut) · Estimated size: ~300 changed lines · Target: 28 November 2026
   - Never cut. Starts after the freeze.
   - Scope: `docs/video-script.md` only.
