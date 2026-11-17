@@ -99,3 +99,5 @@ Not in this list:
 - **On screen:** Under the cracked seal, the button "Also fix the fingerprint". Pressing it recomputes the copy's fingerprint and tries again. The result reads "Refused at the authentication tag check. The fingerprint matches, and the encrypted text does not."
 - **Spoken:** "Revenant also recomputes the copy's fingerprint. The copy is still refused, at the check on the encrypted text."
 - **Capture:** `tamper-fixed` at both sizes, with and without reduced motion.
+
+<!-- provenance: grep -ciF over this file for the five Retired_Phrases in the commit c4c2a81 search (the G2.7 copy rules and the O5/L4 patches), case-insensitive: 0 matches for each phrase, 2026-11-17, searched at c4c2a81 -->

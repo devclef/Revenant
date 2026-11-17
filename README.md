@@ -188,3 +188,5 @@ The full runbook is in [docs/agent-loop.md](docs/agent-loop.md).
 ## License
 
 See [LICENSE](LICENSE).
+
+<!-- provenance: grep -ciF over this file for the five Retired_Phrases in the commit c4c2a81 search (the G2.7 copy rules and the O5/L4 patches), case-insensitive: 0 matches for each phrase, 2026-11-17, searched at c4c2a81 -->
