@@ -31,7 +31,7 @@ Revenant is the wax seal, resurrected. A sealed letter comes back out of the dar
 - The ghost is the concept, not decoration: it is your past self. It is the one Halloween figure we allow. It is our own drawing, a plain sheet ghost, never Kiro's logo or mascot.
 - Props stay few and physical: lit soil, the envelope, the wax seal, the letter on warm paper. No desk, candle, parchment texture, moon, gravestones, mounds, crosses or cartoon Halloween props.
 - Typography: a very big, heavy sans for headlines, the same clean sans for data and UI, and a serif for the letter text only.
-- Orange means "you": the main buttons, the wax, the focus ring and the reader's own answer. It never marks a figure, a change or a direction, and it is never text on purple.
+- Orange means "you": the main buttons, the wax, the focus ring, the reader's own answer, the reader's current step on the step track, the press instruction under the seal, the selected backup card, and the numbered question disc (a drop of wax). It never marks a figure, a change or a direction, and it is never text on purple.
 - Text on purple is pure white. Body text and all numbers meet WCAG 2.2 AA contrast on the surface they sit on. Dirt, glow and texture are decoration only and never sit on text.
 - Motion is quick and deliberate. Every sequence can be skipped, and `prefers-reduced-motion` or the calm control turns all decorative motion off.
 - No colour coding that implies a number moved in a good or bad direction.

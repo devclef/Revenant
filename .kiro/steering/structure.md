@@ -49,6 +49,8 @@ Planned layout. Update this file when the structure changes.
 │   │   │   └── scene/       # The Scene: tokens, Top_Bar, light, Soil, Soil_Canvas, Ghost (browser-only canvas chunk)
 │   │   ├── landing/         # Landing sections below the hero: ritual, resurrection, no-seal, and a static Coven strip (one line, two links, no counts). No SampleReceipt.
 │   │   ├── live/            # Live demo UI: write, seal with a passkey, 30-second wait, unlock
+│   │   │   ├── desk/        # The /demo/live Write step: letter sheet, questions, envelope panel, receipt card, fold button
+│   │   │   ├── seal-step/   # The /demo/live Press the seal step: text column, backup cards, links, press status line
 │   │   │   └── occasions.ts # Occasions: letter starters and questions, client-side only, never stored
 │   │   └── ui/              # Shared primitives (buttons, parchment surfaces, typography)
 │   │       └── buttons.module.css  # the shared primary button
