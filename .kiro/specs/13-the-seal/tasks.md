@@ -473,7 +473,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
 
 Group D changes documents only. It adds no feature and is never cut. D2 does not exist; its number is not reused.
 
-- [ ] 19. D3 · Spec 12 ticks as one patch and an evidence list
+- [x] 19. D3 · Spec 12 ticks as one patch and an evidence list
   - Agent: `platform-dev` · Depends on: none · Estimated size: ~200 changed lines · Target: any time, planned 21 November 2026
   - Never cut. `.kiro/**` is owner-only, so the owner applies the patch with `git apply` whenever they like. An agent does not edit `.kiro/**`, and nothing waits for the patch.
   - Scope: `tools/qa/patches/spec-12-tasks.patch` and `tools/qa/patches/spec-12-tasks.evidence.md` (new). `.kiro/specs/12-submission-polish/tasks.md` is not edited by the task.
