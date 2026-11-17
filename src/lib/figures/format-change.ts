@@ -149,10 +149,16 @@ export function formatPeriod(period: string, region: string): string {
  * fraction-digit count of the two input values; the percent is shown with
  * exactly one fraction digit. A positive change is prefixed `+`, a negative one
  * `−` (U+2212), and an unchanged one carries no sign.
+ *
+ * `options.differenceDigits`, when set, replaces that fraction-digit count for
+ * the difference magnitude only. The sign and direction still come from the
+ * exact `result.difference`, so a non-zero difference that rounds to zero keeps
+ * its sign. When the option is absent the output is unchanged.
  */
 export function formatChange(
   result: Extract<ChangeResult, { comparable: true }>,
   region: string,
+  options?: { differenceDigits?: number },
 ): ChangeDisplay {
   // result.difference is already canonical from change.ts (toDecimalString),
   // so zero is exactly "0" and a negative value starts with a hyphen-minus.
@@ -171,7 +177,9 @@ export function formatChange(
     numericSign = "+";
   }
 
-  const diffDigits = maxFractionDigits(result.then.value, result.now.value);
+  const diffDigits =
+    options?.differenceDigits ??
+    maxFractionDigits(result.then.value, result.now.value);
   const differenceText =
     numericSign + formatValue(magnitude(result.difference), region, diffDigits);
 
