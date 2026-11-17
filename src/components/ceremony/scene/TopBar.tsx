@@ -21,7 +21,7 @@
 // Skip (spec 09 C4.4). SceneShell owns its state and passes it in as `sound`.
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState, type RefObject } from "react";
 
 import { CEREMONY_COPY } from "../copy";
 import { PHONE_BELOW_PX } from "../constants";
@@ -120,6 +120,30 @@ export function topBarShowsNotice(
   return stage !== undefined && stageIsAfterRecall(stage);
 }
 
+/**
+ * Publishes the Top_Bar's rendered height as `--topbar-clear` on the document
+ * root, so a heading's scroll-margin-top clears the fixed bar even when the
+ * bar wraps taller than 96 px (a phone with the persona notice). The value
+ * follows the bar through a ResizeObserver and is removed on unmount.
+ */
+function useTopBarClear(headerRef: RefObject<HTMLElement | null>): void {
+  useEffect(() => {
+    const header = headerRef.current;
+    if (!header || typeof ResizeObserver === "undefined") return;
+    const root = document.documentElement;
+    const update = () => {
+      root.style.setProperty("--topbar-clear", `${header.offsetHeight}px`);
+    };
+    update();
+    const observer = new ResizeObserver(update);
+    observer.observe(header);
+    return () => {
+      observer.disconnect();
+      root.style.removeProperty("--topbar-clear");
+    };
+  }, [headerRef]);
+}
+
 export function TopBar({
   personaName,
   demo = true,
@@ -130,6 +154,8 @@ export function TopBar({
   const { mode, setCalm } = useMotion();
   const { hasActive, skipAll } = useSequence();
   const compact = useCompact();
+  const headerRef = useRef<HTMLElement>(null);
+  useTopBarClear(headerRef);
 
   const calmOn = mode === "calm";
   const calmLabel = calmOn ? CEREMONY_COPY.calmOff : CEREMONY_COPY.calmOn;
@@ -142,6 +168,7 @@ export function TopBar({
   const soundIsLast = !hasActive && sound !== undefined;
   return (
     <header
+      ref={headerRef}
       className={styles.topbar}
       data-topbar
       data-compact={compact ? true : undefined}

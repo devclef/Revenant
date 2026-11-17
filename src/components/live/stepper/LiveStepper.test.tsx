@@ -243,3 +243,37 @@ describe("LiveStepper Reveal_Host and Primary_Card (X1)", () => {
     expect(view.host).toBeNull();
   });
 });
+
+describe("LiveStepper heading focus (W8)", () => {
+  const stepperSource = readFileSync(
+    join(process.cwd(), "src/components/live/stepper/LiveStepper.tsx"),
+    "utf8",
+  );
+  const stepperCss = readFileSync(
+    join(process.cwd(), "src/components/live/stepper/stepper.module.css"),
+    "utf8",
+  );
+
+  it("focuses the heading without the browser's own scroll", () => {
+    expect(stepperSource).toContain("heading.focus({ preventScroll: true })");
+  });
+
+  it("scrolls the heading into view after focus, at its start edge", () => {
+    const focusAt = stepperSource.indexOf("heading.focus(");
+    const scrollAt = stepperSource.indexOf("heading.scrollIntoView(");
+    expect(focusAt).toBeGreaterThan(-1);
+    expect(scrollAt).toBeGreaterThan(focusAt);
+    expect(stepperSource).toMatch(/block:\s*"start"/);
+  });
+
+  it("scrolls instantly when Calm is in force, and smoothly otherwise", () => {
+    expect(stepperSource).toContain("useCalmInForce()");
+    expect(stepperSource).toMatch(/calm \? "instant" : "smooth"/);
+  });
+
+  it("offsets the heading by the Top_Bar clearance plus 16 px", () => {
+    expect(stepperCss).toMatch(
+      /\.heading \{[^}]*scroll-margin-top:\s*calc\(var\(--topbar-clear, 96px\) \+ 16px\)/,
+    );
+  });
+});

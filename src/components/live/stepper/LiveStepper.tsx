@@ -71,16 +71,27 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
   // The Reveal_Host element. It is set once on mount and never changes, so the
   // portal target stays the same (spec 12, X1).
   const [host, setHost] = useState<HTMLDivElement | null>(null);
+  // Calm is on under reduced motion or the judge's Calm control. Calm scrolls
+  // without animation.
+  const calm = useCalmInForce();
   // Keeps the focused field and its Next above the on-screen keyboard (P9).
-  useKeepInVisualViewport(primaryRef, useCalmInForce());
+  useKeepInVisualViewport(primaryRef, calm);
   const previousStep = useRef<LiveStep>(state.step);
 
   useEffect(() => {
     // Skip the first render, so a page load does not steal focus.
     if (!movesFocus(previousStep.current, state.step)) return;
     previousStep.current = state.step;
-    headingRef.current?.focus();
-  }, [state.step]);
+    const heading = headingRef.current;
+    if (!heading) return;
+    // Focus without the browser's own scroll, then scroll the heading to its
+    // scroll-margin-top, so it clears the fixed Top_Bar.
+    heading.focus({ preventScroll: true });
+    heading.scrollIntoView({
+      behavior: calm ? "instant" : "smooth",
+      block: "start",
+    });
+  }, [state.step, calm]);
 
   const view: StepView = {
     step: state.step,
