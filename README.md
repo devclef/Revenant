@@ -64,8 +64,8 @@ This is not a slide deck. It runs. The sealing-and-opening ceremony, the live pa
 - **Real figures** — adapters for the US EIA and the European Commission Weekly Oil Bulletin, each returning figures with full provenance and never inventing, interpolating or currency-converting anything.
 - **The database** — PostgreSQL with `BEFORE UPDATE OR DELETE` triggers that make sealed rows physically immutable. Application code *cannot* change a sealed letter; the trigger raises an exception.
 
-Three spec folders still have open tasks, so the build is not complete as of 14 November 2026: 08-judge-polish, 09-demo-polish and 12-submission-polish. The other ten spec folders have no open task. See `.kiro/specs/` for the task-level status.
-<!-- Status, checked 14 November 2026 01:42 CET at commit 7deb74c (the commit before this README change): grep -cF -- '- [ ]' .kiro/specs/*/tasks.md gives 1 in 08-judge-polish, 1 in 09-demo-polish, 22 in 12-submission-polish, and 0 in the other ten spec folders (13 folders in all). Use -F: the pattern '- [ ]' without -F is a bracket expression and matches nothing. -->
+Two spec folders still have open tasks, so the build is not complete as of 17 November 2026: 12-submission-polish and 13-the-seal. The other eleven spec folders have no open task. See `.kiro/specs/` for the task-level status.
+<!-- Status, checked 17 November 2026 at commit 0c06d87 (the commit before this README change): grep -cE '^\s*- \[ \]' .kiro/specs/*/tasks.md gives 20 in 12-submission-polish, 31 in 13-the-seal, and 0 in the other eleven spec folders (13 folders in all). The anchored pattern counts only real checkbox lines. An unanchored grep -F -- '- [ ]' also matches prose that mentions the checkbox syntax (08-judge-polish line 590 and 09-demo-polish line 22), so it wrongly counts those two folders as open. -->
 
 ## How the seal works
 
