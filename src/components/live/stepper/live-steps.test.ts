@@ -66,19 +66,19 @@ describe("step order and names", () => {
   it("gives the Step_Track one state per step, with the current step marked", () => {
     expect(stepTrackStates(0)).toEqual([
       "current",
-      "future",
-      "future",
-      "future",
-      "future",
-      "future",
+      "todo",
+      "todo",
+      "todo",
+      "todo",
+      "todo",
     ]);
     expect(stepTrackStates(3)).toEqual([
       "done",
       "done",
       "done",
       "current",
-      "future",
-      "future",
+      "todo",
+      "todo",
     ]);
     expect(stepTrackStates(5)).toEqual([
       "done",

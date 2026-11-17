@@ -104,7 +104,7 @@ describe("Step_Track stylesheet (S1.1, S1.2)", () => {
     );
   });
 
-  it("sizes the future dot 8px in #3a3350 with a #8f86ad label", () => {
+  it("sizes the todo dot 8px in #3a3350 with a #8f86ad label", () => {
     expect(ruleBody(".dot")).toMatch(/background-color:\s*#3a3350/);
     expect(ruleBody(".dot")).toMatch(/height:\s*8px/);
     expect(ruleBody(".label")).toMatch(/color:\s*#8f86ad/);

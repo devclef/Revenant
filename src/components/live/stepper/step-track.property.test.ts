@@ -2,7 +2,7 @@
 //
 // For any step of /demo/live, the Step_Track has six items in order, exactly
 // one of them is current, the items before it are done and the items after it
-// are future. The track also gives exactly one aria-current="step" in markup.
+// are todo. The track also gives exactly one aria-current="step" in markup.
 // Validates spec 14 S1.1, S1.3, S1.5 and Q2.5.
 
 import { createElement } from "react";
@@ -36,7 +36,7 @@ describe("Property 1: the Step_Track marks one current step", () => {
     );
   });
 
-  it("marks the steps before the current one done and those after future", () => {
+  it("marks the steps before the current one done and those after todo", () => {
     fc.assert(
       fc.property(stepArb, (step) => {
         const index = stepIndex(step);
@@ -44,7 +44,7 @@ describe("Property 1: the Step_Track marks one current step", () => {
 
         states.forEach((state, position) => {
           if (position < index) expect(state).toBe("done");
-          if (position > index) expect(state).toBe("future");
+          if (position > index) expect(state).toBe("todo");
         });
       }),
       { numRuns: 100 },

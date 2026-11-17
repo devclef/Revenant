@@ -8,12 +8,12 @@
 export const STEP_TRACK_COUNT = 6;
 
 /** The state of one dot on the Step_Track (spec 14, S1). */
-export type StepTrackState = "done" | "current" | "future";
+export type StepTrackState = "done" | "current" | "todo";
 
 /**
  * The Step_Track state of every step, in order, for the step at `currentStep`
  * (counted from 0). Steps before it are done, the step itself is current, and
- * the steps after it are future. Exactly one entry is current.
+ * the steps after it are todo. Exactly one entry is current.
  */
 export function stepTrackStates(
   currentStep: number,
@@ -22,6 +22,6 @@ export function stepTrackStates(
   return Array.from({ length: stepCount }, (_, position) => {
     if (position < currentStep) return "done";
     if (position === currentStep) return "current";
-    return "future";
+    return "todo";
   });
 }

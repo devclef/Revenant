@@ -64,14 +64,14 @@ describe("Step_Indicator", () => {
     expect(html).toContain('data-state="current"');
   });
 
-  it("gives the earlier steps the done state and the later ones future", () => {
+  it("gives the earlier steps the done state and the later ones todo", () => {
     // Six steps since issue #385: Testify is the fourth, so three are done and
-    // two (Break the seal, Receipts) are future.
+    // two (Break the seal, Receipts) are todo.
     const html = renderToStaticMarkup(
       createElement(StepTrack, { current: "testify" }),
     );
     expect(html.match(/data-state="done"/g)).toHaveLength(3);
-    expect(html.match(/data-state="future"/g)).toHaveLength(2);
+    expect(html.match(/data-state="todo"/g)).toHaveLength(2);
   });
 
   it("sits under the data-step-indicator hook and names the list", () => {
