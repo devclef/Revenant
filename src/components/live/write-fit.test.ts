@@ -57,24 +57,23 @@ describe("Write step fallback 1: one-line question rows", () => {
     expect(field).not.toMatch(/(?:^|;)\s*height:\s*44px/);
   });
 
-  it("keeps the label and the remove icon on one line", () => {
+  it("keeps the label and the Remove control on one line", () => {
     const nowrap = ruleBody(
       block,
-      ".questionRow .label,\n  .questionRow .removeIcon",
+      ".questionRow .label,\n  .questionRow .removeControl",
     );
     expect(nowrap).toMatch(/white-space:\s*nowrap/);
   });
 
-  it("sizes the Remove_Icon at 44 px below 600 px and 32 px from 600 px", () => {
-    expect(ruleBody(css, ".removeIcon")).toMatch(/width:\s*44px/);
-    // mediaBlock finds the first 600 px query, which belongs to the occasion
-    // chips. The icon's own query is the one that opens on .removeIcon.
-    const iconWide = css.slice(
-      css.indexOf("@media (min-width: 600px) {\n  .removeIcon"),
+  it("keeps the Remove control at a 44 px touch target at every width", () => {
+    const control = ruleBody(css, ".removeControl");
+    expect(control).toMatch(/min-width:\s*44px/);
+    expect(control).toMatch(/min-height:\s*44px/);
+    expect(control).toMatch(/white-space:\s*nowrap/);
+    // The control is never shrunk: no width-based query sets it below 44 px.
+    expect(css).not.toMatch(
+      /\.removeControl\s*\{[^}]*(?:width|height):\s*32px/,
     );
-    expect(iconWide.length).toBeGreaterThan(0);
-    expect(ruleBody(iconWide, ".removeIcon")).toMatch(/width:\s*32px/);
-    expect(ruleBody(iconWide, ".removeIcon")).toMatch(/height:\s*32px/);
   });
 });
 

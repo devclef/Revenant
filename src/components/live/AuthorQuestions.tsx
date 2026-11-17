@@ -130,11 +130,11 @@ export function AuthorQuestions({
             />
             <button
               type="button"
-              className={styles.removeIcon}
+              className={styles.removeControl}
               aria-label={withNumber(LIVE_COPY.authorQuestionRemove, n)}
               onClick={() => pressRemove(index)}
             >
-              <span aria-hidden="true">{LIVE_COPY.removeIconGlyph}</span>
+              {LIVE_COPY.authorQuestionRemoveText}
             </button>
             {isTooLong ? (
               <p id={problemId} className={styles.problem}>

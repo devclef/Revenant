@@ -1285,25 +1285,26 @@
 }
 
 /*
- * The Remove_Icon: a plain outlined x. It is 44 px square below 600 px, the
- * touch target, and 32 px from 600 px. Its border is --ink, which the paper
- * sets, so the border contrasts with the paper well above 3:1.
+ * The Remove control: a text button labelled Remove, outlined in --ink. It is
+ * at least 44 px square at every width, the touch target, and its label never
+ * wraps, so it stays on one line. Its border is --ink, which the paper sets, so
+ * the border contrasts with the paper well above 3:1.
  */
-.removeIcon {
+.removeControl {
   align-self: start;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
-  width: 44px;
-  height: 44px;
   min-width: 44px;
   min-height: 44px;
-  padding: 0;
+  margin: 0;
+  padding: 0 0.75rem;
   font-family: var(--font-sans);
-  font-size: 1.125rem;
+  font-size: 0.9375rem;
   font-weight: 600;
-  line-height: 1;
+  line-height: 1.2;
+  white-space: nowrap;
   color: var(--ink);
   background-color: transparent;
   border: 1px solid var(--ink);
@@ -1311,21 +1312,9 @@
   cursor: pointer;
 }
 
-.removeIcon:focus-visible {
+.removeControl:focus-visible {
   outline: 2px solid var(--ink);
   outline-offset: 2px;
-}
-
-@media (min-width: 600px) {
-  .removeIcon {
-    width: 32px;
-    height: 32px;
-    min-width: 32px;
-    min-height: 32px;
-    /* Centres the 32 px icon on the 44 px first line of the textarea. */
-    margin-top: 0.375rem;
-    font-size: 1rem;
-  }
 }
 
 /*
@@ -1395,7 +1384,7 @@
   }
 
   .questionRow .label,
-  .questionRow .removeIcon {
+  .questionRow .removeControl {
     white-space: nowrap;
   }
 
@@ -1411,7 +1400,7 @@
     grid-column: 2;
   }
 
-  .questionRow .removeIcon {
+  .questionRow .removeControl {
     grid-row: 1;
     grid-column: 3;
   }

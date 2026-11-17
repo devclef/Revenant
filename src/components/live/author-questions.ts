@@ -48,16 +48,16 @@ export function questionsForSeal(rows: readonly string[]): string[] {
 export type FocusAfterRemove = { kind: "row"; index: number } | { kind: "add" };
 
 /**
- * The row that takes focus after removing the row at `removedIndex` from a list
- * of `countBefore` rows. It is the row now at `removedIndex`. When the last row
- * was removed, it is the row before it. When no rows remain, it is Add.
+ * The control that takes focus after removing the row at `removedIndex` from a
+ * list of `countBefore` rows. It is the next row, which is now at
+ * `removedIndex`. When the removed row was the last one, no row follows, so
+ * focus goes to Add a question.
  */
 export function focusAfterRemove(
   countBefore: number,
   removedIndex: number,
 ): FocusAfterRemove {
   const countAfter = Math.max(0, countBefore - 1);
-  if (countAfter === 0) return { kind: "add" };
   if (removedIndex < countAfter) return { kind: "row", index: removedIndex };
-  return { kind: "row", index: countAfter - 1 };
+  return { kind: "add" };
 }

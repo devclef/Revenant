@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
@@ -120,16 +122,42 @@ describe("AuthorQuestions rendering", () => {
     expect(html).not.toContain("<input");
   });
 
-  it("gives the icon button an aria-label and an aria-hidden x", () => {
+  it("gives each Remove button a name with its row number and visible text Remove", () => {
     const html = render({ questions: ["first", "second"] });
     const buttons = html.match(/<button[^>]*>[\s\S]*?<\/button>/g) ?? [];
-    // Only the row remove icons carry a "Remove" label. The Add button does not.
+    // Only the row Remove controls carry a "Remove question" name. Add does not.
     const removes = buttons.filter((b) => b.includes('aria-label="Remove'));
     expect(removes).toHaveLength(2);
     expect(removes[0]).toContain('type="button"');
     expect(removes[0]).toContain('aria-label="Remove question 1"');
-    expect(removes[0]).toContain('<span aria-hidden="true">x</span>');
+    expect(removes[0]).toContain(">Remove</button>");
     expect(removes[1]).toContain('aria-label="Remove question 2"');
+    expect(removes[1]).toContain(">Remove</button>");
+    // The x icon from spec 12 W3 is gone.
+    expect(html).not.toContain('<span aria-hidden="true">x</span>');
+    expect(html).not.toContain("removeIcon");
+  });
+
+  it("keeps the Remove control after the field and before the problem line", () => {
+    const html = render({ questions: ["first"], tooLongIndices: [0] });
+    const row = html.split(/<div class="[^"]*questionRow[^"]*"/)[1] ?? "";
+    expect(row.indexOf("<textarea")).toBeLessThan(
+      row.indexOf("Remove</button>"),
+    );
+    expect(row.indexOf("Remove</button>")).toBeLessThan(
+      row.indexOf(LIVE_COPY.questionTooLong),
+    );
+  });
+
+  it("styles the Remove control as a text control with a 44 px touch target", () => {
+    const css = readFileSync(
+      new URL("./live.module.css", import.meta.url),
+      "utf8",
+    );
+    const body = css.match(/\.removeControl \{[^}]*\}/)?.[0] ?? "";
+    expect(body).toMatch(/min-width:\s*44px/);
+    expect(body).toMatch(/min-height:\s*44px/);
+    expect(body).toMatch(/white-space:\s*nowrap/);
   });
 
   it("keeps a 200-character question whole, with no length limit on the field", () => {
