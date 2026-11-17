@@ -113,6 +113,7 @@ function propsFor(
     }),
     formula: createElement(FormulaLine, {
       result: change,
+      shown: formatChange(change, REGION),
       seriesId: then.series_id,
       sourceUrls: [then.source_url],
     }),
@@ -200,6 +201,7 @@ function receiptPropsFor(then: Official, now: Official, markValue?: string): Rec
     }),
     formula: createElement(FormulaLine, {
       result: change,
+      shown: formatChange(change, REGION),
       seriesId: then.series_id,
       sourceUrls: [then.source_url],
     }),

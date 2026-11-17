@@ -173,6 +173,7 @@ export function FigureEntry({
         formula={
           <FormulaLine
             result={shownChange}
+            shown={changeText}
             seriesId={then.series_id}
             sourceUrls={sourceUrls}
           />

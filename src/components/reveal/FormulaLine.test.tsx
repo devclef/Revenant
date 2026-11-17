@@ -5,7 +5,12 @@ import { describe, expect, it } from "vitest";
 import { displayChangeResult, rescaledChangeInputs } from "./change-display";
 import { REVEAL_COPY } from "./copy";
 import { FormulaLine } from "./FormulaLine";
-import { CHANGE_FORMULA_ID, computeChange, type ChangeResult } from "@/lib/figures";
+import {
+  CHANGE_FORMULA_ID,
+  computeChange,
+  formatChange,
+  type ChangeResult,
+} from "@/lib/figures";
 import type { FigureV1 } from "@/lib/seal-format";
 
 /**
@@ -52,7 +57,12 @@ function render(
   seriesId: string = THEN.series_id,
 ): string {
   return renderToStaticMarkup(
-    createElement(FormulaLine, { result, seriesId, sourceUrls }),
+    createElement(FormulaLine, {
+      result,
+      shown: formatChange(result, THEN.region),
+      seriesId,
+      sourceUrls,
+    }),
   );
 }
 

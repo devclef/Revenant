@@ -149,6 +149,19 @@ describe("FiguresThenNow, live and real same-period card (spec 14 R7.1)", () => 
     expect(html).not.toContain(REVEAL_COPY.notComparable);
   });
 
+  it("shows the sealed period in both rows and the source once in the source control", () => {
+    const html = render(true, "live");
+    const period = formatPeriod(SAME_THEN.period, SAME_THEN.region);
+    // Both rows carry the same period: the then row and the now row.
+    const thenRow = html.slice(html.indexOf('data-receipt-row="then"'));
+    const nowRow = html.slice(html.indexOf('data-receipt-row="now"'));
+    expect(thenRow).toContain(period);
+    expect(nowRow).toContain(period);
+    // The source and the series ID are shown in the source control.
+    expect(html).toContain(NOW_FIGURE.source);
+    expect(html).toContain(NOW_FIGURE.series_id);
+  });
+
   it("keeps the same card with allowSamePeriod off for a real letter", () => {
     // Same_Figure on a real letter depends on the kind, not on allowSamePeriod.
     const html = render(false, "real");

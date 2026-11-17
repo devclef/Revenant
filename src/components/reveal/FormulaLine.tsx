@@ -1,4 +1,4 @@
-import { CHANGE_FORMULA_ID } from "@/lib/figures";
+import { CHANGE_FORMULA_ID, type ChangeDisplay } from "@/lib/figures";
 import { REVEAL_COPY } from "./copy";
 import { readableFormula, type ComparableResult } from "./formula";
 import styles from "./reveal.module.css";
@@ -19,13 +19,20 @@ import styles from "./reveal.module.css";
 export type FormulaLineProps = {
   /** The comparable change, with the display inputs already applied (R5.4). */
   result: ComparableResult;
+  /** The change as ChangeLine prints it: the result ends the formula (R5.4). */
+  shown: ChangeDisplay;
   /** The sealed series ID, shown when no input carries a source_url. */
   seriesId: string;
   /** The source_url of each input figure. Absent entries are skipped. */
   sourceUrls: ReadonlyArray<string | undefined>;
 };
 
-export function FormulaLine({ result, seriesId, sourceUrls }: FormulaLineProps) {
+export function FormulaLine({
+  result,
+  shown,
+  seriesId,
+  sourceUrls,
+}: FormulaLineProps) {
   const urls = [
     ...new Set(
       sourceUrls.filter((url): url is string => url !== undefined && url !== ""),
@@ -35,7 +42,7 @@ export function FormulaLine({ result, seriesId, sourceUrls }: FormulaLineProps) 
   return (
     <div className={styles.change} data-change="">
       <p className={styles.formula} data-formula={CHANGE_FORMULA_ID}>
-        {REVEAL_COPY.formulaLabel}: {readableFormula(result)}
+        {REVEAL_COPY.formulaLabel}: {readableFormula(result, shown)}
       </p>
       {urls.length === 0 ? (
         <p className={styles.period}>

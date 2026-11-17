@@ -56,6 +56,7 @@ function props(withFormula: boolean): ReceiptCardProps {
     formula: withFormula
       ? createElement(FormulaLine, {
           result: change,
+          shown: formatChange(change, THEN.region),
           seriesId: THEN.series_id,
           sourceUrls: [SOURCE_URL],
         })
@@ -73,6 +74,16 @@ describe("ReceiptCard formula slot (R4.2)", () => {
     expect(formulaAt).toBeGreaterThan(detailsEnd);
     // The formula is not inside the details element.
     expect(html.slice(0, detailsEnd)).not.toContain(REVEAL_COPY.formulaLabel);
+  });
+
+  it("draws the formula visible while the Source details are closed", () => {
+    const html = renderToStaticMarkup(createElement(ReceiptCard, props(true)));
+    // The details element is rendered without the open attribute, so its
+    // contents are hidden. The formula sits after it, so it is never hidden.
+    expect(html).toContain("<details");
+    expect(html).not.toMatch(/<details[^>]*\sopen/);
+    const formulaAt = html.indexOf(`data-formula=`);
+    expect(formulaAt).toBeGreaterThan(html.indexOf("</details>"));
   });
 
   it("keeps the check link outside the Source details when a formula is drawn", () => {
