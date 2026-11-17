@@ -7,6 +7,7 @@ import {
   hasSomethingToTestify,
   selfReportedPeriodOk,
   selfReportedRowProblems,
+  selfReportedRowsOk,
   selfReportedTextOk,
   selfReportedValueOk,
   validateWrite,
@@ -352,5 +353,46 @@ describe("a letter with a question seals with no figure, in any mode", () => {
       mode: "demo",
     });
     expect(problems).not.toContain("nothing_to_testify");
+  });
+});
+
+// Example (spec 11, W4 and W7): a blank own-number row is left alone and does
+// not block Next or sealing, while a partly filled row still does.
+describe("blank own-number row does not block Next (example)", () => {
+  const BLANK_ROW = {
+    name: "",
+    value: "",
+    unit: "",
+    region: "",
+    period: "",
+  };
+
+  it("passes the rows check for a blank row beside a good row", () => {
+    expect(selfReportedRowsOk([BLANK_ROW, GOOD_ROW], SEALING_DAY)).toBe(true);
+  });
+
+  it("passes the rows check for a whitespace-only blank row", () => {
+    const whitespace = { ...BLANK_ROW, name: "  ", value: " " };
+    expect(selfReportedRowsOk([whitespace], SEALING_DAY)).toBe(true);
+  });
+
+  it("does not add a problem to validateWrite for a blank row", () => {
+    const base = {
+      text: "A letter",
+      metricIds: [],
+      questions: ["What did the rent cost that month?"],
+      warningTicked: true,
+      sealingDay: SEALING_DAY,
+      mode: "demo" as const,
+    };
+    const without = validateWrite({ ...base, selfReported: [] });
+    const withBlank = validateWrite({ ...base, selfReported: [BLANK_ROW] });
+    expect(withBlank).toEqual(without);
+    expect(withBlank).toEqual([]);
+  });
+
+  it("still blocks for a partly filled row", () => {
+    const partly = { ...BLANK_ROW, name: "Rent" };
+    expect(selfReportedRowsOk([partly], SEALING_DAY)).toBe(false);
   });
 });
