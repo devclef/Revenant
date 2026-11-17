@@ -2,6 +2,7 @@ import Link from "next/link";
 
 import { displayFigureValue } from "@/components/reveal/display-figure";
 import { REVEAL_COPY } from "@/components/reveal/copy";
+import { shortNameFor } from "@/components/reveal/short-names";
 import { formatShortDate } from "@/components/ui/letter-date";
 
 import {
@@ -144,38 +145,42 @@ export function FigurePicker({
             disabled={disabled}
             onChange={() => onToggle(item.metricId)}
           />
-          <span className={styles.figureName}>{item.displayName}</span>
-          {shown !== undefined ? (
-            <span className={styles.figureValue}>
-              {LIVE_COPY.figureValue.replace("{value}", shown.text)}{" "}
-              {shown.unit}
+          {/* Receipt_Row, line one: Short_Name, region, fixture label. */}
+          <span className={styles.figureHead}>
+            <span className={styles.figureName}>
+              {shortNameFor(item.metricId, item.displayName)}
             </span>
-          ) : null}
-          <span className={styles.figureMeta}>
-            {item.unit} · {item.region}
+            <span className={styles.figureMeta}>{item.region}</span>
+            {item.isFixture ? (
+              <span className={styles.fixture}>{LIVE_COPY.fixtureLabel}</span>
+            ) : null}
           </span>
-          <span className={styles.figureMeta}>
-            {LIVE_COPY.pickerPeriod.replace(
-              "{period}",
-              formatShortDate(item.latestPeriod),
+          {/* Receipt_Row, line two: value and unit, then period, then the
+              retrieved date of a fallback. The source sits behind one tap. */}
+          <span className={styles.figureFacts}>
+            {shown !== undefined ? (
+              <span className={styles.figureValue}>
+                {LIVE_COPY.figureValue.replace("{value}", shown.text)}{" "}
+                {shown.unit}
+              </span>
+            ) : (
+              <span className={styles.figureMeta}>{item.unit}</span>
             )}
-          </span>
-          {detail !== undefined ? (
             <span className={styles.figureMeta}>
-              {LIVE_COPY.figureSource.replace("{source}", detail.sourceName)}
-            </span>
-          ) : null}
-          {isFallback ? (
-            <span className={styles.figureMeta}>
-              {LIVE_COPY.pickerRetrieved.replace(
-                "{date}",
-                formatShortDate(item.fallbackRetrievedAt ?? ""),
+              {LIVE_COPY.pickerPeriod.replace(
+                "{period}",
+                formatShortDate(item.latestPeriod),
               )}
             </span>
-          ) : null}
-          {item.isFixture ? (
-            <span className={styles.fixture}>{LIVE_COPY.fixtureLabel}</span>
-          ) : null}
+            {isFallback ? (
+              <span className={styles.figureMeta}>
+                {LIVE_COPY.pickerRetrieved.replace(
+                  "{date}",
+                  formatShortDate(item.fallbackRetrievedAt ?? ""),
+                )}
+              </span>
+            ) : null}
+          </span>
         </label>
         {detail !== undefined ? (
           <details className={styles.sourceDetails}>

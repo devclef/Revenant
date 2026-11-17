@@ -161,3 +161,13 @@ describe("WriteForm wiring for Add a receipt", () => {
     );
   });
 });
+
+describe("ReceiptsDisclosure closed state (spec 11, W6)", () => {
+  it("shows only its summary while closed, with every receipt line inside the details", () => {
+    const html = render("loading");
+    const summaryEnd = html.indexOf("</summary>");
+    expect(summaryEnd).toBeGreaterThan(-1);
+    expect(html.indexOf(LIVE_COPY.receiptsLoading)).toBeGreaterThan(summaryEnd);
+    expect(html.indexOf("data-own-numbers")).toBeGreaterThan(summaryEnd);
+  });
+});

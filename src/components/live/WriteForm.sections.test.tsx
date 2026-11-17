@@ -158,3 +158,30 @@ describe("WriteForm sections (spec 09, D2)", () => {
     expect(html).toContain(LIVE_COPY.createButton);
   });
 });
+
+// W6 (spec 11): one Add a receipt control, beside Next, and no Receipts link.
+describe("WriteForm receipt action (spec 11, W6)", () => {
+  it("offers one Add a receipt control in the action row, beside Next", () => {
+    const html = render({ section: "write", onNext: () => {} });
+    expect(html.split(LIVE_COPY.receiptsAction).length - 1).toBe(1);
+    const row = html.indexOf("writeActions");
+    const action = html.indexOf(LIVE_COPY.receiptsAction);
+    const next = html.indexOf(LIVE_COPY.nextButton);
+    expect(row).toBeGreaterThan(-1);
+    expect(action).toBeGreaterThan(row);
+    expect(next).toBeGreaterThan(action);
+  });
+
+  it("has no Receipts link anywhere on the write step", () => {
+    const html = render({ section: "write", onNext: () => {} });
+    expect(html).not.toMatch(/<a\b[^>]*>\s*Receipts\s*<\/a>/);
+    expect(html).not.toMatch(/<a\b[^>]*>[^<]*Receipts[^<]*<\/a>/);
+  });
+
+  it("keeps the Receipts_Disclosure closed by default", () => {
+    const html = render({ section: "write", onNext: () => {} });
+    const match = html.match(/<details[^>]*>/);
+    expect(match).not.toBeNull();
+    expect(match?.[0]).not.toMatch(/\sopen(\s|=|>)/);
+  });
+});

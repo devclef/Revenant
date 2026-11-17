@@ -252,6 +252,8 @@ export const LIVE_COPY = {
   selfReportedHint:
     "Add numbers only you know, such as your own rent. They are sealed as you type them and labelled self-reported. Revenant does not check them against any source.",
   selfReportedAdd: "Add a number of your own",
+  /** The label on each own-number Receipt_Row. Own numbers are never official. */
+  selfReportedTag: "self-reported",
   /** `{n}` is the row number, starting at 1. */
   selfReportedRowLabel: "Number {n}",
   selfReportedRemove: "Remove number {n}",

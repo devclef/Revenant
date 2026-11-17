@@ -166,11 +166,10 @@
   list-style: none;
 }
 
+/* A Receipt_Row has no card border of its own. It sits on the paper and
+   takes its width from the list. */
 .figureItem {
   min-width: 0;
-  border: 1px solid var(--ink-soft);
-  border-radius: 3px;
-  background-color: var(--paper-deep);
 }
 
 .figureLabel {
@@ -181,14 +180,27 @@
   column-gap: 0.75rem;
   align-items: start;
   min-height: 44px;
-  padding: 0.75rem;
+  padding: 0.5rem 0.75rem;
   cursor: pointer;
   font-family: var(--font-sans);
   color: var(--ink);
 }
 
+/* Receipt_Row lines: name and region on one line, value and period on the
+   next. They wrap onto more lines only on a narrow screen. */
+.figureHead,
+.figureFacts {
+  grid-column: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.75rem;
+  min-width: 0;
+}
+
 .checkbox {
-  grid-row: 1 / span 4;
+  grid-row: 1 / span 2;
+
   width: 1.375rem;
   height: 1.375rem;
   min-width: 1.375rem;
@@ -1354,6 +1366,22 @@
 
 .selfField {
   min-width: 0;
+}
+
+/* The own-number Receipt_Row: the same two lines as a picker row. */
+.selfReceipt {
+  margin: 0 0 0.5rem;
+  font-family: var(--font-sans);
+  color: var(--ink);
+}
+
+.selfReceiptHead,
+.selfReceiptFacts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 0.75rem;
+  margin: 0;
 }
 
 @media (min-width: 40rem) {
