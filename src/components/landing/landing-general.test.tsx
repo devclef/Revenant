@@ -82,6 +82,8 @@ describe("section text measure clear of the Ghost (H1 step 1)", () => {
       )?.[1] ?? "";
     expect(media).not.toMatch(/--text-right/);
     expect(media).toMatch(/padding-right:\s*0/);
+    expect(media).toMatch(/background:\s*var\(--bg\)/);
+    expect(media).toMatch(/z-index:\s*1/);
     expect(landingCss).toMatch(
       /body:has\(\[data-landing-hero\]\)\) :global\(\[data-ghost-layer\]\) \{\s*position:\s*absolute;/,
     );

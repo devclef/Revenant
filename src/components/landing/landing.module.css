@@ -440,7 +440,11 @@
 /* H1 step 2: at 900 px and wider each section uses both halves of the frame.
    The heading (always the first child) takes the left half, and the body
    takes the right half, stacked in one column. The ritual list spans the full
-   width under the heading, so its cards sit across both halves. */
+   width under the heading, so its cards sit across both halves.
+
+   The Soil strip is fixed to the window, so below-the-fold text scrolls over
+   it. Each section takes the page background (opaque) so no section text sits
+   on the Soil or its glow. The section colour is --text on --bg, as before. */
 @media (min-width: 900px) {
   .section {
     display: grid;
@@ -448,6 +452,9 @@
     column-gap: 3rem;
     align-items: start;
     padding-right: 0;
+    position: relative;
+    z-index: 1;
+    background: var(--bg);
   }
 
   .section > :first-child {
