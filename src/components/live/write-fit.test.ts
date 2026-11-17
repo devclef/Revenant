@@ -85,6 +85,31 @@ describe("Write step: one Writing_Column, no two-column grid", () => {
     expect(column).toMatch(/box-sizing:\s*border-box;/);
   });
 
+  it("keeps the paper within the column plus 80 px: the desktop side padding is at most 40 px", () => {
+    // The panel's side padding is clamp(1.25rem, 4vw, 2.5rem), at most 40 px a side.
+    expect(ruleBody(css, ".panel")).toMatch(
+      /padding:\s*clamp\(1\.25rem, 4vw, 2\.5rem\);/,
+    );
+  });
+
+  it("puts the Letter_Field before the question rows and the receipts in the form", () => {
+    const field = writeForm.indexOf('id="live-letter"');
+    const questions = writeForm.indexOf("<AuthorQuestions");
+    const receipts = writeForm.indexOf("<ReceiptsDisclosure");
+    expect(field).toBeGreaterThan(0);
+    expect(field).toBeLessThan(questions);
+    expect(field).toBeLessThan(receipts);
+  });
+
+  it("keeps the letter field inside its column", () => {
+    const letter = ruleBody(
+      readFileSync(resolve(here, "letter-field.module.css"), "utf8"),
+      ".letterField",
+    );
+    expect(letter).toMatch(/max-width:\s*100%;/);
+    expect(letter).toMatch(/box-sizing:\s*border-box;/);
+  });
+
   it("has no two-column grid rule for the occasion control", () => {
     expect(css).not.toContain(".liveWrite:has(> .occasions)");
     expect(ruleBody(css, ".liveWrite")).not.toMatch(/grid-template-columns/);
