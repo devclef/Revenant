@@ -1,5 +1,6 @@
-import type { DisplayRescale } from "@/lib/figures";
+import type { ChangeResult, DisplayRescale } from "@/lib/figures";
 import { rescaleForDisplay } from "@/lib/figures";
+import { parseDecimal, sub, toDecimalString } from "@/lib/figures/decimal";
 import { REVEAL_COPY } from "./copy";
 
 /**
@@ -20,6 +21,27 @@ export type ChangeDisplayInputs = {
 function trimFraction(value: string): string {
   if (!value.includes(".")) return value;
   return value.replace(/0+$/, "").replace(/\.$/, "");
+}
+
+/**
+ * The comparable change with the display inputs in place of the sealed values
+ * (C8.4). The difference is the exact now − then of the display values. The
+ * percent is unchanged, because a power-of-ten rescale leaves the ratio the same.
+ * The sealed result is not modified.
+ */
+export function displayChangeResult(
+  result: Extract<ChangeResult, { comparable: true }>,
+  inputs: ChangeDisplayInputs,
+): Extract<ChangeResult, { comparable: true }> {
+  const difference = toDecimalString(
+    sub(parseDecimal(inputs.now), parseDecimal(inputs.then)),
+  );
+  return {
+    ...result,
+    then: { ...result.then, value: inputs.then },
+    now: { ...result.now, value: inputs.now },
+    difference,
+  };
 }
 
 /**

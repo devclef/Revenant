@@ -25,3 +25,26 @@ const FUEL_DISPLAY_UNITS: ReadonlySet<string> = new Set([
 export function displayPrecisionForUnit(unit: string): number | undefined {
   return FUEL_DISPLAY_UNITS.has(unit) ? DISPLAY_PRECISION_FUEL : undefined;
 }
+
+/**
+ * The decimals for the difference of a change, shown in `shownUnit` (R5.2).
+ * A unit with a display precision uses it. Any other unit uses the larger
+ * fraction-digit count of the two shown values, so the difference keeps the
+ * precision the reader sees in the Then and Now rows.
+ */
+export function differenceDigitsFor(
+  shownUnit: string,
+  thenShown: string,
+  nowShown: string,
+): number {
+  return (
+    displayPrecisionForUnit(shownUnit) ??
+    Math.max(fractionDigitsOf(thenShown), fractionDigitsOf(nowShown))
+  );
+}
+
+// The decimals in a canonical decimal string. "3.6" has 1, "3" has 0.
+function fractionDigitsOf(value: string): number {
+  const point = value.indexOf(".");
+  return point === -1 ? 0 : value.length - point - 1;
+}

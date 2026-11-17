@@ -101,8 +101,8 @@ describe("Property 15: the card keeps its order, and each figure shows its perio
           at(`data-receipt-row="then"`),
           at(`data-receipt-row="now"`),
           at(`data-line-label="answer"`),
-          at(`${REVEAL_COPY.formulaLabel}:`),
           at(`<summary>${REVEAL_COPY.sourceSummary}</summary>`),
+          at(`${REVEAL_COPY.formulaLabel}:`),
         ];
         for (const position of positions) expect(position).toBeGreaterThan(-1);
         expect([...positions].sort((a, b) => a - b)).toEqual(positions);

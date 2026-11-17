@@ -13,6 +13,7 @@ import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 
 import { ChangeLine } from "./ChangeLine";
+import { FormulaLine } from "./FormulaLine";
 import { ReceiptCard, type ReceiptCardProps, type ReceiptFigure } from "./ReceiptCard";
 import { REVEAL_COPY } from "./copy";
 import { displayFigureValue } from "./display-figure";
@@ -21,6 +22,7 @@ import { receiptFigureOf, receiptSourceOf } from "./FigureLine";
 import { SHORT_NAME_TABLE, shortNameFor } from "./short-names";
 import {
   computeChange,
+  formatChange,
   formatPeriod,
   formatValue,
 } from "@/lib/figures";
@@ -104,7 +106,16 @@ function propsFor(
     now: receiptFigure(now, NOW_LABEL),
     nowNote: branch === "fallback" ? "Bundled fallback figure for this series." : undefined,
     numberLine: createElement("div", { "data-number-line": "" }),
-    change: createElement(ChangeLine, { result: change, region: REGION, then, now }),
+    change: createElement(ChangeLine, {
+      changeText: formatChange(change, REGION),
+      then,
+      now,
+    }),
+    formula: createElement(FormulaLine, {
+      result: change,
+      seriesId: then.series_id,
+      sourceUrls: [then.source_url],
+    }),
   };
 }
 
@@ -182,7 +193,16 @@ function receiptPropsFor(then: Official, now: Official, markValue?: string): Rec
     unit: then.unit,
     then: receiptFigureOf(then, "then", "persona"),
     now: receiptFigureOf(now, "now", "persona"),
-    change: createElement(ChangeLine, { result: change, region: REGION, then, now }),
+    change: createElement(ChangeLine, {
+      changeText: formatChange(change, REGION),
+      then,
+      now,
+    }),
+    formula: createElement(FormulaLine, {
+      result: change,
+      seriesId: then.series_id,
+      sourceUrls: [then.source_url],
+    }),
     source: receiptSourceOf(then, "Regular gasoline"),
   };
 }

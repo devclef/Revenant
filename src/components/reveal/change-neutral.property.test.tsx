@@ -123,7 +123,11 @@ function renderChange(
   now: Readonly<FigureV1>,
 ): string {
   return renderToStaticMarkup(
-    createElement(ChangeLine, { result, region: then.region, then, now }),
+    createElement(ChangeLine, {
+      changeText: formatChange(result, then.region),
+      then,
+      now,
+    }),
   );
 }
 

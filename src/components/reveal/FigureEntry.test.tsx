@@ -69,8 +69,8 @@ describe("FigureEntry draws one Receipt_Card in the C3.1 order (spec 09 C3.1)", 
       at(`data-role="then"`),
       at(`data-role="now"`),
       at(`data-line-label="answer"`),
-      at(`${REVEAL_COPY.formulaLabel}:`),
       at(`<summary>${REVEAL_COPY.sourceSummary}</summary>`),
+      at(`${REVEAL_COPY.formulaLabel}:`),
     ];
     for (const index of order) expect(index).toBeGreaterThan(-1);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
