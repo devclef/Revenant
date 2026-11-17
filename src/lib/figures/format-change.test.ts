@@ -154,6 +154,68 @@ describe("formatChange", () => {
   });
 });
 
+describe("formatChange differenceDigits", () => {
+  it("keeps the sign of a non-zero difference that rounds to zero", () => {
+    // 3.001 - 3.000 = 0.001, which is 0.00 at 2 digits, but the direction is
+    // still "rose" and the sign is still "+", taken from the exact difference.
+    const result = comparableChange(
+      official({ value: "3.000", period: "2024-09" }),
+      official({ value: "3.001", period: "2026-09" }),
+    );
+
+    const display = formatChange(result, "U.S.", { differenceDigits: 2 });
+
+    expect(display.direction).toBe("rose");
+    expect(display.difference).toBe("+0.00");
+  });
+
+  it("shows an exact zero difference as 0.00 with no sign and 'unchanged'", () => {
+    const result = comparableChange(
+      official({ value: "3.00", period: "2024-09" }),
+      official({ value: "3.00", period: "2026-09" }),
+    );
+
+    const display = formatChange(result, "U.S.", { differenceDigits: 2 });
+
+    expect(display.direction).toBe("unchanged");
+    expect(display.difference).toBe("0.00");
+    expect(display.difference.includes("+")).toBe(false);
+    expect(display.difference.includes(MINUS)).toBe(false);
+    expect(display.difference.includes("-")).toBe(false);
+  });
+
+  it("leaves every existing case unchanged when the option is omitted", () => {
+    const cases: Array<[FigureV1, FigureV1]> = [
+      [
+        official({ value: "2.00", period: "2024-09" }),
+        official({ value: "5.00", period: "2026-09" }),
+      ],
+      [
+        official({ value: "9.00", period: "2024-09" }),
+        official({ value: "6.00", period: "2026-09" }),
+      ],
+      [
+        official({ value: "3.00", period: "2024-09" }),
+        official({ value: "3.00", period: "2026-09" }),
+      ],
+      [
+        official({ value: "2.5", period: "2024-09" }),
+        official({ value: "5.125", period: "2026-09" }),
+      ],
+      [
+        official({ value: "0", period: "2024-09" }),
+        official({ value: "5.00", period: "2026-09" }),
+      ],
+    ];
+
+    for (const [then, now] of cases) {
+      const result = comparableChange(then, now);
+      const withoutOption = formatChange(result, "U.S.");
+      expect(formatChange(result, "U.S.", {})).toEqual(withoutOption);
+    }
+  });
+});
+
 describe("formatValue", () => {
   it("renders a decimal string at its own precision when no digits are forced", () => {
     expect(formatValue("3.412", "U.S.")).toBe("3.412");
