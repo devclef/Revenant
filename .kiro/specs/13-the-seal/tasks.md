@@ -421,7 +421,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
   - Validation: `bash scripts/check.sh`; route budgets after `npm run build`.
   - _Requirements: F3.1–F3.4_
 
-- [ ] 16. F4 · Live Testify has its ghost and room
+- [x] 16. F4 · Live Testify has its ghost and room
   - Agent: `frontend-dev` · Depends on: 9 · Estimated size: ~300 changed lines · Target: 27 November 2026
   - Never cut.
   - Scope: `src/components/live/stepper/LiveWaitStep.tsx` (draw `LiveGhost` for `testify` too), `src/components/ceremony/intro/intro.module.css` (the bare section's top padding only), and the `*.test.ts(x)` for each file.
