@@ -331,7 +331,7 @@ Group D (tasks 15 and 16) is the only cuttable work. Whatever is merged on `main
 
 ### Group R: the persona Read step and the receipts, target 23 to 25 November 2026
 
-- [ ] 9. R1 to R3 · Reproduce, the Read step column, the creases and the two buttons
+- [x] 9. R1 to R3 · Reproduce, the Read step column, the creases and the two buttons
   - Agent: `frontend-dev` · Depends on: none · Estimated size: M, ~600 changed lines · Target: 24 November 2026
   - Never cut.
   - Scope: `src/components/ceremony/letter/LetterBlock.tsx`, `LetterBlock.module.css`; `src/components/ceremony/ceremony.module.css` (the letter Stage rule only); `src/components/reveal/Reveal.tsx` (button classes only), `reveal.module.css` (`.outlineButton`); and the `*.test.ts(x)` for each file.
