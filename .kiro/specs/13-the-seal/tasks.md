@@ -519,7 +519,7 @@ Group D changes documents only. It adds no feature and is never cut. D2 does not
   - Validation: `bash scripts/check.sh`.
   - _Requirements: D4.1–D4.5_
 
-- [ ] 22. D1 · Recount of README and video script numbers at the Final_Commit
+- [x] 22. D1 · Recount of README and video script numbers at the Final_Commit
   - Agent: `platform-dev` · Depends on: 21 · Estimated size: ~150 changed lines · Target: 30 November 2026
   - Never cut. Repeated at the new Final_Commit if any Part 1 PR merges after it (D1.5).
   - Scope: `README.md`, `docs/video-script.md`.
