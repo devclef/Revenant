@@ -110,6 +110,14 @@
     order: 1;
   }
 
+  /* The drawn Landing_Ghost bottom is at 72vh (measured 608 px at 390x844). The
+     calls to action start at 553 px in this flow (seal box bottom 537 px plus the
+     1rem gap), so the margin lifts them to ghost bottom + 20 px. It is zero on
+     shorter screens, where the actions already clear the ghost. */
+  .actions {
+    margin-top: max(0px, calc(72vh - 533px));
+  }
+
   /* The drawn Landing_Ghost is narrower here, so its body clears the Hero_Sentence.
      The width variable belongs to the shared Scene placement (scene.module.css),
      which this file does not own. The selector only matches the landing Ghost. */
@@ -139,7 +147,7 @@
 }
 
 .sealFrame :global([data-seal-hash]) {
-  transform: translate(-32px, -42px) scale(2);
+  transform: translate(-32px, -32px) scale(2);
 }
 
 /* The wax glow behind the seal. It sits inside the seal box only (inset 0), so

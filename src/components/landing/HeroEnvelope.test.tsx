@@ -61,7 +61,7 @@ describe("HeroEnvelope seal size (landing.module.css)", () => {
 
   it("scales the seal by 2 about its origin, centred on the flap tip", () => {
     expect(css).toMatch(
-      /\.sealFrame :global\(\[data-seal-hash\]\) \{\s*transform: translate\(-32px, -42px\) scale\(2\);\s*\}/,
+      /\.sealFrame :global\(\[data-seal-hash\]\) \{\s*transform: translate\(-32px, -32px\) scale\(2\);\s*\}/,
     );
   });
 });

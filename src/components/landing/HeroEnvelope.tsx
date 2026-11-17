@@ -7,9 +7,9 @@
 // to no letter (see constants.ts).
 //
 // The box is sized in landing.module.css: the envelope is at most 420 px wide,
-// and the seal inside it is 120 user units, which is 140 CSS px at 390 px wide
-// and 168 CSS px at 1440 px wide. Nothing here is a canvas, an image or a
-// script.
+// and the seal inside it is scaled by 2 from its 64-unit SVG. Measured in
+// Chromium, it renders at 165.6 CSS px at 1440 px wide and 125.4 CSS px at
+// 390 px wide. Nothing here is a canvas, an image or a script.
 
 import type { ReactElement } from "react";
 
