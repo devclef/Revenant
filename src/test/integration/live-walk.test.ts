@@ -56,6 +56,7 @@ import {
   checkStepHeadingClearOfTopBar,
   checkPasskeyCount,
   checkPasskeyTotal,
+  checkQuickPressAddsNone,
   checkSealMarks,
   checkTamperRunNoPasskey,
   countPasskeyCalls,
@@ -951,6 +952,16 @@ function fiveStageActions(run: WalkRun): readonly StageAction[] {
           sealChecks.push(checkEarlyRelease(early, credentials.length));
         }
         await pressSealEnvelope(c, run);
+        // Q1.2: a second quick press while the passkey prompt is open adds no
+        // prompt. Read the total on either side of that press.
+        const beforeQuick = await readPasskeyCounts(c.page);
+        await c.page
+          .getByRole("button", { name: PRESS_COPY.name, exact: true })
+          .click();
+        const afterQuick = await readPasskeyCounts(c.page);
+        sealChecks.push(
+          checkQuickPressAddsNone(beforeQuick.total, afterQuick.total),
+        );
         await c.page
           .locator('[data-live-step="created"]')
           .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
