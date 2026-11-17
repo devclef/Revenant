@@ -371,7 +371,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
   function writeForm(nav?: WriteNav) {
     return (
       <WriteForm
-  section={nav?.section}
+        section={nav?.section}
         footer={nav?.footer}
         onNext={nav?.onNext}
         onBack={nav?.onBack}
