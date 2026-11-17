@@ -371,7 +371,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
   - Validation: `bash scripts/check.sh`; route budgets after `npm run build` (`/` at most 160 kB).
   - _Requirements: L2.1–L2.4_
 
-- [ ] 13. L2 · `page.tsx` stops passing the backdrop ghost (platform half)
+- [x] 13. L2 · `page.tsx` stops passing the backdrop ghost (platform half)
   - Agent: `platform-dev` · Depends on: 12 · Estimated size: ~150 changed lines · Target: 26 November 2026
   - **Cuttable, cut order 2.** Cut with task 12.
   - Scope: `src/app/page.tsx`, `src/lib/landing-backdrop*` (only the ghost the page passes), and the `*.test.ts(x)` for each file.
