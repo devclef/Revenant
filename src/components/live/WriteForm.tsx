@@ -25,6 +25,7 @@ import styles from "./live.module.css";
 import letterField from "./letter-field.module.css";
 import { OccasionPicker } from "./OccasionPicker";
 import { PressEnvelope } from "./press/PressEnvelope";
+import { PRESS_COPY } from "./press/copy";
 import { applyOccasion, occasionPlaceholder, type OccasionDraft, type OccasionId } from "./occasions";
 import { letterFieldHeightPx } from "./phone";
 import { type PrfHint } from "./prf-hint";
@@ -413,10 +414,13 @@ export function WriteForm({
   const pressBlocked =
     !inCreated && (!formReady || backupChoice === null || inputBlocked);
   // Only the choose-first line shows while no option is picked (P1.5). Once an
-  // option is picked, a blocked input leaves the press without a line, so the
-  // choose-first copy never reads as the reason. Setting_State keeps its own line.
+  // option is picked and the press is blocked by the fields, the fix-fields line
+  // shows instead, so the status line is never blank and never reads as "choose
+  // first". Setting_State keeps its own line.
   const pressLine =
-    !inCreated && backupChoice !== null ? "" : undefined;
+    !inCreated && backupChoice !== null && pressBlocked
+      ? PRESS_COPY.fixFields
+      : undefined;
 
   const pressButton = (
     <button

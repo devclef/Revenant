@@ -462,7 +462,11 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
 function stepHeading(step: LiveStep): ReactNode {
   if (step === "write" || step === "seal") {
     return (
-      <h1 className={styles.liveHeading} data-step-heading="" tabIndex={-1}>
+      <h1
+        className={`${styles.liveHeading} ${styles.cardHeading}`}
+        data-step-heading=""
+        tabIndex={-1}
+      >
         {stepName(step)}
       </h1>
     );
