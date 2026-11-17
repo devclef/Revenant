@@ -98,6 +98,24 @@ describe("stepShotName", () => {
     ]);
   });
 
+  it("pins the walk's step names in order, with press-held and setting after seal and tamper last", () => {
+    expect([...WALK_STEP_NAMES]).toEqual([
+      "write",
+      "write-receipts",
+      "seal",
+      "press-held",
+      "setting",
+      "wait",
+      "unlock",
+      "testify",
+      "marks",
+      "letter",
+      "figures",
+      "close",
+      "tamper",
+    ]);
+  });
+
   it("adds the -reduced suffix before .png when reduced motion is on", () => {
     expect(
       stepShotName({
