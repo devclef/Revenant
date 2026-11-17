@@ -66,6 +66,27 @@ describe("R1: the letter Stage centres the column at 900 px and wider", () => {
   it("keeps the phone layout below 900 px: the sheet has no width rule outside the 900 px block", () => {
     expect(blockOf(letterCss, ".sheet")).not.toMatch(/width:/);
   });
+
+  it("uses the two-track letter grid only at 1,200 px and up, while a figures panel is rendered", () => {
+    const twoTrack =
+      /@media \(min-width:\s*1200px\)\s*\{\s*\.letterFigures:has\(>\s*\[data-figures-panel\]\)\s*\{([^}]*)\}/.exec(
+        revealCss,
+      );
+    expect(twoTrack).not.toBeNull();
+    expect(twoTrack?.[1]).toMatch(
+      /grid-template-columns:\s*minmax\(0,\s*1\.4fr\)\s*minmax\(20rem,\s*1fr\);/,
+    );
+  });
+
+  it("sets no two-track template on the letter grid when the letter is alone", () => {
+    const withoutPanelRule = revealCss.replace(
+      /\.letterFigures:has\(>\s*\[data-figures-panel\]\)\s*\{[^}]*\}/,
+      "",
+    );
+    expect(withoutPanelRule).not.toMatch(
+      /\.letterFigures\s*\{[^}]*grid-template-columns/,
+    );
+  });
 });
 
 describe("R2: each crease is two side segments at 1/3 and 2/3 of the paper height", () => {
