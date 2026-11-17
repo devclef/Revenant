@@ -103,6 +103,20 @@ describe("landing page hero markup (B1)", () => {
     expect(html).not.toMatch(/ghost[- ]envelope/i);
   });
 
+  it("draws exactly one ghost, the one in the hero envelope", () => {
+    // The fixed backdrop ghost is gone. The hero's HeroEnvelope is the only
+    // ghost on `/`, so the page has one ghost pit, and it sits inside the hero.
+    const html = renderPage();
+    expect(countOf(html, "data-ghost-pit")).toBe(1);
+    expect(countOf(html, 'id="ghost-body-landing"')).toBe(0);
+
+    const heroStart = html.indexOf("data-landing-hero");
+    const ghostAt = html.indexOf("data-ghost-pit");
+    expect(heroStart).toBeGreaterThan(-1);
+    expect(ghostAt).toBeGreaterThan(heroStart);
+    expect(ghostAt).toBeLessThan(html.indexOf('id="ritual-title"'));
+  });
+
   it("links the How_Page exactly once", () => {
     expect(countOf(render(), `href="${HOW_HREF}"`)).toBe(1);
   });
