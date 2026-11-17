@@ -65,3 +65,17 @@ describe("HeroEnvelope seal size (landing.module.css)", () => {
     );
   });
 });
+
+describe("HeroEnvelope ghost (L2)", () => {
+  it("draws one decorative sheet Ghost before the envelope", () => {
+    expect(html.match(/data-hero-pit/g)).toHaveLength(1);
+    expect(html).toContain("data-hero-ghost");
+    expect(html.indexOf("data-hero-ghost")).toBeLessThan(
+      html.indexOf("data-envelope-state"),
+    );
+  });
+
+  it("uses its own gradient id", () => {
+    expect(html).toContain('id="ghost-body-hero"');
+  });
+});

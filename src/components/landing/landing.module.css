@@ -146,6 +146,48 @@
   width: min(100%, 420px);
 }
 
+/* The sheet Ghost behind the envelope (issue #433, L2). It fills the seal box
+   top to bottom and is 8 % wider than the envelope frame, so its sides reach
+   around the envelope. It is clipped to the box, so it never reaches the h1, a
+   control or the sections below. It sits behind the envelope and passes pointer
+   events through. */
+.heroGhost {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  z-index: 0;
+  width: calc(min(100%, 420px) * 1.08);
+  transform: translateX(-50%);
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.heroGhost :global([data-ghost-pit][data-hero-pit]) {
+  position: absolute;
+  inset: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  transform: none;
+  animation-duration: 0s;
+  animation-delay: 0s;
+}
+
+.heroGhost :global([data-hero-pit]) > div {
+  width: 100%;
+}
+
+.heroGhost :global([data-hero-pit]) :global([data-ghost-bob]) {
+  animation-duration: 0s;
+  animation-delay: 0s;
+}
+
+.sealFrame {
+  position: relative;
+  z-index: 1;
+}
+
 .sealFrame :global([data-seal-hash]) {
   transform: translate(-32px, -32px) scale(2);
 }
