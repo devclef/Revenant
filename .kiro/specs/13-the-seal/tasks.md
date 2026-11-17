@@ -356,7 +356,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
 
 ### Group L2: the ghost holding the seal (Cuttable), target 27 November 2026
 
-- [ ] 12. L2 · The ghost behind the envelope, holding it (frontend half)
+- [x] 12. L2 · The ghost behind the envelope, holding it (frontend half)
   - Agent: `frontend-dev` · Depends on: 8 · Estimated size: ~350 changed lines · Target: 26 November 2026
   - **Cuttable, cut order 2 (both halves, tasks 12 and 13).** If cut, the hero keeps the ghost behind the envelope without the holding pose, and L1 still holds. It draws the relief, so it also needs task 8, which needs task 3.
   - Scope: `src/components/landing/HeroEnvelope.tsx`, `LandingHero.tsx`, `landing.module.css` (hero rules), and the `*.test.ts(x)` for each file. `src/app/page.tsx` is task 13.
