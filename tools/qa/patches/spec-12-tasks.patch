@@ -1,0 +1,83 @@
+--- a/.kiro/specs/12-submission-polish/tasks.md
++++ b/.kiro/specs/12-submission-polish/tasks.md
+@@ -103,7 +103,7 @@
+   - Scope: `src/lib/figures/same-figure.ts` (new), `src/lib/figures/index.ts` (export only), and the `*.test.ts` for each file above. `computeChange`, `format-change.ts` and `decimal.ts` are not edited.
+   - Design sections: "Z1. `isSameFigure`", "Single_Figure_View" (the diagram), "Error Handling" (unparseable value, revised figure).
+   - Acceptance:
+-    - [ ] 2.1 Implement `isSameFigure(then, now)`
++    - [x] 2.1 Implement `isSameFigure(then, now)`
+       - Returns true when both figures are `kind: "official"`, `source`, `series_id`, `unit`, `region` and `period` are equal strings, and the values are equal as exact decimals (`isZero(sub(parseDecimal(a), parseDecimal(b)))`). No tolerance, no rounding, no `Number` (Z1.1, Z1.5).
+       - An unparseable value returns false, so the existing `computeChange` path decides (Z1 Error Handling).
+       - A revised figure (same period, different value) is not a Same_Figure. A different period is not a Same_Figure, so a zero change across two periods is still computed (Z1.3, Z1.4).
+@@ -142,7 +142,7 @@
+   - Scope: `src/components/live/stepper/live-steps.ts`, `src/components/live/stepper/LiveStepper.tsx`, `src/components/live/stepper/stepper.module.css` (only if six items need a rule), `src/components/live/SealPage.tsx` (or the path that holds it on `main`), and the `*.test.ts(x)` for each file above.
+   - Design sections: "Stage to step", "Phone step names", "X4. Six steps", "Data Models" (Live_Stepper state).
+   - Acceptance:
+-    - [ ] 4.1 Six steps and the `STAGE` action
++    - [x] 4.1 Six steps and the `STAGE` action
+       - `LIVE_STEPS` is `write, seal, wait, testify, break, receipts`. `LIVE_STEP_NAMES` takes "Break the seal" from `CEREMONY_COPY.steps[1]` (X4.1).
+       - `stepForStage(stage)` is a pure function: `marks` and `seal` give `break`; `letter`, `figures` and `close` give `receipts`; earlier Stages give `null`. `stepForFlowPhase` keeps `testify` for `recall`, `submitting` and `submit_failed` and returns `null` for `reveal` (X4.7).
+       - The reducer handles `STAGE` by storing the Stage and applying `GOTO` to its step in one update. `GOTO` still moves forward only. Back is never offered after the seal is stored (X4.6).
+@@ -172,7 +172,7 @@
+   - Scope: `src/components/reveal/receipt-kind.ts` (new), `src/components/reveal/ReceiptCard.tsx`, `src/components/reveal/FiguresThenNow.tsx`, `src/components/reveal/copy.ts` (add `nothingToCompare` only), `src/components/reveal/reveal.module.css` (only if the card needs a rule), and the `*.test.ts(x)` for each file above. `computeChange` and its `allowSamePeriod` option are not edited.
+   - Design sections: "Single_Figure_View", "Z2. The Single_Figure_View", "Data Models" (Receipt kind), "Copy" (`nothingToCompare`).
+   - Acceptance:
+-    - [ ] 5.1 `receiptKindFor` and the Single_Figure_View card
++    - [x] 5.1 `receiptKindFor` and the Single_Figure_View card
+       - `receiptKindFor(then, now, change)` returns `"no_now"` with no now figure, `"single"` exactly when `isSameFigure` is true, otherwise `"compared"` or `"not_comparable"` as `computeChange` gives today. A revised figure takes the not-comparable card (Z1.3, Z1.4).
+       - `FiguresThenNow` switches on it per figure. A Same_Figure card and a compared card may share a list; each Same_Figure card prints its own Nothing_To_Compare_Line (Z2.7, Z2.8).
+       - `ReceiptCard` takes a `single` prop and draws the Short_Name heading, "Your answer" once, the one figure row (value at Display_Precision, unit, period, region, provenance), the line "This is the same record as the one you sealed, so there is nothing to compare yet." and the source control. No "Then:" or "Now:" labels, no Number_Line, no change, no percentage, no formula, no direction word (Z2.1–Z2.3).
+@@ -183,7 +183,7 @@
+       - **Property 4: A figure gets the Single_Figure_View if and only if it is a Same_Figure**
+       - Include a zero change across two periods (`compared`) and a revision (`not_comparable`).
+       - **Validates: Requirements Z1.3, Z1.4, Z2.7**
+-    - [ ]* 5.3 Write property test for the Single_Figure_View markup
++    - [x]* 5.3 Write property test for the Single_Figure_View markup
+       - **Property 5: The Single_Figure_View shows the figure once and prints no change**
+       - Assert none of `0.000`, `0.0%`, `unchanged`, `rose`, `fell`, the formula element, a Number_Line, or a Then and Now label pair.
+       - **Validates: Requirements Z2.1, Z2.2, Z2.3, Z2.4, Z2.5, Z2.10**
+@@ -246,7 +246,7 @@
+   - Scope: `src/components/live/AuthorQuestions.tsx`, `src/components/live/author-questions.ts`, `src/components/live/copy.ts` (`authorQuestionRemoved`, `authorQuestionRemove`), `src/components/live/live.module.css`, and the `*.test.ts(x)` for each file above.
+   - Design sections: "W3. Question rows", "Data Models" (Write draft helpers), "Copy".
+   - Acceptance:
+-    - [ ] 8.1 Compact rows, Remove_Icon and focus after removal
++    - [x] 8.1 Compact rows, Remove_Icon and focus after removal
+       - Each row is one line: a small "Question {n}" label, an auto-sizing `textarea` (`rows=1`, grows with its text, `resize: none`), and the Remove_Icon. A 200-code-point question is fully visible with no ellipsis or horizontal scroll at 1440×900 and 390×844 (W3.1, W3.2).
+       - The Remove_Icon is a `button type="button"` with an `aria-hidden` "×" and `aria-label` from `authorQuestionRemove`, no visible text, 44×44 px below 600 px and 32×32 px above, border at 3:1 or better against paper (W3.3–W3.5, W3.9).
+       - `focusAfterRemove(countBefore, removedIndex)` is a pure function in `author-questions.ts`, returning the nearest remaining row (the row now at that index, else the one before) or `{ kind: "add" }` when none remain. `AuthorQuestions` uses it and sets a polite live region to "Question {n} removed." (W3.6).
+@@ -270,7 +270,7 @@
+   - Scope: `src/components/live/WriteForm.tsx`, `src/components/live/ReceiptsDisclosure.tsx`, `src/components/live/SelfReportedRows.tsx`, `src/components/live/form.ts`, `src/components/live/build-payload.ts`, `src/components/live/write-draft.ts`, `src/components/live/copy.ts` (`receiptsSummary`, `receiptsAction`), `src/components/live/live.module.css`, and the `*.test.ts(x)` for each file above.
+   - Design sections: "W5. The action row", "W6. Blank own number", "Data Models" (Write draft), "Copy".
+   - Acceptance:
+-    - [ ] 9.1 Action row, Receipts_Action and blank own-number rows
++    - [x] 9.1 Action row, Receipts_Action and blank own-number rows
+       - The last row is `display: flex; justify-content: flex-end; gap: 0.75rem`, with the Receipts_Action first in the DOM and Next second, so Next is at the bottom right and the tab order follows the reading order. Below 600 px the row stacks in DOM order (the Receipts_Action, then Next), both 44 px tall and full width (W5.1, W5.5, W5.6). The design keeps DOM order rather than reorder with CSS.
+       - The Receipts_Action reads "Add a receipt" and is a secondary outline control; Next is the only primary button (W5.2). The `summary` is renamed "Receipts".
+       - `ReceiptsDisclosure` accepts an `openRequest` counter. When it changes the native `details` opens and focus moves, with `preventScroll`, to the first focusable control inside (the first figure checkbox when ready, else the first own-number control). The `summary` still opens it from the keyboard (W5.3, W5.4).
+@@ -297,14 +297,14 @@
+   - Scope: `src/components/reveal/display-figure.ts` (new), `src/components/ui/letter-date.ts` (new, or the shared date module on `main`), `src/components/reveal/ReceiptCard.tsx` (call sites only), `src/components/live/FigurePicker.tsx`, `src/components/live/copy.ts` (`pickerNote`, `pickerRetrieved`, `pickerPeriod`), and the `*.test.ts(x)` for each file above.
+   - Design sections: "K1 to K3. The picker's numbers, dates and note", "Copy".
+   - Acceptance:
+-    - [ ] 10.1 One display function for the picker and the Receipt_Card
++    - [x] 10.1 One display function for the picker and the Receipt_Card
+       - `displayFigureValue(value, unit, region)` returns `{ text, unit }`, applying `rescaleForDisplay` where `displayRescaleForUnit(unit)` exists and then `formatValue(…, region, displayPrecisionForUnit(shownUnit))`. The picker and `receiptFigureOf` both call it, so 1954.037871213403 EUR per 1,000 litres reads 1.95 EUR per litre in both (K1.1, K1.2, K1.5).
+       - Only displayed text changes. No stored, sealed or passed-to-sealing value changes (K1.3). The picker's source control shows "As published: {value} {unit}" as the Receipt_Card does (K1.4).
+       - _Requirements: K1.1–K1.5_
+-    - [ ] 10.2 Short_Dates
++    - [x] 10.2 Short_Dates
+       - `formatShortDate(instant)` returns "26 Oct 2026" from the instant's UTC fields. A month period shows "Oct 2026" and a year shows "2026", through `formatPeriod`; no day is invented. The Receipt_Card's "retrieved" label and the picker share this function. Each date is labelled "Period" or "Retrieved" (K2.1–K2.5).
+       - _Requirements: K2.1–K2.5_
+-    - [ ] 10.3 One Picker_Note
++    - [x] 10.3 One Picker_Note
+       - The picker renders `pickerNote` once above the list when any item has `fallbackRetrievedAt`, and not at all otherwise. Rows show "Retrieved {Short_Date}" and nothing else about the fallback. The Reveal's per-figure `fallbackNote` is untouched (K3.1–K3.5).
+       - _Requirements: K3.1–K3.5_
+     - [ ]* 10.4 Write property test for picker values
+@@ -331,7 +331,7 @@
+   - Scope: `src/components/live/catalogue-list.ts`, `src/components/live/FigurePicker.tsx`, `src/components/live/copy.ts` (`regionUs`, `regionEu`), `src/components/live/live.module.css`, and the `*.test.ts(x)` for each file above.
+   - Design sections: "K4. Regions", "Data Models" (Picker groups).
+   - Acceptance:
+-    - [ ] 11.1 Region groups
++    - [x] 11.1 Region groups
+       - `regionGroupFor(region)` returns `"us"` for `"U.S."`, `"eu"` for a region starting with `"EU"`, and `null` otherwise. `groupPickable(series)` returns groups in the fixed order United States then European Union, items in Catalogue order, leaves out empty groups and any item whose group is `null` (K4.1, K4.3–K4.5).
+       - Each group is a `fieldset` with a `legend` ("United States", "European Union"). No Sweden group or figure (`sweden-guard.test.ts` still passes). The order depends on no value, change or direction (K4.2, K4.3).
+       - The figure limit and its hint count across groups (K4.6). Two columns at 1024 px and wider, one column below, every checkbox at least 44×44 px on a phone (K4.7).
