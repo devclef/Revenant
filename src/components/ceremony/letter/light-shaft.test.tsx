@@ -154,17 +154,25 @@ describe("Light_Shaft Calm path (spec 09 L7)", () => {
   });
 });
 
-describe("paper creases (spec 09 L8)", () => {
-  it("are two, at 1/3 and 2/3 of the paper height, full width and aria-hidden", () => {
+describe("paper creases (spec 09 L8, issue #476 R2)", () => {
+  it("are two creases, each as a left and a right segment at 1/3 and 2/3 of the paper height, aria-hidden", () => {
     expect(CREASE_POSITIONS).toEqual([1 / 3, 2 / 3]);
     const html = render("full");
-    const creases = [...html.matchAll(/<div[^>]*data-crease="(\d)"[^>]*>/g)].map((m) => m[0]);
-    expect(creases).toHaveLength(CREASE_POSITIONS.length);
+    const creases = [...html.matchAll(/<div[^>]*data-crease="(left|right)"[^>]*>/g)].map(
+      (m) => m[0],
+    );
+    // Two segments per crease: left and right at each of the two positions.
+    expect(creases).toHaveLength(CREASE_POSITIONS.length * 2);
     CREASE_POSITIONS.forEach((share, index) => {
       // Expected top is derived from the constant, to the 4 decimals React writes.
       const expected = `top:${(share * 100).toFixed(4)}%`;
-      expect(creases[index]).toContain(`style="${expected}"`);
-      expect(creases[index]).toMatch(/aria-hidden="true"/);
+      const [left, right] = [creases[index * 2], creases[index * 2 + 1]];
+      expect(left).toContain('data-crease="left"');
+      expect(right).toContain('data-crease="right"');
+      expect(left).toContain(`style="${expected}"`);
+      expect(right).toContain(`style="${expected}"`);
+      expect(left).toMatch(/aria-hidden="true"/);
+      expect(right).toMatch(/aria-hidden="true"/);
     });
   });
 
@@ -181,11 +189,15 @@ describe("paper creases (spec 09 L8)", () => {
     expect(article?.[1]).toMatch(/data-letter-text/);
   });
 
-  it("are full width in the stylesheet, with no fill", () => {
+  it("are side segments in the stylesheet, sized to the side padding, with no fill", () => {
     const crease = blockOf(LETTER_CSS, "crease");
-    expect(crease).toMatch(/left:\s*0/);
-    expect(crease).toMatch(/right:\s*0/);
     expect(crease).not.toMatch(/background/);
+    expect(LETTER_CSS).toMatch(
+      /\.crease\[data-crease="left"\]\s*\{[^}]*left:\s*0[^}]*width:\s*var\(--letter-pad-x\)/,
+    );
+    expect(LETTER_CSS).toMatch(
+      /\.crease\[data-crease="right"\]\s*\{[^}]*right:\s*0[^}]*width:\s*var\(--letter-pad-x\)/,
+    );
   });
 });
 
