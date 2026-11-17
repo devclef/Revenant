@@ -19,7 +19,7 @@ import fc from "fast-check";
 
 import { LIVE_COPY } from "../copy";
 
-import { StepIndicator } from "./StepIndicator";
+import { StepTrack } from "./StepTrack";
 import {
   LIVE_STEPS,
   LIVE_STEP_NAMES,
@@ -70,7 +70,7 @@ describe("Property 10: the Live_Stepper has six steps and one current step", () 
         for (const action of actions) state = reduceStepper(state, action);
 
         const html = renderToStaticMarkup(
-          createElement(StepIndicator, { current: state.step }),
+          createElement(StepTrack, { current: state.step }),
         );
         const items = indicatorItems(html);
         expect(items).toHaveLength(6);

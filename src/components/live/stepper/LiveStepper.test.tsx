@@ -1,4 +1,4 @@
-// Static-markup tests for LiveStepper and StepIndicator (spec 09, D2). Rendered
+// Static-markup tests for LiveStepper and StepTrack (spec 09, D2). Rendered
 // with renderToStaticMarkup, as the other live tests are, because the test
 // environment is Node. Effects, including the focus move on a step change, do
 // not run here; the stepper's focus rule is tested through movesFocus in
@@ -19,7 +19,7 @@ import {
   initialStepperState,
   type LiveStep,
 } from "./live-steps";
-import { StepIndicator } from "./StepIndicator";
+import { StepTrack } from "./StepTrack";
 
 function render(
   initialStep: LiveStep,
@@ -38,7 +38,7 @@ function render(
 function indicatorNames(html: string): string[] {
   const list = html.match(/<ol[\s\S]*?<\/ol>/)?.[0] ?? "";
   const names: string[] = [];
-  const pattern = /<span class="[^"]*name[^"]*">([^<]*)<\/span>/g;
+  const pattern = /<span class="[^"]*label[^"]*">([^<]*)<\/span>/g;
   for (const match of list.matchAll(pattern)) {
     names.push(match[1] ?? "");
   }
@@ -49,7 +49,7 @@ describe("Step_Indicator", () => {
   // Issue #385: the list has six steps, the seal break included.
   it("lists the six steps in order", () => {
     const html = renderToStaticMarkup(
-      createElement(StepIndicator, { current: "write" }),
+      createElement(StepTrack, { current: "write" }),
     );
     expect(indicatorNames(html)).toEqual([...LIVE_STEP_NAMES]);
     expect(indicatorNames(html)).toHaveLength(6);
@@ -57,43 +57,39 @@ describe("Step_Indicator", () => {
 
   it('marks only the current step with aria-current="step"', () => {
     const html = renderToStaticMarkup(
-      createElement(StepIndicator, { current: "seal" }),
+      createElement(StepTrack, { current: "seal" }),
     );
     const matches = html.match(/aria-current="step"/g) ?? [];
     expect(matches).toHaveLength(1);
     expect(html).toContain('data-state="current"');
   });
 
-  it("gives the earlier steps the done state and the later ones todo", () => {
+  it("gives the earlier steps the done state and the later ones future", () => {
     // Six steps since issue #385: Testify is the fourth, so three are done and
-    // two (Break the seal, See the receipts) are todo.
+    // two (Break the seal, Receipts) are future.
     const html = renderToStaticMarkup(
-      createElement(StepIndicator, { current: "testify" }),
+      createElement(StepTrack, { current: "testify" }),
     );
     expect(html.match(/data-state="done"/g)).toHaveLength(3);
-    expect(html.match(/data-state="todo"/g)).toHaveLength(2);
+    expect(html.match(/data-state="future"/g)).toHaveLength(2);
   });
 
   it("sits under the data-step-indicator hook and names the list", () => {
     const html = renderToStaticMarkup(
-      createElement(StepIndicator, { current: "write" }),
+      createElement(StepTrack, { current: "write" }),
     );
     expect(html).toContain("data-step-indicator");
     expect(html).toContain(`aria-label="${LIVE_COPY.stepsLabel}"`);
   });
 
-  it("announces the step number and name politely", () => {
-    const html = renderToStaticMarkup(
-      createElement(StepIndicator, { current: "seal" }),
-    );
-    expect(html).toContain('aria-live="polite"');
+  it("announces the step number and name politely, from the stepper", () => {
+    const html = render("seal");
+    expect(html).toContain('role="status" aria-live="polite"');
     expect(html).toContain("Step 2 of 6: Press the seal");
   });
 
   it("announces Wait as step 3 of 6", () => {
-    const html = renderToStaticMarkup(
-      createElement(StepIndicator, { current: "wait" }),
-    );
+    const html = render("wait");
     expect(html).toContain("Step 3 of 6: Wait");
   });
 });
@@ -303,7 +299,7 @@ describe("LiveStepper heading focus (W8)", () => {
 
   it("attaches the track ref to the wrapper around the Step_Indicator", () => {
     expect(stepperSource).toMatch(
-      /<div ref=\{trackRef\} className=\{styles\.track\}>\s*<StepIndicator/,
+      /<div ref=\{trackRef\} className=\{styles\.track\}>\s*<StepTrack/,
     );
   });
 

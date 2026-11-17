@@ -5,14 +5,17 @@ import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 import { useCalmInForce } from "@/components/ceremony/motion";
 import { useKeepInVisualViewport } from "@/components/ui/use-keep-in-visual-viewport";
 
+import { LIVE_COPY } from "../copy";
 import type { WriteDraft, WriteDraftEvent } from "../write-draft";
 
 import styles from "./stepper.module.css";
-import { StepIndicator } from "./StepIndicator";
+import { StepTrack } from "./StepTrack";
 import {
+  LIVE_STEPS,
   canGoBack,
   hasPrimaryCard,
   movesFocus,
+  stepIndex,
   stepName,
   stepperDrawsHeading,
   type LiveStep,
@@ -132,7 +135,14 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
   return (
     <div className={styles.stepper} data-live-stepper>
       <div ref={trackRef} className={styles.track}>
-        <StepIndicator current={state.step} />
+        <StepTrack current={state.step} />
+        {/* The one live region of the stepper (spec 14, S1.5). */}
+        <p className={styles.announce} role="status" aria-live="polite">
+          {LIVE_COPY.stepAnnounce
+            .replace("{n}", String(stepIndex(state.step) + 1))
+            .replace("{total}", String(LIVE_STEPS.length))
+            .replace("{label}", stepName(state.step))}
+        </p>
       </div>
       <section
         className={card ? styles.card : styles.bare}

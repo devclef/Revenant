@@ -55,25 +55,12 @@ export const LIVE_STEP_NAMES: readonly string[] = [
   LIVE_COPY.receiptsStep,
 ];
 
+/** The Step_Track states live in step-track.ts. Re-exported for the stepper. */
+export { stepTrackStates, type StepTrackState } from "./step-track";
+
 /** The position of a step in LIVE_STEPS, counted from 0. */
 export function stepIndex(step: LiveStep): number {
   return LIVE_STEPS.indexOf(step);
-}
-
-/** The state of one dot on the Step_Track (spec 14, S1). */
-export type StepTrackState = "done" | "current" | "future";
-
-/**
- * The Step_Track state of every step, in order, for the step at `index`
- * (counted from 0). Steps before it are done, the step itself is current, and
- * the steps after it are future. Exactly one entry is current.
- */
-export function stepTrackStates(index: number): StepTrackState[] {
-  return LIVE_STEPS.map((_, position) => {
-    if (position < index) return "done";
-    if (position === index) return "current";
-    return "future";
-  });
 }
 
 /** The visible name of a step. */
