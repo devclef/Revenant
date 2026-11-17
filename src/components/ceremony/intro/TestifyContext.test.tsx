@@ -237,3 +237,38 @@ describe("TestifyContext: width rules", () => {
     expect(source).not.toMatch(/styles\.(notice|meta|line|dates)\b/);
   });
 });
+
+// F3.1: the notice moves off the Step_Indicator row only by a top margin, so
+// the copy and its order are the same as before.
+describe("TestifyContext: notice once and content order (spec 07 F3.1)", () => {
+  it("renders the Maya notice exactly once in the recall block", () => {
+    const html = render(persona);
+    const notice = CEREMONY_COPY.personaNotice.replace("{name}", "Maya");
+    expect(html.split(notice).length - 1).toBe(1);
+  });
+
+  it("keeps the content in order: notice, A letter from, dates, seal line, Memory_Line", () => {
+    const html = render(persona);
+    const parts = [
+      CEREMONY_COPY.personaNotice.replace("{name}", "Maya"),
+      REVEAL_COPY.contextFrom.replace("{name}", "Maya"),
+      "Written as of 12 May 2024 · Opens 5 November 2024",
+      REVEAL_COPY.sealIntact,
+      "You lived through May 2024 too.",
+    ];
+    const positions = parts.map((part) => html.indexOf(part));
+    expect(positions.every((at) => at >= 0)).toBe(true);
+    expect([...positions].sort((a, b) => a - b)).toEqual(positions);
+  });
+
+  it("gives the notice a 6 px top margin only at 600 px and wider, and only the notice", () => {
+    expect(desktopRules).toMatch(
+      /@media \(min-width: 600px\) \{\s*\.testifyNotice \{\s*margin-top: 0\.375rem;\s*\}\s*\}/,
+    );
+    expect(desktopRules).not.toMatch(/\.testify(From|Seal|Dates|Memory)\s*\{[^}]*margin-top/);
+  });
+
+  it("adds no top margin to the notice in the phone rules, so the 390 x 844 layout is unchanged", () => {
+    expect(phoneRules).not.toMatch(/\.testifyNotice\s*\{[^}]*margin-top/);
+  });
+});
