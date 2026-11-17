@@ -70,6 +70,9 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
   // The Step_Track wrapper. The step change scrolls this, not the heading, so
   // the track and the card both land below the Top_Bar (baseline 98d49aa, cause a).
   const trackRef = useRef<HTMLDivElement>(null);
+  // The frame that will scroll the track. A newer step change cancels it, and
+  // unmount cancels it too, so a stale frame never scrolls.
+  const scrollFrame = useRef<number | null>(null);
   const primaryRef = useRef<HTMLDivElement>(null);
   // The Reveal_Host element. It is set once on mount and never changes, so the
   // portal target stays the same (spec 12, X1).
@@ -88,13 +91,23 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
     // Focus without the browser's own scroll. The scroll itself runs after one
     // frame, so the new step has its height first (baseline cause a).
     headingRef.current?.focus({ preventScroll: true });
-    requestAnimationFrame(() => {
+    if (scrollFrame.current !== null) cancelAnimationFrame(scrollFrame.current);
+    scrollFrame.current = requestAnimationFrame(() => {
+      scrollFrame.current = null;
       trackRef.current?.scrollIntoView({
         behavior: calm ? "instant" : "smooth",
         block: "start",
       });
     });
   }, [state.step, calm]);
+
+  // Unmount cancels a pending scroll frame.
+  useLayoutEffect(() => {
+    return () => {
+      if (scrollFrame.current !== null)
+        cancelAnimationFrame(scrollFrame.current);
+    };
+  }, []);
 
   const view: StepView = {
     step: state.step,

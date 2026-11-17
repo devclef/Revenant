@@ -278,6 +278,19 @@ describe("LiveStepper heading focus (W8)", () => {
     expect(scrollAt).toBeGreaterThan(frameAt);
   });
 
+  it("cancels a pending scroll frame on a newer step change and on unmount", () => {
+    expect(stepperSource).toContain(
+      "cancelAnimationFrame(scrollFrame.current)",
+    );
+    expect(
+      stepperSource.match(/cancelAnimationFrame\(scrollFrame\.current\)/g)
+        ?.length,
+    ).toBe(2);
+    expect(stepperSource).toMatch(
+      /scrollFrame\.current = requestAnimationFrame\(/,
+    );
+  });
+
   it("attaches the track ref to the wrapper around the Step_Indicator", () => {
     expect(stepperSource).toMatch(
       /<div ref=\{trackRef\} className=\{styles\.track\}>\s*<StepIndicator/,
