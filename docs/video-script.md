@@ -24,7 +24,7 @@ Not in this list:
 
 - **Tasks:** 14. PR #456. <!-- provenance: grep -n "^- \[x\] " .kiro/specs/13-the-seal/tasks.md; gh pr view 456 -q .state, 2026-11-17, 8ff7228 -->
 - **Route:** `/`, below the hero.
-- **On screen:** The sections use both halves of the page at 1440×900. The four ritual cards sit with room inside each card. At 390×844 the sections stack, with no sideways scroll. <!-- provenance: grep -n "1440x900" tools/qa/layout-check.mjs; grep -n "390x844" tools/qa/layout-check.mjs; awk '/ritualSteps: \[/{f=1;next} f&&/^  \],/{print n; exit} f&&/^    \{/{n++}' src/components/brand/copy.ts (prints 4), 2026-11-17, 8ff7228 -->
+- **On screen:** The sections use both halves of the page at 1440×900. The four ritual cards sit with room inside each card. At 390×844 the sections stack, with no sideways scroll. <!-- provenance: grep -n "1440x900" tools/qa/layout-check.mjs; grep -n "390x844" tools/qa/layout-check.mjs; awk '/ritualSteps: \[/{f=1;next} f&&/^  \],/{print n; exit} f&&/^    \{/{n++}' src/components/brand/copy.ts, 2026-11-17, 8ff7228 -->
 - **Spoken:** "Write the letter. Press the seal. Wait. Testify. Break the seal. See the receipts."
 - **Capture:** Each section at both sizes, with and without reduced motion.
 
@@ -32,7 +32,7 @@ Not in this list:
 
 - **Tasks:** 3. PR #446. <!-- provenance: grep -n "^- \[x\] " .kiro/specs/13-the-seal/tasks.md; gh pr view 446 -q .state, 2026-11-17, 8ff7228 -->
 - **Route:** `/demo`
-- **On screen:** The three persona envelopes. Each seal is drawn at the same 96 px size and differs from the others. <!-- provenance: node -e 'console.log(require("./content/personas/personas.json").personas.length)' (prints 3); grep -n 'width="96"' src/components/demo/PersonaCard.test.tsx, 2026-11-17, 8ff7228 -->
+- **On screen:** The three persona envelopes. Each seal is drawn at the same 96 px size and differs from the others. <!-- provenance: node -e 'console.log(require("./content/personas/personas.json").personas.length)'; grep -n 'width="96"' src/components/demo/PersonaCard.test.tsx, 2026-11-17, 8ff7228 -->
 - **Spoken:** "Each seal is drawn from its letter's fingerprint. It shows that fingerprint. It does not verify the letter."
 - **Capture:** `/demo` at 1440×900 and 390×844. <!-- provenance: grep -n "1440x900" tools/qa/layout-check.mjs; grep -n "390x844" tools/qa/layout-check.mjs, 2026-11-17, 8ff7228 -->
 
