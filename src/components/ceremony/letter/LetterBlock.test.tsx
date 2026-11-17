@@ -223,6 +223,15 @@ describe("Property 17: the letter is shown verbatim with nothing against it (R13
     );
   });
 
+  it("renders each crease as a left and a right segment, not one full-width line (issue #476, R2)", () => {
+    const html = render("A short letter.");
+    const sides = [...html.matchAll(/<div[^>]*data-crease="(left|right)"[^>]*>/g)].map(
+      (match) => match[1],
+    );
+    // Two creases (1/3 and 2/3), each with a left and a right segment.
+    expect(sides).toEqual(["left", "right", "left", "right"]);
+  });
+
   it("gives the caption its own light focus ring, not a white ring inside a purple block (L6.2)", () => {
     const css = withoutComments(readFileSync(join(HERE, "LetterBlock.module.css"), "utf8"));
     expect(css).toMatch(/\.caption :focus-visible\s*\{[^}]*outline:\s*2px solid var\(--text/);

@@ -3,8 +3,9 @@
 //
 // - The shaft is static under Calm (the Calm control) and reduced motion. The
 //   layout effect starts no animation, and the markup says `data-light="static"`.
-// - The creases sit at 1/3 and 2/3 of the paper height, full width, aria-hidden,
-//   and outside the article so the paper still holds the Letter_Text alone.
+// - The creases sit at 1/3 and 2/3 of the paper height, each drawn as a left
+//   and a right segment in the side padding (issue #476, R2), aria-hidden, and
+//   outside the article so the paper still holds the Letter_Text alone.
 // - The scene's light is a shaft, not a solid purple slab, and the receipts
 //   column is plain dark.
 

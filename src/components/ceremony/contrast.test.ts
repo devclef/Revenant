@@ -421,3 +421,25 @@ describe("X5.1: Seal_Group text (--on-purple) clears AA on the dark Scene", () =
     });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Issue #476, R3: the Stage's primary button and the outline button.
+//
+// The ratios come from the WCAG formula above, computed here from the hex
+// values. Nothing is measured from a browser.
+
+describe("issue #476 R3: primary and outline button pairs clear 4.5:1", () => {
+  const BUTTON_PAIRS: ReadonlyArray<{ fg: string; bg: string }> = [
+    // The primary button's label colour on its orange fill.
+    { fg: "#0b0912", bg: "#ff7b1c" },
+    // The outline button's border colour on #0b0912.
+    { fg: "#8f86ad", bg: "#0b0912" },
+  ];
+
+  for (const { fg, bg } of BUTTON_PAIRS) {
+    it(`${fg} on ${bg} is at least ${WCAG_AA_NORMAL}:1`, () => {
+      const ratio = contrastRatio(fg, bg);
+      expect(ratio).toBeGreaterThanOrEqual(WCAG_AA_NORMAL);
+    });
+  }
+});
