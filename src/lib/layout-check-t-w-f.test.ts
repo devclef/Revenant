@@ -9,6 +9,7 @@ import {
   t1Failures,
   tg2Failures,
   w8Failures,
+  w8Row,
   wFailures,
 } from "../../tools/qa/layout-check.mjs";
 
@@ -329,6 +330,42 @@ describe("w8Failures (W8.2)", () => {
     expect(w8Failures({ heading: null, topBarBottom: 100 })).toEqual([
       "W8.2 no step heading to measure",
     ]);
+  });
+});
+
+describe("w8Row (W8, per step change)", () => {
+  const ok = { missing: false, step: "seal", heading: { top: 120 }, topBarBottom: 100 };
+  const low = { missing: false, step: "seal", heading: { top: 110 }, topBarBottom: 100 };
+
+  it("names the press and the step in the detail of a passing row", () => {
+    const row = w8Row({ label: "Next press 2", viewport: "1440x900", r: ok });
+    expect(row.status).toBe("pass");
+    expect(row.detail).toMatch(/^after Next press 2 step=seal /);
+  });
+
+  it("names W8.2 and the press in a failing row", () => {
+    const row = w8Row({ label: "Next press 3", viewport: "1440x900", r: low });
+    expect(row.status).toBe("fail");
+    expect(row.detail).toContain("after Next press 3 step=seal");
+    expect(row.detail).toContain("W8.2 step heading top is 10.0px below the Top_Bar, need at least 16px");
+  });
+
+  it("gives each step change its own detail text", () => {
+    const a = w8Row({ label: "Next press 1", viewport: "390x844", r: { ...ok, step: "text" } });
+    const b = w8Row({ label: "Next press 2", viewport: "390x844", r: { ...ok, step: "figures" } });
+    expect(a.detail).not.toBe(b.detail);
+    expect(a.detail).toContain("step=text");
+    expect(b.detail).toContain("step=figures");
+  });
+
+  it("reports a missing heading or Top_Bar as missing with the press named", () => {
+    expect(w8Row({ label: "Next press 1", viewport: "390x844", r: { missing: true } })).toMatchObject({
+      status: "missing",
+      detail: expect.stringContaining("after Next press 1"),
+    });
+    expect(
+      w8Row({ label: "Next press 1", viewport: "390x844", r: { ...ok, topBarBottom: null } }),
+    ).toMatchObject({ status: "missing", detail: expect.stringContaining("no [data-topbar]") });
   });
 });
 

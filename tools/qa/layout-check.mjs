@@ -3189,11 +3189,11 @@ async function checkPressEnvelope(context, ctx) {
       if ((await page.locator('[data-live-step="seal"]').count()) > 0) break;
       await next.click({ timeout: 10_000 }).catch(() => {});
       await sleep(800);
-      await guard(ctx, "W8", () => checkHeadingOffset(page, ctx));
+      await guard(ctx, "W8", () => checkHeadingOffset(page, ctx, `Next press ${i + 1}`));
       measured = true;
     }
     // The page already on the seal step before any press: measure it once.
-    if (!measured) await guard(ctx, "W8", () => checkHeadingOffset(page, ctx));
+    if (!measured) await guard(ctx, "W8", () => checkHeadingOffset(page, ctx, "page load on the seal step"));
     await sleep(800);
     await guard(ctx, "T1", () => checkLiveStages(page, ctx));
     const r = await page.evaluate(P1_READ);
@@ -3561,20 +3561,25 @@ async function checkWriteRow(page, ctx) {
   report(ctx, result("W", "write-step", problems.length ? "fail" : "pass", detail));
 }
 
-async function checkHeadingOffset(page, ctx) {
-  const r = await page.evaluate(W8_READ);
+// W8 row for one step change. `label` says which Next press produced the change; `r` is the
+// W8_READ result. Pure, so the per-step detail and the W8.2 failure text can be unit tested.
+export function w8Row({ label, viewport, r }) {
+  const where = `after ${label}`;
   if (r.missing) {
-    report(ctx, result("W8", "heading-offset", "missing", "not on this build: no [data-live-stepper] heading after the step change"));
-    return;
+    return result("W8", "heading-offset", "missing", `${where}: not on this build: no [data-live-stepper] heading after the step change`);
   }
   if (r.topBarBottom === null) {
-    report(ctx, result("W8", "heading-offset", "missing", "not on this build: no [data-topbar] to measure the heading against"));
-    return;
+    return result("W8", "heading-offset", "missing", `${where} step=${r.step}: not on this build: no [data-topbar] to measure the heading against`);
   }
   const problems = w8Failures({ heading: r.heading, topBarBottom: r.topBarBottom });
   const gap = r.heading.top - r.topBarBottom;
-  const detail = `step=${r.step} heading top=${px(r.heading.top)} topBarBottom=${px(r.topBarBottom)} gap=${gap.toFixed(1)}px viewport=${ctx.size} threshold=heading at least ${TOP_BAR_GAP_PX}px below the Top_Bar after a step change${problems.length ? ` (${problems.join("; ")})` : ""}`;
-  report(ctx, result("W8", "heading-offset", problems.length ? "fail" : "pass", detail));
+  const detail = `${where} step=${r.step} heading top=${px(r.heading.top)} topBarBottom=${px(r.topBarBottom)} gap=${gap.toFixed(1)}px viewport=${viewport} threshold=heading at least ${TOP_BAR_GAP_PX}px below the Top_Bar after a step change${problems.length ? ` (${problems.join("; ")})` : ""}`;
+  return result("W8", "heading-offset", problems.length ? "fail" : "pass", detail);
+}
+
+async function checkHeadingOffset(page, ctx, label = "the step change") {
+  const r = await page.evaluate(W8_READ);
+  report(ctx, w8Row({ label, viewport: ctx.size, r }));
 }
 
 // T1, TG2 and F4 need the Wait and live Testify steps, which come after a passkey seal. This
