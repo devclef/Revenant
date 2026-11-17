@@ -65,6 +65,20 @@ describe("Step_Track stylesheet (S1.1, S1.2)", () => {
     expect(clearancePx).toBeGreaterThanOrEqual(0.5 * rootPx);
   });
 
+  it("applies the 3rem column gap at 1280 and 1366 px, where the labels show", () => {
+    // jsdom cannot measure text, so the layout check measures the real widths.
+    // Here the test pins which gap applies at those widths: the base .steps
+    // rule sets 3rem, and the only gap override sits inside the max-width:599px
+    // block. Both 1280 and 1366 px are above 599 px, so they get 3rem.
+    const mediaStart = css.indexOf("@media (max-width: 599px)");
+    expect(mediaStart).toBeGreaterThan(-1);
+    const base = css.slice(0, mediaStart);
+    const narrow = css.slice(mediaStart);
+    expect(base.match(/\.steps\s*\{[^}]*gap:\s*0\.5rem\s+3rem/)).not.toBeNull();
+    expect(base.match(/\.steps\s*\{[^}]*gap:/g)?.length).toBe(1);
+    expect(narrow).toMatch(/\.steps\s*\{\s*gap:\s*0\.5rem\s+1rem/);
+  });
+
   it("sizes the current dot 12px in #ff7b1c with a 4px rgba(255,123,28,.22) halo", () => {
     const current = ruleBody('.step[data-state="current"] .dot');
     expect(current).toMatch(/width:\s*12px/);
