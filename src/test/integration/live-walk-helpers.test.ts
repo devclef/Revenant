@@ -46,6 +46,7 @@ import {
   parseCssColor,
   recordStepResult,
   reportMissingShots,
+  sealPressInput,
   shotsWrittenSince,
   skipLinkBlocksSettle,
   stepShotName,
@@ -1218,5 +1219,31 @@ describe("checkTamperRunNoPasskey", () => {
     expect(checkTamperRunNoPasskey({ create: 1, get: 0, total: 1 }).ok).toBe(
       false,
     );
+  });
+});
+
+describe("sealPressInput (how each walk run presses the seal, Q1.3)", () => {
+  it("presses Space on the keyboard run at every width and motion setting", () => {
+    expect(
+      sealPressInput({ width: 1440, reduced: false, keyboard: true }),
+    ).toBe("keyboard");
+    expect(sealPressInput({ width: 390, reduced: false, keyboard: true })).toBe(
+      "keyboard",
+    );
+    expect(sealPressInput({ width: 1440, reduced: true, keyboard: true })).toBe(
+      "keyboard",
+    );
+  });
+
+  it("holds with the mouse at desktop, touches at phone width, and clicks once when reduced", () => {
+    expect(
+      sealPressInput({ width: 1440, reduced: false, keyboard: false }),
+    ).toBe("hold");
+    expect(
+      sealPressInput({ width: 390, reduced: false, keyboard: false }),
+    ).toBe("touch");
+    expect(
+      sealPressInput({ width: 1440, reduced: true, keyboard: false }),
+    ).toBe("click");
   });
 });

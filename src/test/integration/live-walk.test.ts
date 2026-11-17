@@ -50,7 +50,10 @@ import {
   checkDemoSeals,
   checkNoJsSeal,
   checkEarlyRelease,
+  checkGhostClearOfKeep,
   checkOwnNumberRowsBlank,
+  checkSealOrangeButtons,
+  checkStepHeadingClearOfTopBar,
   checkPasskeyCount,
   checkPasskeyTotal,
   checkSealMarks,
@@ -71,6 +74,7 @@ import {
   type BoxRect,
   type BreakMethod,
   type DemoSeal,
+  type OrangeButton,
   type SealMark,
   type SettleState,
   type StepCheck,
@@ -378,6 +382,75 @@ async function readPage(
 }
 
 /**
+ * The boxes the Q1.2 layout rules compare, read from the page. A box is null when
+ * its element is not on the page at this stage. The check that needs it then
+ * does not run.
+ */
+type StepBoxes = {
+  heading: BoxRect | null;
+  topBar: BoxRect | null;
+  ghost: BoxRect | null;
+  keep: BoxRect | null;
+};
+
+async function readStepBoxes(page: Page): Promise<StepBoxes> {
+  const boxOf = (selector: string): Promise<BoxRect | null> =>
+    page.evaluate((sel) => {
+      const el = document.querySelector(sel);
+      if (!el) return null;
+      const box = el.getBoundingClientRect();
+      return {
+        top: box.top,
+        right: box.right,
+        bottom: box.bottom,
+        left: box.left,
+      };
+    }, selector);
+  return {
+    // The Step_Heading is the h2 of the card step (LiveStepper sets data-card).
+    heading: await boxOf("[data-live-stepper] [data-card] h2"),
+    topBar: await boxOf("[data-topbar]"),
+    // The risen ghost (Ghost.tsx sets data-ghost-rise) and the Keep_Section (U6).
+    ghost: await boxOf("[data-ghost-rise]"),
+    keep: await boxOf("[data-live-keep-section]"),
+  };
+}
+
+/**
+ * Every visible button on the page that is orange: its own background, or one of
+ * its descendants', is the wax colour (`--wax`, #ff7b1c). The Press_Envelope is
+ * flagged by its `data-press-mode` attribute (Q1.2).
+ */
+async function readOrangeButtons(page: Page): Promise<OrangeButton[]> {
+  return page.evaluate(() => {
+    const WAX = "rgb(255, 123, 28)";
+    const isOrange = (el: Element): boolean =>
+      [el, ...Array.from(el.querySelectorAll("*"))].some(
+        (node) => getComputedStyle(node).backgroundColor === WAX,
+      );
+    return Array.from(document.querySelectorAll("button"))
+      .filter((button) => {
+        const style = getComputedStyle(button);
+        const box = button.getBoundingClientRect();
+        return (
+          style.display !== "none" &&
+          style.visibility !== "hidden" &&
+          box.width > 0 &&
+          box.height > 0 &&
+          isOrange(button)
+        );
+      })
+      .map((button) => ({
+        label: (button.getAttribute("aria-label") ?? button.textContent ?? "")
+          .replace(/\s+/g, " ")
+          .trim()
+          .slice(0, 80),
+        isPressEnvelope: button.hasAttribute("data-press-mode"),
+      }));
+  });
+}
+
+/**
  * Run stages in order in one browser session. Each stage: act, settle, check
  * (Q1.6), record (Q1.5), save its Step_Shot (Q2.1, Q2.2). Stops at the first
  * stage with a defect or an action that threw.
@@ -486,6 +559,19 @@ async function runWalk(
               }),
             ),
           );
+          // Q1.2 layout rules, read on every step change. A rule whose boxes are not
+          // on the page at this stage is not run, rather than passed on a guess.
+          const boxes = await readStepBoxes(page);
+          const layoutChecks: StepCheck[] = [];
+          if (boxes.heading && boxes.topBar) {
+            layoutChecks.push(
+              checkStepHeadingClearOfTopBar(boxes.heading, boxes.topBar),
+            );
+          }
+          if (stage.step === "wait" && boxes.ghost && boxes.keep) {
+            layoutChecks.push(checkGhostClearOfKeep(boxes.ghost, boxes.keep));
+          }
+          defects.push(...defectsFromChecks(stage.step, layoutChecks));
           if (stage.step === "wait") {
             waitSeal = await readSealMark(page, false);
           }
@@ -841,6 +927,11 @@ function fiveStageActions(run: WalkRun): readonly StageAction[] {
         await c.page
           .getByRole("radio", { name: LIVE_COPY.backupChoiceSkip, exact: true })
           .check();
+        // Q1.2: on the Seal step the Press_Envelope is the only orange button. Read
+        // before the press, while every button of the step is still on the page.
+        sealChecks.push(
+          checkSealOrangeButtons(await readOrangeButtons(c.page)),
+        );
         if (
           sealPressInput({
             width: run.size.width,

@@ -5,6 +5,7 @@ import { describe, expect, it } from "vitest";
 
 import { WALK_STEP_NAMES } from "./live-walk-helpers";
 import {
+  KEYBOARD_MATRIX_ENTRY,
   WALK_MATRIX,
   matrixRun,
   matrixShotNames,
@@ -204,5 +205,38 @@ describe("full walk plan includes the new steps", () => {
     expect(names.some((n) => n.includes("-press-held-"))).toBe(true);
     expect(names.some((n) => n.includes("-setting-"))).toBe(true);
     expect(names.some((n) => n.includes("-tamper-"))).toBe(true);
+  });
+});
+
+describe("KEYBOARD_MATRIX_ENTRY (the keyboard seal run, Q1.3)", () => {
+  it("is kept out of WALK_MATRIX, which still lists the eight mouse and touch runs", () => {
+    expect(WALK_MATRIX).toHaveLength(8);
+    expect(WALK_MATRIX.map((e) => e.id)).not.toContain(
+      KEYBOARD_MATRIX_ENTRY.id,
+    );
+  });
+
+  it("is the desktop no-figure run with motion on", () => {
+    expect(KEYBOARD_MATRIX_ENTRY).toEqual({
+      id: "1440x900-keyboard",
+      width: 1440,
+      height: 900,
+      variant: "no-figure",
+      reduced: false,
+    });
+    expect(matrixRun(KEYBOARD_MATRIX_ENTRY)).toEqual({
+      size: { width: 1440, height: 900 },
+      reduced: false,
+      figure: false,
+    });
+  });
+
+  it("plans the same Step_Shot names as the desktop mouse run, before the -keyboard suffix", () => {
+    // The walk adds the -keyboard suffix when it saves a file (walkShotFor).
+    const mouse = WALK_MATRIX.find((e) => e.id === "1440x900-no-figure");
+    expect(mouse).toBeDefined();
+    expect(matrixShotNames(KEYBOARD_MATRIX_ENTRY)).toEqual(
+      matrixShotNames(mouse!),
+    );
   });
 });
