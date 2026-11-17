@@ -27,22 +27,29 @@ describe("Step_Track stylesheet (S1.1, S1.2)", () => {
     expect(hairline).toMatch(/background-color:\s*#3a3350/);
   });
 
-  it("keeps a non-zero column gap between steps (2.5rem), not gap: 0.5rem 0", () => {
+  it("keeps a non-zero column gap between steps (3rem), not gap: 0.5rem 0", () => {
     const steps = ruleBody(".steps");
-    expect(steps).toMatch(/gap:\s*0\.5rem\s+2\.5rem/);
+    expect(steps).toMatch(/gap:\s*0\.5rem\s+3rem/);
     expect(steps).not.toMatch(/gap:\s*0\.5rem\s+0\b/);
   });
 
-  it("ends the 36px hairline no further than the column gap, so it clears the next label", () => {
-    // The hairline starts at calc(100% + 0.25rem) and runs 36px. Its end must
-    // not pass the 2.5rem column gap, or it would run into the next step.
+  it("ends each hairline strictly before the next step, with the gap read from the stylesheet", () => {
+    // The hairline starts at calc(100% + <offset>rem) and runs for its own
+    // width. Its end must sit inside the column gap, with room to spare, so it
+    // does not touch the next label at 1280 and 1366 px. Both values are read
+    // from the stylesheet, not repeated here.
     const hairline = ruleBody(".step:not(:last-child)::after");
     const offset = hairline.match(/left:\s*calc\(100%\s*\+\s*([\d.]+)rem\)/);
+    const width = hairline.match(/width:\s*([\d.]+)px/);
+    const gap = ruleBody(".steps").match(/gap:\s*[\d.]+rem\s+([\d.]+)rem/);
     expect(offset).not.toBeNull();
-    const startPx = Number(offset?.[1]) * 16;
-    const endPx = startPx + 36;
-    const columnGapPx = 2.5 * 16;
-    expect(endPx).toBeLessThanOrEqual(columnGapPx);
+    expect(width).not.toBeNull();
+    expect(gap).not.toBeNull();
+    const rootPx = 16;
+    const endPx =
+      Number(offset?.[1]) * rootPx + Number(width?.[1]);
+    const columnGapPx = Number(gap?.[1]) * rootPx;
+    expect(endPx).toBeLessThan(columnGapPx);
   });
 
   it("sizes the current dot 12px in #ff7b1c with a 4px rgba(255,123,28,.22) halo", () => {
