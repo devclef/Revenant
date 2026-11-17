@@ -3183,13 +3183,18 @@ async function checkPressEnvelope(context, ctx) {
     await page.locator("textarea").first().fill(P1_LIVE_TEXT).catch(() => {});
     await guard(ctx, "W", () => checkWriteRow(page, ctx));
     const next = page.getByRole("button", { name: "Next", exact: true }).first();
+    // W8 runs after every Next press, so each step change gets its own heading row (W8.2).
+    let measured = false;
     for (let i = 0; i < P1_MAX_NEXT_PRESSES; i += 1) {
       if ((await page.locator('[data-live-step="seal"]').count()) > 0) break;
       await next.click({ timeout: 10_000 }).catch(() => {});
       await sleep(800);
+      await guard(ctx, "W8", () => checkHeadingOffset(page, ctx));
+      measured = true;
     }
+    // The page already on the seal step before any press: measure it once.
+    if (!measured) await guard(ctx, "W8", () => checkHeadingOffset(page, ctx));
     await sleep(800);
-    await guard(ctx, "W8", () => checkHeadingOffset(page, ctx));
     await guard(ctx, "T1", () => checkLiveStages(page, ctx));
     const r = await page.evaluate(P1_READ);
     if (r.missing) {
