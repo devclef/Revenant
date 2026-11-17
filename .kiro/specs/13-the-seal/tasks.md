@@ -331,7 +331,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
   - Validation: `bash scripts/check.sh`; route budgets after `npm run build`.
   - _Requirements: W1, W2, W3, W5_
 
-- [ ] 11. W4, W6 to W8 · Question rows, one place to add a receipt, Receipt_Rows, heading offset
+- [x] 11. W4, W6 to W8 · Question rows, one place to add a receipt, Receipt_Rows, heading offset
   - Agent: `frontend-dev` · Depends on: 10 · Estimated size: ~1,000 changed lines · Target: 25 November 2026
   - Never cut.
   - Scope: `src/components/live/AuthorQuestions.tsx`, `ReceiptsDisclosure.tsx`, `FigurePicker.tsx`, `SelfReportedRows.tsx`, `WriteForm.tsx` (action row), `src/components/live/stepper/LiveStepper.tsx`, `stepper.module.css` (`.heading`), `src/components/ceremony/scene/TopBar.tsx` (only if the bar can exceed 96 px), `live.module.css`, `copy.ts`, and the `*.test.ts(x)` for each file.
