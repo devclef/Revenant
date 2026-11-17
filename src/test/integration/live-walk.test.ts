@@ -49,6 +49,7 @@ import {
   checkBreakSealSize,
   checkDemoSeals,
   checkNoJsSeal,
+  checkEarlyRelease,
   checkOwnNumberRowsBlank,
   checkPasskeyCount,
   checkPasskeyTotal,
@@ -745,6 +746,27 @@ async function pressSealEnvelope(c: WalkContext, run: WalkRun): Promise<void> {
 }
 
 /**
+ * An early release (Q1.2): the mouse is let go well before the press threshold.
+ * The hold timer must then cancel, so the walk waits past the threshold before it
+ * reads the count. Only the desktop mouse hold is driven this way.
+ */
+async function pressSealEarly(c: WalkContext): Promise<void> {
+  const press = c.page.getByRole("button", {
+    name: PRESS_COPY.name,
+    exact: true,
+  });
+  const box = await press.boundingBox();
+  if (!box) {
+    throw new Error("The Press the seal control has no size on screen.");
+  }
+  await c.page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+  await c.page.mouse.down();
+  await c.page.waitForTimeout(Math.floor(SEAL_PRESS_HOLD_MS / 4));
+  await c.page.mouse.up();
+  await c.page.waitForTimeout(SEAL_PRESS_HOLD_MS + 200);
+}
+
+/**
  * Stages Write to Testify. The write-receipts stage picks one figure when `run.figure`
  * is true (the one-figure variant); otherwise it opens the receipts and adds none.
  */
@@ -819,6 +841,21 @@ function fiveStageActions(run: WalkRun): readonly StageAction[] {
         await c.page
           .getByRole("radio", { name: LIVE_COPY.backupChoiceSkip, exact: true })
           .check();
+        if (
+          sealPressInput({
+            width: run.size.width,
+            reduced: run.reduced,
+            keyboard: run.keyboard,
+          }) === "hold"
+        ) {
+          await pressSealEarly(c);
+          // Q1.2: an early release makes no prompt and stores no credential.
+          const early = await readPasskeyCounts(c.page);
+          const { credentials } = (await c.cdp.send("WebAuthn.getCredentials", {
+            authenticatorId: c.authenticatorId,
+          })) as { credentials: unknown[] };
+          sealChecks.push(checkEarlyRelease(early, credentials.length));
+        }
         await pressSealEnvelope(c, run);
         await c.page
           .locator('[data-live-step="created"]')
