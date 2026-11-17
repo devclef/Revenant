@@ -538,7 +538,7 @@ Group D changes documents only. It adds no feature and is never cut. D2 does not
 
 ### Final
 
-- [ ] 23. Q1.5 · Final Live_Walk on merged `main`
+- [x] 23. Q1.5 · Final Live_Walk on merged `main`
   - Agent: `platform-dev` · Depends on: 22 · Estimated size: ~150 changed lines · Target: 30 November 2026
   - Never cut. Highest number (G3.1). Its own box is not counted by D4.
   - Scope: `src/test/integration/live-walk*` (only if the run exposes a defect in the script), and the run record in the PR description. No product file.
