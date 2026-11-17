@@ -367,4 +367,18 @@ describe("FigureEntry shows the change line in the rescaled unit (C8.4, eu-tomas
         .replace("{fromUnit}", "EUR per 1,000 litres"),
     );
   });
+
+  it("shows the difference at the shown unit's precision, not the sealed one (R5.2)", () => {
+    const html = plain(
+      render({
+        then: TOMAS_THEN,
+        now: TOMAS_NOW,
+        change: comparable(TOMAS_THEN, TOMAS_NOW),
+        rescale,
+      }),
+    );
+    // Per litre, EUR per litre has display precision 2: +0.10, not +100.00 or +0.1.
+    expect(html).toContain("+0.10");
+    expect(html).not.toContain("+100.00");
+  });
 });
