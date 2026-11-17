@@ -530,22 +530,6 @@
   }
 }
 
-/* Issue #476, R1: at 900 px and wider the letter Stage is a one-track grid
-   that centres the Letter_Block. The paper (.sheet, 680 px at most) centres in
-   the Letter_Block, which fills the track. Below 900 px the spec 08 R3.3 layout
-   stays. The Ghost is absolutely positioned, so it never moves this column. */
-@media (min-width: 900px) {
-  .letterCol {
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    justify-items: center;
-  }
-
-  .letterCol > * {
-    width: 100%;
-  }
-}
-
 /* Spec 08 R3.4: a long series ID (the Oil Bulletin name has no spaces) wraps
    inside the source details instead of pushing the Stage sideways. */
 .source,
