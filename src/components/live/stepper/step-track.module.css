@@ -15,7 +15,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem 0;
+  gap: 0.5rem 2.5rem;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -89,6 +89,10 @@
 @media (max-width: 599px) {
   /* Dots and a phone line only. The labels are hidden visually but stay in
      the accessibility tree, so the list still names every step. */
+  .steps {
+    gap: 0.5rem 1rem;
+  }
+
   .step::after {
     top: 0.25rem;
   }
