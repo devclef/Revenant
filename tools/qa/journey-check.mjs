@@ -35,6 +35,9 @@
 //                       "openable" and an envelopeHash equal to the envelope_hash
 //                       recorded in personas.json (U9, issue #425). Fetch only;
 //                       no browser.
+//   Q1.2 landing-seal   GET / on production answers 200 and its raw server-rendered
+//                       HTML contains [data-landing-seal] (spec 13 Q1.2, issue #438).
+//                       Fetch only; no browser and no JavaScript.
 // A phone or font check whose element isn't on production yet prints a note,
 // not a FAIL (A6.2 item 6).
 //
@@ -54,7 +57,7 @@
 // Options:
 //   --url <origin>      Required. Production origin.
 //   --chromium <path>   Browser binary. Default $CHROMIUM_PATH, then /usr/bin/chromium.
-//   --require <ids>     Checks to run. Default all of J1 to J9.
+//   --require <ids>     Checks to run. Default all: J1 to J10 and Q1.2.
 //   --reveal            Run J2 whatever the hour (the workflow sets it on manual runs
 //                       through GITHUB_EVENT_NAME=workflow_dispatch).
 //   --no-issue          Print results only; do not touch GitHub.
@@ -66,7 +69,8 @@ import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { runFontCheck, runPhoneChecks } from "./layout-check.mjs";
 
-export const ALL_CHECKS = ["J1", "J2", "J3", "J4", "J5", "J6", "J7", "J8", "J9", "J10"];
+export const ALL_CHECKS = ["J1", "J2", "J3", "J4", "J5", "J6", "J7", "J8", "J9", "J10", "Q1.2"];
+export const LANDING_SEAL_THRESHOLD = "HTTP 200 and [data-landing-seal] in the server-rendered HTML of /";
 export const PERSONAS_PATH = new URL("../../content/personas/personas.json", import.meta.url);
 export const ENVELOPE_HASH_THRESHOLD = "HTTP 200, status openable, envelopeHash equal to envelope_hash in personas.json";
 export const LIVE_WALK_SIZES = ["1440x900", "390x844"];
@@ -476,6 +480,41 @@ async function personaReveal(page, ctx, key, size, atStage) {
   ctx.add(res("J2", where, entries.length && !bad ? "pass" : "fail", `entries=${entries.length} withoutNowOrRetrieved=${bad}`, "every entry has a now value and a retrieved date"));
 }
 
+/**
+ * Q1.2 verdict for production's raw HTML of /. Pure. Fails unless the request
+ * answered 200 and the HTML carries data-landing-seal in the first render.
+ * `httpStatus` is null when the request itself failed.
+ * @returns {{status:"pass"|"fail", measured:string, threshold:string}}
+ */
+export function compareLandingSeal({ httpStatus, html }) {
+  const threshold = LANDING_SEAL_THRESHOLD;
+  const fail = (measured) => ({ status: "fail", measured, threshold });
+  if (httpStatus === null) return fail("request failed");
+  if (httpStatus !== 200) return fail(`HTTP ${httpStatus}`);
+  if (typeof html !== "string") return fail("no HTML body");
+  if (!html.includes("data-landing-seal")) return fail("data-landing-seal missing from the server-rendered HTML");
+  return { status: "pass", measured: "data-landing-seal in server-rendered HTML", threshold };
+}
+
+/** Q1.2 (spec 13, issue #438): the Landing_Seal is in the raw HTML of / on production. Fetch only. */
+async function checkQ12(ctx) {
+  let httpStatus = null;
+  let html = null;
+  try {
+    const r = await fetch(`${ctx.origin}/`, {
+      headers: { Accept: "text/html" },
+      signal: AbortSignal.timeout(PAGE_TIMEOUT_MS),
+      redirect: "error",
+    });
+    httpStatus = r.status;
+    if (r.ok) html = await r.text();
+  } catch {
+    httpStatus = null;
+  }
+  const verdict = compareLandingSeal({ httpStatus, html });
+  ctx.add(res("Q1.2", "/ server-rendered HTML", verdict.status, verdict.measured, verdict.threshold));
+}
+
 export async function main(argv = process.argv.slice(2), env = process.env) {
   let opts;
   try {
@@ -502,6 +541,7 @@ export async function main(argv = process.argv.slice(2), env = process.env) {
   if (wanted.has("J1")) await checkJ1(ctx);
   if (wanted.has("J4")) await checkJ4(ctx);
   if (wanted.has("J10")) await checkJ10(ctx);
+  if (wanted.has("Q1.2")) await checkQ12(ctx);
 
   const browserChecks = ["J2", "J3", "J5", "J6", "J7", "J8", "J9"].some((id) => wanted.has(id));
   if (browserChecks) {
