@@ -16,8 +16,8 @@ import Home from "@/app/page";
 describe("landing Ghost in the server HTML (R9.15)", () => {
   const html = renderToStaticMarkup(createElement(Home));
 
-  it("renders exactly one data-ghost-pit in the server HTML", () => {
-    expect(html.match(/data-ghost-pit/g)).toHaveLength(1);
+  it("renders the backdrop Ghost and the hero Ghost (two pits until task 13 drops the backdrop one)", () => {
+    expect(html.match(/data-ghost-pit/g)).toHaveLength(2);
   });
 
   it("renders the Ghost inside the backdrop, before the hero headline", () => {
