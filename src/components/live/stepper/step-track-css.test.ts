@@ -27,6 +27,24 @@ describe("Step_Track stylesheet (S1.1, S1.2)", () => {
     expect(hairline).toMatch(/background-color:\s*#3a3350/);
   });
 
+  it("keeps a non-zero column gap between steps (2.5rem), not gap: 0.5rem 0", () => {
+    const steps = ruleBody(".steps");
+    expect(steps).toMatch(/gap:\s*0\.5rem\s+2\.5rem/);
+    expect(steps).not.toMatch(/gap:\s*0\.5rem\s+0\b/);
+  });
+
+  it("ends the 36px hairline no further than the column gap, so it clears the next label", () => {
+    // The hairline starts at calc(100% + 0.25rem) and runs 36px. Its end must
+    // not pass the 2.5rem column gap, or it would run into the next step.
+    const hairline = ruleBody(".step:not(:last-child)::after");
+    const offset = hairline.match(/left:\s*calc\(100%\s*\+\s*([\d.]+)rem\)/);
+    expect(offset).not.toBeNull();
+    const startPx = Number(offset?.[1]) * 16;
+    const endPx = startPx + 36;
+    const columnGapPx = 2.5 * 16;
+    expect(endPx).toBeLessThanOrEqual(columnGapPx);
+  });
+
   it("sizes the current dot 12px in #ff7b1c with a 4px rgba(255,123,28,.22) halo", () => {
     const current = ruleBody('.step[data-state="current"] .dot');
     expect(current).toMatch(/width:\s*12px/);
