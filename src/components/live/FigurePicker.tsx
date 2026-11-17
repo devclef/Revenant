@@ -145,18 +145,18 @@ export function FigurePicker({
             disabled={disabled}
             onChange={() => onToggle(item.metricId)}
           />
-          {/* Receipt_Row, line one: Short_Name, region, fixture label. */}
+          {/* Receipt_Row, line one: Short_Name and the fixture label. */}
           <span className={styles.figureHead}>
             <span className={styles.figureName}>
               {shortNameFor(item.metricId, item.displayName)}
             </span>
-            <span className={styles.figureMeta}>{item.region}</span>
             {item.isFixture ? (
               <span className={styles.fixture}>{LIVE_COPY.fixtureLabel}</span>
             ) : null}
           </span>
-          {/* Receipt_Row, line two: value and unit, then period, then the
-              retrieved date of a fallback. The source sits behind one tap. */}
+          {/* Receipt_Row, line two: value and unit, then period and region
+              beside the value, then the retrieved date of a fallback. The
+              source sits behind one tap. */}
           <span className={styles.figureFacts}>
             {shown !== undefined ? (
               <span className={styles.figureValue}>
@@ -172,6 +172,7 @@ export function FigurePicker({
                 formatShortDate(item.latestPeriod),
               )}
             </span>
+            <span className={styles.figureMeta}>{item.region}</span>
             {isFallback ? (
               <span className={styles.figureMeta}>
                 {LIVE_COPY.pickerRetrieved.replace(

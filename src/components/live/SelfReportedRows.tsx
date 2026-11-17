@@ -124,7 +124,6 @@ export function SelfReportedRows({
                   <span className={styles.figureMeta}>
                     {LIVE_COPY.selfReportedTag}
                   </span>
-                  <span className={styles.figureMeta}>{row.region}</span>
                 </p>
                 <p className={styles.selfReceiptFacts}>
                   <span className={styles.figureValue} data-user-content="">
@@ -132,6 +131,9 @@ export function SelfReportedRows({
                   </span>
                   <span className={styles.figureMeta}>
                     {LIVE_COPY.pickerPeriod.replace("{period}", row.period)}
+                  </span>
+                  <span className={styles.figureMeta} data-user-content="">
+                    {row.region}
                   </span>
                 </p>
               </div>

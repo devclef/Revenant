@@ -505,3 +505,23 @@ describe("FigurePicker Receipt_Row (spec 11, W7)", () => {
     expect(html).toContain("Value: 3.41 USD per gallon");
   });
 });
+
+// Receipt_Row order (spec 11, W4). Short_Name is on the first line. The value
+// and unit come next, with the period and region beside them on the second
+// line. Region moved off the name line so the row fits the two-line limit at
+// 1440 by 900 (the layout check reads these lines).
+describe("FigurePicker Receipt_Row order (spec 11, W4)", () => {
+  it("puts the region after the value and period, not beside the name", () => {
+    const html = render([REAL]);
+    const name = html.indexOf("Regular gasoline");
+    const unit = html.indexOf("USD per gallon");
+    const period = html.indexOf("Period:");
+    const region = html.indexOf("U.S.");
+    expect(name).toBeGreaterThanOrEqual(0);
+    expect(name).toBeLessThan(unit);
+    expect(unit).toBeLessThan(period);
+    expect(period).toBeLessThan(region);
+    expect(html.indexOf("figureHead")).toBeLessThan(html.indexOf("figureFacts"));
+    expect(html.indexOf("U.S.")).toBeGreaterThan(html.indexOf("figureFacts"));
+  });
+});
