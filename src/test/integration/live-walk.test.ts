@@ -941,6 +941,9 @@ function fiveStageActions(run: WalkRun): readonly StageAction[] {
         ) {
           await pressSealEarly(c);
           // Q1.2: an early release makes no prompt and stores no credential.
+          // Early release is checked only on the desktop mouse-hold run, because
+          // sealPressInput returns "hold" only at 1440 without reduced motion.
+          // Touch, click and keyboard runs do not exercise early release.
           const early = await readPasskeyCounts(c.page);
           const { credentials } = (await c.cdp.send("WebAuthn.getCredentials", {
             authenticatorId: c.authenticatorId,
