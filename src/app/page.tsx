@@ -1,6 +1,5 @@
 import type { CSSProperties } from "react";
 
-import { Ghost } from "@/components/ceremony/scene/Ghost";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { CovenStrip } from "@/components/landing/CovenStrip";
 import { LandingHero } from "@/components/landing/LandingHero";
@@ -67,9 +66,7 @@ export default function Home() {
           </>
         }
       >
-        <LandingBackdrop>
-          <Ghost gradientId="ghost-body-landing" />
-        </LandingBackdrop>
+        <LandingBackdrop />
         <div style={HERO_STYLE}>
           <LandingHero personaCount={personaCount} demo2On={demo2On} />
         </div>
