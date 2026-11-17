@@ -117,6 +117,46 @@ describe("u8Failures (U8.1 to U8.3)", () => {
     expect(failures).toEqual(["U8.2 Skip control is not inside the viewport"]);
   });
 
+  it("passes when the Break the seal hold control is inside the viewport", () => {
+    const failures = u8Failures({
+      seal: seal(160),
+      hold: rect(600, 500, 240, 56),
+      skips: [],
+      minWidth: 160,
+      w: 1440,
+      h: 900,
+    });
+    expect(failures).toEqual([]);
+  });
+
+  it("fails a Break the seal hold control below the viewport at 1440 and names U8.2", () => {
+    const failures = u8Failures({
+      seal: seal(160),
+      hold: rect(600, 880, 240, 56),
+      skips: [],
+      minWidth: 160,
+      w: 1440,
+      h: 900,
+    });
+    expect(failures).toEqual([
+      "U8.2 Break the seal hold control is not inside the viewport",
+    ]);
+  });
+
+  it("fails a Break the seal hold control below the viewport at 390 and names U8.2", () => {
+    const failures = u8Failures({
+      seal: seal(120, 135, 100),
+      hold: rect(20, 800, 350, 56),
+      skips: [],
+      minWidth: 120,
+      w: 390,
+      h: 844,
+    });
+    expect(failures).toEqual([
+      "U8.2 Break the seal hold control is not inside the viewport",
+    ]);
+  });
+
   it("reports a missing seal and names U8.3", () => {
     expect(
       u8Failures({ seal: null, skips: [], minWidth: 120, w: 390, h: 844 }),

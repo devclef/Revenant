@@ -50,8 +50,9 @@
 //                             Additive (issue #425): no existing layout-check row or test
 //                             was changed or retired by this row.
 //   U8    break-seal-size    Break the seal at 1440x900 and 390x844: the [data-seal-target] svg is
-//                             at least 160 px (1440) and 120 px (390) wide, and the seal and any
-//                             Skip control are inside the viewport (spec 13 U8.1 to U8.3).
+//                             at least 160 px (1440) and 120 px (390) wide, and the seal, the
+//                             Break the seal hold control ([data-seal-button]) and any Skip
+//                             control are inside the viewport (spec 13 U8.1 to U8.3).
 //   LS1   landing-seal        / at 1440x900 and 390x844: [data-landing-seal] is at least 160 px
 //                             (1440) and 120 px (390) wide, inside the First_Viewport, and the h1
 //                             and the primary call to action are inside it (spec 13 L1.1 to L1.3).
@@ -3016,13 +3017,16 @@ export function rectsSame(a, b) {
 }
 
 // U8: the seal at Break the seal. seal is { width, left, top, right, bottom } or null;
+// hold is the rect of the Break the seal hold control, or null when it is not on the page;
 // skips is a list of rects for Skip controls. Returns the failure reasons; an empty list
 // passes. Pure, so unit tests use it without a browser.
-export function u8Failures({ seal, skips, minWidth, w, h }) {
+export function u8Failures(args) {
+  const { seal, hold, skips, minWidth, w, h } = args;
   if (!seal) return ["U8.3 no [data-seal-target] svg to measure"];
   const out = [];
   if (seal.width < minWidth) out.push(`U8.3 (U8.1) seal is ${seal.width.toFixed(1)}px across, need ${minWidth}px`);
   if (!rectInViewport(seal, w, h)) out.push("U8.2 seal is not inside the viewport");
+  if (hold && !rectInViewport(hold, w, h)) out.push("U8.2 Break the seal hold control is not inside the viewport");
   for (const s of skips) {
     if (!rectInViewport(s, w, h)) out.push("U8.2 Skip control is not inside the viewport");
   }
@@ -3055,17 +3059,19 @@ export function p1Failures({ largestIsPress, press, accentCount, pressIsAccent, 
   return out;
 }
 
-// U8: the seal's rect and every visible Skip control, in the page.
+// U8: the seal's rect, the Break the seal hold control ([data-seal-button], the one
+// the reader holds in SealBreak.tsx) and every visible Skip control, in the page.
 const U8_READ = () => {
   const box = (el) => {
     const r = el.getBoundingClientRect();
     return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width };
   };
   const seal = document.querySelector("[data-seal-target] svg");
+  const hold = document.querySelector("[data-seal-button]");
   const skips = [...document.querySelectorAll("button, a")]
     .filter((el) => /^Skip\b/.test((el.textContent || "").trim()) && el.getClientRects().length > 0)
     .map(box);
-  return { seal: seal ? box(seal) : null, skips };
+  return { seal: seal ? box(seal) : null, hold: hold ? box(hold) : null, skips };
 };
 
 // LS1: the landing seal, h1 and primary call to action, in the page.
@@ -3145,8 +3151,8 @@ async function checkBreakSeal(page, ctx) {
     report(ctx, result("U8", "break-seal-size", "missing", "not on this build: no [data-seal-target] svg"));
     return;
   }
-  const problems = u8Failures({ seal: r.seal, skips: r.skips, minWidth, w: ctx.w, h: ctx.h });
-  const detail = `width=${r.seal.width.toFixed(1)}px viewport=${ctx.size} threshold=width>=${minWidth}px (U8.1), seal and Skip inside the viewport${problems.length ? ` (${problems.join("; ")})` : ""}`;
+  const problems = u8Failures({ seal: r.seal, hold: r.hold, skips: r.skips, minWidth, w: ctx.w, h: ctx.h });
+  const detail = `width=${r.seal.width.toFixed(1)}px viewport=${ctx.size} threshold=width>=${minWidth}px (U8.1), seal, Break the seal control and Skip inside the viewport${problems.length ? ` (${problems.join("; ")})` : ""}`;
   report(ctx, result("U8", "break-seal-size", problems.length ? "fail" : "pass", detail));
 }
 
