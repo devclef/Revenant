@@ -52,3 +52,16 @@ The implementation test checks that the named file exists on main and exports th
 ## Path
 
 The ticket names `/home/dopey/kiro/revenant-crew/dev/tools/qa/patches/`. That path is outside the task worktree and does not exist. This file is written to the worktree copy at `tools/qa/patches/spec-12-tasks.evidence.md`, which platform-dev owns under `tools/qa/**`.
+
+## Patch check
+
+Adds tools/qa/patches/spec-12-tasks.patch, one unified diff against .kiro/specs/12-submission-polish/tasks.md. It changes only checkbox markers on 10 lines. It does not edit tasks.md. Checked with git apply --check and git apply --check --recount on this worktree: both exit 0.
+
+Path note: the ticket names /home/dopey/kiro/revenant-crew/dev/tools/qa/patches/. That path is outside this task worktree, so the files are written under tools/qa/patches/ in the worktree instead, as the task rules require.
+
+Ticked (10 lines, artefact on main per the evidence list):
+2.1 (same-figure.ts, PR #403), 4.1 (live-steps.ts, PR #405), 5.1 (receipt-kind.ts, PR #406), 5.3 (ReceiptCard.single.property.test.tsx, Property 5, 5 tests pass, PR #406), 8.1 (author-questions.ts, PR #409), 9.1 (ReceiptsDisclosure.tsx and form.ts, PR #411), 10.1 (display-figure.ts, PR #413), 10.2 (letter-date.ts, PR #413), 10.3 (FigurePicker.tsx, PR #413), 11.1 (catalogue-list.ts, PR #416).
+
+Stayed open (10 lines): 2.2, 4.2, 4.3, 5.2, 8.2, 9.2, 10.4, 10.5, 10.6, 11.2. Each property line has no test file tagged with its Property number on main. The only tag on main is Property 5 (git grep "Feature: 12-submission-polish" origin/main -- src: one hit).
+
+Full evidence: tools/qa/patches/spec-12-tasks.evidence.md (commit 4930610). Checked against origin/main at d076f35.
