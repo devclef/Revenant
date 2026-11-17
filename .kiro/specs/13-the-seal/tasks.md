@@ -503,7 +503,7 @@ Group D changes documents only. It adds no feature and is never cut. D2 does not
   - Validation: `bash scripts/check.sh`.
   - _Requirements: D5.1–D5.3, G3.6_
 
-- [ ] 21. D4 · README paragraph and one clause per merged feature
+- [x] 21. D4 · README paragraph and one clause per merged feature
   - Agent: `platform-dev` · Depends on: 19, 20 · Estimated size: ~150 changed lines · Target: 29 November 2026
   - Never cut. Its own box and the final Live_Walk box (task 23) are the only boxes it does not count.
   - Scope: `README.md` only. Edit the lines in place.
