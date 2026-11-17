@@ -386,7 +386,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
 
 ### Group F: smaller fixes, target 26 to 27 November 2026
 
-- [ ] 14. F1 and F2 · Landing sections use both halves; the ritual cards have room (Cuttable)
+- [x] 14. F1 and F2 · Landing sections use both halves; the ritual cards have room (Cuttable)
   - Agent: `frontend-dev` · Depends on: 8 · Estimated size: ~700 changed lines · Target: 26 November 2026
   - **Cuttable, cut order 3.** If cut, the sections and cards stay as on `main` and the landing Ghost keeps its fixed place below the hero.
   - Scope: `src/components/landing/landing.module.css`, `RitualSection.tsx`, `ResurrectionSection.tsx`, `NoSealSection.tsx`, `CovenStrip.tsx`, and the `*.test.ts(x)` for each file.
