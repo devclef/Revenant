@@ -52,6 +52,19 @@ describe("Step_Track stylesheet (S1.1, S1.2)", () => {
     expect(endPx).toBeLessThan(columnGapPx);
   });
 
+  it("leaves at least 0.5rem (8px) between each hairline end and the next step", () => {
+    // Labels at 13px Inter run close to the column gap at 1280 and 1366 px.
+    // A margin floor stops a later gap cut from touching the next label.
+    const hairline = ruleBody(".step:not(:last-child)::after");
+    const offset = hairline.match(/left:\s*calc\(100%\s*\+\s*([\d.]+)rem\)/);
+    const width = hairline.match(/width:\s*([\d.]+)px/);
+    const gap = ruleBody(".steps").match(/gap:\s*[\d.]+rem\s+([\d.]+)rem/);
+    const rootPx = 16;
+    const endPx = Number(offset?.[1]) * rootPx + Number(width?.[1]);
+    const clearancePx = Number(gap?.[1]) * rootPx - endPx;
+    expect(clearancePx).toBeGreaterThanOrEqual(0.5 * rootPx);
+  });
+
   it("sizes the current dot 12px in #ff7b1c with a 4px rgba(255,123,28,.22) halo", () => {
     const current = ruleBody('.step[data-state="current"] .dot');
     expect(current).toMatch(/width:\s*12px/);
