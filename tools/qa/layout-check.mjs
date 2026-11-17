@@ -60,6 +60,26 @@
 //                             largest element, a focusable button of at least 44x44 px, the only
 //                             orange control, and the Warning_Text does not move during a short hold
 //                             that sends nothing (spec 13 P1.1 to P1.4 as the failure messages name).
+//   T1    wait-envelope      Wait step (after a passkey seal, so reached by Live_Walk, not here): the
+//                             Sealed_Envelope_View and countdown inside the First_Viewport, and the
+//                             Keep_Section top at or below the view bottom (spec 13 T1.2, T1.3).
+//   TG2   wait-ghost          the same Wait step: the risen ghost box does not intersect the
+//                             Keep_Section (spec 13 T2.2). Row ID TG2 because T2 is the tick row.
+//   W     write-step          /demo/live Write step at 1440x900 and 390x844: one column on paper,
+//                             Letter_Field top, Occasion heights, question and receipt row heights
+//                             (spec 13 W1.1 to W1.3, W3.3, W4.4, W7.2).
+//   W8    heading-offset      /demo/live after the step change to Press the seal: the Step_Heading
+//                             box at least 16 px below the Top_Bar (spec 13 W8.2).
+//   LF1   landing-halves      / at 1440x900: each section with an h2 has content reaching past 60 %
+//                             of its width (spec 13 F1.4). Row ID LF1 because F1 is the fit row.
+//   LF2   ritual-cards        / at 1440x900 (wide rules) and 390x844 (one column): ritual card padding,
+//                             text width, gaps and body text, and no clipped text (spec 13 F2.1 to F2.3).
+//   F3    persona-testify     persona Testify step at 1440x900: the fictional notice clear of the
+//                             Step_Indicator labels, question, answer and continue control in the
+//                             viewport, notice once (spec 13 F3.1, F3.2, F3.4).
+//   F4    live-testify        live Testify step (after a passkey seal, so reached by Live_Walk): Ghost
+//                             inside the viewport, verdict 16 px below the Top_Bar, Ghost clear of the
+//                             question, answer and verdict (spec 13 F4.1 to F4.3).
 //   HW1   hero-wide           2560x1440: the / h1 font size is at least 1.5 times its 1366x800 size.
 //   ST1   step-indicator      persona intact to close: [data-step-indicator] present; one
 //                             aria-current="step" from recall on; 1 line at 600 px and wider,
@@ -2444,6 +2464,8 @@ async function landing(context, ctx) {
       await guard(ctx, "CTA1", () => checkLandingCtas(page, ctx));
       await guard(ctx, "LS1", () => checkLandingSeal(page, ctx));
       await guard(ctx, "H1.6", () => checkLandingSections(page, ctx));
+      await guard(ctx, "LF1", () => checkLandingHalves(page, ctx));
+      await guard(ctx, "LF2", () => checkRitualCards(page, ctx));
       await guard(ctx, "H2.7", () => checkRitualRow(page, ctx));
       await guard(ctx, "HW1", () => checkHeroWide(page, ctx));
       await checkEveryPage(page, ctx, "/", { fonts: true });
@@ -2616,6 +2638,7 @@ async function personaWalk(page, ctx, p, via) {
   await guard(ctx, "G2", () => checkGhostCentre(page, ctx, "recall"));
   await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
   await guard(ctx, "ST1", () => checkStepIndicator(page, ctx, "recall"));
+  await guard(ctx, "F3", () => checkPersonaTestify(page, ctx));
   await guard(ctx, "SI1", () => checkStepFit(page, ctx));
   await guard(ctx, "GT1", () => checkGhostText(page, ctx));
   await guard(ctx, "CF1", () => checkCardFit(page, ctx));
@@ -3152,6 +3175,7 @@ async function checkPressEnvelope(context, ctx) {
       return;
     }
     await page.locator("textarea").first().fill(P1_LIVE_TEXT).catch(() => {});
+    await guard(ctx, "W", () => checkWriteRow(page, ctx));
     const next = page.getByRole("button", { name: "Next", exact: true }).first();
     for (let i = 0; i < P1_MAX_NEXT_PRESSES; i += 1) {
       if ((await page.locator('[data-live-step="seal"]').count()) > 0) break;
@@ -3159,6 +3183,8 @@ async function checkPressEnvelope(context, ctx) {
       await sleep(800);
     }
     await sleep(800);
+    await guard(ctx, "W8", () => checkHeadingOffset(page, ctx));
+    await guard(ctx, "T1", () => checkLiveStages(page, ctx));
     const r = await page.evaluate(P1_READ);
     if (r.missing) {
       report(ctx, result("P1", "press-envelope", "missing", "not on this build: no Press_Envelope on the seal step of /demo/live"));
@@ -3186,6 +3212,437 @@ async function checkPressEnvelope(context, ctx) {
   } finally {
     await page.close();
   }
+}
+
+// T1, TG2, W, W8, LF1, LF2, F3 and F4 (spec 13 groups T, W, F). Each failure message names
+// its requirement ID. The pure verdicts below are exported for unit tests; the readers run in
+// the page and the checks report one row each. Rows the walk cannot reach (the Wait and live
+// Testify steps need a passkey seal) report missing.
+const WIDE_MIN_PX = 900; // the desktop rules apply at this width and wider (1440 is measured)
+const TOP_BAR_GAP_PX = 16;
+const LF_SIZES = [H27_SIZE, "390x844"];
+
+// Two rects overlap by more than half a pixel on both axes. Pure.
+export function rectsIntersect(a, b) {
+  if (!a || !b) return false;
+  return a.left < b.right - 0.5 && b.left < a.right - 0.5 && a.top < b.bottom - 0.5 && b.top < a.bottom - 0.5;
+}
+
+// T1 (T1.2, T1.3): the envelope view and the countdown inside the First_Viewport, and the
+// Keep_Section top at or below the view's bottom edge. Pure.
+export function t1Failures({ view, countdown, keep, w, h }) {
+  if (!view) return ["T1.2 no [data-sealed-envelope-view] to measure"];
+  const out = [];
+  if (!rectInViewport(view, w, h)) out.push("T1.2 Sealed_Envelope_View is not inside the First_Viewport");
+  if (!countdown || !rectInViewport(countdown, w, h)) out.push("T1.2 countdown is not inside the First_Viewport");
+  if (!keep) out.push("T1.3 no [data-live-keep-section] to measure");
+  else if (keep.top < view.bottom - 0.5) {
+    out.push(`T1.3 Keep_Section top ${keep.top.toFixed(1)}px is above the view bottom ${view.bottom.toFixed(1)}px`);
+  }
+  return out;
+}
+
+// TG2 (T2.2): the risen ghost's box does not intersect the Keep_Section. Pure.
+export function tg2Failures({ ghost, keep }) {
+  return rectsIntersect(ghost, keep) ? ["T2.2 the risen ghost intersects the Keep_Section"] : [];
+}
+
+// W (W1.1 to W1.3, W3.3, W4.4, W7.2). Desktop rules apply at WIDE_MIN_PX and wider; the phone
+// rules apply below it. Rows are { height, lineHeight, padY } and a row's line limit is
+// maxLines * lineHeight + padY. Pure.
+export function wFailures({ w, h, remPx, field, column, paper, occasions, questions, receipts }) {
+  if (!field) return ["W1.3 no Letter_Field (#live-letter) to measure"];
+  const out = [];
+  const desktop = w >= WIDE_MIN_PX;
+  if (desktop) {
+    if (column > 44 * remPx + 0.5) {
+      out.push(`W1.1 Writing_Column is ${column.toFixed(0)}px wide, need at most ${(44 * remPx).toFixed(0)}px (44rem)`);
+    }
+    if (paper !== null && paper > column + 80 + 0.5) {
+      out.push(`W1.2 paper is ${paper.toFixed(0)}px wide, need at most the column plus 80px (${(column + 80).toFixed(0)}px)`);
+    }
+    if (field.top > 360 + 0.5) out.push(`W1.3 Letter_Field top is ${field.top.toFixed(0)}px from the top, need at most 360px`);
+  } else if (field.top < 0 || field.top >= h) {
+    out.push("W1.3 Letter_Field top is outside the First_Viewport");
+  }
+  const minOccasion = desktop ? 32 : 44;
+  occasions.forEach((o, i) => {
+    if (o.height < minOccasion - 0.5) {
+      out.push(`W3.3 Occasion ${i + 1} is ${o.height.toFixed(0)}px high, need at least ${minOccasion}px`);
+    }
+  });
+  if (desktop) {
+    questions.forEach((q, i) => {
+      const max = 2 * q.lineHeight + q.padY;
+      if (q.height > max + 0.5) out.push(`W4.4 question row ${i + 1} is ${q.height.toFixed(0)}px tall, need at most two lines (${max.toFixed(0)}px)`);
+    });
+  }
+  const maxLines = desktop ? 2 : 3;
+  receipts.forEach((r, i) => {
+    const max = maxLines * r.lineHeight + r.padY;
+    if (r.height > max + 0.5) out.push(`W7.2 receipt row ${i + 1} is ${r.height.toFixed(0)}px tall, need at most ${maxLines} lines (${max.toFixed(0)}px)`);
+  });
+  return out;
+}
+
+// W8 (W8.2): the Step_Heading's box starts at least 16 px below the Top_Bar's bottom edge.
+// The caller reports a missing Top_Bar as a note before this runs. Pure.
+export function w8Failures({ heading, topBarBottom }) {
+  if (!heading) return ["W8.2 no step heading to measure"];
+  if (topBarBottom === null) return [];
+  const gap = heading.top - topBarBottom;
+  return gap >= TOP_BAR_GAP_PX ? [] : [`W8.2 step heading top is ${gap.toFixed(1)}px below the Top_Bar, need at least ${TOP_BAR_GAP_PX}px`];
+}
+
+// LF1 (F1.4): each landing section has content reaching past 60 % of its content box, so its
+// right 40 % is not empty. Sections are { name, left, width, leafRights }. Pure.
+export function lf1Failures(sections) {
+  return sections.flatMap((s) => {
+    const edge = s.left + 0.6 * s.width;
+    if (s.leafRights.some((right) => right > edge)) return [];
+    return [`F1.4 ${s.name} has no content in its right 40% (content box ${s.left.toFixed(0)}..${(s.left + s.width).toFixed(0)}px)`];
+  });
+}
+
+// LF2 (F2.1 to F2.3): the ritual cards. Wide: 24 px padding, 200 px text width, 24 px between
+// cards, 16 px body text at line height 1.5. Phone: one column, 20 px padding. Cards are
+// { left, top, right, bottom, padding, textWidth, fontSize, lineHeight, clipped }. Pure.
+export function lf2Failures({ items, w }) {
+  const out = [];
+  const wide = w >= WIDE_MIN_PX;
+  const minPad = wide ? 24 : 20;
+  items.forEach((c, i) => {
+    const n = i + 1;
+    if (c.padding < minPad - 0.5) out.push(`${wide ? "F2.1" : "F2.2"} card ${n} padding is ${c.padding.toFixed(0)}px, need at least ${minPad}px`);
+    if (c.clipped) out.push(`F2.3 card ${n} clips its text`);
+    if (wide) {
+      if (c.textWidth < 200 - 0.5) out.push(`F2.1 card ${n} text width is ${c.textWidth.toFixed(0)}px, need at least 200px`);
+      if (c.fontSize < 16 - 0.01 || c.lineHeight < 1.5 * c.fontSize - 0.01) {
+        out.push(`F2.1 card ${n} body text is ${c.fontSize.toFixed(1)}px at line height ${c.lineHeight.toFixed(1)}px, need 16px at 1.5`);
+      }
+    }
+  });
+  if (wide) {
+    for (let a = 0; a < items.length; a += 1) {
+      for (let b = a + 1; b < items.length; b += 1) {
+        const A = items[a];
+        const B = items[b];
+        const gap = Math.max(A.left - B.right, B.left - A.right, A.top - B.bottom, B.top - A.bottom);
+        if (gap < 24 - 0.5) out.push(`F2.1 cards ${a + 1} and ${b + 1} are ${gap.toFixed(0)}px apart, need at least 24px`);
+      }
+    }
+  } else if (items.some((c) => Math.abs(c.left - items[0].left) > 0.5)) {
+    out.push("F2.2 ritual cards are not stacked in one column");
+  }
+  return out;
+}
+
+// F3 (F3.1, F3.2, F3.4) on the persona Testify step at 1440x900. The fictional notice does not
+// overlap a Step_Indicator label; the question, the answer control and the control to go on lie
+// inside the viewport; the notice shows once. A null answer or continue control is skipped.
+export function f3Failures({ w, h, notice, labels, question, answer, cont, noticeCount }) {
+  const out = [];
+  if (notice && labels.some((l) => rectsIntersect(notice, l))) {
+    out.push("F3.1 the fictional notice overlaps a Step_Indicator label");
+  }
+  if (!question) out.push("F3.2 no question heading to measure");
+  else if (!rectInViewport(question, w, h)) out.push("F3.2 question is not inside the First_Viewport");
+  if (answer && !rectInViewport(answer, w, h)) out.push("F3.2 answer control is not inside the First_Viewport");
+  if (cont && !rectInViewport(cont, w, h)) out.push("F3.2 control to go on is not inside the First_Viewport");
+  if (noticeCount > 1) out.push(`F3.4 the fictional notice shows ${noticeCount} times, need once`);
+  return out;
+}
+
+// F4 (F4.1 to F4.3) on the live Testify step. The Ghost is drawn inside the viewport, the verdict
+// line starts 16 px below the Top_Bar, and the Ghost covers neither the question, the answer
+// control nor the verdict. others is a list of [name, rect] pairs; null rects are skipped. Pure.
+export function f4Failures({ w, h, ghost, topBarBottom, verdict, others }) {
+  if (!ghost) return ["F4.1 no Ghost drawn on the live Testify step"];
+  const out = [];
+  if (!rectInViewport(ghost, w, h)) out.push("F4.1 the Ghost is not inside the First_Viewport");
+  if (verdict && topBarBottom !== null && verdict.top - topBarBottom < TOP_BAR_GAP_PX - 0.5) {
+    out.push(`F4.2 verdict line starts ${(verdict.top - topBarBottom).toFixed(1)}px below the Top_Bar, need at least ${TOP_BAR_GAP_PX}px`);
+  }
+  for (const [name, rect] of others) {
+    if (rectsIntersect(ghost, rect)) out.push(`F4.3 the Ghost covers the ${name}`);
+  }
+  return out;
+}
+
+// W: the Write step's Letter_Field, column, paper, Occasion controls, question rows and receipt
+// rows, read in the page. Missing when there is no #live-letter.
+const W_READ = () => {
+  const box = (el) => {
+    const r = el.getBoundingClientRect();
+    return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+  };
+  const visible = (el) => el.getClientRects().length > 0;
+  const rowMetrics = (el) => {
+    const cs = getComputedStyle(el);
+    const line = el.querySelector("textarea, p, span") || el;
+    const lcs = getComputedStyle(line);
+    const fontSize = parseFloat(lcs.fontSize) || 16;
+    const lineHeight = parseFloat(lcs.lineHeight) || fontSize * 1.2;
+    const padY = ["paddingTop", "paddingBottom", "borderTopWidth", "borderBottomWidth"].reduce((s, k) => s + (parseFloat(cs[k]) || 0), 0);
+    return { height: el.getBoundingClientRect().height, lineHeight, padY };
+  };
+  const field = document.querySelector("textarea#live-letter");
+  if (!field) return { missing: true };
+  const panel = document.querySelector('[data-card="live-write"]');
+  return {
+    missing: false,
+    remPx: parseFloat(getComputedStyle(document.documentElement).fontSize) || 16,
+    field: box(field),
+    column: field.parentElement.getBoundingClientRect().width,
+    paper: panel ? panel.getBoundingClientRect().width : null,
+    occasions: [...document.querySelectorAll('[class*="occasionButton"]')].filter(visible).map((el) => ({ height: el.getBoundingClientRect().height })),
+    questions: [...document.querySelectorAll('[class*="questionRow"]')].filter(visible).map(rowMetrics),
+    receipts: [...document.querySelectorAll('[class*="figureItem"]')].filter(visible).map(rowMetrics),
+  };
+};
+
+// W8: the Step_Heading after a step change, and the Top_Bar's bottom edge when the bar is shown.
+const W8_READ = () => {
+  const heading = document.querySelector("[data-live-stepper] h2");
+  if (!heading || heading.getClientRects().length === 0) return { missing: true };
+  const bar = document.querySelector("[data-topbar]");
+  const barShown = bar !== null && bar.getClientRects().length > 0;
+  return {
+    missing: false,
+    step: document.querySelector("[data-live-step]")?.getAttribute("data-live-step") ?? "none",
+    heading: { top: heading.getBoundingClientRect().top },
+    topBarBottom: barShown ? bar.getBoundingClientRect().bottom : null,
+  };
+};
+
+// LF1: the landing sections that have an h2 (the hero is excluded), with the content box and
+// the right edge of each visible content element.
+const LF1_READ = () => {
+  const visible = (el) => el.getClientRects().length > 0;
+  return [...document.querySelectorAll("section")]
+    .filter((s) => visible(s) && !s.hasAttribute("data-landing-hero") && s.querySelector("h2"))
+    .map((s) => {
+      const r = s.getBoundingClientRect();
+      const cs = getComputedStyle(s);
+      const pl = (parseFloat(cs.paddingLeft) || 0) + (parseFloat(cs.borderLeftWidth) || 0);
+      const pr = (parseFloat(cs.paddingRight) || 0) + (parseFloat(cs.borderRightWidth) || 0);
+      const leafRights = [...s.querySelectorAll("p, h1, h2, h3, li, svg, img, figure, blockquote")]
+        .filter(visible)
+        .map((el) => el.getBoundingClientRect())
+        .filter((q) => q.width > 0 && q.height > 0)
+        .map((q) => q.right);
+      return {
+        name: (s.querySelector("h2").textContent || "").trim().slice(0, 30),
+        left: r.left + pl,
+        width: r.width - pl - pr,
+        leafRights,
+      };
+    });
+};
+
+// LF2: the ritual cards on /, with their boxes, padding, text width, body text and clipping.
+const LF2_READ = () => {
+  const list = document.querySelector('[data-block="ritual"]');
+  if (!list) return { missing: true };
+  const items = [...list.children]
+    .filter((el) => el.tagName === "LI" && el.getClientRects().length > 0)
+    .map((li) => {
+      const r = li.getBoundingClientRect();
+      const cs = getComputedStyle(li);
+      const pl = parseFloat(cs.paddingLeft) || 0;
+      const pr = parseFloat(cs.paddingRight) || 0;
+      const edges = pl + pr + (parseFloat(cs.borderLeftWidth) || 0) + (parseFloat(cs.borderRightWidth) || 0);
+      const text = li.querySelector("p") ?? li;
+      const tcs = getComputedStyle(text);
+      const fontSize = parseFloat(tcs.fontSize) || 0;
+      return {
+        left: r.left,
+        top: r.top,
+        right: r.right,
+        bottom: r.bottom,
+        padding: Math.min(pl, pr),
+        textWidth: r.width - edges,
+        fontSize,
+        lineHeight: parseFloat(tcs.lineHeight) || fontSize * 1.2,
+        clipped: li.scrollWidth > li.clientWidth + 1 || text.scrollWidth > text.clientWidth + 1,
+      };
+    });
+  if (!items.length) return { missing: true };
+  return { missing: false, items };
+};
+
+// F3: the persona Testify step. The notice is the first visible paragraph that says it is
+// fictional; noticeCount counts all of them. The control to go on is the last visible button.
+const F3_READ = () => {
+  const box = (el) => {
+    const r = el.getBoundingClientRect();
+    return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+  };
+  const visible = (el) => el.getClientRects().length > 0;
+  const fictional = [...document.querySelectorAll("p")].filter((p) => visible(p) && (p.textContent || "").includes("is fictional"));
+  const question = document.querySelector("[data-stage-heading]");
+  const answer = [...document.querySelectorAll("[data-recall-reader] textarea, [data-recall-reader] input")].find(visible);
+  const buttons = [...document.querySelectorAll("button")].filter(visible);
+  const cont = buttons.length ? buttons[buttons.length - 1] : null;
+  return {
+    notice: fictional.length ? box(fictional[0]) : null,
+    noticeCount: fictional.length,
+    labels: [...document.querySelectorAll("[data-step-indicator] li")].filter(visible).map(box),
+    question: question && visible(question) ? box(question) : null,
+    answer: answer ? box(answer) : null,
+    cont: cont ? box(cont) : null,
+    contText: cont ? (cont.textContent || "").trim().slice(0, 40) : "",
+  };
+};
+
+// T1, TG2 and F4: the Wait step and the live Testify step. Both exist only after a passkey
+// seal, so a page without them returns null for each.
+const LIVE_STAGE_READ = () => {
+  const box = (el) => {
+    const r = el.getBoundingClientRect();
+    return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+  };
+  const visible = (el) => el.getClientRects().length > 0;
+  const first = (sel) => {
+    const el = document.querySelector(sel);
+    return el && visible(el) ? el : null;
+  };
+  const bar = first("[data-topbar]");
+  const topBarBottom = bar ? bar.getBoundingClientRect().bottom : null;
+  const countdown = first('[data-live-countdown="ticking"]');
+  const view = first("[data-sealed-envelope-view]");
+  const heldGhost = document.querySelector("[data-held-ghost] svg, [data-live-ghost-layer] svg");
+  const keep = first("[data-live-keep-section]");
+  const testify = first("[data-live-testify-ghost]");
+  const verdict = [...document.querySelectorAll("p")].find((p) => visible(p) && (p.textContent || "").trim().startsWith("The seal is intact"));
+  const question = first("[data-stage-heading]");
+  const answer = first("textarea");
+  return {
+    topBarBottom,
+    wait: countdown && view
+      ? {
+          view: box(view),
+          countdown: box(countdown),
+          keep: keep ? box(keep) : null,
+          ghost: heldGhost && visible(heldGhost) ? box(heldGhost) : null,
+        }
+      : null,
+    testify: testify
+      ? {
+          ghost: box(testify),
+          verdict: verdict ? box(verdict) : null,
+          question: question ? box(question) : null,
+          answer: answer ? box(answer) : null,
+        }
+      : null,
+  };
+};
+
+async function checkWriteRow(page, ctx) {
+  const r = await page.evaluate(W_READ);
+  if (r.missing) {
+    report(ctx, result("W", "write-step", "missing", "not on this build: no #live-letter on the Write step"));
+    return;
+  }
+  const problems = wFailures({ w: ctx.w, h: ctx.h, ...r });
+  const desktop = ctx.w >= WIDE_MIN_PX;
+  const detail = `field top=${px(r.field.top)} column=${px(r.column)} paper=${r.paper === null ? "n/a" : px(r.paper)} occasions=${r.occasions.length} questions=${r.questions.length} receipts=${r.receipts.length} viewport=${ctx.size} threshold=${desktop ? "column at most 44rem, paper at most column plus 80px, field top at most 360px" : "field top inside the viewport"}, occasion at least ${desktop ? 32 : 44}px, rows at most ${desktop ? 2 : 3} lines${problems.length ? ` (${problems.join("; ")})` : ""}`;
+  report(ctx, result("W", "write-step", problems.length ? "fail" : "pass", detail));
+}
+
+async function checkHeadingOffset(page, ctx) {
+  const r = await page.evaluate(W8_READ);
+  if (r.missing) {
+    report(ctx, result("W8", "heading-offset", "missing", "not on this build: no [data-live-stepper] heading after the step change"));
+    return;
+  }
+  if (r.topBarBottom === null) {
+    report(ctx, result("W8", "heading-offset", "missing", "not on this build: no [data-topbar] to measure the heading against"));
+    return;
+  }
+  const problems = w8Failures({ heading: r.heading, topBarBottom: r.topBarBottom });
+  const gap = r.heading.top - r.topBarBottom;
+  const detail = `step=${r.step} heading top=${px(r.heading.top)} topBarBottom=${px(r.topBarBottom)} gap=${gap.toFixed(1)}px viewport=${ctx.size} threshold=heading at least ${TOP_BAR_GAP_PX}px below the Top_Bar after a step change${problems.length ? ` (${problems.join("; ")})` : ""}`;
+  report(ctx, result("W8", "heading-offset", problems.length ? "fail" : "pass", detail));
+}
+
+// T1, TG2 and F4 need the Wait and live Testify steps, which come after a passkey seal. This
+// check reads them if the page is there and reports missing otherwise (Live_Walk measures them).
+async function checkLiveStages(page, ctx) {
+  const r = await page.evaluate(LIVE_STAGE_READ);
+  const unreached = "not reached: the Wait and live Testify steps come after a passkey seal, which this check does not make; Live_Walk measures them";
+  if (!r.wait) {
+    report(ctx, result("T1", "wait-envelope", "missing", unreached));
+    report(ctx, result("TG2", "wait-ghost", "missing", unreached));
+  } else {
+    const { view, countdown, keep, ghost } = r.wait;
+    const problems = t1Failures({ view, countdown, keep, w: ctx.w, h: ctx.h });
+    const keepTop = keep ? px(keep.top) : "n/a";
+    const detail = `view=${px(view.top)}..${px(view.bottom)} countdown=${px(countdown.top)}..${px(countdown.bottom)} keep top=${keepTop} viewport=${ctx.size} threshold=view and countdown inside the First_Viewport, Keep_Section top at or below the view bottom${problems.length ? ` (${problems.join("; ")})` : ""}`;
+    report(ctx, result("T1", "wait-envelope", problems.length ? "fail" : "pass", detail));
+    if (!ghost) {
+      report(ctx, result("TG2", "wait-ghost", "missing", "no ghost drawn on the Wait step to measure"));
+    } else {
+      const ghostProblems = tg2Failures({ ghost, keep });
+      report(ctx, result("TG2", "wait-ghost", ghostProblems.length ? "fail" : "pass", `ghost=${px(ghost.top)}..${px(ghost.bottom)} keep top=${keepTop} viewport=${ctx.size} threshold=ghost box does not intersect the Keep_Section${ghostProblems.length ? ` (${ghostProblems.join("; ")})` : ""}`));
+    }
+  }
+  if (!r.testify) {
+    report(ctx, result("F4", "live-testify", "missing", unreached));
+    return;
+  }
+  const { ghost, verdict, question, answer } = r.testify;
+  const problems = f4Failures({
+    w: ctx.w,
+    h: ctx.h,
+    ghost,
+    topBarBottom: r.topBarBottom,
+    verdict,
+    others: [["question", question], ["answer control", answer], ["verdict line", verdict]],
+  });
+  const detail = `ghost=${px(ghost.top)}..${px(ghost.bottom)} verdict top=${verdict ? px(verdict.top) : "n/a"} topBarBottom=${r.topBarBottom === null ? "n/a" : px(r.topBarBottom)} viewport=${ctx.size} threshold=Ghost inside the viewport, verdict at least 16px below the Top_Bar, Ghost clear of question, answer and verdict${problems.length ? ` (${problems.join("; ")})` : ""}`;
+  report(ctx, result("F4", "live-testify", problems.length ? "fail" : "pass", detail));
+}
+
+async function checkLandingHalves(page, ctx) {
+  if (ctx.size !== H27_SIZE) return;
+  const sections = await page.evaluate(LF1_READ);
+  if (!sections.length) {
+    report(ctx, result("LF1", "landing-halves", "missing", "no landing section with an h2 on / to measure"));
+    return;
+  }
+  const problems = lf1Failures(sections);
+  const parts = sections.map((s) => `${s.name}=${px(s.left)}..${px(s.left + s.width)}`);
+  const detail = `${parts.join(" ")} viewport=${ctx.size} threshold=content reaches past 60% of each section's content box${problems.length ? ` (${problems.join("; ")})` : ""}`;
+  report(ctx, result("LF1", "landing-halves", problems.length ? "fail" : "pass", detail));
+}
+
+async function checkRitualCards(page, ctx) {
+  if (!LF_SIZES.includes(ctx.size)) return;
+  const r = await page.evaluate(LF2_READ);
+  if (r.missing) {
+    report(ctx, result("LF2", "ritual-cards", "missing", "not on this build: no [data-block=\"ritual\"] cards on /"));
+    return;
+  }
+  const problems = lf2Failures({ items: r.items, w: ctx.w });
+  const cards = r.items.map((c, i) => `card${i + 1}=pad ${px(c.padding)} text ${px(c.textWidth)} body ${c.fontSize.toFixed(0)}px/${c.lineHeight.toFixed(0)}px`);
+  const threshold = ctx.w >= WIDE_MIN_PX
+    ? "24px padding, 200px text width, 24px between cards, 16px body text at 1.5"
+    : "one column, 20px padding, no clipped text";
+  const detail = `${cards.join(" ")} viewport=${ctx.size} threshold=${threshold}${problems.length ? ` (${problems.join("; ")})` : ""}`;
+  report(ctx, result("LF2", "ritual-cards", problems.length ? "fail" : "pass", detail));
+}
+
+async function checkPersonaTestify(page, ctx) {
+  if (ctx.size !== H27_SIZE) return;
+  const r = await page.evaluate(F3_READ);
+  if (!r.notice) {
+    report(ctx, result("F3", "persona-testify", "missing", "no fictional notice on the Testify step to measure"));
+    return;
+  }
+  const problems = f3Failures({ w: ctx.w, h: ctx.h, notice: r.notice, labels: r.labels, question: r.question, answer: r.answer, cont: r.cont, noticeCount: r.noticeCount });
+  const detail = `notice=${px(r.notice.top)}..${px(r.notice.bottom)} labels=${r.labels.length} question=${r.question ? px(r.question.bottom) : "n/a"} continue="${r.contText}" viewport=${ctx.size} threshold=notice clear of the step labels, question, answer and continue control inside the viewport, notice once${problems.length ? ` (${problems.join("; ")})` : ""}`;
+  report(ctx, result("F3", "persona-testify", problems.length ? "fail" : "pass", detail));
 }
 
 async function runSize(browser, base, size, opts, rep) {
