@@ -452,7 +452,7 @@ Never cut: P1, P2 (apart from P3), P4 to P7, U1 to U6, U8 to U10, T1 and T2, W1 
   - Validation: `bash scripts/check.sh`; `npm run layout-check` against a local build.
   - _Requirements: U8.3, L1.3, F1.4, F2, F3.1, F3.2, F4.2, P1.1–P1.4, T1.2, T1.3, T2.2, W1, W8.2, Q1.2_
 
-- [ ] 18. Q1 · Live_Walk rewrite for the press and the new steps
+- [x] 18. Q1 · Live_Walk rewrite for the press and the new steps
   - Agent: `platform-dev` · Depends on: 2, 5, 6, 9, 11, 16, 17 · Estimated size: ~1,200 changed lines · Target: 27 November 2026
   - Never cut. Test files (`*.test.ts`) are excluded from the size count; the helpers file counts.
   - Scope: `src/test/integration/live-walk.test.ts`, `live-walk-helpers.ts`, `live-walk-matrix.ts`, their `*.test.ts`, and `package.json` only if a script name changes.
