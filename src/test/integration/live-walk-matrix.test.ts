@@ -8,6 +8,8 @@ import {
   WALK_MATRIX,
   matrixRun,
   matrixShotNames,
+  TAMPER_MATRIX,
+  tamperShotNames,
   walkEnabled,
 } from "./live-walk-matrix";
 
@@ -165,5 +167,42 @@ describe("live-walk.test.ts with WALK unset", () => {
     expect(output).toMatch(/Tests\s+\d+ skipped \(\d+\)/);
     expect(output).not.toMatch(/\d+ passed/);
     expect(output).not.toMatch(/\bfailed\b/);
+  });
+});
+
+describe("TAMPER_MATRIX (persona tamper runs)", () => {
+  it("has four runs: both widths, motion on and reduced", () => {
+    expect(TAMPER_MATRIX.map((e) => [e.width, e.reduced])).toEqual([
+      [1440, false],
+      [1440, true],
+      [390, false],
+      [390, true],
+    ]);
+  });
+
+  it("gives every run a unique id", () => {
+    const ids = TAMPER_MATRIX.map((e) => e.id);
+    expect(new Set(ids).size).toBe(ids.length);
+  });
+
+  it("names one tamper Step_Shot, numbered 13 and with -reduced when reduced", () => {
+    expect(tamperShotNames(TAMPER_MATRIX[0])).toEqual([
+      "live-13-tamper-1440x900.png",
+    ]);
+    expect(tamperShotNames(TAMPER_MATRIX[1])).toEqual([
+      "live-13-tamper-1440x900-reduced.png",
+    ]);
+    expect(tamperShotNames(TAMPER_MATRIX[3])).toEqual([
+      "live-13-tamper-390x844-reduced.png",
+    ]);
+  });
+});
+
+describe("full walk plan includes the new steps", () => {
+  it("lists press-held, setting and tamper in the Step_Shot names", () => {
+    const names = matrixShotNames(WALK_MATRIX[0]);
+    expect(names.some((n) => n.includes("-press-held-"))).toBe(true);
+    expect(names.some((n) => n.includes("-setting-"))).toBe(true);
+    expect(names.some((n) => n.includes("-tamper-"))).toBe(true);
   });
 });

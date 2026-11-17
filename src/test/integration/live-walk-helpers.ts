@@ -957,3 +957,196 @@ export function checkSealOrangeButtons(
       .join(", ")}`,
   };
 }
+
+/* ---------------------------------------------------------------------------
+ * Seal checks (spec 13, Q1.3, Q1.4, U8, U9). Pure: the walk reads the page and
+ * passes plain values in.
+ * ------------------------------------------------------------------------- */
+
+/** What the walk reads from one seal: its fingerprint, coarse signature and markup. */
+export type SealMark = {
+  hash: string | null;
+  coarse: string | null;
+  markup: string | null;
+};
+
+/** A seal with nothing read from it. Used when a stage could not read one. */
+export const NO_SEAL: SealMark = { hash: null, coarse: null, markup: null };
+
+/**
+ * The relief paths of a seal's markup, as one string. Clip ids are normalised
+ * the way `normaliseWaxSealIds` does it, so two seals with different React ids
+ * compare equal when their relief is equal. Only `d` attributes count (the
+ * notch, tick and ring paths).
+ */
+export function reliefPathOf(markup: string): string {
+  const normalised = markup.replace(
+    /wax-seal-[A-Za-z0-9_-]*-(left|right)/g,
+    "wax-seal-$1",
+  );
+  return Array.from(normalised.matchAll(/\sd="([^"]*)"/g), (match) =>
+    match[1].replace(/\s+/g, " ").trim(),
+  ).join("|");
+}
+
+/**
+ * Q1.3: the seal on the Wait step and the seal at Break the seal must have an
+ * equal `data-seal-hash`, an equal normalised relief path and an equal
+ * `data-coarse`. A missing value on either side fails.
+ */
+export function checkSealMarks(
+  waitSeal: SealMark,
+  breakSeal: SealMark,
+): StepCheck {
+  const expected =
+    "Q1.3: the Wait step and Break the seal show equal data-seal-hash, relief path and data-coarse";
+  const missing: string[] = [];
+  if (!waitSeal.hash || !breakSeal.hash) missing.push("data-seal-hash");
+  if (!waitSeal.coarse || !breakSeal.coarse) missing.push("data-coarse");
+  if (!waitSeal.markup || !breakSeal.markup) missing.push("relief path");
+  if (missing.length > 0) {
+    return {
+      ok: false,
+      expected,
+      message: `FAIL the seal is missing on one stage: ${missing.join(", ")}`,
+    };
+  }
+  const differ: string[] = [];
+  if (waitSeal.hash !== breakSeal.hash) differ.push("data-seal-hash");
+  if (waitSeal.coarse !== breakSeal.coarse) differ.push("data-coarse");
+  if (
+    reliefPathOf(waitSeal.markup ?? "") !== reliefPathOf(breakSeal.markup ?? "")
+  ) {
+    differ.push("relief path");
+  }
+  if (differ.length === 0) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL the Wait step and Break the seal differ in ${differ.join(", ")}`,
+  };
+}
+
+/**
+ * Q1.4: a page that draws a seal must have it in the server HTML, so it shows
+ * with JavaScript off. The marker is `data-landing-seal` (the Landing_Seal on
+ * `/`) or a `data-seal-hash` on an `svg` (the seals on `/demo`, the persona page
+ * and `/l/[id]`).
+ */
+export function checkNoJsSeal(label: string, html: string): StepCheck {
+  const expected = `Q1.4: ${label} shows a seal in the server HTML with JavaScript off`;
+  const found =
+    /\sdata-landing-seal(=|\s|>)/.test(html) ||
+    /<svg[^>]*\sdata-seal-hash="[^"]+"/.test(html);
+  if (found) return { ok: true, expected, message: `PASS ${expected}` };
+  return {
+    ok: false,
+    expected,
+    message: `FAIL ${label}: no data-landing-seal or data-seal-hash in the server HTML`,
+  };
+}
+
+/** U8: the seal at Break the seal is at least 160 px wide at 1440 and 120 px at 390. */
+export function breakSealMinWidth(viewportWidth: number): number {
+  return viewportWidth >= 1440 ? 160 : 120;
+}
+
+/**
+ * U8: the seal at Break the seal is at least `minWidth` px across and sits
+ * inside the viewport. `seal` is null when the page has no seal to measure.
+ */
+export function checkBreakSealSize(
+  seal: BoxRect | null,
+  viewport: { width: number; height: number },
+  minWidth: number,
+): StepCheck {
+  const expected = `U8: the seal at Break the seal is at least ${minWidth} px wide and inside the viewport`;
+  if (!seal) {
+    return {
+      ok: false,
+      expected,
+      message: "FAIL no seal found at Break the seal",
+    };
+  }
+  const width = seal.right - seal.left;
+  const inside =
+    seal.left >= 0 &&
+    seal.top >= 0 &&
+    seal.right <= viewport.width &&
+    seal.bottom <= viewport.height;
+  if (width >= minWidth && inside) {
+    return { ok: true, expected, message: `PASS ${expected} (${width} px)` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL the seal at Break the seal is ${width} px wide${inside ? "" : " and outside the viewport"}, expected at least ${minWidth} px inside the viewport`,
+  };
+}
+
+/** U9: each `/demo` persona seal is drawn at 96 CSS px. */
+export const DEMO_SEAL_SIZE = 96;
+
+/** U9: how many persona seals `/demo` draws. */
+export const DEMO_SEAL_COUNT = 3;
+
+/** One persona seal on `/demo`: its drawn width in CSS px and its `data-coarse`. */
+export type DemoSeal = { width: number; coarse: string | null };
+
+/**
+ * U9: the three persona seals are each 96 CSS px wide (to within half a pixel),
+ * and each has a different `data-coarse`, so they are told apart at a glance.
+ */
+export function checkDemoSeals(seals: readonly DemoSeal[]): StepCheck {
+  const expected = `U9: ${DEMO_SEAL_COUNT} persona seals on /demo, each ${DEMO_SEAL_SIZE} px wide, with different data-coarse values`;
+  if (seals.length !== DEMO_SEAL_COUNT) {
+    return {
+      ok: false,
+      expected,
+      message: `FAIL /demo draws ${seals.length} seal(s), expected ${DEMO_SEAL_COUNT}`,
+    };
+  }
+  const wrongWidth = seals.filter(
+    (seal) => Math.abs(seal.width - DEMO_SEAL_SIZE) > 0.5,
+  );
+  if (wrongWidth.length > 0) {
+    return {
+      ok: false,
+      expected,
+      message: `FAIL ${wrongWidth.length} persona seal(s) on /demo not ${DEMO_SEAL_SIZE} px: ${wrongWidth
+        .map((seal) => `${seal.width} px`)
+        .join(", ")}`,
+    };
+  }
+  const coarse = seals.map((seal) => seal.coarse ?? "");
+  const distinct = new Set(coarse.filter((value) => value.length > 0));
+  if (
+    coarse.some((value) => value.length === 0) ||
+    distinct.size !== DEMO_SEAL_COUNT
+  ) {
+    return {
+      ok: false,
+      expected,
+      message: `FAIL the persona seals on /demo do not have ${DEMO_SEAL_COUNT} different data-coarse values`,
+    };
+  }
+  return { ok: true, expected, message: `PASS ${expected}` };
+}
+
+/**
+ * The persona Tamper_Control run (A1, Q1.1 step `tamper`) makes no passkey
+ * prompt. Any create or get call fails the run.
+ */
+export function checkTamperRunNoPasskey(counts: PasskeyCounts): StepCheck {
+  const expected = "the persona tamper run makes no passkey prompt";
+  if (counts.total === 0) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL the persona tamper run made ${counts.total} passkey prompt(s)`,
+  };
+}

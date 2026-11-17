@@ -5,6 +5,14 @@ import {
   MAX_PASSKEY_PROMPTS,
   MOTION_CONTROL_SELECTOR,
   PASSKEY_INIT_SCRIPT,
+  NO_SEAL,
+  breakSealMinWidth,
+  checkBreakSealSize,
+  checkDemoSeals,
+  checkNoJsSeal,
+  checkSealMarks,
+  checkTamperRunNoPasskey,
+  reliefPathOf,
   SKIP_LINK_STAGE,
   STEP_SUSPECTED_FILES,
   WALK_STEP_NAMES,
@@ -1056,6 +1064,159 @@ describe("rectsIntersect and the layout rules", () => {
     expect(bad.ok).toBe(false);
     expect(bad.message).toBe(
       'FAIL 1 other orange button(s) on the Seal step: "Lock it"',
+    );
+  });
+});
+
+describe("reliefPathOf", () => {
+  it("reads the d attributes and ignores clip ids", () => {
+    const a = `<svg data-seal-hash="x"><clipPath id="wax-seal-r1-left"></clipPath><path clip-path="url(#wax-seal-r1-left)" d="M 0 0  L 1 1"/></svg>`;
+    const b = `<svg data-seal-hash="x"><clipPath id="wax-seal-r9-left"></clipPath><path clip-path="url(#wax-seal-r9-left)" d="M 0 0 L 1 1"/></svg>`;
+    expect(reliefPathOf(a)).toBe("M 0 0 L 1 1");
+    expect(reliefPathOf(a)).toBe(reliefPathOf(b));
+  });
+
+  it("returns an empty string when there is no path", () => {
+    expect(reliefPathOf("<svg></svg>")).toBe("");
+  });
+});
+
+describe("checkSealMarks (Q1.3)", () => {
+  const mark = {
+    hash: "a".repeat(64),
+    coarse: "n4-r1",
+    markup: '<svg><path d="M 0 0 L 2 2"/></svg>',
+  };
+
+  it("passes when the Wait step and Break the seal match", () => {
+    const check = checkSealMarks(mark, { ...mark });
+    expect(check.ok).toBe(true);
+    expect(check.message.startsWith("PASS")).toBe(true);
+  });
+
+  it("fails and names data-seal-hash when the hashes differ", () => {
+    const check = checkSealMarks(mark, { ...mark, hash: "b".repeat(64) });
+    expect(check.ok).toBe(false);
+    expect(check.message).toContain("data-seal-hash");
+  });
+
+  it("fails and names data-coarse when the coarse signatures differ", () => {
+    const check = checkSealMarks(mark, { ...mark, coarse: "n5-r1" });
+    expect(check.ok).toBe(false);
+    expect(check.message).toContain("data-coarse");
+  });
+
+  it("fails and names the relief path when the drawn paths differ", () => {
+    const check = checkSealMarks(mark, {
+      ...mark,
+      markup: '<svg><path d="M 0 0 L 3 3"/></svg>',
+    });
+    expect(check.ok).toBe(false);
+    expect(check.message).toContain("relief path");
+  });
+
+  it("fails when the seal is missing on one stage", () => {
+    const check = checkSealMarks(NO_SEAL, mark);
+    expect(check.ok).toBe(false);
+    expect(check.message).toContain("missing on one stage");
+  });
+});
+
+describe("checkNoJsSeal (Q1.4)", () => {
+  it("passes when the landing seal marker is in the server HTML", () => {
+    const html = '<div class="sealBox" data-landing-seal="">';
+    expect(checkNoJsSeal("/", html).ok).toBe(true);
+  });
+
+  it("passes when an svg with data-seal-hash is in the server HTML", () => {
+    const html = `<svg width="96" data-seal-hash="${"c".repeat(64)}" data-coarse="n4"></svg>`;
+    expect(checkNoJsSeal("/demo", html).ok).toBe(true);
+  });
+
+  it("fails when no seal marker is in the HTML", () => {
+    const check = checkNoJsSeal("/demo", "<main>Nothing drawn here</main>");
+    expect(check.ok).toBe(false);
+    expect(check.message).toContain("/demo");
+  });
+
+  it("does not count a seal hash on a non-svg element", () => {
+    const html = `<div data-seal-hash="${"c".repeat(64)}"></div>`;
+    expect(checkNoJsSeal("/l/x", html).ok).toBe(false);
+  });
+});
+
+describe("breakSealMinWidth and checkBreakSealSize (U8)", () => {
+  it("uses 160 px at 1440 and 120 px at 390", () => {
+    expect(breakSealMinWidth(1440)).toBe(160);
+    expect(breakSealMinWidth(390)).toBe(120);
+  });
+
+  const viewport = { width: 1440, height: 900 };
+  const box = (left: number, top: number, size: number) => ({
+    left,
+    top,
+    right: left + size,
+    bottom: top + size,
+  });
+
+  it("passes a seal at least the minimum and inside the viewport", () => {
+    expect(checkBreakSealSize(box(600, 200, 170), viewport, 160).ok).toBe(true);
+  });
+
+  it("fails a seal narrower than the minimum", () => {
+    const check = checkBreakSealSize(box(600, 200, 150), viewport, 160);
+    expect(check.ok).toBe(false);
+    expect(check.message).toContain("150 px");
+  });
+
+  it("fails a seal that sits outside the viewport", () => {
+    const check = checkBreakSealSize(box(1400, 200, 170), viewport, 160);
+    expect(check.ok).toBe(false);
+    expect(check.message).toContain("outside the viewport");
+  });
+
+  it("fails when no seal was measured", () => {
+    expect(checkBreakSealSize(null, viewport, 160).ok).toBe(false);
+  });
+});
+
+describe("checkDemoSeals (U9)", () => {
+  const seal = (coarse: string | null, width = 96) => ({ width, coarse });
+
+  it("passes three 96 px seals with three different data-coarse values", () => {
+    const check = checkDemoSeals([seal("a"), seal("b"), seal("c")]);
+    expect(check.ok).toBe(true);
+  });
+
+  it("fails when /demo does not draw three seals", () => {
+    expect(checkDemoSeals([seal("a"), seal("b")]).ok).toBe(false);
+  });
+
+  it("fails a seal that is not 96 px wide", () => {
+    const check = checkDemoSeals([seal("a"), seal("b"), seal("c", 60)]);
+    expect(check.ok).toBe(false);
+    expect(check.message).toContain("60 px");
+  });
+
+  it("fails when two seals share a data-coarse value", () => {
+    expect(checkDemoSeals([seal("a"), seal("a"), seal("c")]).ok).toBe(false);
+  });
+
+  it("fails when a seal has no data-coarse value", () => {
+    expect(checkDemoSeals([seal("a"), seal("b"), seal(null)]).ok).toBe(false);
+  });
+});
+
+describe("checkTamperRunNoPasskey", () => {
+  it("passes when the persona tamper run made no passkey prompt", () => {
+    expect(checkTamperRunNoPasskey({ create: 0, get: 0, total: 0 }).ok).toBe(
+      true,
+    );
+  });
+
+  it("fails when the run made a create or get call", () => {
+    expect(checkTamperRunNoPasskey({ create: 1, get: 0, total: 1 }).ok).toBe(
+      false,
     );
   });
 });

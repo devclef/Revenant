@@ -88,3 +88,37 @@ export function matrixShotNames(
       }),
     );
 }
+
+/**
+ * The persona tamper runs (spec 13, A1): each width, with motion on and reduced.
+ * Each run ends on the `tamper` Step_Shot. It needs no passkey.
+ */
+export type TamperMatrixEntry = {
+  /** Stable id, for example `390x844-reduced`. */
+  id: string;
+  width: number;
+  height: number;
+  reduced: boolean;
+};
+
+export const TAMPER_MATRIX: readonly TamperMatrixEntry[] = WALK_SIZES.flatMap(
+  (size) =>
+    [false, true].map((reduced) => ({
+      id: `${size.width}x${size.height}${reduced ? "-reduced" : ""}`,
+      width: size.width,
+      height: size.height,
+      reduced,
+    })),
+);
+
+/** The one Step_Shot a persona tamper run writes. */
+export function tamperShotNames(entry: TamperMatrixEntry): string[] {
+  return [
+    stepShotName({
+      step: "tamper",
+      width: entry.width,
+      height: entry.height,
+      reduced: entry.reduced,
+    }),
+  ];
+}

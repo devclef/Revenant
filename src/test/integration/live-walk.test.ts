@@ -33,15 +33,26 @@ import { describe, expect, it } from "vitest";
 import { LIVE_COPY } from "../../components/live/copy";
 import { SEAL_PRESS_HOLD_MS } from "../../components/live/press/constants";
 import { PRESS_COPY } from "../../components/live/press/copy";
+import { TAMPER_COPY } from "../../components/reveal/tamper/tamper-copy";
 
 import {
   BREAK_METHODS,
   FULL_PAGE_STEPS,
   MOTION_CONTROL_SELECTOR,
+  NO_SEAL,
+  PASSKEY_INIT_SCRIPT,
   STEP_SUSPECTED_FILES,
   WALK_SIZES,
+  WALK_STEP_NAMES,
   advanceSettle,
+  breakSealMinWidth,
+  checkBreakSealSize,
+  checkDemoSeals,
+  checkNoJsSeal,
   checkOwnNumberRowsBlank,
+  checkSealMarks,
+  checkTamperRunNoPasskey,
+  countPasskeyCalls,
   checkRunShots,
   checkStepSnapshot,
   defectsFromChecks,
@@ -53,8 +64,12 @@ import {
   sealPressInput,
   skipLinkBlocksSettle,
   walkShotName,
+  type BoxRect,
   type BreakMethod,
+  type DemoSeal,
+  type SealMark,
   type SettleState,
+  type StepCheck,
   type ShotFile,
   type ClippedSample,
   type ContrastSample,
@@ -64,9 +79,11 @@ import {
   type WalkStepResult,
 } from "./live-walk-helpers";
 import {
+  TAMPER_MATRIX,
   WALK_MATRIX,
   matrixRun,
   matrixShotNames,
+  tamperShotNames,
   walkEnabled,
 } from "./live-walk-matrix";
 
@@ -91,7 +108,12 @@ type WalkContext = {
   cdp: Cdp;
   authenticatorId: string;
   dir: string;
+  /** Filled at unlock: the `/l/<id>` path of the sealed letter, for the Q1.4 page check. */
+  letter: { path: string | null };
 };
+
+/** The persona whose seal and tamper control the walk checks (spec 13, Q1.4, A1). */
+const PERSONA_KEY = "us-maya";
 
 type WalkAction = (ctx: WalkContext) => Promise<string>;
 
@@ -137,7 +159,7 @@ describe.skipIf(!walkEnabled(process.env))("live walk matrix plan", () => {
     "plans every Step_Shot for %s",
     (_id, entry) => {
       const names = matrixShotNames(entry);
-      expect(names).toHaveLength(10);
+      expect(names).toHaveLength(WALK_STEP_NAMES.length);
       expect(new Set(names).size).toBe(names.length);
     },
   );
@@ -353,12 +375,18 @@ async function readPage(
  * (Q1.6), record (Q1.5), save its Step_Shot (Q2.1, Q2.2). Stops at the first
  * stage with a defect or an action that threw.
  */
+/** What a walk run returns: its stage rows, and the `/l/<id>` path if a letter was unlocked. */
+type WalkResult = { rows: StageRow[]; letterPath: string | null };
+
 async function runWalk(
   run: WalkRun,
   stages: readonly StageAction[],
-): Promise<StageRow[]> {
+): Promise<WalkResult> {
   mkdirSync(LIVE_WALK_SHOTS, { recursive: true });
   const rows: StageRow[] = [];
+  const letter: { path: string | null } = { path: null };
+  // The Wait step's seal, read so Break the seal can be compared with it (Q1.3).
+  let waitSeal: SealMark | null = null;
   const { width, height } = run.size;
 
   const browser = await chromium.launch({
@@ -370,6 +398,8 @@ async function runWalk(
       viewport: { width, height },
       reducedMotion: run.reduced ? "reduce" : "no-preference",
     });
+    // Counts passkey prompts in window.__passkeyCalls (Q1.2). Read by the tamper run.
+    await context.addInitScript(PASSKEY_INIT_SCRIPT);
     const page = await context.newPage();
 
     // Every console error and uncaught page error, in order. Each stage reads only its own.
@@ -404,6 +434,7 @@ async function runWalk(
       cdp,
       authenticatorId,
       dir: LIVE_WALK_SHOTS,
+      letter,
     };
     let seen = 0;
 
@@ -448,6 +479,25 @@ async function runWalk(
               }),
             ),
           );
+          if (stage.step === "wait") {
+            waitSeal = await readSealMark(page, false);
+          }
+          if (stage.step === "marks") {
+            // Q1.3: the seal at Break the seal matches the one on the Wait step.
+            // U8: the seal is at least the minimum size at this width.
+            const breakSeal = await readSealMark(page, true);
+            const box = await readBreakSealBox(page);
+            defects.push(
+              ...defectsFromChecks("marks", [
+                checkSealMarks(waitSeal ?? NO_SEAL, breakSeal),
+                checkBreakSealSize(
+                  box,
+                  { width, height },
+                  breakSealMinWidth(width),
+                ),
+              ]),
+            );
+          }
         } catch (error) {
           defects.push({
             step: stage.step,
@@ -508,7 +558,7 @@ async function runWalk(
   } finally {
     await browser.close();
   }
-  return rows;
+  return { rows, letterPath: letter.path };
 }
 
 /** One line per step, then one line per defect. Quoted by the owner in the QA verdict. */
@@ -785,6 +835,7 @@ async function openLetterAndUnlock(
     .or(c.page.getByRole("button", { name: /go to your letter/i }));
   await goTo.first().click();
   await c.page.waitForURL(/\/l\//, { timeout: STEP_TIMEOUT_MS });
+  c.letter.path = new URL(c.page.url()).pathname;
   await c.page.getByRole("button", { name: label }).click();
 }
 
@@ -899,7 +950,7 @@ describe.skipIf(!walkEnabled(process.env))(
         };
         const stages = fiveStageActions(run);
         const runStartMs = Date.now();
-        const rows = await runWalk(run, stages);
+        const { rows } = await runWalk(run, stages);
         const record = formatStageRows(rows);
         console.log(record);
 
@@ -957,7 +1008,12 @@ describe.skipIf(!walkEnabled(process.env))(
           ...remainingStageActions(run.method),
         ];
         const runStartMs = Date.now();
-        const rows = await runWalk(run, stages);
+        const { rows, letterPath } = await runWalk(run, stages);
+        const pageChecks = await checkSealPages(run.size, letterPath);
+        console.log(pageChecks.map((check) => check.message).join("\n"));
+        expect(
+          pageChecks.filter((check) => !check.ok).map((check) => check.message),
+        ).toEqual([]);
         const record = formatStageRows(rows);
         console.log(record);
 
@@ -980,3 +1036,219 @@ describe.skipIf(!walkEnabled(process.env))(
     );
   },
 );
+
+/**
+ * The seal the page draws: the first `svg` with a `data-seal-hash`. At Break the
+ * seal the search is limited to `[data-seal-target]`.
+ */
+async function readSealMark(page: Page, atBreak: boolean): Promise<SealMark> {
+  return (await page.evaluate((scoped: boolean) => {
+    const scope: ParentNode =
+      (scoped ? document.querySelector("[data-seal-target]") : null) ??
+      document;
+    const svg = scope.querySelector<SVGElement>("svg[data-seal-hash]");
+    if (!svg) return { hash: null, coarse: null, markup: null };
+    return {
+      hash: svg.getAttribute("data-seal-hash"),
+      coarse: svg.getAttribute("data-coarse"),
+      markup: svg.outerHTML,
+    };
+  }, atBreak)) as SealMark;
+}
+
+/** The on-screen box of the seal at Break the seal (U8), or null when none is drawn. */
+async function readBreakSealBox(page: Page): Promise<BoxRect | null> {
+  return (await page.evaluate(() => {
+    const svg = document.querySelector("[data-seal-target] svg");
+    if (!svg) return null;
+    const box = svg.getBoundingClientRect();
+    if (box.width === 0 || box.height === 0) return null;
+    return {
+      top: box.top,
+      right: box.right,
+      bottom: box.bottom,
+      left: box.left,
+    };
+  })) as BoxRect | null;
+}
+
+/** Q1.4 pages: each one must show its seal in the server HTML with JavaScript off. */
+const NO_JS_PATHS = ["/", "/demo", `/demo/personas/${PERSONA_KEY}`] as const;
+
+/**
+ * Q1.4 and U9. Loads `/`, `/demo`, the persona page and the walk's `/l/<id>` with
+ * JavaScript disabled, then checks the seal markers in the HTML. Then, with
+ * JavaScript on, measures the persona seals on `/demo` (U9). Runs after the
+ * walk, at the same viewport.
+ */
+async function checkSealPages(
+  size: { width: number; height: number },
+  letterPath: string | null,
+): Promise<StepCheck[]> {
+  const checks: StepCheck[] = [];
+  const browser = await chromium.launch({
+    headless: true,
+    executablePath: process.env.CHROMIUM_PATH || undefined,
+  });
+  try {
+    const paths: string[] = [...NO_JS_PATHS];
+    if (letterPath) {
+      paths.push(letterPath);
+    } else {
+      checks.push({
+        ok: false,
+        expected:
+          "Q1.4: /l/[id] shows a seal in the server HTML with JavaScript off",
+        message: "FAIL no letter was unlocked, so /l/[id] was not checked",
+      });
+    }
+    const noJs = await browser.newContext({
+      javaScriptEnabled: false,
+      viewport: size,
+    });
+    try {
+      for (const path of paths) {
+        const page = await noJs.newPage();
+        try {
+          await page.goto(`${BASE_URL}${path}`, {
+            waitUntil: "load",
+            timeout: STEP_TIMEOUT_MS,
+          });
+          checks.push(checkNoJsSeal(path, await page.content()));
+        } catch (error) {
+          checks.push({
+            ok: false,
+            expected: `Q1.4: ${path} shows a seal in the server HTML with JavaScript off`,
+            message: `FAIL ${path}: ${errorMessage(error)}`,
+          });
+        } finally {
+          await page.close();
+        }
+      }
+    } finally {
+      await noJs.close();
+    }
+
+    const withJs = await browser.newContext({ viewport: size });
+    try {
+      const page = await withJs.newPage();
+      await page.goto(`${BASE_URL}/demo`, {
+        waitUntil: "load",
+        timeout: STEP_TIMEOUT_MS,
+      });
+      const seals = (await page.evaluate(() =>
+        Array.from(
+          document.querySelectorAll<SVGSVGElement>("svg[data-seal-hash]"),
+        ).map((svg) => ({
+          width: svg.getBoundingClientRect().width,
+          coarse: svg.getAttribute("data-coarse"),
+        })),
+      )) as DemoSeal[];
+      checks.push(checkDemoSeals(seals));
+    } catch (error) {
+      checks.push({
+        ok: false,
+        expected: "U9: the persona seals on /demo are measured",
+        message: `FAIL /demo: ${errorMessage(error)}`,
+      });
+    } finally {
+      await withJs.close();
+    }
+  } finally {
+    await browser.close();
+  }
+  return checks;
+}
+
+/**
+ * The persona tamper stage (A1). Opens the persona, moves through the Read step
+ * (answering questions and breaking the seal on the way), presses the
+ * Tamper_Control and waits for its result. It must make no passkey prompt.
+ */
+function tamperStage(): StageAction {
+  return {
+    step: "tamper",
+    act: async (c) => {
+      await c.page.goto(`${BASE_URL}/demo/personas/${PERSONA_KEY}`);
+      const tamper = c.page.getByRole("button", {
+        name: TAMPER_COPY.button,
+        exact: true,
+      });
+      const advance = c.page
+        .getByRole("button", {
+          name: /^(see the receipts|next|continue|close)$/i,
+        })
+        .first();
+      let reached = false;
+      for (let guard = 0; guard < 12; guard += 1) {
+        if ((await tamper.count()) > 0 && (await tamper.first().isVisible())) {
+          reached = true;
+          break;
+        }
+        const stage = await currentStage(c.page);
+        if (stage === "recall") {
+          await answerEveryQuestion(c);
+        } else if (stage === "marks") {
+          await breakSeal(c, "button");
+        } else if ((await advance.count()) > 0) {
+          await advance.click();
+          await c.page.waitForTimeout(300);
+        } else {
+          await c.page.waitForTimeout(300);
+        }
+      }
+      if (!reached) {
+        throw new Error(
+          "The Tamper_Control was not reached on the persona page.",
+        );
+      }
+      const counts = countPasskeyCalls(
+        await c.page.evaluate(
+          () =>
+            (window as unknown as { __passkeyCalls?: string[] })
+              .__passkeyCalls ?? [],
+        ),
+      );
+      const noPasskey = checkTamperRunNoPasskey(counts);
+      if (!noPasskey.ok) throw new Error(noPasskey.message);
+      await tamper.first().click();
+      await c.page
+        .locator("[data-tamper-result]")
+        .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+      return `Tamper_Control opened on the Read step and its result shown. ${noPasskey.message.replace(/^PASS /, "")}.`;
+    },
+  };
+}
+
+describe.skipIf(!walkEnabled(process.env))("live walk: persona tamper", () => {
+  // Each width, with and without reduced motion. No passkey is made (A1).
+  it.each(TAMPER_MATRIX.map((entry) => [entry.id, entry] as const))(
+    "opens the Tamper_Control on the persona Read step at %s",
+    async (_id, entry) => {
+      const run: WalkRun = {
+        size: { width: entry.width, height: entry.height },
+        reduced: entry.reduced,
+        figure: false,
+        method: "hold",
+        keyboard: false,
+      };
+      const runStartMs = Date.now();
+      const { rows } = await runWalk(run, [tamperStage()]);
+      const record = formatStageRows(rows);
+      console.log(record);
+
+      const expected = tamperShotNames(entry);
+      const shots = shotReport(expected, runStartMs);
+      console.log(shots.lines.join("\n"));
+      const unnamed = shotsMissingFromRecord(record, expected);
+
+      const failed = rows.filter((row) => !row.result.pass && !row.blocked);
+      expect(
+        failed.map((row) => `${row.result.step}: ${row.result.observation}`),
+      ).toEqual([]);
+      expect(shots.missing).toEqual([]);
+      expect(unnamed).toEqual([]);
+    },
+    VIEWPORT_TIMEOUT_MS,
+  );
+});
