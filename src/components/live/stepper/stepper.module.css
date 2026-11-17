@@ -23,6 +23,12 @@
   color: var(--text);
 }
 
+/* The Step_Track wrapper is the step change's scroll target (LiveStepper). It
+   lands 24 px under the fixed Top_Bar, so the track is not hidden by the bar. */
+.track {
+  scroll-margin-top: calc(var(--topbar-clear, 96px) + 24px);
+}
+
 .steps {
   display: flex;
   flex-wrap: wrap;

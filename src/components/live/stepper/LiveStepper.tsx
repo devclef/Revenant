@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 import { useCalmInForce } from "@/components/ceremony/motion";
 import { useKeepInVisualViewport } from "@/components/ui/use-keep-in-visual-viewport";
@@ -67,6 +67,9 @@ export interface LiveStepperProps {
  */
 export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
   const headingRef = useRef<HTMLHeadingElement>(null);
+  // The Step_Track wrapper. The step change scrolls this, not the heading, so
+  // the track and the card both land below the Top_Bar (baseline 98d49aa, cause a).
+  const trackRef = useRef<HTMLDivElement>(null);
   const primaryRef = useRef<HTMLDivElement>(null);
   // The Reveal_Host element. It is set once on mount and never changes, so the
   // portal target stays the same (spec 12, X1).
@@ -78,18 +81,18 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
   useKeepInVisualViewport(primaryRef, calm);
   const previousStep = useRef<LiveStep>(state.step);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Skip the first render, so a page load does not steal focus.
     if (!movesFocus(previousStep.current, state.step)) return;
     previousStep.current = state.step;
-    const heading = headingRef.current;
-    if (!heading) return;
-    // Focus without the browser's own scroll, then scroll the heading to its
-    // scroll-margin-top, so it clears the fixed Top_Bar.
-    heading.focus({ preventScroll: true });
-    heading.scrollIntoView({
-      behavior: calm ? "instant" : "smooth",
-      block: "start",
+    // Focus without the browser's own scroll. The scroll itself runs after one
+    // frame, so the new step has its height first (baseline cause a).
+    headingRef.current?.focus({ preventScroll: true });
+    requestAnimationFrame(() => {
+      trackRef.current?.scrollIntoView({
+        behavior: calm ? "instant" : "smooth",
+        block: "start",
+      });
     });
   }, [state.step, calm]);
 
@@ -111,7 +114,9 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
 
   return (
     <div className={styles.stepper} data-live-stepper>
-      <StepIndicator current={state.step} />
+      <div ref={trackRef} className={styles.track}>
+        <StepIndicator current={state.step} />
+      </div>
       <section
         className={card ? styles.card : styles.bare}
         data-card={card ? "" : undefined}

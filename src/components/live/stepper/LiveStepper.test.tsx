@@ -255,15 +255,33 @@ describe("LiveStepper heading focus (W8)", () => {
   );
 
   it("focuses the heading without the browser's own scroll", () => {
-    expect(stepperSource).toContain("heading.focus({ preventScroll: true })");
+    expect(stepperSource).toContain(
+      "headingRef.current?.focus({ preventScroll: true })",
+    );
   });
 
-  it("scrolls the heading into view after focus, at its start edge", () => {
-    const focusAt = stepperSource.indexOf("heading.focus(");
-    const scrollAt = stepperSource.indexOf("heading.scrollIntoView(");
+  it("scrolls the Step_Track, not the heading, after focus", () => {
+    const focusAt = stepperSource.indexOf("headingRef.current?.focus(");
+    const scrollAt = stepperSource.indexOf("trackRef.current?.scrollIntoView(");
     expect(focusAt).toBeGreaterThan(-1);
     expect(scrollAt).toBeGreaterThan(focusAt);
+    expect(stepperSource).not.toContain("heading.scrollIntoView(");
     expect(stepperSource).toMatch(/block:\s*"start"/);
+  });
+
+  it("runs the step-change scroll in a layout effect after one animation frame", () => {
+    expect(stepperSource).toContain("useLayoutEffect(");
+    expect(stepperSource).not.toMatch(/useEffect\(\(\) => \{\s*\/\/ Skip/);
+    const frameAt = stepperSource.indexOf("requestAnimationFrame(");
+    const scrollAt = stepperSource.indexOf("trackRef.current?.scrollIntoView(");
+    expect(frameAt).toBeGreaterThan(-1);
+    expect(scrollAt).toBeGreaterThan(frameAt);
+  });
+
+  it("attaches the track ref to the wrapper around the Step_Indicator", () => {
+    expect(stepperSource).toMatch(
+      /<div ref=\{trackRef\} className=\{styles\.track\}>\s*<StepIndicator/,
+    );
   });
 
   it("scrolls instantly when Calm is in force, and smoothly otherwise", () => {
@@ -274,6 +292,12 @@ describe("LiveStepper heading focus (W8)", () => {
   it("offsets the heading by the Top_Bar clearance plus 16 px", () => {
     expect(stepperCss).toMatch(
       /\.heading \{[^}]*scroll-margin-top:\s*calc\(var\(--topbar-clear, 96px\) \+ 16px\)/,
+    );
+  });
+
+  it("offsets the Step_Track by the Top_Bar clearance plus 24 px", () => {
+    expect(stepperCss).toMatch(
+      /\.track \{[^}]*scroll-margin-top:\s*calc\(var\(--topbar-clear, 96px\) \+ 24px\)/,
     );
   });
 });
