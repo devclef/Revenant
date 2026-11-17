@@ -297,7 +297,9 @@
   display: grid;
   grid-template-columns: 2.5rem 1fr;
   gap: 0.25rem 0.75rem;
-  padding: 1rem;
+  /* F2: at least 24 px inside each card at 1440 px. The stacked phone cards
+     keep at least 20 px (this value is larger). */
+  padding: 1.5rem;
   border: 1px solid var(--text);
   border-radius: 8px;
 }
@@ -319,7 +321,8 @@
 
 .ritualLine {
   margin: 0;
-  font-size: 0.95rem;
+  /* F2: body text at least 16 px with line height at least 1.5. */
+  font-size: 1rem;
   line-height: 1.5;
 }
 
@@ -385,8 +388,10 @@
 }
 
 @media (min-width: 1024px) {
+  /* F2: at 1440 px the four cards keep at least 24 px between them. */
   .ritualList {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 1.5rem;
   }
 }
 
