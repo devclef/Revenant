@@ -63,7 +63,6 @@
    letter is at most 48 px (spec 10 C7.3). */
 .paper {
   --ink: #1f1b16;
-  --paper-pad: clamp(1rem, 3vw, 1.5rem);
   position: relative;
   color: var(--ink);
   background-color: var(--paper, #f4ecd8);
@@ -83,8 +82,22 @@
 /* The sheet holds the paper, the Light_Shaft and the creases. It is as tall as
    the paper (the article is its only in-flow child), so the creases at 1/3 and
    2/3 of the sheet are at 1/3 and 2/3 of the paper. It unfolds as one. */
+/* --paper-pad is the paper's inline and block padding. It lives on the sheet so
+   the creases (children of the sheet, not of the paper) can read
+   --letter-pad-x, which is the same value (issue #476, R2). */
 .sheet {
+  --paper-pad: clamp(1rem, 3vw, 1.5rem);
+  --letter-pad-x: var(--paper-pad);
   position: relative;
+}
+
+/* At 900 px and wider the letter Stage centres this sheet at 680 px at most
+   (issue #476, R1). Below 900 px the sheet keeps the spec 08 R3.3 layout. */
+@media (min-width: 900px) {
+  .sheet {
+    width: min(680px, 100%);
+    margin-inline: auto;
+  }
 }
 
 /* The Light_Shaft: the lit band above the paper, which lights its top edge and
@@ -129,16 +142,28 @@
   }
 }
 
-/* A crease: one full-width hairline across the paper, with a light line under
-   it (design.md, Creases). Decorative only. */
+/* A crease: a hairline with a light line under it (design.md, Creases). It is
+   drawn as two segments, one in each side padding of the paper, so the text
+   column never has a line across it (issue #476, R2). Decorative only. */
 .crease {
   position: absolute;
-  left: 0;
-  right: 0;
   height: 0;
   border-top: 1px solid rgba(31, 27, 22, 0.08);
   box-shadow: 0 1px 0 rgba(255, 255, 255, 0.35);
   pointer-events: none;
+}
+
+/* The left and right segments fill the side padding (--letter-pad-x). The
+   padding never resolves below 8 px (its minimum is 0.875rem, 14 px), so no
+   container rule hides the segments. */
+.crease[data-crease="left"] {
+  left: 0;
+  width: var(--letter-pad-x);
+}
+
+.crease[data-crease="right"] {
+  right: 0;
+  width: var(--letter-pad-x);
 }
 
 /* Below LETTER_NARROW_PX (600 px) the paper padding tightens, so the
@@ -148,7 +173,7 @@
     padding: 0.5rem;
   }
 
-  .paper {
+  .sheet {
     --paper-pad: 0.875rem;
   }
 }

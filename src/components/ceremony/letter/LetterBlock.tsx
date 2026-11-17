@@ -74,6 +74,9 @@ function creaseTop(share: number): string {
   return `${(share * 100).toFixed(4)}%`;
 }
 
+/** Each crease is two segments, one in each side padding (issue #476, R2). */
+const CREASE_SIDES = ["left", "right"] as const;
+
 export function LetterBlock(props: LetterBlockProps) {
   const { still = false, caption, collapsible = false, letterKind, ...letterProps } = props;
   const { mode } = useMotion();
@@ -164,15 +167,17 @@ export function LetterBlock(props: LetterBlockProps) {
       <article className={styles.paper}>
         <SealedLetterText opened={letterProps.opened} letterKind={letterKind} />
       </article>
-      {CREASE_POSITIONS.map((share, index) => (
-        <div
-          key={index}
-          className={styles.crease}
-          aria-hidden="true"
-          data-crease={index + 1}
-          style={{ top: creaseTop(share) }}
-        />
-      ))}
+      {CREASE_POSITIONS.flatMap((share, index) =>
+        CREASE_SIDES.map((side) => (
+          <div
+            key={`${index}-${side}`}
+            className={styles.crease}
+            aria-hidden="true"
+            data-crease={side}
+            style={{ top: creaseTop(share) }}
+          />
+        )),
+      )}
     </div>
   );
 

@@ -215,3 +215,23 @@
   line-height: 1.4;
   color: var(--muted);
 }
+
+/*
+ * The letter Stage (data-letter-stage, reveal/Reveal.tsx). At 900 px and wider
+ * it is a one-track grid that centres the Letter_Block; the paper (.sheet,
+ * 680 px at most, LetterBlock.module.css) centres inside that block. Below
+ * 900 px the spec 08 R3.3 layout stays. The Ghost is absolutely positioned, so
+ * it is never in this grid and cannot move the column (issue #476, R1).
+ * CeremonyRoot imports this module on the reveal page, so the rule applies there.
+ */
+@media (min-width: 900px) {
+  .ceremony [data-letter-stage] {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-items: center;
+  }
+
+  .ceremony [data-letter-stage] > * {
+    width: 100%;
+  }
+}

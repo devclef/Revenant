@@ -63,8 +63,8 @@ describe("LetterBlock paper (C7.3)", () => {
   it.each([360, 600, 900, 1200, 1280, 1366, 1600, 2560])(
     "leaves at most 48 px of empty paper above and below the letter at %i px",
     (viewportPx) => {
-      expect(ruleBody(letterBlock, ".paper")).toMatch(
-        /padding:\s*var\(--paper-pad\);/,
+      expect(ruleBody(letterBlock, ".sheet")).toMatch(
+        /--paper-pad:\s*clamp\(1rem, 3vw, 1\.5rem\);/,
       );
       // The paragraph margin is zero (tested above) and the paper has no border,
       // so the empty space is the top and bottom padding alone.

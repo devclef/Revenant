@@ -27,6 +27,7 @@ import { useLocalView } from "@/components/ceremony/local-view";
 import { REVEAL_COPY } from "./copy";
 import { useViewportWidth } from "./viewport-width";
 import styles from "./reveal.module.css";
+import buttons from "@/components/ui/buttons.module.css";
 
 /**
  * True below 600 px (the Phone_Sizes, spec 09 P6). The server and the first
@@ -618,7 +619,7 @@ function RevealBody({
         <div className={styles.stageControls}>
           <button
             type="button"
-            className={styles.button}
+            className={buttons.primary}
             data-advance="figures"
             data-primary-control=""
             onClick={onSeeNumbers}
@@ -627,7 +628,7 @@ function RevealBody({
           </button>
           <button
             type="button"
-            className={styles.button}
+            className={styles.outlineButton}
             onClick={onShowEverything}
           >
             {REVEAL_COPY.showAll}

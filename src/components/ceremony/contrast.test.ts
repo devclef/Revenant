@@ -421,3 +421,33 @@ describe("X5.1: Seal_Group text (--on-purple) clears AA on the dark Scene", () =
     });
   }
 });
+
+// ---------------------------------------------------------------------------
+// Issue #476, R3: the Stage's primary button and the outline button.
+//
+// The ratios come from the WCAG formula above, computed here from the hex
+// values. Nothing is measured from a browser.
+
+describe("issue #476 R3: primary and outline button pairs clear 4.5:1", () => {
+  // The primary button's label is --on-accent on the --accent fill. Both are
+  // read from the Scene tokens, so the test tracks the CSS, not a copy of it.
+  const buttonTokensCss = readFileSync(tokensCssPath, "utf8");
+  const onAccent = readColourToken(buttonTokensCss, "--on-accent", "tokens.css");
+  const accent = readColourToken(buttonTokensCss, "--accent", "tokens.css");
+
+  it("primary button: --on-accent on --accent is at least 4.5:1", () => {
+    const r = checkPair(
+      "--on-accent on --accent (primary button)",
+      onAccent.rgb,
+      accent.rgb,
+      WCAG_AA_NORMAL,
+    );
+    expect(r.ok, describeResult(r)).toBe(true);
+  });
+
+  // The outline button's border colour on #0b0912.
+  it("outline button: #8f86ad on #0b0912 is at least 4.5:1", () => {
+    const ratio = contrastRatio("#8f86ad", "#0b0912");
+    expect(ratio).toBeGreaterThanOrEqual(WCAG_AA_NORMAL);
+  });
+});

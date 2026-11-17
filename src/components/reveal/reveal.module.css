@@ -128,6 +128,29 @@
   outline-offset: 2px;
 }
 
+/* "Show everything": an outline control beside the Stage's primary button. Only
+   the primary button is orange (buttons.module.css), so this one stays plain. */
+.outlineButton {
+  font: inherit;
+  font-weight: 700;
+  color: #ffffff;
+  background-color: transparent;
+  border: 1px solid #8f86ad;
+  border-radius: 2px;
+  min-height: 44px;
+  min-width: 44px;
+  max-width: 100%;
+  padding: 0.5rem 1.1rem;
+  text-align: center;
+  white-space: normal;
+  cursor: pointer;
+}
+
+.outlineButton:focus-visible {
+  outline: 3px solid #ffffff;
+  outline-offset: 2px;
+}
+
 /* --- Recall step --- */
 
 .recall {
@@ -520,11 +543,21 @@
   min-width: 0;
 }
 
+/* At 900 px and wider, with the letter alone (no figures panel yet), the letter
+   grid is one track, so the letter Stage spans the whole grid and centres its
+   sheet (issue #476, R1). Below 900 px the spec 08 R3.3 stack is unchanged. */
+@media (min-width: 900px) {
+  .letterFigures:not(:has(> [data-figures-panel])) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
 /* At or above 1,200 px (REVEAL_SIDE_BY_SIDE_PX): the Letter_Block on the left,
    the figures beside it. Below 1,200 px the figures stack under the
-   Letter_Block (spec 08, R3.1). */
+   Letter_Block (spec 08, R3.1). The two tracks apply only while a figures
+   panel is rendered (stage 3 and later). */
 @media (min-width: 1200px) {
-  .letterFigures {
+  .letterFigures:has(> [data-figures-panel]) {
     grid-template-columns: minmax(0, 1.4fr) minmax(20rem, 1fr);
     align-items: start;
   }

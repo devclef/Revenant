@@ -211,11 +211,25 @@ describe("Property 17: the letter is shown verbatim with nothing against it (R13
     expect(shaft).toMatch(/linear-gradient/);
     expect(shaft).not.toMatch(/background-color/);
     expect(css).not.toMatch(/#8f46ff|143,\s*70,\s*255/i);
-    // A crease is one full-width horizontal line: zero height, no vertical extent.
+    // A crease is a horizontal hairline with zero height. Each crease is drawn
+    // as a left and a right segment in the side padding (issue #476, R2).
     const crease = blockOf(css, "crease");
     expect(crease).toMatch(/height:\s*0/);
-    expect(crease).toMatch(/left:\s*0/);
-    expect(crease).toMatch(/right:\s*0/);
+    expect(css).toMatch(
+      /\.crease\[data-crease="left"\]\s*\{[^}]*left:\s*0[^}]*width:\s*var\(--letter-pad-x\)/,
+    );
+    expect(css).toMatch(
+      /\.crease\[data-crease="right"\]\s*\{[^}]*right:\s*0[^}]*width:\s*var\(--letter-pad-x\)/,
+    );
+  });
+
+  it("renders each crease as a left and a right segment, not one full-width line (issue #476, R2)", () => {
+    const html = render("A short letter.");
+    const sides = [...html.matchAll(/<div[^>]*data-crease="(left|right)"[^>]*>/g)].map(
+      (match) => match[1],
+    );
+    // Two creases (1/3 and 2/3), each with a left and a right segment.
+    expect(sides).toEqual(["left", "right", "left", "right"]);
   });
 
   it("gives the caption its own light focus ring, not a white ring inside a purple block (L6.2)", () => {
