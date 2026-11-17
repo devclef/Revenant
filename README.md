@@ -190,3 +190,5 @@ The full runbook is in [docs/agent-loop.md](docs/agent-loop.md).
 See [LICENSE](LICENSE).
 
 <!-- provenance: grep -ciF over this file for the five Retired_Phrases in the commit c4c2a81 search (the G2.7 copy rules and the O5/L4 patches), case-insensitive: 0 matches for each phrase, 2026-11-17, searched at c4c2a81 -->
+
+<!-- G2.7 Retired_Phrase over dev/ copies: for p in "Check your connection and reload the page" "What's on your mind right now?" "Seal the figures" "fuel prices from the US or the EU" "nowUnavailableFetch"; do grep -ciF "$p" dev/README.md dev/docs/video-script.md; done; checked 17 November 2026; commit 022516b59299c0651b3e3385cf389964e29687c4; NOT RECOUNTED: the dev/ copies are not in this task worktree (git ls-files lists no dev/ paths), so the search cannot run from the worktree root. The copies sit at /home/dopey/kiro/revenant-crew/dev outside the worktree. The 022516b body reports 0 for every phrase in those copies, but that search ran outside the worktree and is not recounted here. -->
