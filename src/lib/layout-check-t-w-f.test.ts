@@ -481,6 +481,35 @@ describe("f3Failures (F3.1, F3.2, F3.4)", () => {
     ]);
   });
 
+  it("names F3.2 when the question or the control to go on is below the viewport", () => {
+    const failures = f3Failures({
+      ...DESKTOP,
+      notice,
+      labels: [],
+      question: rect(100, 880, 600, 60),
+      answer,
+      cont: rect(100, 950, 200, 40),
+      noticeCount: 1,
+    });
+    expect(failures).toEqual([
+      "F3.2 question is not inside the First_Viewport",
+      "F3.2 control to go on is not inside the First_Viewport",
+    ]);
+  });
+
+  it("reports a missing question heading and names F3.2", () => {
+    const failures = f3Failures({
+      ...DESKTOP,
+      notice,
+      labels: [],
+      question: null,
+      answer,
+      cont,
+      noticeCount: 1,
+    });
+    expect(failures).toEqual(["F3.2 no question heading to measure"]);
+  });
+
   it("names F3.4 when the notice shows more than once", () => {
     const failures = f3Failures({
       ...DESKTOP,
@@ -552,5 +581,77 @@ describe("f4Failures (F4.1 to F4.3)", () => {
       others: [["question", question]],
     });
     expect(failures).toEqual(["F4.3 the Ghost covers the question"]);
+  });
+});
+
+describe("failure messages name their requirement ID (T, W, F)", () => {
+  it("starts every failure with its row ID", () => {
+    const failures = [
+      ...t1Failures({ view: null, countdown: null, keep: null, w: 1440, h: 900 }),
+      ...t1Failures({
+        view: rect(1300, 10, 200, 100),
+        countdown: rect(10, 10, 100, 20),
+        keep: rect(0, 200, 100, 100),
+        w: 1440,
+        h: 900,
+      }),
+      ...tg2Failures({ ghost: rect(0, 0, 100, 100), keep: rect(50, 50, 100, 100) }),
+      ...wFailures({
+        ...DESKTOP,
+        field: null,
+        column: 0,
+        paper: null,
+        occasions: [],
+        questions: [],
+        receipts: [],
+      }),
+      ...wFailures({
+        ...DESKTOP,
+        field: rect(0, 400, 600, 200),
+        column: 600,
+        paper: 600,
+        occasions: [{ height: 20 }],
+        questions: [],
+        receipts: [],
+      }),
+      ...w8Failures({ heading: { top: 10 }, topBarBottom: 0 }),
+      ...lf1Failures([{ name: "Maya", left: 0, width: 100, leafRights: [10] }]),
+      ...lf2Failures({
+        items: [
+          {
+            left: 0,
+            top: 0,
+            right: 100,
+            bottom: 100,
+            padding: 10,
+            textWidth: 100,
+            fontSize: 16,
+            lineHeight: 24,
+            clipped: false,
+          },
+        ],
+        w: 1440,
+      }),
+      ...f3Failures({
+        ...DESKTOP,
+        notice: rect(850, 20, 300, 20),
+        labels: [rect(850, 20, 200, 20)],
+        question: rect(100, 300, 600, 60),
+        answer: rect(100, 400, 600, 80),
+        cont: rect(100, 520, 200, 40),
+        noticeCount: 2,
+      }),
+      ...f4Failures({
+        ...DESKTOP,
+        ghost: rect(100, 300, 600, 300),
+        topBarBottom: 0,
+        verdict: rect(100, 5, 600, 20),
+        others: [["question", rect(100, 300, 600, 60)]],
+      }),
+    ];
+    expect(failures.length).toBeGreaterThanOrEqual(12);
+    for (const f of failures) {
+      expect(f).toMatch(/^[TWFL]\d(\.\d+)? /);
+    }
   });
 });

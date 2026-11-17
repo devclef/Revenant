@@ -125,7 +125,10 @@ describe("u8Failures (U8.1 to U8.3)", () => {
 });
 
 describe("landingSealFailures (L1.1 to L1.3)", () => {
-  const seal = (width: number) => ({ ...rect(100, 80, width, width), width });
+  const seal = (width: number, left = 100) => ({
+    ...rect(left, 80, width, width),
+    width,
+  });
   const h1 = rect(100, 300, 600, 80);
   const cta = rect(100, 420, 200, 48);
   const ok = { minWidth: 160, w: 1440, h: 900 };
@@ -152,6 +155,18 @@ describe("landingSealFailures (L1.1 to L1.3)", () => {
     });
     expect(failures).toEqual([
       "L1.3 primary call to action is not inside the First_Viewport",
+    ]);
+  });
+
+  it("fails a landing seal outside the First_Viewport and names L1.1", () => {
+    const failures = landingSealFailures({
+      seal: seal(160, 1300),
+      h1,
+      cta,
+      ...ok,
+    });
+    expect(failures).toEqual([
+      "L1.1 landing seal is not inside the First_Viewport",
     ]);
   });
 
@@ -234,5 +249,49 @@ describe("p1Failures (P1.1 to P1.4)", () => {
     expect(p1Failures({ ...good, warningDuring: null })).toEqual([
       "P1.4 Warning_Text not found before or during the hold",
     ]);
+  });
+});
+
+describe("failure messages name their requirement ID (U8, L1, P1)", () => {
+  const ok = { minWidth: 160, w: 1440, h: 900 };
+  const h1 = rect(100, 300, 600, 80);
+  const cta = rect(100, 420, 200, 48);
+  const press = { ...rect(500, 200, 460, 460), tag: "BUTTON", height: 460 };
+  const warning = rect(40, 300, 400, 90);
+  const pGood = {
+    largestIsPress: true,
+    press,
+    accentCount: 1,
+    pressIsAccent: true,
+    warningBefore: warning,
+    warningDuring: { ...warning },
+  };
+
+  it("starts every failure with U8.x, L1.x or P1.x", () => {
+    const failures = [
+      ...u8Failures({ seal: rect(0, 0, 75, 75), skips: [], ...ok }),
+      ...u8Failures({ seal: rect(1300, 100, 160, 160), skips: [], ...ok }),
+      ...u8Failures({
+        seal: rect(100, 100, 160, 160),
+        skips: [rect(20, 950, 120, 30)],
+        ...ok,
+      }),
+      ...landingSealFailures({ seal: null, h1, cta, ...ok }),
+      ...landingSealFailures({
+        seal: rect(1300, 80, 160, 160),
+        h1,
+        cta,
+        ...ok,
+      }),
+      ...landingSealFailures({ seal: rect(100, 80, 160, 160), h1: null, cta, ...ok }),
+      ...p1Failures({ ...pGood, largestIsPress: false }),
+      ...p1Failures({ ...pGood, press: { ...press, tag: "DIV" } }),
+      ...p1Failures({ ...pGood, accentCount: 2 }),
+      ...p1Failures({ ...pGood, warningDuring: { ...warning, top: 312 } }),
+    ];
+    expect(failures.length).toBeGreaterThanOrEqual(10);
+    for (const f of failures) {
+      expect(f).toMatch(/^(U8|L1|P1)\.\d+ /);
+    }
   });
 });
