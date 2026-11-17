@@ -24,3 +24,11 @@ export const TOUCH_TARGET_MIN_PX = 44;
 
 /** From this width the headline scales up and the hero centres (B4.1). */
 export const LANDING_WIDE_MIN_PX = 1920;
+
+/**
+ * The seal hash shown on the landing hero envelope. It belongs to no letter:
+ * it is a fixed decorative value, never sealed, stored or checked against a
+ * real envelope.
+ */
+export const LANDING_SEAL_HASH =
+  "f7023f7534d9709bba90be98d8df835c724e7013d40202a0cb02db103a46b2a8";

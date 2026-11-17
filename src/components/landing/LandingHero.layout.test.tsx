@@ -69,7 +69,7 @@ describe("RitualSection renders the four ritual step names from BRAND_COPY", () 
 });
 
 describe("landing hero stacking rule below 600 px", () => {
-  it("puts the actions in order 1 so they follow the reserved ghost box", () => {
+  it("puts the actions in order 1 so they follow the hero seal box", () => {
     expect(phoneBlock()).toMatch(/\.actions \{\s*order: 1;\s*\}/);
   });
 
@@ -79,10 +79,9 @@ describe("landing hero stacking rule below 600 px", () => {
     expect(block).toMatch(/\.sentence \{\s*line-height: 1\.5;\s*\}/);
   });
 
-  it("reserves the ghost box as 71vh less 300px, never below zero", () => {
-    expect(phoneBlock()).toMatch(
-      /\.hero \.ghost \{\s*height: max\(0px, calc\(71vh - 300px\)\);\s*\}/,
-    );
+  it("keeps the hero seal box at the envelope height, with no 71vh ghost reservation", () => {
+    expect(phoneBlock()).not.toMatch(/71vh - 300px/);
+    expect(css).toMatch(/\.sealFrame \{\s*width: min\(100%, 420px\);\s*\}/);
   });
 
   it("narrows the drawn Landing_Ghost placement through the Scene's --ghost-w", () => {

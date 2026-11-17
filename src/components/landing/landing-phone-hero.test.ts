@@ -65,24 +65,25 @@ function phoneBlock(): string {
 }
 
 describe("landing hero below 600 px (landing.module.css)", () => {
-  it("puts the actions after the reserved ghost box, in the flow", () => {
+  it("puts the actions after the hero seal box, in the flow", () => {
     const block = phoneBlock();
     expect(block).toMatch(/\.actions \{\s*order: 1;\s*\}/);
     expect(block).not.toMatch(/position:\s*absolute/);
   });
 
-  it("sizes the reserved ghost box to 71vh less 300px, never below zero", () => {
-    const block = phoneBlock();
-    expect(block).toMatch(/\.ghost \{\s*height: max\(0px, calc\(71vh - 300px\)\);\s*\}/);
+  it("no longer reserves a 71vh ghost box; the seal frame sets the envelope width", () => {
+    // The ghost reservation was replaced by the hero envelope (issue #429).
+    expect(phoneBlock()).not.toMatch(/71vh - 300px/);
+    expect(css).toMatch(/\.sealFrame \{\s*width: min\(100%, 420px\);\s*\}/);
   });
 });
 
 describe("landing Landing_Ghost box below 600 px (spec 10 X2.5)", () => {
-  it("sets the phone ghost box rule inside the phone block, and keeps the base ghost rule outside it", () => {
+  it("keeps the Scene ghost width rule in the phone block, and has no landing .ghost box rule", () => {
     const block = phoneBlock();
-    expect(block).toMatch(/\.hero \.ghost \{\s*height: max\(0px, calc\(71vh - 300px\)\);\s*\}/);
-    // Outside the phone block, the wide ghost rule is still the base 30svh rule.
-    expect(css).toMatch(/\.ghost \{\s*width: 100%;\s*height: 30vh;/);
+    expect(block).toMatch(/:global\(\[data-ghost-pit\]\) > div \{\s*--ghost-w: min\(20vh, 128px\);\s*\}/);
+    // The landing .ghost box was replaced by the hero seal box (issue #429).
+    expect(css).not.toMatch(/\.ghost \{/);
   });
 });
 
@@ -113,8 +114,8 @@ describe("landing Landing_Ghost on the first screen below 600 px (measured, X4)"
     });
   }
 
-  it("keeps the phone rule that reserves the ghost box, so the page does not move", () => {
-    const block = phoneBlock();
-    expect(block).toMatch(/\.hero \.ghost \{\s*height: max\(0px, calc\(71vh - 300px\)\);\s*\}/);
+  it("keeps the seal box in the flow with its envelope height, so the page does not move", () => {
+    expect(css).toMatch(/\.sealBox \{[^}]*display: flex;/);
+    expect(css).toMatch(/\.sealFrame :global\(\[data-seal-hash\]\) \{/);
   });
 });

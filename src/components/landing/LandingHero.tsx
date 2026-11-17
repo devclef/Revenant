@@ -10,15 +10,16 @@
 // With no persona there is no primary call to action. The secondary call to
 // action, to the live demo, shows only while Demo_2_On (B1.2 to B1.4).
 //
-// The Landing_Ghost box is reserved here, after the calls to action, so the
-// server HTML holds its place (OD12 c, CLS 0). The ghost itself is drawn by
-// the page. `primaryCost` is not rendered yet; see constants.ts for why.
+// The hero envelope (HeroEnvelope) comes after the calls to action, in the
+// same place the Landing_Ghost box was reserved, so the server HTML holds its
+// place (OD12 c). `primaryCost` is not rendered yet; see constants.ts for why.
 
 import Link from "next/link";
 
 import { BRAND_COPY } from "@/components/brand/copy";
 import { splitTagline } from "@/components/ceremony/scene/SceneHeadline";
 
+import { HeroEnvelope } from "./HeroEnvelope";
 import { LANDING_COPY } from "./copy";
 import styles from "./landing.module.css";
 
@@ -67,7 +68,9 @@ export function LandingHero({ personaCount, demo2On }: LandingHeroProps) {
           </Link>
         ) : null}
       </div>
-      <div className={styles.ghost} data-block="ghost" aria-hidden="true" />
+      <div data-block="seal">
+        <HeroEnvelope />
+      </div>
     </section>
   );
 }

@@ -93,20 +93,9 @@
   outline-offset: 3px;
 }
 
-/* Phone hero (below 600 px): the Landing_Ghost is drawn at a fixed place in the
-   Scene backdrop, with its bottom at about 71vh (452 px at 360x640, 601 px at
-   390x844). The calls to action stay in the flow, so the reserved ghost box
-   moves in front of them: the actions take order 1, and the box, which is
-   sized so the actions start 20 px below the drawn ghost, takes the space
-   between the Hero_Sentence and the actions. The box keeps the same CLS
-   reservation. Its height is 71vh less 300 px. The layout check at 360x640
-   measured the Hero_Sentence bottom at 322 px and the primary call to action
-   at 509 px, with the reserved box between them (302 to 456 px). Above 600 px
-   nothing changes. */
-/* The phone box rule is `.hero .ghost`, not `.ghost`: the base `.ghost` rule
-   below sets 30svh (at most 190 px), and at equal specificity that later rule
-   wins. With the base height the actions sat at 591 px at 360x640, past the
-   fold (layout-check PH1). */
+/* Phone hero (below 600 px): the calls to action take order 1, so the seal
+   box, which keeps its place after the Hero_Sentence in the source, sits above
+   them. The seal box takes the height of its envelope. */
 @media (max-width: 599.98px) {
   .hero {
     gap: 1rem;
@@ -121,8 +110,12 @@
     order: 1;
   }
 
-  .hero .ghost {
-    height: max(0px, calc(71vh - 300px));
+  /* The drawn Landing_Ghost bottom is at 72vh (measured 608 px at 390x844). The
+     calls to action start at 553 px in this flow (seal box bottom 537 px plus the
+     1rem gap), so the margin lifts them to ghost bottom + 20 px. It is zero on
+     shorter screens, where the actions already clear the ghost. */
+  .actions {
+    margin-top: max(0px, calc(72vh - 533px));
   }
 
   /* The drawn Landing_Ghost is narrower here, so its body clears the Hero_Sentence.
@@ -133,13 +126,86 @@
   }
 }
 
-/* The Landing_Ghost box is reserved in the server HTML so the page does not
-   move when the ghost arrives (CLS 0). It is at most 30% of the viewport
-   height and at most 190 px (P1.1). */
-.ghost {
+/* The hero seal (issue #429). The box is the envelope's own height, so the
+   server HTML holds its place (CLS 0). The envelope frame is at most 420 px
+   wide. The seal's SVG keeps its width attribute (64 units), because a CSS
+   width on a nested SVG does not resize it, so the seal is scaled instead.
+   Scaling by 2 about its own origin gives 165.6 px at 420 px wide (1440 x 900)
+   and 125.4 px at 318 px wide (390 x 844), both measured in Chromium. The
+   translate puts the seal centre at (150, 104) in the envelope's 300 x 188
+   units, the flap tip. The selector is scoped to the seal box. */
+.sealBox {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  justify-content: center;
   width: 100%;
-  height: 30vh;
-  height: min(30svh, 190px);
+}
+
+.sealFrame {
+  width: min(100%, 420px);
+}
+
+.sealFrame :global([data-seal-hash]) {
+  transform: translate(-32px, -32px) scale(2);
+}
+
+/* The wax glow behind the seal. It sits inside the seal box only (inset 0), so
+   it never reaches the text above or the ghost below. Its rest state is the
+   same at every motion setting: opacity 0.6 and no transform. Opacity and
+   transform only. */
+.sealBox::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    ellipse closest-side,
+    rgba(143, 70, 255, 0.5),
+    rgba(143, 70, 255, 0)
+  );
+  opacity: 0.6;
+}
+
+/* Full motion only: the glow warms once on arrival, from 0.2 to its rest state.
+   Reduced motion and no JavaScript show the rest state at once. */
+@keyframes waxGlow {
+  from {
+    opacity: 0.2;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .sealBox::before {
+    animation: waxGlow 1600ms ease-out backwards;
+  }
+}
+
+/* The ghost settle (hero only): the landing Ghost fades in from 0.4 to full
+   opacity once, as the hero arrives. Opacity only. The rise and bob belong to
+   scene.module.css and are not changed here. Reduced motion and no JavaScript
+   show the Ghost at full opacity. */
+@keyframes ghostSettleFade {
+  from {
+    opacity: 0.4;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  /* The place around the Ghost, not the pit itself: the pit carries its own
+     shake animation in scene.module.css, which this rule must not replace. */
+  :global(body:has([data-landing-hero])) :global([data-ghost-pit]) > div {
+    animation: ghostSettleFade 320ms ease-out backwards;
+  }
 }
 
 /* Wide: the headline grows with the viewport up to 1920 px. From 1920 px it is

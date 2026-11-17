@@ -90,15 +90,16 @@ describe("LandingHero with two personas", () => {
 describe("LandingHero blocks and reserved ghost box", () => {
   it("carries data-block on every content block", () => {
     const html = markup(2);
-    for (const block of ["eyebrow", "headline", "sentence", "actions", "ghost"]) {
+    for (const block of ["eyebrow", "headline", "sentence", "actions", "seal"]) {
       expect(html).toContain(`data-block="${block}"`);
     }
   });
 
-  it("reserves the Landing_Ghost box after the calls to action", () => {
+  it("places the hero seal box after the calls to action", () => {
     const html = markup(2);
     expect(html.indexOf('data-block="actions"')).toBeLessThan(
-      html.indexOf('data-block="ghost"'),
+      html.indexOf('data-block="seal"'),
     );
+    expect(html).toContain("data-landing-seal");
   });
 });
