@@ -15,6 +15,11 @@ import { write16Failures, write17Failures } from "../../tools/qa/layout-check.mj
  *   - W1.7 (spec 12) at 360x640: no sideways scroll on the document or the Write card.
  *     Unchanged.
  *
+ * Spec 11 Write-step rows: none remain. The spec 11 L3 thresholds (every primary control,
+ * Next included, in view at phone sizes) were replaced by W1.6 and W1.7 in spec 12, as
+ * tools/qa/layout-check.mjs (around line 95) says. Nothing in src/ or tools/qa/ still
+ * asserts L3, so this file asserts no spec 11 value.
+ *
  * Retired tests: none. Nothing in this file replaces an earlier threshold.
  */
 
