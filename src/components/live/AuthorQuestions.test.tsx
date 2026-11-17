@@ -9,6 +9,7 @@ import { firstPoliticalTerm } from "@/lib/personas/banned-terms";
 import { checkRecallSubject } from "@/lib/recall";
 
 import { AuthorQuestions, type AuthorQuestionsProps } from "./AuthorQuestions";
+import { focusAfterRemove } from "./author-questions";
 import { DEFAULT_QUESTION } from "./occasions";
 import { LIVE_COPY } from "./copy";
 
@@ -198,5 +199,33 @@ describe("AuthorQuestions rendering", () => {
   it("shows the too-long message only for the flagged row", () => {
     const html = render({ questions: ["short", "long"], tooLongIndices: [1] });
     expect(html.split(LIVE_COPY.questionTooLong)).toHaveLength(2);
+  });
+});
+
+// Spec 10, C2. Removing a row moves focus to the next row, or to Add a
+// question when the last row went. The rule is focusAfterRemove; the component
+// must use it on every remove, and the rendered Remove name stays exact.
+describe("AuthorQuestions remove focus (spec 10, C2)", () => {
+  const source = readFileSync(
+    new URL("./AuthorQuestions.tsx", import.meta.url),
+    "utf8",
+  );
+
+  it("names the second row's control Remove question 2", () => {
+    const html = render({ questions: ["first", "second"] });
+    expect(html).toContain('aria-label="Remove question 2"');
+  });
+
+  it("moves focus with focusAfterRemove on every removal", () => {
+    expect(source).toContain("focusAfterRemove(questions.length, index)");
+    expect(source).toContain(
+      "textareaRefs.current.get(pendingFocus.index)?.focus()",
+    );
+    expect(source).toContain("addRef.current?.focus()");
+  });
+
+  it("sends focus to the next row, or to Add a question after the last", () => {
+    expect(focusAfterRemove(3, 1)).toEqual({ kind: "row", index: 1 });
+    expect(focusAfterRemove(2, 1)).toEqual({ kind: "add" });
   });
 });

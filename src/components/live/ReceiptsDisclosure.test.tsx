@@ -6,6 +6,8 @@ import { describe, expect, it } from "vitest";
 
 import { LIVE_COPY } from "./copy";
 import { ReceiptsDisclosure, type ReceiptsStatus } from "./ReceiptsDisclosure";
+import { WriteForm } from "./WriteForm";
+import type { SealState } from "./seal-machine";
 
 // The disclosure is rewritten for L1.4 and L1.5 (spec 11): one closed native
 // details, titled "Receipts", with the explain line first and the picker
@@ -169,5 +171,54 @@ describe("ReceiptsDisclosure closed state (spec 11, W6)", () => {
     expect(summaryEnd).toBeGreaterThan(-1);
     expect(html.indexOf(LIVE_COPY.receiptsLoading)).toBeGreaterThan(summaryEnd);
     expect(html.indexOf("data-own-numbers")).toBeGreaterThan(summaryEnd);
+  });
+});
+
+// Spec 11, W6. The summary is not a visible control: it is visually hidden,
+// out of the Tab order and hidden from assistive tech, so Add a receipt is the
+// only way to open the disclosure.
+describe("ReceiptsDisclosure hidden summary (spec 11, W6)", () => {
+  it("renders the summary visually hidden, out of tab order and aria-hidden", () => {
+    const html = render("ready");
+    const summary = html.match(/<summary[^>]*>/)?.[0] ?? "";
+    expect(summary).toContain('tabindex="-1"');
+    expect(summary).toContain('aria-hidden="true"');
+    expect(summary).toMatch(/class="[^"]*visuallyHidden/);
+    expect(summary).not.toMatch(/moreSummary/);
+  });
+
+  it("keeps the disclosure closed in every status", () => {
+    for (const status of ["loading", "ready", "failed"] as const) {
+      const match = render(status).match(/<details[^>]*>/);
+      expect(match?.[0], status).not.toMatch(/\sopen(\s|=|>)/);
+    }
+  });
+});
+
+// Example: on the Write step the words Add a receipt appear once, and no
+// Receipts link exists anywhere on the step.
+describe("WriteForm write step receipt control (spec 11, W6)", () => {
+  it("shows the text Add a receipt once and no Receipts link", () => {
+    const html = renderToStaticMarkup(
+      createElement(WriteForm, {
+        series: [],
+        state: { tag: "write" } as SealState,
+        cryptoLoaded: true,
+        text: "",
+        metricIds: [],
+        warningTicked: false,
+        backupCardTicked: false,
+        onTextChange: () => {},
+        onToggleFigure: () => {},
+        onWarningChange: () => {},
+        onBackupCardChange: () => {},
+        onCreatePress: () => {},
+        onConfirmPress: () => {},
+        section: "write",
+        onNext: () => {},
+      }),
+    );
+    expect(html.split(LIVE_COPY.receiptsAction).length - 1).toBe(1);
+    expect(html).not.toMatch(/<a\b[^>]*>[^<]*Receipts[^<]*<\/a>/);
   });
 });

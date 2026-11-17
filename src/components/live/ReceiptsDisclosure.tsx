@@ -42,8 +42,9 @@ const CONTROL_SELECTOR = "input, button, select, textarea, a[href]";
  * numbers are not official figures, so they stay in every state. Nothing here
  * gates sealing or Next.
  *
- * The summary still opens it from the keyboard, because it is a native
- * `details`. When `openRequest` changes, the disclosure opens and focus moves
+ * The summary is visually hidden and out of the Tab order (spec 11, W6), so Add
+ * a receipt is the only control that opens the disclosure. When `openRequest`
+ * changes, the disclosure opens and focus moves
  * to the first figure checkbox when figures are ready, otherwise to the first
  * own-number control. The focus move does not scroll the page.
  */
@@ -72,7 +73,14 @@ export function ReceiptsDisclosure({
 
   return (
     <details ref={detailsRef} className={styles.more} data-receipts-disclosure>
-      <summary className={styles.moreSummary}>
+      {/* The summary is not a control: it is visually hidden, out of the Tab
+          order and hidden from assistive tech. Add a receipt is the only way
+          to open the disclosure (spec 11, W6). */}
+      <summary
+        className={styles.visuallyHidden}
+        tabIndex={-1}
+        aria-hidden="true"
+      >
         {LIVE_COPY.receiptsSummary}
       </summary>
       <p className={styles.hint}>{LIVE_COPY.receiptsExplain}</p>
