@@ -154,6 +154,101 @@ describe("formatChange", () => {
   });
 });
 
+describe("formatChange differenceDigits", () => {
+  it("keeps the sign of a non-zero difference that rounds to zero", () => {
+    // 3.001 - 3.000 = 0.001, which is 0.00 at 2 digits, but the direction is
+    // still "rose" and the sign is still "+", taken from the exact difference.
+    const result = comparableChange(
+      official({ value: "3.000", period: "2024-09" }),
+      official({ value: "3.001", period: "2026-09" }),
+    );
+
+    const display = formatChange(result, "U.S.", { differenceDigits: 2 });
+
+    expect(display.direction).toBe("rose");
+    expect(display.difference).toBe("+0.00");
+  });
+
+  it("shows an exact zero difference as 0.00 with no sign and 'unchanged'", () => {
+    const result = comparableChange(
+      official({ value: "3.00", period: "2024-09" }),
+      official({ value: "3.00", period: "2026-09" }),
+    );
+
+    const display = formatChange(result, "U.S.", { differenceDigits: 2 });
+
+    expect(display.direction).toBe("unchanged");
+    expect(display.difference).toBe("0.00");
+    expect(display.difference.includes("+")).toBe(false);
+    expect(display.difference.includes(MINUS)).toBe(false);
+    expect(display.difference.includes("-")).toBe(false);
+  });
+
+  it("keeps the existing rendered output when the option is omitted", () => {
+    // Each row: the then and now values, and the exact display fields the
+    // default (option-omitted) output must produce. These are the same
+    // expectations the earlier tests in this file assert.
+    const rows: Array<{
+      then: string;
+      now: string;
+      direction: "rose" | "fell" | "unchanged";
+      difference: string;
+      percent: string | null;
+    }> = [
+      {
+        then: "2.00",
+        now: "5.00",
+        direction: "rose",
+        difference: "+3.00",
+        percent: "+150.0%",
+      },
+      {
+        then: "9.00",
+        now: "6.00",
+        direction: "fell",
+        difference: `${MINUS}3.00`,
+        percent: `${MINUS}33.3%`,
+      },
+      {
+        then: "3.00",
+        now: "3.00",
+        direction: "unchanged",
+        difference: "0.00",
+        percent: "0.0%",
+      },
+      {
+        then: "2.5",
+        now: "5.125",
+        direction: "rose",
+        difference: "+2.625",
+        percent: "+105.0%",
+      },
+      {
+        then: "0",
+        now: "5.00",
+        direction: "rose",
+        difference: "+5.00",
+        percent: null,
+      },
+    ];
+
+    for (const row of rows) {
+      const result = comparableChange(
+        official({ value: row.then, period: "2024-09" }),
+        official({ value: row.now, period: "2026-09" }),
+      );
+
+      const display = formatChange(result, "U.S.");
+
+      expect(display.direction).toBe(row.direction);
+      expect(display.difference).toBe(row.difference);
+      expect(display.percent).toBe(row.percent);
+      // The explicit empty options object renders identically to no options.
+      expect(formatChange(result, "U.S.", {})).toEqual(display);
+    }
+  });
+});
+
 describe("formatValue", () => {
   it("renders a decimal string at its own precision when no digits are forced", () => {
     expect(formatValue("3.412", "U.S.")).toBe("3.412");
