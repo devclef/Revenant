@@ -25,7 +25,7 @@ import styles from "./live.module.css";
 import letterField from "./letter-field.module.css";
 import { OccasionPicker } from "./OccasionPicker";
 import { PressEnvelope } from "./press/PressEnvelope";
-import { applyOccasion, type OccasionDraft, type OccasionId } from "./occasions";
+import { applyOccasion, occasionPlaceholder, type OccasionDraft, type OccasionId } from "./occasions";
 import { letterFieldHeightPx } from "./phone";
 import { type PrfHint } from "./prf-hint";
 import { RealDatePicker } from "./RealDatePicker";
@@ -470,6 +470,7 @@ export function WriteForm({
             ref={letterRef}
             className={`${styles.textarea} ${letterField.letterField}`}
             rows={LETTER_FIELD_ROWS}
+            placeholder={occasionPlaceholder(chosenOccasion)}
             value={text}
             aria-describedby="live-letter-count live-letter-problem"
             onChange={(event) => {

@@ -15,6 +15,11 @@ export interface Occasion {
   id: OccasionId;
   label: string;
   starter: string;
+  /**
+   * Shown in the empty letter field while this Occasion is chosen (spec 12,
+   * W2). Display only: it is never stored, counted or sealed.
+   */
+  placeholder: string;
   /** The default question first, then up to two subject questions. */
   questions: readonly string[];
 }
@@ -35,6 +40,7 @@ export const OCCASIONS: readonly Occasion[] = [
     id: "year",
     label: "The year ahead",
     starter: "This is where my year stands as I write this.",
+    placeholder: "Write what your year looks like on the day you sealed this.",
     questions: [
       DEFAULT_QUESTION,
       "What did you hope the year would hold when you wrote this?",
@@ -46,6 +52,7 @@ export const OCCASIONS: readonly Occasion[] = [
     label: "Work",
     starter:
       "This is what my work looks like as I write this, and what I am still working out.",
+    placeholder: "Write what work looks like on the day you sealed this.",
     questions: [
       DEFAULT_QUESTION,
       "What was on your mind about work when you wrote this?",
@@ -57,6 +64,7 @@ export const OCCASIONS: readonly Occasion[] = [
     label: "Family",
     starter:
       "This is how things are with the people closest to me as I write this.",
+    placeholder: "Write about your people on the day you sealed this.",
     questions: [
       DEFAULT_QUESTION,
       "Who were you thinking about most when you wrote this?",
@@ -68,6 +76,7 @@ export const OCCASIONS: readonly Occasion[] = [
     label: "A decision",
     starter:
       "This is the decision in front of me, and where I lean as I write this.",
+    placeholder: "Write what you are deciding on the day you sealed this.",
     questions: [
       DEFAULT_QUESTION,
       "What were you weighing when you wrote this?",
@@ -78,9 +87,19 @@ export const OCCASIONS: readonly Occasion[] = [
     id: "blank",
     label: "Blank",
     starter: "",
+    placeholder:
+      "Write whatever you want to remember on the day you sealed this.",
     questions: [DEFAULT_QUESTION],
   },
 ];
+
+/**
+ * The letter field placeholder for an Occasion (spec 12, W2). Shown only while
+ * the letter is empty, and never part of the letter's value.
+ */
+export function occasionPlaceholder(id: OccasionId): string {
+  return findOccasion(id).placeholder;
+}
 
 /**
  * The Write step's Occasion state. `appliedStarter` and `appliedQuestions` hold

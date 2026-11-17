@@ -141,6 +141,10 @@ describe("Occasion copy (spec 11, L2.1)", () => {
     });
   });
 
+  it("has no check mark copy for the Occasion options (spec 12, W2)", () => {
+    expect(LIVE_COPY).not.toHaveProperty("occasionMark");
+  });
+
   it("keeps the answer-in-letter line and drops the retired starter keys", () => {
     expect(LIVE_COPY.answerInLetter).toBe(
       "Answer them in your letter too, in your own words.",

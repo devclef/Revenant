@@ -121,6 +121,12 @@
   overflow-y: auto;
 }
 
+/* The Occasion placeholder: the paper's soft ink, so it meets AA on the paper. */
+.textarea::placeholder {
+  color: var(--ink-soft);
+  opacity: 1;
+}
+
 .count {
   margin: 0.375rem 0 0;
   font-family: var(--font-sans);
@@ -525,12 +531,12 @@
 }
 
 /*
- * The Occasion buttons (spec 11, L2.1, L2.9) sit above the letter field. They
- * wrap onto rows at phone widths instead of scrolling. Chips are 44px tall
- * below 600px (the touch target from .secondary) and 32px from 600px. The
- * pressed chip uses a heavier type and a 2px ink border, so the choice is
- * clear without colour (tone.md). The [x] marker is aria-hidden and shown only
- * on the pressed chip.
+ * The Occasion options (spec 11, L2.1, L2.9; spec 12, W2) sit above the letter
+ * field as one row of plain text: no box, tick or check mark. They wrap onto
+ * rows at phone widths instead of scrolling. Each option is 44px tall below
+ * 600px and 32px from 600px, so the touch target stays large. The chosen
+ * option is underlined and heavier, so the choice is clear without colour
+ * (tone.md).
  */
 .occasions {
   border: 0;
@@ -559,30 +565,40 @@
   margin: 0.5rem 0 0;
 }
 
+/* Plain text on the paper: no box, no background, the paper ink colour. */
 .occasionButton {
   flex: 0 1 auto;
   height: 44px;
   min-height: 44px;
+  margin: 0;
   padding: 0 0.75rem;
+  border: 0;
+  border-radius: 0;
+  background: none;
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 400;
   line-height: 1.25;
+  text-decoration: none;
+  cursor: pointer;
 }
 
-.occasionMark {
-  margin-right: 0.375rem;
-  font-variant-numeric: tabular-nums;
+.occasionButton:focus-visible {
+  outline: 2px solid var(--ink);
+  outline-offset: 2px;
 }
 
-.occasionButton[aria-pressed="false"] .occasionMark {
-  visibility: hidden;
-}
-
+/* The chosen option: underlined and heavier. */
 .occasionButton[aria-pressed="true"] {
   font-weight: 700;
-  border-width: 2px;
+  text-decoration: underline;
+  text-decoration-thickness: 2px;
+  text-underline-offset: 0.25em;
 }
 
 /*
- * From 600 px the chips use slightly less side padding so the five labels fit
+ * From 600 px the options use slightly less side padding so the five labels fit
  * in one row in the single-column Write panel at 1024 px and wider.
  */
 @media (min-width: 600px) {

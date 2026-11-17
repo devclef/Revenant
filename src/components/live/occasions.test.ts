@@ -7,6 +7,7 @@ import {
   DEFAULT_QUESTION,
   OCCASION_QUESTIONS_MAX,
   OCCASIONS,
+  occasionPlaceholder,
   type OccasionDraft,
   type OccasionId,
 } from "./occasions";
@@ -230,6 +231,60 @@ describe("applyOccasion (Property 7, typed text is never overwritten)", () => {
     expect(family.questions).toContain(typed);
     expect(family.questions.length).toBeLessThanOrEqual(OCCASION_QUESTIONS_MAX);
     expect(family.questions[0]).toBe(DEFAULT_QUESTION);
+    expect(work?.questions[0]).toBe(DEFAULT_QUESTION);
+  });
+});
+
+/**
+ * Spec 12, W2: one placeholder line per Occasion, at most 12 words, in the
+ * tone and neutrality rules. A placeholder is display only.
+ */
+describe("Occasion placeholders (spec 12, W2)", () => {
+  it("gives every Occasion a non-empty placeholder of at most 12 words", () => {
+    for (const occasion of OCCASIONS) {
+      const words = occasion.placeholder.trim().split(/\s+/);
+      expect(occasion.placeholder, occasion.label).not.toBe("");
+      expect(words.length, occasion.label).toBeLessThanOrEqual(12);
+    }
+  });
+
+  it("keeps each placeholder free of digits, banned terms and time words", () => {
+    for (const occasion of OCCASIONS) {
+      expect(occasion.placeholder, occasion.label).not.toMatch(DIGIT);
+      expect(occasion.placeholder, occasion.label).not.toMatch(POLITICAL_TERMS);
+      expect(occasion.placeholder, occasion.label).not.toMatch(
+        FORBIDDEN_PHRASES,
+      );
+      expect(occasion.placeholder, occasion.label).not.toContain("!");
+    }
+  });
+
+  it("names the sealing day in every placeholder that is not Blank", () => {
+    for (const occasion of OCCASIONS) {
+      if (occasion.id === "blank") continue;
+      expect(occasion.placeholder, occasion.label).toMatch(
+        /the day you sealed this/,
+      );
+    }
+  });
+
+  it("returns the placeholder of the chosen Occasion", () => {
+    expect(occasionPlaceholder("work")).toBe(
+      "Write what work looks like on the day you sealed this.",
+    );
+    expect(occasionPlaceholder("family")).toBe(
+      "Write about your people on the day you sealed this.",
+    );
+    for (const occasion of OCCASIONS) {
+      expect(occasionPlaceholder(occasion.id)).toBe(occasion.placeholder);
+    }
+  });
+
+  it("leaves the starter and questions unchanged by the placeholder", () => {
+    const work = OCCASIONS.find((o) => o.id === "work");
+    expect(work?.starter).toBe(
+      "This is what my work looks like as I write this, and what I am still working out.",
+    );
     expect(work?.questions[0]).toBe(DEFAULT_QUESTION);
   });
 });
