@@ -1,0 +1,150 @@
+/*
+ * The Letter_Sheet and Letter_Field on the Write desk (spec 14, W4 and W5).
+ *
+ * Every text colour is set here, on the paper. The sheet is a paper surface
+ * with its own ink, so nothing inherits the desk's light text (desk tokens
+ * apply only to the desk).
+ *
+ * Measured contrast on #f6ead4 (computed, not estimated): #1f1b16 14.38,
+ * #4a4036 8.49, #6b5f51 5.22, #7a2410 8.45.
+ */
+
+.sheet {
+  box-sizing: border-box;
+  width: 100%;
+  margin: 0;
+  padding: 48px 56px 40px;
+  border-radius: 6px;
+  background-color: #f6ead4;
+  color: #1f1b16;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55);
+}
+
+.topRow,
+.bottomRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.salutation {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.3;
+  color: #1f1b16;
+}
+
+/* The date slot keeps the same height on the server (empty) and on the client
+   (filled), so hydration sees the same markup (W4.3). */
+.date {
+  display: block;
+  min-height: 20px;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 20px;
+  color: #4a4036;
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The ruled Letter_Field (W5.1, W5.2). The rules are a repeating gradient
+   every 32 px. background-attachment: local moves them with the text when the
+   field scrolls inside itself.
+
+   --rule-offset puts each rule just under a baseline. It is 7 px, the design
+   value for EB Garamond at 21 px in a 32 px line (design.md section 2.3). The
+   W5.2 baseline measurement at 21 px still needs a browser run; the G2.6
+   measurement was taken at 16 px and does not give this value. */
+.letter {
+  --rule-offset: 7px;
+
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 296px;
+  margin: 24px 0 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background-color: transparent;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0 31px,
+    rgba(74, 64, 54, 0.16) 31px 32px
+  );
+  background-attachment: local;
+  background-position: 0 var(--rule-offset, 7px);
+  font-family: var(--font-serif);
+  font-size: 21px;
+  font-weight: 400;
+  line-height: 32px;
+  color: #1f1b16;
+  resize: none;
+  overflow-y: auto;
+}
+
+.letter::placeholder {
+  font-style: italic;
+  color: #6b5f51;
+  opacity: 1;
+}
+
+.letter:focus-visible {
+  outline: 2px solid #ff7b1c;
+  outline-offset: 4px;
+  box-shadow: 0 1px 0 0 #1f1b16;
+}
+
+.signOff {
+  margin: 0;
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-weight: 400;
+  font-size: 20px;
+  line-height: 1.4;
+  color: #4a4036;
+}
+
+.count {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.4;
+  color: #4a4036;
+}
+
+.problem {
+  margin: 8px 0 0;
+  min-height: 1.4em;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.4;
+  color: #7a2410;
+}
+
+@media (max-width: 599.98px) {
+  .sheet {
+    padding: 24px 20px;
+  }
+
+  .topRow {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

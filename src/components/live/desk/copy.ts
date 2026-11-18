@@ -16,4 +16,8 @@ export const DESK_COPY = {
     "Say where things stand today. Then leave a few questions. When it opens, you answer them from memory first, then read what you wrote.",
   /** The visible legend above the Occasion pills (W3.1). */
   startFrom: "Start from",
+  /** The salutation at the top of the Letter_Sheet (W4.2). Display only. */
+  salutation: "Dear future me,",
+  /** The sign-off under the Letter_Field (W4.4). Display only, never sealed. */
+  signOff: "— me, today",
 } as const;
