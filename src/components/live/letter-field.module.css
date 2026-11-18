@@ -50,3 +50,14 @@
     --letter-lines: 10;
   }
 }
+
+/*
+ * The serif for the Letter_Sheet's textarea on the Write desk (spec 14, W5.1).
+ * It lives here because this module is the live letter field, one of the two
+ * serif modules that src/test/serif-scope.test.ts allows. Only the font family
+ * is set here; the size, rules and colour come from sheet.module.css.
+ */
+
+.sheetLetter {
+  font-family: var(--font-serif);
+}

@@ -4,6 +4,7 @@ import { useLayoutEffect, useRef, type RefObject } from "react";
 
 import { LIVE_COPY } from "../copy";
 import { countCodePoints } from "../form";
+import letterField from "../letter-field.module.css";
 import { deskLetterHeightPx } from "../phone";
 
 import { DESK_COPY } from "./copy";
@@ -74,7 +75,7 @@ export function LetterSheet({
       <textarea
         id="live-letter"
         ref={field}
-        className={styles.letter}
+        className={`${styles.letter} ${letterField.sheetLetter}`}
         placeholder={placeholder}
         value={value}
         aria-describedby="live-letter-count live-letter-problem"

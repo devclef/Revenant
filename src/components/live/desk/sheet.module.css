@@ -31,7 +31,7 @@
 
 .salutation {
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-style: italic;
   font-weight: 400;
   font-size: 26px;
@@ -90,7 +90,7 @@
   );
   background-attachment: local;
   background-position: 0 var(--rule-offset, 7px);
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-size: 21px;
   font-weight: 400;
   line-height: 32px;
@@ -113,7 +113,7 @@
 
 .signOff {
   margin: 0;
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-style: italic;
   font-weight: 400;
   font-size: 20px;
