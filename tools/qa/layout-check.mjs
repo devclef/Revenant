@@ -4721,18 +4721,23 @@ export function r61Failures({ labels }) {
 }
 
 // B1.2: every Top_Bar slot keeps its x and width across the steps, and the bar keeps its height.
-export function b12Failures({ steps }) {
+// Skip is measured in each of its two states. `skip` ("disabled" or "enabled") picks the
+// steps where Skip is in that state, and the first of those steps is the reference.
+export function b12Failures({ steps, skip }) {
   const out = [];
-  const [first, ...rest] = steps;
-  if (!first) return ["B1.2 no [data-topbar-slot] to measure"];
+  const wantDisabled = skip === "disabled";
+  const inState = steps.filter((s) => s.skipDisabled === wantDisabled);
+  const tag = `B1.2 Skip ${skip}`;
+  const [first, ...rest] = inState;
+  if (!first) return [`${tag} no step with Skip ${skip} to measure`];
   for (const s of rest) {
     for (const name of Object.keys(first.slots)) {
       const a = first.slots[name];
       const b = s.slots[name];
-      if (!b) out.push(`B1.2 slot "${name}" missing at ${s.label}`);
-      else if (!slotStable(a, b)) out.push(`B1.2 slot "${name}" moved from ${num(a.left, 0)}px to ${num(b.left, 0)}px at ${s.label}`);
+      if (!b) out.push(`${tag} slot "${name}" missing at ${s.label}`);
+      else if (!slotStable(a, b)) out.push(`${tag} slot "${name}" moved from ${num(a.left, 0)}px to ${num(b.left, 0)}px at ${s.label}`);
     }
-    if (!sizeWithin(s.barHeight, first.barHeight)) out.push(`B1.2 bar is ${num(s.barHeight, 0)}px at ${s.label}, was ${num(first.barHeight, 0)}px`);
+    if (!sizeWithin(s.barHeight, first.barHeight)) out.push(`${tag} bar is ${num(s.barHeight, 0)}px at ${s.label}, was ${num(first.barHeight, 0)}px`);
   }
   return out;
 }
@@ -4973,7 +4978,8 @@ const B_READ = () => {
     slots[el.getAttribute("data-topbar-slot")] = { left: r.left, width: r.width };
   }
   const notice = [...document.querySelectorAll("[data-topbar-slot='notice']")];
-  return { barHeight: bar ? bar.getBoundingClientRect().height : null, slots, noticeCount: notice.length, noticeInBar: notice.every((n) => !!bar && bar.contains(n)) };
+  const skip = document.querySelector("[data-topbar-slot='skip']");
+  return { barHeight: bar ? bar.getBoundingClientRect().height : null, slots, skipDisabled: skip ? skip.disabled === true : null, noticeCount: notice.length, noticeInBar: notice.every((n) => !!bar && bar.contains(n)) };
 };
 
 const B21_READ = () => {
@@ -5215,7 +5221,16 @@ async function checkTopBarSteps(browser, base, size, rep, required) {
     await page.waitForSelector("[data-seal-step]", { timeout: WAIT_MS });
     await sleep(800);
     steps.push({ label: "seal", ...(await page.evaluate(B_READ)) });
-    report(ctx, verdictRow("B1.2", "topbar-slots", b12Failures({ steps }), `steps=${steps.map((s) => s.label).join(",")} viewport=${ctx.size}`, "each Top_Bar slot keeps its x and width (1 px) and the bar its height"));
+    // B1.2 has two results, one per Skip state. A state no step reached is reported missing, not passed.
+    for (const skip of ["disabled", "enabled"]) {
+      const name = `topbar-skip-${skip}`;
+      const reached = steps.filter((s) => s.skipDisabled === (skip === "disabled")).map((s) => s.label);
+      if (!reached.length) {
+        report(ctx, missingRow("B1.2", name, `no step on /demo/live with Skip ${skip}`));
+      } else {
+        report(ctx, verdictRow("B1.2", name, b12Failures({ steps, skip }), `skip=${skip} steps=${reached.join(",")} viewport=${ctx.size}`, "each Top_Bar slot keeps its x and width (1 px) and the bar its height"));
+      }
+    }
     await page.close();
   } finally {
     await context.close();
