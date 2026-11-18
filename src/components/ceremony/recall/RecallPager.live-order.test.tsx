@@ -2,6 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { REVEAL_COPY } from "@/components/reveal/copy";
 import { RecallPager, type RecallPagerProps } from "./RecallPager";
 import type { PayloadV1 } from "@/lib/seal-format";
 
@@ -46,5 +47,16 @@ describe("Live_Letter Testify order (spec 10 C9.2)", () => {
     const markup = render();
     expect(markup).toContain(OWN_QUESTION);
     expect(markup).not.toContain(FIGURE_QUESTION);
+  });
+});
+
+describe("Live_Letter text question row (spec 14, T1.5)", () => {
+  it("puts Next after the No answer control on the first Author_Question, with no Previous", () => {
+    const markup = render();
+    const noAnswer = markup.indexOf(`${REVEAL_COPY.noAnswer}</label>`);
+    const next = markup.indexOf(`>${REVEAL_COPY.nextQuestion}</button>`);
+    expect(noAnswer).toBeGreaterThan(-1);
+    expect(next).toBeGreaterThan(noAnswer);
+    expect(markup).not.toContain(REVEAL_COPY.previousQuestion);
   });
 });

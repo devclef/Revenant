@@ -129,3 +129,28 @@ describe.each(["us-maya", "eu-tomas"])(
     });
   },
 );
+
+// Feature: spec 14 (T7): a persona keeps its "as of" counter. The written-on
+// form is for live and real letters only.
+describe.each([
+  ["us-maya", "12 May 2024"],
+  ["eu-tomas", "12 May 2024"],
+])("persona %s keeps the as-of counter (spec 14, T7)", (key, asOf) => {
+  const { payload, writtenAsOf, metricCount } = personaPayload(key);
+
+  it("shows Question n of N with the as-of date on the first question", () => {
+    const markup = renderQuestion(payload, writtenAsOf, 0);
+    expect(counterText(markup)).toBe(
+      `Question 1 of ${metricCount} · as of ${asOf}`,
+    );
+    expect(markup).not.toContain("you wrote this on");
+  });
+});
+
+/** The text of the question counter paragraph, with its markup removed. */
+function counterText(markup: string): string {
+  const match = /<p class="[^"]*" data-fit="counter"[^>]*>(.*?)<\/p>/.exec(
+    markup,
+  );
+  return (match?.[1] ?? "").replace(/<[^>]+>/g, "");
+}

@@ -60,10 +60,22 @@ describe("the textarea (C4.5)", () => {
     expect(textareaTag(render())).toContain(`rows="${TEXT_ANSWER_ROWS}"`);
   });
 
-  it("is named by its question heading", () => {
+  it("is named by its question heading, then its visible label", () => {
     const markup = render();
     expect(markup).toContain(`<h2 id="${HEADING_ID}">${QUESTION}</h2>`);
-    expect(textareaTag(markup)).toContain(`aria-labelledby="${HEADING_ID}"`);
+    expect(textareaTag(markup)).toContain(
+      `aria-labelledby="${HEADING_ID} ${FIELD_ID}-label"`,
+    );
+  });
+
+  it("shows the visible label 'Your answer, from memory' above the field", () => {
+    const markup = render();
+    expect(markup).toContain(
+      `<label id="${FIELD_ID}-label" for="${FIELD_ID}">Your answer, from memory</label>`,
+    );
+    expect(markup.indexOf(`${FIELD_ID}-label`)).toBeLessThan(
+      markup.indexOf("<textarea"),
+    );
   });
 
   it("carries data-stage-focus and no data-user-content", () => {

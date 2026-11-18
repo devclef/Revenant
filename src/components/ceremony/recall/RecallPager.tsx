@@ -21,9 +21,12 @@
  */
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { NavRow } from "./NavRow";
 import { RecallScale } from "./RecallScale";
 import { TextAnswerField } from "./TextAnswerField";
+import { WaxDisc } from "@/components/live/desk/WaxDisc";
 import { answerText } from "./answer-text";
+import { formatWrittenOn } from "./written-on";
 import { CEREMONY_COPY } from "../copy";
 import {
   canAdvance,
@@ -65,6 +68,12 @@ export type RecallPagerProps = {
   failed?: boolean;
   /** The persona's written-as-of date (`YYYY-MM-DD`). Absent on a Live_Letter (R11.5). */
   writtenAsOf?: string;
+  /**
+   * The sealing instant (ISO, UTC) and the zone to name its calendar day in, for a
+   * live or real letter. Shows "you wrote this on {date}" in the counter. Ignored
+   * when `writtenAsOf` is set, because a persona keeps its "as of" counter.
+   */
+  writtenOn?: { sealedAt: string; timeZone: string };
   /** Dispatches `EDIT_DRAFT` as the judge types, or moves the Recall_Scale Mark. */
   onEdit: (id: string, text: string) => void;
   /** Dispatches `TOGGLE_NO_ANSWER` for one question (R11.7). */
@@ -100,6 +109,7 @@ export function RecallPager({
   submitting,
   failed = false,
   writtenAsOf,
+  writtenOn,
   onEdit,
   onToggleNoAnswer,
   onSubmit,
@@ -282,6 +292,17 @@ export function RecallPager({
       : fill(REVEAL_COPY.questionCounterAsOf, {
           date: formatCalendarDate(writtenAsOf),
         });
+  // A live or real letter names the day it was sealed (spec 14, T1.2). The day
+  // is empty when the sealing instant does not parse; the counter then keeps
+  // its plain form.
+  const writtenOnDay =
+    writtenAsOf !== undefined || writtenOn === undefined
+      ? ""
+      : formatWrittenOn(writtenOn.sealedAt, writtenOn.timeZone);
+  const writtenOnText =
+    writtenOnDay === ""
+      ? undefined
+      : fill(REVEAL_COPY.questionCounterWrittenOn, { date: writtenOnDay });
 
   // The intro sits on the first question only (R11.15). A persona letter names
   // its written-as-of date; a Live_Letter gets the hint alone.
@@ -325,14 +346,18 @@ export function RecallPager({
 
   return (
     <>
-      <p className={styles.counter} data-fit="counter">
-        {asOfText === undefined ? (
+      <p
+        className={styles.counter}
+        data-fit="counter"
+        data-recall-counter={writtenOnText === undefined ? undefined : ""}
+      >
+        {asOfText === undefined && writtenOnText === undefined ? (
           counterBase
         ) : (
           <>
             {counterBase}
             {REVEAL_COPY.questionCounterSeparator}
-            <span className={styles.nowrap}>{asOfText}</span>
+            <span className={styles.nowrap}>{asOfText ?? writtenOnText}</span>
           </>
         )}
       </p>
@@ -343,14 +368,17 @@ export function RecallPager({
         className={styles.form}
         ref={formRef}
       >
-        <h2
-          id={headingId}
-          className={styles.qTitle}
-          data-fit="question"
-          data-stage-heading=""
-        >
-          <span data-user-content="">{question.text}</span>
-        </h2>
+        <div className={styles.qRow}>
+          <WaxDisc n={index + 1} />
+          <h2
+            id={headingId}
+            className={`${styles.qTitle} ${styles.qText}`}
+            data-fit="question"
+            data-stage-heading=""
+          >
+            <span data-user-content="">{question.text}</span>
+          </h2>
+        </div>
 
         <fieldset className={styles.fieldset} aria-labelledby={headingId}>
           <div className={styles.body}>
@@ -428,16 +456,13 @@ export function RecallPager({
                     onToggleNoAnswer(question.id, noAnswer)
                   }
                 />
-                <div className={styles.row}>
-                  <button
-                    type="submit"
-                    className={styles.cta}
-                    data-fit="advance"
-                    disabled={submitting}
-                  >
-                    {isLast ? submitLabel : REVEAL_COPY.nextQuestion}
-                  </button>
-                </div>
+                <NavRow
+                  showPrevious={!isFirst}
+                  onPrevious={() => goTo(previousIndex(index))}
+                  mainLabel={isLast ? submitLabel : REVEAL_COPY.nextQuestion}
+                  mainDisabled={submitting}
+                  onMain={() => formRef.current?.requestSubmit()}
+                />
               </div>
             )}
 
@@ -513,7 +538,7 @@ export function RecallPager({
               </span>
             ) : null}
 
-            {isFirst ? null : (
+            {isFirst || !isNumber ? null : (
               <div className={styles.row}>
                 <button
                   type="button"

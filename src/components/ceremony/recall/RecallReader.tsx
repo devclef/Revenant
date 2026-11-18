@@ -16,6 +16,7 @@
 
 import paper from "@/components/ui/paper.module.css";
 import buttons from "@/components/ui/buttons.module.css";
+import { WaxDisc } from "@/components/live/desk/WaxDisc";
 import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-date";
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import { CEREMONY_COPY } from "../copy";
@@ -118,9 +119,17 @@ export function RecallReader({
             </>
           )}
         </p>
-        <h2 tabIndex={-1} data-stage-heading="" className={styles.question}>
-          {entry.question}
-        </h2>
+        <div className={styles.qRow}>
+          <WaxDisc n={index + 1} />
+          <h2
+            tabIndex={-1}
+            data-stage-heading=""
+            data-fit="question"
+            className={`${styles.question} ${styles.qText}`}
+          >
+            <span data-user-content="">{entry.question}</span>
+          </h2>
+        </div>
         <p className={styles.label} data-fictional-label="">
           {REVEAL_COPY.personaAnswerLabel}
         </p>

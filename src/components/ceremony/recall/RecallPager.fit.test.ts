@@ -43,7 +43,7 @@ describe("Recall_Pager fit hooks", () => {
   });
 
   it("keeps the counter date in one nowrap span", () => {
-    expect(source).toContain('<span className={styles.nowrap}>{asOfText}</span>');
+    expect(source).toContain('<span className={styles.nowrap}>{asOfText ?? writtenOnText}</span>');
     expect(ruleBody(".nowrap")).toMatch(/white-space:\s*nowrap/);
   });
 });
@@ -74,11 +74,11 @@ describe("Recall_Pager card fits above the fold at 1280 x 800", () => {
   });
 
   it("tightens the fieldset padding and the vertical gaps", () => {
-    expect(ruleBody(".fieldset")).toMatch(/padding:\s*0\.75rem 1\.25rem/);
+    expect(ruleBody(".fieldset")).toMatch(/padding:\s*0\.5rem 1\.25rem/);
     expect(ruleBody(".fieldset")).toMatch(/margin:\s*0 0 0\.75rem/);
-    expect(ruleBody(".body")).toMatch(/gap:\s*0\.5rem/);
+    expect(ruleBody(".body")).toMatch(/gap:\s*0\.25rem/);
     expect(ruleBody(".qTitle")).toMatch(/margin:\s*0 0 0\.5rem/);
-    expect(ruleBody(".counter")).toMatch(/margin:\s*0 0 0\.5rem/);
+    expect(ruleBody(".counter")).toMatch(/margin:\s*0 0 0\.25rem/);
   });
 });
 
@@ -151,5 +151,44 @@ describe("Recall_Pager number field shows a typed value such as 1.585 at 360 x 6
 
   it("keeps the read-as line and the parser source untouched by this rule", () => {
     expect(source).toContain('className={styles.parsed}');
+  });
+});
+
+/*
+ * RECORDED MEASUREMENT, NOT A LIVE CHECK. These constants were read once from
+ * Chromium at 390 x 844 (spec 14 T1.6). Method: the branch was built, started with
+ * `npm start`, and the Maya persona's Testify step (stage "recall") was opened. The
+ * question text was replaced in the DOM with a 200-character string, and the
+ * getBoundingClientRect values of the heading and the answer row were read. The
+ * constants below cannot fail if the layout changes. The live check is the T1.6
+ * row of `npm run layout-check` (spec 14 task 17).
+ */
+const MEASURED_200_CHAR_390X844 = {
+  viewportHeight: 844,
+  questionTop: 469,
+  questionBottom: 623,
+  answerTop: 659,
+  answerBottom: 703,
+  discRight: 83,
+  questionLeft: 99,
+};
+
+describe("Recall_Pager 200-character text question at 390 x 844 (T1.6), recorded measurement", () => {
+  it("recorded: the answer row and the main button sit inside the 844 px First_Viewport", () => {
+    expect(MEASURED_200_CHAR_390X844.answerBottom).toBeLessThanOrEqual(
+      MEASURED_200_CHAR_390X844.viewportHeight,
+    );
+  });
+
+  it("ends the question above the answer row", () => {
+    expect(MEASURED_200_CHAR_390X844.questionBottom).toBeLessThan(
+      MEASURED_200_CHAR_390X844.answerTop,
+    );
+  });
+
+  it("keeps the 390 rules as they are, because the question fits without them", () => {
+    // The narrow heading stays at 1rem; the T1.6 rules (.qText at 26 px,
+    // .navRow margin-top 16 px) apply only when the measured row overflows.
+    expect(narrowRuleBody(".qTitle")).toMatch(/font-size:\s*1rem/);
   });
 });
