@@ -393,10 +393,17 @@
    layer is anchored to the document below 600 px (see .ghostLayer), so it
    scrolls with the page. */
 /* The backdrop. One aria-hidden layer under the content; the pointer passes
-   through it. Fixed to the window, so the Soil stays where the design puts it. */
+   through it. It is one window tall and sits at the bottom of the Scene root
+   (spec 14 B2.2). On a page no taller than the window it covers the window
+   exactly as the old fixed layer did. On a taller page the Soil_Band moves to
+   the Scene's bottom, so text scrolled over the middle of the page never sits
+   under it. Colours, edge and motion are unchanged. */
 .backdrop {
-  position: fixed;
-  inset: 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 100vh;
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
