@@ -1,16 +1,18 @@
 /**
- * Live_Walk (Q1, Q2). Skipped unless WALK=1.
+ * Live_Walk (spec 14, Q1 and Q2). Skipped unless WALK=1.
  *
- * Scope: the walk covers Write, seal, Wait, unlock, Testify, Break the seal,
- * letter, receipts and Close at 1440x900 and 390x844. The legacy W1 replay, its
- * run record, the backup-key and figures-unavailable variants, and the helpers
- * only it used are removed.
+ * Drives the walk from the Write desk to Close in headless Chromium, with a
+ * virtual WebAuthn authenticator that reports PRF support. The live runs come
+ * from WALK_MATRIX (each width, with no figure or one figure, motion on and
+ * reduced), plus the Seal_Button and Skip_Link breaks at 1440 and one Space-key
+ * run. The persona runs walk Maya's Read step and press the Tamper_Control
+ * (TAMPER_MATRIX). Step_Shots are saved under `qa-shots/live-walk/`. The matrix
+ * is in `live-walk-matrix.ts` and the checks are in `live-walk-helpers.ts`.
  *
- * Drives the walk from Write to Close in headless Chromium, with a virtual
- * WebAuthn authenticator that reports PRF support. Each run is one width (1440x900
- * or 390x844), with motion on or reduced, and one way of breaking the seal.
- * Step_Shots are saved under `qa-shots/live-walk/`. The matrix is in
- * `live-walk-matrix.ts` and the checks are in `live-walk-helpers.ts`.
+ * Product failures are not test failures. The walk records each one with its
+ * step, the expected result, the observed result and the suspected file, and
+ * prints them under "For task 19". A test fails only when the walk itself
+ * breaks: the browser cannot start, or the walk throws outside a stage.
  *
  * How to run by hand:
  *   1. npm run build
@@ -31,6 +33,7 @@ import { chromium, type BrowserContext, type Page } from "playwright-core";
 import { describe, expect, it } from "vitest";
 
 import { LIVE_COPY } from "../../components/live/copy";
+import { DESK_COPY } from "../../components/live/desk/copy";
 import { SEAL_PRESS_HOLD_MS } from "../../components/live/press/constants";
 import { PRESS_COPY } from "../../components/live/press/copy";
 import { TAMPER_COPY } from "../../components/reveal/tamper/tamper-copy";
@@ -43,46 +46,51 @@ import {
   PASSKEY_INIT_SCRIPT,
   STEP_SUSPECTED_FILES,
   WALK_SIZES,
-  WALK_STEP_NAMES,
   advanceSettle,
   breakSealMinWidth,
+  checkAccentButtonCount,
   checkBreakSealSize,
   checkDemoSeals,
-  checkNoJsSeal,
   checkEarlyRelease,
+  checkFigureRowsNoAccent,
   checkGhostClearOfKeep,
-  checkOwnNumberRowsBlank,
-  checkSealOrangeButtons,
-  checkStepHeadingClearOfTopBar,
+  checkNoJsSeal,
   checkPasskeyCount,
   checkPasskeyTotal,
+  checkPressEnvelopeClearOfText,
+  checkPressStatusLine,
   checkQuickPressAddsNone,
-  checkSealMarks,
-  checkTamperRunNoPasskey,
-  countPasskeyCalls,
-  type PasskeyCounts,
   checkRunShots,
+  checkSealMarks,
+  checkSealOrangeButtons,
+  checkStepHeadingClearOfTopBar,
   checkStepSnapshot,
+  checkStepTrackClearOfTopBar,
+  checkTamperRunNoPasskey,
+  checkTopbarSlotStable,
+  countPasskeyCalls,
   defectsFromChecks,
   missingShotDefect,
   RECORD_SHOT_PREFIX,
-  shotsMissingFromRecord,
   recordStepResult,
-  shotsWrittenSince,
   sealPressInput,
+  shotsMissingFromRecord,
+  shotsWrittenSince,
   skipLinkBlocksSettle,
   walkShotName,
   type BoxRect,
   type BreakMethod,
-  type DemoSeal,
-  type OrangeButton,
-  type SealMark,
-  type SettleState,
-  type StepCheck,
-  type ShotFile,
   type ClippedSample,
   type ContrastSample,
+  type DemoSeal,
+  type FigureRowPaint,
+  type OrangeButton,
   type PageSnapshot,
+  type PasskeyCounts,
+  type SealMark,
+  type SettleState,
+  type ShotFile,
+  type StepCheck,
   type WalkDefect,
   type WalkStepName,
   type WalkStepResult,
@@ -92,24 +100,34 @@ import {
   TAMPER_MATRIX,
   WALK_MATRIX,
   matrixRun,
-  matrixShotNames,
-  tamperShotNames,
   walkEnabled,
 } from "./live-walk-matrix";
 
 const BASE_URL = "http://localhost:3000";
 
-/** Text the Walk types as the letter. The reveal step checks it comes back unchanged. */
+/** Text the walk types as the letter. The walk checks it comes back unchanged. */
 const LETTER_TEXT =
   "Walk letter: I will check the petrol price again next autumn.";
-/** Question text the Walk writes for the future self. */
-const WALK_QUESTION =
-  "What do you remember paying for fuel the day you sealed this?";
+/** The question the walk writes after pressing "Write my own". */
+const WALK_OWN_QUESTION =
+  "What did you hope for the year ahead, the day you sealed this?";
+/** The persona whose seal and tamper control the walk checks (spec 13, Q1.4, A1). */
+const PERSONA_KEY = "us-maya";
 /** A fixed wait for the 30-second demo lock, plus a margin. */
 const LOCK_WAIT_MS = 31_000;
 const STEP_TIMEOUT_MS = 30_000;
-/** Whole-run budget for one viewport. */
+/** Whole-run budget for one run. */
 const VIEWPORT_TIMEOUT_MS = 10 * 60_000;
+/** How long the screen must hold still before a Step_Shot is taken. */
+const SETTLE_MS = 300;
+/** How long the seal is held down for the press-and-hold break. */
+const HOLD_MS = 2_500;
+/** How long the Seal step's press is held: the press threshold plus a margin (Q1.3). */
+const SEAL_HOLD_WAIT_MS = SEAL_PRESS_HOLD_MS + 200;
+/** Folder for the Step_Shots of the walk. Git-ignored. */
+const LIVE_WALK_SHOTS = path.resolve("qa-shots", "live-walk");
+/** Q1.4 pages: each one must show its seal in the server HTML with JavaScript off. */
+const NO_JS_PATHS = ["/", "/demo", `/demo/personas/${PERSONA_KEY}`] as const;
 
 type Cdp = Awaited<ReturnType<BrowserContext["newCDPSession"]>>;
 
@@ -117,123 +135,51 @@ type WalkContext = {
   page: Page;
   cdp: Cdp;
   authenticatorId: string;
-  dir: string;
   /** Filled at unlock: the `/l/<id>` path of the sealed letter, for the Q1.4 page check. */
   letter: { path: string | null };
 };
 
-/** The persona whose seal and tamper control the walk checks (spec 13, Q1.4, A1). */
-const PERSONA_KEY = "us-maya";
-
-type WalkAction = (ctx: WalkContext) => Promise<string>;
-
-/** Every screenshot must land under this folder. */
-const QA_SHOTS_ROOT = path.resolve("qa-shots");
-
-function errorMessage(error: unknown): string {
-  return error instanceof Error ? error.message : String(error);
-}
-
 /**
- * Ticks the first figure checkbox on the write step (skipping the passkey
- * warning) and returns its label. Used by the stage walk.
+ * One stage's action. It receives the stage's `checks` array and pushes the
+ * checks it makes into it. Its returned text is the observation for the record.
  */
-async function tickOneFigure(page: Page): Promise<string> {
-  const boxes = page.locator('[data-live-step="write"] input[type="checkbox"]');
-  const count = await boxes.count();
-  for (let i = 0; i < count; i += 1) {
-    const label = await boxes.nth(i).evaluate((el) => {
-      const input = el as HTMLInputElement;
-      return (
-        input.labels?.[0]?.textContent ?? input.getAttribute("aria-label") ?? ""
-      );
-    });
-    if (/lost|passkey|saved|warning/i.test(label)) continue;
-    await boxes.nth(i).check();
-    return label.trim();
-  }
-  throw new Error("No figure checkbox found on the write step.");
-}
+type WalkAction = (ctx: WalkContext, checks: StepCheck[]) => Promise<string>;
 
-/**
- * Replay plan (Q1 and Q2). Skipped unless WALK=1. Each run of the matrix lists
- * the Step_Shot names it must produce. The browser walk for these runs is added
- * in a later step; this block only checks the plan is complete.
- */
-describe.skipIf(!walkEnabled(process.env))("live walk matrix plan", () => {
-  it("has eight runs: two widths, two variants, motion on and reduced", () => {
-    expect(WALK_MATRIX).toHaveLength(8);
-  });
-
-  it.each(WALK_MATRIX.map((entry) => [entry.id, entry] as const))(
-    "plans every Step_Shot for %s",
-    (_id, entry) => {
-      const names = matrixShotNames(entry);
-      expect(names).toHaveLength(WALK_STEP_NAMES.length);
-      expect(new Set(names).size).toBe(names.length);
-    },
-  );
-});
-
-/*
- * The walk from Write to Close (Q1, Q2). Skipped unless WALK=1.
- *
- * Each stage runs in one browser session per run. A run is one width, reduced or
- * not, with one way of breaking the seal (press and hold, the Seal_Button or the
- * Skip_Link). After every stage the page must settle, then the checks in Q1.6 run
- * on the real page, then a Step_Shot is saved under `qa-shots/live-walk/` (named
- * by `walkShotName`). A defect on a stage is recorded and the walk goes on to the next stage, so every reachable stage is checked and shot. It stops only when a stage's own action fails. Missing
- * Step_Shots print `FAIL missing Step_Shot <name>`.
- */
-
-/** Folder for the Step_Shots of the walk. Git-ignored. */
-const LIVE_WALK_SHOTS = path.resolve(QA_SHOTS_ROOT, "live-walk");
-/** How long the screen must hold still before a Step_Shot is taken. */
-const SETTLE_MS = 300;
-/** How long the seal is held down for the press-and-hold break. */
-const HOLD_MS = 2_500;
-/** How long the Seal step's press is held: the press threshold plus a margin (Q1.3). */
-const SEAL_HOLD_WAIT_MS = SEAL_PRESS_HOLD_MS + 200;
-
-/**
- * Steps that depend on a task not yet merged. A failure at one of these is
- * recorded as expected-blocked instead of failed. None of the walk's stages is
- * listed: add an entry here with its task number when one is.
- */
-const FIVE_STAGE_BLOCKED: Partial<
-  Record<WalkStepName, { task: number; reason: string }>
-> = {};
-
-/**
- * One run: the width, whether motion is reduced, whether one figure is picked,
- * and how the seal is broken.
- */
+/** One run: the width, motion, figure, break method, keyboard flag and persona flag. */
 type WalkRun = {
   size: { width: number; height: number };
   reduced: boolean;
+  /** True for the one-figure variant: a public price is picked on the receipt. */
   figure: boolean;
   method: BreakMethod;
-  /** True for the keyboard run: the seal is pressed with Space. No matrix entry sets it yet. */
+  /** True for the keyboard run: the seal is pressed with Space. */
   keyboard: boolean;
+  /** True for the persona runs: no letter, no passkey, the Read step and Tamper_Control. */
+  persona: boolean;
 };
 
 /**
  * One stage. `act` runs first; the stage is then checked and its Step_Shot is
- * taken. `afterShot`, if set, runs only when the stage passed, after its shot,
- * and belongs to the same step.
+ * taken. `afterShot`, if set, runs only when the act passed, after the shot, and
+ * belongs to the same step.
  */
 type StageAction = {
   step: WalkStepName;
   act: WalkAction;
   afterShot?: WalkAction;
-  /** Checks the stage collected while it ran (passkey counts). Scored like the snapshot checks. */
-  checks?: StepCheck[];
 };
 
 type StageRow = {
   result: WalkStepResult;
   shot?: string;
-  blocked?: { task: number; reason: string };
+};
+
+/** What a walk run returns: its stage rows, the stages it reached, and the run-wide defects. */
+type WalkResult = {
+  rows: StageRow[];
+  reached: WalkStepName[];
+  letterPath: string | null;
+  runDefects: WalkDefect[];
 };
 
 const BREAK_LABELS: Record<BreakMethod, string> = {
@@ -241,6 +187,10 @@ const BREAK_LABELS: Record<BreakMethod, string> = {
   button: "the Seal_Button",
   skip: "the Skip_Link",
 };
+
+function errorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
 
 /** The `data-ceremony` value of the Stage on screen, or an empty string. */
 async function currentStage(page: Page): Promise<string> {
@@ -305,7 +255,7 @@ async function waitForStable(page: Page): Promise<void> {
   );
 }
 
-/** Read the page facts that the Q1.6 checks need. The browser only collects; checks.ts decides. */
+/** Read the page facts that the Q1.6 checks need. The browser only collects; checks decide. */
 async function readPage(
   c: WalkContext,
   consoleErrors: string[],
@@ -382,38 +332,44 @@ async function readPage(
   return { ...raw, motionControls, consoleErrors };
 }
 
+/** The box of the first element matching the selector, or null when none is on the page. */
+async function boxOf(page: Page, selector: string): Promise<BoxRect | null> {
+  return (await page.evaluate((sel: string) => {
+    const el = document.querySelector(sel);
+    if (!el) return null;
+    const box = el.getBoundingClientRect();
+    return {
+      top: box.top,
+      right: box.right,
+      bottom: box.bottom,
+      left: box.left,
+    };
+  }, selector)) as BoxRect | null;
+}
+
 /**
- * The boxes the Q1.2 layout rules compare, read from the page. A box is null when
- * its element is not on the page at this stage. The check that needs it then
- * does not run.
+ * The boxes the Q1.2 and Q1.4 layout rules compare, read from the page. A box is
+ * null when its element is not on the page at this stage. The check that needs
+ * it then does not run.
  */
 type StepBoxes = {
   heading: BoxRect | null;
   topBar: BoxRect | null;
+  track: BoxRect | null;
   ghost: BoxRect | null;
   keep: BoxRect | null;
 };
 
 async function readStepBoxes(page: Page): Promise<StepBoxes> {
-  const boxOf = (selector: string): Promise<BoxRect | null> =>
-    page.evaluate((sel) => {
-      const el = document.querySelector(sel);
-      if (!el) return null;
-      const box = el.getBoundingClientRect();
-      return {
-        top: box.top,
-        right: box.right,
-        bottom: box.bottom,
-        left: box.left,
-      };
-    }, selector);
   return {
     // The Step_Heading is the h2 of the card step (LiveStepper sets data-card).
-    heading: await boxOf("[data-live-stepper] [data-card] h2"),
-    topBar: await boxOf("[data-topbar]"),
+    heading: await boxOf(page, "[data-live-stepper] [data-card] h2"),
+    topBar: await boxOf(page, "[data-topbar]"),
+    // The Step_Track (StepTrack.tsx sets data-step-track).
+    track: await boxOf(page, "[data-step-track]"),
     // The risen ghost (Ghost.tsx sets data-ghost-rise) and the Keep_Section (U6).
-    ghost: await boxOf("[data-ghost-rise]"),
-    keep: await boxOf("[data-live-keep-section]"),
+    ghost: await boxOf(page, "[data-ghost-rise]"),
+    keep: await boxOf(page, "[data-live-keep-section]"),
   };
 }
 
@@ -451,244 +407,158 @@ async function readOrangeButtons(page: Page): Promise<OrangeButton[]> {
   });
 }
 
-/**
- * Run stages in order in one browser session. Each stage: act, settle, check
- * (Q1.6), record (Q1.5), save its Step_Shot (Q2.1, Q2.2). Stops at the first
- * stage with a defect or an action that threw.
- */
-/** What a walk run returns: its stage rows, and the `/l/<id>` path if a letter was unlocked. */
-type WalkResult = {
-  rows: StageRow[];
-  letterPath: string | null;
-  /** Q1.2: the run-wide passkey total, scored through defectsFromChecks. */
-  passkeyDefects: WalkDefect[];
-};
-
-async function runWalk(
-  run: WalkRun,
-  stages: readonly StageAction[],
-): Promise<WalkResult> {
-  mkdirSync(LIVE_WALK_SHOTS, { recursive: true });
-  const rows: StageRow[] = [];
-  const letter: { path: string | null } = { path: null };
-  let passkeyDefects: WalkDefect[] = [];
-  // The Wait step's seal, read so Break the seal can be compared with it (Q1.3).
-  let waitSeal: SealMark | null = null;
-  const { width, height } = run.size;
-
-  const browser = await chromium.launch({
-    headless: true,
-    executablePath: process.env.CHROMIUM_PATH || undefined,
-  });
-  try {
-    const context = await browser.newContext({
-      viewport: { width, height },
-      reducedMotion: run.reduced ? "reduce" : "no-preference",
-    });
-    // Counts passkey prompts in window.__passkeyCalls (Q1.2). Read by the tamper run.
-    await context.addInitScript(PASSKEY_INIT_SCRIPT);
-    const page = await context.newPage();
-
-    // Every console error and uncaught page error, in order. Each stage reads only its own.
-    const errors: string[] = [];
-    page.on("console", (message) => {
-      if (message.type() === "error") errors.push(message.text());
-    });
-    page.on("pageerror", (error) => {
-      errors.push(error.message);
-    });
-
-    // Virtual authenticator: CTAP2 internal, user-verified, PRF reported, auto-presence.
-    const cdp = await context.newCDPSession(page);
-    await cdp.send("WebAuthn.enable");
-    const { authenticatorId } = (await cdp.send(
-      "WebAuthn.addVirtualAuthenticator",
-      {
-        options: {
-          protocol: "ctap2",
-          transport: "internal",
-          hasResidentKey: true,
-          hasUserVerification: true,
-          isUserVerified: true,
-          hasPrf: true,
-          automaticPresenceSimulation: true,
-        },
+/** The paint of every Figure_Row: its border, background and outline colours, and whether it has focus. */
+async function readFigurePaint(page: Page): Promise<FigureRowPaint[]> {
+  return (await page.evaluate(() =>
+    Array.from(document.querySelectorAll<HTMLElement>("[data-figure-row]")).map(
+      (el) => {
+        const style = getComputedStyle(el);
+        return {
+          focused: document.activeElement === el,
+          border: style.borderTopColor,
+          background: style.backgroundColor,
+          outline: style.outlineColor,
+        };
       },
-    )) as { authenticatorId: string };
+    ),
+  )) as FigureRowPaint[];
+}
 
-    const ctx: WalkContext = {
-      page,
-      cdp,
-      authenticatorId,
-      dir: LIVE_WALK_SHOTS,
-      letter,
+/** The Press_Status_Line text, or null when no line is on the page. */
+async function readPressLine(page: Page): Promise<string | null> {
+  const line = page.locator("[data-press-line]");
+  if ((await line.count()) === 0) return null;
+  return line.first().textContent();
+}
+
+/** Checks that the Testify counter says "you wrote this on" on every question it was read on (Q1.4). */
+function checkWrittenOnCounter(texts: readonly (string | null)[]): StepCheck {
+  const expected =
+    'the live Testify counter says \"you wrote this on\" on every question';
+  if (texts.length === 0) {
+    return {
+      ok: false,
+      expected,
+      message:
+        "FAIL no Testify question was reached, so the counter was not read",
     };
-    let seen = 0;
-
-    for (const stage of stages) {
-      const shotName = walkShotFor(run, stage.step);
-      const suspectedFile = STEP_SUSPECTED_FILES[stage.step];
-
-      let observed: string;
-      let actionFailed = false;
-      try {
-        observed = await stage.act(ctx);
-      } catch (error) {
-        actionFailed = true;
-        observed = `Failed: ${errorMessage(error)}`;
-      }
-
-      const defects: WalkDefect[] = [];
-      if (actionFailed) {
-        defects.push({
-          step: stage.step,
-          expected: `The ${stage.step} stage is reached and its action completes.`,
-          observed,
-          suspectedFile,
-        });
-      } else {
-        try {
-          await waitForStable(page);
-          const fresh = errors.slice(seen);
-          seen = errors.length;
-          const snapshot = await readPage(ctx, fresh);
-          defects.push(
-            ...defectsFromChecks(
-              stage.step,
-              checkStepSnapshot(stage.step, snapshot, {
-                letterText: LETTER_TEXT,
-              }),
-            ),
-          );
-          // Q1.2 layout rules, read on every step change. A rule whose boxes are not
-          // on the page at this stage is not run, rather than passed on a guess.
-          const boxes = await readStepBoxes(page);
-          const layoutChecks: StepCheck[] = [];
-          if (boxes.heading && boxes.topBar) {
-            layoutChecks.push(
-              checkStepHeadingClearOfTopBar(boxes.heading, boxes.topBar),
-            );
-          }
-          if (stage.step === "wait" && boxes.ghost && boxes.keep) {
-            layoutChecks.push(checkGhostClearOfKeep(boxes.ghost, boxes.keep));
-          }
-          defects.push(...defectsFromChecks(stage.step, layoutChecks));
-          if (stage.step === "wait") {
-            waitSeal = await readSealMark(page, false);
-          }
-          if (stage.step === "marks") {
-            // Q1.3: the seal at Break the seal matches the one on the Wait step.
-            // U8: the seal is at least the minimum size at this width.
-            const breakSeal = await readSealMark(page, true);
-            const box = await readBreakSealBox(page);
-            defects.push(
-              ...defectsFromChecks("marks", [
-                checkSealMarks(waitSeal ?? NO_SEAL, breakSeal),
-                checkBreakSealSize(
-                  box,
-                  { width, height },
-                  breakSealMinWidth(width),
-                ),
-              ]),
-            );
-          }
-        } catch (error) {
-          defects.push({
-            step: stage.step,
-            expected: "The screen settles after the stage's action.",
-            observed: `Failed: ${errorMessage(error)}`,
-            suspectedFile,
-          });
-        }
-      }
-
-      // Checks a stage collected while it ran (the seal and tamper passkey counts).
-      defects.push(...defectsFromChecks(stage.step, stage.checks ?? []));
-
-      let shot: string | undefined;
-      try {
-        await page.screenshot({
-          path: path.join(LIVE_WALK_SHOTS, shotName),
-          fullPage: FULL_PAGE_STEPS.has(stage.step),
-        });
-        shot = shotName;
-      } catch (error) {
-        observed += ` (screenshot failed: ${errorMessage(error)})`;
-      }
-      // A step with no Step_Shot counts as failed, not passed (Q2.6, Q2.7).
-      const noShot = missingShotDefect({
-        step: stage.step,
-        shot,
-        expectedName: shotName,
-        suspectedFile: "src/test/integration/live-walk.test.ts",
-      });
-      if (noShot) defects.push(noShot);
-
-      // The follow-on action runs only after the stage has been checked and shot.
-      if (stage.afterShot && !actionFailed) {
-        try {
-          observed += ` ${await stage.afterShot(ctx)}`;
-        } catch (error) {
-          defects.push({
-            step: stage.step,
-            expected: `The ${stage.step} stage's follow-on action completes and the next stage is reached.`,
-            observed: `Failed: ${errorMessage(error)}`,
-            suspectedFile,
-          });
-        }
-      }
-
-      const blocked = actionFailed ? FIVE_STAGE_BLOCKED[stage.step] : undefined;
-      rows.push({
-        result: recordStepResult({
-          step: stage.step,
-          observation: observed,
-          shots: shot ? [shot] : [],
-          defects,
-        }),
-        shot,
-        blocked,
-      });
-      if (actionFailed && !blocked) break;
-    }
-    // Q1.2: the whole run makes at most two passkey prompts.
-    const lastStep = stages[stages.length - 1]?.step ?? WALK_STEP_NAMES[0];
-    passkeyDefects = defectsFromChecks(lastStep, [
-      checkPasskeyTotal(await readPasskeyCounts(page)),
-    ]);
-    await context.close();
-  } finally {
-    await browser.close();
   }
-  return { rows, letterPath: letter.path, passkeyDefects };
+  const bad = texts.findIndex(
+    (text) =>
+      text === null || !text.toLowerCase().includes("you wrote this on"),
+  );
+  if (bad === -1) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  const shown = texts[bad];
+  return {
+    ok: false,
+    expected,
+    message:
+      shown === null
+        ? `FAIL the live Testify counter is missing on question ${bad + 1}`
+        : `FAIL the live Testify counter on question ${bad + 1} reads \"${shown.trim()}\"`,
+  };
 }
 
-/** One line per step, then one line per defect. Quoted by the owner in the QA verdict. */
-function formatStageRows(rows: readonly StageRow[]): string {
-  return rows
-    .flatMap((row) => {
-      const r = row.result;
-      const label = row.blocked
-        ? `EXPECTED-BLOCKED (task ${row.blocked.task})`
-        : r.pass
-          ? "PASS"
-          : "FAIL";
-      const lines = [
-        `${r.step}: ${label}. ${r.observation}` +
-          (row.shot ? ` ${RECORD_SHOT_PREFIX}${row.shot}` : ""),
-      ];
-      for (const defect of r.defects) {
-        lines.push(
-          `  Defect. Expected: ${defect.expected} Observed: ${defect.observed} Suspected file: ${defect.suspectedFile}`,
-        );
-      }
-      return lines;
-    })
-    .join("\n");
+/** Checks that the Testify counter is shown on the desk's receipt checklist for an own number. */
+function checkOwnNumberOnChecklist(text: string): StepCheck {
+  const expected = "A receipt shows 1 own number after the own number is typed";
+  if (/1 own number/.test(text)) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  const shown = text.replace(/\s+/g, " ").trim();
+  return {
+    ok: false,
+    expected,
+    message: `FAIL A receipt reads "${shown}"`,
+  };
 }
 
-/** The Step_Shot names one run writes for the given steps. */
-/** The Step_Shot name for one step of a run. The keyboard run adds a `-keyboard` suffix. */
+/** Checks that folding an empty letter keeps focus on #live-letter and shows one fold summary. */
+function checkFoldFailure(focusId: string, summaries: number): StepCheck {
+  const expected =
+    "folding an empty letter keeps focus on #live-letter and shows one [data-fold-summary]";
+  if (focusId === "live-letter" && summaries === 1) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  const where = focusId || "nothing";
+  return {
+    ok: false,
+    expected,
+    message: `FAIL focus is on "${where}" and ${summaries} [data-fold-summary] element(s) are shown`,
+  };
+}
+
+/** Checks that the letter text is unchanged after an Occasion is picked. */
+function checkDraftKept(
+  actual: string,
+  expected: string,
+  after: string,
+): StepCheck {
+  const label = `the letter text is unchanged after ${after}`;
+  if (actual === expected) {
+    return { ok: true, expected: label, message: `PASS ${label}` };
+  }
+  return {
+    ok: false,
+    expected: label,
+    message: `FAIL the letter text changed after ${after}: it reads \"${actual}\"`,
+  };
+}
+
+/** Checks that the desk gained one question row for each step: the suggestion, then Write my own. */
+function checkRowsGrew(counts: readonly number[]): StepCheck {
+  const expected =
+    "a suggested question and then Write my own each add one question row";
+  if (counts.length === 3 && counts[1] > counts[0] && counts[2] > counts[1]) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL question rows read ${counts.join(", ")} (before, after the suggestion, after Write my own)`,
+  };
+}
+
+/** Checks the public-figure rule on the public-price receipt: a figure was picked only in the one-figure variant. */
+function checkSamePeriod(count: number, figure: boolean): StepCheck {
+  const expected =
+    "the receipts show [data-same-period] in the one-figure variant";
+  if (!figure) {
+    return {
+      ok: true,
+      expected,
+      message:
+        "PASS not checked in the no-figure variant (no receipt figure was picked)",
+    };
+  }
+  if (count > 0) {
+    return { ok: true, expected, message: `PASS ${expected} (${count} found)` };
+  }
+  return {
+    ok: false,
+    expected,
+    message:
+      "FAIL no [data-same-period] line is shown on the receipts of the one-figure variant",
+  };
+}
+
+/** Checks that the skip backup choice is still selected after a return to the letter. */
+function checkSkipKept(checked: boolean): StepCheck {
+  const expected = "the Skip it choice is still selected after folding again";
+  if (checked) return { ok: true, expected, message: `PASS ${expected}` };
+  return {
+    ok: false,
+    expected,
+    message: "FAIL the Skip it choice was not kept after folding again",
+  };
+}
+
+/**
+ * The Step_Shot name for one step of a run. The method suffix (`-via-button`,
+ * `-via-skip`) comes from walkShotName, and the keyboard run adds `-keyboard`.
+ */
 function walkShotFor(run: WalkRun, step: WalkStepName): string {
   const name = walkShotName({
     step,
@@ -698,6 +568,19 @@ function walkShotFor(run: WalkRun, step: WalkStepName): string {
     method: run.method,
   });
   return run.keyboard ? name.replace(/\.png$/, "-keyboard.png") : name;
+}
+
+/** The Step_Shot names of a run for the given steps, in order. */
+function runShotNames(run: WalkRun, steps: readonly WalkStepName[]): string[] {
+  return steps.map((step) => walkShotFor(run, step));
+}
+
+/** A readable name for one run, used as the test title. */
+function runLabel(run: WalkRun): string {
+  const motion = run.reduced ? "reduced motion" : "motion on";
+  const figures = run.figure ? "one figure" : "no figure";
+  const keys = run.keyboard ? ", Space key" : "";
+  return `${run.size.width}x${run.size.height}, ${motion}, ${figures}, break with ${run.method}${keys}`;
 }
 
 /** The passkey prompts the page has made so far, from window.__passkeyCalls (Q1.2). */
@@ -721,15 +604,9 @@ function passkeyDelta(
   return { create, get, total: create + get };
 }
 
-function runShotNames(run: WalkRun, steps: readonly WalkStepName[]): string[] {
-  return steps.map((step) => walkShotFor(run, step));
-}
-
 /**
- * Which expected Step_Shots this run wrote. Missing ones print `FAIL missing Step_Shot`.
- * Only files with an mtime at or after `runStartMs` count, so a file from the other
- * variant cannot satisfy the check. Each call site runs it straight after its own
- * browser run and before the next run starts.
+ * Which expected Step_Shots this run wrote. Only files with an mtime at or after
+ * `runStartMs` count, so a file from an earlier run cannot satisfy the check.
  */
 function shotReport(expected: readonly string[], runStartMs: number) {
   const files: ShotFile[] = expected.flatMap((name) => {
@@ -739,56 +616,65 @@ function shotReport(expected: readonly string[], runStartMs: number) {
   return checkRunShots(expected, shotsWrittenSince(files, runStartMs));
 }
 
-/** The recall stage: answer every question in turn, then go on to `marks`. Returns the count answered. */
-async function answerEveryQuestion(c: WalkContext): Promise<number> {
-  const recall = c.page.locator('[data-ceremony="recall"]');
-  let answered = 0;
-  for (let guard = 0; guard < 12; guard += 1) {
-    if ((await currentStage(c.page)) !== "recall") break;
-    const field = recall
-      .locator('textarea, input[type="text"], input[type="number"]')
-      .first();
-    if ((await field.count()) > 0) {
-      await field.fill(`Walk answer ${answered + 1}`);
-    } else {
-      // A scale control. The Motion_Control is excluded: it is not an answer.
-      const control = recall
-        .locator('button[aria-label]:not([aria-label*="motion" i])')
-        .first();
-      if ((await control.count()) === 0) {
-        throw new Error("No recall answer control found on the Testify stage.");
-      }
-      await control.click();
-    }
-    answered += 1;
-    const next = recall
-      .getByRole("button", {
-        name: /^(next question|next|continue|submit|save)$/i,
-      })
-      .first();
-    if ((await next.count()) > 0) {
-      await next.click();
-    } else {
-      const last = recall
-        .getByRole("button", { name: /break the seal|record|submit|save/i })
-        .first();
-      if ((await last.count()) > 0) await last.click();
-      else break;
-    }
-    await c.page.waitForTimeout(300);
-  }
-  if (answered === 0) {
-    throw new Error("No recall question field found.");
-  }
-  return answered;
+/** One line per step, then the Step_Shot line the record names. */
+function formatStageRows(rows: readonly StageRow[]): string {
+  return rows
+    .map((row) => {
+      const r = row.result;
+      const label = r.pass ? "PASS" : "FAIL";
+      return (
+        `${r.step}: ${label}. ${r.observation}` +
+        (row.shot ? ` ${RECORD_SHOT_PREFIX}${row.shot}` : "")
+      );
+    })
+    .join("\n");
+}
+
+/** One product finding, as a line for the For task 19 block. */
+function describeDefect(defect: WalkDefect): string {
+  return `${defect.step}: ${defect.observed} Expected: ${defect.expected} Suspected file: ${defect.suspectedFile}`;
 }
 
 /**
- * Presses the Seal step's envelope in the way the run calls for (Q1.3). The press
- * is the native button `PressEnvelope` renders (`[data-press-mode="write"]`, named
- * PRESS_COPY.name). Touch and mouse holds last SEAL_HOLD_WAIT_MS, so the press
- * passes its threshold before the release.
+ * Prints the run's record, its Step_Shot report and the For task 19 block. The
+ * block holds every product finding: the stage defects, the run-wide defects,
+ * the missing Step_Shots and any extra notes. Returns the Step_Shot names the
+ * record does not name, which only the walk itself can cause.
  */
+function reportRun(
+  run: WalkRun,
+  walk: WalkResult,
+  runStartMs: number,
+  notes: readonly string[],
+): string[] {
+  const record = formatStageRows(walk.rows);
+  console.log(record);
+
+  const expected = runShotNames(run, walk.reached);
+  const shots = shotReport(expected, runStartMs);
+  console.log(shots.lines.join("\n"));
+
+  const findings = [
+    ...walk.rows.flatMap((row) => row.result.defects.map(describeDefect)),
+    ...walk.runDefects.map(describeDefect),
+    ...shots.missing.map((name) => `missing Step_Shot ${name}`),
+    ...notes,
+  ];
+  const reachedNote = `Stages reached: ${walk.reached.join(", ") || "none"}.`;
+  const header = `Run: ${runLabel(run)}${run.persona ? " (persona)" : ""}. ${reachedNote}`;
+  console.log(
+    [
+      "For task 19 (product findings. The walk does not fail on these.)",
+      header,
+      ...(findings.length > 0
+        ? findings.map((line) => `- ${line}`)
+        : ["- none"]),
+    ].join("\n"),
+  );
+  return shotsMissingFromRecord(record, expected);
+}
+
+/** Presses the Seal step's envelope in the way the run calls for (Q1.3). */
 async function pressSealEnvelope(c: WalkContext, run: WalkRun): Promise<void> {
   const press = c.page.getByRole("button", {
     name: PRESS_COPY.name,
@@ -854,173 +740,58 @@ async function pressSealEarly(c: WalkContext): Promise<void> {
 }
 
 /**
- * Stages Write to Testify. The write-receipts stage picks one figure when `run.figure`
- * is true (the one-figure variant); otherwise it opens the receipts and adds none.
+ * The recall stage: answer every question in turn, then go on. Reads the Testify
+ * counter on each question into `counters`. Returns the count answered.
  */
-function fiveStageActions(run: WalkRun): readonly StageAction[] {
-  const figure = run.figure;
-  const sealChecks: StepCheck[] = [];
-  return [
-    {
-      step: "write",
-      act: async (c) => {
-        await c.page.goto(`${BASE_URL}/demo/live`);
-        const write = c.page.locator('[data-live-step="write"]');
-        await write.waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-        await write.locator('button[aria-pressed="false"]').first().click();
-        await write.locator("textarea").first().fill(LETTER_TEXT);
-        await write
-          .getByLabel("Question 1", { exact: true })
-          .fill(WALK_QUESTION);
-        const removers = write.getByRole("button", {
-          name: /^Remove question \d+$/,
-        });
-        if ((await removers.count()) < 2) {
-          await write.getByRole("button", { name: /^Add a question$/ }).click();
-        }
-        const before = await removers.count();
-        await removers.last().click();
-        return `Occasion chosen, letter typed, question 1 edited, one question removed (${before} before).`;
-      },
-    },
-    {
-      step: "write-receipts",
-      act: async (c) => {
-        await c.page
-          .getByText("Add a receipt", { exact: true })
-          .first()
-          .click();
-        const open = await c.page
-          .locator("details[data-receipts-disclosure]")
-          .first()
-          .evaluate((el) => (el as HTMLDetailsElement).open);
-        if (!open) {
-          throw new Error("The Receipts_Disclosure did not open.");
-        }
-        if (!figure) {
-          // Check the rows rather than claim it: the own-number inputs inside
-          // the open disclosure must all be empty. Only SelfReportedRows sets
-          // data-user-content inside the disclosure, so the selector is exact.
-          const typed = await c.page
-            .locator("[data-receipts-disclosure] input[data-user-content]")
-            .evaluateAll((inputs) =>
-              inputs.map((input) => (input as HTMLInputElement).value),
-            );
-          const check = checkOwnNumberRowsBlank(typed);
-          if (!check.ok) throw new Error(check.message);
-          return `Receipts_Disclosure opened. ${check.message.replace(/^PASS /, "")}.`;
-        }
-        return `Receipts_Disclosure opened. Figure selected: ${await tickOneFigure(c.page)}.`;
-      },
-    },
-    {
-      step: "seal",
-      act: async (c) => {
-        // Write and receipts share one stepper step. Next moves the stepper to
-        // Press the seal, where the Backup_Choice and the press appear.
-        const backupChoice = c.page.locator("[data-backup-choice]");
-        if (!(await backupChoice.isVisible())) {
-          await c.page
-            .getByRole("button", { name: LIVE_COPY.nextButton, exact: true })
-            .click();
-        }
-        // Skip it is the explicit confirmation that unlocks the press (P7, P1.5).
-        await c.page
-          .getByRole("radio", { name: LIVE_COPY.backupChoiceSkip, exact: true })
-          .check();
-        // Q1.2: on the Seal step the Press_Envelope is the only orange button. Read
-        // before the press, while every button of the step is still on the page.
-        sealChecks.push(
-          checkSealOrangeButtons(await readOrangeButtons(c.page)),
-        );
-        if (
-          sealPressInput({
-            width: run.size.width,
-            reduced: run.reduced,
-            keyboard: run.keyboard,
-          }) === "hold"
-        ) {
-          await pressSealEarly(c);
-          // Q1.2: an early release makes no prompt and stores no credential.
-          // Early release is checked only on the desktop mouse-hold run, because
-          // sealPressInput returns "hold" only at 1440 without reduced motion.
-          // Touch, click and keyboard runs do not exercise early release.
-          const early = await readPasskeyCounts(c.page);
-          const { credentials } = (await c.cdp.send("WebAuthn.getCredentials", {
-            authenticatorId: c.authenticatorId,
-          })) as { credentials: unknown[] };
-          sealChecks.push(checkEarlyRelease(early, credentials.length));
-        }
-        await pressSealEnvelope(c, run);
-        // Q1.2: a second quick press while the passkey prompt is open adds no
-        // prompt. Read the total on either side of that press.
-        const beforeQuick = await readPasskeyCounts(c.page);
-        await c.page
-          .getByRole("button", { name: PRESS_COPY.name, exact: true })
-          .click();
-        const afterQuick = await readPasskeyCounts(c.page);
-        sealChecks.push(
-          checkQuickPressAddsNone(beforeQuick.total, afterQuick.total),
-        );
-        await c.page
-          .locator('[data-live-step="created"]')
-          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-        // Q1.2: a release past the hold makes exactly one create prompt.
-        const afterRelease = await readPasskeyCounts(c.page);
-        sealChecks.push(
-          checkPasskeyCount(afterRelease, { create: 1 }, "seal release"),
-        );
-        // The passkey is created. The Setting_State is one plain press, with no hold.
-        await c.page.locator('[data-press-mode="setting"]').click();
-        await c.page
-          .locator('[data-live-step="sealed"]')
-          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-        // Q1.2: the Setting_State press makes exactly one get prompt.
-        const afterSetting = await readPasskeyCounts(c.page);
-        sealChecks.push(
-          checkPasskeyCount(
-            passkeyDelta(afterRelease, afterSetting),
-            { get: 1 },
-            "setting press",
-          ),
-        );
-        const { credentials } = (await c.cdp.send("WebAuthn.getCredentials", {
-          authenticatorId: c.authenticatorId,
-        })) as { credentials: unknown[] };
-        if (credentials.length === 0) {
-          throw new Error(
-            "The virtual authenticator holds no passkey after sealing.",
-          );
-        }
-        return `Sealed. Virtual passkeys stored: ${credentials.length}.`;
-      },
-      checks: sealChecks,
-    },
-    {
-      step: "wait",
-      act: async (c) => {
-        await c.page.waitForTimeout(LOCK_WAIT_MS);
-        return `Waited ${LOCK_WAIT_MS / 1000} seconds on the sealed page.`;
-      },
-    },
-    {
-      step: "unlock",
-      act: async (c) => {
-        await openLetterAndUnlock(c, /unlock with your passkey/i);
-        await c.page
-          .locator('[data-ceremony="recall"]')
-          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-        return "Unlocked with the passkey. Recall stage shown.";
-      },
-    },
-    {
-      step: "testify",
-      act: async (c) => {
-        const answered = await answerEveryQuestion(c);
-        return `Answered ${answered} recall question(s).`;
-      },
-    },
-  ];
+async function answerEveryQuestion(
+  c: WalkContext,
+  counters: (string | null)[],
+): Promise<number> {
+  const recall = c.page.locator('[data-ceremony="recall"]');
+  let answered = 0;
+  for (let guard = 0; guard < 12; guard += 1) {
+    if ((await currentStage(c.page)) !== "recall") break;
+    const counter = recall.locator("[data-recall-counter]");
+    counters.push(
+      (await counter.count()) > 0 ? await counter.first().textContent() : null,
+    );
+    const numberField = recall.locator('input[type="number"]').first();
+    const textField = recall.locator('textarea, input[type="text"]').first();
+    if ((await numberField.count()) > 0) {
+      await numberField.fill("12");
+    } else if ((await textField.count()) > 0) {
+      await textField.fill(`Walk answer ${answered + 1}`);
+    } else {
+      // A scale control. The Motion_Control is excluded: it is not an answer.
+      const control = recall
+        .locator('button[aria-label]:not([aria-label*="motion" i])')
+        .first();
+      if ((await control.count()) === 0) {
+        throw new Error("No recall answer control found on the Testify stage.");
+      }
+      await control.click();
+    }
+    answered += 1;
+    const next = recall
+      .getByRole("button", {
+        name: /^(next question|next|continue|submit|save)$/i,
+      })
+      .first();
+    if ((await next.count()) > 0) {
+      await next.click();
+    } else {
+      const last = recall
+        .getByRole("button", { name: /break the seal|record|submit|save/i })
+        .first();
+      if ((await last.count()) > 0) await last.click();
+      else break;
+    }
+    await c.page.waitForTimeout(300);
+  }
+  if (answered === 0) {
+    throw new Error("No recall question field found.");
+  }
+  return answered;
 }
 
 async function openLetterAndUnlock(
@@ -1062,194 +833,7 @@ async function breakSeal(c: WalkContext, method: BreakMethod): Promise<string> {
   return `Seal broken with ${BREAK_LABELS[method]}. Letter stage shown.`;
 }
 
-/**
- * Stages Break the seal through Close. The marks Step_Shot and its Q1.6 checks
- * run while `data-ceremony` is `marks`; the break is a separate action after them.
- */
-function remainingStageActions(method: BreakMethod): readonly StageAction[] {
-  return [
-    {
-      step: "marks",
-      act: async (c) => {
-        await c.page
-          .locator('[data-ceremony="marks"]')
-          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-        return "Break the seal stage shown, seal not yet touched.";
-      },
-      afterShot: (c) => breakSeal(c, method),
-    },
-    {
-      step: "letter",
-      act: async (c) => {
-        await c.page
-          .locator('[data-ceremony="letter"]')
-          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-        return `Letter stage shown (${LETTER_TEXT.length} characters typed).`;
-      },
-    },
-    {
-      step: "figures",
-      act: async (c) => {
-        if ((await currentStage(c.page)) === "letter") {
-          // The letter stage's button is REVEAL_COPY.stage2Next, "See the receipts"
-          // (reveal/copy.ts, rendered by Reveal.tsx). /see the receipts/i matches it.
-          const next = c.page
-            .getByRole("button", { name: /see the receipts/i })
-            .first();
-          if ((await next.count()) === 0) {
-            throw new Error("No See the receipts control on the letter stage.");
-          }
-          await next.click();
-        }
-        await c.page
-          .locator('[data-ceremony="figures"], [data-ceremony="close"]')
-          .first()
-          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-        return `Receipts stage reached: ${await currentStage(c.page)}.`;
-      },
-    },
-    {
-      step: "close",
-      act: async (c) => {
-        if ((await currentStage(c.page)) === "figures") {
-          // A letter with figures leaves the receipts by one more control.
-          const next = c.page
-            .getByRole("button", { name: /^(next|continue|close|done)$/i })
-            .first();
-          if ((await next.count()) === 0) {
-            throw new Error("No control leads from the receipts to the Close.");
-          }
-          await next.click();
-        }
-        await c.page
-          .locator('[data-ceremony="close"]')
-          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-        return "Close stage shown.";
-      },
-    },
-  ];
-}
-
-describe.skipIf(!walkEnabled(process.env))(
-  "live walk: first five stages",
-  () => {
-    // Every WALK_MATRIX entry: each width, no figure or one figure, with and without reduced motion.
-    it.each(WALK_MATRIX.map((entry) => [entry.id, entry] as const))(
-      "walks Write to Testify and saves Step_Shots at %s",
-      async (_id, entry) => {
-        const matrix = matrixRun(entry);
-        const run: WalkRun = {
-          size: matrix.size,
-          reduced: matrix.reduced,
-          figure: matrix.figure,
-          method: "hold",
-          keyboard: false,
-        };
-        const stages = fiveStageActions(run);
-        const runStartMs = Date.now();
-        const { rows } = await runWalk(run, stages);
-        const record = formatStageRows(rows);
-        console.log(record);
-
-        const expected = matrixShotNames(
-          entry,
-          stages.map((stage) => stage.step),
-        );
-        const shots = shotReport(expected, runStartMs);
-        console.log(shots.lines.join("\n"));
-        const unnamed = shotsMissingFromRecord(record, expected);
-
-        const failed = rows.filter((row) => !row.result.pass && !row.blocked);
-        expect(
-          failed.map((row) => `${row.result.step}: ${row.result.observation}`),
-        ).toEqual([]);
-        expect(shots.missing).toEqual([]);
-        expect(unnamed).toEqual([]);
-      },
-      VIEWPORT_TIMEOUT_MS,
-    );
-  },
-);
-
-describe.skipIf(!walkEnabled(process.env))(
-  "live walk: Break the seal through Close",
-  () => {
-    // Each width, with and without reduced motion, with and without one figure,
-    // with each way of breaking the seal (Q1.4, Q1.2).
-    const runs: WalkRun[] = WALK_SIZES.flatMap((size) =>
-      [false, true].flatMap((reduced) =>
-        [false, true].flatMap((figure) =>
-          BREAK_METHODS.map((method) => ({
-            size,
-            reduced,
-            figure,
-            method,
-            keyboard: false,
-          })),
-        ),
-      ),
-    );
-    // Q1.3: one 1440 run presses the seal with Space and gets the same prompt checks.
-    runs.push({
-      size: {
-        width: KEYBOARD_MATRIX_ENTRY.width,
-        height: KEYBOARD_MATRIX_ENTRY.height,
-      },
-      reduced: false,
-      figure: false,
-      method: "hold",
-      keyboard: true,
-    });
-
-    it.each(
-      runs.map((run) => {
-        const motion = run.reduced ? "reduced motion" : "motion on";
-        const figures = run.figure ? "one figure" : "no figure";
-        const label = `${run.size.width}x${run.size.height}, ${motion}, ${figures}, break with ${run.method}${run.keyboard ? ", Space key" : ""}`;
-        return [label, run] as const;
-      }),
-    )(
-      "walks the whole flow: %s",
-      async (_label, run) => {
-        const stages = [
-          ...fiveStageActions(run),
-          ...remainingStageActions(run.method),
-        ];
-        const runStartMs = Date.now();
-        const { rows, letterPath, passkeyDefects } = await runWalk(run, stages);
-        const pageChecks = await checkSealPages(run.size, letterPath);
-        console.log(pageChecks.map((check) => check.message).join("\n"));
-        expect(
-          pageChecks.filter((check) => !check.ok).map((check) => check.message),
-        ).toEqual([]);
-        const record = formatStageRows(rows);
-        console.log(record);
-
-        const expected = runShotNames(
-          run,
-          stages.map((stage) => stage.step),
-        );
-        const shots = shotReport(expected, runStartMs);
-        console.log(shots.lines.join("\n"));
-        const unnamed = shotsMissingFromRecord(record, expected);
-
-        const failed = rows.filter((row) => !row.result.pass && !row.blocked);
-        expect(
-          failed.map((row) => `${row.result.step}: ${row.result.observation}`),
-        ).toEqual([]);
-        expect(shots.missing).toEqual([]);
-        expect(unnamed).toEqual([]);
-        expect(passkeyDefects.map((defect) => defect.observed)).toEqual([]);
-      },
-      VIEWPORT_TIMEOUT_MS,
-    );
-  },
-);
-
-/**
- * The seal the page draws: the first `svg` with a `data-seal-hash`. At Break the
- * seal the search is limited to `[data-seal-target]`.
- */
+/** The seal the page draws: the first `svg` with a `data-seal-hash`. At Break the seal the search is limited to `[data-seal-target]`. */
 async function readSealMark(page: Page, atBreak: boolean): Promise<SealMark> {
   return (await page.evaluate((scoped: boolean) => {
     const scope: ParentNode =
@@ -1281,13 +865,10 @@ async function readBreakSealBox(page: Page): Promise<BoxRect | null> {
   })) as BoxRect | null;
 }
 
-/** Q1.4 pages: each one must show its seal in the server HTML with JavaScript off. */
-const NO_JS_PATHS = ["/", "/demo", `/demo/personas/${PERSONA_KEY}`] as const;
-
 /**
  * Q1.4 and U9. Loads `/`, `/demo`, the persona page and the walk's `/l/<id>` with
  * JavaScript disabled, then checks the seal markers in the HTML. Then, with
- * JavaScript on, measures the persona seals on `/demo` (U9). Runs after the
+ * JavaScript on, measures the persona seals on `/demo` (U9). Runs after a live
  * walk, at the same viewport.
  */
 async function checkSealPages(
@@ -1370,95 +951,703 @@ async function checkSealPages(
 }
 
 /**
- * The persona tamper stage (A1). Opens the persona, moves through the Read step
- * (answering questions and breaking the seal on the way), presses the
- * Tamper_Control and waits for its result. It must make no passkey prompt.
+ * Run stages in order in one browser session. Each stage: act, settle, check
+ * (Q1.6), record (Q1.5), save its Step_Shot (Q2.1, Q2.2), run its follow-on
+ * action. A stage whose act throws ends the run: the stages after it are not
+ * reached. Every product finding goes into the stage's record, not into a thrown
+ * error.
  */
-function tamperStage(): StageAction {
-  const tamperChecks: StepCheck[] = [];
-  return {
-    step: "tamper",
-    act: async (c) => {
-      await c.page.goto(`${BASE_URL}/demo/personas/${PERSONA_KEY}`);
-      const tamper = c.page.getByRole("button", {
-        name: TAMPER_COPY.button,
-        exact: true,
-      });
-      const advance = c.page
-        .getByRole("button", {
-          name: /^(see the receipts|next|continue|close)$/i,
-        })
-        .first();
-      let reached = false;
-      for (let guard = 0; guard < 12; guard += 1) {
-        if ((await tamper.count()) > 0 && (await tamper.first().isVisible())) {
-          reached = true;
-          break;
-        }
-        const stage = await currentStage(c.page);
-        if (stage === "recall") {
-          await answerEveryQuestion(c);
-        } else if (stage === "marks") {
-          await breakSeal(c, "button");
-        } else if ((await advance.count()) > 0) {
-          await advance.click();
-          await c.page.waitForTimeout(300);
-        } else {
-          await c.page.waitForTimeout(300);
+async function runWalk(
+  run: WalkRun,
+  stages: readonly StageAction[],
+): Promise<WalkResult> {
+  mkdirSync(LIVE_WALK_SHOTS, { recursive: true });
+  const rows: StageRow[] = [];
+  const reached: WalkStepName[] = [];
+  const letter: { path: string | null } = { path: null };
+  const slotBoxes: (BoxRect | null)[] = [];
+  let runDefects: WalkDefect[] = [];
+  // The Wait step's seal, read so Break the seal can be compared with it (Q1.3).
+  let waitSeal: SealMark | null = null;
+  const { width, height } = run.size;
+
+  const browser = await chromium.launch({
+    headless: true,
+    executablePath: process.env.CHROMIUM_PATH || undefined,
+  });
+  try {
+    const context = await browser.newContext({
+      viewport: { width, height },
+      reducedMotion: run.reduced ? "reduce" : "no-preference",
+    });
+    // Counts passkey prompts in window.__passkeyCalls (Q1.2).
+    await context.addInitScript(PASSKEY_INIT_SCRIPT);
+    const page = await context.newPage();
+
+    // Every console error and uncaught page error, in order. Each stage reads only its own.
+    const errors: string[] = [];
+    page.on("console", (message) => {
+      if (message.type() === "error") errors.push(message.text());
+    });
+    page.on("pageerror", (error) => {
+      errors.push(error.message);
+    });
+
+    // Virtual authenticator: CTAP2 internal, user-verified, PRF reported, auto-presence.
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("WebAuthn.enable");
+    const { authenticatorId } = (await cdp.send(
+      "WebAuthn.addVirtualAuthenticator",
+      {
+        options: {
+          protocol: "ctap2",
+          transport: "internal",
+          hasResidentKey: true,
+          hasUserVerification: true,
+          isUserVerified: true,
+          hasPrf: true,
+          automaticPresenceSimulation: true,
+        },
+      },
+    )) as { authenticatorId: string };
+
+    const ctx: WalkContext = { page, cdp, authenticatorId, letter };
+    let seen = 0;
+
+    for (const stage of stages) {
+      const shotName = walkShotFor(run, stage.step);
+      const suspectedFile = STEP_SUSPECTED_FILES[stage.step];
+      const checks: StepCheck[] = [];
+
+      let observed: string;
+      let actionFailed = false;
+      try {
+        observed = await stage.act(ctx, checks);
+      } catch (error) {
+        actionFailed = true;
+        observed = `Failed: ${errorMessage(error)}`;
+      }
+      reached.push(stage.step);
+
+      const defects: WalkDefect[] = [];
+      if (actionFailed) {
+        defects.push({
+          step: stage.step,
+          expected: `The ${stage.step} stage is reached and its action completes.`,
+          observed,
+          suspectedFile,
+        });
+      } else {
+        try {
+          await waitForStable(page);
+          const fresh = errors.slice(seen);
+          seen = errors.length;
+          const snapshot = await readPage(ctx, fresh);
+          checks.push(
+            ...checkStepSnapshot(stage.step, snapshot, {
+              letterText: run.persona ? undefined : LETTER_TEXT,
+            }),
+          );
+          // Q1.2 and Q1.4 layout rules, read on every step change. A rule whose
+          // boxes are not on the page at this stage is not run, rather than passed on a guess.
+          const boxes = await readStepBoxes(page);
+          if (boxes.heading && boxes.topBar) {
+            checks.push(
+              checkStepHeadingClearOfTopBar(boxes.heading, boxes.topBar),
+            );
+          }
+          if (boxes.track && boxes.topBar) {
+            checks.push(checkStepTrackClearOfTopBar(boxes.track, boxes.topBar));
+          }
+          if (stage.step === "wait" && boxes.ghost && boxes.keep) {
+            checks.push(checkGhostClearOfKeep(boxes.ghost, boxes.keep));
+          }
+          slotBoxes.push(await boxOf(page, "[data-topbar-slot]"));
+          if (stage.step === "wait") {
+            waitSeal = await readSealMark(page, false);
+          }
+          if (stage.step === "marks") {
+            // Q1.3: the seal at Break the seal matches the one on the Wait step.
+            // U8: the seal is at least the minimum size at this width.
+            const breakSeal = await readSealMark(page, true);
+            const box = await readBreakSealBox(page);
+            checks.push(
+              checkSealMarks(waitSeal ?? NO_SEAL, breakSeal),
+              checkBreakSealSize(
+                box,
+                { width, height },
+                breakSealMinWidth(width),
+              ),
+            );
+          }
+        } catch (error) {
+          defects.push({
+            step: stage.step,
+            expected: "The screen settles after the stage's action.",
+            observed: `Failed: ${errorMessage(error)}`,
+            suspectedFile,
+          });
         }
       }
-      if (!reached) {
+
+      let shot: string | undefined;
+      try {
+        await page.screenshot({
+          path: path.join(LIVE_WALK_SHOTS, shotName),
+          fullPage: FULL_PAGE_STEPS.has(stage.step),
+        });
+        shot = shotName;
+      } catch (error) {
+        observed += ` (screenshot failed: ${errorMessage(error)})`;
+      }
+      // A step with no Step_Shot counts as failed, not passed (Q2.6, Q2.7).
+      const noShot = missingShotDefect({
+        step: stage.step,
+        shot,
+        expectedName: shotName,
+        suspectedFile: "src/test/integration/live-walk.test.ts",
+      });
+      if (noShot) defects.push(noShot);
+
+      // The follow-on action runs only after the stage has been checked and shot.
+      if (stage.afterShot && !actionFailed) {
+        try {
+          observed += ` ${await stage.afterShot(ctx, checks)}`;
+        } catch (error) {
+          defects.push({
+            step: stage.step,
+            expected: `The ${stage.step} stage's follow-on action completes and the next stage is reached.`,
+            observed: `Failed: ${errorMessage(error)}`,
+            suspectedFile,
+          });
+        }
+      }
+
+      defects.push(...defectsFromChecks(stage.step, checks));
+      rows.push({
+        result: recordStepResult({
+          step: stage.step,
+          observation: observed,
+          shots: shot ? [shot] : [],
+          defects,
+        }),
+        shot,
+      });
+      if (actionFailed) break;
+    }
+
+    const lastStep: WalkStepName = reached[reached.length - 1] ?? "write";
+    // Q1.4: the Top_Bar slot keeps its box from one step to the next.
+    if (slotBoxes.length > 1) {
+      runDefects = [
+        ...runDefects,
+        ...defectsFromChecks(lastStep, [checkTopbarSlotStable(slotBoxes)]),
+      ];
+    }
+    // Q1.2: the whole run makes at most two passkey prompts.
+    runDefects = [
+      ...runDefects,
+      ...defectsFromChecks(lastStep, [
+        checkPasskeyTotal(await readPasskeyCounts(page)),
+      ]),
+    ];
+    await context.close();
+  } finally {
+    await browser.close();
+  }
+  return { rows, reached, letterPath: letter.path, runDefects };
+}
+
+/**
+ * The live stages, Write to Close, for one run. The one-figure variant ticks a
+ * public price on the receipt. Every run types the own number, checks the
+ * Testify counter and then walks the whole flow.
+ */
+function liveStages(run: WalkRun): StageAction[] {
+  // The passkey count after the seal's create prompt, read again by the setting press.
+  let afterRelease: PasskeyCounts | null = null;
+
+  return [
+    {
+      step: "write",
+      act: async (c, checks) => {
+        await c.page.goto(`${BASE_URL}/demo/live`);
+        const write = c.page.locator('[data-live-step="write"]');
+        await write.waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        await c.page.locator("#live-letter").fill(LETTER_TEXT);
+        await write
+          .getByRole("button", {
+            name: LIVE_COPY.occasionLabels.work,
+            exact: true,
+          })
+          .click();
+        await write
+          .getByRole("button", {
+            name: LIVE_COPY.occasionLabels.blank,
+            exact: true,
+          })
+          .click();
+        const kept = await c.page.locator("#live-letter").inputValue();
+        checks.push(
+          checkDraftKept(
+            kept,
+            LETTER_TEXT,
+            "the Work and A blank page occasions",
+          ),
+        );
+        return `Occasion picked (Work, then A blank page). Letter typed.`;
+      },
+    },
+    {
+      step: "write-occasion",
+      act: async (c, checks) => {
+        const rows = c.page.locator("[data-question-row]");
+        const before = await rows.count();
+        await c.page
+          .getByRole("button", { name: /^Add the question:/ })
+          .first()
+          .click();
+        const afterSuggestion = await rows.count();
+        await c.page
+          .getByRole("button", { name: DESK_COPY.writeOwn, exact: true })
+          .click();
+        const afterWriteOwn = await rows.count();
+        await rows.last().locator("textarea").fill(WALK_OWN_QUESTION);
+        checks.push(checkRowsGrew([before, afterSuggestion, afterWriteOwn]));
+        return `Suggested question added, then Write my own pressed. Question rows: ${before}, ${afterSuggestion}, ${afterWriteOwn}.`;
+      },
+    },
+    {
+      step: "write-receipt",
+      act: async (c, checks) => {
+        const panel = c.page.locator("[data-receipt-panel]").first();
+        // At the phone width the receipt is a details element: open it first.
+        const isDetails = await panel.evaluate(
+          (el) => el.tagName === "DETAILS",
+        );
+        if (isDetails) {
+          const open = await panel.evaluate(
+            (el) => (el as HTMLDetailsElement).open,
+          );
+          if (!open) await panel.locator("summary").first().click();
+        }
+        let figureNote = "No public price (no-figure variant).";
+        if (run.figure) {
+          await c.page
+            .getByRole("button", { name: DESK_COPY.togglePublic, exact: true })
+            .click();
+          await c.page.locator("[data-figure-row]").first().click();
+          figureNote = "Public price ticked.";
+        }
+        await c.page
+          .getByRole("button", { name: DESK_COPY.toggleOwn, exact: true })
+          .click();
+        const fields = c.page.locator("[data-own-number] input");
+        const values = ["My rent", "1200", "EUR a month", "My city"];
+        for (let i = 0; i < values.length; i += 1) {
+          await fields.nth(i).fill(values[i]);
+        }
+        const checklist =
+          (await c.page.locator("[data-checklist]").first().textContent()) ??
+          "";
+        checks.push(checkOwnNumberOnChecklist(checklist));
+        return `Receipt opened. ${figureNote} Own number typed in all four fields.`;
+      },
+    },
+    {
+      step: "write-failed",
+      act: async (c, checks) => {
+        await c.page.locator("#live-letter").fill("");
+        await c.page.locator("[data-fold-button]").first().click();
+        const focusId = await c.page.evaluate(
+          () => document.activeElement?.id ?? "",
+        );
+        const summaries = await c.page.locator("[data-fold-summary]").count();
+        checks.push(checkFoldFailure(focusId, summaries));
+        return `Empty letter folded. Focus on ${focusId || "nothing"}, ${summaries} fold summary.`;
+      },
+    },
+    {
+      step: "write-receipts",
+      act: async (c, checks) => {
+        await c.page.locator("#live-letter").fill(LETTER_TEXT);
+        const paints = await readFigurePaint(c.page);
+        checks.push(checkFigureRowsNoAccent(paints));
+        const orange = await readOrangeButtons(c.page);
+        checks.push(
+          checkAccentButtonCount(
+            "Write",
+            orange.map((button) => button.label),
+          ),
+        );
+        return `Letter written again. ${paints.length} figure row(s) on the desk.`;
+      },
+      afterShot: async (c) => {
+        await c.page.locator("[data-fold-button]").first().click();
+        return "Folded.";
+      },
+    },
+    {
+      step: "seal",
+      act: async (c, checks) => {
+        await c.page
+          .locator("[data-seal-step]")
+          .first()
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        // Q1.2: on the Seal step the Press_Envelope is the only orange button.
+        checks.push(checkSealOrangeButtons(await readOrangeButtons(c.page)));
+        return "Press the seal step shown.";
+      },
+    },
+    {
+      step: "seal-before-choice",
+      act: async (c, checks) => {
+        // Q1.4: the Press_Status_Line is read before a backup choice is made.
+        const line = await readPressLine(c.page);
+        checks.push(checkPressStatusLine(line, PRESS_COPY.chooseFirst));
+        // Q1.4: at 1440 the Press_Envelope does not intersect the text column.
+        const envelope = await boxOf(c.page, "[data-press-mode]");
+        const text = await boxOf(c.page, "[data-seal-text]");
+        if (envelope && text) {
+          checks.push(
+            checkPressEnvelopeClearOfText(envelope, text, run.size.width),
+          );
+        } else {
+          checks.push({
+            ok: false,
+            expected:
+              "the Press_Envelope and the text column are on the page at the Seal step",
+            message:
+              "FAIL the Press_Envelope or the text column is not on the page",
+          });
+        }
+        return `Press_Status_Line reads \"${line ?? ""}\" before a choice.`;
+      },
+    },
+    {
+      step: "seal-after-choice",
+      act: async (c, checks) => {
+        // Skip it is the explicit confirmation that unlocks the press (P7, P1.5).
+        await c.page.locator('[data-backup-card="skip"]').first().click();
+        const radio = c.page.locator(
+          '[data-backup-card="skip"] input[type="radio"]',
+        );
+        checks.push(checkSkipKept(await radio.isChecked()));
+        // Q1.4: the line for the motion setting. Reduced motion has no hold.
+        const motionLine = run.reduced
+          ? PRESS_COPY.pressToSeal
+          : PRESS_COPY.holdToSeal;
+        const line = await readPressLine(c.page);
+        checks.push(checkPressStatusLine(line, motionLine));
+        return `Skip it chosen. Press_Status_Line reads \"${line ?? ""}\".`;
+      },
+      afterShot: async (c, checks) => {
+        await c.page
+          .getByRole("button", { name: LIVE_COPY.backToLetter })
+          .first()
+          .click();
+        const kept = await c.page.locator("#live-letter").inputValue();
+        checks.push(checkDraftKept(kept, LETTER_TEXT, "Back to the letter"));
+        await c.page.locator("[data-fold-button]").first().click();
+        await c.page
+          .locator("[data-seal-step]")
+          .first()
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        const radio = c.page.locator(
+          '[data-backup-card="skip"] input[type="radio"]',
+        );
+        checks.push(checkSkipKept(await radio.isChecked()));
+        return "Back to the letter, the draft kept, folded again.";
+      },
+    },
+    {
+      step: "press-held",
+      act: async (c, checks) => {
+        const input = sealPressInput({
+          width: run.size.width,
+          reduced: run.reduced,
+          keyboard: run.keyboard,
+        });
+        if (input === "hold") {
+          await pressSealEarly(c);
+          // Q1.2: an early release makes no prompt and stores no credential.
+          const early = await readPasskeyCounts(c.page);
+          const { credentials } = (await c.cdp.send("WebAuthn.getCredentials", {
+            authenticatorId: c.authenticatorId,
+          })) as { credentials: unknown[] };
+          checks.push(checkEarlyRelease(early, credentials.length));
+        }
+        await pressSealEnvelope(c, run);
+        // Q1.2: a second quick press while the passkey prompt is open adds no prompt.
+        const beforeQuick = await readPasskeyCounts(c.page);
+        await c.page
+          .getByRole("button", { name: PRESS_COPY.name, exact: true })
+          .click();
+        const afterQuick = await readPasskeyCounts(c.page);
+        checks.push(
+          checkQuickPressAddsNone(beforeQuick.total, afterQuick.total),
+        );
+        await c.page
+          .locator('[data-live-step="created"]')
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        // Q1.2: a release past the hold makes exactly one create prompt.
+        afterRelease = await readPasskeyCounts(c.page);
+        checks.push(
+          checkPasskeyCount(afterRelease, { create: 1 }, "seal release"),
+        );
+        return `Seal pressed (${input}). The passkey is being created.`;
+      },
+    },
+    {
+      step: "setting",
+      act: async (c, checks) => {
+        // The Setting_State is one plain press, with no hold.
+        await c.page.locator('[data-press-mode="setting"]').click();
+        await c.page
+          .locator('[data-live-step="sealed"]')
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        // Q1.2: the Setting_State press makes exactly one get prompt.
+        const afterSetting = await readPasskeyCounts(c.page);
+        checks.push(
+          checkPasskeyCount(
+            passkeyDelta(afterRelease ?? afterSetting, afterSetting),
+            { get: 1 },
+            "setting press",
+          ),
+        );
+        const { credentials } = (await c.cdp.send("WebAuthn.getCredentials", {
+          authenticatorId: c.authenticatorId,
+        })) as { credentials: unknown[] };
+        if (credentials.length === 0) {
+          throw new Error(
+            "The virtual authenticator holds no passkey after sealing.",
+          );
+        }
+        return `Sealed. Virtual passkeys stored: ${credentials.length}.`;
+      },
+    },
+    {
+      step: "wait",
+      act: async (c) => {
+        await c.page.waitForTimeout(LOCK_WAIT_MS);
+        return `Waited ${LOCK_WAIT_MS / 1000} seconds on the sealed page.`;
+      },
+    },
+    {
+      step: "unlock",
+      act: async (c) => {
+        await openLetterAndUnlock(c, /unlock with your passkey/i);
+        await c.page
+          .locator('[data-ceremony="recall"]')
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        return "Unlocked with the passkey. Recall stage shown.";
+      },
+    },
+    {
+      step: "testify",
+      act: async (c, checks) => {
+        const counters: (string | null)[] = [];
+        const answered = await answerEveryQuestion(c, counters);
+        checks.push(checkWrittenOnCounter(counters));
+        return `Answered ${answered} recall question(s). Counter read on each.`;
+      },
+    },
+    {
+      step: "marks",
+      act: async (c) => {
+        await c.page
+          .locator('[data-ceremony="marks"]')
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        return "Break the seal stage shown, seal not yet touched.";
+      },
+      afterShot: (c) => breakSeal(c, run.method),
+    },
+    {
+      step: "letter",
+      act: async (c) => {
+        await c.page
+          .locator('[data-ceremony="letter"]')
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        return `Letter stage shown (${LETTER_TEXT.length} characters typed).`;
+      },
+    },
+    {
+      step: "figures",
+      act: async (c, checks) => {
+        if ((await currentStage(c.page)) === "letter") {
+          // The letter stage's button is REVEAL_COPY.stage2Next, "See the receipts".
+          const next = c.page
+            .getByRole("button", { name: /see the receipts/i })
+            .first();
+          if ((await next.count()) === 0) {
+            throw new Error("No See the receipts control on the letter stage.");
+          }
+          await next.click();
+        }
+        await c.page
+          .locator('[data-ceremony="figures"], [data-ceremony="close"]')
+          .first()
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        // Q1.4: the receipts of the one-figure variant show the same-period line.
+        const samePeriod = await c.page.locator("[data-same-period]").count();
+        checks.push(checkSamePeriod(samePeriod, run.figure));
+        return `Receipts stage reached: ${await currentStage(c.page)}.`;
+      },
+    },
+    {
+      step: "close",
+      act: async (c) => {
+        if ((await currentStage(c.page)) === "figures") {
+          // A letter with figures leaves the receipts by one more control.
+          const next = c.page
+            .getByRole("button", { name: /^(next|continue|close|done)$/i })
+            .first();
+          if ((await next.count()) === 0) {
+            throw new Error("No control leads from the receipts to the Close.");
+          }
+          await next.click();
+        }
+        await c.page
+          .locator('[data-ceremony="close"]')
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        return "Close stage shown.";
+      },
+    },
+  ];
+}
+
+/**
+ * The persona stages (A1). Persona-read opens Maya's letter, answers each
+ * question, breaks the seal and waits for the Tamper_Control on the Read step.
+ * Tamper presses the control and checks that no passkey prompt was made.
+ */
+function personaStages(): StageAction[] {
+  return [
+    {
+      step: "persona-read",
+      act: async (c) => {
+        await c.page.goto(`${BASE_URL}/demo/personas/${PERSONA_KEY}`);
+        const tamper = c.page.getByRole("button", {
+          name: TAMPER_COPY.button,
+          exact: true,
+        });
+        const advance = c.page
+          .getByRole("button", {
+            name: /^(see the receipts|next|continue|close)$/i,
+          })
+          .first();
+        const counters: (string | null)[] = [];
+        for (let guard = 0; guard < 12; guard += 1) {
+          if (
+            (await tamper.count()) > 0 &&
+            (await tamper.first().isVisible())
+          ) {
+            return "Read step reached. Tamper_Control visible.";
+          }
+          const stage = await currentStage(c.page);
+          if (stage === "recall") {
+            await answerEveryQuestion(c, counters);
+          } else if (stage === "marks") {
+            await breakSeal(c, "button");
+          } else if ((await advance.count()) > 0) {
+            await advance.click();
+            await c.page.waitForTimeout(300);
+          } else {
+            await c.page.waitForTimeout(300);
+          }
+        }
         throw new Error(
           "The Tamper_Control was not reached on the persona page.",
         );
-      }
-      const noPasskey = checkTamperRunNoPasskey(
-        await readPasskeyCounts(c.page),
-      );
-      if (!noPasskey.ok) throw new Error(noPasskey.message);
-      await tamper.first().click();
-      await c.page
-        .locator("[data-tamper-result]")
-        .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-      // Q1.2: the press itself must not prompt, so the count is read again after it.
-      tamperChecks.push(
-        checkTamperRunNoPasskey(await readPasskeyCounts(c.page)),
-      );
-      return `Tamper_Control opened on the Read step and its result shown. ${noPasskey.message.replace(/^PASS /, "")}.`;
+      },
     },
-    checks: tamperChecks,
-  };
+    {
+      step: "tamper",
+      act: async (c, checks) => {
+        const tamper = c.page.getByRole("button", {
+          name: TAMPER_COPY.button,
+          exact: true,
+        });
+        // A1: opening the Tamper_Control makes no passkey prompt, before or after the press.
+        checks.push(checkTamperRunNoPasskey(await readPasskeyCounts(c.page)));
+        await tamper.first().click();
+        await c.page
+          .locator("[data-tamper-result]")
+          .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+        checks.push(checkTamperRunNoPasskey(await readPasskeyCounts(c.page)));
+        return "Tamper_Control pressed and its result shown.";
+      },
+    },
+  ];
 }
 
-describe.skipIf(!walkEnabled(process.env))("live walk: persona tamper", () => {
-  // Each width, with and without reduced motion. No passkey is made (A1).
-  it.each(TAMPER_MATRIX.map((entry) => [entry.id, entry] as const))(
-    "opens the Tamper_Control on the persona Read step at %s",
-    async (_id, entry) => {
-      const run: WalkRun = {
-        size: { width: entry.width, height: entry.height },
-        reduced: entry.reduced,
-        figure: false,
-        method: "hold",
-        keyboard: false,
-      };
+/** Every live run: the eight WALK_MATRIX entries, the Seal_Button and Skip_Link breaks at each width, and the Space-key run. */
+const LIVE_RUNS: readonly WalkRun[] = [
+  ...WALK_MATRIX.map((entry) => ({
+    ...matrixRun(entry),
+    method: "hold" as BreakMethod,
+    keyboard: false,
+    persona: false,
+  })),
+  ...WALK_SIZES.flatMap((size) =>
+    BREAK_METHODS.filter((method) => method !== "hold").map((method) => ({
+      size,
+      reduced: false,
+      figure: false,
+      method,
+      keyboard: false,
+      persona: false,
+    })),
+  ),
+  {
+    size: {
+      width: KEYBOARD_MATRIX_ENTRY.width,
+      height: KEYBOARD_MATRIX_ENTRY.height,
+    },
+    reduced: false,
+    figure: false,
+    method: "hold",
+    keyboard: true,
+    persona: false,
+  },
+];
+
+/** Every persona run: each width, with motion on and reduced (TAMPER_MATRIX). */
+const PERSONA_RUNS: readonly WalkRun[] = TAMPER_MATRIX.map((entry) => ({
+  size: { width: entry.width, height: entry.height },
+  reduced: entry.reduced,
+  figure: false,
+  method: "hold" as BreakMethod,
+  keyboard: false,
+  persona: true,
+}));
+
+describe.skipIf(!walkEnabled(process.env))("live walk", () => {
+  it.each(LIVE_RUNS.map((run) => [runLabel(run), run] as const))(
+    "walks Write to Close: %s",
+    async (_label, run) => {
       const runStartMs = Date.now();
-      const { rows, passkeyDefects } = await runWalk(run, [tamperStage()]);
-      const record = formatStageRows(rows);
-      console.log(record);
+      const walk = await runWalk(run, liveStages(run));
+      const pageChecks = await checkSealPages(run.size, walk.letterPath);
+      console.log(pageChecks.map((check) => check.message).join("\n"));
+      const notes = pageChecks
+        .filter((check) => !check.ok)
+        .map((check) => check.message);
+      reportRun(run, walk, runStartMs, notes);
+      expect(walk.rows.length).toBeGreaterThan(0);
+    },
+    VIEWPORT_TIMEOUT_MS,
+  );
+});
 
-      const expected = tamperShotNames(entry);
-      const shots = shotReport(expected, runStartMs);
-      console.log(shots.lines.join("\n"));
-      const unnamed = shotsMissingFromRecord(record, expected);
-
-      const failed = rows.filter((row) => !row.result.pass && !row.blocked);
-      expect(
-        failed.map((row) => `${row.result.step}: ${row.result.observation}`),
-      ).toEqual([]);
-      expect(shots.missing).toEqual([]);
-      expect(unnamed).toEqual([]);
-      expect(passkeyDefects.map((defect) => defect.observed)).toEqual([]);
+describe.skipIf(!walkEnabled(process.env))("live walk: persona tamper", () => {
+  it.each(PERSONA_RUNS.map((run) => [runLabel(run), run] as const))(
+    "walks Maya's Read step and the Tamper_Control: %s",
+    async (_label, run) => {
+      const runStartMs = Date.now();
+      const walk = await runWalk(run, personaStages());
+      reportRun(run, walk, runStartMs, []);
+      expect(walk.rows.length).toBeGreaterThan(0);
     },
     VIEWPORT_TIMEOUT_MS,
   );
