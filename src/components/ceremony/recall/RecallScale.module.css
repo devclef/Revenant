@@ -12,6 +12,19 @@
   margin: 2.25rem 0 1rem;
 }
 
+/* Below 600 px the scale takes less vertical space, so a number question's
+   Next button can sit inside the 390 x 844 First_Viewport (spec 14 T2.5). The
+   readout still clears the top of the track. */
+@media (max-width: 599.98px) {
+  .scale {
+    margin: 1.5rem 0 0.25rem;
+  }
+
+  .zoomRow {
+    margin-top: 0.25rem;
+  }
+}
+
 .track {
   position: relative;
   height: 3rem;
