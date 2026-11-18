@@ -155,11 +155,13 @@ describe("Recall_Pager number field shows a typed value such as 1.585 at 360 x 6
 });
 
 /*
- * Recorded measurement (spec 14 T1.6), not a live check. The text question of
- * 200 characters was set in the Maya persona's Testify step (stage "recall") with
- * the branch built, started with `npm start` and measured in Chromium at 390 x 844.
- * The question heading is about 154 px tall (top 469, bottom 623). The answer row
- * (field and Next) sits at 659 to 703 px. layout-check remains the authority.
+ * RECORDED MEASUREMENT, NOT A LIVE CHECK. These constants were read once from
+ * Chromium at 390 x 844 (spec 14 T1.6). Method: the branch was built, started with
+ * `npm start`, and the Maya persona's Testify step (stage "recall") was opened. The
+ * question text was replaced in the DOM with a 200-character string, and the
+ * getBoundingClientRect values of the heading and the answer row were read. The
+ * constants below cannot fail if the layout changes. The live check is the T1.6
+ * row of `npm run layout-check` (spec 14 task 17).
  */
 const MEASURED_200_CHAR_390X844 = {
   viewportHeight: 844,
@@ -171,8 +173,8 @@ const MEASURED_200_CHAR_390X844 = {
   questionLeft: 99,
 };
 
-describe("Recall_Pager 200-character text question at 390 x 844 (T1.6)", () => {
-  it("keeps the answer row and the main button inside the 844 px First_Viewport", () => {
+describe("Recall_Pager 200-character text question at 390 x 844 (T1.6), recorded measurement", () => {
+  it("recorded: the answer row and the main button sit inside the 844 px First_Viewport", () => {
     expect(MEASURED_200_CHAR_390X844.answerBottom).toBeLessThanOrEqual(
       MEASURED_200_CHAR_390X844.viewportHeight,
     );

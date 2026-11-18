@@ -56,7 +56,10 @@ describe(".qText lets a 200-character question wrap beside the disc (T1.6)", () 
     expect(ruleBody(pagerCss, ".qText")).toMatch(/min-width:\s*0/);
   });
 
-  it("breaks long words, so a run of text with no spaces cannot push the disc or the row off the card", () => {
+  it("breaks long words in the heading, so a run of text with no spaces cannot push the disc or the row off the card", () => {
+    // The heading carries both classes (`styles.qTitle styles.qText`), and the
+    // overflow-wrap rule lives on .qTitle. The .qText rule only sets flex and min-width.
+    expect(pagerSource).toContain("${styles.qTitle} ${styles.qText}");
     expect(ruleBody(pagerCss, ".qTitle")).toMatch(/overflow-wrap:\s*anywhere/);
   });
 
