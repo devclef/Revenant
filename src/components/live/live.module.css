@@ -75,6 +75,12 @@
   color: var(--text);
 }
 
+/* The Write and Seal step heading sits on the cream card, so it sets the paper's
+   ink colour (paper tokens), not the desk text colour. */
+.cardHeading {
+  color: var(--ink);
+}
+
 .intro,
 .explain p,
 .warning p {

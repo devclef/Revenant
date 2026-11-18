@@ -1,4 +1,4 @@
-// Static-markup tests for LiveStepper and StepIndicator (spec 09, D2). Rendered
+// Static-markup tests for LiveStepper and StepTrack (spec 09, D2). Rendered
 // with renderToStaticMarkup, as the other live tests are, because the test
 // environment is Node. Effects, including the focus move on a step change, do
 // not run here; the stepper's focus rule is tested through movesFocus in
@@ -19,7 +19,7 @@ import {
   initialStepperState,
   type LiveStep,
 } from "./live-steps";
-import { StepIndicator } from "./StepIndicator";
+import { StepTrack } from "./StepTrack";
 
 function render(
   initialStep: LiveStep,
@@ -38,7 +38,7 @@ function render(
 function indicatorNames(html: string): string[] {
   const list = html.match(/<ol[\s\S]*?<\/ol>/)?.[0] ?? "";
   const names: string[] = [];
-  const pattern = /<span class="[^"]*name[^"]*">([^<]*)<\/span>/g;
+  const pattern = /<span class="[^"]*label[^"]*">([^<]*)<\/span>/g;
   for (const match of list.matchAll(pattern)) {
     names.push(match[1] ?? "");
   }
@@ -49,7 +49,7 @@ describe("Step_Indicator", () => {
   // Issue #385: the list has six steps, the seal break included.
   it("lists the six steps in order", () => {
     const html = renderToStaticMarkup(
-      createElement(StepIndicator, { current: "write" }),
+      createElement(StepTrack, { current: "write" }),
     );
     expect(indicatorNames(html)).toEqual([...LIVE_STEP_NAMES]);
     expect(indicatorNames(html)).toHaveLength(6);
@@ -57,7 +57,7 @@ describe("Step_Indicator", () => {
 
   it('marks only the current step with aria-current="step"', () => {
     const html = renderToStaticMarkup(
-      createElement(StepIndicator, { current: "seal" }),
+      createElement(StepTrack, { current: "seal" }),
     );
     const matches = html.match(/aria-current="step"/g) ?? [];
     expect(matches).toHaveLength(1);
@@ -66,9 +66,9 @@ describe("Step_Indicator", () => {
 
   it("gives the earlier steps the done state and the later ones todo", () => {
     // Six steps since issue #385: Testify is the fourth, so three are done and
-    // two (Break the seal, See the receipts) are todo.
+    // two (Break the seal, Receipts) are todo.
     const html = renderToStaticMarkup(
-      createElement(StepIndicator, { current: "testify" }),
+      createElement(StepTrack, { current: "testify" }),
     );
     expect(html.match(/data-state="done"/g)).toHaveLength(3);
     expect(html.match(/data-state="todo"/g)).toHaveLength(2);
@@ -76,40 +76,39 @@ describe("Step_Indicator", () => {
 
   it("sits under the data-step-indicator hook and names the list", () => {
     const html = renderToStaticMarkup(
-      createElement(StepIndicator, { current: "write" }),
+      createElement(StepTrack, { current: "write" }),
     );
     expect(html).toContain("data-step-indicator");
     expect(html).toContain(`aria-label="${LIVE_COPY.stepsLabel}"`);
   });
 
-  it("announces the step number and name politely", () => {
-    const html = renderToStaticMarkup(
-      createElement(StepIndicator, { current: "seal" }),
-    );
-    expect(html).toContain('aria-live="polite"');
+  it("announces the step number and name politely, from the stepper", () => {
+    const html = render("seal");
+    expect(html).toContain('role="status" aria-live="polite"');
     expect(html).toContain("Step 2 of 6: Press the seal");
   });
 
   it("announces Wait as step 3 of 6", () => {
-    const html = renderToStaticMarkup(
-      createElement(StepIndicator, { current: "wait" }),
-    );
+    const html = render("wait");
     expect(html).toContain("Step 3 of 6: Wait");
   });
 });
 
 describe("LiveStepper", () => {
-  it("renders the current step's heading with focus support", () => {
-    const html = render("seal");
+  it("renders the Wait heading with focus support", () => {
+    const html = render("wait");
     expect(html).toContain('tabindex="-1"');
-    expect(html).toMatch(/<h2[^>]*tabindex="-1"[^>]*>Press the seal<\/h2>/);
+    expect(html).toMatch(
+      /<h2[^>]*data-step-heading=""[^>]*tabindex="-1"[^>]*>Wait<\/h2>/,
+    );
   });
 
   it("keeps the data-primary-control and data-card hooks on the Seal step", () => {
     const html = render("seal");
     expect(html).toMatch(/<section[^>]*data-card[^>]*data-step="seal"/);
     expect(html.match(/data-primary-control/g)).toHaveLength(1);
-    expect(html).toMatch(/<h2[^>]*>Press the seal<\/h2>/);
+    // Seal draws no h2 here; its heading comes from the page (task 7).
+    expect(html).not.toContain("<h2");
   });
 
   it("puts the step card on a data-card root", () => {
@@ -117,7 +116,7 @@ describe("LiveStepper", () => {
   });
 
   it("puts the heading, fields and Next inside one data-primary-control group", () => {
-    const html = render("write", () =>
+    const html = render("wait", () =>
       createElement("button", { type: "button" }, "Next"),
     );
     // The hook appears once. The group runs from its opening tag to the card's
@@ -127,7 +126,7 @@ describe("LiveStepper", () => {
     const end = html.indexOf("</section>", start);
     expect(end).toBeGreaterThan(start);
     const group = html.slice(start, end);
-    expect(group).toContain(">Write</h2>");
+    expect(group).toContain(">Wait</h2>");
     expect(group).toContain(">Next<");
   });
 
@@ -233,6 +232,12 @@ describe("LiveStepper Reveal_Host and Primary_Card (X1)", () => {
     expect(render("testify")).not.toMatch(/<h2/);
   });
 
+  it("draws no h2 on Write or Seal, and one h2 on Wait (spec 14, S7)", () => {
+    expect(render("write")).not.toContain("<h2");
+    expect(render("seal")).not.toContain("<h2");
+    expect(render("wait").match(/<h2/g)).toHaveLength(1);
+  });
+
   it("gives the content no host before the host has mounted", () => {
     let seen: StepView | null = null;
     render("testify", (view) => {
@@ -254,16 +259,48 @@ describe("LiveStepper heading focus (W8)", () => {
     "utf8",
   );
 
-  it("focuses the heading without the browser's own scroll", () => {
-    expect(stepperSource).toContain("heading.focus({ preventScroll: true })");
+  it("focuses the step heading without the browser's own scroll", () => {
+    expect(stepperSource).toContain(
+      '?.querySelector<HTMLElement>("[data-step-heading]")',
+    );
+    expect(stepperSource).toContain("?.focus({ preventScroll: true })");
   });
 
-  it("scrolls the heading into view after focus, at its start edge", () => {
-    const focusAt = stepperSource.indexOf("heading.focus(");
-    const scrollAt = stepperSource.indexOf("heading.scrollIntoView(");
+  it("scrolls the Step_Track, not the heading, after focus", () => {
+    const focusAt = stepperSource.indexOf("?.focus({ preventScroll: true })");
+    const scrollAt = stepperSource.indexOf("trackRef.current?.scrollIntoView(");
     expect(focusAt).toBeGreaterThan(-1);
     expect(scrollAt).toBeGreaterThan(focusAt);
+    expect(stepperSource).not.toContain("heading.scrollIntoView(");
     expect(stepperSource).toMatch(/block:\s*"start"/);
+  });
+
+  it("runs the step-change scroll in a layout effect after one animation frame", () => {
+    expect(stepperSource).toContain("useLayoutEffect(");
+    expect(stepperSource).not.toMatch(/useEffect\(\(\) => \{\s*\/\/ Skip/);
+    const frameAt = stepperSource.indexOf("requestAnimationFrame(");
+    const scrollAt = stepperSource.indexOf("trackRef.current?.scrollIntoView(");
+    expect(frameAt).toBeGreaterThan(-1);
+    expect(scrollAt).toBeGreaterThan(frameAt);
+  });
+
+  it("cancels a pending scroll frame on a newer step change and on unmount", () => {
+    expect(stepperSource).toContain(
+      "cancelAnimationFrame(scrollFrame.current)",
+    );
+    expect(
+      stepperSource.match(/cancelAnimationFrame\(scrollFrame\.current\)/g)
+        ?.length,
+    ).toBe(2);
+    expect(stepperSource).toMatch(
+      /scrollFrame\.current = requestAnimationFrame\(/,
+    );
+  });
+
+  it("attaches the track ref to the wrapper around the Step_Indicator", () => {
+    expect(stepperSource).toMatch(
+      /<div ref=\{trackRef\} className=\{styles\.track\}>\s*<StepTrack/,
+    );
   });
 
   it("scrolls instantly when Calm is in force, and smoothly otherwise", () => {
@@ -274,6 +311,12 @@ describe("LiveStepper heading focus (W8)", () => {
   it("offsets the heading by the Top_Bar clearance plus 16 px", () => {
     expect(stepperCss).toMatch(
       /\.heading \{[^}]*scroll-margin-top:\s*calc\(var\(--topbar-clear, 96px\) \+ 16px\)/,
+    );
+  });
+
+  it("offsets the Step_Track by the Top_Bar clearance plus 24 px", () => {
+    expect(stepperCss).toMatch(
+      /\.track \{[^}]*scroll-margin-top:\s*calc\(var\(--topbar-clear, 96px\) \+ 24px\)/,
     );
   });
 });

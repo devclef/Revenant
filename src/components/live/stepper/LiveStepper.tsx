@@ -1,19 +1,23 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 import { useCalmInForce } from "@/components/ceremony/motion";
 import { useKeepInVisualViewport } from "@/components/ui/use-keep-in-visual-viewport";
 
+import { LIVE_COPY } from "../copy";
 import type { WriteDraft, WriteDraftEvent } from "../write-draft";
 
 import styles from "./stepper.module.css";
-import { StepIndicator } from "./StepIndicator";
+import { StepTrack } from "./StepTrack";
 import {
+  LIVE_STEPS,
   canGoBack,
   hasPrimaryCard,
   movesFocus,
+  stepIndex,
   stepName,
+  stepperDrawsHeading,
   type LiveStep,
   type StepperAction,
   type StepperState,
@@ -66,7 +70,12 @@ export interface LiveStepperProps {
  * step changes, focus moves to the new heading, if the step has one.
  */
 export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
-  const headingRef = useRef<HTMLHeadingElement>(null);
+  // The Step_Track wrapper. The step change scrolls this, not the heading, so
+  // the track and the card both land below the Top_Bar (baseline 98d49aa, cause a).
+  const trackRef = useRef<HTMLDivElement>(null);
+  // The frame that will scroll the track. A newer step change cancels it, and
+  // unmount cancels it too, so a stale frame never scrolls.
+  const scrollFrame = useRef<number | null>(null);
   const primaryRef = useRef<HTMLDivElement>(null);
   // The Reveal_Host element. It is set once on mount and never changes, so the
   // portal target stays the same (spec 12, X1).
@@ -78,20 +87,34 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
   useKeepInVisualViewport(primaryRef, calm);
   const previousStep = useRef<LiveStep>(state.step);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     // Skip the first render, so a page load does not steal focus.
     if (!movesFocus(previousStep.current, state.step)) return;
     previousStep.current = state.step;
-    const heading = headingRef.current;
-    if (!heading) return;
-    // Focus without the browser's own scroll, then scroll the heading to its
-    // scroll-margin-top, so it clears the fixed Top_Bar.
-    heading.focus({ preventScroll: true });
-    heading.scrollIntoView({
-      behavior: calm ? "instant" : "smooth",
-      block: "start",
+    // Focus without the browser's own scroll. The scroll itself runs after one
+    // frame, so the new step has its height first (baseline cause a). The
+    // target is the step's [data-step-heading]: the h2 drawn for Wait here, or
+    // the page's own heading for Write and Seal (spec 14).
+    primaryRef.current
+      ?.querySelector<HTMLElement>("[data-step-heading]")
+      ?.focus({ preventScroll: true });
+    if (scrollFrame.current !== null) cancelAnimationFrame(scrollFrame.current);
+    scrollFrame.current = requestAnimationFrame(() => {
+      scrollFrame.current = null;
+      trackRef.current?.scrollIntoView({
+        behavior: calm ? "instant" : "smooth",
+        block: "start",
+      });
     });
   }, [state.step, calm]);
+
+  // Unmount cancels a pending scroll frame.
+  useLayoutEffect(() => {
+    return () => {
+      if (scrollFrame.current !== null)
+        cancelAnimationFrame(scrollFrame.current);
+    };
+  }, []);
 
   const view: StepView = {
     step: state.step,
@@ -111,7 +134,16 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
 
   return (
     <div className={styles.stepper} data-live-stepper>
-      <StepIndicator current={state.step} />
+      <div ref={trackRef} className={styles.track}>
+        <StepTrack current={state.step} />
+        {/* The one live region of the stepper (spec 14, S1.5). */}
+        <p className={styles.announce} role="status" aria-live="polite">
+          {LIVE_COPY.stepAnnounce
+            .replace("{n}", String(stepIndex(state.step) + 1))
+            .replace("{total}", String(LIVE_STEPS.length))
+            .replace("{label}", stepName(state.step))}
+        </p>
+      </div>
       <section
         className={card ? styles.card : styles.bare}
         data-card={card ? "" : undefined}
@@ -122,8 +154,8 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
           className={card ? styles.primary : styles.bareContent}
           data-primary-control={card ? "" : undefined}
         >
-          {card ? (
-            <h2 ref={headingRef} tabIndex={-1} className={styles.heading}>
+          {stepperDrawsHeading(state.step) ? (
+            <h2 data-step-heading="" tabIndex={-1} className={styles.heading}>
               {stepName(state.step)}
             </h2>
           ) : null}

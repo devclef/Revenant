@@ -21,6 +21,8 @@ import {
   stepForFlowPhase,
   stepForStage,
   stepName,
+  stepTrackStates,
+  stepperDrawsHeading,
   type LiveStep,
 } from "./live-steps";
 
@@ -39,25 +41,53 @@ describe("step order and names", () => {
     ]);
   });
 
-  it("names the steps Write, Press the seal, Wait, Testify, Break the seal, See the receipts", () => {
+  it("names the steps Write, Press the seal, Wait, Testify, Break the seal, Receipts", () => {
     expect([...LIVE_STEP_NAMES]).toEqual([
       "Write",
       "Press the seal",
       "Wait",
       "Testify",
       "Break the seal",
-      "See the receipts",
+      "Receipts",
     ]);
   });
 
-  it("takes the names from Brand_Copy and CEREMONY_COPY, Wait from LIVE_COPY", () => {
+  it("takes the names from Brand_Copy and CEREMONY_COPY, Wait and Receipts from LIVE_COPY", () => {
     const ritual = BRAND_COPY.ritualSteps.map((step) => step.name);
     expect(LIVE_STEP_NAMES[0]).toBe(ritual[0]);
     expect(LIVE_STEP_NAMES[1]).toBe(ritual[1]);
     expect(LIVE_STEP_NAMES[2]).toBe(LIVE_COPY.waitStep);
     expect(LIVE_STEP_NAMES[3]).toBe(ritual[2]);
     expect(LIVE_STEP_NAMES[4]).toBe(CEREMONY_COPY.steps[1]);
-    expect(LIVE_STEP_NAMES[5]).toBe(ritual[3]);
+    expect(LIVE_STEP_NAMES[5]).toBe(LIVE_COPY.receiptsStep);
+    expect(LIVE_STEP_NAMES[5]).toBe("Receipts");
+  });
+
+  it("gives the Step_Track one state per step, with the current step marked", () => {
+    expect(stepTrackStates(0)).toEqual([
+      "current",
+      "todo",
+      "todo",
+      "todo",
+      "todo",
+      "todo",
+    ]);
+    expect(stepTrackStates(3)).toEqual([
+      "done",
+      "done",
+      "done",
+      "current",
+      "todo",
+      "todo",
+    ]);
+    expect(stepTrackStates(5)).toEqual([
+      "done",
+      "done",
+      "done",
+      "done",
+      "done",
+      "current",
+    ]);
   });
 
   it("gives each step its name", () => {
@@ -152,6 +182,23 @@ describe("movesFocus", () => {
   it("moves focus only when the step changes", () => {
     expect(movesFocus("write", "seal")).toBe(true);
     expect(movesFocus("seal", "seal")).toBe(false);
+  });
+});
+
+// Task 6 (issue #468): the stepper draws the step-name h2 for Wait only. Write
+// and Seal get their heading from the page, and Testify, the break and Receipts
+// draw none.
+describe("stepperDrawsHeading", () => {
+  it("draws the h2 for wait only, across all six steps", () => {
+    const drawn = LIVE_STEPS.map((step) => [step, stepperDrawsHeading(step)]);
+    expect(drawn).toEqual([
+      ["write", false],
+      ["seal", false],
+      ["wait", true],
+      ["testify", false],
+      ["break", false],
+      ["receipts", false],
+    ]);
   });
 });
 

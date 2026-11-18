@@ -37,7 +37,7 @@ vi.mock("./prf-hint", async (importOriginal) => ({
 // page behaves as before: no response yet, and the real stepper on Write.
 const pageStub = vi.hoisted(() => ({
   figures: null as import("@/components/reveal/figures-api").FiguresState | null,
-  step: null as null | "write",
+  step: null as null | import("./stepper/live-steps").LiveStep,
 }));
 
 vi.mock("@/components/reveal/figures-api", async (importOriginal) => ({
@@ -241,7 +241,7 @@ describe("the Sealing_Flow step order (same in both modes)", () => {
 });
 
 describe("SealPage in demo mode (/demo/live)", () => {
-  it("renders the liveHeading above the Live_Stepper", () => {
+  it("holds no page heading on the Write step; the step's own h1 holds the step name", () => {
     const html = renderToStaticMarkup(
       createElement(SealPage, {
         rpId: "revenant.devclef.se",
@@ -250,10 +250,11 @@ describe("SealPage in demo mode (/demo/live)", () => {
       }),
     );
     expect(LIVE_COPY.liveHeading).toBe("Seal your own letter");
-    expect(html).toMatch(/<h1[^>]*>Seal your own letter<\/h1>/);
-    expect(html.indexOf("Seal your own letter")).toBeLessThan(
-      html.indexOf("data-live-stepper"),
+    expect(html).not.toContain("Seal your own letter");
+    expect(html).toMatch(
+      /<h1[^>]*data-step-heading=""[^>]*tabindex="-1"[^>]*>Write<\/h1>/,
     );
+    expect(html.split("<h1").length - 1).toBe(1);
   });
 
   it("does not show the demo heading in real mode", () => {
@@ -265,6 +266,41 @@ describe("SealPage in demo mode (/demo/live)", () => {
       }),
     );
     expect(html).not.toContain("Seal your own letter");
+  });
+});
+
+describe("SealPage has exactly one h1 per demo step", () => {
+  const base = {
+    rpId: "revenant.devclef.se",
+    appOrigin: "https://revenant.devclef.se",
+    mode: "demo" as const,
+  };
+
+  afterEach(() => {
+    pageStub.step = null;
+  });
+
+  it("holds the step name in a focusable h1 on Write and Seal", () => {
+    for (const step of ["write", "seal"] as const) {
+      pageStub.step = step;
+      const html = renderToStaticMarkup(createElement(SealPage, base));
+      const name = step === "write" ? "Write" : "Press the seal";
+      expect(html, step).toMatch(
+        new RegExp(
+          `<h1[^>]*data-step-heading=""[^>]*tabindex="-1"[^>]*>${name}</h1>`,
+        ),
+      );
+      expect(html.split("<h1").length - 1, step).toBe(1);
+      expect(html, step).not.toContain("Seal your own letter");
+    }
+  });
+
+  it("holds the page heading, not the step name, on Wait", () => {
+    pageStub.step = "wait";
+    const html = renderToStaticMarkup(createElement(SealPage, base));
+    expect(html).toMatch(/<h1[^>]*>Seal your own letter<\/h1>/);
+    expect(html).not.toContain("data-step-heading");
+    expect(html.split("<h1").length - 1).toBe(1);
   });
 });
 

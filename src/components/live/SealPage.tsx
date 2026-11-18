@@ -33,7 +33,12 @@ import {
 import { figureLimit } from "./form";
 import { LiveStepper, type StepView } from "./stepper/LiveStepper";
 import { LiveWaitStep } from "./stepper/LiveWaitStep";
-import { initialStepperState, reduceStepper } from "./stepper/live-steps";
+import {
+  initialStepperState,
+  reduceStepper,
+  stepName,
+  type LiveStep,
+} from "./stepper/live-steps";
 import { browserTimeZone } from "@/components/ui/letter-date";
 import { earliestOpeningDate } from "@/lib/seal-format";
 
@@ -256,16 +261,13 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
         <Link href="/demo">{LIVE_COPY.backToDemo}</Link>
       </p>
       {mode === "demo" ? (
-        <>
-          <h1 className={styles.liveHeading}>{LIVE_COPY.liveHeading}</h1>
-          <StageReportContext.Provider value={reportStage}>
-            <LiveStepper
-              state={stepper}
-              dispatch={dispatchStepper}
-              renderStep={renderDemoStep}
-            />
-          </StageReportContext.Provider>
-        </>
+        <StageReportContext.Provider value={reportStage}>
+          <LiveStepper
+            state={stepper}
+            dispatch={dispatchStepper}
+            renderStep={renderDemoStep}
+          />
+        </StageReportContext.Provider>
       ) : (
         renderState()
       )}
@@ -273,11 +275,25 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
   );
 
   /**
+   * One stepper step in demo mode: its one h1, then its content. Write and Seal
+   * each get a temporary h1 that holds the step name and is the focus target.
+   * Every other step shows the page heading, so each step has exactly one h1.
+   */
+  function renderDemoStep(view: StepView) {
+    return (
+      <>
+        {stepHeading(view.step)}
+        {demoStepContent(view)}
+      </>
+    );
+  }
+
+  /**
    * The content of one stepper step in demo mode. Once the seal is stored the
    * sealed view takes over. The failure and fallback screens replace the step
    * content too. Until then the step picks which part of the write form shows.
    */
-  function renderDemoStep(view: StepView) {
+  function demoStepContent(view: StepView) {
     if (state.tag === "sealed") {
       // Wait, Testify and Receipts share one card: the countdown, then the
       // embedded Opening_Flow (spec 09, D5). The seal's own state stays
@@ -436,6 +452,26 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
       />
     );
   }
+}
+
+/**
+ * The one h1 of a demo step. Write and Seal hold the step name in a temporary
+ * h1 that takes focus when the step opens. The other steps hold the page's
+ * liveHeading.
+ */
+function stepHeading(step: LiveStep): ReactNode {
+  if (step === "write" || step === "seal") {
+    return (
+      <h1
+        className={`${styles.liveHeading} ${styles.cardHeading}`}
+        data-step-heading=""
+        tabIndex={-1}
+      >
+        {stepName(step)}
+      </h1>
+    );
+  }
+  return <h1 className={styles.liveHeading}>{LIVE_COPY.liveHeading}</h1>;
 }
 
 /**

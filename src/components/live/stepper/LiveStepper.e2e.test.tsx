@@ -248,6 +248,10 @@ describe("Live_Stepper end to end: Write to Receipts (spec 10 C2, C9.2, C9.3)", 
     );
   });
 
+  it("draws no step h2 on the Write step (spec 14, S8)", () => {
+    expect(renderWriteStep(WRITTEN)).not.toContain("<h2");
+  });
+
   it("seals only the kept rows, in row order, and clears the draft once sealed", () => {
     expect(SEALED_QUESTIONS).toEqual([DEFAULT_QUESTION, TYPED]);
     expect(AT_TESTIFY.sealed).toBe(true);

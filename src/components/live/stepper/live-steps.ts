@@ -52,8 +52,11 @@ export const LIVE_STEP_NAMES: readonly string[] = [
   LIVE_COPY.waitStep,
   RITUAL[2].name,
   CEREMONY_COPY.steps[1],
-  RITUAL[3].name,
+  LIVE_COPY.receiptsStep,
 ];
+
+/** The Step_Track states live in step-track.ts. Re-exported for the stepper. */
+export { stepTrackStates, type StepTrackState } from "./step-track";
 
 /** The position of a step in LIVE_STEPS, counted from 0. */
 export function stepIndex(step: LiveStep): number {
@@ -131,6 +134,15 @@ export function flowMounted(step: LiveStep, countdownDone: boolean): boolean {
  */
 export function hasPrimaryCard(step: LiveStep): boolean {
   return step === "write" || step === "seal" || step === "wait";
+}
+
+/**
+ * Whether the stepper draws the step-name h2 above the step's content. Only
+ * Wait gets one here. Write and Seal bring their own heading from the page
+ * (SealPage, spec 14), and Testify and Receipts have none.
+ */
+export function stepperDrawsHeading(step: LiveStep): boolean {
+  return step === "wait";
 }
 
 /**
