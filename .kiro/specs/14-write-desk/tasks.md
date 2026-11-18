@@ -540,7 +540,7 @@ Group D is the only cuttable work (G3.3): whatever is merged on `main` at the fr
 
 ### Group Q: verification, target 26 to 27 November 2026
 
-- [ ] 17. Q1.1, Q1.2 · Layout-check rows and the retirements
+- [x] 17. Q1.1, Q1.2 · Layout-check rows and the retirements
   - Agent: `platform-dev` · Depends on: 2, 6, 8, 9, 11, 12, 13, 14 · Estimated size: L, ~1,800 changed lines · Target: 26 November 2026
   - Never cut. Does not depend on task 15 or 16: the D rows report SKIP when `[data-live-entry-card]` is absent.
   - Scope: `tools/qa/layout-check.mjs`, and the tests that cover it (`tools/qa/*.test.*` where they exist, or `src/test/**`).
