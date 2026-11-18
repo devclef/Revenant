@@ -1,4 +1,6 @@
 import { createElement } from "react";
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
@@ -6,6 +8,17 @@ import { LIVE_COPY } from "../copy";
 
 import { DESK_COPY } from "./copy";
 import { LetterSheet, type LetterSheetProps } from "./LetterSheet";
+
+/** The `.letter` rule body in sheet.module.css, comments stripped. */
+function letterRuleBody(): string {
+  const css = readFileSync(
+    join(process.cwd(), "src/components/live/desk/sheet.module.css"),
+    "utf8",
+  ).replace(/\/\*[\s\S]*?\*\//g, "");
+  const match = /^\.letter \{([\s\S]*?)^\}/m.exec(css);
+  if (match === null) throw new Error(".letter rule not found");
+  return match[1] ?? "";
+}
 
 const render = (props: Partial<LetterSheetProps> = {}) =>
   renderToStaticMarkup(
@@ -26,6 +39,13 @@ function textareaValue(html: string): string {
 }
 
 describe("LetterSheet (spec 14, W4 and W5)", () => {
+  it("sets the textarea font family in one place only: the serif on letter-field", () => {
+    // `.letter` must not set a font family. The serif comes from
+    // letter-field.module.css (.sheetLetter), so no stylesheet order can change it.
+    expect(letterRuleBody()).not.toMatch(/font-family/);
+    expect(letterRuleBody()).not.toMatch(/font:/);
+  });
+
   it("keeps the salutation, sign-off and date out of the textarea value", () => {
     const html = render({ value: "Dear me, the year went well." });
     expect(textareaValue(html)).toBe("Dear me, the year went well.");

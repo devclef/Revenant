@@ -90,7 +90,6 @@
   );
   background-attachment: local;
   background-position: 0 var(--rule-offset, 7px);
-  font-family: var(--font-sans);
   font-size: 21px;
   font-weight: 400;
   line-height: 32px;
