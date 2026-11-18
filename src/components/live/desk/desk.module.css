@@ -1,0 +1,105 @@
+/*
+ * The Write desk (spec 14, W2 and W3). Header and Occasion pills first; the
+ * desk row and the sheet come in later tasks. Text colours are set on each
+ * element here, so nothing inherits from a paper surface (desk tokens only).
+ */
+
+.header {
+  margin: 0;
+  max-width: 620px;
+}
+
+.eyebrow {
+  margin: 0 0 12px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  line-height: 1.4;
+  text-transform: uppercase;
+  color: #bdb4dc;
+}
+
+.heading {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 56px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.02;
+  color: #ffffff;
+}
+
+.intro {
+  margin: 16px 0 0;
+  max-width: 620px;
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.5;
+  color: #bdb4dc;
+}
+
+.occasions {
+  margin: 24px 0 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.occasionLegend {
+  float: left;
+  width: 100%;
+  margin: 0 0 12px;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.4;
+  color: #bdb4dc;
+}
+
+.pills {
+  clear: both;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.pill {
+  min-height: 44px;
+  flex: 0 0 auto;
+  border-radius: 999px;
+  padding: 0 16px;
+  border: 1px solid #4a4266;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 500;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.pill[aria-pressed="true"] {
+  background: #ffffff;
+  border-color: #ffffff;
+  color: #0b0912;
+}
+
+.pill:focus-visible {
+  outline: 2px solid #ff7b1c;
+  outline-offset: 2px;
+}
+
+/* Below 600 px the pills form one line that scrolls sideways. The page does
+   not scroll sideways (W3.5). */
+@media (max-width: 599px) {
+  .heading {
+    font-size: 36px;
+  }
+
+  .pills {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+  }
+}

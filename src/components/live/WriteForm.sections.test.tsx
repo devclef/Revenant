@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import type { PickableSeries } from "./catalogue-list";
+import { DESK_COPY } from "./desk/copy";
 import { LIVE_COPY } from "./copy";
 import { PRESS_COPY } from "./press/copy";
 import { WriteForm, type WriteFormProps } from "./WriteForm";
@@ -67,7 +68,7 @@ describe("WriteForm sections (spec 09, D2)", () => {
   // line and the closed Receipts_Disclosure.
   it("holds the write markup in the spec 11 order, with the disclosure closed", () => {
     const html = render({ section: "write", onNext: () => {} });
-    const occasion = html.indexOf(LIVE_COPY.occasionLegend);
+    const occasion = html.indexOf(DESK_COPY.startFrom);
     const letter = html.indexOf('id="live-letter"');
     const add = html.indexOf(LIVE_COPY.authorQuestionAdd);
     const hint = html.indexOf(

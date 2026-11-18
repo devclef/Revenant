@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { realLetterSealApi, realSealApi, REAL_PREPARE_PATH, REAL_SEAL_PATH, PREPARE_PATH } from "./api";
 import { LIVE_COPY, REAL_COPY } from "./copy";
+import { DESK_COPY } from "./desk/copy";
 import { DEMO_COPY } from "@/components/demo/copy";
 import { figuresResponseFrom } from "@/components/reveal/figures-stub";
 import { displayFigureValue } from "@/components/reveal/display-figure";
@@ -413,7 +414,7 @@ describe("SealPage rehearsal line (spec 11, L4.1, L4.3)", () => {
     expect(fieldAt).toBeGreaterThan(paperAt);
     const above = html.slice(paperAt, fieldAt);
     expect(above).not.toContain(`>${DEMO_COPY.demoLabel}</span>`);
-    expect(above).toContain(LIVE_COPY.occasionLegend);
+    expect(above).toContain(DESK_COPY.startFrom);
   });
 
   it("omits the sealed-in-the-browser sentence from the Write step", () => {

@@ -24,9 +24,16 @@ import {
 import styles from "./live.module.css";
 import letterField from "./letter-field.module.css";
 import { OccasionPicker } from "./OccasionPicker";
+import { OccasionPills } from "./desk/OccasionPills";
 import { PressEnvelope } from "./press/PressEnvelope";
 import { PRESS_COPY } from "./press/copy";
-import { applyOccasion, occasionPlaceholder, type OccasionDraft, type OccasionId } from "./occasions";
+import {
+  applyOccasion,
+  applyOccasionQuestions,
+  occasionPlaceholder,
+  type OccasionDraft,
+  type OccasionId,
+} from "./occasions";
 import { letterFieldHeightPx } from "./phone";
 import { type PrfHint } from "./prf-hint";
 import { RealDatePicker } from "./RealDatePicker";
@@ -288,6 +295,30 @@ export function WriteForm({
     setOccasionMemory(next);
     onOccasionApplied(next.text, next.questions);
   }
+
+  // /demo/live (spec 14, W3.3, W3.4): an Occasion changes only the question
+  // rows. The letter text is passed through unchanged, so no starter is
+  // written into the letter.
+  function chooseOccasionQuestions(id: OccasionId) {
+    const applied = applyOccasionQuestions(
+      {
+        questions: [...questions],
+        occasion: chosenOccasion,
+        appliedQuestions: occasionMemory?.appliedQuestions ?? [
+          DEFAULT_QUESTION,
+        ],
+      },
+      id,
+    );
+    setOccasionMemory({
+      text,
+      questions: applied.questions,
+      occasion: applied.occasion,
+      appliedStarter: occasionMemory?.appliedStarter ?? "",
+      appliedQuestions: applied.appliedQuestions,
+    });
+    onOccasionApplied(text, applied.questions);
+  }
   const limit = figureLimit(series.length);
   // A real letter (`/seal`) is the one that carries the date picker (spec 08).
   const mode: WriteMode = realDate === undefined ? "demo" : "real";
@@ -470,7 +501,17 @@ export function WriteForm({
         <p className={styles.intro}>{REAL_COPY.intro}</p>
       ) : null}
 
-      {shows("write") ? (
+      {shows("write") && mode === "demo" ? (
+        <OccasionPills
+          chosen={chosenOccasion}
+          onChoose={(id) => {
+            onTouch(TOUCH_FIELDS.letter);
+            chooseOccasionQuestions(id);
+          }}
+        />
+      ) : null}
+
+      {shows("write") && mode === "real" ? (
         <OccasionPicker
           chosen={chosenOccasion}
           onChoose={(id) => {
