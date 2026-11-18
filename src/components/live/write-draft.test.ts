@@ -238,3 +238,37 @@ describe("the Backup_Choice (spec 13, P7)", () => {
     expect(cleared.backupCardTicked).toBe(false);
   });
 });
+
+describe("QUESTION_ADDED carries the row text (spec 14, W8)", () => {
+  it("appends a row with the text it carries", () => {
+    const next = reduceWriteDraft(INITIAL_WRITE_DRAFT, {
+      type: "QUESTION_ADDED",
+      text: "What did you promise yourself the day you sealed this?",
+    });
+    expect(next.questions).toEqual([
+      DEFAULT_QUESTION,
+      "What did you promise yourself the day you sealed this?",
+    ]);
+  });
+
+  it("appends an empty row when the text is empty", () => {
+    const next = reduceWriteDraft(INITIAL_WRITE_DRAFT, {
+      type: "QUESTION_ADDED",
+      text: "",
+    });
+    expect(next.questions).toEqual([DEFAULT_QUESTION, ""]);
+  });
+
+  it("keeps the rows unchanged once three rows exist", () => {
+    let draft = INITIAL_WRITE_DRAFT;
+    for (const text of ["one", "two"]) {
+      draft = reduceWriteDraft(draft, { type: "QUESTION_ADDED", text });
+    }
+    expect(draft.questions).toHaveLength(3);
+    const full = reduceWriteDraft(draft, {
+      type: "QUESTION_ADDED",
+      text: "four",
+    });
+    expect(full).toBe(draft);
+  });
+});

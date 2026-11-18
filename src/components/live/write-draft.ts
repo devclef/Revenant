@@ -111,7 +111,7 @@ export type WriteDraftEvent =
   | { type: "BACKUP_CARD_CHANGED"; ticked: boolean }
   | { type: "BACKUP_CHOICE_CHANGED"; choice: BackupChoiceValue | null }
   | { type: "QUESTION_CHANGED"; index: number; text: string }
-  | { type: "QUESTION_ADDED" }
+  | { type: "QUESTION_ADDED"; text: string }
   | { type: "QUESTION_REMOVED"; index: number }
   | { type: "OCCASION_APPLIED"; text: string; questions: string[] }
   | { type: "SELF_REPORTED_ADDED" }
@@ -156,7 +156,7 @@ export function reduceWriteDraft(
       };
     case "QUESTION_ADDED":
       if (state.questions.length >= AUTHOR_QUESTIONS_MAX) return state;
-      return { ...state, questions: [...state.questions, ""] };
+      return { ...state, questions: [...state.questions, event.text] };
     case "QUESTION_REMOVED":
       return {
         ...state,

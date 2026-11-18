@@ -38,7 +38,7 @@ const questionEventArb: fc.Arbitrary<WriteDraftEvent> = fc.oneof(
       index,
       text,
     })),
-  fc.constant<WriteDraftEvent>({ type: "QUESTION_ADDED" }),
+  fc.constant<WriteDraftEvent>({ type: "QUESTION_ADDED", text: "" }),
   fc
     .integer({ min: 0, max: 3 })
     .map((index): WriteDraftEvent => ({ type: "QUESTION_REMOVED", index })),
@@ -116,7 +116,7 @@ describe("Property 5: the question rows survive every way back", () => {
     });
     state = reduceStepper(state, {
       type: "DRAFT",
-      event: { type: "QUESTION_ADDED" },
+      event: { type: "QUESTION_ADDED", text: "" },
     });
     state = reduceStepper(state, {
       type: "DRAFT",
