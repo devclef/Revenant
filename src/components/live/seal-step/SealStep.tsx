@@ -14,7 +14,6 @@ import { useCalmInForce } from "@/components/ceremony/motion";
 
 import { BackupChoice } from "../BackupChoice";
 import { LIVE_COPY } from "../copy";
-import { PRESS_COPY } from "../press/copy";
 import { PressEnvelope } from "../press/PressEnvelope";
 import type { BackupChoiceValue } from "../write-draft";
 import { SealLinks } from "./SealLinks";
@@ -35,8 +34,6 @@ export type SealStepProps = {
   backupChoiceProblem?: string;
   /** True while the press is blocked (aria-disabled, 40 % seal). */
   pressBlocked: boolean;
-  /** True when a choice is made but the fields block the press. The line then points at the fields. */
-  fieldsBlocked: boolean;
   /** True when the press can be used: no prompt is open and the input is valid (S6.5). */
   ready: boolean;
   /** `setting` is the one plain press of the Setting_State (P5). */
@@ -83,7 +80,6 @@ export function SealStep({
   onBackupChoice,
   backupChoiceProblem,
   pressBlocked,
-  fieldsBlocked,
   ready,
   mode,
   questionCount,
@@ -96,11 +92,9 @@ export function SealStep({
   onAttempt,
 }: SealStepProps) {
   const motion = useMotionSetting();
-  // The fields message wins over the choice line only while a choice is made,
-  // so the line never reads "choose first" once a choice exists (P1.5).
-  const status = fieldsBlocked
-    ? { text: PRESS_COPY.fixFields, tone: "muted" as const }
-    : pressStatusLine({ tag, backupChoice, motion });
+  // pressStatusLine alone chooses the line: it never reads "choose first" once
+  // a choice exists (P1.5).
+  const status = pressStatusLine({ tag, backupChoice, motion });
 
   return (
     <div data-seal-step="" className={styles.step}>

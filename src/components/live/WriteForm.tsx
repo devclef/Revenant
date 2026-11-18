@@ -683,7 +683,6 @@ export function WriteForm({
           }}
           backupChoiceProblem={warningProblem ? LIVE_COPY.backupChoiceUnchosen : undefined}
           pressBlocked={pressBlocked}
-          fieldsBlocked={!inCreated && backupChoice !== null && inputBlocked}
           ready={!pressBlocked}
           mode={pressMode}
           questionCount={questions.filter((row) => row.trim() !== "").length}

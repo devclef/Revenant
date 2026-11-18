@@ -18,7 +18,6 @@ const BASE: SealStepProps = {
   backupChoice: null,
   onBackupChoice: () => undefined,
   pressBlocked: true,
-  fieldsBlocked: false,
   ready: false,
   mode: "write",
   questionCount: 0,
@@ -143,13 +142,13 @@ describe("SealStep press column (spec 14, S6)", () => {
     expect(html).toMatch(/data-press-line=""[^>]*data-tone="muted"/);
   });
 
-  it("shows the fix-fields line when a choice is made and the fields block the press", () => {
+  it("shows the hold line, not the fix-fields line, when the fields block the press", () => {
     const html = render({
       backupChoice: "skip",
-      fieldsBlocked: true,
       pressBlocked: true,
     });
-    expect(html).toContain(PRESS_COPY.fixFields);
+    expect(html).toContain(PRESS_COPY.holdToSeal);
+    expect(html).not.toContain(PRESS_COPY.fixFields);
     expect(html).not.toContain(PRESS_COPY.chooseFirst);
   });
 
