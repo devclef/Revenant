@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useId, useState } from "react";
+import { useId, useRef, useState } from "react";
 
 import { displayFigureValue } from "@/components/reveal/display-figure";
 import { shortNameFor } from "@/components/reveal/short-names";
@@ -57,6 +57,7 @@ export function FigureRows({
 }: FigureRowsProps) {
   const detailsId = useId();
   const [detailsOpen, setDetailsOpen] = useState(false);
+  const limitNoteRef = useRef<HTMLParagraphElement>(null);
   const limit = figureLimit(series.length);
   const hint = pickerHint(limit);
 
@@ -133,7 +134,13 @@ export function FigureRows({
           aria-disabled={blocked ? "true" : undefined}
           aria-label={accessibleName}
           onClick={() => {
-            if (!blocked) onToggle(item.metricId);
+            // A blocked row toggles nothing. Focus moves to the limit line
+            // that says why, so a second press still changes the page (X2.1).
+            if (blocked) {
+              limitNoteRef.current?.focus();
+              return;
+            }
+            onToggle(item.metricId);
           }}
         >
           <span className={styles.check} aria-hidden="true" />
@@ -162,7 +169,11 @@ export function FigureRows({
         <p className={styles.figuresHint}>{LIVE_COPY.pickerNote}</p>
       ) : null}
       <ul className={styles.figureList}>{series.map(renderRow)}</ul>
-      {atLimit ? <p className={styles.figuresHint}>{tooManyText}</p> : null}
+      {atLimit ? (
+        <p ref={limitNoteRef} tabIndex={-1} className={styles.figuresHint}>
+          {tooManyText}
+        </p>
+      ) : null}
       <div className={styles.sourcesRow}>
         <p className={styles.sources}>
           {sourcesLine(series.map((item) => item.source))}
