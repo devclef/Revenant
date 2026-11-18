@@ -366,9 +366,47 @@
   margin-top: 16px;
 }
 
-/* Below 600 px the intro line is 15 px (spec 14 T2.5). */
+/* Below 600 px the intro line is 15 px, and the stacked parts take no extra gap
+   (spec 14 T2.5). The scale, the Sample_Note and the Nav_Row keep their own
+   margins. */
 @media (max-width: 599.98px) {
   .intro {
     font-size: 15px;
+  }
+
+  .body {
+    gap: 0;
+  }
+
+  .body > :global([data-nav-row]) {
+    gap: 8px;
+  }
+
+  /* The Nav_Row's two buttons share one row, each half the width, and their
+     labels wrap onto two lines. Side by side at full label width they wrap into
+     two stacked rows, which pushes the main button below the 844 px
+     First_Viewport on the last question (spec 14 T2.5). */
+  .body > :global([data-nav-row]) > button {
+    flex: 1 1 0;
+    min-width: 0;
+    line-height: 1.25;
+    padding: 0.2rem 0.5rem;
+  }
+}
+
+/* Below 900 px the number question's text lines are tighter, so the Nav_Row of a
+   persona number question with its Sample_Note sits inside the 390 x 844
+   First_Viewport (spec 14 T2.5). Line heights only; sizes and colours are unchanged. */
+@media (max-width: 899px) {
+  .counter {
+    line-height: 1.25;
+  }
+
+  .unit {
+    line-height: 1.25;
+  }
+
+  .sampleNote {
+    line-height: 1.25;
   }
 }

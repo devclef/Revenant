@@ -505,7 +505,6 @@ export function RecallPager({
                 label={question.text}
                 unitLabel={unit}
                 range={scaleRangeFor(unit)}
-                note={rescaleNote ?? undefined}
                 value={markValue}
                 text={resolved ?? undefined}
                 valueHidden={resolved === null}

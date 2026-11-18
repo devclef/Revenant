@@ -299,3 +299,18 @@ describe("Recall_Pager persona number question CSS (T2.5)", () => {
     expect(css).toMatch(/@media \(max-width: 599\.98px\) \{\s*\.intro \{\s*font-size:\s*15px;/);
   });
 });
+
+describe("Recall_Pager number question fit at 390 x 844, source rules (T2.5)", () => {
+  it("passes the rescale note to the pager's own line only, not again under the scale", () => {
+    // The note is linked to the field by aria-describedby. Passing it to RecallScale too
+    // would show the same text twice and push the Nav_Row down (spec 14 T2.5).
+    expect(source).not.toMatch(/note=\{rescaleNote/);
+    expect(source).toContain("id={helpId}");
+  });
+
+  it("shares one row between the Nav_Row buttons below 600 px", () => {
+    expect(css).toMatch(
+      /@media \(max-width: 599\.98px\) \{[\s\S]*\.body > :global\(\[data-nav-row\]\) > button \{[\s\S]*flex: 1 1 0;/,
+    );
+  });
+});
