@@ -301,7 +301,7 @@ Group D (tasks 15 and 16) is the only cuttable work. Whatever is merged on `main
   - Validation: `bash scripts/check.sh`; route budgets after `npm run build`.
   - _Requirements: T1, G2.6_
 
-- [ ] 8. T2, T3 · Number questions in one order, and a scale range for every unit
+- [x] 8. T2, T3 · Number questions in one order, and a scale range for every unit
   - Agent: `frontend-dev` · Depends on: 7 · Estimated size: M, ~800 changed lines · Target: 23 November 2026
   - Never cut.
   - Scope: `src/components/ceremony/recall/RecallPager.tsx`, `RecallPager.module.css`, `NavRow.tsx`, `unit-ranges.ts`; `src/components/ceremony/copy.ts` (`parsedValue` removed); and the `*.test.ts(x)` for each file.
@@ -472,7 +472,7 @@ Group D (tasks 15 and 16) is the only cuttable work. Whatever is merged on `main
 
 ### Group X: smaller fixes, target 25 November 2026
 
-- [ ] 14. X1, X2 · Reproduce, wording fixes, double activation and the X1 test
+- [x] 14. X1, X2 · Reproduce, wording fixes, double activation and the X1 test
   - Agent: `frontend-dev` · Depends on: 2, 6 · Estimated size: S, ~500 changed lines · Target: 25 November 2026
   - Never cut.
   - Scope: `src/components/live/copy.ts` (`busyBody`); any `src/components/**/copy.ts` reachable from `/demo/live` or `/demo` that holds "Demo 1" or "Demo 2" (for example `src/components/demo/copy.ts`); `src/components/live/live.module.css` (only the rule behind the stray bar, if step 1 shows it is shared CSS); `src/components/live/desk/*.tsx` and `desk/*.module.css` (only for an X2.1 defect or a W12.5 failure step 1 finds); and the `*.test.ts(x)` for each file.
