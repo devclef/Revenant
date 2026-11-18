@@ -46,6 +46,7 @@ export function NavRow({
       <button
         type="button"
         className={buttons.primary}
+        data-fit="advance"
         disabled={mainDisabled}
         onClick={onMain}
       >
