@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -157,5 +160,67 @@ describe("Demo_Index page markup", () => {
     // No persona cards: no "Open the letter" link appears.
     expect(html).not.toContain(DEMO_COPY.openLetter);
     expect(html).not.toContain('href="/demo/personas/');
+  });
+});
+
+/**
+ * D1.1: the /demo content starts on the wordmark's edge. SceneShell's `main`
+ * applies the Top_Bar side padding, so the page's own rule must add none.
+ * `--frame-pad-x` is not a token in this codebase; the Top_Bar uses
+ * `calc(var(--frame-l) + var(--pad))`, which `.main` also uses.
+ */
+describe("Demo_Index side alignment (D1.1)", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const pageCss = readFileSync(resolve(here, "page.module.css"), "utf8");
+  const sceneCss = readFileSync(
+    resolve(here, "../../components/ceremony/scene/scene.module.css"),
+    "utf8",
+  );
+
+  it("the page rule adds no side padding and no centring offset", () => {
+    const pageRule = /\.page\s*\{([^}]*)\}/.exec(pageCss)?.[1] ?? "";
+    expect(pageRule).toMatch(/padding-inline:\s*0\s*;/);
+    expect(pageRule).toMatch(/margin-inline:\s*0\s*;/);
+    expect(pageRule).not.toMatch(/margin-inline:\s*auto/);
+  });
+
+  it("the scene main carries the Top_Bar side padding the page relies on", () => {
+    const mainRule = /\.main\s*\{([^}]*)\}/.exec(sceneCss)?.[1] ?? "";
+    expect(mainRule.replace(/\s+/g, " ")).toContain(
+      "padding-inline: calc(var(--frame-l) + var(--pad));",
+    );
+  });
+});
+
+/**
+ * D1.2: the live demo entry is the last card of the Persona_List, after every
+ * persona card, with or without personas.
+ */
+describe("Demo_Index live entry card (D1.2)", () => {
+  it("renders the live entry as the last li of the list, after the persona cards", async () => {
+    const html = await renderWithPersonas(TWO_PERSONAS);
+    const lastLiAt = html.lastIndexOf("<li");
+    const lastCardAt = html.indexOf(
+      `href="/demo/personas/${TWO_PERSONAS[1].key}"`,
+    );
+    expect(html.slice(lastLiAt)).toContain('data-live-entry-card=""');
+    expect(html.slice(lastLiAt)).toContain('href="/demo/live"');
+    expect(lastCardAt).toBeGreaterThanOrEqual(0);
+    expect(lastCardAt).toBeLessThan(lastLiAt);
+  });
+
+  it("renders exactly one live entry card, and it is not a persona card", async () => {
+    const html = await renderWithPersonas(TWO_PERSONAS);
+    expect(html.match(/data-live-entry-card=""/g)).toHaveLength(1);
+    expect(html.match(/href="\/demo\/live"/g)).toHaveLength(1);
+    expect(html.match(/<li/g)).toHaveLength(TWO_PERSONAS.length + 1);
+  });
+
+  it("still shows the live entry card when the Persona_List is empty", async () => {
+    const html = await renderWithPersonas([]);
+    expect(html).toContain(DEMO_COPY.indexEmpty);
+    expect(html).toContain('data-live-entry-card=""');
+    expect(html).toContain('href="/demo/live"');
+    expect(html.match(/<li/g)).toHaveLength(1);
   });
 });

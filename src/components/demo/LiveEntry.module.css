@@ -1,21 +1,22 @@
 /*
- * LiveEntry: the Demo_Index link to the live demo. It sits on the dark desk,
- * so every text colour is a demo desk token (--demo-ink, --demo-ink-soft) set on the
- * desk ancestor. It sets its own colour, so nothing inherits from a paper
- * surface. Contrast on the desk, the lit pool and the brightest desk value is
- * checked in src/components/live/contrast.test.ts.
+ * LiveEntry: the live demo as the last card in the Persona_List. The li takes
+ * the persona card's paper class (PersonaCard.module.css), which sets --ink and
+ * --ink-soft on the card itself, so the heading and body text read on paper and
+ * never inherit the dark desk's light text. The orange button is the persona
+ * card's .button class, composed on the link in LiveEntry.tsx.
  */
 
-.entry {
+/*
+ * Matches the persona cards' corners. The attribute selector gives this rule
+ * more weight than the paper class, which has square top corners.
+ */
+.card[data-live-entry-card] {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
-  gap: 0.5rem;
-  width: 100%;
-  max-width: 40rem;
-  margin: 0 auto;
-  padding-top: 1rem;
-  border-top: 1px solid var(--demo-ink-soft);
+  gap: 0.6rem;
+  min-width: 0;
+  margin: 0;
+  border-radius: 0.5rem;
   box-sizing: border-box;
 }
 
@@ -24,28 +25,24 @@
   font-family: var(--font-sans);
   font-size: 1.25rem;
   font-weight: 600;
-  color: var(--demo-ink);
+  line-height: 1.2;
+  color: var(--ink);
 }
 
 .body {
   margin: 0;
   font-family: var(--font-sans);
-  color: var(--demo-ink-soft);
+  font-size: 0.9375rem;
+  line-height: 1.4;
+  color: var(--ink-soft);
 }
 
+/* The persona card's button, as a link. The button class supplies the colours. */
 .link {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0.5rem 0;
-  font-family: var(--font-sans);
-  font-weight: 600;
-  color: var(--demo-ink);
-  text-decoration: underline;
-  text-underline-offset: 0.2em;
+  text-decoration: none;
 }
 
 .link:focus-visible {
-  outline: 2px solid var(--demo-ink);
+  outline: 2px solid var(--accent);
   outline-offset: 4px;
 }

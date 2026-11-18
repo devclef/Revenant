@@ -20,8 +20,8 @@ export const metadata = pageMetadata(UI_COPY.pageMeta.demo, "/demo");
  *
  * Order on the page: the "Demo" label, the heading, the intro note, then one
  * envelope per persona in list order, or the empty state when the list is
- * empty. The live demo entry (`/demo/live`) sits after the list, with or without
- * personas. A card receives only list fields (R5.3, R6.2, R16.5), never anything
+ * empty. The live demo entry (`/demo/live`) is the last card in that list, with
+ * or without personas. A card receives only list fields (R5.3, R6.2, R16.5), never anything
  * from inside the sealed letter. The persona's `key` is passed as `personaKey`
  * because React reserves `key`.
  *
@@ -47,24 +47,23 @@ export default function DemoIndexPage() {
           <section>
             <p className={styles.empty}>{DEMO_COPY.indexEmpty}</p>
           </section>
-        ) : (
-          <ul className={styles.list}>
-            {PERSONAS.map((persona) => (
-              <li className={styles.listItem} key={persona.key}>
-                <PersonaCard
-                  personaKey={persona.key}
-                  display_name={persona.display_name}
-                  region={persona.region}
-                  written_as_of={persona.written_as_of}
-                  opens_at={persona.opens_at}
-                  envelope_hash={persona.envelope_hash}
-                />
-              </li>
-            ))}
-          </ul>
-        )}
+        ) : null}
 
-        <LiveEntry />
+        <ul className={styles.list}>
+          {PERSONAS.map((persona) => (
+            <li className={styles.listItem} key={persona.key}>
+              <PersonaCard
+                personaKey={persona.key}
+                display_name={persona.display_name}
+                region={persona.region}
+                written_as_of={persona.written_as_of}
+                opens_at={persona.opens_at}
+                envelope_hash={persona.envelope_hash}
+              />
+            </li>
+          ))}
+          <LiveEntry />
+        </ul>
       </div>
     </SceneShell>
   );
