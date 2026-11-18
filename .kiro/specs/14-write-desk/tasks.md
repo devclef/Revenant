@@ -131,7 +131,7 @@ Group D (tasks 15 and 16) is the only cuttable work. Whatever is merged on `main
 
 ### Group W: the Write step, target 20 to 22 November 2026
 
-- [ ] 3. W1 to W5, W3, X1.4 · Reproduce, the desk, the header, the Occasion pills and the Letter_Sheet
+- [x] 3. W1 to W5, W3, X1.4 · Reproduce, the desk, the header, the Occasion pills and the Letter_Sheet
   - Agent: `frontend-dev` · Depends on: 1 · Estimated size: L, ~1,900 changed lines · Target: 20 November 2026
   - Never cut. Runs after task 2 in number order; both edit `WriteForm.tsx`, in different section branches.
   - Scope: `src/components/live/desk/WriteDesk.tsx`, `StepHeader.tsx`, `OccasionPills.tsx`, `LetterSheet.tsx`, `SheetDate.tsx`, `use-local-day.ts`, `sheet-date.ts`, `copy.ts`, `desk.module.css`, `sheet.module.css` (all new); `src/components/live/occasions.ts` (placeholders, `applyOccasionQuestions`); `src/components/live/phone.ts` (`deskLetterHeightPx`); `src/components/live/WriteForm.tsx` (section `write` only, plus the `/demo/live` sealing day); `SealPage.tsx` (the temporary Write `h1` from task 1 removed); `src/components/live/copy.ts` (`occasionLabels.blank`); `src/components/ceremony/scene/SceneBackdrop.tsx` (the `--light-x` value for `/demo/live` only, if step 1 shows the glow crosses text); and the `*.test.ts(x)` for each file.
