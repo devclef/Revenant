@@ -76,7 +76,10 @@ describe("the Letter_Sheet paper (W4.1)", () => {
   it("sets the paper, radius, padding and shadow", () => {
     expect(valuesOf(css, ".sheet", "background-color")).toContain("#f6ead4");
     expect(valuesOf(css, ".sheet", "border-radius")).toContain("6px");
-    expect(valuesOf(css, ".sheet", "padding")).toContain("48px 56px 40px");
+    expect(valuesOf(css, ".sheet", "padding")).toContain(
+      "48px var(--sheet-pad-x) 40px",
+    );
+    expect(valuesOf(css, ".sheet", "--sheet-pad-x")).toContain("56px");
     expect(valuesOf(css, ".sheet", "box-shadow")).toContain(
       "0 30px 80px rgba(0, 0, 0, 0.55)",
     );
@@ -201,5 +204,138 @@ describe("the Letter_Field (W5.1 to W5.4)", () => {
 
   it("sets no maxlength in the stylesheet", () => {
     expect(stripComments(css)).not.toMatch(/maxlength/i);
+  });
+});
+
+// Spec 14 W6 to W8 (task 3 and 4 of #471): the Perforation, the Question_Section,
+// the Question_Row and its Wax_Disc, and the Suggestion_Pills. Each value is read
+// from the module that owns it.
+const sectionCss = readFileSync(
+  join(here, "question-section.module.css"),
+  "utf8",
+);
+const waxDiscCss = readFileSync(join(here, "wax-disc.module.css"), "utf8");
+
+describe("the Perforation (W6.1)", () => {
+  it("runs edge to edge with negative margins equal to --sheet-pad-x", () => {
+    expect(valuesOf(css, ".sheet", "--sheet-pad-x")).toContain("56px");
+    expect(mediaBody(css, "max-width: 599.98px")).toMatch(
+      /--sheet-pad-x:\s*20px/,
+    );
+    expect(valuesOf(css, ".perforation", "margin")).toContain(
+      "36px calc(var(--sheet-pad-x) * -1) 32px",
+    );
+  });
+
+  it("is a 2 px dashed line in rgba(74, 64, 54, 0.28)", () => {
+    expect(valuesOf(css, ".perforation", "border-top")).toContain(
+      "2px dashed rgba(74, 64, 54, 0.28)",
+    );
+  });
+});
+
+describe("the Question_Section rows and legend (W6.2 to W6.4)", () => {
+  it("sets rows 22 px apart", () => {
+    expect(valuesOf(sectionCss, ".rows", "row-gap")).toContain("22px");
+  });
+
+  it("sets the legend to 26 px weight 500 in #1f1b16", () => {
+    expect(valuesOf(sectionCss, ".legend", "font-size")).toContain("26px");
+    expect(valuesOf(sectionCss, ".legend", "font-weight")).toContain("500");
+    expect(valuesOf(sectionCss, ".legend", "color")).toContain("var(--ink)");
+    expect(valuesOf(sectionCss, ".questions", "--ink")).toContain("#1f1b16");
+  });
+
+  it("sets the intro to 14 px #4a4036 at most 560 px wide", () => {
+    expect(valuesOf(sectionCss, ".intro", "font-size")).toContain("14px");
+    expect(valuesOf(sectionCss, ".intro", "max-width")).toContain("560px");
+    expect(valuesOf(sectionCss, ".questions", "--ink-muted")).toContain(
+      "#4a4036",
+    );
+  });
+});
+
+describe("the Question_Row (W7.1, W7.3, W7.5)", () => {
+  it("is a flex row with a 16 px gap", () => {
+    expect(valuesOf(sectionCss, ".row", "display")).toContain("flex");
+    expect(valuesOf(sectionCss, ".row", "gap")).toContain("16px");
+  });
+
+  it("sets the input to 21 px italic serif with a 1 px bottom rule", () => {
+    expect(valuesOf(sectionCss, ".qInput", "font-size")).toContain("21px");
+    expect(valuesOf(sectionCss, ".qInput", "background")).toContain(
+      "transparent",
+    );
+    expect(valuesOf(sectionCss, ".qInput", "border-bottom")).toContain(
+      "1px solid rgba(31, 27, 22, 0.35)",
+    );
+    expect(
+      valuesOf(sectionCss, ".qInput:hover", "border-bottom-color"),
+    ).toContain("var(--ink)");
+  });
+
+  it("sets the Lock_Line to 13 px #4a4036 with 10 px above it", () => {
+    expect(valuesOf(sectionCss, ".lock", "font-size")).toContain("13px");
+    expect(valuesOf(sectionCss, ".lock", "color")).toContain(
+      "var(--ink-muted)",
+    );
+    expect(valuesOf(sectionCss, ".lock", "margin")).toContain("10px 0 0");
+  });
+
+  it("sets the Edit control to 12 px with a 24 px target", () => {
+    expect(valuesOf(sectionCss, ".edit", "font-size")).toContain("12px");
+    expect(valuesOf(sectionCss, ".edit", "min-width")).toContain("24px");
+    expect(valuesOf(sectionCss, ".edit", "min-height")).toContain("24px");
+  });
+});
+
+describe("the Wax_Disc (W7.2)", () => {
+  it("is a 30 px #ff7b1c circle with #0b0912 text", () => {
+    expect(valuesOf(waxDiscCss, ".disc", "width")).toContain("30px");
+    expect(valuesOf(waxDiscCss, ".disc", "height")).toContain("30px");
+    expect(valuesOf(waxDiscCss, ".disc", "border-radius")).toContain("50%");
+    expect(valuesOf(waxDiscCss, ".disc", "background")).toContain("#ff7b1c");
+    expect(valuesOf(waxDiscCss, ".disc", "color")).toContain("#0b0912");
+  });
+
+  it("sets the number to 13 px weight 800 with the inset shadow", () => {
+    expect(valuesOf(waxDiscCss, ".disc", "font-size")).toContain("13px");
+    expect(valuesOf(waxDiscCss, ".disc", "font-weight")).toContain("800");
+    expect(valuesOf(waxDiscCss, ".disc", "box-shadow")).toContain(
+      "inset 0 -2px 0 rgba(0, 0, 0, 0.18)",
+    );
+  });
+});
+
+describe("the Suggestion_Pills (W8.1, W8.2)", () => {
+  it("sets the label to 13 px #4a4036", () => {
+    expect(valuesOf(sectionCss, ".askLabel", "font-size")).toContain("13px");
+    expect(valuesOf(sectionCss, ".askLabel", "color")).toContain(
+      "var(--ink-muted)",
+    );
+  });
+
+  it("makes each pill 40 px tall, fully rounded, with a 1 px rgba(74, 64, 54, 0.35) border", () => {
+    expect(valuesOf(sectionCss, ".pill", "min-height")).toContain("40px");
+    expect(valuesOf(sectionCss, ".pill", "border-radius")).toContain("999px");
+    expect(valuesOf(sectionCss, ".pill", "border")).toContain(
+      "1px solid rgba(74, 64, 54, 0.35)",
+    );
+    expect(valuesOf(sectionCss, ".pill", "overflow-wrap")).toContain(
+      "anywhere",
+    );
+  });
+
+  it("sets the pill text to 17 px italic", () => {
+    expect(valuesOf(sectionCss, ".pill", "font-size")).toContain("17px");
+    expect(valuesOf(sectionCss, ".pill", "font-style")).toContain("italic");
+  });
+
+  it('sets "+ Write my own" to 14 px weight 600 in the sans face', () => {
+    expect(valuesOf(sectionCss, ".writeOwn", "font-family")).toContain(
+      "var(--font-sans)",
+    );
+    expect(valuesOf(sectionCss, ".writeOwn", "font-size")).toContain("14px");
+    expect(valuesOf(sectionCss, ".writeOwn", "font-weight")).toContain("600");
   });
 });

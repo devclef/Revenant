@@ -63,8 +63,9 @@ function renderWriteStep(state: StepperState): string {
 function rowValues(html: string): string[] {
   const values: string[] = [];
   // A textarea renders its value as its text content, not as a value attribute.
+  // The desk's QuestionRow textarea names its lock line in aria-describedby.
   for (const match of html.matchAll(
-    /<textarea[^>]*id="[^"]*-q\d+"[^>]*>([^<]*)<\/textarea>/g,
+    /<textarea[^>]*aria-describedby="[^"]*-lock"[^>]*>([^<]*)<\/textarea>/g,
   )) {
     values.push(match[1] ?? "");
   }
@@ -90,7 +91,7 @@ describe("Write step: Author_Question rows on the Live_Stepper", () => {
   it("adds a row typed after the Live_Prefill row", () => {
     const state = run(
       initialStepperState("write", "demo"),
-      { type: "DRAFT", event: { type: "QUESTION_ADDED" } },
+      { type: "DRAFT", event: { type: "QUESTION_ADDED", text: "" } },
       {
         type: "DRAFT",
         event: { type: "QUESTION_CHANGED", index: 1, text: STARTER },
@@ -136,17 +137,17 @@ describe("Write step: Author_Question rows on the Live_Stepper", () => {
     // row 3 typed then removed. The sealed list keeps only the trimmed text.
     let state = run(
       initialStepperState("write", "real"),
-      { type: "DRAFT", event: { type: "QUESTION_ADDED" } },
+      { type: "DRAFT", event: { type: "QUESTION_ADDED", text: "" } },
       {
         type: "DRAFT",
         event: { type: "QUESTION_CHANGED", index: 0, text: "" },
       },
-      { type: "DRAFT", event: { type: "QUESTION_ADDED" } },
+      { type: "DRAFT", event: { type: "QUESTION_ADDED", text: "" } },
       {
         type: "DRAFT",
         event: { type: "QUESTION_CHANGED", index: 1, text: "  Kept  " },
       },
-      { type: "DRAFT", event: { type: "QUESTION_ADDED" } },
+      { type: "DRAFT", event: { type: "QUESTION_ADDED", text: "" } },
       {
         type: "DRAFT",
         event: { type: "QUESTION_CHANGED", index: 2, text: "Removed" },

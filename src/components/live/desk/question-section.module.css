@@ -1,0 +1,273 @@
+/*
+ * The P.S. Question_Section and its Question_Rows (spec 14, W6, W7 and W8).
+ * The section sits on the Letter_Sheet's warm paper, so it sets its own ink:
+ * --ink is the text colour on the paper, and every text rule here reads it.
+ * Desk tokens never reach this paper. The serif comes from the existing
+ * .sheetSerif class in letter-field.module.css, the only serif module besides
+ * reveal, so this file never names the serif font itself.
+ *
+ * Colours on the paper (#f6ead4), measured in sheet.module.css: #1f1b16 14.38,
+ * #4a4036 8.49, #7a2410 8.45.
+ */
+
+.questions {
+  --ink: #1f1b16;
+  --ink-muted: #4a4036;
+
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--ink);
+}
+
+.legend {
+  float: left;
+  width: 100%;
+  margin: 0 0 8px;
+  padding: 0;
+  font-size: 26px;
+  font-weight: 500;
+  line-height: 1.25;
+  color: var(--ink);
+}
+
+.intro {
+  clear: both;
+  max-width: 560px;
+  margin: 0 0 24px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--ink-muted);
+}
+
+.rows {
+  display: grid;
+  row-gap: 22px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* One question: the wax disc, the line and the Remove control. */
+.row {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin: 0;
+  padding: 0;
+}
+
+.qBody {
+  position: relative;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.qLine {
+  position: relative;
+}
+
+/* A one-line field that grows with its text. The right padding keeps typed
+   text clear of the Edit control (W7.4). */
+.qInput {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 32px;
+  margin: 0;
+  padding: 4px 64px 4px 0;
+  border: 0;
+  border-bottom: 1px solid rgba(31, 27, 22, 0.35);
+  border-radius: 0;
+  background: transparent;
+  font-size: 21px;
+  line-height: 1.5;
+  color: var(--ink);
+  resize: none;
+  overflow: hidden;
+}
+
+.qInput::placeholder {
+  font-style: italic;
+  color: var(--ink-muted);
+  opacity: 1;
+}
+
+.qInput:hover,
+.qInput:focus {
+  border-bottom-color: var(--ink);
+}
+
+.qInput:focus-visible {
+  outline: 2px solid #ff7b1c;
+  outline-offset: 4px;
+}
+
+/* The Edit control: a visual cue only. It is aria-hidden and has no tabIndex,
+   so keyboard and screen reader users reach the field itself (W7.4). */
+.edit {
+  position: absolute;
+  top: 6px;
+  right: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 24px;
+  min-height: 24px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1;
+  color: var(--ink-muted);
+  cursor: text;
+}
+
+/* The Lock_Line: plain text, no border, no hover and no focus stop (W7.5). */
+.lock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 10px 0 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-muted);
+}
+
+.remove {
+  flex: none;
+  min-width: 44px;
+  min-height: 44px;
+  margin: -10px -8px 0 0;
+  padding: 0 8px;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  color: var(--ink-muted);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.remove:focus-visible {
+  outline: 2px solid #ff7b1c;
+  outline-offset: 2px;
+}
+
+.problem {
+  margin: 8px 0 0;
+  min-height: 1.4em;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.4;
+  color: #7a2410;
+}
+
+.pills {
+  clear: both;
+  margin-top: 24px;
+}
+
+.limit {
+  margin: 24px 0 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-muted);
+}
+
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* The Suggestion_Pills under the rows (spec 14, W8.1, W8.2). A pill is at
+   least 40 px tall, fully rounded, with a 1 px rgba(74,64,54,.35) border and
+   EB Garamond italic 17 px text. Long text wraps inside it, so a pill never
+   scrolls the page sideways at 390 px. */
+.askLabel {
+  margin: 0 0 8px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--ink-muted);
+}
+
+.pillList {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 40px;
+  max-width: 100%;
+  margin: 0;
+  padding: 8px 16px;
+  border: 1px solid rgba(74, 64, 54, 0.35);
+  border-radius: 999px;
+  background: transparent;
+  font-size: 17px;
+  font-style: italic;
+  line-height: 1.3;
+  color: var(--ink);
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.pill:hover {
+  border-color: var(--ink);
+}
+
+.pill:focus-visible {
+  outline: 2px solid #ff7b1c;
+  outline-offset: 2px;
+}
+
+/* "+ Write my own" is the same pill in the sans face (W8.2). */
+.writeOwn {
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-style: normal;
+  font-weight: 600;
+}
+
+/* On a narrow sheet the Remove control moves under its question, so the question
+   text keeps the width beside the wax disc instead of wrapping one word a line. */
+@media (max-width: 520px) {
+  .row {
+    flex-wrap: wrap;
+    gap: 12px 14px;
+  }
+
+  .qBody {
+    flex: 1 1 0;
+  }
+
+  .remove {
+    order: 3;
+    flex: 0 0 100%;
+    margin: 0 0 0 44px;
+    padding: 0;
+    min-height: 32px;
+    text-align: left;
+  }
+}

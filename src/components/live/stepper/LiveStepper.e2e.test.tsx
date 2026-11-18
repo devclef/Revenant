@@ -71,8 +71,9 @@ function indexOfOrFail(markup: string, needle: string): number {
 function rowValues(html: string): string[] {
   const values: string[] = [];
   // A textarea renders its value as its text content, not as a value attribute.
+  // The desk's QuestionRow textarea names its lock line in aria-describedby.
   for (const match of html.matchAll(
-    /<textarea[^>]*id="[^"]*-q\d+"[^>]*>([^<]*)<\/textarea>/g,
+    /<textarea[^>]*aria-describedby="[^"]*-lock"[^>]*>([^<]*)<\/textarea>/g,
   )) {
     values.push(match[1] ?? "");
   }
@@ -110,9 +111,9 @@ function renderWriteStep(state: StepperState): string {
 // The Write step: Live_Prefill kept, one starter added, one row removed.
 const WRITTEN = run(
   initialStepperState("write", "demo"),
-  { type: "DRAFT", event: { type: "QUESTION_ADDED" } },
+  { type: "DRAFT", event: { type: "QUESTION_ADDED", text: "" } },
   { type: "DRAFT", event: { type: "QUESTION_CHANGED", index: 1, text: STARTER } },
-  { type: "DRAFT", event: { type: "QUESTION_ADDED" } },
+  { type: "DRAFT", event: { type: "QUESTION_ADDED", text: "" } },
   { type: "DRAFT", event: { type: "QUESTION_CHANGED", index: 2, text: TYPED } },
   { type: "DRAFT", event: { type: "QUESTION_REMOVED", index: 1 } },
 );

@@ -57,23 +57,21 @@ describe("WriteForm sections (spec 09, D2)", () => {
   // L1.4: the disclosure sits after the question rows, not before them.
   it("puts the Receipts_Disclosure after the question rows", () => {
     const html = render({ section: "write", onNext: () => {} });
-    const rows = html.indexOf(LIVE_COPY.authorQuestionAdd);
+    const rows = html.indexOf("data-question-section");
     const receipts = html.indexOf("data-receipts-disclosure");
     expect(rows).toBeGreaterThanOrEqual(0);
     expect(receipts).toBeGreaterThan(rows);
   });
 
-  // L3.5 (spec 11): above Next the write step holds, in this order, the
-  // Occasion control, the letter field, the question rows with Add, one hint
-  // line and the closed Receipts_Disclosure.
+  // L3.5 (spec 11), on the desk (spec 14 W6): above Next the write step holds,
+  // in this order, the Occasion control, the letter field, the P.S. section
+  // with its intro and pills, and the closed Receipts_Disclosure.
   it("holds the write markup in the spec 11 order, with the disclosure closed", () => {
     const html = render({ section: "write", onNext: () => {} });
     const occasion = html.indexOf(DESK_COPY.startFrom);
     const letter = html.indexOf('id="live-letter"');
-    const add = html.indexOf(LIVE_COPY.authorQuestionAdd);
-    const hint = html.indexOf(
-      LIVE_COPY.authorQuestionsHint.replace(/'/g, "&#x27;"),
-    );
+    const add = html.indexOf("data-question-section");
+    const hint = html.indexOf(DESK_COPY.psIntro.replace(/'/g, "&#x27;"));
     const receipts = html.indexOf("data-receipts-disclosure");
     const next = html.indexOf(LIVE_COPY.nextButton);
     for (const index of [occasion, letter, add, hint, receipts, next]) {

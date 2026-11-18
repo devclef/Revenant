@@ -20,4 +20,23 @@ export const DESK_COPY = {
   salutation: "Dear future me,",
   /** The sign-off under the Letter_Field (W4.4). Display only, never sealed. */
   signOff: "— me, today",
+  /** The legend of the P.S. Question_Section (W6.2). */
+  psLegend: "P.S. Questions for opening day",
+  /** The intro under the P.S. legend (W6.3). */
+  psIntro:
+    "These stay on top of the envelope. When it opens, you answer each one from memory, before a word of the letter is shown. You don't answer them now.",
+  /** Shown instead of the suggestion pills once three rows exist (W8.6). */
+  questionsFull: "Three is the most a letter holds.",
+  /** The placeholder of an empty Question_Row input (W7.1). */
+  questionPlaceholder: "Write a question for opening day…",
+  /** The visible text of the Edit control on a Question_Row (W7.4). */
+  edit: "Edit",
+  /** The Lock_Line under each Question_Row input (W7.5). */
+  lockLine: "Answered on opening day, before the letter is shown.",
+  /** The label above the Suggestion_Pills under the rows (W8.1). */
+  askAnother: "Ask another:",
+  /** The visible text of the last pill, after the hidden "+ " (W8.1, W8.7). */
+  writeOwn: "Write my own",
+  /** Accessible name of a Suggestion_Pill, with {text} the suggestion (W8.7). */
+  addSuggestion: "Add the question: {text}",
 } as const;

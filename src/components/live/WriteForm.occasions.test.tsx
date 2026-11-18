@@ -82,7 +82,7 @@ describe("WriteForm Occasion row above the letter field (spec 11, L2.1)", () => 
     const html = render();
     expect(html).not.toContain(LIVE_COPY.answerInLetter);
     expect(html).toContain(
-      LIVE_COPY.authorQuestionsHint.replace(/'/g, "&#x27;"),
+      DESK_COPY.psIntro.replace(/'/g, "&#x27;"),
     );
   });
 });
