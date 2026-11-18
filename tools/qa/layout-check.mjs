@@ -4342,7 +4342,7 @@ const W52_READ = () => {
   mirror.style.cssText = [
     "position:fixed", "left:0", "top:0", "visibility:hidden", "pointer-events:none",
     "margin:0", "padding:0", "border:0", "box-sizing:content-box",
-    `width:${contentW}px`, "white-space:pre",
+    `width:${contentW}px`, "white-space:pre-wrap", "overflow-wrap:break-word",
     `font-family:${cs.fontFamily}`, `font-size:${cs.fontSize}`, `font-weight:${cs.fontWeight}`,
     `font-style:${cs.fontStyle}`, `line-height:${cs.lineHeight}`, `letter-spacing:${cs.letterSpacing}`,
     `word-spacing:${cs.wordSpacing}`,
@@ -4357,12 +4357,15 @@ const W52_READ = () => {
   const top = mirror.getBoundingClientRect().top;
   const baselines = [...mirror.querySelectorAll("span")].map((m) => m.getBoundingClientRect().bottom - top);
   mirror.remove();
+  // One baseline per field line only holds when no line wraps. Consecutive baselines must sit one
+  // line-height apart; otherwise a wrapped line would pair the baselines with the wrong rules.
+  const oneLinePerText = baselines.every((b, i) => i === 0 || Math.abs(b - baselines[i - 1] - lineHeight) <= 1);
   ta.scrollTop = 0;
   const scrollBefore = ta.scrollTop;
   ta.scrollTop = 20 * lineHeight;
   ta.dispatchEvent(new Event("scroll"));
   const scrollAfter = ta.scrollTop;
-  return { missing: false, scrollable: true, attachment: cs.backgroundAttachment, offset, lineHeight, baselines, scrollBefore, scrollAfter };
+  return { missing: false, scrollable: true, attachment: cs.backgroundAttachment, offset, lineHeight, baselines, oneLinePerText, scrollBefore, scrollAfter };
 };
 
 // W5.2 row from the W52_READ result. Before the scroll, lines 1 to 3 are measured. After it, the
@@ -4375,7 +4378,7 @@ export function w52Row({ viewport, raw }) {
   const first = Math.ceil(raw.scrollAfter / raw.lineHeight);
   const before = [0, 1, 2].filter((i) => i < raw.baselines.length).map(at);
   const after = [first, first + 1, first + 2].filter((i) => i < raw.baselines.length).map(at);
-  const r = { attachment: raw.attachment, scrollTop: raw.scrollAfter, before, after };
+  const r = { attachment: raw.attachment, scrollTop: raw.scrollAfter, oneLinePerText: raw.oneLinePerText, before, after };
   const problems = w52Failures(r);
   const list = (rows) => rows.map((x) => `${x.line}:${num(x.gap)}`).join(" ");
   const detail = `scrollTop=${num(raw.scrollAfter, 0)}px attachment=${raw.attachment} rule-offset=${num(raw.offset, 0)}px before=[${list(before)}] after=[${list(after)}] viewport=${viewport}`;
@@ -4474,8 +4477,9 @@ export function ruleGapPx(baseline, offset, lineHeight = 32, bandAt = 31) {
 
 // W5.2 failures. `before` and `after` hold { line, gap } rows measured before and after the
 // internal scroll of the Letter_Field. Each gap must pass baselineGapOk (at most 2 px).
-export function w52Failures({ attachment, scrollTop, before, after }) {
+export function w52Failures({ attachment, scrollTop, oneLinePerText, before, after }) {
   const out = [];
+  if (oneLinePerText === false) out.push("W5.2 a measured line wraps in the Letter_Field, so baselines do not map to its lines (want one line per line of text)");
   if (!(scrollTop > 0)) out.push(`W5.2 the Letter_Field did not scroll inside itself (scrollTop ${num(scrollTop, 0)}px)`);
   if (attachment !== "local") out.push(`W5.2 Letter_Field background-attachment is ${attachment}, want local so the rules move with the text`);
   if (!before?.length || !after?.length) out.push("W5.2 no lines measured before and after the scroll");
