@@ -144,7 +144,8 @@ export const LIVE_COPY = {
     "The server could not finish. Nothing was sealed, and your letter is still here. Try again.",
   clockBody:
     "Your device clock differs from Revenant's clock by more than the demo allows. Nothing was sealed. Check your device time and try again.",
-  busyBody: "Demo 2 is busy right now. Nothing was sealed. Try again later.",
+  busyBody:
+    "The live demo is busy right now. Nothing was sealed. Try again later.",
   missingThenBody:
     "No figure is available for {name}. Nothing was sealed. Choose different figures and try again.",
   fallbackTitle: "Your backup key",
