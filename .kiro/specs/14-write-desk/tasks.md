@@ -203,7 +203,7 @@ Group D (tasks 15 and 16) is the only cuttable work. Whatever is merged on `main
   - Validation: `bash scripts/check.sh`; route budgets after `npm run build`.
   - _Requirements: W6, W7, W8, Q2.4_
 
-- [ ] 5. W9, W13 · The Envelope_Panel, the checklist, the Write_Check and the Fold_Button
+- [x] 5. W9, W13 · The Envelope_Panel, the checklist, the Write_Check and the Fold_Button
   - Agent: `frontend-dev` · Depends on: 4 · Estimated size: M, ~1,300 changed lines · Target: 21 November 2026
   - Never cut.
   - Scope: `src/components/live/desk/EnvelopePanel.tsx`, `InTheEnvelopeCard.tsx`, `FoldButton.tsx`, `checklist.ts`, `write-check.ts`, `panel.module.css` (all new); `desk/WriteDesk.tsx`, `desk/copy.ts`; `src/components/live/WriteForm.tsx` (section `write`: the old Next and its checks call `writeCheck`); `src/components/live/SealPage.tsx` (stops passing the Rehearsal_Line as `footer` for section `write`); and the `*.test.ts(x)` for each file.
