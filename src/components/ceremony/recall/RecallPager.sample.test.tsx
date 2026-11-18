@@ -96,3 +96,20 @@ describe("RecallPager Sample_Note (C5.5)", () => {
     expect(markup).not.toContain(REVEAL_COPY.sampleLabel);
   });
 });
+
+describe("RecallPager Sample_Note position (T2.1)", () => {
+  it("shows the Sample_Note after the Recall_Scale and before No answer and the Nav_Row", () => {
+    const markup = render(
+      { q1: { text: "3.59", noAnswer: false } },
+      { q1: "3.59" },
+    );
+    const scale = markup.indexOf('role="slider"');
+    const note = markup.indexOf(REVEAL_COPY.sampleNote);
+    const noAnswer = markup.indexOf('id="recall-q1-no-answer"');
+    const nav = markup.indexOf('data-nav-row=""');
+    expect(scale).toBeGreaterThan(-1);
+    expect(note).toBeGreaterThan(scale);
+    expect(noAnswer).toBeGreaterThan(note);
+    expect(nav).toBeGreaterThan(noAnswer);
+  });
+});

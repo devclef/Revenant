@@ -358,3 +358,17 @@
     gap: 0.2rem;
   }
 }
+
+/* Fit at 390 x 844 (spec 14 T2.5): the Nav_Row of a number question sits 16 px
+   below the Sample_Note. The row is the pager's direct child of .body, so the
+   text question's Nav_Row (inside .textGroup) is unchanged. */
+.body > :global([data-nav-row]) {
+  margin-top: 16px;
+}
+
+/* Below 600 px the intro line is 15 px (spec 14 T2.5). */
+@media (max-width: 599.98px) {
+  .intro {
+    font-size: 15px;
+  }
+}

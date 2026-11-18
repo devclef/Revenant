@@ -194,3 +194,58 @@ describe("Recall_Pager 200-character text question at 390 x 844 (T1.6), recorded
     expect(narrowRuleBody(".qTitle")).toMatch(/font-size:\s*1rem/);
   });
 });
+
+/*
+ * RECORDED MEASUREMENT, NOT A LIVE CHECK (spec 14 T2.5). Read once from Chromium
+ * at 390 x 844 with scrollY 0, on the built branch with the persona letters sealed
+ * by `npm run seal-personas`. Each row is one persona number question with its
+ * Sample_Note shown. Values are CSS px from getBoundingClientRect. The counter top
+ * is the same for every question because the letter preamble sits above it.
+ *
+ * At scrollY 0 no advance control lies inside the 844 px viewport: the lowest is
+ * 1034 px. The question block (counter top to advance bottom) fits: the tallest is
+ * 589 px, under the 748 px left below the 96 px Top_Bar fallback. This is open
+ * for the layout-check row that owns T2.5.
+ */
+const MEASURED_PERSONA_NUMBER_390X844 = [
+  { persona: "us-maya", metric: "us-gasoline-regular", counterTop: 446, noteBottom: 814, advanceBottom: 924 },
+  { persona: "us-maya", metric: "us-diesel", counterTop: 446, noteBottom: 814, advanceBottom: 987 },
+  { persona: "eu-tomas", metric: "eu-petrol-euro95", counterTop: 446, noteBottom: 861, advanceBottom: 972 },
+  { persona: "eu-tomas", metric: "eu-diesel", counterTop: 446, noteBottom: 861, advanceBottom: 1034 },
+];
+
+const SAMPLES_FILE = resolve(here, "../../../../content/personas/letters/samples.json");
+
+describe("Recall_Pager every persona number question with its Sample_Note at 390 x 844 (T2.5), recorded", () => {
+  it("covers every persona number question that has a Sample_Answer", () => {
+    const samples = JSON.parse(readFileSync(SAMPLES_FILE, "utf8")) as Record<
+      string,
+      Record<string, string[]>
+    >;
+    const expected = Object.entries(samples).flatMap(([persona, metrics]) =>
+      Object.keys(metrics).map((metric) => `${persona}/${metric}`),
+    );
+    const recorded = MEASURED_PERSONA_NUMBER_390X844.map(
+      (row) => `${row.persona}/${row.metric}`,
+    );
+    expect(recorded.sort()).toEqual(expected.sort());
+  });
+
+  it("keeps the question block inside the 844 px viewport below the 96 px Top_Bar", () => {
+    const clearance = 844 - 96;
+    for (const row of MEASURED_PERSONA_NUMBER_390X844) {
+      expect(row.advanceBottom - row.counterTop, `${row.persona} ${row.metric}`).toBeLessThanOrEqual(clearance);
+    }
+  });
+
+  it("keeps the Sample_Note above the Nav_Row (T2.1 order)", () => {
+    for (const row of MEASURED_PERSONA_NUMBER_390X844) {
+      expect(row.noteBottom, `${row.persona} ${row.metric}`).toBeLessThan(row.advanceBottom);
+    }
+  });
+
+  it("sets the Nav_Row 16 px below its top and the intro at 15 px below 600 px", () => {
+    expect(css).toMatch(/\.body > :global\(\[data-nav-row\]\)\s*\{\s*margin-top:\s*16px;/);
+    expect(css).toMatch(/@media \(max-width: 599\.98px\) \{\s*\.intro \{\s*font-size:\s*15px;/);
+  });
+});
