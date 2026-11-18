@@ -25,6 +25,8 @@ import styles from "./live.module.css";
 import letterField from "./letter-field.module.css";
 import { OccasionPicker } from "./OccasionPicker";
 import { OccasionPills } from "./desk/OccasionPills";
+import { WriteDesk } from "./desk/WriteDesk";
+import { useLocalDay } from "./desk/use-local-day";
 import { PressEnvelope } from "./press/PressEnvelope";
 import { PRESS_COPY } from "./press/copy";
 import {
@@ -271,6 +273,10 @@ export function WriteForm({
 }: WriteFormProps) {
   const letterCount = countCodePoints(text);
   const letterRef = useRef<HTMLTextAreaElement>(null);
+  // The visitor's local day for the /demo/live Write step (spec 14, W4.2). It
+  // is the UTC day until mount, so the server markup and the first client
+  // render agree. /seal ignores it and keeps the UTC day.
+  const localDay = useLocalDay();
   // The Occasion last chosen and the rows it applied (L2.2). Memory only: it
   // is never sent, stored, put in the URL or in cookies (L2.5). A fresh form
   // treats the default question as the untouched row, so the first Occasion
@@ -326,9 +332,13 @@ export function WriteForm({
   // one column at most 44 rem wide. /seal keeps the plain panel.
   const panelClass =
     mode === "demo" ? `${styles.panel} ${styles.liveWrite}` : styles.panel;
-  // The sealing day for the self-reported period rule: today in UTC unless the
-  // page gives one.
-  const today = sealingDay ?? new Date().toISOString().slice(0, 10);
+  // The sealing day for the self-reported period rule. On /demo/live it is the
+  // visitor's local day (spec 14, W9.4); /seal keeps the UTC day.
+  const today =
+    sealingDay ??
+    (mode === "demo"
+      ? localDay.day
+      : new Date().toISOString().slice(0, 10));
   const problems = validateWrite({
     text,
     metricIds,
@@ -489,6 +499,127 @@ export function WriteForm({
       </button>
     ) : null;
 
+  // The pieces the Write desk places (spec 14, W1). The `all` form renders the
+  // same pieces inside its single panel.
+  const authorQuestions = (
+    <AuthorQuestions
+      questions={questions}
+      tooLongIndices={tooLongIndices}
+      onAdd={() => {
+        onTouch(TOUCH_FIELDS.questions);
+        onQuestionAdd();
+      }}
+      onChange={(index, next) => {
+        onTouch(TOUCH_FIELDS.questions);
+        onQuestionChange(index, next);
+      }}
+      onRemove={(index) => {
+        onTouch(TOUCH_FIELDS.questions);
+        onQuestionRemove(index);
+      }}
+    />
+  );
+
+  const receipts = (
+    <>
+      <ReceiptsDisclosure
+        status={figuresStatus}
+        openRequest={receiptsRequest}
+        picker={
+          <FigurePicker
+            series={series}
+            selected={metricIds}
+            atLimit={atLimit}
+            details={figureDetails}
+            mode={mode}
+            onToggle={(metricId) => {
+              onTouch(TOUCH_FIELDS.figures);
+              onToggleFigure(metricId);
+            }}
+          />
+        }
+        selfReported={
+          <SelfReportedRows
+            rows={selfReported}
+            sealingDay={today}
+            touched={touched}
+            onTouch={onTouch}
+            onAdd={() => {
+              onTouch(TOUCH_FIELDS.selfReported);
+              onSelfReportedAdd();
+            }}
+            onChange={(index, field, next) => {
+              onSelfReportedChange(index, field, next);
+            }}
+            onRemove={(index) => {
+              onTouch(TOUCH_FIELDS.selfReported);
+              onSelfReportedRemove(index);
+            }}
+          />
+        }
+      />
+      <p id="live-figures-problem" className={styles.problem}>
+        {nothingToTestifyProblem}
+      </p>
+    </>
+  );
+
+  const writeActions = (
+    <div className={`${styles.actions} ${styles.writeActions}`}>
+      <button
+        type="button"
+        className={styles.secondary}
+        onClick={() => setReceiptsRequest(nextOpenRequest)}
+      >
+        {LIVE_COPY.receiptsAction}
+      </button>
+      <button
+        type="button"
+        className={styles.primary}
+        onClick={() => {
+          const field = !letterValid
+            ? TOUCH_FIELDS.letter
+            : !questionsValid
+              ? TOUCH_FIELDS.questions
+              : !selfReportedValid
+                ? TOUCH_FIELDS.selfReported
+                : TOUCH_FIELDS.figures;
+          pressNext(
+            letterValid && questionsValid && selfReportedValid && figuresValid,
+            field,
+          );
+        }}
+      >
+        {LIVE_COPY.nextButton}
+      </button>
+    </div>
+  );
+
+  if (section === "write") {
+    return (
+      <WriteDesk
+        chosenOccasion={chosenOccasion}
+        onChooseOccasion={(id) => {
+          onTouch(TOUCH_FIELDS.letter);
+          chooseOccasionQuestions(id);
+        }}
+        placeholder={occasionPlaceholder(chosenOccasion)}
+        text={text}
+        letterProblem={letterProblem}
+        onLetterChange={(value) => {
+          onTouch(TOUCH_FIELDS.letter);
+          onTextChange(value);
+        }}
+        onLetterBlur={() => onTouch(TOUCH_FIELDS.letter)}
+        letterRef={letterRef}
+        authorQuestions={authorQuestions}
+        receipts={receipts}
+        actions={writeActions}
+        footer={footer}
+      />
+    );
+  }
+
   const body = (
     <>
       {all && realDate === undefined ? <DemoLabel /> : null}
@@ -549,69 +680,9 @@ export function WriteForm({
         </div>
       ) : null}
 
-      {shows("write") ? (
-        <AuthorQuestions
-          questions={questions}
-          tooLongIndices={tooLongIndices}
-          onAdd={() => {
-            onTouch(TOUCH_FIELDS.questions);
-            onQuestionAdd();
-          }}
-          onChange={(index, next) => {
-            onTouch(TOUCH_FIELDS.questions);
-            onQuestionChange(index, next);
-          }}
-          onRemove={(index) => {
-            onTouch(TOUCH_FIELDS.questions);
-            onQuestionRemove(index);
-          }}
-        />
-      ) : null}
+      {shows("write") ? authorQuestions : null}
 
-      {shows("write") ? (
-        <>
-          <ReceiptsDisclosure
-            status={figuresStatus}
-            openRequest={receiptsRequest}
-            picker={
-              <FigurePicker
-                series={series}
-                selected={metricIds}
-                atLimit={atLimit}
-                details={figureDetails}
-                mode={mode}
-                onToggle={(metricId) => {
-                  onTouch(TOUCH_FIELDS.figures);
-                  onToggleFigure(metricId);
-                }}
-              />
-            }
-            selfReported={
-              <SelfReportedRows
-                rows={selfReported}
-                sealingDay={today}
-                touched={touched}
-                onTouch={onTouch}
-                onAdd={() => {
-                  onTouch(TOUCH_FIELDS.selfReported);
-                  onSelfReportedAdd();
-                }}
-                onChange={(index, field, next) => {
-                  onSelfReportedChange(index, field, next);
-                }}
-                onRemove={(index) => {
-                  onTouch(TOUCH_FIELDS.selfReported);
-                  onSelfReportedRemove(index);
-                }}
-              />
-            }
-          />
-          <p id="live-figures-problem" className={styles.problem}>
-            {nothingToTestifyProblem}
-          </p>
-        </>
-      ) : null}
-
+      {shows("write") ? receipts : null}
       {all && realDate !== undefined ? (
         <>
           <p className={styles.explain}>{REAL_COPY.testNotice}</p>
@@ -751,42 +822,6 @@ export function WriteForm({
           <StepStatus state={state} />
         </div>
       ) : null}
-
-      {section === "write" ? (
-        <div className={`${styles.actions} ${styles.writeActions}`}>
-          <button
-            type="button"
-            className={styles.secondary}
-            onClick={() => setReceiptsRequest(nextOpenRequest)}
-          >
-            {LIVE_COPY.receiptsAction}
-          </button>
-          <button
-            type="button"
-            className={styles.primary}
-            onClick={() => {
-              const field = !letterValid
-                ? TOUCH_FIELDS.letter
-                : !questionsValid
-                  ? TOUCH_FIELDS.questions
-                  : !selfReportedValid
-                    ? TOUCH_FIELDS.selfReported
-                    : TOUCH_FIELDS.figures;
-              pressNext(
-                letterValid &&
-                  questionsValid &&
-                  selfReportedValid &&
-                  figuresValid,
-                field,
-              );
-            }}
-          >
-            {LIVE_COPY.nextButton}
-          </button>
-        </div>
-      ) : null}
-
-      {section === "write" ? footer : null}
 
     </>
   );

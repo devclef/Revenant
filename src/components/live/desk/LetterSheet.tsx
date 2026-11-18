@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, type RefObject } from "react";
+import { useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
 
 import { LIVE_COPY } from "../copy";
 import { countCodePoints } from "../form";
@@ -24,6 +24,8 @@ export interface LetterSheetProps {
   onBlur?: () => void;
   /** Optional ref to the textarea, for focus from the parent. */
   fieldRef?: RefObject<HTMLTextAreaElement | null>;
+  /** Content under the problem line, inside the sheet (the author questions). */
+  children?: ReactNode;
 }
 
 /** The letter count as the Letter_Sheet shows it (W4.4): grouped, e.g. "1,234 of 5,000 characters". */
@@ -48,6 +50,7 @@ export function LetterSheet({
   onChange,
   onBlur,
   fieldRef,
+  children,
 }: LetterSheetProps) {
   const ownRef = useRef<HTMLTextAreaElement | null>(null);
   const field = fieldRef ?? ownRef;
@@ -65,7 +68,9 @@ export function LetterSheet({
   return (
     <section className={styles.sheet} data-letter-sheet="">
       <div className={styles.topRow}>
-        <p className={styles.salutation}>{DESK_COPY.salutation}</p>
+        <p className={`${styles.salutation} ${letterField.sheetSerif}`}>
+          {DESK_COPY.salutation}
+        </p>
         <SheetDate />
       </div>
 
@@ -84,7 +89,9 @@ export function LetterSheet({
       />
 
       <div className={styles.bottomRow}>
-        <p className={styles.signOff}>{DESK_COPY.signOff}</p>
+        <p className={`${styles.signOff} ${letterField.sheetSerif}`}>
+          {DESK_COPY.signOff}
+        </p>
         <p id="live-letter-count" className={styles.count}>
           {letterCountText(value)}
         </p>
@@ -93,6 +100,8 @@ export function LetterSheet({
       <p id="live-letter-problem" className={styles.problem}>
         {problem}
       </p>
+
+      {children}
     </section>
   );
 }

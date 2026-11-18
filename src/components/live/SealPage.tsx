@@ -277,9 +277,10 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
   );
 
   /**
-   * One stepper step in demo mode: its one h1, then its content. Write and Seal
-   * each get a temporary h1 that holds the step name and is the focus target.
-   * Every other step shows the page heading, so each step has exactly one h1.
+   * One stepper step in demo mode: its one h1, then its content. The Write
+   * step's h1 is inside its desk, and the Seal step gets a temporary h1 (see
+   * stepHeading). Every other step shows the page heading, so each step has
+   * exactly one h1.
    */
   function renderDemoStep(view: StepView) {
     // The Seal step's own h1 (SealStep, spec 14 S3.2) is the step's heading
@@ -473,12 +474,14 @@ const SEAL_FORM_TAGS: ReadonlySet<string> = new Set([
 ]);
 
 /**
- * The one h1 of a demo step. Write and Seal hold the step name in a temporary
- * h1 that takes focus when the step opens. The other steps hold the page's
- * liveHeading.
+ * The one h1 of a demo step. The Write step's h1 is the desk's StepHeader
+ * (spec 14, W2.3), so it has none here. The Seal step holds its step name in a
+ * temporary h1 that takes focus when the step opens. The other steps hold the
+ * page's liveHeading.
  */
 function stepHeading(step: LiveStep): ReactNode {
-  if (step === "write" || step === "seal") {
+  if (step === "write") return null;
+  if (step === "seal") {
     return (
       <h1
         className={`${styles.liveHeading} ${styles.cardHeading}`}

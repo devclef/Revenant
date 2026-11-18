@@ -61,3 +61,14 @@
 .sheetLetter {
   font-family: var(--font-serif);
 }
+
+/*
+ * The serif for the Letter_Sheet's salutation and sign-off (spec 14, W4.2,
+ * W4.4: EB Garamond italic). They sit here, not in sheet.module.css, because
+ * src/test/serif-scope.test.ts allows the serif only in this module and the
+ * Letter_Text module. sheet.module.css sets no font-family on them.
+ */
+.sheetSerif {
+  font-family: var(--font-serif);
+  font-style: italic;
+}

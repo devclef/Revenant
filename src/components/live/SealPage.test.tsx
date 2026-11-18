@@ -149,8 +149,8 @@ describe("SealPage in real mode", () => {
     expect(root).toBeGreaterThanOrEqual(0);
     const occasions = demo.search(/<fieldset class="[^"]*occasions[^"]*"/);
     expect(occasions).toBeGreaterThan(root);
-    // The live Write step panel carries the liveWrite class the two-column rule matches.
-    expect(demo).toMatch(/data-card="live-step-write" class="[^"]*liveWrite[^"]*"/);
+    // The Write step is the desk (spec 14, W1): its root carries data-write-desk.
+    expect(demo).toContain('data-write-desk=""');
   });
 
   it("defaults to demo mode when no mode is given", () => {
@@ -242,7 +242,7 @@ describe("the Sealing_Flow step order (same in both modes)", () => {
 });
 
 describe("SealPage in demo mode (/demo/live)", () => {
-  it("holds no page heading on the Write step; the step's own h1 holds the step name", () => {
+  it("holds no page heading on the Write step; the desk's own h1 holds the heading", () => {
     const html = renderToStaticMarkup(
       createElement(SealPage, {
         rpId: "revenant.devclef.se",
@@ -251,9 +251,10 @@ describe("SealPage in demo mode (/demo/live)", () => {
       }),
     );
     expect(LIVE_COPY.liveHeading).toBe("Seal your own letter");
-    expect(html).not.toContain("Seal your own letter");
+    // The eyebrow carries the step's name as plain text, not as a heading (W2.2).
+    expect(html).toMatch(/<p class="[^"]*eyebrow[^"]*">Seal your own letter<\/p>/);
     expect(html).toMatch(
-      /<h1[^>]*data-step-heading=""[^>]*tabindex="-1"[^>]*>Write<\/h1>/,
+      /<h1[^>]*data-step-heading=""[^>]*tabindex="-1"[^>]*>Write to the you who opens this\.<\/h1>/,
     );
     expect(html.split("<h1").length - 1).toBe(1);
   });
@@ -285,15 +286,19 @@ describe("SealPage has exactly one h1 per demo step", () => {
     for (const step of ["write", "seal"] as const) {
       pageStub.step = step;
       const html = renderToStaticMarkup(createElement(SealPage, base));
-      // Seal's h1 is the Seal step's own heading (spec 14, S3.2).
-      const name = step === "write" ? "Write" : "Press the seal\\.";
+      // Write's h1 is the desk heading (spec 14, W2.3); Seal's h1 is the Seal
+      // step's own heading (spec 14, S3.2).
+      const name =
+        step === "write" ? DESK_COPY.heading : "Press the seal\\.";
       expect(html, step).toMatch(
         new RegExp(
           `<h1[^>]*data-step-heading=""[^>]*tabindex="-1"[^>]*>${name}</h1>`,
         ),
       );
       expect(html.split("<h1").length - 1, step).toBe(1);
-      expect(html, step).not.toContain("Seal your own letter");
+      if (step === "seal") {
+        expect(html, step).not.toContain("Seal your own letter");
+      }
     }
   });
 
@@ -401,14 +406,23 @@ describe("SealPage rehearsal line (spec 11, L4.1, L4.3)", () => {
     ]) {
       expect(lower, phrase).not.toContain(phrase);
     }
-    for (const word of ["right now", "today", "currently"]) {
+    for (const word of ["right now", "currently"]) {
       expect(lower, word).not.toContain(word);
+    }
+    // The intro and the sign-off are the desk's own copy (spec 14, W2.4, W4.4),
+    // so "today" is allowed there. No question text may use it (tone.md).
+    const questionTexts = [
+      ...html.matchAll(/<textarea[^>]*class="[^"]*textarea[^"]*"[^>]*>([^<]*)<\/textarea>/g),
+    ].map((m) => (m[1] ?? "").toLowerCase());
+    expect(questionTexts.length).toBeGreaterThan(0);
+    for (const text of questionTexts) {
+      expect(text).not.toMatch(/\btoday\b/);
     }
   });
 
-  it("puts no Demo label above the letter field, from the Write paper's start", () => {
+  it("puts no Demo label above the letter field, from the Write desk's start", () => {
     const html = renderToStaticMarkup(createElement(SealPage, { ...base, rehearsal: true }));
-    const paperAt = html.indexOf('data-card="live-step-write"');
+    const paperAt = html.indexOf('data-write-desk=""');
     const fieldAt = html.indexOf('id="live-letter"');
     expect(paperAt).toBeGreaterThan(-1);
     expect(fieldAt).toBeGreaterThan(paperAt);

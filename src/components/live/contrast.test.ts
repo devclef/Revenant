@@ -27,6 +27,7 @@ const tokensCss = readFileSync(
   "utf8",
 );
 const liveCss = readFileSync(resolve(here, "live.module.css"), "utf8");
+const sheetCss = readFileSync(resolve(here, "desk", "sheet.module.css"), "utf8");
 
 const WCAG_AA_NORMAL = 4.5;
 
@@ -244,5 +245,24 @@ describe("Seal step text meets WCAG 2.2 AA (spec 14, S3 and S6)", () => {
 
   it.each(SEAL_PAIRS)("%s is at least 4.5:1", (_label, text, surface) => {
     expect(contrastRatio(text, surface)).toBeGreaterThanOrEqual(WCAG_AA_NORMAL);
+  });
+});
+
+// The Letter_Sheet (spec 14, W4, W5): its paper and the three inks on it. The
+// paper is read from sheet.module.css, so the pairs follow the stylesheet.
+describe("the Write desk's Letter_Sheet text meets WCAG 2.2 AA (W4, W5)", () => {
+  const SHEET_TEXT_PAIRS: ReadonlyArray<readonly [string, string]> = [
+    ["Letter_Field ink and salutation (#1f1b16)", "#1f1b16"],
+    ["date, sign-off and count (#4a4036)", "#4a4036"],
+    ["Letter_Field placeholder (#6b5f51)", "#6b5f51"],
+  ];
+
+  it("reads the sheet paper from sheet.module.css", () => {
+    expect(sheetCss).toMatch(/background-color:\s*#f6ead4;/);
+  });
+
+  it.each(SHEET_TEXT_PAIRS)("%s is at least 4.5:1 on the sheet paper", (_label, text) => {
+    expect(sheetCss.toLowerCase()).toContain(text);
+    expect(contrastRatio(text, "#f6ead4")).toBeGreaterThanOrEqual(WCAG_AA_NORMAL);
   });
 });
