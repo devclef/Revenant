@@ -183,10 +183,10 @@ describe("TestifyContext: the four recall items appear once (spec 11 P3.5)", () 
     },
   );
 
-  it("shows no fictional-persona note in the Top_Bar during recall at either width", () => {
+  it("shows the persona note in the Top_Bar during recall too (B1.4)", () => {
     for (const p of personaList) {
-      expect(topBarShowsNotice(p.display_name, false, "recall")).toBe(false);
-      expect(topBarShowsNotice(p.display_name, true, "recall")).toBe(false);
+      expect(topBarShowsNotice(p.display_name)).toBe(true);
+      expect(topBarShowsNotice(p.display_name)).toBe(true);
     }
   });
 });

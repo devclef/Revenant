@@ -251,6 +251,13 @@
   outline-offset: 2px;
 }
 
+/* Skip with no sequence running (B1.3): same box and label, 40 % opacity. It
+   is a native disabled button, so it is out of the Tab order. */
+[data-topbar-slot="skip"]:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
 /* The control's icon and label. At 600 px and wider the label shows and the
    icon is hidden. Below 600 px the phone block swaps them (P5.2). */
 .controlIcon {

@@ -57,12 +57,13 @@ describe("the Top_Bar sound toggle (C4.4, P5.2)", () => {
     expect(skip).toBeGreaterThan(sound);
   });
 
-  it("sits between Calm and the end of the bar when no sequence runs", () => {
+  it("sits between Calm and Skip, with Skip disabled, when no sequence runs", () => {
     const html = bar(off, false);
     const calm = at(html, `aria-label="${CALM}"`);
     const sound = at(html, "data-topbar-sound");
     expect(sound).toBeGreaterThan(calm);
-    expect(html).not.toContain(`aria-label="${SKIP}"`);
+    expect(html).toMatch(/data-topbar-slot="skip"[^>]*disabled/);
+    expect(sound).toBeLessThan(at(html, "data-topbar-slot=\"skip\""));
   });
 
   it("is off by default and offers to turn sound on", () => {
@@ -84,18 +85,18 @@ describe("the Top_Bar sound toggle (C4.4, P5.2)", () => {
     expect(html).not.toContain("data-topbar-sound");
   });
 
-  it("marks the sound control as the last control when Skip is hidden, and moves the mark off Calm", () => {
+  it("keeps the sound control off the last-control mark; Skip carries it", () => {
     const html = bar(off, false);
-    expect(html).toMatch(/<button[^>]*data-topbar-sound[^>]*data-topbar-last/);
-    expect(html).not.toMatch(new RegExp(`aria-label="${CALM}"[^>]*data-topbar-last`));
+    expect(html).not.toMatch(/data-topbar-sound[^>]*data-topbar-last/);
+    expect(html).toMatch(/data-topbar-slot="skip"[^>]*data-topbar-last="true"/);
   });
 });
 
 describe("Top_Bar Skip visibility (C4.5)", () => {
-  it("is absent while no sequence runs", () => {
+  it("is disabled while no sequence runs", () => {
     const html = bar(off, false);
-    expect(html).not.toContain(`aria-label="${SKIP}"`);
-    expect(html).not.toMatch(/data-topbar-last[^>]*aria-label="Skip"/);
+    expect(html).toMatch(/data-topbar-slot="skip"[^>]*disabled/);
+    expect(html).toMatch(/data-topbar-last[^>]*aria-label="Skip"/);
   });
 
   it("is present while a sequence runs, and is then the last control", () => {
