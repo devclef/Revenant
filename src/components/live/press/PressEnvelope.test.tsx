@@ -120,6 +120,18 @@ describe("PressEnvelope, Setting_State (P5.4 to P5.6)", () => {
   });
 });
 
+describe("PressEnvelope, running prompt", () => {
+  it("marks a running prompt with data-press-running and keeps aria-disabled true", () => {
+    const html = render({ disabled: true, running: true });
+    expect(html).toContain("data-press-running");
+    expect(html).toContain('aria-disabled="true"');
+  });
+
+  it("does not mark an unready press that is not running", () => {
+    expect(render({ disabled: true })).not.toContain("data-press-running");
+  });
+});
+
 describe("PressEnvelope, failure lift (P4.3, P4.4)", () => {
   it("renders the lifted seal with no pool stage and no press", () => {
     const html = render({ inert: true, pose: "lifted" });
@@ -133,5 +145,32 @@ describe("PressEnvelope, failure lift (P4.3, P4.4)", () => {
     const html = render({ inert: true, pose: "lifted", mode: "setting" });
     expect(html).not.toContain(PRESS_COPY.setting);
     expect(html).not.toContain(PRESS_COPY.chooseFirst);
+  });
+});
+
+// Spec 14, S6.2, S6.5 and S6.7: the caption, the ready halo and the line tone.
+describe("PressEnvelope caption, ready and tone (spec 14, S6)", () => {
+  it("shows the caption on the envelope and keeps it out of the accessible name", () => {
+    const html = render({ caption: "To me, on opening day" });
+    expect(html).toMatch(
+      /<span class="[^"]*caption[^"]*">To me, on opening day<\/span>/,
+    );
+    expect(html).toContain(`aria-label="${PRESS_COPY.name}"`);
+    expect(html).toMatch(
+      /<span class="[^"]*envelope[^"]*" aria-hidden="true">/,
+    );
+  });
+
+  it("marks the button ready only when it is ready and not blocked", () => {
+    expect(render({ ready: true })).toMatch(/<button[^>]*data-ready=""/);
+    expect(render({ ready: true, disabled: true })).not.toMatch(/data-ready=/);
+    expect(render({ ready: false })).not.toMatch(/data-ready=/);
+  });
+
+  it("colours the status line muted by default and accent when asked", () => {
+    expect(render()).toMatch(/data-press-line=""[^>]*data-tone="muted"/);
+    expect(render({ tone: "accent" })).toMatch(
+      /data-press-line=""[^>]*data-tone="accent"/,
+    );
   });
 });

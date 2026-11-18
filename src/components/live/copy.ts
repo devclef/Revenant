@@ -19,6 +19,15 @@
 export const LIVE_COPY = {
   heading: "Seal a letter of your own",
   intro: "This letter is sealed in your browser with your own passkey.",
+  /** The Seal step heading (spec 14, S3.2). Its own h1, the step's focus target. */
+  sealHeading: "Press the seal.",
+  /** The one in-browser paragraph of the Seal step (spec 14, S3.3). */
+  sealParagraph:
+    'This letter is sealed in your browser with your own passkey. Your device will ask for the passkey twice. The passkey will be named "Revenant demo" in your passkey manager.',
+  /** The text control that opens the cross-device line (spec 14, S5.2). */
+  crossDeviceQuestion: "Opening on another device?",
+  /** The text control that returns to the Write step (spec 14, S5.3). */
+  backToLetter: "Back to the letter",
   letterLabel: "Your letter",
   letterHint: "Plain text. Up to 5,000 characters.",
   letterCount: "{count} of 5,000 characters",
@@ -106,10 +115,12 @@ export const LIVE_COPY = {
     "This device may not be able to lock the letter with a passkey. If so, you will need a backup key card.",
   warningUnticked:
     "Tick the box to confirm you understand, then create your passkey.",
-  /** The Backup_Choice legend and options (spec 13, P7.1). */
-  backupChoiceLegend: "The backup key",
+  /** The Backup_Choice legend and options (spec 13, P7.1; spec 14, X1.3 and S4.3). */
+  backupChoiceLegend: "If you lose this passkey",
   backupChoiceCard: "Download a backup key card",
+  backupChoiceCardHelp: "A small image with a QR code. It opens the letter if the passkey is gone.",
   backupChoiceSkip: "Skip it. A lost passkey means a lost letter.",
+  backupChoiceSkipHelp: "Fine for a 30-second rehearsal.",
   /** The field message while no Backup_Choice is selected (P7.2). */
   backupChoiceUnchosen: "Choose one option for the backup key first.",
   unavailable:

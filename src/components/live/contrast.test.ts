@@ -179,3 +179,70 @@ describe("the rendered colours are the tokens the pairs were read from", () => {
     expect(readHexToken(tokensCss, "--env-ink")).toMatch(/^#[0-9a-f]{6}$/);
   });
 });
+
+// Spec 14, S4: the Backup_Card text. The selected card's tint is composited over
+// the card base in the test itself, so the ratio is computed from the CSS values
+// and no figure is written by hand.
+describe("Backup_Card text meets WCAG 2.2 AA on the card and the selected tint (spec 14, S4)", () => {
+  const cardCss = readFileSync(resolve(here, "backup-choice.module.css"), "utf8");
+
+  /** Opaque hex from an `rgba(r, g, b, a)` tint composited over an opaque hex base. */
+  function compositeOver(rgba: string, base: string): string {
+    const m = rgba.match(/rgba\((\d+),\s*(\d+),\s*(\d+),\s*([\d.]+)\)/);
+    if (!m) throw new Error(`no rgba tint in ${rgba}`);
+    const [tr, tg, tb] = [m[1], m[2], m[3]].map(Number);
+    const a = Number(m[4]);
+    const [br, bg, bb] = hexToChannels(base).map((c) => Math.round(c * 255));
+    const mix = (t: number, b: number) => Math.round(a * t + (1 - a) * b);
+    return (
+      "#" +
+      [mix(tr, br), mix(tg, bg), mix(tb, bb)]
+        .map((c) => c.toString(16).padStart(2, "0"))
+        .join("")
+    );
+  }
+
+  const cardBase = /background:\s*(#[0-9a-fA-F]{6})/.exec(
+    ruleBlocks(cardCss, ".card")[0] ?? "",
+  )?.[1];
+  const selectedTint = /background:\s*linear-gradient\(\s*(rgba\([^)]*\))/.exec(
+    ruleBlocks(cardCss, ".card:has(.radio:checked)")[0] ?? "",
+  )?.[1];
+  const helpColour = /color:\s*(#[0-9a-fA-F]{6})/.exec(ruleBlocks(cardCss, ".help")[0] ?? "")?.[1];
+  const titleColour = /color:\s*(#[0-9a-fA-F]{6})/.exec(ruleBlocks(cardCss, ".title")[0] ?? "")?.[1];
+
+  it("reads the card base, the selected tint, the help and the title from the CSS", () => {
+    expect(cardBase).toMatch(/^#[0-9a-f]{6}$/i);
+    expect(selectedTint).toBeDefined();
+    expect(helpColour).toMatch(/^#[0-9a-f]{6}$/i);
+    expect(titleColour).toMatch(/^#[0-9a-f]{6}$/i);
+  });
+
+  it("keeps the help line at least 4.5:1 on the card base", () => {
+    const ratio = contrastRatio(helpColour as string, cardBase as string);
+    expect(ratio).toBeGreaterThanOrEqual(WCAG_AA_NORMAL);
+  });
+
+  it("keeps the help line #bdb4dc at least 4.5:1 on the selected tint", () => {
+    const tinted = compositeOver(selectedTint as string, cardBase as string);
+    expect(helpColour).toBe("#bdb4dc");
+    expect(contrastRatio(helpColour as string, tinted)).toBeGreaterThanOrEqual(WCAG_AA_NORMAL);
+  });
+
+  it("keeps the white title at least 4.5:1 on the selected tint", () => {
+    const tinted = compositeOver(selectedTint as string, cardBase as string);
+    expect(contrastRatio(titleColour as string, tinted)).toBeGreaterThanOrEqual(WCAG_AA_NORMAL);
+  });
+});
+
+// Spec 14, S3 and S6: the Seal step text and the accent status line.
+describe("Seal step text meets WCAG 2.2 AA (spec 14, S3 and S6)", () => {
+  const SEAL_PAIRS: ReadonlyArray<readonly [string, string, string]> = [
+    ["Seal step body and muted status line (#bdb4dc on the card)", "#bdb4dc", "#15111f"],
+    ["Seal step accent status line (#ff9a4d on the step)", "#ff9a4d", "#0b0912"],
+  ];
+
+  it.each(SEAL_PAIRS)("%s is at least 4.5:1", (_label, text, surface) => {
+    expect(contrastRatio(text, surface)).toBeGreaterThanOrEqual(WCAG_AA_NORMAL);
+  });
+});

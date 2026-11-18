@@ -1,0 +1,120 @@
+/*
+ * Feature: 14-write-desk (spec 14, S3 and S5). The Seal step on its own dark
+ * surface: the text column beside the press column from 900 px. Below 900 px
+ * the text comes first in one column. Every text colour is set here, on this
+ * surface (#ffffff and #bdb4dc on #0b0912), never inherited from the paper panel.
+ */
+
+.step {
+  box-sizing: border-box;
+  max-width: 1240px;
+  margin-inline: auto;
+  padding: 32px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 32px;
+  background-color: #0b0912;
+  color: #ffffff;
+}
+
+.text {
+  max-width: 520px;
+  min-width: 0;
+}
+
+.heading {
+  margin: 0 0 16px;
+  font-family: var(--font-sans);
+  font-size: 48px;
+  font-weight: 900;
+  letter-spacing: -0.03em;
+  line-height: 1.05;
+  color: #ffffff;
+}
+
+.heading:focus-visible {
+  outline: 2px solid #ff7b1c;
+  outline-offset: 4px;
+}
+
+.body {
+  margin: 0 0 16px;
+  font-family: var(--font-sans);
+  font-size: 17px;
+  line-height: 1.5;
+  color: #bdb4dc;
+}
+
+.links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 20px;
+  margin: 16px 0 0;
+  font-size: 13px;
+  color: #bdb4dc;
+}
+
+.textLink {
+  min-height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  font: inherit;
+  color: #bdb4dc;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.textLink:focus-visible {
+  outline: 2px solid #ff7b1c;
+  outline-offset: 3px;
+}
+
+.textLink:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.crossDevice {
+  margin: 12px 0 0;
+  font-size: 15px;
+  line-height: 1.5;
+  color: #bdb4dc;
+}
+
+.fallback {
+  min-height: 44px;
+  margin: 0 0 16px;
+  padding: 0 18px;
+  border: 1px solid #bdb4dc;
+  border-radius: 6px;
+  background: transparent;
+  font: inherit;
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.fallback:focus-visible {
+  outline: 2px solid #ff7b1c;
+  outline-offset: 3px;
+}
+
+/* The press column is its own container, so the envelope sizes to it (S6.8). */
+.press {
+  container-type: inline-size;
+  display: grid;
+  justify-items: center;
+  min-width: 0;
+}
+
+@media (min-width: 900px) {
+  .step {
+    grid-template-columns: minmax(0, 520px) minmax(0, 1fr);
+    column-gap: 64px;
+    align-items: center;
+  }
+}

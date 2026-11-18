@@ -132,6 +132,8 @@ export interface SealPageProps {
 /** How the write form is shown for one stepper step (spec 09, D2). */
 interface WriteNav {
   section?: WriteSection;
+  /** False when the page holds the step heading (every step but Seal). */
+  sealHeading?: boolean;
   /** Content inside the Write paper, after the action row. */
   footer?: ReactNode;
   onNext?: () => void;
@@ -280,9 +282,13 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
    * Every other step shows the page heading, so each step has exactly one h1.
    */
   function renderDemoStep(view: StepView) {
+    // The Seal step's own h1 (SealStep, spec 14 S3.2) is the step's heading
+    // while the seal form shows, so the temporary Seal h1 is not rendered.
+    const sealOwnsHeading =
+      view.step === "seal" && SEAL_FORM_TAGS.has(state.tag);
     return (
       <>
-        {stepHeading(view.step)}
+        {sealOwnsHeading ? null : stepHeading(view.step)}
         {demoStepContent(view)}
       </>
     );
@@ -334,6 +340,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
       ) : undefined;
     return writeForm({
       section,
+      sealHeading: view.step === "seal",
       onNext: view.next,
       // Back is offered only before a passkey prompt has started (spec 09, D2.2).
       onBack: view.canGoBack && state.tag === "write" ? view.back : undefined,
@@ -388,6 +395,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
     return (
       <WriteForm
         section={nav?.section}
+        sealHeading={nav?.sealHeading}
         footer={nav?.footer}
         onNext={nav?.onNext}
         onBack={nav?.onBack}
@@ -453,6 +461,16 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
     );
   }
 }
+
+/** The seal states that render the Seal step form (WriteForm section seal). */
+const SEAL_FORM_TAGS: ReadonlySet<string> = new Set([
+  "write",
+  "creating",
+  "created",
+  "confirming",
+  "preparing",
+  "sealing",
+]);
 
 /**
  * The one h1 of a demo step. Write and Seal hold the step name in a temporary

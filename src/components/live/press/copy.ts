@@ -8,7 +8,11 @@ export const PRESS_COPY = {
   /** The accessible name of the one press control. */
   name: "Press the seal",
   /** The one plain line shown while the press is disabled (P1.5). */
-  chooseFirst: "Choose what to do about the backup key first.",
+  chooseFirst: "Choose a backup option first.",
+  /** The Press_Status_Line once a choice is made, with full motion (S6.7). */
+  holdToSeal: "Press and hold the wax to seal it.",
+  /** The Press_Status_Line once a choice is made, with reduced or calm motion (S6.7). */
+  pressToSeal: "Press the wax to seal it.",
   /**
    * The one plain line while the press is blocked after a Backup_Choice is made
    * (P1.5). It points at the fields, so the status line is never empty.
