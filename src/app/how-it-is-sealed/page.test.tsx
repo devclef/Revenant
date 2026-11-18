@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest";
 
 import { BRAND_COPY } from "@/components/brand/copy";
 import { HOW_COPY } from "@/components/how/copy";
+import { SCENE_COPY } from "@/components/ceremony/scene/copy";
 
 import HowItIsSealedPage from "./page";
 
@@ -140,6 +141,22 @@ describe("How_Page statements (R18.1 to R18.5)", () => {
     expect(body).toContain(
       "Letters sealed on revenant.devclef.se count as test letters",
     );
+  });
+});
+
+describe("How_Page Demo chip and plain Scene (spec 14 B1.1, D2)", () => {
+  it("renders the Demo chip in the Top_Bar chip slot, after the wordmark", () => {
+    const chip = /<span\b[^>]*data-topbar-slot="chip"[^>]*>([^<]*)<\/span>/.exec(html);
+    expect(chip?.[1]).toBe(SCENE_COPY.demoChip);
+    const wordmarkAt = html.indexOf("data-wordmark");
+    expect(wordmarkAt).toBeGreaterThanOrEqual(0);
+    expect(chip?.index ?? -1).toBeGreaterThan(wordmarkAt);
+  });
+
+  it("has no Soil strip, canvas or Ghost, so the plain page gets no backdrop", () => {
+    expect(html).not.toContain("data-soil-strip");
+    expect(html).not.toContain("<canvas");
+    expect(html).not.toMatch(/data-ghost\b/);
   });
 });
 
