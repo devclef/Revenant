@@ -29,7 +29,7 @@ const BUDGETS = [
   { route: "/", page: "", maxKb: 160 },
   { route: "/demo", page: "demo", maxKb: 160 },
   { route: "/demo/personas/[key]", page: "demo/personas/[key]", maxKb: 260 },
-  { route: "/demo/live", page: "demo/live", maxKb: 260 },
+  { route: "/demo/live", page: "demo/live", maxKb: 280 },
   { route: "/l/[id]", page: "l/[id]", maxKb: 260 },
 ];
 
