@@ -15,7 +15,6 @@ import { LIVE_COPY, REAL_COPY } from "./copy";
 import { BackupChoice } from "./BackupChoice";
 import type { BackupChoiceValue } from "./write-draft";
 import { FigurePicker, type FigureDetail } from "./FigurePicker";
-import { nextOpenRequest } from "./receipts-focus";
 import { ReceiptsDisclosure } from "./ReceiptsDisclosure";
 import {
   countCodePoints,
@@ -48,7 +47,13 @@ import { SelfReportedRows } from "./SelfReportedRows";
 import { StepStatus } from "./StepStatus";
 import { SealStep } from "./seal-step/SealStep";
 import type { PressStatusTag } from "./seal-step/press-status";
-import { DEFAULT_QUESTION, type SelfReportedField, type SelfReportedRow } from "./write-draft";
+import {
+  DEFAULT_QUESTION,
+  emptySelfReportedRow,
+  type OwnNumberField,
+  type SelfReportedField,
+  type SelfReportedRow,
+} from "./write-draft";
 
 /**
  * Which part of the write flow a WriteForm renders (spec 09, D2). `all` is the
@@ -122,6 +127,12 @@ export interface WriteFormProps {
     index: number,
     field: SelfReportedField,
     text: string,
+  ) => void;
+  /** The visitor typed in one own number field, with the sealing day (W12). */
+  onOwnNumberChange?: (
+    field: OwnNumberField,
+    text: string,
+    sealingDay: string,
   ) => void;
   /** The visitor removed self-reported row `index`. */
   onSelfReportedRemove?: (index: number) => void;
@@ -271,6 +282,7 @@ export function WriteForm({
   onSelfReportedAdd = () => {},
   onSelfReportedChange = () => {},
   onSelfReportedRemove = () => {},
+  onOwnNumberChange = () => {},
   sealingDay,
 }: WriteFormProps) {
   const letterCount = countCodePoints(text);
@@ -287,10 +299,9 @@ export function WriteForm({
     null,
   );
   const chosenOccasion: OccasionId = occasionMemory?.occasion ?? "blank";
-  // Raised by the Add a receipt action to open the Receipts_Disclosure and move
-  // focus into it (spec 11, L1.4). Each press is a new request.
-  const [receiptsRequest, setReceiptsRequest] = useState(0);
-
+  // The own number is one row, so the receipt card reads the first row (W12).
+  const ownNumberRow: SelfReportedRow =
+    selfReported[0] ?? emptySelfReportedRow();
   function chooseOccasion(id: OccasionId) {
     const base: OccasionDraft = occasionMemory ?? {
       text: "",
@@ -546,7 +557,6 @@ export function WriteForm({
     <>
       <ReceiptsDisclosure
         status={figuresStatus}
-        openRequest={receiptsRequest}
         picker={
           <FigurePicker
             series={series}
@@ -592,19 +602,24 @@ export function WriteForm({
     </>
   );
 
-  // On the desk the receipts sit in the interim paper block with this row
-  // (until task 6). The Next control is the Fold_Button now (W13).
-  const writeActions = (
-    <div className={`${styles.actions} ${styles.writeActions}`}>
-      <button
-        type="button"
-        className={styles.secondary}
-        onClick={() => setReceiptsRequest(nextOpenRequest)}
-      >
-        {LIVE_COPY.receiptsAction}
-      </button>
-    </div>
-  );
+  // The receipt card of the Write desk (W10). The public view offers the
+  // figures; the own view holds the one own number (W12).
+  const deskReceipt = {
+    series,
+    figuresStatus,
+    selected: metricIds,
+    onToggleFigure: (metricId: string) => {
+      onTouch(TOUCH_FIELDS.figures);
+      onToggleFigure(metricId);
+    },
+    details: figureDetails,
+    ownNumber: ownNumberRow,
+    sealingDay: today,
+    touched,
+    onTouch,
+    onOwnNumberChange: (field: OwnNumberField, text: string) =>
+      onOwnNumberChange(field, text, today),
+  };
 
   if (section === "write") {
     return (
@@ -624,8 +639,7 @@ export function WriteForm({
         onLetterBlur={() => onTouch(TOUCH_FIELDS.letter)}
         letterRef={letterRef}
         authorQuestions={deskQuestions}
-        receipts={receiptsDisclosure}
-        actions={writeActions}
+        receipt={deskReceipt}
         check={checkInput}
         rehearsal={rehearsal}
         onFoldPass={() => onNext?.()}

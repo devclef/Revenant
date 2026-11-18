@@ -18,10 +18,8 @@ export interface EnvelopePanelProps {
   onFold: () => void;
   /** Shows the Rehearsal_Line under the Fold_Button. Set only on /demo/live. */
   rehearsal?: boolean;
-  /** The interim receipts disclosure, shown on paper until task 6. */
+  /** The receipt card (ReceiptPanel), the only way to add a receipt (W10.2). */
   receipts: ReactNode;
-  /** The interim "Add a receipt" row, shown on paper until task 6. */
-  actions: ReactNode;
   /** Extra class for the column, from the desk's layout (flex and width). */
   className?: string;
 }
@@ -44,7 +42,6 @@ export function EnvelopePanel({
   onFold,
   rehearsal = false,
   receipts,
-  actions,
   className,
 }: EnvelopePanelProps) {
   const panelRef = useRef<HTMLDivElement>(null);
@@ -95,10 +92,7 @@ export function EnvelopePanel({
       data-sticky={sticky ? "" : undefined}
     >
       <InTheEnvelopeCard checklist={checklist} ready={ready} />
-      <div className={styles.interim}>
-        {receipts}
-        {actions}
-      </div>
+      {receipts}
       <FoldButton onFold={onFold} failed={failed} />
       {rehearsal ? (
         <p className={styles.rehearsal} data-live-rehearsal="">

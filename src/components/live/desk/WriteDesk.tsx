@@ -17,6 +17,8 @@ import { EnvelopePanel } from "./EnvelopePanel";
 import styles from "./desk.module.css";
 import { LetterSheet } from "./LetterSheet";
 import { OccasionPills } from "./OccasionPills";
+import { ReceiptPanel, type ReceiptPanelProps } from "./ReceiptPanel";
+import type { ReceiptView } from "./ReceiptToggle";
 import { StepHeader } from "./StepHeader";
 import {
   writeCheck,
@@ -39,10 +41,8 @@ export interface WriteDeskProps {
   letterRef: RefObject<HTMLTextAreaElement | null>;
   /** The author questions. They sit inside the Letter_Sheet under the field. */
   authorQuestions: ReactNode;
-  /** The receipts disclosure and its problem line, on paper until task 6. */
-  receipts: ReactNode;
-  /** The "Add a receipt" row, on paper until task 6. */
-  actions: ReactNode;
+  /** The receipt card's data: series, figures, own number and touch state. */
+  receipt: Omit<ReceiptPanelProps, "view" | "onViewChange">;
   /** The draft the Write_Check and the Envelope_Panel read (W9, W13). */
   check: WriteCheckInput;
   /** Shows the Rehearsal_Line under the Fold_Button. Set only on /demo/live. */
@@ -110,9 +110,8 @@ function targetElement(
  *
  * The Fold_Button runs the Write_Check. A pass moves to the Seal step. A fail
  * marks the fields, and focus moves to the first failing field in page order.
- * This task only moves focus into what is already on the page: the own-number
- * fields are opened from the interim receipts block, and task 6 replaces that
- * with the Receipt_Toggle.
+ * A failed fold that points at an own-number field switches the Receipt_Toggle
+ * to the own view first, and opens the phone `details` if it is closed (W13.3).
  */
 export function WriteDesk({
   chosenOccasion,
@@ -124,8 +123,7 @@ export function WriteDesk({
   onLetterBlur,
   letterRef,
   authorQuestions,
-  receipts,
-  actions,
+  receipt,
   check,
   rehearsal = false,
   onFoldPass,
@@ -133,6 +131,7 @@ export function WriteDesk({
 }: WriteDeskProps) {
   const rootRef = useRef<HTMLDivElement>(null);
   const [failure, setFailure] = useState<FoldFailure | null>(null);
+  const [view, setView] = useState<ReceiptView>("public");
   const writeResult = writeCheck(check);
 
   // The failed-fold line goes away once the Write_Check passes (W13.3).
@@ -146,8 +145,7 @@ export function WriteDesk({
     if (failure === null || failure.target === null || root === null) return;
     const element = targetElement(root, failure.target, letterRef.current);
     if (element === null) return;
-    // The own-number fields may sit in the closed receipts disclosure, so open
-    // it before focusing (until the Receipt_Toggle of task 6).
+    // On the phone the card is a closed `details`, so open it before focusing.
     const details = element.closest("details");
     if (details !== null) details.open = true;
     element.focus();
@@ -159,6 +157,9 @@ export function WriteDesk({
       onFoldPass();
       return;
     }
+    // The own view is switched in the same update, so the field is shown when
+    // the layout effect focuses it.
+    if (result.first?.kind === "own_number") setView("own");
     setFailure((previous) => ({
       target: result.first,
       nonce: (previous?.nonce ?? 0) + 1,
@@ -198,8 +199,9 @@ export function WriteDesk({
           failed={failure !== null}
           onFold={fold}
           rehearsal={rehearsal}
-          receipts={receipts}
-          actions={actions}
+          receipts={
+            <ReceiptPanel {...receipt} view={view} onViewChange={setView} />
+          }
         />
       </div>
     </div>

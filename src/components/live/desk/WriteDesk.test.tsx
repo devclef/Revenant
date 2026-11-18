@@ -1,8 +1,10 @@
 import { createElement, type RefObject } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
+import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 
 import { LIVE_COPY } from "../copy";
+import { INITIAL_TOUCHED } from "../touched";
 
 import { DESK_COPY } from "./copy";
 import { WriteDesk, type WriteDeskProps } from "./WriteDesk";
@@ -23,12 +25,16 @@ const base: WriteDeskProps = {
     { "data-test-questions": "" },
     "QUESTIONS",
   ),
-  receipts: createElement("span", { "data-test-receipts": "" }, "RECEIPTS"),
-  actions: createElement(
-    "button",
-    { type: "button", "data-test-next": "" },
-    "NEXT",
-  ),
+  receipt: {
+    series: [],
+    selected: [],
+    onToggleFigure: () => {},
+    ownNumber: { name: "", value: "", unit: "", region: "", period: "" },
+    sealingDay: "2026-11-18",
+    touched: INITIAL_TOUCHED,
+    onTouch: () => {},
+    onOwnNumberChange: () => {},
+  },
   check: {
     text: "",
     questions: [],
@@ -80,18 +86,35 @@ describe("WriteDesk markup (spec 14, W1 and W2)", () => {
     expect(questionsAt).toBeLessThan(sheetEnd);
   });
 
-  it("puts the receipts and the action row in the panel column, after the sheet", () => {
+  it("puts the receipt card in the panel column, after the sheet", () => {
     const html = render();
     const panelAt = html.search(/class="[^"]*panelColumn[^"]*"/);
     const sheetAt = html.indexOf("data-letter-sheet");
     expect(panelAt).toBeGreaterThan(sheetAt);
-    expect(html.indexOf("data-test-receipts")).toBeGreaterThan(panelAt);
-    expect(html.indexOf("data-test-next")).toBeGreaterThan(panelAt);
+    expect(html.indexOf("data-receipt-panel")).toBeGreaterThan(panelAt);
+    expect(html).not.toContain("data-test-next");
+    expect(html).not.toContain(LIVE_COPY.receiptsAction);
   });
 
   it("keeps the letter out of any maxlength and shows the letter count as text", () => {
     const html = render({ text: "Hello" });
     expect(html).not.toContain("maxlength");
     expect(html).toContain("5 of 5,000 characters");
+  });
+});
+
+// The failed fold moves focus, so its wiring is checked in the source (W13.3).
+describe("WriteDesk failed fold (spec 14, W13.3)", () => {
+  const source = readFileSync(
+    new URL("./WriteDesk.tsx", import.meta.url),
+    "utf8",
+  );
+
+  it("switches to the own view when the failing field is an own number", () => {
+    expect(source).toContain('if (result.first?.kind === "own_number") setView("own");');
+  });
+
+  it("opens a closed phone details before focusing the failing field", () => {
+    expect(source).toContain('element.closest("details")');
   });
 });

@@ -1,7 +1,6 @@
 import Link from "next/link";
 
 import { displayFigureValue } from "@/components/reveal/display-figure";
-import { REVEAL_COPY } from "@/components/reveal/copy";
 import { shortNameFor } from "@/components/reveal/short-names";
 import { formatShortDate } from "@/components/ui/letter-date";
 
@@ -15,6 +14,7 @@ import { LIVE_COPY, REAL_COPY } from "./copy";
 import { pickerHint } from "./figure-hint";
 import { figureLimit, type WriteMode } from "./form";
 import styles from "./live.module.css";
+import { SourceDetailsList } from "./SourceDetailsList";
 
 /**
  * The value and source of one figure, as the Figures_API published it. The
@@ -188,25 +188,7 @@ export function FigurePicker({
             <summary className={styles.sourceSummary}>
               {LIVE_COPY.figureSourceDetails}
             </summary>
-            <dl className={styles.sourceList}>
-              <dt>{LIVE_COPY.figureSourceName}</dt>
-              <dd>{detail.sourceName}</dd>
-              <dt>{LIVE_COPY.figureSeriesId}</dt>
-              <dd>{detail.seriesId}</dd>
-              <dt>{LIVE_COPY.figureSourceLink}</dt>
-              <dd>
-                <a href={detail.sourceUrl} rel="noopener noreferrer">
-                  {detail.sourceUrl}
-                </a>
-              </dd>
-              <dt>{LIVE_COPY.figureRetrieved}</dt>
-              <dd>{formatShortDate(detail.retrievedAt)}</dd>
-            </dl>
-            <p className={styles.figureMeta}>
-              {REVEAL_COPY.asPublished
-                .replace("{value}", detail.value)
-                .replace("{unit}", detail.unit)}
-            </p>
+            <SourceDetailsList detail={detail} />
           </details>
         ) : null}
       </li>

@@ -28,6 +28,8 @@ const REAL: PickableSeries = {
   unit: "USD per gallon",
   region: "U.S.",
   latestPeriod: "2026-10-26",
+  periodType: "weekly",
+  source: "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
   isFixture: false,
 };
 
@@ -37,6 +39,8 @@ const FIXTURE: PickableSeries = {
   unit: "USD per gallon",
   region: "U.S.",
   latestPeriod: "2026-10-26",
+  periodType: "weekly",
+  source: "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
   isFixture: true,
 };
 
@@ -114,8 +118,8 @@ describe("FigurePicker", () => {
     const four = [REAL, FIXTURE, { ...REAL, metricId: "c" }, { ...REAL, metricId: "d" }];
     const ten = Array.from({ length: 10 }, (_, i) => ({ ...REAL, metricId: `m-${i}` }));
 
-    expect(render(four)).toContain("Choose between 1 and 4.");
-    expect(render(ten)).toContain("Choose between 1 and 6.");
+    expect(render(four)).toContain("Choose up to 4.");
+    expect(render(ten)).toContain("Choose up to 6.");
   });
 
   it("has the legend and the singular hint when one figure can be sealed", () => {
@@ -146,6 +150,8 @@ describe("FigurePicker", () => {
       ...REAL,
       metricId: "us-gasoline-fallback",
       latestPeriod: "2026-10-01",
+      periodType: "weekly",
+      source: "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
       fallbackRetrievedAt: "2026-10-30T14:02:11Z",
     };
     const html = render([fallback]);
@@ -402,6 +408,8 @@ describe("FigurePicker region groups (K4)", () => {
     unit: "EUR per 1,000 litres",
     region: "EU27, weighted average",
     latestPeriod: "2026-10-26",
+    periodType: "weekly",
+    source: "European Commission, Weekly Oil Bulletin",
     isFixture: false,
   };
 
@@ -437,7 +445,7 @@ describe("FigurePicker region groups (K4)", () => {
   it("counts the limit across every group", () => {
     const four = [REAL, FIXTURE, EU, EU_TWO];
 
-    expect(render(four)).toContain("Choose between 1 and 4.");
+    expect(render(four)).toContain("Choose up to 4.");
   });
 
   it("disables unchecked boxes in every group once the limit is reached", () => {

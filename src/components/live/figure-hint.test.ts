@@ -20,6 +20,9 @@ const SERIES: PickableSeries = {
   unit: "USD per gallon",
   region: "U.S.",
   latestPeriod: "2026-10-26",
+  periodType: "weekly",
+  source:
+    "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
   isFixture: false,
 };
 
@@ -110,7 +113,7 @@ describe("Property 5: the picker never states a zero limit", () => {
       const html = renderPicker(count);
       const max = Math.min(MAX_FIGURES, count);
       if (max >= 2) {
-        expect(html).toContain(`between 1 and ${max}.`);
+        expect(html).toContain(`up to ${max}.`);
       }
     }
   });

@@ -29,7 +29,6 @@ const render = (props: Partial<EnvelopePanelProps> = {}) =>
       failed: false,
       onFold: () => {},
       receipts: null,
-      actions: null,
       ...props,
     }),
   );

@@ -16,6 +16,8 @@ const SERIES: PickableSeries[] = [
     unit: "USD per gallon",
     region: "U.S.",
     latestPeriod: "2026-10-26",
+    periodType: "weekly",
+    source: "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
     isFixture: false,
   },
 ];
@@ -47,32 +49,33 @@ describe("WriteForm sections (spec 09, D2)", () => {
     const html = render({ section: "write", onNext: () => {} });
     expect(html).toContain('id="live-letter"');
     expect(html).not.toContain('id="live-warning"');
-    expect(html).toContain("data-receipts-disclosure");
-    expect(html).toContain('data-card="live-figures"');
+    expect(html).toContain("data-receipt-panel");
+    expect(html).not.toContain("data-receipts-disclosure");
     expect(html).not.toContain(LIVE_COPY.createButton);
     expect(html).toContain(DESK_COPY.fold);
     expect(html).not.toContain(LIVE_COPY.backButton);
   });
 
-  // L1.4: the disclosure sits after the question rows, not before them.
-  it("puts the Receipts_Disclosure after the question rows", () => {
+  // L1.4 (spec 11), on the desk (spec 14 W10): the receipt card sits after the
+  // question rows, not before them.
+  it("puts the receipt card after the question rows", () => {
     const html = render({ section: "write", onNext: () => {} });
     const rows = html.indexOf("data-question-section");
-    const receipts = html.indexOf("data-receipts-disclosure");
+    const receipts = html.indexOf("data-receipt-panel");
     expect(rows).toBeGreaterThanOrEqual(0);
     expect(receipts).toBeGreaterThan(rows);
   });
 
   // L3.5 (spec 11), on the desk (spec 14 W6): above Next the write step holds,
   // in this order, the Occasion control, the letter field, the P.S. section
-  // with its intro and pills, and the closed Receipts_Disclosure.
-  it("holds the write markup in the spec 11 order, with the disclosure closed", () => {
+  // with its intro and pills, and the receipt card.
+  it("holds the write markup in order, with the receipt card before the Fold_Button", () => {
     const html = render({ section: "write", onNext: () => {} });
     const occasion = html.indexOf(DESK_COPY.startFrom);
     const letter = html.indexOf('id="live-letter"');
     const add = html.indexOf("data-question-section");
     const hint = html.indexOf(DESK_COPY.psIntro.replace(/'/g, "&#x27;"));
-    const receipts = html.indexOf("data-receipts-disclosure");
+    const receipts = html.indexOf("data-receipt-panel");
     const next = html.indexOf(DESK_COPY.fold);
     for (const index of [occasion, letter, add, hint, receipts, next]) {
       expect(index).toBeGreaterThan(-1);
@@ -82,11 +85,6 @@ describe("WriteForm sections (spec 09, D2)", () => {
     expect(add).toBeLessThan(hint);
     expect(hint).toBeLessThan(receipts);
     expect(receipts).toBeLessThan(next);
-
-    // The disclosure renders closed: no `open` attribute on its details.
-    const details = html.match(/<details[^>]*data-receipts-disclosure[^>]*>/);
-    expect(details).not.toBeNull();
-    expect(details?.[0]).not.toMatch(/\sopen(\s|=|>)/);
     // No Rehearsal_Line above Next (it belongs to the heading, task 13).
     expect(html).not.toContain("rehearsal");
   });
@@ -162,16 +160,11 @@ describe("WriteForm sections (spec 09, D2)", () => {
 });
 
 // W6 (spec 11): one Add a receipt control, beside Next, and no Receipts link.
-describe("WriteForm receipt action (spec 11, W6)", () => {
-  it("offers one Add a receipt control in the action row, beside Next", () => {
+describe("WriteForm receipt card (spec 14, W10.2)", () => {
+  it("offers no Add a receipt control on the write step", () => {
     const html = render({ section: "write", onNext: () => {} });
-    expect(html.split(LIVE_COPY.receiptsAction).length - 1).toBe(1);
-    const row = html.indexOf("writeActions");
-    const action = html.indexOf(LIVE_COPY.receiptsAction);
-    const next = html.indexOf(DESK_COPY.fold);
-    expect(row).toBeGreaterThan(-1);
-    expect(action).toBeGreaterThan(row);
-    expect(next).toBeGreaterThan(action);
+    expect(html).not.toContain(LIVE_COPY.receiptsAction);
+    expect(html).not.toContain("writeActions");
   });
 
   it("has no Receipts link anywhere on the write step", () => {
@@ -180,10 +173,10 @@ describe("WriteForm receipt action (spec 11, W6)", () => {
     expect(html).not.toMatch(/<a\b[^>]*>[^<]*Receipts[^<]*<\/a>/);
   });
 
-  it("keeps the Receipts_Disclosure closed by default", () => {
+  it("shows the receipt card once, with the public view first", () => {
     const html = render({ section: "write", onNext: () => {} });
-    const match = html.match(/<details[^>]*>/);
-    expect(match).not.toBeNull();
-    expect(match?.[0]).not.toMatch(/\sopen(\s|=|>)/);
+    expect(html.split("data-receipt-panel").length - 1).toBe(1);
+    expect(html).toContain(DESK_COPY.receiptTitle);
+    expect(html).not.toContain("data-receipts-disclosure");
   });
 });

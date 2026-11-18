@@ -22,6 +22,8 @@ const SERIES: PickableSeries[] = [
     unit: "USD per gallon",
     region: "U.S.",
     latestPeriod: "2026-10-26",
+    periodType: "weekly",
+    source: "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
     isFixture: false,
   },
 ];

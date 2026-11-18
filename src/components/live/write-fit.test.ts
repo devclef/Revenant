@@ -92,12 +92,12 @@ describe("Write step: one Writing_Column, no two-column grid", () => {
     );
   });
 
-  it("puts the Letter_Field before the question rows and the receipts in the form", () => {
+  it("puts the Letter_Field before the question rows and the receipt card in the form", () => {
     // Section write renders WriteDesk, which holds the Letter_Sheet (and so the
-    // Letter_Field and the author questions inside it) before the receipts.
+    // Letter_Field and the author questions inside it) before the receipt card.
     const field = writeDesk.indexOf("<LetterSheet");
     const questions = writeDesk.indexOf("{authorQuestions}");
-    const receipts = writeDesk.indexOf("{receipts}");
+    const receipts = writeDesk.indexOf("receipts={");
     expect(field).toBeGreaterThan(0);
     expect(field).toBeLessThan(questions);
     expect(field).toBeLessThan(receipts);

@@ -36,16 +36,15 @@ export const LIVE_COPY = {
   regionUs: "United States",
   /** The heading of the European Union figures group in the picker. */
   regionEu: "European Union",
-  figuresHint:
-    "Choose between 1 and {max}. Each is sealed as published, with its period and source.",
+  /** The range hint of the figure picker and the receipts (spec 14, X1.2). */
+  figuresHint: "Choose up to {max}.",
   /** Shown instead of any range when no figure can be sealed (A4.1). */
   figuresNoneAvailable:
     "No figure can be sealed right now. Try again later, or {link}.",
   /** The text of the `{link}` in figuresNoneAvailable; it links to /demo. */
   figuresNoneLink: "open a persona letter in the demo",
   /** The singular hint, used when the stated maximum is 1 (A4.3). */
-  figuresHintOne:
-    "Choose 1. It is sealed as published, with its period and source.",
+  figuresHintOne: "You can choose 1.",
   figuresTooManyOne: "Choose no more than 1 figure.",
   figureLatest: "Latest period: {period}",
   /** The published value, shown at full precision with its unit beside it. */

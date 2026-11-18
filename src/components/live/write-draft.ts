@@ -10,7 +10,11 @@
 
 import { AUTHOR_QUESTIONS_MAX } from "./author-questions";
 import { MAX_FIGURES, SELF_REPORTED_MAX } from "./constants";
-import { validateWrite, type WriteMode } from "./form";
+import {
+  missingSelfReportedFields,
+  validateWrite,
+  type WriteMode,
+} from "./form";
 import { DEFAULT_QUESTION as OCCASION_DEFAULT_QUESTION } from "./occasions";
 
 /**
@@ -121,7 +125,33 @@ export type WriteDraftEvent =
       field: SelfReportedField;
       text: string;
     }
-  | { type: "SELF_REPORTED_REMOVED"; index: number };
+  | { type: "SELF_REPORTED_REMOVED"; index: number }
+  | {
+      type: "OWN_NUMBER_CHANGED";
+      field: OwnNumberField;
+      text: string;
+      /** The local sealing day, YYYY-MM-DD. Used only when the row is in use. */
+      sealingDay: string;
+    };
+
+/** The four typed fields of the Own_Number_View. The period is not typed (W12.3). */
+export type OwnNumberField = "name" | "value" | "unit" | "region";
+
+const OWN_NUMBER_FIELDS: readonly OwnNumberField[] = [
+  "name",
+  "value",
+  "unit",
+  "region",
+];
+
+/**
+ * The own-number fields that are empty after trimming, in form order. The
+ * period is left out: the Own_Number_View never shows it, because it is always
+ * the sealing day once the row is used (W12.3, W12.4).
+ */
+export function ownNumberMissing(row: SelfReportedRow): SelfReportedField[] {
+  return missingSelfReportedFields(row).filter((field) => field !== "period");
+}
 
 /**
  * Applies one form event. Picking a figure adds it, unless it is already
@@ -184,6 +214,18 @@ export function reduceWriteDraft(
         ...state,
         selfReported: state.selfReported.filter((_, i) => i !== event.index),
       };
+    case "OWN_NUMBER_CHANGED": {
+      // The own number is always exactly one row (W12). Its period is the
+      // sealing day while any of the four typed fields has text, and "" when
+      // all four are blank, so a blank view seals nothing (W12.3, W12.4).
+      const current = state.selfReported[0] ?? emptySelfReportedRow();
+      const row: SelfReportedRow = { ...current, [event.field]: event.text };
+      const used = OWN_NUMBER_FIELDS.some((field) => row[field].trim() !== "");
+      return {
+        ...state,
+        selfReported: [{ ...row, period: used ? event.sealingDay : "" }],
+      };
+    }
     case "FIGURE_TOGGLED": {
       const { metricId } = event;
       if (state.metricIds.includes(metricId)) {

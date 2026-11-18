@@ -204,3 +204,359 @@
     transition: none;
   }
 }
+
+/* The receipt card (spec 14, W10 to W12). Each surface sets its own text
+   colour: the card is #15111f, and each row or input sets its own colour on
+   #0b0912. Accent is not used here; the focus ring is the only orange, and it
+   sits on the focus-visible rules below (G1.6). */
+
+.titleRow {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin: 0 0 8px;
+}
+
+.receiptTitle {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 20px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: #ffffff;
+}
+
+.optional {
+  font-family: var(--font-sans);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #bdb4dc;
+}
+
+.receiptIntro {
+  margin: 0 0 16px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: #bdb4dc;
+}
+
+.receiptSummary {
+  min-height: 44px;
+  display: flex;
+  align-items: center;
+  font-family: var(--font-sans);
+  font-size: 16px;
+  font-weight: 700;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.receiptStatus {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: #ffffff;
+}
+
+/* The two-way toggle: a dark track with two pills (W10.3). */
+.toggle {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px;
+  padding: 4px;
+  margin: 0 0 16px;
+  border-radius: 999px;
+  background: #0b0912;
+}
+
+.toggleOn,
+.toggleOff {
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 999px;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toggleOn {
+  background: #ffffff;
+  color: #0b0912;
+}
+
+.toggleOff {
+  background: transparent;
+  color: #bdb4dc;
+}
+
+.toggleOn:focus-visible,
+.toggleOff:focus-visible {
+  outline: 2px solid #ff7b1c;
+  outline-offset: 2px;
+}
+
+/* Figure_Rows (W11). Rows are a list with no region headings. */
+.figureRows {
+  display: grid;
+  row-gap: 12px;
+}
+
+.figuresHint {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: #bdb4dc;
+}
+
+.figuresNone {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 14px;
+  line-height: 1.5;
+  color: #ffffff;
+}
+
+.figuresNoneLink {
+  color: #ffffff;
+  text-decoration: underline;
+}
+
+.figureList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  row-gap: 8px;
+}
+
+.figureRow {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 56px;
+  display: grid;
+  grid-template-columns: 18px 1fr auto;
+  column-gap: 12px;
+  align-items: center;
+  padding: 8px 12px;
+  border: 1px solid #2a2340;
+  border-radius: 8px;
+  background: #0b0912;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Pressed is keyed on aria-pressed only, never on :focus (X2.2). */
+.figureRow[aria-pressed="true"] {
+  border: 1.5px solid #ffffff;
+  background: rgba(245, 243, 255, 0.06);
+}
+
+.figureRow:focus-visible {
+  outline: 2px solid #ff7b1c;
+  outline-offset: 2px;
+}
+
+.check {
+  box-sizing: border-box;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid #6d6488;
+  border-radius: 4px;
+}
+
+.figureRow[aria-pressed="true"] .check {
+  border-color: #ffffff;
+  background: #ffffff;
+  box-shadow: inset 0 0 0 4px #0b0912;
+}
+
+.figureMain {
+  min-width: 0;
+  display: grid;
+  row-gap: 2px;
+}
+
+.figureName {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.3;
+  color: #ffffff;
+}
+
+.fixture {
+  font-size: 12px;
+  font-weight: 500;
+  color: #bdb4dc;
+}
+
+.figureMeta {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #bdb4dc;
+}
+
+.figureValue {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #ffffff;
+}
+
+.sourcesRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.sources {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.5;
+  color: #bdb4dc;
+}
+
+.detailsButton {
+  min-height: 44px;
+  padding: 0 4px;
+  border: 0;
+  background: transparent;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.detailsButton:focus-visible {
+  outline: 2px solid #ff7b1c;
+  outline-offset: 2px;
+}
+
+/* No display rule here: the hidden attribute must still hide the list. */
+.details {
+  margin: 0;
+}
+
+.detailsItem {
+  padding: 8px 0;
+  border-top: 1px solid #2a2340;
+}
+
+.detailsName {
+  margin: 0 0 6px;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.sourceList {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: 4px 12px;
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.4;
+  color: #ffffff;
+  overflow-wrap: anywhere;
+}
+
+.sourceList dt {
+  color: #bdb4dc;
+}
+
+.sourceList dd {
+  margin: 0;
+}
+
+.sourceNote {
+  margin: 6px 0 0;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.4;
+  color: #bdb4dc;
+}
+
+/* The Own_Number_View (W12). No rule here adds a pseudo-element or a side
+   border to an .own* class (W12.5). */
+.own {
+  display: grid;
+  row-gap: 12px;
+}
+
+.ownPair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.ownField {
+  min-width: 0;
+  display: grid;
+  row-gap: 6px;
+}
+
+.ownLabel {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.4;
+  color: #bdb4dc;
+}
+
+.ownInput {
+  box-sizing: border-box;
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid #3a3350;
+  border-radius: 8px;
+  background: #0b0912;
+  color: #ffffff;
+  font-family: var(--font-sans);
+  font-size: 15px;
+}
+
+.ownInput::placeholder {
+  color: #8f86ad;
+}
+
+.ownInput:focus-visible {
+  outline: 2px solid #ff7b1c;
+  outline-offset: 2px;
+}
+
+.ownNote {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.5;
+  color: #bdb4dc;
+}
+
+.problem {
+  margin: 0;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.4;
+  color: #ffffff;
+}
+
+.receiptSummary:focus-visible {
+  outline: 2px solid #ff7b1c;
+  outline-offset: 2px;
+}

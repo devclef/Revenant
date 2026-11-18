@@ -5,6 +5,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { realLetterSealApi, realSealApi, REAL_PREPARE_PATH, REAL_SEAL_PATH, PREPARE_PATH } from "./api";
 import { LIVE_COPY, REAL_COPY } from "./copy";
 import { DESK_COPY } from "./desk/copy";
+import { shortUnit } from "./desk/figure-row-text";
 import { DEMO_COPY } from "@/components/demo/copy";
 import { figuresResponseFrom } from "@/components/reveal/figures-stub";
 import { displayFigureValue } from "@/components/reveal/display-figure";
@@ -330,14 +331,15 @@ describe("SealPage passes each figure's value and source into the picker", () =>
       }),
     );
 
-    expect(html).toContain('data-card="live-figures"');
+    expect(html).toContain("data-receipt-panel");
     let checked = 0;
     for (const entry of response.series) {
       const figure = entry.figure;
       if (figure === null || figure.kind !== "official") continue;
       checked += 1;
       const shown = displayFigureValue(figure.value, figure.unit, figure.region);
-      expect(html).toContain(esc(LIVE_COPY.figureValue.replace("{value}", shown.text)));
+      // The desk row shows the value and its short unit together (spec 14, W11).
+      expect(html).toContain(esc(`${shown.text} ${shortUnit(shown.unit)}`));
       expect(html).toContain(esc(`As published: ${figure.value} ${figure.unit}`));
       // The source name sits in the details list, one tap away (spec 11, W7).
       expect(html).toContain(`<dd>${esc(figure.source)}</dd>`);
