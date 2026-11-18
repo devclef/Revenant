@@ -77,6 +77,7 @@ import { Envelope } from "@/components/ceremony/envelope/Envelope";
 import heldStyles from "@/components/ceremony/scene/scene.module.css";
 import { useSealBreak, type SealController } from "@/components/ceremony/seal/useSealBreak";
 import { DemoLabel } from "@/components/demo/DemoLabel";
+import { browserTimeZone } from "@/components/ui/letter-date";
 import { useOpeningFlow } from "./useOpeningFlow";
 import { onceOnly, type AuthenticatorPort } from "@/components/live/unlock";
 import { RecallStep } from "./RecallStep";
@@ -388,6 +389,19 @@ type KeyEntry = {
   onKeyTextChange: (text: string) => void;
 };
 
+/**
+ * The sealing instant and zone for the recall counter's "you wrote this on"
+ * day (spec 14, T1.2). A persona keeps its as-of date instead, so it gets none.
+ * A live or real letter names its sealing day in the browser's zone.
+ */
+function writtenOnFor(
+  sealedAt: string,
+  mode: "persona" | "live",
+): { sealedAt: string; timeZone: string } | undefined {
+  if (mode === "persona") return undefined;
+  return { sealedAt, timeZone: browserTimeZone() };
+}
+
 /** Render the one view that belongs to the current `state.tag`. */
 function selectView(
   state: FlowState,
@@ -510,6 +524,7 @@ function selectView(
           onToggleNoAnswer={flow.toggleNoAnswer}
           onSubmit={flow.submit}
           writtenAsOf={writtenAsOf}
+          writtenOn={writtenOnFor(state.opened.header.sealedAt, mode)}
           testify={testify}
         />
       );
@@ -527,6 +542,7 @@ function selectView(
           onToggleNoAnswer={flow.toggleNoAnswer}
           onSubmit={flow.submit}
           writtenAsOf={writtenAsOf}
+          writtenOn={writtenOnFor(state.opened.header.sealedAt, mode)}
           testify={testify}
         />
       );
@@ -545,6 +561,7 @@ function selectView(
           onSubmit={flow.retryPost}
           failed={true}
           writtenAsOf={writtenAsOf}
+          writtenOn={writtenOnFor(state.opened.header.sealedAt, mode)}
           testify={testify}
         />
       );

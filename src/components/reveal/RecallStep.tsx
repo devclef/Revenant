@@ -56,6 +56,12 @@ export type RecallStepProps = {
    */
   writtenAsOf?: string;
   /**
+   * The sealing instant (ISO, UTC) and the zone to name its calendar day in, for a
+   * live or real letter. The counter shows "you wrote this on {date}" (spec 14,
+   * T1.2). Absent on a persona letter, which shows its as-of date instead.
+   */
+  writtenOn?: { sealedAt: string; timeZone: string };
+  /**
    * The Testify_Context above the card (spec 10 C4.3). A persona passes its
    * name and dates; a Live_Letter or Real_Letter passes the seal line only.
    */
@@ -72,6 +78,7 @@ export function RecallStep({
   onSubmit,
   failed = false,
   writtenAsOf,
+  writtenOn,
   testify,
   samples,
 }: RecallStepProps) {
@@ -86,6 +93,7 @@ export function RecallStep({
           submitting={submitting}
           failed={failed}
           writtenAsOf={writtenAsOf}
+          writtenOn={writtenOn}
           onEdit={onEdit}
           onToggleNoAnswer={onToggleNoAnswer}
           onSubmit={onSubmit}
