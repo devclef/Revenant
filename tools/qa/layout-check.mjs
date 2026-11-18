@@ -4315,6 +4315,7 @@ async function checkDeskRows(browser, base, size, rep, required) {
       await sleep(500);
       await guard(ctx, "S1", () => checkStepTrack(page, ctx, "write"));
       await guard(ctx, "W", () => checkWriteDesk(page, ctx));
+      await guard(ctx, "W2", () => checkWriteRows(page, ctx));
       if (SEAL_SIZES.includes(size)) {
         await guard(ctx, "S2", async () => {
           await page.fill("#live-letter", DESK_LETTER);
@@ -4328,6 +4329,775 @@ async function checkDeskRows(browser, base, size, rep, required) {
     }
   } catch (error) {
     rep.add("note", "desk", `could not run: ${String(error.message ?? error).split("\n")[0]}`);
+  } finally {
+    await context.close();
+  }
+}
+
+// --- Q1.1 rows, part 2: W2 to W12, X2.1, T, R, B and D ----------------------
+
+// W2.2 to W2.4 (the Write step header) and W2.3 (one h1). W2.3's heading size is 36 px on a phone.
+export function w2Failures({ h1Count, h1, eyebrow, intro, phone }) {
+  const out = [];
+  if (h1Count !== 1) out.push(`W2.3 ${h1Count} h1 on the Write step, want 1`);
+  if (!h1) out.push("W2.3 no h1 to measure");
+  else {
+    const want = phone ? 36 : 56;
+    if (!sizeWithin(h1.size, want, 0)) out.push(`W2.3 h1 is ${num(h1.size, 0)}px, want ${want}px`);
+    if (h1.weight !== "900") out.push(`W2.3 h1 weight ${h1.weight}, want 900`);
+    if (h1.text !== "Write to the you who opens this.") out.push(`W2.3 h1 text "${h1.text}"`);
+  }
+  if (!eyebrow) out.push("W2.2 no eyebrow reading \"Seal your own letter\"");
+  else {
+    if (!sizeWithin(eyebrow.size, 12, 0)) out.push(`W2.2 eyebrow is ${num(eyebrow.size, 0)}px, want 12px`);
+    if (eyebrow.weight !== "600") out.push(`W2.2 eyebrow weight ${eyebrow.weight}, want 600`);
+    if (!colourMatch(eyebrow.colour, "#bdb4dc")) out.push(`W2.2 eyebrow colour ${eyebrow.colour}, want #bdb4dc`);
+  }
+  if (!intro) out.push("W2.4 no intro line");
+  else {
+    if (!sizeWithin(intro.size, 17, 0)) out.push(`W2.4 intro is ${num(intro.size, 0)}px, want 17px`);
+    if (!colourMatch(intro.colour, "#bdb4dc")) out.push(`W2.4 intro colour ${intro.colour}, want #bdb4dc`);
+    if (intro.width > 620 + Q11_TOL_PX) out.push(`W2.4 intro is ${num(intro.width, 0)}px wide, want at most 620px`);
+  }
+  return out;
+}
+
+// W3.1 to W3.2: five pills in order, 44 px tall, "A blank page" selected at load.
+const W3_PILLS = ["The year ahead", "Work", "Family", "A decision", "A blank page"];
+export function w3Failures({ pills }) {
+  const out = [];
+  const texts = pills.map((p) => p.text);
+  if (texts.join("|") !== W3_PILLS.join("|")) out.push(`W3.1 pills are "${texts.join(", ")}", want "${W3_PILLS.join(", ")}"`);
+  for (const p of pills) {
+    if (!sizeWithin(p.height, 44)) out.push(`W3.2 pill "${p.text}" is ${num(p.height, 0)}px tall, want 44px`);
+    const want = p.text === "A blank page" ? "true" : "false";
+    if (p.pressed !== want) out.push(`W3.2 pill "${p.text}" aria-pressed ${p.pressed}, want ${want} at load`);
+  }
+  return out;
+}
+
+// W5.1, W5.3 and W5.5 on the Letter_Field. W5.2 (the ruled-line baseline gap) is noted by the row, not measured.
+export function w5Failures({ field }) {
+  if (!field) return ["W5.1 no #live-letter to measure"];
+  const out = [];
+  if (!sizeWithin(field.size, 21, 0)) out.push(`W5.1 Letter_Field is ${num(field.size, 0)}px, want 21px`);
+  if (field.lineHeight !== "32px") out.push(`W5.1 Letter_Field line-height ${field.lineHeight}, want 32px`);
+  if (!colourMatch(field.colour, "#1f1b16")) out.push(`W5.1 Letter_Field text ${field.colour}, want #1f1b16`);
+  if (field.borderStyle !== "none") out.push(`W5.1 Letter_Field border style ${field.borderStyle}, want none`);
+  if (!colourMatch(field.bg, "rgba(0, 0, 0, 0)")) out.push(`W5.1 Letter_Field background ${field.bg}, want transparent`);
+  if (field.height < 296 - Q11_TOL_PX) out.push(`W5.3 Letter_Field is ${num(field.height, 0)}px tall, want at least 296px`);
+  if (field.label !== "Your letter") out.push(`W5.5 Letter_Field label "${field.label}", want "Your letter"`);
+  return out;
+}
+
+// W7.1 to W7.6 on one Question_Row: disc, input, Lock_Line and Remove.
+export function w7Failures({ row }) {
+  if (!row) return ["W7.1 no [data-question-row] to measure"];
+  const out = [];
+  const { disc, input, lock, remove } = row;
+  if (!disc) out.push("W7.2 no [data-wax-disc]");
+  else {
+    if (!sizeWithin(disc.width, 30)) out.push(`W7.2 Wax_Disc is ${num(disc.width, 0)}px, want 30px`);
+    if (!colourMatch(disc.bg, "#ff7b1c")) out.push(`W7.2 Wax_Disc fill ${disc.bg}, want #ff7b1c`);
+    if (!sizeWithin(disc.size, 13, 0)) out.push(`W7.2 Wax_Disc number is ${num(disc.size, 0)}px, want 13px`);
+    if (disc.weight !== "800") out.push(`W7.2 Wax_Disc number weight ${disc.weight}, want 800`);
+    if (!colourMatch(disc.colour, "#0b0912")) out.push(`W7.2 Wax_Disc number colour ${disc.colour}, want #0b0912`);
+  }
+  if (!input) out.push("W7.3 no question input");
+  else {
+    if (!sizeWithin(input.size, 21, 0)) out.push(`W7.3 question is ${num(input.size, 0)}px, want 21px`);
+    if (input.italic !== "italic") out.push(`W7.3 question style ${input.italic}, want italic`);
+    if (!colourMatch(input.colour, "#1f1b16")) out.push(`W7.3 question colour ${input.colour}, want #1f1b16`);
+  }
+  if (!lock) out.push("W7.5 no Lock_Line");
+  else {
+    if (!sizeWithin(lock.size, 13, 0)) out.push(`W7.5 Lock_Line is ${num(lock.size, 0)}px, want 13px`);
+    if (!colourMatch(lock.colour, "#4a4036")) out.push(`W7.5 Lock_Line colour ${lock.colour}, want #4a4036`);
+  }
+  if (!remove) out.push("W7.6 no Remove control");
+  else if (remove.w < 44 - Q11_TOL_PX || remove.h < 44 - Q11_TOL_PX) {
+    out.push(`W7.6 Remove is ${num(remove.w, 0)}x${num(remove.h, 0)}px, want at least 44x44px`);
+  }
+  return out;
+}
+
+// W8.1, W8.2, W8.5 and W8.7: "Ask another:", suggestion pills and "+ Write my own".
+export function askAnotherFailures({ rows, pills, askAnother, writeOwn }) {
+  const out = [];
+  if (rows < 3) {
+    if (!askAnother) out.push("W8.1 no \"Ask another:\" line");
+    if (pills.length > 2) out.push(`W8.1 ${pills.length} suggestion pills, want at most 2`);
+  }
+  for (const p of pills) {
+    if (p.height < 40 - Q11_TOL_PX) out.push(`W8.2 pill is ${num(p.height, 0)}px tall, want at least 40px`);
+    if (!colourMatch(p.border, "rgba(74,64,54,.35)") || !sizeWithin(p.borderW, 1, 0)) out.push(`W8.2 pill border ${p.border} ${p.borderW}px, want 1px rgba(74,64,54,.35)`);
+    if (!sizeWithin(p.size, 17, 0) || p.style !== "italic") out.push(`W8.2 pill text is ${num(p.size, 0)}px ${p.style}, want 17px italic`);
+    if (!p.text.startsWith("+ ")) out.push(`W8.2 pill "${p.text}" lacks the "+ " prefix`);
+    if (!(p.name ?? "").startsWith("Add the question: ")) out.push(`W8.7 pill name "${p.name}", want "Add the question: {text}"`);
+  }
+  if (!writeOwn) out.push("W8.4 no \"+ Write my own\" control");
+  else {
+    if (!sizeWithin(writeOwn.size, 14, 0) || writeOwn.weight !== "600") out.push(`W8.7 "+ Write my own" is ${num(writeOwn.size, 0)}px weight ${writeOwn.weight}, want 14px 600`);
+    if (writeOwn.name !== "Write my own") out.push(`W8.7 "+ Write my own" accessible name "${writeOwn.name}", want "Write my own"`);
+  }
+  return out;
+}
+
+// W9.1 and W9.5: the In_The_Envelope_Card style (shared by the W10 card) and its three Checklist_Lines.
+export const CARD_STYLE = { bg: "#15111f", border: "#2a2340", radius: 10, padding: 24 };
+export function cardStyleFailures(label, card) {
+  if (!card) return [`${label} no card to measure`];
+  const out = [];
+  if (!colourMatch(card.bg, CARD_STYLE.bg)) out.push(`${label} card background ${card.bg}, want #15111f`);
+  if (!sizeWithin(card.borderW, 1, 0) || !colourMatch(card.border, CARD_STYLE.border)) out.push(`${label} card border ${card.borderW}px ${card.border}, want 1px #2a2340`);
+  if (!sizeWithin(card.radius, CARD_STYLE.radius, 0)) out.push(`${label} card radius ${num(card.radius, 0)}px, want 10px`);
+  if (!sizeWithin(card.padding, CARD_STYLE.padding, 0)) out.push(`${label} card padding ${num(card.padding, 0)}px, want 24px`);
+  return out;
+}
+
+export function w9Failures({ card, checklistCount }) {
+  const out = cardStyleFailures("W9.1", card);
+  if (checklistCount !== 3) out.push(`W9.5 ${checklistCount} Checklist_Lines, want 3`);
+  return out;
+}
+
+// W10.3: the Receipt_Toggle, a 40 px pill pair with the active button solid white.
+export function w10Failures({ card, toggle }) {
+  const out = cardStyleFailures("W10", card);
+  if (!toggle) return [...out, "W10.3 no Receipt_Toggle buttons"];
+  if (!toggle.publicPressed || toggle.ownPressed) out.push("W10.3 \"A public price\" is not the active view at load");
+  for (const b of [toggle.public, toggle.own]) {
+    if (!b) continue;
+    if (!sizeWithin(b.height, 40)) out.push(`W10.3 "${b.text}" is ${num(b.height, 0)}px tall, want 40px`);
+  }
+  const active = toggle.publicPressed ? toggle.public : toggle.own;
+  if (active && (!colourMatch(active.bg, "#ffffff") || !colourMatch(active.colour, "#0b0912"))) {
+    out.push(`W10.3 active view is ${active.bg} on ${active.colour}, want #ffffff with #0b0912 text`);
+  }
+  return out;
+}
+
+// W11.2, W11.3 and W11.4: unselected and selected Figure_Rows. Neither uses the Accent.
+export function w11Failures({ rows }) {
+  const out = [];
+  for (const r of rows) {
+    if (r.height < 56 - Q11_TOL_PX) out.push(`W11.2 row "${r.name}" is ${num(r.height, 0)}px tall, want at least 56px`);
+    if (!sizeWithin(r.radius, 8, 0)) out.push(`W11.2 row "${r.name}" radius ${num(r.radius, 0)}px, want 8px`);
+    if (r.pressed === "true") {
+      if (!sizeWithin(r.borderW, 1.5, 0.01) || !colourMatch(r.border, "#ffffff")) out.push(`W11.4 selected row "${r.name}" border ${r.borderW}px ${r.border}, want 1.5px white`);
+    } else if (!sizeWithin(r.borderW, 1, 0) || !colourMatch(r.border, "#2a2340") || !colourMatch(r.bg, "#0b0912")) {
+      out.push(`W11.3 unselected row "${r.name}" is ${r.bg} with ${r.borderW}px ${r.border}, want #0b0912 and 1px #2a2340`);
+    }
+    if (isAccentRgb(r.bg) || isAccentRgb(r.border)) out.push(`W11.4 row "${r.name}" uses the Accent`);
+  }
+  return out;
+}
+
+function isAccentRgb(c) {
+  const p = parseColour(c);
+  return !!p && p[3] > 0 && p[0] === 255 && p[1] === 123 && p[2] === 28;
+}
+
+// W12.1 and W12.2: the own-number inputs, 44 px tall, 8 px radius, #0b0912 fill, 1px #3a3350 border.
+export function w12Failures({ inputs }) {
+  const out = [];
+  const want = ["What is it?", "Amount", "Unit", "Where?"];
+  const names = inputs.map((i) => i.label);
+  if (names.join("|") !== want.join("|")) out.push(`W12.1 inputs are "${names.join(", ")}", want "${want.join(", ")}"`);
+  for (const i of inputs) {
+    if (!sizeWithin(i.height, 44)) out.push(`W12.1 "${i.label}" is ${num(i.height, 0)}px tall, want 44px`);
+    if (!sizeWithin(i.radius, 8, 0)) out.push(`W12.1 "${i.label}" radius ${num(i.radius, 0)}px, want 8px`);
+    if (!colourMatch(i.bg, "#0b0912") || !colourMatch(i.border, "#3a3350") || !sizeWithin(i.borderW, 1, 0)) {
+      out.push(`W12.1 "${i.label}" fill ${i.bg} border ${i.borderW}px ${i.border}, want #0b0912 and 1px #3a3350`);
+    }
+  }
+  return out;
+}
+
+// X2.1: activating a desk control twice leaves its state, the letter and the focus as one activation left them.
+export function x21Failures({ control, once, twice }) {
+  const out = [];
+  if (JSON.stringify(once.pressed) !== JSON.stringify(twice.pressed)) out.push(`X2.1 "${control}" changed the pressed states on its second activation`);
+  if (once.letter !== twice.letter) out.push(`X2.1 "${control}" changed the letter text on its second activation`);
+  if (!twice.focused) out.push(`X2.1 focus left "${control}" after its second activation`);
+  return out;
+}
+
+// T1.6, T2.1, T2.5 on the recall stage at 390x844: every part inside the First_Viewport.
+export function t16Failures({ parts, w, h }) {
+  const out = [];
+  for (const p of parts) {
+    if (!p.rect) out.push(`T1.6 no ${p.name} to measure`);
+    else if (p.rect.top < 0 || p.rect.bottom > h || p.rect.left < 0 || p.rect.right > w) {
+      out.push(`T1.6 ${p.name} is outside the First_Viewport`);
+    }
+  }
+  return out;
+}
+
+// T2.1: the number question's parts stay in one DOM order: question, sample note, answer field, main button.
+export function t21Failures({ order }) {
+  const want = ["question", "sample-note", "field", "button"];
+  const seen = order.filter((n) => want.includes(n));
+  if (seen.length !== want.length) return [`T2.1 parts found ${seen.join(", ") || "none"}, want ${want.join(", ")}`];
+  return seen.join("|") === want.join("|") ? [] : [`T2.1 DOM order is ${seen.join(", ")}, want ${want.join(", ")}`];
+}
+
+// R1.2: the letter column centre within 8 px of the Scene_Frame centre, at least 600 px wide.
+export function r12Failures({ column, frame, w, shiftPx }) {
+  if (!column) return ["R1.2 no [data-letter-stage] to measure"];
+  const out = [];
+  if (!frame) out.push("R1.2 no [data-scene-frame] to centre against");
+  else if (Math.abs((column.left + column.right) / 2 - (frame.left + frame.right) / 2) > 8) out.push("R1.2 letter column is more than 8px off the Scene_Frame centre");
+  if (column.width < 600) out.push(`R1.2 letter column is ${num(column.width, 0)}px wide, want at least 600px`);
+  if (shiftPx !== null && shiftPx > Q11_TOL_PX) out.push(`R1.2 letter column moved ${num(shiftPx)}px when the ghost left`);
+  return out;
+}
+
+// R2.2: no [data-crease] box meets a letter line box.
+export function r22Failures({ creases, lines }) {
+  const out = [];
+  for (const c of creases) {
+    const hit = lines.find((l) => rectsIntersect(c, l));
+    if (hit) out.push(`R2.2 crease meets the letter line "${hit.text}"`);
+  }
+  return out;
+}
+
+// R3: the two actions after reading, in the text colour, outlined, border at 3:1 or more against the surface.
+export function r3Failures({ controls }) {
+  const out = [];
+  if (controls.length === 0) return ["R3 no stage2Next or Show everything control to measure"];
+  for (const c of controls) {
+    if (!colourMatch(c.colour, "#ffffff")) out.push(`R3 "${c.text}" text ${c.colour}, want #ffffff`);
+    if (!sizeWithin(c.borderW, 1, 0)) out.push(`R3 "${c.text}" border ${c.borderW}px, want 1px`);
+    if (isAccentRgb(c.bg) || isAccentRgb(c.border) || isAccentRgb(c.colour)) out.push(`R3 "${c.text}" uses the Accent`);
+    const { ok, ratio, min } = contrastOk(c.border, c.surface, { large: true });
+    if (!ok) out.push(`R3 "${c.text}" border contrast ${ratio.toFixed(2)}:1, want at least ${min}:1`);
+  }
+  return out;
+}
+
+// R6.1: no two line labels intersect, and two labels in one row keep LINE_LABEL_GAP_PX apart.
+export const LINE_LABEL_GAP_PX_QA = 6; // mirrors LINE_LABEL_GAP_PX in src/components/ceremony/constants.ts
+export function r61Failures({ labels }) {
+  const out = [];
+  for (let i = 0; i < labels.length; i += 1) {
+    for (let j = i + 1; j < labels.length; j += 1) {
+      const a = labels[i];
+      const b = labels[j];
+      if (rectsIntersect(a, b)) {
+        out.push(`R6.1 line labels "${a.text}" and "${b.text}" intersect`);
+        continue;
+      }
+      const sameRow = a.top < b.bottom && b.top < a.bottom;
+      if (sameRow) {
+        const gap = a.right <= b.left ? b.left - a.right : a.left - b.right;
+        if (gap >= 0 && gap < LINE_LABEL_GAP_PX_QA) out.push(`R6.1 line labels are ${num(gap)}px apart, want at least ${LINE_LABEL_GAP_PX_QA}px`);
+      }
+    }
+  }
+  return out;
+}
+
+// B1.2: every Top_Bar slot keeps its x and width across the steps, and the bar keeps its height.
+export function b12Failures({ steps }) {
+  const out = [];
+  const [first, ...rest] = steps;
+  if (!first) return ["B1.2 no [data-topbar-slot] to measure"];
+  for (const s of rest) {
+    for (const name of Object.keys(first.slots)) {
+      const a = first.slots[name];
+      const b = s.slots[name];
+      if (!b) out.push(`B1.2 slot "${name}" missing at ${s.label}`);
+      else if (!slotStable(a, b)) out.push(`B1.2 slot "${name}" moved from ${num(a.left, 0)}px to ${num(b.left, 0)}px at ${s.label}`);
+    }
+    if (!sizeWithin(s.barHeight, first.barHeight)) out.push(`B1.2 bar is ${num(s.barHeight, 0)}px at ${s.label}, was ${num(first.barHeight, 0)}px`);
+  }
+  return out;
+}
+
+// B1.4: the persona notice is text in the Top_Bar, once.
+export function b14Failures({ count, inBar }) {
+  if (count !== 1) return [`B1.4 persona notice appears ${count} times, want once`];
+  return inBar ? [] : ["B1.4 persona notice is not inside the Top_Bar"];
+}
+
+// B1.5: the persona page's bar at 360x640 and 390x844 stays at most 96 px tall with the notice and Skip.
+export function b15Failures({ barHeight }) {
+  if (barHeight === null) return ["B1.5 no Top_Bar to measure"];
+  return barHeight > 96 ? [`B1.5 bar is ${num(barHeight, 0)}px tall, want at most 96px`] : [];
+}
+
+// B2.1: no visible text box meets the soil strip.
+export function b21Failures({ strip, texts }) {
+  if (!strip) return ["B2.1 no [data-soil-strip] to measure"];
+  return texts.filter((t) => rectsIntersect(strip, t)).map((t) => `B2.1 text "${t.text}" meets the soil strip`);
+}
+
+// D1.1 to D1.3: the /demo wordmark line-up and the live entry card against a persona card.
+export function d1Failures({ wordmarkLeft, card, personaCard, scrollWidth, clientWidth }) {
+  const out = [];
+  if (!card) return ["D1 no [data-live-entry-card] to measure"];
+  if (wordmarkLeft === null || !sizeWithin(card.left, wordmarkLeft)) out.push(`D1.1 card left ${num(card.left, 0)}px, wordmark left ${num(wordmarkLeft, 0)}px`);
+  if (!personaCard) out.push("D1.2 no persona card to compare with");
+  else {
+    if (!sizeWithin(card.width, personaCard.width)) out.push(`D1.2 card is ${num(card.width, 0)}px wide, a persona card ${num(personaCard.width, 0)}px`);
+    if (!colourMatch(card.border, personaCard.border)) out.push(`D1.2 card border ${card.border}, a persona card ${personaCard.border}`);
+  }
+  if (scrollWidth > clientWidth) out.push(`D1.3 horizontal scroll: scrollWidth ${scrollWidth}px > ${clientWidth}px`);
+  return out;
+}
+
+// --- Browser reads, part 2 --------------------------------------------------
+
+const Q11_TEXT = (el) => (el?.textContent ?? "").replace(/\s+/g, " ").trim();
+
+const W2_READ = () => {
+  const pick = (el) => {
+    if (!el) return null;
+    const s = getComputedStyle(el);
+    return { size: parseFloat(s.fontSize), weight: s.fontWeight, colour: s.color, width: el.getBoundingClientRect().width };
+  };
+  const h1s = [...document.querySelectorAll("h1")];
+  const h1 = h1s[0] ?? null;
+  const eyebrow = [...document.querySelectorAll("p, span, div")].find((e) => e.children.length === 0 && (e.textContent ?? "").trim() === "Seal your own letter") ?? null;
+  const intro = [...document.querySelectorAll("p")].find((e) => (e.textContent ?? "").trim().startsWith("Say where things stand today.")) ?? null;
+  return {
+    h1Count: h1s.length,
+    h1: h1 ? { ...pick(h1), text: (h1.textContent ?? "").trim() } : null,
+    eyebrow: pick(eyebrow),
+    intro: pick(intro),
+  };
+};
+
+const W3_READ = () => ({
+  pills: [...document.querySelectorAll("[data-occasion-pill]")].map((b) => ({
+    text: (b.textContent ?? "").trim(),
+    height: b.getBoundingClientRect().height,
+    pressed: b.getAttribute("aria-pressed"),
+  })),
+});
+
+const W5_READ = () => {
+  const f = document.querySelector("#live-letter");
+  if (!f) return null;
+  const s = getComputedStyle(f);
+  const label = f.labels && f.labels[0] ? (f.labels[0].textContent ?? "").trim() : f.getAttribute("aria-label");
+  return { size: parseFloat(s.fontSize), lineHeight: s.lineHeight, colour: s.color, borderStyle: s.borderTopStyle, bg: s.backgroundColor, height: f.getBoundingClientRect().height, label };
+};
+
+const W7_READ = () => {
+  const row = document.querySelector("[data-question-row]");
+  if (!row) return null;
+  const disc = row.querySelector("[data-wax-disc]");
+  const input = row.querySelector("input");
+  const lock = [...row.querySelectorAll("*")].find((e) => e.children.length === 0 && (e.textContent ?? "").trim().startsWith("Answered on opening day")) ?? null;
+  const remove = [...row.querySelectorAll("button")].find((b) => (b.getAttribute("aria-label") ?? b.textContent ?? "").trim().startsWith("Remove question")) ?? null;
+  const d = disc ? getComputedStyle(disc) : null;
+  const i = input ? getComputedStyle(input) : null;
+  const l = lock ? getComputedStyle(lock) : null;
+  const rr = remove ? remove.getBoundingClientRect() : null;
+  return {
+    disc: disc ? { width: disc.getBoundingClientRect().width, bg: d.backgroundColor, size: parseFloat(d.fontSize), weight: d.fontWeight, colour: d.color } : null,
+    input: input ? { size: parseFloat(i.fontSize), italic: i.fontStyle, colour: i.color } : null,
+    lock: lock ? { size: parseFloat(l.fontSize), colour: l.color } : null,
+    remove: rr ? { w: rr.width, h: rr.height } : null,
+  };
+};
+
+const ASK_READ = () => {
+  const pills = [...document.querySelectorAll("[data-suggestion-pill]")].map((p) => {
+    const s = getComputedStyle(p);
+    return {
+      height: p.getBoundingClientRect().height,
+      border: s.borderTopColor,
+      borderW: parseFloat(s.borderTopWidth),
+      size: parseFloat(s.fontSize),
+      style: s.fontStyle,
+      text: (p.textContent ?? "").trim(),
+      name: p.getAttribute("aria-label"),
+    };
+  });
+  const askAnother = [...document.querySelectorAll("p, span, div")].some((e) => e.children.length === 0 && (e.textContent ?? "").trim() === "Ask another:");
+  const wo = [...document.querySelectorAll("button")].find((b) => (b.textContent ?? "").replace(/\s+/g, " ").trim() === "+ Write my own") ?? null;
+  const woS = wo ? getComputedStyle(wo) : null;
+  return {
+    rows: document.querySelectorAll("[data-question-row]").length,
+    pills,
+    askAnother,
+    writeOwn: wo ? { size: parseFloat(woS.fontSize), weight: woS.fontWeight, name: wo.getAttribute("aria-label") ?? (wo.textContent ?? "").trim() } : null,
+  };
+};
+
+const CARD_READ = (selector) => {
+  const el = document.querySelector(selector);
+  if (!el) return null;
+  const s = getComputedStyle(el);
+  return { bg: s.backgroundColor, border: s.borderTopColor, borderW: parseFloat(s.borderTopWidth), radius: parseFloat(s.borderTopLeftRadius), padding: parseFloat(s.paddingTop) };
+};
+
+const W11_READ = () =>
+  [...document.querySelectorAll("[data-figure-row]")].map((b) => {
+    const s = getComputedStyle(b);
+    return {
+      name: (b.textContent ?? "").replace(/\s+/g, " ").trim().slice(0, 40),
+      height: b.getBoundingClientRect().height,
+      radius: parseFloat(s.borderTopLeftRadius),
+      border: s.borderTopColor,
+      borderW: parseFloat(s.borderTopWidth),
+      bg: s.backgroundColor,
+      pressed: b.getAttribute("aria-pressed"),
+    };
+  });
+
+const W12_READ = () => {
+  const box = document.querySelector("[data-own-number]");
+  if (!box) return null;
+  return [...box.querySelectorAll("input")].map((i) => {
+    const s = getComputedStyle(i);
+    const labelEl = i.labels && i.labels[0];
+    const label = labelEl ? (labelEl.textContent ?? "").trim() : (i.getAttribute("aria-label") ?? "");
+    return { label, height: i.getBoundingClientRect().height, radius: parseFloat(s.borderTopLeftRadius), bg: s.backgroundColor, border: s.borderTopColor, borderW: parseFloat(s.borderTopWidth) };
+  });
+};
+
+const DESK_STATE_READ = () => {
+  const desk = document.querySelector("[data-write-desk]") ?? document.body;
+  const pressed = [...desk.querySelectorAll("[aria-pressed]")].map((b) => `${(b.textContent ?? "").trim()}=${b.getAttribute("aria-pressed")}`);
+  const letter = document.querySelector("#live-letter")?.value ?? null;
+  return { pressed, letter, focused: document.activeElement ? (document.activeElement.textContent ?? "").trim() : null };
+};
+
+const T_READ = () => {
+  const rect = (el) => {
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { top: r.top, bottom: r.bottom, left: r.left, right: r.right };
+  };
+  const question = document.querySelector("[data-stage-heading], h2");
+  const field = document.querySelector("textarea, input[type='text']");
+  const button = document.querySelector("[data-primary-control]");
+  const counter = document.querySelector("[data-recall-counter]");
+  const note = document.querySelector("[data-sample-note]");
+  const order = [];
+  const seq = [["question", question], ["sample-note", note], ["field", field], ["button", button]];
+  for (const [name, el] of seq) if (el) order.push({ name, el });
+  order.sort((a, b) => (a.el.compareDocumentPosition(b.el) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1));
+  return {
+    parts: [
+      { name: "counter", rect: rect(counter) },
+      { name: "question", rect: rect(question) },
+      { name: "Answer_Field", rect: rect(field) },
+      { name: "main button", rect: rect(button) },
+    ],
+    order: order.map((o) => o.name),
+    hasNote: !!note,
+    noteRect: rect(note),
+    w: window.innerWidth,
+    h: window.innerHeight,
+  };
+};
+
+const R_READ = () => {
+  const rect = (el) => {
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+  };
+  const column = document.querySelector("[data-letter-stage]");
+  const frame = document.querySelector("[data-scene-frame]");
+  const creases = [...document.querySelectorAll("[data-crease]")].map(rect);
+  const textEl = document.querySelector("[data-letter-text]");
+  const lines = [];
+  if (textEl) {
+    const walker = document.createTreeWalker(textEl, NodeFilter.SHOW_TEXT);
+    let node = walker.nextNode();
+    while (node) {
+      const range = document.createRange();
+      range.selectNodeContents(node);
+      for (const r of range.getClientRects()) {
+        lines.push({ left: r.left, top: r.top, right: r.right, bottom: r.bottom, text: (node.textContent ?? "").trim().slice(0, 24) });
+      }
+      node = walker.nextNode();
+    }
+  }
+  const labels = [...document.querySelectorAll("[data-line-label]")].map((el) => ({ ...rect(el), text: (el.textContent ?? "").trim().slice(0, 24) }));
+  const controls = [...document.querySelectorAll("[data-advance], button")]
+    .filter((b) => b.getAttribute("data-advance") !== null || /^(Show everything|Skip to the receipts)$/.test((b.textContent ?? "").trim()))
+    .map((b) => {
+      const s = getComputedStyle(b);
+      const surface = (() => {
+        let el = b.parentElement;
+        while (el) {
+          const bg = getComputedStyle(el).backgroundColor;
+          if (bg !== "rgba(0, 0, 0, 0)" && bg !== "transparent") return bg;
+          el = el.parentElement;
+        }
+        return "rgb(11, 9, 18)";
+      })();
+      return { text: (b.textContent ?? "").trim(), colour: s.color, bg: s.backgroundColor, borderW: parseFloat(s.borderTopWidth), border: s.borderTopColor, surface };
+    });
+  return { column: rect(column), frame: rect(frame), creases, lines, labels, controls, w: window.innerWidth };
+};
+
+const B_READ = () => {
+  const bar = document.querySelector("[data-topbar]") ?? document.querySelector("header");
+  const slots = {};
+  for (const el of document.querySelectorAll("[data-topbar-slot]")) {
+    const r = el.getBoundingClientRect();
+    slots[el.getAttribute("data-topbar-slot")] = { left: r.left, width: r.width };
+  }
+  const notice = [...document.querySelectorAll("[data-topbar-slot='notice']")];
+  return { barHeight: bar ? bar.getBoundingClientRect().height : null, slots, noticeCount: notice.length, noticeInBar: notice.every((n) => !!bar && bar.contains(n)) };
+};
+
+const B21_READ = () => {
+  const strip = document.querySelector("[data-soil-strip]");
+  const texts = [...document.querySelectorAll("p, h1, h2, h3, li, a, button")]
+    .filter((e) => e.getClientRects().length > 0 && (e.textContent ?? "").trim().length > 0)
+    .map((e) => {
+      const r = e.getBoundingClientRect();
+      return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, text: (e.textContent ?? "").trim().slice(0, 24) };
+    });
+  const s = strip ? strip.getBoundingClientRect() : null;
+  return { strip: s ? { left: s.left, top: s.top, right: s.right, bottom: s.bottom } : null, texts };
+};
+
+const D_READ = () => {
+  const rect = (el) => {
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { left: r.left, width: r.width };
+  };
+  const card = document.querySelector("[data-live-entry-card]");
+  const wordmark = document.querySelector("[data-wordmark]");
+  const personaLink = document.querySelector("a[href^='/demo/personas/']");
+  const personaCard = personaLink ? personaLink.closest("article, li, div") : null;
+  const cs = card ? getComputedStyle(card) : null;
+  const pcs = personaCard ? getComputedStyle(personaCard) : null;
+  return {
+    card: card ? { ...rect(card), border: cs.borderTopColor } : null,
+    wordmarkLeft: wordmark ? rect(wordmark).left : null,
+    personaCard: personaCard ? { ...rect(personaCard), border: pcs.borderTopColor } : null,
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+  };
+};
+
+// --- Row runners, part 2 ----------------------------------------------------
+
+async function activateTwice(page, control, locator) {
+  const before = await page.evaluate(DESK_STATE_READ);
+  await locator.click();
+  await sleep(200);
+  const once = await page.evaluate(DESK_STATE_READ);
+  await locator.click();
+  await sleep(200);
+  const twice = await page.evaluate(DESK_STATE_READ);
+  return { control, before, once, twice };
+}
+
+// W2, W3, W5, W7 to W12, W13.4 and X2.1 on the Write step. Run after checkWriteDesk.
+async function checkWriteRows(page, ctx) {
+  const w2 = await page.evaluate(W2_READ);
+  const phone = ctx.w < PHONE_WIDTH_MAX;
+  report(ctx, verdictRow("W2", "write-header", w2Failures({ ...w2, phone }), `viewport=${ctx.size}`, "eyebrow 12 px, one h1 at 56 px (36 px on a phone), intro 17 px within 620 px"));
+
+  const w3 = await page.evaluate(W3_READ);
+  report(ctx, w3.pills.length ? verdictRow("W3", "occasion-pills", w3Failures(w3), `pills=${w3.pills.length} viewport=${ctx.size}`, "five pills in order, 44 px, \"A blank page\" selected at load") : missingRow("W3", "occasion-pills", "no [data-occasion-pill]"));
+
+  const w5 = await page.evaluate(W5_READ);
+  report(ctx, w5 ? verdictRow("W5", "letter-field", w5Failures({ field: w5 }), `height=${num(w5.height, 0)} viewport=${ctx.size}`, "21 px text on 32 px lines, no border, transparent, at least 296 px tall, labelled \"Your letter\"") : missingRow("W5", "letter-field", "no #live-letter"));
+  report(ctx, result("W5.2", "ruled-baseline", "missing", "not measured: the text is in a textarea with no line boxes to read; needs a text mirror (not built)"));
+
+  await page.getByRole("button", { name: "Write my own", exact: true }).click().catch(() => {});
+  await sleep(300);
+  const w7 = await page.evaluate(W7_READ);
+  report(ctx, w7 ? verdictRow("W7", "question-row", w7Failures({ row: w7 }), `viewport=${ctx.size}`, "Wax_Disc 30 px, 21 px question, 13 px Lock_Line, Remove at least 44 px") : missingRow("W7", "question-row", "no [data-question-row] after \"+ Write my own\""));
+  const w8 = await page.evaluate(ASK_READ);
+  report(ctx, verdictRow("W8", "ask-another", askAnotherFailures({ rows: w8.rows, pills: w8.pills, askAnother: w8.askAnother, writeOwn: w8.writeOwn }), `rows=${w8.rows} pills=${w8.pills.length} viewport=${ctx.size}`, "\"Ask another:\", pills of at least 40 px with the W8.2 border and type, \"+ Write my own\" at 14 px 600"));
+
+  const w9 = await page.evaluate(CARD_READ, "[data-in-envelope]");
+  const checklistCount = await page.evaluate(() => document.querySelectorAll("[data-checklist] li, [data-checklist] > *").length);
+  report(ctx, w9 ? verdictRow("W9", "in-envelope-card", w9Failures({ card: w9, checklistCount }), `viewport=${ctx.size}`, "card #15111f, 1px #2a2340, 10 px radius, 24 px padding, three Checklist_Lines") : missingRow("W9", "in-envelope-card", "no [data-in-envelope]"));
+
+  const card10 = await page.evaluate(CARD_READ, "[data-receipt-panel]");
+  const toggle = await page.evaluate(() => {
+    const find = (t) => [...document.querySelectorAll("button")].find((b) => (b.textContent ?? "").trim() === t) ?? null;
+    const pub = find("A public price");
+    const own = find("A number of my own");
+    const read = (b) => (b ? { text: (b.textContent ?? "").trim(), height: b.getBoundingClientRect().height, bg: getComputedStyle(b).backgroundColor, colour: getComputedStyle(b).color } : null);
+    return { public: read(pub), own: read(own), publicPressed: pub?.getAttribute("aria-pressed") === "true", ownPressed: own?.getAttribute("aria-pressed") === "true" };
+  });
+  report(ctx, card10 ? verdictRow("W10", "receipt-card", w10Failures({ card: card10, toggle }), `viewport=${ctx.size}`, "card style, Receipt_Toggle with 40 px buttons, \"A public price\" active") : missingRow("W10", "receipt-card", "no [data-receipt-panel]"));
+
+  const figures = await page.evaluate(W11_READ);
+  report(ctx, figures.length ? verdictRow("W11", "public-price-rows", w11Failures({ rows: figures }), `rows=${figures.length} viewport=${ctx.size}`, "rows at least 56 px, 8 px radius, unselected #0b0912 with 1px #2a2340, no Accent") : missingRow("W11", "public-price-rows", "no [data-figure-row] (no series offered on this build)"));
+
+  await page.getByRole("button", { name: "A number of my own", exact: true }).click().catch(() => {});
+  await sleep(200);
+  const w12 = await page.evaluate(W12_READ);
+  report(ctx, w12 ? verdictRow("W12", "own-number", w12Failures({ inputs: w12 }), `inputs=${w12.length} viewport=${ctx.size}`, "four 44 px inputs, 8 px radius, #0b0912 fill, 1px #3a3350 border") : missingRow("W12", "own-number", "no [data-own-number]"));
+  await page.getByRole("button", { name: "A public price", exact: true }).click().catch(() => {});
+
+  const rehearsal = await page.evaluate(() => document.querySelectorAll("[data-live-rehearsal]").length);
+  report(ctx, verdictRow("W13.4", "rehearsal-line", rehearsal === 1 ? [] : [`${rehearsal} rehearsal lines, want 1`], `count=${rehearsal} viewport=${ctx.size}`, "the Rehearsal_Line once on the Write step"));
+
+  const occasion = page.getByRole("button", { name: "Work", exact: true });
+  const x1 = await activateTwice(page, "Work", occasion);
+  report(ctx, verdictRow("X2.1", "desk-controls", x21Failures({ control: "Work", once: x1.once, twice: x1.twice }), `viewport=${ctx.size}`, "each desk control activated twice: same state, letter and focus"));
+}
+
+// T1.6, T2.1 and T2.5 on the persona recall stage at 390x844, and R1.2, R2.2, R3 and R6.1 after the reveal.
+async function checkPersonaRows(browser, base, p, size, rep, required) {
+  const [w, h] = parseSize(size);
+  const context = await browser.newContext({ viewport: { width: w, height: h } });
+  const ctx = { size, w, h, base, rep, stage: null, required, memo: {}, ghostHook: false };
+  rep.setContext(ctx);
+  console.log(`\n==== ${size} (${p.key} Q1.1 rows) ====`);
+  const page = await newPage(context);
+  try {
+    rep.stage(`${p.key}-recall`);
+    const res = await page.goto(`${base}${p.path}`, { waitUntil: "load" });
+    if (!res || res.status() !== 200) {
+      rep.add("note", "persona", `${p.path} answered HTTP ${res?.status() ?? "none"}; rows not measured`);
+      return;
+    }
+    const first = await reachRecall(page);
+    if (first === "pickup") {
+      await page.getByRole("button", { name: PICK_UP, exact: true }).click({ timeout: WAIT_MS });
+      await waitForStage(page, "recall");
+    }
+    await sleep(1500);
+    if (w === 390) {
+      const t = await page.evaluate(T_READ);
+      report(ctx, verdictRow("T1.6", "recall-viewport", t16Failures({ parts: t.parts, w: t.w, h: t.h }), `persona=${p.key} viewport=${ctx.size}`, "counter, question, Answer_Field and main button inside the First_Viewport"));
+      if (t.hasNote) {
+        report(ctx, verdictRow("T2.5", "sample-note-viewport", t.noteRect && t.noteRect.bottom <= t.h && t.noteRect.top >= 0 ? [] : ["T2.5 Sample_Note is outside the First_Viewport"], `persona=${p.key} viewport=${ctx.size}`, "a figure question's Sample_Note inside the First_Viewport"));
+      } else {
+        report(ctx, result("T2.5", "sample-note-viewport", "missing", `${p.key} recall shows a text question first; the figure question is not reached by this check`));
+      }
+      report(ctx, verdictRow("T2.1", "question-part-order", t21Failures({ order: t.order }), `persona=${p.key} order=${t.order.join(",")}`, "question, Sample_Note, Answer_Field and main button in that DOM order"));
+    }
+    await guard(ctx, "B1.5", async () => {
+      if (w === 390 || w === 360) {
+        const b = await page.evaluate(B_READ);
+        report(ctx, verdictRow("B1.5", "persona-bar", b.barHeight === null ? ["B1.5 no Top_Bar to measure"] : b15Failures({ barHeight: b.barHeight }), `bar=${num(b.barHeight, 0)}px viewport=${ctx.size}`, "Top_Bar at most 96 px on the persona page"));
+        report(ctx, verdictRow("B1.4", "persona-notice", b14Failures({ count: b.noticeCount, inBar: b.noticeInBar }), `notices=${b.noticeCount} viewport=${ctx.size}`, "the persona notice once, inside the Top_Bar"));
+      }
+    });
+
+    if (w === 1440) {
+      const show = page.getByRole("button", { name: SHOW_ALL_LABEL }).first();
+      if ((await show.count()) > 0) await show.click().catch(() => {});
+      await sleep(1500);
+      const r = await page.evaluate(R_READ);
+      report(ctx, r.column && !r.frame ? missingRow("R1.2", "letter-column", "no [data-scene-frame] to centre against") : verdictRow("R1.2", "letter-column", r.column ? r12Failures({ column: r.column, frame: r.frame, w: r.w, shiftPx: null }) : ["R1.2 no [data-letter-stage] to measure"], `column=${r.column ? num(r.column.width, 0) : "n/a"}px viewport=${ctx.size}`, "letter column centred on the Scene_Frame and at least 600 px wide"));
+      if (r.lines.length === 0) report(ctx, missingRow("R2.2", "crease-lines", "no [data-letter-text]"));
+      else report(ctx, verdictRow("R2.2", "crease-lines", r22Failures({ creases: r.creases, lines: r.lines }), `creases=${r.creases.length} lines=${r.lines.length} viewport=${ctx.size}`, "no [data-crease] meets a letter line"));
+      report(ctx, r.controls.length ? verdictRow("R3", "reveal-actions", r3Failures({ controls: r.controls }), `controls=${r.controls.length} viewport=${ctx.size}`, "two outlined white controls, 1px border at 3:1 against their surface") : missingRow("R3", "reveal-actions", "no reveal action buttons"));
+      report(ctx, r.labels.length ? verdictRow("R6.1", "line-labels", r61Failures({ labels: r.labels }), `labels=${r.labels.length} persona=${p.key}`, "no line label meets another, 6 px apart in one row") : missingRow("R6.1", "line-labels", `no [data-line-label] on ${p.key}`));
+    }
+  } catch (error) {
+    rep.add("note", "persona", `could not run: ${String(error.message ?? error).split("\n")[0]}`);
+  } finally {
+    await page.close();
+    await context.close();
+  }
+}
+
+// B1.2 on /demo/live: the Top_Bar slots across the Write and Seal steps at the Phone sizes.
+async function checkTopBarSteps(browser, base, size, rep, required) {
+  const [w, h] = parseSize(size);
+  const context = await browser.newContext({ viewport: { width: w, height: h } });
+  const ctx = { size, w, h, base, rep, stage: "live", required, memo: {}, ghostHook: false };
+  rep.setContext(ctx);
+  try {
+    const page = await newPage(context);
+    const res = await page.goto(`${base}${LIVE_PATH}`, { waitUntil: "load" });
+    if (!res || res.status() !== 200) return;
+    await page.evaluate(() => document.fonts.ready);
+    await sleep(500);
+    const steps = [{ label: "write", ...(await page.evaluate(B_READ)) }];
+    await page.fill("#live-letter", DESK_LETTER);
+    await page.getByRole("button", { name: FOLD_LABEL }).click();
+    await page.waitForSelector("[data-seal-step]", { timeout: WAIT_MS });
+    await sleep(800);
+    steps.push({ label: "seal", ...(await page.evaluate(B_READ)) });
+    report(ctx, verdictRow("B1.2", "topbar-slots", b12Failures({ steps }), `steps=${steps.map((s) => s.label).join(",")} viewport=${ctx.size}`, "each Top_Bar slot keeps its x and width (1 px) and the bar its height"));
+    await page.close();
+  } finally {
+    await context.close();
+  }
+}
+
+// B2.1 on the listed pages at top, half and end scroll. Desktop size.
+async function checkSoilStrips(browser, base, rep, required) {
+  const size = "1440x900";
+  const [w, h] = parseSize(size);
+  const context = await browser.newContext({ viewport: { width: w, height: h } });
+  const ctx = { size, w, h, base, rep, stage: "soil", required, memo: {}, ghostHook: false };
+  rep.setContext(ctx);
+  const pages = ["/", "/demo", PERSONA_PATH, LIVE_PATH];
+  try {
+    for (const path of pages) {
+      const page = await newPage(context);
+      try {
+        const res = await page.goto(`${base}${path}`, { waitUntil: "load" });
+        if (!res || res.status() !== 200) {
+          rep.add("note", "B2.1", `${path} answered HTTP ${res?.status() ?? "none"}; not measured`);
+          continue;
+        }
+        await page.evaluate(() => document.fonts.ready);
+        await sleep(600);
+        const problems = [];
+        for (const where of ["top", "half", "end"]) {
+          await page.evaluate((mode) => {
+            const max = document.documentElement.scrollHeight - window.innerHeight;
+            window.scrollTo(0, mode === "top" ? 0 : mode === "half" ? max / 2 : max);
+          }, where);
+          await sleep(300);
+          const r = await page.evaluate(B21_READ);
+          problems.push(...b21Failures(r).map((m) => `${where}: ${m}`));
+          if (!r.strip) break;
+        }
+        report(ctx, await page.evaluate(() => !!document.querySelector("[data-soil-strip]"))
+          ? verdictRow("B2.1", "soil-text", problems, `page=${path} viewport=${ctx.size}`, "no visible text box meets the soil strip at top, half or end scroll")
+          : result("B2.1", "soil-text", "missing", `not on this build: ${path} has no [data-soil-strip]`));
+      } finally {
+        await page.close();
+      }
+    }
+  } finally {
+    await context.close();
+  }
+}
+
+// D1.1 to D1.3 on /demo. Each row prints SKIP when the live entry card is absent (group D not merged).
+async function checkDemoRows(browser, base, size, rep, required) {
+  const [w, h] = parseSize(size);
+  const context = await browser.newContext({ viewport: { width: w, height: h } });
+  const ctx = { size, w, h, base, rep, stage: "demo", required, memo: {}, ghostHook: false };
+  rep.setContext(ctx);
+  try {
+    const page = await newPage(context);
+    const res = await page.goto(`${base}/demo`, { waitUntil: "load" });
+    if (!res || res.status() !== 200) return;
+    await page.evaluate(() => document.fonts.ready);
+    await sleep(500);
+    const d = await page.evaluate(D_READ);
+    if (!d.card) {
+      for (const id of ["D1.1", "D1.2", "D1.3"]) report(ctx, result(id, "demo-page", "missing", "SKIP: no [data-live-entry-card] (group D not merged)"));
+    } else {
+      const problems = d1Failures(d);
+      const names = { "D1.1": "demo-lineup", "D1.2": "demo-card", "D1.3": "demo-scroll" };
+      for (const id of Object.keys(names)) {
+        const own = problems.filter((m) => m.startsWith(id));
+        report(ctx, verdictRow(id, names[id], own, `viewport=${ctx.size}`, id === "D1.1" ? "card left edge on the wordmark" : id === "D1.2" ? "card width and border match a persona card" : "no horizontal scroll on /demo"));
+      }
+    }
+    await page.close();
   } finally {
     await context.close();
   }
@@ -4425,6 +5195,18 @@ async function main() {
     for (const size of DESK_SIZES) {
       await checkDeskRows(browser, opts.url, size, rep, opts.required);
     }
+    for (const size of ["360x640", "390x844"]) {
+      await checkTopBarSteps(browser, opts.url, size, rep, opts.required);
+    }
+    for (const size of ["1440x900", "390x844"]) {
+      await checkDemoRows(browser, opts.url, size, rep, opts.required);
+    }
+    for (const size of ["360x640", "390x844", "1440x900"]) {
+      for (const p of PERSONAS) {
+        await checkPersonaRows(browser, opts.url, p, size, rep, opts.required);
+      }
+    }
+    await checkSoilStrips(browser, opts.url, rep, opts.required);
   } finally {
     await browser.close();
   }
