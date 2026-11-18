@@ -97,9 +97,6 @@ export const CEREMONY_COPY = {
 
   // --- Recall number field (spec 08 R32) ---
 
-  /** Under the field, the number as read, for example "Read as 1,585.76". `{value}` is the number. */
-  parsedValue: "Read as {value}",
-
   /** The legend of the two-reading choice for an Ambiguous_Input. */
   readingLegend: "This could be read two ways. Which did you mean?",
 

@@ -25,7 +25,6 @@ import { NavRow } from "./NavRow";
 import { RecallScale } from "./RecallScale";
 import { TextAnswerField } from "./TextAnswerField";
 import { WaxDisc } from "@/components/live/desk/WaxDisc";
-import { answerText } from "./answer-text";
 import { formatWrittenOn } from "./written-on";
 import { CEREMONY_COPY } from "../copy";
 import {
@@ -266,7 +265,6 @@ export function RecallPager({
   const inputId = `recall-${question.id}`;
   const unitId = `recall-${question.id}-unit`;
   const helpId = `recall-${question.id}-unit-help`;
-  const parsedId = `recall-${question.id}-parsed`;
   const readingsId = `recall-${question.id}-readings`;
   const unreadableId = `recall-${question.id}-unreadable`;
   const errorId = `recall-${question.id}-error`;
@@ -319,7 +317,6 @@ export function RecallPager({
   const describedBy = [
     unitText === undefined ? null : unitId,
     rescaleNote === null ? null : helpId,
-    resolved === null ? null : parsedId,
     reading === null ? null : readingsId,
     unreadable ? unreadableId : null,
     showSampleNote ? sampleNoteId : null,
@@ -426,14 +423,6 @@ export function RecallPager({
                         )
                   }
                 />
-                <button
-                  type="submit"
-                  className={styles.cta}
-                  data-fit="advance"
-                  disabled={submitting || !ready}
-                >
-                  {isLast ? submitLabel : REVEAL_COPY.nextQuestion}
-                </button>
               </div>
             ) : (
               <div
@@ -464,34 +453,6 @@ export function RecallPager({
                   onMain={() => formRef.current?.requestSubmit()}
                 />
               </div>
-            )}
-
-            {showSampleNote ? (
-              <p id={sampleNoteId} className={styles.sampleNote}>
-                {REVEAL_COPY.sampleNote}
-              </p>
-            ) : null}
-
-            {isNumber ? (
-              <label className={styles.noAnswer} htmlFor={noAnswerId}>
-                <input
-                  id={noAnswerId}
-                  type="checkbox"
-                  checked={draft.noAnswer}
-                  onChange={(event) =>
-                    onToggleNoAnswer(question.id, event.target.checked)
-                  }
-                />
-                {REVEAL_COPY.noAnswer}
-              </label>
-            ) : null}
-
-            {resolved === null ? null : (
-              <p id={parsedId} className={styles.parsed} aria-live="polite">
-                {fill(CEREMONY_COPY.parsedValue, {
-                  value: answerText(resolved),
-                })}
-              </p>
             )}
 
             {reading === null || readingLabels === null ? null : (
@@ -538,18 +499,6 @@ export function RecallPager({
               </span>
             ) : null}
 
-            {isFirst || !isNumber ? null : (
-              <div className={styles.row}>
-                <button
-                  type="button"
-                  className={styles.link}
-                  onClick={() => goTo(previousIndex(index))}
-                >
-                  {REVEAL_COPY.previousQuestion}
-                </button>
-              </div>
-            )}
-
             {isNumber && unit !== undefined ? (
               <RecallScale
                 id={question.id}
@@ -559,11 +508,42 @@ export function RecallPager({
                 note={rescaleNote ?? undefined}
                 value={markValue}
                 text={resolved ?? undefined}
+                valueHidden={resolved === null}
                 noAnswer={draft.noAnswer}
                 onEdit={(id, text) =>
                   applyField(id, setFromScale(fieldFor(id), text))
                 }
                 spokenPrefix={REVEAL_COPY.yourAnswer}
+              />
+            ) : null}
+
+            {isNumber && showSampleNote ? (
+              <p id={sampleNoteId} className={styles.sampleNote}>
+                {REVEAL_COPY.sampleNote}
+              </p>
+            ) : null}
+
+            {isNumber ? (
+              <label className={styles.noAnswer} htmlFor={noAnswerId}>
+                <input
+                  id={noAnswerId}
+                  type="checkbox"
+                  checked={draft.noAnswer}
+                  onChange={(event) =>
+                    onToggleNoAnswer(question.id, event.target.checked)
+                  }
+                />
+                {REVEAL_COPY.noAnswer}
+              </label>
+            ) : null}
+
+            {isNumber ? (
+              <NavRow
+                showPrevious={!isFirst}
+                onPrevious={() => goTo(previousIndex(index))}
+                mainLabel={isLast ? submitLabel : REVEAL_COPY.nextQuestion}
+                mainDisabled={submitting || !ready}
+                onMain={() => formRef.current?.requestSubmit()}
               />
             ) : null}
 

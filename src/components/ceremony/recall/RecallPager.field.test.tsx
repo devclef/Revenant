@@ -47,28 +47,37 @@ function render(
   return renderToStaticMarkup(<RecallPager {...props} />);
 }
 
-/** The opening tag of the Next or submit control. */
+/** The opening tag of the advance control: the NavRow main button on a number question. */
 function nextButton(markup: string): string {
-  const match = /<button[^>]*type="submit"[^>]*>/.exec(markup);
+  const match = /<button[^>]*data-fit="advance"[^>]*>/.exec(markup);
   return match?.[0] ?? "";
 }
 
-describe("the parsed value (R32.8)", () => {
-  it("shows Read as with the number, grouped in threes", () => {
+describe("no parsed-value line (T2.3)", () => {
+  it("shows no Read as line, and the number reaches the Recall_Scale label only", () => {
     const markup = render("1585.76");
-    expect(markup).toContain(CEREMONY_COPY.parsedValue.replace("{value}", "1,585.76"));
-    expect(markup).toContain('aria-describedby="');
-  });
-
-  it("is linked from the field by aria-describedby", () => {
-    const markup = render("1585.76");
-    expect(markup).toMatch(/aria-describedby="[^"]*recall-q1-parsed/);
+    expect(markup).not.toContain("Read as");
+    expect(markup).not.toMatch(/recall-q1-parsed/);
+    expect(markup).toContain('data-readout="readout"');
+    expect(markup).toContain("1,585.76");
   });
 
   it("shows no parsed value for an empty field (R32.13)", () => {
     const markup = render("");
     expect(markup).not.toContain("Read as");
     expect(markup).not.toContain(CEREMONY_COPY.numberUnreadable);
+  });
+
+  it("shows no value in the Recall_Scale label while the field is ambiguous", () => {
+    const markup = render("1.585");
+    expect(markup).not.toContain('data-readout="readout"');
+    expect(markup).toContain(CEREMONY_COPY.recallNoMarkYet);
+  });
+
+  it("shows no value in the Recall_Scale label while the field is unreadable", () => {
+    const markup = render("12a");
+    expect(markup).not.toContain('data-readout="readout"');
+    expect(markup).toContain(CEREMONY_COPY.recallNoMarkYet);
   });
 });
 

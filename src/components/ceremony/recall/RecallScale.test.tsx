@@ -209,6 +209,7 @@ describe("Property 10: the zoom reads nothing but the marker and the pointer", (
       | "spokenPrefix"
       | "range"
       | "note"
+      | "valueHidden"
     >();
   });
 

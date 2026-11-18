@@ -35,11 +35,12 @@ function narrowRuleBody(selector: string): string {
 }
 
 describe("Recall_Pager fit hooks", () => {
-  it("names the counter, question, answer row and advance control", () => {
+  it("names the counter, question, answer field and advance control", () => {
+    const navRow = readFileSync(resolve(here, "NavRow.tsx"), "utf8");
     expect(source).toContain('data-fit="counter"');
     expect(source).toContain('data-fit="question"');
     expect(source).toContain('data-fit="answer"');
-    expect(source).toContain('data-fit="advance"');
+    expect(navRow).toContain('data-fit="advance"');
   });
 
   it("keeps the counter date in one nowrap span", () => {
@@ -49,15 +50,15 @@ describe("Recall_Pager fit hooks", () => {
 });
 
 describe("Recall_Pager reading group keeps the field and Next in view", () => {
-  it("names the reading group after the answer row, so it cannot push them down", () => {
+  it("names the reading group after the answer field and before the Nav_Row", () => {
     const answer = source.indexOf('data-fit="answer"');
     const readings = source.indexOf('data-fit="readings"');
-    const advance = source.indexOf('data-fit="advance"');
+    // The number question's NavRow is the last one in the file; the text branch
+    // has its own NavRow earlier in the markup.
+    const nav = source.lastIndexOf("<NavRow");
     expect(answer).toBeGreaterThan(-1);
-    expect(readings).toBeGreaterThan(-1);
-    expect(advance).toBeGreaterThan(-1);
-    // The answer row (field and Next) comes first in the markup; the readings follow it.
-    expect(readings).toBeGreaterThan(advance);
+    expect(readings).toBeGreaterThan(answer);
+    expect(nav).toBeGreaterThan(readings);
   });
 
   it("caps the reading group at the card width at every size", () => {
@@ -149,8 +150,9 @@ describe("Recall_Pager number field shows a typed value such as 1.585 at 360 x 6
     expect(narrowRuleBody(".input")).not.toMatch(/\bwidth:/);
   });
 
-  it("keeps the read-as line and the parser source untouched by this rule", () => {
-    expect(source).toContain('className={styles.parsed}');
+  it("shows no read-as line (T2.3)", () => {
+    expect(source).not.toContain("CEREMONY_COPY.parsedValue");
+    expect(source).not.toContain("styles.parsed");
   });
 });
 
