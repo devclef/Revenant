@@ -564,7 +564,7 @@ Group D is the only cuttable work (G3.3): whatever is merged on `main` at the fr
   - Validation: `bash scripts/check.sh`; `npm run layout-check`.
   - _Requirements: Q1.1, Q1.2, Q1.7_
 
-- [ ] 18. Q1.3, Q1.4 · Live_Walk rewrite for the desk, the Seal step and the new checks
+- [x] 18. Q1.3, Q1.4 · Live_Walk rewrite for the desk, the Seal step and the new checks
   - Agent: `platform-dev` · Depends on: 2, 6, 8, 9, 11, 12 · Estimated size: L, ~1,500 changed lines · Target: 26 November 2026
   - Never cut. Test files (`*.test.ts`) are excluded from the size count; the helpers and matrix files count.
   - Scope: `src/test/integration/live-walk.test.ts`, `live-walk-helpers.ts`, `live-walk-matrix.ts`, `live-walk-helpers.test.ts`, `live-walk-matrix.test.ts`, and `package.json` only if a script name changes.
