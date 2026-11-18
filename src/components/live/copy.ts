@@ -19,6 +19,15 @@
 export const LIVE_COPY = {
   heading: "Seal a letter of your own",
   intro: "This letter is sealed in your browser with your own passkey.",
+  /** The Seal step heading (spec 14, S3.2). Its own h1, the step's focus target. */
+  sealHeading: "Press the seal.",
+  /** The one in-browser paragraph of the Seal step (spec 14, S3.3). */
+  sealParagraph:
+    'This letter is sealed in your browser with your own passkey. Your device will ask for the passkey twice. The passkey will be named "Revenant demo" in your passkey manager.',
+  /** The text control that opens the cross-device line (spec 14, S5.2). */
+  crossDeviceQuestion: "Opening on another device?",
+  /** The text control that returns to the Write step (spec 14, S5.3). */
+  backToLetter: "Back to the letter",
   letterLabel: "Your letter",
   letterHint: "Plain text. Up to 5,000 characters.",
   letterCount: "{count} of 5,000 characters",

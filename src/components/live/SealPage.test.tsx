@@ -284,7 +284,8 @@ describe("SealPage has exactly one h1 per demo step", () => {
     for (const step of ["write", "seal"] as const) {
       pageStub.step = step;
       const html = renderToStaticMarkup(createElement(SealPage, base));
-      const name = step === "write" ? "Write" : "Press the seal";
+      // Seal's h1 is the Seal step's own heading (spec 14, S3.2).
+      const name = step === "write" ? "Write" : "Press the seal\\.";
       expect(html, step).toMatch(
         new RegExp(
           `<h1[^>]*data-step-heading=""[^>]*tabindex="-1"[^>]*>${name}</h1>`,

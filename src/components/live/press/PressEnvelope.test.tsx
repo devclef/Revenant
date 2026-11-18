@@ -135,3 +135,30 @@ describe("PressEnvelope, failure lift (P4.3, P4.4)", () => {
     expect(html).not.toContain(PRESS_COPY.chooseFirst);
   });
 });
+
+// Spec 14, S6.2, S6.5 and S6.7: the caption, the ready halo and the line tone.
+describe("PressEnvelope caption, ready and tone (spec 14, S6)", () => {
+  it("shows the caption on the envelope and keeps it out of the accessible name", () => {
+    const html = render({ caption: "To me, on opening day" });
+    expect(html).toMatch(
+      /<span class="[^"]*caption[^"]*">To me, on opening day<\/span>/,
+    );
+    expect(html).toContain(`aria-label="${PRESS_COPY.name}"`);
+    expect(html).toMatch(
+      /<span class="[^"]*envelope[^"]*" aria-hidden="true">/,
+    );
+  });
+
+  it("marks the button ready only when it is ready and not blocked", () => {
+    expect(render({ ready: true })).toMatch(/<button[^>]*data-ready=""/);
+    expect(render({ ready: true, disabled: true })).not.toMatch(/data-ready=/);
+    expect(render({ ready: false })).not.toMatch(/data-ready=/);
+  });
+
+  it("colours the status line muted by default and accent when asked", () => {
+    expect(render()).toMatch(/data-press-line=""[^>]*data-tone="muted"/);
+    expect(render({ tone: "accent" })).toMatch(
+      /data-press-line=""[^>]*data-tone="accent"/,
+    );
+  });
+});

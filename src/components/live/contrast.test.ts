@@ -234,3 +234,15 @@ describe("Backup_Card text meets WCAG 2.2 AA on the card and the selected tint (
     expect(contrastRatio(titleColour as string, tinted)).toBeGreaterThanOrEqual(WCAG_AA_NORMAL);
   });
 });
+
+// Spec 14, S3 and S6: the Seal step text and the accent status line.
+describe("Seal step text meets WCAG 2.2 AA (spec 14, S3 and S6)", () => {
+  const SEAL_PAIRS: ReadonlyArray<readonly [string, string, string]> = [
+    ["Seal step body and muted status line (#bdb4dc on the card)", "#bdb4dc", "#15111f"],
+    ["Seal step accent status line (#ff9a4d on the step)", "#ff9a4d", "#0b0912"],
+  ];
+
+  it.each(SEAL_PAIRS)("%s is at least 4.5:1", (_label, text, surface) => {
+    expect(contrastRatio(text, surface)).toBeGreaterThanOrEqual(WCAG_AA_NORMAL);
+  });
+});

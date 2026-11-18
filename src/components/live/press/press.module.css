@@ -1,9 +1,10 @@
 /*
- * Feature: 13-the-seal. Press_Envelope styles (spec 13, design section 2).
+ * Feature: 13-the-seal, restyled for 14-write-desk (spec 14, S6.1 to S6.7).
  *
- * The envelope is one control. Its paper is cream and its text is --ink, set
- * here on this surface. The wax is the only orange (--wax). The focus ring is
- * --accent. Every focusable part is at least 44 CSS px square (P1.2).
+ * The envelope is one control, drawn on the dark Seal step surface. Its paper
+ * is the cream #f1e4c8 and its text is the caption ink, set here on the paper.
+ * The wax is the only orange (--wax). The focus ring is --accent. Every
+ * focusable part is at least 44 CSS px square (P1.2).
  *
  * --press-progress (0 to 1) is written by usePressEnvelope each frame. The
  * wax scales with it through `transform` only.
@@ -13,10 +14,11 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  color: var(--ink);
+  gap: 0.75rem;
+  width: 100%;
 }
 
+/* The envelope is 440 px at most and never wider than its press column (S6.1, S6.8). */
 .press {
   --press-progress: 0;
   position: relative;
@@ -24,14 +26,13 @@
   box-sizing: border-box;
   min-width: 44px;
   min-height: 44px;
-  width: min(88vw, 30rem);
-  aspect-ratio: 4 / 3;
+  width: min(440px, 100cqi);
+  aspect-ratio: 1.55;
   padding: 0;
   margin: 0;
-  border: 2px solid var(--ink);
+  border: 0;
   border-radius: 6px;
-  background-color: var(--paper);
-  color: var(--ink);
+  background: transparent;
   cursor: pointer;
   touch-action: none;
   -webkit-touch-callout: none;
@@ -40,8 +41,7 @@
 }
 
 .press[aria-disabled="true"] {
-  border-style: dashed;
-  cursor: default;
+  cursor: not-allowed;
 }
 
 .press:focus-visible {
@@ -51,32 +51,70 @@
 
 .envelope {
   position: absolute;
-  inset: 8%;
-  border: 1px solid var(--ink);
-  background-color: var(--paper-deep);
+  inset: 0;
+  border-radius: 6px;
+  background-color: #f1e4c8;
+  box-shadow: 0 40px 90px rgba(0, 0, 0, 0.6);
   pointer-events: none;
 }
 
+/* The flap: a triangle whose point lies on the vertical centre line (S6.1). */
 .flap {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 53%;
-  background-color: var(--paper);
-  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  inset: 0;
+  background-color: #e6d5b2;
+  clip-path: polygon(0 0, 100% 0, 50% 58%);
 }
 
+/* The sealing caption, bottom left, display only (S6.2). */
+.caption {
+  position: absolute;
+  left: 20px;
+  bottom: 16px;
+  max-width: calc(100% - 40px);
+  font-family: var(--font-serif);
+  font-style: italic;
+  font-size: 17px;
+  line-height: 1.3;
+  color: #4a4036;
+}
+
+/* The wax: 112 px at 440 px wide, in proportion below that (S6.3). */
 .wax {
   position: absolute;
-  top: 53%;
+  top: 58%;
   left: 50%;
-  width: 28%;
+  width: calc(min(440px, 100cqi) * 112 / 440);
   aspect-ratio: 1;
   border-radius: 50%;
   background-color: var(--wax);
   transform: translate(-50%, -50%)
     scale(calc(0.15 + 0.85 * var(--press-progress)));
+}
+
+/* Unready: the seal shows at 40 % (S6.4). */
+.press[aria-disabled="true"] .wax {
+  opacity: 0.4;
+}
+
+/*
+ * The double halo marks a ready press (S6.5). No halo under reduced motion or
+ * Calm_Mode, which is the :root[data-calm] attribute set by the Calm control.
+ */
+.press[data-ready] .wax {
+  box-shadow:
+    0 0 0 10px rgba(255, 123, 28, 0.18),
+    0 0 0 22px rgba(255, 123, 28, 0.08);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .press[data-ready] .wax {
+    box-shadow: none;
+  }
+}
+
+:root[data-calm] .press[data-ready] .wax {
+  box-shadow: none;
 }
 
 /*
@@ -102,11 +140,22 @@
   border-radius: 50%;
 }
 
+/* The one status line (S6.7). Muted and accent are the only two colours, both on the dark surface. */
 .line {
   box-sizing: border-box;
   min-height: 2lh;
   margin: 0;
   max-width: 36ch;
+  font-size: 15px;
+  font-weight: 600;
   text-align: center;
-  color: var(--ink);
+  color: #bdb4dc;
+}
+
+.line[data-tone="muted"] {
+  color: #bdb4dc;
+}
+
+.line[data-tone="accent"] {
+  color: #ff9a4d;
 }

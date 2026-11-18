@@ -32,6 +32,12 @@ export type PressEnvelopeProps = {
   pose?: SealPose;
   /** Replaces the default plain line under the envelope. */
   line?: string;
+  /** The colour of the status line (spec 14, S6.7). Defaults to muted. */
+  tone?: "muted" | "accent";
+  /** Display-only caption at the bottom left of the envelope (spec 14, S6.2). Not part of the accessible name. */
+  caption?: string;
+  /** True when a choice is made, crypto is loaded and no prompt is open: full opacity with the halo (spec 14, S6.5). */
+  ready?: boolean;
   /** True while the Signet or Setting_State animation runs. Registers the page Skip (P2.6). */
   animating?: boolean;
   /** Moves the running animation to its final frame. Never answers a prompt. */
@@ -50,6 +56,9 @@ export function PressEnvelope({
   inert = false,
   pose = "unpressed",
   line,
+  tone = "muted",
+  caption,
+  ready = false,
   animating = false,
   onSkip = NOOP,
   onCreatePress = NOOP,
@@ -91,6 +100,7 @@ export function PressEnvelope({
         data-seal-pose={pose}
         data-pool-stage={stage ?? undefined}
         data-press-mode={inert ? "inert" : mode}
+        data-ready={ready && !blocked ? "" : undefined}
         onPointerDown={handlers.onPointerDown}
         onClick={handlers.onClick}
         onContextMenu={handlers.onContextMenu}
@@ -98,9 +108,18 @@ export function PressEnvelope({
         <span className={styles.envelope} aria-hidden="true">
           <span className={styles.flap} />
           <span className={styles.wax} />
+          {caption !== undefined ? (
+            <span className={styles.caption}>{caption}</span>
+          ) : null}
         </span>
       </button>
-      <p id={lineId} className={styles.line} data-press-line="" role="status">
+      <p
+        id={lineId}
+        className={styles.line}
+        data-press-line=""
+        data-tone={tone}
+        role="status"
+      >
         {description}
       </p>
     </div>

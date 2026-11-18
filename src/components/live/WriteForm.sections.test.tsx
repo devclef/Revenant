@@ -94,11 +94,14 @@ describe("WriteForm sections (spec 09, D2)", () => {
 
   // L1.6: the figures step is gone, so Back is offered only from the seal step.
   it("offers Back on the seal section only when Back is passed", () => {
+    // Back is a text link inside the Seal step (spec 14, S5.3). Without onBack it stays, disabled.
     const withBack = render({ section: "seal", onBack: () => {} });
-    expect(withBack).toContain(LIVE_COPY.backButton);
+    expect(withBack).toContain(LIVE_COPY.backToLetter);
+    expect(withBack).toMatch(/data-back-to-letter=""(?! disabled)/);
 
     const noBack = render({ section: "seal" });
-    expect(noBack).not.toContain(LIVE_COPY.backButton);
+    expect(noBack).toContain(LIVE_COPY.backToLetter);
+    expect(noBack).toMatch(/data-back-to-letter="" disabled=""/);
   });
 
   it("the seal section holds the passkey explanation, the warning and the press, not the letter or the picker", () => {

@@ -31,10 +31,11 @@ import { letterFieldHeightPx } from "./phone";
 import { type PrfHint } from "./prf-hint";
 import { RealDatePicker } from "./RealDatePicker";
 import { INITIAL_TOUCHED, showsFieldMessage, type TouchedState } from "./touched";
-import { INITIAL_SEAL_STATE } from "./seal-machine";
 import type { SealState } from "./seal-machine";
 import { SelfReportedRows } from "./SelfReportedRows";
 import { StepStatus } from "./StepStatus";
+import { SealStep } from "./seal-step/SealStep";
+import type { PressStatusTag } from "./seal-step/press-status";
 import { selfReportedRowsOk } from "./form";
 import { DEFAULT_QUESTION, type SelfReportedField, type SelfReportedRow } from "./write-draft";
 
@@ -136,6 +137,8 @@ export interface WriteFormProps {
    * `write` or `seal` (spec 09, D2; spec 11, L1.6).
    */
   section?: WriteSection;
+  /** False when the page holds the step's heading (any step but Seal). Default true. */
+  sealHeading?: boolean;
   /**
    * Section mode `write` only: content placed inside the paper, after the
    * action row (SealPage passes the Rehearsal_Line here on /demo/live).
@@ -241,6 +244,7 @@ export function WriteForm({
   backupChoice = null,
   onBackupChoice = () => {},
   section = "all",
+  sealHeading = true,
   footer = null,
   onNext,
   onBack,
@@ -578,13 +582,13 @@ export function WriteForm({
         </>
       ) : null}
 
-      {shows("seal") && prfHint === "missing" ? (
+      {all && prfHint === "missing" ? (
         <p className={styles.hint} role="status">
           {LIVE_COPY.prfHint}
         </p>
       ) : null}
 
-      {shows("seal") ? (
+      {all ? (
         <div className={styles.sealStep}>
         {realDate === undefined ? (
           <p className={styles.explain}>{LIVE_COPY.intro}</p>
@@ -669,6 +673,30 @@ export function WriteForm({
         </div>
       ) : null}
 
+      {section === "seal" ? (
+        <SealStep
+          tag={state.tag as PressStatusTag}
+          backupChoice={backupChoice}
+          onBackupChoice={(choice) => {
+            onTouch(TOUCH_FIELDS.warning);
+            onBackupChoice(choice);
+          }}
+          backupChoiceProblem={warningProblem ? LIVE_COPY.backupChoiceUnchosen : undefined}
+          pressBlocked={pressBlocked}
+          fieldsBlocked={!inCreated && backupChoice !== null && inputBlocked}
+          ready={!pressBlocked}
+          mode={pressMode}
+          questionCount={questions.filter((row) => row.trim() !== "").length}
+          prfMissing={prfHint === "missing"}
+          onBackupStart={onBackupStart}
+          onBack={onBack}
+          showHeading={sealHeading}
+          onCreatePress={onCreatePress}
+          onConfirmPress={onConfirmPress}
+          onAttempt={onAttempt}
+        />
+      ) : null}
+
       {all ? (
         <div className={styles.actions}>
           {backupButton}
@@ -713,18 +741,6 @@ export function WriteForm({
 
       {section === "write" ? footer : null}
 
-      {section === "seal" ? (
-        <div className={styles.actions}>
-          {onBack ? (
-            <button type="button" className={styles.secondary} onClick={onBack}>
-              {LIVE_COPY.backButton}
-            </button>
-          ) : null}
-          {backupButton}
-          {/* In created, the Setting_State line under the press is the one line (P5.5). */}
-          <StepStatus state={inCreated ? INITIAL_SEAL_STATE : state} />
-        </div>
-      ) : null}
     </>
   );
 
@@ -743,9 +759,7 @@ export function WriteForm({
   return (
     <div
       data-card={`live-step-${section}`}
-      className={
-        section === "seal" ? `${panelClass} ${styles.sealPanel}` : panelClass
-      }
+      className={section === "seal" ? styles.sealPanel : panelClass}
     >
       {body}
     </div>
