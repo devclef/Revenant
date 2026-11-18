@@ -21,6 +21,7 @@
  */
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
+import { NavRow } from "./NavRow";
 import { RecallScale } from "./RecallScale";
 import { TextAnswerField } from "./TextAnswerField";
 import { WaxDisc } from "@/components/live/desk/WaxDisc";
@@ -455,16 +456,13 @@ export function RecallPager({
                     onToggleNoAnswer(question.id, noAnswer)
                   }
                 />
-                <div className={styles.row}>
-                  <button
-                    type="submit"
-                    className={styles.cta}
-                    data-fit="advance"
-                    disabled={submitting}
-                  >
-                    {isLast ? submitLabel : REVEAL_COPY.nextQuestion}
-                  </button>
-                </div>
+                <NavRow
+                  showPrevious={!isFirst}
+                  onPrevious={() => goTo(previousIndex(index))}
+                  mainLabel={isLast ? submitLabel : REVEAL_COPY.nextQuestion}
+                  mainDisabled={submitting}
+                  onMain={() => formRef.current?.requestSubmit()}
+                />
               </div>
             )}
 
@@ -540,7 +538,7 @@ export function RecallPager({
               </span>
             ) : null}
 
-            {isFirst ? null : (
+            {isFirst || !isNumber ? null : (
               <div className={styles.row}>
                 <button
                   type="button"

@@ -9,6 +9,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { REVEAL_COPY } from "@/components/reveal/copy";
 import { RecallPager, type RecallPagerProps } from "./RecallPager";
 import type { PayloadV1 } from "@/lib/seal-format";
 
@@ -103,5 +104,54 @@ describe("the targets are at least 44 x 44 at the Phone_Sizes (P8.4)", () => {
 
   it("gives the Next button a 44 px minimum width too", () => {
     expect(ruleBody(css, ".cta")).toMatch(/min-width:\s*44px/);
+  });
+});
+
+// Feature: spec 14, T1.5: the answer row on a text question. The count and the
+// field come first, then "No answer", then the Nav_Row (Next on the right, and
+// Previous on the left from question 2 on), then the submit-failed message.
+describe("the text answer row order (spec 14, T1.5)", () => {
+  function textPayload(): Pick<PayloadV1, "metrics" | "recall_questions"> {
+    return {
+      metrics: [],
+      recall_questions: [
+        { id: "a1", text: "A text question?", answer_type: "text" },
+        { id: "a2", text: "A second text question?", answer_type: "text" },
+      ] as unknown as PayloadV1["recall_questions"],
+    };
+  }
+
+  it("renders field, count, No answer, Next, then the submit-failed message", () => {
+    const markup = render(1, {
+      payload: textPayload(),
+      failed: true,
+      initialIndex: 0,
+    });
+    const textarea = markup.indexOf("<textarea");
+    const count = markup.indexOf('id="recall-a1-count"');
+    const noAnswer = markup.indexOf(`${REVEAL_COPY.noAnswer}</label>`);
+    const next = markup.indexOf(`>${REVEAL_COPY.nextQuestion}</button>`);
+    // The copy has an apostrophe, which static markup escapes; match its first sentence.
+    const failed = markup.indexOf(REVEAL_COPY.submitFailed.split(". ")[0]);
+    expect(textarea).toBeGreaterThan(-1);
+    expect(count).toBeGreaterThan(textarea);
+    expect(noAnswer).toBeGreaterThan(count);
+    expect(next).toBeGreaterThan(noAnswer);
+    expect(failed).toBeGreaterThan(next);
+  });
+
+  it("keeps Next inside the primary control group on a text question", () => {
+    const markup = render(1, { payload: textPayload(), initialIndex: 0 });
+    const group = markup.indexOf('data-primary-control=""');
+    const next = markup.indexOf(`>${REVEAL_COPY.nextQuestion}</button>`);
+    expect(group).toBeGreaterThan(-1);
+    expect(next).toBeGreaterThan(group);
+  });
+
+  it("shows no Previous on question 1 and exactly one, from the Nav_Row, on question 2", () => {
+    const first = render(1, { payload: textPayload(), initialIndex: 0 });
+    expect(first).not.toContain(REVEAL_COPY.previousQuestion);
+    const second = render(1, { payload: textPayload(), initialIndex: 1 });
+    expect(second.split(REVEAL_COPY.previousQuestion)).toHaveLength(2);
   });
 });
