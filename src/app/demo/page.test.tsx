@@ -1,3 +1,6 @@
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vitest";
@@ -157,5 +160,34 @@ describe("Demo_Index page markup", () => {
     // No persona cards: no "Open the letter" link appears.
     expect(html).not.toContain(DEMO_COPY.openLetter);
     expect(html).not.toContain('href="/demo/personas/');
+  });
+});
+
+/**
+ * D1.1: the /demo content starts on the wordmark's edge. SceneShell's `main`
+ * applies the Top_Bar side padding, so the page's own rule must add none.
+ * `--frame-pad-x` is not a token in this codebase; the Top_Bar uses
+ * `calc(var(--frame-l) + var(--pad))`, which `.main` also uses.
+ */
+describe("Demo_Index side alignment (D1.1)", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+  const pageCss = readFileSync(resolve(here, "page.module.css"), "utf8");
+  const sceneCss = readFileSync(
+    resolve(here, "../../components/ceremony/scene/scene.module.css"),
+    "utf8",
+  );
+
+  it("the page rule adds no side padding and no centring offset", () => {
+    const pageRule = /\.page\s*\{([^}]*)\}/.exec(pageCss)?.[1] ?? "";
+    expect(pageRule).toMatch(/padding-inline:\s*0\s*;/);
+    expect(pageRule).toMatch(/margin-inline:\s*0\s*;/);
+    expect(pageRule).not.toMatch(/margin-inline:\s*auto/);
+  });
+
+  it("the scene main carries the Top_Bar side padding the page relies on", () => {
+    const mainRule = /\.main\s*\{([^}]*)\}/.exec(sceneCss)?.[1] ?? "";
+    expect(mainRule.replace(/\s+/g, " ")).toContain(
+      "padding-inline: calc(var(--frame-l) + var(--pad));",
+    );
   });
 });
