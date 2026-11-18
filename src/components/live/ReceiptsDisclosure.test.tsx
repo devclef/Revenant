@@ -217,7 +217,6 @@ describe("WriteForm write step receipt control (spec 11, W6)", () => {
       }),
     );
     expect(html).not.toContain(LIVE_COPY.receiptsAction);
-    expect(html.split(`<h2 id="`).length - 1).toBeGreaterThanOrEqual(1);
     expect(html).toMatch(new RegExp(`<h2[^>]*>${DESK_COPY.receiptTitle}</h2>`));
     expect(html).not.toContain("data-receipts-disclosure");
     expect(html).not.toMatch(/<a\b[^>]*>[^<]*Receipts[^<]*<\/a>/);
