@@ -4,9 +4,15 @@ import {
   computeChange,
   displayRescaleForUnit,
   formatPeriod,
+  formatValue,
   isFixtureFigure,
+  rescaleForDisplay,
 } from "@/lib/figures";
 import { FIG_VALUE_SIZE } from "@/components/ceremony/constants";
+import { MotionProvider } from "@/components/ceremony/motion";
+import { NumberLine } from "@/components/ceremony/figures/NumberLine";
+import { displayPrecisionForUnit } from "./display-precision";
+import { samePeriodLine } from "./same-period";
 import { pickNow } from "@/lib/figures/now";
 import type { FiguresState } from "./figures-api";
 import type { Opened } from "./opening-machine";
@@ -257,7 +263,7 @@ export function FiguresThenNow({
       nowNote,
       rescale,
       change,
-      kind: receiptKindFor(then, now, change),
+      kind: receiptKindFor(then, now, change, letterKind),
       markValue,
       sample: keptSampleFor(then.metric_id, payload.recall_questions, record),
       // The typed answer is stored per litre already (C8.3), so it is shown as
@@ -338,6 +344,72 @@ export function FiguresThenNow({
                 source={receiptSourceOf(entry.then, entry.seriesName)}
                 single
               />
+            </div>
+          );
+        }
+
+        if (entry.kind === "same_period" && entry.now !== undefined) {
+          // Same_Figure on a live or real letter (spec 14 R7.1): both rows, the
+          // Number_Line as on a compared card (then and now coincide) and the
+          // Same_Period_Line from the sealed period. No change line, formula or
+          // nothingToCompare. The rescale and precision match FigureEntry.
+          const rescale = entry.rescale;
+          const toDisplay = (value: string): string =>
+            rescale === undefined
+              ? value
+              : rescaleForDisplay(value, rescale.divisor);
+          const unit = rescale === undefined ? entry.then.unit : rescale.unit;
+          const precision = displayPrecisionForUnit(unit);
+          const shownValue = (figure: Readonly<FigureV1>): string =>
+            formatValue(toDisplay(figure.value), figure.region, precision);
+          return (
+            <div
+              key={entry.key}
+              className={styles.figureGroup}
+              data-figure-entry=""
+            >
+              <MotionProvider>
+                <ReceiptCard
+                  name={entry.name}
+                  region={entry.then.region}
+                  markValue={answer.markValue}
+                  sample={entry.sample}
+                  unit={answer.unit}
+                  then={thenRow}
+                  now={receiptFigureOf(
+                    entry.now,
+                    "now",
+                    letterKind,
+                    entry.rescale,
+                  )}
+                  nowNote={entry.nowNote ?? undefined}
+                  primary={primary}
+                  source={receiptSourceOf(entry.then, entry.seriesName)}
+                  numberLine={
+                    <NumberLine
+                      thenValue={toDisplay(entry.then.value)}
+                      nowValue={toDisplay(entry.now.value)}
+                      thenShown={shownValue(entry.then)}
+                      nowShown={shownValue(entry.now)}
+                      thenPeriod={formatPeriod(
+                        entry.then.period,
+                        entry.then.region,
+                      )}
+                      nowPeriod={formatPeriod(
+                        entry.now.period,
+                        entry.now.region,
+                      )}
+                      markValue={answer.markValue}
+                      unit={unit}
+                    />
+                  }
+                  change={
+                    <p className={styles.period} data-same-period="">
+                      {samePeriodLine(entry.then.period)}
+                    </p>
+                  }
+                />
+              </MotionProvider>
             </div>
           );
         }

@@ -54,7 +54,7 @@ export type ReceiptSource = {
   source: string;
   /** The series identifier, as sealed. */
   seriesId: string;
-  /** A link to check the figure at its source, when one was sealed. */
+  /** A link to check the figure at its source, when one was sealed (FormulaLine). */
   sourceUrl?: string;
   /** The exact sealed value and unit, "As published: …" (P5.2). */
   asPublished?: string;
@@ -84,6 +84,12 @@ export type ReceiptCardProps = {
   numberLine?: ReactNode;
   /** The change line and formula, or `undefined` when the card has none. */
   change?: ReactNode;
+  /**
+   * The formula and its check links (FormulaLine), drawn after the Source
+   * details so they stay visible while the details are closed (R4.2). Absent
+   * when the card has no change.
+   */
+  formula?: ReactNode;
   /** The source control. */
   source: ReceiptSource;
   /**
@@ -109,7 +115,17 @@ function isMessage(
   return "message" in now;
 }
 
-function SourceControl({ source }: { source: ReceiptSource }) {
+function SourceControl({
+  source,
+  checkLink,
+}: {
+  source: ReceiptSource;
+  /**
+   * Draw the check link here. False when a FormulaLine is drawn after this
+   * control, because the FormulaLine then carries the links (R4.2).
+   */
+  checkLink: boolean;
+}) {
   return (
     <details className={styles.src}>
       <summary>{REVEAL_COPY.sourceSummary}</summary>
@@ -119,7 +135,7 @@ function SourceControl({ source }: { source: ReceiptSource }) {
         {REVEAL_COPY.seriesLabel}: {source.seriesId}
       </p>
       {source.asPublished === undefined ? null : <p>{source.asPublished}</p>}
-      {source.sourceUrl === undefined ? null : (
+      {!checkLink || source.sourceUrl === undefined ? null : (
         <p>
           <a href={source.sourceUrl} rel="noreferrer noopener" target="_blank">
             {REVEAL_COPY.checkAtSource}
@@ -231,6 +247,7 @@ export function ReceiptCard({
   change,
   source,
   nowSource,
+  formula,
   primary = false,
   single = false,
 }: ReceiptCardProps) {
@@ -263,7 +280,7 @@ export function ReceiptCard({
           {REVEAL_COPY.nothingToCompare}
         </p>
 
-        <SourceControl source={source} />
+        <SourceControl source={source} checkLink />
       </section>
     );
   }
@@ -312,8 +329,11 @@ export function ReceiptCard({
 
       {change}
 
-      <SourceControl source={source} />
-      {nowSource === undefined ? null : <SourceControl source={nowSource} />}
+      <SourceControl source={source} checkLink={formula === undefined} />
+      {nowSource === undefined ? null : (
+        <SourceControl source={nowSource} checkLink={formula === undefined} />
+      )}
+      {formula}
     </section>
   );
 }

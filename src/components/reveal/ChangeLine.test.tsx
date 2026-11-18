@@ -3,29 +3,25 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { ChangeLine } from "./ChangeLine";
-import { rescaledChangeInputs } from "./change-display";
+import { displayChangeResult, rescaledChangeInputs } from "./change-display";
 import { REVEAL_COPY } from "./copy";
 import {
-  CHANGE_FORMULA_ID,
   computeChange,
   formatChange,
   type ChangeResult,
+  type DisplayRescale,
 } from "@/lib/figures";
 import type { FigureV1 } from "@/lib/seal-format";
 
 /**
  * Markup tests for the then-vs-now change line (design.md "Reveal", R12.9,
- * neutrality.md). Rendered with `renderToStaticMarkup` and `createElement` — no
- * DOM library and no JSX, matching the existing reveal test style.
+ * neutrality.md). Rendered with `renderToStaticMarkup` and `createElement`.
  *
- * A comparable change renders `formatChange`'s display (direction word, signed
- * difference, percent when defined, and both periods) followed by the formula
- * line built from {@link CHANGE_FORMULA_ID}. When either sealed input is a
- * fixture, the "fixture data" label appears on the change line too (R13.4).
- *
- * The result shown is produced by `computeChange` on two comparable official
- * figures, so the test checks the real shape the component receives rather than
- * a hand-built one.
+ * The change line draws the `formatChange` display (direction word, signed
+ * difference, percent when defined, and both periods). The formula is drawn by
+ * FormulaLine, outside the Source details, and is tested in FormulaLine.test.tsx.
+ * When either sealed input is a fixture, the "fixture data" label appears on
+ * the change line too (R13.4).
  */
 
 // Two comparable official figures from the same series: a rise.
@@ -50,8 +46,11 @@ const NOW: Readonly<FigureV1> = {
 };
 
 // A comparable change (now − then) from the two figures above.
-function comparableResult(): Extract<ChangeResult, { comparable: true }> {
-  const result = computeChange(THEN, NOW);
+function comparableResult(
+  then: Readonly<FigureV1> = THEN,
+  now: Readonly<FigureV1> = NOW,
+): Extract<ChangeResult, { comparable: true }> {
+  const result = computeChange(then, now);
   if (!result.comparable) {
     throw new Error("test setup: the two figures must be comparable");
   }
@@ -59,20 +58,19 @@ function comparableResult(): Extract<ChangeResult, { comparable: true }> {
 }
 
 function render(
-  result: Extract<ChangeResult, { comparable: true }>,
-  then: Readonly<FigureV1>,
-  now: Readonly<FigureV1>,
+  then: Readonly<FigureV1> = THEN,
+  now: Readonly<FigureV1> = NOW,
 ): string {
+  const changeText = formatChange(comparableResult(then, now), then.region);
   return renderToStaticMarkup(
-    createElement(ChangeLine, { result, region: then.region, then, now }),
+    createElement(ChangeLine, { changeText, then, now }),
   );
 }
 
 describe("ChangeLine markup", () => {
   it("renders the formatChange display line (direction, difference, percent, periods)", () => {
-    const result = comparableResult();
-    const display = formatChange(result, THEN.region);
-    const html = render(result, THEN, NOW);
+    const display = formatChange(comparableResult(), THEN.region);
+    const html = render();
 
     expect(html).toContain(display.direction);
     expect(html).toContain(display.difference);
@@ -86,31 +84,14 @@ describe("ChangeLine markup", () => {
     expect(html).toContain(REVEAL_COPY.periodRange);
   });
 
-  it("renders a readable formula with its inputs, not the formula id", () => {
-    const result = comparableResult();
-    const html = render(result, THEN, NOW);
-    expect(html).toContain(REVEAL_COPY.formulaLabel);
-    // THEN 3.000, NOW 3.600: (now - then) / then x 100.
-    expect(html).toContain("(3.600 - 3.000) / 3.000 x 100");
-    // The identifier is kept in a data attribute only, never in visible text.
-    expect(html).toContain(`data-formula="${CHANGE_FORMULA_ID}"`);
-    const visibleText = html.replace(/<[^>]*>/g, "");
-    expect(visibleText).not.toContain(CHANGE_FORMULA_ID);
-  });
-
-  it("shows the plain difference when the then value is zero (no percent)", () => {
-    const zeroThen: Readonly<FigureV1> = { ...THEN, value: "0.000" };
-    const result = computeChange(zeroThen, NOW);
-    if (!result.comparable) throw new Error("test setup: must be comparable");
-    const html = render(result, zeroThen, NOW);
-    expect(html).toContain("3.600 - 0.000");
-    expect(html).not.toContain(" / 0.000");
+  it("does not draw the formula; FormulaLine owns it (R4.2)", () => {
+    const html = render();
+    expect(html).not.toContain(REVEAL_COPY.formulaLabel);
+    expect(html).not.toContain("data-formula=");
   });
 
   it("does not render the fixture-data label when neither input is a fixture", () => {
-    const result = comparableResult();
-    const html = render(result, THEN, NOW);
-    expect(html).not.toContain(REVEAL_COPY.labelFixtureData);
+    expect(render()).not.toContain(REVEAL_COPY.labelFixtureData);
   });
 
   it("carries the fixture-data label when the then input is a fixture (R13.4)", () => {
@@ -124,44 +105,26 @@ describe("ChangeLine markup", () => {
       source: "FIXTURE source",
       series_id: "FIXTURE-fuel",
     };
-    // The change itself is still computed from two comparable figures; the
-    // fixture detection is independent of comparability.
-    const result = computeChange(fixtureThen, fixtureNow);
-    if (!result.comparable) {
-      throw new Error("test setup: fixture figures must be comparable");
-    }
-    const html = render(result, fixtureThen, fixtureNow);
-    expect(html).toContain(REVEAL_COPY.labelFixtureData);
+    expect(render(fixtureThen, fixtureNow)).toContain(
+      REVEAL_COPY.labelFixtureData,
+    );
   });
 
-  it("detects a fixture input through the series_id prefix, not just the source (ChangeLine checks either input)", () => {
-    // A comparable pair must share source and series_id, so a pair with a
-    // fixture input has both inputs on that series. This case fixes the FIXTURE
-    // marker on the series_id (with a real-looking source), so it asserts the
-    // series_id branch of isFixtureFigure drives the label, not the source.
-    const fixtureBySeriesThen: Readonly<FigureV1> = {
-      ...THEN,
-      series_id: "FIXTURE-fuel",
-    };
-    const fixtureBySeriesNow: Readonly<FigureV1> = {
-      ...NOW,
-      series_id: "FIXTURE-fuel",
-    };
-    const result = computeChange(fixtureBySeriesThen, fixtureBySeriesNow);
-    if (!result.comparable) {
-      throw new Error("test setup: figures must be comparable");
-    }
-    const html = render(result, fixtureBySeriesThen, fixtureBySeriesNow);
-    expect(html).toContain(REVEAL_COPY.labelFixtureData);
+  it("detects a fixture input through the series_id prefix, not just the source", () => {
+    // A comparable pair shares source and series_id. This case fixes the
+    // FIXTURE marker on the series_id only, so the series_id branch of
+    // isFixtureFigure drives the label.
+    const fixtureThen: Readonly<FigureV1> = { ...THEN, series_id: "FIXTURE-fuel" };
+    const fixtureNow: Readonly<FigureV1> = { ...NOW, series_id: "FIXTURE-fuel" };
+    expect(render(fixtureThen, fixtureNow)).toContain(
+      REVEAL_COPY.labelFixtureData,
+    );
   });
 });
 
 describe("ChangeLine fade marker (R3.1)", () => {
-  it("marks the change and formula block with data-change so the stage 3 Steps can fade it", () => {
-    const html = render(comparableResult(), THEN, NOW);
-    expect(html).toMatch(/<div class="[^"]*change[^"]*" data-change="">/);
-    // Both the change line and the formula line sit inside that block.
-    expect(html).toContain(REVEAL_COPY.formulaLabel);
+  it("marks the change line with data-change so the stage 3 Steps can fade it", () => {
+    expect(render()).toMatch(/<div class="[^"]*change[^"]*" data-change="">/);
   });
 });
 
@@ -181,53 +144,47 @@ describe("ChangeLine shows the rescaled inputs (C8.4)", () => {
     period: "2026-05",
   };
 
-  function euRender(): string {
-    const result = computeChange(EU_THEN, EU_NOW);
-    if (!result.comparable) throw new Error("test setup: must be comparable");
+  const euRender = (): string => {
+    const rescale: DisplayRescale = { divisor: 1000, unit: "EUR per litre" };
     const display = rescaledChangeInputs(
       EU_THEN.value,
       EU_NOW.value,
-      { divisor: 1000, unit: "EUR per litre" },
+      rescale,
       EU_THEN.unit,
     );
+    // The change is built from the rescaled inputs, as FigureEntry does.
+    const shown = displayChangeResult(comparableResult(EU_THEN, EU_NOW), display);
+    const changeText = formatChange(shown, EU_THEN.region, {
+      differenceDigits: 2,
+    });
     return renderToStaticMarkup(
       createElement(ChangeLine, {
-        result,
-        region: EU_THEN.region,
+        changeText,
         then: EU_THEN,
         now: EU_NOW,
         display,
       }),
     );
-  }
-
-  it("builds the formula from the rescaled inputs, not the sealed values", () => {
-    const html = euRender();
-    expect(html).toContain("(1.9 - 1.8) / 1.8 x 100");
-    const visibleText = html.replace(/<[^>]*>/g, "");
-    expect(visibleText).not.toContain("1800.00");
-    expect(visibleText).not.toContain("1900.00");
-  });
+  };
 
   it("shows the difference from the rescaled inputs and keeps the percentage", () => {
     const html = euRender();
-    // Per litre: 1.9 − 1.8 = +0.1. The sealed difference would read +100.00.
-    expect(html).toContain("+0.1");
+    // Per litre: 1.9 − 1.8 = +0.10 at two decimals. The sealed difference
+    // would read +100.00.
+    expect(html).toContain("+0.10");
     expect(html).not.toContain("+100.00");
     // The percentage is the same as the sealed change: 100 / 1800 = 5.6%.
     expect(html).toContain("+5.6%");
   });
 
   it("shows the rescale note on the change line", () => {
-    const html = euRender();
     const note = REVEAL_COPY.rescaledNote
       .replace("{toUnit}", "EUR per litre")
       .replace("{fromUnit}", "EUR per 1,000 litres");
-    expect(html).toContain(note);
+    expect(euRender()).toContain(note);
   });
 
   it("shows no rescale note when no display inputs are passed", () => {
-    const html = render(comparableResult(), THEN, NOW);
-    expect(html).not.toContain(REVEAL_COPY.rescaledNote.split("{")[0]);
+    expect(render()).not.toContain(REVEAL_COPY.rescaledNote.split("{")[0]);
   });
 });

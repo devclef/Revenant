@@ -429,6 +429,22 @@ export const REVEAL_COPY = {
   nothingToCompare:
     "This is the same record as the one you sealed, so there is nothing to compare yet.",
 
+  /**
+   * The Same_Period_Line on a live or real letter whose sealed period is a day
+   * in a week (YYYY-MM-DD). The period is read from the sealed string only
+   * (spec 14 R7.2). The change is never shown for the same period.
+   */
+  samePeriodWeek:
+    "Same week as when you sealed it. A letter kept for months would show the change.",
+
+  /** The Same_Period_Line for a sealed period written YYYY-MM. */
+  samePeriodMonth:
+    "Same month as when you sealed it. A letter kept for months would show the change.",
+
+  /** The Same_Period_Line for any other sealed period string. */
+  samePeriodOther:
+    "Same period as when you sealed it. A letter kept for months would show the change.",
+
   /** The lead line shown when the then and now figures can't be compared. */
   notComparable:
     "These figures can't be compared, so no change is shown.",

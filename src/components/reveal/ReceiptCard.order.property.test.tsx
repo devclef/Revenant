@@ -14,7 +14,7 @@ import fc from "fast-check";
 import { ChangeLine } from "./ChangeLine";
 import { ReceiptCard, type ReceiptCardProps, type ReceiptFigure } from "./ReceiptCard";
 import { REVEAL_COPY } from "./copy";
-import { computeChange, formatPeriod, formatValue } from "@/lib/figures";
+import { computeChange, formatChange, formatPeriod, formatValue } from "@/lib/figures";
 import type { FigureV1 } from "@/lib/seal-format";
 
 type Official = Extract<FigureV1, { kind: "official" }>;
@@ -68,7 +68,11 @@ function cardProps(then: Official, now: Official, markValue: string): ReceiptCar
     then: receiptFigure(then, "historical record, retrieved 30 October 2024"),
     now: receiptFigure(now, "retrieved 2 November 2026"),
     numberLine: createElement("div", { "data-number-line": "" }),
-    change: createElement(ChangeLine, { result: change, region: REGION, then, now }),
+    change: createElement(ChangeLine, {
+      changeText: formatChange(change, REGION),
+      then,
+      now,
+    }),
     source: { source: then.source, seriesId: then.series_id, sourceUrl: then.source_url },
   };
 }

@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { rescaleForDisplay } from "@/lib/figures";
-import { DISPLAY_PRECISION_FUEL, displayPrecisionForUnit } from "./display-precision";
+import {
+  DISPLAY_PRECISION_FUEL,
+  differenceDigitsFor,
+  displayPrecisionForUnit,
+} from "./display-precision";
 
 describe("display precision (P5.1)", () => {
   it("uses two decimals for fuel", () => {
@@ -24,5 +28,18 @@ describe("display precision (P5.1)", () => {
     expect(displayPrecisionForUnit("EUR per 1,000 litres")).toBeUndefined();
     expect(displayPrecisionForUnit("index, 2015 = 100")).toBeUndefined();
     expect(displayPrecisionForUnit("")).toBeUndefined();
+  });
+});
+
+describe("differenceDigitsFor (R5.2)", () => {
+  it("uses the display precision of a fuel unit", () => {
+    expect(differenceDigitsFor("USD per gallon", "3.000", "3.600")).toBe(2);
+    expect(differenceDigitsFor("EUR per litre", "1.8", "1.9")).toBe(2);
+  });
+
+  it("uses the larger fraction-digit count of the shown values otherwise", () => {
+    expect(differenceDigitsFor("index, 2015 = 100", "101.25", "103")).toBe(2);
+    expect(differenceDigitsFor("EUR per 1,000 litres", "1800", "1900.5")).toBe(1);
+    expect(differenceDigitsFor("EUR per 1,000 litres", "1800", "1900")).toBe(0);
   });
 });

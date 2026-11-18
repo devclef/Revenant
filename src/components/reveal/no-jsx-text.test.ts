@@ -130,6 +130,7 @@ const EXPECTED_REVEAL_TSX = [
   "FigureLine.tsx",
   "FiguresThenNow.tsx",
   "FixtureNote.tsx",
+  "FormulaLine.tsx",
   "Reveal.tsx",
   "SealedLetter.tsx",
 ] as const;

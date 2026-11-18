@@ -69,8 +69,8 @@ describe("FigureEntry draws one Receipt_Card in the C3.1 order (spec 09 C3.1)", 
       at(`data-role="then"`),
       at(`data-role="now"`),
       at(`data-line-label="answer"`),
-      at(`${REVEAL_COPY.formulaLabel}:`),
       at(`<summary>${REVEAL_COPY.sourceSummary}</summary>`),
+      at(`${REVEAL_COPY.formulaLabel}:`),
     ];
     for (const index of order) expect(index).toBeGreaterThan(-1);
     expect([...order].sort((a, b) => a - b)).toEqual(order);
@@ -366,5 +366,19 @@ describe("FigureEntry shows the change line in the rescaled unit (C8.4, eu-tomas
         .replace("{toUnit}", "EUR per litre")
         .replace("{fromUnit}", "EUR per 1,000 litres"),
     );
+  });
+
+  it("shows the difference at the shown unit's precision, not the sealed one (R5.2)", () => {
+    const html = plain(
+      render({
+        then: TOMAS_THEN,
+        now: TOMAS_NOW,
+        change: comparable(TOMAS_THEN, TOMAS_NOW),
+        rescale,
+      }),
+    );
+    // Per litre, EUR per litre has display precision 2: +0.10, not +100.00 or +0.1.
+    expect(html).toContain("+0.10");
+    expect(html).not.toContain("+100.00");
   });
 });

@@ -1,11 +1,23 @@
 import type { FigureV1 } from "@/lib/seal-format";
 import type { ChangeResult, DisplayRescale } from "@/lib/figures";
-import { formatPeriod, formatValue, rescaleForDisplay } from "@/lib/figures";
+import {
+  formatChange,
+  formatPeriod,
+  formatValue,
+  rescaleForDisplay,
+} from "@/lib/figures";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { NumberLine } from "@/components/ceremony/figures/NumberLine";
 import { ChangeLine } from "./ChangeLine";
-import { rescaledChangeInputs } from "./change-display";
-import { displayPrecisionForUnit } from "./display-precision";
+import { FormulaLine } from "./FormulaLine";
+import {
+  displayChangeResult,
+  rescaledChangeInputs,
+} from "./change-display";
+import {
+  differenceDigitsFor,
+  displayPrecisionForUnit,
+} from "./display-precision";
 import { ReceiptCard } from "./ReceiptCard";
 import {
   receiptFigureOf,
@@ -104,6 +116,28 @@ export function FigureEntry({
   // per-litre value it stored (C8.3). Rescaling it again here would divide twice.
   const markForLine = markValue;
 
+  // The change is formatted once (R5.4). ChangeLine and FormulaLine both draw
+  // from this result, so the formula shows the inputs the difference used.
+  const displayInputs =
+    rescale === undefined
+      ? undefined
+      : rescaledChangeInputs(then.value, now.value, rescale, then.unit);
+  const shownChange =
+    displayInputs === undefined
+      ? change
+      : displayChangeResult(change, displayInputs);
+  const changeText = formatChange(shownChange, then.region, {
+    differenceDigits: differenceDigitsFor(
+      unit,
+      shownChange.then.value,
+      shownChange.now.value,
+    ),
+  });
+  const sourceUrls = [
+    receiptSourceOf(then).sourceUrl,
+    receiptSourceOf(now).sourceUrl,
+  ];
+
   return (
     <MotionProvider>
       <ReceiptCard
@@ -130,15 +164,18 @@ export function FigureEntry({
         }
         change={
           <ChangeLine
-            result={change}
-            region={then.region}
+            changeText={changeText}
             then={then}
             now={now}
-            display={
-              rescale === undefined
-                ? undefined
-                : rescaledChangeInputs(then.value, now.value, rescale, then.unit)
-            }
+            display={displayInputs}
+          />
+        }
+        formula={
+          <FormulaLine
+            result={shownChange}
+            shown={changeText}
+            seriesId={then.series_id}
+            sourceUrls={sourceUrls}
           />
         }
         source={receiptSourceOf(then, seriesName)}
