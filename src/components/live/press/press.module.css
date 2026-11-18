@@ -72,7 +72,7 @@
   left: 20px;
   bottom: 16px;
   max-width: calc(100% - 40px);
-  font-family: var(--font-serif);
+  font-family: var(--font-sans);
   font-style: italic;
   font-size: 17px;
   line-height: 1.3;
