@@ -21,6 +21,10 @@
   --soil-band: 8vh;
   --ghost-x: 50vw;
   --content-column-max: min(34rem, 46vw);
+  /* The Soil_Band's drawn height (--soil-band) plus 16 px. The Scene content
+     reserves this at its bottom, so the last text ends above the band at the
+     end of the scroll (spec 14 B2.1). */
+  --soil-clear: calc(var(--soil-band) + 16px);
   position: relative;
   min-height: 100vh;
   background: var(--bg);
@@ -28,11 +32,14 @@
 }
 
 /* The page content. Shares its side padding with the Top_Bar, so the wordmark
-   and the headline start on the same line (R8.14). */
+   and the headline start on the same line (R8.14). Its bottom padding reserves
+   the Soil_Band (--soil-clear), so text never sits under the band at the end
+   of the scroll. */
 .main {
   position: relative;
   z-index: 1;
   padding-top: 6rem;
+  padding-bottom: var(--soil-clear);
   padding-inline: calc(var(--frame-l) + var(--pad));
 }
 
