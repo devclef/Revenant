@@ -2,7 +2,8 @@
 //
 // The How_Page at /how-it-is-sealed. A server component on the plain Scene
 // shell (design.md "Pages and the Top_Bar"): the Top_Bar with the wordmark link
-// to /, and no Demo chip, backdrop or controls. The footer comes from layout.tsx.
+// to /, the Demo chip in its chip slot (spec 14 B1.1), and no backdrop, Soil,
+// canvas or Ghost. The footer comes from layout.tsx.
 //
 // It opens with "How the seal works" and the Seal_Mapping table from
 // Brand_Copy, then shows its sections in their existing order. It imports
@@ -21,7 +22,7 @@ export const metadata = pageMetadata(UI_COPY.pageMeta.howItIsSealed, "/how-it-is
 
 export default function HowItIsSealedPage() {
   return (
-    <SceneShell variant="plain" demo={false}>
+    <SceneShell variant="plain" demo>
       <div className={styles.page}>
         <h1 className={styles.heading}>{HOW_COPY.heading}</h1>
         <table className={styles.mapping}>
