@@ -49,12 +49,16 @@ export function TextAnswerField({
   onChange,
   onToggleNoAnswer,
 }: TextAnswerFieldProps) {
+  const labelId = `${id}-label`;
   const countId = `${id}-count`;
   const invalidId = `${id}-invalid`;
   const describedBy = invalid ? `${countId} ${invalidId}` : countId;
 
   return (
     <div>
+      <label id={labelId} htmlFor={id}>
+        {REVEAL_COPY.answerFromMemory}
+      </label>
       <textarea
         id={id}
         rows={TEXT_ANSWER_ROWS}
@@ -62,7 +66,7 @@ export function TextAnswerField({
         disabled={noAnswer}
         data-stage-focus=""
         aria-invalid={invalid ? true : undefined}
-        aria-labelledby={headingId}
+        aria-labelledby={`${headingId} ${labelId}`}
         aria-describedby={describedBy}
         onChange={(event) => onChange(event.target.value)}
       />
