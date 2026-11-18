@@ -138,6 +138,19 @@ describe("FormulaLine check links (R4.2)", () => {
     expect(html).toContain(`${REVEAL_COPY.seriesLabel}: EMM_EPMR_PTE_NUS_DPG`);
   });
 
+  it("shows the series ID for an input without a source_url beside the link for one with it", () => {
+    const html = render(comparable(THEN, NOW), [SOURCE_URL, undefined]);
+    expect(html.split(checkLabel).length - 1).toBe(1);
+    expect(html).toContain('href="https://www.eia.gov/series"');
+    expect(html).toContain(`${REVEAL_COPY.seriesLabel}: EMM_EPMR_PTE_NUS_DPG`);
+  });
+
+  it("shows one link when two inputs share a source_url, with no series ID", () => {
+    const html = render(comparable(THEN, NOW), [SOURCE_URL, SOURCE_URL]);
+    expect(html.split(checkLabel).length - 1).toBe(1);
+    expect(html).not.toContain(REVEAL_COPY.seriesLabel);
+  });
+
   it("opens the link in a new tab without leaking the referrer", () => {
     const html = render(comparable(THEN, NOW));
     expect(html).toContain('rel="noreferrer noopener"');
