@@ -94,7 +94,7 @@
    paper pieces inside the desk keep their own ink. */
 .card.deskCard {
   padding: 0;
-  color: #ffffff;
+  color: var(--text);
   background-color: transparent;
   border: 0;
   border-radius: 0;
