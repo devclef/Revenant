@@ -11,9 +11,8 @@
 // letter, figures, close) is on the page. So it shows in `emerging`, `sealed`
 // the states the spec names.
 //
-// The first line is the fictional-persona notice at every width (P5.3). Below
-// 600 px the Compact_Top_Bar does not render it, so this card is the only place
-// it shows there. At 600 px and wider the Top_Bar also shows it (spec 07 R8.4).
+// The fictional-persona notice is not in this card. The Top_Bar shows it (spec 09
+// B1.4), so this card starts with the intro line.
 //
 // Server-safe: no hooks, no browser APIs, no import from lib/crypto or
 // lib/seal-format.
@@ -25,7 +24,7 @@ import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-dat
 import styles from "./intro.module.css";
 
 export type PersonaIntroProps = {
-  /** The persona's display name, for the fictional-persona notice. */
+  /** The persona's display name. Not shown here: the Top_Bar carries the notice. */
   personaName: string;
   /** The one everyday line (Persona_List `intro_line`). */
   introLine: string;
@@ -55,7 +54,6 @@ export function introQuestionsText(n: number): string {
 }
 
 export function PersonaIntro({
-  personaName,
   introLine,
   writtenAsOf,
   opensAt,
@@ -63,7 +61,6 @@ export function PersonaIntro({
   flowMinutes,
   stage,
 }: PersonaIntroProps) {
-  const notice = CEREMONY_COPY.personaNotice.replace("{name}", personaName);
   const writtenText = CEREMONY_COPY.envelopeWrittenAsOf.replace(
     "{date}",
     formatCalendarDate(writtenAsOf),
@@ -73,7 +70,6 @@ export function PersonaIntro({
 
   return (
     <section className={styles.intro} data-persona-intro data-block="persona-intro">
-      {stage === "recall" ? null : <p className={styles.notice}>{notice}</p>}
       <p className={styles.line}>{introLine}</p>
       {stage === "recall" ? null : (
         <p className={styles.dates}>

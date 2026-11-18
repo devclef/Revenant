@@ -64,12 +64,10 @@ describe("PersonaIntro content (spec 09 C1.1)", () => {
     expect(render({ flowMinutes: 2 })).toContain("It takes about 2 minutes.");
   });
 
-  it("puts the fictional-persona notice first, with the name filled in", () => {
+  it("does not render the fictional-persona notice: the Top_Bar carries it (spec 09 B1.4)", () => {
     const html = render();
-    const notice = CEREMONY_COPY.personaNotice.replace("{name}", "Maya");
-    expect(html).toContain(notice);
-    expect(html.indexOf(notice)).toBeLessThan(html.indexOf("writes on a May Sunday"));
-    expect(html.indexOf(notice)).toBeLessThan(html.indexOf("Written as of"));
+    expect(html).not.toContain(CEREMONY_COPY.personaNotice.replace("{name}", "Maya"));
+    expect(html.indexOf("writes on a May Sunday")).toBeLessThan(html.indexOf("Written as of"));
   });
 
   it("reads only the Persona_List values it is given, never a sealed payload", () => {
@@ -100,30 +98,30 @@ describe("PersonaIntro stages (spec 09 C1, emerging and sealed)", () => {
     );
   });
 
-  it("shows the notice inside the Persona_Intro at every width, with no CSS hiding", () => {
+  it("has no notice rule in intro.module.css, so nothing hides or styles it there", () => {
     const css = readFileSync(intro, "utf8");
-    const notice = css.slice(css.indexOf(".notice {"), css.indexOf("}", css.indexOf(".notice {")));
-    expect(notice).not.toMatch(/display:\s*none/);
-    expect(css).not.toMatch(/\.notice \{\s*display:/);
+    expect(css).not.toMatch(/\.notice\s*\{/);
+    expect(css).not.toMatch(/\.notice,/);
   });
 });
 
-// P3.1 moves the fictional-persona note and the written-as-of and opens lines
-// to TestifyContext for the recall Stage. The content tests above use the
-// `emerging` fixture, so they check what the card shows before recall.
+// P3.1 moves the written-as-of and opens lines to TestifyContext for the recall
+// Stage. The fictional-persona notice moved to the Top_Bar (spec 09 B1.4), so
+// this card never shows it. The content tests above use the `emerging` fixture,
+// so they check what the card shows before recall.
 describe("PersonaIntro lines by stage (spec 09 P3.1)", () => {
   const notice = CEREMONY_COPY.personaNotice.replace("{name}", "Maya");
   const written = CEREMONY_COPY.envelopeWrittenAsOf.replace("{date}", "12 May 2024");
   const opens = CEREMONY_COPY.envelopeOpens.replace("{date}", "5 November 2024");
 
-  it.each(["emerging", "sealed"] as const)("shows the note and both date lines in %s", (stage) => {
+  it.each(["emerging", "sealed"] as const)("shows both date lines and no notice in %s", (stage) => {
     const html = render({ stage });
-    expect(html).toContain(notice);
+    expect(html).not.toContain(notice);
     expect(html).toContain(written);
     expect(html).toContain(opens);
   });
 
-  it("hides the note and both date lines during recall", () => {
+  it("hides the date lines during recall, and never shows the notice", () => {
     const html = render({ stage: "recall" });
     expect(html).not.toContain(notice);
     expect(html).not.toContain(written);
@@ -137,10 +135,10 @@ describe("PersonaIntro lines by stage (spec 09 P3.1)", () => {
   });
 
   it.each(["marks", "seal", "letter", "figures", "close"] as const)(
-    "shows the note and both date lines in %s",
+    "shows both date lines and no notice in %s",
     (stage) => {
       const html = render({ stage });
-      expect(html).toContain(notice);
+      expect(html).not.toContain(notice);
       expect(html).toContain(written);
       expect(html).toContain(opens);
     },
