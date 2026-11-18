@@ -66,7 +66,7 @@ Group D (tasks 15 and 16) is the only cuttable work. Whatever is merged on `main
 
 ### Group S: the Seal step and the step header, target 18 to 19 November 2026
 
-- [ ] 1. S1, S2 · Reproduce, JS budget baseline, the Step_Track and the step change
+- [x] 1. S1, S2 · Reproduce, JS budget baseline, the Step_Track and the step change
   - Agent: `frontend-dev` · Depends on: none · Estimated size: M, ~1,100 changed lines · Target: 18 November 2026
   - Never cut.
   - Scope: `src/components/live/stepper/live-steps.ts`, `StepTrack.tsx` (new), `step-track.module.css` (new), `LiveStepper.tsx`, `stepper.module.css`, `src/components/live/stepper/StepIndicator.tsx` (deleted once nothing imports it), `src/components/live/SealPage.tsx` (its `h1` only), `src/components/live/copy.ts` (`receiptsStep`, `stepTrackPhone`), `src/components/ui/use-keep-in-visual-viewport.ts` (the optional `suspendUntil` ref only, if step 1 shows it is a cause), `src/components/ceremony/scene/TopBar.tsx` (setting `--topbar-clear` on every page, only if step 1 shows it is unset on `/demo/live`), and the `*.test.ts(x)` for each file. `src/components/ui/StepIndicator.tsx` stays if any other page imports it.
