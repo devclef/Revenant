@@ -41,6 +41,25 @@
   outline: none;
 }
 
+/* The question row, the same as RecallPager's: the Wax_Disc (aria-hidden, so it
+   is not in the question's name) sits 16 px left of the question heading. */
+.qRow {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.qRow > :global([data-wax-disc]) {
+  margin-top: 0.1rem;
+}
+
+.qText {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .label {
   margin: 0.5rem 0 0;
   font-family: var(--font-sans);

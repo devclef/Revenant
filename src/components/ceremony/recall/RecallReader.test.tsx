@@ -96,6 +96,21 @@ describe("RecallReader (Text_Persona reading view)", () => {
   it("renders nothing for an index outside the testimony", () => {
     expect(render(5)).toBe("");
   });
+
+  it("puts a Wax_Disc with the question number beside the question, hidden from its name", () => {
+    const html = render(1);
+    expect(html).toMatch(/<span[^>]*aria-hidden="true"[^>]*data-wax-disc=""[^>]*>2<\/span>/);
+    const heading = html.match(/<h2[^>]*data-stage-heading=""[^>]*>(.*?)<\/h2>/);
+    expect(heading).not.toBeNull();
+    expect(heading?.[1]).toContain(TESTIMONY[1].question);
+    expect(heading?.[1]).not.toContain("data-wax-disc");
+  });
+
+  it("shows no \"Your answer, from memory\" label, and keeps the fictional label", () => {
+    const html = render(0);
+    expect(html).not.toContain(REVEAL_COPY.answerFromMemory);
+    expect(html).toContain(REVEAL_COPY.personaAnswerLabel);
+  });
 });
 
 describe("RecallReader Memory_Line (spec 11 P1.6)", () => {
