@@ -8,6 +8,7 @@ import type { PickableSeries } from "./catalogue-list";
 import { AuthorQuestions } from "./AuthorQuestions";
 import { QuestionSection } from "./desk/QuestionSection";
 import { SuggestionPills } from "./desk/SuggestionPills";
+import { writeCheck } from "./desk/write-check";
 import { questionRowProblem } from "./author-questions";
 import { LETTER_FIELD_ROWS } from "./constants";
 import { LIVE_COPY, REAL_COPY } from "./copy";
@@ -439,11 +440,17 @@ export function WriteForm({
   const letterValid = !problems.some(
     (problem) => problem === "letter_empty" || problem === "letter_too_long",
   );
-  const figuresValid = !problems.some(
-    (problem) =>
-      problem === "nothing_to_testify" || problem === "figures_too_many",
-  );
   const selfReportedValid = selfReportedRowsOk(selfReported, today);
+  // The move to Seal reads the Write_Check (spec 14, W13.2). It is the same
+  // rule as the checks above, without the Seal-step warning.
+  const writeResult = writeCheck({
+    text,
+    questions,
+    metricIds,
+    selfReported,
+    maxFigures: limit,
+    sealingDay: today,
+  });
   function pressNext(valid: boolean, field: string) {
     if (!valid) {
       onTouch(field);
@@ -619,10 +626,7 @@ export function WriteForm({
               : !selfReportedValid
                 ? TOUCH_FIELDS.selfReported
                 : TOUCH_FIELDS.figures;
-          pressNext(
-            letterValid && questionsValid && selfReportedValid && figuresValid,
-            field,
-          );
+          pressNext(writeResult.ok, field);
         }}
       >
         {LIVE_COPY.nextButton}

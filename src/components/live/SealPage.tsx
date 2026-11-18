@@ -331,21 +331,14 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
         break;
     }
     const section: WriteSection = view.step === "write" ? "write" : "seal";
-    // The rehearsal line sits once, below the Write step's action row, inside
-    // the paper (spec 11, L4.1). WriteForm places the footer after that row.
-    const rehearsalFooter =
-      rehearsal && view.step === "write" ? (
-        <p className={styles.intro} data-live-rehearsal="">
-          {LIVE_COPY.rehearsalLine}
-        </p>
-      ) : undefined;
+    // The Rehearsal_Line no longer sits under the Write step's action row. It
+    // moves under the Fold_Button on the desk (spec 14, W9.3 and task 3).
     return writeForm({
       section,
       sealHeading: view.step === "seal",
       onNext: view.next,
       // Back is offered only before a passkey prompt has started (spec 09, D2.2).
       onBack: view.canGoBack && state.tag === "write" ? view.back : undefined,
-      footer: rehearsalFooter,
     });
   }
 
