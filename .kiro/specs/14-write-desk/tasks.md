@@ -422,7 +422,7 @@ Group D (tasks 15 and 16) is the only cuttable work. Whatever is merged on `main
 
 ### Group B: the Top_Bar and the Scene, target 24 to 25 November 2026
 
-- [ ] 12. B1 · Reproduce, one fixed Top_Bar
+- [x] 12. B1 · Reproduce, one fixed Top_Bar
   - Agent: `frontend-dev` · Depends on: none · Estimated size: M, ~900 changed lines · Target: 24 November 2026
   - Never cut. Runs after task 1 in number order; both may touch `TopBar.tsx`.
   - Scope: `src/components/ceremony/scene/TopBar.tsx`, `scene.module.css` (Top_Bar rules only); `src/components/ceremony/intro/TestifyContext.tsx`, `PersonaIntro.tsx`, `intro.module.css` (the notice removed); and the `*.test.ts(x)` for each file.
