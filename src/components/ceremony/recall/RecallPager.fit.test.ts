@@ -8,7 +8,8 @@
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { chromium, type Browser, type Page } from "playwright-core";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const here = __dirname;
 const css = readFileSync(resolve(here, "RecallPager.module.css"), "utf8");
@@ -195,55 +196,104 @@ describe("Recall_Pager 200-character text question at 390 x 844 (T1.6), recorded
   });
 });
 
-/*
- * RECORDED MEASUREMENT, NOT A LIVE CHECK (spec 14 T2.5). Read once from Chromium
- * at 390 x 844 with scrollY 0, on the built branch with the persona letters sealed
- * by `npm run seal-personas`. Each row is one persona number question with its
- * Sample_Note shown. Values are CSS px from getBoundingClientRect. The counter top
- * is the same for every question because the letter preamble sits above it.
- *
- * At scrollY 0 no advance control lies inside the 844 px viewport: the lowest is
- * 1034 px. The question block (counter top to advance bottom) fits: the tallest is
- * 589 px, under the 748 px left below the 96 px Top_Bar fallback. This is open
- * for the layout-check row that owns T2.5.
- */
-const MEASURED_PERSONA_NUMBER_390X844 = [
-  { persona: "us-maya", metric: "us-gasoline-regular", counterTop: 446, noteBottom: 814, advanceBottom: 924 },
-  { persona: "us-maya", metric: "us-diesel", counterTop: 446, noteBottom: 814, advanceBottom: 987 },
-  { persona: "eu-tomas", metric: "eu-petrol-euro95", counterTop: 446, noteBottom: 861, advanceBottom: 972 },
-  { persona: "eu-tomas", metric: "eu-diesel", counterTop: 446, noteBottom: 861, advanceBottom: 1034 },
-];
-
 const SAMPLES_FILE = resolve(here, "../../../../content/personas/letters/samples.json");
+const SAMPLES = JSON.parse(readFileSync(SAMPLES_FILE, "utf8")) as Record<string, Record<string, string[]>>;
 
-describe("Recall_Pager every persona number question with its Sample_Note at 390 x 844 (T2.5), recorded", () => {
-  it("covers every persona number question that has a Sample_Answer", () => {
-    const samples = JSON.parse(readFileSync(SAMPLES_FILE, "utf8")) as Record<
-      string,
-      Record<string, string[]>
-    >;
-    const expected = Object.entries(samples).flatMap(([persona, metrics]) =>
-      Object.keys(metrics).map((metric) => `${persona}/${metric}`),
-    );
-    const recorded = MEASURED_PERSONA_NUMBER_390X844.map(
-      (row) => `${row.persona}/${row.metric}`,
-    );
-    expect(recorded.sort()).toEqual(expected.sort());
-  });
+/*
+ * LIVE CHECK (spec 14 T2.5). Opens each persona's Testify step at 390 x 844 in
+ * Chromium and measures every number question that shows its Sample_Note. It needs
+ * a running app with the persona letters sealed (`npm run seal-personas`). Set
+ * REVENANT_LAYOUT_URL to the app origin, for example http://localhost:3939, and
+ * REVENANT_CHROMIUM to a Chromium path when the bundled one is not installed.
+ * Without REVENANT_LAYOUT_URL the block is skipped, so `npm test` stays offline.
+ */
+const LAYOUT_URL = process.env.REVENANT_LAYOUT_URL ?? "";
+const VIEWPORT = { width: 390, height: 844 };
+const PICK_UP = "Pick up the letter";
+const NEXT = "Next question";
+const RECORD = "Record my answers";
 
-  it("keeps the question block inside the 844 px viewport below the 96 px Top_Bar", () => {
-    const clearance = 844 - 96;
-    for (const row of MEASURED_PERSONA_NUMBER_390X844) {
-      expect(row.advanceBottom - row.counterTop, `${row.persona} ${row.metric}`).toBeLessThanOrEqual(clearance);
+type NumberRow = { question: number; noteBottom: number; navRowBottom: number };
+
+/** Walks one persona's recall questions and measures each one that shows a Sample_Note. */
+async function measureNumberQuestions(browser: Browser, persona: string): Promise<NumberRow[]> {
+  const page: Page = await browser.newPage({ viewport: VIEWPORT });
+  const rows: NumberRow[] = [];
+  try {
+    const res = await page.goto(`${LAYOUT_URL}/demo/personas/${persona}`, { waitUntil: "load" });
+    expect(res?.status(), `${persona} page status`).toBe(200);
+    const pickUp = page.getByRole("button", { name: PICK_UP, exact: true });
+    if ((await pickUp.count()) > 0) await pickUp.first().click();
+    await page.waitForSelector('[data-ceremony="recall"]', { timeout: 30_000 });
+    // The handed layout settles a moment after the stage changes.
+    await page.waitForTimeout(2600);
+
+    for (let i = 0; i < 20; i += 1) {
+      await page.evaluate(() => window.scrollTo(0, 0));
+      const box = await page.evaluate(() => {
+        const shown = (el: Element) => el.getBoundingClientRect().height > 0;
+        const nav = [...document.querySelectorAll("[data-nav-row]")].find(shown);
+        const note = [...document.querySelectorAll('[id$="-sample-note"]')].find(shown);
+        const bottom = (el: Element | undefined) => (el ? el.getBoundingClientRect().bottom : null);
+        return { navRowBottom: bottom(nav), noteBottom: bottom(note) };
+      });
+      if (box.noteBottom !== null && box.navRowBottom !== null) {
+        rows.push({ question: i + 1, noteBottom: box.noteBottom, navRowBottom: box.navRowBottom });
+      }
+
+      const next = page.getByRole("button", { name: NEXT, exact: true });
+      const record = page.getByRole("button", { name: RECORD, exact: true });
+      if ((await next.count()) > 0 && (await next.first().isVisible())) {
+        const counter = () =>
+          page.evaluate(() => document.querySelector('[data-fit="counter"]')?.textContent?.trim() ?? "");
+        const before = await counter();
+        await next.first().click();
+        await page.waitForFunction(
+          (b) => (document.querySelector('[data-fit="counter"]')?.textContent?.trim() ?? "") !== b,
+          before,
+          { timeout: 10_000 },
+        );
+        continue;
+      }
+      if ((await record.count()) > 0 && (await record.first().isVisible())) return rows;
+      throw new Error(`${persona}: no "${NEXT}" or "${RECORD}" button on question ${i + 1}`);
     }
-  });
+    throw new Error(`${persona}: more than 20 questions`);
+  } finally {
+    await page.close();
+  }
+}
 
-  it("keeps the Sample_Note above the Nav_Row (T2.1 order)", () => {
-    for (const row of MEASURED_PERSONA_NUMBER_390X844) {
-      expect(row.noteBottom, `${row.persona} ${row.metric}`).toBeLessThan(row.advanceBottom);
+describe.skipIf(!LAYOUT_URL)(
+  "Recall_Pager every persona number question with its Sample_Note at 390 x 844 (T2.5), live",
+  () => {
+    let browser: Browser;
+    beforeAll(async () => {
+      browser = await chromium.launch({ executablePath: process.env.REVENANT_CHROMIUM || undefined });
+    });
+    afterAll(async () => {
+      await browser?.close();
+    });
+
+    for (const persona of Object.keys(SAMPLES)) {
+      it(`${persona}: every sample question's Nav_Row sits inside the 844 px viewport, below its Sample_Note`, async () => {
+        const expected = Object.keys(SAMPLES[persona]);
+        const rows = await measureNumberQuestions(browser, persona);
+        expect(rows.length, `${persona} number questions with a Sample_Note`).toBe(expected.length);
+        for (const row of rows) {
+          expect(row.navRowBottom, `${persona} question ${row.question} Nav_Row bottom`).toBeLessThanOrEqual(
+            VIEWPORT.height,
+          );
+          expect(row.noteBottom, `${persona} question ${row.question} Sample_Note bottom`).toBeLessThan(
+            row.navRowBottom,
+          );
+        }
+      }, 120_000);
     }
-  });
+  },
+);
 
+describe("Recall_Pager persona number question CSS (T2.5)", () => {
   it("sets the Nav_Row 16 px below its top and the intro at 15 px below 600 px", () => {
     expect(css).toMatch(/\.body > :global\(\[data-nav-row\]\)\s*\{\s*margin-top:\s*16px;/);
     expect(css).toMatch(/@media \(max-width: 599\.98px\) \{\s*\.intro \{\s*font-size:\s*15px;/);
