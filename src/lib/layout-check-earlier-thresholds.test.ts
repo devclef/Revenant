@@ -1,12 +1,16 @@
 import { describe, expect, it } from "vitest";
 
-import { write16Failures, write17Failures } from "../../tools/qa/layout-check.mjs";
+import {
+  phTopbarMaxPx,
+  write16Failures,
+  write17Failures,
+} from "../../tools/qa/layout-check.mjs";
 
 /**
  * Spec 11 and spec 12 Write-step thresholds in tools/qa/layout-check.mjs, asserted by value.
  *
- * The new W row (spec 13 W1.3, W3.3, W4.4, W7.2; commit 5eeba2b) does not change any of
- * these rows, so each one below is unchanged:
+ * The W row (spec 13 W1.3, W4.4) and the retirements that came with spec 14 (W1.1, W1.2, W3.3,
+ * W7.2 and PH4's persona limit) do not read any of these rows, so each one below is unchanged:
  *   - W1.6 (spec 12) at 1440x900: the Letter_Field top is in the window, the field shows
  *     10 lines in view (W16_LINES_DESKTOP), and every Occasion chip is in view. Unchanged.
  *   - W1.6 phone form (spec 12, checked by PH1 at 390x844 and 360x640): the field top and
@@ -89,5 +93,18 @@ describe("spec 12 W1.7 no sideways scroll (360x640), unchanged by the W row", ()
     );
     expect(failures).toHaveLength(1);
     expect(failures[0]).toContain("Write card scrollWidth");
+  });
+});
+
+describe("PH4 Top_Bar height limit (P5.1; persona page 96 px per B1.5)", () => {
+  it("keeps 56 px on the landing, index and live pages", () => {
+    expect(phTopbarMaxPx("landing")).toBe(56);
+    expect(phTopbarMaxPx("index")).toBe(56);
+    expect(phTopbarMaxPx("live")).toBe(56);
+    expect(phTopbarMaxPx("other")).toBe(56);
+  });
+
+  it("allows 96 px on the persona page, where the notice and Skip sit in the bar", () => {
+    expect(phTopbarMaxPx("persona")).toBe(96);
   });
 });

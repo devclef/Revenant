@@ -66,9 +66,9 @@
 //                             Keep_Section top at or below the view bottom (spec 13 T1.2, T1.3).
 //   TG2   wait-ghost          the same Wait step: the risen ghost box does not intersect the
 //                             Keep_Section (spec 13 T2.2). Row ID TG2 because T2 is the tick row.
-//   W     write-step          /demo/live Write step at 1440x900 and 390x844: one column on paper,
-//                             Letter_Field top, Occasion heights, question and receipt row heights
-//                             (spec 13 W1.1 to W1.3, W3.3, W4.4, W7.2).
+//   W     write-step          /demo/live Write step at 1440x900 and 390x844: Letter_Field top and
+//                             question row heights (spec 13 W1.3, W4.4). The column and paper widths,
+//                             Occasion heights and receipt row heights were retired (see W1, W4, W11, W12).
 //   W8    heading-offset      /demo/live after the step change to Press the seal: the Step_Heading
 //                             box at least 16 px below the Top_Bar (spec 13 W8.2).
 //   LF1   landing-halves      / at 1440x900: each section with an h2 has content reaching past 60 %
@@ -77,7 +77,7 @@
 //                             text width, gaps and body text, and no clipped text (spec 13 F2.1 to F2.3).
 //   F3    persona-testify     persona Testify step at 1440x900: the fictional notice clear of the
 //                             Step_Indicator labels, question, answer and continue control in the
-//                             viewport, notice once (spec 13 F3.1, F3.2, F3.4).
+//                             viewport (spec 13 F3.1, F3.2). The notice count was retired: B1.4 counts it.
 //   F4    live-testify        live Testify step (after a passkey seal, so reached by Live_Walk): Ghost
 //                             inside the viewport, verdict 16 px below the Top_Bar, Ghost clear of the
 //                             question, answer and verdict (spec 13 F4.1 to F4.3).
@@ -227,6 +227,12 @@ const HW1_BASE_SIZE = "1366x800";
 const HW1_RATIO_MIN = 1.5;
 const PH_GAP_MAX_PX = 64;
 const PH_TOPBAR_MAX_PX = 56;
+// The persona page's bar holds the fictional notice and Skip (spec 14 B1.5, 96 px at 360 and 390).
+const PH_TOPBAR_PERSONA_MAX_PX = 96;
+// The Top_Bar height limit for a route kind (routeKind). Pure, so unit tests use it.
+export function phTopbarMaxPx(kind) {
+  return kind === "persona" ? PH_TOPBAR_PERSONA_MAX_PX : PH_TOPBAR_MAX_PX;
+}
 const PH_TARGET_MIN_PX = 44;
 const PH_HEADLINE_LINES_LANDING = 3;
 const PH_HEADLINE_LINES_OTHER = 2;
@@ -1941,12 +1947,13 @@ export async function runPhoneChecks(page, size, route) {
         out.push(result("PH3", "headline-lines", r.lines <= max && !lone ? "pass" : "fail", `lines=${r.lines} wordsPerLine=${r.words.join(",")} threshold=lines<=${max}, no lone word before the last line`));
       }
     }
-    // PH4 topbar-height.
+    // PH4 topbar-height. The persona page allows 96 px (B1.5); every other page keeps 56 px.
     {
       const r = await page.evaluate(PH4_READ);
+      const max = phTopbarMaxPx(kind);
       out.push(r.missing
         ? result("PH4", "topbar-height", "missing", "no [data-topbar] on this page")
-        : result("PH4", "topbar-height", r.height <= PH_TOPBAR_MAX_PX ? "pass" : "fail", `height=${r.height.toFixed(1)}px compact=${r.compact} threshold=<=${PH_TOPBAR_MAX_PX}px`));
+        : result("PH4", "topbar-height", r.height <= max ? "pass" : "fail", `height=${r.height.toFixed(1)}px compact=${r.compact} threshold=<=${max}px`));
     }
     // PH5 card-containment, where the figures show.
     if (kind === "persona" && (stage === "figures" || stage === "close")) {
@@ -3276,41 +3283,25 @@ export function tg2Failures({ ghost, keep }) {
   return rectsIntersect(ghost, keep) ? ["T2.2 the risen ghost intersects the Keep_Section"] : [];
 }
 
-// W (W1.1 to W1.3, W3.3, W4.4, W7.2). Desktop rules apply at WIDE_MIN_PX and wider; the phone
-// rules apply below it. Rows are { height, lineHeight, padY } and a row's line limit is
-// maxLines * lineHeight + padY. Pure.
-export function wFailures({ w, h, remPx, field, column, paper, occasions, questions, receipts }) {
+// W (W1.3, W4.4). Desktop rules apply at WIDE_MIN_PX and wider; the phone rules apply below it.
+// Rows are { height, lineHeight, padY } and a row's line limit is maxLines * lineHeight + padY.
+// W1.3 and W4.4 (spec 13). The column and paper widths (now W1 and W4), the Occasion heights
+// (now W3) and the receipt row heights (now W11 and W12) were retired from this check. Pure.
+export function wFailures({ w, h, field, questions }) {
   if (!field) return ["W1.3 no Letter_Field (#live-letter) to measure"];
   const out = [];
   const desktop = w >= WIDE_MIN_PX;
   if (desktop) {
-    if (column > 44 * remPx + 0.5) {
-      out.push(`W1.1 Writing_Column is ${column.toFixed(0)}px wide, need at most ${(44 * remPx).toFixed(0)}px (44rem)`);
-    }
-    if (paper !== null && paper > column + 80 + 0.5) {
-      out.push(`W1.2 paper is ${paper.toFixed(0)}px wide, need at most the column plus 80px (${(column + 80).toFixed(0)}px)`);
-    }
     if (field.top > 360 + 0.5) out.push(`W1.3 Letter_Field top is ${field.top.toFixed(0)}px from the top, need at most 360px`);
   } else if (field.top < 0 || field.top >= h) {
     out.push("W1.3 Letter_Field top is outside the First_Viewport");
   }
-  const minOccasion = desktop ? 32 : 44;
-  occasions.forEach((o, i) => {
-    if (o.height < minOccasion - 0.5) {
-      out.push(`W3.3 Occasion ${i + 1} is ${o.height.toFixed(0)}px high, need at least ${minOccasion}px`);
-    }
-  });
   if (desktop) {
     questions.forEach((q, i) => {
       const max = 2 * q.lineHeight + q.padY;
       if (q.height > max + 0.5) out.push(`W4.4 question row ${i + 1} is ${q.height.toFixed(0)}px tall, need at most two lines (${max.toFixed(0)}px)`);
     });
   }
-  const maxLines = desktop ? 2 : 3;
-  receipts.forEach((r, i) => {
-    const max = maxLines * r.lineHeight + r.padY;
-    if (r.height > max + 0.5) out.push(`W7.2 receipt row ${i + 1} is ${r.height.toFixed(0)}px tall, need at most ${maxLines} lines (${max.toFixed(0)}px)`);
-  });
   return out;
 }
 
@@ -3366,10 +3357,12 @@ export function lf2Failures({ items, w }) {
   return out;
 }
 
-// F3 (F3.1, F3.2, F3.4) on the persona Testify step at 1440x900. The fictional notice does not
+// F3 (F3.1, F3.2) on the persona Testify step at 1440x900. The fictional notice does not
 // overlap a Step_Indicator label; the question, the answer control and the control to go on lie
-// inside the viewport; the notice shows once. A null answer or continue control is skipped.
-export function f3Failures({ w, h, notice, labels, question, answer, cont, noticeCount }) {
+// inside the viewport. A null answer or continue control is skipped.
+// F3.4 (the notice count) was retired: B1.4 checks that the element whose text equals
+// personaNoticeText is shown once, inside the Top_Bar. Pure.
+export function f3Failures({ w, h, notice, labels, question, answer, cont }) {
   const out = [];
   if (notice && labels.some((l) => rectsIntersect(notice, l))) {
     out.push("F3.1 the fictional notice overlaps a Step_Indicator label");
@@ -3378,7 +3371,6 @@ export function f3Failures({ w, h, notice, labels, question, answer, cont, notic
   else if (!rectInViewport(question, w, h)) out.push("F3.2 question is not inside the First_Viewport");
   if (answer && !rectInViewport(answer, w, h)) out.push("F3.2 answer control is not inside the First_Viewport");
   if (cont && !rectInViewport(cont, w, h)) out.push("F3.2 control to go on is not inside the First_Viewport");
-  if (noticeCount > 1) out.push(`F3.4 the fictional notice shows ${noticeCount} times, need once`);
   return out;
 }
 
@@ -3417,16 +3409,10 @@ const W_READ = () => {
   };
   const field = document.querySelector("textarea#live-letter");
   if (!field) return { missing: true };
-  const panel = document.querySelector('[data-card="live-write"]');
   return {
     missing: false,
-    remPx: parseFloat(getComputedStyle(document.documentElement).fontSize) || 16,
     field: box(field),
-    column: field.parentElement.getBoundingClientRect().width,
-    paper: panel ? panel.getBoundingClientRect().width : null,
-    occasions: [...document.querySelectorAll('[class*="occasionButton"]')].filter(visible).map((el) => ({ height: el.getBoundingClientRect().height })),
     questions: [...document.querySelectorAll('[class*="questionRow"]')].filter(visible).map(rowMetrics),
-    receipts: [...document.querySelectorAll('[class*="figureItem"]')].filter(visible).map(rowMetrics),
   };
 };
 
@@ -3501,7 +3487,7 @@ const LF2_READ = () => {
 };
 
 // F3: the persona Testify step. The notice is the first visible paragraph that says it is
-// fictional; noticeCount counts all of them. The control to go on is the last visible button.
+// fictional. The control to go on is the last visible button.
 const F3_READ = () => {
   const box = (el) => {
     const r = el.getBoundingClientRect();
@@ -3515,7 +3501,6 @@ const F3_READ = () => {
   const cont = buttons.length ? buttons[buttons.length - 1] : null;
   return {
     notice: fictional.length ? box(fictional[0]) : null,
-    noticeCount: fictional.length,
     labels: [...document.querySelectorAll("[data-step-indicator] li")].filter(visible).map(box),
     question: question && visible(question) ? box(question) : null,
     answer: answer ? box(answer) : null,
@@ -3575,7 +3560,7 @@ async function checkWriteRow(page, ctx) {
   }
   const problems = wFailures({ w: ctx.w, h: ctx.h, ...r });
   const desktop = ctx.w >= WIDE_MIN_PX;
-  const detail = `field top=${px(r.field.top)} column=${px(r.column)} paper=${r.paper === null ? "n/a" : px(r.paper)} occasions=${r.occasions.length} questions=${r.questions.length} receipts=${r.receipts.length} viewport=${ctx.size} threshold=${desktop ? "column at most 44rem, paper at most column plus 80px, field top at most 360px" : "field top inside the viewport"}, occasion at least ${desktop ? 32 : 44}px, rows at most ${desktop ? 2 : 3} lines${problems.length ? ` (${problems.join("; ")})` : ""}`;
+  const detail = `field top=${px(r.field.top)} questions=${r.questions.length} viewport=${ctx.size} threshold=${desktop ? "field top at most 360px, question rows at most two lines" : "field top inside the viewport"}${problems.length ? ` (${problems.join("; ")})` : ""}`;
   report(ctx, result("W", "write-step", problems.length ? "fail" : "pass", detail));
 }
 
@@ -3674,8 +3659,8 @@ async function checkPersonaTestify(page, ctx) {
     report(ctx, result("F3", "persona-testify", "missing", "no fictional notice on the Testify step to measure"));
     return;
   }
-  const problems = f3Failures({ w: ctx.w, h: ctx.h, notice: r.notice, labels: r.labels, question: r.question, answer: r.answer, cont: r.cont, noticeCount: r.noticeCount });
-  const detail = `notice=${px(r.notice.top)}..${px(r.notice.bottom)} labels=${r.labels.length} question=${r.question ? px(r.question.bottom) : "n/a"} continue="${r.contText}" viewport=${ctx.size} threshold=notice clear of the step labels, question, answer and continue control inside the viewport, notice once${problems.length ? ` (${problems.join("; ")})` : ""}`;
+  const problems = f3Failures({ w: ctx.w, h: ctx.h, notice: r.notice, labels: r.labels, question: r.question, answer: r.answer, cont: r.cont });
+  const detail = `notice=${px(r.notice.top)}..${px(r.notice.bottom)} labels=${r.labels.length} question=${r.question ? px(r.question.bottom) : "n/a"} continue="${r.contText}" viewport=${ctx.size} threshold=notice clear of the step labels, question, answer and continue control inside the viewport${problems.length ? ` (${problems.join("; ")})` : ""}`;
   report(ctx, result("F3", "persona-testify", problems.length ? "fail" : "pass", detail));
 }
 
