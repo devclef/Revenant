@@ -9,7 +9,7 @@
   container: recallTrack / inline-size;
   color: var(--ink);
   position: relative;
-  margin: 2.25rem 0 1rem;
+  margin: 1rem 0 0.5rem;
 }
 
 /* Below 600 px the scale takes less vertical space, so a number question's
