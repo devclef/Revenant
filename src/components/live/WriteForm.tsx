@@ -1,6 +1,6 @@
 "use client";
 
-import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
+import { useLayoutEffect, useRef, useState } from "react";
 
 import { DemoLabel } from "@/components/demo/DemoLabel";
 
@@ -8,6 +8,7 @@ import type { PickableSeries } from "./catalogue-list";
 import { AuthorQuestions } from "./AuthorQuestions";
 import { QuestionSection } from "./desk/QuestionSection";
 import { SuggestionPills } from "./desk/SuggestionPills";
+import type { WriteCheckInput } from "./desk/write-check";
 import { questionRowProblem } from "./author-questions";
 import { LETTER_FIELD_ROWS } from "./constants";
 import { LIVE_COPY, REAL_COPY } from "./copy";
@@ -47,7 +48,6 @@ import { SelfReportedRows } from "./SelfReportedRows";
 import { StepStatus } from "./StepStatus";
 import { SealStep } from "./seal-step/SealStep";
 import type { PressStatusTag } from "./seal-step/press-status";
-import { selfReportedRowsOk } from "./form";
 import { DEFAULT_QUESTION, type SelfReportedField, type SelfReportedRow } from "./write-draft";
 
 /**
@@ -151,10 +151,10 @@ export interface WriteFormProps {
   /** False when the page holds the step's heading (any step but Seal). Default true. */
   sealHeading?: boolean;
   /**
-   * Section mode `write` only: content placed inside the paper, after the
-   * action row (SealPage passes the Rehearsal_Line here on /demo/live).
+   * Section mode `write` only: shows the Rehearsal_Line under the Fold_Button.
+   * SealPage sets it on /demo/live only.
    */
-  footer?: ReactNode;
+  rehearsal?: boolean;
   /** Section mode: moves to the next step once this step is valid. */
   onNext?: () => void;
   /** Section mode: moves back one step. Omit where Back is not offered. */
@@ -256,7 +256,7 @@ export function WriteForm({
   onBackupChoice = () => {},
   section = "all",
   sealHeading = true,
-  footer = null,
+  rehearsal = false,
   onNext,
   onBack,
   onCreatePress,
@@ -398,7 +398,6 @@ export function WriteForm({
         questionRowProblem(row) !== null ? [index] : [],
       )
     : [];
-  const questionsValid = !problems.includes("question_too_long");
   const dateMissing =
     realDate !== undefined && realDate.value === null && state.tag === "write";
   const dateProblem = shownFor(
@@ -436,22 +435,16 @@ export function WriteForm({
   // testify rule (L1.2) and the self-reported rows, so an invalid one keeps the
   // judge on the step where its messages show. The figures request never blocks
   // here (spec 11, X2.4).
-  const letterValid = !problems.some(
-    (problem) => problem === "letter_empty" || problem === "letter_too_long",
-  );
-  const figuresValid = !problems.some(
-    (problem) =>
-      problem === "nothing_to_testify" || problem === "figures_too_many",
-  );
-  const selfReportedValid = selfReportedRowsOk(selfReported, today);
-  function pressNext(valid: boolean, field: string) {
-    if (!valid) {
-      onTouch(field);
-      onAttempt();
-      return;
-    }
-    onNext?.();
-  }
+  // The Fold_Button reads the Write_Check (spec 14, W13.2). The desk runs the
+  // same check, so the card's seal and the fold always agree.
+  const checkInput: WriteCheckInput = {
+    text,
+    questions,
+    metricIds,
+    selfReported,
+    maxFigures: limit,
+    sealingDay: today,
+  };
 
   // The Seal step's press (P1). It is disabled until a Backup_Choice is made
   // (P1.5). In `created` it is the Setting_State press, which confirms the
@@ -599,6 +592,8 @@ export function WriteForm({
     </>
   );
 
+  // On the desk the receipts sit in the interim paper block with this row
+  // (until task 6). The Next control is the Fold_Button now (W13).
   const writeActions = (
     <div className={`${styles.actions} ${styles.writeActions}`}>
       <button
@@ -607,25 +602,6 @@ export function WriteForm({
         onClick={() => setReceiptsRequest(nextOpenRequest)}
       >
         {LIVE_COPY.receiptsAction}
-      </button>
-      <button
-        type="button"
-        className={styles.primary}
-        onClick={() => {
-          const field = !letterValid
-            ? TOUCH_FIELDS.letter
-            : !questionsValid
-              ? TOUCH_FIELDS.questions
-              : !selfReportedValid
-                ? TOUCH_FIELDS.selfReported
-                : TOUCH_FIELDS.figures;
-          pressNext(
-            letterValid && questionsValid && selfReportedValid && figuresValid,
-            field,
-          );
-        }}
-      >
-        {LIVE_COPY.nextButton}
       </button>
     </div>
   );
@@ -650,7 +626,16 @@ export function WriteForm({
         authorQuestions={deskQuestions}
         receipts={receiptsDisclosure}
         actions={writeActions}
-        footer={footer}
+        check={checkInput}
+        rehearsal={rehearsal}
+        onFoldPass={() => onNext?.()}
+        onFoldFail={() => {
+          onTouch(TOUCH_FIELDS.letter);
+          onTouch(TOUCH_FIELDS.questions);
+          onTouch(TOUCH_FIELDS.figures);
+          onTouch(TOUCH_FIELDS.selfReported);
+          onAttempt();
+        }}
       />
     );
   }

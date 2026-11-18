@@ -115,16 +115,12 @@
   min-width: 0;
 }
 
-/* The interim panel is a paper surface, so the receipts and buttons it holds
-   keep their paper ink (W1.2, until the Envelope_Panel replaces it). */
+/* The Envelope_Panel is the flex item itself, so its sticky state moves it
+   within the row (W1.3). Its paper and ink come from panel.module.css. */
 .panelColumn {
   flex: 1 1 340px;
   min-width: 0;
-  box-sizing: border-box;
-  padding: 24px;
-  border-radius: 6px;
-  background-color: #f6ead4;
-  color: #1f1b16;
+  align-self: flex-start;
 }
 
 /* Below 600 px the pills form one line that scrolls sideways. The page does

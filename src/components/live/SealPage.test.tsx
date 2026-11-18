@@ -371,26 +371,13 @@ describe("SealPage passes each figure's value and source into the picker", () =>
 describe("SealPage rehearsal line (spec 11, L4.1, L4.3)", () => {
   const base = { rpId: "revenant.devclef.se", appOrigin: "https://revenant.devclef.se" };
 
-  it("shows the rehearsal line under the Write heading with the rehearsal prop", () => {
+  it("shows the rehearsal line once on the Write step, under the Fold_Button (spec 14, W13.4)", () => {
     const html = renderToStaticMarkup(createElement(SealPage, { ...base, rehearsal: true }));
-    expect(html).toContain('data-live-rehearsal=""');
-    expect(html).toContain(LIVE_COPY.rehearsalLine);
-  });
-
-  it("shows the rehearsal line exactly once on the Write step", () => {
-    const html = renderToStaticMarkup(createElement(SealPage, { ...base, rehearsal: true }));
-    const count = html.split(LIVE_COPY.rehearsalLine).length - 1;
-    expect(count).toBe(1);
-    expect(html.split("data-live-rehearsal").length - 1).toBe(1);
-  });
-
-  it("places the rehearsal line below the Write action row, not above the field", () => {
-    const html = renderToStaticMarkup(createElement(SealPage, { ...base, rehearsal: true }));
-    const nextAt = html.lastIndexOf(`>${LIVE_COPY.nextButton}</button>`);
-    const lineAt = html.indexOf(LIVE_COPY.rehearsalLine);
-    expect(nextAt).toBeGreaterThan(-1);
-    expect(lineAt).toBeGreaterThan(nextAt);
-    expect(html.indexOf('id="live-letter"')).toBeLessThan(lineAt);
+    expect(html.split('data-live-rehearsal=""').length - 1).toBe(1);
+    expect(html.indexOf(LIVE_COPY.rehearsalLine)).toBeGreaterThan(
+      html.indexOf("data-fold-button"),
+    );
+    expect(html).toContain('data-live-step="write"');
   });
 
   it("carries no retired starter phrase or time word on the Write step", () => {

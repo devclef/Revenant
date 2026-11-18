@@ -81,11 +81,8 @@ describe("the Write desk container and row (W1)", () => {
     expect(valuesOf(css, ".container", "color")).toContain("#ffffff");
   });
 
-  it("keeps the interim panel a paper surface with paper ink (no inherited text)", () => {
-    expect(valuesOf(css, ".panelColumn", "background-color")).toContain(
-      "#f6ead4",
-    );
-    expect(valuesOf(css, ".panelColumn", "color")).toContain("#1f1b16");
+  it("keeps the panel column at the start of its row so it can stick (W1.3)", () => {
+    expect(valuesOf(css, ".panelColumn", "align-self")).toContain("flex-start");
   });
 });
 

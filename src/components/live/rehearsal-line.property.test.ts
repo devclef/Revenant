@@ -1,11 +1,11 @@
 // Property 19: the Rehearsal_Line appears only on the live demo (spec 11, L4.1,
 // L4.3, L4.4, L4.5).
 //
-// The line shows under the /demo/live Write heading (SealPage, covered by the
-// example tests in SealPage.test.tsx) and next to the Wait countdown (checked
-// here over every step, every prop value and clocks on both sides of the
-// opening time). A source scan then checks that no other page or component
-// can show it: /seal, a Real_Letter at /l/[id] and the persona pages.
+// The line shows on the Wait step (checked here over every step, every prop
+// value and clocks on both sides of the opening time). Spec 14 takes it off the
+// Write step's footer; it returns under the Fold_Button (desk task 3). A source
+// scan then checks that no other page or component can show it: /seal, a
+// Real_Letter at /l/[id] and the persona pages.
 
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
@@ -64,25 +64,25 @@ describe("Property 19: the Rehearsal_Line appears only on the live demo", () => 
 describe("Property 19: no other page or component can show the line", () => {
   const files = readSourceFiles(["src"], [".ts", ".tsx"]);
 
-  it("only the copy module and the two live components name rehearsalLine", () => {
+  it("only the copy module and the Wait step name rehearsalLine", () => {
     const users = files
       .filter((file) => file.text.includes("rehearsalLine"))
       .map((file) => file.path)
       .sort();
     expect(users).toEqual([
-      "src/components/live/SealPage.tsx",
       "src/components/live/copy.ts",
+      "src/components/live/desk/EnvelopePanel.tsx",
       "src/components/live/stepper/LiveWaitStep.tsx",
     ]);
   });
 
-  it("only the Write step (SealPage) and the Wait step (LiveWaitStep) render the line", () => {
+  it("only the Wait step and the Envelope_Panel render the line", () => {
     const rendering = files
       .filter((file) => file.text.includes("LIVE_COPY.rehearsalLine"))
       .map((file) => file.path)
       .sort();
     expect(rendering).toEqual([
-      "src/components/live/SealPage.tsx",
+      "src/components/live/desk/EnvelopePanel.tsx",
       "src/components/live/stepper/LiveWaitStep.tsx",
     ]);
   });
