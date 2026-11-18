@@ -138,6 +138,7 @@ describe("TopBar (R8.1 to R8.6)", () => {
     for (const stage of ALL_STAGES) {
       const html = render(createElement(TopBar, { personaName: "Maya", stage }));
       expect(html, `${stage} markup`).toContain(personaNoticeText("Maya"));
+      expect(html.split(personaNoticeText("Maya")).length - 1, `${stage} count`).toBe(1);
     }
   });
 
