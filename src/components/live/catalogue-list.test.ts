@@ -70,7 +70,29 @@ describe("listPickableSeries", () => {
       unit: "USD per gallon",
       region: "U.S.",
       latestPeriod: "2026-10-26",
+      periodType: "weekly",
+      source: "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
       isFixture: false,
+    });
+  });
+
+  it("carries the period type and the full publisher source of each series", () => {
+    const figures = makeFigures([
+      { metric: US, figures: [{ period: "2026-10-26", value: "3.41" }] },
+      { metric: EU, figures: [{ period: "2026-10-26", value: "1800.00" }] },
+    ]);
+
+    const byId = new Map(
+      listPickableSeries(figures).map((s) => [s.metricId, s]),
+    );
+
+    expect(byId.get("us-gasoline-regular")).toMatchObject({
+      periodType: "weekly",
+      source: "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
+    });
+    expect(byId.get("eu-petrol-euro95")).toMatchObject({
+      periodType: "weekly",
+      source: "European Commission, Weekly Oil Bulletin",
     });
   });
 
@@ -160,6 +182,8 @@ describe("groupPickable", () => {
     unit: "unit",
     region,
     latestPeriod: "2024-01-01",
+    periodType: "weekly",
+    source: "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
     isFixture: false,
   });
 

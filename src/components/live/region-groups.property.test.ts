@@ -32,6 +32,11 @@ const seriesArb: fc.Arbitrary<PickableSeries> = fc.record({
   displayName: fc.string({ maxLength: 12 }),
   unit: fc.string({ maxLength: 12 }),
   latestPeriod: fc.constant("2024-01-01"),
+  periodType: fc.constantFrom("weekly" as const, "monthly" as const),
+  source: fc.constantFrom(
+    "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
+    "European Commission, Weekly Oil Bulletin",
+  ),
   isFixture: fc.boolean(),
 });
 

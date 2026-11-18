@@ -28,6 +28,8 @@ const REAL: PickableSeries = {
   unit: "USD per gallon",
   region: "U.S.",
   latestPeriod: "2026-10-26",
+  periodType: "weekly",
+  source: "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
   isFixture: false,
 };
 
@@ -37,6 +39,8 @@ const FIXTURE: PickableSeries = {
   unit: "USD per gallon",
   region: "U.S.",
   latestPeriod: "2026-10-26",
+  periodType: "weekly",
+  source: "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
   isFixture: true,
 };
 
@@ -146,6 +150,8 @@ describe("FigurePicker", () => {
       ...REAL,
       metricId: "us-gasoline-fallback",
       latestPeriod: "2026-10-01",
+      periodType: "weekly",
+      source: "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
       fallbackRetrievedAt: "2026-10-30T14:02:11Z",
     };
     const html = render([fallback]);
@@ -402,6 +408,8 @@ describe("FigurePicker region groups (K4)", () => {
     unit: "EUR per 1,000 litres",
     region: "EU27, weighted average",
     latestPeriod: "2026-10-26",
+    periodType: "weekly",
+    source: "European Commission, Weekly Oil Bulletin",
     isFixture: false,
   };
 

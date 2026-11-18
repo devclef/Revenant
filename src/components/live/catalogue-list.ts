@@ -11,6 +11,7 @@ import {
 } from "@/lib/figures";
 import type { FiguresResponseV1 } from "@/lib/figures/now";
 import type { FiguresState } from "@/components/reveal/figures-api";
+import type { PeriodType } from "@/lib/figures/types";
 
 /** One series the visitor can pick, with the fields the picker shows. */
 export interface PickableSeries {
@@ -20,6 +21,10 @@ export interface PickableSeries {
   region: string;
   /** The period of the latest figure, shown as "Latest period: {period}". */
   latestPeriod: string;
+  /** How often the series publishes: weekly or monthly (the receipt row's period). */
+  periodType: PeriodType;
+  /** The publisher's full source string, as published in the catalogue. */
+  source: string;
   /** True when the latest figure is fixture data (labelled "fixture data"). */
   isFixture: boolean;
   /**
@@ -50,6 +55,8 @@ export function listPickableSeries(figures: LoadedFigures): PickableSeries[] {
       unit: series.metric.unit,
       region: series.metric.region,
       latestPeriod: latest.period,
+      periodType: series.period_type,
+      source: series.metric.source,
       isFixture: isFixtureFigure(latest),
     });
   }
@@ -77,6 +84,8 @@ export function listPickableFromResponse(
       unit: entry.metric.unit,
       region: entry.metric.region,
       latestPeriod: figure.period,
+      periodType: entry.period_type,
+      source: entry.metric.source,
       isFixture: isFixtureFigure(figure),
       ...(entry.fallback === true
         ? { fallbackRetrievedAt: figure.retrieved_at }
