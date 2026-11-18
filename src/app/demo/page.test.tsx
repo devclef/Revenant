@@ -191,3 +191,36 @@ describe("Demo_Index side alignment (D1.1)", () => {
     );
   });
 });
+
+/**
+ * D1.2: the live demo entry is the last card of the Persona_List, after every
+ * persona card, with or without personas.
+ */
+describe("Demo_Index live entry card (D1.2)", () => {
+  it("renders the live entry as the last li of the list, after the persona cards", async () => {
+    const html = await renderWithPersonas(TWO_PERSONAS);
+    const lastLiAt = html.lastIndexOf("<li");
+    const lastCardAt = html.indexOf(
+      `href="/demo/personas/${TWO_PERSONAS[1].key}"`,
+    );
+    expect(html.slice(lastLiAt)).toContain('data-live-entry-card=""');
+    expect(html.slice(lastLiAt)).toContain('href="/demo/live"');
+    expect(lastCardAt).toBeGreaterThanOrEqual(0);
+    expect(lastCardAt).toBeLessThan(lastLiAt);
+  });
+
+  it("renders exactly one live entry card, and it is not a persona card", async () => {
+    const html = await renderWithPersonas(TWO_PERSONAS);
+    expect(html.match(/data-live-entry-card=""/g)).toHaveLength(1);
+    expect(html.match(/href="\/demo\/live"/g)).toHaveLength(1);
+    expect(html.match(/<li/g)).toHaveLength(TWO_PERSONAS.length + 1);
+  });
+
+  it("still shows the live entry card when the Persona_List is empty", async () => {
+    const html = await renderWithPersonas([]);
+    expect(html).toContain(DEMO_COPY.indexEmpty);
+    expect(html).toContain('data-live-entry-card=""');
+    expect(html).toContain('href="/demo/live"');
+    expect(html.match(/<li/g)).toHaveLength(1);
+  });
+});
