@@ -171,7 +171,7 @@ Group D (tasks 15 and 16) is the only cuttable work. Whatever is merged on `main
   - Validation: `bash scripts/check.sh`; route budgets after `npm run build`.
   - _Requirements: S2.1, W1–W5, X1.4, G2.6_
 
-- [ ] 4. W6 to W8 · The Perforation, the question rows and the suggestions
+- [x] 4. W6 to W8 · The Perforation, the question rows and the suggestions
   - Agent: `frontend-dev` · Depends on: 3 · Estimated size: M, ~1,200 changed lines · Target: 21 November 2026
   - Never cut.
   - Scope: `src/components/live/desk/QuestionSection.tsx`, `QuestionRow.tsx`, `WaxDisc.tsx`, `SuggestionPills.tsx`, `suggestions.ts`, `icons.tsx` (all new); `desk/LetterSheet.tsx`, `desk/copy.ts`, `desk/sheet.module.css`; `src/components/live/occasions.ts` (`suggestions`, `SHARED_SUGGESTIONS`); `src/components/live/write-draft.ts` (`QUESTION_ADDED` with `text`); `src/components/live/copy.ts` (only if `authorQuestionLabel` does not read "Question {n}"); and the `*.test.ts(x)` for each file.
