@@ -111,8 +111,8 @@ describe("matrixShotNames with a step filter", () => {
     const names = matrixShotNames(entry!, ["write", "seal", "testify"]);
     expect(names).toEqual([
       "live-01-write-390x844.png",
-      "live-03-seal-390x844.png",
-      "live-08-testify-390x844.png",
+      "live-06-seal-390x844.png",
+      "live-13-testify-390x844.png",
     ]);
   });
 
@@ -186,15 +186,15 @@ describe("TAMPER_MATRIX (persona tamper runs)", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("names one tamper Step_Shot, numbered 13 and with -reduced when reduced", () => {
+  it("names one tamper Step_Shot, numbered 19 and with -reduced when reduced", () => {
     expect(tamperShotNames(TAMPER_MATRIX[0])).toEqual([
-      "live-13-tamper-1440x900.png",
+      "live-19-tamper-1440x900.png",
     ]);
     expect(tamperShotNames(TAMPER_MATRIX[1])).toEqual([
-      "live-13-tamper-1440x900-reduced.png",
+      "live-19-tamper-1440x900-reduced.png",
     ]);
     expect(tamperShotNames(TAMPER_MATRIX[3])).toEqual([
-      "live-13-tamper-390x844-reduced.png",
+      "live-19-tamper-390x844-reduced.png",
     ]);
   });
 });

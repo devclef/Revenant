@@ -61,19 +61,19 @@ describe("stepShotName", () => {
       "live-01-write-1440x900.png",
     );
     expect(stepShotName({ step: "tamper", width: 390, height: 844 })).toBe(
-      "live-13-tamper-390x844.png",
+      "live-19-tamper-390x844.png",
     );
     expect(stepShotName({ step: "close", width: 390, height: 844 })).toBe(
-      "live-12-close-390x844.png",
+      "live-17-close-390x844.png",
     );
   });
 
   it("follows the pattern at both widths", () => {
     expect(stepShotName({ step: "seal", width: 1440, height: 900 })).toBe(
-      "live-03-seal-1440x900.png",
+      "live-06-seal-1440x900.png",
     );
     expect(stepShotName({ step: "seal", width: 390, height: 844 })).toBe(
-      "live-03-seal-390x844.png",
+      "live-06-seal-390x844.png",
     );
   });
 
@@ -95,14 +95,25 @@ describe("stepShotName", () => {
       "live-11",
       "live-12",
       "live-13",
+      "live-14",
+      "live-15",
+      "live-16",
+      "live-17",
+      "live-18",
+      "live-19",
     ]);
   });
 
   it("pins the walk's step names in order, with press-held and setting after seal and tamper last", () => {
     expect([...WALK_STEP_NAMES]).toEqual([
       "write",
+      "write-occasion",
+      "write-receipt",
+      "write-failed",
       "write-receipts",
       "seal",
+      "seal-before-choice",
+      "seal-after-choice",
       "press-held",
       "setting",
       "wait",
@@ -112,6 +123,7 @@ describe("stepShotName", () => {
       "letter",
       "figures",
       "close",
+      "persona-read",
       "tamper",
     ]);
   });
@@ -124,7 +136,7 @@ describe("stepShotName", () => {
         height: 900,
         reduced: true,
       }),
-    ).toBe("live-11-figures-1440x900-reduced.png");
+    ).toBe("live-16-figures-1440x900-reduced.png");
     expect(
       stepShotName({
         step: "figures",
@@ -132,22 +144,22 @@ describe("stepShotName", () => {
         height: 844,
         reduced: false,
       }),
-    ).toBe("live-11-figures-390x844.png");
+    ).toBe("live-16-figures-390x844.png");
   });
 
   it("names the press and setting steps after seal, in walk order", () => {
     expect(stepShotName({ step: "press-held", width: 1440, height: 900 })).toBe(
-      "live-04-press-held-1440x900.png",
+      "live-09-press-held-1440x900.png",
     );
     expect(stepShotName({ step: "setting", width: 390, height: 844 })).toBe(
-      "live-05-setting-390x844.png",
+      "live-10-setting-390x844.png",
     );
   });
 
   it("names the step, not the Stage, for write-receipts", () => {
     expect(
       stepShotName({ step: "write-receipts", width: 390, height: 844 }),
-    ).toBe("live-02-write-receipts-390x844.png");
+    ).toBe("live-05-write-receipts-390x844.png");
   });
 
   it("throws on a step that is not in the walk", () => {
@@ -160,10 +172,10 @@ describe("stepShotName", () => {
 describe("expectedShotNames", () => {
   it("lists every step at both widths, with and without the reduced suffix", () => {
     const names = expectedShotNames("one-figure");
-    expect(names).toHaveLength(13 * 2 * 2);
+    expect(names).toHaveLength(19 * 2 * 2);
     expect(names).toContain("live-01-write-1440x900.png");
-    expect(names).toContain("live-12-close-390x844-reduced.png");
-    expect(names).toContain("live-13-tamper-1440x900-reduced.png");
+    expect(names).toContain("live-17-close-390x844-reduced.png");
+    expect(names).toContain("live-19-tamper-1440x900-reduced.png");
     expect(new Set(names).size).toBe(names.length);
   });
 
@@ -599,7 +611,7 @@ describe("checkStepSnapshot and defectsFromChecks", () => {
   it("checks forbidden strings only at figures and close", () => {
     const withPlaceholder = {
       ...CLEAN_SNAPSHOT,
-      currentStep: "See the receipts",
+      currentStep: "Receipts",
       bodyText: "unchanged 0.000 0.0%",
     };
     expect(
@@ -611,7 +623,7 @@ describe("checkStepSnapshot and defectsFromChecks", () => {
   });
 
   it("checks the typed letter text on the letter stage only when given", () => {
-    const onLetter = { ...CLEAN_SNAPSHOT, currentStep: "See the receipts" };
+    const onLetter = { ...CLEAN_SNAPSHOT, currentStep: "Receipts" };
     const missing = checkStepSnapshot("letter", onLetter, {
       letterText: "Walk letter",
     });
@@ -696,7 +708,7 @@ describe("walkShotName", () => {
   it("keeps the spec name for the default hold method", () => {
     expect(
       walkShotName({ step: "marks", width: 1440, height: 900, method: "hold" }),
-    ).toBe("live-09-marks-1440x900.png");
+    ).toBe("live-14-marks-1440x900.png");
   });
 
   it("adds the method and the reduced suffix for the other runs", () => {
@@ -708,7 +720,7 @@ describe("walkShotName", () => {
         reduced: true,
         method: "skip",
       }),
-    ).toBe("live-12-close-390x844-reduced-via-skip.png");
+    ).toBe("live-17-close-390x844-reduced-via-skip.png");
   });
 });
 
@@ -731,7 +743,7 @@ describe("checkRunShots (per-run missing Step_Shot check)", () => {
     const result = checkRunShots(expected, [expected[0]]);
     expect(result.ok).toBe(false);
     expect(result.lines).toEqual([
-      "FAIL missing Step_Shot live-03-seal-390x844.png",
+      "FAIL missing Step_Shot live-06-seal-390x844.png",
     ]);
   });
 
