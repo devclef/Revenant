@@ -197,6 +197,35 @@
 //
 // Exit codes: 0 no blocker. 1 at least one blocker. 2 the check could not start
 // (bad arguments, no Chromium, or the app does not answer at --url).
+//
+// For task 19: known product gaps. Each row below reads a hook attribute that no
+// src/ file renders yet, so on a build without it the row reports a missing or
+// failing result. This list is written from the row code and a grep of src/. No
+// row has been run against a built app. The owner must run npm run layout-check
+// and quote each result line.
+//
+//   S3.4  warning-to-seal        today: missing ("no [data-warning-text] or [data-press-envelope]")
+//         missing attribute:     data-press-envelope
+//         suspected file:        no src file renders it yet
+//   S6.1  press-envelope         today: missing ("no [data-press-envelope]")
+//         missing attribute:     data-press-envelope
+//         suspected file:        no src file renders it yet
+//   S6.8  press-vs-text          today: fail ("S6.8 no [data-press-envelope] to measure")
+//         missing attribute:     data-press-envelope
+//         suspected file:        no src file renders it yet
+//   R1.2  letter-column          today: missing ("no [data-scene-frame] to centre against")
+//         missing attribute:     data-scene-frame
+//         suspected file:        no src file renders it yet
+//   T2.5  sample-note-viewport   today: fail ("T2.5 Sample_Note is outside the First_Viewport")
+//         missing attribute:     data-sample-note
+//         suspected file:        no src file renders it yet
+//   W8    ask-another            today: no pills found, so the pill checks run on an empty list
+//         missing attribute:     data-suggestion-pill
+//         suspected file:        no src file renders it yet
+//   S6.6, S6.7, R6.1             need a manual Live_Walk passkey run by the owner.
+//
+// The W8 heading-offset row (W8.2) reads data-topbar and data-live-stepper, not any
+// attribute above.
 
 import { existsSync, mkdirSync, realpathSync } from "node:fs";
 import { join, resolve } from "node:path";
