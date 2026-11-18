@@ -240,7 +240,7 @@ Group D (tasks 15 and 16) is the only cuttable work. Whatever is merged on `main
   - Validation: `bash scripts/check.sh`; route budgets after `npm run build`.
   - _Requirements: W1.3, W1.6, W9, W13, Q2.2, Q2.3_
 
-- [ ] 6. W10 to W12, X1.2 · The "Tuck in a receipt" card, the Figure_Rows and the own number
+- [x] 6. W10 to W12, X1.2 · The "Tuck in a receipt" card, the Figure_Rows and the own number
   - Agent: `frontend-dev` · Depends on: 5 · Estimated size: L, ~2,000 changed lines · Target: 22 November 2026
   - Never cut.
   - Scope: `src/components/live/desk/ReceiptPanel.tsx`, `ReceiptToggle.tsx`, `FigureRows.tsx`, `OwnNumberView.tsx`, `figure-row-text.ts`, `short-units.ts`, `short-publishers.ts` (all new); `src/components/live/SourceDetailsList.tsx` (new, shared by `FigurePicker` and `FigureRows`); `src/components/live/FigurePicker.tsx` (uses `SourceDetailsList`, markup unchanged); `desk/WriteDesk.tsx`, `desk/EnvelopePanel.tsx`, `desk/copy.ts`, `desk/panel.module.css`; `src/components/live/catalogue-list.ts` (`periodType`, `source` on `PickableSeries`); `src/components/live/write-draft.ts` (`OWN_NUMBER_CHANGED`, `ownNumberMissing`); `src/components/live/WriteForm.tsx` (section `write`: the interim `ReceiptsDisclosure` and "Add a receipt" removed); `src/components/live/copy.ts` (`figuresHint`, `figuresHintOne`); and the `*.test.ts(x)` for each file.
