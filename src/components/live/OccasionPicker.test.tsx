@@ -52,7 +52,13 @@ describe("OccasionPicker (spec 11, L2.1, L2.9)", () => {
   it("renders the legend and the five labels in Occasion_Table order", () => {
     const html = render(null);
     expect(html).toContain(LIVE_COPY.occasionLegend);
-    const labels = ["The year ahead", "Work", "Family", "A decision", "Blank"];
+    const labels = [
+      "The year ahead",
+      "Work",
+      "Family",
+      "A decision",
+      "A blank page",
+    ];
     let last = -1;
     for (const label of labels) {
       const at = html.indexOf(`>${label}</button>`);

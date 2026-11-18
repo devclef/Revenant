@@ -3,6 +3,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import type { PickableSeries } from "./catalogue-list";
+import { DESK_COPY } from "./desk/copy";
 import { LIVE_COPY } from "./copy";
 import { OCCASIONS } from "./occasions";
 import type { SealState } from "./seal-machine";
@@ -55,7 +56,8 @@ const RETIRED = [
 describe("WriteForm Occasion row above the letter field (spec 11, L2.1)", () => {
   it("renders the Occasion legend and buttons before the letter field", () => {
     const html = render();
-    const legend = html.indexOf(LIVE_COPY.occasionLegend);
+    const legend = html.indexOf(DESK_COPY.startFrom);
+    expect(html).not.toContain(LIVE_COPY.occasionLegend);
     const field = html.indexOf('id="live-letter"');
     expect(legend).toBeGreaterThan(-1);
     expect(legend).toBeLessThan(field);

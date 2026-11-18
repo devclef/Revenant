@@ -2,6 +2,7 @@ import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
+import { LIVE_COPY } from "./copy";
 import {
   applyOccasion,
   DEFAULT_QUESTION,
@@ -58,8 +59,15 @@ describe("OCCASIONS table (Property 8, copy rules)", () => {
       "Work",
       "Family",
       "A decision",
-      "Blank",
+      "A blank page",
     ]);
+  });
+
+  it("labels the blank Occasion 'A blank page' on the pill too (spec 14, X1.4)", () => {
+    expect(LIVE_COPY.occasionLabels.blank).toBe("A blank page");
+    expect(OCCASIONS.find((o) => o.id === "blank")?.label).toBe(
+      LIVE_COPY.occasionLabels.blank,
+    );
   });
 
   it.each(OCCASIONS.map((o) => [o.label, o] as const))(
@@ -248,32 +256,40 @@ describe("Occasion placeholders (spec 12, W2)", () => {
     }
   });
 
-  it("keeps each placeholder free of digits, banned terms and time words", () => {
+  // Placeholders are display text in the author's voice, not questions, so the
+  // "today" rule for questions does not apply to them (spec 14, Decisions).
+  const PLACEHOLDER_FORBIDDEN = /right now|\bcurrently\b/i;
+
+  it("keeps each placeholder free of digits, banned terms and '!'", () => {
     for (const occasion of OCCASIONS) {
       expect(occasion.placeholder, occasion.label).not.toMatch(DIGIT);
       expect(occasion.placeholder, occasion.label).not.toMatch(POLITICAL_TERMS);
       expect(occasion.placeholder, occasion.label).not.toMatch(
-        FORBIDDEN_PHRASES,
+        PLACEHOLDER_FORBIDDEN,
       );
       expect(occasion.placeholder, occasion.label).not.toContain("!");
     }
   });
 
-  it("names the sealing day in every placeholder that is not Blank", () => {
+  it("uses the placeholder lines from the spec 14 Decisions, word for word", () => {
+    const decided: Record<OccasionId, string> = {
+      year: "This is where my year stands as I write this…",
+      work: "This is what my work looks like as I write this…",
+      family: "This is how things are with the people closest to me…",
+      decision: "This is the decision in front of me, and where I lean…",
+      blank: "Write whatever you want to remember about today…",
+    };
     for (const occasion of OCCASIONS) {
-      if (occasion.id === "blank") continue;
-      expect(occasion.placeholder, occasion.label).toMatch(
-        /the day you sealed this/,
-      );
+      expect(occasion.placeholder, occasion.label).toBe(decided[occasion.id]);
     }
   });
 
   it("returns the placeholder of the chosen Occasion", () => {
     expect(occasionPlaceholder("work")).toBe(
-      "Write what work looks like on the day you sealed this.",
+      "This is what my work looks like as I write this…",
     );
     expect(occasionPlaceholder("family")).toBe(
-      "Write about your people on the day you sealed this.",
+      "This is how things are with the people closest to me…",
     );
     for (const occasion of OCCASIONS) {
       expect(occasionPlaceholder(occasion.id)).toBe(occasion.placeholder);

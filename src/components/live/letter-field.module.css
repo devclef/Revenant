@@ -50,3 +50,25 @@
     --letter-lines: 10;
   }
 }
+
+/*
+ * The serif for the Letter_Sheet's textarea on the Write desk (spec 14, W5.1).
+ * It lives here because this module is the live letter field, one of the two
+ * serif modules that src/test/serif-scope.test.ts allows. Only the font family
+ * is set here; the size, rules and colour come from sheet.module.css.
+ */
+
+.sheetLetter {
+  font-family: var(--font-serif);
+}
+
+/*
+ * The serif for the Letter_Sheet's salutation and sign-off (spec 14, W4.2,
+ * W4.4: EB Garamond italic). They sit here, not in sheet.module.css, because
+ * src/test/serif-scope.test.ts allows the serif only in this module and the
+ * Letter_Text module. sheet.module.css sets no font-family on them.
+ */
+.sheetSerif {
+  font-family: var(--font-serif);
+  font-style: italic;
+}

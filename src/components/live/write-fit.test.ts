@@ -11,6 +11,7 @@ import { describe, expect, it } from "vitest";
 const here = dirname(fileURLToPath(import.meta.url));
 const css = readFileSync(resolve(here, "live.module.css"), "utf8");
 const writeForm = readFileSync(resolve(here, "WriteForm.tsx"), "utf8");
+const writeDesk = readFileSync(resolve(here, "desk", "WriteDesk.tsx"), "utf8");
 
 /** The text inside the @media block whose header starts with `query`. */
 function mediaBlock(query: string): string {
@@ -92,9 +93,11 @@ describe("Write step: one Writing_Column, no two-column grid", () => {
   });
 
   it("puts the Letter_Field before the question rows and the receipts in the form", () => {
-    const field = writeForm.indexOf('id="live-letter"');
-    const questions = writeForm.indexOf("<AuthorQuestions");
-    const receipts = writeForm.indexOf("<ReceiptsDisclosure");
+    // Section write renders WriteDesk, which holds the Letter_Sheet (and so the
+    // Letter_Field and the author questions inside it) before the receipts.
+    const field = writeDesk.indexOf("<LetterSheet");
+    const questions = writeDesk.indexOf("{authorQuestions}");
+    const receipts = writeDesk.indexOf("{receipts}");
     expect(field).toBeGreaterThan(0);
     expect(field).toBeLessThan(questions);
     expect(field).toBeLessThan(receipts);

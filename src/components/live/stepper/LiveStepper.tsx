@@ -145,7 +145,13 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
         </p>
       </div>
       <section
-        className={card ? styles.card : styles.bare}
+        className={
+          card
+            ? state.step === "write"
+              ? `${styles.card} ${styles.deskCard}`
+              : styles.card
+            : styles.bare
+        }
         data-card={card ? "" : undefined}
         data-step={state.step}
       >
