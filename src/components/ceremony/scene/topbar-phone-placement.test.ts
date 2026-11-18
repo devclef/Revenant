@@ -76,3 +76,49 @@ describe("phone Top_Bar controls sit on the left, clear of the Ghost (spec 10 X2
     expect(ruleIn(block, ".controls")).not.toMatch(/order:\s*2;/);
   });
 });
+
+describe("phone Top_Bar height and notice row (spec 14 B1.2, B1.4)", () => {
+  const block = phoneBlockWith(".controls {\n    flex-wrap: nowrap;");
+
+  it("keeps a page without the persona notice at one 56 px row", () => {
+    const bar = ruleIn(block, ".topbar");
+    expect(bar).toMatch(/flex-wrap:\s*nowrap;/);
+    expect(bar).toMatch(/height:\s*56px;/);
+    expect(bar).toMatch(/max-height:\s*56px;/);
+  });
+
+  it("lets the persona bar wrap, so the notice takes the second row", () => {
+    const personaBar = ruleIn(
+      block,
+      '.topbar:has([data-topbar-slot="notice"])',
+    );
+    expect(personaBar).toMatch(/flex-wrap:\s*wrap;/);
+    expect(personaBar).toMatch(/height:\s*auto;/);
+  });
+
+  it("caps the persona bar at 96 px (TOP_BAR_MAX_PX)", () => {
+    expect(ruleIn(block, '.topbar:has([data-topbar-slot="notice"])')).toMatch(
+      /max-height:\s*96px;/,
+    );
+  });
+
+  it("gives the notice a full-width basis, so it never shares the first row", () => {
+    // The base .notice rule sits outside the phone block, so read the whole file.
+    expect(ruleIn(css, ".notice")).toMatch(/flex-grow:\s*1;/);
+    expect(ruleIn(css, ".notice")).toMatch(/flex-basis:\s*100%;/);
+  });
+});
+
+describe("Top_Bar slot boxes do not change by Stage or sequence (spec 14 B1.2)", () => {
+  it("fixes the chip, Calm, sound and Skip boxes with flex: none", () => {
+    expect(ruleIn(css, ".chip")).toMatch(/flex:\s*none;/);
+    expect(ruleIn(css, ".control")).toMatch(/flex:\s*none;/);
+    expect(ruleIn(css, ".brand")).toMatch(/flex:\s*none;/);
+  });
+
+  it("keeps the disabled Skip at 40 % opacity", () => {
+    expect(ruleIn(css, '[data-topbar-slot="skip"]:disabled')).toMatch(
+      /opacity:\s*0\.4;/,
+    );
+  });
+});
