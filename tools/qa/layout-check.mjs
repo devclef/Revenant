@@ -221,6 +221,8 @@ const FP1_WAIT_STEPS = 15;
 const FIRST_STAGE_WAIT_MS = 15000;
 // The walk's answer for an empty text field (an Author_Question, spec 10 task 7 on).
 const TEXT_ANSWER = "Mostly work, and the evenings at home.";
+// Exactly 200 characters, for the T1.6 200-character case (checkPersonaRows).
+const T16_ANSWER = "Mostly work, and the evenings at home. ".repeat(6).slice(0, 200);
 const DESKTOP_SIZES = ["1366x800", "1280x800"];
 const WIDE_SIZE = "2560x1440";
 const HW1_BASE_SIZE = "1366x800";
@@ -4644,6 +4646,15 @@ export function t16Failures({ parts, w, h }) {
   return out;
 }
 
+// T1.6 at 200 characters: the answer typed into the Answer_Field must be exactly 200 characters, and the
+// same parts stay inside the First_Viewport with that answer in place.
+export const T16_ANSWER_LENGTH = 200;
+export function t16LongAnswerFailures({ length, parts, w, h }) {
+  const out = [];
+  if (length !== T16_ANSWER_LENGTH) out.push(`T1.6 Answer_Field holds ${length} characters, want ${T16_ANSWER_LENGTH}`);
+  return [...out, ...t16Failures({ parts, w, h })];
+}
+
 // T2.1: the number question's parts stay in one DOM order: question, sample note, answer field, main button.
 export function t21Failures({ order }) {
   const want = ["question", "sample-note", "field", "button"];
@@ -5150,6 +5161,21 @@ async function checkPersonaRows(browser, base, p, size, rep, required) {
         report(ctx, verdictRow("B1.5", "persona-bar", b.barHeight === null ? ["B1.5 no Top_Bar to measure"] : b15Failures({ barHeight: b.barHeight }), `bar=${num(b.barHeight, 0)}px viewport=${ctx.size}`, "Top_Bar at most 96 px on the persona page"));
         report(ctx, verdictRow("B1.4", "persona-notice", b14Failures({ count: b.noticeCount, inBar: b.noticeInBar }), `notices=${b.noticeCount} viewport=${ctx.size}`, "the persona notice once, inside the Top_Bar"));
       }
+    });
+
+    // T1.6 at 200 characters: type exactly 200 characters into the answer field, then check the parts again.
+    await guard(ctx, "T1.6-200", async () => {
+      if (w !== 390 || h !== 844) return;
+      const field = page.locator("textarea, input[type='text']").first();
+      if ((await field.count()) === 0) {
+        report(ctx, missingRow("T1.6", "recall-viewport-200", `${p.key} recall has no Answer_Field to type into`));
+        return;
+      }
+      await field.fill(T16_ANSWER);
+      await sleep(800);
+      const t = await page.evaluate(T_READ);
+      const length = (await field.inputValue()).length;
+      report(ctx, verdictRow("T1.6", "recall-viewport-200", t16LongAnswerFailures({ length, parts: t.parts, w: t.w, h: t.h }), `persona=${p.key} length=${length} viewport=${ctx.size}`, `200-character answer; counter, question, Answer_Field and main button inside the First_Viewport`));
     });
 
     if (w === 1440) {
