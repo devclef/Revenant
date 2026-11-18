@@ -4,6 +4,7 @@ import {
   baselineGapOk,
   colourMatch,
   contrastOk,
+  contrastThreshold,
   rectsIntersect,
   slotStable,
 } from "../../tools/qa/layout-check.mjs";
@@ -81,5 +82,21 @@ describe("contrastOk", () => {
     const result = contrastOk("#777777", "#ffffff", { large: true });
     expect(result.min).toBe(3);
     expect(result.ok).toBe(true);
+  });
+});
+
+describe("colourMatch alpha", () => {
+  it("accepts two identical translucent colours, because alpha must match exactly", () => {
+    expect(colourMatch("rgba(143, 70, 255, 0.5)", "rgba(143, 70, 255, 0.5)")).toBe(true);
+  });
+});
+
+describe("contrastThreshold (G1.7)", () => {
+  it("requires 4.5:1 for text that is not large", () => {
+    expect(contrastThreshold({ large: false })).toBe(4.5);
+  });
+
+  it("requires only 3:1 for large text and control boundaries", () => {
+    expect(contrastThreshold({ large: true })).toBe(3);
   });
 });
