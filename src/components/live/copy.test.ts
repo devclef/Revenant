@@ -137,7 +137,7 @@ describe("Occasion copy (spec 11, L2.1)", () => {
       work: "Work",
       family: "Family",
       decision: "A decision",
-      blank: "Blank",
+      blank: "A blank page",
     });
   });
 
@@ -173,7 +173,7 @@ describe("Occasion_Table through firstPoliticalTerm (spec 11, L2.3, L2.4)", () =
       "Work",
       "Family",
       "A decision",
-      "Blank",
+      "A blank page",
     ]);
   });
 

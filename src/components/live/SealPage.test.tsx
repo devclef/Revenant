@@ -389,7 +389,10 @@ describe("SealPage rehearsal line (spec 11, L4.1, L4.3)", () => {
 
   it("carries no retired starter phrase or time word on the Write step", () => {
     const html = renderToStaticMarkup(createElement(SealPage, { ...base, rehearsal: true }));
-    const lower = html.toLowerCase();
+    // Placeholder text is display text in the author's voice, not a question
+    // or a line of the letter (spec 14, Decisions), so it is left out of this
+    // scan. The rest of the Write step still has to pass.
+    const lower = html.replace(/placeholder="[^"]*"/g, "").toLowerCase();
     for (const phrase of [
       "right now, the thing on my mind is",
       "what was on your mind most days?",

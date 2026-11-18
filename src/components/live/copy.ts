@@ -293,7 +293,7 @@ export const LIVE_COPY = {
     work: "Work",
     family: "Family",
     decision: "A decision",
-    blank: "Blank",
+    blank: "A blank page",
   },
 } as const;
 

@@ -40,7 +40,7 @@ export const OCCASIONS: readonly Occasion[] = [
     id: "year",
     label: "The year ahead",
     starter: "This is where my year stands as I write this.",
-    placeholder: "Write what your year looks like on the day you sealed this.",
+    placeholder: "This is where my year stands as I write this…",
     questions: [
       DEFAULT_QUESTION,
       "What did you hope the year would hold when you wrote this?",
@@ -52,7 +52,7 @@ export const OCCASIONS: readonly Occasion[] = [
     label: "Work",
     starter:
       "This is what my work looks like as I write this, and what I am still working out.",
-    placeholder: "Write what work looks like on the day you sealed this.",
+    placeholder: "This is what my work looks like as I write this…",
     questions: [
       DEFAULT_QUESTION,
       "What was on your mind about work when you wrote this?",
@@ -64,7 +64,7 @@ export const OCCASIONS: readonly Occasion[] = [
     label: "Family",
     starter:
       "This is how things are with the people closest to me as I write this.",
-    placeholder: "Write about your people on the day you sealed this.",
+    placeholder: "This is how things are with the people closest to me…",
     questions: [
       DEFAULT_QUESTION,
       "Who were you thinking about most when you wrote this?",
@@ -76,7 +76,7 @@ export const OCCASIONS: readonly Occasion[] = [
     label: "A decision",
     starter:
       "This is the decision in front of me, and where I lean as I write this.",
-    placeholder: "Write what you are deciding on the day you sealed this.",
+    placeholder: "This is the decision in front of me, and where I lean…",
     questions: [
       DEFAULT_QUESTION,
       "What were you weighing when you wrote this?",
@@ -85,10 +85,9 @@ export const OCCASIONS: readonly Occasion[] = [
   },
   {
     id: "blank",
-    label: "Blank",
+    label: "A blank page",
     starter: "",
-    placeholder:
-      "Write whatever you want to remember on the day you sealed this.",
+    placeholder: "Write whatever you want to remember about today…",
     questions: [DEFAULT_QUESTION],
   },
 ];
@@ -146,10 +145,69 @@ export function applyOccasion(
       ? occasion.starter
       : draft.text;
 
+  const questions = nextQuestionRows(
+    draft.questions,
+    draft.appliedQuestions,
+    occasion,
+  );
+
+  return {
+    text,
+    questions,
+    occasion: occasion.id,
+    appliedStarter: occasion.starter,
+    appliedQuestions: [...occasion.questions],
+  };
+}
+
+/**
+ * The question part of an Occasion pick, for /demo/live (spec 14, W3.3, W3.4).
+ * It never reads or writes letter text, so the desk passes the text through
+ * unchanged. `applyOccasion` stays as it is for /seal.
+ */
+export type OccasionQuestionsDraft = {
+  questions: string[];
+  occasion: OccasionId;
+  appliedQuestions: readonly string[];
+};
+
+/**
+ * Applies an Occasion to the question rows only (steps 2 and 3 of
+ * `applyOccasion`). A row the visitor typed is kept in place. An empty, missing
+ * or still-applied row takes the new Occasion's question at that index.
+ */
+export function applyOccasionQuestions(
+  draft: OccasionQuestionsDraft,
+  id: OccasionId,
+): OccasionQuestionsDraft {
+  const occasion = findOccasion(id);
+  return {
+    questions: nextQuestionRows(
+      draft.questions,
+      draft.appliedQuestions,
+      occasion,
+    ),
+    occasion: occasion.id,
+    appliedQuestions: [...occasion.questions],
+  };
+}
+
+/**
+ * The row rule shared by `applyOccasion` and `applyOccasionQuestions`: each
+ * row index 0 to 2 takes the Occasion's question at that index only when the
+ * row is empty, missing or still the previously applied question. Typed rows
+ * stay. Rows are compacted in order, and the default question fills in when
+ * none are left.
+ */
+function nextQuestionRows(
+  questions: readonly string[],
+  appliedQuestions: readonly string[],
+  occasion: Occasion,
+): string[] {
   const rows: string[] = [];
   for (let i = 0; i < OCCASION_QUESTIONS_MAX; i += 1) {
-    const current = draft.questions[i];
-    const previous = draft.appliedQuestions[i];
+    const current = questions[i];
+    const previous = appliedQuestions[i];
     const unedited =
       current === undefined || current.trim() === "" || current === previous;
     if (unedited) {
@@ -162,16 +220,7 @@ export function applyOccasion(
     }
   }
 
-  const questions =
-    rows.length > 0
-      ? rows.slice(0, OCCASION_QUESTIONS_MAX)
-      : [DEFAULT_QUESTION];
-
-  return {
-    text,
-    questions,
-    occasion: occasion.id,
-    appliedStarter: occasion.starter,
-    appliedQuestions: [...occasion.questions],
-  };
+  return rows.length > 0
+    ? rows.slice(0, OCCASION_QUESTIONS_MAX)
+    : [DEFAULT_QUESTION];
 }
