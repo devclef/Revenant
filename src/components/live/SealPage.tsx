@@ -418,8 +418,8 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
         onQuestionChange={(index, text) =>
           dispatchDraft({ type: "QUESTION_CHANGED", index, text })
         }
-        onQuestionAdd={() =>
-          dispatchDraft({ type: "QUESTION_ADDED", text: "" })
+        onQuestionAdd={(text) =>
+          dispatchDraft({ type: "QUESTION_ADDED", text })
         }
         onQuestionRemove={(index) =>
           dispatchDraft({ type: "QUESTION_REMOVED", index })

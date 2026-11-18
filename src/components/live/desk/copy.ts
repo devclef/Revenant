@@ -33,4 +33,10 @@ export const DESK_COPY = {
   edit: "Edit",
   /** The Lock_Line under each Question_Row input (W7.5). */
   lockLine: "Answered on opening day, before the letter is shown.",
+  /** The label above the Suggestion_Pills under the rows (W8.1). */
+  askAnother: "Ask another:",
+  /** The visible text of the last pill, after the hidden "+ " (W8.1, W8.7). */
+  writeOwn: "Write my own",
+  /** Accessible name of a Suggestion_Pill, with {text} the suggestion (W8.7). */
+  addSuggestion: "Add the question: {text}",
 } as const;

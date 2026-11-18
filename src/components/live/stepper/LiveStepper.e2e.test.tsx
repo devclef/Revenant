@@ -71,8 +71,9 @@ function indexOfOrFail(markup: string, needle: string): number {
 function rowValues(html: string): string[] {
   const values: string[] = [];
   // A textarea renders its value as its text content, not as a value attribute.
+  // The desk's QuestionRow textarea names its lock line in aria-describedby.
   for (const match of html.matchAll(
-    /<textarea[^>]*id="[^"]*-q\d+"[^>]*>([^<]*)<\/textarea>/g,
+    /<textarea[^>]*aria-describedby="[^"]*-lock"[^>]*>([^<]*)<\/textarea>/g,
   )) {
     values.push(match[1] ?? "");
   }

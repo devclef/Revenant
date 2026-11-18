@@ -6,6 +6,8 @@ import { DemoLabel } from "@/components/demo/DemoLabel";
 
 import type { PickableSeries } from "./catalogue-list";
 import { AuthorQuestions } from "./AuthorQuestions";
+import { QuestionSection } from "./desk/QuestionSection";
+import { SuggestionPills } from "./desk/SuggestionPills";
 import { questionRowProblem } from "./author-questions";
 import { LETTER_FIELD_ROWS } from "./constants";
 import { LIVE_COPY, REAL_COPY } from "./copy";
@@ -100,7 +102,7 @@ export interface WriteFormProps {
   /** The visitor typed in question row `index`. */
   onQuestionChange?: (index: number, text: string) => void;
   /** The visitor added an empty question row. */
-  onQuestionAdd?: () => void;
+  onQuestionAdd?: (text: string) => void;
   /** The visitor removed question row `index`. */
   onQuestionRemove?: (index: number) => void;
   /**
@@ -500,14 +502,15 @@ export function WriteForm({
     ) : null;
 
   // The pieces the Write desk places (spec 14, W1). The `all` form renders the
-  // same pieces inside its single panel.
+  // same pieces inside its single panel. The desk's P.S. section takes the
+  // rows, the nothing-to-testify line and the suggestion pills (W6, W8).
   const authorQuestions = (
     <AuthorQuestions
       questions={questions}
       tooLongIndices={tooLongIndices}
       onAdd={() => {
         onTouch(TOUCH_FIELDS.questions);
-        onQuestionAdd();
+        onQuestionAdd("");
       }}
       onChange={(index, next) => {
         onTouch(TOUCH_FIELDS.questions);
@@ -520,7 +523,33 @@ export function WriteForm({
     />
   );
 
-  const receipts = (
+  const deskQuestions = (
+    <QuestionSection
+      questions={questions}
+      tooLongIndices={tooLongIndices}
+      nothingToTestify={nothingToTestifyProblem !== ""}
+      onChange={(index, next) => {
+        onTouch(TOUCH_FIELDS.questions);
+        onQuestionChange(index, next);
+      }}
+      onRemove={(index) => {
+        onTouch(TOUCH_FIELDS.questions);
+        onQuestionRemove(index);
+      }}
+      pills={
+        <SuggestionPills
+          occasion={chosenOccasion}
+          questions={questions}
+          onAdd={(text) => {
+            onTouch(TOUCH_FIELDS.questions);
+            onQuestionAdd(text);
+          }}
+        />
+      }
+    />
+  );
+
+  const receiptsDisclosure = (
     <>
       <ReceiptsDisclosure
         status={figuresStatus}
@@ -558,6 +587,12 @@ export function WriteForm({
           />
         }
       />
+    </>
+  );
+
+  const receipts = (
+    <>
+      {receiptsDisclosure}
       <p id="live-figures-problem" className={styles.problem}>
         {nothingToTestifyProblem}
       </p>
@@ -612,8 +647,8 @@ export function WriteForm({
         }}
         onLetterBlur={() => onTouch(TOUCH_FIELDS.letter)}
         letterRef={letterRef}
-        authorQuestions={authorQuestions}
-        receipts={receipts}
+        authorQuestions={deskQuestions}
+        receipts={receiptsDisclosure}
         actions={writeActions}
         footer={footer}
       />

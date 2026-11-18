@@ -412,7 +412,9 @@ describe("SealPage rehearsal line (spec 11, L4.1, L4.3)", () => {
     // The intro and the sign-off are the desk's own copy (spec 14, W2.4, W4.4),
     // so "today" is allowed there. No question text may use it (tone.md).
     const questionTexts = [
-      ...html.matchAll(/<textarea[^>]*class="[^"]*textarea[^"]*"[^>]*>([^<]*)<\/textarea>/g),
+      ...html.matchAll(
+        /<textarea[^>]*class="[^"]*(?:textarea|qInput)[^"]*"[^>]*>([^<]*)<\/textarea>/g,
+      ),
     ].map((m) => (m[1] ?? "").toLowerCase());
     expect(questionTexts.length).toBeGreaterThan(0);
     for (const text of questionTexts) {

@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from "react";
 
 import {
   AUTHOR_QUESTIONS_MAX,
@@ -81,6 +87,14 @@ export function QuestionSection({
 
   const showPills = questions.length < AUTHOR_QUESTIONS_MAX;
 
+  // A pill adds a row at the end (W8.3, W8.4). The pills and the row are set in
+  // the same render, so the focus effect finds the new input.
+  function pressPillArea(event: MouseEvent<HTMLDivElement>) {
+    const target = event.target as HTMLElement;
+    if (target.closest("[data-add-row]") === null) return;
+    setPendingFocus({ kind: "row", index: questions.length });
+  }
+
   return (
     <fieldset className={styles.questions} data-question-section="">
       <legend className={`${styles.legend} ${letterField.sheetSerif}`}>
@@ -115,7 +129,12 @@ export function QuestionSection({
         </p>
       ) : null}
 
-      <div ref={pillsRef} className={styles.pills} data-pills-area="">
+      <div
+        ref={pillsRef}
+        className={styles.pills}
+        data-pills-area=""
+        onClickCapture={pressPillArea}
+      >
         {showPills ? (
           pills
         ) : (

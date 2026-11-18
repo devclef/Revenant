@@ -101,6 +101,12 @@ export function LetterSheet({
         {problem}
       </p>
 
+      <div
+        className={styles.perforation}
+        aria-hidden="true"
+        data-perforation=""
+      />
+
       {children}
     </section>
   );
