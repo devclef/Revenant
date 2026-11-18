@@ -273,7 +273,7 @@ Group D (tasks 15 and 16) is the only cuttable work. Whatever is merged on `main
 
 ### Group T: Testify, target 22 to 23 November 2026
 
-- [ ] 7. T1 · Reproduce, the counter, the Wax_Disc and the text questions
+- [x] 7. T1 · Reproduce, the counter, the Wax_Disc and the text questions
   - Agent: `frontend-dev` · Depends on: 4 · Estimated size: M, ~1,000 changed lines · Target: 22 November 2026
   - Never cut. Depends on task 4 for `desk/WaxDisc.tsx`.
   - Scope: `src/components/ceremony/recall/written-on.ts`, `NavRow.tsx` (new); `RecallPager.tsx`, `RecallPager.module.css`, `TextAnswerField.tsx`, `RecallReader.tsx`, `RecallReader.module.css`; `src/components/reveal/RecallStep.tsx` (passes `writtenOn`); `src/components/reveal/copy.ts` (`questionCounterWrittenOn`, `answerFromMemory`); and the `*.test.ts(x)` for each file. `desk/WaxDisc.tsx` is imported, not edited.
