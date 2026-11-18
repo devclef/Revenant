@@ -377,7 +377,7 @@ Group D (tasks 15 and 16) is the only cuttable work. Whatever is merged on `main
   - Validation: `bash scripts/check.sh`; route budgets after `npm run build`.
   - _Requirements: R5.1, R5.2, R5.3_
 
-- [ ] 11. R4 to R7 · Formula under the source, change at the shown precision, the Same_Period_Line, Number_Line labels
+- [x] 11. R4 to R7 · Formula under the source, change at the shown precision, the Same_Period_Line, Number_Line labels
   - Agent: `frontend-dev` · Depends on: 10 · Estimated size: M, ~1,300 changed lines · Target: 25 November 2026
   - Never cut.
   - Scope: `src/components/reveal/FormulaLine.tsx`, `formula.ts`, `same-period.ts` (new); `ChangeLine.tsx`, `ReceiptCard.tsx`, `FigureEntry.tsx`, `FiguresThenNow.tsx`, `receipt-kind.ts`, `change-display.ts` (only if the readable formula lives there today), `reveal.module.css`, `reveal/copy.ts` (`samePeriodWeek`, `samePeriodMonth`, `samePeriodOther`); `src/components/ceremony/figures/line-labels.ts` (only if Property 15 finds a failing case); and the `*.test.ts(x)` for each file.
