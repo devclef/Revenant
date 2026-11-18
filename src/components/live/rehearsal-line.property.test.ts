@@ -71,16 +71,20 @@ describe("Property 19: no other page or component can show the line", () => {
       .sort();
     expect(users).toEqual([
       "src/components/live/copy.ts",
+      "src/components/live/desk/EnvelopePanel.tsx",
       "src/components/live/stepper/LiveWaitStep.tsx",
     ]);
   });
 
-  it("only the Wait step (LiveWaitStep) renders the line", () => {
+  it("only the Wait step and the Envelope_Panel render the line", () => {
     const rendering = files
       .filter((file) => file.text.includes("LIVE_COPY.rehearsalLine"))
       .map((file) => file.path)
       .sort();
-    expect(rendering).toEqual(["src/components/live/stepper/LiveWaitStep.tsx"]);
+    expect(rendering).toEqual([
+      "src/components/live/desk/EnvelopePanel.tsx",
+      "src/components/live/stepper/LiveWaitStep.tsx",
+    ]);
   });
 
   it("only /demo/live passes the rehearsal prop, so /seal, /l/[id] and persona pages never get it", () => {

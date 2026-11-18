@@ -1,15 +1,28 @@
 "use client";
 
-import type { ReactNode, RefObject } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type ReactNode,
+  type RefObject,
+} from "react";
 
 import { LIVE_COPY } from "../copy";
 import type { OccasionId } from "../occasions";
 
 import { DESK_COPY } from "./copy";
+import { EnvelopePanel } from "./EnvelopePanel";
 import styles from "./desk.module.css";
 import { LetterSheet } from "./LetterSheet";
 import { OccasionPills } from "./OccasionPills";
 import { StepHeader } from "./StepHeader";
+import {
+  writeCheck,
+  type FoldTarget,
+  type WriteCheckInput,
+} from "./write-check";
 
 export interface WriteDeskProps {
   /** The Occasion last chosen. "A blank page" at first (W3.2). */
@@ -26,22 +39,80 @@ export interface WriteDeskProps {
   letterRef: RefObject<HTMLTextAreaElement | null>;
   /** The author questions. They sit inside the Letter_Sheet under the field. */
   authorQuestions: ReactNode;
-  /** The receipts disclosure and its problem line, in the panel column. */
+  /** The receipts disclosure and its problem line, on paper until task 6. */
   receipts: ReactNode;
-  /** The "Add a receipt" and "Next" row, in the panel column. */
+  /** The "Add a receipt" row, on paper until task 6. */
   actions: ReactNode;
-  /** Content after the action row, inside the panel (the rehearsal line). */
-  footer?: ReactNode;
+  /** The draft the Write_Check and the Envelope_Panel read (W9, W13). */
+  check: WriteCheckInput;
+  /** Shows the Rehearsal_Line under the Fold_Button. Set only on /demo/live. */
+  rehearsal?: boolean;
+  /** The Write_Check passed and the Fold_Button was pressed: move to Seal. */
+  onFoldPass: () => void;
+  /**
+   * The Write_Check failed: mark every write field touched and count the
+   * attempt, so each field shows its own message.
+   */
+  onFoldFail: () => void;
+}
+
+/** A failed fold: where focus goes, and a counter so each fold moves it again. */
+interface FoldFailure {
+  target: FoldTarget | null;
+  nonce: number;
+}
+
+/** The first own-number control that holds `field`, or the first one at all. */
+function ownNumberInput(
+  root: HTMLElement,
+  field: string,
+): HTMLInputElement | null {
+  const inputs = root.querySelectorAll<HTMLInputElement>(
+    "input[data-user-content]",
+  );
+  const matching = Array.from(inputs).find((input) =>
+    input.id.endsWith(`-${field}`),
+  );
+  return matching ?? inputs[0] ?? null;
+}
+
+/** Finds the DOM control for a fold target, in page order. */
+function targetElement(
+  root: HTMLElement,
+  target: FoldTarget,
+  letter: HTMLTextAreaElement | null,
+): HTMLElement | null {
+  switch (target.kind) {
+    case "letter":
+      return letter;
+    case "question":
+      return (
+        root.querySelectorAll<HTMLTextAreaElement>("[data-question-row] textarea")[
+          target.index
+        ] ?? null
+      );
+    case "write_own":
+      return (
+        Array.from(root.querySelectorAll<HTMLButtonElement>("button")).find(
+          (button) => button.textContent?.trim() === DESK_COPY.writeOwn,
+        ) ?? null
+      );
+    case "own_number":
+      return ownNumberInput(root, target.field);
+  }
 }
 
 /**
- * The Write desk (spec 14, W1 and W2): the step header, the Occasion pills,
- * then a wrapping row. The Letter_Sheet sits on the left and the panel on the
- * right. Below 992 px of content width the panel drops under the sheet (W1.4).
+ * The Write desk (spec 14, W1, W2 and W13): the step header, the Occasion
+ * pills, then a wrapping row. The Letter_Sheet sits on the left and the
+ * Envelope_Panel on the right. Below 992 px of content width the panel drops
+ * under the sheet (W1.4).
  *
- * This is the interim panel: the receipts and the action row stay where they
- * were until the Envelope_Panel replaces them. The panel is a paper surface,
- * so its text keeps the paper ink. The desk itself sets the light text.
+ * The Fold_Button runs the Write_Check. A pass moves to the Seal step. A fail
+ * marks the fields, and focus moves to the first failing field in page order.
+ * This task only moves focus into what is already on the page: the own-number
+ * fields are opened from the interim receipts block, and task 6 replaces that
+ * with the Receipt_Toggle.
  */
 export function WriteDesk({
   chosenOccasion,
@@ -55,10 +126,52 @@ export function WriteDesk({
   authorQuestions,
   receipts,
   actions,
-  footer,
+  check,
+  rehearsal = false,
+  onFoldPass,
+  onFoldFail,
 }: WriteDeskProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+  const [failure, setFailure] = useState<FoldFailure | null>(null);
+  const writeResult = writeCheck(check);
+
+  // The failed-fold line goes away once the Write_Check passes (W13.3).
+  useEffect(() => {
+    if (writeResult.ok) setFailure(null);
+  }, [writeResult.ok]);
+
+  // Runs after the touched messages render, so focus lands on a visible field.
+  useLayoutEffect(() => {
+    const root = rootRef.current;
+    if (failure === null || failure.target === null || root === null) return;
+    const element = targetElement(root, failure.target, letterRef.current);
+    if (element === null) return;
+    // The own-number fields may sit in the closed receipts disclosure, so open
+    // it before focusing (until the Receipt_Toggle of task 6).
+    const details = element.closest("details");
+    if (details !== null) details.open = true;
+    element.focus();
+  }, [failure, letterRef]);
+
+  function fold() {
+    const result = writeCheck(check);
+    if (result.ok) {
+      onFoldPass();
+      return;
+    }
+    setFailure((previous) => ({
+      target: result.first,
+      nonce: (previous?.nonce ?? 0) + 1,
+    }));
+    onFoldFail();
+  }
+
   return (
-    <div className={styles.container} data-write-desk="">
+    <div
+      ref={rootRef}
+      className={styles.container}
+      data-write-desk=""
+    >
       <StepHeader
         headingId="live-write-heading"
         eyebrow={LIVE_COPY.liveHeading}
@@ -79,11 +192,15 @@ export function WriteDesk({
             {authorQuestions}
           </LetterSheet>
         </div>
-        <div className={styles.panelColumn}>
-          {receipts}
-          {actions}
-          {footer}
-        </div>
+        <EnvelopePanel
+          className={styles.panelColumn}
+          checkInput={check}
+          failed={failure !== null}
+          onFold={fold}
+          rehearsal={rehearsal}
+          receipts={receipts}
+          actions={actions}
+        />
       </div>
     </div>
   );

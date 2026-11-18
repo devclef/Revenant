@@ -134,8 +134,6 @@ interface WriteNav {
   section?: WriteSection;
   /** False when the page holds the step heading (every step but Seal). */
   sealHeading?: boolean;
-  /** Content inside the Write paper, after the action row. */
-  footer?: ReactNode;
   onNext?: () => void;
   onBack?: () => void;
 }
@@ -390,7 +388,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
       <WriteForm
         section={nav?.section}
         sealHeading={nav?.sealHeading}
-        footer={nav?.footer}
+        rehearsal={rehearsal}
         onNext={nav?.onNext}
         onBack={nav?.onBack}
         series={pickable}

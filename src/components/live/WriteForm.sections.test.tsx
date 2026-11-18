@@ -43,14 +43,14 @@ const render = (overrides: Partial<WriteFormProps> = {}) =>
   renderToStaticMarkup(createElement(WriteForm, props(overrides)));
 
 describe("WriteForm sections (spec 09, D2)", () => {
-  it("the write section holds the letter, the question rows, the closed receipts and a Next", () => {
+  it("the write section holds the letter, the question rows, the closed receipts and the Fold_Button", () => {
     const html = render({ section: "write", onNext: () => {} });
     expect(html).toContain('id="live-letter"');
     expect(html).not.toContain('id="live-warning"');
     expect(html).toContain("data-receipts-disclosure");
     expect(html).toContain('data-card="live-figures"');
     expect(html).not.toContain(LIVE_COPY.createButton);
-    expect(html).toContain(LIVE_COPY.nextButton);
+    expect(html).toContain(DESK_COPY.fold);
     expect(html).not.toContain(LIVE_COPY.backButton);
   });
 
@@ -73,7 +73,7 @@ describe("WriteForm sections (spec 09, D2)", () => {
     const add = html.indexOf("data-question-section");
     const hint = html.indexOf(DESK_COPY.psIntro.replace(/'/g, "&#x27;"));
     const receipts = html.indexOf("data-receipts-disclosure");
-    const next = html.indexOf(LIVE_COPY.nextButton);
+    const next = html.indexOf(DESK_COPY.fold);
     for (const index of [occasion, letter, add, hint, receipts, next]) {
       expect(index).toBeGreaterThan(-1);
     }
@@ -121,7 +121,7 @@ describe("WriteForm sections (spec 09, D2)", () => {
     expect(html).toContain(LIVE_COPY.backButton);
     expect(html).not.toContain('id="live-letter"');
     expect(html).not.toContain('data-card="live-figures"');
-    expect(html).not.toContain(LIVE_COPY.nextButton);
+    expect(html).not.toContain(DESK_COPY.fold);
   });
 
   // P1 and P7: one press, the only orange control, and the Backup_Choice has
@@ -168,7 +168,7 @@ describe("WriteForm receipt action (spec 11, W6)", () => {
     expect(html.split(LIVE_COPY.receiptsAction).length - 1).toBe(1);
     const row = html.indexOf("writeActions");
     const action = html.indexOf(LIVE_COPY.receiptsAction);
-    const next = html.indexOf(LIVE_COPY.nextButton);
+    const next = html.indexOf(DESK_COPY.fold);
     expect(row).toBeGreaterThan(-1);
     expect(action).toBeGreaterThan(row);
     expect(next).toBeGreaterThan(action);

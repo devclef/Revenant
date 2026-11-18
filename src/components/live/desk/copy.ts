@@ -39,4 +39,14 @@ export const DESK_COPY = {
   writeOwn: "Write my own",
   /** Accessible name of a Suggestion_Pill, with {text} the suggestion (W8.7). */
   addSuggestion: "Add the question: {text}",
+  /** The eyebrow of the In_The_Envelope_Card, shown in capitals (W9.2). */
+  inEnvelope: "In the envelope",
+  /** The three Checklist_Line labels (W9.5). */
+  checkLetter: "The letter",
+  checkQuestions: "Questions on top",
+  checkReceipt: "A receipt",
+  /** The Fold_Button label, before its aria-hidden arrow (W13.1). */
+  fold: "Fold it and press the seal",
+  /** The one line under the Fold_Button after a failed fold (W13.3). */
+  foldFailed: "Check the note above, then try again.",
 } as const;

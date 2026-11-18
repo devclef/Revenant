@@ -29,6 +29,16 @@ const base: WriteDeskProps = {
     { type: "button", "data-test-next": "" },
     "NEXT",
   ),
+  check: {
+    text: "",
+    questions: [],
+    metricIds: [],
+    selfReported: [],
+    maxFigures: 3,
+    sealingDay: "2026-11-18",
+  },
+  onFoldPass: () => {},
+  onFoldFail: () => {},
 };
 
 const render = (props: Partial<WriteDeskProps> = {}) =>

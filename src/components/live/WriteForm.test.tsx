@@ -20,6 +20,7 @@ import {
 import { listPickableSeries } from "./catalogue-list";
 import { validateWrite } from "./form";
 import { LIVE_COPY } from "./copy";
+import { DESK_COPY } from "./desk/copy";
 import styles from "./live.module.css";
 import type { SealState } from "./seal-machine";
 import { SealPage } from "./SealPage";
@@ -501,13 +502,18 @@ describe("WriteForm — action row on the Write step (spec 11, L1.4)", () => {
     return html.slice(html.lastIndexOf("<button", end), end + 1);
   }
 
-  it("puts Add a receipt before Next in the DOM", () => {
+  /** The opening tag of the Fold_Button, which carries its arrow span. */
+  function foldTag(html: string): string {
+    return /<button[^>]*data-fold-button[^>]*>/.exec(html)?.[0] ?? "";
+  }
+
+  it("puts Add a receipt before the Fold_Button in the DOM", () => {
     const html = renderWriteForm({ section: "write", onNext: () => {} });
     expect(html.indexOf(esc(LIVE_COPY.receiptsAction))).toBeGreaterThanOrEqual(
       0,
     );
     expect(html.indexOf(esc(LIVE_COPY.receiptsAction))).toBeLessThan(
-      html.indexOf(LIVE_COPY.nextButton),
+      html.indexOf(DESK_COPY.fold),
     );
   });
 
@@ -518,36 +524,32 @@ describe("WriteForm — action row on the Write step (spec 11, L1.4)", () => {
     expect(html).toContain(`>${esc(LIVE_COPY.receiptsSummary)}</summary>`);
   });
 
-  it("keeps Next the only primary button and the receipts action secondary", () => {
+  it("keeps the Fold_Button the only Accent button and the receipts action secondary", () => {
     const html = renderWriteForm({ section: "write", onNext: () => {} });
     expect(buttonTag(html, LIVE_COPY.receiptsAction)).not.toContain(
       "disabled",
     );
-    expect(buttonTag(html, LIVE_COPY.nextButton)).toContain(
-      `class="${styles.primary}"`,
-    );
+    expect(foldTag(html)).toContain("data-fold-button");
     expect(buttonTag(html, LIVE_COPY.receiptsAction)).toContain(
       `class="${styles.secondary}"`,
     );
   });
 
-  it("puts both buttons in the write action row", () => {
+  it("puts the receipts action in the write action row", () => {
     const html = renderWriteForm({ section: "write", onNext: () => {} });
     expect(html).toContain(`class="${styles.actions} ${styles.writeActions}"`);
   });
 
   it.each(["loading", "failed", "ready"] as const)(
-    "keeps Next enabled while the figures request is %s",
+    "keeps the Fold_Button enabled while the figures request is %s",
     (figuresStatus) => {
       const html = renderWriteForm({
         section: "write",
         onNext: () => {},
         figuresStatus,
       });
-      expect(buttonTag(html, LIVE_COPY.nextButton)).not.toContain("disabled");
-      expect(buttonTag(html, LIVE_COPY.nextButton)).not.toContain(
-        "aria-disabled",
-      );
+      expect(foldTag(html)).not.toContain("disabled");
+      expect(foldTag(html)).not.toContain("aria-disabled");
     },
   );
 });

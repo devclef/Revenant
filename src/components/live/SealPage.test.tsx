@@ -371,10 +371,12 @@ describe("SealPage passes each figure's value and source into the picker", () =>
 describe("SealPage rehearsal line (spec 11, L4.1, L4.3)", () => {
   const base = { rpId: "revenant.devclef.se", appOrigin: "https://revenant.devclef.se" };
 
-  it("does not put the rehearsal line on the Write step's footer (spec 14, W9.3 moves it under the Fold_Button)", () => {
+  it("shows the rehearsal line once on the Write step, under the Fold_Button (spec 14, W13.4)", () => {
     const html = renderToStaticMarkup(createElement(SealPage, { ...base, rehearsal: true }));
-    expect(html).not.toContain('data-live-rehearsal=""');
-    expect(html).not.toContain(LIVE_COPY.rehearsalLine);
+    expect(html.split('data-live-rehearsal=""').length - 1).toBe(1);
+    expect(html.indexOf(LIVE_COPY.rehearsalLine)).toBeGreaterThan(
+      html.indexOf("data-fold-button"),
+    );
     expect(html).toContain('data-live-step="write"');
   });
 
