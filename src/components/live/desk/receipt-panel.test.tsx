@@ -153,6 +153,17 @@ describe("FigureRows (W11)", () => {
     expect(blocked).toContain('aria-disabled="true"');
     expect(html.match(/aria-disabled="true"/g)?.length).toBe(1);
   });
+
+  it("makes the limit line focusable, so a press on a blocked row can move focus to it (X2.1)", () => {
+    const series = sevenSeries();
+    const selected = series.slice(0, 6).map((item) => item.metricId);
+    const html = figureRows({ series, selected });
+    const limitLine = html.match(/<p[^>]*tabindex="-1"[^>]*>[^<]*<\/p>/);
+
+    expect(limitLine).not.toBeNull();
+    const text = (limitLine?.[0] ?? "").replace(/<[^>]+>/g, "");
+    expect(text.trim().length).toBeGreaterThan(0);
+  });
 });
 
 describe("ReceiptPanel (W10)", () => {

@@ -90,6 +90,10 @@
 
 .field {
   margin: 1.5rem 0;
+  /* A fieldset draws a 2px groove border and 0.75em side padding by default.
+     Removing both keeps the browser frame off the field (spec 14 X2.3). */
+  border: 0;
+  padding: 0;
 }
 
 .label,
