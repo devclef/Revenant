@@ -10,6 +10,7 @@ import * as demoCopy from "./demo/copy";
 import * as howCopy from "./how/copy";
 import * as landingCopy from "./landing/copy";
 import * as liveCopy from "./live/copy";
+import * as deskCopy from "./live/desk/copy";
 import * as pressCopy from "./live/press/copy";
 import * as revealCopy from "./reveal/copy";
 import * as sceneCopy from "./ceremony/scene/copy";
@@ -133,6 +134,7 @@ const COPY_MODULES: Record<string, Record<string, unknown>> = {
   "src/components/how/copy.ts": howCopy,
   "src/components/landing/copy.ts": landingCopy,
   "src/components/live/copy.ts": liveCopy,
+  "src/components/live/desk/copy.ts": deskCopy,
   "src/components/live/press/copy.ts": pressCopy,
   "src/components/reveal/copy.ts": revealCopy,
   "src/components/ui/copy.ts": uiCopy,
