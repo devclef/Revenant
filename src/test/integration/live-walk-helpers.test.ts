@@ -11,9 +11,17 @@ import {
   checkDemoSeals,
   checkNoJsSeal,
   checkSealMarks,
+  checkAccentButtonCount,
+  checkFigureRowsNoAccent,
+  checkPressEnvelopeClearOfText,
+  checkPressStatusLine,
+  checkStepTrackClearOfTopBar,
+  checkTestifyCounter,
+  checkTopbarSlotStable,
   checkTamperRunNoPasskey,
   reliefPathOf,
   SKIP_LINK_STAGE,
+  STEP_INDICATOR_EXPECTATIONS,
   STEP_SUSPECTED_FILES,
   WALK_STEP_NAMES,
   advanceSettle,
@@ -52,6 +60,7 @@ import {
   stepShotName,
   walkShotName,
   type BoxRect,
+  type FigureRowPaint,
   type PageSnapshot,
 } from "./live-walk-helpers";
 
@@ -61,19 +70,19 @@ describe("stepShotName", () => {
       "live-01-write-1440x900.png",
     );
     expect(stepShotName({ step: "tamper", width: 390, height: 844 })).toBe(
-      "live-13-tamper-390x844.png",
+      "live-19-tamper-390x844.png",
     );
     expect(stepShotName({ step: "close", width: 390, height: 844 })).toBe(
-      "live-12-close-390x844.png",
+      "live-17-close-390x844.png",
     );
   });
 
   it("follows the pattern at both widths", () => {
     expect(stepShotName({ step: "seal", width: 1440, height: 900 })).toBe(
-      "live-03-seal-1440x900.png",
+      "live-06-seal-1440x900.png",
     );
     expect(stepShotName({ step: "seal", width: 390, height: 844 })).toBe(
-      "live-03-seal-390x844.png",
+      "live-06-seal-390x844.png",
     );
   });
 
@@ -95,14 +104,25 @@ describe("stepShotName", () => {
       "live-11",
       "live-12",
       "live-13",
+      "live-14",
+      "live-15",
+      "live-16",
+      "live-17",
+      "live-18",
+      "live-19",
     ]);
   });
 
   it("pins the walk's step names in order, with press-held and setting after seal and tamper last", () => {
     expect([...WALK_STEP_NAMES]).toEqual([
       "write",
+      "write-occasion",
+      "write-receipt",
+      "write-failed",
       "write-receipts",
       "seal",
+      "seal-before-choice",
+      "seal-after-choice",
       "press-held",
       "setting",
       "wait",
@@ -112,6 +132,7 @@ describe("stepShotName", () => {
       "letter",
       "figures",
       "close",
+      "persona-read",
       "tamper",
     ]);
   });
@@ -124,7 +145,7 @@ describe("stepShotName", () => {
         height: 900,
         reduced: true,
       }),
-    ).toBe("live-11-figures-1440x900-reduced.png");
+    ).toBe("live-16-figures-1440x900-reduced.png");
     expect(
       stepShotName({
         step: "figures",
@@ -132,22 +153,22 @@ describe("stepShotName", () => {
         height: 844,
         reduced: false,
       }),
-    ).toBe("live-11-figures-390x844.png");
+    ).toBe("live-16-figures-390x844.png");
   });
 
   it("names the press and setting steps after seal, in walk order", () => {
     expect(stepShotName({ step: "press-held", width: 1440, height: 900 })).toBe(
-      "live-04-press-held-1440x900.png",
+      "live-09-press-held-1440x900.png",
     );
     expect(stepShotName({ step: "setting", width: 390, height: 844 })).toBe(
-      "live-05-setting-390x844.png",
+      "live-10-setting-390x844.png",
     );
   });
 
   it("names the step, not the Stage, for write-receipts", () => {
     expect(
       stepShotName({ step: "write-receipts", width: 390, height: 844 }),
-    ).toBe("live-02-write-receipts-390x844.png");
+    ).toBe("live-05-write-receipts-390x844.png");
   });
 
   it("throws on a step that is not in the walk", () => {
@@ -160,10 +181,10 @@ describe("stepShotName", () => {
 describe("expectedShotNames", () => {
   it("lists every step at both widths, with and without the reduced suffix", () => {
     const names = expectedShotNames("one-figure");
-    expect(names).toHaveLength(13 * 2 * 2);
+    expect(names).toHaveLength(19 * 2 * 2);
     expect(names).toContain("live-01-write-1440x900.png");
-    expect(names).toContain("live-12-close-390x844-reduced.png");
-    expect(names).toContain("live-13-tamper-1440x900-reduced.png");
+    expect(names).toContain("live-17-close-390x844-reduced.png");
+    expect(names).toContain("live-19-tamper-1440x900-reduced.png");
     expect(new Set(names).size).toBe(names.length);
   });
 
@@ -599,7 +620,7 @@ describe("checkStepSnapshot and defectsFromChecks", () => {
   it("checks forbidden strings only at figures and close", () => {
     const withPlaceholder = {
       ...CLEAN_SNAPSHOT,
-      currentStep: "See the receipts",
+      currentStep: "Receipts",
       bodyText: "unchanged 0.000 0.0%",
     };
     expect(
@@ -611,7 +632,7 @@ describe("checkStepSnapshot and defectsFromChecks", () => {
   });
 
   it("checks the typed letter text on the letter stage only when given", () => {
-    const onLetter = { ...CLEAN_SNAPSHOT, currentStep: "See the receipts" };
+    const onLetter = { ...CLEAN_SNAPSHOT, currentStep: "Receipts" };
     const missing = checkStepSnapshot("letter", onLetter, {
       letterText: "Walk letter",
     });
@@ -696,7 +717,7 @@ describe("walkShotName", () => {
   it("keeps the spec name for the default hold method", () => {
     expect(
       walkShotName({ step: "marks", width: 1440, height: 900, method: "hold" }),
-    ).toBe("live-09-marks-1440x900.png");
+    ).toBe("live-14-marks-1440x900.png");
   });
 
   it("adds the method and the reduced suffix for the other runs", () => {
@@ -708,7 +729,7 @@ describe("walkShotName", () => {
         reduced: true,
         method: "skip",
       }),
-    ).toBe("live-12-close-390x844-reduced-via-skip.png");
+    ).toBe("live-17-close-390x844-reduced-via-skip.png");
   });
 });
 
@@ -731,7 +752,7 @@ describe("checkRunShots (per-run missing Step_Shot check)", () => {
     const result = checkRunShots(expected, [expected[0]]);
     expect(result.ok).toBe(false);
     expect(result.lines).toEqual([
-      "FAIL missing Step_Shot live-03-seal-390x844.png",
+      "FAIL missing Step_Shot live-06-seal-390x844.png",
     ]);
   });
 
@@ -1263,5 +1284,197 @@ describe("sealPressInput (how each walk run presses the seal, Q1.3)", () => {
     expect(
       sealPressInput({ width: 1440, reduced: true, keyboard: false }),
     ).toBe("click");
+  });
+});
+
+describe("WALK_STEP_NAMES numbering and STEP_INDICATOR_EXPECTATIONS (Q1.3, Q1.4)", () => {
+  it("has nineteen steps, each numbered by its place in WALK_STEP_NAMES", () => {
+    expect(WALK_STEP_NAMES).toHaveLength(19);
+    WALK_STEP_NAMES.forEach((step, index) => {
+      const order = String(index + 1).padStart(2, "0");
+      expect(stepShotName({ step, width: 390, height: 844 })).toBe(
+        `live-${order}-${step}-390x844.png`,
+      );
+    });
+  });
+
+  it("uses Receipts, not See the receipts, as the Step_Indicator item on letter, figures and close", () => {
+    for (const step of ["letter", "figures", "close"] as const) {
+      const expectation = STEP_INDICATOR_EXPECTATIONS[step];
+      expect(expectation?.test("Receipts")).toBe(true);
+      expect(expectation?.test("See the receipts")).toBe(false);
+    }
+  });
+});
+
+describe("checkPressStatusLine (S6.7, Q1.4)", () => {
+  const expected = "Press and hold the seal to lock it.";
+
+  it("passes when the line reads the S6.7 text, ignoring the surrounding space", () => {
+    const check = checkPressStatusLine(`  ${expected} \n`, expected);
+    expect(check.ok).toBe(true);
+    expect(check.message).toBe(
+      `PASS the Press_Status_Line reads "${expected}" (S6.7)`,
+    );
+  });
+
+  it("fails when the line reads other text and names both texts", () => {
+    const check = checkPressStatusLine("Seal it now", expected);
+    expect(check.ok).toBe(false);
+    expect(check.message).toBe(
+      `FAIL the Press_Status_Line reads "Seal it now", expected "${expected}"`,
+    );
+  });
+});
+
+describe("checkPressEnvelopeClearOfText (Q1.4)", () => {
+  const rect = (top: number, left: number, bottom: number, right: number) => ({
+    top,
+    left,
+    bottom,
+    right,
+  });
+  const textColumn = rect(100, 400, 600, 1000);
+
+  it("passes an envelope clear of the text column at 1440 px, and skips other widths", () => {
+    const clear = checkPressEnvelopeClearOfText(
+      rect(100, 0, 200, 300),
+      textColumn,
+      1440,
+    );
+    expect(clear.ok).toBe(true);
+    expect(clear.message).toBe(
+      "PASS the Press_Envelope does not intersect the text column at 1440 px",
+    );
+    expect(
+      checkPressEnvelopeClearOfText(rect(100, 0, 200, 300), textColumn, 390)
+        .message,
+    ).toBe("PASS not checked at 390 px (the rule applies at 1440 px)");
+  });
+
+  it("fails an envelope that overlaps the text column at 1440 px", () => {
+    const overlap = checkPressEnvelopeClearOfText(
+      rect(100, 300, 200, 500),
+      textColumn,
+      1440,
+    );
+    expect(overlap.ok).toBe(false);
+    expect(overlap.message).toBe(
+      "FAIL the Press_Envelope (left 300, right 500) intersects the text column (left 400, right 1000) at 1440 px",
+    );
+  });
+});
+
+describe("checkStepTrackClearOfTopBar (Q1.4)", () => {
+  const topBar = { top: 0, left: 0, bottom: 60, right: 390 };
+
+  it("passes a Step_Track that sits below the Top_Bar", () => {
+    const check = checkStepTrackClearOfTopBar(
+      { top: 80, left: 0, bottom: 120, right: 390 },
+      topBar,
+    );
+    expect(check.ok).toBe(true);
+    expect(check.message).toBe(
+      "PASS the Step_Track is not under the Top_Bar after a step change",
+    );
+  });
+
+  it("fails a Step_Track that sits under the Top_Bar", () => {
+    const check = checkStepTrackClearOfTopBar(
+      { top: 40, left: 0, bottom: 90, right: 390 },
+      topBar,
+    );
+    expect(check.ok).toBe(false);
+    expect(check.message).toBe(
+      "FAIL the Step_Track (top 40, bottom 90) sits under the Top_Bar (bottom 60)",
+    );
+  });
+});
+
+describe("checkTopbarSlotStable (Q1.4)", () => {
+  const slot = { top: 0, left: 0, bottom: 60, right: 1440 };
+
+  it("passes a [data-topbar-slot] box that stays put on every step", () => {
+    const check = checkTopbarSlotStable([slot, { ...slot }, { ...slot }]);
+    expect(check.ok).toBe(true);
+    expect(check.message).toBe(
+      "PASS [data-topbar-slot] keeps the same box on every step",
+    );
+  });
+
+  it("fails a slot that moves on a later step and names that step", () => {
+    const check = checkTopbarSlotStable([
+      slot,
+      { ...slot },
+      { ...slot, top: 4, bottom: 64 },
+    ]);
+    expect(check.ok).toBe(false);
+    expect(check.message).toBe(
+      "FAIL [data-topbar-slot] moved between steps: step 1 at top 0, step 3 at top 4",
+    );
+  });
+});
+
+describe("checkFigureRowsNoAccent (Q1.4)", () => {
+  const row = (overrides: Partial<FigureRowPaint> = {}): FigureRowPaint => ({
+    focused: false,
+    border: "rgb(40, 40, 40)",
+    background: "rgb(255, 255, 255)",
+    outline: "rgb(255, 123, 28)",
+    ...overrides,
+  });
+
+  it("passes an unfocused row whose only Accent is an outline it does not paint", () => {
+    const check = checkFigureRowsNoAccent([row()]);
+    expect(check.ok).toBe(true);
+    expect(check.message).toBe(
+      "PASS no Figure_Row paints an Accent colour in its border or background, and in its outline only while focused (1 row(s))",
+    );
+  });
+
+  it("fails a row whose border is the Accent colour", () => {
+    const check = checkFigureRowsNoAccent([
+      row({ border: "rgb(255, 123, 28)" }),
+    ]);
+    expect(check.ok).toBe(false);
+    expect(check.message).toBe(
+      "FAIL 1 Accent or unreadable colour(s), 0 unreadable: row 1 border is Accent (rgb(255, 123, 28))",
+    );
+  });
+});
+
+describe("checkAccentButtonCount (Q1.4)", () => {
+  it("passes one Accent button on the Seal step, the Press_Envelope", () => {
+    const check = checkAccentButtonCount("Seal", ["Press the seal"]);
+    expect(check.ok).toBe(true);
+    expect(check.message).toBe(
+      "PASS at most one Accent button on the Seal step (1 found)",
+    );
+  });
+
+  it("fails a second Accent button on the Write step and names both", () => {
+    const check = checkAccentButtonCount("Write", ["Continue", "Add a figure"]);
+    expect(check.ok).toBe(false);
+    expect(check.message).toBe(
+      'FAIL 2 Accent buttons on the Write step: "Continue", "Add a figure"',
+    );
+  });
+});
+
+describe("checkTestifyCounter (Q1.4)", () => {
+  it("passes a live Testify counter that does not say you wrote this on", () => {
+    const check = checkTestifyCounter("Question 1 of 3");
+    expect(check.ok).toBe(true);
+    expect(check.message).toBe(
+      'PASS the live Testify counter does not say "you wrote this on" (counter reads "Question 1 of 3")',
+    );
+  });
+
+  it("fails a counter that says you wrote this on", () => {
+    const check = checkTestifyCounter("You wrote this on 12 March");
+    expect(check.ok).toBe(false);
+    expect(check.message).toBe(
+      'FAIL the live Testify counter reads "You wrote this on 12 March"',
+    );
   });
 });

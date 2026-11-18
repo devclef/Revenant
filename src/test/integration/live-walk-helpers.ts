@@ -6,14 +6,21 @@
  */
 
 /**
- * The thirteen steps of the walk, in order. `<step>` in a Step_Shot name is one of these.
- * `press-held` and `setting` come straight after `seal`. `tamper` is the last step: it
- * is a separate persona run on the Read step, so it follows the live walk.
+ * The nineteen steps of the walk, in order. `<step>` in a Step_Shot name is one of these.
+ * The `write-*` steps cover the desk (occasion, receipt, failed receipt). The `seal-*`
+ * steps wrap the backup choice on the Seal step, and `press-held` and `setting` come
+ * after them. `persona-read` and `tamper` are the persona runs on the Read step, so
+ * they follow the live walk; `tamper` is last.
  */
 export const WALK_STEP_NAMES = [
   "write",
+  "write-occasion",
+  "write-receipt",
+  "write-failed",
   "write-receipts",
   "seal",
+  "seal-before-choice",
+  "seal-after-choice",
   "press-held",
   "setting",
   "wait",
@@ -23,6 +30,7 @@ export const WALK_STEP_NAMES = [
   "letter",
   "figures",
   "close",
+  "persona-read",
   "tamper",
 ] as const;
 
@@ -250,16 +258,21 @@ export const STEP_INDICATOR_EXPECTATIONS: Partial<
   Record<WalkStepName, RegExp>
 > = {
   marks: /^break the seal$/i,
-  letter: /^see the receipts$/i,
-  figures: /^see the receipts$/i,
-  close: /^see the receipts$/i,
+  letter: /^receipts$/i,
+  figures: /^receipts$/i,
+  close: /^receipts$/i,
 };
 
 /** The file a defect at each step most likely lives in. The owner confirms before fixing. */
 export const STEP_SUSPECTED_FILES: Record<WalkStepName, string> = {
   write: "src/components/live/WriteForm.tsx",
+  "write-occasion": "src/components/live/desk/OccasionPills.tsx",
+  "write-receipt": "src/components/live/desk/ReceiptPanel.tsx",
+  "write-failed": "src/components/live/desk/ReceiptPanel.tsx",
   "write-receipts": "src/components/live/FigurePicker.tsx",
   seal: "src/components/live/SealPage.tsx",
+  "seal-before-choice": "src/components/live/seal-step/SealStep.tsx",
+  "seal-after-choice": "src/components/live/seal-step/SealStep.tsx",
   "press-held": "src/components/live/press/PressEnvelope.tsx",
   setting: "src/components/live/press/PressEnvelope.tsx",
   wait: "src/components/live/SealPage.tsx",
@@ -269,6 +282,7 @@ export const STEP_SUSPECTED_FILES: Record<WalkStepName, string> = {
   letter: "src/components/ceremony/letter/",
   figures: "src/components/ceremony/figures/",
   close: "src/components/ceremony/close/",
+  "persona-read": "src/components/reveal/ReceiptCard.tsx",
   tamper: "src/components/reveal/tamper/TamperControl.tsx",
 };
 
@@ -1148,5 +1162,257 @@ export function checkTamperRunNoPasskey(counts: PasskeyCounts): StepCheck {
     ok: false,
     expected,
     message: `FAIL the persona tamper run made ${counts.total} passkey prompt(s)`,
+  };
+}
+
+/* ---------------------------------------------------------------------------
+ * Q1.4 fail rules for the desk, the Seal step and the Step_Track (spec 14,
+ * task 18). Pure: the walk reads the page and passes plain values in.
+ * ------------------------------------------------------------------------- */
+
+/** The Accent colour, `--accent: #ff7b1c` in `ceremony/scene/tokens.css`. */
+export const ACCENT_COLOUR: RgbaColor = { r: 255, g: 123, b: 28, a: 1 };
+
+/** The width at which the Press_Envelope must clear the text column (Q1.4). */
+export const PRESS_CLEARANCE_WIDTH = 1440;
+
+/**
+ * The Press_Status_Line (S6.7, Q1.4). `actual` is the text the walk read from
+ * `[data-press-line]`, and `expected` is the S6.7 copy for the current state.
+ * An empty line fails, and so does any other text. The walk checks this before
+ * the letter is stored, so a wrong line cannot pass unnoticed.
+ */
+export function checkPressStatusLine(
+  actual: string | null,
+  expected: string,
+): StepCheck {
+  const label = `the Press_Status_Line reads "${expected}" (S6.7)`;
+  const text = (actual ?? "").trim();
+  if (text === "") {
+    return {
+      ok: false,
+      expected: label,
+      message: `FAIL the Press_Status_Line is empty, expected "${expected}"`,
+    };
+  }
+  if (text === expected) {
+    return { ok: true, expected: label, message: `PASS ${label}` };
+  }
+  return {
+    ok: false,
+    expected: label,
+    message: `FAIL the Press_Status_Line reads "${text}", expected "${expected}"`,
+  };
+}
+
+/**
+ * The Press_Envelope must not intersect the text column at 1440 px (Q1.4).
+ * Other widths are not part of this rule, so they pass with a note that says so.
+ */
+export function checkPressEnvelopeClearOfText(
+  envelope: BoxRect,
+  textColumn: BoxRect,
+  viewportWidth: number,
+): StepCheck {
+  const expected = `the Press_Envelope does not intersect the text column at ${PRESS_CLEARANCE_WIDTH} px`;
+  if (viewportWidth !== PRESS_CLEARANCE_WIDTH) {
+    return {
+      ok: true,
+      expected,
+      message: `PASS not checked at ${viewportWidth} px (the rule applies at ${PRESS_CLEARANCE_WIDTH} px)`,
+    };
+  }
+  if (!rectsIntersect(envelope, textColumn)) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL the Press_Envelope (left ${envelope.left}, right ${envelope.right}) intersects the text column (left ${textColumn.left}, right ${textColumn.right}) at ${viewportWidth} px`,
+  };
+}
+
+/**
+ * The Step_Track must not sit under the Top_Bar after a step change (Q1.4).
+ * Fails when the two boxes overlap.
+ */
+export function checkStepTrackClearOfTopBar(
+  track: BoxRect,
+  topBar: BoxRect,
+): StepCheck {
+  const expected =
+    "the Step_Track is not under the Top_Bar after a step change";
+  if (!rectsIntersect(track, topBar)) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL the Step_Track (top ${track.top}, bottom ${track.bottom}) sits under the Top_Bar (bottom ${topBar.bottom})`,
+  };
+}
+
+/**
+ * The `[data-topbar-slot]` box must stay put from one step to the next (Q1.4).
+ * `boxes` holds the slot's box at each step, in walk order. A missing box fails,
+ * and so does any box that moves more than `tolerancePx` on any edge.
+ */
+export function checkTopbarSlotStable(
+  boxes: readonly (BoxRect | null)[],
+  tolerancePx = 1,
+): StepCheck {
+  const expected = "[data-topbar-slot] keeps the same box on every step";
+  if (boxes.length === 0) {
+    return {
+      ok: false,
+      expected,
+      message: "FAIL no [data-topbar-slot] box was read",
+    };
+  }
+  const missing = boxes.findIndex((box) => box === null);
+  if (missing !== -1) {
+    return {
+      ok: false,
+      expected,
+      message: `FAIL [data-topbar-slot] is missing at step ${missing + 1}`,
+    };
+  }
+  const first = boxes[0] as BoxRect;
+  const moved = boxes.findIndex((box) => {
+    const b = box as BoxRect;
+    return (
+      Math.abs(b.top - first.top) > tolerancePx ||
+      Math.abs(b.left - first.left) > tolerancePx ||
+      Math.abs(b.right - first.right) > tolerancePx ||
+      Math.abs(b.bottom - first.bottom) > tolerancePx
+    );
+  });
+  if (moved === -1) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  const box = boxes[moved] as BoxRect;
+  return {
+    ok: false,
+    expected,
+    message: `FAIL [data-topbar-slot] moved between steps: step 1 at top ${first.top}, step ${moved + 1} at top ${box.top}`,
+  };
+}
+
+/** The paint of one Figure_Row: its computed colours, and whether the row has focus. */
+export type FigureRowPaint = {
+  focused: boolean;
+  border: string;
+  background: string;
+  /** The computed outline colour. Counted only while the row is focused. */
+  outline: string;
+};
+
+/**
+ * No Figure_Row may paint an Accent colour in its border or background, and in
+ * its outline only while focused (Q1.4). A colour that cannot be read is a
+ * failure, because the walk cannot show the row is free of Accent.
+ */
+export function checkFigureRowsNoAccent(
+  rows: readonly FigureRowPaint[],
+  accent: RgbaColor = ACCENT_COLOUR,
+): StepCheck {
+  const expected =
+    "no Figure_Row paints an Accent colour in its border or background, and in its outline only while focused";
+  const problems: string[] = [];
+  let unmeasured = 0;
+  rows.forEach((row, index) => {
+    const props: { name: string; value: string }[] = [
+      { name: "border", value: row.border },
+      { name: "background", value: row.background },
+    ];
+    if (row.focused) props.push({ name: "outline", value: row.outline });
+    for (const prop of props) {
+      const colour = parseCssColor(prop.value);
+      if (!colour) {
+        unmeasured += 1;
+        problems.push(
+          `row ${index + 1} ${prop.name} "${prop.value}" could not be read`,
+        );
+        continue;
+      }
+      const isAccent =
+        colour.a > 0 &&
+        colour.r === accent.r &&
+        colour.g === accent.g &&
+        colour.b === accent.b;
+      if (isAccent) {
+        problems.push(
+          `row ${index + 1} ${prop.name} is Accent (${prop.value})`,
+        );
+      }
+    }
+  });
+  if (problems.length === 0) {
+    return {
+      ok: true,
+      expected,
+      message: `PASS ${expected} (${rows.length} row(s))`,
+    };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL ${problems.length} Accent or unreadable colour(s), ${unmeasured} unreadable: ${problems.slice(0, 3).join("; ")}`,
+  };
+}
+
+/**
+ * At most one Accent button on the Write or Seal screen (Q1.4). `accentLabels`
+ * lists the text of every button painted Accent. A second one fails and is
+ * named in the message.
+ */
+export function checkAccentButtonCount(
+  screen: "Write" | "Seal",
+  accentLabels: readonly string[],
+): StepCheck {
+  const expected = `at most one Accent button on the ${screen} step`;
+  if (accentLabels.length <= 1) {
+    return {
+      ok: true,
+      expected,
+      message: `PASS ${expected} (${accentLabels.length} found)`,
+    };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL ${accentLabels.length} Accent buttons on the ${screen} step: ${accentLabels
+      .map((label) => `"${label}"`)
+      .join(", ")}`,
+  };
+}
+
+/** The phrase the live Testify counter must not show (Q1.4). */
+export const TESTIFY_COUNTER_FORBIDDEN = /you wrote this on/i;
+
+/**
+ * The live Testify counter (`[data-recall-counter]`) must not say "you wrote
+ * this on" (Q1.4). A missing counter fails, because the check cannot run without it.
+ */
+export function checkTestifyCounter(text: string | null): StepCheck {
+  const expected = 'the live Testify counter does not say "you wrote this on"';
+  if (text === null) {
+    return {
+      ok: false,
+      expected,
+      message: "FAIL the live Testify counter is missing",
+    };
+  }
+  if (!TESTIFY_COUNTER_FORBIDDEN.test(text)) {
+    return {
+      ok: true,
+      expected,
+      message: `PASS ${expected} (counter reads "${text.trim()}")`,
+    };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL the live Testify counter reads "${text.trim()}"`,
   };
 }

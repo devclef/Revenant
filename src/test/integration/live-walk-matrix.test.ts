@@ -111,8 +111,8 @@ describe("matrixShotNames with a step filter", () => {
     const names = matrixShotNames(entry!, ["write", "seal", "testify"]);
     expect(names).toEqual([
       "live-01-write-390x844.png",
-      "live-03-seal-390x844.png",
-      "live-08-testify-390x844.png",
+      "live-06-seal-390x844.png",
+      "live-13-testify-390x844.png",
     ]);
   });
 
@@ -186,15 +186,15 @@ describe("TAMPER_MATRIX (persona tamper runs)", () => {
     expect(new Set(ids).size).toBe(ids.length);
   });
 
-  it("names one tamper Step_Shot, numbered 13 and with -reduced when reduced", () => {
+  it("names one tamper Step_Shot, numbered 19 and with -reduced when reduced", () => {
     expect(tamperShotNames(TAMPER_MATRIX[0])).toEqual([
-      "live-13-tamper-1440x900.png",
+      "live-19-tamper-1440x900.png",
     ]);
     expect(tamperShotNames(TAMPER_MATRIX[1])).toEqual([
-      "live-13-tamper-1440x900-reduced.png",
+      "live-19-tamper-1440x900-reduced.png",
     ]);
     expect(tamperShotNames(TAMPER_MATRIX[3])).toEqual([
-      "live-13-tamper-390x844-reduced.png",
+      "live-19-tamper-390x844-reduced.png",
     ]);
   });
 });
@@ -237,6 +237,19 @@ describe("KEYBOARD_MATRIX_ENTRY (the keyboard seal run, Q1.3)", () => {
     expect(mouse).toBeDefined();
     expect(matrixShotNames(KEYBOARD_MATRIX_ENTRY)).toEqual(
       matrixShotNames(mouse!),
+    );
+  });
+});
+
+describe("Step_Shot numbering in the matrix (Q1.3)", () => {
+  it("numbers the one-figure desktop run 01 to 19 in WALK_STEP_NAMES order", () => {
+    const entry = WALK_MATRIX.find((e) => e.id === "1440x900-one-figure");
+    expect(entry).toBeDefined();
+    const orders = matrixShotNames(entry!).map((name) => name.slice(0, 7));
+    expect(orders).toEqual(
+      WALK_STEP_NAMES.map(
+        (_, index) => `live-${String(index + 1).padStart(2, "0")}`,
+      ),
     );
   });
 });
