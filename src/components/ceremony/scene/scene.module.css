@@ -579,6 +579,15 @@
     --ghost-x: calc(var(--frame-l) + var(--frame-w) * 0.72);
   }
 
+  /* The Soil_Band sits at the bottom of the backdrop, which is the bottom of
+     the Scene (spec 14 B2.2). The page content reserves --soil-clear there, so
+     text never runs under the band. Narrow keeps the top-anchored band that its
+     card positions rely on. */
+  .soilStrip {
+    top: auto;
+    bottom: 0;
+  }
+
   .main {
     padding-top: 5rem;
   }

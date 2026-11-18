@@ -136,6 +136,16 @@ describe("the Soil_Band sits at the bottom of the Scene on tall pages (B2.2)", (
   });
 });
 
+describe("the wide Soil_Band sits at the Scene bottom (B2.2, 900 px and up)", () => {
+  it("anchors the strip to the bottom of the backdrop in the wide layout only", () => {
+    expect(css).toContain("  .soilStrip {\n    top: auto;\n    bottom: 0;\n  }");
+  });
+
+  it("keeps the narrow strip top-anchored at --soil-top", () => {
+    expect(ruleText(".soilStrip")).toContain("top: var(--soil-top);");
+  });
+});
+
 describe("--soil-clear reserves the Soil_Band at the Scene bottom (B2.1)", () => {
   it("defines --soil-clear as the drawn band height plus 16 px, on the Scene", () => {
     expect(ruleText(".scene")).toContain(
