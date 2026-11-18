@@ -4301,6 +4301,7 @@ async function checkDeskRows(browser, base, size, rep, required) {
       await guard(ctx, "S1", () => checkStepTrack(page, ctx, "write"));
       await guard(ctx, "W", () => checkWriteDesk(page, ctx));
       await guard(ctx, "W2", () => checkWriteRows(page, ctx));
+      await guard(ctx, "W5.2", () => checkRuledBaseline(context, ctx));
       if (SEAL_SIZES.includes(size)) {
         await guard(ctx, "S2", async () => {
           await page.fill("#live-letter", DESK_LETTER);
@@ -4316,6 +4317,88 @@ async function checkDeskRows(browser, base, size, rep, required) {
     rep.add("note", "desk", `could not run: ${String(error.message ?? error).split("\n")[0]}`);
   } finally {
     await context.close();
+  }
+}
+
+// W5.2 on /demo/live: the ruled-line baseline gap of the Letter_Field, before and after an internal scroll.
+// Runs on a fresh page so the Write-step rows keep their own state. The field is filled with
+// W52_LINES short lines, which is more than the field shows, so it scrolls inside itself.
+const W52_LINES = 60;
+
+// Browser side. The baselines come from a hidden mirror built here with the field's own font,
+// width and line-height: one zero-height inline-block per line, whose bottom edge sits on that
+// line's baseline. The rule offset and attachment are read from the field's computed style.
+// The field is scrolled to 20 lines down and back; the scroll values are returned as read.
+const W52_READ = () => {
+  const ta = document.querySelector("#live-letter");
+  if (!ta) return { missing: true };
+  const cs = getComputedStyle(ta);
+  if (ta.scrollHeight <= ta.clientHeight + 1) return { missing: false, scrollable: false };
+  const lineHeight = parseFloat(cs.lineHeight) || 32;
+  const offset = parseFloat(cs.backgroundPosition.split(" ")[1]);
+  const contentW = ta.clientWidth - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+  const mirror = document.createElement("div");
+  mirror.setAttribute("aria-hidden", "true");
+  mirror.style.cssText = [
+    "position:fixed", "left:0", "top:0", "visibility:hidden", "pointer-events:none",
+    "margin:0", "padding:0", "border:0", "box-sizing:content-box",
+    `width:${contentW}px`, "white-space:pre",
+    `font-family:${cs.fontFamily}`, `font-size:${cs.fontSize}`, `font-weight:${cs.fontWeight}`,
+    `font-style:${cs.fontStyle}`, `line-height:${cs.lineHeight}`, `letter-spacing:${cs.letterSpacing}`,
+    `word-spacing:${cs.wordSpacing}`,
+  ].join(";");
+  const lines = ta.value.split("\n");
+  lines.forEach((text, i) => {
+    const marker = document.createElement("span");
+    marker.style.cssText = "display:inline-block;width:0;height:0;vertical-align:baseline";
+    mirror.append(marker, document.createTextNode(i < lines.length - 1 ? `${text}\n` : text));
+  });
+  document.body.append(mirror);
+  const top = mirror.getBoundingClientRect().top;
+  const baselines = [...mirror.querySelectorAll("span")].map((m) => m.getBoundingClientRect().bottom - top);
+  mirror.remove();
+  ta.scrollTop = 0;
+  const scrollBefore = ta.scrollTop;
+  ta.scrollTop = 20 * lineHeight;
+  ta.dispatchEvent(new Event("scroll"));
+  const scrollAfter = ta.scrollTop;
+  return { missing: false, scrollable: true, attachment: cs.backgroundAttachment, offset, lineHeight, baselines, scrollBefore, scrollAfter };
+};
+
+// W5.2 row from the W52_READ result. Before the scroll, lines 1 to 3 are measured. After it, the
+// three lines at the top of the visible field are measured. Each gap is the signed distance from
+// the baseline to the nearest rule (ruleGapPx), checked with baselineGapOk.
+export function w52Row({ viewport, raw }) {
+  if (raw.missing) return result("W5.2", "ruled-baseline", "missing", "not on this build: no #live-letter on /demo/live");
+  if (!raw.scrollable) return result("W5.2", "ruled-baseline", "missing", `not measured at viewport=${viewport}: the Letter_Field did not scroll inside itself with ${W52_LINES} lines`);
+  const at = (i) => ({ line: i + 1, gap: ruleGapPx(raw.baselines[i], raw.offset, raw.lineHeight) });
+  const first = Math.ceil(raw.scrollAfter / raw.lineHeight);
+  const before = [0, 1, 2].filter((i) => i < raw.baselines.length).map(at);
+  const after = [first, first + 1, first + 2].filter((i) => i < raw.baselines.length).map(at);
+  const r = { attachment: raw.attachment, scrollTop: raw.scrollAfter, before, after };
+  const problems = w52Failures(r);
+  const list = (rows) => rows.map((x) => `${x.line}:${num(x.gap)}`).join(" ");
+  const detail = `scrollTop=${num(raw.scrollAfter, 0)}px attachment=${raw.attachment} rule-offset=${num(raw.offset, 0)}px before=[${list(before)}] after=[${list(after)}] viewport=${viewport}`;
+  const threshold = "each measured baseline within 2 px of its ruled line, before and after the internal scroll, with the rules moving with the text";
+  return result("W5.2", "ruled-baseline", problems.length ? "fail" : "pass", `${detail} threshold=${threshold}${problems.length ? ` (${problems.join("; ")})` : ""}`);
+}
+
+// Opens a fresh /demo/live page, fills the Letter_Field with W52_LINES lines and reports W5.2.
+async function checkRuledBaseline(context, ctx) {
+  const page = await newPage(context);
+  try {
+    const res = await page.goto(`${ctx.base}${LIVE_PATH}`, { waitUntil: "load" });
+    if (!res || res.status() !== 200) {
+      report(ctx, result("W5.2", "ruled-baseline", "missing", `${LIVE_PATH} answered HTTP ${res?.status() ?? "none"}; not measured`));
+      return;
+    }
+    await page.evaluate(() => document.fonts.ready);
+    await page.fill("#live-letter", Array.from({ length: W52_LINES }, (_, i) => `Line ${i + 1}`).join("\n")).catch(() => {});
+    await sleep(300);
+    const raw = await page.evaluate(W52_READ);
+    report(ctx, w52Row({ viewport: ctx.size, raw }));
+  } finally {
+    await page.close();
   }
 }
 
@@ -4361,7 +4444,7 @@ export function w3Failures({ pills }) {
   return out;
 }
 
-// W5.1, W5.3 and W5.5 on the Letter_Field. W5.2 (the ruled-line baseline gap) is noted by the row, not measured.
+// W5.1, W5.3 and W5.5 on the Letter_Field. W5.2 is measured by checkRuledBaseline.
 export function w5Failures({ field }) {
   if (!field) return ["W5.1 no #live-letter to measure"];
   const out = [];
@@ -4372,6 +4455,35 @@ export function w5Failures({ field }) {
   if (!colourMatch(field.bg, "rgba(0, 0, 0, 0)")) out.push(`W5.1 Letter_Field background ${field.bg}, want transparent`);
   if (field.height < 296 - Q11_TOL_PX) out.push(`W5.3 Letter_Field is ${num(field.height, 0)}px tall, want at least 296px`);
   if (field.label !== "Your letter") out.push(`W5.5 Letter_Field label "${field.label}", want "Your letter"`);
+  return out;
+}
+
+// W5.2: each ruled line sits under its baseline. The rules are a repeating gradient with a 1 px
+// band at 31 px of every 32 px tile, and the tile starts at the field's background-position y
+// (--rule-offset). Returns rule top minus baseline for the nearest rule, in px. Negative means
+// the rule is above the baseline.
+export function ruleGapPx(baseline, offset, lineHeight = 32, bandAt = 31) {
+  const k = Math.round((baseline - offset - bandAt) / lineHeight);
+  let best = null;
+  for (const n of [k - 1, k, k + 1]) {
+    const gap = offset + bandAt + n * lineHeight - baseline;
+    if (best === null || Math.abs(gap) < Math.abs(best)) best = gap;
+  }
+  return best;
+}
+
+// W5.2 failures. `before` and `after` hold { line, gap } rows measured before and after the
+// internal scroll of the Letter_Field. Each gap must pass baselineGapOk (at most 2 px).
+export function w52Failures({ attachment, scrollTop, before, after }) {
+  const out = [];
+  if (!(scrollTop > 0)) out.push(`W5.2 the Letter_Field did not scroll inside itself (scrollTop ${num(scrollTop, 0)}px)`);
+  if (attachment !== "local") out.push(`W5.2 Letter_Field background-attachment is ${attachment}, want local so the rules move with the text`);
+  if (!before?.length || !after?.length) out.push("W5.2 no lines measured before and after the scroll");
+  for (const [phase, rows] of [["before", before ?? []], ["after", after ?? []]]) {
+    for (const { line, gap } of rows) {
+      if (!baselineGapOk(gap)) out.push(`W5.2 line ${line} baseline is ${num(gap)}px from its rule ${phase} the scroll, want at most 2px`);
+    }
+  }
   return out;
 }
 
@@ -4894,7 +5006,6 @@ async function checkWriteRows(page, ctx) {
 
   const w5 = await page.evaluate(W5_READ);
   report(ctx, w5 ? verdictRow("W5", "letter-field", w5Failures({ field: w5 }), `height=${num(w5.height, 0)} viewport=${ctx.size}`, "21 px text on 32 px lines, no border, transparent, at least 296 px tall, labelled \"Your letter\"") : missingRow("W5", "letter-field", "no #live-letter"));
-  report(ctx, result("W5.2", "ruled-baseline", "missing", "not measured: the text is in a textarea with no line boxes to read; needs a text mirror (not built)"));
 
   await page.getByRole("button", { name: "Write my own", exact: true }).click().catch(() => {});
   await sleep(300);
