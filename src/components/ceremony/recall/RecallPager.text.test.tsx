@@ -151,3 +151,65 @@ function buttonTag(markup: string, label: string): string {
   const open = markup.lastIndexOf("<button", start);
   return markup.slice(open, start);
 }
+
+// Feature: spec 14 (T1.2, T7): the recall counter. A live or real letter names
+// the day it was sealed ("you wrote this on"); a persona keeps its "as of"
+// counter and ignores the sealing instant.
+
+describe("the recall counter (spec 14, T1.2)", () => {
+  const sealed = {
+    sealedAt: "2026-11-17T09:00:00Z",
+    timeZone: "UTC",
+  };
+
+  it("shows the written-on form on a live or real letter", () => {
+    const markup = render(textPayload, { writtenOn: sealed });
+    expect(counterText(markup)).toBe(
+      "Question 1 of 2 · you wrote this on 17 November 2026",
+    );
+  });
+
+  it("marks the counter with data-recall-counter only in the written-on form", () => {
+    const withDay = render(textPayload, { writtenOn: sealed });
+    expect(withDay).toMatch(/data-recall-counter=""/);
+    const plain = render(textPayload);
+    expect(plain).not.toContain("data-recall-counter");
+  });
+
+  it("names the calendar day in the stated time zone, not in UTC", () => {
+    const markup = render(textPayload, {
+      writtenOn: {
+        sealedAt: "2026-11-17T23:30:00Z",
+        timeZone: "Europe/Stockholm",
+      },
+    });
+    expect(markup).toContain("you wrote this on 18 November 2026");
+  });
+
+  it("keeps the plain counter when the sealing instant does not parse", () => {
+    const markup = render(textPayload, {
+      writtenOn: { sealedAt: "not a date", timeZone: "UTC" },
+    });
+    expect(markup).toContain("Question 1 of 2");
+    expect(markup).not.toContain("you wrote this on");
+    expect(markup).not.toContain("data-recall-counter");
+  });
+
+  it("keeps the as-of counter on a persona and ignores the sealing instant", () => {
+    const markup = render(textPayload, {
+      writtenAsOf: "2024-05-12",
+      writtenOn: sealed,
+    });
+    expect(counterText(markup)).toBe("Question 1 of 2 · as of 12 May 2024");
+    expect(markup).not.toContain("you wrote this on");
+    expect(markup).not.toContain("data-recall-counter");
+  });
+});
+
+/** The text of the question counter paragraph, with its markup removed. */
+function counterText(markup: string): string {
+  const match = /<p class="[^"]*" data-fit="counter"[^>]*>(.*?)<\/p>/.exec(
+    markup,
+  );
+  return (match?.[1] ?? "").replace(/<[^>]+>/g, "");
+}
