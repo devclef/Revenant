@@ -140,64 +140,21 @@ describe("tg2Failures (T2.2)", () => {
   });
 });
 
-describe("wFailures (W1.1 to W1.3, W3.3, W4.4, W7.2)", () => {
+describe("wFailures (W1.3, W4.4; W1.1, W1.2, W3.3, W7.2 retired)", () => {
   const goodField = rect(300, 300, 700, 200);
   const goodQuestion = { height: 60, lineHeight: 24, padY: 12 };
-  const goodReceipt = { height: 40, lineHeight: 20, padY: 0 };
-  const occasion = { height: 32 };
 
-  it("passes a desktop Write step with a 704 px column and a paper within 80 px of it", () => {
-    const failures = wFailures({
-      ...DESKTOP,
-      field: goodField,
-      column: 704,
-      paper: 760,
-      occasions: [occasion],
-      questions: [goodQuestion],
-      receipts: [goodReceipt],
-    });
-    expect(failures).toEqual([]);
-  });
-
-  it("names W1.1 when the column is wider than 44rem", () => {
-    const failures = wFailures({
-      ...DESKTOP,
-      field: goodField,
-      column: 720,
-      paper: 720,
-      occasions: [],
-      questions: [],
-      receipts: [],
-    });
-    expect(failures).toEqual([
-      "W1.1 Writing_Column is 720px wide, need at most 704px (44rem)",
-    ]);
-  });
-
-  it("names W1.2 when the paper is wider than the column plus 80 px", () => {
-    const failures = wFailures({
-      ...DESKTOP,
-      field: goodField,
-      column: 600,
-      paper: 700,
-      occasions: [],
-      questions: [],
-      receipts: [],
-    });
-    expect(failures).toEqual([
-      "W1.2 paper is 700px wide, need at most the column plus 80px (680px)",
-    ]);
+  it("passes a desktop Write step with the Letter_Field top at most 360 px down", () => {
+    expect(
+      wFailures({ ...DESKTOP, field: goodField, questions: [goodQuestion] }),
+    ).toEqual([]);
   });
 
   it("names W1.3 when the Letter_Field top is more than 360 px from the top at 1440", () => {
     const failures = wFailures({
       ...DESKTOP,
       field: rect(300, 400, 700, 200),
-      column: 600,
-      paper: 600,
-      occasions: [],
       questions: [],
-      receipts: [],
     });
     expect(failures).toEqual([
       "W1.3 Letter_Field top is 400px from the top, need at most 360px",
@@ -208,11 +165,7 @@ describe("wFailures (W1.1 to W1.3, W3.3, W4.4, W7.2)", () => {
     const failures = wFailures({
       ...DESKTOP,
       field: rect(300, 360, 700, 200),
-      column: 600,
-      paper: 600,
-      occasions: [],
       questions: [],
-      receipts: [],
     });
     expect(failures).toEqual([]);
   });
@@ -221,81 +174,33 @@ describe("wFailures (W1.1 to W1.3, W3.3, W4.4, W7.2)", () => {
     const failures = wFailures({
       ...PHONE,
       field: rect(20, 900, 350, 200),
-      column: 350,
-      paper: null,
-      occasions: [],
       questions: [],
-      receipts: [],
     });
     expect(failures).toEqual([
       "W1.3 Letter_Field top is outside the First_Viewport",
     ]);
   });
 
-  it("uses 32 px for Occasion heights at 1440 and 44 px at 390", () => {
-    expect(
-      wFailures({
-        ...DESKTOP,
-        field: goodField,
-        column: 600,
-        paper: 600,
-        occasions: [{ height: 36 }],
-        questions: [],
-        receipts: [],
-      }),
-    ).toEqual([]);
-    expect(
-      wFailures({
-        ...PHONE,
-        field: rect(20, 100, 350, 200),
-        column: 350,
-        paper: null,
-        occasions: [{ height: 36 }],
-        questions: [],
-        receipts: [],
-      }),
-    ).toEqual(["W3.3 Occasion 1 is 36px high, need at least 44px"]);
+  it("no longer judges the column, paper, Occasion or receipt rows (retired; W1, W4, W3, W11, W12 replace them)", () => {
+    // Before the retirement these inputs failed W1.1, W1.2, W3.3 and W7.2. Now only W1.3 and
+    // W4.4 are judged, so a Write step with any of those widths or heights passes here.
+    expect(wFailures({ ...DESKTOP, field: goodField, questions: [] })).toEqual(
+      [],
+    );
+    expect(wFailures({ ...PHONE, field: rect(20, 100, 350, 200), questions: [] })).toEqual(
+      [],
+    );
   });
 
   it("names W4.4 when a question row is taller than two lines at 1440", () => {
     const failures = wFailures({
       ...DESKTOP,
       field: goodField,
-      column: 600,
-      paper: 600,
-      occasions: [],
       questions: [{ height: 90, lineHeight: 24, padY: 12 }],
-      receipts: [],
     });
     expect(failures).toEqual([
       "W4.4 question row 1 is 90px tall, need at most two lines (60px)",
     ]);
-  });
-
-  it("names W7.2 for a three-line receipt at 1440 and allows three lines at 390", () => {
-    const threeLines = { height: 60, lineHeight: 20, padY: 0 };
-    expect(
-      wFailures({
-        ...DESKTOP,
-        field: goodField,
-        column: 600,
-        paper: 600,
-        occasions: [],
-        questions: [],
-        receipts: [threeLines],
-      }),
-    ).toEqual(["W7.2 receipt row 1 is 60px tall, need at most 2 lines (40px)"]);
-    expect(
-      wFailures({
-        ...PHONE,
-        field: rect(20, 100, 350, 200),
-        column: 350,
-        paper: null,
-        occasions: [],
-        questions: [],
-        receipts: [threeLines],
-      }),
-    ).toEqual([]);
   });
 
   it("reports a missing Letter_Field with the requirement name", () => {
@@ -303,11 +208,7 @@ describe("wFailures (W1.1 to W1.3, W3.3, W4.4, W7.2)", () => {
       wFailures({
         ...DESKTOP,
         field: null,
-        column: 0,
-        paper: null,
-        occasions: [],
         questions: [],
-        receipts: [],
       }),
     ).toEqual(["W1.3 no Letter_Field (#live-letter) to measure"]);
   });
@@ -469,7 +370,7 @@ describe("lf2Failures (F2.1 to F2.3)", () => {
   });
 });
 
-describe("f3Failures (F3.1, F3.2, F3.4)", () => {
+describe("f3Failures (F3.1, F3.2; F3.4 retired)", () => {
   const notice = rect(900, 20, 300, 20);
   const question = rect(100, 300, 600, 60);
   const answer = rect(100, 400, 600, 80);
@@ -483,7 +384,6 @@ describe("f3Failures (F3.1, F3.2, F3.4)", () => {
       question,
       answer,
       cont,
-      noticeCount: 1,
     });
     expect(failures).toEqual([]);
   });
@@ -496,7 +396,6 @@ describe("f3Failures (F3.1, F3.2, F3.4)", () => {
       question,
       answer,
       cont,
-      noticeCount: 1,
     });
     expect(failures).toEqual([
       "F3.1 the fictional notice overlaps a Step_Indicator label",
@@ -511,7 +410,6 @@ describe("f3Failures (F3.1, F3.2, F3.4)", () => {
       question,
       answer: rect(100, 880, 600, 80),
       cont,
-      noticeCount: 1,
     });
     expect(failures).toEqual([
       "F3.2 answer control is not inside the First_Viewport",
@@ -526,7 +424,6 @@ describe("f3Failures (F3.1, F3.2, F3.4)", () => {
       question: rect(100, 880, 600, 60),
       answer,
       cont: rect(100, 950, 200, 40),
-      noticeCount: 1,
     });
     expect(failures).toEqual([
       "F3.2 question is not inside the First_Viewport",
@@ -542,12 +439,11 @@ describe("f3Failures (F3.1, F3.2, F3.4)", () => {
       question: null,
       answer,
       cont,
-      noticeCount: 1,
     });
     expect(failures).toEqual(["F3.2 no question heading to measure"]);
   });
 
-  it("names F3.4 when the notice shows more than once", () => {
+  it("no longer counts the notice (F3.4 retired; B1.4 checks the notice text once, in the Top_Bar)", () => {
     const failures = f3Failures({
       ...DESKTOP,
       notice,
@@ -555,11 +451,8 @@ describe("f3Failures (F3.1, F3.2, F3.4)", () => {
       question,
       answer,
       cont,
-      noticeCount: 2,
     });
-    expect(failures).toEqual([
-      "F3.4 the fictional notice shows 2 times, need once",
-    ]);
+    expect(failures).toEqual([]);
   });
 });
 
@@ -636,20 +529,12 @@ describe("failure messages name their requirement ID (T, W, F)", () => {
       ...wFailures({
         ...DESKTOP,
         field: null,
-        column: 0,
-        paper: null,
-        occasions: [],
         questions: [],
-        receipts: [],
       }),
       ...wFailures({
         ...DESKTOP,
         field: rect(0, 400, 600, 200),
-        column: 600,
-        paper: 600,
-        occasions: [{ height: 20 }],
         questions: [],
-        receipts: [],
       }),
       ...w8Failures({ heading: { top: 10 }, topBarBottom: 0 }),
       ...lf1Failures([{ name: "Maya", left: 0, width: 100, leafRights: [10] }]),
@@ -676,7 +561,6 @@ describe("failure messages name their requirement ID (T, W, F)", () => {
         question: rect(100, 300, 600, 60),
         answer: rect(100, 400, 600, 80),
         cont: rect(100, 520, 200, 40),
-        noticeCount: 2,
       }),
       ...f4Failures({
         ...DESKTOP,
