@@ -4616,9 +4616,17 @@ export function w12Failures({ inputs }) {
 }
 
 // X2.1: activating a desk control twice leaves its state, the letter and the focus as one activation left them.
-export function x21Failures({ control, once, twice }) {
+// A toggle (Figure_Row, Details) changes its state on the first activation and returns to its starting state on the
+// second, so with `toggles` the check compares against `before` instead of the first activation.
+export function x21Failures({ control, before = null, once, twice, toggles = false }) {
   const out = [];
-  if (JSON.stringify(once.pressed) !== JSON.stringify(twice.pressed)) out.push(`X2.1 "${control}" changed the pressed states on its second activation`);
+  const pressedKey = (s) => JSON.stringify(s.pressed);
+  if (toggles) {
+    if (before && pressedKey(once) === pressedKey(before)) out.push(`X2.1 "${control}" showed no state change on its first activation`);
+    if (before && pressedKey(twice) !== pressedKey(before)) out.push(`X2.1 "${control}" did not return to its starting state on its second activation`);
+  } else if (pressedKey(once) !== pressedKey(twice)) {
+    out.push(`X2.1 "${control}" changed the pressed states on its second activation`);
+  }
   if (once.letter !== twice.letter) out.push(`X2.1 "${control}" changed the letter text on its second activation`);
   if (!twice.focused) out.push(`X2.1 focus left "${control}" after its second activation`);
   return out;
@@ -4865,9 +4873,13 @@ const W12_READ = () => {
 
 const DESK_STATE_READ = () => {
   const desk = document.querySelector("[data-write-desk]") ?? document.body;
-  const pressed = [...desk.querySelectorAll("[aria-pressed]")].map((b) => `${(b.textContent ?? "").trim()}=${b.getAttribute("aria-pressed")}`);
+  const pressed = [...desk.querySelectorAll("[aria-pressed], [aria-expanded]")].map(
+    (b) => `${(b.textContent ?? "").trim()}=${b.getAttribute("aria-pressed") ?? ""}/${b.getAttribute("aria-expanded") ?? ""}`,
+  );
   const letter = document.querySelector("#live-letter")?.value ?? null;
-  return { pressed, letter, focused: document.activeElement ? (document.activeElement.textContent ?? "").trim() : null };
+  const el = document.activeElement;
+  const focused = el && el !== document.body ? (el.textContent ?? "").trim() || el.getAttribute("aria-label") || el.id || el.tagName.toLowerCase() : null;
+  return { pressed, letter, focused };
 };
 
 const T_READ = () => {
@@ -4988,15 +5000,64 @@ const D_READ = () => {
 
 // --- Row runners, part 2 ----------------------------------------------------
 
-async function activateTwice(page, control, locator) {
-  const before = await page.evaluate(DESK_STATE_READ);
-  await locator.click();
+// X2.1 for one desk control: activate it twice and emit one result line named X2.1.
+// `leavesDesk` marks Fold_Button: a passing fold moves the desk to Seal, so a missing desk after the first press is a pass.
+async function x21Control(page, ctx, { name, locator, toggles = false, leavesDesk = false }) {
+  const slug = `desk-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}`;
+  const target = locator.first();
+  if ((await target.count()) === 0) {
+    report(ctx, missingRow("X2.1", slug, `no ${name} control on the desk`));
+    return;
+  }
+  let before;
+  let once;
+  let twice;
+  try {
+    before = await page.evaluate(DESK_STATE_READ);
+    await target.click({ timeout: 3000 });
+    await sleep(200);
+    if (leavesDesk && (await page.locator("[data-write-desk]").count()) === 0) {
+      report(ctx, result("X2.1", slug, "pass", `control="${name}" moved the desk to Seal on its first activation (X2.1 table: passes moves to Seal) viewport=${ctx.size}`));
+      return;
+    }
+    once = await page.evaluate(DESK_STATE_READ);
+    await target.click({ timeout: 3000 });
+    await sleep(200);
+    twice = await page.evaluate(DESK_STATE_READ);
+  } catch (error) {
+    const reason = String(error.message ?? error).split("\n")[0];
+    report(ctx, result("X2.1", slug, "fail", `X2.1 "${name}" could not be activated twice: ${reason} viewport=${ctx.size}`));
+    return;
+  }
+  report(ctx, verdictRow("X2.1", slug, x21Failures({ control: name, before, once, twice, toggles }), `control="${name}" viewport=${ctx.size}`, "each desk control activated twice: same state, letter and focus"));
+}
+
+// X2.1 over every desk control in the design's X2.1 table, in an order that keeps each control reachable.
+// Rows are filled to two before Remove, so its second press still has a row to remove.
+async function runX21Controls(page, ctx) {
+  const writeOwn = () => page.getByRole("button", { name: "Write my own", exact: true });
+  await x21Control(page, ctx, { name: "Occasion pill Work", locator: page.getByRole("button", { name: "Work", exact: true }) });
+  await x21Control(page, ctx, { name: "Suggestion pill", locator: page.locator('[data-add-row]:not([aria-label="Write my own"])') });
+  await x21Control(page, ctx, { name: "+ Write my own", locator: writeOwn() });
+  for (let i = 0; i < 2 && (await page.locator("[data-question-row]").count()) < 2; i++) {
+    await writeOwn().click().catch(() => {});
+    await sleep(200);
+  }
+  await x21Control(page, ctx, { name: "Remove", locator: page.getByRole("button", { name: /^Remove/ }) });
+  const publicPrice = () => page.getByRole("button", { name: "A public price", exact: true });
+  await x21Control(page, ctx, { name: "A public price", locator: publicPrice() });
+  await x21Control(page, ctx, { name: "A number of my own", locator: page.getByRole("button", { name: "A number of my own", exact: true }) });
+  const inputs = page.locator("[data-own-number] input");
+  const inputCount = await inputs.count();
+  if (inputCount === 0) report(ctx, missingRow("X2.1", "desk-own-number-input", "no [data-own-number] input on the desk"));
+  for (let i = 0; i < inputCount; i++) {
+    await x21Control(page, ctx, { name: `own-number input ${i + 1}`, locator: inputs.nth(i) });
+  }
+  await publicPrice().click().catch(() => {});
   await sleep(200);
-  const once = await page.evaluate(DESK_STATE_READ);
-  await locator.click();
-  await sleep(200);
-  const twice = await page.evaluate(DESK_STATE_READ);
-  return { control, before, once, twice };
+  await x21Control(page, ctx, { name: "Figure_Row", locator: page.locator("[data-figure-row]"), toggles: true });
+  await x21Control(page, ctx, { name: "Details", locator: page.locator("[data-figure-details]"), toggles: true });
+  await x21Control(page, ctx, { name: "Fold_Button", locator: page.locator("[data-fold-button]"), leavesDesk: true });
 }
 
 // W2, W3, W5, W7 to W12, W13.4 and X2.1 on the Write step. Run after checkWriteDesk.
@@ -5044,9 +5105,7 @@ async function checkWriteRows(page, ctx) {
   const rehearsal = await page.evaluate(() => document.querySelectorAll("[data-live-rehearsal]").length);
   report(ctx, verdictRow("W13.4", "rehearsal-line", rehearsal === 1 ? [] : [`${rehearsal} rehearsal lines, want 1`], `count=${rehearsal} viewport=${ctx.size}`, "the Rehearsal_Line once on the Write step"));
 
-  const occasion = page.getByRole("button", { name: "Work", exact: true });
-  const x1 = await activateTwice(page, "Work", occasion);
-  report(ctx, verdictRow("X2.1", "desk-controls", x21Failures({ control: "Work", once: x1.once, twice: x1.twice }), `viewport=${ctx.size}`, "each desk control activated twice: same state, letter and focus"));
+  await runX21Controls(page, ctx);
 }
 
 // T1.6, T2.1 and T2.5 on the persona recall stage at 390x844, and R1.2, R2.2, R3 and R6.1 after the reveal.
