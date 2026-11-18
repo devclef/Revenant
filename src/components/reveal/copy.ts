@@ -147,6 +147,16 @@ export const REVEAL_COPY = {
    */
   questionCounterAsOf: "as of {date}",
 
+  /**
+   * The as-of part of the counter on a live or real letter (spec 14, T1.2).
+   * `{date}` is the sealing day in the reader's zone. The counter is
+   * `questionCounter` plus the separator plus this text.
+   */
+  questionCounterWrittenOn: "you wrote this on {date}",
+
+  /** The visible label above a text question's field (spec 14, T1.4). */
+  answerFromMemory: "Your answer, from memory",
+
   /** The separator between the counter and its as-of part (R11.5). */
   questionCounterSeparator: " · ",
 
