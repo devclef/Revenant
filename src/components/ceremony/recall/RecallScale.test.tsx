@@ -484,3 +484,17 @@ describe("the log track's decade labels come from visibleTicks", () => {
     expect(css).not.toMatch(/@container\s+recallTrack/);
   });
 });
+
+describe("the Look closer and Show everything buttons match the shared buttons (spec 14 T3)", () => {
+  const css = readFileSync(join(here, "RecallScale.module.css"), "utf8");
+  const block = css.match(/\.wholeScale\s*\{([^}]*)\}/)?.[1] ?? "";
+
+  it("set the page's sans font, not the browser default", () => {
+    expect(block).toMatch(/font-family:\s*var\(--font-sans\)/);
+  });
+
+  it("keep the shared 2 px corner and a 1 px ink border", () => {
+    expect(block).toMatch(/border-radius:\s*2px/);
+    expect(block).toMatch(/border:\s*1px solid var\(--ink\)/);
+  });
+});

@@ -139,11 +139,19 @@
   font-size: 0.875rem;
 }
 
+/*
+ * "Look closer at the mark" and "Show everything" on the recall scale. This is
+ * the outline style from buttons.module.css (the Stage's one orange button is
+ * the primary). Same 2 px corner, 1 px ink border and sans face as the shared
+ * buttons. The class name stays: tests and the zoom rows refer to it.
+ */
 .wholeScale {
   min-height: 44px;
   min-width: 44px;
   padding: 0 0.75rem;
   font: inherit;
+  font-family: var(--font-sans);
+  font-weight: 700;
   color: var(--ink);
   background: transparent;
   border: 1px solid var(--ink);
