@@ -24,8 +24,15 @@
   gap: clamp(1rem, 3vw, 1.5rem);
   width: 100%;
   max-width: 64rem;
-  margin-inline: auto;
-  padding: clamp(1.25rem, 4vw, 3rem) clamp(1rem, 4vw, 2rem);
+  /*
+   * Left-aligned, not centred, so the content starts on the Top_Bar's edge.
+   * SceneShell's main already applies the Top_Bar side padding
+   * (calc(var(--frame-l) + var(--pad))), so the page adds none of its own.
+   * A second copy of that padding would push the content past the wordmark.
+   */
+  margin-inline: 0;
+  padding-block: clamp(1.25rem, 4vw, 3rem);
+  padding-inline: 0;
   box-sizing: border-box;
   min-width: 0;
   overflow-wrap: anywhere;
