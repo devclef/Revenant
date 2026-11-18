@@ -134,9 +134,12 @@
     font-size: 36px;
   }
 
+  /* contain: inline-size stops the one-line pills from setting the width of the
+     grid column they sit in, so the page keeps the viewport width (W3.5). */
   .pills {
     flex-wrap: nowrap;
     overflow-x: auto;
     overscroll-behavior-x: contain;
+    contain: inline-size;
   }
 }

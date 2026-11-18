@@ -89,6 +89,17 @@
   font-family: var(--font-sans);
 }
 
+/* The Write step sits on the desk, not on paper (spec 14, W1). Its desk text is
+   light, so the card drops its paper and sets the desk text colour itself. The
+   paper pieces inside the desk keep their own ink. */
+.card.deskCard {
+  padding: 0;
+  color: #ffffff;
+  background-color: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
 /* The step section once the card has dropped away (Testify and Receipts). It
    sits on the desk, so it sets the desk text colour and no paper. */
 .bare {
