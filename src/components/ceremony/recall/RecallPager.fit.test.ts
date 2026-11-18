@@ -43,7 +43,7 @@ describe("Recall_Pager fit hooks", () => {
   });
 
   it("keeps the counter date in one nowrap span", () => {
-    expect(source).toContain('<span className={styles.nowrap}>{asOfText}</span>');
+    expect(source).toContain('<span className={styles.nowrap}>{asOfText ?? writtenOnText}</span>');
     expect(ruleBody(".nowrap")).toMatch(/white-space:\s*nowrap/);
   });
 });

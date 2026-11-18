@@ -24,6 +24,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { RecallScale } from "./RecallScale";
 import { TextAnswerField } from "./TextAnswerField";
 import { answerText } from "./answer-text";
+import { formatWrittenOn } from "./written-on";
 import { CEREMONY_COPY } from "../copy";
 import {
   canAdvance,
@@ -65,6 +66,12 @@ export type RecallPagerProps = {
   failed?: boolean;
   /** The persona's written-as-of date (`YYYY-MM-DD`). Absent on a Live_Letter (R11.5). */
   writtenAsOf?: string;
+  /**
+   * The sealing instant (ISO, UTC) and the zone to name its calendar day in, for a
+   * live or real letter. Shows "you wrote this on {date}" in the counter. Ignored
+   * when `writtenAsOf` is set, because a persona keeps its "as of" counter.
+   */
+  writtenOn?: { sealedAt: string; timeZone: string };
   /** Dispatches `EDIT_DRAFT` as the judge types, or moves the Recall_Scale Mark. */
   onEdit: (id: string, text: string) => void;
   /** Dispatches `TOGGLE_NO_ANSWER` for one question (R11.7). */
@@ -100,6 +107,7 @@ export function RecallPager({
   submitting,
   failed = false,
   writtenAsOf,
+  writtenOn,
   onEdit,
   onToggleNoAnswer,
   onSubmit,
@@ -282,6 +290,17 @@ export function RecallPager({
       : fill(REVEAL_COPY.questionCounterAsOf, {
           date: formatCalendarDate(writtenAsOf),
         });
+  // A live or real letter names the day it was sealed (spec 14, T1.2). The day
+  // is empty when the sealing instant does not parse; the counter then keeps
+  // its plain form.
+  const writtenOnDay =
+    writtenAsOf !== undefined || writtenOn === undefined
+      ? ""
+      : formatWrittenOn(writtenOn.sealedAt, writtenOn.timeZone);
+  const writtenOnText =
+    writtenOnDay === ""
+      ? undefined
+      : fill(REVEAL_COPY.questionCounterWrittenOn, { date: writtenOnDay });
 
   // The intro sits on the first question only (R11.15). A persona letter names
   // its written-as-of date; a Live_Letter gets the hint alone.
@@ -325,14 +344,18 @@ export function RecallPager({
 
   return (
     <>
-      <p className={styles.counter} data-fit="counter">
-        {asOfText === undefined ? (
+      <p
+        className={styles.counter}
+        data-fit="counter"
+        data-recall-counter={writtenOnText === undefined ? undefined : ""}
+      >
+        {asOfText === undefined && writtenOnText === undefined ? (
           counterBase
         ) : (
           <>
             {counterBase}
             {REVEAL_COPY.questionCounterSeparator}
-            <span className={styles.nowrap}>{asOfText}</span>
+            <span className={styles.nowrap}>{asOfText ?? writtenOnText}</span>
           </>
         )}
       </p>
