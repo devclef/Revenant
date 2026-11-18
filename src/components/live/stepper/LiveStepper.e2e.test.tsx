@@ -250,7 +250,9 @@ describe("Live_Stepper end to end: Write to Receipts (spec 10 C2, C9.2, C9.3)", 
   });
 
   it("draws no step h2 on the Write step (spec 14, S8)", () => {
-    expect(renderWriteStep(WRITTEN)).not.toContain("<h2");
+    // The receipt card's own heading is an h2 (spec 14, W10.2); the rule is
+    // about the step heading, which is the h1 of the desk.
+    expect(renderWriteStep(WRITTEN)).not.toMatch(/<h2[^>]*data-step-heading/);
   });
 
   it("seals only the kept rows, in row order, and clears the draft once sealed", () => {

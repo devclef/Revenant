@@ -5,6 +5,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
 import { LIVE_COPY } from "./copy";
+import { DESK_COPY } from "./desk/copy";
 import { ReceiptsDisclosure, type ReceiptsStatus } from "./ReceiptsDisclosure";
 import { WriteForm } from "./WriteForm";
 import type { SealState } from "./seal-machine";
@@ -142,25 +143,22 @@ describe("ReceiptsDisclosure openRequest", () => {
   });
 });
 
-// The click cannot run under static markup, so the wiring is checked in the
-// source: Add a receipt raises the counter, and the disclosure receives it.
-describe("WriteForm wiring for Add a receipt", () => {
+// source: the Write desk has no Add a receipt control. The receipt card replaces
+// it (spec 14, W10.2), so the section write source no longer wires the counter.
+describe("WriteForm wiring for the receipt card", () => {
   const source = readFileSync(
     new URL("./WriteForm.tsx", import.meta.url),
     "utf8",
   );
 
-  it("passes the counter to the disclosure", () => {
-    expect(source).toContain("openRequest={receiptsRequest}");
+  it("no longer raises the Add a receipt counter", () => {
+    expect(source).not.toContain("setReceiptsRequest");
+    expect(source).not.toContain("{LIVE_COPY.receiptsAction}");
   });
 
-  it("raises the counter from the Add a receipt button", () => {
-    const button = source.slice(
-      source.indexOf("{LIVE_COPY.receiptsAction}") - 300,
-    );
-    expect(button).toMatch(
-      /onClick=\{\(\) => setReceiptsRequest\(nextOpenRequest\)\}/,
-    );
+  it("hands the Write desk the ReceiptPanel data, not the disclosure", () => {
+    expect(source).toContain("receipt={deskReceipt}");
+    expect(source).not.toContain("actions={writeActions}");
   });
 });
 
@@ -198,7 +196,7 @@ describe("ReceiptsDisclosure hidden summary (spec 11, W6)", () => {
 // Example: on the Write step the words Add a receipt appear once, and no
 // Receipts link exists anywhere on the step.
 describe("WriteForm write step receipt control (spec 11, W6)", () => {
-  it("shows the text Add a receipt once and no Receipts link", () => {
+  it("shows one receipt card and no Add a receipt or Receipts link", () => {
     const html = renderToStaticMarkup(
       createElement(WriteForm, {
         series: [],
@@ -218,7 +216,10 @@ describe("WriteForm write step receipt control (spec 11, W6)", () => {
         onNext: () => {},
       }),
     );
-    expect(html.split(LIVE_COPY.receiptsAction).length - 1).toBe(1);
+    expect(html).not.toContain(LIVE_COPY.receiptsAction);
+    expect(html.split(`<h2 id="`).length - 1).toBeGreaterThanOrEqual(1);
+    expect(html).toMatch(new RegExp(`<h2[^>]*>${DESK_COPY.receiptTitle}</h2>`));
+    expect(html).not.toContain("data-receipts-disclosure");
     expect(html).not.toMatch(/<a\b[^>]*>[^<]*Receipts[^<]*<\/a>/);
   });
 });

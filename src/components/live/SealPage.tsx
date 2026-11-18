@@ -426,6 +426,14 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
         onSelfReportedRemove={(index) =>
           dispatchDraft({ type: "SELF_REPORTED_REMOVED", index })
         }
+        onOwnNumberChange={(field, text, sealingDay) =>
+          dispatchDraft({
+            type: "OWN_NUMBER_CHANGED",
+            field,
+            text,
+            sealingDay,
+          })
+        }
         onToggleFigure={(metricId) =>
           dispatchDraft({ type: "FIGURE_TOGGLED", metricId, limit: figureMax })
         }

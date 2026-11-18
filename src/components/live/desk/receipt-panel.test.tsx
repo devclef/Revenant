@@ -70,6 +70,8 @@ const panel = (overrides: Partial<ReceiptPanelProps> = {}) =>
       touched: { touched: {}, attempted: false },
       onTouch: () => {},
       onOwnNumberChange: () => {},
+      view: "public",
+      onViewChange: () => {},
       ...overrides,
     }),
   );
@@ -180,6 +182,20 @@ describe("ReceiptPanel (W10)", () => {
       "hidden",
     );
     expect(openingTagWith(html, 'data-receipt-view="own"')).toContain("hidden");
+  });
+
+  it("shows the own view and presses its toggle when the view is own", () => {
+    const html = panel({ view: "own" });
+
+    expect(openingTagWith(html, 'data-receipt-view="own"')).not.toContain(
+      "hidden",
+    );
+    expect(openingTagWith(html, 'data-receipt-view="public"')).toContain(
+      "hidden",
+    );
+    expect(html).toMatch(
+      new RegExp(`aria-pressed="true"[^>]*>${DESK_COPY.toggleOwn}<`),
+    );
   });
 
   it("holds the own number fields inside the own view", () => {

@@ -40,6 +40,10 @@ export interface ReceiptPanelProps {
   onTouch: (key: string) => void;
   /** The visitor typed in one own number field. */
   onOwnNumberChange: (field: OwnNumberField, text: string) => void;
+  /** The view shown. The desk owns it so a failed fold can switch it (W13.3). */
+  view: ReceiptView;
+  /** Called with the view the visitor picked. */
+  onViewChange: (view: ReceiptView) => void;
 }
 
 /**
@@ -85,10 +89,11 @@ export function ReceiptPanel({
   touched,
   onTouch,
   onOwnNumberChange,
+  view,
+  onViewChange,
 }: ReceiptPanelProps) {
   const headingId = useId();
   const phone = usePhone();
-  const [view, setView] = useState<ReceiptView>("public");
 
   const publicView =
     figuresStatus === "loading" ? (
@@ -111,7 +116,7 @@ export function ReceiptPanel({
   const body = (
     <>
       <p className={styles.receiptIntro}>{DESK_COPY.receiptIntro}</p>
-      <ReceiptToggle view={view} onChange={setView} />
+      <ReceiptToggle view={view} onChange={onViewChange} />
       <div hidden={view !== "public"} data-receipt-view="public">
         {publicView}
       </div>
