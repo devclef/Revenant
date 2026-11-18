@@ -96,7 +96,7 @@ Group D (tasks 15 and 16) is the only cuttable work. Whatever is merged on `main
   - Validation: `bash scripts/check.sh` (SHA, exit status, PASS or FAIL); the five route budgets after `npm run build`, with the baseline from step 1.
   - _Requirements: S1, S2, G2.5, G2.6_
 
-- [ ] 2. S3 to S6, X1.3 · The Seal step: layout, Backup_Cards, links, press envelope and Press_Status_Line
+- [x] 2. S3 to S6, X1.3 · The Seal step: layout, Backup_Cards, links, press envelope and Press_Status_Line
   - Agent: `frontend-dev` · Depends on: 1 · Estimated size: L, ~2,000 changed lines · Target: 19 November 2026
   - Never cut. `press-hold.ts`, `hold.ts`, `seal-machine.ts` and `useSealFlow.ts` keep their behaviour; `usePressEnvelope.ts` changes only to receive `instant`.
   - Scope: `src/components/live/seal-step/SealStep.tsx`, `SealLinks.tsx`, `press-status.ts`, `seal-step.module.css` (all new); `src/components/live/BackupChoice.tsx`, `backup-choice.module.css` (new; the `.backupChoice*` rules move out of `live.module.css`); `src/components/live/press/PressEnvelope.tsx`, `press.module.css`, `press/copy.ts`, `usePressEnvelope.ts` (props only); `src/components/live/WriteForm.tsx` (section `seal` only), `SealPage.tsx` (the temporary Seal `h1` from task 1 removed), `live.module.css` (rule moves only), `src/components/live/copy.ts`; and the `*.test.ts(x)` for each file.
