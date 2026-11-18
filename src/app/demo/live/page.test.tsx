@@ -34,8 +34,8 @@ describe("/demo/live page", () => {
     expect(html).toContain(LIVE_COPY.unavailable);
     expect(html).toContain('href="/demo"');
     expect(html).not.toContain("data-rp-id");
-    // The only button is the Top_Bar's Calm control. No seal control renders.
-    expect(html.match(/<button/g)?.length ?? 0).toBe(1);
+    // The Top_Bar holds Calm and a disabled Skip (B1.3). No seal control renders.
+    expect(html.match(/<button(?![^>]*disabled)/g)?.length ?? 0).toBe(1);
   });
 
   it("renders the Seal_Page with rpId and appOrigin when RP_ID is set", async () => {
