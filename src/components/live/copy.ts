@@ -106,10 +106,12 @@ export const LIVE_COPY = {
     "This device may not be able to lock the letter with a passkey. If so, you will need a backup key card.",
   warningUnticked:
     "Tick the box to confirm you understand, then create your passkey.",
-  /** The Backup_Choice legend and options (spec 13, P7.1). */
-  backupChoiceLegend: "The backup key",
+  /** The Backup_Choice legend and options (spec 13, P7.1; spec 14, X1.3 and S4.3). */
+  backupChoiceLegend: "If you lose this passkey",
   backupChoiceCard: "Download a backup key card",
+  backupChoiceCardHelp: "A small image with a QR code. It opens the letter if the passkey is gone.",
   backupChoiceSkip: "Skip it. A lost passkey means a lost letter.",
+  backupChoiceSkipHelp: "Fine for a 30-second rehearsal.",
   /** The field message while no Backup_Choice is selected (P7.2). */
   backupChoiceUnchosen: "Choose one option for the backup key first.",
   unavailable:
