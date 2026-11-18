@@ -141,6 +141,24 @@
 // the letter" only when the build shows it, keeps a prefilled field, fills an empty one,
 // and presses "Next question" and "Record my answers" with the mouse.
 //
+// Spec 14 Q1.1 desk rows (design.md "Layout rows"), on /demo/live at DESK_SIZES:
+//   S1    step-track        the six Step_Track dots, labels, hairlines, one current, phone text
+//   S2.2  step-change       Step_Track 16 to 48 px under the Top_Bar 1,000 ms after Fold
+//   S2.3  step-focus        focus on [data-step-heading], no scroll drift after the change
+//   S3.1  seal-columns      64 px column gap and level centres at 900 px and wider
+//   S3.4  warning-to-seal   390 px only: seal bottom at most 844 px below the Warning_Text top
+//   S6.1  press-envelope    width, 1.55 aspect, colour, radius, shadow, seal scale
+//   S6.4  seal-no-choice    40 % opacity, not-allowed, aria-disabled, status line (before a choice)
+//   S6.5  seal-chosen       full opacity, halo, aria-disabled false, status line (after "Skip it")
+//   S6.6, S6.7              prompt and sealing states: reached by Live_Walk, noted here
+//   S6.8  press-vs-text     envelope meets no text-column element; no horizontal scroll
+//   W1    write-layout      side by side from 992 px, level tops, sticky panel, no scroll, Fold reachable
+//   W4    letter-sheet      paper colour, radius, padding
+//   W6.1  perforation       dashed 2 px line from sheet edge to sheet edge
+//   W13.1 fold-button       56 px, Accent fill, dark 16 px weight 800 text, hover colour
+//   W13.5 desk-accent       no Accent fill or border on other desk buttons
+// Not yet rows: W2, W3, W5, W7 to W12, T, R, B, X2.1 and D1.1 to D1.3 (see the commit notes).
+//
 // Line format: <PASS|BLOCKER|polish|note> <id> <name> <WxH> <stage> <detail>.
 // The spec 08 and spec 09 checks put the measured values and threshold=<...> in <detail>.
 //
@@ -3661,6 +3679,660 @@ async function checkPersonaTestify(page, ctx) {
   report(ctx, result("F3", "persona-testify", problems.length ? "fail" : "pass", detail));
 }
 
+// ---------------------------------------------------------------------------
+// Q1.1 desk rows (spec 14 design, "Layout rows"). Each row reads the design's
+// data attributes after document.fonts.ready and names its requirement in every
+// failure. A row whose element is not on this build reports missing (a note).
+// The pure verdicts below are exported for unit tests.
+// ---------------------------------------------------------------------------
+const DESK_SIZES = ["1440x900", "390x844", "1055x900", "1056x900"];
+const SEAL_SIZES = ["1440x900", "390x844"];
+const DESK_LETTER = "A letter for the desk check.";
+const FOLD_LABEL = "Fold it and press the seal";
+const Q11_TOL_PX = 1;
+const Q11_LABELS = ["Write", "Press the seal", "Wait", "Testify", "Break the seal", "Receipts"];
+const S1_STYLE = {
+  current: { dot: 12, dotBg: "#ff7b1c", label: "#ffffff", weight: 700 },
+  done: { dot: 8, dotBg: "#bdb4dc", label: "#bdb4dc" },
+  todo: { dot: 8, dotBg: "#3a3350", label: "#8f86ad" },
+};
+const S2_GAP_MIN_PX = 16;
+const S2_GAP_MAX_PX = 48;
+const S31_GAP_PX = 64;
+const S31_SPLIT_PX = 900;
+const S34_MAX_PX = 844;
+const S61_ENV_MAX_PX = 440;
+const S61_ASPECT = 1.55;
+const S61_SEAL_PX = 112;
+const W1_SIDE_MIN_PX = 992;
+const W1_STICKY_GAP_PX = 16;
+const W1_STICKY_CHROME_PX = 32;
+const ACCENT_HEX = "#ff7b1c";
+// G1.7: 4.5:1 for text below 24 px regular or 18.66 px bold; 3:1 for larger text and control boundaries.
+const G17_TEXT_MIN = 4.5;
+const G17_LARGE_MIN = 3;
+
+// --- Pure helpers -----------------------------------------------------------
+
+// Parses "#rrggbb" or "rgb()/rgba()" (the forms getComputedStyle and the specs use).
+// Returns [r, g, b, alpha] or null.
+export function parseColour(value) {
+  if (typeof value !== "string") return null;
+  const v = value.trim().toLowerCase();
+  const hex = /^#([0-9a-f]{6})$/.exec(v);
+  if (hex) {
+    const n = parseInt(hex[1], 16);
+    return [(n >> 16) & 255, (n >> 8) & 255, n & 255, 1];
+  }
+  const m = /^rgba?\(\s*([\d.]+)[,\s]+([\d.]+)[,\s]+([\d.]+)(?:[,\s/]+([\d.]+%?))?\s*\)$/.exec(v);
+  if (!m) return null;
+  const alpha = m[4] === undefined ? 1 : m[4].endsWith("%") ? parseFloat(m[4]) / 100 : parseFloat(m[4]);
+  return [parseFloat(m[1]), parseFloat(m[2]), parseFloat(m[3]), alpha];
+}
+
+// G1.8: colours match exactly, alpha included. Zero tolerance.
+export function colourMatch(actual, expected) {
+  const a = parseColour(actual);
+  const e = parseColour(expected);
+  if (!a || !e) return false;
+  return a.every((channel, i) => channel === e[i]);
+}
+
+// G1.8: sizes match within 1 CSS px.
+export function sizeWithin(actual, expected, tol = Q11_TOL_PX) {
+  return typeof actual === "number" && Number.isFinite(actual) && Math.abs(actual - expected) <= tol;
+}
+
+// Two boxes keep the same slot when their left edge and width both match within tol.
+export function slotStable(a, b, tol = Q11_TOL_PX) {
+  return !!a && !!b && Math.abs(a.left - b.left) <= tol && Math.abs(a.width - b.width) <= tol;
+}
+
+// A baseline sits on its rule when the gap is within max px (W5.2 uses 2 px).
+export function baselineGapOk(gap, max = 2) {
+  return typeof gap === "number" && Number.isFinite(gap) && Math.abs(gap) <= max;
+}
+
+function relativeLuminance([r, g, b]) {
+  const lin = (c) => {
+    const s = c / 255;
+    return s <= 0.03928 ? s / 12.92 : ((s + 0.055) / 1.055) ** 2.4;
+  };
+  return 0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b);
+}
+
+// WCAG contrast ratio between two colours (opaque, alpha ignored).
+export function contrastRatio(fg, bg) {
+  const a = relativeLuminance(parseColour(fg));
+  const b = relativeLuminance(parseColour(bg));
+  return (Math.max(a, b) + 0.05) / (Math.min(a, b) + 0.05);
+}
+
+// G1.7 threshold: 3:1 for larger text and control boundaries, 4.5:1 for other text.
+export function contrastThreshold({ large }) {
+  return large ? G17_LARGE_MIN : G17_TEXT_MIN;
+}
+
+// Returns { ratio, min, ok } so a failure message can name the numbers it compared.
+export function contrastOk(fg, bg, { large = false } = {}) {
+  const ratio = contrastRatio(fg, bg);
+  const min = contrastThreshold({ large });
+  return { ratio, min, ok: ratio >= min };
+}
+
+const num = (v, d = 1) => (typeof v === "number" && Number.isFinite(v) ? v.toFixed(d) : "n/a");
+
+// --- S1: the Step_Track (requirement S1.1 to S1.4) --------------------------
+
+export function s1Failures({ items, phone, phoneText }) {
+  const out = [];
+  if (items.length !== Q11_LABELS.length) out.push(`S1.1 ${items.length} steps, want ${Q11_LABELS.length}`);
+  const currents = items.filter((it) => it.state === "current");
+  if (currents.length !== 1) out.push(`S1.3 ${currents.length} current steps, want 1`);
+  const idx = currents.length === 1 ? items.indexOf(currents[0]) : -1;
+  items.forEach((it, i) => {
+    const want = i < idx ? "done" : i === idx ? "current" : "todo";
+    if (it.state !== want) out.push(`S1.3 step ${i + 1} is ${it.state}, want ${want}`);
+    if ((it.state === "current") !== (it.ariaCurrent === "step")) {
+      out.push(`S1.2 step ${i + 1} aria-current is ${it.ariaCurrent ?? "absent"} for state ${it.state}`);
+    }
+    if (i < items.length - 1) {
+      const h = it.hairline;
+      if (!h || h.content === "none") out.push(`S1.1 no hairline after step ${i + 1}`);
+      else {
+        if (!sizeWithin(h.width, 36)) out.push(`S1.1 hairline ${i + 1} is ${num(h.width)}px long, want 36px`);
+        if (!sizeWithin(h.height, 1)) out.push(`S1.1 hairline ${i + 1} is ${num(h.height)}px thick, want 1px`);
+        if (!colourMatch(h.bg, "#3a3350")) out.push(`S1.1 hairline ${i + 1} colour ${h.bg}, want #3a3350`);
+      }
+    }
+    const st = S1_STYLE[it.state];
+    if (!st) return;
+    if (!sizeWithin(it.dotW, st.dot)) out.push(`S1.2 step ${i + 1} dot is ${num(it.dotW)}px, want ${st.dot}px`);
+    if (!colourMatch(it.dotBg, st.dotBg)) out.push(`S1.2 step ${i + 1} dot colour ${it.dotBg}, want ${st.dotBg}`);
+    if (!phone) {
+      if (it.label !== Q11_LABELS[i]) out.push(`S1.1 step ${i + 1} label "${it.label}", want "${Q11_LABELS[i]}"`);
+      if (!sizeWithin(it.labelSize, 13)) out.push(`S1.1 step ${i + 1} label is ${num(it.labelSize)}px, want 13px`);
+      if (!colourMatch(it.labelColor, st.label)) out.push(`S1.2 step ${i + 1} label colour ${it.labelColor}, want ${st.label}`);
+      if (st.weight !== undefined && it.labelWeight !== st.weight) {
+        out.push(`S1.2 step ${i + 1} label weight ${it.labelWeight}, want ${st.weight}`);
+      }
+    }
+  });
+  if (phone) {
+    const want = idx >= 0 ? `Step ${idx + 1} of ${Q11_LABELS.length} · ${Q11_LABELS[idx]}` : null;
+    if (!want || !phoneText.includes(want)) out.push(`S1.4 phone text "${want ?? "none"}" not in the Step_Track`);
+  }
+  return out;
+}
+
+// --- S2: the step change (S2.2 scroll position, S2.3 focus) ----------------
+
+export function s22Failures({ gap, atTop }) {
+  if (atTop) return [];
+  if (gap === null) return ["S2.2 no [data-step-track] or Top_Bar to measure"];
+  if (gap < S2_GAP_MIN_PX || gap > S2_GAP_MAX_PX) {
+    return [`S2.2 Step_Track top is ${num(gap)}px below the Top_Bar bottom, want ${S2_GAP_MIN_PX} to ${S2_GAP_MAX_PX}px`];
+  }
+  return [];
+}
+
+export function s23Failures({ focusedHeading, scrollDrift, headingTop, barBottom }) {
+  const out = [];
+  if (!focusedHeading) out.push("S2.3 focus is not on [data-step-heading]");
+  if (scrollDrift === null || Math.abs(scrollDrift) > Q11_TOL_PX) {
+    out.push(`S2.3 page scrolled ${num(scrollDrift)}px after the change settled, want at most 1px`);
+  }
+  if (headingTop === null || barBottom === null || headingTop < barBottom) {
+    out.push(`S2.3 heading top ${num(headingTop)}px is under the Top_Bar bottom ${num(barBottom)}px`);
+  }
+  return out;
+}
+
+// --- S3: the Seal step text column ------------------------------------------
+
+export function s31Failures({ w, text, press }) {
+  if (!text || !press) return ["S3.1 no [data-seal-text] or [data-press-column] to measure"];
+  if (w >= S31_SPLIT_PX) {
+    const out = [];
+    const gap = press.left - text.right;
+    if (Math.abs(gap - S31_GAP_PX) > Q11_TOL_PX) out.push(`S3.1 column gap is ${num(gap)}px, want ${S31_GAP_PX}px`);
+    const dy = Math.abs((text.top + text.bottom) / 2 - (press.top + press.bottom) / 2);
+    if (dy > Q11_TOL_PX) out.push(`S3.1 column centres are ${num(dy)}px apart vertically, want at most 1px`);
+    return out;
+  }
+  return press.top < text.top ? ["S3.1 below 900px the Press_Envelope column sits above the text column"] : [];
+}
+
+export function s34Failures({ warningTop, sealBottom }) {
+  if (warningTop === null || sealBottom === null) return ["S3.4 no [data-warning-text] or [data-press-envelope] to measure"];
+  const span = sealBottom - warningTop;
+  return span > S34_MAX_PX ? [`S3.4 seal bottom is ${num(span, 0)}px below the Warning_Text top, want at most ${S34_MAX_PX}px`] : [];
+}
+
+// --- S6: the press envelope and its status line -----------------------------
+
+export function s61Failures({ envW, colW, envH, bg, radius, shadow, sealW }) {
+  if (envW === null || envH === null) return ["S6.1 no [data-press-envelope] to measure"];
+  const out = [];
+  const wantW = Math.min(S61_ENV_MAX_PX, colW);
+  if (!sizeWithin(envW, wantW)) out.push(`S6.1 envelope is ${num(envW)}px wide, want ${num(wantW, 0)}px`);
+  if (!sizeWithin(envH, envW / S61_ASPECT)) {
+    out.push(`S6.1 envelope is ${num(envH)}px tall, want ${num(envW / S61_ASPECT)}px (aspect ${S61_ASPECT})`);
+  }
+  if (!colourMatch(bg, "#f1e4c8")) out.push(`S6.1 envelope colour ${bg}, want #f1e4c8`);
+  if (radius !== 6) out.push(`S6.1 envelope radius ${radius}px, want 6px`);
+  if (!/rgba\(0, 0, 0, 0\.6\) 0px 40px 90px/.test(shadow ?? "")) out.push(`S6.1 envelope shadow "${shadow}", want rgba(0,0,0,.6) 0 40px 90px`);
+  const wantSeal = (S61_SEAL_PX * envW) / S61_ENV_MAX_PX;
+  if (!sizeWithin(sealW, wantSeal)) out.push(`S6.1 seal is ${num(sealW)}px across, want ${num(wantSeal)}px`);
+  return out;
+}
+
+export function s64Failures({ opacity, cursor, ariaDisabled, status, statusColour }) {
+  const out = [];
+  if (Math.abs(Number(opacity) - 0.4) > 1e-6) out.push(`S6.4 seal opacity ${opacity}, want 0.4`);
+  if (cursor !== "not-allowed") out.push(`S6.4 seal cursor ${cursor}, want not-allowed`);
+  if (ariaDisabled !== "true") out.push(`S6.4 seal aria-disabled ${ariaDisabled}, want true`);
+  if (status !== "Choose a backup option first.") out.push(`S6.4 status line "${status}", want "Choose a backup option first."`);
+  if (!colourMatch(statusColour, "#bdb4dc")) out.push(`S6.4 status colour ${statusColour}, want #bdb4dc`);
+  return out;
+}
+
+// reduced: true when reduced motion or Calm_Mode is on (the halo is then off and the text changes).
+export function s65Failures({ opacity, ariaDisabled, boxShadow, status, statusColour, reduced = false }) {
+  const out = [];
+  if (Math.abs(Number(opacity) - 1) > 1e-6) out.push(`S6.5 seal opacity ${opacity}, want 1`);
+  if (ariaDisabled !== "false") out.push(`S6.5 seal aria-disabled ${ariaDisabled}, want false`);
+  const halo = boxShadow ?? "";
+  if (reduced) {
+    if (halo !== "none" && halo !== "") out.push("S6.5 halo is on under reduced motion, want off");
+  } else {
+    for (const need of ["rgba(255, 123, 28, 0.18) 0px 0px 0px 10px", "rgba(255, 123, 28, 0.08) 0px 0px 0px 22px"]) {
+      if (!halo.includes(need)) out.push(`S6.5 halo lacks "${need}"`);
+    }
+  }
+  const wantStatus = reduced ? "Press the wax to seal it." : "Press and hold the wax to seal it.";
+  if (status !== wantStatus) out.push(`S6.5 status line "${status}", want "${wantStatus}"`);
+  if (!colourMatch(statusColour, "#ff9a4d")) out.push(`S6.5 status colour ${statusColour}, want #ff9a4d`);
+  return out;
+}
+
+// S6.8: the envelope meets no text-column element, and the page does not scroll sideways.
+export function s68Failures({ env, texts, scrollWidth, clientWidth }) {
+  if (!env) return ["S6.8 no [data-press-envelope] to measure"];
+  const out = [];
+  for (const t of texts) {
+    if (rectsIntersect(env, t)) out.push(`S6.8 envelope meets <${t.tag}> "${t.text}"`);
+  }
+  if (scrollWidth > clientWidth) out.push(`S6.8 horizontal scroll: scrollWidth ${scrollWidth}px > ${clientWidth}px`);
+  return out;
+}
+
+// --- W: the Write step ------------------------------------------------------
+
+// W1.2 to W1.6. Side by side from 992 px of content width; below it the panel sits under the sheet.
+export function w1Failures({ contentW, sheet, panel, topBarBottom, sticky, stickyTop, panelH, vh, scrollWidth, clientWidth, foldReachable }) {
+  if (!sheet || !panel) return ["W1.2 no [data-letter-sheet] or [data-envelope-panel] to measure"];
+  const out = [];
+  if (contentW >= W1_SIDE_MIN_PX) {
+    if (panel.left < sheet.right - Q11_TOL_PX) out.push(`W1.4 at ${num(contentW, 0)}px content width the Envelope_Panel is not beside the Letter_Sheet`);
+    if (Math.abs(panel.top - sheet.top) > Q11_TOL_PX) {
+      out.push(`W1.4 Envelope_Panel top ${num(panel.top, 0)}px is not level with the Letter_Sheet top ${num(sheet.top, 0)}px`);
+    }
+    if (panelH <= vh - topBarBottom - W1_STICKY_CHROME_PX) {
+      if (sticky !== "sticky") out.push(`W1.3 Envelope_Panel position is ${sticky}, want sticky`);
+      if (!(stickyTop >= topBarBottom + W1_STICKY_GAP_PX - Q11_TOL_PX)) {
+        out.push(`W1.3 sticky top is ${num(stickyTop, 0)}px, want at least ${num(topBarBottom + W1_STICKY_GAP_PX, 0)}px`);
+      }
+    }
+  } else {
+    if (panel.top < sheet.bottom - Q11_TOL_PX) out.push(`W1.4 at ${num(contentW, 0)}px content width the Envelope_Panel is not below the Letter_Sheet`);
+    if (!sizeWithin(panel.width, contentW)) out.push(`W1.4 Envelope_Panel is ${num(panel.width, 0)}px wide, want the content width ${num(contentW, 0)}px`);
+  }
+  if (scrollWidth > clientWidth) out.push(`W1.5 horizontal scroll: scrollWidth ${scrollWidth}px > ${clientWidth}px`);
+  if (!foldReachable) out.push("W1.6 Fold_Button cannot be scrolled fully into view");
+  return out;
+}
+
+// W4.1: the sheet's paper colour, radius and padding. Phone padding is 24 px vertical, 20 px sides.
+export function w4Failures({ phone, sheetStyle }) {
+  if (!sheetStyle) return ["W4.1 no [data-letter-sheet] to measure"];
+  const out = [];
+  if (!colourMatch(sheetStyle.bg, "#f6ead4")) out.push(`W4.1 Letter_Sheet background ${sheetStyle.bg}, want #f6ead4`);
+  if (!sizeWithin(sheetStyle.radius, 6)) out.push(`W4.1 Letter_Sheet radius ${num(sheetStyle.radius)}px, want 6px`);
+  const want = phone ? { t: 24, r: 20, b: 24, l: 20 } : { t: 48, r: 56, b: 40, l: 56 };
+  for (const [key, label] of [["pt", "top"], ["pr", "right"], ["pb", "bottom"], ["pl", "left"]]) {
+    const k = key.slice(1);
+    if (!sizeWithin(sheetStyle[key], want[k])) out.push(`W4.1 Letter_Sheet padding-${label} ${num(sheetStyle[key], 0)}px, want ${want[k]}px`);
+  }
+  return out;
+}
+
+// W6.1: the perforation runs from the sheet's left edge to its right edge, dashed, 2 px, rgba(74,64,54,.28).
+export function w61Failures({ sheet, perf, border }) {
+  if (!perf || !sheet) return ["W6.1 no [data-perforation] or [data-letter-sheet] to measure"];
+  const out = [];
+  if (!sizeWithin(perf.left, sheet.left) || !sizeWithin(perf.right, sheet.right)) {
+    out.push(`W6.1 Perforation runs ${num(perf.left, 0)}..${num(perf.right, 0)}px, sheet is ${num(sheet.left, 0)}..${num(sheet.right, 0)}px`);
+  }
+  if (!border || border.style !== "dashed") out.push(`W6.1 Perforation style ${border?.style}, want dashed`);
+  if (!border || !sizeWithin(border.width, 2)) out.push(`W6.1 Perforation is ${num(border?.width)}px thick, want 2px`);
+  if (!border || !colourMatch(border.colour, "rgba(74,64,54,.28)")) out.push(`W6.1 Perforation colour ${border?.colour}, want rgba(74,64,54,.28)`);
+  return out;
+}
+
+// W13.1: the Fold_Button. Full width, 56 px, solid Accent, dark 16 px weight 800 text, hover #ff8f3d.
+export function w13Failures({ fold, style, panelW, hoverBg }) {
+  if (!fold || !style) return ["W13.1 no [data-fold-button] to measure"];
+  const out = [];
+  if (!sizeWithin(fold.height, 56)) out.push(`W13.1 Fold_Button is ${num(fold.height, 0)}px tall, want 56px`);
+  if (!sizeWithin(fold.width, panelW)) out.push(`W13.1 Fold_Button is ${num(fold.width, 0)}px wide, want the panel width ${num(panelW, 0)}px`);
+  if (!colourMatch(style.bg, ACCENT_HEX)) out.push(`W13.1 Fold_Button fill ${style.bg}, want #ff7b1c`);
+  if (!colourMatch(style.colour, "#0b0912")) out.push(`W13.1 Fold_Button text ${style.colour}, want #0b0912`);
+  if (!sizeWithin(style.fontSize, 16, 0)) out.push(`W13.1 Fold_Button text ${num(style.fontSize, 0)}px, want 16px`);
+  if (style.weight !== "800") out.push(`W13.1 Fold_Button weight ${style.weight}, want 800`);
+  if (hoverBg !== null && !colourMatch(hoverBg, "#ff8f3d")) out.push(`W13.1 Fold_Button hover fill ${hoverBg}, want #ff8f3d`);
+  return out;
+}
+
+// W13.5: every desk button except the Fold_Button has no Accent fill or border.
+// buttons: [{ label, fill, borders: [{ colour, width, style }] }].
+export function accentFailures(buttons) {
+  const isAccent = (c) => {
+    const p = parseColour(c);
+    return !!p && p[3] > 0 && p[0] === 255 && p[1] === 123 && p[2] === 28;
+  };
+  const out = [];
+  for (const b of buttons) {
+    const edges = b.borders.filter((s) => s.width > 0 && s.style !== "none").map((s) => s.colour);
+    if ([b.fill, ...edges].some(isAccent)) out.push(`W13.5 "${b.label}" has an Accent fill or border; only the Fold_Button may`);
+  }
+  return out;
+}
+
+// --- Browser reads ----------------------------------------------------------
+
+const Q11_RECT = (el) => {
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+};
+
+const S1_READ = () => {
+  const root = document.querySelector("[data-step-track]");
+  if (!root) return null;
+  const lis = [...root.querySelectorAll("li[data-state]")];
+  const items = lis.map((li, i) => {
+    const dot = li.firstElementChild;
+    const label = li.lastElementChild;
+    const d = dot ? getComputedStyle(dot) : null;
+    const l = label ? getComputedStyle(label) : null;
+    const pseudo = i < lis.length - 1 ? getComputedStyle(li, "::after") : null;
+    return {
+      state: li.getAttribute("data-state"),
+      ariaCurrent: li.getAttribute("aria-current"),
+      label: (label?.textContent ?? "").trim(),
+      dotW: d ? parseFloat(d.width) : null,
+      dotBg: d ? d.backgroundColor : null,
+      labelColor: l ? l.color : null,
+      labelSize: l ? parseFloat(l.fontSize) : null,
+      labelWeight: l ? Number(l.fontWeight) : null,
+      hairline: pseudo ? { content: pseudo.content, width: parseFloat(pseudo.width), height: parseFloat(pseudo.height), bg: pseudo.backgroundColor } : null,
+    };
+  });
+  return { items, text: (root.textContent ?? "").replace(/\s+/g, " ").trim() };
+};
+
+const STEP_READ = () => {
+  const track = document.querySelector("[data-step-track]");
+  const bar = document.querySelector("[data-topbar]") ?? document.querySelector("header");
+  const heading = document.querySelector("[data-step-heading]");
+  return {
+    trackTop: track ? track.getBoundingClientRect().top : null,
+    barBottom: bar ? bar.getBoundingClientRect().bottom : null,
+    atTop: window.scrollY === 0,
+    scrollY: window.scrollY,
+    focusedHeading: !!heading && document.activeElement === heading,
+    headingTop: heading ? heading.getBoundingClientRect().top : null,
+  };
+};
+
+const SEAL_READ = () => {
+  const rect = (el) => {
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+  };
+  const env = document.querySelector("[data-press-envelope]");
+  const col = document.querySelector("[data-press-column]");
+  const text = document.querySelector("[data-seal-text]");
+  const warn = document.querySelector("[data-warning-text]");
+  const seal = document.querySelector("[data-seal-target]");
+  const line = document.querySelector("[data-press-line]");
+  const es = env ? getComputedStyle(env) : null;
+  const ss = seal ? getComputedStyle(seal) : null;
+  const ls = line ? getComputedStyle(line) : null;
+  const texts = text
+    ? [...text.querySelectorAll("h1, h2, h3, p, li, label, button, a, input, textarea, [data-warning-text]")]
+        .filter((e) => e.getClientRects().length > 0)
+        .map((e) => ({ tag: e.tagName.toLowerCase(), text: (e.textContent ?? "").trim().slice(0, 30), ...rect(e) }))
+    : [];
+  return {
+    env: rect(env),
+    envAriaDisabled: env ? env.getAttribute("aria-disabled") : null,
+    col: rect(col),
+    text: rect(text),
+    colW: col ? col.getBoundingClientRect().width : null,
+    envBg: es ? es.backgroundColor : null,
+    envRadius: es ? parseFloat(es.borderTopLeftRadius) : null,
+    envShadow: es ? es.boxShadow : null,
+    sealW: seal ? seal.getBoundingClientRect().width : null,
+    sealOpacity: ss ? ss.opacity : null,
+    sealCursor: ss ? ss.cursor : null,
+    sealShadow: ss ? ss.boxShadow : null,
+    status: line ? (line.textContent ?? "").trim() : null,
+    statusColour: ls ? ls.color : null,
+    warnTop: warn ? warn.getBoundingClientRect().top : null,
+    texts,
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+    reduced: window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+  };
+};
+
+const DESK_WRITE_READ = () => {
+  const rect = (el) => {
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+  };
+  const borderOf = (cs) =>
+    ["Top", "Right", "Bottom", "Left"].map((side) => ({
+      colour: cs[`border${side}Color`],
+      width: parseFloat(cs[`border${side}Width`]),
+      style: cs[`border${side}Style`],
+    }));
+  const topbar = document.querySelector("[data-topbar]") ?? document.querySelector("header");
+  const desk = document.querySelector("[data-write-desk]");
+  const sheet = document.querySelector("[data-letter-sheet]");
+  const panel = document.querySelector("[data-envelope-panel]");
+  const fold = document.querySelector("[data-fold-button]");
+  const perf = document.querySelector("[data-perforation]");
+  const dcs = desk ? getComputedStyle(desk) : null;
+  const scs = sheet ? getComputedStyle(sheet) : null;
+  const pcs = panel ? getComputedStyle(panel) : null;
+  const fcs = fold ? getComputedStyle(fold) : null;
+  const pf = perf ? getComputedStyle(perf) : null;
+  const buttons = desk
+    ? [...desk.querySelectorAll("button")]
+        .filter((b) => !b.hasAttribute("data-fold-button"))
+        .map((b) => {
+          const cs = getComputedStyle(b);
+          return { label: (b.textContent ?? "").trim().slice(0, 40), fill: cs.backgroundColor, borders: borderOf(cs) };
+        })
+    : [];
+  return {
+    contentW: desk ? desk.clientWidth - parseFloat(dcs.paddingLeft) - parseFloat(dcs.paddingRight) : null,
+    topBarBottom: topbar ? topbar.getBoundingClientRect().bottom : null,
+    vh: window.innerHeight,
+    sheet: rect(sheet),
+    sheetStyle: scs
+      ? {
+          bg: scs.backgroundColor,
+          radius: parseFloat(scs.borderTopLeftRadius),
+          pt: parseFloat(scs.paddingTop),
+          pr: parseFloat(scs.paddingRight),
+          pb: parseFloat(scs.paddingBottom),
+          pl: parseFloat(scs.paddingLeft),
+        }
+      : null,
+    panel: rect(panel),
+    panelW: panel ? panel.clientWidth : null,
+    sticky: pcs ? pcs.position : null,
+    stickyTop: pcs ? parseFloat(pcs.top) : null,
+    perf: rect(perf),
+    perfBorder: pf ? { style: pf.borderTopStyle, width: parseFloat(pf.borderTopWidth), colour: pf.borderTopColor } : null,
+    fold: rect(fold),
+    foldStyle: fcs
+      ? { bg: fcs.backgroundColor, colour: fcs.color, fontSize: parseFloat(fcs.fontSize), weight: fcs.fontWeight }
+      : null,
+    scrollWidth: document.documentElement.scrollWidth,
+    clientWidth: document.documentElement.clientWidth,
+    buttons,
+  };
+};
+
+const FOLD_REACH_READ = () => {
+  const fold = document.querySelector("[data-fold-button]");
+  if (!fold) return null;
+  fold.scrollIntoView({ block: "center" });
+  const r = fold.getBoundingClientRect();
+  return r.top >= 0 && r.bottom <= window.innerHeight;
+};
+
+// --- Row runners ------------------------------------------------------------
+
+function missingRow(id, name, detail) {
+  return result(id, name, "missing", `not on this build: ${detail}`);
+}
+
+function verdictRow(id, name, problems, detail, threshold) {
+  const tail = problems.length ? ` (${problems.join("; ")})` : "";
+  return result(id, name, problems.length ? "fail" : "pass", `${detail} threshold=${threshold}${tail}`);
+}
+
+async function checkStepTrack(page, ctx, stage) {
+  const r = await page.evaluate(S1_READ);
+  if (!r) {
+    report(ctx, missingRow("S1", "step-track", "no [data-step-track]"));
+    return;
+  }
+  const phone = ctx.w < PHONE_WIDTH_MAX;
+  const problems = s1Failures({ items: r.items, phone, phoneText: r.text });
+  const states = r.items.map((it) => it.state).join(",");
+  report(ctx, verdictRow("S1", "step-track", problems, `stage=${stage} states=${states} viewport=${ctx.size}`, "six steps, one current, the S1.2 dot and label values, phone text at under 600 px"));
+}
+
+async function checkStepChange(page, ctx) {
+  await page.getByRole("button", { name: FOLD_LABEL }).click();
+  await page.waitForSelector("[data-seal-step]", { timeout: WAIT_MS });
+  await sleep(1000);
+  const first = await page.evaluate(STEP_READ);
+  await sleep(500);
+  const second = await page.evaluate(STEP_READ);
+  if (first.trackTop === null || first.barBottom === null) {
+    report(ctx, missingRow("S2.2", "step-change", "no [data-step-track] or Top_Bar to measure"));
+  } else {
+    const gap = first.trackTop - first.barBottom;
+    report(
+      ctx,
+      verdictRow(
+        "S2.2",
+        "step-change",
+        s22Failures({ gap, atTop: first.atTop }),
+        `gap=${num(gap)}px scrollY=${num(first.scrollY, 0)} viewport=${ctx.size}`,
+        "Step_Track 16 to 48 px below the Top_Bar 1,000 ms after the change, unless at the page top",
+      ),
+    );
+  }
+  report(
+    ctx,
+    verdictRow(
+      "S2.3",
+      "step-focus",
+      s23Failures({ focusedHeading: first.focusedHeading, scrollDrift: second.scrollY - first.scrollY, headingTop: first.headingTop, barBottom: first.barBottom }),
+      `heading top=${num(first.headingTop, 0)}px drift=${num(second.scrollY - first.scrollY)}px viewport=${ctx.size}`,
+      "focus on [data-step-heading], no scroll after 1,000 ms, heading below the Top_Bar",
+    ),
+  );
+}
+
+async function checkSealText(page, ctx, r) {
+  if (!r.text || !r.col) {
+    report(ctx, missingRow("S3.1", "seal-columns", "no [data-seal-text] or [data-press-column]"));
+    return;
+  }
+  const problems = s31Failures({ w: ctx.w, text: r.text, press: r.col });
+  report(ctx, verdictRow("S3.1", "seal-columns", problems, `text=${num(r.text.left, 0)}..${num(r.text.right, 0)} press=${num(r.col.left, 0)}..${num(r.col.right, 0)} viewport=${ctx.size}`, "64 px gap and level centres at 900 px and wider; text column first below 900 px"));
+}
+
+async function checkPress(page, ctx, phase, r) {
+  if (!r.env) {
+    report(ctx, missingRow("S6.1", "press-envelope", "no [data-press-envelope]"));
+    return;
+  }
+  const colW = r.colW ?? 0;
+  report(ctx, verdictRow("S6.1", "press-envelope", s61Failures({ envW: r.env.width, colW, envH: r.env.height, bg: r.envBg, radius: r.envRadius, shadow: r.envShadow, sealW: r.sealW }), `envelope=${num(r.env.width, 0)}x${num(r.env.height, 0)} seal=${num(r.sealW, 0)} viewport=${ctx.size}`, "envelope min(440, column) wide, 1.55 aspect, #f1e4c8, 6 px radius, shadow; seal scaled from 112 px at 440"));
+  report(ctx, verdictRow("S6.8", "press-vs-text", s68Failures({ env: r.env, texts: r.texts, scrollWidth: r.scrollWidth, clientWidth: r.clientWidth }), `texts=${r.texts.length} viewport=${ctx.size}`, "no intersection with the text column, no horizontal scroll"));
+  if (phase === "no-choice") {
+    report(ctx, verdictRow("S6.4", "seal-no-choice", s64Failures({ opacity: r.sealOpacity, cursor: r.sealCursor, ariaDisabled: r.envAriaDisabled, status: r.status, statusColour: r.statusColour }), `opacity=${r.sealOpacity} cursor=${r.sealCursor} status="${r.status}" viewport=${ctx.size}`, "40% opacity, not-allowed, aria-disabled true, Choose a backup option first."));
+  } else {
+    report(ctx, verdictRow("S6.5", "seal-chosen", s65Failures({ opacity: r.sealOpacity, ariaDisabled: r.envAriaDisabled, boxShadow: r.sealShadow, status: r.status, statusColour: r.statusColour, reduced: r.reduced }), `opacity=${r.sealOpacity} status="${r.status}" viewport=${ctx.size}`, "full opacity, double halo, aria-disabled false, press-and-hold line"));
+  }
+}
+
+async function checkSealRows(page, ctx) {
+  ctx.rep.stage("seal");
+  const note = (id, name) => report(ctx, result(id, name, "missing", "not reached here: a passkey prompt or the sealing is driven by Live_Walk, not by this check"));
+  const before = await page.evaluate(SEAL_READ);
+  await checkSealText(page, ctx, before);
+  await checkPress(page, ctx, "no-choice", before);
+  if (ctx.w === 390) {
+    const sealBottom = await page.evaluate(() => {
+      const warn = document.querySelector("[data-warning-text]");
+      const env = document.querySelector("[data-press-envelope]");
+      if (!warn || !env) return null;
+      warn.scrollIntoView({ block: "start" });
+      return { warningTop: warn.getBoundingClientRect().top, sealBottom: env.getBoundingClientRect().bottom };
+    });
+    report(ctx, sealBottom
+      ? verdictRow("S3.4", "warning-to-seal", s34Failures(sealBottom), `viewport=${ctx.size}`, "seal bottom at most 844 px below the Warning_Text top")
+      : missingRow("S3.4", "warning-to-seal", "no [data-warning-text] or [data-press-envelope]"));
+  }
+  await page.locator('[data-backup-card="skip"]').click();
+  await sleep(300);
+  const after = await page.evaluate(SEAL_READ);
+  await checkPress(page, ctx, "chosen", after);
+  note("S6.6", "seal-prompt");
+  note("S6.7", "seal-sealing");
+}
+
+async function checkWriteDesk(page, ctx) {
+  const r = await page.evaluate(DESK_WRITE_READ);
+  if (!r.sheet || !r.panel) {
+    report(ctx, missingRow("W1", "write-layout", "no [data-letter-sheet] or [data-envelope-panel]"));
+  } else {
+    await page.locator("[data-fold-button]").hover().catch(() => {});
+    const hoverBg = await page.evaluate(() => {
+      const f = document.querySelector("[data-fold-button]");
+      return f ? getComputedStyle(f).backgroundColor : null;
+    });
+    await page.mouse.move(0, 0);
+    const foldReachable = await page.evaluate(FOLD_REACH_READ);
+    report(ctx, verdictRow("W1", "write-layout", w1Failures({ contentW: r.contentW, sheet: r.sheet, panel: r.panel, topBarBottom: r.topBarBottom ?? 0, sticky: r.sticky, stickyTop: r.stickyTop, panelH: r.panel.height, vh: r.vh, scrollWidth: r.scrollWidth, clientWidth: r.clientWidth, foldReachable: foldReachable === true }), `content=${num(r.contentW, 0)} sheet=${num(r.sheet.width, 0)} panel=${num(r.panel.width, 0)} sticky=${r.sticky} viewport=${ctx.size}`, "side by side from 992 px of content, sticky panel, no sideways scroll, Fold_Button reachable"));
+    report(ctx, verdictRow("W4", "letter-sheet", w4Failures({ phone: ctx.w < PHONE_WIDTH_MAX, sheetStyle: r.sheetStyle }), `viewport=${ctx.size}`, "#f6ead4, 6 px radius, 48/56/40 padding (24/20 on a phone)"));
+    report(ctx, verdictRow("W6.1", "perforation", w61Failures({ sheet: r.sheet, perf: r.perf, border: r.perfBorder }), `viewport=${ctx.size}`, "dashed 2 px line, sheet edge to sheet edge, rgba(74,64,54,.28)"));
+    report(ctx, verdictRow("W13.1", "fold-button", w13Failures({ fold: r.fold, style: r.foldStyle, panelW: r.panelW, hoverBg }), `viewport=${ctx.size}`, "56 px, #ff7b1c fill, #0b0912 16 px weight 800 text, #ff8f3d on hover"));
+    report(ctx, verdictRow("W13.5", "desk-accent", accentFailures(r.buttons), `buttons=${r.buttons.length} viewport=${ctx.size}`, "no Accent fill or border on any desk button except the Fold_Button"));
+  }
+}
+
+async function checkDeskRows(browser, base, size, rep, required) {
+  const [w, h] = parseSize(size);
+  const context = await browser.newContext({ viewport: { width: w, height: h } });
+  const ctx = { size, w, h, base, rep, stage: null, required, memo: {}, ghostHook: false };
+  rep.setContext(ctx);
+  console.log(`\n==== ${size} (Q1.1 desk rows) ====`);
+  try {
+    const page = await newPage(context);
+    try {
+      rep.stage("write");
+      const res = await page.goto(`${base}${LIVE_PATH}`, { waitUntil: "load" });
+      if (!res || res.status() !== 200) {
+        rep.add("note", "desk", `${LIVE_PATH} answered HTTP ${res?.status() ?? "none"}; desk rows not measured`);
+        return;
+      }
+      await page.evaluate(() => document.fonts.ready);
+      await sleep(500);
+      await guard(ctx, "S1", () => checkStepTrack(page, ctx, "write"));
+      await guard(ctx, "W", () => checkWriteDesk(page, ctx));
+      if (SEAL_SIZES.includes(size)) {
+        await guard(ctx, "S2", async () => {
+          await page.fill("#live-letter", DESK_LETTER);
+          await checkStepChange(page, ctx);
+        });
+        await guard(ctx, "S1", () => checkStepTrack(page, ctx, "seal"));
+        await guard(ctx, "S", () => checkSealRows(page, ctx));
+      }
+    } finally {
+      await page.close();
+    }
+  } catch (error) {
+    rep.add("note", "desk", `could not run: ${String(error.message ?? error).split("\n")[0]}`);
+  } finally {
+    await context.close();
+  }
+}
+
 async function runSize(browser, base, size, opts, rep) {
   const [w, h] = size.split("x").map(Number);
   const context = await browser.newContext({ viewport: { width: w, height: h } });
@@ -3749,6 +4421,9 @@ async function main() {
     }
     for (const size of U9_SIZES) {
       await checkPersonaSealRow(browser, opts.url, size, rep, opts.required);
+    }
+    for (const size of DESK_SIZES) {
+      await checkDeskRows(browser, opts.url, size, rep, opts.required);
     }
   } finally {
     await browser.close();
