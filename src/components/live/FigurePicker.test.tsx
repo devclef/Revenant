@@ -118,8 +118,8 @@ describe("FigurePicker", () => {
     const four = [REAL, FIXTURE, { ...REAL, metricId: "c" }, { ...REAL, metricId: "d" }];
     const ten = Array.from({ length: 10 }, (_, i) => ({ ...REAL, metricId: `m-${i}` }));
 
-    expect(render(four)).toContain("Choose between 1 and 4.");
-    expect(render(ten)).toContain("Choose between 1 and 6.");
+    expect(render(four)).toContain("Choose up to 4.");
+    expect(render(ten)).toContain("Choose up to 6.");
   });
 
   it("has the legend and the singular hint when one figure can be sealed", () => {
@@ -445,7 +445,7 @@ describe("FigurePicker region groups (K4)", () => {
   it("counts the limit across every group", () => {
     const four = [REAL, FIXTURE, EU, EU_TWO];
 
-    expect(render(four)).toContain("Choose between 1 and 4.");
+    expect(render(four)).toContain("Choose up to 4.");
   });
 
   it("disables unchecked boxes in every group once the limit is reached", () => {

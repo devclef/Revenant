@@ -91,8 +91,23 @@ function contrast(a: string, b: string): number {
   return (hi + 0.05) / (lo + 0.05);
 }
 
-/** The Accent selectors that may carry the Accent colours. */
-const ACCENT_SELECTORS = [".markerOn", ".fold", ".fold:hover", ".fold:focus-visible"];
+/**
+ * The Accent selectors that may carry the Accent colours: the Fold_Button, the
+ * marker and the focus rings (G1.6). The receipt card's focus rings are added
+ * here too (W10.3, W11.5, W12), since a focus ring is the one other Accent use.
+ */
+const ACCENT_SELECTORS = [
+  ".markerOn",
+  ".fold",
+  ".fold:hover",
+  ".fold:focus-visible",
+  ".toggleOn:focus-visible",
+  ".toggleOff:focus-visible",
+  ".figureRow:focus-visible",
+  ".detailsButton:focus-visible",
+  ".ownInput:focus-visible",
+  ".receiptSummary:focus-visible",
+];
 const ACCENT_PATTERN = /#ff7b1c|#ff8f3d|rgba\(\s*255\s*,\s*123\s*,\s*28\s*,/i;
 
 describe("panel.module.css (spec 14, W9)", () => {

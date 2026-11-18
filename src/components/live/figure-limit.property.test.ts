@@ -70,7 +70,7 @@ describe("Property 29: the figure picker never offers more than it says", () => 
 
           // Both messages state N in the copy.
           expect(LIVE_COPY.figuresHint.replace("{max}", String(limit))).toContain(
-            `between 1 and ${limit}`,
+            `up to ${limit}`,
           );
           expect(LIVE_COPY.figuresTooMany.replace("{max}", String(limit))).toContain(
             `no more than ${limit} figures`,

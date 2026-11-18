@@ -113,7 +113,7 @@ describe("Property 5: the picker never states a zero limit", () => {
       const html = renderPicker(count);
       const max = Math.min(MAX_FIGURES, count);
       if (max >= 2) {
-        expect(html).toContain(`between 1 and ${max}.`);
+        expect(html).toContain(`up to ${max}.`);
       }
     }
   });

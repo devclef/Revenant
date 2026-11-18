@@ -49,4 +49,37 @@ export const DESK_COPY = {
   fold: "Fold it and press the seal",
   /** The one line under the Fold_Button after a failed fold (W13.3). */
   foldFailed: "Check the note above, then try again.",
+  /** The heading of the receipt card (W10.2). It is not a "Receipts" heading. */
+  receiptTitle: "Tuck in a receipt",
+  /** The small label beside the card heading (W10.2). */
+  optional: "Optional",
+  /** The intro under the card heading (W10.2). */
+  receiptIntro:
+    "A number sealed with its date. When it opens, you guess it first, then see it next to today's.",
+  /** The summary of the card below 600 px, which holds the heading (W10.2). */
+  receiptSummaryPhone: "Tuck in a receipt (optional)",
+  /** The first toggle button, the public figures view (W10.3). */
+  togglePublic: "A public price",
+  /** The second toggle button, the own number view (W10.3). */
+  toggleOwn: "A number of my own",
+  /** The visible text of the Details control under the Figure_Rows (W11.8). */
+  details: "Details",
+  /** The label above the own number name field (W12.1). */
+  ownName: "What is it?",
+  /** The placeholder of the own number name field (W12.1). */
+  ownNamePlaceholder: "My rent",
+  /** The label above the own number value field (W12.1). */
+  ownAmount: "Amount",
+  /** The label above the own number unit field (W12.1). */
+  ownUnit: "Unit",
+  /** The label above the own number region field (W12.1). */
+  ownWhere: "Where?",
+  /** The placeholder of the own number region field (W12.1). */
+  ownWherePlaceholder: "My city",
+  /** The sealing day under the own number fields, `{date}` a formatted day (W12.2). */
+  dated: "Dated {date}",
+  /** The self-reported line under the own number fields (W12.2). */
+  ownMarked: "Marked self-reported. Revenant doesn't check it.",
+  /** Names the empty fields of a partly filled own number (W12.4). `{fields}` is a list. */
+  ownMissing: "Still to fill in: {fields}.",
 } as const;
