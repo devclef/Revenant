@@ -23,6 +23,7 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { RecallScale } from "./RecallScale";
 import { TextAnswerField } from "./TextAnswerField";
+import { WaxDisc } from "@/components/live/desk/WaxDisc";
 import { answerText } from "./answer-text";
 import { formatWrittenOn } from "./written-on";
 import { CEREMONY_COPY } from "../copy";
@@ -366,14 +367,17 @@ export function RecallPager({
         className={styles.form}
         ref={formRef}
       >
-        <h2
-          id={headingId}
-          className={styles.qTitle}
-          data-fit="question"
-          data-stage-heading=""
-        >
-          <span data-user-content="">{question.text}</span>
-        </h2>
+        <div className={styles.qRow}>
+          <WaxDisc n={index + 1} />
+          <h2
+            id={headingId}
+            className={`${styles.qTitle} ${styles.qText}`}
+            data-fit="question"
+            data-stage-heading=""
+          >
+            <span data-user-content="">{question.text}</span>
+          </h2>
+        </div>
 
         <fieldset className={styles.fieldset} aria-labelledby={headingId}>
           <div className={styles.body}>
