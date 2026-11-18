@@ -62,13 +62,15 @@ describe("the field group carries data-primary-control (C2, P4.1)", () => {
     expect(markup.match(/data-primary-control/g)).toHaveLength(1);
   });
 
-  it("keeps the field and its submit control inside that group", () => {
+  it("keeps the field inside that group, and the main button outside it in the Nav_Row (T2.5)", () => {
     const markup = render(1);
     const start = markup.indexOf('data-primary-control=""');
-    const group = markup.slice(start, start + 1200);
     expect(start).toBeGreaterThan(-1);
+    const end = markup.indexOf("</div>", start);
+    const group = markup.slice(start, end);
     expect(group).toContain('type="text"');
-    expect(group).toMatch(/type="submit"/);
+    expect(group).not.toContain("<button");
+    expect(markup.indexOf('data-fit="advance"')).toBeGreaterThan(end);
   });
 });
 

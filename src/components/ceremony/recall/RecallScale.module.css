@@ -9,7 +9,7 @@
   container: recallTrack / inline-size;
   color: var(--ink);
   position: relative;
-  margin: 2.25rem 0 1rem;
+  margin: 1rem 0 0.5rem;
 }
 
 .track {
@@ -139,11 +139,19 @@
   font-size: 0.875rem;
 }
 
+/*
+ * "Look closer at the mark" and "Show everything" on the recall scale. This is
+ * the outline style from buttons.module.css (the Stage's one orange button is
+ * the primary). Same 2 px corner, 1 px ink border and sans face as the shared
+ * buttons. The class name stays: tests and the zoom rows refer to it.
+ */
 .wholeScale {
   min-height: 44px;
   min-width: 44px;
   padding: 0 0.75rem;
   font: inherit;
+  font-family: var(--font-sans);
+  font-weight: 700;
   color: var(--ink);
   background: transparent;
   border: 1px solid var(--ink);
@@ -278,4 +286,33 @@
  */
 .recordedHelp {
   margin: 1.75rem 0 0;
+}
+
+/*
+ * Below 600 px the scale takes less vertical space, so a number question's
+ * Nav_Row can sit inside the 390 x 844 First_Viewport (spec 14 T2.5). This block
+ * comes last, so it overrides the base rules above. The readout is a 20 px line
+ * that still clears the answer field, and the track keeps its 44 px mark.
+ */
+@media (max-width: 599.98px) {
+  .scale {
+    margin: 1.25rem 0 0;
+  }
+
+  .readout {
+    line-height: 1.25;
+  }
+
+  .track {
+    height: 2.75rem;
+  }
+
+  .labels {
+    height: 1rem;
+    line-height: 1.25;
+  }
+
+  .zoomRow {
+    margin-top: 0;
+  }
 }

@@ -76,6 +76,11 @@ export type RecallScaleProps = {
    * ignored while a drag is under way, because the marker then moves ahead of it.
    */
   text?: string;
+  /**
+   * True while the field is ambiguous or unreadable (spec 14, T2.3). The Mark
+   * stays where the field left it, but the label shows no value.
+   */
+  valueHidden?: boolean;
   /** True when the judge chose "No answer": the Mark is hidden and the slider is disabled. */
   noAnswer: boolean;
   /** Called with the question id and the plain-decimal text to send as EDIT_DRAFT. */
@@ -299,6 +304,7 @@ export function RecallScale({
   range,
   value,
   text,
+  valueHidden = false,
   noAnswer,
   onEdit,
   spokenPrefix,
@@ -318,6 +324,9 @@ export function RecallScale({
       : windowFor(level, level === 0 ? base : anchor, range);
 
   const hasMark = !noAnswer && shownValue !== null;
+  // The label shows a value only while the field resolves (T2.3). A hidden
+  // value keeps the Mark where it is and reads as "No answer yet".
+  const labelShowsValue = hasMark && !valueHidden;
   const markPosition =
     level === 0 ? positionOfIn(base, range) : positionInWindow(base, win);
   // Every readout is the answer text (answerText). The text is the stored answer
@@ -328,12 +337,12 @@ export function RecallScale({
     !noAnswer && shownValue !== null
       ? answerText(storedText ?? readoutFor(shownValue, range))
       : "";
-  const markText = hasMark ? `${readout} ${unitLabel}` : CEREMONY_COPY.recallNoMarkYet;
+  const markText = labelShowsValue ? `${readout} ${unitLabel}` : CEREMONY_COPY.recallNoMarkYet;
   // The Mark is announced as the judge's answer, not as a position: with a
   // prefix ("Your answer") the spoken value is the answer and its unit. The
   // prefix applies in edit and read-only mode alike (R11, Mark wording).
   const spokenValue =
-    hasMark && spokenPrefix !== undefined
+    labelShowsValue && spokenPrefix !== undefined
       ? `${spokenPrefix}: ${markText}`
       : markText;
 
@@ -461,7 +470,7 @@ export function RecallScale({
         onPointerCancel={endDrag}
       >
         <span className={styles.readout}>
-          {hasMark ? (
+          {labelShowsValue ? (
             <>
               <span data-readout="readout">{readout}</span>
               <span className={styles.unit}>{unitLabel}</span>

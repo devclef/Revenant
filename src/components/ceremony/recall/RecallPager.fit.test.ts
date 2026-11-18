@@ -8,7 +8,8 @@
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { describe, expect, it } from "vitest";
+import { chromium, type Browser, type Page } from "playwright-core";
+import { afterAll, beforeAll, describe, expect, it } from "vitest";
 
 const here = __dirname;
 const css = readFileSync(resolve(here, "RecallPager.module.css"), "utf8");
@@ -35,11 +36,12 @@ function narrowRuleBody(selector: string): string {
 }
 
 describe("Recall_Pager fit hooks", () => {
-  it("names the counter, question, answer row and advance control", () => {
+  it("names the counter, question, answer field and advance control", () => {
+    const navRow = readFileSync(resolve(here, "NavRow.tsx"), "utf8");
     expect(source).toContain('data-fit="counter"');
     expect(source).toContain('data-fit="question"');
     expect(source).toContain('data-fit="answer"');
-    expect(source).toContain('data-fit="advance"');
+    expect(navRow).toContain('data-fit="advance"');
   });
 
   it("keeps the counter date in one nowrap span", () => {
@@ -49,15 +51,15 @@ describe("Recall_Pager fit hooks", () => {
 });
 
 describe("Recall_Pager reading group keeps the field and Next in view", () => {
-  it("names the reading group after the answer row, so it cannot push them down", () => {
+  it("names the reading group after the answer field and before the Nav_Row", () => {
     const answer = source.indexOf('data-fit="answer"');
     const readings = source.indexOf('data-fit="readings"');
-    const advance = source.indexOf('data-fit="advance"');
+    // The number question's NavRow is the last one in the file; the text branch
+    // has its own NavRow earlier in the markup.
+    const nav = source.lastIndexOf("<NavRow");
     expect(answer).toBeGreaterThan(-1);
-    expect(readings).toBeGreaterThan(-1);
-    expect(advance).toBeGreaterThan(-1);
-    // The answer row (field and Next) comes first in the markup; the readings follow it.
-    expect(readings).toBeGreaterThan(advance);
+    expect(readings).toBeGreaterThan(answer);
+    expect(nav).toBeGreaterThan(readings);
   });
 
   it("caps the reading group at the card width at every size", () => {
@@ -149,8 +151,9 @@ describe("Recall_Pager number field shows a typed value such as 1.585 at 360 x 6
     expect(narrowRuleBody(".input")).not.toMatch(/\bwidth:/);
   });
 
-  it("keeps the read-as line and the parser source untouched by this rule", () => {
-    expect(source).toContain('className={styles.parsed}');
+  it("shows no read-as line (T2.3)", () => {
+    expect(source).not.toContain("CEREMONY_COPY.parsedValue");
+    expect(source).not.toContain("styles.parsed");
   });
 });
 
@@ -190,5 +193,124 @@ describe("Recall_Pager 200-character text question at 390 x 844 (T1.6), recorded
     // The narrow heading stays at 1rem; the T1.6 rules (.qText at 26 px,
     // .navRow margin-top 16 px) apply only when the measured row overflows.
     expect(narrowRuleBody(".qTitle")).toMatch(/font-size:\s*1rem/);
+  });
+});
+
+const SAMPLES_FILE = resolve(here, "../../../../content/personas/letters/samples.json");
+const SAMPLES = JSON.parse(readFileSync(SAMPLES_FILE, "utf8")) as Record<string, Record<string, string[]>>;
+
+/*
+ * LIVE CHECK (spec 14 T2.5). Opens each persona's Testify step at 390 x 844 in
+ * Chromium and measures every number question that shows its Sample_Note. It needs
+ * a running app with the persona letters sealed (`npm run seal-personas`). Set
+ * REVENANT_LAYOUT_URL to the app origin, for example http://localhost:3939, and
+ * REVENANT_CHROMIUM to a Chromium path when the bundled one is not installed.
+ * Without REVENANT_LAYOUT_URL the block is skipped, so `npm test` stays offline.
+ */
+const LAYOUT_URL = process.env.REVENANT_LAYOUT_URL ?? "";
+const VIEWPORT = { width: 390, height: 844 };
+const PICK_UP = "Pick up the letter";
+const NEXT = "Next question";
+const RECORD = "Record my answers";
+
+type NumberRow = { question: number; noteBottom: number; navRowBottom: number };
+
+/** Walks one persona's recall questions and measures each one that shows a Sample_Note. */
+async function measureNumberQuestions(browser: Browser, persona: string): Promise<NumberRow[]> {
+  const page: Page = await browser.newPage({ viewport: VIEWPORT });
+  const rows: NumberRow[] = [];
+  try {
+    const res = await page.goto(`${LAYOUT_URL}/demo/personas/${persona}`, { waitUntil: "load" });
+    expect(res?.status(), `${persona} page status`).toBe(200);
+    const pickUp = page.getByRole("button", { name: PICK_UP, exact: true });
+    if ((await pickUp.count()) > 0) await pickUp.first().click();
+    await page.waitForSelector('[data-ceremony="recall"]', { timeout: 30_000 });
+    // The handed layout settles a moment after the stage changes.
+    await page.waitForTimeout(2600);
+
+    for (let i = 0; i < 20; i += 1) {
+      await page.evaluate(() => window.scrollTo(0, 0));
+      const box = await page.evaluate(() => {
+        const shown = (el: Element) => el.getBoundingClientRect().height > 0;
+        const nav = [...document.querySelectorAll("[data-nav-row]")].find(shown);
+        const note = [...document.querySelectorAll('[id$="-sample-note"]')].find(shown);
+        const bottom = (el: Element | undefined) => (el ? el.getBoundingClientRect().bottom : null);
+        return { navRowBottom: bottom(nav), noteBottom: bottom(note) };
+      });
+      if (box.noteBottom !== null && box.navRowBottom !== null) {
+        rows.push({ question: i + 1, noteBottom: box.noteBottom, navRowBottom: box.navRowBottom });
+      }
+
+      const next = page.getByRole("button", { name: NEXT, exact: true });
+      const record = page.getByRole("button", { name: RECORD, exact: true });
+      if ((await next.count()) > 0 && (await next.first().isVisible())) {
+        const counter = () =>
+          page.evaluate(() => document.querySelector('[data-fit="counter"]')?.textContent?.trim() ?? "");
+        const before = await counter();
+        await next.first().click();
+        await page.waitForFunction(
+          (b) => (document.querySelector('[data-fit="counter"]')?.textContent?.trim() ?? "") !== b,
+          before,
+          { timeout: 10_000 },
+        );
+        continue;
+      }
+      if ((await record.count()) > 0 && (await record.first().isVisible())) return rows;
+      throw new Error(`${persona}: no "${NEXT}" or "${RECORD}" button on question ${i + 1}`);
+    }
+    throw new Error(`${persona}: more than 20 questions`);
+  } finally {
+    await page.close();
+  }
+}
+
+describe.skipIf(!LAYOUT_URL)(
+  "Recall_Pager every persona number question with its Sample_Note at 390 x 844 (T2.5), live",
+  () => {
+    let browser: Browser;
+    beforeAll(async () => {
+      browser = await chromium.launch({ executablePath: process.env.REVENANT_CHROMIUM || undefined });
+    });
+    afterAll(async () => {
+      await browser?.close();
+    });
+
+    for (const persona of Object.keys(SAMPLES)) {
+      it(`${persona}: every sample question's Nav_Row sits inside the 844 px viewport, below its Sample_Note`, async () => {
+        const expected = Object.keys(SAMPLES[persona]);
+        const rows = await measureNumberQuestions(browser, persona);
+        expect(rows.length, `${persona} number questions with a Sample_Note`).toBe(expected.length);
+        for (const row of rows) {
+          expect(row.navRowBottom, `${persona} question ${row.question} Nav_Row bottom`).toBeLessThanOrEqual(
+            VIEWPORT.height,
+          );
+          expect(row.noteBottom, `${persona} question ${row.question} Sample_Note bottom`).toBeLessThan(
+            row.navRowBottom,
+          );
+        }
+      }, 120_000);
+    }
+  },
+);
+
+describe("Recall_Pager persona number question CSS (T2.5)", () => {
+  it("sets the Nav_Row 16 px below its top and the intro at 15 px below 600 px", () => {
+    expect(css).toMatch(/\.body > :global\(\[data-nav-row\]\)\s*\{\s*margin-top:\s*16px;/);
+    expect(css).toMatch(/@media \(max-width: 599\.98px\) \{\s*\.intro \{\s*font-size:\s*15px;/);
+  });
+});
+
+describe("Recall_Pager number question fit at 390 x 844, source rules (T2.5)", () => {
+  it("passes the rescale note to the pager's own line only, not again under the scale", () => {
+    // The note is linked to the field by aria-describedby. Passing it to RecallScale too
+    // would show the same text twice and push the Nav_Row down (spec 14 T2.5).
+    expect(source).not.toMatch(/note=\{rescaleNote/);
+    expect(source).toContain("id={helpId}");
+  });
+
+  it("shares one row between the Nav_Row buttons below 600 px", () => {
+    expect(css).toMatch(
+      /@media \(max-width: 599\.98px\) \{[\s\S]*\.body > :global\(\[data-nav-row\]\) > button \{[\s\S]*flex: 1 1 0;/,
+    );
   });
 });

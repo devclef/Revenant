@@ -78,7 +78,7 @@ describe("a text question (C4.5)", () => {
   it("shows no number parser, scale or unit", () => {
     const markup = render(textPayload);
     expect(markup).not.toContain('inputMode="decimal"');
-    expect(markup).not.toContain(CEREMONY_COPY.parsedValue.split("{value}")[0]);
+    expect(markup).not.toContain("Read as");
     expect(markup).not.toContain(CEREMONY_COPY.recallNoMarkYet);
     expect(markup).not.toContain(
       REVEAL_COPY.unitLabel.replace("{unit}", "USD per gallon"),
@@ -114,15 +114,14 @@ describe("a text question (C4.5)", () => {
 });
 
 describe("No answer placement (C7.2)", () => {
-  it("sits directly under the field group, before the scale, on a number question", () => {
+  it("sits after the Recall_Scale and before the Nav_Row on a number question (T2.1)", () => {
     const markup = render(numberPayload);
-    const label = `${REVEAL_COPY.noAnswer}</label>`;
-    const noAnswer = markup.indexOf(label);
-    const next = markup.indexOf(REVEAL_COPY.submit);
     const scale = markup.indexOf(CEREMONY_COPY.recallNoMarkYet);
-    expect(next).toBeGreaterThan(-1);
-    expect(noAnswer).toBeGreaterThan(next);
-    expect(scale).toBeGreaterThan(noAnswer);
+    const noAnswer = markup.indexOf(`${REVEAL_COPY.noAnswer}</label>`);
+    const nav = markup.indexOf("data-nav-row");
+    expect(scale).toBeGreaterThan(-1);
+    expect(noAnswer).toBeGreaterThan(scale);
+    expect(nav).toBeGreaterThan(noAnswer);
   });
 
   it("sits under the text field on a text question", () => {

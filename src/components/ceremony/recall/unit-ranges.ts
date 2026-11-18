@@ -31,7 +31,12 @@ export const FALLBACK_RANGE: ScaleRange = {
   ticks: [0.01, 0.1, 1, 10, 100, 1000, 10000, 100000],
 };
 
-/** Approved ranges, keyed by the displayed unit. Exactly these two keys. */
+/**
+ * Approved ranges, keyed by the displayed unit: `"USD per gallon"` and
+ * `"EUR per litre"`. Exactly these two keys. The Q2.10 test in
+ * unit-ranges.test.ts fails when a displayed catalogue, persona or bundled unit
+ * has no key here.
+ */
 export const UNIT_RANGE_TABLE: Readonly<Record<string, ScaleRange>> = {
   "USD per gallon": {
     min: 0,

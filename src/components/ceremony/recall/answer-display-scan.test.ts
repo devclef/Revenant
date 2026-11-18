@@ -16,7 +16,8 @@ const components = join(here, "..", "..");
 
 /** The answer display files, relative to src/components. */
 const ANSWER_DISPLAY_FILES = [
-  "ceremony/recall/RecallPager.tsx",
+  // RecallPager.tsx shows no answer itself since T2.3: the Recall_Scale readout
+  // is the only answer display it renders, and that file is scanned below.
   "ceremony/recall/RecordedScale.tsx",
   "ceremony/recall/RecallScale.tsx",
   "ceremony/figures/NumberLine.tsx",

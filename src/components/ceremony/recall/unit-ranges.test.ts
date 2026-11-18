@@ -2,7 +2,11 @@ import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import { CATALOGUE } from "@/lib/figures/catalogue";
-import { displayRescaleForUnit } from "@/lib/figures/rescale";
+import { DEMO_FIGURES } from "@/lib/figures/demo";
+import {
+  displayRescaleForUnit,
+  rescaleForDisplay,
+} from "@/lib/figures/rescale";
 import * as unitRanges from "./unit-ranges";
 import {
   FALLBACK_RANGE,
@@ -203,5 +207,92 @@ describe("unit coverage (R7.1)", () => {
         ).toBe(true);
       }
     }
+  });
+});
+
+// Q2.10: every displayed unit the judge can see has its own key. The units come
+// from the Catalogue, from the bundled figures (DEMO_FIGURES) and from each
+// persona's sealed metrics. Persona JSON holds no values, so the persona figure
+// values are read from DEMO_FIGURES by the persona's metric ids.
+type PersonasFile = {
+  personas: { metrics: { metric_id: string }[] }[];
+};
+
+function personaMetricIds(): string[] {
+  const personasUrl = new URL(
+    "../../../../content/personas/personas.json",
+    import.meta.url,
+  );
+  const personas = JSON.parse(readFileSync(personasUrl, "utf8")) as PersonasFile;
+  return personas.personas.flatMap((p) => p.metrics.map((m) => m.metric_id));
+}
+
+describe("Q2.10: every displayed unit has its own key", () => {
+  it("every bundled figure unit has a table entry under its displayed unit", () => {
+    for (const series of DEMO_FIGURES.series.values()) {
+      const shown = displayUnitFor(series.metric.unit);
+      expect(
+        Object.hasOwn(UNIT_RANGE_TABLE, shown),
+        `missing range for "${shown}" (bundled "${series.metric.unit}")`,
+      ).toBe(true);
+    }
+  });
+
+  it("every persona metric has bundled figures and a table entry under its displayed unit", () => {
+    for (const metricId of personaMetricIds()) {
+      const series = DEMO_FIGURES.series.get(metricId);
+      expect(series, `no bundled figures for persona metric ${metricId}`).toBeDefined();
+      expect(series?.figures.length ?? 0, `no figures for ${metricId}`).toBeGreaterThan(0);
+      const shown = displayUnitFor(series?.metric.unit ?? "");
+      expect(
+        Object.hasOwn(UNIT_RANGE_TABLE, shown),
+        `missing range for "${shown}" (persona metric ${metricId})`,
+      ).toBe(true);
+    }
+  });
+});
+
+// T3.5: every bundled figure value, persona figure values included, lies inside
+// its range once the display rescale is applied. Values are compared as
+// published, after the exact decimal shift; the stored values are not changed.
+describe("T3.5: every bundled value lies within its range after rescale", () => {
+  it("each figure value, after display rescale, is between the range min and max", () => {
+    let checked = 0;
+    for (const series of DEMO_FIGURES.series.values()) {
+      const range = scaleRangeFor(displayUnitFor(series.metric.unit));
+      const rescale = displayRescaleForUnit(series.metric.unit);
+      for (const figure of series.figures) {
+        const shown = rescale
+          ? rescaleForDisplay(figure.value, rescale.divisor)
+          : figure.value;
+        const value = Number(shown);
+        expect(
+          value >= range.min && value <= range.max,
+          `${series.metric.id} ${figure.period}: ${shown} outside ${range.min} to ${range.max}`,
+        ).toBe(true);
+        checked += 1;
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+});
+
+// T3.3: unit-ranges.ts imports only the rescale module and reads no figure
+// value. Comments are stripped before the scan so prose cannot trip it.
+describe("T3.3: unit-ranges.ts reads no figure value", () => {
+  const source = readFileSync(new URL("./unit-ranges.ts", import.meta.url), "utf8");
+  const code = source.replace(/\/\*[\s\S]*?\*\//g, "").replace(/\/\/.*$/gm, "");
+
+  it("imports only @/lib/figures/rescale", () => {
+    const specifiers = [...code.matchAll(/^\s*import\b[^;]*?\bfrom\s+["']([^"']+)["']/gm)].map(
+      (m) => m[1],
+    );
+    expect(specifiers).toEqual(["@/lib/figures/rescale"]);
+  });
+
+  it("reads no value property", () => {
+    expect(code).not.toMatch(/\.value\b/);
+    expect(code).not.toMatch(/\[\s*["'`]value["'`]\s*\]/);
+    expect(code).not.toMatch(/\bvalue\s*:/);
   });
 });
