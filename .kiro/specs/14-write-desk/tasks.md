@@ -522,7 +522,7 @@ Group D is the only cuttable work (G3.3): whatever is merged on `main` at the fr
   - Validation: `bash scripts/check.sh`; route budgets after `npm run build` (`/demo` at most 160 kB).
   - _Requirements: D1_
 
-- [ ] 16. D2 · `/how-it-is-sealed` carries the Demo chip
+- [x] 16. D2 · `/how-it-is-sealed` carries the Demo chip
   - Agent: `frontend-dev` · Depends on: none · Estimated size: S, ~60 changed lines · Target: 26 November 2026
   - **Cuttable (with task 15).** Group D is the only cuttable work; whatever is merged at the 27 November 2026 freeze ships.
   - Scope: `src/app/how-it-is-sealed/page.tsx` and `src/app/how-it-is-sealed/page.test.tsx`.
