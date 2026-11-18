@@ -500,7 +500,7 @@ Group D (tasks 15 and 16) is the only cuttable work. Whatever is merged on `main
 
 Group D is the only cuttable work (G3.3): whatever is merged on `main` at the freeze ships. Nothing outside group D depends on it.
 
-- [ ] 15. D1 · `/demo` lines up and offers the live demo as a card
+- [x] 15. D1 · `/demo` lines up and offers the live demo as a card
   - Agent: `frontend-dev` · Depends on: none · Estimated size: S, ~400 changed lines · Target: 26 November 2026
   - **Cuttable (with task 16).** Group D is the only cuttable work; whatever is merged at the 27 November 2026 freeze ships.
   - Scope: `src/app/demo/page.tsx`, `src/app/demo/page.module.css`; `src/components/demo/LiveEntry.tsx`, `LiveEntry.module.css`, `PersonaCard.module.css` (only to expose the paper and button classes for `composes`); and the `*.test.ts(x)` for each file.
