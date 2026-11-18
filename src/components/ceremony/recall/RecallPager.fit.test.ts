@@ -74,11 +74,11 @@ describe("Recall_Pager card fits above the fold at 1280 x 800", () => {
   });
 
   it("tightens the fieldset padding and the vertical gaps", () => {
-    expect(ruleBody(".fieldset")).toMatch(/padding:\s*0\.75rem 1\.25rem/);
+    expect(ruleBody(".fieldset")).toMatch(/padding:\s*0\.5rem 1\.25rem/);
     expect(ruleBody(".fieldset")).toMatch(/margin:\s*0 0 0\.75rem/);
-    expect(ruleBody(".body")).toMatch(/gap:\s*0\.5rem/);
+    expect(ruleBody(".body")).toMatch(/gap:\s*0\.25rem/);
     expect(ruleBody(".qTitle")).toMatch(/margin:\s*0 0 0\.5rem/);
-    expect(ruleBody(".counter")).toMatch(/margin:\s*0 0 0\.5rem/);
+    expect(ruleBody(".counter")).toMatch(/margin:\s*0 0 0\.25rem/);
   });
 });
 
