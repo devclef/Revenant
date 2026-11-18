@@ -113,6 +113,43 @@ export function formatCalendarMonth(date: string): string {
 }
 
 /**
+ * "Tuesday, 17 November 2026" for an instant, as the calendar day it falls on in
+ * `timeZone` (spec 14, W4.2). The comma after the weekday is ours, not the
+ * locale's, so the shape is exact. Returns "" for an invalid instant.
+ */
+export function formatWeekdayDate(instant: Date, timeZone: string): string {
+  if (Number.isNaN(instant.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone,
+  }).formatToParts(instant);
+  const by = (type: Intl.DateTimeFormatPartTypes): string =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  return `${by("weekday")}, ${by("day")} ${by("month")} ${by("year")}`;
+}
+
+/**
+ * The calendar day of an instant in `timeZone`, as `YYYY-MM-DD` (spec 14,
+ * W4.2, W12.2). Returns "" for an invalid instant.
+ */
+export function calendarDayIn(instant: Date, timeZone: string): string {
+  if (Number.isNaN(instant.getTime())) return "";
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    timeZone,
+  }).formatToParts(instant);
+  const by = (type: Intl.DateTimeFormatPartTypes): string =>
+    parts.find((part) => part.type === type)?.value ?? "";
+  const pad = (value: string): string => value.padStart(2, "0");
+  return `${by("year")}-${pad(by("month"))}-${pad(by("day"))}`;
+}
+
+/**
  * The runtime's own IANA zone (the browser's zone on the client), for passing
  * to `letterZoneFor` for a Live_Letter. Kept here so callers never construct
  * their own `Intl.DateTimeFormat` (R15.5). Falls back to "UTC" if the runtime
