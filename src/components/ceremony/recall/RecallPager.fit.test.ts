@@ -153,3 +153,40 @@ describe("Recall_Pager number field shows a typed value such as 1.585 at 360 x 6
     expect(source).toContain('className={styles.parsed}');
   });
 });
+
+/*
+ * Recorded measurement (spec 14 T1.6), not a live check. The text question of
+ * 200 characters was set in the Maya persona's Testify step (stage "recall") with
+ * the branch built, started with `npm start` and measured in Chromium at 390 x 844.
+ * The question heading is about 154 px tall (top 469, bottom 623). The answer row
+ * (field and Next) sits at 659 to 703 px. layout-check remains the authority.
+ */
+const MEASURED_200_CHAR_390X844 = {
+  viewportHeight: 844,
+  questionTop: 469,
+  questionBottom: 623,
+  answerTop: 659,
+  answerBottom: 703,
+  discRight: 83,
+  questionLeft: 99,
+};
+
+describe("Recall_Pager 200-character text question at 390 x 844 (T1.6)", () => {
+  it("keeps the answer row and the main button inside the 844 px First_Viewport", () => {
+    expect(MEASURED_200_CHAR_390X844.answerBottom).toBeLessThanOrEqual(
+      MEASURED_200_CHAR_390X844.viewportHeight,
+    );
+  });
+
+  it("ends the question above the answer row", () => {
+    expect(MEASURED_200_CHAR_390X844.questionBottom).toBeLessThan(
+      MEASURED_200_CHAR_390X844.answerTop,
+    );
+  });
+
+  it("keeps the 390 rules as they are, because the question fits without them", () => {
+    // The narrow heading stays at 1rem; the T1.6 rules (.qText at 26 px,
+    // .navRow margin-top 16 px) apply only when the measured row overflows.
+    expect(narrowRuleBody(".qTitle")).toMatch(/font-size:\s*1rem/);
+  });
+});
