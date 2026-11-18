@@ -49,9 +49,9 @@ function topBarFor(breaking: boolean, broken: boolean): string {
 }
 
 describe("Top_Bar Skip at the marks stage", () => {
-  it("shows no Top_Bar Skip while the seal waits at its marks (nothing pressed)", () => {
+  it("shows a disabled Top_Bar Skip while the seal waits at its marks (nothing pressed)", () => {
     const html = topBarFor(false, false);
-    expect(html).not.toContain(`aria-label="${SKIP}"`);
+    expect(html).toMatch(/data-topbar-slot="skip"[^>]*disabled/);
   });
 
   it("shows the Top_Bar Skip once the button starts a break", () => {
@@ -59,9 +59,9 @@ describe("Top_Bar Skip at the marks stage", () => {
     expect(html).toContain(`aria-label="${SKIP}"`);
   });
 
-  it("drops the Top_Bar Skip again once the seal has broken", () => {
+  it("leaves Skip disabled once the seal has broken", () => {
     const html = topBarFor(true, true);
-    expect(html).not.toContain(`aria-label="${SKIP}"`);
+    expect(html).toMatch(/data-topbar-slot="skip"[^>]*disabled/);
   });
 });
 

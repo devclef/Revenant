@@ -55,9 +55,9 @@ describe("TestifyContext: persona letter", () => {
     expect(render(persona)).toContain("data-testify-context");
   });
 
-  it("shows the fictional-persona notice and the A letter from line", () => {
+  it("shows the A letter from line and no notice, since the Top_Bar carries the notice", () => {
     const html = render(persona);
-    expect(html).toContain(CEREMONY_COPY.personaNotice.replace("{name}", "Maya"));
+    expect(html).not.toContain(CEREMONY_COPY.personaNotice.replace("{name}", "Maya"));
     expect(html).toContain(REVEAL_COPY.contextFrom.replace("{name}", "Maya"));
   });
 
@@ -183,10 +183,10 @@ describe("TestifyContext: the four recall items appear once (spec 11 P3.5)", () 
     },
   );
 
-  it("shows no fictional-persona note in the Top_Bar during recall at either width", () => {
+  it("shows the persona note in the Top_Bar during recall too (B1.4)", () => {
     for (const p of personaList) {
-      expect(topBarShowsNotice(p.display_name, false, "recall")).toBe(false);
-      expect(topBarShowsNotice(p.display_name, true, "recall")).toBe(false);
+      expect(topBarShowsNotice(p.display_name)).toBe(true);
+      expect(topBarShowsNotice(p.display_name)).toBe(true);
     }
   });
 });
@@ -233,7 +233,7 @@ describe("TestifyContext: width rules", () => {
 
   it("does not reuse the Persona_Intro ink-on-paper classes, so the phone ink rule cannot reach it", () => {
     const source = readFileSync(resolve(__dirname, "TestifyContext.tsx"), "utf8");
-    expect(source).toContain("styles.testifyNotice");
+    expect(source).not.toContain("styles.testifyNotice");
     expect(source).not.toMatch(/styles\.(notice|meta|line|dates)\b/);
   });
 });
@@ -241,16 +241,15 @@ describe("TestifyContext: width rules", () => {
 // F3.1: the notice moves off the Step_Indicator row only by a top margin, so
 // the copy and its order are the same as before.
 describe("TestifyContext: notice once and content order (spec 07 F3.1)", () => {
-  it("renders the Maya notice exactly once in the recall block", () => {
+  it("renders no notice in the recall block; the Top_Bar holds it (B1.4)", () => {
     const html = render(persona);
     const notice = CEREMONY_COPY.personaNotice.replace("{name}", "Maya");
-    expect(html.split(notice).length - 1).toBe(1);
+    expect(html.split(notice).length - 1).toBe(0);
   });
 
-  it("keeps the content in order: notice, A letter from, dates, seal line, Memory_Line", () => {
+  it("keeps the content in order: A letter from, dates, seal line, Memory_Line", () => {
     const html = render(persona);
     const parts = [
-      CEREMONY_COPY.personaNotice.replace("{name}", "Maya"),
       REVEAL_COPY.contextFrom.replace("{name}", "Maya"),
       "Written as of 12 May 2024 · Opens 5 November 2024",
       REVEAL_COPY.sealIntact,
@@ -300,7 +299,7 @@ describe("TestifyContext: First_Viewport fit at 1440x900 (spec 13 F3.2)", () => 
   });
 
   for (const p of ["Maya", "Tomás"]) {
-    it(`renders ${p}'s notice once and keeps the content in order`, () => {
+    it(`renders no notice for ${p} in the recall block and keeps the content in order`, () => {
       const entry = fitPersonas.find((f) => f.display_name === p);
       if (!entry) throw new Error(`no persona ${p}`);
       const html = render({
@@ -310,9 +309,8 @@ describe("TestifyContext: First_Viewport fit at 1440x900 (spec 13 F3.2)", () => 
         opensAt: entry.opens_at,
       });
       const notice = CEREMONY_COPY.personaNotice.replace("{name}", p);
-      expect(html.split(notice).length - 1).toBe(1);
+      expect(html.split(notice).length - 1).toBe(0);
       const parts = [
-        notice,
         REVEAL_COPY.contextFrom.replace("{name}", p),
         REVEAL_COPY.sealIntact,
       ];

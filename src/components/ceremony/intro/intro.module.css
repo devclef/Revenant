@@ -4,9 +4,8 @@
  * for the quieter lines). Both meet WCAG 2.2 AA on --bg. Orange is not used:
  * it is reserved for "you" (tone.md).
  *
- * The fictional-persona notice is the first line at every width. Below 600 px
- * the Top_Bar does not render it, so this card is the only place it shows
- * there. At 600 px and wider the Top_Bar shows it too (spec 07 R8.4).
+ * The fictional-persona notice is not in this card: the Top_Bar shows it (spec
+ * 09 B1.4).
  */
 
 .intro {
@@ -28,13 +27,6 @@
   .intro {
     margin-top: calc(var(--soil-top) + var(--soil-band) + 0.25rem - 6rem - 2.5rem);
   }
-}
-
-.notice {
-  margin: 0;
-  font-size: 0.8rem;
-  line-height: 1.3;
-  color: var(--muted);
 }
 
 .line {
@@ -85,7 +77,6 @@
     color: var(--ink);
   }
 
-  .notice,
   .meta {
     color: var(--ink-soft);
   }

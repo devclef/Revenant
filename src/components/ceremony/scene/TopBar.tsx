@@ -2,20 +2,18 @@
 
 // Feature: 07-judge-journey
 //
-// The Top_Bar (design.md "Providers and the Top_Bar", R8.1 to R8.6). Fixed to
-// the top of the window. It holds the wordmark and the Demo chip, and on the
-// persona page the notice, Calm and Skip, in that order. The notice shows at
-// 600 px and wider on the persona page, except during `recall`, where
-// TestifyContext holds it. Below 600 px it shows only once the Stage is after
-// `recall` (the Compact_Top_Bar). Before that, PersonaIntro carries the notice
-// at that width.
+// The Top_Bar (design.md "Providers and the Top_Bar", R8.1 to R8.6; spec 14
+// B1). Fixed to the top of the window. It holds the wordmark and the Demo chip,
+// and on the persona page the notice, Calm, sound and Skip, in that order. The
+// notice shows on every persona page at every width (B1.4).
 //
-// Skip shows only while a sequence is registered (`useSequence().hasActive`),
-// so it is in the Tab order only then. It is a native button, so Enter and
-// Space work. Calm toggles `useMotion().setCalm`, as the region's control does.
+// Skip is always rendered. While a sequence is registered (`useSequence().hasActive`)
+// it is a live native button, so Enter and Space work. Otherwise it is a
+// disabled button, out of the Tab order (B1.3). Calm toggles `useMotion().setCalm`,
+// as the region's control does.
 //
-// `data-wordmark` and `data-topbar-last` are set for the browser checks: the
-// first marks the wordmark, the second the last control in the bar.
+// `data-topbar-slot` marks each slot for the browser checks (B1.1), and
+// `data-topbar-last` marks Skip, the last control in the bar.
 //
 // On the persona page the bar also holds the sound toggle, between Calm and
 // Skip (spec 09 C4.4). SceneShell owns its state and passes it in as `sound`.
@@ -28,7 +26,7 @@ import { PHONE_BELOW_PX } from "../constants";
 import { useMotion } from "../motion";
 import { useSequence } from "../skip";
 import { SoundToggle } from "../sound/SoundToggle";
-import { stageIsAfterRecall, type Stage } from "../stages";
+import { type Stage } from "../stages";
 import { SCENE_COPY } from "./copy";
 import { MotionIcon, SkipIcon } from "./icons";
 import styles from "./scene.module.css";
@@ -84,9 +82,8 @@ export type TopBarProps = {
   sound?: TopBarSound;
   /**
    * The current Stage of the persona page, reported up from the Ceremony.
-   * The notice is not shown during `recall` (TestifyContext holds it). Below
-   * 600 px it shows only once this is a Stage after `recall`. Undefined before
-   * the first report (the server markup).
+   * Kept for the callers. It no longer changes the notice: the notice shows
+   * for every Stage and width (spec 14 B1.4).
    */
   stage?: Stage;
 };
@@ -103,21 +100,12 @@ export function personaNoticeText(personaName: string): string {
 }
 
 /**
- * Whether the Top_Bar renders the persona notice. It needs a persona page.
- * During `recall` it never shows: TestifyContext holds the one notice there
- * (spec 11 P3.1, P3.5). Otherwise at 600 px and wider it shows. Below 600 px
- * (`compact`) it shows only for a Stage after `recall`, so PersonaIntro carries
- * it before that.
+ * Whether the Top_Bar renders the persona notice. It shows on every persona
+ * page, for every Stage and at every width (spec 14 B1.4). It needs a persona
+ * name; a page without one shows no notice.
  */
-export function topBarShowsNotice(
-  personaName: string | undefined,
-  compact: boolean,
-  stage?: Stage,
-): boolean {
-  if (personaName === undefined) return false;
-  if (stage === "recall") return false;
-  if (!compact) return true;
-  return stage !== undefined && stageIsAfterRecall(stage);
+export function topBarShowsNotice(personaName: string | undefined): boolean {
+  return personaName !== undefined;
 }
 
 /**
@@ -149,7 +137,6 @@ export function TopBar({
   demo = true,
   controls = "calm",
   sound,
-  stage,
 }: TopBarProps) {
   const { mode, setCalm } = useMotion();
   const { hasActive, skipAll } = useSequence();
@@ -160,12 +147,14 @@ export function TopBar({
   const calmOn = mode === "calm";
   const calmLabel = calmOn ? CEREMONY_COPY.calmOff : CEREMONY_COPY.calmOn;
 
-  // The last control in the bar: Skip when it shows, otherwise the sound
-  // control when the page has one, otherwise Calm.
   // Each control holds its icon and its text. Below 600 px CSS shows the icon
   // as a 44 x 44 control and hides the text; the aria-label and title keep the
   // name. At 600 px and wider CSS shows the text as before.
-  const soundIsLast = !hasActive && sound !== undefined;
+  //
+  // The slots keep the order of spec 14 B1.1: wordmark, Demo chip, persona
+  // notice, then Calm, sound and Skip. Skip is always the last slot, so it
+  // carries data-topbar-last. It is rendered whether or not a sequence runs;
+  // without one it is a disabled button (B1.3).
   return (
     <header
       ref={headerRef}
@@ -174,24 +163,28 @@ export function TopBar({
       data-compact={compact ? true : undefined}
     >
       <div className={styles.brand}>
-        <p className={styles.wordmark}>
+        <p className={styles.wordmark} data-topbar-slot="wordmark">
           <Link href="/" className={styles.wordmarkLink} data-wordmark>
             {SCENE_COPY.wordmark}
           </Link>
         </p>
         {demo ? (
-          <span className={styles.chip}>{SCENE_COPY.demoChip}</span>
+          <span className={styles.chip} data-topbar-slot="chip">
+            {SCENE_COPY.demoChip}
+          </span>
         ) : null}
       </div>
-      {topBarShowsNotice(personaName, compact, stage) && personaName !== undefined ? (
-        <p className={styles.notice}>{personaNoticeText(personaName)}</p>
+      {topBarShowsNotice(personaName) && personaName !== undefined ? (
+        <p className={styles.notice} data-topbar-slot="notice">
+          {personaNoticeText(personaName)}
+        </p>
       ) : null}
       {controls === "none" ? null : (
         <div className={styles.controls}>
           <button
             type="button"
             className={styles.control}
-            data-topbar-last={hasActive || soundIsLast ? undefined : true}
+            data-topbar-slot="calm"
             aria-label={calmLabel}
             title={calmLabel}
             onClick={() => setCalm(!calmOn)}
@@ -204,22 +197,21 @@ export function TopBar({
               variant="topbar"
               enabled={sound.enabled}
               onChange={sound.onChange}
-              last={soundIsLast}
             />
           ) : null}
-          {hasActive ? (
-            <button
-              type="button"
-              className={styles.control}
-              data-topbar-last={true}
-              aria-label={CEREMONY_COPY.skip}
-              title={CEREMONY_COPY.skip}
-              onClick={skipAll}
-            >
-              <SkipIcon className={styles.controlIcon} />
-              <span className={styles.controlLabel}>{CEREMONY_COPY.skip}</span>
-            </button>
-          ) : null}
+          <button
+            type="button"
+            className={styles.control}
+            data-topbar-slot="skip"
+            data-topbar-last={true}
+            disabled={!hasActive}
+            aria-label={CEREMONY_COPY.skip}
+            title={CEREMONY_COPY.skip}
+            onClick={skipAll}
+          >
+            <SkipIcon className={styles.controlIcon} />
+            <span className={styles.controlLabel}>{CEREMONY_COPY.skip}</span>
+          </button>
         </div>
       )}
     </header>
