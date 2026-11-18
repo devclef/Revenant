@@ -240,3 +240,16 @@ describe("KEYBOARD_MATRIX_ENTRY (the keyboard seal run, Q1.3)", () => {
     );
   });
 });
+
+describe("Step_Shot numbering in the matrix (Q1.3)", () => {
+  it("numbers the one-figure desktop run 01 to 19 in WALK_STEP_NAMES order", () => {
+    const entry = WALK_MATRIX.find((e) => e.id === "1440x900-one-figure");
+    expect(entry).toBeDefined();
+    const orders = matrixShotNames(entry!).map((name) => name.slice(0, 7));
+    expect(orders).toEqual(
+      WALK_STEP_NAMES.map(
+        (_, index) => `live-${String(index + 1).padStart(2, "0")}`,
+      ),
+    );
+  });
+});
