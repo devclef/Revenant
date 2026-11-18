@@ -415,6 +415,12 @@ export function WriteForm({
   // passkey with one plain press (P5). Input problems also disable it, and its
   // attempt then shows the field messages (A4.4).
   const pressMode = inCreated ? "setting" : "write";
+  // A running passkey prompt or sealing keeps the wax whole (press.module.css).
+  const pressRunning =
+    state.tag === "creating" ||
+    state.tag === "confirming" ||
+    state.tag === "preparing" ||
+    state.tag === "sealing";
   const pressBlocked =
     !inCreated && (!formReady || backupChoice === null || inputBlocked);
   // Only the choose-first line shows while no option is picked (P1.5). Once an
@@ -663,6 +669,7 @@ export function WriteForm({
             <PressEnvelope
               mode={pressMode}
               disabled={pressBlocked}
+              running={pressRunning}
               line={pressLine}
               onCreatePress={onCreatePress}
               onConfirmPress={onConfirmPress}

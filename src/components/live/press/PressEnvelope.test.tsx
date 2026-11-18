@@ -120,6 +120,18 @@ describe("PressEnvelope, Setting_State (P5.4 to P5.6)", () => {
   });
 });
 
+describe("PressEnvelope, running prompt", () => {
+  it("marks a running prompt with data-press-running and keeps aria-disabled true", () => {
+    const html = render({ disabled: true, running: true });
+    expect(html).toContain("data-press-running");
+    expect(html).toContain('aria-disabled="true"');
+  });
+
+  it("does not mark an unready press that is not running", () => {
+    expect(render({ disabled: true })).not.toContain("data-press-running");
+  });
+});
+
 describe("PressEnvelope, failure lift (P4.3, P4.4)", () => {
   it("renders the lifted seal with no pool stage and no press", () => {
     const html = render({ inert: true, pose: "lifted" });

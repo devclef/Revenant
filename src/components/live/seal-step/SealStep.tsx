@@ -95,6 +95,11 @@ export function SealStep({
   // pressStatusLine alone chooses the line: it never reads "choose first" once
   // a choice exists (P1.5).
   const status = pressStatusLine({ tag, backupChoice, motion });
+  const running =
+    tag === "creating" ||
+    tag === "confirming" ||
+    tag === "preparing" ||
+    tag === "sealing";
 
   return (
     <div data-seal-step="" className={styles.step}>
@@ -139,6 +144,7 @@ export function SealStep({
           tone={status.tone}
           caption={envelopeCaption(questionCount)}
           ready={ready}
+          running={running}
           onCreatePress={onCreatePress}
           onConfirmPress={onConfirmPress}
           onAttempt={onAttempt}

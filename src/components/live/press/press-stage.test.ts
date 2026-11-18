@@ -53,3 +53,17 @@ describe("press.module.css pool stages", () => {
     }
   });
 });
+
+describe("press.module.css running prompt", () => {
+  it("keeps the wax at full opacity with no halo while a prompt runs", () => {
+    expect(css).toMatch(
+      /\.press\[data-press-running\]\[aria-disabled="true"\] \.wax \{\s*opacity: 1;\s*box-shadow: none;\s*\}/,
+    );
+  });
+
+  it("keeps the 40 % unready rule and the aria-disabled value it keys on", () => {
+    expect(css).toMatch(
+      /\.press\[aria-disabled="true"\] \.wax \{\s*opacity: 0\.4;\s*\}/,
+    );
+  });
+});

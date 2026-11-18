@@ -97,6 +97,13 @@
   opacity: 0.4;
 }
 
+/* A running passkey prompt or sealing keeps the wax whole: full opacity and no
+ * halo, while aria-disabled stays "true" on the press (S6.4). */
+.press[data-press-running][aria-disabled="true"] .wax {
+  opacity: 1;
+  box-shadow: none;
+}
+
 /*
  * The double halo marks a ready press (S6.5). No halo under reduced motion or
  * Calm_Mode, which is the :root[data-calm] attribute set by the Calm control.

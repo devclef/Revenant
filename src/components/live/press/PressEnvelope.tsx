@@ -30,6 +30,8 @@ export type PressEnvelopeProps = {
   inert?: boolean;
   /** The wax and Signet pose. Set by the caller from the seal state. */
   pose?: SealPose;
+  /** A passkey prompt or sealing is running (creating, confirming, preparing, sealing). The wax stays whole while blocked. */
+  running?: boolean;
   /** Replaces the default plain line under the envelope. */
   line?: string;
   /** The colour of the status line (spec 14, S6.7). Defaults to muted. */
@@ -55,6 +57,7 @@ export function PressEnvelope({
   instant = false,
   inert = false,
   pose = "unpressed",
+  running = false,
   line,
   tone = "muted",
   caption,
@@ -100,6 +103,7 @@ export function PressEnvelope({
         data-seal-pose={pose}
         data-pool-stage={stage ?? undefined}
         data-press-mode={inert ? "inert" : mode}
+        data-press-running={running && !inert ? "" : undefined}
         data-ready={ready && !blocked ? "" : undefined}
         onPointerDown={handlers.onPointerDown}
         onClick={handlers.onClick}
