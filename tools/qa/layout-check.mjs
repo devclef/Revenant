@@ -5038,6 +5038,10 @@ async function runX21Controls(page, ctx) {
   const writeOwn = () => page.getByRole("button", { name: "Write my own", exact: true });
   await x21Control(page, ctx, { name: "Occasion pill Work", locator: page.getByRole("button", { name: "Work", exact: true }) });
   await x21Control(page, ctx, { name: "Suggestion pill", locator: page.locator('[data-add-row]:not([aria-label="Write my own"])') });
+  // "Ask another:" is a text label on the desk, not a control: its pills are the Suggestion pill row above.
+  report(ctx, result("X2.1", "desk-ask-another", "note", `"Ask another:" is a text label, not a control; its pills are checked as desk-suggestion-pill viewport=${ctx.size}`));
+  // The Add a letter control named in the Testing Strategy: absent on this build, so the row reports missing.
+  await x21Control(page, ctx, { name: "Add a letter", locator: page.getByRole("button", { name: "Add a letter", exact: true }) });
   await x21Control(page, ctx, { name: "+ Write my own", locator: writeOwn() });
   for (let i = 0; i < 2 && (await page.locator("[data-question-row]").count()) < 2; i++) {
     await writeOwn().click().catch(() => {});
@@ -5045,6 +5049,7 @@ async function runX21Controls(page, ctx) {
   }
   await x21Control(page, ctx, { name: "Remove", locator: page.getByRole("button", { name: /^Remove/ }) });
   const publicPrice = () => page.getByRole("button", { name: "A public price", exact: true });
+  // The receipt toggle is the Receipt_Toggle pair: both buttons are pressed twice here.
   await x21Control(page, ctx, { name: "A public price", locator: publicPrice() });
   await x21Control(page, ctx, { name: "A number of my own", locator: page.getByRole("button", { name: "A number of my own", exact: true }) });
   const inputs = page.locator("[data-own-number] input");
