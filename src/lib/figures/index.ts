@@ -41,6 +41,9 @@ export {
 export type { Decimal, RatioPercent } from "./decimal";
 
 export { computeChange, CHANGE_FORMULA_ID } from "./change";
+
+export { figureAtOpening, personaNowResponse } from "./at-opening";
+export type { PersonaForNow } from "./at-opening";
 export type { ChangeResult, NotComparableReason } from "./change";
 
 export { isSameFigure } from "./same-figure";
