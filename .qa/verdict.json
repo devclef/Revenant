@@ -1,0 +1,21 @@
+{
+  "verdict": "pass",
+  "summary": "Ticket #510 is met: OpenedPayload is a Pick of PayloadV1 used by opening-machine.ts, FiguresThenNow.tsx and RecallPager.tsx, and the expectTypeOf test covers PayloadV1 assignability. The only fixture change is dropping format_version. Layout check was not run because this is a spec 15 ticket, not spec 07, 09 or 10. The persona walk (recall, marks, letter, numbers, calm, 360px) completes with recall before the reveal and no blocker found on screen.",
+  "screenshots": [
+    {"file": "01-desk.png", "shows": "Demo index at 1280x800 with three persona envelopes and the Demo label.", "readable": true, "failed_checks": []},
+    {"file": "02-desk-360.png", "shows": "Demo index at 360x640 with the Demo label and the first persona card.", "readable": true, "failed_checks": []},
+    {"file": "03-recall.png", "shows": "Maya's first recall question with the sample answer 4.25 USD per gallon, on the parchment card with the ghost.", "readable": true, "failed_checks": []},
+    {"file": "04-marks.png", "shows": "Break the seal step showing the testimony (4.25 and 3.19 USD per gallon) before the letter, with the ghost and the seal.", "readable": true, "failed_checks": []},
+    {"file": "05-marks-360.png", "shows": "Break the seal step at 360x640 with the testimony readable and the ghost to the right.", "readable": true, "failed_checks": []},
+    {"file": "06-letter.png", "shows": "The sealed letter text in serif on warm paper after Break the seal.", "readable": true, "failed_checks": []},
+    {"file": "07-numbers.png", "shows": "Receipts for regular gasoline: then, now, retrieval date, formula (3.805 - 3.643) / 3.643 x 100 = +4.4%, Source control, and the diesel figure beneath.", "readable": true, "failed_checks": []},
+    {"file": "08-calm.png", "shows": "Receipts with motion off after reload: the Turn motion back on button and the sound and skip controls match the page style.", "readable": true, "failed_checks": []}
+  ],
+  "findings": [
+    {"severity": "minor", "file": "src/components/reveal/opened-payload.test.ts", "detail": "expectTypeOf assertions are compile-time only. Vitest does not typecheck at runtime, so this test passes even if the assignability breaks. Only tsc (CI typecheck) catches a regression. Consider noting this in the test or relying on tsc, which CI already runs."},
+    {"severity": "minor", "file": "src/lib/recall/generate.ts", "detail": "The ticket lists src/lib/recall/generate.ts types as part of the change, but this PR does not touch it. It still types RecallQuestionV1 from PayloadV1. This is not an acceptance criterion, since OpenedPayload's three consumers are all covered, so the owner should confirm whether that file was meant to change in this ticket."},
+    {"severity": "minor", "file": "src/components/ceremony/recall/RecallPager.module.css", "detail": "On 03-recall, the active question heading and the answer field are each drawn inside a thin outline box. This may be the intended focus ring on the active control. It is not in this diff and is already on main, so it is not a blocker. Owner should confirm it reads as focus, not a stray frame."},
+    {"severity": "minor", "file": null, "detail": "The PR description was not available to QA, so the Notes block could not be checked against ticket #510's Notes. The commit messages state the same intent (type-only change, fixtures drop format_version). Owner should confirm the PR body copies the ticket's Notes."},
+    {"severity": "minor", "file": null, "detail": "Layout check (npm run layout-check) was not run. This ticket is spec 15, so the spec 07/09/10 layout script does not apply. The walk was manual and covered the persona journey at 1280x800 and 360x640."}
+  ]
+}
