@@ -16,7 +16,7 @@ Revenant never takes a political side. It shows people their own words and real 
 - Default to a metric set that leans toward one narrative. Defaults should be broad, everyday costs, and the user chooses.
 - Comment on, grade or argue with what the user wrote or remembered. Their letter is theirs.
 - Use an LLM to summarise, interpret or editorialise on the user's letter or data.
-- Score, diff, highlight, summarise or interpret the gap between the testimony and the letter, or between a written answer and any line of the letter. No similarity measure, no keyword match and no AI on either.
+- Score, diff, highlight, summarise or interpret the gap between the testimony and the letter, between a written answer and any line of the letter, or between a recollection and the answer sealed with its question. No similarity measure, no keyword match and no AI on either.
 - Call a sample answer, or any answer, right, close, near, wrong, off or accurate, in the UI or in persona copy.
 - Show an event name next to a persona opening date.
 
@@ -35,7 +35,7 @@ Persona letters are written by us, so they speak for Revenant. They must:
 - Avoid stereotypes tied to region, class, age or background. Across all personas, cover a range of situations without implying any group is better or worse off because of politics.
 - Be reviewed against the copy test below before they are sealed.
 
-A persona's pre-written answers follow the same rules as her letter: everyday life only, no price, no party, policy or election term. They differ from her letter only in ordinary, neutral ways (a different detail, a different order, a different emphasis). The page does not point at, mark, count or explain any difference, and no wording calls an answer right, wrong, close, off or accurate.
+A persona's sealed answers and recollections follow the same rules as her letter: everyday life only, no price, no party, policy or election term. They differ from her letter only in ordinary, neutral ways (a different detail, a different order, a different emphasis). The page does not point at, mark, count or explain any difference, and no wording calls an answer right, wrong, close, off or accurate.
 
 Occasion starters and questions follow the same rules: everyday life only, no leading wording, no party, policy or election term.
 
