@@ -49,7 +49,7 @@ The encrypted payload contains:
 - The letter text (plain text only, at most 5,000 characters).
 - Every tracked figure with full provenance (value, unit, region, period, source, series ID, `source_url`, `retrieved_at`), both official and self-reported.
 - Metric definitions as they were at sealing: display name, unit, region, source and series ID, so "now" data can be looked up later without the app's catalogue.
-- The recall questions, written out in full at sealing time.
+- The recall questions, written out in full at sealing time, with the answer sealed with each author question.
 - Inputs and formula identifiers for any derived value (none in the MVP beyond the then-vs-now change, which is computed at opening).
 - A `format_version` for the payload schema.
 
@@ -61,8 +61,8 @@ Opening code must support every `format_version` ever sealed. Never change the m
 
 1. Letter link loads. Before `opens_at`: "still sealed" and a countdown, nothing else.
 2. After `opens_at`: unlock with passkey or backup key, verify, decrypt in the browser.
-3. Show the sealed recall questions. Store the encrypted answers before anything else is displayed.
-4. Reveal the letter and sealed figures.
+3. Show the sealed recall questions. For each author question the reader writes what they think they answered. Store the encrypted answers before anything sealed is displayed.
+4. Reveal each author question with the testimony beside its sealed answer, then the letter, then the sealed figures.
 5. For "now" figures, the browser downloads the latest figures for the whole catalogue and picks the series it needs locally, so the server never learns what a letter tracks. If a series is no longer available, the reveal says so and still shows the sealed figure.
 6. Derived values (the then-vs-now change) are calculated in the browser.
 

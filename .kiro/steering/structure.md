@@ -25,7 +25,8 @@ Planned layout. Update this file when the structure changes.
 ├── content/
 │   └── personas/            # Demo persona letters (text only, reviewed against neutrality.md)
 │       ├── letters/samples.json  # Sample_Candidates for persona figure questions; shown on the Testify step, never sealed
-│       └── letters/answers.json  # Pre-written, fictional answers for the text persona; shown on the Testify step, never sealed or stored
+│       ├── letters/answers.json  # Pre-written, fictional recollections for the text persona; shown on the Testify step, never sealed or stored
+│       └── letters/sealed-answers.json  # The answers sealed with the text persona's questions (format v2)
 ├── drizzle/                 # SQL migrations, including immutability triggers
 ├── scripts/                 # fetch-figures (run by the CronJob), prefetch demo-window data, seal-personas
 ├── src/
@@ -76,6 +77,6 @@ Planned layout. Update this file when the structure changes.
 - `lib/sources` adapters are the only code that talks to external data publishers. Everything else reads figures from the database.
 - `lib/figures` is the only place that computes derived values like the then-vs-now change, so the formula shown to users and the formula used are the same code.
 - Demo letters (personas and live) and real sealed letters live in separate tables (see `data-integrity.md`).
-- `src/components/ceremony/scene/` holds the Scene shared by `/`, `/demo` and `/demo/personas/[key]`. Its components render on the server and the client. `soil-canvas.ts` is browser-only and is loaded only by dynamic `import()`, never statically. The landing page (platform-dev) imports from this folder and does not edit it.
+- `src/components/ceremony/scene/` holds the Scene shared by `/`, `/demo`, `/demo/personas/[key]`, `/demo/live` and `/l/[id]`. The ghost renders only in the opening flow, from emergence to the break. Home and `/demo` show the envelope on soil without it. Its components render on the server and the client. `soil-canvas.ts` is browser-only and is loaded only by dynamic `import()`, never statically. The landing page (platform-dev) imports from this folder and does not edit it.
 - User-facing copy follows `tone.md` and `neutrality.md`. Keep strings for the seal, recall and reveal flows together in their feature folders so they're easy to review.
 - `crypto.md` loads automatically for `lib/crypto`, `lib/seal-format`, `api/letters`, `api/openings` and the persona sealing script. Keep crypto-related code inside those paths so the rules load when needed.
