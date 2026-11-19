@@ -203,13 +203,18 @@ describe("Property 11: the Soil_Canvas draws the same thing from the seed", () =
     expect(dotCentreY(40, 2, 20)).toBe(40);
   });
 
-  it("places the light at the window centre at every width (spec 15 R5.5)", () => {
+  it("places the light at the window centre below 900 px (spec 15 R5.5)", () => {
     fc.assert(
-      fc.property(fc.integer({ min: 320, max: 2560 }), (w) => {
+      fc.property(fc.integer({ min: 320, max: 899 }), (w) => {
         expect(lightX(w)).toBeCloseTo(w / 2, 9);
       }),
       RUNS,
     );
+  });
+
+  it("places the light on the letter column's centre line at 900 px and above (#515 task 1)", () => {
+    expect(lightX(1280)).toBeCloseTo(310.4, 6);
+    expect(lightX(2560)).toBeCloseTo(872, 6);
   });
 
   it("covers the full canvas width with the base", () => {

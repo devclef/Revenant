@@ -17,12 +17,12 @@ describe("lightX (the Soil_Canvas light rule)", () => {
     expect(lightX(899)).toBe(899 / 2);
   });
 
-  it("is also w / 2 at 900 px, because the light stays in the centred column (spec 15 R5.5)", () => {
-    expect(lightX(900)).toBe(450);
-    expect(lightX(900)).toBeCloseTo(GHOST_X_NARROW * 900, 9);
+  it("is the letter column's centre line at 900 px, not the window centre (#515 task 1)", () => {
+    expect(lightX(900)).toBeCloseTo(234, 6);
+    expect(lightX(900)).not.toBeCloseTo(GHOST_X_NARROW * 900, 9);
   });
 
-  it("is the window centre at 2560 px, not the 1440 px frame's 72 % point", () => {
-    expect(lightX(2560)).toBe(1280);
+  it("is the letter column's centre line at 2560 px, not the window centre", () => {
+    expect(lightX(2560)).toBeCloseTo(872, 6);
   });
 });

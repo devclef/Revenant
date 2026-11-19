@@ -609,6 +609,19 @@
   .scene {
     --soil-top: 74vh;
     --soil-band: 14vh;
+    /* The Ghost's centre line and the light's x: the centre of the letter
+       column (min(34rem, 46vw), never wider than the frame less both pads),
+       from the frame's left edge plus the side pad. Matches ghostCentreX in
+       scene/layout.ts (spec 15 R5.5, revised for #515 task 1). */
+    --ghost-cx: calc(
+      var(--frame-l) + var(--pad) +
+        min(34rem, 46vw, var(--frame-w) - 2 * var(--pad)) / 2
+    );
+  }
+
+  .pit,
+  .light {
+    left: var(--ghost-cx);
   }
 
   /* The Soil_Band sits at the bottom of the backdrop, which is the bottom of
@@ -815,7 +828,7 @@
     --seal-group-gap: 20px; /* SEAL_GROUP_GAP_PX */
     position: absolute;
     left: calc(
-      50% - var(--ghost-w) / 2 + var(--ghost-w) * 0.12 - var(--seal-group-gap) -
+      var(--ghost-cx) - var(--ghost-w) / 2 + var(--ghost-w) * 0.12 - var(--seal-group-gap) -
         14rem
     );
     top: calc(var(--soil-top) + 3vh - var(--ghost-w) * 0.54621);
@@ -1037,7 +1050,11 @@
   .personaColumn > [data-ceremony="recall"],
   .personaColumn > [data-ceremony="marks"],
   .personaColumn > [data-ceremony="seal"] {
-    top: 56px;
+    /* Below the compact Ghost. The Ghost's box spans 56 px to 56 + 0.696 W
+       (1.2 W tall, scaled 0.58, W = min(26vh, 170px)), so the flow starts
+       0.75rem under it. The Step label and the "A letter from" line sit here,
+       clear of the Ghost (#515 task 1). */
+    top: calc(56px + min(26vh, 170px) * 0.696 + 0.75rem);
   }
 
   /* The Soil fades out once the persona Stages start (after the First_Step). */

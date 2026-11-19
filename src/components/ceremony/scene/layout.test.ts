@@ -46,18 +46,25 @@ describe("the Scene_Frame (R8.14)", () => {
   });
 });
 
-describe("the light and the Ghost's centre x (spec 15 R5.5, R5.16, R6.17)", () => {
-  it("sits at the window centre at every width, so the Ghost is in the centred column", () => {
+describe("the light and the Ghost's centre x (spec 15 R5.5, revised for #515 task 1)", () => {
+  it("is the window centre below 900 px, so the narrow Ghost stays centred", () => {
     expect(GHOST_X_NARROW).toBe(0.5);
-    expect(ghostCentreX(1280)).toBe(640);
-    expect(ghostCentreX(1440)).toBe(720);
-    expect(ghostCentreX(1920)).toBe(960);
-    expect(ghostCentreX(2560)).toBe(1280);
-  });
-
-  it("sits at the middle of the window below 900 px", () => {
     expect(ghostCentreX(360)).toBe(180);
     expect(ghostCentreX(899)).toBe(449.5);
+  });
+
+  it("sits on the centre line of the letter column at or above 900 px", () => {
+    // Column left = frame left + pad; column width = min(544, 46vw, frame - 2 pad).
+    // 1280: pad 38.4, column 544 wide (544 < 588.8), centre 38.4 + 272.
+    expect(ghostCentreX(1280)).toBeCloseTo(310.4, 6);
+    // 900: pad 27, column 414 wide (46vw), centre 27 + 207.
+    expect(ghostCentreX(900)).toBeCloseTo(234, 6);
+    // 1440: pad 40, column 544, centre 40 + 272.
+    expect(ghostCentreX(1440)).toBeCloseTo(312, 6);
+    // 1920: frame 1440 at left 240, pad 40, column 544, centre 240 + 40 + 272.
+    expect(ghostCentreX(1920)).toBeCloseTo(552, 6);
+    // 2560: frame 1440 at left 560, pad 40, column 544, centre 560 + 40 + 272.
+    expect(ghostCentreX(2560)).toBeCloseTo(872, 6);
   });
 
   it("is the same number on any Stage, because it depends only on the window", () => {

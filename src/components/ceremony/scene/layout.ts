@@ -9,10 +9,15 @@
 // narrow values apply.
 
 import {
+  CONTENT_COLUMN_MAX_PX,
+  CONTENT_COLUMN_VW,
   EDGE_BAND_PX,
   GHOST_X_NARROW,
   SCENE_BREAKPOINT_PX,
   SCENE_FRAME_MAX_PX,
+  SIDE_PAD_MAX_PX,
+  SIDE_PAD_MIN_PX,
+  SIDE_PAD_VW,
   SOIL_BAND_NARROW_VH,
   SOIL_BAND_WIDE_VH,
   SOIL_TOP_NARROW_VH,
@@ -36,12 +41,25 @@ export function frameLeft(viewportWidth: number): number {
 
 /**
  * The x of the light and the Ghost's pit, in pixels from the window's left
- * edge. It is the window's centre at every width (spec 15 R5.5: the ghost is
- * part of the centred column). It does not depend on the Stage, so the light
- * never moves sideways.
+ * edge. Below 900 px it is the window's centre (GHOST_X_NARROW). At or above
+ * 900 px it is the centre line of the letter column: the frame's left edge,
+ * plus the side padding, plus half the column's width. The column is
+ * min(34rem, 46vw), and never wider than the frame minus both paddings. This
+ * is the same expression scene.module.css uses for --ghost-cx. It does not
+ * depend on the Stage, so the light never moves sideways.
  */
 export function ghostCentreX(viewportWidth: number): number {
-  return viewportWidth * GHOST_X_NARROW;
+  if (!isWideLayout(viewportWidth)) return viewportWidth * GHOST_X_NARROW;
+  const pad = Math.min(
+    SIDE_PAD_MAX_PX,
+    Math.max(SIDE_PAD_MIN_PX, viewportWidth * SIDE_PAD_VW),
+  );
+  const columnW = Math.min(
+    CONTENT_COLUMN_MAX_PX,
+    viewportWidth * CONTENT_COLUMN_VW,
+    frameWidth(viewportWidth) - 2 * pad,
+  );
+  return frameLeft(viewportWidth) + pad + columnW / 2;
 }
 
 /** Soil top, in pixels from the top of a viewport of this height. */

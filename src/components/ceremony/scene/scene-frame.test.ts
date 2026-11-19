@@ -74,18 +74,20 @@ describe("the Soil and light at each layout (R6.1, R6.14, R5.16)", () => {
     expect(wide).toContain(`--soil-band: ${SOIL_BAND_WIDE_VH}vh;`);
   });
 
-  it("puts the light and the Ghost at the centre of the window at every width (spec 15 R5.5)", () => {
+  it("puts the light and the Ghost on the letter column's centre line at wide widths, and the window centre below (#515 task 1)", () => {
     expect(GHOST_X_IN_FRAME).toBe(0.72);
     expect(ruleBody(".scene")).not.toContain("--ghost-x");
     expect(wideBlock()).not.toContain("--ghost-x");
     expect(ruleBody(".light")).toContain("left: 50%;");
     expect(ruleBody(".pit")).toContain("left: 50%;");
+    expect(wideBlock()).toContain("--ghost-cx:");
   });
 
-  it("places the light, the soil and the Ghost on the window centre, so they never move sideways", () => {
+  it("places the light and the Ghost on one shared x per layout, so they never move with the Stage", () => {
     expect(ruleBody(".light")).toContain("left: 50%;");
     expect(ruleBody(".soilStrip")).toContain("top: var(--soil-top);");
     expect(ruleBody(".pit")).toContain("left: 50%;");
+    expect(wideBlock()).toContain("left: var(--ghost-cx);");
   });
 });
 
