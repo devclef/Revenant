@@ -50,6 +50,7 @@ export {
   type PayloadV2,
   type RecallQuestionV2,
   type TextRecallQuestionV2,
+  sealedAnswerOf,
 } from "./v2/payload";
 
 // Header v2 schema and type.

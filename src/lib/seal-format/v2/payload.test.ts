@@ -3,7 +3,8 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { parsePayload, parseEnvelope } from "../registry";
-import { payloadV2Schema } from "./payload";
+import { payloadV2Schema, sealedAnswerOf } from "./payload";
+import { sealedAnswerOf as sealedAnswerOfFromBarrel } from "../index";
 import { headerV2Schema } from "./header";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -171,5 +172,53 @@ describe("registry routes version 2", () => {
     const result = parseEnvelope({ ...golden, formatVersion: 2 });
     expect(result.ok).toBe(true);
     if (result.ok) expect(result.value.formatVersion).toBe(2);
+  });
+});
+
+describe("sealedAnswerOf", () => {
+  it("returns the sealed_answer of a text question", () => {
+    const text = validPayloadV2.recall_questions[1];
+    expect(sealedAnswerOf(text as Parameters<typeof sealedAnswerOf>[0])).toBe(
+      "Quiet, and busy with the harvest.",
+    );
+  });
+
+  it("returns undefined for a number question, which carries no answer", () => {
+    const number = validPayloadV2.recall_questions[0];
+    expect(sealedAnswerOf(number as Parameters<typeof sealedAnswerOf>[0])).toBe(
+      undefined,
+    );
+  });
+
+  it("is exported from the seal-format barrel", () => {
+    expect(sealedAnswerOfFromBarrel).toBe(sealedAnswerOf);
+  });
+});
+
+describe("Property 3: a text question without sealed_answer is rejected", () => {
+  it("rejects a parsed v2 payload whose text question has no sealed_answer, for any answer-less text question", () => {
+    const base = validPayloadV2.recall_questions[1];
+    for (const text of [
+      base.text,
+      "What did you do that week?",
+      "Who was there?",
+    ]) {
+      const question: Record<string, unknown> = { ...base, text };
+      delete question.sealed_answer;
+      const result = parsePayload({
+        ...validPayloadV2,
+        recall_questions: [validPayloadV2.recall_questions[0], question],
+      });
+      expect(result).toEqual({
+        ok: false,
+        error: "invalid",
+        field: "recall_questions.1.sealed_answer",
+      });
+    }
+  });
+
+  it("accepts the same text question once it carries a sealed_answer", () => {
+    const result = parsePayload(validPayloadV2);
+    expect(result.ok).toBe(true);
   });
 });

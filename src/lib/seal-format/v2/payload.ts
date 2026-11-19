@@ -178,3 +178,13 @@ export type TextRecallQuestionV2 = Extract<
   RecallQuestionV2,
   { answer_type: "text" }
 >;
+
+/**
+ * The author's sealed answer to a version 2 recall question. Returns the
+ * `sealed_answer` of a text question, and `undefined` for a number question,
+ * which carries no answer. The schema above already requires `sealed_answer`
+ * on every text question, so a parsed text question always has one.
+ */
+export function sealedAnswerOf(question: RecallQuestionV2): string | undefined {
+  return question.answer_type === "text" ? question.sealed_answer : undefined;
+}
