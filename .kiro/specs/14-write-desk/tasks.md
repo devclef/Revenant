@@ -589,7 +589,7 @@ Group D is the only cuttable work (G3.3): whatever is merged on `main` at the fr
   - Validation: `bash scripts/check.sh` (the walk itself is skipped unless `WALK=1`).
   - _Requirements: Q1.2, Q1.3, Q1.4, Q1.7_
 
-- [ ] 19. Q1.6 · Fix_Up_Task: fix product code until the layout rows and the Live_Walk pass
+- [x] 19. Q1.6 · Fix_Up_Task: fix product code until the layout rows and the Live_Walk pass
   - Agent: `frontend-dev` · Depends on: 17, 18 · Estimated size: M, ~1,000 changed lines · Target: 27 November 2026
   - Never cut. Depends on no group D task, so it runs whether or not tasks 15 and 16 merged.
   - Scope: frontend-dev paths only: `src/components/**`, `src/app/**/*.tsx` and `src/app/**/*.css`, plus the `*.test.ts(x)` next to each file it changes. It does not edit `tools/qa/` or `src/test/`, and it never edits a layout-check row, a threshold or a Live_Walk step.
