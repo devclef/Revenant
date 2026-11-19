@@ -41,7 +41,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
 
 ## Tasks
 
-- [ ] 1. Opening code takes any payload version
+- [x] 1. Opening code takes any payload version
   - Agent: `frontend-dev` · Depends on: none · Estimated size: S, ~250 changed lines
   - Scope: `src/components/reveal/opened-payload.ts` (new), `opening-machine.ts`, `FiguresThenNow.tsx`, `src/components/ceremony/recall/RecallPager.tsx`, `src/lib/recall/generate.ts` (types only), and the `*.test.ts(x)` next to each.
   - Design sections: "2. Opening code takes any version".
