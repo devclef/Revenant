@@ -811,8 +811,8 @@
      the window centre (50 %, pit left, translateX(-50 %)).
    - The Ghost_Body_Box edge is 12 % of W from that left edge, so the group's
      right edge is that minus the gap.
-   - Vertically the box bottom sits at --soil-top + 3vh (ghostPlace bottom
-     -3vh), the box is 1.2 W tall, and the handed pose lifts it 12 % of its
+   - Vertically the box bottom sits at --soil-top + 3vh (the Ghost_Box's
+     bottom -3vh on .pit), the box is 1.2 W tall, and the handed pose lifts it 12 % of its
      height. The held Envelope starts at 48 % of the box height, is 64 % of W
      wide and 188 / 300 of its width tall (the Envelope viewBox). The WaxSeal
      centre is 55.3 % down the Envelope.
