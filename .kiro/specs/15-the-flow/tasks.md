@@ -263,7 +263,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     2. Rewrite the walk for the new flow at both sizes: Write with answers, a fold check failure, Press the seal in two presses, Wait, "Open your letter", Testify (author and figure question), Break the seal, the receipts, and a persona. Each failure helper has a passing and a failing example.
     3. Update `README.md` and `docs/video-script.md` to the new ritual (questions answered when writing and recalled at opening). Keep the provenance comments in the video script correct.
     4. If task 7's commit notes say a line in `src/app/page.tsx` must change, make that change here.
-    5. A row or step that fails because of a product file is listed under "For task 15" with its name, output and suspected file. This task edits no product file and lowers no threshold.
+    5. A row or step that fails because of a product file is listed under "For task 15" with its name, output and suspected file. This task edits no product file other than the `src/app/page.tsx` change in step 4 and lowers no threshold.
   - Acceptance:
     - [ ] 14.1 Layout rows and retirements
       - _Requirements: 14.1_
