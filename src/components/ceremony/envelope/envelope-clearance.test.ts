@@ -101,10 +101,10 @@ const SIZES: ReadonlyArray<{ name: string; viewport: number }> = [
   { name: "largest (26 rem cap)", viewport: LARGEST_WIDTH_REM * REM_PX / SHARE_OF_VIEWPORT + 1 },
 ];
 
-describe("Property 9: no Envelope_Front text box reaches the dirt band", () => {
+describe("Property 9: no Envelope_Front text box reaches the lower band of the front", () => {
   for (const layout of ["wide", "narrow"] as const) {
     for (const size of SIZES) {
-      it(`keeps the ${layout} front text above the dirt band at the ${size.name}`, () => {
+      it(`keeps the ${layout} front text above the lower band of the front at the ${size.name}`, () => {
         const { bottom, frontH } = textBlockTopPx(layout, size.viewport);
         const bandTop = dirtBandTopPx(frontH);
         // `bottom` is the text box's bottom edge, measured from the top of the

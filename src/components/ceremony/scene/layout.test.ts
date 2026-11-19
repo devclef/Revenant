@@ -7,7 +7,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { EDGE_BAND_PX, GHOST_X_IN_FRAME, SCENE_BREAKPOINT_PX } from "../constants";
+import { EDGE_BAND_PX, GHOST_X_NARROW, SCENE_BREAKPOINT_PX } from "../constants";
 import {
   frameLeft,
   frameWidth,
@@ -46,14 +46,13 @@ describe("the Scene_Frame (R8.14)", () => {
   });
 });
 
-describe("the light and the Ghost's centre x (R5.16, R5.17, R6.17)", () => {
-  it("sits at 72 % of the frame at or above 900 px", () => {
-    expect(GHOST_X_IN_FRAME).toBe(0.72);
-    // design.md measured values, within a pixel of the rounded numbers.
-    expect(ghostCentreX(1280)).toBeCloseTo(922, 0);
-    expect(ghostCentreX(1440)).toBeCloseTo(1037, 0);
-    expect(ghostCentreX(1920)).toBeCloseTo(1277, 0);
-    expect(ghostCentreX(2560)).toBeCloseTo(1597, 0);
+describe("the light and the Ghost's centre x (spec 15 R5.5, R5.16, R6.17)", () => {
+  it("sits at the window centre at every width, so the Ghost is in the centred column", () => {
+    expect(GHOST_X_NARROW).toBe(0.5);
+    expect(ghostCentreX(1280)).toBe(640);
+    expect(ghostCentreX(1440)).toBe(720);
+    expect(ghostCentreX(1920)).toBe(960);
+    expect(ghostCentreX(2560)).toBe(1280);
   });
 
   it("sits at the middle of the window below 900 px", () => {

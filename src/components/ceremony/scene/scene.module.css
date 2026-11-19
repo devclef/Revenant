@@ -19,7 +19,6 @@
   --pad: clamp(1rem, 3vw, 2.5rem);
   --soil-top: 69vh;
   --soil-band: 8vh;
-  --ghost-x: 50vw;
   --content-column-max: min(34rem, 46vw);
   /* The Soil_Band's drawn height (--soil-band) plus 16 px. The Scene content
      reserves this at its bottom, so the last text ends above the band at the
@@ -450,7 +449,7 @@
    static (no animation), so Calm and reduced motion show the same light. */
 .light {
   position: absolute;
-  left: var(--ghost-x);
+  left: 50%;
   top: var(--soil-top);
   width: 40vmax;
   height: 130vmax;
@@ -461,12 +460,38 @@
   clip-path: inset(0 0 calc(50% - 12px) 0);
 }
 
-/* The pit: the Ghost's placement, centred on the light's x. */
+/* The pit: the Ghost's placement, centred in the window (spec 15 R5.5). The
+   Ghost_Box hangs from the pit point, and the clip keeps everything below the
+   Soil line (SOIL_LINE: 3vh below the pit) hidden, so the hem rises out of the
+   Soil. The clip is inset from a zero-size box, so its sides are wide enough to
+   never cut the drawing. */
 .pit {
+  --ghost-w: min(50vh, 560px);
+  --ghost-risen: -7%;
   position: absolute;
-  left: var(--ghost-x);
+  left: 50%;
   top: var(--soil-top);
   transform: translateX(-50%);
+  clip-path: inset(-100vh -100vw -3vh -100vw);
+}
+
+/* The narrow layout (below 900 px). */
+@media (max-width: 899.98px) {
+  .pit {
+    --ghost-w: min(26vh, 170px);
+    --ghost-risen: -3%;
+  }
+}
+
+/* The Ghost_Box: 1.2 times as tall as it is wide (aspect 5 : 6), hung from the
+   pit point. Its base transform is the risen pose. */
+.ghost {
+  position: absolute;
+  left: calc(var(--ghost-w) * -0.5);
+  bottom: -3vh;
+  width: var(--ghost-w);
+  aspect-ratio: 5 / 6;
+  transform: translateY(var(--ghost-risen));
 }
 
 /*
@@ -532,7 +557,7 @@
     100% 100%
   );
   background:
-    radial-gradient(ellipse 30% 90% at var(--ghost-x) 0%, var(--soil-lit), transparent),
+    radial-gradient(ellipse 30% 90% at 50% 0%, var(--soil-lit), transparent),
     radial-gradient(var(--clod) 1px, transparent 1.5px) 0 0 / 14px 14px,
     linear-gradient(to bottom, var(--soil-mid), var(--soil-deep));
 }
@@ -584,7 +609,6 @@
   .scene {
     --soil-top: 74vh;
     --soil-band: 14vh;
-    --ghost-x: calc(var(--frame-l) + var(--frame-w) * 0.72);
   }
 
   /* The Soil_Band sits at the bottom of the backdrop, which is the bottom of
@@ -680,36 +704,7 @@
  * Ghost rests risen from the first render (R9.14).
  */
 
-/* The Ghost_Box width and the risen pose, in the wide layout. */
-.ghostPlace {
-  --ghost-w: min(50vh, 560px);
-  --ghost-risen: -7%;
-  position: absolute;
-  left: 50%;
-  bottom: -3vh;
-  width: var(--ghost-w);
-  transform: translateX(-50%);
-  /* Clips the bottom edge at the Soil line, so the hem rises out of the Soil.
-     The top, left and right stay open. */
-  clip-path: inset(-100% -100% 0 -100%);
-}
-
-/* The narrow layout (below 900 px). */
-@media (max-width: 899.98px) {
-  .ghostPlace {
-    --ghost-w: min(26vh, 170px);
-    --ghost-risen: -3%;
-  }
-}
-
-/* The Ghost_Box: 1.2 times as tall as it is wide (aspect 5 : 6). Its base
-   transform is the risen pose. */
-.ghost {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 5 / 6;
-  transform: translateY(var(--ghost-risen));
-}
+/* The Ghost_Box width and the risen pose live on .pit (above). */
 
 .bob {
   position: relative;
@@ -799,8 +794,8 @@
    edge facing the Content_Column, centred on the WaxSeal, left-aligned.
 
    The position repeats the Ghost's placement from the same scene variables:
-   - Ghost_Box width W is --ghost-w (ghostPlace); its left edge is
-     --ghost-x - W / 2 (pit, translateX(-50 %)).
+   - Ghost_Box width W is --ghost-w (on .pit); its centre is the pit point, at
+     the window centre (50 %, pit left, translateX(-50 %)).
    - The Ghost_Body_Box edge is 12 % of W from that left edge, so the group's
      right edge is that minus the gap.
    - Vertically the box bottom sits at --soil-top + 3vh (ghostPlace bottom
@@ -820,7 +815,7 @@
     --seal-group-gap: 20px; /* SEAL_GROUP_GAP_PX */
     position: absolute;
     left: calc(
-      var(--ghost-x) - var(--ghost-w) / 2 + var(--ghost-w) * 0.12 - var(--seal-group-gap) -
+      50% - var(--ghost-w) / 2 + var(--ghost-w) * 0.12 - var(--seal-group-gap) -
         14rem
     );
     top: calc(var(--soil-top) + 3vh - var(--ghost-w) * 0.54621);
@@ -1014,18 +1009,17 @@
 
 /* The Compact_Ghost (spec 09 P4.2, P4.3). Below 600 px, after the First_Step
    (data-compact="true" on the pit), the Ghost_Box is scaled by COMPACT_GHOST_SCALE
-   about the pit's own point (50vw, 69vh) and moved with translate, so its top
-   sits at 56 px (the Compact_Top_Bar's bottom edge) and its right edge sits 16 px
-   from the window's right edge. Its box is 0.58 x 1.2 x min(26vh, 170px) tall,
-   at most 118 px. Only transform changes; the classes and the pit's own left and
-   top stay the same. The seal's hit square grows so it stays 44 px on screen
+   about the pit point, which is the window's centre (spec 15 R5.5). Its top sits
+   at 56 px (the Compact_Top_Bar's bottom edge). It is moved only vertically, so it
+   stays in the centred column. Its box is 0.58 x 1.2 x min(26vh, 170px) tall,
+   at most 118 px. The seal's hit square grows so it stays 44 px on screen
    (HeldSeal.module.css, --seal-hit-compact). */
 @media (max-width: 599.98px) {
   .pit[data-compact="true"] {
     --seal-hit-compact: 76px;
     transform-origin: 0 0;
     transform: translate(
-        calc(100vw - 16px - 0.29 * min(26vh, 170px) - var(--ghost-x)),
+        0,
         calc(56px - var(--soil-top) + 0.58 * (1.2 * min(26vh, 170px) - 3vh))
       )
       scale(0.58);

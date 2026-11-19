@@ -35,7 +35,7 @@ describe("Seal_Group placement in the marks layer (spec 10 C6.3)", () => {
   it("offsets the group from the Ghost body by the SEAL_GROUP_GAP_PX gap", () => {
     expect(body).toMatch(/--seal-group-gap:\s*20px/);
     expect(body).toMatch(
-      /left:\s*calc\(\s*var\(--ghost-x\)[^;]*var\(--seal-group-gap\)/,
+      /left:\s*calc\(\s*50%[^;]*var\(--seal-group-gap\)/,
     );
   });
 

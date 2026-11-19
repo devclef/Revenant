@@ -12,8 +12,8 @@
 // landing page (a server component) renders it without any handler.
 //
 // Layers, outside to inside:
-//   .pit        the Emergence shake (the pit is the Ghost's placement)
-//   .ghostPlace the Ghost_Box position, clipped at the Soil line
+//   .pit        the Emergence shake, and the placement (centred in the window,
+//               clipped at the Soil line)
 //   .ghost      the rise, from below the Soil to the risen pose (data-ghost-rise)
 //   .bob        the Idle_Bob, and the held Envelope's slot (.heldSlot)
 //   svg         the drawing, with the eyes group that follows the pointer
@@ -115,8 +115,7 @@ export function Ghost({
       data-ghost-pit
       {...rootAttributes}
     >
-      <div className={styles.ghostPlace}>
-        <div
+      <div
           ref={riseRef}
           className={styles.ghost}
           data-pose={pose}
@@ -166,7 +165,6 @@ export function Ghost({
             <div className={styles.heldSlot}>{children}</div>
           </div>
         </div>
-      </div>
     </div>
   );
 }

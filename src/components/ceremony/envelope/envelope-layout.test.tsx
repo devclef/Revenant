@@ -48,20 +48,20 @@ describe("Envelope — narrow front holds only the two date lines (Property 21)"
   });
 });
 
-describe("Envelope — accessibility and dirt band", () => {
+describe("Envelope — accessibility and the front", () => {
   it("hides the art from assistive technology", () => {
     const html = render("wide", persona());
     expect(html).toContain('aria-hidden="true"');
     expect(html).not.toContain('role="img"');
   });
 
-  it("draws the dirt band and the torn edge in every state", () => {
+  it("draws the torn edge and no dirt band in every state (spec 15 R5.6)", () => {
     for (const state of ["closed", "turned", "open"] as const) {
       const html = renderToStaticMarkup(
         createElement(Envelope, { state, persona: persona() }),
       );
-      expect(html).toContain("dirtBand");
       expect(html).toContain("tear");
+      expect(html).not.toContain("dirt");
     }
   });
 });

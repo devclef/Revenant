@@ -10,7 +10,6 @@
 
 import {
   EDGE_BAND_PX,
-  GHOST_X_IN_FRAME,
   GHOST_X_NARROW,
   SCENE_BREAKPOINT_PX,
   SCENE_FRAME_MAX_PX,
@@ -37,14 +36,12 @@ export function frameLeft(viewportWidth: number): number {
 
 /**
  * The x of the light and the Ghost's pit, in pixels from the window's left
- * edge. At or above 900 px it is `frameL + 72 % of frameW`; below, 50 % of the
- * window. It does not depend on the Stage, so the light never moves sideways.
+ * edge. It is the window's centre at every width (spec 15 R5.5: the ghost is
+ * part of the centred column). It does not depend on the Stage, so the light
+ * never moves sideways.
  */
 export function ghostCentreX(viewportWidth: number): number {
-  if (!isWideLayout(viewportWidth)) {
-    return viewportWidth * GHOST_X_NARROW;
-  }
-  return frameLeft(viewportWidth) + frameWidth(viewportWidth) * GHOST_X_IN_FRAME;
+  return viewportWidth * GHOST_X_NARROW;
 }
 
 /** Soil top, in pixels from the top of a viewport of this height. */

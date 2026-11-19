@@ -74,18 +74,18 @@ describe("the Soil and light at each layout (R6.1, R6.14, R5.16)", () => {
     expect(wide).toContain(`--soil-band: ${SOIL_BAND_WIDE_VH}vh;`);
   });
 
-  it("puts the light at 72 % of the frame at or above 900 px and the middle of the window below", () => {
+  it("puts the light and the Ghost at the centre of the window at every width (spec 15 R5.5)", () => {
     expect(GHOST_X_IN_FRAME).toBe(0.72);
-    expect(ruleBody(".scene")).toContain("--ghost-x: 50vw;");
-    expect(wideBlock()).toContain(
-      "--ghost-x: calc(var(--frame-l) + var(--frame-w) * 0.72);",
-    );
+    expect(ruleBody(".scene")).not.toContain("--ghost-x");
+    expect(wideBlock()).not.toContain("--ghost-x");
+    expect(ruleBody(".light")).toContain("left: 50%;");
+    expect(ruleBody(".pit")).toContain("left: 50%;");
   });
 
-  it("places the light and the soil on the same --ghost-x, so they never move sideways", () => {
-    expect(ruleBody(".light")).toContain("left: var(--ghost-x);");
+  it("places the light, the soil and the Ghost on the window centre, so they never move sideways", () => {
+    expect(ruleBody(".light")).toContain("left: 50%;");
     expect(ruleBody(".soilStrip")).toContain("top: var(--soil-top);");
-    expect(ruleBody(".pit")).toContain("left: var(--ghost-x);");
+    expect(ruleBody(".pit")).toContain("left: 50%;");
   });
 });
 

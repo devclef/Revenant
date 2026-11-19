@@ -56,17 +56,6 @@
   stroke-width: 1.5;
 }
 
-/* The dirt in the bottom 22 percent: a soil-coloured band with flecks. */
-.dirtBand {
-  fill: var(--env-soil);
-  opacity: 0.18;
-}
-
-.dirt circle {
-  fill: var(--env-soil);
-  opacity: 0.35;
-}
-
 /* The paper body, shared by every state. */
 .paper {
   fill: var(--env-paper);
@@ -116,7 +105,7 @@
   position: absolute;
   left: 8%;
   right: 8%;
-  /* Sits above the dirt band, which is the bottom 22 percent. */
+  /* Sits above the lower part of the front, where the envelope edge is. */
   bottom: 46%;
   display: flex;
   flex-direction: column;

@@ -23,6 +23,15 @@ import { PersonaGhost } from "./PersonaGhost";
 const here = dirname(fileURLToPath(import.meta.url));
 const css = readFileSync(join(here, "scene.module.css"), "utf8");
 
+describe("the Ghost's pit is the window centre at every size (spec 15 R5.5)", () => {
+  it("places the pit at 50 % of the window, centred by translateX(-50%)", () => {
+    const pit = css.match(/^\.pit \{([^}]*)\}/m)?.[1] ?? "";
+    expect(pit).toContain("left: 50%;");
+    expect(pit).toContain("transform: translateX(-50%);");
+    expect(pit).not.toContain("--ghost-x");
+  });
+});
+
 const PLACED_STAGES: Stage[] = ["emerging", "recall", "marks", "seal"];
 
 function ghostAt(stage: Stage): string {

@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { GHOST_X_IN_FRAME } from "../constants";
+import { GHOST_X_NARROW } from "../constants";
 import { lightX } from "./layout";
 
 describe("lightX (the Soil_Canvas light rule)", () => {
@@ -17,14 +17,12 @@ describe("lightX (the Soil_Canvas light rule)", () => {
     expect(lightX(899)).toBe(899 / 2);
   });
 
-  it("switches to the frame rule at 900 px", () => {
-    // frameW = 900, frameL = 0
-    expect(lightX(900)).toBeCloseTo(0.72 * 900, 9);
-    expect(lightX(900)).toBeCloseTo(GHOST_X_IN_FRAME * 900, 9);
+  it("is also w / 2 at 900 px, because the light stays in the centred column (spec 15 R5.5)", () => {
+    expect(lightX(900)).toBe(450);
+    expect(lightX(900)).toBeCloseTo(GHOST_X_NARROW * 900, 9);
   });
 
-  it("uses the 1440 px frame at 2560 px", () => {
-    // frameW = 1440, frameL = (2560 - 1440) / 2 = 560
-    expect(lightX(2560)).toBeCloseTo(560 + 0.72 * 1440, 9);
+  it("is the window centre at 2560 px, not the 1440 px frame's 72 % point", () => {
+    expect(lightX(2560)).toBe(1280);
   });
 });
