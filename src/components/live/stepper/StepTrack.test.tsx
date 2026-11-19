@@ -9,10 +9,23 @@ import { describe, expect, it } from "vitest";
 
 import { LiveStepper } from "./LiveStepper";
 import { StepTrack } from "./StepTrack";
-import { LIVE_STEPS, initialStepperState } from "./live-steps";
+import { LIVE_COPY } from "../copy";
+import {
+  LIVE_STEPS,
+  LIVE_STEP_NAMES,
+  initialStepperState,
+  stepIndex,
+} from "./live-steps";
 
 function trackHtml(current: (typeof LIVE_STEPS)[number]): string {
-  return renderToStaticMarkup(createElement(StepTrack, { current }));
+  return renderToStaticMarkup(
+    createElement(StepTrack, {
+      steps: LIVE_STEP_NAMES,
+      current: stepIndex(current),
+      label: LIVE_COPY.stepsLabel,
+      phoneTemplate: LIVE_COPY.stepTrackPhone,
+    }),
+  );
 }
 
 describe("StepTrack markup", () => {

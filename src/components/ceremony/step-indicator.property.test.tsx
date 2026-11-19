@@ -1,4 +1,5 @@
 // Feature: 09-demo-polish, Property 10 (the Step_Indicator follows the Stage)
+// Rewritten for spec 15 task 6: the persona page now draws the shared StepTrack.
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import fc from "fast-check";
@@ -7,7 +8,7 @@ import { describe, expect, it } from "vitest";
 import { CEREMONY_COPY } from "./copy";
 import { personaStepFor } from "./steps";
 import type { Stage } from "./stages";
-import { StepIndicator } from "../ui/StepIndicator";
+import { StepTrack } from "../live/stepper/StepTrack";
 
 // The Stages the persona page passes through, in order (C2.1: recall to close).
 const PATH: readonly Stage[] = [
@@ -24,10 +25,11 @@ const PRE_RECALL: readonly Stage[] = ["emerging", "sealed", "envelope"];
 /** The index of the aria-current item in the rendered indicator, or -1. */
 function currentIndex(step: number | null): number {
   const html = renderToStaticMarkup(
-    createElement(StepIndicator, {
+    createElement(StepTrack, {
       steps: CEREMONY_COPY.steps,
       current: step,
       label: CEREMONY_COPY.stepsLabel,
+      phoneTemplate: CEREMONY_COPY.stepTrackPhone,
     }),
   );
   const items = [...html.matchAll(/<li([^>]*)>/g)];

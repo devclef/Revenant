@@ -17,9 +17,20 @@ import {
   LIVE_STEPS,
   LIVE_STEP_NAMES,
   initialStepperState,
+  stepIndex,
   type LiveStep,
 } from "./live-steps";
 import { StepTrack } from "./StepTrack";
+
+/** The Step_Track of /demo/live at one step, from the stepper's own copy. */
+function track(step: LiveStep) {
+  return createElement(StepTrack, {
+    steps: LIVE_STEP_NAMES,
+    current: stepIndex(step),
+    label: LIVE_COPY.stepsLabel,
+    phoneTemplate: LIVE_COPY.stepTrackPhone,
+  });
+}
 
 function render(
   initialStep: LiveStep,
@@ -48,17 +59,13 @@ function indicatorNames(html: string): string[] {
 describe("Step_Indicator", () => {
   // Issue #385: the list has six steps, the seal break included.
   it("lists the six steps in order", () => {
-    const html = renderToStaticMarkup(
-      createElement(StepTrack, { current: "write" }),
-    );
+    const html = renderToStaticMarkup(track("write"));
     expect(indicatorNames(html)).toEqual([...LIVE_STEP_NAMES]);
     expect(indicatorNames(html)).toHaveLength(6);
   });
 
   it('marks only the current step with aria-current="step"', () => {
-    const html = renderToStaticMarkup(
-      createElement(StepTrack, { current: "seal" }),
-    );
+    const html = renderToStaticMarkup(track("seal"));
     const matches = html.match(/aria-current="step"/g) ?? [];
     expect(matches).toHaveLength(1);
     expect(html).toContain('data-state="current"');
@@ -67,17 +74,13 @@ describe("Step_Indicator", () => {
   it("gives the earlier steps the done state and the later ones todo", () => {
     // Six steps since issue #385: Testify is the fourth, so three are done and
     // two (Break the seal, Receipts) are todo.
-    const html = renderToStaticMarkup(
-      createElement(StepTrack, { current: "testify" }),
-    );
+    const html = renderToStaticMarkup(track("testify"));
     expect(html.match(/data-state="done"/g)).toHaveLength(3);
     expect(html.match(/data-state="todo"/g)).toHaveLength(2);
   });
 
   it("sits under the data-step-indicator hook and names the list", () => {
-    const html = renderToStaticMarkup(
-      createElement(StepTrack, { current: "write" }),
-    );
+    const html = renderToStaticMarkup(track("write"));
     expect(html).toContain("data-step-indicator");
     expect(html).toContain(`aria-label="${LIVE_COPY.stepsLabel}"`);
   });

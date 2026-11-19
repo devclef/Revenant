@@ -1,10 +1,11 @@
-// Feature: 09-demo-polish, C2.2 (Step_Indicator)
+// Feature: 09-demo-polish, C2.2 (Step_Indicator, now the shared StepTrack)
 //
 // Maps a persona-page Stage to the Step_Indicator step that is current. The
 // four steps are Testify (0), Break the seal (1), Read (2) and See the
 // receipts (3), in the order CEREMONY_COPY.steps gives them.
 //
-// Pure: no React, no DOM. CeremonyRoot and the Step_Indicator use it.
+// Pure: no React, no DOM. CeremonyRoot uses it to pick the StepTrack step (spec 15
+// task 6: the track component is the shared StepTrack in live/stepper/).
 
 import { CEREMONY_COPY } from "./copy";
 import { PERSONA_STEPS } from "./constants";
