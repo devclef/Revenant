@@ -650,7 +650,22 @@ Strings marked **new or changed** are not found verbatim in today's source or co
 - "Your letter link"
 - **new or changed** "revenant.devclef.se/l/Qm7vXk2pTn9sLd4wRa8Hye"
 - "Fingerprint at sealing"
-- **new or changed** "9c41 e7a0 5b2d 83f6 a1d0 c7e4 b58f 3a29 d6e0 b1c4 7f85 a3d2 9e6b 0c17 a4f8 d352"
+- **new or changed** "9c41"
+- **new or changed** "e7a0"
+- **new or changed** "5b2d"
+- **new or changed** "83f6"
+- **new or changed** "a1d0"
+- **new or changed** "c7e4"
+- **new or changed** "b58f"
+- **new or changed** "3a29"
+- **new or changed** "d6e0"
+- **new or changed** "b1c4"
+- **new or changed** "7f85"
+- **new or changed** "a3d2"
+- **new or changed** "9e6b"
+- **new or changed** "0c17"
+- **new or changed** "a4f8"
+- **new or changed** "d352"
 - "Save the card as an image"
 - "Add to your calendar"
 - "This is a rehearsal: a real letter stays sealed for months, and this one opens in 30 seconds."
@@ -670,16 +685,30 @@ Strings marked **new or changed** are not found verbatim in today's source or co
 
 <details><summary>Every string on this screen</summary>
 
-- "Your letter is sealed"
-- "It cannot be changed now."
 - "The time has come."
+- "It cannot be changed now."
 - **new or changed** "Open your letter"
 - "Letter card"
 - **new or changed** "Opens 14:21:05 UTC, 19 November 2026"
 - "Your letter link"
 - **new or changed** "revenant.devclef.se/l/Qm7vXk2pTn9sLd4wRa8Hye"
 - "Fingerprint at sealing"
-- **new or changed** "9c41 e7a0 5b2d 83f6 a1d0 c7e4 b58f 3a29 d6e0 b1c4 7f85 a3d2 9e6b 0c17 a4f8 d352"
+- **new or changed** "9c41"
+- **new or changed** "e7a0"
+- **new or changed** "5b2d"
+- **new or changed** "83f6"
+- **new or changed** "a1d0"
+- **new or changed** "c7e4"
+- **new or changed** "b58f"
+- **new or changed** "3a29"
+- **new or changed** "d6e0"
+- **new or changed** "b1c4"
+- **new or changed** "7f85"
+- **new or changed** "a3d2"
+- **new or changed** "9e6b"
+- **new or changed** "0c17"
+- **new or changed** "a4f8"
+- **new or changed** "d352"
 - "Save the card as an image"
 - "Add to your calendar"
 - "This is a rehearsal: a real letter stays sealed for months, and this one opens in 30 seconds."
@@ -831,13 +860,13 @@ Strings marked **new or changed** are not found verbatim in today's source or co
 
 <details><summary>Every string on this screen</summary>
 
-- **new or changed** "Question 3 of 3 · you wrote this on 19 November 2026"
+- **new or changed** "Question 3 of 3 · sealed on 19 November 2026"
 - **new or changed** "What do you think a gallon of regular gasoline cost then?"
 - "Your answer, from memory"
 - "USD per gallon"
-- **new or changed** "$3.00"
+- **new or changed** "$0"
 - **new or changed** "Zoom in to place it more exactly"
-- **new or changed** "$5.50"
+- **new or changed** "$10"
 - "Drag the ink mark to where you remember it. You can also type the number, or choose no answer."
 - "Previous question"
 - "No answer"
@@ -858,13 +887,13 @@ Strings marked **new or changed** are not found verbatim in today's source or co
 
 <details><summary>Every string on this screen</summary>
 
-- **new or changed** "Question 3 of 3 · you wrote this on 19 November 2026"
+- **new or changed** "Question 3 of 3 · sealed on 19 November 2026"
 - **new or changed** "What do you think a gallon of regular gasoline cost then?"
 - "Your answer, from memory"
 - "USD per gallon"
-- **new or changed** "$3.00"
+- **new or changed** "$0"
 - **new or changed** "Zoom in to place it more exactly"
-- **new or changed** "$5.50"
+- **new or changed** "$10"
 - "Drag the ink mark to where you remember it. You can also type the number, or choose no answer."
 - "Previous question"
 - "No answer"
@@ -930,8 +959,7 @@ Strings marked **new or changed** are not found verbatim in today's source or co
 - **new or changed** "Your answer, just now"
 - **new or changed** "$4.10"
 - "USD per gallon"
-- **new or changed** "0% · 26 Oct 2026 to 26 Oct 2026"
-- **new or changed** "(4.269 − 4.269) ÷ 4.269. Then and now are the same published period."
+- "Same week as when you sealed it. A letter kept for months would show the change."
 - **new or changed** "Source: U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices · series EMM_EPMR_PTE_NUS_DPG. Then: sealed with the letter, retrieved 1 Nov 2026. Now: retrieved 19 Nov 2026."
 - **new or changed** "Check the source"
 - "The seal is intact. Nothing here has changed since it was sealed."
@@ -966,11 +994,10 @@ Strings marked **new or changed** are not found verbatim in today's source or co
 - **new or changed** "You lived through May 2024 too. Answer from your own memory of it."
 - "Your answer, from memory"
 - "USD per gallon"
-- **new or changed** "· sample answer."
 - "A sample answer is filled in. Change it if you remember differently."
-- **new or changed** "$2.99"
+- **new or changed** "$0"
 - **new or changed** "Zoom in to place it more exactly"
-- **new or changed** "$4.25"
+- **new or changed** "$10"
 - "Drag the ink mark to where you remember it. You can also type the number, or choose no answer."
 - "No answer"
 - "Next question"
@@ -1033,16 +1060,16 @@ Strings marked **new or changed** are not found verbatim in today's source or co
 - **new or changed** "Your answer · sample answer"
 - **new or changed** "$3.59"
 - "USD per gallon"
-- **new or changed** "−15.8% · 6 May 2024 to 4 Nov 2024"
-- **new or changed** "(3.069 − 3.643) ÷ 3.643"
+- **new or changed** "fell −0.574 · −15.8% · 6 May 2024 to 4 Nov 2024"
+- **new or changed** "Formula: (3.069 − 3.643) ÷ 3.643 × 100 = −15.8%"
 - **new or changed** "Source: U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices · series EMM_EPMR_PTE_NUS_DPG. Then: historical record, retrieved 1 Nov 2026. Now: historical record, retrieved 1 Nov 2026."
 - **new or changed** "Check the source"
 - **new or changed** "A gallon of diesel"
 - **new or changed** "$3.894"
 - **new or changed** "$3.536"
 - **new or changed** "$3.79"
-- **new or changed** "−9.2% · 6 May 2024 to 4 Nov 2024"
-- **new or changed** "(3.536 − 3.894) ÷ 3.894"
+- **new or changed** "fell −0.358 · −9.2% · 6 May 2024 to 4 Nov 2024"
+- **new or changed** "Formula: (3.536 − 3.894) ÷ 3.894 × 100 = −9.2%"
 - **new or changed** "Source: U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices · series EMD_EPD2D_PTE_NUS_DPG. Then: historical record, retrieved 1 Nov 2026. Now: historical record, retrieved 1 Nov 2026."
 - "The seal is intact. Nothing here has changed since it was sealed."
 - "Show the fingerprint"
@@ -1092,16 +1119,16 @@ Strings marked **new or changed** are not found verbatim in today's source or co
 - **new or changed** "Your answer · sample answer"
 - **new or changed** "$3.59"
 - "USD per gallon"
-- **new or changed** "−15.8% · 6 May 2024 to 4 Nov 2024"
-- **new or changed** "(3.069 − 3.643) ÷ 3.643"
+- **new or changed** "fell −0.574 · −15.8% · 6 May 2024 to 4 Nov 2024"
+- **new or changed** "Formula: (3.069 − 3.643) ÷ 3.643 × 100 = −15.8%"
 - **new or changed** "Source: U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices · series EMM_EPMR_PTE_NUS_DPG. Then: historical record, retrieved 1 Nov 2026. Now: historical record, retrieved 1 Nov 2026."
 - **new or changed** "Check the source"
 - **new or changed** "A gallon of diesel"
 - **new or changed** "$3.894"
 - **new or changed** "$3.536"
 - **new or changed** "$3.79"
-- **new or changed** "−9.2% · 6 May 2024 to 4 Nov 2024"
-- **new or changed** "(3.536 − 3.894) ÷ 3.894"
+- **new or changed** "fell −0.358 · −9.2% · 6 May 2024 to 4 Nov 2024"
+- **new or changed** "Formula: (3.536 − 3.894) ÷ 3.894 × 100 = −9.2%"
 - **new or changed** "Source: U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices · series EMD_EPD2D_PTE_NUS_DPG. Then: historical record, retrieved 1 Nov 2026. Now: historical record, retrieved 1 Nov 2026."
 - "The seal is cracked. Revenant refuses to open this copy."
 - "This runs on a copy in your browser. The stored letter is not changed."
@@ -1140,7 +1167,7 @@ Strings marked **new or changed** are not found verbatim in today's source or co
 - **new or changed** "Priya's letter"
 - **new or changed** "Written as of 12 May 2024 · Opens 5 November 2024"
 - **new or changed** "Question 1 of 2"
-- **new or changed** "On 12 May 2024 she asked herself:"
+- **new or changed** "As of 12 May 2024 she asked herself:"
 - **new or changed** "What am I looking forward to most right now?"
 - **new or changed** "What she thinks she answered · fictional"
 - **new or changed** "The coast trip with my sister, mostly. I think I also wanted one quiet Sunday."
@@ -1169,10 +1196,10 @@ Strings marked **new or changed** are not found verbatim in today's source or co
 - **new or changed** "She remembered · fictional"
 - **new or changed** "The coast trip with my sister, mostly. I think I also wanted one quiet Sunday."
 - **new or changed** "She wrote, as of 12 May 2024"
-- **new or changed** "The trip to the coast with my sister, even though we haven't agreed how to get there. And a Sunday with nothing on the list."
+- **new or changed** "The trip to the coast with my sister, even though we have not agreed how to get there. And a Sunday with nothing on the list."
 - **new or changed** "What am I worried about right now?"
-- **new or changed** "Whether to take the extra morning shift. And I think I was worried about the reading list."
-- **new or changed** "The extra morning shift. I can't decide, and I'm worried I'll fall behind on my reading either way."
+- **new or changed** "I think I had already decided to say no to the extra shift. The reading list was what worried me."
+- **new or changed** "The extra morning shift. I keep changing my mind, and either way I am worried I will fall behind on my reading."
 - **new or changed** "What she wrote, as of 12 May 2024"
 - **new or changed** "Written as of 12 May 2024"
 - "Dear Priya,"
@@ -1216,7 +1243,22 @@ Strings marked **new or changed** are not found verbatim in today's source or co
 - "Your letter link"
 - **new or changed** "revenant.devclef.se/l/Qm7vXk2pTn9sLd4wRa8Hye"
 - "Fingerprint at sealing"
-- **new or changed** "9c41 e7a0 5b2d 83f6 a1d0 c7e4 b58f 3a29 d6e0 b1c4 7f85 a3d2 9e6b 0c17 a4f8 d352"
+- **new or changed** "9c41"
+- **new or changed** "e7a0"
+- **new or changed** "5b2d"
+- **new or changed** "83f6"
+- **new or changed** "a1d0"
+- **new or changed** "c7e4"
+- **new or changed** "b58f"
+- **new or changed** "3a29"
+- **new or changed** "d6e0"
+- **new or changed** "b1c4"
+- **new or changed** "7f85"
+- **new or changed** "a3d2"
+- **new or changed** "9e6b"
+- **new or changed** "0c17"
+- **new or changed** "a4f8"
+- **new or changed** "d352"
 - **new or changed** "Scan the code to open the letter. Before the opening time it shows only that the letter is still sealed. This card holds no key."
 - **new or changed** "Printable keepsake, shown at screen size."
 - "Save the card as an image"
@@ -1271,22 +1313,22 @@ Old wording for comparison: "Before you read it, what do you remember about the 
 
 ## Priya: copy for the owner to approve
 
-Fictional. Everyday and neutral, no price, party, policy or election term, no wording that grades. Her letter is unchanged (`content/personas/letters/us-priya.txt`).
+Approved by the owner with these edits. Fictional. Everyday and neutral, no price, party, policy or election term, no wording that grades. Her letter is unchanged (`content/personas/letters/us-priya.txt`).
 
 Her questions (rewritten to the new rule):
 
 1. What am I looking forward to most right now?
 2. What am I worried about right now?
 
-What she answered on 12 May 2024 (sealed):
+What she answered on 12 May 2024 (sealed). No contractions, like her letter:
 
-1. "The trip to the coast with my sister, even though we haven't agreed how to get there. And a Sunday with nothing on the list."
-2. "The extra morning shift. I can't decide, and I'm worried I'll fall behind on my reading either way."
+1. "The trip to the coast with my sister, even though we have not agreed how to get there. And a Sunday with nothing on the list."
+2. "The extra morning shift. I keep changing my mind, and either way I am worried I will fall behind on my reading."
 
 What she remembers at opening (fictional recollection, small natural drift):
 
 1. "The coast trip with my sister, mostly. I think I also wanted one quiet Sunday."
-2. "Whether to take the extra morning shift. And I think I was worried about the reading list."
+2. "I think I had already decided to say no to the extra shift. The reading list was what worried me."
 
 The live-letter text, questions and answers on the live screens are sample copy for the prototype only.
 
@@ -1294,7 +1336,7 @@ The live-letter text, questions and answers on the live screens are sample copy 
 
 Things this brief did not settle, and what I chose:
 
-- **Persona notice on phone.** The brief puts it in the bar, but the full sentence does not fit beside two icon buttons. On desktop it sits in the bar. On phone it sits in a thin strip directly under the bar. Only one of the two is visible at any width, so it is never shown twice.
+- **Persona notice on phone** (approved). The full sentence does not fit beside two icon buttons. On desktop it sits in the bar on one line. On phone it sits in a thin strip directly under the bar. Only one of the two is visible at any width, so it is never shown twice.
 - **Skip.** Its space is always reserved. No screen is captured mid-sequence, so no screenshot shows it. During the rise (emergence) and the unfold after the break it becomes visible in the reserved slot.
 - **Unlock and still-sealed have no ghost.** Nothing is unlocked yet. The ghost first rises on `emergence`. The brief says "from the moment the letter is unlocked".
 - **Ghost sizes.** Held, with the envelope in front of its lower body (no hands). Testify: 160 px tall on desktop, 96 px on phone. Emergence: 240 and 168. Break: about 384 and 312, with the wax 120 px across on desktop and 96 px on phone, pressable. Other seals are 28% of their envelope's width.
@@ -1307,7 +1349,15 @@ Things this brief did not settle, and what I chose:
 - **Wait.** The letter card is drawn on paper, because it is a keepsake of what was sealed. It has no seal drawing of its own, so the seal appears once (the envelope). While the countdown runs the button slot shows plain text, so nothing jumps when "Open your letter" appears.
 - **Persona recollection** uses a purple rule, not orange, because orange means the reader. Her recollection is labelled "fictional".
 - **Receipts for personas.** Maya's "now" figures are the records for the week of her opening date (4 Nov 2024). Her sample answers are marked "sample answer" in the figure.
-- **Same-week case** on the live letter: then and now are the same published period, so the change is 0% and the formula line says "Then and now are the same published period." No more explanation is given.
+- **Same-week case** on the live letter uses the wording the live site already has: "Same week as when you sealed it. A letter kept for months would show the change." ("month" for a YYYY-MM period, "period" otherwise). In that case there is no change line, no percentage and no formula. Then and Now still show with their periods.
+- **Scale range** is fixed per unit from `UNIT_RANGE_TABLE` in `unit-ranges.ts` (USD per gallon 0 to 10, ticks every 2). It never comes from a figure or an answer.
+- **Change line** keeps what the live site shows: the direction word, the signed difference with the same number of decimals as Then and Now, the percentage and both periods, for example "fell −0.574 · −15.8% · 6 May 2024 to 4 Nov 2024". The formula is shown with its result: "Formula: (3.069 − 3.643) ÷ 3.643 × 100 = −15.8%".
+- **Wordmark** is the current one: the text "revenant" set in uppercase with letter-spacing 0.12em, as in `scene.module.css`.
+- **Top bar slots.** The reserved Skip slot sits first in the button group, so the visible buttons sit flush right. When Skip is visible it is last.
+- **Wax size.** The wax drawing fills about 92% of its box, so the box is 132 px on desktop and 106 px on phone to make the wax itself at least 120 px and 96 px across.
+- **Write envelope wax** shows at 35% until the fold check would pass (letter written and every question answered).
+- **Counters.** Author questions read "Question 1 of 3". Figure questions read "Question 3 of 3 · sealed on 19 November 2026". Persona figure questions read "as of 12 May 2024". Persona author questions read "As of 12 May 2024 she asked herself:".
+- **Back to the letter** is shown as plain muted text, not a link, once the passkey is made (`seal-step-2`, `seal-sealing`), at the same position.
 - **Backup key and QR** on the card screens are sample values for the prototype and not real keys. The QR is a real code made with the repo's encoder, and it points at a sample letter link.
 - **New art, only where none existed.** The crack across the wax on `maya-tampered` (a plain dark line over the existing seal relief), the soil strip (flat, with a lit edge and a few clods, instead of the canvas Soil), and the top-bar icons (simple strokes, not copied from `scene/icons.tsx`). The ghost, the seal relief and the envelope are copied from the source, and the envelope has no dirt band. The three seal reliefs come from the maya and priya fingerprints, and a sample fingerprint for the live letter.
 - **Ritual copy on the home page** changes for "Write" and "Testify" to match the new model.
@@ -1341,10 +1391,8 @@ Not edited. Proposed wording follows.
 
 ## Sealed format changes needed
 
-A sealed answer for each author question needs a new `format_version` (2). Version 1 letters keep opening exactly as today. The v2 payload gains, for each author question, the question text as written and the author's answer as a plain-text string with a length limit. Everything else in v1 is unchanged. The reveal handles a v1 letter by showing each question and the reader's testimony with no sealed answer beside it, and a plain line saying the letter was sealed before answers were kept. That line is not drawn in this prototype and needs wording. The persona Priya must be sealed again as v2 with her sealed answers, which gives her a new letter id and fingerprint. Her recollections stay outside the sealed letter, as `content/personas/letters/answers.json` does now.
+A sealed answer for each author question needs a new `format_version` (2). Version 1 letters keep opening exactly as today. The v2 payload gains, for each author question, the question text as written and the author's answer as a plain-text string with a length limit. Everything else in v1 is unchanged. The reveal handles a v1 letter by showing each question and the reader's testimony with no sealed answer beside it. Under a question with no sealed answer it says: "No answer was sealed with this question." That line is not drawn in a screenshot because no screen shows a v1 letter. The persona Priya must be sealed again as v2 with her sealed answers, which gives her a new letter id and fingerprint. Her recollections stay outside the sealed letter, as `content/personas/letters/answers.json` does now.
 
 ## Questions for the owner
 
-1. Approve Priya's questions, sealed answers and recollections above.
-2. On phone, is the persona notice in a strip under the bar acceptable, or should it be an icon in the bar that opens the notice?
-3. The same-week receipts line says only "Then and now are the same published period." Is that the wording you want?
+None blocking. The three earlier questions were answered in review.

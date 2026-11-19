@@ -58,8 +58,8 @@ export function heldGhost(size, kind, waxOpts) {
 export const soil = (wide) => `<div class="soil${wide ? " wide" : ""}" aria-hidden="true"></div>`;
 
 // A free-standing envelope with its wax, for pages without the ghost.
-export function envBox(kind, { off = false, pressed = false, button = true, label } = {}) {
-  const w = button ? wax(kind, { off, pressed, label }) : `<span class="wax" style="pointer-events:none">${sealSvg(kind)}</span>`;
+export function envBox(kind, { off = false, pressed = false, button = true, label, dim = false } = {}) {
+  const w = button ? wax(kind, { off, pressed, label }) : `<span class="wax${dim ? " off" : ""}" style="pointer-events:none">${sealSvg(kind)}</span>`;
   return `<div class="envbox sealgroup${button ? " press" : ""}">${envSvg(null)}${w}</div>`;
 }
 
@@ -73,9 +73,10 @@ export function topbar({ persona, sound, skip }) {
   return `<header class="top">
 <a class="brand" href="index.html" title="Back to the prototype index"><span class="word">revenant</span><span class="chip">Demo</span></a>
 ${persona ? `<p class="notice">${esc(persona)}</p>` : ""}
+${skip ? "" : `<button class="tbtn reserved" type="button" aria-label="Skip" aria-hidden="true" tabindex="-1">${ic.skip}<span class="t">Skip</span></button>`}
 <button class="tbtn" type="button" aria-label="Turn off motion">${ic.calm}<span class="t">Calm</span></button>
 ${sound ? `<button class="tbtn" type="button" aria-label="Turn sound on">${ic.sound}<span class="t">Sound</span></button>` : ""}
-<button class="tbtn${skip ? "" : " reserved"}" type="button" aria-label="Skip"${skip ? "" : ' aria-hidden="true" tabindex="-1"'}>${ic.skip}<span class="t">Skip</span></button>
+${skip ? `<button class="tbtn" type="button" aria-label="Skip">${ic.skip}<span class="t">Skip</span></button>` : ""}
 </header>${persona ? `<p class="persona-strip">${esc(persona)}</p>` : ""}`;
 }
 

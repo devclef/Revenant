@@ -86,22 +86,22 @@ Old wording for comparison: "Before you read it, what do you remember about the 
 
 ## Priya: copy for the owner to approve
 
-Fictional. Everyday and neutral, no price, party, policy or election term, no wording that grades. Her letter is unchanged (\`content/personas/letters/us-priya.txt\`).
+Approved by the owner with these edits. Fictional. Everyday and neutral, no price, party, policy or election term, no wording that grades. Her letter is unchanged (\`content/personas/letters/us-priya.txt\`).
 
 Her questions (rewritten to the new rule):
 
 1. What am I looking forward to most right now?
 2. What am I worried about right now?
 
-What she answered on 12 May 2024 (sealed):
+What she answered on 12 May 2024 (sealed). No contractions, like her letter:
 
-1. "The trip to the coast with my sister, even though we haven't agreed how to get there. And a Sunday with nothing on the list."
-2. "The extra morning shift. I can't decide, and I'm worried I'll fall behind on my reading either way."
+1. "The trip to the coast with my sister, even though we have not agreed how to get there. And a Sunday with nothing on the list."
+2. "The extra morning shift. I keep changing my mind, and either way I am worried I will fall behind on my reading."
 
 What she remembers at opening (fictional recollection, small natural drift):
 
 1. "The coast trip with my sister, mostly. I think I also wanted one quiet Sunday."
-2. "Whether to take the extra morning shift. And I think I was worried about the reading list."
+2. "I think I had already decided to say no to the extra shift. The reading list was what worried me."
 
 The live-letter text, questions and answers on the live screens are sample copy for the prototype only.
 
@@ -109,7 +109,7 @@ The live-letter text, questions and answers on the live screens are sample copy 
 
 Things this brief did not settle, and what I chose:
 
-- **Persona notice on phone.** The brief puts it in the bar, but the full sentence does not fit beside two icon buttons. On desktop it sits in the bar. On phone it sits in a thin strip directly under the bar. Only one of the two is visible at any width, so it is never shown twice.
+- **Persona notice on phone** (approved). The full sentence does not fit beside two icon buttons. On desktop it sits in the bar on one line. On phone it sits in a thin strip directly under the bar. Only one of the two is visible at any width, so it is never shown twice.
 - **Skip.** Its space is always reserved. No screen is captured mid-sequence, so no screenshot shows it. During the rise (emergence) and the unfold after the break it becomes visible in the reserved slot.
 - **Unlock and still-sealed have no ghost.** Nothing is unlocked yet. The ghost first rises on \`emergence\`. The brief says "from the moment the letter is unlocked".
 - **Ghost sizes.** Held, with the envelope in front of its lower body (no hands). Testify: 160 px tall on desktop, 96 px on phone. Emergence: 240 and 168. Break: about 384 and 312, with the wax 120 px across on desktop and 96 px on phone, pressable. Other seals are 28% of their envelope's width.
@@ -122,7 +122,15 @@ Things this brief did not settle, and what I chose:
 - **Wait.** The letter card is drawn on paper, because it is a keepsake of what was sealed. It has no seal drawing of its own, so the seal appears once (the envelope). While the countdown runs the button slot shows plain text, so nothing jumps when "Open your letter" appears.
 - **Persona recollection** uses a purple rule, not orange, because orange means the reader. Her recollection is labelled "fictional".
 - **Receipts for personas.** Maya's "now" figures are the records for the week of her opening date (4 Nov 2024). Her sample answers are marked "sample answer" in the figure.
-- **Same-week case** on the live letter: then and now are the same published period, so the change is 0% and the formula line says "Then and now are the same published period." No more explanation is given.
+- **Same-week case** on the live letter uses the wording the live site already has: "Same week as when you sealed it. A letter kept for months would show the change." ("month" for a YYYY-MM period, "period" otherwise). In that case there is no change line, no percentage and no formula. Then and Now still show with their periods.
+- **Scale range** is fixed per unit from \`UNIT_RANGE_TABLE\` in \`unit-ranges.ts\` (USD per gallon 0 to 10, ticks every 2). It never comes from a figure or an answer.
+- **Change line** keeps what the live site shows: the direction word, the signed difference with the same number of decimals as Then and Now, the percentage and both periods, for example "fell −0.574 · −15.8% · 6 May 2024 to 4 Nov 2024". The formula is shown with its result: "Formula: (3.069 − 3.643) ÷ 3.643 × 100 = −15.8%".
+- **Wordmark** is the current one: the text "revenant" set in uppercase with letter-spacing 0.12em, as in \`scene.module.css\`.
+- **Top bar slots.** The reserved Skip slot sits first in the button group, so the visible buttons sit flush right. When Skip is visible it is last.
+- **Wax size.** The wax drawing fills about 92% of its box, so the box is 132 px on desktop and 106 px on phone to make the wax itself at least 120 px and 96 px across.
+- **Write envelope wax** shows at 35% until the fold check would pass (letter written and every question answered).
+- **Counters.** Author questions read "Question 1 of 3". Figure questions read "Question 3 of 3 · sealed on 19 November 2026". Persona figure questions read "as of 12 May 2024". Persona author questions read "As of 12 May 2024 she asked herself:".
+- **Back to the letter** is shown as plain muted text, not a link, once the passkey is made (\`seal-step-2\`, \`seal-sealing\`), at the same position.
 - **Backup key and QR** on the card screens are sample values for the prototype and not real keys. The QR is a real code made with the repo's encoder, and it points at a sample letter link.
 - **New art, only where none existed.** The crack across the wax on \`maya-tampered\` (a plain dark line over the existing seal relief), the soil strip (flat, with a lit edge and a few clods, instead of the canvas Soil), and the top-bar icons (simple strokes, not copied from \`scene/icons.tsx\`). The ghost, the seal relief and the envelope are copied from the source, and the envelope has no dirt band. The three seal reliefs come from the maya and priya fingerprints, and a sample fingerprint for the live letter.
 - **Ritual copy on the home page** changes for "Write" and "Testify" to match the new model.
@@ -156,13 +164,11 @@ Not edited. Proposed wording follows.
 
 ## Sealed format changes needed
 
-A sealed answer for each author question needs a new \`format_version\` (2). Version 1 letters keep opening exactly as today. The v2 payload gains, for each author question, the question text as written and the author's answer as a plain-text string with a length limit. Everything else in v1 is unchanged. The reveal handles a v1 letter by showing each question and the reader's testimony with no sealed answer beside it, and a plain line saying the letter was sealed before answers were kept. That line is not drawn in this prototype and needs wording. The persona Priya must be sealed again as v2 with her sealed answers, which gives her a new letter id and fingerprint. Her recollections stay outside the sealed letter, as \`content/personas/letters/answers.json\` does now.
+A sealed answer for each author question needs a new \`format_version\` (2). Version 1 letters keep opening exactly as today. The v2 payload gains, for each author question, the question text as written and the author's answer as a plain-text string with a length limit. Everything else in v1 is unchanged. The reveal handles a v1 letter by showing each question and the reader's testimony with no sealed answer beside it. Under a question with no sealed answer it says: "No answer was sealed with this question." That line is not drawn in a screenshot because no screen shows a v1 letter. The persona Priya must be sealed again as v2 with her sealed answers, which gives her a new letter id and fingerprint. Her recollections stay outside the sealed letter, as \`content/personas/letters/answers.json\` does now.
 
 ## Questions for the owner
 
-1. Approve Priya's questions, sealed answers and recollections above.
-2. On phone, is the persona notice in a strip under the bar acceptable, or should it be an icon in the bar that opens the notice?
-3. The same-week receipts line says only "Then and now are the same published period." Is that the wording you want?
+None blocking. The three earlier questions were answered in review.
 `;
 writeFileSync(dir + "README.md", md);
 console.log("README written", md.length);

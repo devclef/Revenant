@@ -110,7 +110,7 @@ ${receipt === "own" ? `<div class="formgrid"><div class="field full"><label>What
       : `<p class="muted">No receipt tucked in. A letter does not need one.</p><div class="row">${btn("Choose a public price", "#", "two small")}</div>`}
 </section>`;
   const side = `<aside class="side"><div class="panel stack"><h2 class="h3">In the envelope</h2>
-<div style="width:min(100%,220px);margin:0 auto">${envBox("live", { button: false })}</div>
+<div style="width:min(100%,220px);margin:0 auto">${envBox("live", { button: false, dim: !(letterOk && answered === qs.length) })}</div>
 <ul class="checklist"><li class="${letterOk ? "ok" : ""}"><span class="tick">${letterOk ? "✓" : ""}</span><span>The letter<small>${letterOk ? "Written" : "Not written yet"}</small></span></li>
 <li class="${answered === qs.length ? "ok" : ""}"><span class="tick">${answered === qs.length ? "✓" : ""}</span><span>Questions answered<small>${answered} of ${qs.length}</small></span></li>
 <li class="${receipt === "none" ? "" : "ok"}"><span class="tick">${receipt === "none" ? "" : "✓"}</span><span>A receipt<small>${receipt === "none" ? "None. Optional" : receipt === "own" ? "1 number of your own" : "1 public price"}</small></span></li></ul>
@@ -139,22 +139,22 @@ const backupCardMini = `<div class="paper" style="padding:14px 16px;display:grid
 <p class="muted small">Sample key, for this prototype only.</p><div class="row">${btn("Save the card as an image", "#", "two small")}</div>`;
 const warnBox = `<div class="warn"><p><b>A lost or deleted passkey means this letter can never be opened, unless you also keep its backup key.</b> Revenant cannot recover it.</p></div>`;
 const crossDev = `<details><summary class="link" style="cursor:pointer">Opening on another device</summary><p class="muted" style="margin-top:8px">A passkey may not work on a device from a different ecosystem. To open this letter, use a device that has the passkey, or your computer's "use a phone" option.</p></details>`;
-const sealTail = (opts) => `<fieldset style="border:0;padding:0;margin:0" class="stack"><legend class="h3" style="margin-bottom:12px;padding:0">If you lose this passkey</legend>${opts}</fieldset>${warnBox}<div class="stack">${crossDev}<p><a class="link" href="write-filled.html">Back to the letter</a></p></div>`;
+const sealTail = (opts, backOff) => `<fieldset style="border:0;padding:0;margin:0" class="stack"><legend class="h3" style="margin-bottom:12px;padding:0">If you lose this passkey</legend>${opts}</fieldset>${warnBox}<div class="stack">${crossDev}<p>${backOff ? `<span class="link dis" aria-disabled="true">Back to the letter</span>` : `<a class="link" href="write-filled.html">Back to the letter</a>`}</p></div>`;
 
-function sealBody({ wax: wopts, status, steps, opts, extra = "", notice = "" }) {
+function sealBody({ wax: wopts, status, steps, opts, extra = "", notice = "", backOff = false }) {
   return `${track({ live: 1 })}<div class="stack center" style="margin-bottom:8px"><h1 class="h1">Press the seal.</h1>${sealPara}</div>
 ${notice}<div class="stage"><div class="fold-env" style="width:min(100%,340px)">${envBox("live", wopts)}</div>${soil()}</div>
 <div class="center stack" style="align-items:center;display:flex;flex-direction:column;margin-top:-6px"><p class="status" role="status">${status}</p>${steps}</div>
-${extra}<div class="stack" style="margin-top:36px">${sealTail(opts)}</div>`;
+${extra}<div class="stack" style="margin-top:36px">${sealTail(opts, backOff)}</div>`;
 }
 add({ id: "seal-choose", title: "Press the seal: choose a backup", route: "/demo/live (step 2)", state: "Before a backup choice. The wax is at 35% with its relief.", fixes: [4], component: "src/components/live/seal-step/SealStep.tsx, press/PressEnvelope.tsx, BackupChoice.tsx", wide: "", opts: {},
   body: () => sealBody({ wax: { off: true }, status: "Choose a backup option first.", steps: stepsHtml("", "", "", ""), opts: cardOpt(false) + skipOpt(false) }) });
 add({ id: "seal-step-1", title: "Press the seal: first press", route: "/demo/live (step 2)", state: "Backup chosen (skip, with the warning confirmed). Ready for the first press.", fixes: [4], component: "SealStep.tsx, PressEnvelope.tsx", wide: "", opts: {},
   body: () => sealBody({ wax: {}, status: "Press the wax to make your passkey.", steps: stepsHtml("now", "", "", ""), opts: cardOpt(false) + skipOpt(true, `<label style="display:flex;gap:10px;align-items:flex-start"><span class="tick" style="flex:none;width:22px;height:22px;border:2px solid var(--text);border-radius:4px;display:grid;place-items:center;background:var(--text);color:var(--bg);font-size:14px">✓</span><span>I understand that a lost or deleted passkey means this letter can never be opened, unless I keep its backup key.</span></label>`) }) });
 add({ id: "seal-step-2", title: "Press the seal: second press", route: "/demo/live (step 2)", state: "Passkey made. The second press is the next action.", fixes: [4], component: "SealStep.tsx, press/press-status", wide: "", opts: {},
-  body: () => sealBody({ wax: {}, status: "Your device will ask once more to set the seal. Press the wax.", steps: stepsHtml("done", "now", "Passkey made", ""), opts: cardOpt(true, "<p class=\"muted small\">Backup card saved.</p>") + skipOpt(false) }) });
+  body: () => sealBody({ wax: {}, status: "Your device will ask once more to set the seal. Press the wax.", backOff: true, steps: stepsHtml("done", "now", "Passkey made", ""), opts: cardOpt(true, "<p class=\"muted small\">Backup card saved.</p>") + skipOpt(false) }) });
 add({ id: "seal-sealing", title: "Press the seal: sealing", route: "/demo/live (step 2)", state: "Sealing in progress. The wax is shown pressed.", fixes: [4], component: "SealStep.tsx", wide: "", opts: {},
-  body: () => sealBody({ wax: { pressed: true }, status: "Sealing your letter.", steps: stepsHtml("done", "now", "Passkey made", "Sealing your letter."), opts: cardOpt(true, "<p class=\"muted small\">Backup card saved.</p>") + skipOpt(false) }) });
+  body: () => sealBody({ wax: { pressed: true }, status: "Sealing your letter.", backOff: true, steps: stepsHtml("done", "now", "Passkey made", "Sealing your letter."), opts: cardOpt(true, "<p class=\"muted small\">Backup card saved.</p>") + skipOpt(false) }) });
 add({ id: "seal-backup", title: "Press the seal: backup card", route: "/demo/live (step 2)", state: "'Download a backup key card' chosen, card ready to save.", fixes: [4], component: "BackupChoice.tsx, BackupKeyCard.tsx", wide: "", opts: {},
   body: () => sealBody({ wax: {}, status: "Press the wax to make your passkey.", steps: stepsHtml("now", "", "", ""), opts: cardOpt(true, backupCardMini) + skipOpt(false) }) });
 add({ id: "seal-no-prf", title: "Press the seal: no passkey key", route: "/demo/live (step 2)", state: "The passkey can't make a key. The backup key is now required. The wax waits for the key to be saved.", fixes: [4], component: "BackupFallback.tsx, SealFailure.tsx", wide: "", opts: {},

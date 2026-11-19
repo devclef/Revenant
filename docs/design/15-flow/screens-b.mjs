@@ -8,11 +8,11 @@ const fpBlock = (h, cls = "") => `<div class="fpgrid ${cls}">${fpHtml(h)}</div>`
 // ---------------------------------------------------------------- Wait
 const letterCard = () => `<div class="paper lcard"><div class="qr">${qr}</div><div class="meta"><span class="k">Letter card</span><b>Opens ${LIVE.opens}</b>
 <span class="k">Your letter link</span><span class="url">${LIVE.link}</span>
-<span class="k">Fingerprint at sealing</span><div class="fpsmall">${groups(LIVE.hash).join(" ")}</div></div></div>`;
+<span class="k">Fingerprint at sealing</span><div class="fpsmall">${groups(LIVE.hash).map((g) => `<span class="g4">${g}</span>`).join(" ")}</div></div></div>`;
 function waitBody(ready) {
   return `${track({ live: 2 })}<section class="panel stack" style="padding:28px"><div style="width:min(100%,240px);margin:0 auto">${envBox("live", { button: false })}</div>
-<div class="center stack"><h1 class="h1">Your letter is sealed</h1><p class="lede">It cannot be changed now.</p>
-${ready ? `<p class="big" role="timer">The time has come.</p>` : `<p class="big" role="timer" aria-live="off">18</p><p class="muted">Time remaining: 18 seconds.</p>`}
+<div class="center stack"><h1 class="h1">${ready ? "The time has come." : "Your letter is sealed"}</h1><p class="lede">It cannot be changed now.</p>
+${ready ? "" : `<p class="big" role="timer" aria-live="off">18</p><p class="muted">Time remaining: 18 seconds.</p>`}
 <div class="row c" style="min-height:56px;align-items:center">${ready ? btn("Open your letter", "unlock.html") : `<span class="muted">The button appears when the time is up.</span>`}</div></div>
 ${letterCard()}
 <div class="row stackm c">${btn("Save the card as an image", "#", "two small")}${btn("Add to your calendar", "#", "two small")}</div>
@@ -57,24 +57,27 @@ add({ id: "testify-text", title: "Testify: your question", route: "/l/{id} and t
 <div class="field"><label for="a1">What you think you answered</label><p class="hint" style="margin-bottom:8px">What did you answer? Write what you remember.</p><textarea class="ta orange" id="a1">${esc(LIVE.t[0])}</textarea><p class="count">${LIVE.t[0].length} of 1,000 characters</p></div>
 ${btns({ mid: "I don't remember", next: "Next question", nextHref: "testify-number.html" })}</section>` });
 
-const scaleHtml = (min, max, val) => {
+// The range is fixed per unit (UNIT_RANGE_TABLE in unit-ranges.ts: USD per gallon 0 to 10). It never comes from a figure or an answer.
+const RANGE = { min: 0, max: 10, ticks: [0, 2, 4, 6, 8, 10] };
+const scaleHtml = (val) => {
+  const { min, max } = RANGE;
   const pct = val === null ? null : ((val - min) / (max - min)) * 100;
-  return `<div class="scale"><div class="rail">${[0, 25, 50, 75, 100].map((p) => `<i class="tick" style="left:${p}%"></i>`).join("")}<i class="mark${pct === null ? " empty" : ""}" style="left:${pct ?? 0}%"></i></div>
-<div class="ends"><span>$${min.toFixed(2)}</span><a class="link small" href="#">Zoom in to place it more exactly</a><span>$${max.toFixed(2)}</span></div>
+  return `<div class="scale"><div class="rail">${RANGE.ticks.map((t) => `<i class="tick" style="left:${((t - min) / (max - min)) * 100}%"></i>`).join("")}<i class="mark${pct === null ? " empty" : ""}" style="left:${pct ?? 0}%"></i></div>
+<div class="ends"><span>$${min}</span><a class="link small" href="#">Zoom in to place it more exactly</a><span>$${max}</span></div>
 <p class="hint" style="margin-top:8px">Drag the ink mark to where you remember it. You can also type the number, or choose no answer.</p></div>`;
 };
 const numField = (v, unit) => `<div class="numfield"><input value="${v}" aria-label="Your answer, from memory" inputmode="decimal"><span class="unit">${unit}</span></div>`;
 function figQ({ n, t, val, last, sample, prev, asOf, mem }) {
   return `<section class="panel qcard">${countLine(n, t, ` · ${asOf}`)}
 <p class="fig-q">What do you think ${sample ? "a gallon of regular gasoline" : "a gallon of regular gasoline"} cost then?</p>${mem ? `<p class="hint" style="margin-bottom:12px">${mem}</p>` : ""}
-<div class="field"><label>Your answer, from memory</label>${numField(val === null ? "" : val.toFixed(2), "USD per gallon")}${sample ? `<p class="sample"><b>· sample answer.</b> A sample answer is filled in. Change it if you remember differently.</p>` : ""}</div>
-${scaleHtml(sample ? 2.99 : 3.0, sample ? 4.25 : 5.5, val)}
+<div class="field"><label>Your answer, from memory</label>${numField(val === null ? "" : val.toFixed(2), "USD per gallon")}${sample ? `<p class="sample">A sample answer is filled in. Change it if you remember differently.</p>` : ""}</div>
+${scaleHtml(val)}
 ${btns({ prev, mid: "No answer", next: last ? "Record my testimony" : "Next question", nextHref: last ? "break.html" : "#" })}</section>`;
 }
 add({ id: "testify-number", title: "Testify: a figure question", route: "/l/{id} and the live demo", state: "Question 3 of 3, a figure with the scale, before an answer is placed.", fixes: [6], component: "RecallReader.tsx, recall/NumberLine.tsx", wide: "", opts: { sound: true },
-  body: () => `${track({ live: 3 })}${ghostTop()}${figQ({ n: 3, t: 3, val: null, last: true, prev: "testify-text.html", asOf: `you wrote this on ${TODAY}` })}` });
+  body: () => `${track({ live: 3 })}${ghostTop()}${figQ({ n: 3, t: 3, val: null, last: true, prev: "testify-text.html", asOf: `sealed on ${TODAY}` })}` });
 add({ id: "testify-last", title: "Testify: the last question", route: "/l/{id} and the live demo", state: "The last question answered. Previous question and Record my testimony.", fixes: [6], component: "RecallReader.tsx", wide: "", opts: { sound: true },
-  body: () => `${track({ live: 3 })}${ghostTop()}${figQ({ n: 3, t: 3, val: 4.1, last: true, prev: "testify-number.html", asOf: `you wrote this on ${TODAY}` })}` });
+  body: () => `${track({ live: 3 })}${ghostTop()}${figQ({ n: 3, t: 3, val: 4.1, last: true, prev: "testify-number.html", asOf: `sealed on ${TODAY}` })}` });
 
 const breakBody = (kind, extra = "", three) => `<div class="stage">${heldGhost("lg", kind, { label: "Break the seal" })}${soil(true)}</div>
 <div class="center stack"><h1 class="h1">Break the seal</h1><p class="muted">Your testimony is recorded.</p>
@@ -87,11 +90,11 @@ const qa = ({ q, rem, remLabel, wrote, wroteLabel, pers }) => `<div class="qa"><
 <div class="you${pers ? " pers" : ""}"><span class="tag">${esc(remLabel)}</span><p>${esc(rem)}</p></div>
 <div class="paper then"><span class="tag">${esc(wroteLabel)}</span><p>${esc(wrote)}</p></div></div>`;
 const letterPaper = (text, dateLine) => `<div class="paper letterpaper"><p class="date">${esc(dateLine)}</p>${paras(text)}</div>`;
-const fig = ({ name, then, now, ans, ansLabel, unit, chg, formula, series, retThen, retNow, tp, np }) => `<div class="fig"><p class="name">${esc(name)}</p><div class="cells">
+const fig = ({ name, then, now, ans, ansLabel, unit, chg, formula, same, series, retThen, retNow, tp, np }) => `<div class="fig"><p class="name">${esc(name)}</p><div class="cells">
 <div class="cell"><span class="k">Then</span><div class="val">$${then}</div><p class="per">${unit} · ${tp} · U.S.</p></div>
 <div class="cell"><span class="k">Now</span><div class="val">$${now}</div><p class="per">${unit} · ${np} · U.S.</p></div>
 <div class="cell you2"><span class="k">${ansLabel}</span><div class="val">$${ans}</div><p class="per">${unit}</p></div></div>
-<p class="chg">${chg}<small>${formula}</small></p>
+${same ? `<p class="chg"><span style="font-weight:400">${esc(same)}</span></p>` : `<p class="chg">${chg}<small>Formula: ${formula}</small></p>`}
 <p class="src">Source: ${SRC_GAS} · series ${series}. Then: ${retThen}. Now: ${retNow}. <a class="link" href="#">Check the source</a></p></div>`;
 const sealRow = ({ hash, tamper }) => `<div class="sealrow">${statusOk("The seal is intact. Nothing here has changed since it was sealed.").replace('class="status"', 'class="status" style="justify-content:flex-start"')}
 <details class="fp"><summary>Show the fingerprint</summary>${fpBlock(hash)}</details>${tamper || ""}</div>`;
@@ -107,7 +110,7 @@ add({ id: "receipts-live", title: "See the receipts: live letter", route: "/l/{i
   body: () => `${track({ live: 5 })}<div class="rc"><h1 class="h1">See the receipts</h1>
 <section><h2 class="h2">Your questions</h2>${qa({ q: LIVE.q[0], rem: LIVE.t[0], remLabel: "You remembered, just now", wrote: LIVE.a[0], wroteLabel: `You wrote, ${TODAY}` })}${qa({ q: LIVE.q[1], rem: LIVE.t[1], remLabel: "You remembered, just now", wrote: LIVE.a[1], wroteLabel: `You wrote, ${TODAY}` })}</section>
 <section><h2 class="h2">What you wrote then</h2>${letterPaper(LIVE.letter, TODAY)}</section>
-<section><h2 class="h2">The numbers, then and now</h2><div class="figs">${fig({ name: "Regular gasoline", then: "4.269", now: "4.269", ans: "4.10", ansLabel: "Your answer, just now", unit: "USD per gallon", chg: "0% · 26 Oct 2026 to 26 Oct 2026", formula: "(4.269 − 4.269) ÷ 4.269. Then and now are the same published period.", series: "EMM_EPMR_PTE_NUS_DPG", retThen: "sealed with the letter, retrieved 1 Nov 2026", retNow: "retrieved 19 Nov 2026", tp: "week of 26 Oct 2026", np: "week of 26 Oct 2026" })}</div></section>
+<section><h2 class="h2">The numbers, then and now</h2><div class="figs">${fig({ name: "Regular gasoline", then: "4.269", now: "4.269", ans: "4.10", ansLabel: "Your answer, just now", unit: "USD per gallon", same: "Same week as when you sealed it. A letter kept for months would show the change.", series: "EMM_EPMR_PTE_NUS_DPG", retThen: "sealed with the letter, retrieved 1 Nov 2026", retNow: "retrieved 19 Nov 2026", tp: "week of 26 Oct 2026", np: "week of 26 Oct 2026" })}</div></section>
 ${sealRow({ hash: hashes.live })}${endLive()}</div>` });
 
 // ---------------------------------------------------------------- Personas
@@ -122,8 +125,8 @@ add({ id: "maya-testify", title: "Maya: a figure question", route: "/demo/person
 add({ id: "maya-break", title: "Maya: break the seal", route: "/demo/personas/us-maya", state: "The ghost centred, the wax ready to press.", fixes: [2], component: "ceremony/seal/BreakSeal.tsx", wide: "", opts: { persona: NOTICE("Maya"), sound: true },
   body: () => `${track({ three: 1 })}${breakBody("maya", "maya-receipts.html")}` });
 
-const mayaFigs = () => `<div class="figs">${fig({ name: "A gallon of regular gasoline", then: "3.643", now: "3.069", ans: "3.59", ansLabel: "Your answer · sample answer", unit: "USD per gallon", chg: "−15.8% · 6 May 2024 to 4 Nov 2024", formula: "(3.069 − 3.643) ÷ 3.643", series: "EMM_EPMR_PTE_NUS_DPG", retThen: "historical record, retrieved 1 Nov 2026", retNow: "historical record, retrieved 1 Nov 2026", tp: "week of 6 May 2024", np: "week of 4 Nov 2024" })}
-${fig({ name: "A gallon of diesel", then: "3.894", now: "3.536", ans: "3.79", ansLabel: "Your answer · sample answer", unit: "USD per gallon", chg: "−9.2% · 6 May 2024 to 4 Nov 2024", formula: "(3.536 − 3.894) ÷ 3.894", series: "EMD_EPD2D_PTE_NUS_DPG", retThen: "historical record, retrieved 1 Nov 2026", retNow: "historical record, retrieved 1 Nov 2026", tp: "week of 6 May 2024", np: "week of 4 Nov 2024" })}</div>`;
+const mayaFigs = () => `<div class="figs">${fig({ name: "A gallon of regular gasoline", then: "3.643", now: "3.069", ans: "3.59", ansLabel: "Your answer · sample answer", unit: "USD per gallon", chg: "fell −0.574 · −15.8% · 6 May 2024 to 4 Nov 2024", formula: "(3.069 − 3.643) ÷ 3.643 × 100 = −15.8%", series: "EMM_EPMR_PTE_NUS_DPG", retThen: "historical record, retrieved 1 Nov 2026", retNow: "historical record, retrieved 1 Nov 2026", tp: "week of 6 May 2024", np: "week of 4 Nov 2024" })}
+${fig({ name: "A gallon of diesel", then: "3.894", now: "3.536", ans: "3.79", ansLabel: "Your answer · sample answer", unit: "USD per gallon", chg: "fell −0.358 · −9.2% · 6 May 2024 to 4 Nov 2024", formula: "(3.536 − 3.894) ÷ 3.894 × 100 = −9.2%", series: "EMD_EPD2D_PTE_NUS_DPG", retThen: "historical record, retrieved 1 Nov 2026", retNow: "historical record, retrieved 1 Nov 2026", tp: "week of 6 May 2024", np: "week of 4 Nov 2024" })}</div>`;
 const mayaReceipts = (tamper) => `${track({ three: 2 })}<div class="rc"><h1 class="h1">See the receipts</h1>
 <section><h2 class="h2">What she wrote, as of 12 May 2024</h2>${letterPaper(maya, "Written as of 12 May 2024")}</section>
 <section><h2 class="h2">The numbers, then and now</h2>${mayaFigs()}</section>
@@ -140,17 +143,17 @@ add({ id: "maya-tampered", title: "Maya: tamper check", route: "/demo/personas/u
 
 const PQ = ["What am I looking forward to most right now?", "What am I worried about right now?"];
 const PA = [
-  "The trip to the coast with my sister, even though we haven't agreed how to get there. And a Sunday with nothing on the list.",
-  "The extra morning shift. I can't decide, and I'm worried I'll fall behind on my reading either way.",
+  "The trip to the coast with my sister, even though we have not agreed how to get there. And a Sunday with nothing on the list.",
+  "The extra morning shift. I keep changing my mind, and either way I am worried I will fall behind on my reading.",
 ];
 const PR = [
   "The coast trip with my sister, mostly. I think I also wanted one quiet Sunday.",
-  "Whether to take the extra morning shift. And I think I was worried about the reading list.",
+  "I think I had already decided to say no to the extra shift. The reading list was what worried me.",
 ];
 export const priyaCopy = { PQ, PA, PR };
 add({ id: "priya-testify", title: "Priya: her recollection", route: "/demo/personas/us-priya", state: "Her fictional recollection of her answer, one question at a time.", fixes: [2, 6], component: "ceremony/recall/PersonaTestimony.tsx, OpeningFlow.tsx", wide: "", opts: { persona: NOTICE("Priya"), sound: true },
   body: () => `${track({ three: 0 })}${personaHead("Priya")}${ghostSm("priya")}<section class="panel qcard">${countLine(1, 2)}
-<p class="asked">On 12 May 2024 she asked herself:</p><div class="paper"><span class="q">${esc(PQ[0])}</span></div>
+<p class="asked">As of 12 May 2024 she asked herself:</p><div class="paper"><span class="q">${esc(PQ[0])}</span></div>
 <div class="recol"><span class="tag">What she thinks she answered · fictional</span><p>${esc(PR[0])}</p></div>
 ${btns({ next: "Next question", nextHref: "#" })}</section>` });
 add({ id: "priya-receipts", title: "Priya: the receipts", route: "/demo/personas/us-priya", state: "Her recollection beside her sealed answer for each question, then her letter.", fixes: [1, 7], component: "reveal/Reveal.tsx, reveal/tamper/TamperControl.tsx", wide: "", opts: { persona: NOTICE("Priya"), sound: true },
@@ -165,7 +168,7 @@ add({ id: "letter-card", title: "Letter card", route: "downloaded at sealing", s
   body: () => `<div class="center stack" style="margin-bottom:24px"><h1 class="h1">Letter card</h1></div>
 <div class="card"><div class="qr">${qr}</div><div><span class="word2">revenant</span><h2>Your letter is sealed</h2>
 <span class="k">Opens</span><b>${LIVE.opens}</b><span class="k">Your letter link</span><span class="mono">${LIVE.link}</span>
-<span class="k">Fingerprint at sealing</span><span class="mono" style="font-size:12px">${groups(LIVE.hash).join(" ")}</span>
+<span class="k">Fingerprint at sealing</span><span class="mono" style="font-size:12px">${groups(LIVE.hash).map((g) => `<span class="g4">${g}</span>`).join(" ")}</span>
 <p style="margin-top:12px;font-size:17px">Scan the code to open the letter. Before the opening time it shows only that the letter is still sealed. This card holds no key.</p></div></div>${keepNote}
 <div class="row c" style="margin-top:12px">${btn("Save the card as an image", "#", "small")}${btn("Print or save as PDF", "#", "two small")}</div>` });
 add({ id: "backup-card", title: "Backup key card", route: "downloaded at sealing", state: "The printable backup key card. The only place the key exists.", fixes: [3], component: "src/components/live/BackupKeyCard.tsx", wide: "mid", opts: {},
