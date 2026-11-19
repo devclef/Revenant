@@ -174,8 +174,16 @@
   animation-delay: 0s;
 }
 
+/* The shared Ghost_Box hangs left of the pit point by half its width (scene
+   .ghost). In the hero box the pit fills the seal box, so the Ghost_Box must
+   start at the box's left edge, or its drawing is clipped into a hard strip. */
 .heroGhost :global([data-hero-pit]) > div {
+  left: 0;
+  top: 0;
+  bottom: auto;
   width: 100%;
+  height: 100%;
+  aspect-ratio: auto;
 }
 
 .heroGhost :global([data-hero-pit]) :global([data-ghost-bob]) {
