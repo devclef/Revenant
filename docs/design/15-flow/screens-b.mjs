@@ -11,7 +11,7 @@ const letterCard = () => `<div class="paper lcard"><div class="qr">${qr}</div><d
 <span class="k">Fingerprint at sealing</span><div class="fpsmall">${groups(LIVE.hash).map((g) => `<span class="g4">${g}</span>`).join(" ")}</div></div></div>`;
 function waitBody(ready) {
   return `${track({ live: 2 })}<section class="panel stack" style="padding:28px"><div style="width:min(100%,240px);margin:0 auto">${envBox("live", { button: false })}</div>
-<div class="center stack"><h1 class="h1">${ready ? "The time has come." : "Your letter is sealed"}</h1><p class="lede">It cannot be changed now.</p>
+<div class="center stack"><h1 class="h1">${ready ? "The time has come." : "Your letter is sealed"}</h1><p class="lede">${ready ? "Your letter is sealed. It cannot be changed now." : "It cannot be changed now."}</p>
 ${ready ? "" : `<p class="big" role="timer" aria-live="off">18</p><p class="muted">Time remaining: 18 seconds.</p>`}
 <div class="row c" style="min-height:56px;align-items:center">${ready ? btn("Open your letter", "unlock.html") : `<span class="muted">The button appears when the time is up.</span>`}</div></div>
 ${letterCard()}

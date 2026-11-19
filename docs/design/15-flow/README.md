@@ -686,7 +686,7 @@ Strings marked **new or changed** are not found verbatim in today's source or co
 <details><summary>Every string on this screen</summary>
 
 - "The time has come."
-- "It cannot be changed now."
+- **new or changed** "Your letter is sealed. It cannot be changed now."
 - **new or changed** "Open your letter"
 - "Letter card"
 - **new or changed** "Opens 14:21:05 UTC, 19 November 2026"
