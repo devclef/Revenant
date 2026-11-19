@@ -4,7 +4,7 @@ import { openLetter } from "./open";
 import { generateBackupKey } from "./backup-key";
 import { assertPasskey, confirmPasskey, createPasskey } from "./passkey";
 import { createFakeAuthenticator } from "./testing/fake-authenticator";
-import type { PayloadV1, EnvelopeV1 } from "../seal-format";
+import type { PayloadV1 } from "../seal-format";
 import {
   decodeBase64url,
   encodeBase64url,
@@ -227,7 +227,7 @@ describe("openLetter with a passkey", () => {
 
     const bytes = decodeBase64url(envelope.payloadCiphertext);
     bytes[0] ^= 0x01;
-    const changed: EnvelopeV1 = {
+    const changed: typeof envelope = {
       ...envelope,
       payloadCiphertext: encodeBase64url(bytes),
     };

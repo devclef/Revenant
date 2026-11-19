@@ -69,8 +69,10 @@ beforeAll(async () => {
     sealedAt: SEALED_AT,
     opensAt: OPENS_AT,
   });
-  const ciphertext = (sealed.envelope as { payloadCiphertext: string })
-    .payloadCiphertext;
+  if (sealed.envelope.formatVersion !== 1) {
+    throw new Error("tamper fixture seals a version 1 payload");
+  }
+  const ciphertext = sealed.envelope.payloadCiphertext;
   fixture = {
     envelope: sealed.envelope,
     hash: sealed.envelopeHash,

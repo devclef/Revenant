@@ -33,9 +33,11 @@ import {
   canonicalize,
   encodeBase64url,
   envelopeHash as computeEnvelopeHash,
-  payloadV1Schema,
+  parsePayload,
   type EnvelopeV1,
+  type EnvelopeV2,
   type PayloadV1,
+  type PayloadV2,
 } from "../seal-format";
 import { isRpId } from "../seal-format/v1/header";
 import { deriveBackupKek, derivePasskeyKek } from "./kdf";
@@ -95,7 +97,10 @@ export interface PasskeyFactor {
 
 /** Inputs to `sealLetter`. At least one of `backupKey` and `passkey` is required. */
 export interface SealInput {
-  /** The plaintext payload; validated with `payloadV1Schema`. */
+  /**
+   * The plaintext payload, format version 1 or 2. Validated with `parsePayload`,
+   * which selects the schema by `format_version`. The header gets the same version.
+   */
   payload: unknown;
   /** The letter's 16 random ID bytes. */
   letterId: Uint8Array;
@@ -113,9 +118,14 @@ export interface SealInput {
 
 /** The sealed envelope plus its SHA-256 hash. */
 export interface SealResult {
-  envelope: EnvelopeV1;
+  envelope: EnvelopeV1 | EnvelopeV2;
   envelopeHash: string;
 }
+
+/** A header before its ciphertext is added, in either format version. */
+type HeaderWithoutCiphertext =
+  | Omit<EnvelopeV1, "payloadCiphertext">
+  | Omit<EnvelopeV2, "payloadCiphertext">;
 
 /**
  * Copy bytes into a fresh `ArrayBuffer`-backed view. WebCrypto's typings want a
@@ -282,13 +292,14 @@ async function sealChecked(input: SealInput): Promise<SealResult> {
     throw new SealError("passkey");
   }
 
-  // Validate the payload against the frozen v1 schema. A bad payload is an
-  // invalid envelope input; surface it before any derivation too.
-  const parsed = payloadV1Schema.safeParse(input.payload);
-  if (!parsed.success) {
+  // Validate the payload against the schema for its own format_version (1 or 2).
+  // A bad payload, or an unknown version, is an invalid envelope input; surface
+  // it before any derivation too.
+  const parsed = parsePayload(input.payload);
+  if (!parsed.ok) {
     throw new SealError("envelope");
   }
-  const payload: PayloadV1 = parsed.data;
+  const payload: PayloadV1 | PayloadV2 = parsed.value;
 
   // `written_as_of`, if present, must not be later than the UTC calendar date
   // of `sealedAt`. Both are `YYYY-MM-DD` (sealedAt sliced), so a plain string
@@ -326,9 +337,8 @@ async function sealChecked(input: SealInput): Promise<SealResult> {
     // Step 4: build the header WITHOUT the ciphertext. Passkey fields appear
     // only when a passkey wrap exists (matches headerV1Schema).
     const payloadNonce = randomNonce();
-    const headerWithoutCiphertext_: Omit<EnvelopeV1, "payloadCiphertext"> = {
+    const headerFields = {
       letterId: encodeBase64url(letterId),
-      formatVersion: 1,
       sealedAt,
       opensAt,
       payloadNonce: encodeBase64url(payloadNonce),
@@ -345,6 +355,12 @@ async function sealChecked(input: SealInput): Promise<SealResult> {
           }
         : {}),
     };
+    // The header version follows the payload version. Both headers have the same
+    // fields; only formatVersion differs.
+    const headerWithoutCiphertext_: HeaderWithoutCiphertext =
+      payload.format_version === 2
+        ? { ...headerFields, formatVersion: 2 }
+        : { ...headerFields, formatVersion: 1 };
 
     // Step 5: encrypt the canonical payload with the DEK. AAD is the canonical
     // header without the ciphertext, so every header field (wraps included) is
@@ -366,7 +382,7 @@ async function sealChecked(input: SealInput): Promise<SealResult> {
     const payloadCiphertext = encodeBase64url(new Uint8Array(ciphertextBuf));
 
     // Step 6: assemble the full envelope, compute its hash, return.
-    const envelope: EnvelopeV1 = {
+    const envelope: EnvelopeV1 | EnvelopeV2 = {
       ...headerWithoutCiphertext_,
       payloadCiphertext,
     };

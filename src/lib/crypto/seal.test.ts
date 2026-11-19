@@ -4,7 +4,8 @@ import { sealLetter, SealError } from "./seal";
 import { openLetter } from "./open";
 import { generateBackupKey } from "./backup-key";
 import type { BackupKeyBytes } from "./errors";
-import type { PayloadV1 } from "../seal-format";
+import type { PayloadV1, PayloadV2 } from "../seal-format";
+import { parseEnvelope } from "../seal-format";
 
 // Feature: 02-sealed-letters — seal-side properties (P9, P10, P20) and the
 // input precondition checks that run before any key derivation.
@@ -368,5 +369,85 @@ describe("sealLetter input checks run before any derivation", () => {
       expect(e).toBeInstanceOf(SealError);
       expect((e as SealError).message).toBe("invalid_input");
     }
+  });
+});
+
+// --- format version 1 and 2 payloads ----------------------------------------
+
+/** A valid v2 payload with one text question and its sealed answer. */
+function payloadV2WithQuestion(): PayloadV2 {
+  return {
+    format_version: 2,
+    letter_text: "A letter with one sealed answer.",
+    metrics: [],
+    figures: [],
+    recall_questions: [
+      {
+        id: "q1",
+        answer_type: "text",
+        text: "What worries me most right now?",
+        sealed_answer: "The rent and the car.",
+      },
+    ],
+  };
+}
+
+describe("sealLetter accepts format version 1 and 2 payloads", () => {
+  it("seals a version 1 payload with formatVersion 1 in the header", async () => {
+    const { envelope } = await sealLetter({
+      payload: payloadWithText("a version 1 letter"),
+      letterId: freshLetterId(),
+      serverSecret: freshServerSecret(),
+      backupKey: generateBackupKey(),
+      sealedAt: SEALED_AT,
+      opensAt: OPENS_AT,
+    });
+    expect(envelope.formatVersion).toBe(1);
+    expect(parseEnvelope(envelope).ok).toBe(true);
+  });
+
+  it("seals a version 2 payload with formatVersion 2 in the header and opens it", async () => {
+    const letterId = freshLetterId();
+    const serverSecret = freshServerSecret();
+    const backupKey = generateBackupKey();
+
+    const { envelope, envelopeHash } = await sealLetter({
+      payload: payloadV2WithQuestion(),
+      letterId,
+      serverSecret,
+      backupKey,
+      sealedAt: SEALED_AT,
+      opensAt: OPENS_AT,
+    });
+    expect(envelope.formatVersion).toBe(2);
+    expect(parseEnvelope(envelope).ok).toBe(true);
+
+    const result = await openLetter({ envelope, envelopeHash, serverSecret, backupKey });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.payload.format_version).toBe(2);
+      expect(result.payload.recall_questions).toEqual(
+        payloadV2WithQuestion().recall_questions,
+      );
+    }
+  });
+
+  it("rejects a payload with an unknown format_version before any derivation", async () => {
+    const deriveKeySpy = vi.spyOn(globalThis.crypto.subtle, "deriveKey");
+    const encryptSpy = vi.spyOn(globalThis.crypto.subtle, "encrypt");
+
+    await expect(
+      sealLetter({
+        payload: { ...payloadWithText("version 3"), format_version: 3 },
+        letterId: freshLetterId(),
+        serverSecret: freshServerSecret(),
+        backupKey: generateBackupKey(),
+        sealedAt: SEALED_AT,
+        opensAt: OPENS_AT,
+      }),
+    ).rejects.toMatchObject({ error: { kind: "invalid_input", field: "envelope" } });
+
+    expect(deriveKeySpy).not.toHaveBeenCalled();
+    expect(encryptSpy).not.toHaveBeenCalled();
   });
 });
