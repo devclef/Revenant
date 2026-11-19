@@ -105,7 +105,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Copy evidence: tone-check for the changed copy files and the neutrality check of `letter-checks` for Priya's answers.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 5. Persona "now" figures for the week of the opening date
+- [x] 5. Persona "now" figures for the week of the opening date
   - Agent: `data-dev` · Depends on: none · Estimated size: S, ~250 changed lines
   - Scope: `src/lib/figures/at-opening.ts` (new), `src/lib/figures/index.ts`, and the `*.test.ts(x)` next to them.
   - Design sections: "4. Persona 'now' figures", Property 7.
