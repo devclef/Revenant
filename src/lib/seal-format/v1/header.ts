@@ -175,13 +175,13 @@ export type EnvelopeV1 = z.infer<typeof headerV1Schema>;
  * canonical form is the AES-GCM AAD for the payload, so every other header
  * field (wraps included) is authenticated by the payload's GCM tag.
  */
-export function headerWithoutCiphertext(
-  env: EnvelopeV1,
-): Omit<EnvelopeV1, "payloadCiphertext"> {
+export function headerWithoutCiphertext<E extends { payloadCiphertext: string }>(
+  env: E,
+): Omit<E, "payloadCiphertext"> {
   const rest: Record<string, unknown> = {};
   for (const key of Object.keys(env)) {
     if (key === "payloadCiphertext") continue;
-    rest[key] = env[key as keyof EnvelopeV1];
+    rest[key] = env[key as keyof E];
   }
-  return rest as Omit<EnvelopeV1, "payloadCiphertext">;
+  return rest as Omit<E, "payloadCiphertext">;
 }

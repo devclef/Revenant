@@ -11,18 +11,21 @@
 // the schema runs. A known version that fails its schema returns `invalid` with
 // the first failing Zod issue path.
 //
-// This module imports only the v1 schema modules. It imports nothing from
+// This module imports only the v1 and v2 schema modules. It imports nothing from
 // src/lib/crypto or src/lib/db; it is pure and safe to import from either the
 // browser or the server.
 
 import type { z } from "zod";
 import { payloadV1Schema, type PayloadV1 } from "./v1/payload";
 import { headerV1Schema, type EnvelopeV1 } from "./v1/header";
+import { payloadV2Schema, type PayloadV2 } from "./v2/payload";
+import { headerV2Schema, type EnvelopeV2 } from "./v2/header";
 
 // The registry. Add a new version as a new numeric key with its own schema
 // module; never change an existing entry's meaning.
 export const formats = {
   1: { payload: payloadV1Schema, header: headerV1Schema },
+  2: { payload: payloadV2Schema, header: headerV2Schema },
 } as const;
 
 type FormatVersion = keyof typeof formats;
@@ -74,7 +77,9 @@ function run<S extends z.ZodType>(
  * header's `formatVersion`. Unknown or non-positive-integer version ->
  * `unsupported_format`. Known version, bad shape -> `invalid` with `field`.
  */
-export function parseEnvelope(json: unknown): ParseResult<EnvelopeV1> {
+export function parseEnvelope(
+  json: unknown,
+): ParseResult<EnvelopeV1 | EnvelopeV2> {
   const version = knownVersion(peek(json, "formatVersion"));
   if (version === undefined) {
     return { ok: false, error: "unsupported_format" };
@@ -87,7 +92,9 @@ export function parseEnvelope(json: unknown): ParseResult<EnvelopeV1> {
  * `format_version`. Unknown or non-positive-integer version ->
  * `unsupported_format`. Known version, bad shape -> `invalid` with `field`.
  */
-export function parsePayload(json: unknown): ParseResult<PayloadV1> {
+export function parsePayload(
+  json: unknown,
+): ParseResult<PayloadV1 | PayloadV2> {
   const version = knownVersion(peek(json, "format_version"));
   if (version === undefined) {
     return { ok: false, error: "unsupported_format" };

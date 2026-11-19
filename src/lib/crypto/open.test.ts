@@ -590,7 +590,7 @@ describe("open paths reachable only with an unvalidated sealed plaintext", () =>
     const serverSecret = freshServerSecret();
     const backupKey = generateBackupKey();
     const futurePayload = JSON.stringify({
-      format_version: 2,
+      format_version: 3,
       letter_text: "from the future",
     });
     const { envelope, envelopeHash } = await sealRawPlaintext({
@@ -604,7 +604,7 @@ describe("open paths reachable only with an unvalidated sealed plaintext", () =>
     if (!result.ok) {
       expect(result.error.kind).toBe("unsupported_format");
       if (result.error.kind === "unsupported_format") {
-        expect(result.error.formatVersion).toBe(2);
+        expect(result.error.formatVersion).toBe(3);
       }
     }
   });

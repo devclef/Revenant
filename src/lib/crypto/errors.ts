@@ -9,7 +9,7 @@
 // WebCrypto only, browser-safe: this module has no `node:` imports and no
 // runtime dependencies. It defines types and two small type guards.
 
-import type { PayloadV1 } from "../seal-format";
+import type { PayloadV1, PayloadV2 } from "../seal-format";
 
 // --- Branded backup-key types ------------------------------------------------
 
@@ -94,5 +94,5 @@ export type SealErrorDetail =
  * `OpenError` and nothing else.
  */
 export type OpenResult =
-  | { ok: true; payload: PayloadV1; openingKey: CryptoKey }
+  | { ok: true; payload: PayloadV1 | PayloadV2; openingKey: CryptoKey }
   | { ok: false; error: OpenError };

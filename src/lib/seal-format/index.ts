@@ -44,6 +44,17 @@ export {
   type EnvelopeV1,
 } from "./v1/header";
 
+// Payload v2 schema and type: version 1 plus a sealed answer on each text question.
+export {
+  payloadV2Schema,
+  type PayloadV2,
+  type RecallQuestionV2,
+  type TextRecallQuestionV2,
+} from "./v2/payload";
+
+// Header v2 schema and type.
+export { headerV2Schema, type EnvelopeV2 } from "./v2/header";
+
 // Time-lock constants for Live_Letters (shared with the browser).
 export {
   LOCK_DURATION_MS,
