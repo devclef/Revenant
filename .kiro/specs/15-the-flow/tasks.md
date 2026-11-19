@@ -55,7 +55,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: none expected; name any.
   - Validation: `bash scripts/check.sh`; `npx tsc --noEmit`.
 
-- [ ] 2. Format version 2: a sealed answer for each author question
+- [x] 2. Format version 2: a sealed answer for each author question
   - Agent: `crypto-dev` · Depends on: 1 · Estimated size: M, ~900 changed lines
   - Scope: `src/lib/seal-format/**` (`v2/payload.ts`, `v2/header.ts`, `registry.ts`, `index.ts`, `__fixtures__/`), `src/lib/crypto/seal.ts`, `open.ts`, `errors.ts`, and the `*.test.ts(x)` next to each. May change `format_version`. Changes no primitive, key step or header field.
   - Design sections: "1. Sealed format version 2", Properties 1 to 3.
