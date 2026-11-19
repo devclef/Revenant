@@ -542,10 +542,10 @@ describe("Property 3: any positive integer version not in the registry is unsupp
     fc.assert(
       fc.property(
         validHeaderArb,
-        fc.integer({ min: 2, max: 1_000_000 }),
+        fc.integer({ min: 3, max: 1_000_000 }),
         (h, version) => {
           const c = clone(h);
-          c.formatVersion = version; // a positive integer, but not 1
+          c.formatVersion = version; // a positive integer, but not 1 or 2
           const result = parseEnvelope(c);
           expect(result.ok).toBe(false);
           if (result.ok) return;

@@ -62,10 +62,13 @@ const validPayload = {
 } as const;
 
 describe("formats registry", () => {
-  it("has exactly version 1 with payload and header schemas", () => {
-    expect(Object.keys(formats)).toEqual(["1"]);
+  // Version 2 is added alongside version 1 (sealed answers). Version 1 stays.
+  it("has exactly versions 1 and 2, each with payload and header schemas", () => {
+    expect(Object.keys(formats)).toEqual(["1", "2"]);
     expect(formats[1].payload).toBeDefined();
     expect(formats[1].header).toBeDefined();
+    expect(formats[2].payload).toBeDefined();
+    expect(formats[2].header).toBeDefined();
   });
 });
 
@@ -79,8 +82,9 @@ describe("parseEnvelope", () => {
     }
   });
 
+  // Version 2 is now known, so an unknown version is 3 here.
   it("returns unsupported_format for an unknown version", () => {
-    const result = parseEnvelope({ ...validEnvelope, formatVersion: 2 });
+    const result = parseEnvelope({ ...validEnvelope, formatVersion: 3 });
     expect(result).toEqual({ ok: false, error: "unsupported_format" });
   });
 

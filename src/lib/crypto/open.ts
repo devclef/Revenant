@@ -45,6 +45,7 @@ import {
   parseEnvelope,
   parsePayload,
   type EnvelopeV1,
+  type EnvelopeV2,
 } from "../seal-format";
 import { deriveBackupKek, deriveOpeningKey, derivePasskeyKek } from "./kdf";
 import type { BackupKeyBytes, OpenError, OpenResult } from "./errors";
@@ -131,7 +132,7 @@ function constantTimeEqual(a: string, b: string): boolean {
 
 /** The single wrap of the given factor in a v1 envelope, if present. */
 function wrapFor(
-  envelope: EnvelopeV1,
+  envelope: EnvelopeV1 | EnvelopeV2,
   factor: "backup" | "passkey",
 ): EnvelopeV1["wrappedDeks"][number] | undefined {
   return envelope.wrappedDeks.find((w) => w.factor === factor);

@@ -5,7 +5,7 @@ import { openLetter } from "./open";
 import { generateBackupKey } from "./backup-key";
 import { assertPasskey, confirmPasskey, createPasskey } from "./passkey";
 import { createFakeAuthenticator } from "./testing/fake-authenticator";
-import type { EnvelopeV1, PayloadV1 } from "../seal-format";
+import type { PayloadV1 } from "../seal-format";
 import {
   decodeBase64url,
   encodeBase64url,
@@ -211,7 +211,7 @@ describe("Property 8: wrong keys and changes never open the letter", () => {
             opensAt: OPENS_AT,
           });
 
-          let changed: EnvelopeV1;
+          let changed: typeof envelope;
           if (target === "ciphertext") {
             const bytes = decodeBase64url(envelope.payloadCiphertext);
             bytes[index % bytes.length] ^= 0x01;
