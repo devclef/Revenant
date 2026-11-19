@@ -615,7 +615,7 @@ Group D is the only cuttable work (G3.3): whatever is merged on `main` at the fr
   - Validation: `bash scripts/check.sh`; route budgets after `npm run build`.
   - _Requirements: Q1.6_
 
-- [ ] 20. Q1.5 · Final_Walk on merged `main`, report-only
+- [x] 20. Q1.5 · Final_Walk on merged `main`, report-only
   - Agent: `platform-dev` · Depends on: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 17, 18, 19 · Estimated size: S, one empty commit · Target: 27 November 2026
   - Never cut. Highest number (G3.1). Depends on no group D task (G3.5), so it runs whether or not tasks 15 and 16 merged.
   - Scope: none. The run record is the body of one empty commit (`git commit --allow-empty`) on the task branch. It changes no product file and no file under `tools/qa/` or `src/test/`.
