@@ -6,13 +6,18 @@
 // can be set per test.
 //
 // Covered: slot order on every Stage of a persona page and on /, /demo,
-// /demo/live and /how-it-is-sealed; Skip always rendered and disabled while no
-// sequence is registered; the persona notice rendered once and never in
-// TestifyContext or PersonaIntro; the /l/[id] bar with no Calm, sound or Skip;
-// and controls="none" rendering none of them.
+// /demo/live and /how-it-is-sealed; the reserved Skip slot while no sequence is
+// registered, and a live Skip first in the group while one is; no disabled
+// control anywhere (spec 15 Requirement 5.1); the persona notice rendered once
+// and never in TestifyContext or PersonaIntro; the /l/[id] bar with no Calm,
+// sound or Skip; and controls="none" rendering none of them.
 //
 // The Demo chip and the no-backdrop checks for /how-it-is-sealed belong to
 // task 16, so they are not asserted here.
+//
+// Changed for spec 15 Requirement 5.1: Skip is no longer rendered disabled. The
+// old tests expected a disabled Skip last in the group; they now expect the
+// reserved slot first while idle, and a live Skip first while a sequence runs.
 
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
@@ -85,6 +90,11 @@ function slotOrder(header: string): string[] {
   return [...header.matchAll(/data-topbar-slot="([a-z]+)"/g)].map((m) => m[1]);
 }
 
+/** The index of the reserved Skip slot (the empty placeholder), or -1. */
+function reserveAt(header: string): number {
+  return header.indexOf("data-topbar-reserve");
+}
+
 /** The opening tag of the Skip button. */
 function skipTag(header: string): string {
   const match = header.match(/<button[^>]*data-topbar-slot="skip"[^>]*>/);
@@ -94,8 +104,8 @@ function skipTag(header: string): string {
 
 const child = createElement("p", null, "CHILD_CONTENT");
 
-describe("Top_Bar slot order (spec 14 B1.1)", () => {
-  it("renders the persona bar in the order wordmark, chip, notice, Calm, sound, Skip on every Stage", () => {
+describe("Top_Bar slot order (spec 14 B1.1, spec 15 R5.1)", () => {
+  it("renders the persona bar in the order wordmark, chip, notice, Calm, sound on every Stage while no sequence runs", () => {
     for (const stage of ALL_STAGES) {
       const header = headerOf(
         renderTopBar({ personaName: PERSONA, stage, sound: SOUND }),
@@ -106,24 +116,49 @@ describe("Top_Bar slot order (spec 14 B1.1)", () => {
         "notice",
         "calm",
         "sound",
-        "skip",
       ]);
     }
   });
 
-  it("renders the landing bar in the order wordmark, chip, Calm, Skip", () => {
+  it("puts the live Skip first in the group, before Calm and sound, while a sequence runs", () => {
+    for (const stage of ALL_STAGES) {
+      const header = headerOf(
+        renderTopBar({ personaName: PERSONA, stage, sound: SOUND }, true),
+      );
+      expect(slotOrder(header), `${stage} order`).toEqual([
+        "wordmark",
+        "chip",
+        "notice",
+        "skip",
+        "calm",
+        "sound",
+      ]);
+    }
+  });
+
+  it("reserves the Skip slot before Calm while no sequence runs", () => {
+    const header = headerOf(
+      renderTopBar({ personaName: PERSONA, sound: SOUND }),
+    );
+    expect(reserveAt(header)).toBeGreaterThanOrEqual(0);
+    expect(reserveAt(header)).toBeLessThan(
+      header.indexOf('data-topbar-slot="calm"'),
+    );
+  });
+
+  it("renders the landing bar in the order wordmark, chip, Calm", () => {
     const header = headerOf(
       renderShell({ variant: "landing", children: child }),
     );
-    expect(slotOrder(header)).toEqual(["wordmark", "chip", "calm", "skip"]);
+    expect(slotOrder(header)).toEqual(["wordmark", "chip", "calm"]);
   });
 
-  it("renders the /demo bar in the order wordmark, chip, Calm, Skip", () => {
+  it("renders the /demo bar in the order wordmark, chip, Calm", () => {
     const header = headerOf(renderShell({ variant: "index", children: child }));
-    expect(slotOrder(header)).toEqual(["wordmark", "chip", "calm", "skip"]);
+    expect(slotOrder(header)).toEqual(["wordmark", "chip", "calm"]);
   });
 
-  it("renders the /demo/live bar in the order wordmark, chip, Calm, Skip", () => {
+  it("renders the /demo/live bar in the order wordmark, chip, Calm", () => {
     const header = headerOf(
       renderShell({
         variant: "plain",
@@ -132,38 +167,36 @@ describe("Top_Bar slot order (spec 14 B1.1)", () => {
         children: child,
       }),
     );
-    expect(slotOrder(header)).toEqual(["wordmark", "chip", "calm", "skip"]);
+    expect(slotOrder(header)).toEqual(["wordmark", "chip", "calm"]);
   });
 
   it("renders the /how-it-is-sealed bar in slot order without the chip", () => {
-    // Only the slot order and the disabled Skip are checked here (task 16 owns
-    // the Demo chip and the no-backdrop checks).
+    // Only the slot order is checked here (task 16 owns the Demo chip and the
+    // no-backdrop checks).
     const header = headerOf(
       renderShell({ variant: "plain", demo: false, children: child }),
     );
-    expect(slotOrder(header)).toEqual(["wordmark", "calm", "skip"]);
+    expect(slotOrder(header)).toEqual(["wordmark", "calm"]);
   });
 });
 
-describe("Top_Bar Skip (spec 14 B1.3)", () => {
-  it("renders Skip on every persona Stage, disabled while no sequence is registered", () => {
+describe("Top_Bar Skip (spec 15 R5.1, no disabled control)", () => {
+  it("renders no Skip control on any persona Stage while no sequence is registered", () => {
     for (const stage of ALL_STAGES) {
       const header = headerOf(
         renderTopBar({ personaName: PERSONA, stage, sound: SOUND }),
       );
-      expect(skipTag(header), `${stage} Skip`).toMatch(/disabled=""/);
-      expect(skipTag(header), `${stage} Skip last`).toMatch(
-        /data-topbar-last="true"/,
-      );
+      expect(header, `${stage} Skip`).not.toContain('data-topbar-slot="skip"');
     }
   });
 
-  it("renders Skip enabled while a sequence is registered", () => {
+  it("renders Skip enabled, last-marked off, while a sequence is registered", () => {
     const header = headerOf(renderTopBar({ personaName: PERSONA }, true));
     expect(skipTag(header)).not.toMatch(/disabled/);
+    expect(skipTag(header)).toContain(`aria-label="${SKIP}"`);
   });
 
-  it("renders Skip disabled on the landing, /demo, /demo/live and /how-it-is-sealed bars", () => {
+  it("never renders a disabled control in any Top_Bar", () => {
     const shells: SceneShellProps[] = [
       { variant: "landing", children: child },
       { variant: "index", children: child },
@@ -172,12 +205,18 @@ describe("Top_Bar Skip (spec 14 B1.3)", () => {
     ];
     for (const props of shells) {
       const header = headerOf(renderShell(props));
-      expect(skipTag(header)).toMatch(/disabled=""/);
+      expect(header).not.toMatch(/disabled/);
+    }
+    for (const stage of ALL_STAGES) {
+      const header = headerOf(
+        renderTopBar({ personaName: PERSONA, stage, sound: SOUND }),
+      );
+      expect(header, `${stage} disabled`).not.toMatch(/disabled/);
     }
   });
 
-  it("gives Skip the accessible name from the copy", () => {
-    const header = headerOf(renderTopBar({ personaName: PERSONA }));
+  it("gives Skip the accessible name from the copy while it runs", () => {
+    const header = headerOf(renderTopBar({ personaName: PERSONA }, true));
     expect(skipTag(header)).toContain(`aria-label="${SKIP}"`);
   });
 });

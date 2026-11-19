@@ -116,9 +116,10 @@ describe("Top_Bar slot boxes do not change by Stage or sequence (spec 14 B1.2)",
     expect(ruleIn(css, ".brand")).toMatch(/flex:\s*none;/);
   });
 
-  it("keeps the disabled Skip at 40 % opacity", () => {
-    expect(ruleIn(css, '[data-topbar-slot="skip"]:disabled')).toMatch(
-      /opacity:\s*0\.4;/,
-    );
+  it("sizes the reserved Skip slot to the 44 px icon control below 600 px", () => {
+    // Spec 15 R5.1: no disabled Skip; the reserved slot keeps Skip's box.
+    const phone = phoneBlockWith(".controls {\n    flex-wrap: nowrap;");
+    expect(ruleIn(phone, ".skipReserve")).toMatch(/width:\s*44px;/);
+    expect(ruleIn(css, '[data-topbar-slot="skip"]:disabled')).toBe("");
   });
 });

@@ -261,11 +261,14 @@
   outline-offset: 2px;
 }
 
-/* Skip with no sequence running (B1.3): same box and label, 40 % opacity. It
-   is a native disabled button, so it is out of the Tab order. */
-[data-topbar-slot="skip"]:disabled {
-  opacity: 0.4;
-  cursor: default;
+/* The reserved Skip slot (spec 15 Requirement 5.1). While no sequence runs,
+   this empty box holds Skip's place at the start of the button group. It is
+   not a control: no text, no focus, no button role. Its size matches the Skip
+   control at each width, so the controls keep their place. */
+.skipReserve {
+  flex: none;
+  width: 3.25rem;
+  min-height: 36px;
 }
 
 /* The control's icon and label. At 600 px and wider the label shows and the
@@ -352,6 +355,11 @@
   .controls {
     flex-wrap: nowrap;
     gap: 0.25rem;
+  }
+
+  .skipReserve {
+    width: 44px;
+    min-height: 44px;
   }
 
   /* GT1 (spec 10 X2.1): on the phone the Ghost sits at the right of the frame,
@@ -650,6 +658,7 @@
     font-size: 0.85rem;
   }
 
+  /* Wide: the persona notice sits in the bar on one line (spec 15 R5.2). */
   .notice {
     order: 0;
     flex-grow: 1;
@@ -657,6 +666,7 @@
     margin-left: auto;
     font-size: 0.8rem;
     text-align: right;
+    white-space: nowrap;
   }
 }
 

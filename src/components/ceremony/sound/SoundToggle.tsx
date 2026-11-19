@@ -30,12 +30,15 @@ export type SoundToggleProps = {
   enabled?: boolean;
   /** Which look to use. Default `desk`. */
   variant?: "desk" | "topbar";
+  /** Marks the rightmost Top_Bar control (`data-topbar-last`). Topbar only. */
+  last?: boolean;
 };
 
 export function SoundToggle({
   onChange,
   enabled: controlled,
   variant = "desk",
+  last = false,
 }: SoundToggleProps) {
   const own = useSoundEnabled();
   const enabled = controlled ?? own.enabled;
@@ -57,6 +60,7 @@ export function SoundToggle({
         title={label}
         data-topbar-sound
         data-topbar-slot="sound"
+        data-topbar-last={last ? true : undefined}
         onClick={press}
       >
         <SoundIcon off={!enabled} className={topbarStyles.controlIcon} />

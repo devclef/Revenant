@@ -163,22 +163,25 @@ describe("TopBar (R8.1 to R8.6)", () => {
     expect(without).not.toContain("is fictional");
   });
 
-  it("shows Calm and a disabled Skip while no sequence is registered", () => {
+  it("shows Calm and no Skip control while no sequence is registered", () => {
+    // Spec 15 R5.1: Skip is shown only while a sequence runs, never disabled.
     const html = render(createElement(TopBar, { personaName: "Maya" }));
     expect(html).toContain(CEREMONY_COPY.calmOn);
-    expect(html).toMatch(/<button[^>]*data-topbar-slot="skip"[^>]*disabled/);
+    expect(html).not.toContain('data-topbar-slot="skip"');
+    expect(html).not.toMatch(/disabled/);
   });
 
-  it("shows Skip after Calm while a sequence is registered, as the last control", () => {
+  it("shows Skip before Calm while a sequence is registered (spec 15 R5.1 reserved first slot)", () => {
     const html = render(createElement(TopBar, { personaName: "Maya" }), "full", true);
     expect(html).toContain(`>${CEREMONY_COPY.skip}<`);
-    expect(html.indexOf(CEREMONY_COPY.calmOn)).toBeLessThan(html.indexOf(CEREMONY_COPY.skip));
+    expect(html.indexOf(CEREMONY_COPY.skip)).toBeLessThan(html.indexOf(CEREMONY_COPY.calmOn));
     expect(html.match(/data-topbar-last="true"/g)?.length).toBe(1);
   });
 
-  it("marks Skip as the last control even while no sequence runs", () => {
+  it("marks Calm as the last control while no sequence runs and no sound is shown", () => {
     const html = render(createElement(TopBar));
-    expect(html).toMatch(/data-topbar-slot="skip"[^>]*data-topbar-last="true"/);
+    expect(html).toMatch(/data-topbar-slot="calm"[^>]*data-topbar-last="true"/);
+    expect(html).not.toContain('data-topbar-slot="skip"');
   });
 
   it("renders the notice before Calm and Skip, in document order (R8.3)", () => {

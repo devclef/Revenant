@@ -2,7 +2,8 @@
 //
 // CSS source tests for the Top_Bar slot boxes. The box of each slot must not
 // change with the Stage or with a running sequence (B1.2), the fixed slots are
-// `flex: none`, and the disabled Skip keeps its box and is 40 % opacity (B1.3).
+// `flex: none`, and the reserved Skip slot is a fixed box (spec 15 R5.1). No
+// disabled control is styled, since none is rendered.
 // The browser check (layout-check) measures the real geometry. These tests read
 // scene.module.css and check the rules.
 
@@ -33,7 +34,7 @@ function declared(body: string, prop: string): string | undefined {
 
 /** The Top_Bar slot selectors: the bar, its brand, chip, controls and the Top_Bar icon and label. */
 const SLOT_SELECTOR =
-  /\.(topbar|brand|wordmark|wordmarkLink|chip|controls|control|controlIcon|controlLabel|notice)\b|data-topbar-slot/;
+  /\.(topbar|brand|wordmark|wordmarkLink|chip|controls|control|controlIcon|controlLabel|notice|skipReserve)\b|data-topbar-slot/;
 
 const rules = allRules(css);
 const slotRules = rules.filter((r) => SLOT_SELECTOR.test(r.selector));
@@ -84,26 +85,16 @@ describe("Top_Bar fixed slots are flex: none (spec 14 B1.2)", () => {
   });
 });
 
-describe("the disabled Skip keeps its box at 40 % opacity (spec 14 B1.3)", () => {
-  const disabled = topLevel('[data-topbar-slot="skip"]:disabled');
+describe("the reserved Skip slot (spec 15 R5.1)", () => {
+  const reserve = topLevel(".skipReserve");
 
-  it("sets the disabled Skip to 40 % opacity", () => {
-    expect(declared(disabled.body, "opacity")).toBe("0.4");
+  it("is a fixed, non-shrinking box", () => {
+    expect(declared(reserve.body, "flex")).toBe("none");
+    expect(declared(reserve.body, "width")).toBeDefined();
   });
 
-  it("changes no size, padding, flex or display on the disabled Skip", () => {
-    for (const prop of [
-      "width",
-      "height",
-      "min-width",
-      "min-height",
-      "padding",
-      "flex",
-      "display",
-      "margin",
-    ]) {
-      expect(declared(disabled.body, prop), prop).toBeUndefined();
-    }
+  it("has no disabled-state rule, since no disabled control is shown", () => {
+    expect(rules.some((r) => r.selector.includes(":disabled"))).toBe(false);
   });
 });
 
