@@ -9,7 +9,7 @@ import {
 import { generateBackupKey, formatBackupKey, parseBackupKey } from "./backup-key";
 import { PUBLIC_DEMO_BACKUP_KEY } from "./demo-key";
 import type { BackupKeyBytes } from "./errors";
-import type { PayloadV1, EnvelopeV1 } from "../seal-format";
+import type { PayloadV1, PayloadV2, EnvelopeV1 } from "../seal-format";
 import {
   canonicalize,
   decodeBase64url,
@@ -660,5 +660,198 @@ describe("headerWithoutCiphertext is the AAD basis used by open", () => {
     const header = headerWithoutCiphertext(envelope);
     expect(header).not.toHaveProperty("payloadCiphertext");
     expect(header.letterId).toBe(envelope.letterId);
+  });
+});
+
+// --- openLetter accepts format version 1 and 2 (union payload) --------------
+
+function validPayloadV2(): PayloadV2 {
+  return {
+    format_version: 2,
+    letter_text: "a letter with a sealed answer",
+    metrics: [],
+    figures: [],
+    recall_questions: [
+      {
+        id: "q1",
+        answer_type: "text",
+        text: "What worries me most right now?",
+        sealed_answer: "my rent",
+      },
+    ],
+  };
+}
+
+describe("openLetter accepts a format version 2 letter", () => {
+  it("opens to the same payload that was sealed", async () => {
+    const letterId = freshLetterId();
+    const serverSecret = freshServerSecret();
+    const backupKey = generateBackupKey();
+    const payload = validPayloadV2();
+    const { envelope, envelopeHash } = await sealLetter({
+      payload,
+      letterId,
+      serverSecret,
+      backupKey,
+      sealedAt: SEALED_AT,
+      opensAt: OPENS_AT,
+    });
+    expect(envelope.formatVersion).toBe(2);
+
+    const result = await openLetter({ envelope, envelopeHash, serverSecret, backupKey });
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.payload).toEqual(payload);
+    }
+  });
+
+  it("a wrong backup key -> wrong_key with no payload", async () => {
+    const letterId = freshLetterId();
+    const serverSecret = freshServerSecret();
+    const backupKey = generateBackupKey();
+    const { envelope, envelopeHash } = await sealLetter({
+      payload: validPayloadV2(),
+      letterId,
+      serverSecret,
+      backupKey,
+      sealedAt: SEALED_AT,
+      opensAt: OPENS_AT,
+    });
+
+    const result = await openLetter({
+      envelope,
+      envelopeHash,
+      serverSecret,
+      backupKey: generateBackupKey(),
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.kind).toBe("wrong_key");
+    }
+    expect(result).not.toHaveProperty("payload");
+  });
+
+  it("a tampered ciphertext with the original hash -> verification_failed", async () => {
+    const letterId = freshLetterId();
+    const serverSecret = freshServerSecret();
+    const backupKey = generateBackupKey();
+    const { envelope, envelopeHash } = await sealLetter({
+      payload: validPayloadV2(),
+      letterId,
+      serverSecret,
+      backupKey,
+      sealedAt: SEALED_AT,
+      opensAt: OPENS_AT,
+    });
+
+    const tampered = JSON.parse(JSON.stringify(envelope));
+    const bytes = decodeBase64url(envelope.payloadCiphertext);
+    bytes[bytes.length - 1] ^= 0x01;
+    tampered.payloadCiphertext = encodeBase64url(bytes);
+
+    const result = await openLetter({
+      envelope: tampered,
+      envelopeHash,
+      serverSecret,
+      backupKey,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.kind).toBe("verification_failed");
+    }
+    expect(result).not.toHaveProperty("payload");
+  });
+
+  it("a tampered ciphertext with a recomputed hash -> tampered with no payload", async () => {
+    const letterId = freshLetterId();
+    const serverSecret = freshServerSecret();
+    const backupKey = generateBackupKey();
+    const { envelope } = await sealLetter({
+      payload: validPayloadV2(),
+      letterId,
+      serverSecret,
+      backupKey,
+      sealedAt: SEALED_AT,
+      opensAt: OPENS_AT,
+    });
+
+    const tampered = JSON.parse(JSON.stringify(envelope));
+    const bytes = decodeBase64url(envelope.payloadCiphertext);
+    bytes[bytes.length - 1] ^= 0x01;
+    tampered.payloadCiphertext = encodeBase64url(bytes);
+    const recomputed = await computeEnvelopeHash(tampered);
+
+    const result = await openLetter({
+      envelope: tampered,
+      envelopeHash: recomputed,
+      serverSecret,
+      backupKey,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error.kind).toBe("tampered");
+    }
+    expect(result).not.toHaveProperty("payload");
+  });
+});
+
+describe("openLetter rejects an envelope with an unknown formatVersion", () => {
+  it("formatVersion 3 -> unsupported_format carrying the version seen", async () => {
+    const letterId = freshLetterId();
+    const serverSecret = freshServerSecret();
+    const backupKey = generateBackupKey();
+    const { envelope, envelopeHash } = await sealLetter({
+      payload: validPayload(),
+      letterId,
+      serverSecret,
+      backupKey,
+      sealedAt: SEALED_AT,
+      opensAt: OPENS_AT,
+    });
+
+    const future = { ...envelope, formatVersion: 3 };
+    const result = await openLetter({
+      envelope: future,
+      envelopeHash,
+      serverSecret,
+      backupKey,
+    });
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.error).toEqual({ kind: "unsupported_format", formatVersion: 3 });
+    }
+    expect(result).not.toHaveProperty("payload");
+  });
+});
+
+describe("Property 2: a format version 1 letter still opens with the same payload", () => {
+  it("round-trips any letter text to the payload that was sealed", async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.string({ minLength: 1, maxLength: 120 }).filter((s) => s.trim().length > 0),
+        async (letterText) => {
+          const letterId = freshLetterId();
+          const serverSecret = freshServerSecret();
+          const backupKey = generateBackupKey();
+          const payload = validPayload(letterText);
+          const { envelope, envelopeHash } = await sealLetter({
+            payload,
+            letterId,
+            serverSecret,
+            backupKey,
+            sealedAt: SEALED_AT,
+            opensAt: OPENS_AT,
+          });
+          expect(envelope.formatVersion).toBe(1);
+
+          const result = await openLetter({ envelope, envelopeHash, serverSecret, backupKey });
+          expect(result.ok).toBe(true);
+          if (result.ok) {
+            expect(result.payload).toEqual(payload);
+          }
+        },
+      ),
+      { numRuns: 25 },
+    );
   });
 });
