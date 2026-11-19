@@ -12,7 +12,7 @@ import { describe, expect, it, vi } from "vitest";
 import { Reveal, type RevealProps } from "@/components/reveal/Reveal";
 import type { Opened } from "@/components/reveal/opening-machine";
 import type { RecallRecordV2 } from "@/lib/recall";
-import type { PayloadV1 } from "@/lib/seal-format";
+import type { OpenedPayload } from "@/components/reveal/opened-payload";
 import { MotionProvider } from "@/components/ceremony/motion";
 import { SkipProvider } from "@/components/ceremony/skip";
 import { LiveRegionProvider } from "@/components/ceremony/LiveRegion";
@@ -118,7 +118,6 @@ const OPENED: Opened = {
   envelopeHash:
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   payload: {
-    format_version: 1,
     letter_text: LETTER,
     metrics: [],
     figures: [],
@@ -129,7 +128,7 @@ const OPENED: Opened = {
         text: "What was the first thing on your mind that autumn?",
       },
     ],
-  } satisfies PayloadV1,
+  } satisfies OpenedPayload,
 };
 
 const RECORD: RecallRecordV2 = {

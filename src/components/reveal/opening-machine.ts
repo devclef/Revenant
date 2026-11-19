@@ -28,8 +28,8 @@
  *
  * This module imports one runtime value, `TEXT_ANSWERS_MAX` from
  * `@/lib/recall/limits` (a pure constant file with no Zod). It imports only the
- * types `RecallRecordV2` and `Draft` from `@/lib/recall` and `PayloadV1` from
- * `@/lib/seal-format`. It never imports `@/lib/crypto` or
+ * types `RecallRecordV2` and `Draft` from `@/lib/recall` and `OpenedPayload` from
+ * `./opened-payload`. It never imports `@/lib/crypto` or
  * `@/lib/recall/generate`.
  */
 
@@ -37,14 +37,14 @@ import type { RecallRecordV2, Draft } from "@/lib/recall";
 // The cap is read from limits.ts, not the barrel, so this module imports no
 // Zod-backed runtime value (spec 10 C3.9).
 import { TEXT_ANSWERS_MAX } from "@/lib/recall/limits";
-import type { PayloadV1 } from "@/lib/seal-format";
+import type { OpenedPayload } from "./opened-payload";
 import type { SampleAnswers } from "./sample-pick";
 
 /**
  * A recall question exactly as it was sealed, read from the frozen payload
  * schema so this module and the seal format can never drift.
  */
-export type RecallQuestion = PayloadV1["recall_questions"][number];
+export type RecallQuestion = OpenedPayload["recall_questions"][number];
 
 /**
  * One question with the answer written for it, shown on the Text_Persona walk
@@ -61,7 +61,7 @@ export type Opened = {
   letterId: string;
   /** From the parsed envelope header; both are millisecond-`Z` strings. */
   header: { sealedAt: string; opensAt: string };
-  payload: PayloadV1;
+  payload: OpenedPayload;
   /** Non-extractable, memory only; used to encrypt the recall record. */
   openingKey: CryptoKey;
   /**

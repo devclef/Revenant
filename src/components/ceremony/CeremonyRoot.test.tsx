@@ -40,7 +40,7 @@ import { CEREMONY_COPY } from "./copy";
 import { REVEAL_COPY } from "../reveal/copy";
 import type { FlowState, Opened } from "../reveal/opening-machine";
 import type { Draft, RecallRecordV2 } from "@/lib/recall";
-import type { PayloadV1 } from "@/lib/seal-format";
+import type { OpenedPayload } from "@/components/reveal/opened-payload";
 
 // --- the mocked flow hook ----------------------------------------------------
 //
@@ -124,7 +124,6 @@ const OPENED: Opened = {
   envelopeHash:
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   payload: {
-    format_version: 1,
     letter_text: "LETTER_BODY the letter text does not matter for this test.",
     metrics: [
       {
@@ -158,7 +157,7 @@ const OPENED: Opened = {
         metric_id: "fuel",
       },
     ],
-  } satisfies PayloadV1,
+  } satisfies OpenedPayload,
 };
 
 const DRAFTS: Record<string, Draft> = {

@@ -17,7 +17,7 @@ import { SkipProvider } from "@/components/ceremony/skip";
 import { LiveRegionProvider } from "@/components/ceremony/LiveRegion";
 import { LocalViewProvider } from "@/components/ceremony/local-view";
 import type { Opened, TestimonyEntry } from "./opening-machine";
-import type { PayloadV1 } from "@/lib/seal-format";
+import type { OpenedPayload } from "@/components/reveal/opened-payload";
 
 const LETTER = "Priya's letter, in plain words, with no figures in it.";
 
@@ -35,7 +35,6 @@ const OPENED: Opened = {
   openingKey: {} as unknown as CryptoKey,
   envelopeHash: "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   payload: {
-    format_version: 1,
     letter_text: LETTER,
     metrics: [],
     figures: [],
@@ -44,7 +43,7 @@ const OPENED: Opened = {
       answer_type: "text" as const,
       text: entry.question,
     })),
-  } satisfies PayloadV1,
+  } satisfies OpenedPayload,
 };
 
 function renderReveal(extra: Partial<RevealProps> = {}): string {

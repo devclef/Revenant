@@ -18,7 +18,7 @@ import { LiveRegionProvider } from "@/components/ceremony/LiveRegion";
 import { LocalViewProvider } from "@/components/ceremony/local-view";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV2 } from "@/lib/recall";
-import type { PayloadV1 } from "@/lib/seal-format";
+import type { OpenedPayload } from "@/components/reveal/opened-payload";
 
 const { useFiguresSpy } = vi.hoisted(() => ({ useFiguresSpy: vi.fn() }));
 
@@ -45,7 +45,6 @@ const OPENED: Opened = {
   envelopeHash:
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   payload: {
-    format_version: 1,
     letter_text: LETTER,
     metrics: [],
     figures: [],
@@ -56,7 +55,7 @@ const OPENED: Opened = {
         text: "What was the first thing on your mind that autumn?",
       },
     ],
-  } satisfies PayloadV1,
+  } satisfies OpenedPayload,
 };
 
 const RECORD: RecallRecordV2 = {

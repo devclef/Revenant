@@ -11,7 +11,7 @@ import { LiveRegionProvider } from "@/components/ceremony/LiveRegion";
 import { LocalViewProvider } from "@/components/ceremony/local-view";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV2 } from "@/lib/recall";
-import type { PayloadV1 } from "@/lib/seal-format";
+import type { OpenedPayload } from "@/components/reveal/opened-payload";
 
 /**
  * A letter with no sealed figures and two Author_Questions (spec 10 C8.6). The
@@ -44,7 +44,6 @@ const OPENED: Opened = {
   envelopeHash:
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   payload: {
-    format_version: 1,
     letter_text: LETTER,
     metrics: [],
     figures: [],
@@ -60,7 +59,7 @@ const OPENED: Opened = {
         text: "Who did you talk to most that month?",
       },
     ],
-  } satisfies PayloadV1,
+  } satisfies OpenedPayload,
 };
 
 const RECORD: RecallRecordV2 = {
