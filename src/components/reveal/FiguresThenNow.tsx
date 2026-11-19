@@ -1,4 +1,5 @@
-import type { FigureV1, MetricDefinitionV1, PayloadV1 } from "@/lib/seal-format";
+import type { FigureV1, MetricDefinitionV1 } from "@/lib/seal-format";
+import type { OpenedPayload } from "./opened-payload";
 import type { DisplayRescale } from "@/lib/figures";
 import {
   computeChange,
@@ -501,7 +502,7 @@ export function FiguresThenNow({
  * carries `data-figure-entry` so the fade-up runs as it does for official
  * figures.
  */
-export function SelfReportedOnly({ payload }: { payload: PayloadV1 }) {
+export function SelfReportedOnly({ payload }: { payload: OpenedPayload }) {
   const metricById = new Map<string, MetricDefinitionV1>();
   for (const metric of payload.metrics) {
     metricById.set(metric.id, metric);

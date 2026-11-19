@@ -14,7 +14,7 @@ import { LiveRegionProvider } from "@/components/ceremony/LiveRegion";
 import { LocalViewProvider } from "@/components/ceremony/local-view";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV1 } from "@/lib/recall";
-import type { PayloadV1 } from "@/lib/seal-format";
+import type { OpenedPayload } from "@/components/reveal/opened-payload";
 
 /**
  * Markup tests for stage 1 of the reveal (R9.2, R9.3, R3.8). Rendered with
@@ -39,7 +39,6 @@ const OPENED: Opened = {
   envelopeHash:
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   payload: {
-    format_version: 1,
     letter_text: "LETTER_BODY_SECRET the letter text must never appear here.",
     metrics: [
       {
@@ -78,7 +77,7 @@ const OPENED: Opened = {
         text: "What were you spending most on then?",
       },
     ],
-  } satisfies PayloadV1,
+  } satisfies OpenedPayload,
 };
 
 const RECORD: RecallRecordV1 = {

@@ -14,7 +14,7 @@ import { LiveRegionProvider } from "@/components/ceremony/LiveRegion";
 import { LocalViewProvider } from "@/components/ceremony/local-view";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV1 } from "@/lib/recall";
-import type { PayloadV1 } from "@/lib/seal-format";
+import type { OpenedPayload } from "@/components/reveal/opened-payload";
 
 /**
  * The marks stage (stage 1 of the reveal) shows each number answer on a
@@ -32,7 +32,6 @@ const OPENED: Opened = {
   envelopeHash:
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   payload: {
-    format_version: 1,
     letter_text: "A short letter for the marks test.",
     metrics: [
       {
@@ -72,7 +71,7 @@ const OPENED: Opened = {
         text: "What were you spending most on then?",
       },
     ],
-  } satisfies PayloadV1,
+  } satisfies OpenedPayload,
 };
 
 function renderMarks(

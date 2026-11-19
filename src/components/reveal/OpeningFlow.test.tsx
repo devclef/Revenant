@@ -14,7 +14,7 @@ import type {
   OpenFailedKind,
 } from "./opening-machine";
 import type { RecallRecordV2, Draft } from "@/lib/recall";
-import type { PayloadV1 } from "@/lib/seal-format";
+import type { OpenedPayload } from "@/components/reveal/opened-payload";
 
 /**
  * Markup tests for the Opening_Flow view selector (R7.5-R7.9, R16.4, R9.x).
@@ -133,7 +133,6 @@ const OPENED: Opened = {
   envelopeHash:
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   payload: {
-    format_version: 1,
     letter_text: "LETTER_BODY_SECRET the letter text must never appear here.",
     metrics: [
       {
@@ -167,7 +166,7 @@ const OPENED: Opened = {
         metric_id: "fuel",
       },
     ],
-  } satisfies PayloadV1,
+  } satisfies OpenedPayload,
 };
 
 const DRAFTS: Record<string, Draft> = {

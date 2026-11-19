@@ -9,7 +9,7 @@ import { LiveRegionProvider } from "@/components/ceremony/LiveRegion";
 import { LocalViewProvider } from "@/components/ceremony/local-view";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV2 } from "@/lib/recall";
-import type { PayloadV1 } from "@/lib/seal-format";
+import type { OpenedPayload } from "@/components/reveal/opened-payload";
 import { CATALOGUE } from "@/lib/figures/catalogue";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
 import { thenAndNow } from "@/lib/figures/then-now";
@@ -57,7 +57,6 @@ const OPENED: Opened = {
   envelopeHash:
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   payload: {
-    format_version: 1,
     letter_text: LETTER,
     metrics: [series.metric],
     figures: [then.figure],
@@ -70,7 +69,7 @@ const OPENED: Opened = {
         text: FIGURE_QUESTION,
       },
     ],
-  } satisfies PayloadV1,
+  } satisfies OpenedPayload,
 };
 
 const RECORD: RecallRecordV2 = {

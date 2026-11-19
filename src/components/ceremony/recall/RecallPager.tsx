@@ -43,7 +43,7 @@ import { useKeepInVisualViewport } from "@/components/ui/use-keep-in-visual-view
 import { useCalmInForce } from "../motion";
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import type { Draft } from "@/lib/recall";
-import type { PayloadV1 } from "@/lib/seal-format";
+import type { OpenedPayload } from "@/components/reveal/opened-payload";
 import {
   firstInvalidIndex,
   isLastIndex,
@@ -56,7 +56,7 @@ import styles from "./RecallPager.module.css";
 
 export type RecallPagerProps = {
   /** The sealed payload. Only its questions and metric units are read. */
-  payload: Pick<PayloadV1, "metrics" | "recall_questions">;
+  payload: Pick<OpenedPayload, "metrics" | "recall_questions">;
   /** The judge's in-progress answers, keyed by question ID. */
   drafts: Readonly<Record<string, Draft>>;
   /** The question IDs that failed validation on the last submit (R11.10). */

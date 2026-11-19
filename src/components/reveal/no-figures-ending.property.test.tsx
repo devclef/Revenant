@@ -27,7 +27,7 @@ import {
 } from "@/components/ceremony/stages";
 import type { FlowState, Opened } from "./opening-machine";
 import type { RecallRecordV2 } from "@/lib/recall";
-import type { PayloadV1 } from "@/lib/seal-format";
+import type { OpenedPayload } from "@/components/reveal/opened-payload";
 
 import { Reveal, type RevealProps } from "./Reveal";
 import { REVEAL_COPY } from "./copy";
@@ -59,7 +59,6 @@ const OPENED: Opened = {
   envelopeHash:
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   payload: {
-    format_version: 1,
     letter_text: "A short letter with no figures in it.",
     metrics: [],
     figures: [],
@@ -70,7 +69,7 @@ const OPENED: Opened = {
         text: "What was on your mind that week?",
       },
     ],
-  } satisfies PayloadV1,
+  } satisfies OpenedPayload,
 };
 
 const RECORD: RecallRecordV2 = {

@@ -17,7 +17,7 @@ import { readFileSync as readCss } from "node:fs";
 import { join as joinPath } from "node:path";
 import type { Opened } from "./opening-machine";
 import type { RecallRecordV1 } from "@/lib/recall";
-import type { PayloadV1 } from "@/lib/seal-format";
+import type { OpenedPayload } from "@/components/reveal/opened-payload";
 
 /**
  * Issue #119, task 1: every reveal stage sits on a paper panel that
@@ -41,7 +41,6 @@ const OPENED: Opened = {
   envelopeHash:
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
   payload: {
-    format_version: 1,
     letter_text: "A short letter for the panel test.",
     metrics: [
       {
@@ -75,7 +74,7 @@ const OPENED: Opened = {
         metric_id: "fuel",
       },
     ],
-  } satisfies PayloadV1,
+  } satisfies OpenedPayload,
 };
 
 const RECORD: RecallRecordV1 = {
