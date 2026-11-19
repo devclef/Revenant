@@ -145,7 +145,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Scope: `src/app/page.tsx` (see boundary note), `src/app/demo/page.tsx`, `src/app/how-it-is-sealed/page.tsx`, `src/app/not-found.tsx`, `src/app/seal/page.tsx`, `src/components/landing/**`, `src/components/demo/**`, `src/components/how/**`, `src/components/brand/copy.ts`, and the `*.test.ts(x)` next to each.
   - Covers: `home`, `demo`, `how`, `not-found`. Requirement 6.
   - Steps:
-    1. Build the four screens. `src/app/page.tsx` belongs to platform-dev in `.github/agents.json`: change only the components it renders, and say in a commit message body if a line in `page.tsx` itself must change, so the owner can move it.
+    1. Build the four screens. `src/app/page.tsx` belongs to platform-dev in `.github/agents.json`: change only the components it renders, and say in a commit message body if a line in `page.tsx` itself must change, so task 14 makes it.
     2. `/seal` renders the not-found screen while real sealing is off.
     3. Ritual copy as in the README strings for `home`.
   - Acceptance:
@@ -156,7 +156,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
 
 - [ ] 8. Write: answers with every question, new Occasion wording, version 2 payload
   - Agent: `frontend-dev` · Depends on: 2, 6 · Estimated size: L, ~1,800 changed lines
-  - Scope: `src/components/live/desk/**`, `src/components/live/occasions.ts`, `src/components/live/build-payload.ts`, `src/components/live/WriteForm.tsx`, `src/components/live/copy.ts`, `src/lib/recall/**`, and the `*.test.ts(x)` next to each.
+  - Scope: `src/components/live/desk/**`, `src/components/live/occasions.ts`, `src/components/live/build-payload.ts`, `src/components/live/seal-runner.ts` (its `PayloadV1` annotation), `src/components/live/WriteForm.tsx`, `src/components/live/copy.ts`, `src/lib/recall/**`, and the `*.test.ts(x)` next to each.
   - Covers: `write-empty`, `write-filled`, `write-check`, `write-own-number`. Requirements 7 and 8; design "6. Write", Properties 4 and 8.
   - Steps:
     1. Answer field in each question row, one default row, up to three, the 1,000 code point limit, answers kept on removal and Occasion picks as in Requirement 7.5.
@@ -256,13 +256,14 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
 
 - [ ] 14. Layout rows, the Live_Walk and the docs for the new flow
   - Agent: `platform-dev` · Depends on: 7, 8, 9, 10, 11, 12, 13 · Estimated size: L, ~1,800 changed lines
-  - Scope: `tools/qa/layout-check.mjs`, `src/test/integration/live-walk*.ts`, `README.md`, `docs/video-script.md`, and the tests that cover them.
+  - Scope: `tools/qa/layout-check.mjs`, `src/test/integration/live-walk*.ts`, `src/app/page.tsx`, `README.md`, `docs/video-script.md`, and the tests that cover them.
   - Requirement 14.
   - Steps:
     1. Layout-check rows for what this spec fixes in position: the ghost in the column and unclipped at 390, the Skip slot stable, no dirt band, one persona notice, one DEMO label, and the primary action in view on the screens of Requirement 1.7. Retire the rows and walk steps this spec replaces, with each reason in a commit message body.
     2. Rewrite the walk for the new flow at both sizes: Write with answers, a fold check failure, Press the seal in two presses, Wait, "Open your letter", Testify (author and figure question), Break the seal, the receipts, and a persona. Each failure helper has a passing and a failing example.
     3. Update `README.md` and `docs/video-script.md` to the new ritual (questions answered when writing and recalled at opening). Keep the provenance comments in the video script correct.
-    4. A row or step that fails because of a product file is listed under "For task 15" with its name, output and suspected file. This task edits no product file and lowers no threshold.
+    4. If task 7's commit notes say a line in `src/app/page.tsx` must change, make that change here.
+    5. A row or step that fails because of a product file is listed under "For task 15" with its name, output and suspected file. This task edits no product file and lowers no threshold.
   - Acceptance:
     - [ ] 14.1 Layout rows and retirements
       - _Requirements: 14.1_
