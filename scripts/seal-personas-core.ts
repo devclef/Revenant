@@ -23,7 +23,9 @@ import {
   canonicalize,
   decodeBase64url,
   payloadV1Schema,
+  payloadV2Schema,
   type PayloadV1,
+  type PayloadV2,
   type MetricDefinitionV1,
 } from "@/lib/seal-format";
 import { thenAndNow } from "@/lib/figures/then-now";
@@ -145,22 +147,142 @@ function pickMetricDefinition(metric: MetricDefinitionV1): MetricDefinitionV1 {
  * metric ID without a "then" figure; `invalid_payload` means the no-metrics
  * payload failed payloadV1Schema and must not be stored.
  */
+/**
+ * The author's sealed answers, keyed by persona key. Each list holds one answer
+ * per author question, in the same order as the persona's `author_questions`.
+ * The committed file is content/personas/letters/sealed-answers.json.
+ */
+export type SealedAnswers = Readonly<Record<string, readonly string[]>>;
+
 export type BuildResult =
-  | { ok: true; payload: PayloadV1 }
+  | { ok: true; payload: PayloadV1 | PayloadV2 }
   | { ok: false; reason: "missing_then_figure"; metricId: string }
   | { ok: false; reason: "invalid_payload" };
+
+/** The metric section of a payload, shared by format versions 1 and 2. */
+type MetricSection = {
+  metrics: MetricDefinitionV1[];
+  figures: PayloadV1["figures"];
+  numberQuestions: ReturnType<typeof generateRecallQuestions>;
+};
+
+/**
+ * Build the metric section for a persona that tracks metrics (R4.1, R4.2,
+ * R4.3, R4.4). For each tracked metric, in list order, it takes the "then"
+ * figure from `thenAndNow(metricId, written_as_of, figures).then`. If that
+ * figure is missing it returns `{ ok: false, metricId }` for the FIRST such
+ * metric. Each found figure is copied with a plain spread, changing no field
+ * and keeping the value string verbatim. The metric definition is the six-key
+ * pick from the series' metric, and the number questions come from
+ * `generateRecallQuestions` over the metrics and their subjects.
+ */
+function buildMetricSection(
+  p: Persona,
+  figures: LoadedFigures,
+): { ok: true; section: MetricSection } | { ok: false; metricId: string } {
+  const metrics: MetricDefinitionV1[] = [];
+  const payloadFigures: PayloadV1["figures"] = [];
+
+  for (const { metric_id } of p.metrics) {
+    const then = thenAndNow(metric_id, p.written_as_of, figures).then;
+    if (!then.found) {
+      // The first metric without a "then" figure fails the whole build (R4.3).
+      return { ok: false, metricId: metric_id };
+    }
+
+    // Copy the figure with a plain spread: no field changed or added, and the
+    // value string stays exactly as published (data-integrity.md).
+    payloadFigures.push({ ...then.figure });
+
+    const series = figures.series.get(metric_id);
+    if (series === undefined) {
+      // thenAndNow found a figure, so the series exists; this is unreachable in
+      // practice. Fail the same metric rather than build an invalid payload.
+      return { ok: false, metricId: metric_id };
+    }
+    metrics.push(pickMetricDefinition(series.metric));
+  }
+
+  const numberQuestions = generateRecallQuestions(
+    p.metrics.map((m, i) => ({
+      metric: metrics[i],
+      recall_subject: m.recall_subject,
+    })),
+  );
+
+  return {
+    ok: true,
+    section: { metrics, figures: payloadFigures, numberQuestions },
+  };
+}
+
+/**
+ * Build a format version 2 payload for a persona that has an entry in the
+ * sealed answers (spec 15). Each author question becomes a text question with
+ * id a1, a2, ... by position, carrying the answer sealed with it. A persona
+ * that also tracks metrics keeps its number questions and figures, placed
+ * before the text questions.
+ *
+ * The answers must match the author questions one for one. A count mismatch,
+ * or an answer that fails payloadV2Schema, returns `invalid_payload`.
+ */
+function buildSealedPayload(
+  p: Persona,
+  text: string,
+  figures: LoadedFigures,
+  answers: readonly string[],
+): BuildResult {
+  const questions = p.author_questions ?? [];
+  if (answers.length !== questions.length) {
+    return { ok: false, reason: "invalid_payload" };
+  }
+
+  const authorQuestions = questions.map((question, i) => ({
+    id: `a${i + 1}`,
+    answer_type: "text" as const,
+    text: question,
+    sealed_answer: answers[i],
+  }));
+
+  let metrics: MetricDefinitionV1[] = [];
+  let payloadFigures: PayloadV1["figures"] = [];
+  let numberQuestions: MetricSection["numberQuestions"] = [];
+  if (p.metrics.length > 0) {
+    const built = buildMetricSection(p, figures);
+    if (!built.ok) {
+      return {
+        ok: false,
+        reason: "missing_then_figure",
+        metricId: built.metricId,
+      };
+    }
+    ({ metrics, figures: payloadFigures, numberQuestions } = built.section);
+  }
+
+  // safeParse, not parse: a payload that fails payloadV2Schema returns a reason
+  // here and is never stored (spec 10 P2.2).
+  const checked = payloadV2Schema.safeParse({
+    format_version: 2,
+    letter_text: text,
+    written_as_of: p.written_as_of,
+    metrics,
+    figures: payloadFigures,
+    recall_questions: [...numberQuestions, ...authorQuestions],
+  });
+  if (!checked.success) {
+    return { ok: false, reason: "invalid_payload" };
+  }
+  return { ok: true, payload: checked.data };
+}
 
 /**
  * Build the sealed payload for one persona (R4.1, R4.2, R4.4, R2.8).
  *
- * For each tracked metric, in list order, it takes the "then" figure from
- * `thenAndNow(metricId, written_as_of, figures).then`. If that figure is
- * missing it returns `{ ok: false, metricId }` for the FIRST such metric. Each
- * found figure is copied with a plain spread, changing no field and keeping the
- * value string verbatim. The metric definition is the six-key pick from the
- * series' metric, and the recall questions come from `generateRecallQuestions`
- * over the metrics and their subjects. The assembled payload is validated with
- * `payloadV1Schema.parse`, which throws on any shape error.
+ * A persona with an entry in `sealedAnswers` gets a format version 2 payload,
+ * built by {@link buildSealedPayload}. Every other persona gets the format
+ * version 1 payload, byte for byte as before. The assembled payload is
+ * validated with the schema for its version, so a shape error never reaches
+ * storage.
  *
  * The function reads no clock and no randomness, so the same inputs always
  * build a byte-identical canonical payload. That determinism is what makes the
@@ -170,7 +292,12 @@ export function buildPersonaPayload(
   p: Persona,
   text: string,
   figures: LoadedFigures,
+  sealedAnswers: SealedAnswers = {},
 ): BuildResult {
+  if (Object.prototype.hasOwnProperty.call(sealedAnswers, p.key)) {
+    return buildSealedPayload(p, text, figures, sealedAnswers[p.key] ?? []);
+  }
+
   // A persona with no metrics (the Text_Persona) carries only the questions its
   // author wrote. Its payload has no metrics and no figures, and each author
   // question is sealed as a text question with id a1, a2, ... by position.
@@ -196,43 +323,25 @@ export function buildPersonaPayload(
     return { ok: true, payload: checked.data };
   }
 
-  const metrics: MetricDefinitionV1[] = [];
-  const payloadFigures: PayloadV1["figures"] = [];
-
-  for (const { metric_id } of p.metrics) {
-    const then = thenAndNow(metric_id, p.written_as_of, figures).then;
-    if (!then.found) {
-      // The first metric without a "then" figure fails the whole build (R4.3).
-      return { ok: false, reason: "missing_then_figure", metricId: metric_id };
-    }
-
-    // Copy the figure with a plain spread: no field changed or added, and the
-    // value string stays exactly as published (data-integrity.md).
-    payloadFigures.push({ ...then.figure });
-
-    const series = figures.series.get(metric_id);
-    if (series === undefined) {
-      // thenAndNow found a figure, so the series exists; this is unreachable in
-      // practice. Fail the same metric rather than build an invalid payload.
-      return { ok: false, reason: "missing_then_figure", metricId: metric_id };
-    }
-    metrics.push(pickMetricDefinition(series.metric));
+  const built = buildMetricSection(p, figures);
+  if (!built.ok) {
+    return {
+      ok: false,
+      reason: "missing_then_figure",
+      metricId: built.metricId,
+    };
   }
+  const { metrics, figures: payloadFigures, numberQuestions } = built.section;
 
-  const recall_questions = generateRecallQuestions(
-    p.metrics.map((m, i) => ({
-      metric: metrics[i],
-      recall_subject: m.recall_subject,
-    })),
-  );
-
+  // Assembled from the metric section, which has already checked each figure.
+  // parse (not safeParse) keeps the version 1 behaviour: a shape error throws.
   const payload = payloadV1Schema.parse({
     format_version: 1,
     letter_text: text,
     written_as_of: p.written_as_of,
     metrics,
     figures: payloadFigures,
-    recall_questions,
+    recall_questions: numberQuestions,
   });
 
   return { ok: true, payload };
