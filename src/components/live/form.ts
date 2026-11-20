@@ -1,4 +1,8 @@
-import { questionRowProblem, questionsForSeal } from "./author-questions";
+import {
+  answerProblem,
+  questionRowProblem,
+  questionsForSeal,
+} from "./author-questions";
 import {
   MAX_FIGURES,
   MAX_LETTER_CODE_POINTS,
@@ -22,6 +26,8 @@ export type WriteProblem =
   | "letter_empty"
   | "letter_too_long"
   | "question_too_long"
+  | "answer_missing"
+  | "answer_too_long"
   | "nothing_to_testify"
   | "figures_too_many"
   | "warning_unticked"
@@ -232,6 +238,13 @@ export function validateWrite(input: {
   /** The Author_Question rows, in order. Defaults to none. */
   questions?: readonly string[];
   /**
+   * The answer to each question, index-aligned with `questions` (spec 15, R7.1).
+   * Omitted means the answers are not checked here, as before answers existed.
+   * When given, a question with text needs a non-blank answer, and no answer may
+   * be over 1,000 code points.
+   */
+  answers?: readonly string[];
+  /**
    * The seal mode. Accepted so callers can pass it, but it does not change the
    * rule: demo and real mode need the same something to testify about.
    */
@@ -256,6 +269,20 @@ export function validateWrite(input: {
 
   if (questions.some((row) => questionRowProblem(row) !== null)) {
     problems.push("question_too_long");
+  }
+
+  if (input.answers !== undefined) {
+    const answers = input.answers;
+    const answerRows = questions.map((question, index) => ({
+      hasQuestion: question.trim() !== "",
+      answer: answers[index] ?? "",
+    }));
+    if (answerRows.some((row) => row.hasQuestion && row.answer.trim() === "")) {
+      problems.push("answer_missing");
+    }
+    if (answerRows.some((row) => answerProblem(row.answer) !== null)) {
+      problems.push("answer_too_long");
+    }
   }
 
   if (

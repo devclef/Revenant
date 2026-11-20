@@ -314,6 +314,7 @@ export function canPress(draft: WriteDraft, sealingDay: string): boolean {
       warningTicked: draft.warningTicked,
       backupCardTicked: draft.backupCardTicked,
       questions: draft.questions,
+      answers: draft.answers,
       selfReported: draft.selfReported,
       sealingDay,
     }).length === 0

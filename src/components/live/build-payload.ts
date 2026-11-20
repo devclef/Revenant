@@ -123,6 +123,13 @@ export function buildLivePayload(input: {
       "buildLivePayload: one sealed answer is required for each author question",
     );
   }
+  // The press gate keeps a blank answer out of a seal. This guard makes sure a
+  // blank sealed_answer never reaches the payload, even if a caller skips it.
+  if (authorAnswers.some((answer) => answer.trim() === "")) {
+    throw new Error(
+      "buildLivePayload: every author question needs a non-blank sealed answer",
+    );
+  }
   const selfReportedRows = (input.selfReported ?? []).filter(
     (row) => !isEmptySelfReportedRow(row),
   );

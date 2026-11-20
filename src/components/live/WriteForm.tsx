@@ -282,7 +282,7 @@ export function WriteForm({
   realDate,
   questions = [],
   onQuestionChange = () => {},
-  answers = [],
+  answers,
   onAnswerChange = () => {},
   onQuestionAdd = () => {},
   onQuestionRemove = () => {},
@@ -361,6 +361,8 @@ export function WriteForm({
     (mode === "demo"
       ? localDay.day
       : new Date().toISOString().slice(0, 10));
+  // The answers are checked only when the caller passes them: /seal and /demo/live
+  // both do, so the press waits for an answer on every question (spec 15, R7.4).
   const problems = validateWrite({
     text,
     metricIds,
@@ -368,9 +370,11 @@ export function WriteForm({
     backupCardTicked,
     maxFigures: limit,
     questions,
+    answers,
     selfReported,
     sealingDay: today,
   });
+  const answerRows = answers ?? [];
   const atLimit = metricIds.length >= limit;
   const all = section === "all";
   /** True when this part of the form renders in the current section. */
@@ -424,8 +428,18 @@ export function WriteForm({
     touched,
     TOUCH_FIELDS.questions,
   )
-    ? answers.flatMap((row, index) =>
+    ? answerRows.flatMap((row, index) =>
         answerProblem(row) !== null ? [index] : [],
+      )
+    : [];
+  // A question with no answer names its own message once the rows were touched
+  // or a seal was attempted (spec 15, R7.4). A blank question needs no answer.
+  const missingAnswerIndices =
+    answers !== undefined && showsFieldMessage(touched, TOUCH_FIELDS.questions)
+      ? questions.flatMap((row, index) =>
+        row.trim() !== "" && (answerRows[index] ?? "").trim() === ""
+          ? [index]
+          : [],
       )
     : [];
   const dateMissing =
@@ -532,6 +546,13 @@ export function WriteForm({
     <AuthorQuestions
       questions={questions}
       tooLongIndices={tooLongIndices}
+      answers={answerRows}
+      answerTooLongIndices={answerTooLongIndices}
+      missingAnswerIndices={missingAnswerIndices}
+      onAnswerChange={(index, next) => {
+        onTouch(TOUCH_FIELDS.questions);
+        onAnswerChange(index, next);
+      }}
       onAdd={() => {
         onTouch(TOUCH_FIELDS.questions);
         onQuestionAdd("");
@@ -551,7 +572,7 @@ export function WriteForm({
     <QuestionSection
       questions={questions}
       tooLongIndices={tooLongIndices}
-      answers={answers}
+      answers={answerRows}
       answerTooLongIndices={answerTooLongIndices}
       missingAnswerIndex={missingAnswer}
       onAnswerChange={(index, next) => {

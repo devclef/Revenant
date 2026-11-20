@@ -234,3 +234,46 @@ describe("Property 9: a failed fold targets the first failing field in page orde
     );
   });
 });
+
+// Feature: 15-write-answers, Property 4: the fold names the first blank answer
+//
+// Rows whose questions have text and whose answers may be blank. The letter and
+// the other fields pass, so only the answer rows can fail. The fold must name
+// the lowest index of a blank answer, and no other.
+//
+// Validates: Requirements R7.1, R7.4.
+describe("Property 4: the fold names the first blank answer (R7.4)", () => {
+  const filledText = fc
+    .string({ minLength: 1, maxLength: 40 })
+    .filter((text) => text.trim() !== "");
+  const rowArb = fc.record({
+    question: filledText,
+    answer: fc.oneof(fc.constant(""), fc.constant("   "), filledText),
+  });
+
+  it("the fold names the lowest index of a blank answer and no other", () => {
+    fc.assert(
+      fc.property(fc.array(rowArb, { minLength: 1, maxLength: 3 }), (rows) => {
+        const blankIndices = rows.flatMap((row, index) =>
+          row.answer.trim() === "" ? [index] : [],
+        );
+        fc.pre(blankIndices.length > 0);
+        const input: WriteCheckInput = {
+          text: "A letter.",
+          questions: rows.map((row) => row.question),
+          answers: rows.map((row) => row.answer),
+          metricIds: [],
+          selfReported: [],
+          maxFigures: 4,
+          sealingDay: SEALING_DAY,
+        };
+        expect(firstFailingField(input)).toEqual({
+          kind: "answer",
+          index: blankIndices[0],
+        });
+        expect(writeCheck(input).ok).toBe(false);
+      }),
+      { numRuns: 200 },
+    );
+  });
+});

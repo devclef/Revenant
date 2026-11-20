@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
+import { DESK_COPY } from "./desk/copy";
 import { DEFAULT_QUESTION } from "./occasions";
 import {
   AUTHOR_QUESTIONS_MAX,
@@ -20,6 +21,20 @@ export interface AuthorQuestionsProps {
   onAdd: () => void;
   onChange: (index: number, text: string) => void;
   onRemove: (index: number) => void;
+  /**
+   * The answer to each row, index-aligned with `questions` (spec 15, R7.1). A
+   * missing entry reads as an empty answer.
+   */
+  answers?: readonly string[];
+  /** Indices of answers over 1,000 code points. Their message is shown. */
+  answerTooLongIndices?: readonly number[];
+  /**
+   * Indices of rows with a question and a blank answer. Their message is shown
+   * once the seal was attempted or the rows were touched.
+   */
+  missingAnswerIndices?: readonly number[];
+  /** Called with the row index and its new answer on every change. */
+  onAnswerChange?: (index: number, text: string) => void;
 }
 
 /** Replaces `{n}` in a copy string with a number. */
@@ -48,9 +63,14 @@ export function AuthorQuestions({
   onAdd,
   onChange,
   onRemove,
+  answers = [],
+  answerTooLongIndices = [],
+  missingAnswerIndices = [],
+  onAnswerChange = () => {},
 }: AuthorQuestionsProps) {
   const baseId = useId();
   const textareaRefs = useRef<Map<number, HTMLTextAreaElement>>(new Map());
+  const answerRefs = useRef<Map<number, HTMLTextAreaElement>>(new Map());
   const addRef = useRef<HTMLButtonElement | null>(null);
   // Where focus goes after the next render: the new row after Add, or the row
   // (or Add) that takes over after a removal (focusAfterRemove).
@@ -75,11 +95,12 @@ export function AuthorQuestions({
   useEffect(() => {
     const fitAll = () => {
       for (const el of textareaRefs.current.values()) fitHeight(el);
+      for (const el of answerRefs.current.values()) fitHeight(el);
     };
     fitAll();
     window.addEventListener("resize", fitAll);
     return () => window.removeEventListener("resize", fitAll);
-  }, [questions]);
+  }, [questions, answers]);
 
   function pressAdd() {
     setPendingFocus({ kind: "row", index: questions.length });
@@ -104,6 +125,14 @@ export function AuthorQuestions({
         const inputId = `${baseId}-q${index}`;
         const problemId = `${baseId}-q${index}-problem`;
         const isTooLong = tooLongIndices.includes(index);
+        const answerId = `${baseId}-a${index}`;
+        const answerProblemId = `${baseId}-a${index}-problem`;
+        const answer = answers[index] ?? "";
+        const answerProblem = answerTooLongIndices.includes(index)
+          ? LIVE_COPY.answerTooLong
+          : missingAnswerIndices.includes(index)
+            ? DESK_COPY.answerMissing.replace("{n}", String(n))
+            : undefined;
         return (
           <div
             key={index}
@@ -139,6 +168,28 @@ export function AuthorQuestions({
             {isTooLong ? (
               <p id={problemId} className={styles.problem}>
                 {LIVE_COPY.questionTooLong}
+              </p>
+            ) : null}
+            <label htmlFor={answerId} className={styles.label}>
+              {withNumber(DESK_COPY.answerLabelFor, n)}
+            </label>
+            <textarea
+              id={answerId}
+              rows={1}
+              className={styles.textarea}
+              value={answer}
+              placeholder={DESK_COPY.answerPlaceholder}
+              aria-describedby={answerProblem ? answerProblemId : undefined}
+              aria-invalid={answerProblem ? true : undefined}
+              ref={(el) => {
+                if (el) answerRefs.current.set(index, el);
+                else answerRefs.current.delete(index);
+              }}
+              onChange={(event) => onAnswerChange(index, event.target.value)}
+            />
+            {answerProblem ? (
+              <p id={answerProblemId} className={styles.problem}>
+                {answerProblem}
               </p>
             ) : null}
           </div>
