@@ -73,7 +73,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: `registry.test.ts` (the registry now has two entries), any test that asserts `parsePayload` returns only `PayloadV1`; name each with its reason.
   - Validation: `bash scripts/check.sh`; the golden fixtures pass.
 
-- [ ] 3. Persona sealing script seals version 2
+- [x] 3. Persona sealing script seals version 2
   - Agent: `crypto-dev` · Depends on: 2 · Estimated size: M, ~600 changed lines
   - Scope: `scripts/seal-personas-core.ts`, `seal-personas.ts`, `seal-personas.build.mjs`, `seal-personas-texts.d.ts`, and the `*.test.ts(x)` next to them.
   - Design sections: "3. Personas".
