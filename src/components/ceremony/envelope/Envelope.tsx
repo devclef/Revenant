@@ -114,9 +114,6 @@ export type EnvelopeProps = {
 const VIEW_W = 300;
 const VIEW_H = 188;
 
-/** The top of the dirt band: the bottom 22 percent of the envelope. */
-const DIRT_TOP = VIEW_H * 0.78;
-
 /** The paper body of the envelope: the same rectangle in every state. */
 const BODY_X = 6;
 const BODY_Y = 6;
@@ -244,44 +241,6 @@ function TornEdge(): ReactElement {
   return <path className={styles.tear} d={d} aria-hidden="true" />;
 }
 
-/**
- * The dirt in the bottom 22 percent of the envelope. Flecks sit at fixed
- * positions, so they are the same on every letter. Front text sits above this
- * band.
- */
-const DIRT_FLECKS: ReadonlyArray<readonly [number, number, number]> = [
-  [22, 166, 3.2],
-  [48, 178, 2.4],
-  [74, 160, 2.8],
-  [101, 176, 3.6],
-  [133, 163, 2.2],
-  [160, 179, 3.0],
-  [188, 167, 2.6],
-  [215, 177, 3.4],
-  [243, 162, 2.4],
-  [270, 174, 3.0],
-  [36, 150, 1.8],
-  [118, 152, 1.6],
-  [200, 150, 1.9],
-];
-
-function Dirt(): ReactElement {
-  return (
-    <g className={styles.dirt} aria-hidden="true">
-      <rect
-        x={0}
-        y={DIRT_TOP}
-        width={VIEW_W}
-        height={VIEW_H - DIRT_TOP}
-        className={styles.dirtBand}
-      />
-      {DIRT_FLECKS.map(([cx, cy, r]) => (
-        <circle key={`${cx}-${cy}`} cx={cx} cy={cy} r={r} />
-      ))}
-    </g>
-  );
-}
-
 /** The seal's resting place on the flap, in viewBox units. */
 const SEAL_SIZE = 64;
 const SEAL_X = VIEW_W / 2 - SEAL_SIZE / 2;
@@ -375,7 +334,6 @@ export function Envelope({
         >
           <Front />
           <TornEdge />
-          <Dirt />
         </svg>
 
         {/* The back face: the pocket, the flap and the one wax seal. It is
@@ -389,7 +347,6 @@ export function Envelope({
         >
           {state === "open" ? <Open /> : <Back />}
           <TornEdge />
-          <Dirt />
           {seal === "none" ? null : (
             <g
               transform={`translate(${SEAL_X} ${

@@ -134,7 +134,7 @@
 }
 
 /* At 600 px and wider the Testify_Context sits under the Step_Indicator row
-   (StepIndicator.module.css). With no gap, the current step's underline, which
+   (step-track.module.css). With no gap, the current step's underline, which
    runs about 1 px below the row's line box, reaches into this notice's box.
    Only this notice moves: a 6 px top margin separates the two. Below 600 px the
    phone rules above are unchanged. */

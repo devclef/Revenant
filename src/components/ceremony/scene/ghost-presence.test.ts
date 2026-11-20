@@ -53,9 +53,15 @@ describe("Property 22: break clause (R12.10, R12.9, R12.8)", () => {
 });
 
 describe("Ghost presence before and during the break (design.md \"The dissolve on break\")", () => {
-  it("mounts the Ghost for every pre-reveal state, so the envelope is held", () => {
-    for (const tag of ["loading", "sealed", "openable", "verifying", "recall"]) {
+  it("mounts the Ghost from emergence (verifying) through Testify (recall)", () => {
+    for (const tag of ["verifying", "recall"]) {
       expect(ghostPresent({ tag, stage: null, leaving: false })).toBe(true);
+    }
+  });
+
+  it("does not mount the Ghost before emergence or on the non-emergence screens (spec 15 R5.5)", () => {
+    for (const tag of ["loading", "sealed", "openable", "awaiting_key", "unlocking"]) {
+      expect(ghostPresent({ tag, stage: null, leaving: false })).toBe(false);
     }
   });
 

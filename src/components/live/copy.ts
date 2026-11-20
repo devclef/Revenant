@@ -228,8 +228,8 @@ export const LIVE_COPY = {
   waitStep: "Wait",
   /** The last step on /demo/live, shown as "Receipts" in the Step_Track. */
   receiptsStep: "Receipts",
-  /** The phone line under the Step_Track. `{n}` is the step number, `{label}` its name. */
-  stepTrackPhone: "Step {n} of 6 · {label}",
+  /** The phone line under the Step_Track. `{n}` is the step number, `{total}` the count, `{label}` its name. */
+  stepTrackPhone: "Step {n} of {total} · {label}",
   stepsLabel: "Your progress",
   /** Announced once per step change. `{n}` is the step number, `{total}` the count. */
   stepAnnounce: "Step {n} of {total}: {label}",

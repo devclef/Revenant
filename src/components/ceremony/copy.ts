@@ -195,6 +195,9 @@ export const CEREMONY_COPY = {
    */
   stepAnnounce: "Step {n} of {total}: {label}",
 
+  /** The phone line under the Step_Track. `{n}` is the step number, `{total}` the count, `{label}` its name. */
+  stepTrackPhone: "Step {n} of {total} · {label}",
+
   // --- Close (spec 07 task 6, design.md "Close") ---
   /**
    * The persona close's heading (spec 09 C7.1, F5.1). It names the reader's

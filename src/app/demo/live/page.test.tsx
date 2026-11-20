@@ -34,7 +34,8 @@ describe("/demo/live page", () => {
     expect(html).toContain(LIVE_COPY.unavailable);
     expect(html).toContain('href="/demo"');
     expect(html).not.toContain("data-rp-id");
-    // The Top_Bar holds Calm and a disabled Skip (B1.3). No seal control renders.
+    // The Top_Bar holds Calm and no Skip while no sequence runs (spec 15 R5.1).
+    // No seal control renders.
     expect(html.match(/<button(?![^>]*disabled)/g)?.length ?? 0).toBe(1);
   });
 

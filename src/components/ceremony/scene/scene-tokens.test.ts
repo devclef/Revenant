@@ -82,10 +82,8 @@ function ratioOf(a: Rgb, b: Rgb): number {
 
 const opaque = (token: string): Rgb => readToken(token).rgb;
 
-// The crease is --ink at 8 % over --paper (R13.2). The darkest dirt is the
-// translucent --dirt composited over --env (R4.7).
+// The crease is --ink at 8 % over --paper (R13.2).
 const creaseRgb = composite({ ...readToken("--ink"), alpha: 0.08 }, readToken("--paper"));
-const darkestDirtRgb = composite(readToken("--dirt"), readToken("--env"));
 
 interface Pair {
   pair: string;
@@ -166,12 +164,5 @@ describe("Property 9: every Scene token pair clears its threshold", () => {
   });
   it("the white focus ring inside the Letter_Block passes (R4.9)", () => {
     expect(() => assertLetterBlockRing("--on-purple")).not.toThrow();
-  });
-
-  // R4.7: --env-ink on the darkest dirt is computed and must fail 4.5 : 1.
-  // No Envelope_Front text may sit on the dirt band.
-  it("--env-ink on the darkest --dirt over --env is computed and fails 4.5:1 (R4.7)", () => {
-    const ratio = ratioOf(opaque("--env-ink"), darkestDirtRgb);
-    expect(ratio).toBeLessThan(NORMAL);
   });
 });

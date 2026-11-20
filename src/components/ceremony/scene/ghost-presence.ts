@@ -21,16 +21,19 @@ export type GhostPresenceInput = {
 };
 
 /**
- * True when the Ghost should be mounted. Before the reveal it is always
- * mounted. In the reveal it is mounted only at stage 1 (marks and seal), so a
- * break unmounts it. Calm and Skip never set `leaving`, so the Ghost is gone
- * in the same render as ADVANCE (R12.9, R12.10). Show everything skips stage 2
- * and never sets `leaving`, so no Ghost remains (R12.8).
+ * True when the Ghost should be mounted. The Ghost exists from emergence to the
+ * break: it rises while the seal is checked (`verifying`), holds the envelope
+ * through Testify (`recall`), and holds the seal at reveal stage 1. Before
+ * emergence (loading, sealed, openable, awaiting_key, unlocking) and after the
+ * break it is unmounted (spec 15 R5.5). A completed full-motion break keeps it
+ * mounted only for the leave (`leaving`). Calm and Skip never set `leaving`, so
+ * the Ghost is gone in the same render as ADVANCE (R12.9, R12.10). Show
+ * everything skips stage 2 and never sets `leaving`, so no Ghost remains (R12.8).
  */
 export function ghostPresent(input: GhostPresenceInput): boolean {
   if (input.leaving) return true;
-  if (input.tag !== "reveal") return true;
-  return input.stage === 1;
+  if (input.tag === "verifying" || input.tag === "recall") return true;
+  return input.tag === "reveal" && input.stage === 1;
 }
 
 // --- Exit lifecycle (spec 07 A11, issue #253) ---

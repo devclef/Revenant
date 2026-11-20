@@ -1,11 +1,12 @@
 // Feature: 07-judge-journey (spec 07 task 2, Property 9)
 //
-// Geometry check: no Envelope_Front text box reaches the dirt band at the
-// smallest and largest Envelope sizes, in both the wide and the narrow layout.
+// Geometry check: no Envelope_Front text box reaches the lower band of the front
+// (the bottom 22 % of its height, kept clear of the text) at the smallest and
+// largest Envelope sizes, in both the wide and the narrow layout.
 //
 // The model reads the date-line rules from Envelope.module.css (the `.lines`
-// bottom offset and the `.line` font clamp) and the aspect and
-// dirt-band constants from ../constants. Sizes follow the resting width,
+// bottom offset and the `.line` font clamp) and the aspect constants from
+// ../constants. The lower-band share is LOWER_BAND_SHARE below. Sizes follow the resting width,
 // `min(84vw, 26rem)`: the smallest width is at a 360 px viewport and the largest
 // is the 26 rem cap. Font clamps use the browser root size of 16 px.
 //
@@ -19,9 +20,11 @@ import { describe, expect, it } from "vitest";
 import {
   ENVELOPE_ASPECT_NARROW,
   ENVELOPE_ASPECT_WIDE,
-  ENVELOPE_DIRT_BAND,
   ENVELOPE_FRONT_MIN_PX,
 } from "../constants";
+
+/** The lower band of the front: the bottom share of its height, kept clear of the front text. */
+const LOWER_BAND_SHARE = 0.22;
 
 const css = readFileSync(resolve(__dirname, "Envelope.module.css"), "utf8");
 
@@ -91,9 +94,9 @@ function textBlockTopPx(layout: Layout, viewport: number): {
   return { top: bottom - height, bottom, frontH };
 }
 
-/** The top of the dirt band, measured from the top of the front. */
-function dirtBandTopPx(frontH: number): number {
-  return (1 - ENVELOPE_DIRT_BAND) * frontH;
+/** The top of the lower band, measured from the top of the front. */
+function lowerBandTopPx(frontH: number): number {
+  return (1 - LOWER_BAND_SHARE) * frontH;
 }
 
 const SIZES: ReadonlyArray<{ name: string; viewport: number }> = [
@@ -101,12 +104,12 @@ const SIZES: ReadonlyArray<{ name: string; viewport: number }> = [
   { name: "largest (26 rem cap)", viewport: LARGEST_WIDTH_REM * REM_PX / SHARE_OF_VIEWPORT + 1 },
 ];
 
-describe("Property 9: no Envelope_Front text box reaches the dirt band", () => {
+describe("Property 9: no Envelope_Front text box reaches the lower band of the front", () => {
   for (const layout of ["wide", "narrow"] as const) {
     for (const size of SIZES) {
-      it(`keeps the ${layout} front text above the dirt band at the ${size.name}`, () => {
+      it(`keeps the ${layout} front text above the lower band of the front at the ${size.name}`, () => {
         const { bottom, frontH } = textBlockTopPx(layout, size.viewport);
-        const bandTop = dirtBandTopPx(frontH);
+        const bandTop = lowerBandTopPx(frontH);
         // `bottom` is the text box's bottom edge, measured from the top of the
         // front. The text is clear of the band when that edge sits above the
         // band's top edge.
@@ -120,10 +123,10 @@ describe("Property 9: no Envelope_Front text box reaches the dirt band", () => {
     }
   }
 
-  it("uses a bottom offset of the lines that clears the dirt band's top edge", () => {
+  it("uses a bottom offset of the lines that clears the lower band's top edge", () => {
     // Spec 07 task 2 moved the lines up from 26% to 46% so they clear the band.
-    // A bottom share at or below the dirt share puts the text on the band.
-    expect(linesBottomShare()).toBeGreaterThan(ENVELOPE_DIRT_BAND);
+    // A bottom share at or below the band share puts the text on the band.
+    expect(linesBottomShare()).toBeGreaterThan(LOWER_BAND_SHARE);
   });
 });
 

@@ -101,10 +101,12 @@ describe("the Compact_Ghost size and place (P4.2)", () => {
     expect(body).not.toMatch(/\b(left|top|width|height|right|bottom):/);
   });
 
-  it("moves the Ghost to the right end of the Step_Indicator row, top at 56 px", () => {
+  it("moves the Ghost to the centre of the window, top at 56 px (spec 15 R5.5)", () => {
     const body = ruleBody(phoneBlock("data-compact"), '.pit[data-compact="true"]');
-    // The right edge sits 16 px from the window edge; the top sits at the bar's bottom (56 px).
-    expect(body).toContain("calc(100vw - 16px - 0.29 * min(26vh, 170px) - var(--ghost-x))");
+    // The Ghost stays in the centred column: no horizontal move, only the vertical lift.
+    expect(body).toMatch(/translate\(\s*0,/);
+    expect(body).not.toContain("100vw - 16px");
+    expect(body).not.toContain("--ghost-x");
     expect(body).toContain("calc(56px - var(--soil-top) + 0.58 * (1.2 * min(26vh, 170px) - 3vh))");
   });
 

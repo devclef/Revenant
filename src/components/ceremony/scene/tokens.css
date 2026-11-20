@@ -55,9 +55,6 @@
   --clod: #2a1f33;
   --dust: #d6beff;
 
-  /* Envelope dirt (decoration) */
-  --dirt: rgba(70, 48, 34, 0.55);
-
   /*
    * Break the seal wax width (U8.1, U8.2). 120 px at the phone widths, 160 px
    * at 1440 and wider, and 12vw in between. It sizes the seal on the held

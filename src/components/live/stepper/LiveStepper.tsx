@@ -12,6 +12,7 @@ import styles from "./stepper.module.css";
 import { StepTrack } from "./StepTrack";
 import {
   LIVE_STEPS,
+  LIVE_STEP_NAMES,
   canGoBack,
   hasPrimaryCard,
   movesFocus,
@@ -135,7 +136,12 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
   return (
     <div className={styles.stepper} data-live-stepper>
       <div ref={trackRef} className={styles.track}>
-        <StepTrack current={state.step} />
+        <StepTrack
+          steps={LIVE_STEP_NAMES}
+          current={stepIndex(state.step)}
+          label={LIVE_COPY.stepsLabel}
+          phoneTemplate={LIVE_COPY.stepTrackPhone}
+        />
         {/* The one live region of the stepper (spec 14, S1.5). */}
         <p className={styles.announce} role="status" aria-live="polite">
           {LIVE_COPY.stepAnnounce

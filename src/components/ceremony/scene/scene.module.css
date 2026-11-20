@@ -19,7 +19,6 @@
   --pad: clamp(1rem, 3vw, 2.5rem);
   --soil-top: 69vh;
   --soil-band: 8vh;
-  --ghost-x: 50vw;
   --content-column-max: min(34rem, 46vw);
   /* The Soil_Band's drawn height (--soil-band) plus 16 px. The Scene content
      reserves this at its bottom, so the last text ends above the band at the
@@ -37,7 +36,9 @@
    of the scroll. */
 .main {
   position: relative;
-  z-index: 1;
+  /* Above the Ghost layer (z-index 2), so the column text is never covered by
+     the Ghost body. The marks layer (z-index 4) sits above the column. */
+  z-index: 3;
   padding-top: 6rem;
   padding-bottom: var(--soil-clear);
   padding-inline: calc(var(--frame-l) + var(--pad));
@@ -261,11 +262,14 @@
   outline-offset: 2px;
 }
 
-/* Skip with no sequence running (B1.3): same box and label, 40 % opacity. It
-   is a native disabled button, so it is out of the Tab order. */
-[data-topbar-slot="skip"]:disabled {
-  opacity: 0.4;
-  cursor: default;
+/* The reserved Skip slot (spec 15 Requirement 5.1). While no sequence runs,
+   this empty box holds Skip's place at the start of the button group. It is
+   not a control: no text, no focus, no button role. Its size matches the Skip
+   control at each width, so the controls keep their place. */
+.skipReserve {
+  flex: none;
+  width: 3.25rem;
+  min-height: 36px;
 }
 
 /* The control's icon and label. At 600 px and wider the label shows and the
@@ -352,6 +356,11 @@
   .controls {
     flex-wrap: nowrap;
     gap: 0.25rem;
+  }
+
+  .skipReserve {
+    width: 44px;
+    min-height: 44px;
   }
 
   /* GT1 (spec 10 X2.1): on the phone the Ghost sits at the right of the frame,
@@ -442,7 +451,7 @@
    static (no animation), so Calm and reduced motion show the same light. */
 .light {
   position: absolute;
-  left: var(--ghost-x);
+  left: 50%;
   top: var(--soil-top);
   width: 40vmax;
   height: 130vmax;
@@ -453,12 +462,38 @@
   clip-path: inset(0 0 calc(50% - 12px) 0);
 }
 
-/* The pit: the Ghost's placement, centred on the light's x. */
+/* The pit: the Ghost's placement, centred in the window (spec 15 R5.5). The
+   Ghost_Box hangs from the pit point, and the clip keeps everything below the
+   Soil line (SOIL_LINE: 3vh below the pit) hidden, so the hem rises out of the
+   Soil. The clip is inset from a zero-size box, so its sides are wide enough to
+   never cut the drawing. */
 .pit {
+  --ghost-w: min(50vh, 560px);
+  --ghost-risen: -7%;
   position: absolute;
-  left: var(--ghost-x);
+  left: 50%;
   top: var(--soil-top);
   transform: translateX(-50%);
+  clip-path: inset(-100vh -100vw -3vh -100vw);
+}
+
+/* The narrow layout (below 900 px). */
+@media (max-width: 899.98px) {
+  .pit {
+    --ghost-w: min(26vh, 170px);
+    --ghost-risen: -3%;
+  }
+}
+
+/* The Ghost_Box: 1.2 times as tall as it is wide (aspect 5 : 6), hung from the
+   pit point. Its base transform is the risen pose. */
+.ghost {
+  position: absolute;
+  left: calc(var(--ghost-w) * -0.5);
+  bottom: -3vh;
+  width: var(--ghost-w);
+  aspect-ratio: 5 / 6;
+  transform: translateY(var(--ghost-risen));
 }
 
 /*
@@ -524,7 +559,7 @@
     100% 100%
   );
   background:
-    radial-gradient(ellipse 30% 90% at var(--ghost-x) 0%, var(--soil-lit), transparent),
+    radial-gradient(ellipse 30% 90% at 50% 0%, var(--soil-lit), transparent),
     radial-gradient(var(--clod) 1px, transparent 1.5px) 0 0 / 14px 14px,
     linear-gradient(to bottom, var(--soil-mid), var(--soil-deep));
 }
@@ -576,7 +611,17 @@
   .scene {
     --soil-top: 74vh;
     --soil-band: 14vh;
-    --ghost-x: calc(var(--frame-l) + var(--frame-w) * 0.72);
+    /* The Ghost's centre line and the light's x at wide widths: 72 % of the
+       Scene_Frame, clear of the letter column on its left. Centred over the
+       column, the Ghost body covered the Testify question, the marks text and
+       the Break the seal control (#515, QA G1). Matches ghostCentreX in
+       scene/layout.ts. */
+    --ghost-cx: calc(var(--frame-l) + var(--frame-w) * 0.72);
+  }
+
+  .pit,
+  .light {
+    left: var(--ghost-cx);
   }
 
   /* The Soil_Band sits at the bottom of the backdrop, which is the bottom of
@@ -650,6 +695,7 @@
     font-size: 0.85rem;
   }
 
+  /* Wide: the persona notice sits in the bar on one line (spec 15 R5.2). */
   .notice {
     order: 0;
     flex-grow: 1;
@@ -657,6 +703,7 @@
     margin-left: auto;
     font-size: 0.8rem;
     text-align: right;
+    white-space: nowrap;
   }
 }
 
@@ -670,36 +717,7 @@
  * Ghost rests risen from the first render (R9.14).
  */
 
-/* The Ghost_Box width and the risen pose, in the wide layout. */
-.ghostPlace {
-  --ghost-w: min(50vh, 560px);
-  --ghost-risen: -7%;
-  position: absolute;
-  left: 50%;
-  bottom: -3vh;
-  width: var(--ghost-w);
-  transform: translateX(-50%);
-  /* Clips the bottom edge at the Soil line, so the hem rises out of the Soil.
-     The top, left and right stay open. */
-  clip-path: inset(-100% -100% 0 -100%);
-}
-
-/* The narrow layout (below 900 px). */
-@media (max-width: 899.98px) {
-  .ghostPlace {
-    --ghost-w: min(26vh, 170px);
-    --ghost-risen: -3%;
-  }
-}
-
-/* The Ghost_Box: 1.2 times as tall as it is wide (aspect 5 : 6). Its base
-   transform is the risen pose. */
-.ghost {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 5 / 6;
-  transform: translateY(var(--ghost-risen));
-}
+/* The Ghost_Box width and the risen pose live on .pit (above). */
 
 .bob {
   position: relative;
@@ -717,12 +735,11 @@
     drop-shadow(0 0 4px var(--ghost-glow));
 }
 
-/* The Ghost body takes the hit test only while the seal is up, so the reader
-   can see what covers the seal (GZ1). Elsewhere the layer stays pass-through,
-   so the Break the seal button on the marks stage (narrow widths) and the
-   other content under the Ghost keep their clicks. */
-.scene:has([data-ceremony="seal"]) .ghostSvg {
-  pointer-events: auto;
+/* The Ghost body never takes the hit test. It sits under the column text and
+   the marks layer, and the Break the seal control is in the marks layer above
+   it, so the reader's clicks reach the seal and the text. */
+.ghostSvg {
+  pointer-events: none;
 }
 
 .ghostSvg {
@@ -774,12 +791,15 @@
 }
 
 /* The marks layer (spec 10 C6.3): a sibling of the aria-hidden Ghost layer,
-   drawn above the Stage cards and below the Top_Bar, like the Ghost layer. It
-   passes pointer events through; only the Seal_Group takes them. */
+   drawn above the Stage cards and above the Ghost layer (z-index 2), and below
+   the Top_Bar (z-index 10). The Ghost body takes pointer events while the seal
+   is up, so this layer must sit above it: "Break the seal" is then the topmost
+   element at its centre. It passes pointer events through; only the Seal_Group
+   takes them. */
 .marksLayer {
   position: fixed;
   inset: 0;
-  z-index: 2;
+  z-index: 4;
   overflow: hidden;
   pointer-events: none;
 }
@@ -789,12 +809,12 @@
    edge facing the Content_Column, centred on the WaxSeal, left-aligned.
 
    The position repeats the Ghost's placement from the same scene variables:
-   - Ghost_Box width W is --ghost-w (ghostPlace); its left edge is
-     --ghost-x - W / 2 (pit, translateX(-50 %)).
+   - Ghost_Box width W is --ghost-w (on .pit); its centre is the pit point, at
+     the window centre (50 %, pit left, translateX(-50 %)).
    - The Ghost_Body_Box edge is 12 % of W from that left edge, so the group's
      right edge is that minus the gap.
-   - Vertically the box bottom sits at --soil-top + 3vh (ghostPlace bottom
-     -3vh), the box is 1.2 W tall, and the handed pose lifts it 12 % of its
+   - Vertically the box bottom sits at --soil-top + 3vh (the Ghost_Box's
+     bottom -3vh on .pit), the box is 1.2 W tall, and the handed pose lifts it 12 % of its
      height. The held Envelope starts at 48 % of the box height, is 64 % of W
      wide and 188 / 300 of its width tall (the Envelope viewBox). The WaxSeal
      centre is 55.3 % down the Envelope.
@@ -809,9 +829,15 @@
   .marksLayer [data-seal-group] {
     --seal-group-gap: 20px; /* SEAL_GROUP_GAP_PX */
     position: absolute;
+    /* The group sits left of the Ghost body, but never left of the column's
+       left edge (frame left plus side pad), so it stays inside the viewport at
+       1280 and 1366 wide, where the Ghost body edge alone would put it below 0. */
     left: calc(
-      var(--ghost-x) - var(--ghost-w) / 2 + var(--ghost-w) * 0.12 - var(--seal-group-gap) -
-        14rem
+      max(
+        var(--frame-l) + var(--pad),
+        var(--ghost-cx) - var(--ghost-w) / 2 + var(--ghost-w) * 0.12 - var(--seal-group-gap) -
+          14rem
+      )
     );
     top: calc(var(--soil-top) + 3vh - var(--ghost-w) * 0.54621);
     transform: translateY(-50%);
@@ -1004,18 +1030,17 @@
 
 /* The Compact_Ghost (spec 09 P4.2, P4.3). Below 600 px, after the First_Step
    (data-compact="true" on the pit), the Ghost_Box is scaled by COMPACT_GHOST_SCALE
-   about the pit's own point (50vw, 69vh) and moved with translate, so its top
-   sits at 56 px (the Compact_Top_Bar's bottom edge) and its right edge sits 16 px
-   from the window's right edge. Its box is 0.58 x 1.2 x min(26vh, 170px) tall,
-   at most 118 px. Only transform changes; the classes and the pit's own left and
-   top stay the same. The seal's hit square grows so it stays 44 px on screen
+   about the pit point, which is the window's centre (spec 15 R5.5). Its top sits
+   at 56 px (the Compact_Top_Bar's bottom edge). It is moved only vertically, so it
+   stays in the centred column. Its box is 0.58 x 1.2 x min(26vh, 170px) tall,
+   at most 118 px. The seal's hit square grows so it stays 44 px on screen
    (HeldSeal.module.css, --seal-hit-compact). */
 @media (max-width: 599.98px) {
   .pit[data-compact="true"] {
     --seal-hit-compact: 76px;
     transform-origin: 0 0;
     transform: translate(
-        calc(100vw - 16px - 0.29 * min(26vh, 170px) - var(--ghost-x)),
+        0,
         calc(56px - var(--soil-top) + 0.58 * (1.2 * min(26vh, 170px) - 3vh))
       )
       scale(0.58);
@@ -1033,7 +1058,12 @@
   .personaColumn > [data-ceremony="recall"],
   .personaColumn > [data-ceremony="marks"],
   .personaColumn > [data-ceremony="seal"] {
-    top: 56px;
+    /* Below the compact Ghost. The Ghost's box spans 56 px to 56 + 0.696 W
+       (1.2 W tall, scaled 0.58, W = min(26vh, 170px)), so the flow starts at
+       the box's bottom edge. The 0.75rem gap that c6f5dfb added is removed
+       (#515 task 2): it pushed the question, field and Next button below the
+       first viewport at 360 x 640. */
+    top: calc(56px + min(26vh, 170px) * 0.696);
   }
 
   /* The Soil fades out once the persona Stages start (after the First_Step). */

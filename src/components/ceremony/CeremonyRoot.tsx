@@ -64,7 +64,7 @@ import {
 } from "./stages";
 import { FOCUS_SCROLL_CHECK_MS, LETTER_NARROW_PX, PICKUP_MOVE_MS } from "./constants";
 import { personaStepFor, personaStepLabels, stepAnnouncement } from "./steps";
-import { StepIndicator } from "../ui/StepIndicator";
+import { StepTrack } from "../live/stepper/StepTrack";
 import type { FlowState } from "../reveal/opening-machine";
 import styles from "./ceremony.module.css";
 
@@ -490,10 +490,11 @@ function CeremonyRegion({
           </button>
         ) : null}
         {showSteps ? (
-          <StepIndicator
+          <StepTrack
             steps={personaStepLabels(stepFigures)}
             current={stepNow}
             label={CEREMONY_COPY.stepsLabel}
+            phoneTemplate={CEREMONY_COPY.stepTrackPhone}
           />
         ) : null}
         <div data-stage-content>{children}</div>

@@ -316,7 +316,7 @@ async function readPage(
     const current = document.querySelector(
       "[data-live-stepper] [data-step-indicator] [aria-current='step']",
     );
-    // Matches StepIndicator.tsx: the ol inside [data-step-indicator] marks the
+    // Matches StepTrack: the ol inside [data-step-indicator] marks the
     // current li with aria-current="step" (LiveStepper.tsx wraps it in data-live-stepper).
     return {
       scrollWidth: document.documentElement.scrollWidth,

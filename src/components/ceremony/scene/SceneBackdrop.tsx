@@ -105,8 +105,8 @@ export function SceneBackdrop({
       {marksLayerRef === undefined ? null : (
         // The marks layer (spec 10 C6.3). A sibling of the Ghost layer and not
         // aria-hidden, so the Seal_Group's Seal_Button and Skip_Link stay in the
-        // accessibility tree. It sits in the same stacking order as the Ghost
-        // layer and passes pointer events through; only the controls take them.
+        // accessibility tree. It sits above the Ghost layer (z-index 3, #515
+        // task 2) and passes pointer events through; only the controls take them.
         <div className={styles.marksLayer} ref={marksLayerRef} data-marks-layer="" />
       )}
     </>

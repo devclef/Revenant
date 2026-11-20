@@ -70,7 +70,12 @@ describe("Property 10: the Live_Stepper has six steps and one current step", () 
         for (const action of actions) state = reduceStepper(state, action);
 
         const html = renderToStaticMarkup(
-          createElement(StepTrack, { current: state.step }),
+          createElement(StepTrack, {
+            steps: LIVE_STEP_NAMES,
+            current: stepIndex(state.step),
+            label: LIVE_COPY.stepsLabel,
+            phoneTemplate: LIVE_COPY.stepTrackPhone,
+          }),
         );
         const items = indicatorItems(html);
         expect(items).toHaveLength(6);

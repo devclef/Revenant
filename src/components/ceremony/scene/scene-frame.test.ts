@@ -74,18 +74,20 @@ describe("the Soil and light at each layout (R6.1, R6.14, R5.16)", () => {
     expect(wide).toContain(`--soil-band: ${SOIL_BAND_WIDE_VH}vh;`);
   });
 
-  it("puts the light at 72 % of the frame at or above 900 px and the middle of the window below", () => {
+  it("puts the light and the Ghost on the letter column's centre line at wide widths, and the window centre below (#515 task 1)", () => {
     expect(GHOST_X_IN_FRAME).toBe(0.72);
-    expect(ruleBody(".scene")).toContain("--ghost-x: 50vw;");
-    expect(wideBlock()).toContain(
-      "--ghost-x: calc(var(--frame-l) + var(--frame-w) * 0.72);",
-    );
+    expect(ruleBody(".scene")).not.toContain("--ghost-x");
+    expect(wideBlock()).not.toContain("--ghost-x");
+    expect(ruleBody(".light")).toContain("left: 50%;");
+    expect(ruleBody(".pit")).toContain("left: 50%;");
+    expect(wideBlock()).toContain("--ghost-cx:");
   });
 
-  it("places the light and the soil on the same --ghost-x, so they never move sideways", () => {
-    expect(ruleBody(".light")).toContain("left: var(--ghost-x);");
+  it("places the light and the Ghost on one shared x per layout, so they never move with the Stage", () => {
+    expect(ruleBody(".light")).toContain("left: 50%;");
     expect(ruleBody(".soilStrip")).toContain("top: var(--soil-top);");
-    expect(ruleBody(".pit")).toContain("left: var(--ghost-x);");
+    expect(ruleBody(".pit")).toContain("left: 50%;");
+    expect(wideBlock()).toContain("left: var(--ghost-cx);");
   });
 });
 

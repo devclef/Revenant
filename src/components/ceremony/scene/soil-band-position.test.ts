@@ -75,7 +75,7 @@ const MAIN_SOIL_STRIP = `.soilStrip {
     100% 100%
   );
   background:
-    radial-gradient(ellipse 30% 90% at var(--ghost-x) 0%, var(--soil-lit), transparent),
+    radial-gradient(ellipse 30% 90% at 50% 0%, var(--soil-lit), transparent),
     radial-gradient(var(--clod) 1px, transparent 1.5px) 0 0 / 14px 14px,
     linear-gradient(to bottom, var(--soil-mid), var(--soil-deep));
 }`;

@@ -47,23 +47,24 @@ const on: TopBarSound = { enabled: true, onChange: () => {} };
 const at = (html: string, needle: string): number => html.indexOf(needle);
 
 describe("the Top_Bar sound toggle (C4.4, P5.2)", () => {
-  it("sits between Calm and Skip while a sequence runs", () => {
+  it("sits after Calm, with the live Skip first in the group, while a sequence runs", () => {
+    // Spec 15 R5.1: Skip is the reserved first slot of the button group.
     const html = bar(off, true);
     const calm = at(html, `aria-label="${CALM}"`);
     const sound = at(html, "data-topbar-sound");
     const skip = at(html, `aria-label="${SKIP}"`);
     expect(calm).toBeGreaterThanOrEqual(0);
     expect(sound).toBeGreaterThan(calm);
-    expect(skip).toBeGreaterThan(sound);
+    expect(skip).toBeLessThan(calm);
   });
 
-  it("sits between Calm and Skip, with Skip disabled, when no sequence runs", () => {
+  it("sits after Calm while no sequence runs, with no Skip control", () => {
     const html = bar(off, false);
     const calm = at(html, `aria-label="${CALM}"`);
     const sound = at(html, "data-topbar-sound");
     expect(sound).toBeGreaterThan(calm);
-    expect(html).toMatch(/data-topbar-slot="skip"[^>]*disabled/);
-    expect(sound).toBeLessThan(at(html, "data-topbar-slot=\"skip\""));
+    expect(html).not.toContain('data-topbar-slot="skip"');
+    expect(html).not.toMatch(/disabled/);
   });
 
   it("is off by default and offers to turn sound on", () => {
@@ -85,25 +86,32 @@ describe("the Top_Bar sound toggle (C4.4, P5.2)", () => {
     expect(html).not.toContain("data-topbar-sound");
   });
 
-  it("keeps the sound control off the last-control mark; Skip carries it", () => {
+  it("carries the last-control mark on the sound toggle, the rightmost control when sound is shown", () => {
     const html = bar(off, false);
-    expect(html).not.toMatch(/data-topbar-sound[^>]*data-topbar-last/);
-    expect(html).toMatch(/data-topbar-slot="skip"[^>]*data-topbar-last="true"/);
+    expect(html).toMatch(/data-topbar-sound[^>]*data-topbar-last="true"/);
+    expect(html).not.toMatch(/data-topbar-slot="calm"[^>]*data-topbar-last/);
   });
 });
 
-describe("Top_Bar Skip visibility (C4.5)", () => {
-  it("is disabled while no sequence runs", () => {
+describe("Top_Bar Skip visibility (C4.5, spec 15 R5.1)", () => {
+  it("is not rendered while no sequence runs, and no control is disabled", () => {
     const html = bar(off, false);
-    expect(html).toMatch(/data-topbar-slot="skip"[^>]*disabled/);
-    expect(html).toMatch(/data-topbar-last[^>]*aria-label="Skip"/);
+    expect(html).not.toContain('data-topbar-slot="skip"');
+    expect(html).not.toMatch(/disabled/);
   });
 
-  it("is present while a sequence runs, and is then the last control", () => {
+  it("is present while a sequence runs, and carries no disabled state", () => {
     const html = bar(off, true);
     expect(html).toContain(`aria-label="${SKIP}"`);
-    expect(html).toMatch(new RegExp(`data-topbar-last[^>]*aria-label="${SKIP}"`));
-    expect(html).not.toMatch(/<button[^>]*data-topbar-sound[^>]*data-topbar-last/);
+    expect(html).not.toMatch(/disabled/);
+  });
+
+  it("puts the rightmost-control mark on the sound toggle when sound is shown", () => {
+    // Skip is no longer the last control, so the mark moves to the sound
+    // toggle, the rightmost control in the group (the layout check reads it).
+    const html = bar(off, true);
+    expect(html).toMatch(/data-topbar-sound[^>]*data-topbar-last/);
+    expect(html).not.toMatch(/data-topbar-slot="skip"[^>]*data-topbar-last/);
   });
 });
 

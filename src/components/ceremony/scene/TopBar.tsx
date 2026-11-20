@@ -2,21 +2,24 @@
 
 // Feature: 07-judge-journey
 //
-// The Top_Bar (design.md "Providers and the Top_Bar", R8.1 to R8.6; spec 14
-// B1). Fixed to the top of the window. It holds the wordmark and the Demo chip,
-// and on the persona page the notice, Calm, sound and Skip, in that order. The
-// notice shows on every persona page at every width (B1.4).
+// The Top_Bar (design.md "Providers and the Top_Bar", R8.1 to R8.6). Fixed to the
+// top of the window. Spec 15 Requirement 5.1 sets its slots on every page: the
+// wordmark (capitals by CSS) and the Demo chip on the left; on the right, the
+// persona notice (persona pages only), Calm, Sound (only where there is sound)
+// and Skip (only while a sequence runs).
 //
-// Skip is always rendered. While a sequence is registered (`useSequence().hasActive`)
-// it is a live native button, so Enter and Space work. Otherwise it is a
-// disabled button, out of the Tab order (B1.3). Calm toggles `useMotion().setCalm`,
-// as the region's control does.
+// The Skip slot is reserved and first in the button group, so the other
+// controls keep their place. While no sequence runs, a non-interactive
+// placeholder holds that slot (aria-hidden, no focus). While a sequence runs,
+// Skip is a live button in the same place. A disabled control is never shown.
 //
-// `data-topbar-slot` marks each slot for the browser checks (B1.1), and
-// `data-topbar-last` marks Skip, the last control in the bar.
+// `data-topbar-slot` marks each slot for the browser checks, and
+// `data-topbar-last` marks the rightmost control of the bar (Sound when shown,
+// otherwise Calm).
 //
-// On the persona page the bar also holds the sound toggle, between Calm and
-// Skip (spec 09 C4.4). SceneShell owns its state and passes it in as `sound`.
+// Calm toggles `useMotion().setCalm`, as the region's control does.
+// On the persona page the bar also holds the sound toggle (spec 09 C4.4).
+// SceneShell owns its state and passes it in as `sound`.
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type RefObject } from "react";
@@ -151,10 +154,9 @@ export function TopBar({
   // as a 44 x 44 control and hides the text; the aria-label and title keep the
   // name. At 600 px and wider CSS shows the text as before.
   //
-  // The slots keep the order of spec 14 B1.1: wordmark, Demo chip, persona
-  // notice, then Calm, sound and Skip. Skip is always the last slot, so it
-  // carries data-topbar-last. It is rendered whether or not a sequence runs;
-  // without one it is a disabled button (B1.3).
+  // Slot order (spec 15 Requirement 5.1): wordmark, Demo chip, persona notice,
+  // then the button group. The group starts with the reserved Skip slot, so
+  // Calm and Sound keep their place when Skip appears.
   return (
     <header
       ref={headerRef}
@@ -181,10 +183,30 @@ export function TopBar({
       ) : null}
       {controls === "none" ? null : (
         <div className={styles.controls}>
+          {hasActive ? (
+            <button
+              type="button"
+              className={styles.control}
+              data-topbar-slot="skip"
+              aria-label={CEREMONY_COPY.skip}
+              title={CEREMONY_COPY.skip}
+              onClick={skipAll}
+            >
+              <SkipIcon className={styles.controlIcon} />
+              <span className={styles.controlLabel}>{CEREMONY_COPY.skip}</span>
+            </button>
+          ) : (
+            <span
+              className={styles.skipReserve}
+              data-topbar-reserve=""
+              aria-hidden="true"
+            />
+          )}
           <button
             type="button"
             className={styles.control}
             data-topbar-slot="calm"
+            data-topbar-last={sound === undefined ? true : undefined}
             aria-label={calmLabel}
             title={calmLabel}
             onClick={() => setCalm(!calmOn)}
@@ -197,21 +219,9 @@ export function TopBar({
               variant="topbar"
               enabled={sound.enabled}
               onChange={sound.onChange}
+              last
             />
           ) : null}
-          <button
-            type="button"
-            className={styles.control}
-            data-topbar-slot="skip"
-            data-topbar-last={true}
-            disabled={!hasActive}
-            aria-label={CEREMONY_COPY.skip}
-            title={CEREMONY_COPY.skip}
-            onClick={skipAll}
-          >
-            <SkipIcon className={styles.controlIcon} />
-            <span className={styles.controlLabel}>{CEREMONY_COPY.skip}</span>
-          </button>
         </div>
       )}
     </header>

@@ -1,6 +1,7 @@
 // Feature: 09-demo-polish, spec frontend-dev C4 (Top_Bar Skip at marks)
 //
-// The Top_Bar Skip shows only while a sequence is registered. The Seal_Break
+// The Top_Bar Skip shows only while a sequence is registered (spec 15 R5.1:
+// no disabled control is ever shown; the reserved slot stands in while idle). The Seal_Break
 // registers only from the button press until the seal breaks
 // (`skipRegisteredFor`), so the marks stage shows no Skip. The Skip_Link ("Skip
 // to the receipts") sends SHOW_ALL once and moves focus to the Figures_Heading.
@@ -49,9 +50,10 @@ function topBarFor(breaking: boolean, broken: boolean): string {
 }
 
 describe("Top_Bar Skip at the marks stage", () => {
-  it("shows a disabled Top_Bar Skip while the seal waits at its marks (nothing pressed)", () => {
+  it("shows no Top_Bar Skip while the seal waits at its marks (nothing pressed)", () => {
+    // Spec 15 R5.1: no disabled control is shown, so Skip is absent here.
     const html = topBarFor(false, false);
-    expect(html).toMatch(/data-topbar-slot="skip"[^>]*disabled/);
+    expect(html).not.toContain('data-topbar-slot="skip"');
   });
 
   it("shows the Top_Bar Skip once the button starts a break", () => {
@@ -59,9 +61,10 @@ describe("Top_Bar Skip at the marks stage", () => {
     expect(html).toContain(`aria-label="${SKIP}"`);
   });
 
-  it("leaves Skip disabled once the seal has broken", () => {
+  it("removes the Top_Bar Skip once the seal has broken", () => {
     const html = topBarFor(true, true);
-    expect(html).toMatch(/data-topbar-slot="skip"[^>]*disabled/);
+    expect(html).not.toContain('data-topbar-slot="skip"');
+    expect(html).not.toMatch(/disabled/);
   });
 });
 

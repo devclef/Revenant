@@ -10,6 +10,8 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 
+import { LIVE_COPY } from "../copy";
+
 import { StepTrack } from "./StepTrack";
 import {
   LIVE_STEPS,
@@ -55,7 +57,12 @@ describe("Property 1: the Step_Track marks one current step", () => {
     fc.assert(
       fc.property(stepArb, (step) => {
         const html = renderToStaticMarkup(
-          createElement(StepTrack, { current: step }),
+          createElement(StepTrack, {
+            steps: LIVE_STEP_NAMES,
+            current: stepIndex(step),
+            label: LIVE_COPY.stepsLabel,
+            phoneTemplate: LIVE_COPY.stepTrackPhone,
+          }),
         );
         const list = html.match(/<ol[\s\S]*?<\/ol>/)?.[0] ?? "";
         const items = list.match(/<li\b/g) ?? [];

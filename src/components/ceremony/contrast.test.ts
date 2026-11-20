@@ -166,8 +166,9 @@ describe("Property 22: paper text and focus rings clear AA / 3:1", () => {
 // and checks each R4.1 pair. Normal text needs 4.5:1. Large text, control
 // boundaries and focus rings need 3:1 (R4.3, R4.4). A failure names the pair
 // and its ratio. The rule checks (R4.5 text on purple, R4.9 Accent ring inside
-// the Letter_Block) and the dirt pair (R4.7) are asserted to fail by name.
-// The desk pairs above were removed in spec 07 task 9 (R4.8).
+// the Letter_Block) are asserted to fail by name. The dirt pair (R4.7) was
+// removed with the Dirt band (spec 15 R5.6). The desk pairs above were removed
+// in spec 07 task 9 (R4.8).
 
 type Rgb = [number, number, number];
 interface Colour {
@@ -289,9 +290,6 @@ describe("Spec 07 R4 and Property 9: Scene token pairs", () => {
 
   // The crease: --ink at 8 % over --paper (R13.2, design "Creases").
   const creaseRgb = composite({ ...scene("--ink"), alpha: 0.08 }, scene("--paper"));
-  // --dirt is one translucent colour, so its darkest point is its composite
-  // over --env (R4.7).
-  const darkestDirtRgb = composite(scene("--dirt"), scene("--env"));
 
   // Normal text (4.5:1). Pairs from R4.1 and the spec 07 surfaces.
   const normalPairs: Array<{ pair: string; fg: Rgb; bg: Rgb }> = [
@@ -359,19 +357,6 @@ describe("Spec 07 R4 and Property 9: Scene token pairs", () => {
     ).not.toThrow();
   });
 
-  // R4.7: --env-ink on the darkest dirt over --env is computed and must fail.
-  // No Envelope_Front text may sit on the dirt band (design, Envelope "Dirt and text").
-  it("--env-ink on the darkest --dirt over --env fails 4.5:1 by name (R4.7)", () => {
-    const r = checkPair(
-      "--env-ink on the darkest --dirt over --env",
-      sceneRgb("--env-ink"),
-      darkestDirtRgb,
-      WCAG_AA_NORMAL,
-    );
-    expect(r.ok, describeResult(r)).toBe(false);
-    expect(r.pair).toContain("--env-ink on the darkest --dirt");
-    expect(r.ratio).toBeLessThan(WCAG_AA_NORMAL);
-  });
 });
 
 // ---------------------------------------------------------------------------

@@ -37,13 +37,12 @@ export function frameLeft(viewportWidth: number): number {
 
 /**
  * The x of the light and the Ghost's pit, in pixels from the window's left
- * edge. At or above 900 px it is `frameL + 72 % of frameW`; below, 50 % of the
- * window. It does not depend on the Stage, so the light never moves sideways.
+ * edge. At or above 900 px it is `frameL + 72 % of frameW`, to the right of the
+ * letter column; below, 50 % of the window. It does not depend on the Stage, so
+ * the light never moves sideways. Same expression as scene.module.css --ghost-cx.
  */
 export function ghostCentreX(viewportWidth: number): number {
-  if (!isWideLayout(viewportWidth)) {
-    return viewportWidth * GHOST_X_NARROW;
-  }
+  if (!isWideLayout(viewportWidth)) return viewportWidth * GHOST_X_NARROW;
   return frameLeft(viewportWidth) + frameWidth(viewportWidth) * GHOST_X_IN_FRAME;
 }
 
