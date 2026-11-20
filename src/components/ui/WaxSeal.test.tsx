@@ -135,6 +135,7 @@ describe("WaxSeal — one seal markup in each place it is used", () => {
     personaKey: "us-maya",
     display_name: "Maya",
     region: "United States",
+    intro_line: "Maya, who works early shifts at a clinic.",
     written_as_of: "2024-05-12",
     opens_at: "2024-11-05T00:00:00.000Z",
     envelope_hash: MAYA_HASH,

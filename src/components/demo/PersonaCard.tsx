@@ -20,6 +20,8 @@ export type PersonaCardProps = {
   display_name: string;
   /** The persona's region, in plain words. */
   region: string;
+  /** The one everyday line that introduces the persona (from the persona list). */
+  intro_line: string;
   /** The date the letter was written as of, as `YYYY-MM-DD`. */
   written_as_of: string;
   /** The ISO UTC instant the letter opens. */
@@ -47,6 +49,7 @@ export function PersonaCard({
   personaKey,
   display_name,
   region,
+  intro_line,
   written_as_of,
   opens_at,
   envelope_hash,
@@ -73,6 +76,7 @@ export function PersonaCard({
       <span className={styles.paper}>
         <span className={styles.name}>{display_name}</span>
         <span className={styles.region}>{region}</span>
+        <span className={styles.intro}>{intro_line}</span>
         <span className={styles.dates}>
           <span className={styles.dateRow}>
             <span className={styles.dateLabel}>{DEMO_COPY.writtenAsOfPrefix}</span>{" "}

@@ -16,8 +16,11 @@ export const UI_COPY = {
   },
 
   notFound: {
-    heading: "This page is not here.",
-    body: "Nothing is sealed at this address. Check the link, or go to the demo letters.",
+    /** The not-found heading. Spec 15 prototype wording (docs/design/15-flow). */
+    heading: "No letter here",
+    body: "This link does not match a letter. Check the link and try again.",
+    /** The second link on the not-found page, to the live demo. */
+    sealLink: "Seal a demo letter",
   },
 
   error: {

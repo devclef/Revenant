@@ -10,6 +10,8 @@
 // nothing from src/lib/crypto, src/lib/cards or src/lib/ics (R18.7). Its text is
 // in src/components/how/copy.ts, and the table rows are in Brand_Copy.
 
+import Link from "next/link";
+
 import { BRAND_COPY } from "@/components/brand/copy";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { HOW_COPY } from "@/components/how/copy";
@@ -47,6 +49,11 @@ export default function HowItIsSealedPage() {
             <p className={styles.body}>{section.body}</p>
           </section>
         ))}
+        <p className={styles.body}>
+          <Link href="/" className={styles.link}>
+            {HOW_COPY.backToStart}
+          </Link>
+        </p>
       </div>
     </SceneShell>
   );

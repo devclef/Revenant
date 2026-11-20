@@ -54,6 +54,24 @@
   color: var(--text-on-desk);
 }
 
+/* The global `a` rule is wax-seal red, which does not clear AA on --bg. The
+   link takes --text and keeps the underline, as the other pages' links do. */
+.link {
+  color: var(--text-on-desk);
+  text-decoration-line: underline;
+  text-underline-offset: 0.15em;
+  text-decoration-thickness: 1px;
+  /* A 44 px tall touch target on a phone. */
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.link:hover,
+.link:focus-visible {
+  text-decoration-thickness: 2px;
+}
+
 /* The Seal_Mapping table, first on the page. Text is set on the table, so no
    colour is inherited from the shell. Columns wrap rather than scroll at 360 px. */
 .mapping {

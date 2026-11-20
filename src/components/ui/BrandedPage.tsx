@@ -25,9 +25,11 @@ export type BrandedPageProps = {
   body: string;
   /** An optional control below the copy, for example the error page's retry button. */
   action?: ReactNode;
+  /** An optional link under the copy, shown before the demo link (the not-found page's live link). */
+  link?: { href: string; label: string };
 };
 
-export function BrandedPage({ heading, body, action }: BrandedPageProps) {
+export function BrandedPage({ heading, body, action, link }: BrandedPageProps) {
   return (
     <SceneShell variant="plain" demo={false}>
       <SoilStrip />
@@ -35,6 +37,13 @@ export function BrandedPage({ heading, body, action }: BrandedPageProps) {
         <h1 className={styles.heading}>{heading}</h1>
         <p className={styles.body}>{body}</p>
         {action === undefined ? null : <div className={styles.action}>{action}</div>}
+        {link === undefined ? null : (
+          <p className={styles.demo}>
+            <Link href={link.href} className={styles.link}>
+              {link.label}
+            </Link>
+          </p>
+        )}
         <p className={styles.demo}>
           <Link href="/demo" className={styles.link}>
             {UI_COPY.branded.demoLink}

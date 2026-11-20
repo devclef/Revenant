@@ -40,6 +40,11 @@ describe("app not-found page", () => {
     expect(html).toContain(UI_COPY.branded.demoLink);
   });
 
+  it("links to the live demo with the seal link text", () => {
+    expect(html).toContain('href="/demo/live"');
+    expect(html).toContain(UI_COPY.notFound.sealLink);
+  });
+
   it("renders the Top_Bar and not the Demo chip", () => {
     expect(html).toContain("data-topbar");
     expect(html).toContain(CEREMONY_COPY.calmOn);
