@@ -170,6 +170,7 @@ export const LIVE_COPY = {
   linkLabel: "Your letter link",
   copyLink: "Copy link",
   goToLetter: "Go to your letter",
+  openLetter: "Open your letter",
   keepLink: "Keep this link. This page does not keep your key, so it cannot show the key again after you close it.",
   keyReminder:
     "Your backup key opens this letter after the opening date. Paste it into the key field on the letter page.",

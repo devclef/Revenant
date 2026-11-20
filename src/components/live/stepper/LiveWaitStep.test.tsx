@@ -71,11 +71,11 @@ describe("LiveWaitStep on the Wait card (D5.1)", () => {
     expect(html).not.toContain("data-ceremony");
   });
 
-  it("offers Go to your letter below the countdown, disabled until zero", () => {
+  it("offers no action before zero, so the card has one step left to show", () => {
     const html = render("wait", OPENS_MS - 60_000);
-    expect(html).toContain("data-live-goto");
-    expect(html).toContain('data-disabled="true"');
-    expect(html).not.toMatch(/<a [^>]*data-live-goto/);
+    expect(html).not.toContain("data-live-open");
+    expect(html).not.toContain(LIVE_COPY.openLetter);
+    expect(html).not.toContain("data-live-goto");
   });
 
   // Retired (spec 12, X1): this asserted that the flow's data-ceremony root
@@ -89,17 +89,31 @@ describe("LiveWaitStep on the Wait card (D5.1)", () => {
     expect(html).not.toContain("data-ceremony");
   });
 
-  it("links to the letter page once the countdown has ended", () => {
+  it("offers Open your letter once the countdown has ended, as a button and not a link", () => {
     const html = render("wait", OPENS_MS + 1_000);
-    expect(html).toMatch(/<a [^>]*data-live-goto[^>]*>/);
-    expect(html).toContain('href="/l/AAAAAAAAAAAAAAAAAAAAAA"');
+    expect(html).toMatch(/<button [^>]*data-live-open[^>]*>/);
+    expect(html).toContain(LIVE_COPY.openLetter);
+    expect(html).toContain(LIVE_COPY.countdownDone);
+    expect(html).not.toContain('href="/l/AAAAAAAAAAAAAAAAAAAAAA"');
+    expect(html).not.toContain("data-live-goto");
+    expect(html).not.toContain(LIVE_COPY.goToLetter);
+  });
+
+  it("moves to Testify on the same page from Open your letter, with no navigation", () => {
+    const source = readFileSync(
+      join(process.cwd(), "src/components/live/stepper/LiveWaitStep.tsx"),
+      "utf8",
+    );
+    expect(source).toMatch(/onClick=\{\(\) => advanceTo\("testify"\)\}/);
+    expect(source).not.toContain("next/link");
+    expect(source).not.toContain("<Link");
   });
 
   // Retired (spec 12, X1): this asserted data-ceremony in the Testify markup,
   // for the same reason as the zero case above. The rest of the check stays.
-  it("keeps the wait content off Testify without the countdown or Go to your letter", () => {
+  it("keeps the wait content off Testify without the countdown or Open your letter", () => {
     const html = render("testify", OPENS_MS + 1_000);
-    expect(html).not.toContain("data-live-goto");
+    expect(html).not.toContain("data-live-open");
     expect(html).not.toContain('data-live-countdown="ticking"');
     expect(html).not.toContain("data-card");
   });
@@ -173,7 +187,7 @@ describe("LiveWaitStep on the seal break step (issue #385)", () => {
   it("draws no countdown on the break step", () => {
     const html = render("break", OPENS_MS + 60_000);
     expect(html).not.toContain("data-live-countdown");
-    expect(html).not.toContain("data-live-goto");
+    expect(html).not.toContain("data-live-open");
   });
 });
 
