@@ -140,7 +140,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Copy evidence: tone-check for `scene/copy.ts` and `ceremony/copy.ts` if changed.
   - QA: compare the shell on `home` and `demo` (no ghost), `unlock` and `emergence` (ghost), at both sizes.
 
-- [ ] 7. Home, demo, how it is sealed and not found
+- [x] 7. Home, demo, how it is sealed and not found
   - Agent: `frontend-dev` · Depends on: 6 · Estimated size: M, ~1,200 changed lines
   - Scope: `src/app/page.tsx` (see boundary note), `src/app/demo/page.tsx`, `src/app/how-it-is-sealed/page.tsx`, `src/app/not-found.tsx`, `src/app/seal/page.tsx`, `src/components/landing/**`, `src/components/demo/**`, `src/components/how/**`, `src/components/brand/copy.ts`, and the `*.test.ts(x)` next to each.
   - Covers: `home`, `demo`, `how`, `not-found`. Requirement 6.
