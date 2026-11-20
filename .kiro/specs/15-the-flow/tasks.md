@@ -154,7 +154,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: `src/test/landing*.test.tsx`, `PersonaCard.test.tsx`, `LiveEntry.test.ts` as needed; name each.
   - Copy evidence: tone-check for `brand/copy.ts`, `landing/copy.ts`, `demo/copy.ts`, `how/copy.ts`.
 
-- [ ] 8. Write: answers with every question, new Occasion wording, version 2 payload
+- [x] 8. Write: answers with every question, new Occasion wording, version 2 payload
   - Agent: `frontend-dev` · Depends on: 2, 6 · Estimated size: L, ~1,800 changed lines
   - Scope: `src/components/live/desk/**`, `src/components/live/occasions.ts`, `src/components/live/build-payload.ts`, `src/components/live/seal-runner.ts` (its `PayloadV1` annotation), `src/components/live/WriteForm.tsx`, `src/components/live/copy.ts`, `src/lib/recall/**`, and the `*.test.ts(x)` next to each.
   - Covers: `write-empty`, `write-filled`, `write-check`, `write-own-number`. Requirements 7 and 8; design "6. Write", Properties 4 and 8.
