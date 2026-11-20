@@ -9,12 +9,14 @@ import { describe, expect, it } from "vitest";
 
 // Measured 236.6 kB (14 chunks) on /demo/live.
 const MEASURED_DEMO_LIVE_KB = 236.6;
-// Budget for /demo/live from .kiro/specs/15-the-flow/design.md (section "Testing Strategy").
+// Budget for /demo/live: ".kiro/specs/15-the-flow/design.md", the Overview table
+// ("/demo/live budget is 280 kB"). Section 8 of the design gives no number.
 const DEMO_LIVE_BUDGET_KB = 280;
 
 // Measured 236.8 kB (15 chunks) on /l/[id].
 const MEASURED_LETTER_LINK_KB = 236.8;
-// Budget for /l/[id] from scripts/check-js-budget.mjs, the same budget the build check enforces.
+// Budget for /l/[id]: design.md gives no number for this route. The value is the
+// 260 kB in scripts/check-js-budget.mjs, which design.md section 10 says stays unchanged.
 const LETTER_LINK_BUDGET_KB = 260;
 
 describe("opening flow first-load budget", () => {
