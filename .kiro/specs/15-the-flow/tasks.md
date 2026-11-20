@@ -243,7 +243,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: `Reveal*.test.tsx`, `ChangeLine*.test.tsx`, `ReceiptCard*.test.tsx`, `LetterBlock*.test.tsx`, `close/*.test.tsx`, `tamper/*.test.tsx`, `ceremony-gates.property.test.tsx`; name each.
   - Copy evidence: tone-check for the changed copy files.
 
-- [ ] 13. Keepsakes
+- [x] 13. Keepsakes
   - Agent: `frontend-dev` · Depends on: 6 · Estimated size: S, ~500 changed lines
   - Scope: `src/lib/cards/**`, `src/components/live/BackupKeyCard.tsx`, `LetterCard.tsx`, `SealedKeepsakes.tsx`, `src/components/live/copy.ts`, and the `*.test.ts(x)` next to each.
   - Covers: `letter-card`, `backup-card`. Requirement 13.
