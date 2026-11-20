@@ -97,7 +97,7 @@ import styles from "./reveal.module.css";
  * `recall`, `marks` and `seal`, and never moves to the content
  * column, R10.13). It rests `closed` through the pre-reveal Stages; the later
  * Stages (task 4+) drive it to `turned`/`open`. It carries the persona's two
- * date lines so they stay readable above the dirt band (R8.8) and are never
+ * date lines so they stay readable above the lower band (R8.8) and are never
  * clipped by the content column (the C2 fix).
  */
 function HeldEnvelope({

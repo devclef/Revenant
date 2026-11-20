@@ -792,12 +792,15 @@
 }
 
 /* The marks layer (spec 10 C6.3): a sibling of the aria-hidden Ghost layer,
-   drawn above the Stage cards and below the Top_Bar, like the Ghost layer. It
-   passes pointer events through; only the Seal_Group takes them. */
+   drawn above the Stage cards and above the Ghost layer (z-index 2), and below
+   the Top_Bar (z-index 10). The Ghost body takes pointer events while the seal
+   is up, so this layer must sit above it: "Break the seal" is then the topmost
+   element at its centre. It passes pointer events through; only the Seal_Group
+   takes them. */
 .marksLayer {
   position: fixed;
   inset: 0;
-  z-index: 2;
+  z-index: 3;
   overflow: hidden;
   pointer-events: none;
 }
@@ -1051,10 +1054,11 @@
   .personaColumn > [data-ceremony="marks"],
   .personaColumn > [data-ceremony="seal"] {
     /* Below the compact Ghost. The Ghost's box spans 56 px to 56 + 0.696 W
-       (1.2 W tall, scaled 0.58, W = min(26vh, 170px)), so the flow starts
-       0.75rem under it. The Step label and the "A letter from" line sit here,
-       clear of the Ghost (#515 task 1). */
-    top: calc(56px + min(26vh, 170px) * 0.696 + 0.75rem);
+       (1.2 W tall, scaled 0.58, W = min(26vh, 170px)), so the flow starts at
+       the box's bottom edge. The 0.75rem gap that c6f5dfb added is removed
+       (#515 task 2): it pushed the question, field and Next button below the
+       first viewport at 360 x 640. */
+    top: calc(56px + min(26vh, 170px) * 0.696);
   }
 
   /* The Soil fades out once the persona Stages start (after the First_Step). */
