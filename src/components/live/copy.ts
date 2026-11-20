@@ -200,7 +200,6 @@ export const LIVE_COPY = {
   letterNotFound:
     "This link does not match a letter. Check the link and try again.",
   letterCardTitle: "Letter card",
-  letterCardHeading: "Your letter is sealed",
   letterCardOpens: "Opens {time}",
   letterCardHint:
     "Scan the code to open the letter. Before the opening time it shows only that the letter is still sealed. This card holds no key.",
