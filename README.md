@@ -6,14 +6,16 @@ A wax seal did two jobs: it showed whose letter it was, and whether anyone broke
 
 **Live:** [Seal your own letter](https://revenant.devclef.se/demo/live) · [Open a persona letter](https://revenant.devclef.se/demo) · **Demo video:** [DEMO VIDEO LINK]
 
+**Kiroween 2026 · Resurrection**
+
 <p align="center">
   <img src="docs/readme-hero2x.png" alt="Revenant concept one-pager: the ghost holding the sealed envelope, then the three steps Write and press the seal, Testify, See the receipts" width="800">
   <br><em>The concept one-pager. The fuel figures are real EIA records; the counts in its footer are out of date.</em>
 </p>
 
-**Kiroween 2026 · Resurrection.** Since 1735 the French Académie des sciences has kept *plis cachetés*, sealed envelopes that prove what someone knew, and when. Even Pasteur used them.
+Since 1735 the French Académie des sciences has kept *plis cachetés*, sealed envelopes that prove what someone knew, and when. Even Pasteur used them.
 
-When I was in school, my teacher had us write letters to our future selves and mailed them back years later. Email and cloud drives took the letter digital and left the seal behind: a file can be edited, read by the operator, and opened any time.
+When I was in school, my teacher had us write letters to our future selves, then mailed them back years later. Email and cloud drives took the letter digital and left the seal behind: a file can be edited, read by the operator, and opened any time.
 
 ## The wax seal, job by job
 
@@ -80,7 +82,7 @@ I wrote the steering, the specs and the dispatcher. A crew of Kiro agents wrote 
 
 ```mermaid
 flowchart TB
-    subgraph HUMANS["Humans write the rules"]
+    subgraph HUMANS["I write the rules"]
         direction LR
         STEER["📜 Steering<br/>8 docs of non-negotiables"]
         SPEC["🗂️ Specs<br/>features → tasks"]

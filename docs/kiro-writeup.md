@@ -1,6 +1,6 @@
 # How Revenant was built with Kiro
 
-Every number below was counted at `main` commit `db439b7ab4ac26ea445583aafbaeb8d97cb121d1` (20 November 2026), with the command next to it. Run `git checkout db439b7` first to recompute a count. Pull request counts come from the GitHub API and include everything merged up to the moment the command runs.
+Every number below was counted at `main` commit `a8bd7e15f8acf8a26e0ef8668ce11a823034be5b` (20 November 2026), with the command next to it. Run `git checkout a8bd7e1` first to recompute a count. Pull request counts come from the GitHub API and include everything merged up to the moment the command runs.
 
 <!-- OWNER: before submission, recount at the final main SHA and replace the SHA and every number in this file. Fill in each OWNER note, using the Evidence list under it; delete a note once its text is written. -->
 
@@ -33,7 +33,7 @@ Evidence:
 | `frontend-dev` | Pages, components, styling, cards, `.ics`, recall wording, persona text. |
 | `qa` | Writes nothing in the product. Reviews each PR against its ticket and the steering docs in a headless browser and writes `.qa/verdict.json`. |
 
-Commits by agent tag (`git log --format=%s | grep -oE '^\[[a-z-]+\]' | sort | uniq -c`): frontend-dev 140, platform-dev 41, data-dev 25, crypto-dev 15, owner 13, dispatcher 1.
+Commits by agent tag (`git log --format=%s | grep -oE '^\[[a-z-]+\]' | sort | uniq -c`): frontend-dev 140, platform-dev 41, data-dev 25, crypto-dev 15, owner 14, dispatcher 1.
 
 ## 3. Hooks
 
