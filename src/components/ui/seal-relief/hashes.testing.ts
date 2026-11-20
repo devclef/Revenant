@@ -11,4 +11,4 @@ export const MAYA_HASH =
 export const TOMAS_HASH =
   "a0d025aef084492157f823e72b809b7c802a690bb2fbd75a07b467c0f02a54c6";
 export const PRIYA_HASH =
-  "6524723dfb1ddefb0a4702bc4958fe74f60a9db3564148ec95986bc95e63e64c";
+  "279c56cd167f22de72752a4b60f18b3d9efa2def8fbce772b1a6cd1b908e615e";

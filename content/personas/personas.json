@@ -47,14 +47,14 @@
       "display_name": "Priya",
       "intro_line": "Priya, who teaches a Saturday class, writes in May about her week, a plan with her sister and a choice at work.",
       "region": "United States",
-      "letter_id": "CFtrFrKUnj-R-71e819chQ",
-      "envelope_hash": "6524723dfb1ddefb0a4702bc4958fe74f60a9db3564148ec95986bc95e63e64c",
+      "letter_id": "9cvEPNCigWy7H7peQprIWg",
+      "envelope_hash": "279c56cd167f22de72752a4b60f18b3d9efa2def8fbce772b1a6cd1b908e615e",
       "written_as_of": "2024-05-12",
       "opens_at": "2024-11-05T00:00:00.000Z",
       "metrics": [],
       "author_questions": [
-        "On the day you sealed this, what were you looking forward to most?",
-        "On the day you sealed this, what were you worried about?"
+        "What am I looking forward to most right now?",
+        "What am I worried about right now?"
       ],
       "letter_path": "letters/us-priya.txt"
     }
@@ -64,6 +64,7 @@
     "GNUIStxJIx6BBmZXHGHBnA",
     "Qbm5FLgjOC6vJiRAy5Wh0g",
     "ydsos6hcjdEUOs3sK42RQg",
-    "8t6Bz4bWlaUky-byt1mzGg"
+    "8t6Bz4bWlaUky-byt1mzGg",
+    "CFtrFrKUnj-R-71e819chQ"
   ]
 }

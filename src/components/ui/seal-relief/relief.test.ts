@@ -106,11 +106,14 @@ describe("fixed hashes", () => {
     expect(r.coarse.notches.map((n) => n.slot)).toEqual([6, 22, 14]);
   });
 
-  it("Priya draws 4 notches at slots 18, 12, 6, 0, with the inner ring", () => {
+  it("Priya draws 7 notches at slots 18, 21, 1, 4, 8, 11, 15, with the inner ring", () => {
+    // Re-measured after Priya was resealed with a new letter ID (issue #513).
     const r = relief(PRIYA_HASH);
     expect(r.marks).toHaveLength(64);
-    expect(r.coarse.signature).toBe("n4;s18;m1;r=inner");
-    expect(r.coarse.notches.map((n) => n.slot)).toEqual([18, 12, 6, 0]);
+    expect(r.coarse.signature).toBe("n7;s18;m0;r=inner");
+    expect(r.coarse.notches.map((n) => n.slot)).toEqual([
+      18, 21, 1, 4, 8, 11, 15,
+    ]);
   });
 
   it("the persona pairs differ in coarse features", () => {
@@ -211,11 +214,13 @@ describe("rasteriser (raster.testing.ts)", () => {
   });
 
   it("reproduces the design measurements for the three persona pairs", () => {
-    // design.md, Measured in this session: coarse difference, then coarse and full pixel difference at 96 px.
+    // design.md, Measured in this session, for Maya and Tomas. The Priya pairs
+    // were re-measured after the reseal (issue #513), so design.md's Priya
+    // figures are stale until the design owner measures them again.
     const pairs = [
       [MAYA_HASH, TOMAS_HASH, 8, 5.78, 10.57],
-      [MAYA_HASH, PRIYA_HASH, 11, 33.23, 30.45],
-      [TOMAS_HASH, PRIYA_HASH, 7, 31.15, 28.82],
+      [MAYA_HASH, PRIYA_HASH, 16, 36.93, 34.27],
+      [TOMAS_HASH, PRIYA_HASH, 12, 34.45, 31.97],
     ] as const;
     for (const [x, y, coarse, pixCoarse, pixFull] of pairs) {
       const a = relief(x);
