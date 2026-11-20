@@ -36,7 +36,9 @@
    of the scroll. */
 .main {
   position: relative;
-  z-index: 1;
+  /* Above the Ghost layer (z-index 2), so the column text is never covered by
+     the Ghost body. The marks layer (z-index 4) sits above the column. */
+  z-index: 3;
   padding-top: 6rem;
   padding-bottom: var(--soil-clear);
   padding-inline: calc(var(--frame-l) + var(--pad));
@@ -735,12 +737,11 @@
     drop-shadow(0 0 4px var(--ghost-glow));
 }
 
-/* The Ghost body takes the hit test only while the seal is up, so the reader
-   can see what covers the seal (GZ1). Elsewhere the layer stays pass-through,
-   so the Break the seal button on the marks stage (narrow widths) and the
-   other content under the Ghost keep their clicks. */
-.scene:has([data-ceremony="seal"]) .ghostSvg {
-  pointer-events: auto;
+/* The Ghost body never takes the hit test. It sits under the column text and
+   the marks layer, and the Break the seal control is in the marks layer above
+   it, so the reader's clicks reach the seal and the text. */
+.ghostSvg {
+  pointer-events: none;
 }
 
 .ghostSvg {
@@ -800,7 +801,7 @@
 .marksLayer {
   position: fixed;
   inset: 0;
-  z-index: 3;
+  z-index: 4;
   overflow: hidden;
   pointer-events: none;
 }
@@ -830,9 +831,15 @@
   .marksLayer [data-seal-group] {
     --seal-group-gap: 20px; /* SEAL_GROUP_GAP_PX */
     position: absolute;
+    /* The group sits left of the Ghost body, but never left of the column's
+       left edge (frame left plus side pad), so it stays inside the viewport at
+       1280 and 1366 wide, where the Ghost body edge alone would put it below 0. */
     left: calc(
-      var(--ghost-cx) - var(--ghost-w) / 2 + var(--ghost-w) * 0.12 - var(--seal-group-gap) -
-        14rem
+      max(
+        var(--frame-l) + var(--pad),
+        var(--ghost-cx) - var(--ghost-w) / 2 + var(--ghost-w) * 0.12 - var(--seal-group-gap) -
+          14rem
+      )
     );
     top: calc(var(--soil-top) + 3vh - var(--ghost-w) * 0.54621);
     transform: translateY(-50%);

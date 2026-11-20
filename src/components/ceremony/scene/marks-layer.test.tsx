@@ -57,8 +57,8 @@ describe("marks layer (spec 10 C6.3)", () => {
 
   it("keeps the marks layer's own stacking under the Top_Bar and above the Ghost", () => {
     const layer = css.match(/\n\.marksLayer \{([^}]*)\}/)?.[1] ?? "";
-    // z-index 3: above the Ghost layer (2), so Break the seal is topmost (#515 task 2).
-    expect(layer).toMatch(/z-index:\s*3;/);
+    // z-index 4: above the column (3) and the Ghost layer (2), so Break the seal is topmost (#515 task 2, task 3).
+    expect(layer).toMatch(/z-index:\s*4;/);
     expect(layer).toMatch(/pointer-events:\s*none;/);
   });
 
