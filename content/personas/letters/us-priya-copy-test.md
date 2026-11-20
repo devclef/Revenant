@@ -5,12 +5,15 @@ Status: copy test record. The Text_Persona must not be shown as passed until a n
 ## Texts under review
 
 1. The letter, `content/personas/letters/us-priya.txt`. Not repeated here, so the file has one source.
-2. The two pre-written answers, `content/personas/letters/answers.json` under `us-priya`. These are fictional and are shown only as labelled fictional answers.
-3. The two author questions in `content/personas/personas.json` under `us-priya`:
-   - "On the day you sealed this, what were you looking forward to most?"
-   - "On the day you sealed this, what were you worried about?"
-4. The `intro_line` of `us-priya` in `content/personas/personas.json`:
+2. The two sealed answers, `content/personas/letters/sealed-answers.json` under `us-priya` (format v2). They are sealed with her two questions and are shown beside the reader's recollection at opening.
+3. The two recollections, `content/personas/letters/answers.json` under `us-priya`. These are fictional and are shown only as labelled fictional recollections. They are never sealed or stored.
+4. The two author questions in `content/personas/personas.json` under `us-priya`:
+   - "What am I looking forward to most right now?"
+   - "What am I worried about right now?"
+5. The `intro_line` of `us-priya` in `content/personas/personas.json`:
    "Priya, who teaches a Saturday class, writes in May about her week, a plan with her sister and a choice at work."
+
+The wording of items 2 to 4 is the owner-approved copy in `docs/design/15-flow/README.md`, section "Priya: copy for the owner to approve". It is not reworded here.
 
 ## Persona labels
 
@@ -34,7 +37,12 @@ The reviewer reads each text above and answers each question for every sentence:
 5. Does the text describe any cost as good or bad? (Expected: no.)
 6. Does the text avoid stereotypes tied to region, class, age, nationality or background? (Expected: yes.)
 7. Is the text about everyday life only: work, family, bills, plans and hopes? (Expected: yes.)
-8. For the answers: does each answer avoid grading the letter, the memory or the reader, and avoid any reference to the letter or to changing a mind? (Expected: yes.)
+8. For the sealed answers and the recollections: does each answer avoid grading the letter, the memory or the reader? (Expected: yes.) Does each sealed answer avoid any reference to the letter or to remembering or forgetting? (Expected: yes.)
+
+Two points for the reviewer to decide, found by the agent when reading the copy against the rules:
+
+- Sealed answer 2 reads "I keep changing my mind". The copy-test question 8 asks for no reference to changing a mind. The approved copy is not reworded, so the reviewer decides whether it passes as written. `checkAnswerText` (`ANSWER_MIND_REGEX` in `letter-checks.ts`) rejects that phrase until the next task of this spec adds the sealed-answer exception.
+- Both approved questions use "right now". The current `tone.md` does not forbid "right now". The proposed steering change in the README would forbid it. The reviewer decides under the current `tone.md`.
 
 Any answer that differs from the expected one blocks the pass. The reviewer records the issue here, and the copy is rewritten before a new review.
 
