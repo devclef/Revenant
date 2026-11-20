@@ -88,7 +88,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: name any.
   - Validation: `bash scripts/check.sh`; `npm run build` then `node dist/seal-personas.mjs --hashes` prints one line per persona and the three existing hashes are unchanged.
 
-- [ ] 4. Priya's content: questions, sealed answers, recollections, new letter
+- [x] 4. Priya's content: questions, sealed answers, recollections, new letter
   - Agent: `frontend-dev` · Depends on: 3 · Estimated size: S, ~300 changed lines
   - Scope: `content/personas/personas.json`, `content/personas/letters/answers.json`, `content/personas/letters/sealed-answers.json` (new), `content/personas/letters/us-priya-copy-test.md`, `src/lib/personas/**`, and the `*.test.ts(x)` next to them.
   - Design sections: "3. Personas".
