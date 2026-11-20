@@ -71,13 +71,6 @@ export const SOIL_BAND_NARROW_VH = 8; // 51.2 px at 360 x 640
 export const SCENE_FRAME_MAX_PX = 1440; // Scene_Frame width is min(100vw, 1440px) (R8.14)
 export const GHOST_X_IN_FRAME = 0.72; // Ghost_Box centre and light x, share of the Scene_Frame, every Stage (R5.16, R6.17)
 export const GHOST_X_NARROW = 0.5; // share of the window below 900 px
-// The letter column at or above 900 px (scene.module.css .personaColumn and
-// .scene --ghost-cx). The Ghost and the light sit on its centre line.
-export const CONTENT_COLUMN_MAX_PX = 544; // 34rem at a 16 px root size
-export const CONTENT_COLUMN_VW = 0.46; // 46vw
-export const SIDE_PAD_VW = 0.03; // --pad: clamp(1rem, 3vw, 2.5rem)
-export const SIDE_PAD_MIN_PX = 16;
-export const SIDE_PAD_MAX_PX = 40;
 export const GHOST_WIDE = "min(50vh, 560px)"; // Ghost_Box width at or above 900 px (R5.15)
 export const GHOST_NARROW = "min(26vh, 170px)";
 export const GHOST_HEIGHT_RATIO = 1.2; // Ghost_Box height / width

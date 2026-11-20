@@ -611,14 +611,12 @@
   .scene {
     --soil-top: 74vh;
     --soil-band: 14vh;
-    /* The Ghost's centre line and the light's x: the centre of the letter
-       column (min(34rem, 46vw), never wider than the frame less both pads),
-       from the frame's left edge plus the side pad. Matches ghostCentreX in
-       scene/layout.ts (spec 15 R5.5, revised for #515 task 1). */
-    --ghost-cx: calc(
-      var(--frame-l) + var(--pad) +
-        min(34rem, 46vw, var(--frame-w) - 2 * var(--pad)) / 2
-    );
+    /* The Ghost's centre line and the light's x at wide widths: 72 % of the
+       Scene_Frame, clear of the letter column on its left. Centred over the
+       column, the Ghost body covered the Testify question, the marks text and
+       the Break the seal control (#515, QA G1). Matches ghostCentreX in
+       scene/layout.ts. */
+    --ghost-cx: calc(var(--frame-l) + var(--frame-w) * 0.72);
   }
 
   .pit,
