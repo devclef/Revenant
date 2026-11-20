@@ -143,17 +143,18 @@ function pickMetricDefinition(metric: MetricDefinitionV1): MetricDefinitionV1 {
 }
 
 /**
- * The result of {@link buildPersonaPayload}. `missing_then_figure` carries the
- * metric ID without a "then" figure; `invalid_payload` means the no-metrics
- * payload failed payloadV1Schema and must not be stored.
- */
-/**
  * The author's sealed answers, keyed by persona key. Each list holds one answer
  * per author question, in the same order as the persona's `author_questions`.
  * The committed file is content/personas/letters/sealed-answers.json.
  */
 export type SealedAnswers = Readonly<Record<string, readonly string[]>>;
 
+/**
+ * The result of {@link buildPersonaPayload}. `missing_then_figure` carries the
+ * metric ID without a "then" figure; `invalid_payload` means the payload failed
+ * its version's schema (payloadV1Schema or payloadV2Schema) and must not be
+ * stored.
+ */
 export type BuildResult =
   | { ok: true; payload: PayloadV1 | PayloadV2 }
   | { ok: false; reason: "missing_then_figure"; metricId: string }
