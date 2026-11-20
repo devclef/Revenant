@@ -26,8 +26,24 @@
 // for the sealing script. Nothing under `src/` imports `scripts/`.
 
 import letterTexts from "virtual:persona-letter-texts";
+import sealedAnswers from "virtual:persona-sealed-answers";
 
 async function main(): Promise<void> {
+  // `--hashes` runs before the DATABASE_URL guard and touches no database. It
+  // prints each persona's key, letter_id and committed envelope_hash from
+  // content/personas/personas.json, then exits 0. It prints no secret, key or
+  // PRF material (spec 15, task 3).
+  if (process.argv.slice(2).includes("--hashes")) {
+    const { PERSONAS } = await import("@/lib/personas");
+    for (const persona of PERSONAS) {
+      process.stdout.write(
+        `seal-personas ${persona.key} ${persona.letter_id} ${persona.envelope_hash}\n`,
+      );
+    }
+    process.exitCode = 0;
+    return;
+  }
+
   // The guard runs before any connecting import. A missing or empty
   // DATABASE_URL is reported with one fixed line and exit code 1; the value
   // itself is never printed (R4.12, R8.6).
@@ -61,6 +77,9 @@ async function main(): Promise<void> {
         return text;
       },
       figures: DEMO_FIGURES,
+      // Inlined from content/personas/letters/sealed-answers.json by the build;
+      // {} when that file is absent, so every persona is sealed as version 1.
+      sealedAnswers,
       findLetter,
       storePersonaLetter,
       now: () => new Date(),
