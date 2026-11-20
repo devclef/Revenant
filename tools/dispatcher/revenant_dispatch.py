@@ -170,9 +170,12 @@ def strip_validation(body: str | None) -> str:
 FRONTEND_BROWSER_STEP = (
     "The last step also includes the layout check from "
     ".kiro/agents/prompts/frontend-dev.md ('Look at your work'): build and start the app, "
-    "run `npm run layout-check -- --url <app>`, fix every BLOCKER it reports and re-run it "
-    "until it passes, then paste its summary in your final message. This is part of the "
-    "last step, not a separate step."
+    "run `npm run layout-check -- --url <app>`, and fix every BLOCKER that your change "
+    "causes. A BLOCKER that `origin/main` already has (same check ID, size, persona and "
+    "stage) is not yours: build `origin/main` in a second worktree, run the same check, "
+    "compare, and leave those lines alone (QA ignores them too). Re-run until no new "
+    "BLOCKER remains, then paste its summary, and the count of blockers already on main, "
+    "in your final message. This is part of the last step, not a separate step."
 )
 
 

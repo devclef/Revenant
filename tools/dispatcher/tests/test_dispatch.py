@@ -159,11 +159,18 @@ class Specs(unittest.TestCase):
         spec = d.dev_spec(issue(3, []), "frontend-dev")
         self.assertIn("The last step also includes the layout check from "
                       ".kiro/agents/prompts/frontend-dev.md ('Look at your work'): build and start the app, "
-                      "run `npm run layout-check -- --url <app>`, fix every BLOCKER it reports and re-run it "
-                      "until it passes, then paste its summary in your final message. This is part of the "
-                      "last step, not a separate step.", spec)
+                      "run `npm run layout-check -- --url <app>`", spec)
         steps = spec.split("## Steps", 1)[1].split("## Reading the spec", 1)[0]
         self.assertIn("layout check", steps)
+
+    def test_layout_blockers_already_on_main_are_not_the_agents(self):
+        # A fix run can't clear a blocker main already has; asking it to did send #515
+        # back three times and block it.
+        spec = d.dev_spec(issue(3, []), "frontend-dev")
+        self.assertIn("A BLOCKER that `origin/main` already has", spec)
+        root = Path(d.__file__).resolve().parents[2] / ".kiro" / "agents" / "prompts"
+        for name in ("qa.md", "frontend-dev.md"):
+            self.assertIn("origin/main", (root / name).read_text(), name)
 
     def test_other_roles_do_not_get_browser_check(self):
         self.assertNotIn("browser check", d.dev_spec(issue(3, []), "data-dev"))
