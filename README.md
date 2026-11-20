@@ -2,16 +2,6 @@
 
 *The wax seal, resurrected. Memory rewrites itself. Revenant doesn't.*
 
-> **Judge quick path**
-> - [Open a sealed letter](https://revenant.devclef.se/demo/personas/us-maya) · a few minutes · no sign-up, no passkey
-> - [Open a letter with no numbers](https://revenant.devclef.se/demo/personas/us-priya) · a few minutes · text only, no receipts
-> - [Seal your own](https://revenant.devclef.se/demo/live) · a few minutes · opens 30 seconds after you seal it <!-- 30 seconds: grep -n "LOCK_DURATION_MS = " src/lib/seal-format/live-constants.ts (line 10); checked 17 November 2026, commit f152ebcd022517f0b32698bb25e975ebfc254fe0 --> · needs a passkey with PRF, or use the backup key
-> - [How it is sealed](https://revenant.devclef.se/how-it-is-sealed) · a short read
->
-> Passkeys with PRF work with iCloud Keychain on macOS and iOS 18+, Google Password Manager on Android, and Windows Hello on Windows 11 24H2/25H2 with the February 2026 update and Chrome/Edge 147+ or Firefox 148+. <!-- The versions iOS 18+, Windows 11 24H2/25H2, February 2026, Chrome/Edge 147+ and Firefox 148+ are copied from the "PRF support" section of .kiro/steering/tech.md ("As of 2026"); not independently re-verified against vendor release notes. --> Some third-party passkey managers don't support it. Without PRF, seal with the backup key.
->
-> <!-- VIDEO: embed link here --> <!-- GIF: docs/reveal.gif -->
-
 <p align="center">
   <img src="docs/readme-hero2x.png" alt="Revenant: a sealed letter rising out of the dark" width="800">
 </p>
@@ -20,106 +10,81 @@
   <a href="https://revenant.devclef.se/demo"><img src="https://img.shields.io/badge/Open%20the%20demo-revenant.devclef.se%2Fdemo-8F46FF?style=for-the-badge" alt="Open the demo at revenant.devclef.se/demo"></a>
 </p>
 
-Built for Kiroween 2026, Resurrection category. Letters survived the move to digital, but the seal didn't. Revenant resurrects it with cryptography: no one else can read your letter, tampering is detectable, and no key can open it early. Then it adds what no wax seal ever could: it makes you testify before you read.
+**Kiroween 2026 · Resurrection category.** The dead technology is the **wax seal**: the *pli cacheté*, the sealed envelope the French Académie des sciences has kept since 1735 to prove what someone knew, and when. Revenant brings it back with a **passkey**. You press the seal with your fingerprint, face or device PIN, and the letter is locked in your browser with a key that comes from that passkey. It works today, with your own passkey, in about two minutes.
 
-Seal what you believe now: a goal, a worry, a decision. When it opens, you testify first, then read what you wrote.
+## Try it in two minutes
 
-## What we resurrected
+| | | Needs |
+|---|---|---|
+| **[Seal your own letter](https://revenant.devclef.se/demo/live)** | Write a letter, press the seal with your passkey, wait 30 seconds, unlock it with the same passkey, testify, break the seal. It is a rehearsal of a letter that would normally stay sealed for months. | A passkey with PRF, or use the backup key |
+| **[Open Maya's letter](https://revenant.devclef.se/demo/personas/us-maya)** | A pre-sealed letter with price receipts. Testify, break the seal, see then and now. | Nothing |
+| **[Open Priya's letter](https://revenant.devclef.se/demo/personas/us-priya)** | A text-only letter with two questions she left for herself. | Nothing |
+| **[How it is sealed](https://revenant.devclef.se/how-it-is-sealed)** | A short read on the cryptography. | Nothing |
 
-Since 1735 <!-- 1735: grep -n "1735" .kiro/steering/product.md (line 11, before "## The problem"); checked 17 November 2026, commit f152ebcd022517f0b32698bb25e975ebfc254fe0 --> the French Académie des sciences has kept *plis cachetés*: sealed envelopes that scientists and inventors deposit to prove what they knew, and when. Pasteur and Niépce left them. A classroom time capsule works the same way. When I was in school, my teacher had us each write a letter to our future selves. She kept them sealed for years, then mailed them back to us. The seal carries the meaning: this was written then, by you, and nobody has touched it since.
+Passkeys with PRF work with iCloud Keychain on macOS and iOS 18+, Google Password Manager on Android, and Windows Hello on Windows 11 24H2/25H2 with the February 2026 update and Chrome/Edge 147+ or Firefox 148+. Some third-party passkey managers don't support it. Revenant checks PRF on your device at sealing, and if it fails the backup key card becomes required.
 
-Email, notes apps and cloud drives took the letter digital and left the seal behind. A file can be edited after the fact, read by whoever runs the server, and opened whenever you like. Revenant is the pli cacheté reinvented for the browser. Each part of the old seal has a modern replacement:
+## The problem
+
+Memory rewrites itself. Every time you recall something, you edit it a little, and you can't cross-examine your own past: the only witness is a memory that has already been rewritten. Email, notes apps and cloud drives made letters digital and left the seal behind. A file can be edited, read by whoever runs the server, and opened whenever you like.
+
+## What we resurrected: the seal, with a passkey
+
+Since 1735 the Académie des sciences has kept *plis cachetés*. Pasteur and Niépce left them. A classroom time capsule works the same way. When I was in school, my teacher had us each write a letter to our future selves and mailed them back years later. The seal carries the meaning: this was written then, by you, and nobody has touched it since.
+
+Each part of the old seal has a modern replacement, and the passkey is the signet ring:
 
 | The wax seal | Revenant |
 |---|---|
-| Wax that shows whether it was broken | A SHA-256 hash of the canonical envelope, checked at sealing and again at opening, plus the AES-GCM tag over the contents |
+| The signet ring that made the seal yours | **A passkey (WebAuthn PRF).** Fingerprint, face or device PIN. The passkey produces a secret that wraps the letter's key. No account, no password |
 | The folded paper that hides the page | AES-GCM encryption in your own browser. The server only ever holds ciphertext |
-| The signet ring that made the seal yours | A passkey (WebAuthn PRF) unlocked by fingerprint, face or device PIN, with an optional backup key card |
+| Wax that shows whether it was broken | A SHA-256 hash of the canonical envelope, checked at sealing and again at opening, plus the AES-GCM tag over the contents |
 | The archivist who won't open it before its date | A server time lock. The server releases its half of the key only when its own UTC clock reaches the opening date |
+| A spare key kept somewhere safe | An optional backup key card, a printable PDF with a QR code |
+
+The operator cannot read your letter, your answers or your numbers. Not even you can read it early.
 
 ## What no wax seal could do
 
 A wax seal proves the letter wasn't changed. It can't stop you changing your memory of it.
 
-Every time you recall something, you edit it a little, and the edits favour the story you'd rather be true. You can't go back and check your past, because the only witness is a memory that has already been rewritten.
-
-So Revenant adds one step the Académie never needed. Before the seal breaks, you testify: you say what you remember, and your answer is recorded. Only then do you see what you wrote and, if you added receipts, what things cost. The gap between your testimony and the record is the whole product. Revenant never tells you what that gap means. It just doesn't let your memory have the last word.
+So Revenant adds one step the Académie never needed. **Before the seal breaks, you testify.** For each question you wrote, you say what you think you answered, and your testimony is recorded. Only then do you see what you sealed, side by side with what you remembered. The gap between your testimony and the record is the whole product. Revenant never says what the gap means. It doesn't grade, score or comment on it.
 
 ## The ritual
 
-1. **Write.** A letter to your future self, plain text, up to 5,000 characters <!-- 5000: grep -n "5000" src/lib/personas/letter-checks.ts src/lib/seal-format/v1/payload.ts (lines 79 and 133); checked 17 November 2026, commit f152ebcd022517f0b32698bb25e975ebfc254fe0 -->. Pick an Occasion if it helps. Add up to three questions <!-- 3: grep -n "AUTHOR_QUESTIONS_MAX = " src/components/live/author-questions.ts; checked 17 November 2026, commit f152ebcd022517f0b32698bb25e975ebfc254fe0 --> and an optional receipt: a price figure from an official source for your region, with its value, source, period, unit and region. A letter with no figures seals the same way.
-2. **Press the seal.** Choose an opening date at least three months away <!-- three months: grep -n "at least 3 months" .kiro/steering/tech.md (line 87) --> and lock the letter with your passkey. The live demo locks it for 30 seconds <!-- 30 seconds: grep -n "LOCK_DURATION_MS = " src/lib/seal-format/live-constants.ts (line 10); checked 17 November 2026, commit f152ebcd022517f0b32698bb25e975ebfc254fe0 --> and says it is a rehearsal. From then on the letter is sealed and unreadable, even to you, and nothing inside can change.
-3. **Testify.** After the opening date you unlock the letter. Before a single word is shown, Revenant asks what you remember. Your testimony is recorded first.
-4. **See the receipts.** What you remembered, then what you actually wrote, then any numbers then and now with the plain change between them. A letter with no figures ends with what you wrote. Revenant adds no commentary. It shows the record and leaves the reading to you.
+1. **Write.** A letter to your future self, plain text, up to 5,000 characters. Start from an Occasion (the year ahead, work, family, a decision, or blank). Add up to three questions in your own voice, each answered as you write. Add receipts if you want: official price figures for the US, EU or Sweden, with value, source, period, unit and region. A letter with no figures seals the same way.
+2. **Press the seal.** Pick an opening date and lock the letter with your passkey. Real letters open at least three months out. The live demo opens after 30 seconds. From then on the letter is unreadable and unchangeable.
+3. **Keep.** A letter card with a QR link (no key in it), a backup key card, and an `.ics` calendar file for the opening date.
+4. **Wait.** Scanning early shows only "still sealed" and a countdown.
+5. **Testify.** Unlock with your passkey or backup key. Before anything sealed is shown, you write what you remember.
+6. **See the receipts.** The ghost of your past self rises out of the dark carrying the letter and the seal breaks. Each question appears with your testimony beside the answer you sealed, then the letter, then any figures then and now, with the plain change between them.
 
-## What's actually built
+## What's built and running
 
-This is not a slide deck. It runs. The sealing-and-opening ceremony, the live passkey demo, the pre-sealed persona demos, and the real-data figure pipeline are all implemented and tested.
+- **Real passkey sealing in the browser.** WebAuthn PRF, HKDF, a random content key wrapped twice (by the passkey and by the backup key), both wraps also bound to the server's time-lock secret. The passkey shows up in your password manager, named so it is obviously a Revenant demo.
+- **The live demo** at [`/demo/live`](https://revenant.devclef.se/demo/live): Write, Press the seal, Wait, Testify, Break the seal, See the receipts.
+- **Persona demos** for judges with no passkey: [Maya](https://revenant.devclef.se/demo/personas/us-maya) (US, receipts), [Tomás](https://revenant.devclef.se/demo/personas/eu-tomas) (EU, receipts) and [Priya](https://revenant.devclef.se/demo/personas/us-priya) (text only). They are fictional, written as of a date in their window and sealed with a published demo key. Their figures are real historical records with full provenance.
+- **The reveal ceremony.** Dark room, light finding the soil, the ghost rising with the envelope while the seal is really checked, the seal breaking. The first render works without JavaScript, and `prefers-reduced-motion` turns the motion off.
+- **Cards and calendar.** Letter card, backup key card and `.ics`, all generated in the browser. The backup key never reaches the server.
+- **Real data.** Adapters for the US EIA and the European Commission Weekly Oil Bulletin return figures with full provenance, and a daily fetch job runs as a Kubernetes CronJob. Nothing is invented, interpolated or currency-converted.
+- **Immutability in the database.** PostgreSQL `BEFORE UPDATE OR DELETE` triggers make sealed rows unchangeable. Application code cannot alter a sealed letter.
+- **Self-contained letters.** A sealed letter carries its text, questions, answers and every figure with provenance. It opens even if every data source disappears.
 
-- **The reveal ceremony** — the dark room, the light finding the soil, the ghost rising with your letter, the recall scale, the seal breaking, and the then-vs-now figures. It degrades gracefully: the first render is the settled scene with no JavaScript, and `prefers-reduced-motion` turns the whole sequence off.
-- **Browser-side crypto** — WebAuthn passkeys with the PRF extension, a double-wrapped content key, a per-letter server time lock, an optional backup key card, and an SHA-256 hash over the canonical envelope that's verified again at opening.
-- **The persona demos** — three fictional authors <!-- 3: ls content/personas/letters/*.txt, 17 November 2026, commit f152ebcd022517f0b32698bb25e975ebfc254fe0 --> whose letters were written as of 12 May 2024 and sealed in advance, each openable by a judge in a few minutes with no passkey. [Maya](https://revenant.devclef.se/demo/personas/us-maya) (opens 5 November 2024) and [Tomás](https://revenant.devclef.se/demo/personas/eu-tomas) (opens 9 June 2024) carry price receipts. [Priya](https://revenant.devclef.se/demo/personas/us-priya) (opens 5 November 2024) is a text letter with two questions <!-- 2: node -e 'const p=require("./content/personas/personas.json").personas.find(x=>x.key==="us-priya");console.log(p.author_questions.length)'; checked 17 November 2026, commit f152ebcd022517f0b32698bb25e975ebfc254fe0 --> she left for herself and no figures.
-- **Occasions, optional receipts and the rehearsal** — the Write step offers five Occasions (the year ahead, work, family, a decision, blank) <!-- 5: grep -c '^    id: "' src/components/live/occasions.ts, 17 November 2026, commit f152ebcd022517f0b32698bb25e975ebfc254fe0 -->, a letter seals with no figures at all, and the 30-second live demo <!-- 30 seconds: grep -n "LOCK_DURATION_MS = " src/lib/seal-format/live-constants.ts (line 10); checked 17 November 2026, commit f152ebcd022517f0b32698bb25e975ebfc254fe0 --> labels itself a rehearsal.
-- **The live demo** at [`/demo/live`](https://revenant.devclef.se/demo/live) is a rehearsal of a letter that would normally stay sealed for months. It runs six steps: Write, Press the seal, Wait, Testify, Break the seal, See the receipts. <!-- 6: sed -n 32,40p src/components/live/stepper/live-steps.ts (six entries); 30 seconds: grep -n "LOCK_DURATION_MS = " src/lib/seal-format/live-constants.ts; checked 17 November 2026, commit f152ebcd022517f0b32698bb25e975ebfc254fe0 --> The lock lasts 30 seconds, and the passkey is real: it shows up in your password manager, named so it's obviously a Revenant demo.
-- **Real figures** — adapters for the US EIA and the European Commission Weekly Oil Bulletin, each returning figures with full provenance and never inventing, interpolating or currency-converting anything.
-- **The database** — PostgreSQL with `BEFORE UPDATE OR DELETE` triggers that make sealed rows physically immutable. Application code *cannot* change a sealed letter; the trigger raises an exception.
+Real letters at `/seal` are built but switched off for judging. Only demo letters are live, and they are stored apart from real ones. See [How it is sealed](https://revenant.devclef.se/how-it-is-sealed) for the model and its one accepted limit: opening needs the Revenant server, because it holds the time-lock secret.
 
-Two spec folders still have open tasks, so the build is not complete: 12-submission-polish has 20 open boxes and 13-the-seal has 30, or 28 once its README and final Live_Walk boxes are set aside, counted on 17 November 2026 at commit f152ebcd022517f0b32698bb25e975ebfc254fe0. The other twelve spec folders have no open task.
-<!-- Status, checked 17 November 2026 at commit f152ebcd022517f0b32698bb25e975ebfc254fe0 (the Final_Commit, the commit before this README change): grep -cE '^\s*- \[ \]' .kiro/specs/*/tasks.md gives 20 in 12-submission-polish, 30 in 13-the-seal (tasks 22 and 23, the README and final Live_Walk boxes, are excluded by D4.1, leaving 28), and 0 in the other twelve spec folders (14 folders in all). The anchored pattern counts only real checkbox lines. An unanchored grep -F -- '- [ ]' also matches prose that mentions the checkbox syntax (08-judge-polish line 590 and 09-demo-polish line 22), so it wrongly counts those two folders as open. -->
+## How we used Kiro
 
-## How the seal works
+Revenant was started on 30 October 2026, the first day of the Kiroween submission period (the first commit is dated 2026-10-30). Kiro was the whole team. **Almost none of this code was written by a human at a keyboard.** The full write-up is in [docs/kiro-writeup.md](docs/kiro-writeup.md). It is also our entry for the **Best Kiro Crew App** prize. In short:
 
-- **The browser encrypts.** The server stores only ciphertext, a minimal header and a per-letter time-lock secret. The operator cannot read letters, personal numbers or recall answers.
-- **A passkey** (WebAuthn PRF) unlocks the letter with fingerprint, face or device PIN. An optional **backup key card** is the second way in.
-- **A time lock.** The server releases its half of the key only once its own UTC clock reaches the opening date. The client clock never gets a vote; neither the passkey nor the backup key can open a letter early.
-- **Self-contained letters.** A sealed letter carries everything needed to open and present it — the text, every figure with its provenance, the metric definitions, and the recall questions. It does not depend on the app's catalogue or on any data source still existing when it opens.
-- **A QR card and a calendar file** help you find the letter again. The QR code is only a link and contains no key.
-
-Known limitation for the MVP: opening needs the Revenant server, because it holds the time-lock secret.
-
-## Principles, enforced in code
-
-- **Data integrity.** No number exists without value, unit, region, period, source and retrieval time. Nothing is invented, estimated or converted between currencies. An honest "unavailable" beats a guessed number. Property-based tests guard the source adapters.
-- **Neutrality.** Revenant takes no political side. It shows people their own words and real data, and never says why a number changed or whether the change was good or bad. Up and down get identical visual treatment — no red, no green, no victory arrows. A tone-check hook fails the build on judgemental words.
-- **Tone.** A dark room and one shaft of purple light. Something you buried comes back up, carrying your letter. Spooky the way a quiet night is spooky, not the way a haunted house is.
-
-## Stack
-
-TypeScript (strict mode) end to end. Next.js (App Router, standalone output), PostgreSQL with Drizzle migrations, WebCrypto and WebAuthn directly in the browser, Zod at every route boundary, and Vitest with fast-check for property tests. Shipped as one Docker image and a Helm chart that bundles its own Postgres.
-
-## Run locally
-
-Requires Node.js and a PostgreSQL database.
-
-```bash
-npm install
-cp .env.example .env      # set DATABASE_URL (see .env.example for every variable)
-npm run db:migrate
-npm run dev
-```
-
-Checks:
-
-```bash
-npm run lint
-npm run typecheck
-npm test
-./scripts/check.sh        # the one command CI and the agents run
-```
-
-Passkeys are bound to the domain and need HTTPS. Outside the cluster they fall back to `localhost`.
-
-## Deployment
-
-The Helm chart lives in `deploy/helm/revenant` and includes PostgreSQL. The image is published to `ghcr.io/devclef/revenant`. The MVP runs at `revenant.devclef.se`, deployed by a separate Fleet GitOps repo onto a self-hosted RKE2 cluster. See the chart's README for values and secrets.
-
-## Built by a coven of agents
-
-Here's the part we're genuinely proud of: **almost none of this code was written by a human sitting at a keyboard.** Revenant was built by a team of specialist AI agents orchestrated by [Kiro Crew](https://kiro.dev/docs/crew.md), running an autonomous build loop that has merged 248 pull requests (`gh pr list --state merged --limit 1000 --json number -q length`, run 17 November 2026 at commit f152ebcd022517f0b32698bb25e975ebfc254fe0).
+- **Steering** (`.kiro/steering/`): eight documents of non-negotiables (data integrity, neutrality, tone, crypto, tech, deploy, product, structure). Every agent reads them, and the crypto rules load automatically for the code they govern.
+- **Specs** (`.kiro/specs/`): fifteen spec folders with requirements, design and tasks. One task is one GitHub issue and one pull request.
+- **Custom agents** (`.kiro/agents/`): `platform-dev`, `crypto-dev`, `data-dev`, `frontend-dev` and an independent `qa` agent that clicks through each PR in a headless browser and writes a verdict before anything merges. Each has its own file-ownership boundary.
+- **Hooks** (`.kiro/hooks/` and agent stop hooks): a tone check that blocks judgemental wording, a path-scope check that keeps each agent in its lane, crypto tests on save, and a ceremony-truth check.
+- **MCP**: the `qa` and `frontend-dev` agents drive a real headless browser through the Playwright MCP server, so QA clicks through each PR's build and cites screenshots.
+- **Property-based testing**: fast-check properties (72 property test files) guard the source adapters, the decimal rules and the sealed format.
+- **Kiro Crew** ran the loop: a dispatcher claims ready issues, starts a build run as the right role, opens the PR, waits for CI, runs QA, then merges or feeds failures back. Three failed fixes and it stops and asks a human. The repository has over 540 commits and 240 merged pull requests.
 
 ```mermaid
 flowchart TB
-    %% 8 docs: ls .kiro/steering | wc -l; 3 fix runs: MAX_FIX_ATTEMPTS = 3 in tools/dispatcher/revenant_dispatch.py; both checked 17 November 2026 at commit f152ebcd022517f0b32698bb25e975ebfc254fe0. The dispatcher's schedule is set by the operator outside this repo, so no interval is stated.
     subgraph HUMANS["Humans write the rules"]
         direction LR
         STEER["📜 Steering<br/>8 docs of non-negotiables"]
@@ -168,27 +133,45 @@ flowchart TB
     linkStyle default stroke:#b98cff,stroke-width:2px
 ```
 
-The setup works like a real engineering org:
-
-- **Steering** (`.kiro/steering/`) is the team's constitution. Eight documents <!-- 8: ls .kiro/steering | wc -l, checked 17 November 2026, commit f152ebcd022517f0b32698bb25e975ebfc254fe0 --> — data integrity, neutrality, tone, crypto, tech, deploy, product, structure — encode the non-negotiables. Every agent reads them, and the rules that matter most load automatically for the code they govern.
-- **Specs** (`.kiro/specs/`) break the product into features, and each feature into tasks. One task becomes one GitHub issue.
-- **Role agents** (`.kiro/agents/`) are the engineers, each with its own system prompt, its own file-ownership boundary, and its own tools:
-  - `platform-dev` — scaffold, config, health routes, DB client, migrations, Docker, Helm.
-  - `crypto-dev` — browser crypto, the sealed format, the letter and opening APIs, the immutability triggers.
-  - `data-dev` — source adapters, the figure catalogue, the figures API.
-  - `frontend-dev` — pages, the ceremony, cards, `.ics`, and every word of user-facing copy.
-  - `qa` — an independent reviewer with a real headless browser, who clicks through each PR and writes a verdict before anything merges.
-- **A dispatcher** (a Kiro Crew cron job) runs the loop: it claims ready issues, starts a build run as the right role, opens a pull request, waits for CI, then starts a QA run on the result. Pass and it squash-merges; fail and it feeds the logs back for a fix run. Three failed fixes <!-- 3: grep -n "MAX_FIX_ATTEMPTS = " tools/dispatcher/revenant_dispatch.py; checked 17 November 2026, commit f152ebcd022517f0b32698bb25e975ebfc254fe0 --> and it stops and asks a human.
-- **Hooks** enforce the steering docs at the moment code is written — a tone check that blocks judgemental language, a path-scope check that keeps each agent inside its lane, and crypto-test and ceremony-truth checks.
-
-Commits are tagged by their author: `[frontend-dev]`, `[crypto-dev]`, `[data-dev]`, `[platform-dev]`. The humans wrote the steering, the specs and the dispatcher. The agents wrote the product.
-
 The full runbook is in [docs/agent-loop.md](docs/agent-loop.md).
+
+## Principles, enforced in code
+
+- **Data integrity.** No number exists without value, unit, region, period, source and retrieval time. An honest "unavailable" beats a guessed number. Property-based tests guard the source adapters.
+- **Neutrality.** Revenant takes no political side. It shows people their own words and real data, and never says why a number changed or whether the change was good or bad. Up and down get identical visual treatment.
+- **Tone.** A dark room and one shaft of purple light. Something you buried comes back up, carrying your letter. Spooky the way a quiet night is spooky.
+- **Privacy.** The browser encrypts. The server stores ciphertext, a minimal header and the time-lock secret. Backup keys, PRF output and content keys never leave the browser and are never logged.
+
+## Stack
+
+TypeScript (strict) end to end. Next.js (App Router, standalone output), PostgreSQL with Drizzle migrations, WebCrypto and WebAuthn used directly in the browser, Zod at every route boundary, Vitest with fast-check for property tests. One Docker image and a Helm chart that bundles its own Postgres. Strict Content Security Policy and no third-party scripts.
+
+## Run locally
+
+Requires Node.js and a PostgreSQL database.
+
+```bash
+npm install
+cp .env.example .env      # set DATABASE_URL (see .env.example for every variable)
+npm run db:migrate
+npm run dev
+```
+
+Checks:
+
+```bash
+npm run lint
+npm run typecheck
+npm test
+./scripts/check.sh        # the one command CI and the agents run
+```
+
+Passkeys are bound to the domain and need HTTPS. Outside the cluster they fall back to `localhost`.
+
+## Deployment
+
+The Helm chart lives in `deploy/helm/revenant` and includes PostgreSQL. The image is published to `ghcr.io/devclef/revenant`. It runs at `revenant.devclef.se`, deployed by a separate Fleet GitOps repo onto a self-hosted RKE2 cluster. See the chart's README for values and secrets.
 
 ## License
 
 See [LICENSE](LICENSE).
-
-<!-- provenance: grep -ciF over this file for the five Retired_Phrases in the commit c4c2a81 search (the G2.7 copy rules and the O5/L4 patches), case-insensitive: 0 matches for each phrase, 2026-11-17, searched at c4c2a81 -->
-
-<!-- G2.7 Retired_Phrase over dev/ copies: for p in "Check your connection and reload the page" "What's on your mind right now?" "Seal the figures" "fuel prices from the US or the EU" "nowUnavailableFetch"; do grep -ciF "$p" dev/README.md dev/docs/video-script.md; done; checked 17 November 2026; commit 022516b59299c0651b3e3385cf389964e29687c4; NOT RECOUNTED: the dev/ copies are not in this task worktree (git ls-files lists no dev/ paths), so the search cannot run from the worktree root. The copies sit at /home/dopey/kiro/revenant-crew/dev outside the worktree. The 022516b body reports 0 for every phrase in those copies, but that search ran outside the worktree and is not recounted here. -->
