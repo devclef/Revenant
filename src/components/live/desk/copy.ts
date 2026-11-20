@@ -35,6 +35,8 @@ export const DESK_COPY = {
   answerLabelFor: "Answer to question {n}",
   /** The placeholder of an empty answer field (spec 15, R7.1). */
   answerPlaceholder: "Answer it as you remember it today…",
+  /** Named by the fold check on the first unanswered question, `{n}` its number (spec 15, R7.4). */
+  answerMissing: "Question {n} has no answer yet. Answer it or remove it.",
   /** The visible text of the Edit control on a Question_Row (W7.4). */
   edit: "Edit",
   /** The Lock_Line under each Question_Row input (W7.5). */

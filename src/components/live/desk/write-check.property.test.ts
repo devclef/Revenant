@@ -12,7 +12,7 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
-import { questionRowProblem } from "../author-questions";
+import { answerProblem, questionRowProblem } from "../author-questions";
 import {
   isEmptySelfReportedRow,
   selfReportedRowProblems,
@@ -50,6 +50,13 @@ function frozenNextCondition(input: WriteCheckInput): boolean {
     (problem) => problem === "letter_empty" || problem === "letter_too_long",
   );
   const questionsValid = !problems.includes("question_too_long");
+  const answersValid = input.questions.every((question, index) => {
+    const answer = input.answers?.[index] ?? "";
+    if (answer.trim().length > 0 && [...answer.trim()].length > 1000) {
+      return false;
+    }
+    return !(question.trim() !== "" && answer.trim() === "");
+  });
   const figuresValid = !problems.some(
     (problem) =>
       problem === "nothing_to_testify" || problem === "figures_too_many",
@@ -58,7 +65,13 @@ function frozenNextCondition(input: WriteCheckInput): boolean {
     input.selfReported,
     input.sealingDay,
   );
-  return letterValid && questionsValid && selfReportedValid && figuresValid;
+  return (
+    letterValid &&
+    questionsValid &&
+    answersValid &&
+    selfReportedValid &&
+    figuresValid
+  );
 }
 
 const partArb = fc.oneof(
@@ -97,9 +110,18 @@ const questionArb = fc.oneof(
   fc.constant("q".repeat(201)),
 );
 
+const answerArb = fc.oneof(
+  fc.constant(""),
+  fc.constant("   "),
+  fc.constant("Yes"),
+  fc.string({ maxLength: 60 }),
+  fc.constant("a".repeat(1001)),
+);
+
 const inputArb: fc.Arbitrary<WriteCheckInput> = fc.record({
   text: textArb,
   questions: fc.array(questionArb, { maxLength: 4 }),
+  answers: fc.array(answerArb, { maxLength: 4 }),
   metricIds: fc.array(
     fc.constantFrom("us-gasoline-regular", "eu-diesel", "se-milk"),
     { maxLength: 7 },
@@ -122,17 +144,34 @@ function expectedFirstFailing(input: WriteCheckInput): FoldTarget | null {
     sealingDay: input.sealingDay,
   });
   const ownOk = selfReportedRowsOk(input.selfReported, input.sealingDay);
-  if (!problems.some((p) => p !== "warning_unticked") && ownOk) return null;
+  const rowFailed = input.questions.some((question, index) => {
+    const answer = (input.answers ?? [])[index] ?? "";
+    const hasQuestion = question.trim() !== "";
+    return (
+      (hasQuestion && questionRowProblem(question) !== null) ||
+      answerProblem(answer) !== null ||
+      (hasQuestion && answer.trim() === "")
+    );
+  });
+  if (!problems.some((p) => p !== "warning_unticked") && ownOk && !rowFailed) {
+    return null;
+  }
 
   // 1. The letter.
   if (input.text.trim() === "" || problems.includes("letter_too_long")) {
     return { kind: "letter" };
   }
-  // 2. The question rows, in order.
-  const badRow = input.questions.findIndex(
-    (q) => questionRowProblem(q) !== null,
-  );
-  if (badRow !== -1) return { kind: "question", index: badRow };
+  // 2. The question rows in order: the question, then its answer (spec 15, R7.4).
+  for (let index = 0; index < input.questions.length; index += 1) {
+    const question = input.questions[index] ?? "";
+    const answer = (input.answers ?? [])[index] ?? "";
+    const hasQuestion = question.trim() !== "";
+    if (hasQuestion && questionRowProblem(question) !== null) {
+      return { kind: "question", index };
+    }
+    if (answerProblem(answer) !== null) return { kind: "answer", index };
+    if (hasQuestion && answer.trim() === "") return { kind: "answer", index };
+  }
   // 3. Nothing to testify: the first question row, or the write_own control.
   if (problems.includes("nothing_to_testify")) {
     return input.questions.length > 0

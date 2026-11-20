@@ -165,6 +165,7 @@ export function QuestionRow({
             className={`${styles.answerInput} ${letterField.sheetSerif}`}
             placeholder={DESK_COPY.answerPlaceholder}
             aria-label={withNumber(DESK_COPY.answerLabelFor, n)}
+            data-answer-input=""
             value={answer}
             aria-describedby={answerDescribedBy}
             aria-invalid={answerProblem ? "true" : undefined}

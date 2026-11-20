@@ -470,6 +470,7 @@ export function WriteForm({
   const checkInput: WriteCheckInput = {
     text,
     questions,
+    answers,
     metricIds,
     selfReported,
     maxFigures: limit,
@@ -546,12 +547,13 @@ export function WriteForm({
     />
   );
 
-  const deskQuestions = (
+  const deskQuestions = (missingAnswer: number | null) => (
     <QuestionSection
       questions={questions}
       tooLongIndices={tooLongIndices}
       answers={answers}
       answerTooLongIndices={answerTooLongIndices}
+      missingAnswerIndex={missingAnswer}
       onAnswerChange={(index, next) => {
         onTouch(TOUCH_FIELDS.questions);
         onAnswerChange(index, next);

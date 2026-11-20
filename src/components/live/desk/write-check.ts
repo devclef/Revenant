@@ -1,4 +1,4 @@
-import { questionRowProblem } from "../author-questions";
+import { answerProblem, questionRowProblem } from "../author-questions";
 import {
   isEmptySelfReportedRow,
   selfReportedRowProblems,
@@ -21,12 +21,18 @@ import type { SelfReportedField, SelfReportedRow } from "../write-draft";
 export type FoldTarget =
   | { kind: "letter" }
   | { kind: "question"; index: number }
+  | { kind: "answer"; index: number }
   | { kind: "write_own" }
   | { kind: "own_number"; field: SelfReportedField };
 
 export type WriteCheckInput = {
   text: string;
   questions: readonly string[];
+  /**
+   * The author's answer to each question, index-aligned with `questions`
+   * (spec 15, R7.1). A missing entry reads as an unanswered question.
+   */
+  answers?: readonly string[];
   metricIds: readonly string[];
   selfReported: readonly SelfReportedRow[];
   maxFigures: number;
@@ -35,7 +41,10 @@ export type WriteCheckInput = {
 
 export type WriteCheckResult = {
   ok: boolean;
-  /** The write problems, without the Seal-step warning. Empty when ok. */
+  /**
+   * The write problems, without the Seal-step warning and without the answer
+   * rules (those show as `first`). Empty when no problem is reported here.
+   */
   problems: readonly WriteProblem[];
   /** The first failing field, or null when ok. */
   first: FoldTarget | null;
@@ -84,10 +93,31 @@ function firstOwnNumberField(input: WriteCheckInput): FoldTarget | null {
 }
 
 /**
- * The first failing field in page order: the letter, then the first over-long
- * question row, then the nothing-to-testify target (row 0 when a row exists,
- * otherwise write_own), then the first own-number field. Null when the write
- * passes.
+ * The first question row, in page order, that fails. A row fails when its
+ * question is over 200 code points, its answer is over 1,000, or its question
+ * has no answer (spec 15, R7.1, R7.3, R7.4). Within a row the question comes
+ * before the answer. A row with a blank question is dropped at sealing, so only
+ * an over-long answer on it counts.
+ */
+function firstRowFailure(input: WriteCheckInput): FoldTarget | null {
+  for (let index = 0; index < input.questions.length; index += 1) {
+    const question = input.questions[index] ?? "";
+    const answer = input.answers?.[index] ?? "";
+    const hasQuestion = question.trim() !== "";
+    if (hasQuestion && questionRowProblem(question) !== null) {
+      return { kind: "question", index };
+    }
+    if (answerProblem(answer) !== null) return { kind: "answer", index };
+    if (hasQuestion && answer.trim() === "") return { kind: "answer", index };
+  }
+  return null;
+}
+
+/**
+ * The first failing field in page order: the letter, then the first failing
+ * question row (its question, then its answer), then the nothing-to-testify
+ * target (row 0 when a row exists, otherwise write_own), then the first
+ * own-number field. Null when the write passes.
  *
  * The figure limit has no target of its own: the picker caps figures, so the
  * limit cannot be broken through the UI. If it is broken anyway, the target is
@@ -96,7 +126,8 @@ function firstOwnNumberField(input: WriteCheckInput): FoldTarget | null {
 export function firstFailingField(input: WriteCheckInput): FoldTarget | null {
   const problems = writeProblems(input);
   const ownOk = selfReportedRowsOk(input.selfReported, input.sealingDay);
-  if (problems.length === 0 && ownOk) return null;
+  const row = firstRowFailure(input);
+  if (problems.length === 0 && ownOk && row === null) return null;
 
   if (
     problems.includes("letter_empty") ||
@@ -105,12 +136,7 @@ export function firstFailingField(input: WriteCheckInput): FoldTarget | null {
     return { kind: "letter" };
   }
 
-  if (problems.includes("question_too_long")) {
-    const index = input.questions.findIndex(
-      (row) => questionRowProblem(row) !== null,
-    );
-    return { kind: "question", index };
-  }
+  if (row !== null) return row;
 
   if (problems.includes("nothing_to_testify")) {
     return input.questions.length > 0
@@ -127,13 +153,15 @@ export function firstFailingField(input: WriteCheckInput): FoldTarget | null {
 
 /**
  * Today's Write-step Next as one check. `ok` is true exactly when the letter,
- * the question rows, the nothing-to-testify rule, the figure limit and the
- * self-reported rows all pass.
+ * the question rows and their answers, the nothing-to-testify rule, the figure
+ * limit and the self-reported rows all pass. The envelope seal is at full
+ * strength exactly when `ok` is true (spec 15, R7.6).
  */
 export function writeCheck(input: WriteCheckInput): WriteCheckResult {
   const problems = writeProblems(input);
   const ok =
     problems.length === 0 &&
-    selfReportedRowsOk(input.selfReported, input.sealingDay);
+    selfReportedRowsOk(input.selfReported, input.sealingDay) &&
+    firstRowFailure(input) === null;
   return { ok, problems, first: firstFailingField(input) };
 }

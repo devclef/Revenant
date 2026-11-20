@@ -123,4 +123,12 @@ describe("QuestionRow (spec 14, W7)", () => {
     const html = render({ answer: "short" });
     expect(html).not.toContain(LIVE_COPY.answerTooLong);
   });
+
+  it("marks only the answer textarea, so the fold can focus it (spec 15, R7.4)", () => {
+    const html = render();
+    const textareas = html.match(/<textarea[^>]*>/g) ?? [];
+    expect(textareas).toHaveLength(2);
+    expect(textareas[0]).not.toContain("data-answer-input");
+    expect(textareas[1]).toContain("data-answer-input");
+  });
 });

@@ -37,6 +37,11 @@ export interface QuestionSectionProps {
   answers?: readonly string[];
   /** Indices of answers over 1,000 code points. Their message is shown (R7.3). */
   answerTooLongIndices?: readonly number[];
+  /**
+   * The first unanswered question, named after a failed fold (spec 15, R7.4).
+   * Its answer shows the missing-answer message. Null when none is named.
+   */
+  missingAnswerIndex?: number | null;
   /** Called with the row index and its new answer on every change. */
   onAnswerChange?: (index: number, text: string) => void;
   /** Called with the row index when its Remove control is pressed. */
@@ -63,6 +68,7 @@ export function QuestionSection({
   onRemove,
   answers = [],
   answerTooLongIndices = [],
+  missingAnswerIndex = null,
   onAnswerChange = () => {},
   pills,
 }: QuestionSectionProps) {
@@ -127,7 +133,9 @@ export function QuestionSection({
             answerProblem={
               answerTooLongIndices.includes(index)
                 ? LIVE_COPY.answerTooLong
-                : undefined
+                : missingAnswerIndex === index
+                  ? DESK_COPY.answerMissing.replace("{n}", String(index + 1))
+                  : undefined
             }
             onAnswerChange={(next) => onAnswerChange(index, next)}
             onRemove={() => pressRemove(index)}

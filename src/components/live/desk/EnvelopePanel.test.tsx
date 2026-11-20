@@ -82,6 +82,36 @@ describe("EnvelopePanel (spec 14, W1.3, W9, W13)", () => {
     expect(html).not.toMatch(/data-small-seal="" data-ready/);
   });
 
+  it("keeps the seal at 35% while a question has no answer (spec 15, R7.6)", () => {
+    const html = render({
+      checkInput: { ...PASSING, questions: ["Who was there?"], answers: [""] },
+    });
+    expect(html).toMatch(/data-small-seal=""[^>]*>/);
+    expect(html).not.toMatch(/data-small-seal="" data-ready/);
+  });
+
+  it("brings the seal to full strength once every question is answered (spec 15, R7.6)", () => {
+    const html = render({
+      checkInput: {
+        ...PASSING,
+        questions: ["Who was there?"],
+        answers: ["My sister."],
+      },
+    });
+    expect(html).toMatch(/data-small-seal="" data-ready=""/);
+  });
+
+  it("keeps the seal at 35% when an answer is over 1,000 characters (spec 15, R7.3)", () => {
+    const html = render({
+      checkInput: {
+        ...PASSING,
+        questions: ["Who was there?"],
+        answers: ["a".repeat(1001)],
+      },
+    });
+    expect(html).not.toMatch(/data-small-seal="" data-ready/);
+  });
+
   it("shows the failed-fold summary only when the fold failed", () => {
     expect(render({ failed: false })).not.toContain(DESK_COPY.foldFailed);
     expect(render({ failed: true })).toContain(DESK_COPY.foldFailed);

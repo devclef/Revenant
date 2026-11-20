@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { AUTHOR_QUESTION_MAX_CODE_POINTS } from "../author-questions";
+import {
+  AUTHOR_ANSWER_MAX_CODE_POINTS,
+  AUTHOR_QUESTION_MAX_CODE_POINTS,
+} from "../author-questions";
 import { MAX_LETTER_CODE_POINTS } from "../constants";
 import type { SelfReportedRow } from "../write-draft";
 
@@ -9,6 +12,8 @@ import {
   writeCheck,
   type WriteCheckInput,
 } from "./write-check";
+
+const ANSWER_MAX = AUTHOR_ANSWER_MAX_CODE_POINTS;
 
 const SEALING_DAY = "2026-11-18";
 
@@ -46,9 +51,97 @@ describe("writeCheck", () => {
   });
 
   it("never reports the Seal-step warning", () => {
-    const result = writeCheck({ ...VALID, questions: ["Who was there?"] });
+    const result = writeCheck({
+      ...VALID,
+      questions: ["Who was there?"],
+      answers: ["My sister, at the door."],
+    });
     expect(result.problems).not.toContain("warning_unticked");
     expect(result.ok).toBe(true);
+  });
+
+  it("fails a question with no answer and names that answer, not the letter", () => {
+    const result = writeCheck({
+      ...VALID,
+      questions: ["Who was there?"],
+      answers: [""],
+    });
+    expect(result.ok).toBe(false);
+    expect(result.first).toEqual({ kind: "answer", index: 0 });
+  });
+
+  it("names the first unanswered question and no other", () => {
+    const result = writeCheck({
+      ...VALID,
+      questions: ["First?", "Second?", "Third?"],
+      answers: ["Yes", "", ""],
+    });
+    expect(result.first).toEqual({ kind: "answer", index: 1 });
+  });
+
+  it("passes when every question with text has an answer", () => {
+    const result = writeCheck({
+      ...VALID,
+      questions: ["First?", "Second?"],
+      answers: ["Yes", "No"],
+    });
+    expect(result.ok).toBe(true);
+    expect(result.first).toBeNull();
+  });
+
+  it("treats a missing answers list as unanswered", () => {
+    const result = writeCheck({ ...VALID, questions: ["First?"] });
+    expect(result.ok).toBe(false);
+    expect(result.first).toEqual({ kind: "answer", index: 0 });
+  });
+
+  it("does not require an answer for a blank question row", () => {
+    const result = writeCheck({
+      ...VALID,
+      questions: ["", "Second?"],
+      answers: ["", "No"],
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("names an over-long answer and does not pass", () => {
+    const long = "a".repeat(ANSWER_MAX + 1);
+    const result = writeCheck({
+      ...VALID,
+      questions: ["Short?", "Second?"],
+      answers: ["Yes", long],
+    });
+    expect(result.ok).toBe(false);
+    expect(result.first).toEqual({ kind: "answer", index: 1 });
+  });
+
+  it("accepts an answer of exactly 1,000 code points", () => {
+    const result = writeCheck({
+      ...VALID,
+      questions: ["Short?"],
+      answers: ["a".repeat(ANSWER_MAX)],
+    });
+    expect(result.ok).toBe(true);
+  });
+
+  it("puts a question's own problem before its answer", () => {
+    const long = "q".repeat(AUTHOR_QUESTION_MAX_CODE_POINTS + 1);
+    const result = writeCheck({
+      ...VALID,
+      questions: [long],
+      answers: [""],
+    });
+    expect(result.first).toEqual({ kind: "question", index: 0 });
+  });
+
+  it("puts an earlier row's unanswered answer before a later over-long question", () => {
+    const long = "q".repeat(AUTHOR_QUESTION_MAX_CODE_POINTS + 1);
+    const result = writeCheck({
+      ...VALID,
+      questions: ["First?", long],
+      answers: ["", ""],
+    });
+    expect(result.first).toEqual({ kind: "answer", index: 0 });
   });
 
   it("fails an empty letter and targets the letter", () => {
@@ -70,6 +163,7 @@ describe("writeCheck", () => {
     const result = writeCheck({
       ...VALID,
       questions: ["Short", long],
+      answers: ["Yes", "Yes"],
     });
     expect(result.problems).toContain("question_too_long");
     expect(result.first).toEqual({ kind: "question", index: 1 });
