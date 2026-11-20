@@ -4,6 +4,7 @@ import { describe, expect, it } from "vitest";
 import {
   AUTHOR_QUESTION_MAX_CODE_POINTS,
   AUTHOR_QUESTIONS_MAX,
+  answersForSeal,
   focusAfterRemove,
   questionRowProblem,
   questionsForSeal,
@@ -130,5 +131,18 @@ describe("Property 7: removing a question moves focus to the next row, or to Add
     expect(focusAfterRemove(3, 0)).toEqual({ kind: "row", index: 0 });
     expect(focusAfterRemove(3, 1)).toEqual({ kind: "row", index: 1 });
     expect(focusAfterRemove(3, 2)).toEqual({ kind: "add" });
+  });
+});
+
+describe("answersForSeal (spec 15, R2.1)", () => {
+  it("keeps each kept question's answer, trimmed, and drops the answer of an empty row", () => {
+    const rows = ["  What is on my mind?  ", "   ", "Second?"];
+    const answers = ["  The coast.  ", "stray", "A second answer."];
+    expect(answersForSeal(rows, answers)).toEqual(["The coast.", "A second answer."]);
+    expect(answersForSeal(rows, answers)).toHaveLength(questionsForSeal(rows).length);
+  });
+
+  it("uses an empty string for a missing answer", () => {
+    expect(answersForSeal(["One?"], [])).toEqual([""]);
   });
 });

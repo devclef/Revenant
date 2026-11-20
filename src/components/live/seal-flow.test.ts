@@ -388,6 +388,7 @@ describe("each failed figures request still reaches Press the seal and stores a 
       metricIds: [],
       figures: makeFigures([]),
       questions: stepper.draft.questions,
+      answers: (stepper.draft.questions ?? []).map(() => "My answer."),
     };
     // The figures state never blocks the write (X2.4).
     expect(
@@ -425,6 +426,7 @@ describe("each failed figures request still reaches Press the seal and stores a 
       metricIds: [],
       figures: makeFigures([]),
       questions: stepper.draft.questions,
+      answers: (stepper.draft.questions ?? []).map(() => "My answer."),
     };
     const { state: sealed } = await runFlow(h);
     expect(h.api.seal).toHaveBeenCalledTimes(1);

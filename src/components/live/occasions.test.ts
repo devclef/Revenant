@@ -19,9 +19,11 @@ import {
  * nothing (L2.3, L2.4, L2.5).
  */
 
-const SEALING_DAY_ANCHOR =
-  /\bwriting\b|when you wrote this|the day you sealed this/i;
-const FORBIDDEN_PHRASES = /right now|\btoday\b|currently|this year/i;
+/** A first-person word: "I", "me" or "my" (spec 15, R8.2). */
+const FIRST_PERSON = /\b(I|me|my)\b/;
+/** Second person and the sealing-day phrasing that R8.2 retires. */
+const RETIRED_VOICE = /\b(you|your|when you wrote this|the day you sealed this)\b/i;
+const FORBIDDEN_PHRASES = /\btoday\b|currently/i;
 // Party, policy and election terms the copy must never use (neutrality.md).
 const POLITICAL_TERMS =
   /\b(part(y|ies)|polic(y|ies)|election|elections|vote|voting|votes|candidate|candidates|ballot|government|parliament|minister|president|senate|congress|politic\w*|democrat\w*|republican\w*|conservative\w*|labour|labor|liberal\w*|socialist\w*)\b/i;
@@ -71,23 +73,28 @@ describe("OCCASIONS table (Property 8, copy rules)", () => {
   });
 
   it.each(OCCASIONS.map((o) => [o.label, o] as const))(
-    "%s starts with the default question and has at most three questions",
+    "%s has one default question in the author's voice (spec 15, R8.1)",
     (_label, occasion) => {
-      expect(occasion.questions[0]).toBe(DEFAULT_QUESTION);
-      expect(occasion.questions.length).toBeGreaterThanOrEqual(1);
-      expect(occasion.questions.length).toBeLessThanOrEqual(
-        OCCASION_QUESTIONS_MAX,
-      );
+      expect(occasion.questions).toHaveLength(1);
+      expect(occasion.questions[0]).toMatch(FIRST_PERSON);
     },
   );
 
-  it("gives every question 1 to 200 code points, a sealing-day anchor and no banned term", () => {
+  it("starts a blank draft with DEFAULT_QUESTION, the blank page's own question", () => {
+    expect(OCCASIONS.find((o) => o.id === "blank")?.questions).toEqual([
+      DEFAULT_QUESTION,
+    ]);
+    expect(OCCASION_QUESTIONS_MAX).toBe(3);
+  });
+
+  it("gives every question 1 to 200 code points, first person and no banned term", () => {
     for (const occasion of OCCASIONS) {
       for (const question of occasion.questions) {
         const length = codePoints(question);
         expect(length, question).toBeGreaterThanOrEqual(1);
         expect(length, question).toBeLessThanOrEqual(200);
-        expect(question, question).toMatch(SEALING_DAY_ANCHOR);
+        expect(question, question).toMatch(FIRST_PERSON);
+        expect(question, question).not.toMatch(RETIRED_VOICE);
         expect(question, question).not.toMatch(DIGIT);
         expect(question, question).not.toMatch(POLITICAL_TERMS);
         expect(question, question).not.toMatch(FORBIDDEN_PHRASES);
@@ -176,10 +183,11 @@ describe("applyOccasion (Property 7, typed text is never overwritten)", () => {
               }
 
               const firstRow = result.questions[0];
+              const nextDefault = OCCASIONS.find((o) => o.id === next)?.questions[0];
               const typedFirst =
                 first.trim() !== "" && first !== base.appliedQuestions[0];
               expect(
-                firstRow === DEFAULT_QUESTION ||
+                firstRow === nextDefault ||
                   (typedFirst && firstRow === first),
               ).toBe(true);
 
@@ -232,14 +240,14 @@ describe("applyOccasion (Property 7, typed text is never overwritten)", () => {
   });
 
   it("keeps a typed row and compacts the rest, never returning an empty list", () => {
-    const typed = "What did the boiler quote say when you wrote this?";
+    const typed = "What did the boiler quote say when I wrote this?";
     const work = OCCASIONS.find((o) => o.id === "work");
     const draft = draftFrom("", [DEFAULT_QUESTION, typed, ""], "work");
     const family = applyOccasion(draft, "family");
     expect(family.questions).toContain(typed);
     expect(family.questions.length).toBeLessThanOrEqual(OCCASION_QUESTIONS_MAX);
     expect(family.questions[0]).toBe(DEFAULT_QUESTION);
-    expect(work?.questions[0]).toBe(DEFAULT_QUESTION);
+    expect(work?.questions[0]).toBe("What is on my mind about work right now?");
   });
 });
 
@@ -301,6 +309,6 @@ describe("Occasion placeholders (spec 12, W2)", () => {
     expect(work?.starter).toBe(
       "This is what my work looks like as I write this, and what I am still working out.",
     );
-    expect(work?.questions[0]).toBe(DEFAULT_QUESTION);
+    expect(work?.questions[0]).toBe("What is on my mind about work right now?");
   });
 });

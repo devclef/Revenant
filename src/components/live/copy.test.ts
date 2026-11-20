@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { firstPoliticalTerm } from "@/lib/personas/banned-terms";
 
 import { LIVE_COPY } from "./copy";
-import { DEFAULT_QUESTION, OCCASIONS } from "./occasions";
+import { DEFAULT_QUESTION, OCCASIONS, SHARED_SUGGESTIONS } from "./occasions";
 
 /**
  * Plain string checks on LIVE_COPY, following the rules in
@@ -159,13 +159,17 @@ describe("Occasion copy (spec 11, L2.1)", () => {
   });
 });
 
-const TIME_WORDS = ["right now", "today", "currently", "this year"] as const;
+const TIME_WORDS = ["today", "currently"] as const;
 
-describe("Occasion_Table through firstPoliticalTerm (spec 11, L2.3, L2.4)", () => {
-  const occasionTexts = OCCASIONS.flatMap((occasion) => [
-    occasion.starter,
-    ...occasion.questions,
-  ]).filter((text) => text.length > 0);
+describe("Occasion_Table through firstPoliticalTerm (spec 11, L2.3, L2.4; spec 15, R8.1 to R8.3)", () => {
+  const occasionTexts = [
+    ...OCCASIONS.flatMap((occasion) => [
+      occasion.starter,
+      ...occasion.questions,
+      ...occasion.suggestions,
+    ]),
+    ...SHARED_SUGGESTIONS,
+  ].filter((text) => text.length > 0);
 
   it("has the five Occasions in order", () => {
     expect(OCCASIONS.map((o) => o.label)).toEqual([
@@ -177,10 +181,13 @@ describe("Occasion_Table through firstPoliticalTerm (spec 11, L2.3, L2.4)", () =
     ]);
   });
 
-  it("puts the default question first in every Occasion", () => {
+  it("gives each Occasion one default question, the blank page's being DEFAULT_QUESTION", () => {
     for (const occasion of OCCASIONS) {
-      expect(occasion.questions[0], occasion.id).toBe(DEFAULT_QUESTION);
+      expect(occasion.questions, occasion.id).toHaveLength(1);
     }
+    expect(OCCASIONS.find((o) => o.id === "blank")?.questions).toEqual([
+      DEFAULT_QUESTION,
+    ]);
   });
 
   for (const text of occasionTexts) {

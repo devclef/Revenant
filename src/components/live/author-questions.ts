@@ -75,3 +75,18 @@ export function focusAfterRemove(
   if (removedIndex < countAfter) return { kind: "row", index: removedIndex };
   return { kind: "add" };
 }
+
+/**
+ * The sealed answers that go with `questionsForSeal(rows)`, in the same order
+ * (spec 15, R2.1). `answers` is index-aligned with `rows`. A row that is empty
+ * after trimming is dropped with its answer, so the two lists stay aligned. The
+ * answer is trimmed, as the question is.
+ */
+export function answersForSeal(
+  rows: readonly string[],
+  answers: readonly string[],
+): string[] {
+  return rows.flatMap((row, index) =>
+    row.trim().length > 0 ? [(answers[index] ?? "").trim()] : [],
+  );
+}

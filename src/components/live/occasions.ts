@@ -1,7 +1,9 @@
 /**
  * Occasions for the Write step (spec 11-any-letter, L2): a letter starter and
- * up to three Author_Questions per row, so an author is not facing a blank
- * page. The Occasion_Table is Our_Copy until the visitor edits it.
+ * one default Author_Question per Occasion, so an author is not facing a blank
+ * page. The rest are suggestions the author may add. The wording is the README
+ * table "Question wording (Occasions)" (docs/design/15-flow/README.md), in the
+ * author's own voice and present tense (spec 15, R8.1 to R8.3).
  *
  * An Occasion is memory only. It is never sent, never stored, never put in the
  * sealed payload and never written to cookies, storage or the URL (L2.5).
@@ -20,40 +22,38 @@ export interface Occasion {
    * W2). Display only: it is never stored, counted or sealed.
    */
   placeholder: string;
-  /** The default question first, then up to two subject questions. */
+  /**
+   * The default question, one row by default (spec 15, R8.1). A list, so the
+   * row rules in `nextQuestionRows` read it the same way as before.
+   */
   questions: readonly string[];
   /**
-   * Extra questions the author may add as rows (spec 14, W8). Each names the
-   * sealing day and never equals an entry in any Occasion's `questions`.
+   * The Occasion's own suggestions, offered after its default question (spec
+   * 15, R8.1). Each is first person and present tense.
    */
   suggestions: readonly string[];
 }
 
-/** The question every row starts with (L1.2). Names the sealing day. */
-export const DEFAULT_QUESTION =
-  "Before you read it, what do you remember about the day you sealed this?";
+/**
+ * The question a blank draft starts with (L1.2). It is the blank page's default
+ * question from the README table, in the author's own voice.
+ */
+export const DEFAULT_QUESTION = "What is on my mind right now?";
 
 /** The most Author_Questions a letter may hold (L1.1, L2.8). */
 export const OCCASION_QUESTIONS_MAX = 3;
 
-const PREDICTION_QUESTION =
-  "When you wrote this, what did you think would have happened by the day you opened it?";
-
-/** The Occasion_Table (L2.8). */
+/** The Occasion_Table (README "Question wording (Occasions)"). */
 export const OCCASIONS: readonly Occasion[] = [
   {
     id: "year",
     label: "The year ahead",
     starter: "This is where my year stands as I write this.",
     placeholder: "This is where my year stands as I write this…",
-    questions: [
-      DEFAULT_QUESTION,
-      "What did you hope the year would hold when you wrote this?",
-      PREDICTION_QUESTION,
-    ],
+    questions: ["What do I hope this year holds?"],
     suggestions: [
-      "When you wrote this, which goal for the year felt most real to you?",
-      "When you wrote this, what did you expect to be different by the day you opened it?",
+      "Which goal for the year feels most real to me?",
+      "What do I think will be different by the day I open this?",
     ],
   },
   {
@@ -62,14 +62,11 @@ export const OCCASIONS: readonly Occasion[] = [
     starter:
       "This is what my work looks like as I write this, and what I am still working out.",
     placeholder: "This is what my work looks like as I write this…",
-    questions: [
-      DEFAULT_QUESTION,
-      "What was on your mind about work when you wrote this?",
-      PREDICTION_QUESTION,
-    ],
+    questions: ["What is on my mind about work right now?"],
     suggestions: [
-      "When you wrote this, which piece of work were you most worried about?",
-      "When you wrote this, what did you want your working week to look like?",
+      "What worries me most right now?",
+      "What do I want my working week to look like?",
+      "What do I think will be different by the day I open this?",
     ],
   },
   {
@@ -78,14 +75,10 @@ export const OCCASIONS: readonly Occasion[] = [
     starter:
       "This is how things are with the people closest to me as I write this.",
     placeholder: "This is how things are with the people closest to me…",
-    questions: [
-      DEFAULT_QUESTION,
-      "Who were you thinking about most when you wrote this?",
-      PREDICTION_QUESTION,
-    ],
+    questions: ["Who am I thinking about most right now?"],
     suggestions: [
-      "When you wrote this, what did you most want to say to the people at home?",
-      "When you wrote this, what did you hope the people closest to you would be doing?",
+      "What do I most want to say to the people at home?",
+      "What do I hope the people closest to me are doing when I open this?",
     ],
   },
   {
@@ -94,14 +87,10 @@ export const OCCASIONS: readonly Occasion[] = [
     starter:
       "This is the decision in front of me, and where I lean as I write this.",
     placeholder: "This is the decision in front of me, and where I lean…",
-    questions: [
-      DEFAULT_QUESTION,
-      "What were you weighing when you wrote this?",
-      PREDICTION_QUESTION,
-    ],
+    questions: ["What am I weighing right now?"],
     suggestions: [
-      "When you wrote this, what did you expect the choice to give you?",
-      "When you wrote this, what would have made the decision feel settled?",
+      "What do I expect the choice to give me?",
+      "What would make this decision feel settled for me?",
     ],
   },
   {
@@ -111,20 +100,20 @@ export const OCCASIONS: readonly Occasion[] = [
     placeholder: "Write whatever you want to remember about today…",
     questions: [DEFAULT_QUESTION],
     suggestions: [
-      "When you wrote this, what was the first thing you noticed that morning?",
-      "When you wrote this, what would you most like to remember about that week?",
+      "What did I notice first this morning?",
+      "What do I most want to remember about this week?",
     ],
   },
 ];
 
 /**
- * Suggestions every Occasion may offer after its own (spec 14, W8). Each names
- * the sealing day and never equals an Occasion question.
+ * Suggestions every Occasion may offer after its own (README table, "Shared,
+ * after the Occasion's own"). None equals an Occasion question.
  */
 export const SHARED_SUGGESTIONS: readonly string[] = [
-  "When you wrote this, what was the small thing you were looking forward to?",
-  "When you wrote this, who would you have called first with good news?",
-  "What did you promise yourself the day you sealed this?",
+  "What small thing am I looking forward to?",
+  "Who would I call first with good news?",
+  "What have I promised myself?",
 ];
 
 /**

@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { payloadV1Schema, type PayloadV1 } from "@/lib/seal-format";
+import { payloadV2Schema, type PayloadV2 } from "@/lib/seal-format";
 
 import { buildLivePayload } from "./build-payload";
 import { catalogueMetric, makeFigures } from "./test-figures";
@@ -86,10 +86,10 @@ describe("buildLivePayload with self-reported rows", () => {
     expect(withRows.recall_questions.every((q) => q.metric_id !== "self-1")).toBe(true);
   });
 
-  it("keeps the format version at 1 and parses the payload", () => {
-    const payload: PayloadV1 = build([rentRow]);
-    expect(payload.format_version).toBe(1);
-    expect(payloadV1Schema.safeParse(payload).success).toBe(true);
+  it("keeps the format version at 2 and parses the payload", () => {
+    const payload: PayloadV2 = build([rentRow]);
+    expect(payload.format_version).toBe(2);
+    expect(payloadV2Schema.safeParse(payload).success).toBe(true);
   });
 
   it("builds the same payload as before when there are no rows", () => {

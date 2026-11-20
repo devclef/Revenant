@@ -1,18 +1,21 @@
 // Copy rules for the Occasion suggestions and placeholders on the Write desk
-// (spec 14, W8). Every suggestion names the sealing day, stays inside the
-// letter-question limit, avoids words that anchor a question to the present,
-// and never repeats an Occasion question.
+// (spec 14, W8; spec 15, R8.1 to R8.3). Every suggestion is first person and
+// present tense, stays inside the letter-question limit, never uses "you",
+// "your", "when you wrote this" or "the day you sealed this", and never repeats
+// an Occasion question.
 //
-// Validates: Requirements W8.1, W8.4, W2.5, neutrality.md, tone.md.
+// Validates: Requirements 8.2, 8.3, W8.1, W8.4, W2.5, neutrality.md, tone.md.
 
 import { describe, expect, it } from "vitest";
 
 import { DEFAULT_QUESTION, OCCASIONS, SHARED_SUGGESTIONS } from "../occasions";
 
-/** Sealing-day anchor: a question names the day it was written (tone.md). */
-const SEALING_DAY_ANCHOR = /\b(when you wrote this|the day you sealed this)\b/i;
+/** A first-person word: "I", "me" or "my" (spec 15, R8.2). */
+const FIRST_PERSON = /\b(I|me|my)\b/;
+/** Second person and the sealing-day phrasing that R8.2 retires. */
+const RETIRED_VOICE = /\b(you|your|when you wrote this|the day you sealed this)\b/i;
 /** Words a question must never use (tone.md, Questions). */
-const BANNED = /right now|today|currently/i;
+const BANNED = /today|currently/i;
 const QUESTION_MAX_CHARS = 200;
 const PLACEHOLDER_MAX_WORDS = 12;
 
@@ -27,7 +30,7 @@ const ALL_SUGGESTIONS: readonly { source: string; text: string }[] = [
   ...SHARED_SUGGESTIONS.map((text) => ({ source: "shared", text })),
 ];
 
-describe("Occasion suggestions (spec 14, W8)", () => {
+describe("Occasion suggestions (spec 14, W8; spec 15, R8.2)", () => {
   it.each(OCCASIONS.map((o) => [o.id, o] as const))(
     "%s offers at least two suggestions",
     (_id, occasion) => {
@@ -36,14 +39,21 @@ describe("Occasion suggestions (spec 14, W8)", () => {
   );
 
   it.each(ALL_SUGGESTIONS.map((s) => [s.source, s.text] as const))(
-    "%s suggestion names the sealing day: %s",
+    "%s suggestion is first person: %s",
     (_source, text) => {
-      expect(text).toMatch(SEALING_DAY_ANCHOR);
+      expect(text).toMatch(FIRST_PERSON);
     },
   );
 
   it.each(ALL_SUGGESTIONS.map((s) => [s.source, s.text] as const))(
-    "%s suggestion avoids present-tense words: %s",
+    "%s suggestion uses no second person or sealing-day phrasing: %s",
+    (_source, text) => {
+      expect(text).not.toMatch(RETIRED_VOICE);
+    },
+  );
+
+  it.each(ALL_SUGGESTIONS.map((s) => [s.source, s.text] as const))(
+    "%s suggestion avoids the time words today and currently: %s",
     (_source, text) => {
       expect(text).not.toMatch(BANNED);
     },

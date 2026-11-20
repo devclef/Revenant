@@ -395,7 +395,7 @@ describe("SealPage rehearsal line (spec 11, L4.1, L4.3)", () => {
     ]) {
       expect(lower, phrase).not.toContain(phrase);
     }
-    for (const word of ["right now", "currently"]) {
+    for (const word of ["currently"]) {
       expect(lower, word).not.toContain(word);
     }
     // The intro and the sign-off are the desk's own copy (spec 14, W2.4, W4.4),

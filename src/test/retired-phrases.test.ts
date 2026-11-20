@@ -62,17 +62,7 @@ const RETIRED_PHRASES: readonly RetiredPhrase[] = [
   // Brand_Copy H2 (#353): the four-step ritual no longer has a "Seal the figures" step.
   { name: "\"Seal the figures\" as a step name", pattern: /seal the figures/i },
   // Brand_Copy H2 (#353): a letter holds any part of life, not fuel prices from the US or the EU.
-  {
-    name: "\"fuel prices from the US or the EU\" as what a letter holds",
-    pattern: /fuel prices from the US or the EU/i,
-  },
-  // Spec 11 L4.2 (#345): the Live_Prefill row on /demo/live that asked about
-  // "right now" is removed. The Owner_Patch (O5) adds the same phrase to
-  // RETIRED_PHRASES in tools/hooks/tone-check.mjs.
-  {
-    name: "\"What's on your mind right now?\"",
-    pattern: /what['\u2019]s on your mind right now\?/i,
-  },
+  { name: "\"fuel prices from the US or the EU\" as what a letter holds", pattern: /fuel prices from the US or the EU/i },
 ];
 
 /**
@@ -250,14 +240,7 @@ describe("copy-test exclusion and hit reporting", () => {
 });
 
 describe("L4.2 the retired Live_Prefill question", () => {
-  const phrase = RETIRED_PHRASES[RETIRED_PHRASES.length - 1];
-
-  it("flags \"What's on your mind right now?\" with its straight or curly apostrophe", () => {
-    expect(phrase.pattern.test("What's on your mind right now?")).toBe(true);
-    expect(phrase.pattern.test("What\u2019s on your mind right now?")).toBe(true);
-  });
-
-  it("allows the question that replaced it", () => {
-    expect(phrase.pattern.test("What was on your mind most days?")).toBe(false);
+  it("is no longer in RETIRED_PHRASES: \"right now\" is allowed in Occasion questions (spec 15, R8.2)", () => {
+    expect(RETIRED_PHRASES.some((p) => /right now/i.test(p.name))).toBe(false);
   });
 });

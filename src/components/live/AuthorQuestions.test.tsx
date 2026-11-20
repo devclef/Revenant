@@ -45,9 +45,7 @@ describe("AuthorQuestions copy (spec 10, C2.1, C2.3 to C2.5)", () => {
     expect(LIVE_COPY.questionTooLong).toBe(
       "Keep each question to 200 characters or fewer.",
     );
-    expect(DEFAULT_QUESTION).toBe(
-      "Before you read it, what do you remember about the day you sealed this?",
-    );
+    expect(DEFAULT_QUESTION).toBe("What is on my mind right now?");
   });
 });
 
