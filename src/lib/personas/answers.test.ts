@@ -273,3 +273,137 @@ describe("checkAnswerText", () => {
     ).toEqual([]);
   });
 });
+
+const SEALED_ANSWERS_PATH = resolve(
+  repoRoot,
+  "content",
+  "personas",
+  "letters",
+  "sealed-answers.json",
+);
+
+const realSealedAnswers: unknown = JSON.parse(
+  readFileSync(SEALED_ANSWERS_PATH, "utf8"),
+);
+
+// The approved sealed answer 2, word for word (content/personas/letters/sealed-answers.json).
+const APPROVED_SEALED_ANSWER_2 =
+  "The extra morning shift. I keep changing my mind, and either way I am worried I will fall behind on my reading.";
+
+describe("sealed-answers.json", () => {
+  it("passes validatePersonaAnswers as sealed answers", () => {
+    expect(
+      validatePersonaAnswers(realSealedAnswers, PERSONAS, "sealed"),
+    ).toEqual([]);
+  });
+
+  it("holds the approved sealed answer 2 word for word", () => {
+    const entries = realSealedAnswers as Record<string, string[]>;
+    expect(entries["us-priya"]?.[1]).toBe(APPROVED_SEALED_ANSWER_2);
+  });
+});
+
+describe("sealed answers may refer to changing a mind", () => {
+  it("passes a sealed answer that says 'changing my mind'", () => {
+    expect(
+      checkAnswerText("us-priya", 1, "I keep changing my mind.", {
+        sealed: true,
+      }),
+    ).toEqual([]);
+  });
+
+  it("passes the approved sealed answer 2 word for word", () => {
+    expect(
+      checkAnswerText("us-priya", 1, APPROVED_SEALED_ANSWER_2, {
+        sealed: true,
+      }),
+    ).toEqual([]);
+  });
+
+  it("still rejects a recollection that says 'changing my mind'", () => {
+    const problems = checkAnswerText("us-priya", 1, "I keep changing my mind.");
+    expect(problems.some((p) => p.includes("refers to changing a mind"))).toBe(
+      true,
+    );
+  });
+
+  it("still applies every other rule to a sealed answer", () => {
+    const problems = checkAnswerText(
+      "us-priya",
+      1,
+      "I keep changing my mind about the 3 shifts, and I remember the letter.",
+      { sealed: true },
+    );
+    expect(problems.some((p) => p.includes("contains digit"))).toBe(true);
+    expect(problems.some((p) => p.includes("refers to the letter"))).toBe(true);
+    expect(problems.some((p) => p.includes("changing a mind"))).toBe(false);
+  });
+
+  it("rejects a sealed answer with a verdict word", () => {
+    const problems = checkAnswerText("us-priya", 1, "I was right.", {
+      sealed: true,
+    });
+    expect(problems.some((p) => p.includes("verdict word"))).toBe(true);
+  });
+
+  it("rejects a recollection that says 'changing my mind' through validatePersonaAnswers", () => {
+    const problems = validatePersonaAnswers(
+      {
+        "us-priya": [
+          "The coast trip with my sister.",
+          "I keep changing my mind about the shift.",
+        ],
+      },
+      PERSONAS,
+    );
+    expect(
+      problems.some(
+        (p) =>
+          p.includes("answer 2") && p.includes("refers to changing a mind"),
+      ),
+    ).toBe(true);
+  });
+
+  it("accepts a sealed answer that says 'changing my mind' through validatePersonaAnswers", () => {
+    const problems = validatePersonaAnswers(
+      {
+        "us-priya": [
+          "The coast trip with my sister.",
+          "I keep changing my mind about the shift.",
+        ],
+      },
+      PERSONAS,
+      "sealed",
+    );
+    expect(problems).toEqual([]);
+  });
+});
+
+describe("validatePersonaAnswers length by kind", () => {
+  it("allows a sealed answer of 1,000 code points", () => {
+    const sealed = {
+      "us-priya": ["a".repeat(1000), "Fine."],
+    };
+    expect(validatePersonaAnswers(sealed, PERSONAS, "sealed")).toEqual([]);
+  });
+
+  it("rejects a sealed answer over 1,000 code points", () => {
+    const sealed = {
+      "us-priya": ["a".repeat(1001), "Fine."],
+    };
+    const problems = validatePersonaAnswers(sealed, PERSONAS, "sealed");
+    expect(
+      problems.some((p) => p.includes("answer 1: must be 1-1000 code points")),
+    ).toBe(true);
+  });
+
+  it("still rejects a recollection over 500 code points", () => {
+    const recollection = {
+      "us-priya": ["a".repeat(501), "Fine."],
+    };
+    const problems = validatePersonaAnswers(recollection, PERSONAS);
+    expect(
+      problems.some((p) => p.includes("answer 1: must be 1-500 code points")),
+    ).toBe(true);
+  });
+});

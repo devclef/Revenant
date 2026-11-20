@@ -113,22 +113,34 @@ export function checkLetterText(
   return problems;
 }
 
+/** Options for checkAnswerText. */
+export interface AnswerCheckOptions {
+  /**
+   * True for a sealed answer (sealed-answers.json). A sealed answer is the
+   * author's own words, so the changing-a-mind rule does not apply to it. Every
+   * other rule still does. Recollections (answers.json) leave this unset.
+   */
+  sealed?: boolean;
+}
+
 /**
  * Check one pre-written answer for a persona's question against the answer
  * rules: no digit, currency symbol or currency word, no election or party term,
- * no verdict word, and no reference to the letter, to remembering or forgetting,
- * or to changing a mind. The length rule (1-500 code points) is checked by
- * validatePersonaAnswers, not here.
+ * no verdict word, and no reference to the letter, to remembering or forgetting.
+ * A recollection also may not refer to changing a mind; a sealed answer may.
+ * The length rule is checked by validatePersonaAnswers, not here.
  *
- * @param key    the persona key, named in every problem message
- * @param index  the zero-based question index the answer belongs to
- * @param text   the answer text
+ * @param key     the persona key, named in every problem message
+ * @param index   the zero-based question index the answer belongs to
+ * @param text    the answer text
+ * @param options set `sealed: true` for a sealed answer
  * @returns a list of problem strings; empty when the answer is valid
  */
 export function checkAnswerText(
   key: string,
   index: number,
   text: string,
+  options: AnswerCheckOptions = {},
 ): string[] {
   const problems: string[] = [];
   const prefix = `persona "${key}": answer ${index + 1}`;
@@ -166,11 +178,13 @@ export function checkAnswerText(
     );
   }
 
-  const mindMatch = ANSWER_MIND_REGEX.exec(text);
-  if (mindMatch) {
-    problems.push(
-      `${prefix}: refers to changing a mind with "${mindMatch[0]}"`,
-    );
+  if (options.sealed !== true) {
+    const mindMatch = ANSWER_MIND_REGEX.exec(text);
+    if (mindMatch) {
+      problems.push(
+        `${prefix}: refers to changing a mind with "${mindMatch[0]}"`,
+      );
+    }
   }
 
   return problems;
