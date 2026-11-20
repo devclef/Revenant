@@ -23,7 +23,16 @@ export const LIVE_COPY = {
   sealHeading: "Press the seal.",
   /** The one in-browser paragraph of the Seal step (spec 14, S3.3). */
   sealParagraph:
-    'This letter is sealed in your browser with your own passkey. Your device will ask for the passkey twice. The passkey will be named "Revenant demo" in your passkey manager.',
+    'You\'ll press the wax twice: once to make your passkey, once to set the seal. The passkey is named "Revenant demo" in your passkey manager.',
+  /** The two presses under the wax (spec 15, task 9; prototype screens 9 to 15). */
+  sealStepOne: "Make your passkey",
+  sealStepTwo: "Set the seal",
+  sealStepOneHint: "Press the wax to make your passkey.",
+  sealStepPasskeyMade: "Passkey made",
+  sealStepTwoHint:
+    "Your device will ask once more to set the seal. Press the wax.",
+  sealChooseFirst: "Choose a backup option first.",
+  backupCardSaved: "Backup card saved.",
   /** The text control that opens the cross-device line (spec 14, S5.2). */
   crossDeviceQuestion: "Opening on another device?",
   /** The text control that returns to the Write step (spec 14, S5.3). */
@@ -125,7 +134,8 @@ export const LIVE_COPY = {
   unavailable:
     "Sealing your own letter is not available on this server. Go back to the demo.",
   cannotLockTitle: "This device cannot lock a letter with a passkey",
-  cannotLockBody: "Your letter has not been sealed, and none of its text was sent to Revenant.",
+  cannotLockBody:
+    "Your letter has not been sealed, and none of its text was sent to Revenant. Seal it with a backup key instead.",
   cannotLockNext1:
     "Try another device or browser. If your browser offers it, choose the option to use a phone or tablet.",
   cannotLockNext2:
@@ -145,7 +155,7 @@ export const LIVE_COPY = {
   clockBody:
     "Your device clock differs from Revenant's clock by more than the demo allows. Nothing was sealed. Check your device time and try again.",
   busyBody:
-    "The live demo is busy right now. Nothing was sealed. Try again later.",
+    "The live demo is busy right now. Nothing was sealed. Try again later. Your letter is still here.",
   missingThenBody:
     "No figure is available for {name}. Nothing was sealed. Choose different figures and try again.",
   fallbackTitle: "Your backup key",

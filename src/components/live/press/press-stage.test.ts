@@ -61,9 +61,9 @@ describe("press.module.css running prompt", () => {
     );
   });
 
-  it("keeps the 40 % unready rule and the aria-disabled value it keys on", () => {
+  it("keeps the 35 % unready rule and the aria-disabled value it keys on", () => {
     expect(css).toMatch(
-      /\.press\[aria-disabled="true"\] \.wax \{\s*opacity: 0\.4;\s*\}/,
+      /\.press\[aria-disabled="true"\] \.wax \{\s*opacity: 0\.35;\s*\}/,
     );
   });
 });

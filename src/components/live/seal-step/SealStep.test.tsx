@@ -45,9 +45,11 @@ describe("SealStep text column (spec 14, S3.1 to S3.4)", () => {
 
   it("renders the sealParagraph once, exactly as written", () => {
     const html = render();
-    expect(
-      html.split(LIVE_COPY.sealParagraph.replace(/"/g, "&quot;")).length - 1,
-    ).toBe(1);
+    // React escapes quotes and apostrophes in markup.
+    const escaped = LIVE_COPY.sealParagraph
+      .replace(/"/g, "&quot;")
+      .replace(/'/g, "&#x27;");
+    expect(html.split(escaped).length - 1).toBe(1);
   });
 
   it("renders the Warning_Text as plain body text with data-warning-text", () => {

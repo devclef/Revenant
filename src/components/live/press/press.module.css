@@ -92,9 +92,9 @@
     scale(calc(0.15 + 0.85 * var(--press-progress)));
 }
 
-/* Unready: the seal shows at 40 % (S6.4). */
+/* Unready: the seal shows at 35 % before a backup choice (spec 15, task 9). */
 .press[aria-disabled="true"] .wax {
-  opacity: 0.4;
+  opacity: 0.35;
 }
 
 /* A running passkey prompt or sealing keeps the wax whole: full opacity and no

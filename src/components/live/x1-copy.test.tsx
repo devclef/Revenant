@@ -16,7 +16,7 @@ import type { SealState } from "./seal-machine";
  */
 const X1_STRINGS = {
   busyBody:
-    "The live demo is busy right now. Nothing was sealed. Try again later.",
+    "The live demo is busy right now. Nothing was sealed. Try again later. Your letter is still here.",
   figuresHint: "Choose up to {max}.",
   figuresHintOne: "You can choose 1.",
   chooseFirst: "Choose a backup option first.",

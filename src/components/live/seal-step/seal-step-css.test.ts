@@ -119,9 +119,9 @@ describe("Press_Envelope (spec 14, S6.1 to S6.5)", () => {
     expect(body).toMatch(/left:\s*50%;/);
   });
 
-  it("dims the unready seal to 40 % and marks it not-allowed", () => {
+  it("dims the unready seal to 35 % and marks it not-allowed (spec 15, task 9)", () => {
     expect(ruleBody(pressCss, '.press[aria-disabled="true"] .wax')).toMatch(
-      /opacity:\s*0\.4;/,
+      /opacity:\s*0\.35;/,
     );
     expect(ruleBody(pressCss, '.press[aria-disabled="true"]')).toMatch(
       /cursor:\s*not-allowed;/,
