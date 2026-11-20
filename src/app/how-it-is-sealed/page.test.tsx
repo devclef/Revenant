@@ -194,3 +194,11 @@ describe("How_Page imports (R18.7)", () => {
     expect(source).not.toMatch(/["']use client["']/);
   });
 });
+
+describe("How_Page back link", () => {
+  it("links back to the start page with the README text", () => {
+    expect(HOW_COPY.backToStart).toBe("Back to the start");
+    expect(html).toContain('href="/"');
+    expect(html).toContain(`>${HOW_COPY.backToStart}</a>`);
+  });
+});

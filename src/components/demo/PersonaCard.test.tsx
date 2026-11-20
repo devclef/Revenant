@@ -42,6 +42,8 @@ const PROPS = {
   personaKey: "us-maya",
   display_name: "Maya",
   region: "United States",
+  intro_line:
+    "Maya, who works early shifts at a clinic, writes on a May Sunday about her commute, filling the tank and Saturday deliveries.",
   written_as_of: "2024-05-12",
   opens_at: "2024-11-05T00:00:00.000Z",
   envelope_hash: MAYA_HASH,
@@ -52,6 +54,7 @@ const OTHER_PROPS: PersonaCardProps = {
   personaKey: "eu-anna",
   display_name: "Anna",
   region: "European Union",
+  intro_line: "Anna writes about her week.",
   written_as_of: "2024-03-01",
   opens_at: "2024-06-09T00:00:00.000Z",
   envelope_hash: TOMAS_HASH,
@@ -90,10 +93,11 @@ const tree = (props: PersonaCardProps = PROPS) =>
   PersonaCard(props) as unknown as El;
 
 describe("PersonaCard markup", () => {
-  it("shows the display name and region in the sans", () => {
+  it("shows the display name, region and the persona's intro line", () => {
     const html = render();
     expect(html).toContain(PROPS.display_name);
     expect(html).toContain(PROPS.region);
+    expect(html).toContain(PROPS.intro_line);
   });
 
   it('shows the "Written as of" line with the date from letter-date.ts', () => {

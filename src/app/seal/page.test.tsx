@@ -1,18 +1,11 @@
-import { createElement } from "react";
+import { createElement, type ReactNode } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { UI_COPY } from "@/components/ui/copy";
+
 // `server-only` throws outside a server runtime. Tests run in Node.
 vi.mock("server-only", () => ({}));
-
-// notFound() throws in Next. The stand-in throws a marked error so the test
-// can see that the page asked for a 404.
-const NOT_FOUND = "NEXT_NOT_FOUND";
-vi.mock("next/navigation", () => ({
-  notFound: () => {
-    throw new Error(NOT_FOUND);
-  },
-}));
 
 // Capture the props the page hands to SealPage, without rendering the flow.
 const sealPageCalls: Array<Record<string, unknown>> = [];
@@ -27,6 +20,17 @@ vi.mock("@/components/ceremony/scene/SceneShell", () => ({
   SceneShell: ({ children }: { children: unknown }) => children,
 }));
 
+// The not-found screen (BrandedPage) uses the motion and skip providers.
+vi.mock("@/components/ceremony/motion", () => ({
+  useMotion: () => ({ mode: "full", setCalm: () => {} }),
+  MotionProvider: ({ children }: { children: ReactNode }) => children,
+}));
+
+vi.mock("@/components/ceremony/skip", () => ({
+  useSequence: () => ({ hasActive: false, register: () => () => {}, skipAll: () => {} }),
+  SkipProvider: ({ children }: { children: ReactNode }) => children,
+}));
+
 afterEach(() => {
   vi.unstubAllEnvs();
   vi.resetModules();
@@ -38,23 +42,25 @@ async function loadPage() {
 }
 
 describe("/seal page", () => {
-  it("is not found while REAL_SEALING is off (R25.5)", async () => {
+  it("shows the not-found screen while REAL_SEALING is off (R25.5)", async () => {
     vi.stubEnv("REAL_SEALING", "");
     vi.stubEnv("RP_ID", "revenant.devclef.se");
     const RealSealPage = await loadPage();
-    expect(() => renderToStaticMarkup(createElement(RealSealPage))).toThrow(
-      NOT_FOUND,
-    );
+    const html = renderToStaticMarkup(createElement(RealSealPage));
+    expect(html).toContain(UI_COPY.notFound.heading);
+    expect(html).toContain(UI_COPY.notFound.body);
+    expect(html).toContain('href="/demo/live"');
+    expect(html).toContain('href="/demo"');
     expect(sealPageCalls).toHaveLength(0);
   });
 
-  it("is not found for any value other than exactly \"on\" (R25.4)", async () => {
+  it("shows the not-found screen for any value other than exactly \"on\" (R25.4)", async () => {
     vi.stubEnv("REAL_SEALING", "yes");
     vi.stubEnv("RP_ID", "revenant.devclef.se");
     const RealSealPage = await loadPage();
-    expect(() => renderToStaticMarkup(createElement(RealSealPage))).toThrow(
-      NOT_FOUND,
-    );
+    const html = renderToStaticMarkup(createElement(RealSealPage));
+    expect(html).toContain(UI_COPY.notFound.heading);
+    expect(sealPageCalls).toHaveLength(0);
   });
 
   it("renders SealPage in real mode when REAL_SEALING is on", async () => {

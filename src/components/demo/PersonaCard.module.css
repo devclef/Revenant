@@ -85,6 +85,16 @@
   color: var(--ink-soft);
 }
 
+/* The persona's one everyday line, as on the prototype's demo card. Ink, not
+   the accent: the accent marks only what tone.md lists. */
+.intro {
+  display: block;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: var(--ink);
+}
+
 .dates {
   display: flex;
   flex-direction: column;

@@ -125,8 +125,12 @@ describe("BrandedPage copy", () => {
     }
   });
 
-  it("uses the not-found copy from design.md", () => {
-    expect(UI_COPY.notFound.heading).toBe("This page is not here.");
+  it("uses the not-found copy from the 15-flow prototype", () => {
+    expect(UI_COPY.notFound.heading).toBe("No letter here");
+    expect(UI_COPY.notFound.body).toBe(
+      "This link does not match a letter. Check the link and try again.",
+    );
+    expect(UI_COPY.notFound.sealLink).toBe("Seal a demo letter");
   });
 });
 

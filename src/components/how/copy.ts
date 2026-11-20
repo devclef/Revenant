@@ -58,6 +58,9 @@ export const HOW_COPY = {
       body: "Letters sealed on revenant.devclef.se count as test letters. If Revenant moves to another domain, those letters can be opened only on revenant.devclef.se or with their backup key, because passkeys are tied to the domain they were made on.",
     },
   ] as const satisfies readonly HowSection[],
+
+  /** The link back to the home page, at the end of the page (README how entry). */
+  backToStart: "Back to the start",
 } as const;
 
 export type HowCopy = typeof HOW_COPY;

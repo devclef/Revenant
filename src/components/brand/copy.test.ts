@@ -23,7 +23,7 @@ describe("BRAND_COPY", () => {
     expect(BRAND_COPY.ritualSteps).toEqual([
       {
         name: "Write",
-        line: "A letter to your future self, plain text. Add up to three questions and an optional receipt.",
+        line: "A letter to your future self, plain text. Add up to three questions, answer them now, and add an optional receipt.",
       },
       {
         name: "Press the seal",
@@ -31,11 +31,11 @@ describe("BRAND_COPY", () => {
       },
       {
         name: "Testify",
-        line: "When it opens, say what you remember before a word is shown.",
+        line: "When it opens, write what you think you answered, before a word is shown.",
       },
       {
         name: "See the receipts",
-        line: "Your testimony, then what you wrote, then any numbers then and now.",
+        line: "Your testimony beside what you wrote, then any numbers then and now.",
       },
     ]);
   });
