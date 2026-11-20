@@ -91,6 +91,7 @@ export function LetterCard({ letterId, appOrigin, opensAt, envelopeHash }: Lette
       <p className={styles.cardOpens}>
         {LIVE_COPY.letterCardOpens.replace("{time}", opensText)}
       </p>
+      <p className={styles.cardOpens}>{LIVE_COPY.letterCardHint}</p>
       <p className={styles.cardLink} data-live-card-link>
         {linkText}
       </p>

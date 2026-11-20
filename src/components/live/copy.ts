@@ -201,6 +201,8 @@ export const LIVE_COPY = {
     "This link does not match a letter. Check the link and try again.",
   letterCardTitle: "Letter card",
   letterCardOpens: "Opens {time}",
+  letterCardHint:
+    "Scan the code to open the letter. Before the opening time it shows only that the letter is still sealed. This card holds no key.",
   letterCardFingerprint: "Fingerprint at sealing",
   /**
    * The one sentence near a seal on the Wait step (U6.1). It says where the
