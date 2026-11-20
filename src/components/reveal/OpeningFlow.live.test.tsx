@@ -182,6 +182,36 @@ describe("OpeningFlow live mode: the still-sealed view", () => {
     expect(markup).toContain(esc(REVEAL_COPY.sealedRetry));
     expect(markup).not.toContain(esc(LIVE_COPY.unlockPasskey));
   });
+
+  it("shows only the notice and countdown, with no envelope frame and no track (R10.2)", () => {
+    const markup = renderLive({ tag: "sealed", opensAt: OPENS_AT });
+    // The inline envelope frame is the only element at this width.
+    expect(markup).not.toContain("min(84vw, 22rem)");
+    expect(markup).not.toContain('data-ceremony="envelope"');
+    expect(markup).not.toContain("data-step-track");
+  });
+});
+
+describe("OpeningFlow live mode: the three-step track (R10.1)", () => {
+  it("shows Unlock, Testify and See the receipts, with Unlock current at the key step", () => {
+    const markup = renderLive({
+      tag: "awaiting_key",
+      envelope: {},
+      envelopeHash: "h",
+      unlock: PASSKEY_AND_BACKUP,
+      notice: null,
+    });
+    expect(markup).toContain("data-step-track");
+    for (const name of REVEAL_COPY.letterTrackSteps) {
+      expect(markup).toContain(esc(name));
+    }
+    expect(markup).toMatch(/data-state="current"[^>]*>[\s\S]*?Unlock/);
+  });
+
+  it("does not show the track on the persona route, which keeps its own", () => {
+    const markup = renderPersona({ tag: "loading" });
+    expect(markup).not.toContain("data-step-track");
+  });
 });
 
 describe("OpeningFlow persona route (R17.13)", () => {
