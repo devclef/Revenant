@@ -59,7 +59,7 @@ export const HOW_COPY = {
     },
   ] as const satisfies readonly HowSection[],
 
-  /** The link back to the home page, at the end of the page (README \"how\" entry). */
+  /** The link back to the home page, at the end of the page (README how entry). */
   backToStart: "Back to the start",
 } as const;
 
