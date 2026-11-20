@@ -10,6 +10,7 @@ import { DEMO_COPY } from "@/components/demo/copy";
 import { figuresResponseFrom } from "@/components/reveal/figures-stub";
 import { displayFigureValue } from "@/components/reveal/display-figure";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
+import { DEFAULT_QUESTION } from "./occasions";
 import { sealReducer, INITIAL_SEAL_STATE, type SealEvent, type SealState } from "./seal-machine";
 
 vi.mock("./useSealFlow", () => ({
@@ -387,7 +388,20 @@ describe("SealPage rehearsal line (spec 11, L4.1, L4.3)", () => {
     // Placeholder text is display text in the author's voice, not a question
     // or a line of the letter (spec 14, Decisions), so it is left out of this
     // scan. The rest of the Write step still has to pass.
-    const lower = html.replace(/placeholder="[^"]*"/g, "").toLowerCase();
+    //
+    // The default Occasion question "What is on my mind right now?" is the one
+    // place "right now" may appear on the Write step. Spec 15 Requirement 8.2
+    // allows it, and nothing else on the Write step may use it. Only that exact
+    // question text inside a textarea is removed before the scan. The rehearsal
+    // line, the intro and the sign-off are still scanned for "right now".
+    const questionText = new RegExp(
+      `(<textarea[^>]*>)${DEFAULT_QUESTION.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}(</textarea>)`,
+      "g",
+    );
+    const lower = html
+      .replace(/placeholder="[^"]*"/g, "")
+      .replace(questionText, "$1$2")
+      .toLowerCase();
     for (const phrase of [
       "right now, the thing on my mind is",
       "what was on your mind most days?",
@@ -395,7 +409,7 @@ describe("SealPage rehearsal line (spec 11, L4.1, L4.3)", () => {
     ]) {
       expect(lower, phrase).not.toContain(phrase);
     }
-    for (const word of ["currently"]) {
+    for (const word of ["right now", "currently"]) {
       expect(lower, word).not.toContain(word);
     }
     // The intro and the sign-off are the desk's own copy (spec 14, W2.4, W4.4),
