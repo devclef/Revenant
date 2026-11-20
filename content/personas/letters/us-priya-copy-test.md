@@ -37,11 +37,11 @@ The reviewer reads each text above and answers each question for every sentence:
 5. Does the text describe any cost as good or bad? (Expected: no.)
 6. Does the text avoid stereotypes tied to region, class, age, nationality or background? (Expected: yes.)
 7. Is the text about everyday life only: work, family, bills, plans and hopes? (Expected: yes.)
-8. For the sealed answers and the recollections: does each answer avoid grading the letter, the memory or the reader? (Expected: yes.) Does each sealed answer avoid any reference to the letter or to remembering or forgetting? (Expected: yes.)
+8. For the answers, the sealed answers and the recollections: does each answer avoid grading the letter, the memory or the reader, and avoid any reference to the letter or to changing a mind? (Expected: yes.)
 
-Two points for the reviewer to decide, found by the agent when reading the copy against the rules:
+Point for the reviewer to decide, found by the agent when reading the copy against the rules:
 
-- Sealed answer 2 reads "I keep changing my mind". The copy-test question 8 asks for no reference to changing a mind. The approved copy is not reworded, so the reviewer decides whether it passes as written. `checkAnswerText` (`ANSWER_MIND_REGEX` in `letter-checks.ts`) rejects that phrase until the next task of this spec adds the sealed-answer exception.
+- Sealed answer 2 reads "I keep changing my mind". Under question 8 the expected answer is yes, so this sentence is expected to fail the rule as written. The approved copy is not reworded, so the reviewer records whether it passes. `checkAnswerText` (`ANSWER_MIND_REGEX` in `letter-checks.ts`) rejects that phrase until the next task of this spec adds the sealed-answer exception.
 - Both approved questions use "right now". The current `tone.md` does not forbid "right now". The proposed steering change in the README would forbid it. The reviewer decides under the current `tone.md`.
 
 Any answer that differs from the expected one blocks the pass. The reviewer records the issue here, and the copy is rewritten before a new review.
