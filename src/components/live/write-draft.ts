@@ -57,6 +57,11 @@ export interface WriteDraft {
    * the Live_Prefill row (C9.5); a real draft starts with none.
    */
   questions: string[];
+  /**
+   * The author's answer to each Author_Question, index-aligned with `questions`
+   * (spec 15, R7.1). An empty string is an answer not yet written.
+   */
+  answers: string[];
   /** The visitor's own numbers, in order, at most SELF_REPORTED_MAX rows. */
   selfReported: SelfReportedRow[];
 }
@@ -85,6 +90,7 @@ export function initialWriteDraft(_mode: WriteMode): WriteDraft {
     warningTicked: false,
     backupCardTicked: false,
     questions: [DEFAULT_QUESTION],
+    answers: [""],
     selfReported: [],
   };
 }
@@ -105,6 +111,7 @@ export const CLEARED_WRITE_DRAFT: WriteDraft = {
   warningTicked: false,
   backupCardTicked: false,
   questions: [],
+  answers: [],
   selfReported: [],
 };
 
@@ -117,6 +124,7 @@ export type WriteDraftEvent =
   | { type: "QUESTION_CHANGED"; index: number; text: string }
   | { type: "QUESTION_ADDED"; text: string }
   | { type: "QUESTION_REMOVED"; index: number }
+  | { type: "ANSWER_CHANGED"; index: number; text: string }
   | { type: "OCCASION_APPLIED"; text: string; questions: string[] }
   | { type: "SELF_REPORTED_ADDED" }
   | {
@@ -133,6 +141,36 @@ export type WriteDraftEvent =
       /** The local sealing day, YYYY-MM-DD. Used only when the row is in use. */
       sealingDay: string;
     };
+
+/**
+ * The answers of a draft, padded or cut to one per question, so a missing
+ * answer reads as "" and the two arrays always line up (R7.5).
+ */
+function alignedAnswers(state: WriteDraft): string[] {
+  return state.questions.map((_, i) => state.answers[i] ?? "");
+}
+
+/**
+ * The answer each new question row keeps after an Occasion pick (spec 15,
+ * R7.5). A row the author edited keeps its text, so it matches its own answer
+ * here. A row the Occasion replaced has no match and starts empty. Rows are
+ * matched in order, so a repeated question keeps the answer of its own row.
+ */
+export function answersForOccasion(
+  before: { questions: readonly string[]; answers: readonly string[] },
+  nextQuestions: readonly string[],
+): string[] {
+  let from = 0;
+  return nextQuestions.map((text) => {
+    for (let m = from; m < before.questions.length; m += 1) {
+      if (before.questions[m] === text) {
+        from = m + 1;
+        return before.answers[m] ?? "";
+      }
+    }
+    return "";
+  });
+}
 
 /** The four typed fields of the Own_Number_View. The period is not typed (W12.3). */
 export type OwnNumberField = "name" | "value" | "unit" | "region";
@@ -186,16 +224,38 @@ export function reduceWriteDraft(
       };
     case "QUESTION_ADDED":
       if (state.questions.length >= AUTHOR_QUESTIONS_MAX) return state;
-      return { ...state, questions: [...state.questions, event.text] };
+      return {
+        ...state,
+        questions: [...state.questions, event.text],
+        answers: [...alignedAnswers(state), ""],
+      };
     case "QUESTION_REMOVED":
+      // The answer goes with its question (spec 15, R7.5).
       return {
         ...state,
         questions: state.questions.filter((_, i) => i !== event.index),
+        answers: alignedAnswers(state).filter((_, i) => i !== event.index),
+      };
+    case "ANSWER_CHANGED":
+      return {
+        ...state,
+        answers: alignedAnswers(state).map((row, i) =>
+          i === event.index ? event.text : row,
+        ),
       };
     case "OCCASION_APPLIED":
       // The text and rows come from applyOccasion, which already keeps what the
-      // visitor typed (L2.2). No Occasion identifier is stored here (L2.5).
-      return { ...state, text: event.text, questions: [...event.questions] };
+      // visitor typed (L2.2). No Occasion identifier is stored here (L2.5). The
+      // answers follow their questions (spec 15, R7.5).
+      return {
+        ...state,
+        text: event.text,
+        questions: [...event.questions],
+        answers: answersForOccasion(
+          { questions: state.questions, answers: alignedAnswers(state) },
+          event.questions,
+        ),
+      };
     case "SELF_REPORTED_ADDED":
       if (state.selfReported.length >= SELF_REPORTED_MAX) return state;
       return {

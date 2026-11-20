@@ -163,6 +163,7 @@ const draftArb: fc.Arbitrary<WriteDraft> = fc.record({
   warningTicked: fc.boolean(),
   backupCardTicked: fc.boolean(),
   questions: fc.array(fc.string({ maxLength: 40 }), { maxLength: 4 }),
+  answers: fc.array(fc.string({ maxLength: 40 }), { maxLength: 4 }),
   selfReported: fc.array(selfReportedRowArb, { maxLength: 3 }),
 });
 

@@ -18,6 +18,7 @@ import {
   CLEARED_WRITE_DRAFT,
   DEFAULT_QUESTION,
   INITIAL_WRITE_DRAFT,
+  answersForOccasion,
   initialWriteDraft,
   reduceWriteDraft,
   type WriteDraft,
@@ -36,6 +37,7 @@ describe("the write draft starts empty", () => {
       backupChoice: null,
       backupCardTicked: false,
       questions: [DEFAULT_QUESTION],
+      answers: [""],
       selfReported: [],
     });
   });
@@ -48,8 +50,90 @@ describe("the write draft starts empty", () => {
       backupChoice: null,
       backupCardTicked: false,
       questions: [DEFAULT_QUESTION],
+      answers: [""],
       selfReported: [],
     });
+  });
+});
+
+describe("answers follow their questions (spec 15, R7.1 and R7.5)", () => {
+  it("changes only the answer at the named index", () => {
+    const next = reduceWriteDraft(INITIAL_WRITE_DRAFT, {
+      type: "ANSWER_CHANGED",
+      index: 0,
+      text: "I was still unsure.",
+    });
+    expect(next.answers).toEqual(["I was still unsure."]);
+    expect(next.questions).toEqual([DEFAULT_QUESTION]);
+  });
+
+  it("adds an empty answer with each new question row", () => {
+    const next = reduceWriteDraft(INITIAL_WRITE_DRAFT, {
+      type: "QUESTION_ADDED",
+      text: "What did you promise yourself?",
+    });
+    expect(next.answers).toEqual(["", ""]);
+  });
+
+  it("removes a question's answer with the question, keeping the others", () => {
+    let draft = INITIAL_WRITE_DRAFT;
+    draft = reduceWriteDraft(draft, { type: "QUESTION_ADDED", text: "two" });
+    draft = reduceWriteDraft(draft, {
+      type: "ANSWER_CHANGED",
+      index: 0,
+      text: "first answer",
+    });
+    draft = reduceWriteDraft(draft, {
+      type: "ANSWER_CHANGED",
+      index: 1,
+      text: "second answer",
+    });
+    const next = reduceWriteDraft(draft, { type: "QUESTION_REMOVED", index: 0 });
+    expect(next.questions).toEqual(["two"]);
+    expect(next.answers).toEqual(["second answer"]);
+  });
+
+  it("keeps the answer of an edited question across an Occasion pick", () => {
+    let draft = reduceWriteDraft(INITIAL_WRITE_DRAFT, {
+      type: "QUESTION_CHANGED",
+      index: 0,
+      text: "My own question?",
+    });
+    draft = reduceWriteDraft(draft, {
+      type: "ANSWER_CHANGED",
+      index: 0,
+      text: "my answer",
+    });
+    const next = reduceWriteDraft(draft, {
+      type: "OCCASION_APPLIED",
+      text: "",
+      questions: ["My own question?", "A second Occasion question?"],
+    });
+    expect(next.questions).toEqual([
+      "My own question?",
+      "A second Occasion question?",
+    ]);
+    expect(next.answers).toEqual(["my answer", ""]);
+  });
+
+  it("starts the answer of a question the Occasion replaces as empty", () => {
+    const next = reduceWriteDraft(INITIAL_WRITE_DRAFT, {
+      type: "OCCASION_APPLIED",
+      text: "",
+      questions: ["A new Occasion question?"],
+    });
+    expect(next.answers).toEqual([""]);
+  });
+
+  it("maps answers by question text, not by position, when rows compact", () => {
+    const answers = answersForOccasion(
+      {
+        questions: ["Replaced default?", "Kept question?"],
+        answers: ["lost with the default", "kept answer"],
+      },
+      ["New Occasion?", "Kept question?"],
+    );
+    expect(answers).toEqual(["", "kept answer"]);
   });
 });
 

@@ -92,4 +92,35 @@ describe("QuestionRow (spec 14, W7)", () => {
     expect(lock).not.toMatch(/<(button|a|input|textarea)\b/);
     expect(lock).not.toMatch(/tabindex/i);
   });
+
+  it("renders an answer field under the question with its label and placeholder (spec 15, R7.1)", () => {
+    const html = render({ answer: "I was still unsure." });
+    expect(html).toContain(`>${DESK_COPY.answerLabel}</label>`);
+    expect(html).toContain(`placeholder="${DESK_COPY.answerPlaceholder}"`);
+    expect(html).toContain(
+      `aria-label="${DESK_COPY.answerLabelFor.replace("{n}", "2")}"`,
+    );
+    expect(html).toContain("I was still unsure.</textarea>");
+  });
+
+  it("gives the answer field the paper's own ink colour, not an inherited one (spec 15, R7.1)", () => {
+    const html = render();
+    expect(html).toMatch(/<textarea[^>]*class="[^"]*answerInput[^"]*"/);
+  });
+
+  it("shows the answer's problem and marks the answer invalid when it is over 1,000 characters", () => {
+    const html = render({ answerProblem: LIVE_COPY.answerTooLong });
+    const answerProblemId = html.match(
+      /<p id="([^"]+)"[^>]*>Keep each answer/,
+    )?.[1];
+    expect(answerProblemId, "the answer problem has an id").toBeTruthy();
+    expect(html).toContain(`aria-describedby="${answerProblemId}"`);
+    expect(html).toContain('aria-invalid="true"');
+    expect(html).toContain(LIVE_COPY.answerTooLong);
+  });
+
+  it("shows no answer problem when the answer is fine", () => {
+    const html = render({ answer: "short" });
+    expect(html).not.toContain(LIVE_COPY.answerTooLong);
+  });
 });

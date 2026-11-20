@@ -33,6 +33,12 @@ export interface QuestionSectionProps {
   nothingToTestify?: boolean;
   /** Called with the row index and its new text on every change. */
   onChange: (index: number, text: string) => void;
+  /** The author's answers, index-aligned with `questions` (spec 15, R7.1). */
+  answers?: readonly string[];
+  /** Indices of answers over 1,000 code points. Their message is shown (R7.3). */
+  answerTooLongIndices?: readonly number[];
+  /** Called with the row index and its new answer on every change. */
+  onAnswerChange?: (index: number, text: string) => void;
   /** Called with the row index when its Remove control is pressed. */
   onRemove: (index: number) => void;
   /**
@@ -55,6 +61,9 @@ export function QuestionSection({
   nothingToTestify = false,
   onChange,
   onRemove,
+  answers = [],
+  answerTooLongIndices = [],
+  onAnswerChange = () => {},
   pills,
 }: QuestionSectionProps) {
   const inputRefs = useRef<Map<number, HTMLTextAreaElement>>(new Map());
@@ -114,6 +123,13 @@ export function QuestionSection({
                 : undefined
             }
             onChange={(next) => onChange(index, next)}
+            answer={answers[index] ?? ""}
+            answerProblem={
+              answerTooLongIndices.includes(index)
+                ? LIVE_COPY.answerTooLong
+                : undefined
+            }
+            onAnswerChange={(next) => onAnswerChange(index, next)}
             onRemove={() => pressRemove(index)}
             inputRef={(el) => {
               if (el) inputRefs.current.set(index, el);

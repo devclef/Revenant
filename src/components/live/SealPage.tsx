@@ -406,6 +406,10 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
         onAttempt={onAttempt}
         onTextChange={(text) => dispatchDraft({ type: "TEXT_CHANGED", text })}
         questions={writeDraft.questions}
+        answers={writeDraft.answers}
+        onAnswerChange={(index, text) =>
+          dispatchDraft({ type: "ANSWER_CHANGED", index, text })
+        }
         onQuestionChange={(index, text) =>
           dispatchDraft({ type: "QUESTION_CHANGED", index, text })
         }

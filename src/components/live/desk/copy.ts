@@ -29,6 +29,12 @@ export const DESK_COPY = {
   questionsFull: "Three is the most a letter holds.",
   /** The placeholder of an empty Question_Row input (W7.1). */
   questionPlaceholder: "Write a question for opening day…",
+  /** The visible label above an answer field (spec 15, R7.1). */
+  answerLabel: "Your answer",
+  /** The accessible name of an answer field, `{n}` its question number. */
+  answerLabelFor: "Answer to question {n}",
+  /** The placeholder of an empty answer field (spec 15, R7.1). */
+  answerPlaceholder: "Answer it as you remember it today…",
   /** The visible text of the Edit control on a Question_Row (W7.4). */
   edit: "Edit",
   /** The Lock_Line under each Question_Row input (W7.5). */

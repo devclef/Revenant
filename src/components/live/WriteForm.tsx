@@ -9,7 +9,7 @@ import { AuthorQuestions } from "./AuthorQuestions";
 import { QuestionSection } from "./desk/QuestionSection";
 import { SuggestionPills } from "./desk/SuggestionPills";
 import type { WriteCheckInput } from "./desk/write-check";
-import { questionRowProblem } from "./author-questions";
+import { answerProblem, questionRowProblem } from "./author-questions";
 import { LETTER_FIELD_ROWS } from "./constants";
 import { LIVE_COPY, REAL_COPY } from "./copy";
 import { BackupChoice } from "./BackupChoice";
@@ -106,6 +106,13 @@ export interface WriteFormProps {
   questions?: readonly string[];
   /** The visitor typed in question row `index`. */
   onQuestionChange?: (index: number, text: string) => void;
+  /**
+   * The author's answer to each question row, index-aligned with `questions`
+   * (spec 15, R7.1). Held by the page.
+   */
+  answers?: readonly string[];
+  /** The visitor typed an answer in question row `index` (spec 15, R7.1). */
+  onAnswerChange?: (index: number, text: string) => void;
   /** The visitor added an empty question row. */
   onQuestionAdd?: (text: string) => void;
   /** The visitor removed question row `index`. */
@@ -275,6 +282,8 @@ export function WriteForm({
   realDate,
   questions = [],
   onQuestionChange = () => {},
+  answers = [],
+  onAnswerChange = () => {},
   onQuestionAdd = () => {},
   onQuestionRemove = () => {},
   onOccasionApplied = () => {},
@@ -409,6 +418,16 @@ export function WriteForm({
         questionRowProblem(row) !== null ? [index] : [],
       )
     : [];
+  // An answer over 1,000 code points names its own message, on the same rule
+  // as the questions (spec 15, R7.3). The text stays as typed.
+  const answerTooLongIndices = showsFieldMessage(
+    touched,
+    TOUCH_FIELDS.questions,
+  )
+    ? answers.flatMap((row, index) =>
+        answerProblem(row) !== null ? [index] : [],
+      )
+    : [];
   const dateMissing =
     realDate !== undefined && realDate.value === null && state.tag === "write";
   const dateProblem = shownFor(
@@ -531,6 +550,12 @@ export function WriteForm({
     <QuestionSection
       questions={questions}
       tooLongIndices={tooLongIndices}
+      answers={answers}
+      answerTooLongIndices={answerTooLongIndices}
+      onAnswerChange={(index, next) => {
+        onTouch(TOUCH_FIELDS.questions);
+        onAnswerChange(index, next);
+      }}
       nothingToTestify={nothingToTestifyProblem !== ""}
       onChange={(index, next) => {
         onTouch(TOUCH_FIELDS.questions);

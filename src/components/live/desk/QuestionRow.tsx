@@ -23,6 +23,12 @@ export interface QuestionRowProps {
   text: string;
   /** The row's problem message, or undefined when the row is fine (W7.7). */
   problem?: string;
+  /** The author's answer to this question (spec 15, R7.1). */
+  answer?: string;
+  /** The answer's problem message (spec 15, R7.3), or undefined when fine. */
+  answerProblem?: string;
+  /** Called with the new answer text on every change. */
+  onAnswerChange?: (text: string) => void;
   /** Called with the new text on every change. */
   onChange: (text: string) => void;
   /** Called when the Remove control is pressed. */
@@ -58,17 +64,23 @@ export function QuestionRow({
   index,
   text,
   problem,
+  answer = "",
+  answerProblem,
+  onAnswerChange = () => {},
   onChange,
   onRemove,
   inputRef,
 }: QuestionRowProps) {
   const baseId = useId();
   const inputId = `${baseId}-input`;
+  const answerId = `${baseId}-answer`;
+  const answerProblemId = `${baseId}-answer-problem`;
   const lockId = `${baseId}-lock`;
   const problemId = `${baseId}-problem`;
   const n = index + 1;
 
   const ownRef = useRef<HTMLTextAreaElement | null>(null);
+  const answerRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Keeps the parent's ref and this row's own ref on the same node.
   const setRef = useCallback(
@@ -88,11 +100,19 @@ export function QuestionRow({
     fitHeight(el);
   }, [text]);
 
+  // The answer grows with its text in the same way.
+  useLayoutEffect(() => {
+    const el = answerRef.current;
+    if (el === null) return;
+    fitHeight(el);
+  }, [answer]);
+
   // Refit when the width changes, since a narrower row wraps the same text
   // onto more lines.
   useLayoutEffect(() => {
     const refit = () => {
       if (ownRef.current !== null) fitHeight(ownRef.current);
+      if (answerRef.current !== null) fitHeight(answerRef.current);
     };
     window.addEventListener("resize", refit);
     return () => window.removeEventListener("resize", refit);
@@ -108,6 +128,7 @@ export function QuestionRow({
   }
 
   const describedBy = problem ? `${lockId} ${problemId}` : lockId;
+  const answerDescribedBy = answerProblem ? answerProblemId : undefined;
 
   return (
     <li className={styles.row} data-question-row="">
@@ -132,6 +153,28 @@ export function QuestionRow({
             <PencilIcon />
             {DESK_COPY.edit}
           </span>
+        </div>
+        <div className={styles.answerBlock}>
+          <label htmlFor={answerId} className={styles.answerLabel}>
+            {DESK_COPY.answerLabel}
+          </label>
+          <textarea
+            id={answerId}
+            ref={answerRef}
+            rows={1}
+            className={`${styles.answerInput} ${letterField.sheetSerif}`}
+            placeholder={DESK_COPY.answerPlaceholder}
+            aria-label={withNumber(DESK_COPY.answerLabelFor, n)}
+            value={answer}
+            aria-describedby={answerDescribedBy}
+            aria-invalid={answerProblem ? "true" : undefined}
+            onChange={(event) => onAnswerChange(event.target.value)}
+          />
+          {answerProblem ? (
+            <p id={answerProblemId} className={styles.problem}>
+              {answerProblem}
+            </p>
+          ) : null}
         </div>
         <p id={lockId} className={styles.lock}>
           <LockIcon />
