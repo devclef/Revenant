@@ -26,6 +26,7 @@
 // for the sealing script. Nothing under `src/` imports `scripts/`.
 
 import letterTexts from "virtual:persona-letter-texts";
+import sealedAnswers from "virtual:persona-sealed-answers";
 
 async function main(): Promise<void> {
   // The guard runs before any connecting import. A missing or empty
@@ -61,6 +62,9 @@ async function main(): Promise<void> {
         return text;
       },
       figures: DEMO_FIGURES,
+      // Inlined from content/personas/letters/sealed-answers.json by the build;
+      // {} when that file is absent, so every persona is sealed as version 1.
+      sealedAnswers,
       findLetter,
       storePersonaLetter,
       now: () => new Date(),

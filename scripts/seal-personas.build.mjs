@@ -13,7 +13,7 @@
 // Self-contained check. With metafile: true, after the build the script fails
 // if any import left in the output is not a Node built-in, so "one file, no
 // node_modules" is a checked fact rather than a hope.
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, resolve } from "node:path";
 import { isBuiltin } from "node:module";
@@ -80,6 +80,59 @@ const letterTextsPlugin = {
   },
 };
 
+// The sealed-answers virtual module. `virtual:persona-sealed-answers` is the
+// committed content/personas/letters/sealed-answers.json, inlined as the default
+// export: a map from persona key to that persona's sealed answers, one per
+// author question. When the file is absent the module exports {} so every
+// persona stays on format version 1 and the build still succeeds.
+const SEALED_ANSWERS_ID = "virtual:persona-sealed-answers";
+const sealedAnswersFile = resolve(
+  root,
+  "content/personas/letters/sealed-answers.json",
+);
+
+const sealedAnswersPlugin = {
+  name: "persona-sealed-answers",
+  setup(pluginBuild) {
+    pluginBuild.onResolve(
+      { filter: /^virtual:persona-sealed-answers$/ },
+      () => ({
+        path: SEALED_ANSWERS_ID,
+        namespace: "persona-sealed-answers",
+      }),
+    );
+
+    pluginBuild.onLoad(
+      { filter: /.*/, namespace: "persona-sealed-answers" },
+      () => {
+        const present = existsSync(sealedAnswersFile);
+        const answers = present
+          ? JSON.parse(readFileSync(sealedAnswersFile, "utf8"))
+          : {};
+        if (
+          typeof answers !== "object" ||
+          answers === null ||
+          Array.isArray(answers) ||
+          !Object.values(answers).every(
+            (list) =>
+              Array.isArray(list) &&
+              list.every((item) => typeof item === "string"),
+          )
+        ) {
+          throw new Error(
+            "seal-personas.build: sealed-answers.json must map persona keys to arrays of strings",
+          );
+        }
+        return {
+          contents: `export default ${JSON.stringify(answers)};`,
+          loader: "js",
+          watchFiles: present ? [sealedAnswersFile] : [],
+        };
+      },
+    );
+  },
+};
+
 const result = await build({
   entryPoints: [entry],
   bundle: true,
@@ -94,7 +147,7 @@ const result = await build({
   banner: {
     js: "import { createRequire as __createRequire } from 'node:module'; const require = __createRequire(import.meta.url);",
   },
-  plugins: [letterTextsPlugin],
+  plugins: [letterTextsPlugin, sealedAnswersPlugin],
 });
 
 // Fail if the bundle still imports anything that is not a Node built-in, so the

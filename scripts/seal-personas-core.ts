@@ -112,6 +112,12 @@ export type Deps = {
   readLetterText(path: string): string;
   /** The loaded demo figures the "then" figure is taken from. */
   figures: LoadedFigures;
+  /**
+   * Sealed answers by persona key, one per author question. A persona with an
+   * entry is sealed as format version 2. Omitted or `{}` keeps every persona on
+   * version 1.
+   */
+  sealedAnswers?: SealedAnswers;
   /** Read an existing letter row by ID, or `null` when none exists. */
   findLetter(id: string): Promise<FoundLetter | null>;
   /** Insert one sealed persona letter. Throws on a rejected write. */
@@ -474,7 +480,12 @@ async function sealOne(
 
     // Step 1: build the payload. A missing "then" figure fails this persona.
     const text = deps.readLetterText(persona.letter_path);
-    const built = buildPersonaPayload(persona, text, deps.figures);
+    const built = buildPersonaPayload(
+      persona,
+      text,
+      deps.figures,
+      deps.sealedAnswers ?? {},
+    );
     if (!built.ok && built.reason === "invalid_payload") {
       // The payload failed payloadV1Schema: nothing is stored (spec 10 P2.2).
       return { key, letterId, result: "failed", reason: "invalid_payload" };
