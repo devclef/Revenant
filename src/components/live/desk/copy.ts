@@ -34,7 +34,7 @@ export const DESK_COPY = {
   /** The accessible name of an answer field, `{n}` its question number. */
   answerLabelFor: "Answer to question {n}",
   /** The placeholder of an empty answer field (spec 15, R7.1). */
-  answerPlaceholder: "Answer it as you remember it today…",
+  answerPlaceholder: "Answer it as you remember it…",
   /** Named by the fold check on the first unanswered question, `{n}` its number (spec 15, R7.4). */
   answerMissing: "Question {n} has no answer yet. Answer it or remove it.",
   /** The visible text of the Edit control on a Question_Row (W7.4). */

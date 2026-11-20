@@ -97,7 +97,7 @@ export const OCCASIONS: readonly Occasion[] = [
     id: "blank",
     label: "A blank page",
     starter: "",
-    placeholder: "Write whatever you want to remember about today…",
+    placeholder: "Write whatever you want to remember, in your own words…",
     questions: [DEFAULT_QUESTION],
     suggestions: [
       "What did I notice first this morning?",

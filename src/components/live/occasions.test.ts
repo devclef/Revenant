@@ -285,7 +285,7 @@ describe("Occasion placeholders (spec 12, W2)", () => {
       work: "This is what my work looks like as I write this…",
       family: "This is how things are with the people closest to me…",
       decision: "This is the decision in front of me, and where I lean…",
-      blank: "Write whatever you want to remember about today…",
+      blank: "Write whatever you want to remember, in your own words…",
     };
     for (const occasion of OCCASIONS) {
       expect(occasion.placeholder, occasion.label).toBe(decided[occasion.id]);
