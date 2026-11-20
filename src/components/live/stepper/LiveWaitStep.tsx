@@ -3,15 +3,14 @@
 /**
  * The Wait, Testify and Receipts content of the live stepper (spec 09, D5).
  *
- * On the Wait card it shows the countdown and "Go to your
- * letter" below. The opening time appears once, on the letter card in the
- * Keep_Section. When the countdown reaches zero it portals the embedded
- * Opening_Flow into the Reveal_Host, the sibling below the card (spec 12, X1).
- * Mounting the flow makes the one letter request, so the request is made once,
- * at zero (D5.2). The flow then shows the unlock control in place (D5.3). The
- * stepper moves to Testify and then Receipts only when the flow reports those
- * phases (D5.4). The page never navigates by itself, and the passkey assertion
- * runs only on the reader's press, as the flow already enforces.
+ * The Wait card is one card (spec 15, R9.4 to R9.7). While the countdown runs it
+ * shows the countdown. At zero it offers one action, "Open your letter", which
+ * moves the stepper to Testify on the same page. The embedded Opening_Flow is
+ * mounted only from Testify on, into the Reveal_Host below the card (spec 12,
+ * X1), so the letter request and the unlock control come after that press. The
+ * opening time appears once, on the letter card in the Keep_Section. No link
+ * leaves the page, and the passkey assertion runs only on the reader's press,
+ * as the flow already enforces.
  *
  * The position of this component stays the same across Wait, Testify and
  * Receipts, and so does the Reveal_Host, so the flow keeps its state when the
@@ -20,7 +19,6 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
-import Link from "next/link";
 
 import { useCalmInForce } from "@/components/ceremony/motion";
 import { DemoLabel } from "@/components/demo/DemoLabel";
@@ -151,7 +149,11 @@ export function LiveWaitStep({
           envelopeHash={state.envelopeHash}
           ghost={<LiveGhost sink={sink} />}
         >
-          {done ? null : (
+          {done ? (
+            <p className={styles.status} role="status" data-live-countdown="ready">
+              {LIVE_COPY.countdownDone}
+            </p>
+          ) : (
             <p className={styles.status} role="status" data-live-countdown="ticking">
               {LIVE_COPY.countdown.replace("{seconds}", String(seconds))}
             </p>
@@ -188,22 +190,18 @@ export function LiveWaitStep({
           {showKeyReminder ? (
             <p className={`${styles.intro} ${styles.noPrint}`}>{LIVE_COPY.keyReminder}</p>
           ) : null}
-          <div className={`${styles.actions} ${styles.noPrint}`}>
-            {done ? (
-              <Link href={`/l/${state.letterId}`} className={styles.primary} data-live-goto>
-                {LIVE_COPY.goToLetter}
-              </Link>
-            ) : (
-              <span
-                className={`${styles.primary} ${styles.primaryDisabled}`}
-                aria-disabled="true"
-                data-live-goto
-                data-disabled="true"
+          {done ? (
+            <div className={`${styles.actions} ${styles.noPrint}`}>
+              <button
+                type="button"
+                className={styles.primary}
+                onClick={() => advanceTo("testify")}
+                data-live-open=""
               >
-                {LIVE_COPY.goToLetter}
-              </span>
-            )}
-          </div>
+                {LIVE_COPY.openLetter}
+              </button>
+            </div>
+          ) : null}
           {/* The Keep_Section (U6): the letter card, its calendar file, and the
               backup key card offer. It sits below the envelope view. */}
           <section className={styles.keepSection} data-live-keep-section="">

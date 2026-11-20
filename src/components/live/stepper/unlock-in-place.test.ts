@@ -39,8 +39,8 @@ describe("flowMounted (D5.2)", () => {
     expect(flowMounted("wait", false)).toBe(false);
   });
 
-  it("mounts the flow on Wait once the countdown reaches zero", () => {
-    expect(flowMounted("wait", true)).toBe(true);
+  it("does not mount the flow on Wait, even at zero (spec 15, R9.5)", () => {
+    expect(flowMounted("wait", true)).toBe(false);
   });
 
   it("keeps the flow mounted on Testify and Receipts", () => {

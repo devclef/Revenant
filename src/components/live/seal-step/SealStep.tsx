@@ -17,6 +17,7 @@ import { LIVE_COPY } from "../copy";
 import { PressEnvelope } from "../press/PressEnvelope";
 import type { BackupChoiceValue } from "../write-draft";
 import { SealLinks } from "./SealLinks";
+import { SealSteps } from "./SealSteps";
 import {
   envelopeCaption,
   pressStatusLine,
@@ -149,6 +150,7 @@ export function SealStep({
           onConfirmPress={onConfirmPress}
           onAttempt={onAttempt}
         />
+        <SealSteps tag={tag} backupChoice={backupChoice} />
       </div>
     </div>
   );

@@ -120,11 +120,14 @@ export function stepForStage(stage: Stage): LiveStep | null {
  * once the countdown has reached zero, so the letter request is made once, at
  * zero (D5.2). Testify and Receipts keep it mounted.
  */
-export function flowMounted(step: LiveStep, countdownDone: boolean): boolean {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept so flowPortalTarget's callers keep their shape
+export function flowMounted(step: LiveStep, _countdownDone: boolean): boolean {
   // `break` is the seal break inside the reveal (issue #385). The flow must
   // stay mounted there, or the reveal unmounts as the seal breaks.
-  if (step === "testify" || step === "break" || step === "receipts") return true;
-  return step === "wait" && countdownDone;
+  // Wait never mounts the flow (spec 15, R9.5): "Open your letter" moves the
+  // stepper to Testify, and the flow mounts there. The countdown no longer
+  // decides anything, and the parameter stays so the callers keep their shape.
+  return step === "testify" || step === "break" || step === "receipts";
 }
 
 /**

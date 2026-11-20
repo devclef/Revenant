@@ -32,6 +32,79 @@
   color: #ffffff;
 }
 
+/* The two presses under the wax (spec 15, task 9). Orange marks only the
+ * reader's own next press, the numbered disc of the current step. */
+.steps {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 280px;
+  margin: 16px auto 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  row-gap: 14px;
+}
+
+.stepItem {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  column-gap: 12px;
+  align-items: start;
+}
+
+.stepDisc {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #bdb4dc;
+  border-radius: 50%;
+  font-family: var(--font-sans);
+  font-size: 13px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.stepItem[data-seal-step-state="done"] .stepDisc {
+  background: #2a2340;
+  border-color: #2a2340;
+}
+
+.stepItem[data-seal-step-state="current"] .stepDisc {
+  background: #ff7b1c;
+  border-color: #ff7b1c;
+  color: #0b0912;
+}
+
+.stepItem[data-seal-step-state="pending"] .stepDisc {
+  color: #bdb4dc;
+}
+
+.stepText {
+  display: grid;
+  row-gap: 2px;
+  padding-top: 3px;
+}
+
+.stepLabel {
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.stepItem[data-seal-step-state="pending"] .stepLabel {
+  color: #bdb4dc;
+}
+
+.stepHint {
+  font-family: var(--font-sans);
+  font-size: 13px;
+  line-height: 1.4;
+  color: #bdb4dc;
+}
+
 .heading:focus-visible {
   outline: 2px solid #ff7b1c;
   outline-offset: 4px;

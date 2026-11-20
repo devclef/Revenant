@@ -305,8 +305,8 @@ describe("flowPortalTarget (X1)", () => {
     expect(flowPortalTarget(host, "wait", false)).toBeNull();
   });
 
-  it("is the host from zero on the wait step", () => {
-    expect(flowPortalTarget(host, "wait", true)).toBe(host);
+  it("stays null on the wait step, even at zero: Open your letter mounts it on Testify (spec 15, R9.5)", () => {
+    expect(flowPortalTarget(host, "wait", true)).toBeNull();
   });
 
   it("is the same host on testify and receipts", () => {
@@ -327,7 +327,7 @@ describe("flowPortalTarget (X1)", () => {
   // step gets the same host object, so the portal container never changes and
   // the flow keeps its state from Wait through Testify to Receipts.
   it("returns the identical host object for every step once mounted", () => {
-    const steps: LiveStep[] = ["wait", "testify", "receipts", "wait"];
+    const steps: LiveStep[] = ["testify", "receipts", "testify", "break"];
     const targets = steps.map((step) => flowPortalTarget(host, step, true));
     for (const target of targets) {
       expect(target).toBe(host);

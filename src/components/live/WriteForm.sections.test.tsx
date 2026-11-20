@@ -114,7 +114,7 @@ describe("WriteForm sections (spec 09, D2)", () => {
     const openDetails = html.lastIndexOf("<details", warningAt);
     const closeDetails = html.lastIndexOf("</details>", warningAt);
     expect(openDetails < 0 || closeDetails > openDetails).toBe(true);
-    expect(html).toContain("Your device will ask for the passkey twice.");
+    expect(html).toContain("press the wax twice");
     expect(html).toContain(PRESS_COPY.name);
     expect(html).toContain(LIVE_COPY.backButton);
     expect(html).not.toContain('id="live-letter"');
