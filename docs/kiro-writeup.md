@@ -1,10 +1,10 @@
 # How Revenant was built with Kiro
 
-Every number below was counted at `main` commit `4b71564e7945efc9380d324bdb9165117bfa10e4` (13 November 2026), with the command next to it. Run `git checkout 4b71564` first to recompute a count. Pull request counts come from the GitHub API and include everything merged up to the moment the command runs.
+Every number below was counted at `main` commit `db439b7ab4ac26ea445583aafbaeb8d97cb121d1` (20 November 2026), with the command next to it. Run `git checkout db439b7` first to recompute a count. Pull request counts come from the GitHub API and include everything merged up to the moment the command runs.
 
 <!-- OWNER: before submission, recount at the final main SHA and replace the SHA and every number in this file. Fill in each OWNER note, using the Evidence list under it; delete a note once its text is written. -->
 
-Evidence: SHA `git rev-parse origin/main`; merged pull requests `gh pr list --state merged --limit 1000 --json number -q length` → 206 on 13 November 2026; commits by agent tag, specs, property files and agents in the sections below.
+Evidence: SHA `git rev-parse origin/main`; merged pull requests `gh pr list --state merged --limit 1000 --json number -q length` → 280 on 20 November 2026; commits by agent tag, specs, property files and agents in the sections below.
 
 ## 1. Kiro surfaces
 
@@ -33,7 +33,7 @@ Evidence:
 | `frontend-dev` | Pages, components, styling, cards, `.ics`, recall wording, persona text. |
 | `qa` | Writes nothing in the product. Reviews each PR against its ticket and the steering docs in a headless browser and writes `.qa/verdict.json`. |
 
-Commits by agent tag (`git log --format=%s | grep -oE '^\[[a-z-]+\]' | sort | uniq -c`): frontend-dev 95, platform-dev 24, data-dev 21, crypto-dev 13, owner 10, dispatcher 1.
+Commits by agent tag (`git log --format=%s | grep -oE '^\[[a-z-]+\]' | sort | uniq -c`): frontend-dev 140, platform-dev 41, data-dev 25, crypto-dev 15, owner 13, dispatcher 1.
 
 ## 3. Hooks
 
@@ -53,7 +53,7 @@ Evidence:
 
 ## 4. Spec-driven development compared with vibe coding
 
-The product was built from specs 01 to 10; spec 11 is in progress (`git ls-files .kiro/specs | cut -d/ -f3 | sort -u | wc -l` → 12 folders, two of them numbered 02). Each spec has requirements, a design and a task list. Each task became one GitHub issue and one pull request for one role.
+Specs 01 to 11 have no open task; specs 12 to 15 are in progress (`git ls-files .kiro/specs | cut -d/ -f3 | sort -u | wc -l` → 16 folders, two of them numbered 02). Each spec has requirements, a design and a task list. Each task became one GitHub issue and one pull request for one role.
 
 | Spec | Tasks |
 |---|---|
@@ -69,10 +69,14 @@ The product was built from specs 01 to 10; spec 11 is in progress (`git ls-files
 | 09 Demo polish | 24 |
 | 10 Own questions | 17 |
 | 11 Any letter | 25 |
+| 12 Submission polish | 18 |
+| 13 The seal | 23 |
+| 14 Write desk | 20 |
+| 15 The flow | 16 |
 
 Command: `for d in .kiro/specs/*/; do echo "$d $(grep -cE '^- \[[ x]\] [0-9]+\.' $d/tasks.md)"; done`.
 
-Merged pull requests: `gh pr list --state merged --limit 1000 --json number -q length` → 206 on 13 November 2026.
+Merged pull requests: `gh pr list --state merged --limit 1000 --json number -q length` → 280 on 20 November 2026.
 
 <!-- OWNER: what the spec loop gave that vibe coding would not have, and where you still vibe-coded. -->
 
@@ -91,7 +95,7 @@ The `qa` and `frontend-dev` agents use the Playwright MCP server (`mcpServers.pl
 
 ## 7. Property-based testing
 
-The tests use fast-check. `git ls-files '*.property.test.*' | wc -l` → 49 property test files, covering the source adapters, the then-vs-now change, the sealed payload round trip, the opening state machine, the persona letter checks and the ceremony gates.
+The tests use fast-check. `git ls-files '*.property.test.*' | wc -l` → 72 property test files, covering the source adapters, the then-vs-now change, the sealed payload round trip, the opening state machine, the persona letter checks and the ceremony gates.
 
 <!-- OWNER: list concrete bugs a property caught that example tests missed, each with its PR or commit. Candidates to check: `git log --format='%h %s' -i --grep=property`. -->
 
