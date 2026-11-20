@@ -122,7 +122,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: none expected; name any.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 6. The shell: top bar, step track, ghost placement, envelope, soil strip
+- [x] 6. The shell: top bar, step track, ghost placement, envelope, soil strip
   - Agent: `frontend-dev` · Depends on: none · Estimated size: L, ~2,000 changed lines
   - Scope: `src/components/ceremony/scene/**`, `src/components/ceremony/envelope/**`, `src/components/ceremony/steps.ts`, `src/components/live/stepper/` (the track components), `src/components/ui/**`, `src/components/ceremony/ceremony.module.css`, and the `*.test.ts(x)` next to each.
   - Covers: the shell of every screen ID. Design sections: "5. The shell", Requirement 5.
