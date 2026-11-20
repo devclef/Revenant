@@ -174,7 +174,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: `occasions-desk.test.ts`, `occasions.test.ts`, `copy.test.ts` (the ban on "right now", "today" and "currently"), `src/test/retired-phrases.test.ts` (the retired "right now" entry), `write-check*.test.ts`, `QuestionRow.test.tsx`, `WriteForm*.test.tsx`, `build-payload*.test.ts`; name each with its reason.
   - Copy evidence: tone-check for `live/copy.ts`, `desk/copy.ts`, `occasions.ts`.
 
-- [ ] 9. Press the seal and Wait
+- [x] 9. Press the seal and Wait
   - Agent: `frontend-dev` · Depends on: 8 · Estimated size: L, ~1,600 changed lines
   - Scope: `src/components/live/seal-step/**`, `src/components/live/press/**`, `src/components/live/BackupChoice.tsx`, `BackupFallback.tsx`, `SealFailure.tsx`, `src/components/live/stepper/LiveWaitStep.tsx`, `SealedEnvelopeView.tsx`, `src/components/live/LetterCard.tsx`, `SealedKeepsakes.tsx`, `src/components/live/copy.ts`, `src/components/live/press/copy.ts`, and the `*.test.ts(x)` next to each.
   - Covers: `seal-choose`, `seal-step-1`, `seal-step-2`, `seal-sealing`, `seal-backup`, `seal-no-prf`, `seal-failed`, `wait-counting`, `wait-ready`. Requirement 9.
