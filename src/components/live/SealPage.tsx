@@ -220,12 +220,13 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
       text: writeDraft.text,
       metricIds: writeDraft.metricIds,
       questions: writeDraft.questions,
+      answers: writeDraft.answers,
       selfReported: writeDraft.selfReported,
       figures: sealedFigures,
       backupCard: writeDraft.backupCardTicked,
       ...(mode === "real" ? { real: { opensOn, timeZone: timeZone.timeZone } } : {}),
     }),
-    [writeDraft.text, writeDraft.metricIds, writeDraft.questions, writeDraft.selfReported, writeDraft.backupCardTicked, sealedFigures, mode, opensOn, timeZone],
+    [writeDraft.text, writeDraft.metricIds, writeDraft.questions, writeDraft.answers, writeDraft.selfReported, writeDraft.backupCardTicked, sealedFigures, mode, opensOn, timeZone],
   );
 
   const flow = useSealFlow(sealDeps, draft);
@@ -406,6 +407,10 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
         onAttempt={onAttempt}
         onTextChange={(text) => dispatchDraft({ type: "TEXT_CHANGED", text })}
         questions={writeDraft.questions}
+        answers={writeDraft.answers}
+        onAnswerChange={(index, text) =>
+          dispatchDraft({ type: "ANSWER_CHANGED", index, text })
+        }
         onQuestionChange={(index, text) =>
           dispatchDraft({ type: "QUESTION_CHANGED", index, text })
         }

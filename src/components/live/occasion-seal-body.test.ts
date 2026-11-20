@@ -22,6 +22,7 @@ function seal(text: string, questions: readonly string[]) {
     text,
     metricIds: [],
     authorQuestions: questionsForSeal(questions),
+    authorAnswers: questionsForSeal(questions).map(() => "My answer."),
     sealedDate: SEALED_DATE,
     figures: NO_FIGURES,
     sealedAt: SEALED_AT,

@@ -106,6 +106,55 @@
   outline-offset: 4px;
 }
 
+/* The answer under each question (spec 15, R7.1). It sits on the paper, so its
+   text and label take the paper's own --ink (set on .questions above). */
+.answerBlock {
+  margin: 12px 0 0;
+}
+
+.answerLabel {
+  display: block;
+  margin: 0 0 2px;
+  font-family: var(--font-sans);
+  font-size: 12px;
+  line-height: 1.4;
+  color: var(--ink);
+}
+
+.answerInput {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 32px;
+  margin: 0;
+  padding: 4px 0;
+  border: 0;
+  border-bottom: 1px dashed rgba(31, 27, 22, 0.35);
+  border-radius: 0;
+  background: transparent;
+  font-size: 18px;
+  line-height: 1.5;
+  color: var(--ink);
+  resize: none;
+  overflow: hidden;
+}
+
+.answerInput::placeholder {
+  font-style: italic;
+  color: var(--ink-muted);
+  opacity: 1;
+}
+
+.answerInput:hover,
+.answerInput:focus {
+  border-bottom-color: var(--ink);
+}
+
+.answerInput:focus-visible {
+  outline: 2px solid #ff7b1c;
+  outline-offset: 4px;
+}
+
 /* The Edit control: a visual cue only. It is aria-hidden and has no tabIndex,
    so keyboard and screen reader users reach the field itself (W7.4). */
 .edit {

@@ -253,6 +253,8 @@ export const LIVE_COPY = {
   answerInLetter: "Answer them in your letter too, in your own words.",
   /** Shown after the row was touched or a seal was attempted (C2.3). */
   questionTooLong: "Keep each question to 200 characters or fewer.",
+  /** Shown after the answer was touched or a seal was attempted (spec 15, R7.3). */
+  answerTooLong: "Keep each answer to 1,000 characters or fewer.",
   /** A self-reported name, unit or region outside 1 to 60 characters. */
   selfReportedTextLength: "Use 1 to 60 characters.",
   /** A self-reported value that is not 0 to 999,999,999 with at most 4 decimals. */

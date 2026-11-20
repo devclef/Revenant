@@ -418,6 +418,7 @@ describe("the Author_Question rows in the sealed payload (spec 10, C2.3, C2.7)",
     } as Partial<CryptoModule>;
     const h = await makeHarness({ cryptoPatch: recording });
     h.draft.questions = ["  What is on my mind?  ", "   ", "Second?"];
+    h.draft.answers = ["  The coast.  ", "   ", "A second answer."];
 
     const { outcome } = await runFlow(h);
     expect(outcome?.ok).toBe(true);
@@ -425,8 +426,8 @@ describe("the Author_Question rows in the sealed payload (spec 10, C2.3, C2.7)",
     expect(sealedPayloads).toHaveLength(1);
     const payload = sealedPayloads[0] as { recall_questions: { id: string; answer_type: string; text: string }[] };
     expect(payload.recall_questions.slice(0, 2)).toEqual([
-      { id: "a1", answer_type: "text", text: "What is on my mind?" },
-      { id: "a2", answer_type: "text", text: "Second?" },
+      { id: "a1", answer_type: "text", text: "What is on my mind?", sealed_answer: "The coast." },
+      { id: "a2", answer_type: "text", text: "Second?", sealed_answer: "A second answer." },
     ]);
     expect(payload.recall_questions[2]?.id).toMatch(/^q\d+$/);
   });

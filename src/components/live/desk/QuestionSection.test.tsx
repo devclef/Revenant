@@ -79,4 +79,20 @@ describe("QuestionSection (spec 14, W6)", () => {
     });
     expect(countOf(html, LIVE_COPY.questionTooLong)).toBe(1);
   });
+
+  it("names only the unanswered question the fold pointed at (spec 15, R7.4)", () => {
+    const html = render({
+      questions: ["First?", "Second?"],
+      answers: ["Yes", ""],
+      missingAnswerIndex: 1,
+    });
+    expect(countOf(html, "has no answer yet")).toBe(1);
+    expect(html).toContain(DESK_COPY.answerMissing.replace("{n}", "2"));
+    expect(html).toMatch(/data-answer-input=""/);
+  });
+
+  it("names nothing when no fold has named an answer", () => {
+    const html = render({ questions: ["First?"], answers: [""] });
+    expect(html).not.toContain("has no answer yet");
+  });
 });

@@ -20,11 +20,8 @@ const base: WriteDeskProps = {
   onLetterChange: () => {},
   onLetterBlur: () => {},
   letterRef,
-  authorQuestions: createElement(
-    "span",
-    { "data-test-questions": "" },
-    "QUESTIONS",
-  ),
+  authorQuestions: () =>
+    createElement("span", { "data-test-questions": "" }, "QUESTIONS"),
   receipt: {
     series: [],
     selected: [],

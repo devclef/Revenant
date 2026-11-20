@@ -11,6 +11,7 @@ import { DEMO_FIGURES } from "@/lib/figures/demo";
 
 import { listPickableSeries } from "./catalogue-list";
 import { LIVE_COPY, REAL_COPY } from "./copy";
+import { DESK_COPY } from "./desk/copy";
 import { figureLimit } from "./form";
 import { DEFAULT_QUESTION } from "./occasions";
 import type { SealState } from "./seal-machine";
@@ -57,6 +58,21 @@ describe("Author_Question rows on the Write step", () => {
     expect(html).toContain(LIVE_COPY.authorQuestionsLegend);
     // Static markup escapes the apostrophe in the prefill text.
     expect(html).toContain(DEFAULT_QUESTION.replace(/'/g, "&#x27;"));
+  });
+
+  it("shows an answer field under each question with the author's answer in it (spec 15, R7.1)", () => {
+    const html = renderToStaticMarkup(
+      createElement(WriteForm, {
+        ...formProps({
+          questions: [DEFAULT_QUESTION],
+          answers: ["I was still unsure."],
+        }),
+        section: "write",
+        onNext: () => {},
+      }),
+    );
+    expect(html).toContain(DESK_COPY.answerLabel);
+    expect(html).toContain("I was still unsure.</textarea>");
   });
 
   it("shows no question row on /seal, which prefills nothing", () => {

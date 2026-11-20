@@ -12,7 +12,7 @@ import { isEmptySelfReportedRow } from "./form";
 import { RECALL_SUBJECTS } from "./recall-subjects";
 import type { SelfReportedRow } from "./write-draft";
 import { generateRecallQuestions } from "@/lib/recall";
-import { payloadV1Schema, type MetricDefinitionV1, type PayloadV1 } from "@/lib/seal-format";
+import { payloadV2Schema, type MetricDefinitionV1, type PayloadV2 } from "@/lib/seal-format";
 import type { LoadedFigures } from "@/lib/figures";
 import { thenAndNow } from "@/lib/figures/then-now";
 
@@ -41,7 +41,7 @@ function selfReportedEntry(
   row: SelfReportedRow,
   index: number,
   sealedAt: string,
-): { metric: MetricDefinitionV1; figure: PayloadV1["figures"][number] } {
+): { metric: MetricDefinitionV1; figure: PayloadV2["figures"][number] } {
   const id = `self-${index + 1}`;
   const unit = row.unit.trim();
   const region = row.region.trim();
@@ -84,13 +84,14 @@ function selfReportedEntry(
  * a missing subject or a duplicate id throws instead of building a bad letter.
  *
  * The Author_Question rows come first (C2.7, C2.8). `authorQuestions` must already
- * be trimmed with empty rows dropped (`questionsForSeal`). Row i becomes the
- * text question `a<i+1>` with no `metric_id`, so it can't collide with the
- * generator's `q<n>` IDs. A Real_Letter with no figures still builds, because
- * the schema has no minimum for metrics or figures (C2.9). A letter with no
- * official figure is still format version 1: its questions are v1 text
- * questions, and metrics and figures hold only the self-reported entries
- * (L1.7, Property 9).
+ * be trimmed with empty rows dropped (`questionsForSeal`), and `authorAnswers`
+ * must be index-aligned with it (`answersForSeal`). Row i becomes the text
+ * question `a<i+1>` with no `metric_id`, so it can't collide with the
+ * generator's `q<n>` IDs. Each text question carries its answer as
+ * `sealed_answer` (spec 15, R2.1). A Real_Letter with no figures still builds,
+ * because the schema has no minimum for metrics or figures (C2.9). The payload
+ * is always format version 2 (spec 15, R2.4). A letter with no official figure
+ * holds only the self-reported entries in metrics and figures (L1.7, Property 9).
  *
  * @param sealedDate the sealing day as "YYYY-MM-DD" (UTC), the reference date.
  */
@@ -98,6 +99,8 @@ export function buildLivePayload(input: {
   text: string;
   metricIds: readonly string[];
   authorQuestions: readonly string[];
+  /** The sealed answer for each author question, index-aligned (spec 15, R2.1). */
+  authorAnswers?: readonly string[];
   sealedDate: string;
   figures: LoadedFigures;
   /**
@@ -112,8 +115,21 @@ export function buildLivePayload(input: {
    * retrieved_at is this instant. Required when there are self-reported rows.
    */
   sealedAt?: string;
-}): { ok: true; payload: PayloadV1 } | { ok: false; metricId: string } {
+}): { ok: true; payload: PayloadV2 } | { ok: false; metricId: string } {
   const { text, metricIds, authorQuestions, sealedDate, figures } = input;
+  const authorAnswers = input.authorAnswers ?? [];
+  if (authorAnswers.length !== authorQuestions.length) {
+    throw new Error(
+      "buildLivePayload: one sealed answer is required for each author question",
+    );
+  }
+  // The press gate keeps a blank answer out of a seal. This guard makes sure a
+  // blank sealed_answer never reaches the payload, even if a caller skips it.
+  if (authorAnswers.some((answer) => answer.trim() === "")) {
+    throw new Error(
+      "buildLivePayload: every author question needs a non-blank sealed answer",
+    );
+  }
   const selfReportedRows = (input.selfReported ?? []).filter(
     (row) => !isEmptySelfReportedRow(row),
   );
@@ -124,7 +140,7 @@ export function buildLivePayload(input: {
   }
 
   const metrics: MetricDefinitionV1[] = [];
-  const payloadFigures: PayloadV1["figures"] = [];
+  const payloadFigures: PayloadV2["figures"] = [];
   const subjects: string[] = [];
 
   for (const metricId of metricIds) {
@@ -150,6 +166,7 @@ export function buildLivePayload(input: {
     id: `a${i + 1}`,
     answer_type: "text" as const,
     text: questionText,
+    sealed_answer: authorAnswers[i],
   }));
 
   const recall_questions = [
@@ -164,15 +181,15 @@ export function buildLivePayload(input: {
 
   // No written_as_of: a live letter is sealed on its day, not written "as of" one.
   const selfMetrics: MetricDefinitionV1[] = [];
-  const selfFigures: PayloadV1["figures"] = [];
+  const selfFigures: PayloadV2["figures"] = [];
   selfReportedRows.forEach((row, index) => {
     const entry = selfReportedEntry(row, index, input.sealedAt ?? "");
     selfMetrics.push(entry.metric);
     selfFigures.push(entry.figure);
   });
 
-  const payload = payloadV1Schema.parse({
-    format_version: 1,
+  const payload = payloadV2Schema.parse({
+    format_version: 2,
     letter_text: text,
     metrics: [...metrics, ...selfMetrics],
     figures: [...payloadFigures, ...selfFigures],

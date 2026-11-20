@@ -13,13 +13,27 @@
 
 export const AUTHOR_QUESTIONS_MAX = 3;
 export const AUTHOR_QUESTION_MAX_CODE_POINTS = 200;
+export const AUTHOR_ANSWER_MAX_CODE_POINTS = 1000;
 
 /** The one reason a row can block sealing. */
 export type QuestionRowProblem = "question_too_long";
 
+/** The one reason an answer can block sealing (spec 15, R7.3). */
+export type AnswerProblem = "answer_too_long";
+
 /** Counts code points, so an astral character counts as one. */
 function codePointLength(text: string): number {
   return [...text].length;
+}
+
+/**
+ * Returns `"answer_too_long"` when the answer is over 1,000 code points after
+ * trimming. An empty answer has no problem here; the fold check handles it.
+ */
+export function answerProblem(text: string): AnswerProblem | null {
+  return codePointLength(text.trim()) > AUTHOR_ANSWER_MAX_CODE_POINTS
+    ? "answer_too_long"
+    : null;
 }
 
 /**
@@ -60,4 +74,19 @@ export function focusAfterRemove(
   const countAfter = Math.max(0, countBefore - 1);
   if (removedIndex < countAfter) return { kind: "row", index: removedIndex };
   return { kind: "add" };
+}
+
+/**
+ * The sealed answers that go with `questionsForSeal(rows)`, in the same order
+ * (spec 15, R2.1). `answers` is index-aligned with `rows`. A row that is empty
+ * after trimming is dropped with its answer, so the two lists stay aligned. The
+ * answer is trimmed, as the question is.
+ */
+export function answersForSeal(
+  rows: readonly string[],
+  answers: readonly string[],
+): string[] {
+  return rows.flatMap((row, index) =>
+    row.trim().length > 0 ? [(answers[index] ?? "").trim()] : [],
+  );
 }

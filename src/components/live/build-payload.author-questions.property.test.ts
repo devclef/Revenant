@@ -9,7 +9,7 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 
-import { payloadV1Schema } from "@/lib/seal-format";
+import { payloadV2Schema } from "@/lib/seal-format";
 import type { LoadedFigures } from "@/lib/figures";
 
 import { questionsForSeal } from "./author-questions";
@@ -76,7 +76,8 @@ function checkSealedOrder(
 ): void {
   // The author questions come first, in order, as text with no metric_id.
   questions.forEach((text, i) => {
-    expect(recall[i]).toEqual({ id: `a${i + 1}`, answer_type: "text", text });
+    expect(recall[i]).toMatchObject({ id: `a${i + 1}`, answer_type: "text", text });
+    expect(recall[i]).toHaveProperty("sealed_answer");
     expect(recall[i]).not.toHaveProperty("metric_id");
   });
 
@@ -91,7 +92,7 @@ function checkSealedOrder(
 }
 
 describe("Property 4: Author_Questions are sealed as v1 text questions, first", () => {
-  it("passes payloadV1Schema, with the author text first and the generator's q-questions after it", () => {
+  it("passes payloadV2Schema, with the author text first and the generator's q-questions after it", () => {
     fc.assert(
       fc.property(
         questionsArb,
@@ -103,15 +104,16 @@ describe("Property 4: Author_Questions are sealed as v1 text questions, first", 
             text,
             metricIds: ids,
             authorQuestions: questions,
+            authorAnswers: questions.map(() => "My answer."),
             sealedDate: SEALED_DATE,
             figures,
           });
           expect(result.ok).toBe(true);
           if (!result.ok) return;
 
-          const parsed = payloadV1Schema.safeParse(result.payload);
+          const parsed = payloadV2Schema.safeParse(result.payload);
           expect(parsed.success).toBe(true);
-          expect(result.payload.format_version).toBe(1);
+          expect(result.payload.format_version).toBe(2);
 
           checkSealedOrder(questions, result.payload.recall_questions);
         },
@@ -120,7 +122,7 @@ describe("Property 4: Author_Questions are sealed as v1 text questions, first", 
     );
   });
 
-  it("a Real_Letter with 0 figures and 1 to 3 questions passes payloadV1Schema", () => {
+  it("a Real_Letter with 0 figures and 1 to 3 questions passes payloadV2Schema", () => {
     fc.assert(
       fc.property(
         fc.integer({ min: 1, max: 3 }).chain((n) =>
@@ -136,13 +138,14 @@ describe("Property 4: Author_Questions are sealed as v1 text questions, first", 
             text,
             metricIds: [],
             authorQuestions: questions,
+            authorAnswers: questions.map(() => "My answer."),
             sealedDate: SEALED_DATE,
             figures: makeFigures([]),
           });
           expect(result.ok).toBe(true);
           if (!result.ok) return;
 
-          expect(payloadV1Schema.safeParse(result.payload).success).toBe(true);
+          expect(payloadV2Schema.safeParse(result.payload).success).toBe(true);
           expect(result.payload.figures).toHaveLength(0);
           checkSealedOrder(questions, result.payload.recall_questions);
         },
@@ -153,21 +156,27 @@ describe("Property 4: Author_Questions are sealed as v1 text questions, first", 
 });
 
 describe("Author_Questions example cases", () => {
-  it("a 0-figure Real_Letter with one question passes payloadV1Schema", () => {
+  it("a 0-figure Real_Letter with one question passes payloadV2Schema", () => {
     const result = buildLivePayload({
       text: "Written before the opening.",
       metricIds: [],
       authorQuestions: ["What do you want to remember?"],
+      authorAnswers: ["The coast, with my sister."],
       sealedDate: SEALED_DATE,
       figures: makeFigures([]),
     });
     expect(result.ok).toBe(true);
     if (!result.ok) return;
 
-    const parsed = payloadV1Schema.safeParse(result.payload);
+    const parsed = payloadV2Schema.safeParse(result.payload);
     expect(parsed.success).toBe(true);
     expect(result.payload.recall_questions).toEqual([
-      { id: "a1", answer_type: "text", text: "What do you want to remember?" },
+      {
+        id: "a1",
+        answer_type: "text",
+        text: "What do you want to remember?",
+        sealed_answer: "The coast, with my sister.",
+      },
     ]);
   });
 });

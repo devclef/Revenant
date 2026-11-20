@@ -163,6 +163,7 @@ const draftArb: fc.Arbitrary<WriteDraft> = fc.record({
   warningTicked: fc.boolean(),
   backupCardTicked: fc.boolean(),
   questions: fc.array(fc.string({ maxLength: 40 }), { maxLength: 4 }),
+  answers: fc.array(fc.string({ maxLength: 40 }), { maxLength: 4 }),
   selfReported: fc.array(selfReportedRowArb, { maxLength: 3 }),
 });
 
@@ -173,6 +174,7 @@ function draftWriteProblems(draft: WriteDraft) {
     warningTicked: draft.warningTicked,
     backupCardTicked: draft.backupCardTicked,
     questions: draft.questions,
+    answers: draft.answers,
     selfReported: draft.selfReported,
     sealingDay: SEALING_DAY,
   });
@@ -215,8 +217,13 @@ describe("Property 8: the press is enabled only when the backup choice is made a
       ...initialWriteDraft("demo"),
       text: "Dear me",
       metricIds: ["m1"],
+      answers: ["I remember it."],
     };
     expect(canPress(draft, SEALING_DAY)).toBe(false);
+    // The default question with a blank answer blocks the press (spec 15, R7.4).
+    expect(
+      canPress({ ...draft, answers: [""] }, SEALING_DAY),
+    ).toBe(false);
     expect(
       canPress(
         reduceWriteDraft(draft, { type: "BACKUP_CHOICE_CHANGED", choice: "skip" }),

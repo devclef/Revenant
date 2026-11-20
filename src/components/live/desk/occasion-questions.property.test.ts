@@ -144,24 +144,20 @@ describe("applyOccasionQuestions (Property 3, spec 14 W3.3, W3.4, W8.3)", () => 
     expect(result.questions).toEqual(work);
   });
 
-  it("keeps a typed row in place when the Occasion changes; empty rows take the new Occasion's question", () => {
-    const typed = "What did the boiler quote say when you wrote this?";
+  it("keeps a typed row in place when the Occasion changes; an untouched row takes the new Occasion's question", () => {
+    const typed = "What did the boiler quote say when I wrote this?";
     const result = applyOccasionQuestions(
       {
-        questions: [DEFAULT_QUESTION, typed],
+        questions: [questionsOf("work")[0], typed],
         occasion: "work",
         appliedQuestions: questionsOf("work"),
       },
       "family",
     );
-    // Row 0 is untouched and takes family's question 0 (the same default),
-    // row 1 keeps the typed text, and the missing row 2 takes family's
-    // question 2, exactly as applyOccasion does for /seal.
-    expect(result.questions).toEqual([
-      DEFAULT_QUESTION,
-      typed,
-      questionsOf("family")[2],
-    ]);
+    // Row 0 is untouched and takes family's default question. Row 1 keeps the
+    // typed text. Family has one default, so no third row is added, exactly as
+    // applyOccasion does for /seal.
+    expect(result.questions).toEqual([questionsOf("family")[0], typed]);
   });
 
   it("never returns an empty list, even when every row is blank", () => {

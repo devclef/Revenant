@@ -10,13 +10,13 @@
 // The crypto barrel is never imported here; the browser module arrives through
 // SealDeps, typed by crypto-module.ts.
 
-import { decodeBase64url, type PayloadV1 } from "@/lib/seal-format";
+import { decodeBase64url, type PayloadV2 } from "@/lib/seal-format";
 import type { LoadedFigures } from "@/lib/figures";
 import type { CryptoModule } from "./crypto-module";
 import type { SealApi } from "./api";
 import { computeSealTimes } from "./clock";
 import { buildLivePayload } from "./build-payload";
-import { questionsForSeal } from "./author-questions";
+import { answersForSeal, questionsForSeal } from "./author-questions";
 import { checkRealOpening, type RealOpening } from "./real-opening";
 import type { SealEvent, SealFailureKind } from "./seal-machine";
 import type { SelfReportedRow } from "./write-draft";
@@ -58,6 +58,12 @@ export interface SealDraft {
    * means no author questions.
    */
   questions?: readonly string[];
+  /**
+   * The sealed answer for each Author_Question row, index-aligned with
+   * `questions` (spec 15, R2.1). Sealed only for the rows that are kept
+   * (`answersForSeal`). Omitted means none.
+   */
+  answers?: readonly string[];
   /**
    * The visitor's own numbers as typed (spec 08 later-tasks, R26). Sealed as
    * self-reported figures after the official ones. Omitted means none.
@@ -242,6 +248,7 @@ async function runSeal(
       text: draft.text,
       metricIds: draft.metricIds,
       authorQuestions: questionsForSeal(draft.questions ?? []),
+      authorAnswers: answersForSeal(draft.questions ?? [], draft.answers ?? []),
       sealedDate: times.sealedAt.slice(0, 10),
       figures: draft.figures,
       selfReported: draft.selfReported ?? [],
@@ -250,7 +257,7 @@ async function runSeal(
     if (!built.ok) {
       return { ok: false, event: failure("missing_then", passkeyCreated, built.metricId) };
     }
-    const payload: PayloadV1 = built.payload;
+    const payload: PayloadV2 = built.payload;
 
     // Step 6: seal. The wrap check (R8.5) runs inside sealLetter.
     const factor: Pick<Parameters<CryptoModule["sealLetter"]>[0], "passkey" | "backupKey"> =

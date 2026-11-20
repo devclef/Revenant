@@ -13,7 +13,7 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 
-import { payloadV1Schema, type PayloadV1 } from "@/lib/seal-format";
+import { payloadV2Schema, type PayloadV2 } from "@/lib/seal-format";
 
 import { buildLivePayload } from "./build-payload";
 import { questionRowProblem, questionsForSeal } from "./author-questions";
@@ -54,12 +54,13 @@ const rowArb: fc.Arbitrary<SelfReportedRow> = fc.record({
 
 const rowsArb: fc.Arbitrary<SelfReportedRow[]> = fc.array(rowArb, { minLength: 0, maxLength: 10 });
 
-function build(mode: (typeof MODES)[number], questions: string[], rows: SelfReportedRow[]): PayloadV1 {
+function build(mode: (typeof MODES)[number], questions: string[], rows: SelfReportedRow[]): PayloadV2 {
   void mode; // buildLivePayload has no mode input; see the file header.
   const result = buildLivePayload({
     text: "A letter with no official figures.",
     metricIds: [],
     authorQuestions: questions,
+    authorAnswers: questions.map((_, i) => `Answer ${i + 1}.`),
     sealedDate: SEALED_DATE,
     figures: NO_FIGURES,
     selfReported: rows,
@@ -70,7 +71,7 @@ function build(mode: (typeof MODES)[number], questions: string[], rows: SelfRepo
 }
 
 describe("Property 9: letters with no official figures seal as v1", () => {
-  it("builds a schema-valid version 1 payload with the questions as text items, in both modes", () => {
+  it("builds a schema-valid version 2 payload with the questions as text items, in both modes", () => {
     fc.assert(
       fc.property(questionsArb, rowsArb, (questions, rows) => {
         const payloadsByMode = MODES.map((mode) => build(mode, questions, rows));
@@ -79,13 +80,18 @@ describe("Property 9: letters with no official figures seal as v1", () => {
         expect(payloadsByMode[0]).toEqual(payloadsByMode[1]);
 
         const payload = payloadsByMode[0];
-        expect(payloadV1Schema.safeParse(payload).success).toBe(true);
-        expect(payload.format_version).toBe(1);
+        expect(payloadV2Schema.safeParse(payload).success).toBe(true);
+        expect(payload.format_version).toBe(2);
         expect(payload).not.toHaveProperty("written_as_of");
 
-        // The questions, in order, as v1 text items with no metric_id.
+        // The questions, in order, as v2 text items with no metric_id, each with its sealed answer.
         expect(payload.recall_questions).toEqual(
-          questions.map((text, i) => ({ id: `a${i + 1}`, answer_type: "text", text })),
+          questions.map((text, i) => ({
+            id: `a${i + 1}`,
+            answer_type: "text",
+            text,
+            sealed_answer: `Answer ${i + 1}.`,
+          })),
         );
 
         // Metrics and figures hold only the self-reported entries.
@@ -104,32 +110,34 @@ describe("Property 9: letters with no official figures seal as v1", () => {
 });
 
 describe("letters with no official figures: examples", () => {
-  it("seals 0 official figures with 1 to 3 questions in both modes as v1 text questions", () => {
+  it("seals 0 official figures with 1 to 3 questions in both modes as v2 text questions", () => {
     for (const mode of MODES) {
       const one = build(mode, ["Who did you tell first?"], []);
       expect(one).toEqual({
-        format_version: 1,
+        format_version: 2,
         letter_text: "A letter with no official figures.",
         metrics: [],
         figures: [],
-        recall_questions: [{ id: "a1", answer_type: "text", text: "Who did you tell first?" }],
+        recall_questions: [
+          { id: "a1", answer_type: "text", text: "Who did you tell first?", sealed_answer: "Answer 1." },
+        ],
       });
 
       const three = build(mode, ["First question.", "Second question.", "Third question."], []);
       expect(three.recall_questions.map((q) => q.id)).toEqual(["a1", "a2", "a3"]);
-      expect(payloadV1Schema.safeParse(three).success).toBe(true);
+      expect(payloadV2Schema.safeParse(three).success).toBe(true);
     }
   });
 
-  it("seals a self-reported-only letter with a question as a schema-valid v1 payload in both modes", () => {
+  it("seals a self-reported-only letter with a question as a schema-valid v2 payload in both modes", () => {
     const rows: SelfReportedRow[] = [
       { name: "Rent", value: "950.50", unit: "per month", region: "My city", period: "2026-09" },
     ];
     for (const mode of MODES) {
       const payload = build(mode, ["What did the rent feel like?"], rows);
-      expect(payloadV1Schema.safeParse(payload).success).toBe(true);
+      expect(payloadV2Schema.safeParse(payload).success).toBe(true);
       expect(payload).toEqual({
-        format_version: 1,
+        format_version: 2,
         letter_text: "A letter with no official figures.",
         metrics: [
           {
@@ -154,7 +162,7 @@ describe("letters with no official figures: examples", () => {
             retrieved_at: SEALED_AT,
           },
         ],
-        recall_questions: [{ id: "a1", answer_type: "text", text: "What did the rent feel like?" }],
+        recall_questions: [{ id: "a1", answer_type: "text", text: "What did the rent feel like?", sealed_answer: "Answer 1." }],
       });
     }
   });

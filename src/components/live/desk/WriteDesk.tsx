@@ -39,8 +39,12 @@ export interface WriteDeskProps {
   onLetterChange: (value: string) => void;
   onLetterBlur: () => void;
   letterRef: RefObject<HTMLTextAreaElement | null>;
-  /** The author questions. They sit inside the Letter_Sheet under the field. */
-  authorQuestions: ReactNode;
+  /**
+   * The author questions. They sit inside the Letter_Sheet under the field. The
+   * function receives the index of the question the fold named as unanswered,
+   * or null, so the rows can show its message (spec 15, R7.4).
+   */
+  authorQuestions: (missingAnswer: number | null) => ReactNode;
   /** The receipt card's data: series, figures, own number and touch state. */
   receipt: Omit<ReceiptPanelProps, "view" | "onViewChange">;
   /** The draft the Write_Check and the Envelope_Panel read (W9, W13). */
@@ -87,9 +91,15 @@ function targetElement(
       return letter;
     case "question":
       return (
-        root.querySelectorAll<HTMLTextAreaElement>("[data-question-row] textarea")[
-          target.index
-        ] ?? null
+        root.querySelectorAll<HTMLTextAreaElement>(
+          "[data-question-row] textarea:not([data-answer-input])",
+        )[target.index] ?? null
+      );
+    case "answer":
+      return (
+        root.querySelectorAll<HTMLTextAreaElement>(
+          "[data-question-row] textarea[data-answer-input]",
+        )[target.index] ?? null
       );
     case "write_own":
       return (
@@ -133,6 +143,14 @@ export function WriteDesk({
   const [failure, setFailure] = useState<FoldFailure | null>(null);
   const [view, setView] = useState<ReceiptView>("public");
   const writeResult = writeCheck(check);
+  // The question the last failed fold named as unanswered (spec 15, R7.4). It
+  // stays named only while the fold still fails on that answer.
+  const missingAnswer =
+    failure !== null &&
+    writeResult.first?.kind === "answer" &&
+    (check.answers?.[writeResult.first.index] ?? "").trim() === ""
+      ? writeResult.first.index
+      : null;
 
   // The failed-fold line goes away once the Write_Check passes (W13.3).
   useEffect(() => {
@@ -190,7 +208,7 @@ export function WriteDesk({
             onBlur={onLetterBlur}
             fieldRef={letterRef}
           >
-            {authorQuestions}
+            {authorQuestions(missingAnswer)}
           </LetterSheet>
         </div>
         <EnvelopePanel

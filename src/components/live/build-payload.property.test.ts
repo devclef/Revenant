@@ -119,8 +119,8 @@ describe("Property 12: buildLivePayload copies the then figures and nothing else
           if (!result.ok) return;
           const { payload } = result;
 
-          // Shape: version 1, the letter as written, no written_as_of.
-          expect(payload.format_version).toBe(1);
+          // Shape: version 2, the letter as written, no written_as_of.
+          expect(payload.format_version).toBe(2);
           expect(payload.letter_text).toBe(text);
           expect(payload).not.toHaveProperty("written_as_of");
 
