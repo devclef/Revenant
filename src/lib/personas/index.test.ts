@@ -118,9 +118,10 @@ describe("index — loads without any letter .txt file", () => {
 // Example checks against the committed personas.json for issue #82: Maya moved
 // to catalogue metrics and her letter ID was rotated. The old ID is retired.
 describe("index — committed list: Maya after the catalogue move (#82)", () => {
-  // The IDs this rotation retired are the last two entries of
-  // retired_letter_ids in the Persona_List, so they are read from there.
-  const RETIRED_BY_ROTATION = RETIRED_LETTER_IDS.slice(-2);
+  // The IDs this rotation retired are the two entries just before the last one
+  // in retired_letter_ids (the list order is: Maya's rotation, then Priya's
+  // rotation). They are read from there.
+  const RETIRED_BY_ROTATION = RETIRED_LETTER_IDS.slice(-3, -1);
 
   function maya() {
     const entry = PERSONAS.find((p) => p.key === "us-maya");
