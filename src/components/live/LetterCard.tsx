@@ -76,7 +76,7 @@ export function LetterCard({ letterId, appOrigin, opensAt, envelopeHash }: Lette
       {/* The seal is drawn from the same hash as the Fingerprint below (U4.1, U5.4). */}
       <WaxSeal hash={envelopeHash} size={72} className={styles.cardSeal} />
       <h2 id={headingId} className={styles.cardTitle}>
-        {LIVE_COPY.letterCardTitle}
+        {LIVE_COPY.letterCardHeading}
       </h2>
       <div className={styles.cardQr} aria-hidden="true" data-live-card-qr>
         <svg
@@ -91,6 +91,8 @@ export function LetterCard({ letterId, appOrigin, opensAt, envelopeHash }: Lette
       <p className={styles.cardOpens}>
         {LIVE_COPY.letterCardOpens.replace("{time}", opensText)}
       </p>
+      <p className={styles.cardOpens}>{LIVE_COPY.letterCardHint}</p>
+      <p className={styles.cardOpens}>{LIVE_COPY.linkLabel}</p>
       <p className={styles.cardLink} data-live-card-link>
         {linkText}
       </p>

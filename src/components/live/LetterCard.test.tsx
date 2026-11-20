@@ -35,7 +35,7 @@ function html(): string {
 describe("LetterCard", () => {
   it("shows the card heading and the Demo label", () => {
     const out = html();
-    expect(out).toContain(LIVE_COPY.letterCardTitle);
+    expect(out).toContain(LIVE_COPY.letterCardHeading);
     expect(out).toContain(DEMO_COPY.demoLabel);
   });
 

@@ -54,7 +54,7 @@ describe("SealedKeepsakes", () => {
 
   it("offers the letter card and the calendar download", () => {
     const out = keepsakesHtml();
-    expect(out).toContain(LIVE_COPY.letterCardTitle);
+    expect(out).toContain(LIVE_COPY.letterCardHeading);
     expect(out).toContain(LIVE_COPY.downloadIcs);
     expect(out).toContain("data-live-ics");
   });
@@ -101,7 +101,7 @@ describe("SealedView keepsakes placement", () => {
       createElement(SealedView, { state: sealedState, appOrigin: APP_ORIGIN, nowMs: () => NOW_MS }),
     );
     expect(out).toContain("data-live-keepsakes");
-    expect(out).toContain(LIVE_COPY.letterCardTitle);
+    expect(out).toContain(LIVE_COPY.letterCardHeading);
     expect(out.indexOf(LIVE_COPY.keepLink)).toBeLessThan(out.indexOf("data-live-keepsakes"));
   });
 
