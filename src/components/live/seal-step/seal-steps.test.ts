@@ -5,7 +5,7 @@
 
 import { describe, expect, it } from "vitest";
 
-import { LIVE_COPY } from "../copy";
+import { PRESS_COPY } from "../press/copy";
 import { sealStepsView } from "./seal-steps";
 
 describe("sealStepsView", () => {
@@ -19,7 +19,7 @@ describe("sealStepsView", () => {
     const view = sealStepsView({ tag: "write", backupChoice: "skip" });
     expect(view.one).toEqual({
       state: "current",
-      hint: LIVE_COPY.sealStepOneHint,
+      hint: PRESS_COPY.stepOneHint,
     });
     expect(view.two.state).toBe("pending");
   });
@@ -28,11 +28,11 @@ describe("sealStepsView", () => {
     const view = sealStepsView({ tag: "created", backupChoice: "card" });
     expect(view.one).toEqual({
       state: "done",
-      hint: LIVE_COPY.sealStepPasskeyMade,
+      hint: PRESS_COPY.stepPasskeyMade,
     });
     expect(view.two).toEqual({
       state: "current",
-      hint: LIVE_COPY.sealStepTwoHint,
+      hint: PRESS_COPY.stepTwoHint,
     });
   });
 
@@ -47,7 +47,7 @@ describe("sealStepsView", () => {
     expect(view.one.state).toBe("done");
     expect(view.two).toEqual({
       state: "current",
-      hint: LIVE_COPY.sealStepTwoHint,
+      hint: PRESS_COPY.stepTwoHint,
     });
   });
 

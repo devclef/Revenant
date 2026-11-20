@@ -24,15 +24,6 @@ export const LIVE_COPY = {
   /** The one in-browser paragraph of the Seal step (spec 14, S3.3). */
   sealParagraph:
     'You\'ll press the wax twice: once to make your passkey, once to set the seal. The passkey is named "Revenant demo" in your passkey manager.',
-  /** The two presses under the wax (spec 15, task 9; prototype screens 9 to 15). */
-  sealStepOne: "Make your passkey",
-  sealStepTwo: "Set the seal",
-  sealStepOneHint: "Press the wax to make your passkey.",
-  sealStepPasskeyMade: "Passkey made",
-  sealStepTwoHint:
-    "Your device will ask once more to set the seal. Press the wax.",
-  sealChooseFirst: "Choose a backup option first.",
-  backupCardSaved: "Backup card saved.",
   /** The text control that opens the cross-device line (spec 14, S5.2). */
   crossDeviceQuestion: "Opening on another device?",
   /** The text control that returns to the Write step (spec 14, S5.3). */
@@ -164,6 +155,10 @@ export const LIVE_COPY = {
   fallbackWarning: "A lost key means a lost letter. Revenant cannot recover it.",
   copyKey: "Copy",
   copied: "Copied",
+  /** The no-passkey instruction above the key and the last line (spec 15, task 9; screen 14). */
+  noPrfPress: "Save the key and tick the box. Then press the wax.",
+  noPrfOther:
+    "Other options: try another device or browser, or open a persona letter.",
   savedLabel: "I have saved this key",
   sealWithKey: "Seal with this key",
   notNow: "Not now",

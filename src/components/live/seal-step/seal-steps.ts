@@ -4,7 +4,7 @@
 // data. Each press is `pending`, `current` or `done`. Only the reader's own
 // next press is `current`, and only `current` carries its hint line.
 
-import { LIVE_COPY } from "../copy";
+import { PRESS_COPY } from "../press/copy";
 import type { BackupChoiceValue } from "../write-draft";
 import type { PressStatusTag } from "./press-status";
 
@@ -34,22 +34,22 @@ export function sealStepsView(input: {
   }
   if (tag === "write" || tag === "creating") {
     return {
-      one: { state: "current", hint: LIVE_COPY.sealStepOneHint },
+      one: { state: "current", hint: PRESS_COPY.stepOneHint },
       two: { state: "pending", hint: null },
     };
   }
   if (tag === "created") {
     return {
-      one: { state: "done", hint: LIVE_COPY.sealStepPasskeyMade },
-      two: { state: "current", hint: LIVE_COPY.sealStepTwoHint },
+      one: { state: "done", hint: PRESS_COPY.stepPasskeyMade },
+      two: { state: "current", hint: PRESS_COPY.stepTwoHint },
     };
   }
   // confirming, preparing, sealing: the first press is done.
   return {
-    one: { state: "done", hint: LIVE_COPY.sealStepPasskeyMade },
+    one: { state: "done", hint: PRESS_COPY.stepPasskeyMade },
     two: {
       state: "current",
-      hint: tag === "confirming" ? LIVE_COPY.sealStepTwoHint : null,
+      hint: tag === "confirming" ? PRESS_COPY.stepTwoHint : null,
     },
   };
 }

@@ -62,6 +62,9 @@ export function BackupFallback({ keyText, onSealPress, onDecline }: BackupFallba
       <DemoLabel />
       <h1 className={styles.heading}>{LIVE_COPY.fallbackTitle}</h1>
       <p className={styles.intro}>{LIVE_COPY.fallbackIntro}</p>
+      <p className={styles.intro} data-no-prf-press="">
+        {LIVE_COPY.noPrfPress}
+      </p>
 
       <div className={styles.keyBox} data-live-key>
         {keyGroups(keyText).map((group, index) => (
@@ -105,6 +108,9 @@ export function BackupFallback({ keyText, onSealPress, onDecline }: BackupFallba
           {LIVE_COPY.notNow}
         </button>
       </div>
+      <p className={styles.intro} data-no-prf-other="">
+        {LIVE_COPY.noPrfOther}
+      </p>
     </div>
   );
 }

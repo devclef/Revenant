@@ -3,7 +3,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { LIVE_COPY } from "../copy";
+import { PRESS_COPY } from "../press/copy";
 import { SealSteps } from "./SealSteps";
 
 describe("SealSteps", () => {
@@ -11,10 +11,10 @@ describe("SealSteps", () => {
     const html = renderToStaticMarkup(
       <SealSteps tag="write" backupChoice={null} />,
     );
-    expect(html).toContain(LIVE_COPY.sealStepOne);
-    expect(html).toContain(LIVE_COPY.sealStepTwo);
-    expect(html.indexOf(LIVE_COPY.sealStepOne)).toBeLessThan(
-      html.indexOf(LIVE_COPY.sealStepTwo),
+    expect(html).toContain(PRESS_COPY.stepOne);
+    expect(html).toContain(PRESS_COPY.stepTwo);
+    expect(html.indexOf(PRESS_COPY.stepOne)).toBeLessThan(
+      html.indexOf(PRESS_COPY.stepTwo),
     );
   });
 
@@ -24,8 +24,8 @@ describe("SealSteps", () => {
     );
     expect(html).toMatch(/data-seal-step-state="done"/);
     expect(html).toMatch(/data-seal-step-state="current"/);
-    expect(html).toContain(LIVE_COPY.sealStepPasskeyMade);
-    expect(html).toContain(LIVE_COPY.sealStepTwoHint);
+    expect(html).toContain(PRESS_COPY.stepPasskeyMade);
+    expect(html).toContain(PRESS_COPY.stepTwoHint);
   });
 
   it("marks no press current before a backup choice", () => {

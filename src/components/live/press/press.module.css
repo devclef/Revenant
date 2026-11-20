@@ -79,6 +79,20 @@
   color: #4a4036;
 }
 
+/* The ghost pressed into the wax (spec 15, task 9). It is inside the wax, so
+ * it shares the wax's opacity and press transform. The fill is a darker wax
+ * tone with a light lip, so the relief reads in every seal state. */
+.relief {
+  position: absolute;
+  top: 18%;
+  left: 18%;
+  width: 64%;
+  height: 64%;
+  fill: rgba(92, 34, 4, 0.42);
+  filter: drop-shadow(0 1px 0 rgba(255, 214, 170, 0.45));
+  pointer-events: none;
+}
+
 /* The wax: 112 px at 440 px wide, in proportion below that (S6.3). */
 .wax {
   position: absolute;

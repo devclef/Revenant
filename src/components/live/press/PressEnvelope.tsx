@@ -111,7 +111,17 @@ export function PressEnvelope({
       >
         <span className={styles.envelope} aria-hidden="true">
           <span className={styles.flap} />
-          <span className={styles.wax} />
+          <span className={styles.wax}>
+            <svg
+              className={styles.relief}
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+              focusable="false"
+              data-wax-relief=""
+            >
+              <path d="M12 3a6.5 6.5 0 0 0-6.5 6.5V20l2.2-1.8L9.5 20l2.5-1.8 2.5 1.8 1.8-1.8 2.2 1.8V9.5A6.5 6.5 0 0 0 12 3Zm-2.4 6.6a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2Zm4.8 0a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2Z" />
+            </svg>
+          </span>
           {caption !== undefined ? (
             <span className={styles.caption}>{caption}</span>
           ) : null}

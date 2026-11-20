@@ -6,7 +6,7 @@
 // The done press shows a check mark and its line. The current press shows its
 // number in orange, the reader's own next action. Pending presses are muted.
 
-import { LIVE_COPY } from "../copy";
+import { PRESS_COPY } from "../press/copy";
 import type { BackupChoiceValue } from "../write-draft";
 import type { PressStatusTag } from "./press-status";
 import { sealStepsView, type SealStepState } from "./seal-steps";
@@ -47,13 +47,13 @@ export function SealSteps({ tag, backupChoice }: SealStepsProps) {
     <ol className={styles.steps} data-seal-steps="">
       <StepItem
         number={1}
-        label={LIVE_COPY.sealStepOne}
+        label={PRESS_COPY.stepOne}
         state={view.one.state}
         hint={view.one.hint}
       />
       <StepItem
         number={2}
-        label={LIVE_COPY.sealStepTwo}
+        label={PRESS_COPY.stepTwo}
         state={view.two.state}
         hint={view.two.hint}
       />
