@@ -41,6 +41,7 @@ import { TAMPER_COPY } from "../../components/reveal/tamper/tamper-copy";
 import {
   BREAK_METHODS,
   FULL_PAGE_STEPS,
+  WALK_BASE_URL,
   MOTION_CONTROL_SELECTOR,
   NO_SEAL,
   PASSKEY_INIT_SCRIPT,
@@ -105,7 +106,7 @@ import {
   walkEnabled,
 } from "./live-walk-matrix";
 
-const BASE_URL = "http://localhost:3000";
+const BASE_URL = WALK_BASE_URL;
 
 /** Text the walk types as the letter. The walk checks it comes back unchanged. */
 const LETTER_TEXT =

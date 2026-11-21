@@ -36,6 +36,9 @@ export const WALK_STEP_NAMES = [
 
 export type WalkStepName = (typeof WALK_STEP_NAMES)[number];
 
+/** The app the Live_Walk and the Press_Test drive: a local production build. */
+export const WALK_BASE_URL = "http://localhost:3000";
+
 /** The two widths every Step_Shot is taken at (Q2.1). */
 export const WALK_SIZES = [
   { width: 1440, height: 900 },
