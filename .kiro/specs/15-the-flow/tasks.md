@@ -222,7 +222,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: `RecallPager*.test.tsx`, `written-on.property.test.ts`, `TextAnswerField.test.tsx`, `RecallScale.test.tsx`, `answer-display-scan.test.ts`, `samples.test.ts`; name each.
   - Copy evidence: tone-check for the changed copy files.
 
-- [ ] 12. Break the seal and the receipts
+- [x] 12. Break the seal and the receipts
   - Agent: `frontend-dev` · Depends on: 5, 11 · Estimated size: L, ~2,000 changed lines
   - Scope: `src/components/ceremony/seal/**`, `src/components/ceremony/close/**`, `src/components/ceremony/letter/**`, `src/components/ceremony/figures/**`, `src/components/reveal/**` (the receipts, `ChangeLine.tsx`, `ReceiptCard.tsx`, `tamper/**`), `src/app/demo/personas/[key]/page.tsx`, `src/components/reveal/copy.ts`, `src/components/ceremony/copy.ts`, and the `*.test.ts(x)` next to each.
   - Covers: `break`, `maya-break`, `receipts-live`, `maya-receipts`, `maya-tampered`, `priya-receipts`. Requirement 12.
