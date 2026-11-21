@@ -246,7 +246,7 @@ export const LIVE_COPY = {
   /** The Author_Question rows on the Write step (spec 10, C2.1). */
   authorQuestionsLegend: "Questions for your future self",
   authorQuestionsHint:
-    "When the letter opens, you'll answer these from memory before you read it.",
+    "Answer each one now. When it opens, you're asked again from memory before you read it.",
   /** `{n}` is the row number, starting at 1. */
   authorQuestionLabel: "Question {n}",
   authorQuestionRemove: "Remove question {n}",

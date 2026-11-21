@@ -24,7 +24,7 @@ export const DESK_COPY = {
   psLegend: "P.S. Questions for opening day",
   /** The intro under the P.S. legend (W6.3). */
   psIntro:
-    "These stay on top of the envelope. When it opens, you answer each one from memory, before a word of the letter is shown. You don't answer them now.",
+    "Answer each one now. When it opens, you're asked again from memory, before you see your answer or the letter.",
   /** Shown instead of the suggestion pills once three rows exist (W8.6). */
   questionsFull: "Three is the most a letter holds.",
   /** The placeholder of an empty Question_Row input (W7.1). */
@@ -34,13 +34,13 @@ export const DESK_COPY = {
   /** The accessible name of an answer field, `{n}` its question number. */
   answerLabelFor: "Answer to question {n}",
   /** The placeholder of an empty answer field (spec 15, R7.1). */
-  answerPlaceholder: "Answer it as you remember it…",
+  answerPlaceholder: "Write your answer…",
   /** Named by the fold check on the first unanswered question, `{n}` its number (spec 15, R7.4). */
   answerMissing: "Question {n} has no answer yet. Answer it or remove it.",
   /** The visible text of the Edit control on a Question_Row (W7.4). */
   edit: "Edit",
   /** The Lock_Line under each Question_Row input (W7.5). */
-  lockLine: "Answered on opening day, before the letter is shown.",
+  lockLine: "Asked again on opening day, before your answer is shown.",
   /** The label above the Suggestion_Pills under the rows (W8.1). */
   askAnother: "Ask another:",
   /** The visible text of the last pill, after the hidden "+ " (W8.1, W8.7). */

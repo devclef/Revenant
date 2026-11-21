@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { firstPoliticalTerm } from "@/lib/personas/banned-terms";
 
 import { LIVE_COPY } from "./copy";
+import { DESK_COPY } from "./desk/copy";
 import { DEFAULT_QUESTION, OCCASIONS, SHARED_SUGGESTIONS } from "./occasions";
 
 /**
@@ -143,6 +144,19 @@ describe("Occasion copy (spec 11, L2.1)", () => {
 
   it("has no check mark copy for the Occasion options (spec 12, W2)", () => {
     expect(LIVE_COPY).not.toHaveProperty("occasionMark");
+  });
+
+  it("pins the Write desk wording of the four strings (spec 16, Requirement 6)", () => {
+    expect(DESK_COPY.psIntro).toBe(
+      "Answer each one now. When it opens, you're asked again from memory, before you see your answer or the letter.",
+    );
+    expect(DESK_COPY.lockLine).toBe(
+      "Asked again on opening day, before your answer is shown.",
+    );
+    expect(DESK_COPY.answerPlaceholder).toBe("Write your answer…");
+    expect(LIVE_COPY.authorQuestionsHint).toBe(
+      "Answer each one now. When it opens, you're asked again from memory before you read it.",
+    );
   });
 
   it("keeps the answer-in-letter line and drops the retired starter keys", () => {
