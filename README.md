@@ -46,12 +46,12 @@ So before the seal breaks, you testify. You write what you think you answered, a
 
 ## The ritual
 
-1. **Write.** Plain text, up to 5,000 characters, with up to three questions you answer as you write. Fuel price receipts (US or EU) are optional.
-2. **Press the seal.** Pick an opening date and seal with your passkey.
+1. **Write.** Start from an occasion (the year ahead, work, family, a decision, or blank), or start blank. Each occasion offers a letter starter and one question in your own voice. Add up to three questions and answer each one as you write. Plain text, up to 5,000 characters. Fuel price receipts (US or EU) are optional.
+2. **Press the seal.** Pick an opening date and seal with your passkey. The questions and your answers to them are sealed with the letter, and you cannot change them afterwards.
 3. **Keep.** A letter card with a QR link, a backup key card and an `.ics` file.
 4. **Wait.** Scanning early shows "still sealed" and a countdown.
-5. **Testify.** Unlock, then write what you remember.
-6. **See the receipts.** Break the seal. Your testimony beside each sealed answer, then the letter, then any figures then and now.
+5. **Testify.** After the opening date, unlock. Revenant asks each question again, and you write what you remember answering. Your testimony is stored before anything sealed is shown.
+6. **See the receipts.** Break the seal. Each question with your testimony beside the answer you sealed, then the letter, then any figures then and now. Revenant does not explain the difference.
 
 <!-- TODO(owner): ceremony screenshot. On https://revenant.devclef.se/demo/personas/us-maya at 1440x900, answer both questions, then capture the Break the seal step: the ghost risen from the soil holding the envelope, orange seal centred, before pressing. Save as docs/ceremony-break.png and add it here. -->
 
