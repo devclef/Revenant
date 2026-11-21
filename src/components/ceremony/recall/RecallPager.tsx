@@ -284,23 +284,28 @@ export function RecallPager({
     n: index + 1,
     total,
   });
+  // Spec 15, 11.4. An author question (text) shows the plain counter. A figure
+  // question adds its date: "as of {date}" on a persona, "sealed on {date}" on
+  // a live or real letter. The date is the sealing day (spec 14, T1.2), empty
+  // when the sealing instant does not parse, and then the counter stays plain.
+  const isFigure = question.answer_type === "number";
   const asOfText =
-    writtenAsOf === undefined
+    !isFigure || writtenAsOf === undefined
       ? undefined
       : fill(REVEAL_COPY.questionCounterAsOf, {
           date: formatCalendarDate(writtenAsOf),
         });
-  // A live or real letter names the day it was sealed (spec 14, T1.2). The day
-  // is empty when the sealing instant does not parse; the counter then keeps
-  // its plain form.
   const writtenOnDay =
     writtenAsOf !== undefined || writtenOn === undefined
       ? ""
       : formatWrittenOn(writtenOn.sealedAt, writtenOn.timeZone);
   const writtenOnText =
-    writtenOnDay === ""
+    !isFigure || writtenOnDay === ""
       ? undefined
-      : fill(REVEAL_COPY.questionCounterWrittenOn, { date: writtenOnDay });
+      : fill(REVEAL_COPY.questionCounterSealedOn, { date: writtenOnDay });
+  // The attribute marks a live or real letter's counter, with or without the
+  // date on it, so the layout check can find it on every question.
+  const liveCounter = writtenAsOf === undefined && writtenOnDay !== "";
 
   // The intro sits on the first question only (R11.15). A persona letter names
   // its written-as-of date; a Live_Letter gets the hint alone.
@@ -360,7 +365,7 @@ export function RecallPager({
       <p
         className={styles.counter}
         data-fit="counter"
-        data-recall-counter={writtenOnText === undefined ? undefined : ""}
+        data-recall-counter={liveCounter ? "" : undefined}
       >
         {asOfText === undefined && writtenOnText === undefined ? (
           counterBase
@@ -518,6 +523,16 @@ export function RecallPager({
               </span>
             ) : null}
 
+            {isNumber && showSampleNote ? (
+              <p
+                id={sampleNoteId}
+                className={styles.sampleNote}
+                data-sample-note=""
+              >
+                {REVEAL_COPY.sampleNote}
+              </p>
+            ) : null}
+
             {isNumber && unit !== undefined ? (
               <RecallScale
                 id={question.id}
@@ -533,12 +548,6 @@ export function RecallPager({
                 }
                 spokenPrefix={REVEAL_COPY.yourAnswer}
               />
-            ) : null}
-
-            {isNumber && showSampleNote ? (
-              <p id={sampleNoteId} className={styles.sampleNote}>
-                {REVEAL_COPY.sampleNote}
-              </p>
             ) : null}
 
             {isNumber ? (

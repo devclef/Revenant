@@ -157,38 +157,36 @@ function buttonTag(markup: string, label: string): string {
   return markup.slice(open, start);
 }
 
-// Feature: spec 14 (T1.2, T7): the recall counter. A live or real letter names
-// the day it was sealed ("you wrote this on"); a persona keeps its "as of"
-// counter and ignores the sealing instant.
+// Feature: spec 14 (T1.2, T7) and spec 15 (11.4): the recall counter. An author
+// (text) question shows the plain counter on every letter. Only a figure question
+// adds a date: "sealed on" on a live or real letter, "as of" on a persona.
 
-describe("the recall counter (spec 14, T1.2)", () => {
+describe("the recall counter on author questions (spec 15, 11.4)", () => {
   const sealed = {
     sealedAt: "2026-11-17T09:00:00Z",
     timeZone: "UTC",
   };
 
-  it("shows the written-on form on a live or real letter", () => {
+  it("shows the plain counter on a live or real letter", () => {
     const markup = render(textPayload, { writtenOn: sealed });
-    expect(counterText(markup)).toBe(
-      "Question 1 of 2 · you wrote this on 17 November 2026",
-    );
+    expect(counterText(markup)).toBe("Question 1 of 2");
+    expect(markup).not.toContain("you wrote this on");
+    expect(markup).not.toContain("sealed on");
   });
 
-  it("marks the counter with data-recall-counter only in the written-on form", () => {
-    const withDay = render(textPayload, { writtenOn: sealed });
-    expect(withDay).toMatch(/data-recall-counter=""/);
-    const plain = render(textPayload);
-    expect(plain).not.toContain("data-recall-counter");
+  it("marks a live letter's counter with data-recall-counter, as the layout check reads it", () => {
+    const markup = render(textPayload, { writtenOn: sealed });
+    expect(markup).toMatch(/data-recall-counter=""/);
   });
 
-  it("names the calendar day in the stated time zone, not in UTC", () => {
+  it("names the sealing day in the asked line, in the zone it is given", () => {
     const markup = render(textPayload, {
       writtenOn: {
         sealedAt: "2026-11-17T23:30:00Z",
         timeZone: "Europe/Stockholm",
       },
     });
-    expect(markup).toContain("you wrote this on 18 November 2026");
+    expect(markup).toContain("On 18 November 2026 you asked yourself:");
   });
 
   it("keeps the plain counter when the sealing instant does not parse", () => {
@@ -196,17 +194,15 @@ describe("the recall counter (spec 14, T1.2)", () => {
       writtenOn: { sealedAt: "not a date", timeZone: "UTC" },
     });
     expect(markup).toContain("Question 1 of 2");
-    expect(markup).not.toContain("you wrote this on");
     expect(markup).not.toContain("data-recall-counter");
   });
 
-  it("keeps the as-of counter on a persona and ignores the sealing instant", () => {
+  it("shows the plain counter on a persona author question, with no as-of date", () => {
     const markup = render(textPayload, {
       writtenAsOf: "2024-05-12",
       writtenOn: sealed,
     });
-    expect(counterText(markup)).toBe("Question 1 of 2 · as of 12 May 2024");
-    expect(markup).not.toContain("you wrote this on");
+    expect(counterText(markup)).toBe("Question 1 of 2");
     expect(markup).not.toContain("data-recall-counter");
   });
 });

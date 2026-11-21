@@ -154,11 +154,13 @@ export const REVEAL_COPY = {
   questionCounterAsOf: "as of {date}",
 
   /**
-   * The as-of part of the counter on a live or real letter (spec 14, T1.2).
-   * `{date}` is the sealing day in the reader's zone. The counter is
-   * `questionCounter` plus the separator plus this text.
+   * The sealed-on part of a figure question's counter on a live or real letter
+   * (spec 15, 11.4). `{date}` is the sealing day in the reader's zone. Author
+   * questions show no date here, because their "On {date} you asked yourself"
+   * line carries it. The counter is `questionCounter` plus the separator plus
+   * this text.
    */
-  questionCounterWrittenOn: "you wrote this on {date}",
+  questionCounterSealedOn: "sealed on {date}",
 
   /**
    * The visible label above an author question's field (spec 15, 11.1). The

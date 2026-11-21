@@ -151,9 +151,10 @@ describe("testify-last: the last author question", () => {
     expect(markup).toContain(`${escaped(REVEAL_COPY.dontRemember)}</label>`);
   });
 
-  it("keeps the counter's sealing day on a live letter", () => {
+  it("shows the plain counter on a live letter's author question", () => {
     const markup = render(textPayload, { initialIndex: 1 });
     expect(markup).toContain("Question 2 of 2");
-    expect(markup).toContain(escaped(`you wrote this on ${WRITTEN_ON}`));
+    expect(markup).not.toContain("you wrote this on");
+    expect(markup).not.toContain("sealed on");
   });
 });
