@@ -84,9 +84,62 @@ function runTitle(run: PressRun): string {
   return pressRunLabel(run.size, run.calm, extra);
 }
 
-/** Read the vertical scroll position of the page. */
-async function scrollY(page: Page): Promise<number> {
-  return page.evaluate(() => window.scrollY);
+/**
+ * Records `window.scrollY` inside the press's own down and up events
+ * (pointerdown and pointerup for mouse and touch, keydown and keyup for the
+ * keyboard). The listeners are on `window` in the capture phase, so they run
+ * before any handler of the page. Design section 2 asks for the up read "in the
+ * same task, before the next frame", and Requirement 1.2 ends the check at
+ * pointer up, before the Step_Track scroll of the step change. A read with
+ * `page.evaluate` after `mouse.up()` returns comes later than that: the click
+ * has run and a frame may have passed. The up read also ends at the press's
+ * `click`, whichever comes first: Enter activates a button on key down, so for
+ * the keyboard the step change (and the Step_Track scroll a frame later) comes
+ * before key up.
+ */
+const PRESS_SCROLL_RECORDER = `(() => {
+  const rec = { down: null, up: null };
+  window.__pressScroll = rec;
+  const onDown = () => {
+    if (rec.down === null) rec.down = window.scrollY;
+  };
+  const onUp = () => {
+    if (rec.down !== null && rec.up === null) rec.up = window.scrollY;
+  };
+  for (const type of ["pointerdown", "keydown"]) {
+    window.addEventListener(type, onDown, true);
+  }
+  for (const type of ["pointerup", "keyup", "click"]) {
+    window.addEventListener(type, onUp, true);
+  }
+})();`;
+
+type PressScroll = { down: number | null; up: number | null };
+
+/** Forget the last press, so the next down and up events are recorded. */
+async function resetPressScroll(page: Page): Promise<void> {
+  await page.evaluate(() => {
+    const rec = (window as unknown as { __pressScroll: PressScroll })
+      .__pressScroll;
+    rec.down = null;
+    rec.up = null;
+  });
+}
+
+/** scrollY as read in the press's down and up events. */
+async function readPressScroll(
+  page: Page,
+  name: string,
+): Promise<{ before: number; after: number }> {
+  const rec = await page.evaluate(
+    () => (window as unknown as { __pressScroll: PressScroll }).__pressScroll,
+  );
+  if (rec.down === null || rec.up === null) {
+    throw new Error(
+      `no ${rec.down === null ? "down" : "up"} event reached the page for ${name}`,
+    );
+  }
+  return { before: rec.down, after: rec.up };
 }
 
 /** Bring a control into view, or fail with the control's name. */
@@ -120,12 +173,11 @@ async function holdPress(
 ): Promise<{ before: number; after: number }> {
   const { x, y } = await centre(locator, name);
   await page.mouse.move(x, y);
-  const before = await scrollY(page);
+  await resetPressScroll(page);
   await page.mouse.down();
   await page.waitForTimeout(PRESS_HOLD_MS);
   await page.mouse.up();
-  const after = await scrollY(page);
-  return { before, after };
+  return readPressScroll(page, name);
 }
 
 /** Find the Step_Indicator's current item text, or null. */
@@ -328,9 +380,12 @@ async function foldByTouch(
   const { locator, name } = targetLocator(page, "fold");
   try {
     const { x, y } = await centre(locator, name);
-    const before = await scrollY(page);
+    await resetPressScroll(page);
     await cdpTap(x, y);
-    const after = await scrollY(page);
+    const { before, after } = await readPressScroll(
+      page,
+      `${name} by touch tap`,
+    );
     checks.push(
       checkPressScroll({ target: `${name} by touch tap`, before, after }),
     );
@@ -362,10 +417,13 @@ async function foldByKeyboard(page: Page, checks: PressCheck[]): Promise<void> {
     if (!focused) {
       throw new Error("Tab did not reach the Fold_Button");
     }
-    const before = await scrollY(page);
+    await resetPressScroll(page);
     await page.keyboard.down("Enter");
     await page.keyboard.up("Enter");
-    const after = await scrollY(page);
+    const { before, after } = await readPressScroll(
+      page,
+      "the Fold_Button by Tab and Enter",
+    );
     checks.push(
       checkPressScroll({
         target: "the Fold_Button by Tab and Enter",
@@ -394,6 +452,7 @@ async function runPressTest(run: PressRun): Promise<PressCheck[]> {
       hasTouch: run.fold === "touch",
     });
     await context.addInitScript(PASSKEY_INIT_SCRIPT);
+    await context.addInitScript(PRESS_SCROLL_RECORDER);
     const page = await context.newPage();
     const cdp = await context.newCDPSession(page);
 
