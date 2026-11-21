@@ -37,8 +37,14 @@ export {
   sub,
   isZero,
   ratioPercent,
+  roundDecimal,
 } from "./decimal";
 export type { Decimal, RatioPercent } from "./decimal";
+
+export { formulaInput } from "./formula-input";
+
+export { PUBLISHED_PRECISION } from "./published-precision";
+export type { PublishedPrecision } from "./published-precision";
 
 export { computeChange, CHANGE_FORMULA_ID } from "./change";
 
