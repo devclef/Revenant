@@ -8,6 +8,8 @@ import {
   type RefObject,
 } from "react";
 
+import { KeepGroup } from "@/components/ui/KeepGroup";
+
 import letterField from "../letter-field.module.css";
 import { LIVE_COPY } from "../copy";
 
@@ -131,7 +133,7 @@ export function QuestionRow({
   const answerDescribedBy = answerProblem ? answerProblemId : undefined;
 
   return (
-    <li className={styles.row} data-question-row="">
+    <KeepGroup as="li" className={styles.row} data-question-row="">
       <WaxDisc n={n} />
       <div className={styles.qBody}>
         <label htmlFor={inputId} className={styles.visuallyHidden}>
@@ -195,6 +197,6 @@ export function QuestionRow({
       >
         {LIVE_COPY.authorQuestionRemoveText}
       </button>
-    </li>
+    </KeepGroup>
   );
 }

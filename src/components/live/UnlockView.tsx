@@ -30,6 +30,7 @@
 import type { FormEvent } from "react";
 
 import type { KeyNotice, UnlockInfo } from "@/components/reveal/opening-machine";
+import { KeepGroup } from "@/components/ui/KeepGroup";
 import type { UnlockControls } from "./unlock";
 import { LIVE_COPY } from "./copy";
 import styles from "./live.module.css";
@@ -106,25 +107,27 @@ export function UnlockView({
       {hasBackup ? (
         <form className={styles.field} onSubmit={onSubmit}>
           {hasPasskey ? null : <p className={styles.intro}>{LIVE_COPY.backupOnly}</p>}
-          <label className={styles.label} htmlFor="unlock-backup-key">
-            {LIVE_COPY.backupLabel}
-          </label>
-          <p id="unlock-backup-key-hint" className={styles.hint}>
-            {LIVE_COPY.backupHint}
-          </p>
-          <input
-            id="unlock-backup-key"
-            name="backup-key"
-            type="text"
-            className={styles.keyField}
-            value={keyText}
-            onChange={(event) => onKeyTextChange(event.target.value)}
-            autoComplete="off"
-            autoCorrect="off"
-            autoCapitalize="off"
-            spellCheck={false}
-            aria-describedby="unlock-backup-key-hint"
-          />
+          <KeepGroup as="div">
+            <label className={styles.label} htmlFor="unlock-backup-key">
+              {LIVE_COPY.backupLabel}
+            </label>
+            <p id="unlock-backup-key-hint" className={styles.hint}>
+              {LIVE_COPY.backupHint}
+            </p>
+            <input
+              id="unlock-backup-key"
+              name="backup-key"
+              type="text"
+              className={styles.keyField}
+              value={keyText}
+              onChange={(event) => onKeyTextChange(event.target.value)}
+              autoComplete="off"
+              autoCorrect="off"
+              autoCapitalize="off"
+              spellCheck={false}
+              aria-describedby="unlock-backup-key-hint"
+            />
+          </KeepGroup>
           <button
             type="submit"
             className={styles.secondary}
