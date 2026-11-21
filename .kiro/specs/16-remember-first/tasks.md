@@ -118,7 +118,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Copy evidence: tone-check for every changed copy file.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 4. The headline
+- [x] 4. The headline
   - Agent: `frontend-dev` · Depends on: 2 · Estimated size: S, ~300 changed lines
   - Scope: `src/components/brand/copy.ts` (`tagline`), `src/components/ceremony/scene/SceneHeadline.tsx`, `src/components/landing/LandingHero.tsx`, `src/components/landing/landing.module.css`, `src/app/opengraph-image.tsx`, `src/components/ceremony/ASSETS.md`, `src/test/retired-phrases.test.ts`, and the tests named in 5.7.
   - Design sections: "5. Headline".
