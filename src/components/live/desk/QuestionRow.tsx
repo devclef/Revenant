@@ -121,10 +121,11 @@ export function QuestionRow({
   }, []);
 
   // Edit focuses the field and puts the caret after the last character (W7.4).
+  // preventScroll: pressing Edit must not move the page (spec 16, requirement 1.1).
   function focusEnd() {
     const el = ownRef.current;
     if (el === null) return;
-    el.focus();
+    el.focus({ preventScroll: true });
     const end = el.value.length;
     el.setSelectionRange(end, end);
   }

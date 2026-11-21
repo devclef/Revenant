@@ -83,10 +83,14 @@ export function AuthorQuestions({
 
   useEffect(() => {
     if (pendingFocus === null) return;
+    // preventScroll: a press that adds or edits a row must not move the page
+    // (spec 16, requirement 1.1).
     if (pendingFocus.kind === "add") {
-      addRef.current?.focus();
+      addRef.current?.focus({ preventScroll: true });
     } else {
-      textareaRefs.current.get(pendingFocus.index)?.focus();
+      textareaRefs.current
+        .get(pendingFocus.index)
+        ?.focus({ preventScroll: true });
     }
     setPendingFocus(null);
   }, [pendingFocus, questions.length]);
