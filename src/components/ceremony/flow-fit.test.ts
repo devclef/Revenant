@@ -108,3 +108,52 @@ describe("Figures_Heading re-check across the close settle (N1)", () => {
     );
   });
 });
+
+// Regression guard for the break-stage phone step row (issue #524, fix 1a109dd).
+// The Step_Indicator row ("Step 2 of 4 · ...") must end before the Compact_Ghost's
+// left edge. This evaluates the row's CSS in pixels at 360 px wide and fails if
+// the row's text box runs under the Ghost's box.
+
+/** Evaluates a calc() made of `+` terms, each a product of numbers, N%, Npx and min(26vh, 170px). */
+function evalCalc(expr: string, columnPx: number, viewportHeightPx: number): number {
+  const body = expr.trim().replace(/^calc\(/, "").replace(/\)$/, "");
+  return body.split(" + ").reduce((sum, term) => {
+    const product = term.split(" * ").reduce((acc, factor) => {
+      const f = factor.trim();
+      if (f === "min(26vh, 170px)") return acc * Math.min(0.26 * viewportHeightPx, 170);
+      if (/^[\d.]+%$/.test(f)) return acc * (columnPx * parseFloat(f)) / 100;
+      if (/^[\d.]+px$/.test(f)) return acc * parseFloat(f);
+      if (/^[\d.]+$/.test(f)) return acc * parseFloat(f);
+      throw new Error(`unsupported calc factor: ${f}`);
+    }, 1);
+    return sum + product;
+  }, 0);
+}
+
+describe("break-stage step row clears the Compact_Ghost box at 360 wide (issue #524)", () => {
+  const row = ruleBody(sceneCss, "[data-step-indicator]");
+  const padRight = row.match(/padding-right:\s*([^;]+);/)?.[1] ?? "";
+  const minHeight = row.match(/min-height:\s*([^;]+);/)?.[1] ?? "";
+  const columnPx = 360;
+
+  for (const viewportHeightPx of [640, 800]) {
+    it(`ends the step text before the Ghost's left edge at ${viewportHeightPx} px tall`, () => {
+      expect(padRight).not.toBe("");
+      // The Compact_Ghost is centred on the column, 0.58 W wide. Its left edge is
+      // columnPx / 2 - 0.29 W, and the text box's right edge is columnPx - padding.
+      const w = Math.min(0.26 * viewportHeightPx, 170);
+      const ghostLeftPx = columnPx / 2 - 0.29 * w;
+      const textRightPx = columnPx - evalCalc(padRight, columnPx, viewportHeightPx);
+      expect(textRightPx).toBeLessThanOrEqual(ghostLeftPx);
+    });
+
+    it(`keeps the row as tall as the Ghost's box at ${viewportHeightPx} px tall`, () => {
+      expect(minHeight).not.toBe("");
+      const w = Math.min(0.26 * viewportHeightPx, 170);
+      const ghostHeightPx = 0.58 * 1.2 * w;
+      expect(evalCalc(minHeight, columnPx, viewportHeightPx)).toBeGreaterThanOrEqual(
+        ghostHeightPx - 1e-6,
+      );
+    });
+  }
+});
