@@ -255,8 +255,6 @@ export const LIVE_COPY = {
   /** Announced to screen readers after a row is removed. `{n}` is its number. */
   authorQuestionRemoved: "Question {n} removed.",
   authorQuestionAdd: "Add a question",
-  /** Shown after the rows, so the author knows they can answer in the letter too. */
-  answerInLetter: "Answer them in your letter too, in your own words.",
   /** Shown after the row was touched or a seal was attempted (C2.3). */
   questionTooLong: "Keep each question to 200 characters or fewer.",
   /** Shown after the answer was touched or a seal was attempted (spec 15, R7.3). */

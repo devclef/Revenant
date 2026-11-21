@@ -39,9 +39,7 @@ describe("AuthorQuestions copy (spec 10, C2.1, C2.3 to C2.5)", () => {
     expect(LIVE_COPY.authorQuestionRemove).toBe("Remove question {n}");
     expect(LIVE_COPY.authorQuestionRemoved).toBe("Question {n} removed.");
     expect(LIVE_COPY.authorQuestionAdd).toBe("Add a question");
-    expect(LIVE_COPY.answerInLetter).toBe(
-      "Answer them in your letter too, in your own words.",
-    );
+    expect(LIVE_COPY).not.toHaveProperty("answerInLetter");
     expect(LIVE_COPY.questionTooLong).toBe(
       "Keep each question to 200 characters or fewer.",
     );
@@ -81,7 +79,9 @@ describe("AuthorQuestions rendering", () => {
     expect(hint).toBeGreaterThan(html.indexOf(LIVE_COPY.authorQuestionAdd));
     // Above Next the step holds one hint line only (L3.5), so the
     // answer-in-letter line is not rendered.
-    expect(html).not.toContain(LIVE_COPY.answerInLetter);
+    expect(html).not.toContain(
+      "Answer them in your letter too, in your own words.",
+    );
   });
 
   it("offers Add a question while fewer than 3 rows exist, and not at 3", () => {

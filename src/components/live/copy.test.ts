@@ -159,10 +159,8 @@ describe("Occasion copy (spec 11, L2.1)", () => {
     );
   });
 
-  it("keeps the answer-in-letter line and drops the retired starter keys", () => {
-    expect(LIVE_COPY.answerInLetter).toBe(
-      "Answer them in your letter too, in your own words.",
-    );
+  it("drops the answer-in-letter line and the retired starter keys", () => {
+    expect(LIVE_COPY).not.toHaveProperty("answerInLetter");
     const retired = [
       "starterGroup",
       "questionStartersLabel",
