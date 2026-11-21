@@ -400,6 +400,17 @@
     line-height: 1.25;
     padding: 0.2rem 0.5rem;
   }
+
+  /* The phone order as drawn (spec 15, 11.7): the main button sits above the
+     No answer control, so it stays in view at 360 x 640. Only the visual order
+     changes; the markup order and the Tab order are unchanged. */
+  .body > :global([data-nav-row]) {
+    order: 1;
+  }
+
+  .body > .noAnswer {
+    order: 2;
+  }
 }
 
 /* Below 900 px the number question's text lines are tighter, so the Nav_Row of a
