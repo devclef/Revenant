@@ -189,7 +189,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: `seal-step*.test.*`, `press*.test.*`, `BackupChoice.test.tsx`, `LiveWaitStep.test.tsx`, `goto-letter.property.test.ts`, `unlock-in-place.test.ts`, `LiveStepper*.test.tsx`; name each.
   - Copy evidence: tone-check for the changed copy files.
 
-- [ ] 10. The opening flow on `/demo/live` and `/l/{id}`
+- [x] 10. The opening flow on `/demo/live` and `/l/{id}`
   - Agent: `frontend-dev` · Depends on: 6, 9 · Estimated size: L, ~1,700 changed lines
   - Scope: `src/components/reveal/**` (the still-sealed and unlock parts and `OpeningFlow.tsx`), `src/components/live/UnlockView.tsx`, `src/components/live/stepper/LiveStepper.tsx`, `src/components/ceremony/scene/**` (ghost use), `src/app/l/[id]/**`, `src/app/demo/live/**`, `src/components/reveal/copy.ts`, and the `*.test.ts(x)` next to each.
   - Covers: `still-sealed`, `unlock`, `unlock-backup`, `unlock-error`, `emergence`. Requirement 10; design "8. Opening flow on both routes".
