@@ -24,7 +24,7 @@ export const WALK_STEP_NAMES = [
   "press-held",
   "setting",
   "wait",
-  "unlock",
+  "open-letter",
   "testify",
   "marks",
   "letter",
@@ -268,7 +268,7 @@ export const STEP_SUSPECTED_FILES: Record<WalkStepName, string> = {
   write: "src/components/live/WriteForm.tsx",
   "write-occasion": "src/components/live/desk/OccasionPills.tsx",
   "write-receipt": "src/components/live/desk/ReceiptPanel.tsx",
-  "write-failed": "src/components/live/desk/ReceiptPanel.tsx",
+  "write-failed": "src/components/live/desk/QuestionSection.tsx",
   "write-receipts": "src/components/live/FigurePicker.tsx",
   seal: "src/components/live/SealPage.tsx",
   "seal-before-choice": "src/components/live/seal-step/SealStep.tsx",
@@ -276,7 +276,7 @@ export const STEP_SUSPECTED_FILES: Record<WalkStepName, string> = {
   "press-held": "src/components/live/press/PressEnvelope.tsx",
   setting: "src/components/live/press/PressEnvelope.tsx",
   wait: "src/components/live/SealPage.tsx",
-  unlock: "src/components/live/UnlockView.tsx",
+  "open-letter": "src/components/live/stepper/LiveWaitStep.tsx",
   testify: "src/components/ceremony/recall/RecallPager.tsx",
   marks: "src/components/ceremony/seal/SealBreak.tsx",
   letter: "src/components/ceremony/letter/",
@@ -1414,5 +1414,62 @@ export function checkTestifyCounter(text: string | null): StepCheck {
     ok: false,
     expected,
     message: `FAIL the live Testify counter reads "${text.trim()}"`,
+  };
+}
+
+/**
+ * The fold check on an unanswered question (spec 15, R7.4). Pressing the fold
+ * with question `question` unanswered must show its message once, and move focus
+ * to its answer field. `focusedAnswer` is the 1-based number of the answer field
+ * that has focus, or null when focus is elsewhere. `message` is the desk's line
+ * for that question, with its number filled in.
+ */
+export function checkUnansweredFold(input: {
+  question: number;
+  focusedAnswer: number | null;
+  bodyText: string;
+  foldSummaries: number;
+  message: string;
+}): StepCheck {
+  const expected = `the fold names question ${input.question} and focus moves to its answer field`;
+  const named = input.bodyText.replace(/\s+/g, " ").includes(input.message);
+  if (
+    named &&
+    input.focusedAnswer === input.question &&
+    input.foldSummaries === 1
+  ) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  const focus =
+    input.focusedAnswer === null
+      ? "nothing answer-shaped"
+      : `answer ${input.focusedAnswer}`;
+  return {
+    ok: false,
+    expected,
+    message: `FAIL focus is on ${focus}, the line "${input.message}" is ${named ? "shown" : "missing"}, and ${input.foldSummaries} [data-fold-summary] element(s) are shown`,
+  };
+}
+
+/**
+ * The Testify step answers one author question (typed text) and, in the
+ * one-figure variant, one figure question (a number or a scale). Without a
+ * figure in the letter, no figure question is expected.
+ */
+export function checkTestifyKinds(input: {
+  authorAnswered: number;
+  figureAnswered: number;
+  hasFigure: boolean;
+}): StepCheck {
+  const expected =
+    "Testify answers at least one author question, and one figure question when the letter has a figure";
+  const figureOk = !input.hasFigure || input.figureAnswered >= 1;
+  if (input.authorAnswered >= 1 && figureOk) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL Testify answered ${input.authorAnswered} author question(s) and ${input.figureAnswered} figure question(s)`,
   };
 }

@@ -126,7 +126,7 @@ describe("stepShotName", () => {
       "press-held",
       "setting",
       "wait",
-      "unlock",
+      "open-letter",
       "testify",
       "marks",
       "letter",
