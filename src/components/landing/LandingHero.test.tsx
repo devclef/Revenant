@@ -33,8 +33,16 @@ describe("LandingHero with zero personas", () => {
   it("still renders the eyebrow, the tagline as h1 and the sentence", () => {
     const html = markup(0);
     expect(html).toContain("The wax seal, resurrected.");
-    expect(html).toMatch(/<h1[^>]*>Memory drifts with time\. A sealed <span[^>]*>letter\u00a0doesn&#x27;t\.<\/span><\/h1>/);
+    expect(html).toMatch(/<h1[^>]*><span[^>]*data-hero-first=""[^>]*>Memory drifts with\u00a0time\.<\/span> A sealed <span[^>]*>letter\u00a0doesn&#x27;t\.<\/span><\/h1>/);
     expect(html).toContain("Seal what you believe now");
+  });
+
+  it("wraps the first sentence in its own span with the joined last two words", () => {
+    const html = markup(0);
+    const first = html.match(/<span ([^>]*data-hero-first[^>]*)>([^<]*)<\/span>/);
+    expect(first).not.toBeNull();
+    expect(first?.[2]).toBe("Memory drifts with\u00a0time.");
+    expect(first?.[2]).not.toContain("with time.");
   });
 });
 

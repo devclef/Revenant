@@ -35,6 +35,31 @@ export function splitTagline(tagline: string): { before: string; kept: string } 
   };
 }
 
+/**
+ * Splits the text ahead of the kept phrase into its first sentence and the
+ * rest. The sentence ends at the first ". ". Text without one is all sentence.
+ */
+export function splitFirstSentence(before: string): { sentence: string; rest: string } {
+  const end = before.indexOf(". ");
+  if (end < 0) {
+    return { sentence: before, rest: "" };
+  }
+  return { sentence: before.slice(0, end + 1), rest: before.slice(end + 1) };
+}
+
+/**
+ * Joins the last two words of a sentence with a non-breaking space, so
+ * "with time." never breaks between "with" and "time.". Only the rendered
+ * text changes; the Brand_Copy string keeps its ordinary spaces.
+ */
+export function joinLastWords(sentence: string): string {
+  const at = sentence.lastIndexOf(" ");
+  if (at < 0) {
+    return sentence;
+  }
+  return sentence.slice(0, at) + NBSP + sentence.slice(at + 1);
+}
+
 export type SceneHeadlineProps = {
   /** The headline text, already filled in (for example "Maya's letter"). */
   text: string;

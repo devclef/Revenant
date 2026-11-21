@@ -17,7 +17,11 @@
 import Link from "next/link";
 
 import { BRAND_COPY } from "@/components/brand/copy";
-import { splitTagline } from "@/components/ceremony/scene/SceneHeadline";
+import {
+  joinLastWords,
+  splitFirstSentence,
+  splitTagline,
+} from "@/components/ceremony/scene/SceneHeadline";
 
 import { HeroEnvelope } from "./HeroEnvelope";
 import { LANDING_COPY } from "./copy";
@@ -32,6 +36,7 @@ export type LandingHeroProps = {
 
 export function LandingHero({ personaCount, demo2On }: LandingHeroProps) {
   const { before, kept } = splitTagline(BRAND_COPY.tagline);
+  const { sentence, rest } = splitFirstSentence(before);
   // One persona gets the singular label. Two or more get the plural.
   const primaryLabel =
     personaCount === 1 ? LANDING_COPY.primaryCtaOne : LANDING_COPY.primaryCtaMany;
@@ -42,7 +47,10 @@ export function LandingHero({ personaCount, demo2On }: LandingHeroProps) {
         {BRAND_COPY.eyebrow}
       </p>
       <h1 className={styles.headline} data-block="headline">
-        {before}
+        <span className={styles.first} data-hero-first="">
+          {joinLastWords(sentence)}
+        </span>
+        {rest}
         {kept === "" ? null : <span className={styles.keep}>{kept}</span>}
       </h1>
       <p className={styles.sentence} data-block="sentence">

@@ -282,6 +282,12 @@
   .hero {
     padding-top: 0;
   }
+
+  /* The first sentence stays on one line from 900 px up. Below that it wraps
+     with the rest of the headline, balanced. */
+  .first {
+    white-space: nowrap;
+  }
 }
 
 @media (min-width: 1920px) {
