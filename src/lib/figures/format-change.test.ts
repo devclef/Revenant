@@ -337,3 +337,105 @@ describe("formatPeriod", () => {
     );
   });
 });
+
+describe("formatChange unsigned magnitudes", () => {
+  it("gives the unsigned difference and percent for a rise", () => {
+    const display = formatChange(
+      comparableChange(
+        official({ value: "2.00", period: "2024-09" }),
+        official({ value: "5.00", period: "2026-09" }),
+      ),
+      "U.S.",
+    );
+
+    expect(display.differenceMagnitude).toBe("3.00");
+    expect(display.percentMagnitude).toBe("150.0%");
+    // The signed strings are unchanged.
+    expect(display.difference).toBe("+3.00");
+    expect(display.percent).toBe("+150.0%");
+  });
+
+  it("gives the unsigned difference and percent for a fall, with no minus sign", () => {
+    const display = formatChange(
+      comparableChange(
+        official({ value: "9.00", period: "2024-09" }),
+        official({ value: "6.00", period: "2026-09" }),
+      ),
+      "U.S.",
+    );
+
+    expect(display.differenceMagnitude).toBe("3.00");
+    expect(display.percentMagnitude).toBe("33.3%");
+    expect(display.differenceMagnitude.includes(MINUS)).toBe(false);
+    expect(display.differenceMagnitude.includes("-")).toBe(false);
+    expect(display.percentMagnitude?.includes(MINUS)).toBe(false);
+    expect(display.percentMagnitude?.includes("-")).toBe(false);
+    expect(display.difference).toBe(`${MINUS}3.00`);
+  });
+
+  it("gives zero magnitudes at the row's decimals when the value is unchanged", () => {
+    // The row's decimals are the larger of the two values' fraction digits.
+    const twoDigits = formatChange(
+      comparableChange(
+        official({ value: "3.00", period: "2024-09" }),
+        official({ value: "3.00", period: "2026-09" }),
+      ),
+      "U.S.",
+    );
+    expect(twoDigits.differenceMagnitude).toBe("0.00");
+    expect(twoDigits.percentMagnitude).toBe("0.0%");
+
+    const threeDigits = formatChange(
+      comparableChange(
+        official({ value: "2.500", period: "2024-09" }),
+        official({ value: "2.500", period: "2026-09" }),
+      ),
+      "U.S.",
+    );
+    expect(threeDigits.differenceMagnitude).toBe("0.000");
+    expect(threeDigits.percentMagnitude).toBe("0.0%");
+  });
+
+  it("rounds the difference magnitude at the row's decimals, half away from zero", () => {
+    // 5.125 - 2.5 = 2.625, shown to the larger of 1 and 3 digits (3).
+    const display = formatChange(
+      comparableChange(
+        official({ value: "2.5", period: "2024-09" }),
+        official({ value: "5.125", period: "2026-09" }),
+      ),
+      "U.S.",
+    );
+
+    expect(display.differenceMagnitude).toBe("2.625");
+  });
+
+  it("rounds the magnitude at differenceDigits, and a rounded-to-zero rise is zero", () => {
+    // 3.001 - 3.000 = 0.001, which is 0.00 at 2 digits. The signed string keeps
+    // its "+", and the unsigned magnitude is the zero at the same digits.
+    const display = formatChange(
+      comparableChange(
+        official({ value: "3.000", period: "2024-09" }),
+        official({ value: "3.001", period: "2026-09" }),
+      ),
+      "U.S.",
+      { differenceDigits: 2 },
+    );
+
+    expect(display.difference).toBe("+0.00");
+    expect(display.differenceMagnitude).toBe("0.00");
+  });
+
+  it("gives a null percent magnitude when the percent is null", () => {
+    const display = formatChange(
+      comparableChange(
+        official({ value: "0", period: "2024-09" }),
+        official({ value: "5.00", period: "2026-09" }),
+      ),
+      "U.S.",
+    );
+
+    expect(display.percent).toBeNull();
+    expect(display.percentMagnitude).toBeNull();
+    expect(display.differenceMagnitude).toBe("5.00");
+  });
+});
