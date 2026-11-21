@@ -199,3 +199,44 @@ describe("the Remembered_Phrase on a real letter and a live letter (spec 16, tas
     });
   }
 });
+
+describe("the Text_Persona Priya on every reveal stage (spec 16, task 6)", () => {
+  const PRIYA_QUESTION = "What was the first thing on your mind that autumn?";
+  const priyaOpened: Opened = {
+    letterId: "letter-priya",
+    header: {
+      sealedAt: "2024-10-01T00:00:00.000Z",
+      opensAt: "2024-11-05T00:00:00.000Z",
+    },
+    openingKey: {} as unknown as CryptoKey,
+    envelopeHash:
+      "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",
+    payload: {
+      letter_text: "A short letter with no figures in it.",
+      metrics: [],
+      figures: [],
+      recall_questions: [
+        { id: "q-first", answer_type: "text", text: PRIYA_QUESTION },
+      ],
+    } satisfies OpenedPayload,
+  };
+  const priyaTestimony = [
+    { question: PRIYA_QUESTION, answer: "The commute, mostly." },
+  ];
+
+  for (const stage of STAGES) {
+    it(`shows "She remembered · fictional" and no "Your answer" at stage ${stage}`, () => {
+      const html = renderAt(stage, {
+        opened: priyaOpened,
+        personaName: "Priya",
+        testimony: priyaTestimony,
+        close: { kind: "persona", personaKey: "text-priya", demo2On: false },
+      });
+      expect(html, `stage ${stage}`).not.toContain("Your answer");
+      expect(html, `stage ${stage}`).not.toContain(REVEAL_COPY.yourAnswer);
+      if (stage === 3) {
+        expect(html).toContain("She remembered · fictional");
+      }
+    });
+  }
+});
