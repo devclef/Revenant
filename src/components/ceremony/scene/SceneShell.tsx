@@ -39,7 +39,15 @@ export type SceneShellProps =
       below?: ReactNode;
       children: ReactNode;
     }
-  | { variant: "index"; children: ReactNode }
+  | {
+      variant: "index";
+      /**
+       * Shows the Demo chip in the Top_Bar. Default true. `/demo` turns it off
+       * because its own Demo label already sits above the heading (spec 15 DL1).
+       */
+      demo?: boolean;
+      children: ReactNode;
+    }
   | { variant: "persona"; personaName: string; children: ReactNode }
   | {
       variant: "plain";
@@ -131,6 +139,8 @@ function SceneFrame(props: SceneShellProps) {
         <TopBar personaName={props.personaName} sound={sound} stage={topBarStage} />
       ) : props.variant === "plain" ? (
         <TopBar demo={props.demo ?? true} controls={props.controls ?? "calm"} />
+      ) : props.variant === "index" ? (
+        <TopBar demo={props.demo ?? true} />
       ) : (
         <TopBar />
       )}

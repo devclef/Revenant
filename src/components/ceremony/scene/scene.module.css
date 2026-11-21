@@ -1062,8 +1062,13 @@
        (1.2 W tall, scaled 0.58, W = min(26vh, 170px)), so the flow starts at
        the box's bottom edge. The 0.75rem gap that c6f5dfb added is removed
        (#515 task 2): it pushed the question, field and Next button below the
-       first viewport at 360 x 640. */
-    top: calc(56px + min(26vh, 170px) * 0.696);
+       first viewport at 360 x 640. The region is placed against the
+       Persona_Column, which starts 6rem down the page (the main padding), so
+       the 6rem comes off as in the wider rules above. The Compact_Ghost is
+       drawn inside the region, beside the Step_Indicator row (which reserves
+       its box on the right), so the region starts at the 56 px band under the
+       Compact_Top_Bar and the Ghost moves with it (spec 15 task 15, R1, PV1). */
+    top: calc(56px - 6rem);
   }
 
   /* The Soil fades out once the persona Stages start (after the First_Step). */
@@ -1085,6 +1090,12 @@
     clip-path: inset(50%);
     white-space: nowrap;
     border: 0;
+    /* Held at the column's top edge, above the Compact_Ghost. Its clipped text
+       still has line boxes, and in the old place (the column's 2.5rem top gap)
+       a long name ran into the Ghost body once the recall region moved up
+       (layout-check G1, spec 15 task 15). */
+    top: 0;
+    left: 0;
   }
 }
 
@@ -1249,10 +1260,11 @@
 /*
  * Phone Step_Indicator row and the Compact_Ghost (spec 10 X2.1, X2.3, C1.6).
  * Below 600 px the Step_Indicator row sits under the Compact_Top_Bar, and the
- * Compact_Ghost is fixed at its right edge (top 56 px, width about 0.58 times
- * min(26vh, 170px)). The row reserves that space on its right so no step name
- * sits under the Ghost. The reserve is the Compact_Ghost's box: 1.2 times its
- * width tall, and its width plus a 16 px edge and an 8 px gap on the right.
+ * Compact_Ghost is centred in the window (top 56 px, width about 0.58 times
+ * min(26vh, 170px)). The row's right padding stops the phone step line at the
+ * Ghost's left edge: half the column, plus 0.29 times min(26vh, 170px), plus
+ * an 8 px gap. The Ghost is centred, so a right-edge reserve left the line
+ * under it.
  *
  * The pit's transition is off below 600 px. The full-motion rule
  * `[data-ceremony-motion="full"] .pit` (0,2,0) comes later in this file and
@@ -1260,12 +1272,28 @@
  * rule has one more class-level selector and wins.
  */
 @media (max-width: 599.98px) {
-  /* .scene keeps the selector pure for CSS Modules (it must hold a local class). */
+  /* .scene keeps the selector pure for CSS Modules (it must hold a local class).
+     The Compact_Ghost is centred (pit at 50%), 0.58 x W wide, so its left edge
+     is 50% - 0.29 W. The right padding is half the column (50%) plus 0.29 W
+     plus an 8 px gap, so the phone step line ends at the Ghost's left edge.
+     The old reserve sat on the right and let the line run under the Ghost
+     (layout-check GT1, spec 15 task 15 fix-up). */
   .scene [data-ceremony] > [data-step-indicator] {
     box-sizing: border-box;
     min-height: calc(0.58 * 1.2 * min(26vh, 170px));
-    padding-right: calc(0.58 * min(26vh, 170px) + 24px);
+    padding-right: calc(50% + 0.29 * min(26vh, 170px) + 8px);
     align-content: center;
+  }
+
+  /* Break the seal and the seal (PR #542 QA blocker): the Compact_Ghost's feet
+     end about 13 px below the Step_Indicator row, on the first heading ("Your
+     testimony"). A 1.5rem gap under the row puts the heading clear of them at
+     360 x 640 and 390 x 844. The Ghost is placed against the region, not the
+     row, so it stays where it is. Recall keeps the row as it is: its question,
+     field and Next must stay inside 640 px (layout-check R1). */
+  .scene [data-ceremony="marks"] > [data-step-indicator],
+  .scene [data-ceremony="seal"] > [data-step-indicator] {
+    margin-bottom: 1.5rem;
   }
 
   [data-ceremony-motion="full"] .pit[data-compact="true"] {

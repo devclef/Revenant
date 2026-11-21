@@ -33,7 +33,7 @@ export const metadata = pageMetadata(UI_COPY.pageMeta.demo, "/demo");
  */
 export default function DemoIndexPage() {
   return (
-    <SceneShell variant="index">
+    <SceneShell variant="index" demo={false}>
       <div className={styles.page}>
         <div className={styles.label}>
           <DemoLabel />

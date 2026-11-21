@@ -207,6 +207,19 @@ export function letterShape(state: FlowState): FocusShape {
 }
 
 /**
+ * Whether a pending Figures_Heading scroll re-check survives a Stage change
+ * (spec 15 task 15, layout-check N1). The figures Stage settles to `close`
+ * about 780 ms after "See the numbers", before the re-check at
+ * FOCUS_SCROLL_CHECK_MS. That settle moves no focus, so it must not cancel the
+ * re-check either: on a tall window the smooth scroll overshoots while the
+ * fade-up settles, and the re-check is what brings the heading back below the
+ * Top_Bar. Every other Stage change cancels it.
+ */
+export function keepsFocusRecheck(prev: Stage | null, next: Stage): boolean {
+  return prev === "figures" && next === "close";
+}
+
+/**
  * The focus target for a Stage change, from the previous Stage, the next one and
  * the letter's shape. `prev` is `null` on first mount. The table is the one in
  * spec 10 design.md, "Focus: Load_Entry and Gesture_Entry".

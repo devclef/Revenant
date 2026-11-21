@@ -57,6 +57,7 @@ import {
   emergingStatus,
   focusTargetFor,
   ghostHanded,
+  keepsFocusRecheck,
   letterShape,
   shouldRescueFocus,
   stageFor,
@@ -358,7 +359,7 @@ function CeremonyRegion({
   //  - default: the spec 07 rule (`focusStageDefault`).
   // Runs after mount only, so server and first render match. The effect reads
   // the DOM only, and its cleanup clears the scroll re-check on the next Stage
-  // change or on unmount.
+  // change (except the figures-to-close settle) or on unmount.
   const regionRef = useRef<HTMLDivElement>(null);
   const previousStageRef = useRef<Stage | null>(null);
   // The motion mode is read by the focus effect without making the effect run
@@ -371,9 +372,25 @@ function CeremonyRegion({
   // one of them changes, not on every flow update (the table reads nothing else).
   const letterAuthorQuestions = letterShape(state).authorQuestions;
   const letterFigures = letterShape(state).figures;
+  // The pending Figures_Heading re-check. It lives in a ref, not in the focus
+  // effect's cleanup, so the figures-to-close settle does not cancel it
+  // (`keepsFocusRecheck`, layout-check N1). Any other Stage change, and
+  // unmount, cancel it.
+  const focusRecheckRef = useRef<(() => void) | undefined>(undefined);
+  useEffect(
+    () => () => {
+      focusRecheckRef.current?.();
+      focusRecheckRef.current = undefined;
+    },
+    [],
+  );
   useEffect(() => {
     const prev = previousStageRef.current;
     previousStageRef.current = stage;
+    if (prev !== stage && !keepsFocusRecheck(prev, stage)) {
+      focusRecheckRef.current?.();
+      focusRecheckRef.current = undefined;
+    }
     const region = regionRef.current;
     if (region === null) return undefined;
     const target = focusTargetFor(prev, stage, {
@@ -384,14 +401,16 @@ function CeremonyRegion({
       return focusHeading(region, { selector: "[data-stage-heading]", scroll: false }, motionRef.current);
     }
     if (target.kind === "figures-heading") {
-      return focusHeading(region, { selector: "[data-figures-heading]", scroll: true }, motionRef.current);
+      focusRecheckRef.current = focusHeading(region, { selector: "[data-figures-heading]", scroll: true }, motionRef.current);
+      return undefined;
     }
     if (target.kind === "author-testimony-heading") {
-      return focusHeading(
+      focusRecheckRef.current = focusHeading(
         region,
         { selector: "[data-author-testimony-heading]", fallback: "[data-figures-heading]", scroll: true },
         motionRef.current,
       );
+      return undefined;
     }
     if (target.kind === "letter-heading") {
       return focusLetterStage(region, motionRef.current);

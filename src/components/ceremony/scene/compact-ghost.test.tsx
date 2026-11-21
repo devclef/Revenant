@@ -178,7 +178,9 @@ describe("phone Compact_Ghost clearance and pit transition (scene.module.css)", 
     expect(block).not.toBe("");
     expect(block).toMatch(/box-sizing:\s*border-box;/);
     expect(block).toMatch(/min-height:\s*calc\(0\.58 \* 1\.2 \* min\(26vh, 170px\)\);/);
-    expect(block).toMatch(/padding-right:\s*calc\(0\.58 \* min\(26vh, 170px\) \+ 24px\);/);
+    expect(block).toMatch(
+      /padding-right:\s*calc\(50% \+ 0\.29 \* min\(26vh, 170px\) \+ 8px\);/,
+    );
     expect(block).toMatch(/align-content:\s*center;/);
   });
 
