@@ -16,7 +16,7 @@ Revenant never takes a political side. It shows people their own words and real 
 - Default to a metric set that leans toward one narrative. Defaults should be broad, everyday costs, and the user chooses.
 - Comment on, grade or argue with what the user wrote or remembered. Their letter is theirs.
 - Use an LLM to summarise, interpret or editorialise on the user's letter or data.
-- Score, diff, highlight, summarise or interpret the gap between the testimony and the letter, between a written answer and any line of the letter, or between a recollection and the answer sealed with its question. No similarity measure, no keyword match and no AI on either.
+- Score, diff, highlight, summarise or interpret the gap between what the reader remembered and the letter, between a written answer and any line of the letter, or between a recollection and the answer sealed with its question. No similarity measure, no keyword match and no AI on either.
 - Call a sample answer, or any answer, right, close, near, wrong, off or accurate, in the UI or in persona copy.
 - Show an event name next to a persona opening date.
 

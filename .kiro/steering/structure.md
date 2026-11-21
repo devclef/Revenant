@@ -24,8 +24,8 @@ Planned layout. Update this file when the structure changes.
 ├── Dockerfile               # One image for web, migrations and the fetch job
 ├── content/
 │   └── personas/            # Demo persona letters (text only, reviewed against neutrality.md)
-│       ├── letters/samples.json  # Sample_Candidates for persona figure questions; shown on the Testify step, never sealed
-│       ├── letters/answers.json  # Pre-written, fictional recollections for the text persona; shown on the Testify step, never sealed or stored
+│       ├── letters/samples.json  # Sample_Candidates for persona figure questions; shown on the Remember step, never sealed
+│       ├── letters/answers.json  # Pre-written, fictional recollections for the text persona; shown on the Remember step, never sealed or stored
 │       └── letters/sealed-answers.json  # The answers sealed with the text persona's questions (format v2)
 ├── drizzle/                 # SQL migrations, including immutability triggers
 ├── scripts/                 # fetch-figures (run by the CronJob), prefetch demo-window data, seal-personas
