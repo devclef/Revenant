@@ -38,7 +38,7 @@ describe("AuthorTestimony copy", () => {
     expect(REVEAL_COPY.authorTestimonyTitle).toBe(
       "Questions you left for yourself",
     );
-    expect(REVEAL_COPY.saidJustNow).toBe("What you said just now");
+    expect(REVEAL_COPY.saidJustNow).toBe("You remembered, just now");
     expect(REVEAL_COPY.noAnswer).toBe("No answer");
   });
 });
@@ -76,7 +76,7 @@ describe("AuthorTestimony", () => {
     expect(second).toBeGreaterThan(first);
     expect(html.indexOf("First answer")).toBeGreaterThan(first);
     expect(html.indexOf("Second answer")).toBeGreaterThan(second);
-    expect(html.split("What you said just now").length - 1).toBe(2);
+    expect(html.split("You remembered, just now").length - 1).toBe(2);
   });
 
   it("shows No answer for a question with no text answer", () => {

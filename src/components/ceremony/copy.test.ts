@@ -233,7 +233,7 @@ describe("CEREMONY_COPY tone and neutrality", () => {
   // Property 23 (spec 07 task 6): the Close strings, exact and checked.
   it("gives the Close strings their exact text (Property 23)", () => {
     expect(CEREMONY_COPY.closeLine).toBe(
-      "Your testimony sits beside the record. What lies between them is yours to read.",
+      "What you remembered sits beside the record. What lies between them is yours to read.",
     );
     expect(CEREMONY_COPY.closeLink).toBe("Seal your own. It opens 30 seconds after you seal it.");
     expect(CEREMONY_COPY.closeNote).toBe(
@@ -299,8 +299,8 @@ describe("spec 09 Skip_Link and close copy (C4.2, C7.1, F5.1)", () => {
     expect(CEREMONY_COPY.skipToReceipts).toBe("Skip to the receipts");
   });
 
-  it("names the testimony and the record in the close line, and leaves the meaning to the reader (F5.1)", () => {
-    expect(CEREMONY_COPY.closeLine).toMatch(/testimony/);
+  it("names what you remembered and the record in the close line, and leaves the meaning to the reader (F5.1)", () => {
+    expect(CEREMONY_COPY.closeLine).toMatch(/remembered/);
     expect(CEREMONY_COPY.closeLine).toMatch(/record/);
     expect(CEREMONY_COPY.closeLine).toMatch(/yours to read\.$/);
   });

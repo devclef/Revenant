@@ -335,18 +335,6 @@ const PENDING_RETIRED_WORDS: readonly PendingRetiredWord[] = [
     value: "Your testimony is recorded.",
     task: 10,
   },
-  {
-    path: "src/components/ceremony/copy.ts",
-    value:
-      "Your testimony sits beside the record. What lies between them is yours to read.",
-    task: 3,
-  },
-  {
-    path: "src/components/ceremony/copy.ts",
-    value:
-      "Her testimony and her letter are side by side. What they say is yours to read.",
-    task: 3,
-  },
   // src/components/landing/copy.ts, removed by task 13 (short home section).
   {
     path: "src/components/landing/copy.ts",
@@ -362,7 +350,6 @@ const PENDING_RETIRED_WORDS: readonly PendingRetiredWord[] = [
       "This letter was written as of {date}. Before you read it, testify: say what you remember about that time.",
     task: 3,
   },
-  { path: "src/components/reveal/copy.ts", value: "Your testimony", task: 3 },
   // The rendered / page, which repeats the copy above.
   {
     path: "rendered /",

@@ -546,7 +546,7 @@ export function RecallPager({
                 onEdit={(id, text) =>
                   applyField(id, setFromScale(fieldFor(id), text))
                 }
-                spokenPrefix={REVEAL_COPY.yourAnswer}
+                spokenPrefix={REVEAL_COPY.answerSpokenPrefix}
               />
             ) : null}
 

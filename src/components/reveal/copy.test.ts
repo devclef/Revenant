@@ -203,7 +203,7 @@ describe("REVEAL_COPY claims with code behind them", () => {
 
 describe("spec 09 ritual copy (C2, F4, design.md Copy)", () => {
   it("names the reveal stages and the recall intro with the ritual words", () => {
-    expect(REVEAL_COPY.stage1Title).toBe("Your testimony");
+    expect(REVEAL_COPY.stage1Title).toBe("You remembered, just now");
     expect(REVEAL_COPY.stage2Next).toBe("See the receipts");
     expect(REVEAL_COPY.stage3Title).toBe("The receipts");
     expect(REVEAL_COPY.recallIntro).toBe(

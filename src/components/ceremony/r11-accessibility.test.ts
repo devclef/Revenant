@@ -142,7 +142,7 @@ describe("the Mark is announced as the judge's answer, not a position", () => {
   });
 
   it("the Number_Line's hidden Mark text reads as an answer, never a position", () => {
-    expect(CEREMONY_COPY.markAnswer.startsWith("Your answer")).toBe(true);
+    expect(CEREMONY_COPY.markAnswer.startsWith("You remembered, just now")).toBe(true);
     expect(CEREMONY_COPY.markAnswer.toLowerCase()).not.toContain("position");
   });
 });
