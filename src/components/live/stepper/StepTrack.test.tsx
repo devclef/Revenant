@@ -36,7 +36,7 @@ describe("StepTrack markup", () => {
     expect(html).toContain(">Write<");
     expect(html).toContain(">Press the seal<");
     expect(html).toContain(">Wait<");
-    expect(html).toContain(">Testify<");
+    expect(html).toContain(">Remember<");
     expect(html).toContain(">Break the seal<");
     expect(html).toContain(">Receipts<");
   });

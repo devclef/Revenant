@@ -63,7 +63,7 @@ export const DESK_COPY = {
   optional: "Optional",
   /** The intro under the card heading (W10.2). */
   receiptIntro:
-    "A number sealed with its date. When it opens, you guess it first, then see it next to today's.",
+    "A number sealed with its date. When it opens, you remember it first, then see it beside the record at opening.",
   /** The summary of the card below 600 px, which holds the heading (W10.2). */
   receiptSummaryPhone: "Tuck in a receipt (optional)",
   /** The first toggle button, the public figures view (W10.3). */

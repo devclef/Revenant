@@ -41,12 +41,12 @@ describe("step order and names", () => {
     ]);
   });
 
-  it("names the steps Write, Press the seal, Wait, Testify, Break the seal, Receipts", () => {
+  it("names the steps Write, Press the seal, Wait, Remember, Break the seal, Receipts", () => {
     expect([...LIVE_STEP_NAMES]).toEqual([
       "Write",
       "Press the seal",
       "Wait",
-      "Testify",
+      "Remember",
       "Break the seal",
       "Receipts",
     ]);

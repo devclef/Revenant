@@ -329,43 +329,11 @@ interface PendingRetiredWord {
 }
 
 const PENDING_RETIRED_WORDS: readonly PendingRetiredWord[] = [
-  // src/components/brand/copy.ts, removed by task 3 (Remember and ritual copy).
-  {
-    path: "src/components/brand/copy.ts",
-    value:
-      "Seal what you believe now, a goal, a worry, a decision. When it opens, you testify first, then read what you wrote.",
-    task: 3,
-  },
-  { path: "src/components/brand/copy.ts", value: "Testify", task: 3 },
-  {
-    path: "src/components/brand/copy.ts",
-    value:
-      "Your testimony beside what you wrote, then any numbers then and now.",
-    task: 3,
-  },
   // src/components/ceremony/copy.ts.
   {
     path: "src/components/ceremony/copy.ts",
     value: "Your testimony is recorded.",
     task: 10,
-  },
-  {
-    path: "src/components/ceremony/copy.ts",
-    value: "Testify. Say what you remember.",
-    task: 3,
-  },
-  { path: "src/components/ceremony/copy.ts", value: "Testify", task: 3 },
-  {
-    path: "src/components/ceremony/copy.ts",
-    value:
-      "Your testimony sits beside the record. What lies between them is yours to read.",
-    task: 3,
-  },
-  {
-    path: "src/components/ceremony/copy.ts",
-    value:
-      "Her testimony and her letter are side by side. What they say is yours to read.",
-    task: 3,
   },
   // src/components/landing/copy.ts, removed by task 13 (short home section).
   {
@@ -374,29 +342,7 @@ const PENDING_RETIRED_WORDS: readonly PendingRetiredWord[] = [
       "A seal proves the letter wasn't changed. It can't stop your memory changing. So before you read, you testify, and Revenant never says what the gap means.",
     task: 13,
   },
-  // src/components/reveal/copy.ts.
-  { path: "src/components/reveal/copy.ts", value: "Testify", task: 3 },
-  {
-    path: "src/components/reveal/copy.ts",
-    value:
-      "This letter was written as of {date}. Before you read it, testify: say what you remember about that time.",
-    task: 3,
-  },
-  { path: "src/components/reveal/copy.ts", value: "Your testimony", task: 3 },
   // The rendered / page, which repeats the copy above.
-  {
-    path: "rendered /",
-    value:
-      "Seal what you believe now, a goal, a worry, a decision. When it opens, you testify first, then read what you wrote.",
-    task: 3,
-  },
-  { path: "rendered /", value: "Testify", task: 3 },
-  {
-    path: "rendered /",
-    value:
-      "Your testimony beside what you wrote, then any numbers then and now.",
-    task: 3,
-  },
   {
     path: "rendered /",
     value:

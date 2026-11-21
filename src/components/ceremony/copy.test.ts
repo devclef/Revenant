@@ -233,7 +233,7 @@ describe("CEREMONY_COPY tone and neutrality", () => {
   // Property 23 (spec 07 task 6): the Close strings, exact and checked.
   it("gives the Close strings their exact text (Property 23)", () => {
     expect(CEREMONY_COPY.closeLine).toBe(
-      "Your testimony sits beside the record. What lies between them is yours to read.",
+      "What you remembered sits beside the record. What lies between them is yours to read.",
     );
     expect(CEREMONY_COPY.closeLink).toBe("Seal your own. It opens 30 seconds after you seal it.");
     expect(CEREMONY_COPY.closeNote).toBe(
@@ -279,16 +279,16 @@ describe("spec 09 Step_Indicator and recall copy (C2, design.md Copy)", () => {
   it("gives the four steps in order, with the step label and announce line", () => {
     expect(CEREMONY_COPY.stepsLabel).toBe("Your progress");
     expect([...CEREMONY_COPY.steps]).toEqual([
-      "Testify",
+      "Remember",
       "Break the seal",
       "Read",
-      "See the receipts",
+      "Receipts",
     ]);
     expect(CEREMONY_COPY.stepAnnounce).toBe("Step {n} of {total}: {label}");
   });
 
   it("gives the recall live line its ritual wording", () => {
-    expect(CEREMONY_COPY.stageLive.recall).toBe("Testify. Say what you remember.");
+    expect(CEREMONY_COPY.stageLive.recall).toBe("Remember first. Then read.");
     expect(CEREMONY_COPY.stageLive.recall).not.toContain("Tell us how");
   });
 });
@@ -299,8 +299,8 @@ describe("spec 09 Skip_Link and close copy (C4.2, C7.1, F5.1)", () => {
     expect(CEREMONY_COPY.skipToReceipts).toBe("Skip to the receipts");
   });
 
-  it("names the testimony and the record in the close line, and leaves the meaning to the reader (F5.1)", () => {
-    expect(CEREMONY_COPY.closeLine).toMatch(/testimony/);
+  it("names what you remembered and the record in the close line, and leaves the meaning to the reader (F5.1)", () => {
+    expect(CEREMONY_COPY.closeLine).toMatch(/remembered/);
     expect(CEREMONY_COPY.closeLine).toMatch(/record/);
     expect(CEREMONY_COPY.closeLine).toMatch(/yours to read\.$/);
   });

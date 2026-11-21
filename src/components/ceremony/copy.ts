@@ -132,7 +132,7 @@ export const CEREMONY_COPY = {
    * The hidden text for the Mark on a Number_Line. `{value}` is the answer as
    * typed; `{unit}` is the figure's unit. Read by screen readers only.
    */
-  markAnswer: "Your answer: {value} {unit}",
+  markAnswer: "You remembered, just now: {value} {unit}",
 
   // --- Number_Line labels (spec 08 R5) ---
 
@@ -141,7 +141,7 @@ export const CEREMONY_COPY = {
   /** Visible label under the now point. */
   lineNow: "Now",
   /** Visible label for the judge's answer, followed by the value and unit. */
-  lineAnswer: "Your answer",
+  lineAnswer: "You remembered, just now",
   /** Visible label when the judge gave no answer. */
   lineNoAnswer: "No answer",
   /**
@@ -150,7 +150,7 @@ export const CEREMONY_COPY = {
    * the figures' periods; `{unit}` is the figure's unit.
    */
   numberLineAlt:
-    "Then {then} {unit}, {thenPeriod}. Now {now} {unit}, {nowPeriod}. Your answer {answer} {unit}.",
+    "Then {then} {unit}, {thenPeriod}. Now {now} {unit}, {nowPeriod}. You remembered {answer} {unit}.",
   /** Text alternative for a Number_Line with no answer. */
   numberLineAltNoAnswer:
     "Then {then} {unit}, {thenPeriod}. Now {now} {unit}, {nowPeriod}. No answer.",
@@ -169,7 +169,7 @@ export const CEREMONY_COPY = {
     /** The sealed envelope resting on the desk. */
     envelope: "The envelope is on the desk.",
     /** The recall step, before the letter is opened. */
-    recall: "Testify. Say what you remember.",
+    recall: "Remember first. Then read.",
     /** The remembered answers, placed as ink marks. */
     marks: "Your answers are placed.",
     /** The seal, waiting to be broken. */
@@ -189,8 +189,8 @@ export const CEREMONY_COPY = {
   /** The accessible name of the Step_Indicator list. */
   stepsLabel: "Your progress",
 
-  /** The four steps, in order. Testify and See the receipts match Brand_Copy. */
-  steps: ["Testify", "Break the seal", "Read", "See the receipts"],
+  /** The four steps, in order. Remember and Receipts match Brand_Copy. */
+  steps: ["Remember", "Break the seal", "Read", "Receipts"],
 
   /**
    * The polite live-region line when the current step changes. `{n}` is the
@@ -206,12 +206,12 @@ export const CEREMONY_COPY = {
    * The persona close's heading (spec 09 C7.1, F5.1). It names the reader's
    * testimony and the record, and leaves what lies between them to the reader.
    */
-  closeLine: "Your testimony sits beside the record. What lies between them is yours to read.",
+  closeLine: "What you remembered sits beside the record. What lies between them is yours to read.",
   /**
    * The persona close's heading for a letter with no official figures (spec 11
    * L5.2). It names no numbers and no prices.
    */
-  closeLineNoFigures: "Her testimony and her letter are side by side. What they say is yours to read.",
+  closeLineNoFigures: "Her recollections and her letter are side by side. What they say is yours to read.",
   /** The Accent link to /demo/live, shown only while Demo_2_On is true. */
   closeLink: "Seal your own. It opens 30 seconds after you seal it.",
   /** The smaller note under the link. */

@@ -30,10 +30,10 @@ export const REVEAL_COPY = {
   loading: "Bringing the letter into the light.",
 
   /**
-   * The three-step track on `/l/{id}`, in order: unlock, Testify, receipts.
+   * The three-step track on `/l/{id}`, in order: unlock, Remember, Receipts.
    * It is drawn by StepTrack from letter-track.ts.
    */
-  letterTrackSteps: ["Unlock", "Testify", "See the receipts"] as const,
+  letterTrackSteps: ["Unlock", "Remember", "Receipts"] as const,
 
   /** Heading for the still-sealed state. */
   sealedTitle: "Still sealed",
@@ -77,7 +77,7 @@ export const REVEAL_COPY = {
   authorTestimonyTitle: "Questions you left for yourself",
 
   /** The label above each Text_Answer on the Author_Testimony (spec 10 C8.2). */
-  saidJustNow: "What you said just now",
+  saidJustNow: "You remembered, just now",
 
   /**
    * The Fictional_Label (spec 11 P1.7): shown next to every Persona_Answer on
@@ -131,9 +131,8 @@ export const REVEAL_COPY = {
   /** Heading for the recall step. */
   recallTitle: "Before you read it",
 
-  /** Intro for the recall step. `{date}` is the written-as-of date. */
-  recallIntro:
-    "This letter was written as of {date}. Before you read it, testify: say what you remember about that time.",
+  /** Intro for the recall step. It holds no date (spec 16, Requirement 13). */
+  recallIntro: "Before you read it, say what you remember about that time.",
 
   /** Hint under the recall intro. */
   recallHint: "Answer from memory. You can mark any question as no answer.",
@@ -226,16 +225,26 @@ export const REVEAL_COPY = {
   // --- Reveal, stage 1 ---
 
   /** Heading for stage 1 of the reveal: what the reader just remembered. */
-  stage1Title: "Your testimony",
+  stage1Title: "You remembered, just now",
 
   /**
    * The summary of the marks card on the figures and close Stages at 600 px and
    * wider (C3.4). The card stays closed until the reader opens it.
    */
-  marksSummary: "Your testimony",
+  marksSummary: "You remembered, just now",
 
-  /** Prefix for a remembered answer. `{value}` is filled in at render time. */
-  yourAnswer: "Your answer",
+  /**
+   * The Remembered_Phrase: the label beside what the reader remembered on the
+   * receipts, the marks card and the figure card (spec 16, item 3).
+   */
+  yourAnswer: "You remembered, just now",
+
+  /**
+   * The spoken prefix for a remembered answer on the recall scale. It is read
+   * by screen readers only, before the value and unit: "Your answer: 3.50 USD
+   * per gallon". It is never drawn on screen.
+   */
+  answerSpokenPrefix: "Your answer",
 
   /**
    * The note under a field that holds its Sample_Answer (spec 10 C5.5). The

@@ -193,7 +193,7 @@ describe("OpeningFlow live mode: the still-sealed view", () => {
 });
 
 describe("OpeningFlow live mode: the three-step track (R10.1)", () => {
-  it("shows Unlock, Testify and See the receipts, with Unlock current at the key step", () => {
+  it("shows Unlock, Remember and Receipts, with Unlock current at the key step", () => {
     const markup = renderLive({
       tag: "awaiting_key",
       envelope: {},
