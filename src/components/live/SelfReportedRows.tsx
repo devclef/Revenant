@@ -2,6 +2,8 @@
 
 import { useId } from "react";
 
+import { KeepGroup } from "@/components/ui/KeepGroup";
+
 import { SELF_REPORTED_MAX } from "./constants";
 import { LIVE_COPY, SELF_REPORTED_FIELD_NAMES } from "./copy";
 import {
@@ -148,7 +150,7 @@ export function SelfReportedRows({
                     ? ""
                     : PROBLEM_TEXT[problem];
                 return (
-                  <div key={field} className={styles.selfField}>
+                  <KeepGroup as="div" key={field} className={styles.selfField}>
                     <label htmlFor={inputId} className={styles.label}>
                       {FIELD_LABEL[field]}
                     </label>
@@ -172,7 +174,7 @@ export function SelfReportedRows({
                     <p id={problemId} className={styles.problem}>
                       {message}
                     </p>
-                  </div>
+                  </KeepGroup>
                 );
               })}
             </div>

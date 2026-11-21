@@ -217,9 +217,9 @@ describe("AuthorQuestions remove focus (spec 10, C2)", () => {
   it("moves focus with focusAfterRemove on every removal", () => {
     expect(source).toContain("focusAfterRemove(questions.length, index)");
     expect(source).toContain(
-      "textareaRefs.current.get(pendingFocus.index)?.focus()",
+      "textareaRefs.current\n        .get(pendingFocus.index)\n        ?.focus({ preventScroll: true });",
     );
-    expect(source).toContain("addRef.current?.focus()");
+    expect(source).toContain("addRef.current?.focus({ preventScroll: true })");
   });
 
   it("sends focus to the next row, or to Add a question after the last", () => {

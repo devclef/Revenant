@@ -17,7 +17,7 @@
     "prefetch": "node scripts/prefetch-figures.mjs",
     "fetch-figures": "node dist/fetch-figures.mjs",
     "freshness-check": "node scripts/fetch-figures-freshness.mjs",
-    "live-walk": "WALK=1 vitest run src/test/integration/live-walk.test.ts"
+    "live-walk": "WALK=1 vitest run src/test/integration/live-walk.test.ts src/test/integration/press-test.test.ts"
   },
   "dependencies": {
     "drizzle-orm": "0.45.4",
