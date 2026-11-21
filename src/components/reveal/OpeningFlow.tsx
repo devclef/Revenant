@@ -94,6 +94,7 @@ import type { FlowState, OpenFailedKind } from "./opening-machine";
 import type { PickCandidates } from "./sample-pick";
 import { holdsEnvelope, showsHeldDates } from "./held-envelope";
 import { useViewportWidth } from "./viewport-width";
+import type { FiguresResponseV1 } from "@/lib/figures";
 import styles from "./reveal.module.css";
 
 /**
@@ -228,6 +229,12 @@ export type OpeningFlowProps = {
    * which posts nothing and stores nothing. Absent for every other persona.
    */
   personaAnswers?: readonly string[];
+  /**
+   * Persona mode only: the persona's "now" figures, built on the server for its
+   * opening date (spec 15 R4.4). When present, the reveal uses it in place of
+   * the GET /api/figures request. Absent for a Live_Letter or Real_Letter.
+   */
+  personaNow?: FiguresResponseV1;
 };
 
 /**
@@ -254,6 +261,7 @@ export function OpeningFlow({
   embedded,
   sampleCandidates,
   personaAnswers,
+  personaNow,
 }: OpeningFlowProps) {
   // Live mode reads the key from the reader (keySource "user"). Persona mode
   // passes no options, so the hook behaves exactly as before.
@@ -393,7 +401,7 @@ export function OpeningFlow({
             {selectView(state, flow, letterId, personaName, persona, mode, retryAtZero, KeyStep, {
               keyText,
               onKeyTextChange: setKeyText,
-            }, seal, demo2On, heldSlot, marksSlot)}
+            }, seal, demo2On, heldSlot, marksSlot, personaNow)}
           </div>
         </CeremonyRoot>
       </SkipProvider>
@@ -435,6 +443,7 @@ function selectView(
   demo2On: boolean,
   heldSlot: HTMLElement | null,
   marksSlot: HTMLElement | null,
+  personaNow: FiguresResponseV1 | undefined,
 ): React.ReactNode {
   // The envelope's per-letter inputs: the persona list fields plus the demo
   // flag. These are always demo persona letters, so `demo` is true whenever a
@@ -626,6 +635,7 @@ function selectView(
           heldSlot={heldSlot}
           marksSlot={marksSlot}
           tamperSource={mode === "persona" ? flow.tamperSource : undefined}
+          personaNow={mode === "persona" ? personaNow : undefined}
           variant={mode}
           letterKind={
             // persona route -> persona; live route -> live for a demo letter,

@@ -103,57 +103,57 @@ function renderReveal(extra: Partial<RevealProps> = {}): string {
   );
 }
 
-/** The markup of the one seal row, from its opening tag to its last closing tag. */
+/** The markup of the one seal line, from its opening tag to the end of its section. */
 function sealRowHtml(html: string): string {
-  const start = html.indexOf('data-seal-row=""');
+  const start = html.indexOf('data-seal-line=""');
   if (start < 0) return "";
-  // The row ends after the disclosure that holds the fingerprint.
-  const end = html.indexOf("</details>", start);
-  return end < 0 ? "" : html.slice(start, end + "</details>".length);
+  // The seal line is a section; it ends at its closing tag (spec 15 R12.6).
+  const end = html.indexOf("</section>", start);
+  return end < 0 ? "" : html.slice(start, end + "</section>".length);
 }
 
-describe("Reveal: the Seal_Verdict and fingerprint control share one row (P4.3)", () => {
+describe("Reveal: the seal line closes the receipts (spec 15 R12.6)", () => {
   beforeEach(() => {
     useFiguresSpy.mockClear();
   });
 
-  it("renders one seal row for a persona letter, above the paper", () => {
+  it("renders one seal line for a persona letter, after the letter", () => {
     const html = renderReveal({ stage: 2 });
-    expect(html.match(/data-seal-row=""/g)?.length ?? 0).toBe(1);
-    // The row sits before the letter article, so it is above the paper.
-    expect(html.indexOf('data-seal-row=""')).toBeLessThan(
-      html.indexOf("<article"),
+    expect(html.match(/data-seal-line=""/g)?.length ?? 0).toBe(1);
+    expect(html.indexOf('data-seal-line=""')).toBeGreaterThan(
+      html.indexOf("data-letter-text"),
     );
   });
 
-  it("puts both the Seal_Verdict and the fingerprint control inside that row", () => {
+  it("puts the intact line and the fingerprint control inside that seal line", () => {
     const row = sealRowHtml(renderReveal({ stage: 2 }));
     expect(row).not.toBe("");
-    expect(row).toContain(REVEAL_COPY.sealVerdict);
+    expect(row).toContain(REVEAL_COPY.sealIntact);
     expect(row).toContain("<summary");
     expect(row).toContain(REVEAL_COPY.fingerprintShow);
   });
 
-  it("lists the verdict before the control, so it reads first on the left", () => {
+  it("lists the intact line before the control, so it reads first on the left", () => {
     const row = sealRowHtml(renderReveal({ stage: 2 }));
-    expect(row.indexOf(REVEAL_COPY.sealVerdict)).toBeLessThan(
+    expect(row.indexOf(REVEAL_COPY.sealIntact)).toBeLessThan(
       row.indexOf(REVEAL_COPY.fingerprintShow),
     );
   });
 
-  it("keeps the persona fingerprint section inside the row", () => {
+  it("keeps the persona demo label inside the seal line", () => {
     const row = sealRowHtml(renderReveal({ stage: 2 }));
-    expect(row).toContain('data-fingerprint-persona=""');
+    expect(row).toContain(REVEAL_COPY.fingerprintDemo);
   });
 
-  it("does not add the seal row to a live letter", () => {
+  it("shows the seal line on a live letter too, with no tamper control", () => {
     const html = renderReveal({
       stage: 2,
       letterKind: "live",
       variant: "live",
       close: { kind: "live", demo2On: true } as unknown as RevealProps["close"],
     });
-    expect(html).not.toContain('data-seal-row=""');
+    expect(html.match(/data-seal-line=""/g)?.length ?? 0).toBe(1);
+    expect(html).not.toContain("Try to tamper with it");
   });
 
   it("lays the row out as a single flex line, with no judgement colour", () => {
@@ -183,9 +183,9 @@ describe("Reveal Tamper_Control placement (spec 13 A1.1, A1.2)", () => {
       tamperSource: () => null,
     });
     expect(html).toContain("Try to tamper with it");
-    expect(html).toContain('data-fingerprint-persona=""');
+    expect(html).toContain('data-seal-line=""');
     expect(html.indexOf("Try to tamper with it")).toBeGreaterThan(
-      html.indexOf('data-fingerprint-persona=""'),
+      html.indexOf('data-seal-line=""'),
     );
   });
 

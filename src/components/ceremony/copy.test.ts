@@ -205,6 +205,7 @@ describe("CEREMONY_COPY tone and neutrality", () => {
   it("keeps the R24.5 strings it does not change (Property 23)", () => {
     expect(CEREMONY_COPY.skip).toBe("Skip");
     expect(CEREMONY_COPY.sealButton).toBe("Break the seal");
+    expect(CEREMONY_COPY.testimonyRecorded).toBe("Your testimony is recorded.");
     expect(CEREMONY_COPY.envelopeOpens).toBe("Opens {date}");
   });
 

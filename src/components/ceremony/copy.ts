@@ -59,6 +59,9 @@ export const CEREMONY_COPY = {
 
   // --- Seal break ---
 
+  /** The line above the hint: the reader's testimony is kept before the seal breaks (spec 15 R12.1). */
+  testimonyRecorded: "Your testimony is recorded.",
+
   /** The hint above the wax seal (spec 10 C6.4). It names no position. */
   sealHint: "Press and hold the wax seal to break it, or use the button.",
 

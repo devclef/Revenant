@@ -277,19 +277,20 @@ describe("Live_Stepper end to end: Write to Receipts (spec 10 C2, C9.2, C9.3)", 
     expect(third).toContain(FIGURE_QUESTION);
   });
 
-  it("Receipts lead with the Answer_List, then the Author_Testimony, then the letter", () => {
+  it("Receipts lead with the question pairs, then the letter, with no Answer_List", () => {
     expect(AT_RECEIPTS.step).toBe("receipts");
 
+    // Spec 15 R12.2: the receipts column starts with each author question as
+    // written, then the reader's testimony beside its sealed answer, then the letter.
     const markup = renderReceipts(2);
-    const list = indexOfOrFail(markup, "data-answer-list");
+    const receipts = indexOfOrFail(markup, "data-receipts");
     const prefill = indexOfOrFail(markup, escaped(DEFAULT_QUESTION));
     const typed = indexOfOrFail(markup, TYPED);
-    const testimony = indexOfOrFail(markup, "data-author-testimony");
     const letter = indexOfOrFail(markup, "data-letter-text");
-    expect(list).toBeLessThan(prefill);
+    expect(markup).not.toContain("data-answer-list");
+    expect(receipts).toBeLessThan(prefill);
     expect(prefill).toBeLessThan(typed);
-    expect(typed).toBeLessThan(testimony);
-    expect(testimony).toBeLessThan(letter);
+    expect(typed).toBeLessThan(letter);
   });
 
   it("Receipts show the figures after the letter at stage 3", () => {

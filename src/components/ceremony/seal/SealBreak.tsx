@@ -347,7 +347,15 @@ export function SealBreak({
     </HeldSeal>
   );
 
-  const hint = <p className={styles.hint}>{CEREMONY_COPY.sealHint}</p>;
+  // The testimony line sits above the hint, as drawn on `break` (spec 15 R12.1).
+  const hint = (
+    <>
+      <p className={styles.hint} data-break-line="">
+        {CEREMONY_COPY.testimonyRecorded}
+      </p>
+      <p className={styles.hint}>{CEREMONY_COPY.sealHint}</p>
+    </>
+  );
 
   // The Seal_Group's controls: the Seal_Button (the Stage's one orange primary
   // button, spec 10 C6.5) directly under the hint, and the quiet Skip_Link

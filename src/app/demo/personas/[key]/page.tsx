@@ -3,6 +3,8 @@ import { OpeningFlow } from "@/components/reveal/OpeningFlow";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { PersonaIntroForStage } from "@/components/ceremony/intro/PersonaIntroForStage";
 import { PERSONAS, sampleCandidatesFor } from "@/lib/personas";
+import { DEMO_FIGURES } from "@/lib/figures/demo";
+import { personaNowResponse } from "@/lib/figures";
 import answersFile from "../../../../../content/personas/letters/answers.json";
 import { pageMetadata } from "@/lib/page-metadata";
 import { UI_COPY } from "@/components/ui/copy";
@@ -110,6 +112,16 @@ export default async function PersonaLetterPage({
 
   const demo2On = (process.env.RP_ID ?? "").trim() !== "";
 
+  // The persona's "now" figures, built here on the server for its opening date
+  // (spec 15 R4.4). The reveal reads this in place of GET /api/figures, so a
+  // persona never calls the figures route. Live and real letters keep the
+  // request.
+  const personaNow = personaNowResponse(
+    { opens_at: persona.opens_at, metrics: persona.metrics },
+    DEMO_FIGURES,
+    new Date().toISOString(),
+  );
+
   return (
     <SceneShell variant="persona" personaName={persona.display_name}>
       <PersonaIntroForStage
@@ -133,6 +145,7 @@ export default async function PersonaLetterPage({
         demo2On={demo2On}
         sampleCandidates={sampleCandidatesFor(persona.key)}
         personaAnswers={personaAnswersFor(persona.key)}
+        personaNow={personaNow}
       />
     </SceneShell>
   );

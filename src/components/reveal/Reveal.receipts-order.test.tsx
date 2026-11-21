@@ -15,10 +15,11 @@ import { DEMO_FIGURES } from "@/lib/figures/demo";
 import { thenAndNow } from "@/lib/figures/then-now";
 
 /**
- * The receipts order for a Live_Letter (spec 10 C9.3). At `stage` 2 the
- * Answer_List sits at `marks` and lists the Author_Question first. Then the
- * Author_Testimony, then the letter. At `stage` 3 the figures follow the letter.
- * The test reads the order of the markup, so a block moved above another fails.
+ * The receipts order for a Live_Letter (spec 15 R12.2). At `stage` 2 the
+ * receipts column starts with each author question as written, its testimony
+ * beside the sealed answer, then the letter. At `stage` 3 the figures follow
+ * the letter. The test reads the order of the markup, so a block moved above
+ * another fails.
  */
 
 const { useFiguresSpy } = vi.hoisted(() => ({ useFiguresSpy: vi.fn() }));
@@ -125,22 +126,22 @@ describe("Live_Letter receipts order (spec 10 C9.3)", () => {
     useFiguresSpy.mockClear();
   });
 
-  it("leads the receipts with the Answer_List, which holds the Author_Question first", () => {
+  it("leads the receipts with the question pairs, the Author_Question first, and no Answer_List", () => {
     const markup = renderReveal({ stage: 2 });
-    const list = indexOfOrFail(markup, "data-answer-list");
+    const receipts = indexOfOrFail(markup, "data-receipts");
     const own = indexOfOrFail(markup, OWN_QUESTION);
-    // A number question shows its metric name in the Answer_List, not its wording.
-    expect(own).toBeGreaterThan(list);
-    expect(markup.indexOf(series.metric.display_name)).toBeGreaterThan(own);
+    expect(own).toBeGreaterThan(receipts);
+    // The stage 1 Answer_List is not part of the receipts column (spec 15 R12.2).
+    expect(markup).not.toContain("data-answer-list");
   });
 
-  it("puts the Author_Testimony above the letter, after the Answer_List", () => {
+  it("puts the question pairs above the letter", () => {
     const markup = renderReveal({ stage: 2 });
-    const list = indexOfOrFail(markup, "data-answer-list");
     const testimony = indexOfOrFail(markup, "data-author-testimony");
+    const pair = indexOfOrFail(markup, "data-question-pair");
     const letter = indexOfOrFail(markup, "data-letter-text");
-    expect(list).toBeLessThan(testimony);
-    expect(testimony).toBeLessThan(letter);
+    expect(testimony).toBeLessThan(pair);
+    expect(pair).toBeLessThan(letter);
   });
 
   it("shows the figures after the letter at stage 3", () => {
@@ -150,5 +151,14 @@ describe("Live_Letter receipts order (spec 10 C9.3)", () => {
     const figures = indexOfOrFail(markup, "data-figures-panel");
     expect(testimony).toBeLessThan(letter);
     expect(letter).toBeLessThan(figures);
+  });
+
+  it("ends the column with the seal line and the end card, after the figures", () => {
+    const markup = renderReveal({ stage: 3 });
+    const figures = indexOfOrFail(markup, "data-figures-panel");
+    const seal = indexOfOrFail(markup, "data-seal-line");
+    const end = indexOfOrFail(markup, "data-end-card");
+    expect(figures).toBeLessThan(seal);
+    expect(seal).toBeLessThan(end);
   });
 });
