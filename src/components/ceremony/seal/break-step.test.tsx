@@ -12,6 +12,7 @@ import { CEREMONY_COPY } from "../copy";
 import { LiveRegionProvider } from "../LiveRegion";
 import { MotionProvider } from "../motion";
 import { SkipProvider } from "../skip";
+import { ghostExitFallbackMs, ghostPresent, isGhostExitEnd } from "../scene/ghost-presence";
 import { SealBreak } from "./SealBreak";
 import { planSealBreak } from "./SealBreak";
 import type { SealController } from "./useSealBreak";
@@ -74,5 +75,27 @@ describe("break step: reduced motion and Calm_Mode (requirement 12.7)", () => {
 
   it("plans the full sequence in full motion", () => {
     expect(planSealBreak({ calm: false }).steps.length).toBeGreaterThan(0);
+  });
+});
+
+describe("break step: the ghost hands over and leaves (requirement 12.1)", () => {
+  const STAGE_1 = { tag: "reveal", stage: 1 as const, leaving: false };
+
+  it("full motion: the ghost stays mounted through the leave, then unmounts", () => {
+    // The break's ADVANCE sets leaving, so the ghost is still there for the leave.
+    expect(ghostPresent({ ...STAGE_1, leaving: true })).toBe(true);
+    expect(isGhostExitEnd("ghostLeave")).toBe(true);
+    // When the leave ends (animationend or fallback), the reveal is past stage 1.
+    expect(ghostPresent({ tag: "reveal", stage: 2, leaving: false })).toBe(false);
+    expect(ghostExitFallbackMs(false)).toBeGreaterThan(0);
+  });
+
+  it("Calm_Mode and Skip: no leave runs, so the ghost is gone in the ADVANCE render", () => {
+    expect(ghostPresent({ tag: "reveal", stage: 2, leaving: false })).toBe(false);
+    expect(ghostExitFallbackMs(true)).toBe(0);
+  });
+
+  it("before the break the ghost holds the seal at stage 1", () => {
+    expect(ghostPresent(STAGE_1)).toBe(true);
   });
 });
