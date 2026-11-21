@@ -28,7 +28,7 @@ Not in this list:
 
 - **Tasks:** 14 (spec 13). Merged pull request: #456. <!-- provenance: grep -n "^- \[x\] " .kiro/specs/13-the-seal/tasks.md; gh pr view 456 --json state -q .state -->
 - **Route:** `/`, below the hero.
-- **On screen:** The sections use both halves of the page at 1440×900. The four ritual cards sit with room inside each card. At 390×844 the sections stack, with no sideways scroll. <!-- provenance: grep -n "1440x900" tools/qa/layout-check.mjs; grep -n "390x844" tools/qa/layout-check.mjs; grep -n "ritualSteps" src/components/brand/copy.ts -->
+- **On screen:** The sections use both halves of the page at 1440×900. The four ritual cards sit with room inside each card. At 390×844 the sections stack, with no sideways scroll. <!-- provenance: grep -n "1440x900" tools/qa/layout-check.mjs; grep -n "390x844" tools/qa/layout-check.mjs; awk '/ritualSteps: \[/{f=1;next} f&&/^  \],/{print n; exit} f&&/^    \{/{n++}' src/components/brand/copy.ts -->
 - **Spoken:** "Write the letter. Press the seal. Wait. Testify. Break the seal. See the receipts."
 - **Capture:** Each section at both sizes, with and without reduced motion.
 
