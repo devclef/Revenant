@@ -4,7 +4,7 @@
 //
 // One command walks the judge journey in headless Chromium at each size, runs
 // the box and geometry checks (F1, F2, G1 to G3, D1, E1, T0), the spec 08
-// checks (N1, W1, X1, B1, L1, R1, LG1 and the polish rows T2, FT1, BAND1) and
+// checks (N1, W1, X1, B1, L1, R1, LG1 and the polish rows T2, FT1; spec 15 rows NB1, GC1, DL1, PV1) and
 // the neutrality and data rules (NT1, NT2), and prints one line per result. It
 // is the only copy of those check snippets. design.md points here.
 //
@@ -22,11 +22,10 @@
 //                       control are inside the viewport.
 //   LG1 landing-ghost   /: the Landing_Ghost is visible and its body covers no
 //                       headline line and not the Accent link.
-//   T2, FT1, BAND1      polish only: tick labels, footer against the Soil, and the
-//                       largest row-to-row colour change in one pixel column at the
-//                       light's x from the bottom of the Soil strip: on / down past
-//                       the explanation section's top edge, on the persona page's
-//                       intact stage down to the first text or the viewport bottom.
+//   T2, FT1             polish only: tick labels, and the footer against the Soil.
+//   BAND1               retired: it measured a light band down the Soil strip. Spec 15
+//                       deletes the Envelope's dirt group (design.md, Envelope), so the
+//                       band is gone. NB1 checks that it stays gone.
 // A check whose element is not on this build yet prints a note, not a BLOCKER:
 // N1 without [data-figures-heading], B1 without [data-figure-entry] or a
 // figValue class, L1 without [data-line-label], LG1 without [data-ghost-pit] on /.
@@ -159,6 +158,23 @@
 //   W13.5 desk-accent       no Accent fill or border on other desk buttons
 // Not yet rows: W2, W3, W5, W7 to W12, T, R, B, X2.1 and D1.1 to D1.3 (see the commit notes).
 //
+// Spec 15 rows (spec 15 tasks.md 14.1, design.md "Testing Strategy"). They block on any
+// failure, with no --require, because the spec asks for them in the PR:
+//   NB1   no-dirt-band       / and each persona page: no element with a dirt class or
+//                            [data-dirt]. Replaces BAND1.
+//   GC1   ghost-column       recall at 360x640 and 390x844: the [data-ghost] box is inside
+//                            the viewport (unclipped) and its centre is within 8 px of the
+//                            viewport centre (tone.md: the ghost is part of the column).
+//   DL1   one-demo-label     /demo and each persona recall: exactly one "Demo" text leaf,
+//                            the Top_Bar chip counted.
+//   PV1   primary-in-view    recall (Testify) at 360x640, 390x844 and 1440x900: the
+//                            [data-primary-control] button is inside the viewport. Press the
+//                            seal, Wait, Unlock and Break the seal are measured by the Live_Walk
+//                            (spec 15 task 14.2), not here.
+// Already covered, so no row was added: "one persona notice" is B1.4 (the notice counted
+// once in the Top_Bar), and "the Skip slot is stable" is B1.2 (the slots keep their place
+// across the steps).
+//
 // Line format: <PASS|BLOCKER|polish|note> <id> <name> <WxH> <stage> <detail>.
 // The spec 08 and spec 09 checks put the measured values and threshold=<...> in <detail>.
 //
@@ -189,6 +205,7 @@
 //            - a judgement word, an exclamation mark or red or green text outside the
 //              persona letter (neutrality.md, data-integrity.md)
 //            - a spec 09 check that failed and whose ID was passed with --require
+//            - a spec 15 row (NB1, GC1, DL1, PV1) that failed, with no --require
 //   polish   Reported, never fails the run. Every other layout measure: 1 px drift,
 //            margins, the Top_Bar height, dust height, a date wrapping, a sideways
 //            Ghost move, and any size other than 1280x800 for the button rule.
@@ -197,6 +214,11 @@
 //
 // Exit codes: 0 no blocker. 1 at least one blocker. 2 the check could not start
 // (bad arguments, no Chromium, or the app does not answer at --url).
+//
+// For task 15: rows that fail because of a product file, from the run of the spec 15
+// rows against a built app. Each entry names the row, its output and the suspected file.
+// None recorded yet: this change was not run against a built app in the task that wrote
+// it. QA fills this list from `npm run layout-check`.
 //
 // For task 19: known product gaps. Each row below reads a hook attribute that no
 // src/ file renders yet, so on a build without it the row reports a missing or
@@ -294,11 +316,11 @@ const LETTER_EM_MAX = 40;
 const LETTER_PHONE_MIN_PX = 280;
 const FOCUS_DRIFT_MAX_PX = 1;
 const FOCUS_SETTLE_MS = 1000;
-// BAND1 column: start this far inside the bottom of the Soil strip, run this far
-// past the explanation section's top edge on /, and stop this far above text.
-const BAND_INTO_STRIP_PX = 2;
-const BAND_EDGE_PAST_PX = 6;
-const BAND_TEXT_GAP_PX = 4;
+// Spec 15 rows. They always block (see report) and need no --require.
+const SPEC15_CHECKS = ["NB1", "GC1", "DL1", "PV1"];
+const GC1_CENTRE_TOL_PX = 8;
+// The text of the Top_Bar's Demo chip (scene/copy.ts) and of the DemoLabel (demo/copy.ts).
+const SPEC15_DEMO_LABEL = "Demo";
 const MAIN_RULE_SIZE = "1280x800";
 const TOP_BAR_SIZE = "360x640";
 const TOP_BAR_MAX_PX = 96;
@@ -655,61 +677,6 @@ const FT1_READ = () => {
   const touches = soil ? f.bottom > soil.top && f.top < soil.bottom : false;
   return { missing: false, top: f.top, bottom: f.bottom, soilTop: soil?.top ?? null, soilBottom: soil?.bottom ?? null, touches };
 };
-
-// BAND1 (R9.13, polish): one column of pixels at the light's x, from just inside
-// the bottom of the Soil strip downwards, in page coordinates. On / it runs past
-// the first screen to BAND_EDGE_PAST_PX below the top edge of the explanation
-// section, because the band ends in a hard edge there. It stops BAND_TEXT_GAP_PX
-// above the first text or control the column would cross, so it never reads text.
-const BAND1_GEOMETRY = ({ edgePast, textGap, intoStrip }) => {
-  const soil = document.querySelector("[data-soil-strip]")?.getBoundingClientRect();
-  if (!soil) return null;
-  const pit = document.querySelector("[data-ghost-pit]")?.getBoundingClientRect();
-  const frameW = Math.min(innerWidth, 1440);
-  const frameL = (innerWidth - frameW) / 2;
-  const xView = pit ? pit.left + pit.width / 2 : innerWidth >= 900 ? frameL + 0.72 * frameW : innerWidth / 2;
-  const x = Math.round(Math.min(innerWidth - 1, Math.max(0, xView)));
-  const sy = window.scrollY;
-  const top = Math.floor(soil.bottom + sy) - intoStrip;
-  // The page's explanation block is the element after the Scene root (only on /).
-  let end = innerHeight + sy;
-  let edge = null;
-  const root = document.querySelector('[data-ceremony="scene"]');
-  if (root) {
-    let el = root;
-    while (el && !el.nextElementSibling) el = el.parentElement;
-    const next = el?.nextElementSibling;
-    if (next) {
-      edge = Math.round(next.getBoundingClientRect().top + sy);
-      end = edge + edgePast;
-    }
-  }
-  // Stop above the first text, control or opaque panel (a card, a paper surface)
-  // inside <main> that crosses the column, so its edge is not read as the band.
-  // The explanation section on / sits outside <main>, so its edge is still read.
-  // A wrapper painted in the page's own background colour is not a panel.
-  const pageBg = getComputedStyle(document.body).backgroundColor;
-  const opaque = (el) => {
-    const bg = getComputedStyle(el).backgroundColor;
-    if (bg === pageBg) return false;
-    const m = bg.match(/[\d.]+/g);
-    return !!m && (m.length < 4 || Number(m[3]) >= 0.9);
-  };
-  let firstText = null;
-  const candidates = [
-    ...document.querySelectorAll("h1, h2, h3, p, li, a, button, input, label, summary"),
-    ...[...document.querySelectorAll("main *")].filter(opaque),
-  ];
-  for (const t of candidates) {
-    const r = t.getBoundingClientRect();
-    if (r.width === 0 || r.height === 0 || r.left > x || r.right < x) continue;
-    const tTop = r.top + sy;
-    if (tTop > top && (firstText === null || tTop < firstText)) firstText = tTop;
-  }
-  if (firstText !== null) end = Math.min(end, Math.floor(firstText) - textGap);
-  return { x, top, bottom: Math.floor(end), edge, firstText: firstText === null ? null : Math.round(firstText), docHeight: document.documentElement.scrollHeight };
-};
-
 
 // Neutrality and data (neutrality.md, data-integrity.md). Persona letter text is
 // exempt from the words check (the letter is the persona's own voice); it is
@@ -1805,51 +1772,73 @@ async function checkFooter(page, ctx) {
   ctx.rep.add(r.touches ? "polish" : "ok", "FT1", `footer=${Math.round(r.top)}..${Math.round(r.bottom)}px ${soil} threshold=no overlap`, "footer");
 }
 
-// BAND1: reads the screenshot's pixels in a blank page through a canvas, so the
-// check needs no image library. The clip is in page coordinates with a full-page
-// capture, so the column can run past the first screen.
-async function checkLightBand(page, ctx) {
-  if ((await page.evaluate(() => window.scrollY)) > 0) await page.evaluate(() => window.scrollTo(0, 0));
-  const geo = await page.evaluate(BAND1_GEOMETRY, { edgePast: BAND_EDGE_PAST_PX, textGap: BAND_TEXT_GAP_PX, intoStrip: BAND_INTO_STRIP_PX });
-  if (geo === null || geo.bottom - geo.top < 2) return;
-  const fullPage = geo.bottom > ctx.h;
-  const png = await page.screenshot({ fullPage, clip: { x: geo.x, y: geo.top, width: 1, height: geo.bottom - geo.top } });
-  const blank = await page.context().newPage();
-  try {
-    const edgeRow = geo.edge === null ? -1 : geo.edge - geo.top;
-    const worst = await blank.evaluate(async ([b64, edgeAt]) => {
-      const img = new Image();
-      img.src = `data:image/png;base64,${b64}`;
-      await img.decode();
-      const c = document.createElement("canvas");
-      c.width = img.width;
-      c.height = img.height;
-      const g = c.getContext("2d");
-      g.drawImage(img, 0, 0);
-      const d = g.getImageData(0, 0, 1, img.height).data;
-      let max = 0;
-      let at = 0;
-      let edgeMax = null;
-      for (let y = 1; y < img.height; y++) {
-        for (let ch = 0; ch < 3; ch++) {
-          const diff = Math.abs(d[y * 4 + ch] - d[(y - 1) * 4 + ch]);
-          if (diff > max) {
-            max = diff;
-            at = y;
-          }
-          // The explanation section's top edge, within 2 rows either side.
-          if (edgeAt >= 0 && Math.abs(y - edgeAt) <= 2) edgeMax = Math.max(edgeMax ?? 0, diff);
-        }
-      }
-      return { max, at, edgeMax };
-    }, [png.toString("base64"), edgeRow]);
-    const edge = geo.edge === null ? "" : ` explanationTop=${geo.edge}px edgeChange=${worst.edgeMax ?? "n/a"}`;
-    const text = geo.firstText === null ? "" : ` firstText=${geo.firstText}px`;
-    const detail = `x=${geo.x}px rows=${geo.top}..${geo.bottom}px${fullPage ? " (full page)" : ""}${edge}${text} maxRowChange=${worst.max} at y=${geo.top + worst.at}px threshold=<=2`;
-    ctx.rep.add(worst.max <= 2 ? "ok" : "polish", "BAND1", detail, "light-band");
-  } finally {
-    await blank.close();
+// Spec 15 rows (see the header). The pure helpers return the failure messages for a
+// row, so tests can call them with fixed boxes and counts.
+
+// NB1: no element carries a dirt class or [data-dirt]. Spec 15 deletes the Envelope's dirt group.
+export function nb1Failures({ count }) {
+  return count === 0 ? [] : [`NB1 ${count} element(s) with a dirt class or [data-dirt], want none`];
+}
+
+// GC1: the ghost box is inside the viewport (unclipped) and its centre is within
+// GC1_CENTRE_TOL_PX of the viewport centre. The row runs at the phone sizes only.
+export function gc1Failures({ ghost, w }) {
+  if (!ghost) return ["GC1 no [data-ghost] to measure"];
+  const out = [];
+  if (ghost.left < -0.5 || ghost.right > w + 0.5) out.push(`GC1 ghost spans ${num(ghost.left, 0)}px to ${num(ghost.right, 0)}px, outside the ${w}px viewport`);
+  const centre = (ghost.left + ghost.right) / 2;
+  if (Math.abs(centre - w / 2) > GC1_CENTRE_TOL_PX) out.push(`GC1 ghost centre is ${num(centre, 0)}px, the viewport centre is ${num(w / 2, 0)}px`);
+  return out;
+}
+
+// DL1: exactly one "Demo" label on the page, the Top_Bar chip counted.
+export function dl1Failures({ count }) {
+  return count === 1 ? [] : [`DL1 ${count} "Demo" labels, want one`];
+}
+
+// PV1: the primary control sits inside the viewport.
+export function pv1Failures({ button, w, h }) {
+  if (!button) return ["PV1 no [data-primary-control] to measure"];
+  return rectInViewport(button, w, h) ? [] : [`PV1 primary control spans ${num(button.top, 0)}px to ${num(button.bottom, 0)}px, outside the ${h}px viewport`];
+}
+
+// One evaluate reads every spec 15 input, so the rows see the same page state.
+const SPEC15_READ = ({ demoLabel }) => {
+  const box = (el) => {
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+  };
+  const demoLabels = [...document.querySelectorAll("body *")].filter((el) => el.children.length === 0 && el.textContent.trim() === demoLabel).length;
+  return {
+    ghost: box(document.querySelector("[data-ghost]")),
+    button: box(document.querySelector("[data-primary-control] button") ?? document.querySelector("[data-primary-control]")),
+    demoLabels,
+    dirt: document.querySelectorAll('[data-dirt], [class*="dirt" i]').length,
+  };
+};
+
+// NB1 on / and on a persona page. Reads the DOM, not the pixels.
+async function checkNoDirtBand(page, ctx) {
+  const r = await page.evaluate(SPEC15_READ, { demoLabel: SPEC15_DEMO_LABEL });
+  report(ctx, verdictRow("NB1", "no-dirt-band", nb1Failures({ count: r.dirt }), `dirt=${r.dirt} viewport=${ctx.size}`, "no dirt class or [data-dirt]"));
+}
+
+// DL1 on /demo, where the chip and the DemoLabel would both show.
+async function checkDemoLabel(page, ctx) {
+  const r = await page.evaluate(SPEC15_READ, { demoLabel: SPEC15_DEMO_LABEL });
+  report(ctx, verdictRow("DL1", "one-demo-label", dl1Failures({ count: r.demoLabels }), `labels=${r.demoLabels} viewport=${ctx.size}`, "one Demo label"));
+}
+
+// GC1, PV1 and DL1 on the persona Testify step (recall), reached by checkPersonaRows.
+async function checkRecallRows15(page, ctx) {
+  const r = await page.evaluate(SPEC15_READ, { demoLabel: SPEC15_DEMO_LABEL });
+  const detail = `viewport=${ctx.size}`;
+  if (ctx.w < 600) {
+    report(ctx, r.ghost ? verdictRow("GC1", "ghost-column", gc1Failures({ ghost: r.ghost, w: ctx.w }), detail, `ghost inside the viewport, centre within ${GC1_CENTRE_TOL_PX} px`) : missingRow("GC1", "ghost-column", "no [data-ghost] on recall"));
   }
+  report(ctx, r.button ? verdictRow("PV1", "primary-in-view", pv1Failures({ button: r.button, w: ctx.w, h: ctx.h }), detail, "the primary control inside the viewport") : missingRow("PV1", "primary-in-view", "no [data-primary-control] on recall"));
+  report(ctx, verdictRow("DL1", "one-demo-label", dl1Failures({ count: r.demoLabels }), `labels=${r.demoLabels} ${detail}`, "one Demo label"));
 }
 
 // N1: after the control press, read once at FOCUS_SETTLE_MS (R2.2's limit), then
@@ -1898,7 +1887,7 @@ const result = (id, name, status, detail) => ({ id, name, status, detail });
 
 function report(ctx, r) {
   if (!r) return;
-  const level = r.status === "pass" ? "ok" : r.status === "missing" ? "note" : ctx.required.has(r.id) ? "blocker" : "polish";
+  const level = r.status === "pass" ? "ok" : r.status === "missing" ? "note" : ctx.required.has(r.id) || SPEC15_CHECKS.includes(r.id) ? "blocker" : "polish";
   ctx.rep.add(level, r.id, r.detail, r.name);
 }
 
@@ -2515,7 +2504,7 @@ async function landing(context, ctx) {
       if (start) await guard(ctx, "BTN", () => checkMainButton(page, ctx, start, true, "link"));
       await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
       await guard(ctx, "LG1", () => checkLandingGhost(page, ctx));
-      await guard(ctx, "BAND1", () => checkLightBand(page, ctx));
+      await guard(ctx, "NB1", () => checkNoDirtBand(page, ctx));
       await guard(ctx, "FT1", () => checkFooter(page, ctx));
       await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
       await guard(ctx, "CTA1", () => checkLandingCtas(page, ctx));
@@ -2597,6 +2586,7 @@ async function index(context, ctx) {
       if (link === 0) ctx.rep.add("blocker", "walk", `/demo has no link to ${persona.path}, so the judge cannot reach the letter`);
       else ctx.rep.add("ok", "walk", `/demo links to ${persona.path}`);
     }
+    await guard(ctx, "DL1", () => checkDemoLabel(page, ctx));
     await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
     await guard(ctx, "DX1", () => checkDemoCards(page, ctx));
     await checkEveryPage(page, ctx, "/demo", { fonts: true });
@@ -2655,7 +2645,7 @@ async function personaWalk(page, ctx, p, via) {
     await guard(ctx, "T0", () => checkTopBar(page, ctx));
     await guard(ctx, "BTN", () => checkMainButton(page, ctx, PICK_UP, true));
     await guard(ctx, "D1", () => checkDust(page, ctx));
-    await guard(ctx, "BAND1", () => checkLightBand(page, ctx));
+    await guard(ctx, "NB1", () => checkNoDirtBand(page, ctx));
     await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
     await guard(ctx, "ST1", () => checkStepIndicator(page, ctx, "intact"));
     await guard(ctx, "GT1", () => checkGhostText(page, ctx));
@@ -5180,6 +5170,7 @@ async function checkPersonaRows(browser, base, p, size, rep, required) {
       await waitForStage(page, "recall");
     }
     await sleep(1500);
+    await guard(ctx, "GC1", () => checkRecallRows15(page, ctx));
     if (w === 390) {
       const t = await page.evaluate(T_READ);
       report(ctx, verdictRow("T1.6", "recall-viewport", t16Failures({ parts: t.parts, w: t.w, h: t.h }), `persona=${p.key} viewport=${ctx.size}`, "counter, question, Answer_Field and main button inside the First_Viewport"));
