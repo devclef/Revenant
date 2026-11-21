@@ -272,7 +272,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: the layout-check and walk tests whose rows or steps change; name each.
   - QA: `npm run layout-check` against a local production build with the result lines quoted; the helper tests; one `npm run live-walk` run.
 
-- [ ] 15. Fix-up: fix every product failure the rows and the walk report
+- [x] 15. Fix-up: fix every product failure the rows and the walk report
   - Agent: `frontend-dev` · Depends on: 14 · Estimated size: M, ~1,000 changed lines
   - Scope: frontend-dev paths only, plus the `*.test.ts(x)` next to each file. It does not edit `tools/qa/` or `src/test/`, a layout row, a threshold or a walk step.
   - Steps:
