@@ -88,22 +88,19 @@ export function userFacingText(source: string): string[] {
 }
 
 /**
- * Exact strings where "off" describes a motion or sound control or state, not
- * a judgement of testimony. They are reviewed copy, so they are exempt from the
- * grading-word check only. The "!" check still applies to them.
+ * Exact string literals that are HTML attribute values, not copy. The one entry
+ * is `autoComplete="off"` in RecallPager.tsx, which the browser needs. They are
+ * exempt from the grading-word check only. The "!" check still applies to them.
+ * Control and state copy is not listed here: it is reworded so "off" never
+ * appears in it.
  */
-const CONTROL_STATE_TEXT = new Set([
-  "Turn off motion",
-  "Turn sound off",
-  "Sound and vibration are off unless you turn them on.",
-  "off",
-]);
+const HTML_ATTRIBUTE_VALUES = new Set(["off"]);
 
 export function findViolations(source: string): string[] {
   const found: string[] = [];
   for (const text of userFacingText(source)) {
     if (text.includes("!")) found.push(`"!" in: ${text}`);
-    if (CONTROL_STATE_TEXT.has(text)) continue;
+    if (HTML_ATTRIBUTE_VALUES.has(text)) continue;
     for (const word of GRADING_WORDS) {
       const pattern = new RegExp(`(^|[^A-Za-z-])${word}($|[^A-Za-z-])`, "i");
       if (pattern.test(text)) found.push(`"${word}" in: ${text}`);
