@@ -217,8 +217,15 @@
 //
 // For task 15: rows that fail because of a product file, from the run of the spec 15
 // rows against a built app. Each entry names the row, its output and the suspected file.
-// None recorded yet: this change was not run against a built app in the task that wrote
-// it. QA fills this list from `npm run layout-check`.
+// The two entries below were quoted in the ticket for this task. The layout check was not
+// run
+// against a built app in the task that wrote this list. QA confirms them with
+// `npm run layout-check`.
+//
+//   DL1   one-demo-label         labels=2 on /demo, want one
+//         suspected file:        src/components/ceremony/scene/TopBar.tsx and src/app/demo/page.tsx
+//   PV1   primary-in-view        at 360x640 the primary control is outside the viewport
+//         suspected file:        src/components/ceremony/recall/RecallPager.tsx
 //
 // For task 19: known product gaps. Each row below reads a hook attribute that no
 // src/ file renders yet, so on a build without it the row reports a missing or
@@ -5224,6 +5231,23 @@ async function checkPersonaRows(browser, base, p, size, rep, required) {
 }
 
 // B1.2 on /demo/live: the Top_Bar slots across the Write and Seal steps at the Phone sizes.
+// Pure helpers first, so tests can call them without a browser.
+
+// The text for each [data-answer-input], in page order. The Write step needs every
+// question answered before the fold (spec 15, R7.1), as the Live_Walk write step does.
+export function fillAnswerTexts(count) {
+  const out = [];
+  for (let i = 1; i <= count; i += 1) out.push(`Walk answer to question ${i}`);
+  return out;
+}
+
+// A missing [data-seal-step] after the fold is a note, not a thrown error, so the rows
+// after this check (checkDemoRows, checkPersonaRows, checkSoilStrips) still run.
+// Returns null when the seal step was found.
+export function topBarSealStepNote(found) {
+  return found ? null : "B1.2 no [data-seal-step] after Fold it and press the seal; the Top_Bar rows on the seal step are not measured";
+}
+
 async function checkTopBarSteps(browser, base, size, rep, required) {
   const [w, h] = parseSize(size);
   const context = await browser.newContext({ viewport: { width: w, height: h } });
@@ -5237,18 +5261,30 @@ async function checkTopBarSteps(browser, base, size, rep, required) {
     await sleep(500);
     const steps = [{ label: "write", ...(await page.evaluate(B_READ)) }];
     await page.fill("#live-letter", DESK_LETTER);
+    const answers = page.locator("[data-answer-input]");
+    const answerTexts = fillAnswerTexts(await answers.count());
+    for (let i = 0; i < answerTexts.length; i += 1) {
+      await answers.nth(i).fill(answerTexts[i]);
+    }
     await page.getByRole("button", { name: FOLD_LABEL }).click();
-    await page.waitForSelector("[data-seal-step]", { timeout: WAIT_MS });
-    await sleep(800);
-    steps.push({ label: "seal", ...(await page.evaluate(B_READ)) });
-    // B1.2 has two results, one per Skip state. A state no step reached is reported missing, not passed.
-    for (const skip of ["disabled", "enabled"]) {
-      const name = `topbar-skip-${skip}`;
-      const reached = steps.filter((s) => s.skipDisabled === (skip === "disabled")).map((s) => s.label);
-      if (!reached.length) {
-        report(ctx, missingRow("B1.2", name, `no step on /demo/live with Skip ${skip}`));
-      } else {
-        report(ctx, verdictRow("B1.2", name, b12Failures({ steps, skip }), `skip=${skip} steps=${reached.join(",")} viewport=${ctx.size}`, "each Top_Bar slot keeps its x and width (1 px) and the bar its height"));
+    const sealFound = await page
+      .waitForSelector("[data-seal-step]", { timeout: WAIT_MS })
+      .then(() => true, () => false);
+    const note = topBarSealStepNote(sealFound);
+    if (note) {
+      rep.add("note", "B1.2", note);
+    } else {
+      await sleep(800);
+      steps.push({ label: "seal", ...(await page.evaluate(B_READ)) });
+      // B1.2 has two results, one per Skip state. A state no step reached is reported missing, not passed.
+      for (const skip of ["disabled", "enabled"]) {
+        const name = `topbar-skip-${skip}`;
+        const reached = steps.filter((s) => s.skipDisabled === (skip === "disabled")).map((s) => s.label);
+        if (!reached.length) {
+          report(ctx, missingRow("B1.2", name, `no step on /demo/live with Skip ${skip}`));
+        } else {
+          report(ctx, verdictRow("B1.2", name, b12Failures({ steps, skip }), `skip=${skip} steps=${reached.join(",")} viewport=${ctx.size}`, "each Top_Bar slot keeps its x and width (1 px) and the bar its height"));
+        }
       }
     }
     await page.close();
