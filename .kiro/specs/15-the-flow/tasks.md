@@ -254,7 +254,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: `letter-card-svg.test.ts`, `BackupKeyCard.test.tsx`, `keepsake-files.test.ts`; name each.
   - Copy evidence: tone-check for `live/copy.ts`.
 
-- [ ] 14. Layout rows, the Live_Walk and the docs for the new flow
+- [x] 14. Layout rows, the Live_Walk and the docs for the new flow
   - Agent: `platform-dev` · Depends on: 7, 8, 9, 10, 11, 12, 13 · Estimated size: L, ~1,800 changed lines
   - Scope: `tools/qa/layout-check.mjs`, `src/test/integration/live-walk*.ts`, `src/app/page.tsx`, `README.md`, `docs/video-script.md`, and the tests that cover them.
   - Requirement 14.
