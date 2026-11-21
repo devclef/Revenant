@@ -219,6 +219,15 @@ describe("spec 09 ritual copy (C2, F4, design.md Copy)", () => {
     ]);
   });
 
+  it("has the Remember help text exactly (the spec gives no other wording)", () => {
+    expect(REVEAL_COPY.recallHint).toBe(
+      "Answer from memory. You can mark any question as no answer.",
+    );
+    expect(REVEAL_COPY.answerHint).toBe(
+      "What did you answer? Write what you remember.",
+    );
+  });
+
   it("holds no date and no testify word in the recall intro", () => {
     expect(REVEAL_COPY.recallIntro).not.toContain("{date}");
     expect(REVEAL_COPY.recallIntro).not.toMatch(/testif|testimon/i);
