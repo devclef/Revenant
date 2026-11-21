@@ -9,6 +9,7 @@ import type { RecallRecordV1, RecallRecordV2 } from "@/lib/recall";
 import { SoundEnabledContext } from "@/components/ceremony/sound/SoundEnabledContext";
 import { FiguresThenNow, SelfReportedOnly } from "./FiguresThenNow";
 import { useFigures, type FiguresState } from "./figures-api";
+import type { FiguresResponseV1 } from "@/lib/figures";
 import { QuestionPair } from "./QuestionPair";
 import { LetterPaper } from "./LetterPaper";
 import { FigureReceipt } from "./FigureReceipt";
@@ -167,6 +168,12 @@ export type RevealProps = {
    */
   close?: CloseProps;
   /**
+   * The persona's "now" figures, built on the server (spec 15 R4.4). When set,
+   * the reveal reads these instead of GET /api/figures. Absent for a Live_Letter
+   * or Real_Letter, which keep the request.
+   */
+  personaNow?: FiguresResponseV1;
+  /**
    * Forces the phone layout (true below 600 px) instead of reading the
    * viewport. Tests pass it, because static renders have no viewport. Omitted
    * in the app, where the viewport decides.
@@ -214,6 +221,11 @@ export function Reveal(props: RevealProps) {
   );
   if (!hasOfficialFigures) {
     return <RevealBody {...props} figures={null} />;
+  }
+  if (props.personaNow !== undefined) {
+    // The persona's now figures come from the server: no request is made.
+    const figures: FiguresState = { status: "ready", figures: props.personaNow };
+    return <RevealBody {...props} figures={figures} />;
   }
   return <RevealWithFigures {...props} />;
 }
