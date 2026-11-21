@@ -1367,3 +1367,11 @@ class AgentNotes(unittest.TestCase):
         self.assertNotIn("--allow-empty", spec)
         self.assertIn("Do not plan a step whose only output is a commit message", spec)
         self.assertIn("Do not make an empty commit", spec)
+
+    def test_dev_and_qa_specs_keep_steps_in_the_run_worktree(self):
+        # TASK_f3e0e52d (PR #541): the planner wrote the dispatcher clone's path into
+        # each step, the agent committed there, and every step left no diff.
+        issue = {"number": 2, "title": "t", "body": "b"}
+        self.assertIn(d.WORKTREE_RULE, d.dev_spec(issue, "frontend-dev"))
+        self.assertIn(d.WORKTREE_RULE, d.qa_spec({"number": 7, "title": "t"}, issue))
+        self.assertIn("never name `~/kiro/revenant-crew/qa`", d.WORKTREE_RULE)
