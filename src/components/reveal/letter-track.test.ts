@@ -56,8 +56,8 @@ describe("letterTrackStep", () => {
   it("names the three steps in order", () => {
     expect([...REVEAL_COPY.letterTrackSteps]).toEqual([
       "Unlock",
-      "Testify",
-      "See the receipts",
+      "Remember",
+      "Receipts",
     ]);
   });
 });

@@ -30,10 +30,10 @@ export const REVEAL_COPY = {
   loading: "Bringing the letter into the light.",
 
   /**
-   * The three-step track on `/l/{id}`, in order: unlock, Testify, receipts.
+   * The three-step track on `/l/{id}`, in order: unlock, Remember, Receipts.
    * It is drawn by StepTrack from letter-track.ts.
    */
-  letterTrackSteps: ["Unlock", "Testify", "See the receipts"] as const,
+  letterTrackSteps: ["Unlock", "Remember", "Receipts"] as const,
 
   /** Heading for the still-sealed state. */
   sealedTitle: "Still sealed",
@@ -131,9 +131,8 @@ export const REVEAL_COPY = {
   /** Heading for the recall step. */
   recallTitle: "Before you read it",
 
-  /** Intro for the recall step. `{date}` is the written-as-of date. */
-  recallIntro:
-    "This letter was written as of {date}. Before you read it, testify: say what you remember about that time.",
+  /** Intro for the recall step. It holds no date (spec 16, Requirement 13). */
+  recallIntro: "Before you read it, say what you remember about that time.",
 
   /** Hint under the recall intro. */
   recallHint: "Answer from memory. You can mark any question as no answer.",

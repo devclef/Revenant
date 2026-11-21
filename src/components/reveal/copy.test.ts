@@ -207,8 +207,21 @@ describe("spec 09 ritual copy (C2, F4, design.md Copy)", () => {
     expect(REVEAL_COPY.stage2Next).toBe("See the receipts");
     expect(REVEAL_COPY.stage3Title).toBe("The receipts");
     expect(REVEAL_COPY.recallIntro).toBe(
-      "This letter was written as of {date}. Before you read it, testify: say what you remember about that time.",
+      "Before you read it, say what you remember about that time.",
     );
+  });
+
+  it("names the track steps Unlock, Remember and Receipts, exactly", () => {
+    expect([...REVEAL_COPY.letterTrackSteps]).toEqual([
+      "Unlock",
+      "Remember",
+      "Receipts",
+    ]);
+  });
+
+  it("holds no date and no testify word in the recall intro", () => {
+    expect(REVEAL_COPY.recallIntro).not.toContain("{date}");
+    expect(REVEAL_COPY.recallIntro).not.toMatch(/testif|testimon/i);
   });
 
   it("keeps the retired ritual names out of the reveal copy", () => {
