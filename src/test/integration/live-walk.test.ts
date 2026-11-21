@@ -67,7 +67,9 @@ import {
   checkStepSnapshot,
   checkStepTrackClearOfTopBar,
   checkTamperRunNoPasskey,
+  checkTestifyKinds,
   checkTopbarSlotStable,
+  checkUnansweredFold,
   countPasskeyCalls,
   defectsFromChecks,
   missingShotDefect,
@@ -475,21 +477,6 @@ function checkOwnNumberOnChecklist(text: string): StepCheck {
   };
 }
 
-/** Checks that folding an empty letter keeps focus on #live-letter and shows one fold summary. */
-function checkFoldFailure(focusId: string, summaries: number): StepCheck {
-  const expected =
-    "folding an empty letter keeps focus on #live-letter and shows one [data-fold-summary]";
-  if (focusId === "live-letter" && summaries === 1) {
-    return { ok: true, expected, message: `PASS ${expected}` };
-  }
-  const where = focusId || "nothing";
-  return {
-    ok: false,
-    expected,
-    message: `FAIL focus is on "${where}" and ${summaries} [data-fold-summary] element(s) are shown`,
-  };
-}
-
 /** Checks that the letter text is unchanged after an Occasion is picked. */
 function checkDraftKept(
   actual: string,
@@ -746,8 +733,10 @@ async function pressSealEarly(c: WalkContext): Promise<void> {
 async function answerEveryQuestion(
   c: WalkContext,
   counters: (string | null)[],
-): Promise<number> {
+): Promise<{ author: number; figure: number }> {
   const recall = c.page.locator('[data-ceremony="recall"]');
+  let author = 0;
+  let figure = 0;
   let answered = 0;
   for (let guard = 0; guard < 12; guard += 1) {
     if ((await currentStage(c.page)) !== "recall") break;
@@ -758,11 +747,15 @@ async function answerEveryQuestion(
     const numberField = recall.locator('input[type="number"]').first();
     const textField = recall.locator('textarea, input[type="text"]').first();
     if ((await numberField.count()) > 0) {
+      // A number question is a figure question (spec 15, R11.3).
       await numberField.fill("12");
+      figure += 1;
     } else if ((await textField.count()) > 0) {
-      await textField.fill(`Walk answer ${answered + 1}`);
+      // An author question: the testimony is typed as text.
+      await textField.fill(`Walk answer ${author + 1}`);
+      author += 1;
     } else {
-      // A scale control. The Motion_Control is excluded: it is not an answer.
+      // A figure question's scale control. The Motion_Control is excluded: it is not an answer.
       const control = recall
         .locator('button[aria-label]:not([aria-label*="motion" i])')
         .first();
@@ -770,8 +763,9 @@ async function answerEveryQuestion(
         throw new Error("No recall answer control found on the Testify stage.");
       }
       await control.click();
+      figure += 1;
     }
-    answered += 1;
+    answered = author + figure;
     const next = recall
       .getByRole("button", {
         name: /^(next question|next|continue|submit|save)$/i,
@@ -791,19 +785,26 @@ async function answerEveryQuestion(
   if (answered === 0) {
     throw new Error("No recall question field found.");
   }
-  return answered;
+  return { author, figure };
 }
 
+/**
+ * Presses "Open your letter" on the Wait card, then the passkey unlock on the
+ * Testify step (spec 15, R9.5 and R9.6). The Wait card has no link out of the
+ * page any more, so the `/l/<id>` path is read from its Keep_Section first, for
+ * the Q1.4 page check.
+ */
 async function openLetterAndUnlock(
   c: WalkContext,
   label: RegExp,
 ): Promise<void> {
-  const goTo = c.page
-    .getByRole("link", { name: /go to your letter/i })
-    .or(c.page.getByRole("button", { name: /go to your letter/i }));
-  await goTo.first().click();
-  await c.page.waitForURL(/\/l\//, { timeout: STEP_TIMEOUT_MS });
-  c.letter.path = new URL(c.page.url()).pathname;
+  const keep = c.page.locator("[data-live-keep-section]");
+  const keepText =
+    (await keep.count()) > 0 ? await keep.first().innerText() : "";
+  c.letter.path = /\/l\/[A-Za-z0-9_-]+/.exec(keepText)?.[0] ?? null;
+  await c.page
+    .getByRole("button", { name: LIVE_COPY.openLetter, exact: true })
+    .click();
   await c.page.getByRole("button", { name: label }).click();
 }
 
@@ -1212,9 +1213,19 @@ function liveStages(run: WalkRun): StageAction[] {
           .getByRole("button", { name: DESK_COPY.writeOwn, exact: true })
           .click();
         const afterWriteOwn = await rows.count();
-        await rows.last().locator("textarea").fill(WALK_OWN_QUESTION);
+        // The question text is the row's textarea that is not an answer field.
+        await rows
+          .last()
+          .locator("textarea:not([data-answer-input])")
+          .fill(WALK_OWN_QUESTION);
+        // Each question is answered when it is written (spec 15, R7.1).
+        const answers = c.page.locator("[data-answer-input]");
+        const answerCount = await answers.count();
+        for (let i = 0; i < answerCount; i += 1) {
+          await answers.nth(i).fill(`Walk answer to question ${i + 1}`);
+        }
         checks.push(checkRowsGrew([before, afterSuggestion, afterWriteOwn]));
-        return `Suggested question added, then Write my own pressed. Question rows: ${before}, ${afterSuggestion}, ${afterWriteOwn}.`;
+        return `Suggested question added, then Write my own pressed. Question rows: ${before}, ${afterSuggestion}, ${afterWriteOwn}. Each of ${answerCount} question(s) answered.`;
       },
     },
     {
@@ -1257,20 +1268,42 @@ function liveStages(run: WalkRun): StageAction[] {
     {
       step: "write-failed",
       act: async (c, checks) => {
-        await c.page.locator("#live-letter").fill("");
+        // Clear the answer to the last question, so the fold has one to name.
+        const answers = c.page.locator("[data-answer-input]");
+        const count = await answers.count();
+        await answers.nth(count - 1).fill("");
         await c.page.locator("[data-fold-button]").first().click();
-        const focusId = await c.page.evaluate(
-          () => document.activeElement?.id ?? "",
+        const focusedAnswer = await c.page.evaluate(() => {
+          const active = document.activeElement;
+          if (!active || !active.hasAttribute("data-answer-input")) return null;
+          const all = Array.from(
+            document.querySelectorAll("[data-answer-input]"),
+          );
+          return all.indexOf(active) + 1;
+        });
+        const bodyText = await c.page.evaluate(() => document.body.innerText);
+        const foldSummaries = await c.page
+          .locator("[data-fold-summary]")
+          .count();
+        checks.push(
+          checkUnansweredFold({
+            question: count,
+            focusedAnswer,
+            bodyText,
+            foldSummaries,
+            message: DESK_COPY.answerMissing.replace("{n}", String(count)),
+          }),
         );
-        const summaries = await c.page.locator("[data-fold-summary]").count();
-        checks.push(checkFoldFailure(focusId, summaries));
-        return `Empty letter folded. Focus on ${focusId || "nothing"}, ${summaries} fold summary.`;
+        return `Last answer cleared and the letter folded. Focus on answer ${focusedAnswer ?? "none"}, ${foldSummaries} fold summary.`;
       },
     },
     {
       step: "write-receipts",
       act: async (c, checks) => {
-        await c.page.locator("#live-letter").fill(LETTER_TEXT);
+        await c.page
+          .locator("[data-answer-input]")
+          .last()
+          .fill("Walk answer to the last question.");
         const paints = await readFigurePaint(c.page);
         checks.push(checkFigureRowsNoAccent(paints));
         const orange = await readOrangeButtons(c.page);
@@ -1434,13 +1467,13 @@ function liveStages(run: WalkRun): StageAction[] {
       },
     },
     {
-      step: "unlock",
+      step: "open-letter",
       act: async (c) => {
         await openLetterAndUnlock(c, /unlock with your passkey/i);
         await c.page
           .locator('[data-ceremony="recall"]')
           .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-        return "Unlocked with the passkey. Recall stage shown.";
+        return '"Open your letter" pressed, unlocked with the passkey. Testify stage shown.';
       },
     },
     {
@@ -1449,7 +1482,14 @@ function liveStages(run: WalkRun): StageAction[] {
         const counters: (string | null)[] = [];
         const answered = await answerEveryQuestion(c, counters);
         checks.push(checkWrittenOnCounter(counters));
-        return `Answered ${answered} recall question(s). Counter read on each.`;
+        checks.push(
+          checkTestifyKinds({
+            authorAnswered: answered.author,
+            figureAnswered: answered.figure,
+            hasFigure: run.figure,
+          }),
+        );
+        return `Answered ${answered.author} author and ${answered.figure} figure question(s). Counter read on each.`;
       },
     },
     {
