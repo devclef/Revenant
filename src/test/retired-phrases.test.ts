@@ -497,3 +497,79 @@ describe("F4.5 retired-word fixtures", () => {
     ]);
   });
 });
+
+/**
+ * Property 10 (spec 16, Requirements 2.8 and 4.1 to 4.4): the retired-word scan
+ * reads values, not names. The cases are a fixed table rather than generated
+ * inputs, so every run checks the same fixtures. Each case says whether the
+ * scan must flag it.
+ */
+describe("Property 10: The retired-word scan reads values, not names", () => {
+  const cases: ReadonlyArray<{
+    name: string;
+    kind: "ts" | "json";
+    source: string;
+    flagged: boolean;
+  }> = [
+    {
+      name: "a key containing a retired word passes when its value is clean",
+      kind: "ts",
+      source:
+        'export const copy = { testimonyRecorded: "What you remembered is recorded." };',
+      flagged: false,
+    },
+    {
+      name: "an identifier containing a retired word passes when its value is clean",
+      kind: "ts",
+      source: 'const testifyLater = "Say what you remember.";',
+      flagged: false,
+    },
+    {
+      name: "an import path containing a retired word passes",
+      kind: "ts",
+      source: 'import { helpers } from "./testimony-helpers";',
+      flagged: false,
+    },
+    {
+      name: "a comparison operand containing a retired word passes",
+      kind: "ts",
+      source: 'if (kind === "testify") { run(); }',
+      flagged: false,
+    },
+    {
+      name: "a JSON key containing a retired word passes when its value is clean",
+      kind: "json",
+      source: '{ "testimonyNote": "Say what you remember." }',
+      flagged: false,
+    },
+    {
+      name: "a string value containing a retired word fails",
+      kind: "ts",
+      source: 'export const copy = { heading: "Your testimony" };',
+      flagged: true,
+    },
+    {
+      name: "a template value containing a retired word fails",
+      kind: "ts",
+      source: "export const copy = { line: `Testify first` };",
+      flagged: true,
+    },
+    {
+      name: "a JSON value containing a retired word fails",
+      kind: "json",
+      source: '{ "note": "She testified to it." }',
+      flagged: true,
+    },
+  ];
+
+  for (const testCase of cases) {
+    it(`${testCase.name}`, () => {
+      const strings =
+        testCase.kind === "json"
+          ? userStringsOfJson("src/example/copy.json", testCase.source)
+          : userStringsOfTs("src/example/copy.ts", testCase.source);
+      const found = retiredWordHits(strings);
+      expect(found.length > 0).toBe(testCase.flagged);
+    });
+  }
+});
