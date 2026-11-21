@@ -49,7 +49,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
 
 ## Tasks
 
-- [ ] 1. Keep_Hook fix and the Press_Test
+- [x] 1. Keep_Hook fix and the Press_Test
   - Agent: `frontend-dev` · Depends on: none · Estimated size: M, ~900 changed lines
   - Scope: `src/components/ui/use-keep-in-visual-viewport.ts`, `src/components/ui/KeepGroup.tsx` (new), `src/components/live/stepper/LiveStepper.tsx`, `src/components/live/desk/QuestionRow.tsx`, `desk/LetterSheet.tsx`, `src/components/live/WriteForm.tsx`, `AuthorQuestions.tsx`, `desk/OwnNumberView.tsx`, `SelfReportedRows.tsx`, `UnlockView.tsx`, `src/test/integration/press-test.test.ts` (new), `press-test-helpers.ts` (new), `live-walk-helpers.ts`, `live-walk.test.ts` (shared launch helpers only), `package.json` (the `live-walk` script), and the `*.test.ts(x)` next to each.
   - Design sections: "1. Keep_Hook", "2. Press_Test", Properties 1 and 2.
