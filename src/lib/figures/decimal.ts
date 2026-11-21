@@ -2,9 +2,10 @@
 //
 // A value string matching ^-?[0-9]+(\.[0-9]+)?$ is parsed into
 // { int: bigint, scale: number }, where the value is int / 10^scale. All
-// arithmetic is exact BigInt work on aligned scales. There is no Number(),
-// parseFloat, parseInt or unary + on any value anywhere in this module, and a
-// source-scan test enforces that. No dependency is needed; BigInt is in every
+// arithmetic is exact BigInt work on aligned scales. This module never converts
+// a value through the Number constructor or any float parser, and it never uses
+// parseInt or unary + on a value. A source-scan test enforces the Number and
+// float rule. No dependency is needed; BigInt is in every
 // browser the app supports and in Node 22.
 //
 // This module imports nothing from src/lib/crypto, src/lib/db or Node
@@ -123,6 +124,33 @@ export function sub(a: Decimal, b: Decimal): Decimal {
 /** True when `d` represents zero. */
 export function isZero(d: Decimal): boolean {
   return d.int === 0n;
+}
+
+/**
+ * Round `d` to `decimals` fractional digits, half away from zero (2.5 to 3,
+ * -2.5 to -3). Exact BigInt work with no float step. The result has scale
+ * `decimals`; a value with fewer fractional digits is padded, not changed.
+ *
+ * Throws {@link RangeError} when `decimals` is not a non-negative integer.
+ */
+export function roundDecimal(d: Decimal, decimals: number): Decimal {
+  if (decimals < 0 || decimals % 1 !== 0) {
+    throw new RangeError(`decimals must be a non-negative integer: ${decimals}`);
+  }
+
+  if (d.scale <= decimals) {
+    return { int: d.int * pow10(decimals - d.scale), scale: decimals };
+  }
+
+  const divisor = pow10(d.scale - decimals);
+  const negative = d.int < 0n;
+  const magnitude = negative ? -d.int : d.int;
+  let kept = magnitude / divisor;
+  const remainder = magnitude % divisor;
+  if (remainder * 2n >= divisor) {
+    kept += 1n;
+  }
+  return { int: negative ? -kept : kept, scale: decimals };
 }
 
 /** Result of {@link ratioPercent}: a canonical value string and whether the

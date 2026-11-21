@@ -7,6 +7,7 @@ import {
   isZero,
   parseDecimal,
   ratioPercent,
+  roundDecimal,
   sub,
   toDecimalString,
 } from "./decimal";
@@ -113,5 +114,59 @@ describe("ratioPercent", () => {
     const r = ratioPercent(parseDecimal("0"), parseDecimal("5"));
     expect(r.value).toBe("0");
     expect(r.exact).toBe(true);
+  });
+});
+
+describe("roundDecimal", () => {
+  const round = (s: string, decimals: number): string =>
+    toDecimalString(roundDecimal(parseDecimal(s), decimals));
+
+  it("rounds half away from zero", () => {
+    expect(round("2.5", 0)).toBe("3");
+    expect(round("-2.5", 0)).toBe("-3");
+    expect(round("0.125", 2)).toBe("0.13");
+    expect(round("-0.125", 2)).toBe("-0.13");
+  });
+
+  it("rounds below half down, both signs", () => {
+    expect(round("2.4999", 0)).toBe("2");
+    expect(round("-2.4999", 0)).toBe("-2");
+    expect(round("3.412", 2)).toBe("3.41");
+    expect(round("-3.412", 2)).toBe("-3.41");
+  });
+
+  it("rounds on the exact decimal, not a float: 1.005 to 2 places is 1.01", () => {
+    expect(round("1.005", 2)).toBe("1.01");
+    expect(round("-1.005", 2)).toBe("-1.01");
+  });
+
+  it("carries across the decimal point", () => {
+    expect(round("9.996", 2)).toBe("10");
+    expect(round("-9.996", 2)).toBe("-10");
+  });
+
+  it("pads a value with fewer fractional digits without changing it", () => {
+    const padded = roundDecimal(parseDecimal("3.4"), 3);
+    expect(padded).toEqual({ int: 3400n, scale: 3 });
+    expect(toDecimalString(padded)).toBe("3.4");
+  });
+
+  it("returns scale equal to the requested decimals", () => {
+    expect(roundDecimal(parseDecimal("3.412"), 2)).toEqual({ int: 341n, scale: 2 });
+    expect(roundDecimal(parseDecimal("3.412"), 0)).toEqual({ int: 3n, scale: 0 });
+  });
+
+  it("keeps a zero result unsigned", () => {
+    expect(toDecimalString(roundDecimal(parseDecimal("-0.001"), 2))).toBe("0");
+  });
+
+  it("rounds a long value exactly", () => {
+    expect(round("12345678901234567890.4999999999", 0)).toBe("12345678901234567890");
+    expect(round("12345678901234567890.5", 0)).toBe("12345678901234567891");
+  });
+
+  it("throws RangeError for a negative or fractional decimals argument", () => {
+    expect(() => roundDecimal(parseDecimal("1"), -1)).toThrow(RangeError);
+    expect(() => roundDecimal(parseDecimal("1"), 1.5)).toThrow(RangeError);
   });
 });
