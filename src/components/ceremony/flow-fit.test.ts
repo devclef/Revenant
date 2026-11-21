@@ -15,6 +15,7 @@ const pagerCss = readFileSync(
 );
 const sceneCss = readFileSync(resolve(here, "scene/scene.module.css"), "utf8");
 const rootSource = readFileSync(resolve(here, "CeremonyRoot.tsx"), "utf8");
+const sealCss = readFileSync(resolve(here, "seal/SealBreak.module.css"), "utf8");
 
 /** CSS with every @media block removed, so only the all-widths rules remain. */
 function topLevel(css: string): string {
@@ -116,7 +117,8 @@ describe("Figures_Heading re-check across the close settle (N1)", () => {
 
 /** Evaluates a calc() made of `+` terms, each a product of numbers, N%, Npx and min(26vh, 170px). */
 function evalCalc(expr: string, columnPx: number, viewportHeightPx: number): number {
-  const body = expr.trim().replace(/^calc\(/, "").replace(/\)$/, "");
+  const trimmed = expr.trim();
+  const body = /^calc\(/.test(trimmed) ? trimmed.slice(5, -1) : trimmed;
   return body.split(" + ").reduce((sum, term) => {
     const product = term.split(" * ").reduce((acc, factor) => {
       const f = factor.trim();
@@ -135,25 +137,55 @@ describe("break-stage step row clears the Compact_Ghost box at 360 wide (issue #
   const padRight = row.match(/padding-right:\s*([^;]+);/)?.[1] ?? "";
   const minHeight = row.match(/min-height:\s*([^;]+);/)?.[1] ?? "";
   const columnPx = 360;
+  // The Ghost's width, aspect and compact scale are read from scene.module.css,
+  // so a CSS change to the Ghost fails this test instead of a copy of the value.
+  const ghostWExpr = sceneCss.match(/--ghost-w:\s*(min\(26vh, 170px\));/)?.[1] ?? "";
+  const compactScale = Number(
+    [...sceneCss.matchAll(/\.pit\[data-compact="true"\]\s*\{([^}]*)\}/g)]
+      .map((m) => m[1])
+      .find((body) => body.includes("scale("))
+      ?.match(/scale\(([\d.]+)\)/)?.[1],
+  );
+  const aspect = sceneCss
+    .match(/\n\.ghost \{([^}]*)\}/)?.[1]
+    .match(/aspect-ratio:\s*(\d+)\s*\/\s*(\d+)/);
+  // aspect-ratio 5 / 6 is width 5 to height 6, so height = width x 6 / 5.
+  const ghostAspect = aspect ? Number(aspect[2]) / Number(aspect[1]) : NaN;
 
   for (const viewportHeightPx of [640, 800]) {
     it(`ends the step text before the Ghost's left edge at ${viewportHeightPx} px tall`, () => {
       expect(padRight).not.toBe("");
       // The Compact_Ghost is centred on the column, 0.58 W wide. Its left edge is
       // columnPx / 2 - 0.29 W, and the text box's right edge is columnPx - padding.
-      const w = Math.min(0.26 * viewportHeightPx, 170);
-      const ghostLeftPx = columnPx / 2 - 0.29 * w;
+      const w = evalCalc(ghostWExpr, columnPx, viewportHeightPx);
+      const ghostLeftPx = columnPx / 2 - 0.5 * w * compactScale;
       const textRightPx = columnPx - evalCalc(padRight, columnPx, viewportHeightPx);
       expect(textRightPx).toBeLessThanOrEqual(ghostLeftPx);
     });
 
     it(`keeps the row as tall as the Ghost's box at ${viewportHeightPx} px tall`, () => {
       expect(minHeight).not.toBe("");
-      const w = Math.min(0.26 * viewportHeightPx, 170);
-      const ghostHeightPx = 0.58 * 1.2 * w;
+      const w = evalCalc(ghostWExpr, columnPx, viewportHeightPx);
+      const ghostHeightPx = w * ghostAspect * compactScale;
       expect(evalCalc(minHeight, columnPx, viewportHeightPx)).toBeGreaterThanOrEqual(
         ghostHeightPx - 1e-6,
       );
     });
   }
+
+  it("reads the Ghost's width, scale and aspect from scene.module.css", () => {
+    expect(ghostWExpr).toBe("min(26vh, 170px)");
+    expect(compactScale).toBeGreaterThan(0);
+    expect(ghostAspect).toBeCloseTo(1.2, 10);
+  });
+
+  it("keeps the 'Your testimony is recorded.' line in flow, never positioned over the Ghost", () => {
+    // The line is the .hint paragraph on the Break the seal stage (SealBreak.tsx,
+    // data-break-line). It must take its place in the column's flow, below the
+    // Step_Indicator row, so it cannot sit on the Compact_Ghost's box.
+    const hint = ruleBody(sealCss, ".hint");
+    expect(hint).not.toBe("");
+    expect(hint).not.toMatch(/position:\s*(absolute|fixed)/);
+    expect(hint).not.toMatch(/float:/);
+  });
 });
