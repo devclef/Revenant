@@ -94,9 +94,11 @@ describe("a text question (C4.5)", () => {
   });
 
   it("shows the invalid message only after a refused submit", () => {
-    expect(render(textPayload)).not.toContain(REVEAL_COPY.textAnswerInvalid);
+    expect(render(textPayload)).not.toContain(
+      escaped(REVEAL_COPY.textAnswerInvalid),
+    );
     expect(render(textPayload, { invalid: ["a1"] })).toContain(
-      REVEAL_COPY.textAnswerInvalid,
+      escaped(REVEAL_COPY.textAnswerInvalid),
     );
   });
 
@@ -113,7 +115,7 @@ describe("a text question (C4.5)", () => {
   });
 });
 
-describe("No answer placement (C7.2)", () => {
+describe("I don't remember placement (C7.2)", () => {
   it("sits after the Recall_Scale and before the Nav_Row on a number question (T2.1)", () => {
     const markup = render(numberPayload);
     const scale = markup.indexOf(CEREMONY_COPY.recallNoMarkYet);
@@ -127,10 +129,14 @@ describe("No answer placement (C7.2)", () => {
   it("sits under the text field on a text question", () => {
     const markup = render(textPayload);
     expect(markup.indexOf("<textarea")).toBeLessThan(
-      markup.indexOf(`${REVEAL_COPY.noAnswer}</label>`),
+      markup.indexOf(`${escaped(REVEAL_COPY.dontRemember)}</label>`),
     );
   });
 });
+
+function escaped(text: string): string {
+  return text.replace(/'/g, "&#x27;");
+}
 
 function fill(
   template: string,

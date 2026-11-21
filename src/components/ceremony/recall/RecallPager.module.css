@@ -16,6 +16,14 @@
   white-space: nowrap;
 }
 
+/* The line above an author question (spec 15, 11.1). It sits on the paper, so
+   it sets its own ink colour rather than inheriting one. */
+.asked {
+  margin: 0 0 0.5rem;
+  color: var(--ink);
+  font-weight: 600;
+}
+
 .form {
   margin: 0;
 }

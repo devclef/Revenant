@@ -51,9 +51,11 @@ describe("Live_Letter Testify order (spec 10 C9.2)", () => {
 });
 
 describe("Live_Letter text question row (spec 14, T1.5)", () => {
-  it("puts Next after the No answer control on the first Author_Question, with no Previous", () => {
+  it("puts Next after the I don't remember control on the first Author_Question, with no Previous", () => {
     const markup = render();
-    const noAnswer = markup.indexOf(`${REVEAL_COPY.noAnswer}</label>`);
+    const noAnswer = markup.indexOf(
+      `${REVEAL_COPY.dontRemember.replace(/'/g, "&#x27;")}</label>`,
+    );
     const next = markup.indexOf(`>${REVEAL_COPY.nextQuestion}</button>`);
     expect(noAnswer).toBeGreaterThan(-1);
     expect(next).toBeGreaterThan(noAnswer);

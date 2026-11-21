@@ -312,6 +312,20 @@ export function RecallPager({
           date: formatCalendarDate(writtenAsOf),
         });
 
+  // The line above an author question (spec 15, 11.1). It names the date the
+  // letter was sealed, or the persona's written-as-of date. It is only for text
+  // questions: a figure question carries no "you asked yourself" line.
+  const askedLine =
+    question.answer_type !== "text"
+      ? undefined
+      : writtenAsOf !== undefined
+        ? fill(REVEAL_COPY.askedAsOf, {
+            date: formatCalendarDate(writtenAsOf),
+          })
+        : writtenOnDay === ""
+          ? undefined
+          : fill(REVEAL_COPY.askedOn, { date: writtenOnDay });
+
   const submitLabel = submitting ? REVEAL_COPY.submitting : REVEAL_COPY.submit;
 
   const describedBy = [
@@ -365,6 +379,11 @@ export function RecallPager({
         className={styles.form}
         ref={formRef}
       >
+        {askedLine === undefined ? null : (
+          <p className={styles.asked} data-asked-line="">
+            {askedLine}
+          </p>
+        )}
         <div className={styles.qRow}>
           <WaxDisc n={index + 1} />
           <h2

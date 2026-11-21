@@ -123,7 +123,7 @@ describe("the text answer row order (spec 14, T1.5)", () => {
     };
   }
 
-  it("renders field, count, No answer, Next, then the submit-failed message", () => {
+  it("renders field, count, I don't remember, Next, then the submit-failed message", () => {
     const markup = render(1, {
       payload: textPayload(),
       failed: true,
@@ -131,7 +131,9 @@ describe("the text answer row order (spec 14, T1.5)", () => {
     });
     const textarea = markup.indexOf("<textarea");
     const count = markup.indexOf('id="recall-a1-count"');
-    const noAnswer = markup.indexOf(`${REVEAL_COPY.noAnswer}</label>`);
+    const noAnswer = markup.indexOf(
+      `${REVEAL_COPY.dontRemember.replace(/'/g, "&#x27;")}</label>`,
+    );
     const next = markup.indexOf(`>${REVEAL_COPY.nextQuestion}</button>`);
     // The copy has an apostrophe, which static markup escapes; match its first sentence.
     const failed = markup.indexOf(REVEAL_COPY.submitFailed.split(". ")[0]);

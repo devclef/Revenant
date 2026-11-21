@@ -160,8 +160,33 @@ export const REVEAL_COPY = {
    */
   questionCounterWrittenOn: "you wrote this on {date}",
 
-  /** The visible label above a text question's field (spec 14, T1.4). */
-  answerFromMemory: "Your answer, from memory",
+  /**
+   * The visible label above an author question's field (spec 15, 11.1). The
+   * reader writes what they think they answered, from memory.
+   */
+  answerFromMemory: "What you think you answered",
+
+  /** The hint under the author question's field (spec 15, 11.1). */
+  answerHint: "What did you answer? Write what you remember.",
+
+  /**
+   * The checkbox on an author question. It replaces "No answer" for text
+   * questions only; figure questions keep "No answer" (spec 15, 11.1).
+   */
+  dontRemember: "I don't remember",
+
+  /**
+   * The line above an author question on a live or real letter (spec 15,
+   * 11.1). `{date}` is the sealing day in the reader's zone. The question
+   * itself carries no date.
+   */
+  askedOn: "On {date} you asked yourself:",
+
+  /**
+   * The same line on a persona letter, where the date is its written-as-of
+   * day, not a sealing day. `{date}` is in the spec 03 R6.3 format.
+   */
+  askedAsOf: "As of {date} you asked yourself:",
 
   /** The separator between the counter and its as-of part (R11.5). */
   questionCounterSeparator: " · ",
@@ -184,7 +209,7 @@ export const REVEAL_COPY = {
 
   /** The inline error under a text answer that is empty or too long (C4.6). */
   textAnswerInvalid:
-    "Write an answer of up to 1,000 characters, or choose No answer.",
+    "Write an answer of up to 1,000 characters, or choose I don't remember.",
 
   /** The submit control for the recall step. */
   submit: "Record my answers",
