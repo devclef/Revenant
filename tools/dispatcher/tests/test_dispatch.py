@@ -1358,3 +1358,12 @@ class AgentNotes(unittest.TestCase):
     def test_dev_spec_points_pr_description_at_commit_messages(self):
         spec = d.dev_spec({"number": 2, "title": "t", "body": "b"}, "frontend-dev")
         self.assertIn("commit message", spec)
+
+    def test_dev_spec_forbids_steps_that_leave_no_diff(self):
+        # TASK_45969fb8 (#543): the planner made "record the run in a commit message"
+        # steps with empty commits, and the Task Runner failed each one with "the step
+        # left no diff to review".
+        spec = d.dev_spec({"number": 2, "title": "t", "body": "b"}, "frontend-dev")
+        self.assertNotIn("--allow-empty", spec)
+        self.assertIn("Do not plan a step whose only output is a commit message", spec)
+        self.assertIn("Do not make an empty commit", spec)

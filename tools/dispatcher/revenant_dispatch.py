@@ -353,7 +353,10 @@ def dev_spec(issue: dict, role: str, feedback: str | None = None,
         "committing. Do not plan steps that only read, inspect, confirm, verify or "
         "run checks: the Task Runner already runs `scripts/check.sh` and a reviewer "
         "after every step. Do not plan a step for the ticket's validation command. "
-        "The Task Runner runs it after every step.",
+        "The Task Runner runs it after every step. Do not plan a step whose only "
+        "output is a commit message (recording a run, quoting a result, listing "
+        "findings): the Task Runner fails any step that leaves no diff. Fold that "
+        "recording into the step whose code it is about.",
         *([FRONTEND_BROWSER_STEP] if role == "frontend-dev" else []),
         "",
         "## Reading the spec",
@@ -365,8 +368,10 @@ def dev_spec(issue: dict, role: str, feedback: str | None = None,
         "- Do only what the ticket below asks, inside its Scope paths.",
         "- Do not push, open PRs, or call GitHub. Commit your work locally.",
         "- If the ticket wants something in the PR description (a claim table, a list of "
-        "changed tests, an OUT OF SCOPE list), put it in the body of a commit message "
-        "(an empty commit with `git commit --allow-empty` is fine). The dispatcher copies "
+        "changed tests, an OUT OF SCOPE list, a recorded run), put it in the body of "
+        "the commit that makes the related code change. Do not make an empty commit "
+        "for it: a step that leaves no diff fails the Task Runner's review. The "
+        "dispatcher copies "
         "commit message bodies into the PR description. You cannot edit the PR yourself.",
         "- The Task Runner runs `bash scripts/check.sh` after every step and it must "
         "pass. While working, run only targeted checks (`npx vitest run <path>`, "
