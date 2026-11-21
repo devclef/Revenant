@@ -96,8 +96,12 @@ describe("R1: the letter Stage centres the column at 900 px and wider", () => {
     expect(alone).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\);/);
   });
 
-  it("marks each figures column in Reveal.tsx with data-figures-panel, the selector the grid rules use", () => {
-    expect(revealTsx.match(/data-figures-panel=""/g)).toHaveLength(2);
+  it("marks each figures column with data-figures-panel, the selector the grid rules use", () => {
+    // The figures panel moved into FigureReceipt (spec 15 R12.2); Reveal places
+    // it twice, once per figures stage.
+    const figureReceiptTsx = readFileSync(join(REVEAL_DIR, "FigureReceipt.tsx"), "utf8");
+    expect(figureReceiptTsx).toMatch(/data-figures-panel=""/);
+    expect(revealTsx.match(/<FigureReceipt\b/g)).toHaveLength(2);
     expect(revealTsx).toMatch(/data-letter-stage=""/);
   });
 });

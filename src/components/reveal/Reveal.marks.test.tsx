@@ -114,53 +114,6 @@ function renderMarksRaw(
   );
 }
 
-describe("reveal marks stage: recorded scales (spec 08 R6)", () => {
-  const RECORD: RecallRecordV1 = {
-    version: 1,
-    answers: [
-      { question_id: "q-fuel", kind: "number", value: "2.50" },
-      { question_id: "q-milk", kind: "no_answer" },
-      { question_id: "q-note", kind: "no_answer" },
-    ],
-  };
-
-  it("renders one recorded scale per number question, with no slider and no tab stop", () => {
-    const html = renderTestimony(RECORD);
-    expect(html).not.toContain('role="slider"');
-    expect(html.match(/role="img"/g) ?? []).toHaveLength(2);
-    expect(sliceBetween(html, 'data-card="marks"', "</details>")).not.toContain("tabindex");
-  });
-
-  it("places the Mark at the recorded value and names the value with its unit", () => {
-    const html = renderTestimony(RECORD);
-    expect(html).toContain(": 2.50 USD per gallon\"");
-    expect(html).toContain(">2.50<");
-  });
-
-  it("shows no Mark for a question recorded as no answer, and says No answer", () => {
-    const html = renderTestimony(RECORD);
-    expect(html).toContain(`: ${CEREMONY_COPY.lineNoAnswer}"`);
-    expect(html).toContain(CEREMONY_COPY.lineNoAnswer);
-    // Only the answered question carries a Mark readout.
-    expect(html.match(/recordedMark/g) ?? []).toHaveLength(1);
-  });
-
-  it("shows the judge's value in the Accent, in its own answers list", () => {
-    const html = renderTestimony(RECORD);
-    const answers = sliceBetween(html, 'data-fit="marks-answers"', "</dl>");
-    expect(answers).toContain(">2.50</span>");
-    expect(answers).toMatch(/class="[^"]*marksValue[^"]*"/);
-    // The Accent value is the only answer in the list drawn with the Accent.
-    expect(answers.match(/class="[^"]*marksValue[^"]*"/g) ?? []).toHaveLength(1);
-  });
-
-  it("shows 'No answer' for a question recorded without a number", () => {
-    const html = renderTestimony(RECORD);
-    const answers = sliceBetween(html, 'data-fit="marks-answers"', "</dl>");
-    expect(answers.match(new RegExp(REVEAL_COPY.noAnswer, "g")) ?? []).toHaveLength(2);
-  });
-});
-
 describe("reveal marks stage: column markers and order", () => {
   const RECORD: RecallRecordV1 = {
     version: 1,
@@ -201,49 +154,6 @@ describe("reveal marks stage: column markers and order", () => {
   });
 });
 
-describe("reveal marks stage: recorded scale names and answer format (spec 09 A9)", () => {
-  const RECORD: RecallRecordV1 = {
-    version: 1,
-    answers: [
-      { question_id: "q-fuel", kind: "number", value: "2500.50" },
-      { question_id: "q-milk", kind: "no_answer" },
-      { question_id: "q-note", kind: "no_answer" },
-    ],
-  };
-
-  it("draws one data-recorded-scale per number question, each named with its metric", () => {
-    const html = renderTestimony(RECORD);
-    expect(html.match(/data-recorded-scale=""/g) ?? []).toHaveLength(2);
-    expect(html.indexOf("Regular gasoline")).toBeGreaterThan(-1);
-    expect(html.indexOf("Milk")).toBeGreaterThan(-1);
-  });
-
-  it("shows the recorded answer grouped in threes on the scale and in the answers list", () => {
-    const html = renderTestimony(RECORD);
-    expect(html).toContain(": 2,500.50 USD per gallon\"");
-    const answers = sliceBetween(html, 'data-fit="marks-answers"', "</dl>");
-    expect(answers).toContain(">2,500.50</span>");
-    expect(answers).not.toContain(">2500.50<");
-  });
-});
-
-/**
- * The judge's testimony on the desktop: the recorded scales and the answers
- * list sit in the marks card, which from `figures` on is a closed disclosure
- * (spec 09 C3.4). At stage 1 they are not drawn (C4.1), so these tests read
- * them from the disclosure.
- */
-function renderTestimony(record: RecallRecordV1): string {
-  return renderMarks(record, { stage: 3, phone: false });
-}
-
-/** The text between two markers, used to scope an assertion to one part. */
-function sliceBetween(html: string, start: string, end: string): string {
-  const from = html.indexOf(start);
-  if (from < 0) return "";
-  const to = html.indexOf(end, from);
-  return to < 0 ? html.slice(from) : html.slice(from, to);
-}
 
 /**
  * The seal body for one pattern key: everything from the `width` attribute on,
@@ -325,15 +235,13 @@ describe("reveal marks stage on the phone and the collapsed card (spec 09 P6, C3
     expect(html).not.toContain('data-answer-list=""');
   });
 
-  it("collapses the marks card into a closed details titled Your testimony at 600 px and wider from figures on", () => {
+  it("drops the marks card on the desktop from figures on (spec 15 R12.2)", () => {
+    // The receipts column replaces the marks card from the letter stage on, so
+    // no testimony disclosure and no recorded scale remain at stage 3.
     const html = renderMarks(RECORD, { phone: false, stage: 3 });
-    expect(html).toContain('data-testimony=""');
-    expect(html).toMatch(
-      new RegExp(`<details[^>]*>\\s*<summary>${REVEAL_COPY.stage1Title}</summary>`),
-    );
-    expect(html).not.toMatch(/<details[^>]*\sopen/);
-    // The recorded scales stay in the document inside the closed card.
-    expect(html.match(/role="img"/g) ?? []).toHaveLength(2);
+    expect(html).not.toContain('data-testimony=""');
+    expect(html).not.toContain("data-recorded-scale");
+    expect(html.match(/role="img"/g) ?? []).toHaveLength(0);
   });
 
   it("keeps the open marks card on the desktop at stage 1, with no heading and no disclosure", () => {

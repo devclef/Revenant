@@ -571,8 +571,11 @@ describe("Property 17: views never render letter content before the reveal", () 
             // Stage 1 (marks) draws no answers (spec 09 C4.1). From stage 3 the
             // closed testimony disclosure lists every question.
             if (state.tag === "reveal") {
+              // Spec 15 R12.2: the receipts show each author (text) question, and
+              // these fixtures hold number questions only. Their wording is not
+              // drawn at any stage; the figures show the metric name instead.
               expect(html.includes(text), `reveal stage ${state.stage} question "${text}"`).toBe(
-                state.stage >= 3,
+                false,
               );
               return;
             }

@@ -333,6 +333,38 @@ export const REVEAL_COPY = {
   /** Heading for stage 3 of the reveal: the figures then and now. */
   stage3Title: "The receipts",
 
+  // --- Receipts column (spec 15 R12.2) ---
+
+  /** Heading above the question pairs, for a live letter (the reader's own). */
+  receiptsQuestionsTitle: "Your questions",
+
+  /** Heading above the question pairs, for a persona letter (fictional). */
+  receiptsQuestionsTitlePersona: "Her questions",
+
+  /** Label on the question as it was sealed, for a live letter. */
+  receiptsAsWritten: "Your question, as you wrote it",
+
+  /** Label on the question as it was sealed, for a persona letter. */
+  receiptsAsWrittenPersona: "Her question, as she wrote it",
+
+  /** Label on the reader's testimony, for a live letter. */
+  receiptsRemembered: "You remembered, just now",
+
+  /** Label on a persona's recollection. It carries the fictional label. */
+  receiptsRememberedPersona: "She remembered · fictional",
+
+  /** Label on the sealed answer, for a live letter. {date} is the sealing day. */
+  receiptsWrote: "You wrote, {date}",
+
+  /** Label on the sealed answer, for a persona letter. {date} is its written-as-of day. */
+  receiptsWrotePersona: "She wrote, as of {date}",
+
+  /** Shown in place of the sealed answer on a version 1 letter (no sealed answer). */
+  noSealedAnswer: "No answer was sealed with this question.",
+
+  /** Label on a persona's sealed answer when the letter has no written-as-of day. */
+  receiptsWroteUndatedPersona: "She wrote",
+
   /** Label on the then figure. */
   then: "Then",
 

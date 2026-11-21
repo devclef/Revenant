@@ -84,20 +84,19 @@ function count(html: string, needle: string): number {
 }
 
 describe("Reveal for a Text_Persona (no Recall_Record)", () => {
-  it("labels every Persona_Answer with the Fictional_Label on marks and letter", () => {
-    // Stage 2 shows the marks answers and the letter testimony: two answers in
-    // each, so four labels in all, and each answer appears in full.
+  it("labels every Persona_Answer with the Fictional_Label in the receipts", () => {
+    // Spec 15 R12.2: each question pair shows her recollection with the
+    // fictional label, and the question list is the receipts column, not marks.
     const html = renderReveal({ stage: 2 });
-    expect(count(html, REVEAL_COPY.personaAnswerLabel)).toBe(4);
+    expect(count(html, REVEAL_COPY.receiptsRememberedPersona)).toBe(2);
     expect(html).toContain(TESTIMONY[0].answer);
     expect(html).toContain(TESTIMONY[1].answer);
   });
 
-  it("shows her testimony heading, not the judge's", () => {
+  it("shows her question heading, not the judge's", () => {
     const html = renderReveal({ stage: 2 });
-    expect(html).toContain(REVEAL_COPY.personaTestimonyTitle);
-    expect(html).not.toContain(REVEAL_COPY.saidJustNow);
-    expect(html).not.toContain(REVEAL_COPY.noAnswer);
+    expect(html).toContain(REVEAL_COPY.receiptsQuestionsTitlePersona);
+    expect(html).not.toContain(REVEAL_COPY.receiptsRemembered);
   });
 
   it("has no answer field anywhere on the reveal", () => {

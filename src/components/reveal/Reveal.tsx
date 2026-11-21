@@ -6,15 +6,18 @@ import { AnswerList, type AnswerListItem } from "./AnswerList";
 import { PHONE_QUERY } from "@/components/ceremony/scene/TopBar";
 import type { LetterKind } from "./FigureLine";
 import type { RecallRecordV1, RecallRecordV2 } from "@/lib/recall";
-import { LetterBlock } from "@/components/ceremony/letter/LetterBlock";
 import { SoundEnabledContext } from "@/components/ceremony/sound/SoundEnabledContext";
 import { FiguresThenNow, SelfReportedOnly } from "./FiguresThenNow";
 import { useFigures, type FiguresState } from "./figures-api";
-import { AuthorTestimony } from "./AuthorTestimony";
-import { Fingerprint } from "./Fingerprint";
+import { QuestionPair } from "./QuestionPair";
+import { LetterPaper } from "./LetterPaper";
+import { FigureReceipt } from "./FigureReceipt";
+import { SealLine } from "./SealLine";
+import { EndCard } from "./EndCard";
+import { sealedAnswerOf, sealedLabelOf, testimonyTextOf } from "./receipts";
+import { formatCalendarDate, formatLetterDate, browserTimeZone } from "@/components/ui/letter-date";
 import { TamperControl } from "./tamper/TamperControl";
 import type { TamperSource } from "./tamper/tamper-run";
-import { FiguresFadeUp } from "@/components/ceremony/figures/FiguresFadeUp";
 import { Close, type CloseProps } from "@/components/ceremony/close/Close";
 import { SealBreak } from "@/components/ceremony/seal/SealBreak";
 import { sealPlacement } from "@/components/ceremony/seal/seal-placement";
@@ -27,6 +30,7 @@ import { useLocalView } from "@/components/ceremony/local-view";
 import { REVEAL_COPY } from "./copy";
 import { useViewportWidth } from "./viewport-width";
 import styles from "./reveal.module.css";
+import receiptsStyles from "./receipts.module.css";
 import buttons from "@/components/ui/buttons.module.css";
 
 /**
@@ -427,6 +431,11 @@ function RevealBody({
   }
   const showSeal = stage === 1 || jumpedToEnd;
 
+  // The marks column (the testimony list and the seal break) belongs to stage 1.
+  // From the letter stage on, the receipts column replaces it (spec 15 R12.2).
+  // The marks stay only on the show-everything path, where the seal stays split.
+  const showMarks = stage === 1 || jumpedToEnd;
+
   // From `figures` on, the marks card is closed on the desk-side disclosure at
   // 600 px and wider, and not rendered on the phone (C3.4, P6.4).
   const testimonyCollapsed = stage >= 3 && !isPhone;
@@ -498,42 +507,98 @@ function RevealBody({
           </SoundEnabledContext.Provider>
   );
 
+  // The receipts column (spec 15 R12.2): one scrolling column. Each author
+  // question as written, then the reader's testimony beside the sealed answer
+  // (no comment on the difference), then the letter, then the figures, the seal
+  // line and the end card. Every string comes from copy.ts.
+  const isPersona = letterKind === "persona";
+  const sealedDate = formatLetterDate(opened.header.sealedAt, {
+    kind: "iana",
+    timeZone: browserTimeZone(),
+  });
+  // A persona's answers are dated "as of" the letter's written date. A live
+  // letter's answers are dated by the sealing day, in the reader's time zone.
+  const wroteDate = isPersona
+    ? opened.payload.written_as_of === undefined
+      ? ""
+      : formatCalendarDate(opened.payload.written_as_of)
+    : sealedDate;
+
+  const textQuestions = opened.payload.recall_questions.filter(
+    (question) => question.answer_type === "text",
+  );
+  // The pairs need the stored record, or the persona walk's testimony.
+  const showQuestions =
+    textQuestions.length > 0 && (testimony !== undefined || record !== null);
+  const questionPairs = textQuestions.map((question, index) => (
+    <QuestionPair
+      key={question.id}
+      question={question.text}
+      questionLabel={
+        isPersona
+          ? REVEAL_COPY.receiptsAsWrittenPersona
+          : REVEAL_COPY.receiptsAsWritten
+      }
+      testimony={
+        testimony !== undefined
+          ? (testimony[index]?.answer ?? REVEAL_COPY.noAnswer)
+          : testimonyTextOf(record, question.id)
+      }
+      testimonyLabel={
+        isPersona
+          ? REVEAL_COPY.receiptsRememberedPersona
+          : REVEAL_COPY.receiptsRemembered
+      }
+      sealedAnswer={sealedAnswerOf(question)}
+      sealedLabel={sealedLabelOf(isPersona, wroteDate)}
+      noSealedAnswer={REVEAL_COPY.noSealedAnswer}
+      userContent={!isPersona}
+    />
+  ));
+  const questionsTitle = isPersona
+    ? REVEAL_COPY.receiptsQuestionsTitlePersona
+    : REVEAL_COPY.receiptsQuestionsTitle;
+
+  // The seal line and the end card close the column: after the figures with
+  // figures (stage 3), or after the letter with none (stage 2).
+  const sealEndShown = figureCount === 0 ? stage >= 2 : stage >= 3;
+
   return (
     <section className={styles.reveal}>
-      {marksGone ? null : (
+      {showMarks && !marksGone ? (
         <div className={`${styles.stage} ${styles.fade}`}>
           {/* Stage 1 renders no paper panel (spec 10 C6.7): the testimony
               heading, the Answer_List and the Seal_Group sit on the dark in the
-              .marksOnDesk tokens. From the letter stage on, the testimony stays
-              on the desk too (spec 09 L6.1). */}
+              .marksOnDesk tokens. */}
           <div className={styles.marksOnDesk}>{marksBlock}</div>
         </div>
-      )}
+      ) : null}
 
       {stage >= 2 ? (
-        <div className={styles.letterFigures}>
+        <div className={receiptsStyles.receipts} data-receipts="">
+          {showQuestions ? (
+            <section
+              className={receiptsStyles.questions}
+              data-author-testimony=""
+            >
+              <h2
+                tabIndex={-1}
+                className={receiptsStyles.questionsHeading}
+                data-author-testimony-heading=""
+              >
+                {questionsTitle}
+              </h2>
+              {questionPairs}
+            </section>
+          ) : null}
+
           <div
             className={`${styles.stage} ${styles.fade} ${styles.letterCol}`}
             data-letter-stage=""
           >
-            {/* The Caption_Block holds the Fingerprint: the Seal_Verdict and its
-                control (spec 09 L6.2, C6.4). It sits on the dark above the paper.
-                It shows the verified envelope hash from `Opened.envelopeHash`.
-                A persona letter gets the verdict and a closed disclosure; a live
-                or real letter gets the open block with the card sentence (R14.8).
-                A failed check never reaches the Reveal (R14.6). */}
-            <AuthorTestimony
-              questions={opened.payload.recall_questions}
-              record={record}
-              {...(testimony === undefined
-                ? {}
-                : {
-                    testimony,
-                    answerLabel: REVEAL_COPY.personaAnswerLabel,
-                    title: REVEAL_COPY.personaTestimonyTitle,
-                  })}
-            />
-            <LetterBlock
+            {/* The letter in full, as it was sealed. The fingerprint moved to
+                the seal line after the figures (R12.6). */}
+            <LetterPaper
               opened={opened}
               personaName={personaName}
               variant={variant}
@@ -541,77 +606,60 @@ function RevealBody({
               still={jumpedToEnd}
               collapsible={stage >= 3 && isPhone}
               letterKind={letterKind}
-              caption={
-                letterKind === "persona" ? (
-                  // P4.3: a persona's Seal_Verdict and its fingerprint control
-                  // share one row above the paper (see reveal.module.css).
-                  <div className={styles.sealRow} data-seal-row="">
-                    <Fingerprint
-                      envelopeHash={opened.envelopeHash}
-                      letterKind={letterKind}
-                      tamper={
-                        tamperSource === undefined ? undefined : (
-                          <TamperControl getSource={tamperSource} />
-                        )
-                      }
-                    />
-                  </div>
-                ) : (
-                  <Fingerprint
-                    envelopeHash={opened.envelopeHash}
-                    letterKind={letterKind}
-                  />
-                )
-              }
             />
           </div>
 
           {stage >= 3 && figures !== null && record !== null ? (
-            <div
-              className={`${styles.stage} ${styles.fade} ${styles.figuresCol}`}
-              data-figures-panel=""
-            >
-              <FiguresFadeUp count={figureCount}>
-                <FiguresThenNow
-                  opened={opened}
-                  record={record}
-                  allowSamePeriod={variant === "live"}
-                  letterKind={letterKind}
-                  figures={figures}
-                  primaryCard={!closeShown}
-                />
-              </FiguresFadeUp>
-            </div>
+            <FigureReceipt count={figureCount}>
+              <FiguresThenNow
+                opened={opened}
+                record={record}
+                allowSamePeriod={variant === "live"}
+                letterKind={letterKind}
+                figures={figures}
+                primaryCard={!closeShown}
+              />
+            </FigureReceipt>
           ) : null}
           {stage >= 3 && figures === null && figureCount > 0 ? (
-            <div
-              className={`${styles.stage} ${styles.fade} ${styles.figuresCol}`}
-              data-figures-panel=""
-            >
-              <FiguresFadeUp count={figureCount}>
-                <SelfReportedOnly payload={opened.payload} />
-              </FiguresFadeUp>
+            <FigureReceipt count={figureCount}>
+              <SelfReportedOnly payload={opened.payload} />
+            </FigureReceipt>
+          ) : null}
+
+          {sealEndShown ? (
+            <div className={`${styles.stage} ${styles.fade}`}>
+              <SealLine
+                envelopeHash={opened.envelopeHash}
+                letterKind={letterKind}
+                tamper={
+                  isPersona && tamperSource !== undefined ? (
+                    <TamperControl getSource={tamperSource} />
+                  ) : undefined
+                }
+              />
+              {/* Close (R12.9) shows once the figures have settled. FiguresFadeUp
+                  reports `settled` when its clock ends or Skip ends it, so Close
+                  never appears while the figures are still fading in. */}
+              <EndCard>
+                {closeShown ? (
+                  <Close
+                    {...close}
+                    {...(close?.kind === "persona"
+                      ? { hasFigures: figureCount > 0 }
+                      : {})}
+                    {...(close?.kind === "live"
+                      ? {
+                          hasFigures: opened.payload.figures.some(
+                            (figure) => figure.kind !== "self-reported",
+                          ),
+                        }
+                      : {})}
+                  />
+                ) : null}
+              </EndCard>
             </div>
           ) : null}
-        </div>
-      ) : null}
-
-      {/* Close (R12.9) shows once the figures have settled. FiguresFadeUp
-          reports `settled` when its clock ends or Skip ends it, so Close never
-          appears while the figures are still fading in. */}
-      {closeShown ? (
-        <div className={`${styles.stage} ${styles.fade}`}>
-          <Close
-            {...close}
-            {...(close?.kind === "persona" ? { hasFigures: figureCount > 0 } : {})}
-            {...(close?.kind === "live"
-              ? {
-                  hasFigures: opened.payload.figures.some(
-                    (figure) => figure.kind !== "self-reported",
-                  ),
-                }
-              : {})}
-          />
         </div>
       ) : null}
 

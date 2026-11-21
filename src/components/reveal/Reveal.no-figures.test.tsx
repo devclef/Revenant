@@ -115,15 +115,18 @@ describe("Reveal with no sealed figures (spec 10 C8.6)", () => {
     expect(useFiguresSpy).not.toHaveBeenCalled();
   });
 
-  it("shows the Author_Testimony above the letter, with each answer as recorded", () => {
+  it("shows the question pairs above the letter, each answer as recorded, with no sealed answer on a version 1 letter", () => {
     const html = renderReveal({ stage: 2 });
     const testimony = html.indexOf('data-author-testimony=""');
-    const letter = html.indexOf("<article");
+    const letter = html.indexOf("data-letter-text");
     expect(testimony).toBeGreaterThanOrEqual(0);
     expect(letter).toBeGreaterThan(testimony);
-    expect(html).toContain(REVEAL_COPY.authorTestimonyTitle);
+    expect(html).toContain(REVEAL_COPY.receiptsQuestionsTitlePersona);
     expect(html).toContain("The first answer.");
-    expect(html).toContain(REVEAL_COPY.noAnswer);
+    // "I don't remember" is stored as no_answer on a text question (spec 15 R12.2).
+    // Static markup escapes the apostrophe.
+    expect(html).toContain(REVEAL_COPY.dontRemember.replace(/'/g, "&#x27;"));
+    expect(html).toContain(REVEAL_COPY.noSealedAnswer);
   });
 
   it("keeps the letter text as one unchanged paragraph", () => {
