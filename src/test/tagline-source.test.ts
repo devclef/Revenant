@@ -13,7 +13,7 @@ import { REPO_ROOT, readSourceFiles } from "./source-scan";
  * own.
  */
 
-const TAGLINE = "Memory rewrites itself. Revenant doesn't.";
+const TAGLINE = "Memory drifts with time. A sealed letter doesn't.";
 const BRAND_COPY_FILE = "src/components/brand/copy.ts";
 
 /** An import of BRAND_COPY from the brand copy module, by any path that ends in brand/copy. */

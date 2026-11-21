@@ -20,7 +20,13 @@ describe("opengraph-image route", () => {
 
   it("serves a PNG with the tagline as alt text", () => {
     expect(contentType).toBe("image/png");
-    expect(alt).toBe("Memory rewrites itself. Revenant doesn't.");
+    expect(alt).toBe("Memory drifts with time. A sealed letter doesn't.");
+  });
+
+  it("joins letter and doesn't. with a non-breaking space in the rendered headline", () => {
+    expect(source).toContain('const NBSP = "\\u00a0";');
+    expect(source).toContain("letter${NBSP}doesn't.");
+    expect(source).not.toContain("Revenant${NBSP}doesn't.");
   });
 
   it("renders a PNG response", async () => {

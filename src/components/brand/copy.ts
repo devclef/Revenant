@@ -10,7 +10,7 @@
 
 export const BRAND_COPY = {
   eyebrow: "The wax seal, resurrected.",
-  tagline: "Memory rewrites itself. Revenant doesn't.",
+  tagline: "Memory drifts with time. A sealed letter doesn't.",
   heroSentence:
     "Seal what you believe now, a goal, a worry, a decision. When it opens, you remember first, then read what you wrote.",
   ritualSteps: [

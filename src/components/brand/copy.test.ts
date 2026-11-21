@@ -9,7 +9,7 @@ import { BRAND_COPY } from "./copy";
 describe("BRAND_COPY", () => {
   it("has the eyebrow and tagline exactly", () => {
     expect(BRAND_COPY.eyebrow).toBe("The wax seal, resurrected.");
-    expect(BRAND_COPY.tagline).toBe("Memory rewrites itself. Revenant doesn't.");
+    expect(BRAND_COPY.tagline).toBe("Memory drifts with time. A sealed letter doesn't.");
   });
 
   it("has the hero sentence exactly", () => {

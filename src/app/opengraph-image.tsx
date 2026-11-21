@@ -31,8 +31,8 @@ const PURPLE = "#8f46ff";
 const NBSP = "\u00a0";
 
 export default function OpenGraphImage() {
-  // Keeps "Revenant doesn't." on one line, as the on-page headline does.
-  const tagline = BRAND_COPY.tagline.replace("Revenant doesn't.", `Revenant${NBSP}doesn't.`);
+  // Keeps "letter doesn't." on one line, so "doesn't." never starts a line alone.
+  const tagline = BRAND_COPY.tagline.replace("letter doesn't.", `letter${NBSP}doesn't.`);
   return new ImageResponse(
     (
       <div

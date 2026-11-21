@@ -38,7 +38,12 @@ vi.mock("../skip", () => ({
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { SceneBackdrop } from "./SceneBackdrop";
-import { SceneHeadline, splitTagline } from "./SceneHeadline";
+import {
+  SceneHeadline,
+  joinLastWords,
+  splitFirstSentence,
+  splitTagline,
+} from "./SceneHeadline";
 import { SceneShell, type SceneShellProps } from "./SceneShell";
 import { SoilStrip } from "./SoilStrip";
 import { COMPACT_TOP_BAR_PX, TOUCH_TARGET_MIN_PX } from "../constants";
@@ -235,13 +240,29 @@ describe("SceneHeadline (R3.18, F7)", () => {
 
   it("splits the Tagline before the kept phrase", () => {
     expect(splitTagline(BRAND_COPY.tagline)).toEqual({
-      before: "Memory rewrites itself. ",
-      kept: "Revenant\u00a0doesn't.",
+      before: "Memory drifts with time. A sealed ",
+      kept: "letter\u00a0doesn't.",
     });
   });
 
   it("returns a tagline without the kept phrase whole", () => {
     expect(splitTagline("Plain line")).toEqual({ before: "Plain line", kept: "" });
+  });
+
+  it("splits the first sentence from the rest", () => {
+    expect(splitFirstSentence("Memory drifts with time. A sealed ")).toEqual({
+      sentence: "Memory drifts with time.",
+      rest: " A sealed ",
+    });
+    expect(splitFirstSentence("No full stop here ")).toEqual({
+      sentence: "No full stop here ",
+      rest: "",
+    });
+  });
+
+  it("joins the last two words of a sentence with a non-breaking space", () => {
+    expect(joinLastWords("Memory drifts with time.")).toBe("Memory drifts with\u00a0time.");
+    expect(joinLastWords("Single")).toBe("Single");
   });
 });
 

@@ -28,7 +28,7 @@ describe("pageMetadata", () => {
 
   it("uses the eyebrow and tagline as the landing description (OD16)", () => {
     expect(HOME_DESCRIPTION).toBe(
-      "The wax seal, resurrected. Memory rewrites itself. Revenant doesn't.",
+      "The wax seal, resurrected. Memory drifts with time. A sealed letter doesn't.",
     );
     expect(HOME_DESCRIPTION).not.toContain("Your past self returns with the receipts.");
   });
