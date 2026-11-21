@@ -8,6 +8,12 @@ import { pageMetadata } from "@/lib/page-metadata";
 
 import { lineOf, readSourceFiles, type SourceFile } from "./source-scan";
 import { textOutsideUserContent } from "./user-content";
+import {
+  userStringsOfJson,
+  userStringsOfText,
+  userStringsOfTs,
+  type UserString,
+} from "./user-strings";
 
 // page.tsx imports feature-flags.ts, which imports `server-only`.
 vi.mock("server-only", () => ({}));
@@ -69,8 +75,10 @@ const RETIRED_PHRASES: readonly RetiredPhrase[] = [
 ];
 
 /**
- * Words the UI avoids (F1.3, F6.3). The design adds them to the copy modules
- * only, so they are checked in copy.ts files and in content/personas.
+ * Words the UI avoids (F1.3, F6.3). They are checked only in the values a
+ * reader sees (see user-strings.ts), in the copy modules, in the occasion
+ * starters and questions, in the persona files, and in the rendered `/` page
+ * and its metadata.
  */
 const AVOIDED_WORDS: readonly RetiredPhrase[] = [
   { name: "\"cross-examine\"", pattern: /cross-examine/i },
@@ -92,8 +100,42 @@ function scannedSourceFiles(files: readonly SourceFile[]): SourceFile[] {
   return files.filter((file) => !COPY_TEST_RECORD.test(file.path));
 }
 
+/** Files whose string values are user copy and are checked for AVOIDED_WORDS. */
 function isCopyModule(path: string): boolean {
-  return /(^|\/)copy\.ts$/.test(path) || path.startsWith("content/personas/");
+  return (
+    /(^|\/)copy\.ts$/.test(path) ||
+    path === "src/components/live/occasions.ts" ||
+    path.startsWith("content/personas/")
+  );
+}
+
+/** The string values a reader sees in one file, read by its type. */
+function userStringsOf(file: SourceFile): UserString[] {
+  if (/\.tsx?$/.test(file.path)) return userStringsOfTs(file.path, file.text);
+  if (file.path.endsWith(".json")) return userStringsOfJson(file.path, file.text);
+  return userStringsOfText(file.path, file.text);
+}
+
+/**
+ * Hits for `phrases` in string values only. Each hit names the file, the line
+ * and the value it was found in.
+ */
+function findValueMatches(
+  strings: readonly UserString[],
+  phrases: readonly RetiredPhrase[],
+): string[] {
+  const hits: string[] = [];
+  for (const entry of strings) {
+    for (const { name, pattern } of phrases) {
+      const flags = pattern.flags.replace("g", "");
+      if (new RegExp(pattern.source, flags).test(entry.value)) {
+        hits.push(
+          `${entry.file}:${entry.line} ${name} in ${JSON.stringify(entry.value)}`,
+        );
+      }
+    }
+  }
+  return hits;
 }
 
 /** Every match in `text`, as "file:line name" for a failure message. */
@@ -147,7 +189,9 @@ describe("F8.1 retired phrases in source", () => {
   it("no word the UI avoids in the copy modules", () => {
     const hits = files
       .filter((file) => isCopyModule(file.path))
-      .flatMap((file) => findMatches(file.path, file.text, AVOIDED_WORDS));
+      .flatMap((file) =>
+        findValueMatches(userStringsOf(file), AVOIDED_WORDS),
+      );
     expect(hits).toEqual([]);
   });
 });
@@ -181,6 +225,20 @@ describe("F8.4 retired phrases in the rendered / output and page metadata", () =
   it("no Retired_Phrase in the landing page metadata", () => {
     const meta = JSON.stringify(pageMetadata(null, "/"));
     expect(findMatches("page metadata", meta, RETIRED_PHRASES)).toEqual([]);
+  });
+
+  it("no word the UI avoids in the rendered / page and footer", () => {
+    const text = renderedLandingText();
+    expect(
+      findValueMatches(userStringsOfText("rendered /", text), AVOIDED_WORDS),
+    ).toEqual([]);
+  });
+
+  it("no word the UI avoids in the landing page metadata values", () => {
+    const meta = JSON.stringify(pageMetadata(null, "/"));
+    expect(
+      findValueMatches(userStringsOfJson("page metadata", meta), AVOIDED_WORDS),
+    ).toEqual([]);
   });
 });
 
@@ -234,10 +292,19 @@ describe("copy-test exclusion and hit reporting", () => {
     expect(hits).toEqual([`${path}:3 "rose-tinted"`]);
   });
 
-  it("names the file and the line of each hit", () => {
-    const text = "Opening line\n\nThe word caught appears on line three.";
-    expect(findMatches("src/example/copy.ts", text, AVOIDED_WORDS)).toEqual([
-      'src/example/copy.ts:3 "caught"',
+  it("names the file, the line and the value of each hit", () => {
+    const source = [
+      'const first = "Opening line";',
+      "",
+      'export const second = "The word caught appears on line three.";',
+    ].join("\n");
+    expect(
+      findValueMatches(
+        userStringsOfTs("src/example/copy.ts", source),
+        AVOIDED_WORDS,
+      ),
+    ).toEqual([
+      'src/example/copy.ts:3 "caught" in "The word caught appears on line three."',
     ]);
   });
 });
