@@ -9,6 +9,7 @@ import { pageMetadata } from "@/lib/page-metadata";
 import { lineOf, readSourceFiles, type SourceFile } from "./source-scan";
 import { textOutsideUserContent } from "./user-content";
 import {
+  RETIRED_WORD,
   userStringsOfJson,
   userStringsOfText,
   userStringsOfTs,
@@ -312,5 +313,187 @@ describe("copy-test exclusion and hit reporting", () => {
 describe("L4.2 the retired Live_Prefill question", () => {
   it("is no longer in RETIRED_PHRASES: \"right now\" is allowed in Occasion questions (spec 15, R8.2)", () => {
     expect(RETIRED_PHRASES.some((p) => /right now/i.test(p.name))).toBe(false);
+  });
+});
+
+/**
+ * Spec 16, Requirement 4: "testif" and "testimon" must leave user copy. Until
+ * tasks 3, 10 and 13 of that spec change their strings, each hit on `main` is
+ * listed here with the task that removes it. A task removes its entries in
+ * the same commit. The list is empty once task 13 has landed.
+ */
+interface PendingRetiredWord {
+  path: string;
+  value: string;
+  task: 3 | 10 | 13;
+}
+
+const PENDING_RETIRED_WORDS: readonly PendingRetiredWord[] = [
+  // src/components/brand/copy.ts, removed by task 3 (Remember and ritual copy).
+  {
+    path: "src/components/brand/copy.ts",
+    value:
+      "Seal what you believe now, a goal, a worry, a decision. When it opens, you testify first, then read what you wrote.",
+    task: 3,
+  },
+  { path: "src/components/brand/copy.ts", value: "Testify", task: 3 },
+  {
+    path: "src/components/brand/copy.ts",
+    value:
+      "Your testimony beside what you wrote, then any numbers then and now.",
+    task: 3,
+  },
+  // src/components/ceremony/copy.ts.
+  {
+    path: "src/components/ceremony/copy.ts",
+    value: "Your testimony is recorded.",
+    task: 10,
+  },
+  {
+    path: "src/components/ceremony/copy.ts",
+    value: "Testify. Say what you remember.",
+    task: 3,
+  },
+  { path: "src/components/ceremony/copy.ts", value: "Testify", task: 3 },
+  {
+    path: "src/components/ceremony/copy.ts",
+    value:
+      "Your testimony sits beside the record. What lies between them is yours to read.",
+    task: 3,
+  },
+  {
+    path: "src/components/ceremony/copy.ts",
+    value:
+      "Her testimony and her letter are side by side. What they say is yours to read.",
+    task: 3,
+  },
+  // src/components/landing/copy.ts, removed by task 13 (short home section).
+  {
+    path: "src/components/landing/copy.ts",
+    value:
+      "A seal proves the letter wasn't changed. It can't stop your memory changing. So before you read, you testify, and Revenant never says what the gap means.",
+    task: 13,
+  },
+  // src/components/reveal/copy.ts.
+  { path: "src/components/reveal/copy.ts", value: "Testify", task: 3 },
+  {
+    path: "src/components/reveal/copy.ts",
+    value:
+      "This letter was written as of {date}. Before you read it, testify: say what you remember about that time.",
+    task: 3,
+  },
+  { path: "src/components/reveal/copy.ts", value: "Your testimony", task: 3 },
+  // The rendered / page, which repeats the copy above.
+  {
+    path: "rendered /",
+    value:
+      "Seal what you believe now, a goal, a worry, a decision. When it opens, you testify first, then read what you wrote.",
+    task: 3,
+  },
+  { path: "rendered /", value: "Testify", task: 3 },
+  {
+    path: "rendered /",
+    value:
+      "Your testimony beside what you wrote, then any numbers then and now.",
+    task: 3,
+  },
+  {
+    path: "rendered /",
+    value:
+      "A seal proves the letter wasn't changed. It can't stop your memory changing. So before you read, you testify, and Revenant never says what the gap means.",
+    task: 13,
+  },
+];
+
+/** One line per hit, for a failure message: "file:line \"value\"". */
+function formatUserString(entry: UserString): string {
+  return `${entry.file}:${entry.line} ${JSON.stringify(entry.value)}`;
+}
+
+/** The values a reader sees in the copy modules, the persona files and the rendered / page. */
+function userCopyStrings(
+  files: readonly SourceFile[],
+): UserString[] {
+  const fromFiles = files
+    .filter((file) => isCopyModule(file.path))
+    .flatMap((file) => userStringsOf(file));
+  const landing = userStringsOfText("rendered /", renderedLandingText());
+  const meta = userStringsOfJson(
+    "page metadata",
+    JSON.stringify(pageMetadata(null, "/")),
+  );
+  return [...fromFiles, ...landing, ...meta];
+}
+
+/** Values that hit RETIRED_WORD, in source order. */
+function retiredWordHits(strings: readonly UserString[]): UserString[] {
+  return strings.filter((entry) => RETIRED_WORD.test(entry.value));
+}
+
+describe("F4 retired words in user copy (spec 16, Requirement 4)", () => {
+  const files = scannedSourceFiles(
+    readSourceFiles(SOURCE_ROOTS, SOURCE_EXTENSIONS),
+  );
+  const hits = retiredWordHits(userCopyStrings(files));
+
+  it("no retired word in user copy outside the pending list", () => {
+    const unlisted = hits
+      .filter(
+        (hit) =>
+          !PENDING_RETIRED_WORDS.some(
+            (pending) =>
+              pending.path === hit.file && pending.value === hit.value,
+          ),
+      )
+      .map(formatUserString);
+    expect(unlisted).toEqual([]);
+  });
+
+  it("every pending entry still hits user copy", () => {
+    const stale = PENDING_RETIRED_WORDS.filter(
+      (pending) =>
+        !hits.some(
+          (hit) => hit.file === pending.path && hit.value === pending.value,
+        ),
+    ).map((pending) => JSON.stringify(pending));
+    expect(stale).toEqual([]);
+  });
+});
+
+describe("F4.5 retired-word fixtures", () => {
+  it("passes a key testimonyRecorded whose value is \"What you remembered is recorded.\"", () => {
+    const source =
+      'export const copy = { testimonyRecorded: "What you remembered is recorded." };';
+    const found = retiredWordHits(
+      userStringsOfTs("src/example/copy.ts", source),
+    );
+    expect(found.map(formatUserString)).toEqual([]);
+  });
+
+  it("fails a value containing \"Testimony\" and names the file, line and value", () => {
+    const source = [
+      "const first = 1;",
+      'export const copy = { heading: "Your Testimony" };',
+    ].join("\n");
+    const found = retiredWordHits(
+      userStringsOfTs("src/example/copy.ts", source),
+    );
+    expect(found.map(formatUserString)).toEqual([
+      'src/example/copy.ts:2 "Your Testimony"',
+    ]);
+  });
+
+  it("fails a value containing \"testified\" and names the file, line and value", () => {
+    const source = [
+      'export const first = "Opening line";',
+      "",
+      'export const second = "She testified to it.";',
+    ].join("\n");
+    const found = retiredWordHits(
+      userStringsOfTs("src/example/copy.ts", source),
+    );
+    expect(found.map(formatUserString)).toEqual([
+      'src/example/copy.ts:3 "She testified to it."',
+    ]);
   });
 });
