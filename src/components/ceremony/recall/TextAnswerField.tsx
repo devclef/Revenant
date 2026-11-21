@@ -50,15 +50,19 @@ export function TextAnswerField({
   onToggleNoAnswer,
 }: TextAnswerFieldProps) {
   const labelId = `${id}-label`;
+  const hintId = `${id}-hint`;
   const countId = `${id}-count`;
   const invalidId = `${id}-invalid`;
-  const describedBy = invalid ? `${countId} ${invalidId}` : countId;
+  const describedBy = invalid
+    ? `${hintId} ${countId} ${invalidId}`
+    : `${hintId} ${countId}`;
 
   return (
     <div>
       <label id={labelId} htmlFor={id}>
         {REVEAL_COPY.answerFromMemory}
       </label>
+      <p id={hintId}>{REVEAL_COPY.answerHint}</p>
       <textarea
         id={id}
         rows={TEXT_ANSWER_ROWS}
@@ -79,7 +83,7 @@ export function TextAnswerField({
           checked={noAnswer}
           onChange={(event) => onToggleNoAnswer(event.target.checked)}
         />
-        {REVEAL_COPY.noAnswer}
+        {REVEAL_COPY.dontRemember}
       </label>
     </div>
   );

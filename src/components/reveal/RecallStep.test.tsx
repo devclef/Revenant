@@ -339,14 +339,15 @@ describe("RecallStep hint and intro", () => {
 });
 
 describe("RecallStep passes the sealing day to the counter (spec 14, T1.2)", () => {
-  it('shows "you wrote this on" with the sealing day when writtenOn is given', () => {
+  it('shows "sealed on" with the sealing day on a figure question when writtenOn is given', () => {
     const html = render({
       writtenOn: { sealedAt: "2026-11-17T10:00:00.000Z", timeZone: "UTC" },
     });
     expect(html).toContain(
       `Question 1 of 3${REVEAL_COPY.questionCounterSeparator}<span class="`,
     );
-    expect(html).toContain(">you wrote this on 17 November 2026</span>");
+    expect(html).toContain(">sealed on 17 November 2026</span>");
+    expect(html).not.toContain("you wrote this on");
     expect(html).not.toContain("as of");
   });
 
@@ -357,12 +358,12 @@ describe("RecallStep passes the sealing day to the counter (spec 14, T1.2)", () 
         timeZone: "Europe/Stockholm",
       },
     });
-    expect(html).toContain("you wrote this on 18 November 2026");
+    expect(html).toContain("sealed on 18 November 2026");
   });
 
   it("keeps the persona as-of counter when no writtenOn is given", () => {
     const html = render({ writtenAsOf: WRITTEN_AS_OF });
     expect(html).toContain(`as of ${formatCalendarDate(WRITTEN_AS_OF)}`);
-    expect(html).not.toContain("you wrote this on");
+    expect(html).not.toContain("sealed on");
   });
 });

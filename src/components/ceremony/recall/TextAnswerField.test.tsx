@@ -2,13 +2,14 @@
 //
 // The Recall_Pager is rendered to static markup in these tests (no DOM in the
 // node test environment), so the tests read the first paint: the textarea's
-// attributes, the count line, the invalid message and the "No answer" control.
+// attributes, the count line, the invalid message and the "I don't remember" control.
 // The question text comes from the task 6 fixtures.
 
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 import { PAYLOAD_TEXT_1 } from "@/lib/recall/fixtures.test-data";
+import { REVEAL_COPY } from "@/components/reveal/copy";
 import {
   TextAnswerField,
   TEXT_ANSWER_ROWS,
@@ -20,7 +21,12 @@ const FIELD_ID = "recall-a1-text";
 const NO_ANSWER_ID = "recall-a1-no-answer";
 const QUESTION = PAYLOAD_TEXT_1.recall_questions[0].text;
 const INVALID_TEXT =
-  "Write an answer of up to 1,000 characters, or choose No answer.";
+  "Write an answer of up to 1,000 characters, or choose I don't remember.";
+
+/** The text as React writes it into static markup (apostrophes escaped). */
+function escaped(text: string): string {
+  return text.replace(/'/g, "&#x27;");
+}
 
 function countLabel(n: number): string {
   return `${n} of 1,000 characters`;
@@ -68,10 +74,10 @@ describe("the textarea (C4.5)", () => {
     );
   });
 
-  it("shows the visible label 'Your answer, from memory' above the field", () => {
+  it("shows the visible label 'What you think you answered' above the field", () => {
     const markup = render();
     expect(markup).toContain(
-      `<label id="${FIELD_ID}-label" for="${FIELD_ID}">Your answer, from memory</label>`,
+      `<label id="${FIELD_ID}-label" for="${FIELD_ID}">What you think you answered</label>`,
     );
     expect(markup.indexOf(`${FIELD_ID}-label`)).toBeLessThan(
       markup.indexOf("<textarea"),
@@ -86,7 +92,9 @@ describe("the textarea (C4.5)", () => {
 
   it("points aria-describedby at the count line", () => {
     const tag = textareaTag(render());
-    expect(tag).toContain(`aria-describedby="${FIELD_ID}-count"`);
+    expect(tag).toContain(
+      `aria-describedby="${FIELD_ID}-hint ${FIELD_ID}-count"`,
+    );
     expect(render()).toContain(
       `<p id="${FIELD_ID}-count">0 of 1,000 characters</p>`,
     );
@@ -132,9 +140,11 @@ describe("an invalid text keeps its text (C4.6)", () => {
     const tag = textareaTag(markup);
     expect(tag).toContain('aria-invalid="true"');
     expect(tag).toContain(
-      `aria-describedby="${FIELD_ID}-count ${FIELD_ID}-invalid"`,
+      `aria-describedby="${FIELD_ID}-hint ${FIELD_ID}-count ${FIELD_ID}-invalid"`,
     );
-    expect(markup).toContain(`<p id="${FIELD_ID}-invalid">${INVALID_TEXT}</p>`);
+    expect(markup).toContain(
+      `<p id="${FIELD_ID}-invalid">${escaped(INVALID_TEXT)}</p>`,
+    );
   });
 
   it("keeps an answer of 1,001 code points as typed", () => {
@@ -144,7 +154,7 @@ describe("an invalid text keeps its text (C4.6)", () => {
     expect(markup).toContain(
       `<p id="${FIELD_ID}-count">1001 of 1,000 characters</p>`,
     );
-    expect(markup).toContain(INVALID_TEXT);
+    expect(markup).toContain(escaped(INVALID_TEXT));
   });
 
   it("shows no invalid message or aria-invalid while the text is not invalid", () => {
@@ -154,14 +164,14 @@ describe("an invalid text keeps its text (C4.6)", () => {
   });
 });
 
-describe("No answer sits under the field (C4.6, C7.2)", () => {
-  it("renders a checkbox labelled No answer after the count", () => {
+describe("I don't remember sits under the field (C4.6, C7.2)", () => {
+  it("renders a checkbox labelled I don't remember after the count", () => {
     const markup = render();
     expect(markup).toContain(`id="${NO_ANSWER_ID}"`);
     expect(markup.indexOf("0 of 1,000 characters")).toBeLessThan(
       markup.indexOf(`id="${NO_ANSWER_ID}"`),
     );
-    expect(markup).toContain("No answer");
+    expect(markup).toContain(escaped(REVEAL_COPY.dontRemember));
   });
 
   it("disables the textarea and ticks the box when No answer is set", () => {

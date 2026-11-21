@@ -20,7 +20,7 @@ describe("recall and Testify copy, exact strings", () => {
 
   it("textAnswerInvalid (C4.6)", () => {
     expect(REVEAL_COPY.textAnswerInvalid).toBe(
-      "Write an answer of up to 1,000 characters, or choose No answer.",
+      "Write an answer of up to 1,000 characters, or choose I don't remember.",
     );
   });
 

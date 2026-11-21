@@ -22,7 +22,7 @@ export const CEREMONY_COPY = {
   // --- Motion and sound controls ---
 
   /** Turns motion off (the Calm control, when motion is currently on). */
-  calmOn: "Turn off motion",
+  calmOn: "Stop motion",
 
   /** Turns motion back on (the Calm control, when motion is currently off). */
   calmOff: "Turn motion back on",
@@ -118,10 +118,10 @@ export const CEREMONY_COPY = {
   soundOn: "Turn sound on",
 
   /** Turns sound off (when sound is currently on). */
-  soundOff: "Turn sound off",
+  soundOff: "Mute sound",
 
   /** The note explaining that sound and vibration start off. */
-  soundNote: "Sound and vibration are off unless you turn them on.",
+  soundNote: "Sound and vibration stay silent until you turn them on.",
 
   // --- Number_Line (the figures stage) ---
 
