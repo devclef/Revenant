@@ -329,32 +329,12 @@ interface PendingRetiredWord {
 }
 
 const PENDING_RETIRED_WORDS: readonly PendingRetiredWord[] = [
-  // src/components/brand/copy.ts, removed by task 3 (Remember and ritual copy).
-  {
-    path: "src/components/brand/copy.ts",
-    value:
-      "Seal what you believe now, a goal, a worry, a decision. When it opens, you testify first, then read what you wrote.",
-    task: 3,
-  },
-  { path: "src/components/brand/copy.ts", value: "Testify", task: 3 },
-  {
-    path: "src/components/brand/copy.ts",
-    value:
-      "Your testimony beside what you wrote, then any numbers then and now.",
-    task: 3,
-  },
   // src/components/ceremony/copy.ts.
   {
     path: "src/components/ceremony/copy.ts",
     value: "Your testimony is recorded.",
     task: 10,
   },
-  {
-    path: "src/components/ceremony/copy.ts",
-    value: "Testify. Say what you remember.",
-    task: 3,
-  },
-  { path: "src/components/ceremony/copy.ts", value: "Testify", task: 3 },
   {
     path: "src/components/ceremony/copy.ts",
     value:
@@ -384,19 +364,6 @@ const PENDING_RETIRED_WORDS: readonly PendingRetiredWord[] = [
   },
   { path: "src/components/reveal/copy.ts", value: "Your testimony", task: 3 },
   // The rendered / page, which repeats the copy above.
-  {
-    path: "rendered /",
-    value:
-      "Seal what you believe now, a goal, a worry, a decision. When it opens, you testify first, then read what you wrote.",
-    task: 3,
-  },
-  { path: "rendered /", value: "Testify", task: 3 },
-  {
-    path: "rendered /",
-    value:
-      "Your testimony beside what you wrote, then any numbers then and now.",
-    task: 3,
-  },
   {
     path: "rendered /",
     value:
