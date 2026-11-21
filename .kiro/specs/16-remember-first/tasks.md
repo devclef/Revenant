@@ -96,7 +96,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Earlier-spec tests changed or retired: `retired-phrases.test.ts` (`AVOIDED_WORDS` now reads values only); name any other.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 3. Remember and the Remembered_Phrase
+- [x] 3. Remember and the Remembered_Phrase
   - Agent: `frontend-dev` · Depends on: 2 · Estimated size: M, ~900 changed lines
   - Scope: `src/components/brand/copy.ts`, `src/components/ceremony/copy.ts`, `src/components/reveal/copy.ts`, `src/components/live/copy.ts`, `src/components/live/desk/copy.ts` (`receiptIntro` only), `src/components/landing/copy.ts` (no change to `noSealBody`, task 13 does it), `src/components/ceremony/recall/RecallPager.tsx`, `src/test/integration/live-walk-helpers.ts` (step names), `src/test/retired-phrases.test.ts` (pending list), and the `*.test.ts(x)` next to each.
   - Design sections: "3. Remember, the Remembered_Phrase and the break line" (not the break line), "Where the code differs from the requirements" items 1 to 5.
