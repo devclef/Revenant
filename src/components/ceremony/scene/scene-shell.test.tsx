@@ -235,8 +235,8 @@ describe("SceneHeadline (R3.18, F7)", () => {
 
   it("splits the Tagline before the kept phrase", () => {
     expect(splitTagline(BRAND_COPY.tagline)).toEqual({
-      before: "Memory rewrites itself. ",
-      kept: "Revenant\u00a0doesn't.",
+      before: "Memory drifts with time. A sealed ",
+      kept: "letter\u00a0doesn't.",
     });
   });
 

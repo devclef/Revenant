@@ -6,7 +6,7 @@
 // `demoHeading` on `/demo`. It carries no Tagline and no Eyebrow.
 //
 // The landing page keeps its Tagline. `splitTagline` still lives here, so the
-// landing hero can keep "Revenant doesn't." on one line (F2.3).
+// landing hero can keep "letter doesn't." on one line (F2.3).
 //
 // `data-scene-ceiling` marks the element whose bottom sets the dust ceiling in
 // the Soil_Canvas (R6.16).
@@ -14,12 +14,12 @@
 import styles from "./scene.module.css";
 
 /** The part of the Tagline kept together on one line. */
-const KEPT_TOGETHER = "Revenant doesn't.";
+const KEPT_TOGETHER = "letter doesn't.";
 
 const NBSP = "\u00a0";
 
 /**
- * Splits the Tagline so that "Revenant doesn't." can sit in a nowrap span.
+ * Splits the Tagline so that "letter doesn't." can sit in a nowrap span.
  * `before` is the text ahead of it, and `kept` is that phrase with a
  * non-breaking space between its two words. A tagline without the phrase is
  * returned whole in `before`.

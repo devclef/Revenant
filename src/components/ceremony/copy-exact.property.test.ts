@@ -73,7 +73,7 @@ const hasWord = (text: string, word: string): boolean =>
 
 describe("Property 23, example checks: the R24.3 table matches exactly", () => {
   it("takes the headline from BRAND_COPY, with no Accent part (F2)", () => {
-    expect(BRAND_COPY.tagline).toBe("Memory rewrites itself. Revenant doesn't.");
+    expect(BRAND_COPY.tagline).toBe("Memory drifts with time. A sealed letter doesn't.");
     expect(SCENE_COPY).not.toHaveProperty("headlineAccent");
   });
 

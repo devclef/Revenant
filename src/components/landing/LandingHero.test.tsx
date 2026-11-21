@@ -33,7 +33,7 @@ describe("LandingHero with zero personas", () => {
   it("still renders the eyebrow, the tagline as h1 and the sentence", () => {
     const html = markup(0);
     expect(html).toContain("The wax seal, resurrected.");
-    expect(html).toMatch(/<h1[^>]*>Memory rewrites itself\. <span[^>]*>Revenant\u00a0doesn&#x27;t\.<\/span><\/h1>/);
+    expect(html).toMatch(/<h1[^>]*>Memory drifts with time\. A sealed <span[^>]*>letter\u00a0doesn&#x27;t\.<\/span><\/h1>/);
     expect(html).toContain("Seal what you believe now");
   });
 });
