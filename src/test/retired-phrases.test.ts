@@ -8,6 +8,13 @@ import { pageMetadata } from "@/lib/page-metadata";
 
 import { lineOf, readSourceFiles, type SourceFile } from "./source-scan";
 import { textOutsideUserContent } from "./user-content";
+import {
+  RETIRED_WORD,
+  userStringsOfJson,
+  userStringsOfText,
+  userStringsOfTs,
+  type UserString,
+} from "./user-strings";
 
 // page.tsx imports feature-flags.ts, which imports `server-only`.
 vi.mock("server-only", () => ({}));
@@ -69,8 +76,10 @@ const RETIRED_PHRASES: readonly RetiredPhrase[] = [
 ];
 
 /**
- * Words the UI avoids (F1.3, F6.3). The design adds them to the copy modules
- * only, so they are checked in copy.ts files and in content/personas.
+ * Words the UI avoids (F1.3, F6.3). They are checked only in the values a
+ * reader sees (see user-strings.ts), in the copy modules, in the occasion
+ * starters and questions, in the persona files, and in the rendered `/` page
+ * and its metadata.
  */
 const AVOIDED_WORDS: readonly RetiredPhrase[] = [
   { name: "\"cross-examine\"", pattern: /cross-examine/i },
@@ -92,8 +101,42 @@ function scannedSourceFiles(files: readonly SourceFile[]): SourceFile[] {
   return files.filter((file) => !COPY_TEST_RECORD.test(file.path));
 }
 
+/** Files whose string values are user copy and are checked for AVOIDED_WORDS. */
 function isCopyModule(path: string): boolean {
-  return /(^|\/)copy\.ts$/.test(path) || path.startsWith("content/personas/");
+  return (
+    /(^|\/)copy\.ts$/.test(path) ||
+    path === "src/components/live/occasions.ts" ||
+    path.startsWith("content/personas/")
+  );
+}
+
+/** The string values a reader sees in one file, read by its type. */
+function userStringsOf(file: SourceFile): UserString[] {
+  if (/\.tsx?$/.test(file.path)) return userStringsOfTs(file.path, file.text);
+  if (file.path.endsWith(".json")) return userStringsOfJson(file.path, file.text);
+  return userStringsOfText(file.path, file.text);
+}
+
+/**
+ * Hits for `phrases` in string values only. Each hit names the file, the line
+ * and the value it was found in.
+ */
+function findValueMatches(
+  strings: readonly UserString[],
+  phrases: readonly RetiredPhrase[],
+): string[] {
+  const hits: string[] = [];
+  for (const entry of strings) {
+    for (const { name, pattern } of phrases) {
+      const flags = pattern.flags.replace("g", "");
+      if (new RegExp(pattern.source, flags).test(entry.value)) {
+        hits.push(
+          `${entry.file}:${entry.line} ${name} in ${JSON.stringify(entry.value)}`,
+        );
+      }
+    }
+  }
+  return hits;
 }
 
 /** Every match in `text`, as "file:line name" for a failure message. */
@@ -147,7 +190,9 @@ describe("F8.1 retired phrases in source", () => {
   it("no word the UI avoids in the copy modules", () => {
     const hits = files
       .filter((file) => isCopyModule(file.path))
-      .flatMap((file) => findMatches(file.path, file.text, AVOIDED_WORDS));
+      .flatMap((file) =>
+        findValueMatches(userStringsOf(file), AVOIDED_WORDS),
+      );
     expect(hits).toEqual([]);
   });
 });
@@ -181,6 +226,20 @@ describe("F8.4 retired phrases in the rendered / output and page metadata", () =
   it("no Retired_Phrase in the landing page metadata", () => {
     const meta = JSON.stringify(pageMetadata(null, "/"));
     expect(findMatches("page metadata", meta, RETIRED_PHRASES)).toEqual([]);
+  });
+
+  it("no word the UI avoids in the rendered / page and footer", () => {
+    const text = renderedLandingText();
+    expect(
+      findValueMatches(userStringsOfText("rendered /", text), AVOIDED_WORDS),
+    ).toEqual([]);
+  });
+
+  it("no word the UI avoids in the landing page metadata values", () => {
+    const meta = JSON.stringify(pageMetadata(null, "/"));
+    expect(
+      findValueMatches(userStringsOfJson("page metadata", meta), AVOIDED_WORDS),
+    ).toEqual([]);
   });
 });
 
@@ -234,10 +293,19 @@ describe("copy-test exclusion and hit reporting", () => {
     expect(hits).toEqual([`${path}:3 "rose-tinted"`]);
   });
 
-  it("names the file and the line of each hit", () => {
-    const text = "Opening line\n\nThe word caught appears on line three.";
-    expect(findMatches("src/example/copy.ts", text, AVOIDED_WORDS)).toEqual([
-      'src/example/copy.ts:3 "caught"',
+  it("names the file, the line and the value of each hit", () => {
+    const source = [
+      'const first = "Opening line";',
+      "",
+      'export const second = "The word caught appears on line three.";',
+    ].join("\n");
+    expect(
+      findValueMatches(
+        userStringsOfTs("src/example/copy.ts", source),
+        AVOIDED_WORDS,
+      ),
+    ).toEqual([
+      'src/example/copy.ts:3 "caught" in "The word caught appears on line three."',
     ]);
   });
 });
@@ -246,4 +314,262 @@ describe("L4.2 the retired Live_Prefill question", () => {
   it("is no longer in RETIRED_PHRASES: \"right now\" is allowed in Occasion questions (spec 15, R8.2)", () => {
     expect(RETIRED_PHRASES.some((p) => /right now/i.test(p.name))).toBe(false);
   });
+});
+
+/**
+ * Spec 16, Requirement 4: "testif" and "testimon" must leave user copy. Until
+ * tasks 3, 10 and 13 of that spec change their strings, each hit on `main` is
+ * listed here with the task that removes it. A task removes its entries in
+ * the same commit. The list is empty once task 13 has landed.
+ */
+interface PendingRetiredWord {
+  path: string;
+  value: string;
+  task: 3 | 10 | 13;
+}
+
+const PENDING_RETIRED_WORDS: readonly PendingRetiredWord[] = [
+  // src/components/brand/copy.ts, removed by task 3 (Remember and ritual copy).
+  {
+    path: "src/components/brand/copy.ts",
+    value:
+      "Seal what you believe now, a goal, a worry, a decision. When it opens, you testify first, then read what you wrote.",
+    task: 3,
+  },
+  { path: "src/components/brand/copy.ts", value: "Testify", task: 3 },
+  {
+    path: "src/components/brand/copy.ts",
+    value:
+      "Your testimony beside what you wrote, then any numbers then and now.",
+    task: 3,
+  },
+  // src/components/ceremony/copy.ts.
+  {
+    path: "src/components/ceremony/copy.ts",
+    value: "Your testimony is recorded.",
+    task: 10,
+  },
+  {
+    path: "src/components/ceremony/copy.ts",
+    value: "Testify. Say what you remember.",
+    task: 3,
+  },
+  { path: "src/components/ceremony/copy.ts", value: "Testify", task: 3 },
+  {
+    path: "src/components/ceremony/copy.ts",
+    value:
+      "Your testimony sits beside the record. What lies between them is yours to read.",
+    task: 3,
+  },
+  {
+    path: "src/components/ceremony/copy.ts",
+    value:
+      "Her testimony and her letter are side by side. What they say is yours to read.",
+    task: 3,
+  },
+  // src/components/landing/copy.ts, removed by task 13 (short home section).
+  {
+    path: "src/components/landing/copy.ts",
+    value:
+      "A seal proves the letter wasn't changed. It can't stop your memory changing. So before you read, you testify, and Revenant never says what the gap means.",
+    task: 13,
+  },
+  // src/components/reveal/copy.ts.
+  { path: "src/components/reveal/copy.ts", value: "Testify", task: 3 },
+  {
+    path: "src/components/reveal/copy.ts",
+    value:
+      "This letter was written as of {date}. Before you read it, testify: say what you remember about that time.",
+    task: 3,
+  },
+  { path: "src/components/reveal/copy.ts", value: "Your testimony", task: 3 },
+  // The rendered / page, which repeats the copy above.
+  {
+    path: "rendered /",
+    value:
+      "Seal what you believe now, a goal, a worry, a decision. When it opens, you testify first, then read what you wrote.",
+    task: 3,
+  },
+  { path: "rendered /", value: "Testify", task: 3 },
+  {
+    path: "rendered /",
+    value:
+      "Your testimony beside what you wrote, then any numbers then and now.",
+    task: 3,
+  },
+  {
+    path: "rendered /",
+    value:
+      "A seal proves the letter wasn't changed. It can't stop your memory changing. So before you read, you testify, and Revenant never says what the gap means.",
+    task: 13,
+  },
+];
+
+/** One line per hit, for a failure message: "file:line \"value\"". */
+function formatUserString(entry: UserString): string {
+  return `${entry.file}:${entry.line} ${JSON.stringify(entry.value)}`;
+}
+
+/** The values a reader sees in the copy modules, the persona files and the rendered / page. */
+function userCopyStrings(
+  files: readonly SourceFile[],
+): UserString[] {
+  const fromFiles = files
+    .filter((file) => isCopyModule(file.path))
+    .flatMap((file) => userStringsOf(file));
+  const landing = userStringsOfText("rendered /", renderedLandingText());
+  const meta = userStringsOfJson(
+    "page metadata",
+    JSON.stringify(pageMetadata(null, "/")),
+  );
+  return [...fromFiles, ...landing, ...meta];
+}
+
+/** Values that hit RETIRED_WORD, in source order. */
+function retiredWordHits(strings: readonly UserString[]): UserString[] {
+  return strings.filter((entry) => RETIRED_WORD.test(entry.value));
+}
+
+describe("F4 retired words in user copy (spec 16, Requirement 4)", () => {
+  const files = scannedSourceFiles(
+    readSourceFiles(SOURCE_ROOTS, SOURCE_EXTENSIONS),
+  );
+  const hits = retiredWordHits(userCopyStrings(files));
+
+  it("no retired word in user copy outside the pending list", () => {
+    const unlisted = hits
+      .filter(
+        (hit) =>
+          !PENDING_RETIRED_WORDS.some(
+            (pending) =>
+              pending.path === hit.file && pending.value === hit.value,
+          ),
+      )
+      .map(formatUserString);
+    expect(unlisted).toEqual([]);
+  });
+
+  it("every pending entry still hits user copy", () => {
+    const stale = PENDING_RETIRED_WORDS.filter(
+      (pending) =>
+        !hits.some(
+          (hit) => hit.file === pending.path && hit.value === pending.value,
+        ),
+    ).map((pending) => JSON.stringify(pending));
+    expect(stale).toEqual([]);
+  });
+});
+
+describe("F4.5 retired-word fixtures", () => {
+  it("passes a key testimonyRecorded whose value is \"What you remembered is recorded.\"", () => {
+    const source =
+      'export const copy = { testimonyRecorded: "What you remembered is recorded." };';
+    const found = retiredWordHits(
+      userStringsOfTs("src/example/copy.ts", source),
+    );
+    expect(found.map(formatUserString)).toEqual([]);
+  });
+
+  it("fails a value containing \"Testimony\" and names the file, line and value", () => {
+    const source = [
+      "const first = 1;",
+      'export const copy = { heading: "Your Testimony" };',
+    ].join("\n");
+    const found = retiredWordHits(
+      userStringsOfTs("src/example/copy.ts", source),
+    );
+    expect(found.map(formatUserString)).toEqual([
+      'src/example/copy.ts:2 "Your Testimony"',
+    ]);
+  });
+
+  it("fails a value containing \"testified\" and names the file, line and value", () => {
+    const source = [
+      'export const first = "Opening line";',
+      "",
+      'export const second = "She testified to it.";',
+    ].join("\n");
+    const found = retiredWordHits(
+      userStringsOfTs("src/example/copy.ts", source),
+    );
+    expect(found.map(formatUserString)).toEqual([
+      'src/example/copy.ts:3 "She testified to it."',
+    ]);
+  });
+});
+
+/**
+ * Property 10 (spec 16, Requirements 2.8 and 4.1 to 4.4): the retired-word scan
+ * reads values, not names. The cases are a fixed table rather than generated
+ * inputs, so every run checks the same fixtures. Each case says whether the
+ * scan must flag it.
+ */
+describe("Property 10: The retired-word scan reads values, not names", () => {
+  const cases: ReadonlyArray<{
+    name: string;
+    kind: "ts" | "json";
+    source: string;
+    flagged: boolean;
+  }> = [
+    {
+      name: "a key containing a retired word passes when its value is clean",
+      kind: "ts",
+      source:
+        'export const copy = { testimonyRecorded: "What you remembered is recorded." };',
+      flagged: false,
+    },
+    {
+      name: "an identifier containing a retired word passes when its value is clean",
+      kind: "ts",
+      source: 'const testifyLater = "Say what you remember.";',
+      flagged: false,
+    },
+    {
+      name: "an import path containing a retired word passes",
+      kind: "ts",
+      source: 'import { helpers } from "./testimony-helpers";',
+      flagged: false,
+    },
+    {
+      name: "a comparison operand containing a retired word passes",
+      kind: "ts",
+      source: 'if (kind === "testify") { run(); }',
+      flagged: false,
+    },
+    {
+      name: "a JSON key containing a retired word passes when its value is clean",
+      kind: "json",
+      source: '{ "testimonyNote": "Say what you remember." }',
+      flagged: false,
+    },
+    {
+      name: "a string value containing a retired word fails",
+      kind: "ts",
+      source: 'export const copy = { heading: "Your testimony" };',
+      flagged: true,
+    },
+    {
+      name: "a template value containing a retired word fails",
+      kind: "ts",
+      source: "export const copy = { line: `Testify first` };",
+      flagged: true,
+    },
+    {
+      name: "a JSON value containing a retired word fails",
+      kind: "json",
+      source: '{ "note": "She testified to it." }',
+      flagged: true,
+    },
+  ];
+
+  for (const testCase of cases) {
+    it(`${testCase.name}`, () => {
+      const strings =
+        testCase.kind === "json"
+          ? userStringsOfJson("src/example/copy.json", testCase.source)
+          : userStringsOfTs("src/example/copy.ts", testCase.source);
+      const found = retiredWordHits(strings);
+      expect(found.length > 0).toBe(testCase.flagged);
+    });
+  }
 });
