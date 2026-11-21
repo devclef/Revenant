@@ -10,6 +10,7 @@ import { LIVE_COPY } from "@/components/live/copy";
 import { REVEAL_COPY } from "./copy";
 import type { FlowState, UnlockInfo } from "./opening-machine";
 import { OpeningFlow } from "./OpeningFlow";
+import { stageFor, stageListFor } from "@/components/ceremony/stages";
 
 /**
  * Markup tests for the live mode of `OpeningFlow` (spec 06 task 8, R17.2 to
@@ -181,6 +182,36 @@ describe("OpeningFlow live mode: the still-sealed view", () => {
     expect(markup).toContain(esc(REVEAL_COPY.sealedRetry));
     expect(markup).not.toContain(esc(LIVE_COPY.unlockPasskey));
   });
+
+  it("shows only the notice and countdown, with no envelope frame and no track (R10.2)", () => {
+    const markup = renderLive({ tag: "sealed", opensAt: OPENS_AT });
+    // The inline envelope frame is the only element at this width.
+    expect(markup).not.toContain("min(84vw, 22rem)");
+    expect(markup).not.toContain('data-ceremony="envelope"');
+    expect(markup).not.toContain("data-step-track");
+  });
+});
+
+describe("OpeningFlow live mode: the three-step track (R10.1)", () => {
+  it("shows Unlock, Testify and See the receipts, with Unlock current at the key step", () => {
+    const markup = renderLive({
+      tag: "awaiting_key",
+      envelope: {},
+      envelopeHash: "h",
+      unlock: PASSKEY_AND_BACKUP,
+      notice: null,
+    });
+    expect(markup).toContain("data-step-track");
+    for (const name of REVEAL_COPY.letterTrackSteps) {
+      expect(markup).toContain(esc(name));
+    }
+    expect(markup).toMatch(/data-state="current"[^>]*>[\s\S]*?Unlock/);
+  });
+
+  it("does not show the track on the persona route, which keeps its own", () => {
+    const markup = renderPersona({ tag: "loading" });
+    expect(markup).not.toContain("data-step-track");
+  });
 });
 
 describe("OpeningFlow persona route (R17.13)", () => {
@@ -209,5 +240,63 @@ describe("OpeningFlow live mode: the typed key is owned by the parent", () => {
     expect(source).toMatch(/const \[keyText, setKeyText\] = useState\(initialBackupKey \?\? ""\);/);
     expect(source).toMatch(/keyText=\{keyEntry\.keyText\}/);
     expect(source).toMatch(/onKeyTextChange=\{keyEntry\.onKeyTextChange\}/);
+  });
+});
+
+describe("OpeningFlow five screens and step order (spec 15 task 10.1)", () => {
+  // The five screens of Requirement 10 and the Stage each one renders in. The
+  // still-sealed, emergence and unlock screens are asserted on the markup; the
+  // unlock-backup and unlock-error copy render inside UnlockView after its
+  // lazy load, so UnlockView.test.tsx covers their controls and notices.
+  const FLOW_STAGE_CASES = [
+    { screen: "emergence", tag: "loading", stage: "emerging" },
+    { screen: "emergence", tag: "verifying", stage: "emerging" },
+    { screen: "still-sealed", tag: "sealed", stage: "sealed" },
+    { screen: "unlock", tag: "awaiting_key", stage: "envelope" },
+  ] as const;
+
+  it("maps each screen's state to its Stage through stageFor", () => {
+    const local = { emergence: "done", sealing: false, figures: "settled" } as const;
+    expect(stageFor({ tag: "loading" }, local)).toBe("emerging");
+    expect(stageFor({ tag: "openable", envelope: {}, envelopeHash: "h" }, local)).toBe("emerging");
+    expect(stageFor({ tag: "verifying" }, local)).toBe("emerging");
+    expect(stageFor({ tag: "sealed", opensAt: OPENS_AT }, local)).toBe("sealed");
+    expect(
+      stageFor(
+        { tag: "awaiting_key", envelope: {}, envelopeHash: "h", unlock: PASSKEY_AND_BACKUP, notice: null },
+        local,
+      ),
+    ).toBe("envelope");
+    expect(stageFor({ tag: "recall" } as unknown as FlowState, local)).toBe("recall");
+  });
+
+  it("renders the Stage of each screen in the markup", () => {
+    for (const { tag, stage } of FLOW_STAGE_CASES) {
+      const state = (
+        tag === "loading"
+          ? { tag }
+          : tag === "verifying"
+            ? { tag }
+            : tag === "sealed"
+              ? { tag, opensAt: OPENS_AT }
+              : { tag, envelope: {}, envelopeHash: "h", unlock: PASSKEY_AND_BACKUP, notice: null }
+      ) as FlowState;
+      const markup = renderLive(state);
+      expect(markup, `${tag} must render as ${stage}`).toContain(`data-ceremony="${stage}"`);
+    }
+  });
+
+  it("shows the unlock-error copy for a failed open, with no letter text", () => {
+    const markup = renderLive({ tag: "open_failed", kind: "wrong_key" } as FlowState);
+    expect(markup).toContain('data-ceremony="error"');
+    expect(markup).not.toContain(esc(LIVE_COPY.unlockPasskey));
+  });
+
+  it("walks the Stages in the order emergence, still-sealed, unlock, Testify, reveal", () => {
+    const order = stageListFor(true);
+    const path = ["emerging", "sealed", "envelope", "recall", "marks"] as const;
+    for (let i = 1; i < path.length; i += 1) {
+      expect(order.indexOf(path[i])).toBeGreaterThan(order.indexOf(path[i - 1]));
+    }
   });
 });

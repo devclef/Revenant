@@ -753,10 +753,27 @@ describe("CeremonyRoot persona Step_Indicator", () => {
     expect(html).toContain(esc("Step 4 of 4: See the receipts"));
   });
 
-  it("keeps the Stage line in live mode, with no Step_Indicator", () => {
+  it("keeps the Stage line in live mode, with the three-step track and no four-step Step_Indicator", () => {
+    // Spec 15 R10.1: a live letter has its own three-step track (unlock,
+    // Testify, receipts). The persona's four-step Step_Indicator stays absent.
     const html = render(LETTER_STATE, "live");
     expect(html).toContain(esc(CEREMONY_COPY.stageLive.letter));
-    expect(html).not.toContain("data-step-indicator");
+    expect(html).toContain(
+      esc(
+        CEREMONY_COPY.stepTrackPhone
+          .replace("{n}", "3")
+          .replace("{total}", "3")
+          .replace("{label}", REVEAL_COPY.letterTrackSteps[2]),
+      ),
+    );
+    expect(html).not.toContain(
+      esc(
+        CEREMONY_COPY.stepTrackPhone
+          .replace("{n}", "3")
+          .replace("{total}", "4")
+          .replace("{label}", CEREMONY_COPY.steps[2]),
+      ),
+    );
   });
 
   it("renders the Step_Indicator from the first recall render on, with the current step marked", () => {

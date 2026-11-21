@@ -19,10 +19,10 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from "react";
 import { createPortal } from "react-dom";
+import dynamic from "next/dynamic";
 
 import { useCalmInForce } from "@/components/ceremony/motion";
 import { DemoLabel } from "@/components/demo/DemoLabel";
-import { OpeningFlow } from "@/components/reveal/OpeningFlow";
 import type { AuthenticatorPort } from "@/components/live/unlock";
 
 import { BackupKeyCard } from "../BackupKeyCard";
@@ -37,6 +37,17 @@ import { LiveGhost } from "./LiveGhost";
 import { SealedEnvelopeView } from "./SealedEnvelopeView";
 import { heldGhostSink } from "./HeldGhost";
 import { flowPortalTarget, stepForFlowPhase, type LiveStep } from "./live-steps";
+
+/**
+ * The opening flow, loaded when the Wait card mounts. It is split out of the
+ * /demo/live first-load bundle, so the flow's code arrives only once a letter
+ * is sealed and the stepper can show it (spec 15, R9.5). The export keeps the
+ * name `OpeningFlow`, so the portal below reads the same as before.
+ */
+const OpeningFlow = dynamic(
+  () =>
+    import("@/components/reveal/OpeningFlow").then((mod) => mod.OpeningFlow),
+);
 
 /**
  * The box that holds the Ghost on the Testify step (spec 13, F4). The held Ghost

@@ -81,6 +81,11 @@ import { browserTimeZone } from "@/components/ui/letter-date";
 import { useOpeningFlow } from "./useOpeningFlow";
 import { onceOnly, type AuthenticatorPort } from "@/components/live/unlock";
 import { RecallStep } from "./RecallStep";
+import { StillSealed } from "./StillSealed";
+import { StepTrack } from "@/components/live/stepper/StepTrack";
+import { CEREMONY_COPY } from "@/components/ceremony/copy";
+import { REVEAL_COPY } from "./copy";
+import { letterTrackStep } from "./letter-track";
 import { RecallReader } from "@/components/ceremony/recall/RecallReader";
 import type { TestifyContextProps } from "@/components/ceremony/intro/TestifyContext";
 import { Reveal } from "./Reveal";
@@ -371,6 +376,19 @@ export function OpeningFlow({
               ) : null}
             </SceneBackdrop>
           ) : null}
+          {/* The three-step track of `/l/{id}` (spec 15, R10.1). It is drawn for
+              a live letter that is not embedded in the stepper, which has its
+              own track. The still-sealed state draws none (R10.2). */}
+          {mode === "live" &&
+          !isEmbedded &&
+          letterTrackStep(state.tag) !== null ? (
+            <StepTrack
+              steps={REVEAL_COPY.letterTrackSteps}
+              current={letterTrackStep(state.tag)}
+              label={CEREMONY_COPY.stepsLabel}
+              phoneTemplate={CEREMONY_COPY.stepTrackPhone}
+            />
+          ) : null}
           <div className={styles.view}>
             {selectView(state, flow, letterId, personaName, persona, mode, retryAtZero, KeyStep, {
               keyText,
@@ -472,12 +490,17 @@ function selectView(
       // letter passes its opening instant with the precise countdown and the
       // single automatic re-check at zero. With no persona (spec 03 renders)
       // the closed envelope stands alone.
-      return live === undefined
-        ? envelopeView("sealed")
-        : envelopeView("sealed", {
-            sealedOpensAt: state.opensAt,
-            stillSealed: { precise: true, onZero: retryAtZero },
-          });
+      // A live letter shows the sealed notice and the countdown alone, with no
+      // envelope frame (spec 15, R10.2). The persona view keeps its envelope.
+      if (live === undefined) return envelopeView("sealed");
+      return (
+        <StillSealed
+          opensAt={state.opensAt}
+          onRetry={flow.retry}
+          precise
+          onZero={retryAtZero}
+        />
+      );
 
     case "openable":
       // `openable` is a brief transition into checking the seal; it shows the

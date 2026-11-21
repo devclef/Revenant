@@ -376,3 +376,23 @@ describe("LiveWaitStep draws the Ghost on the Testify step (F4)", () => {
     expect(html).not.toContain("data-live-testify-ghost");
   });
 });
+
+// Spec 15, R9.5. The opening flow is split out of the /demo/live first-load
+// bundle: LiveWaitStep loads it with next/dynamic, not a static import.
+describe("LiveWaitStep loads the opening flow with next/dynamic", () => {
+  const source = readFileSync(
+    join(process.cwd(), "src/components/live/stepper/LiveWaitStep.tsx"),
+    "utf8",
+  );
+
+  it("imports next/dynamic and loads OpeningFlow through an import()", () => {
+    expect(source).toContain('import dynamic from "next/dynamic";');
+    expect(source).toMatch(
+      /dynamic\(\s*\(\)\s*=>\s*import\("@\/components\/reveal\/OpeningFlow"\)/,
+    );
+  });
+
+  it("has no static import of OpeningFlow", () => {
+    expect(source).not.toMatch(/import\s*\{\s*OpeningFlow\s*\}\s*from/);
+  });
+});

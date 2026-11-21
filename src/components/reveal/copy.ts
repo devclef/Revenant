@@ -29,6 +29,12 @@ export const REVEAL_COPY = {
   /** Shown while the letter is being fetched and verified. */
   loading: "Bringing the letter into the light.",
 
+  /**
+   * The three-step track on `/l/{id}`, in order: unlock, Testify, receipts.
+   * It is drawn by StepTrack from letter-track.ts.
+   */
+  letterTrackSteps: ["Unlock", "Testify", "See the receipts"] as const,
+
   /** Heading for the still-sealed state. */
   sealedTitle: "Still sealed",
 
