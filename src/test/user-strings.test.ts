@@ -18,9 +18,9 @@ describe("userStringsOfTs", () => {
       "const c = `Sealed on ${date}`;",
     ].join("\n");
     expect(userStringsOfTs("copy.ts", source)).toEqual([
-      { path: "copy.ts", line: 1, value: "Remember first" },
-      { path: "copy.ts", line: 2, value: "The letter" },
-      { path: "copy.ts", line: 3, value: "Sealed on " },
+      { file: "copy.ts", line: 1, value: "Remember first" },
+      { file: "copy.ts", line: 2, value: "The letter" },
+      { file: "copy.ts", line: 3, value: "Sealed on " },
     ]);
   });
 
@@ -106,7 +106,7 @@ describe("userStringsOfJson", () => {
     const result = userStringsOfJson("letter.json", source);
     expect(values(result)).toEqual(["You wrote this.", "One", "Two"]);
     expect(result[0]).toEqual({
-      path: "letter.json",
+      file: "letter.json",
       line: 2,
       value: "You wrote this.",
     });
@@ -121,9 +121,9 @@ describe("userStringsOfText", () => {
   it("returns each non-blank line as a value with its line number", () => {
     const source = "First line\n\nThe testify line\r\nLast";
     expect(userStringsOfText("us-maya.txt", source)).toEqual([
-      { path: "us-maya.txt", line: 1, value: "First line" },
-      { path: "us-maya.txt", line: 3, value: "The testify line" },
-      { path: "us-maya.txt", line: 4, value: "Last" },
+      { file: "us-maya.txt", line: 1, value: "First line" },
+      { file: "us-maya.txt", line: 3, value: "The testify line" },
+      { file: "us-maya.txt", line: 4, value: "Last" },
     ]);
   });
 });

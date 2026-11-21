@@ -7,7 +7,7 @@ import * as ts from "typescript";
  * user copy, so it is never returned.
  */
 
-export type UserString = { path: string; line: number; value: string };
+export type UserString = { file: string; line: number; value: string };
 
 /** The words the scan retires from user copy. Matched against values only. */
 export const RETIRED_WORD = /\btestif\w*|\btestimon\w*/i;
@@ -90,7 +90,11 @@ function walk(
 ): void {
   if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) {
     if (node.text.length > 0 && !isNonValuePosition(node, parent)) {
-      out.push({ path, line: lineOf(sourceFile, node), value: node.text });
+      out.push({
+        file: path,
+        line: lineOf(sourceFile, node),
+        value: node.text,
+      });
     }
     return;
   }
@@ -103,7 +107,11 @@ function walk(
       ];
       for (const part of parts) {
         if (part.text.length > 0) {
-          out.push({ path, line: lineOf(sourceFile, part), value: part.text });
+          out.push({
+            file: path,
+            line: lineOf(sourceFile, part),
+            value: part.text,
+          });
         }
       }
     }
@@ -148,6 +156,6 @@ export function userStringsOfJson(path: string, source: string): UserString[] {
 export function userStringsOfText(path: string, source: string): UserString[] {
   return source
     .split(/\r?\n/)
-    .map((value, index) => ({ path, line: index + 1, value }))
+    .map((value, index) => ({ file: path, line: index + 1, value }))
     .filter((entry) => entry.value.trim().length > 0);
 }
