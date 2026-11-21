@@ -150,7 +150,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Copy evidence: tone-check for `live/copy.ts` and `desk/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 6. Published_Precision, formula inputs and unsigned magnitudes
+- [x] 6. Published_Precision, formula inputs and unsigned magnitudes
   - Agent: `data-dev` · Depends on: 1 · Estimated size: S, ~400 changed lines
   - Scope: `src/lib/figures/published-precision.ts` (new), `src/lib/figures/formula-input.ts` (new), `src/lib/figures/decimal.ts` (`roundDecimal`), `src/lib/figures/format-change.ts`, `src/lib/figures/index.ts`, and the `*.test.ts` next to each.
   - Design sections: "8. Change line, formula and Published_Precision" (the `src/lib/figures` parts), Properties 5 and 6.
