@@ -169,7 +169,7 @@ export const CEREMONY_COPY = {
     /** The sealed envelope resting on the desk. */
     envelope: "The envelope is on the desk.",
     /** The recall step, before the letter is opened. */
-    recall: "Testify. Say what you remember.",
+    recall: "Remember first. Then read.",
     /** The remembered answers, placed as ink marks. */
     marks: "Your answers are placed.",
     /** The seal, waiting to be broken. */
@@ -189,8 +189,8 @@ export const CEREMONY_COPY = {
   /** The accessible name of the Step_Indicator list. */
   stepsLabel: "Your progress",
 
-  /** The four steps, in order. Testify and See the receipts match Brand_Copy. */
-  steps: ["Testify", "Break the seal", "Read", "See the receipts"],
+  /** The four steps, in order. Remember and Receipts match Brand_Copy. */
+  steps: ["Remember", "Break the seal", "Read", "Receipts"],
 
   /**
    * The polite live-region line when the current step changes. `{n}` is the

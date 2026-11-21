@@ -750,7 +750,7 @@ describe("CeremonyRoot persona Step_Indicator", () => {
       { tag: "reveal", opened: OPENED, record: RECORD, stage: 3 },
       "persona",
     );
-    expect(html).toContain(esc("Step 4 of 4: See the receipts"));
+    expect(html).toContain(esc("Step 4 of 4: Receipts"));
   });
 
   it("keeps the Stage line in live mode, with the three-step track and no four-step Step_Indicator", () => {

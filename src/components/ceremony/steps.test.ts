@@ -41,7 +41,7 @@ describe("personaStepFor (C2.2)", () => {
     expect(personaStepFor("close")).toBe(3);
   });
 
-  it("names exactly Testify, Break the seal and Read for a text-only letter", () => {
+  it("names exactly Remember, Break the seal and Read for a text-only letter", () => {
     expect([...personaStepLabels(false)]).toEqual([
       CEREMONY_COPY.steps[0],
       CEREMONY_COPY.steps[1],
