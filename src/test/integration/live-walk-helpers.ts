@@ -255,7 +255,8 @@ export const FULL_PAGE_STEPS: ReadonlySet<WalkStepName> = new Set<WalkStepName>(
 /**
  * The Step_Indicator item that must be current at each step (Q1.6, spec 12 table
  * row 07). These patterns follow the ceremony copy: "Break the seal" for `marks`,
- * "See the receipts" from `letter` on. Steps not listed here are not checked.
+ * "Receipts" from `letter` on (spec 16, Requirement 2.1; "See the receipts" is
+ * now only the Read step's button). Steps not listed here are not checked.
  */
 export const STEP_INDICATOR_EXPECTATIONS: Partial<
   Record<WalkStepName, RegExp>
