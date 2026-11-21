@@ -429,3 +429,32 @@
     line-height: 1.25;
   }
 }
+
+/* Spec 15 task 15 (layout-check R1, PV1): the question, the field and the Next
+   button sit inside the viewport at scrollY 0 at every checked size. At every
+   width the number question shows, in this visual order: the unit, the field
+   and its reading or error lines, then the Nav_Row, then the Sample_Note, the
+   Recall_Scale and "No answer", then the intro line last. Only the visual
+   order changes; the markup order (T2.1) and the Tab order are unchanged,
+   as with the phone order above (spec 15, 11.7). */
+.body > * {
+  order: 2;
+}
+
+.body > .unit,
+.body > .unitHelp,
+.body > .answerRow,
+.body > .readings,
+.body > .fieldError {
+  order: 0;
+}
+
+.body > :global([data-nav-row]) {
+  order: 1;
+  margin-top: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.body > .intro {
+  order: 11;
+}

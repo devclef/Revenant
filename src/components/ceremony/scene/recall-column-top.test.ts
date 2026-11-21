@@ -29,7 +29,9 @@ describe("the recall column top rule (#515 fit)", () => {
     expect(css).toMatch(/top:\s*calc\(var\(--soil-top\)\s*\+\s*var\(--soil-band\)\s*\+\s*0\.25rem\s*-\s*6rem\s*-\s*18vh\);/);
   });
 
-  it("places the compact recall column below the Compact_Ghost row", () => {
-    expect(compactBlock()).toMatch(/top:\s*calc\(56px \+ min\(26vh, 170px\) \* 0\.696\);/);
+  it("places the compact recall column in the band under the Compact_Top_Bar", () => {
+    // Spec 15 task 15 (R1, PV1): the 56 px band less the Persona_Column's 6rem
+    // offset. The region carries the Compact_Ghost beside its Step_Indicator row.
+    expect(compactBlock()).toMatch(/top:\s*calc\(56px - 6rem\);/);
   });
 });
