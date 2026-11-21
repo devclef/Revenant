@@ -1260,10 +1260,11 @@
 /*
  * Phone Step_Indicator row and the Compact_Ghost (spec 10 X2.1, X2.3, C1.6).
  * Below 600 px the Step_Indicator row sits under the Compact_Top_Bar, and the
- * Compact_Ghost is fixed at its right edge (top 56 px, width about 0.58 times
- * min(26vh, 170px)). The row reserves that space on its right so no step name
- * sits under the Ghost. The reserve is the Compact_Ghost's box: 1.2 times its
- * width tall, and its width plus a 16 px edge and an 8 px gap on the right.
+ * Compact_Ghost is centred in the window (top 56 px, width about 0.58 times
+ * min(26vh, 170px)). The row's right padding stops the phone step line at the
+ * Ghost's left edge: half the column, plus 0.29 times min(26vh, 170px), plus
+ * an 8 px gap. The Ghost is centred, so a right-edge reserve left the line
+ * under it.
  *
  * The pit's transition is off below 600 px. The full-motion rule
  * `[data-ceremony-motion="full"] .pit` (0,2,0) comes later in this file and
@@ -1271,11 +1272,16 @@
  * rule has one more class-level selector and wins.
  */
 @media (max-width: 599.98px) {
-  /* .scene keeps the selector pure for CSS Modules (it must hold a local class). */
+  /* .scene keeps the selector pure for CSS Modules (it must hold a local class).
+     The Compact_Ghost is centred (pit at 50%), 0.58 x W wide, so its left edge
+     is 50% - 0.29 W. The right padding is half the column (50%) plus 0.29 W
+     plus an 8 px gap, so the phone step line ends at the Ghost's left edge.
+     The old reserve sat on the right and let the line run under the Ghost
+     (layout-check GT1, spec 15 task 15 fix-up). */
   .scene [data-ceremony] > [data-step-indicator] {
     box-sizing: border-box;
     min-height: calc(0.58 * 1.2 * min(26vh, 170px));
-    padding-right: calc(0.58 * min(26vh, 170px) + 24px);
+    padding-right: calc(50% + 0.29 * min(26vh, 170px) + 8px);
     align-content: center;
   }
 

@@ -75,6 +75,22 @@ describe("phone recall region top (R1, PV1)", () => {
   });
 });
 
+describe("break-stage step row clears the Compact_Ghost at 360 wide", () => {
+  it("stops the phone step line at the Ghost's left edge, not at a right-edge reserve", () => {
+    // The Compact_Ghost is centred (pit at 50%), 0.58 x min(26vh, 170px) wide,
+    // so its left edge is 50% - 0.29 x W. The row's right padding must reach
+    // from the column's right edge back to that edge plus an 8 px gap:
+    // 50% (half the column) + 0.29 x W + 8 px.
+    const body = ruleBody(sceneCss, "[data-step-indicator]");
+    expect(body).toMatch(
+      /padding-right:\s*calc\(50% \+ 0\.29 \* min\(26vh, 170px\) \+ 8px\);/,
+    );
+    expect(body).not.toMatch(
+      /padding-right:\s*calc\(0\.58 \* min\(26vh, 170px\) \+ 24px\);/,
+    );
+  });
+});
+
 describe("Figures_Heading re-check across the close settle (N1)", () => {
   it("keeps the re-check only for the figures-to-close settle", () => {
     expect(keepsFocusRecheck("figures", "close")).toBe(true);
