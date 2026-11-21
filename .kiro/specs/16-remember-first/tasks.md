@@ -78,7 +78,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Earlier-spec tests changed or retired: `use-keep-in-visual-viewport.hook.test.ts` (focusin and resize cases expect a scroll on any focus), `use-keep-in-visual-viewport.test.ts`, any `LiveStepper*.test.tsx` that asserts the `primaryRef` call; name each.
   - Validation: `bash scripts/check.sh`; `WALK=1 npm run live-walk` against a local production build.
 
-- [ ] 2. Retired-word scanner that reads string values
+- [x] 2. Retired-word scanner that reads string values
   - Agent: `platform-dev` · Depends on: 1 · Estimated size: S, ~400 changed lines
   - Scope: `src/test/user-strings.ts` (new), `src/test/retired-phrases.test.ts`, and the `*.test.ts` next to them.
   - Design sections: "4. Retired-word scanner", Property 10.
