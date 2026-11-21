@@ -33,7 +33,7 @@ describe("AuthorQuestions copy (spec 10, C2.1, C2.3 to C2.5)", () => {
       "Questions for your future self",
     );
     expect(LIVE_COPY.authorQuestionsHint).toBe(
-      "When the letter opens, you'll answer these from memory before you read it.",
+      "Answer each one now. When it opens, you're asked again from memory before you read it.",
     );
     expect(LIVE_COPY.authorQuestionLabel).toBe("Question {n}");
     expect(LIVE_COPY.authorQuestionRemove).toBe("Remove question {n}");
