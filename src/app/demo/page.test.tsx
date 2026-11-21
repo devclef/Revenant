@@ -74,6 +74,13 @@ describe("Demo_Index page markup", () => {
     expect(html).toContain(DEMO_COPY.introNote);
   });
 
+  it("shows one Demo label, not the Top_Bar chip as well (spec 15 DL1)", async () => {
+    const html = await renderWithPersonas(TWO_PERSONAS);
+    expect(html).not.toContain('data-topbar-slot="chip"');
+    const labels = html.split(`>${DEMO_COPY.demoLabel}<`).length - 1;
+    expect(labels).toBe(1);
+  });
+
   it("puts the label and intro note before the first card (R6.4, R6.5)", async () => {
     const html = await renderWithPersonas(TWO_PERSONAS);
     const labelAt = html.indexOf(DEMO_COPY.demoLabel);
