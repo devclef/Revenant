@@ -204,7 +204,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: `UnlockView.test.tsx`, `LiveStepper*.test.tsx`, `OpeningFlow*.test.tsx`, `StillSealed` tests; name each.
   - Copy evidence: tone-check for the changed copy files.
 
-- [ ] 11. Testify
+- [x] 11. Testify
   - Agent: `frontend-dev` · Depends on: 2, 4, 10 · Estimated size: M, ~1,300 changed lines
   - Scope: `src/components/ceremony/recall/**`, `src/components/reveal/RecallStep.tsx`, `TestifyContext.tsx`, `src/components/reveal/copy.ts`, `src/components/ceremony/copy.ts`, and the `*.test.ts(x)` next to each.
   - Covers: `testify-text`, `testify-number`, `testify-last`, `maya-testify`, `priya-testify`. Requirement 11; design "9. Testify and receipts".
