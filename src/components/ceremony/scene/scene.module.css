@@ -1285,6 +1285,17 @@
     align-content: center;
   }
 
+  /* Break the seal and the seal (PR #542 QA blocker): the Compact_Ghost's feet
+     end about 13 px below the Step_Indicator row, on the first heading ("Your
+     testimony"). A 1.5rem gap under the row puts the heading clear of them at
+     360 x 640 and 390 x 844. The Ghost is placed against the region, not the
+     row, so it stays where it is. Recall keeps the row as it is: its question,
+     field and Next must stay inside 640 px (layout-check R1). */
+  .scene [data-ceremony="marks"] > [data-step-indicator],
+  .scene [data-ceremony="seal"] > [data-step-indicator] {
+    margin-bottom: 1.5rem;
+  }
+
   [data-ceremony-motion="full"] .pit[data-compact="true"] {
     transition: none;
   }

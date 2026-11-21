@@ -15,7 +15,10 @@ const pagerCss = readFileSync(
 );
 const sceneCss = readFileSync(resolve(here, "scene/scene.module.css"), "utf8");
 const rootSource = readFileSync(resolve(here, "CeremonyRoot.tsx"), "utf8");
-const sealCss = readFileSync(resolve(here, "seal/SealBreak.module.css"), "utf8");
+const sealCss = readFileSync(
+  resolve(here, "seal/SealBreak.module.css"),
+  "utf8",
+);
 
 /** CSS with every @media block removed, so only the all-widths rules remain. */
 function topLevel(css: string): string {
@@ -82,7 +85,10 @@ describe("break-stage step row clears the Compact_Ghost at 360 wide", () => {
     // so its left edge is 50% - 0.29 x W. The row's right padding must reach
     // from the column's right edge back to that edge plus an 8 px gap:
     // 50% (half the column) + 0.29 x W + 8 px.
-    const body = ruleBody(sceneCss, "[data-step-indicator]");
+    const body = ruleBody(
+      sceneCss,
+      ".scene [data-ceremony] > [data-step-indicator]",
+    );
     expect(body).toMatch(
       /padding-right:\s*calc\(50% \+ 0\.29 \* min\(26vh, 170px\) \+ 8px\);/,
     );
@@ -116,14 +122,19 @@ describe("Figures_Heading re-check across the close settle (N1)", () => {
 // the row's text box runs under the Ghost's box.
 
 /** Evaluates a calc() made of `+` terms, each a product of numbers, N%, Npx and min(26vh, 170px). */
-function evalCalc(expr: string, columnPx: number, viewportHeightPx: number): number {
+function evalCalc(
+  expr: string,
+  columnPx: number,
+  viewportHeightPx: number,
+): number {
   const trimmed = expr.trim();
   const body = /^calc\(/.test(trimmed) ? trimmed.slice(5, -1) : trimmed;
   return body.split(" + ").reduce((sum, term) => {
     const product = term.split(" * ").reduce((acc, factor) => {
       const f = factor.trim();
-      if (f === "min(26vh, 170px)") return acc * Math.min(0.26 * viewportHeightPx, 170);
-      if (/^[\d.]+%$/.test(f)) return acc * (columnPx * parseFloat(f)) / 100;
+      if (f === "min(26vh, 170px)")
+        return acc * Math.min(0.26 * viewportHeightPx, 170);
+      if (/^[\d.]+%$/.test(f)) return (acc * (columnPx * parseFloat(f))) / 100;
       if (/^[\d.]+px$/.test(f)) return acc * parseFloat(f);
       if (/^[\d.]+$/.test(f)) return acc * parseFloat(f);
       throw new Error(`unsupported calc factor: ${f}`);
@@ -133,13 +144,17 @@ function evalCalc(expr: string, columnPx: number, viewportHeightPx: number): num
 }
 
 describe("break-stage step row clears the Compact_Ghost box at 360 wide (issue #524)", () => {
-  const row = ruleBody(sceneCss, "[data-step-indicator]");
+  const row = ruleBody(
+    sceneCss,
+    ".scene [data-ceremony] > [data-step-indicator]",
+  );
   const padRight = row.match(/padding-right:\s*([^;]+);/)?.[1] ?? "";
   const minHeight = row.match(/min-height:\s*([^;]+);/)?.[1] ?? "";
   const columnPx = 360;
   // The Ghost's width, aspect and compact scale are read from scene.module.css,
   // so a CSS change to the Ghost fails this test instead of a copy of the value.
-  const ghostWExpr = sceneCss.match(/--ghost-w:\s*(min\(26vh, 170px\));/)?.[1] ?? "";
+  const ghostWExpr =
+    sceneCss.match(/--ghost-w:\s*(min\(26vh, 170px\));/)?.[1] ?? "";
   const compactScale = Number(
     [...sceneCss.matchAll(/\.pit\[data-compact="true"\]\s*\{([^}]*)\}/g)]
       .map((m) => m[1])
@@ -159,7 +174,8 @@ describe("break-stage step row clears the Compact_Ghost box at 360 wide (issue #
       // columnPx / 2 - 0.29 W, and the text box's right edge is columnPx - padding.
       const w = evalCalc(ghostWExpr, columnPx, viewportHeightPx);
       const ghostLeftPx = columnPx / 2 - 0.5 * w * compactScale;
-      const textRightPx = columnPx - evalCalc(padRight, columnPx, viewportHeightPx);
+      const textRightPx =
+        columnPx - evalCalc(padRight, columnPx, viewportHeightPx);
       expect(textRightPx).toBeLessThanOrEqual(ghostLeftPx);
     });
 
@@ -167,9 +183,9 @@ describe("break-stage step row clears the Compact_Ghost box at 360 wide (issue #
       expect(minHeight).not.toBe("");
       const w = evalCalc(ghostWExpr, columnPx, viewportHeightPx);
       const ghostHeightPx = w * ghostAspect * compactScale;
-      expect(evalCalc(minHeight, columnPx, viewportHeightPx)).toBeGreaterThanOrEqual(
-        ghostHeightPx - 1e-6,
-      );
+      expect(
+        evalCalc(minHeight, columnPx, viewportHeightPx),
+      ).toBeGreaterThanOrEqual(ghostHeightPx - 1e-6);
     });
   }
 
@@ -187,5 +203,17 @@ describe("break-stage step row clears the Compact_Ghost box at 360 wide (issue #
     expect(hint).not.toBe("");
     expect(hint).not.toMatch(/position:\s*(absolute|fixed)/);
     expect(hint).not.toMatch(/float:/);
+  });
+});
+
+describe("break and seal headings clear the Compact_Ghost's feet (PR #542 QA blocker)", () => {
+  it("gives the phone Step_Indicator row a 1.5rem gap on marks and seal only", () => {
+    const rule = sceneCss.match(
+      /\.scene \[data-ceremony="marks"\] > \[data-step-indicator\],\s*\.scene \[data-ceremony="seal"\] > \[data-step-indicator\]\s*\{([^}]*)\}/,
+    );
+    expect(rule?.[1] ?? "").toMatch(/margin-bottom:\s*1\.5rem;/);
+    expect(sceneCss).not.toMatch(
+      /\[data-ceremony="recall"\] > \[data-step-indicator\][^{]*\{[^}]*margin-bottom/,
+    );
   });
 });
