@@ -179,6 +179,21 @@ FRONTEND_BROWSER_STEP = (
 )
 
 
+# The Task Runner plans in the dispatcher's clone (~/kiro/revenant-crew/qa or
+# /dev) before it creates the run's worktree, so the planner tends to write that
+# clone's path into each step as "Working directory: ...". The step agent then
+# commits in the clone, the run's worktree has no diff, and every step fails
+# self-review ("the step left no diff to review"). TASK_f3e0e52d (PR #541).
+WORKTREE_RULE = (
+    "- Each step runs in the Task Runner's own git worktree "
+    "(`.kirocrew-work/<task id>`), which is the directory the step starts in. "
+    "Work and commit there. When planning, never write an absolute working "
+    "directory into a step, and never name `~/kiro/revenant-crew/qa` or "
+    "`~/kiro/revenant-crew/dev`: those clones belong to the dispatcher, and a "
+    "commit made in them leaves the run with no diff, so the step fails."
+)
+
+
 def owned_paths(role: str, agents_json: Path | None = None) -> list[str]:
     """The paths `role` may change, from .github/agents.json (role paths, then shared).
     The dispatcher's dev clone is synced to origin/main every tick, so its copy is
@@ -367,6 +382,7 @@ def dev_spec(issue: dict, role: str, feedback: str | None = None,
         "## Requirements",
         "- Do only what the ticket below asks, inside its Scope paths.",
         "- Do not push, open PRs, or call GitHub. Commit your work locally.",
+        WORKTREE_RULE,
         "- If the ticket wants something in the PR description (a claim table, a list of "
         "changed tests, an OUT OF SCOPE list, a recorded run), put it in the body of "
         "the commit that makes the related code change. Do not make an empty commit "
@@ -423,6 +439,7 @@ def qa_spec(pr: dict, issue: dict, paths: list[str] | None = None) -> str:
         "",
         "## Requirements",
         "- Change no files except `.qa/verdict.json`.",
+        WORKTREE_RULE,
         "- Write the verdict in exactly the JSON shape given in qa.md and commit it.",
         "- File ownership and size are enforced by the `policy` CI check, which has "
         "already passed. Don't raise path-ownership findings.",
