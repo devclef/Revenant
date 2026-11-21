@@ -218,8 +218,7 @@
 // For task 15: rows that fail because of a product file, from the run of the spec 15
 // rows against a built app. Each entry names the row, its output and the suspected file.
 // The two entries below were quoted in the ticket for this task. The layout check was not
-// run
-// against a built app in the task that wrote this list. QA confirms them with
+// run against a built app in the task that wrote this list. QA confirms them with
 // `npm run layout-check`.
 //
 //   DL1   one-demo-label         labels=2 on /demo, want one
