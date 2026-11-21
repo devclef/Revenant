@@ -342,14 +342,6 @@ const PENDING_RETIRED_WORDS: readonly PendingRetiredWord[] = [
       "A seal proves the letter wasn't changed. It can't stop your memory changing. So before you read, you testify, and Revenant never says what the gap means.",
     task: 13,
   },
-  // src/components/reveal/copy.ts.
-  { path: "src/components/reveal/copy.ts", value: "Testify", task: 3 },
-  {
-    path: "src/components/reveal/copy.ts",
-    value:
-      "This letter was written as of {date}. Before you read it, testify: say what you remember about that time.",
-    task: 3,
-  },
   // The rendered / page, which repeats the copy above.
   {
     path: "rendered /",
