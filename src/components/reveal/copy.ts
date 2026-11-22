@@ -377,8 +377,8 @@ export const REVEAL_COPY = {
   /** Label on the then figure. */
   then: "Then",
 
-  /** Label on the now figure. */
-  now: "Now",
+  /** Label on the now figure: the figure as it stood at opening. */
+  now: "At opening",
 
   /**
    * The fixture note, shown once at the top of stage 3 when any shown figure
@@ -439,7 +439,7 @@ export const REVEAL_COPY = {
    * The display-rescale note (R11.10). `{toUnit}` is the shown unit and
    * `{fromUnit}` is the published unit.
    */
-  rescaledNote: "Shown per {toUnit}. Published per {fromUnit}.",
+  rescaledNote: "Shown in {toUnit}. Published in {fromUnit}.",
 
   /**
    * The source-details line with the exact sealed value (P5.2). `{value}` and
@@ -462,6 +462,7 @@ export const REVEAL_COPY = {
    * trailing space; it names no direction and carries no judgement.
    */
   periodRange: " to ",
+  changeSeparator: " · ",
 
   /**
    * Shown in place of a Now_Figure while the figures request is in flight. Only

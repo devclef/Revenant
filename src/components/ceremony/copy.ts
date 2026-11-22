@@ -139,7 +139,7 @@ export const CEREMONY_COPY = {
   /** Visible label under the then point. Read by screen readers only through numberLineAlt. */
   lineThen: "Then",
   /** Visible label under the now point. */
-  lineNow: "Now",
+  lineNow: "At opening",
   /** Visible label for the judge's answer, followed by the value and unit. */
   lineAnswer: "You remembered, just now",
   /** Visible label when the judge gave no answer. */
@@ -150,10 +150,10 @@ export const CEREMONY_COPY = {
    * the figures' periods; `{unit}` is the figure's unit.
    */
   numberLineAlt:
-    "Then {then} {unit}, {thenPeriod}. Now {now} {unit}, {nowPeriod}. You remembered {answer} {unit}.",
+    "Then {then} {unit}, {thenPeriod}. At opening {now} {unit}, {nowPeriod}. You remembered {answer} {unit}.",
   /** Text alternative for a Number_Line with no answer. */
   numberLineAltNoAnswer:
-    "Then {then} {unit}, {thenPeriod}. Now {now} {unit}, {nowPeriod}. No answer.",
+    "Then {then} {unit}, {thenPeriod}. At opening {now} {unit}, {nowPeriod}. No answer.",
 
   // --- Live region, one short line per Stage ---
 

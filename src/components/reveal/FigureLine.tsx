@@ -25,8 +25,9 @@ import type { ReceiptFigure, ReceiptSource } from "./ReceiptCard";
  *
  * `{date}` is `retrieved_at` in UTC, so it never shifts under the viewer's
  * timezone (data-integrity.md). When the series carries a `display_rescale`,
- * the value is shown rescaled (exact, display-only) with the note saying what
- * was rescaled from what (R11.10). The stored value is never changed.
+ * the value is shown rescaled (exact, display-only). The rescale note is not
+ * part of the row: ReceiptCard prints it once per card (R11.10). The stored
+ * value is never changed.
  *
  * Every string comes from copy.ts (R15.1). These helpers read no clock beyond
  * the formatters they call, hold no state and touch no storage.
@@ -52,7 +53,13 @@ export function figureLabel(
   // retrieved_at is a UTC instant, so it always reads the same in any zone.
   const retrievedDate = formatShortDate(figure.retrieved_at);
   if (role === "now") {
-    return REVEAL_COPY.labelRetrieved.replace("{date}", retrievedDate);
+    // A persona now figure is the official record for the opening week, so it
+    // reads as a historical record like a persona then figure (R13.1).
+    const nowTemplate =
+      letterKind === "persona"
+        ? REVEAL_COPY.labelHistoricalRecord
+        : REVEAL_COPY.labelRetrieved;
+    return nowTemplate.replace("{date}", retrievedDate);
   }
   // A persona then figure is a historical record (R13.1); a live or real then
   // figure was sealed with the letter (R13.2).
@@ -81,20 +88,12 @@ export function receiptFigureOf(
   _displayRescale?: Readonly<DisplayRescale>,
 ): ReceiptFigure {
   const shown = displayFigureValue(figure.value, figure.unit, figure.region);
-  // A rescale applies exactly when the shown unit differs from the sealed unit.
-  const note =
-    shown.unit === figure.unit
-      ? undefined
-      : REVEAL_COPY.rescaledNote
-          .replace("{toUnit}", shown.unit)
-          .replace("{fromUnit}", figure.unit);
   return {
     value: shown.text,
     unit: shown.unit,
     period: formatPeriod(figure.period, figure.region),
     region: figure.region,
     label: figureLabel(figure, role, letterKind),
-    note,
   };
 }
 

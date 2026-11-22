@@ -89,7 +89,7 @@ function shownFor(then: FigureV1, now: FigureV1) {
   const inputs =
     rescale === undefined
       ? undefined
-      : rescaledChangeInputs(then.value, now.value, rescale, then.unit);
+      : rescaledChangeInputs(then.value, now.value, rescale);
   const result =
     inputs === undefined ? change : displayChangeResult(change, inputs);
   const text = formatChange(result, then.region, {

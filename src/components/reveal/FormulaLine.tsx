@@ -18,10 +18,15 @@ import styles from "./reveal.module.css";
  */
 
 export type FormulaLineProps = {
-  /** The comparable change, with the display inputs already applied (R5.4). */
+  /** The sealed comparable change, read for the formula inputs (R5.4). */
   result: ComparableResult;
   /** The change as ChangeLine prints it: the result ends the formula (R5.4). */
   shown: ChangeDisplay;
+  /**
+   * Decimal places the inputs move left for a display rescale: 3 for EUR per
+   * 1,000 litres shown per litre, 0 otherwise.
+   */
+  k?: number;
   /** The sealed series ID, shown for each input that has no source_url. */
   seriesId: string;
   /** The source_url of each input figure. Absent entries are skipped. */
@@ -31,6 +36,7 @@ export type FormulaLineProps = {
 export function FormulaLine({
   result,
   shown,
+  k = 0,
   seriesId,
   sourceUrls,
 }: FormulaLineProps) {
@@ -47,7 +53,7 @@ export function FormulaLine({
   return (
     <div className={styles.change} data-change="">
       <p className={styles.formula} data-formula={CHANGE_FORMULA_ID}>
-        {REVEAL_COPY.formulaLabel}: {readableFormula(result, shown)}
+        {REVEAL_COPY.formulaLabel}: {readableFormula(result, shown, k)}
       </p>
       {sources.map((source) =>
         source.startsWith("url:") ? (

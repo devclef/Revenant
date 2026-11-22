@@ -20,6 +20,7 @@ import type { Opened } from "./opening-machine";
 import type { RecallRecordV1, RecallRecordV2 } from "@/lib/recall";
 import { FigureEntry } from "./FigureEntry";
 import { receiptFigureOf, receiptSourceOf, type LetterKind } from "./FigureLine";
+import { rescaleNoteText } from "./change-display";
 import { FixtureNote } from "./FixtureNote";
 import { ReceiptCard } from "./ReceiptCard";
 import { receiptKindFor } from "./receipt-kind";
@@ -210,6 +211,8 @@ export function FiguresThenNow({
     nowMissing: string | null;
     nowNote: string | null;
     rescale: Readonly<DisplayRescale> | undefined;
+    /** The one rescale note for this card, or undefined when shown as sealed. */
+    rescaleNote: string | undefined;
     change: ReturnType<typeof computeChange> | undefined;
     /** The card this figure gets (spec 12 Z2). See receiptKindFor. */
     kind: ReturnType<typeof receiptKindFor>;
@@ -263,6 +266,10 @@ export function FiguresThenNow({
       nowMissing,
       nowNote,
       rescale,
+      rescaleNote:
+        rescale === undefined
+          ? undefined
+          : rescaleNoteText(then.unit, rescale.unit),
       change,
       kind: receiptKindFor(then, now, change, letterKind),
       markValue,
@@ -322,6 +329,7 @@ export function FiguresThenNow({
                 now={{ message: entry.nowMissing }}
                 primary={primary}
                 source={receiptSourceOf(entry.then, entry.seriesName)}
+                rescaleNote={entry.rescaleNote}
               />
             </div>
           );
@@ -343,6 +351,7 @@ export function FiguresThenNow({
                 now={{ message: null }}
                 primary={primary}
                 source={receiptSourceOf(entry.then, entry.seriesName)}
+                rescaleNote={entry.rescaleNote}
                 single
               />
             </div>
@@ -386,6 +395,7 @@ export function FiguresThenNow({
                   nowNote={entry.nowNote ?? undefined}
                   primary={primary}
                   source={receiptSourceOf(entry.then, entry.seriesName)}
+                  rescaleNote={entry.rescaleNote}
                   numberLine={
                     <NumberLine
                       thenValue={toDisplay(entry.then.value)}
@@ -458,6 +468,7 @@ export function FiguresThenNow({
               primary={primary}
               source={receiptSourceOf(entry.then, entry.seriesName)}
               nowSource={receiptSourceOf(entry.now, entry.seriesName)}
+              rescaleNote={entry.rescaleNote}
               change={
                 <>
                   <p className={styles.period}>{REVEAL_COPY.notComparable}</p>

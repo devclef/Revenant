@@ -94,9 +94,11 @@ describe("the ticks hang from the axis and reach their labels (spec 10 X1.1 to X
   });
 
   it("sets each static tick height from 16 px and its label row", () => {
-    // Static render, 16 px root. Then, Now and the Mark's label all sit in row 0
-    // (1.25rem = 20 px), so each tick ends 20 - 4 = 16 px down. No label sits
-    // in a deeper row, so no tick has to pass a label above it (spec 10 X1.4).
+    // Static render, 16 px root. Then and Now sit in row 0 (1.25rem = 20 px), so
+    // each tick ends 20 - 4 = 16 px down. "At opening" is wider than "Now", so
+    // placeLineLabels can move the Mark's label to a deeper row; the Mark tick
+    // then hangs down to that row (spec 10 X1.1, X1.4). Row rules are covered by
+    // line-labels.test.ts.
     const html = render({ ...base, markValue: "15" });
     const tags = html.match(/<span[^>]*data-line-tick="[^"]*"[^>]*>/g) ?? [];
     const heightOf = (name: string): number => {
@@ -105,7 +107,7 @@ describe("the ticks hang from the axis and reach their labels (spec 10 X1.1 to X
     };
     expect(heightOf("then")).toBeCloseTo(16, 6);
     expect(heightOf("now")).toBeCloseTo(16, 6);
-    expect(heightOf("mark")).toBeCloseTo(16, 6);
+    expect(heightOf("mark")).toBeGreaterThanOrEqual(16);
   });
 });
 
@@ -285,7 +287,7 @@ describe("NumberLine text alternative (spec 08 R5.8)", () => {
     });
     expect(html).toContain('role="img"');
     expect(html).toContain(
-      'aria-label="Then 3.41 USD per gallon, Sep 2024. Now 3.90 USD per gallon, Sep 2026. You remembered 3.50 USD per gallon."',
+      'aria-label="Then 3.41 USD per gallon, Sep 2024. At opening 3.90 USD per gallon, Sep 2026. You remembered 3.50 USD per gallon."',
     );
   });
 
@@ -298,7 +300,7 @@ describe("NumberLine text alternative (spec 08 R5.8)", () => {
       nowPeriod: "Sep 2026",
     });
     expect(html).toContain(
-      'aria-label="Then 3.41 USD per gallon, Sep 2024. Now 3.90 USD per gallon, Sep 2026. No answer."',
+      'aria-label="Then 3.41 USD per gallon, Sep 2024. At opening 3.90 USD per gallon, Sep 2026. No answer."',
     );
   });
 });
@@ -316,7 +318,7 @@ describe("Property 12: the text alternative and labels name the same points (R5.
             expect(html).toContain(`data-line-label="answer"`);
             expect(html).toContain(`>${CEREMONY_COPY.lineNoAnswer}</span>`);
             expect(html).toContain(
-              "Then 10 USD per gallon, Sep 2024. Now 20 USD per gallon, Sep 2026. No answer.",
+              "Then 10 USD per gallon, Sep 2024. At opening 20 USD per gallon, Sep 2026. No answer.",
             );
             return;
           }

@@ -7,13 +7,13 @@ import { REVEAL_COPY } from "./copy";
  * The display inputs for a then-vs-now change shown in a rescaled unit (C8.4).
  *
  * `then` and `now` are the sealed values converted for display (exact, power of
- * ten), with trailing fraction zeros removed. `note` is the rescale note that
- * the change line shows. The stored values are never changed.
+ * ten), with trailing fraction zeros removed. The rescale note is not part of
+ * these inputs: ReceiptCard prints it once per card. The stored values are never
+ * changed.
  */
 export type ChangeDisplayInputs = {
   then: string;
   now: string;
-  note: string;
 };
 
 // Remove trailing zeros after the decimal point, and the point itself when no
@@ -45,20 +45,32 @@ export function displayChangeResult(
 }
 
 /**
- * The rescaled then and now values and the rescale note for one change, built
- * from the sealed value strings and the series' display rescale (C8.4).
+ * The rescale note for a figure shown in `displayedUnit` while it was sealed in
+ * `storedUnit` (R11.10). Built from the two unit strings only. Undefined when
+ * the units match, so no note is drawn for a figure shown as sealed.
+ */
+export function rescaleNoteText(
+  storedUnit: string,
+  displayedUnit: string,
+): string | undefined {
+  if (storedUnit === displayedUnit) return undefined;
+  return REVEAL_COPY.rescaledNote
+    .replace("{toUnit}", displayedUnit)
+    .replace("{fromUnit}", storedUnit);
+}
+
+/**
+ * The rescaled then and now values for one change, built from the sealed value
+ * strings and the series' display rescale (C8.4). The rescale note is built by
+ * {@link rescaleNoteText} and printed once per card by ReceiptCard.
  */
 export function rescaledChangeInputs(
   thenValue: string,
   nowValue: string,
   rescale: Readonly<DisplayRescale>,
-  sealedUnit: string,
 ): ChangeDisplayInputs {
   return {
     then: trimFraction(rescaleForDisplay(thenValue, rescale.divisor)),
     now: trimFraction(rescaleForDisplay(nowValue, rescale.divisor)),
-    note: REVEAL_COPY.rescaledNote
-      .replace("{toUnit}", rescale.unit)
-      .replace("{fromUnit}", sealedUnit),
   };
 }
