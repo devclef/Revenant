@@ -7,7 +7,15 @@
 //   The Tab-next control, the first control reached by pressing Tab once from there,
 //   must draw a visible focus ring. Both checks read computed styles only.
 //
+// CT1 (GitHub issue #579, spec 17 requirements 2.3, 2.7 and 2.10):
+//   Text meets WCAG 2.2 contrast on the surface it is painted on. The contrast maths and the
+//   DOM reader are src/lib/layout-check-ct1.ts. They load only when CT1 runs, so the other QA
+//   tools still load on a Node without TypeScript type stripping. CT1 runs at 390x844 and
+//   360x640 on the steps layout-check.mjs names. Any failing text is a BLOCKER.
+//
 // Exports:
+//   CT1_SIZES                     the viewports CT1 runs at.
+//   readCt1Failures(page)         CT1 failures for the page as it is now; [] when all text passes.
 //   parseColorAlpha(value)        alpha of a computed colour string (0 to 1).
 //   isOutlineVisible(outline)     true when style is not none or hidden, width > 0 and colour alpha > 0.
 //   frFailures(reading)           FR1 failures for one reading; [] when both checks pass.
@@ -147,4 +155,18 @@ export async function readFr1(options) {
   } finally {
     await context.close();
   }
+}
+
+// CT1 (GitHub issue #579). The viewports the rule runs at.
+export const CT1_SIZES = ["390x844", "360x640"];
+
+/**
+ * CT1 failures for the page as it is now. Each failure names the element, its text,
+ * the measured ratio and the ratio the text needs. The module is imported here, not at
+ * the top of the file, so a Node that cannot load TypeScript still runs every other rule.
+ */
+export async function readCt1Failures(page) {
+  const ct1 = await import("../../src/lib/layout-check-ct1.ts");
+  const readings = await ct1.readTextContrast(page);
+  return readings.flatMap((reading) => ct1.ctFailures(reading));
 }

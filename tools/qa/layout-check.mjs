@@ -196,6 +196,13 @@
 //                            outline, and Tab once reaches a visible focus ring. Always a BLOCKER,
 //                            with no --require. The row presses Tab, then puts scroll and focus back.
 //
+// CT1   text-contrast         (GitHub issue #579, tools/qa/layout-rules-17.mjs and src/lib/layout-check-ct1.ts)
+//                            at 390x844 and 360x640: every visible text element meets WCAG 2.2 AA
+//                            contrast on the surface it is painted on (4.5:1, or 3:1 for large text).
+//                            Read on Press the seal, Remember (after question 1), Break the seal
+//                            (the marks step), Receipts (the close step) and the landing. Always a
+//                            BLOCKER, with no --require. Spec 17 requirements 2.3, 2.7 and 2.10.
+//
 // Line format: <PASS|BLOCKER|polish|note> <id> <name> <WxH> <stage> <detail>.
 // The spec 08 and spec 09 checks put the measured values and threshold=<...> in <detail>.
 //
@@ -308,7 +315,7 @@ import {
   sectionRuns,
   summaryLines,
 } from "./layout-scope.mjs";
-import { frFailures, readFr1Reading } from "./layout-rules-17.mjs";
+import { CT1_SIZES, frFailures, readCt1Failures, readFr1Reading } from "./layout-rules-17.mjs";
 
 // FR1 (GitHub issue #577) runs at these sizes on every step the walk shoots. It always blocks.
 const FR1_SIZES = ["1440x900", "390x844"];
@@ -1651,6 +1658,41 @@ async function checkFr1(page, ctx) {
   if (failures.length === 0) ctx.rep.add("ok", "FR1", "script-focused headings draw no outline and Tab reaches a focus ring");
 }
 
+// CT1 (GitHub issue #579): text meets WCAG 2.2 contrast on its real surface. Each failing text
+// is a BLOCKER. It runs at CT1_SIZES only, on the steps the walk names.
+async function checkCt1(page, ctx) {
+  if (!CT1_SIZES.includes(ctx.size)) return;
+  const failures = await readCt1Failures(page);
+  for (const f of failures) {
+    ctx.rep.add("blocker", "CT1", `${f.selector} "${f.text}" needs ${f.required}:1 contrast: ${f.reason}`, "text-contrast");
+  }
+  if (failures.length === 0) ctx.rep.add("ok", "CT1", "text meets contrast on its surface");
+}
+
+// CT1 on Press the seal. checkPressEnvelope (P1) measures only the sizes in SEAL_MIN_PX, so this
+// walks /demo/live to the seal step at every CT1 size, with the same text and Next presses, then reads CT1.
+async function checkPressContrast(context, ctx) {
+  if (!CT1_SIZES.includes(ctx.size)) return;
+  const page = await newPage(context);
+  try {
+    const res = await page.goto(`${ctx.base}/demo/live`, { waitUntil: "load" });
+    if (!res || res.status() !== 200) {
+      ctx.rep.add("note", "CT1", `/demo/live answered HTTP ${res?.status() ?? "none"}; Press the seal not read for contrast`);
+      return;
+    }
+    if (await present(page.locator("textarea"))) await page.locator("textarea").first().fill(P1_LIVE_TEXT).catch(() => {});
+    const next = page.getByRole("button", { name: "Next", exact: true }).first();
+    for (let i = 0; i < P1_MAX_NEXT_PRESSES; i += 1) {
+      if ((await page.locator('[data-live-step="seal"]').count()) > 0) break;
+      if (await present(next)) await next.click({ timeout: 10_000 }).catch(() => {});
+      await sleep(800);
+    }
+    await checkCt1(page, ctx);
+  } finally {
+    await page.close();
+  }
+}
+
 function checkSoil(page, ctx) {
   return page.evaluate(F2).then((r) => {
     if (r === null) return;
@@ -2641,6 +2683,7 @@ async function landing(context, ctx) {
       ctx.rep.add("note", "scene", `the landing is not a scene on this build (data-ceremony is ${stage ?? "missing"}); skipped`);
     } else {
       await shot(page, ctx, "scene");
+      await guard(ctx, "CT1", () => checkCt1(page, ctx));
       await guard(ctx, "F2", () => checkSoil(page, ctx));
       if (start) await guard(ctx, "BTN", () => checkMainButton(page, ctx, start, true, "link"));
       await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
@@ -2840,6 +2883,8 @@ async function personaWalk(page, ctx, p, via) {
   await checkEveryPage(page, ctx, route, { fonts: !ctx.pickedUp });
   const answers = p.answers(await page.evaluate(() => document.body.innerText));
   const problem = await answerAll(page, answers, async (i, control) => {
+    // CT1 after question 1 is answered: question 2 is on screen, so Previous question exists.
+    if (i === 1) await guard(ctx, "CT1", () => checkCt1(page, ctx));
     if (i > 0) await guard(ctx, "G1", () => checkGhostBody(page, ctx));
     if (i === 0 || control === RECORD) await guard(ctx, "BTN", () => checkMainButton(page, ctx, control));
   });
@@ -2865,6 +2910,7 @@ async function personaWalk(page, ctx, p, via) {
   await guard(ctx, "G1", () => checkGhostBody(page, ctx));
   await guard(ctx, "G2", () => checkGhostCentre(page, ctx, "marks"));
   await guard(ctx, "BTN", () => checkMainButton(page, ctx, BREAK_SEAL));
+  await guard(ctx, "CT1", () => checkCt1(page, ctx));
   await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
   await guard(ctx, "T2", () => checkTicks(page, ctx));
   await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
@@ -2976,6 +3022,7 @@ async function personaWalk(page, ctx, p, via) {
     await guard(ctx, "L1", () => checkLineLabels(page, ctx));
     await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
     await shot(page, ctx, S("close"));
+    await guard(ctx, "CT1", () => checkCt1(page, ctx));
     await guard(ctx, "F2", () => checkSoil(page, ctx));
     await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
     await guard(ctx, "FT1", () => checkFooter(page, ctx));
@@ -5906,6 +5953,7 @@ async function runSize(browser, base, size, opts, rep) {
       await guard(ctx, "FP1", () => checkFastestPath(context, ctx, PERSONAS[0]));
     }
     if (runs("live")) await guard(ctx, "P1", () => checkPressEnvelope(context, ctx));
+    if (runs("live")) await guard(ctx, "CT1", () => checkPressContrast(context, ctx));
     await guard(ctx, "walk", () => otherPages(context, ctx));
   } finally {
     await context.close();
