@@ -179,7 +179,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - _Preservation: layout below 900 px unchanged; figures, provenance and copy unchanged; Seal group position unchanged (#515)_
     - _Requirements: 1.9, 2.9, 3.7_
 
-- [ ] 10. LC1 rule and GO1 (Soil): columns coherent, Soil clear
+- [x] 10. LC1 rule and GO1 (Soil): columns coherent, Soil clear
   - Agent: `platform-dev` · Depends on: 8, 9 · Estimated size: M, ~450 changed lines
   - Scope: `tools/qa/layout-rules-17.mjs`, `tools/qa/layout-check.mjs`, `src/lib/layout-check-lc1.test.ts` (new).
   - Design sections: "D7 grouping / LC1", "D4 and D7 overlap / GO1".
