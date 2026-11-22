@@ -23,7 +23,7 @@ export const LIVE_COPY = {
   sealHeading: "Press the seal.",
   /** The one in-browser paragraph of the Seal step (spec 14, S3.3). */
   sealParagraph:
-    'You\'ll press the wax twice: once to make your passkey, once to set the seal. The passkey is named "Revenant demo" in your passkey manager.',
+    "Press the wax twice: once to make your passkey, once to set the seal.",
   /** The text control that opens the cross-device line (spec 14, S5.2). */
   crossDeviceQuestion: "Opening on another device?",
   /** The text control that returns to the Write step (spec 14, S5.3). */

@@ -22,6 +22,11 @@
   min-width: 0;
 }
 
+.intro {
+  max-width: 520px;
+  min-width: 0;
+}
+
 .heading {
   margin: 0 0 16px;
   font-family: var(--font-sans);
@@ -189,5 +194,11 @@
     grid-template-columns: minmax(0, 520px) minmax(0, 1fr);
     column-gap: 64px;
     align-items: center;
+  }
+
+  /* The heading, paragraph and warning span both columns above the wax. */
+  .intro {
+    grid-column: 1 / -1;
+    max-width: none;
   }
 }
