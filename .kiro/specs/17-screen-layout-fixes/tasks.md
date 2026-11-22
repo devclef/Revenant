@@ -79,7 +79,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - _Preservation: no copy change; control order and accessible names unchanged_
     - _Requirements: 1.7, 2.7, 3.1, 3.10_
 
-- [ ] 4. CT1 rule: text meets contrast on its real surface
+- [x] 4. CT1 rule: text meets contrast on its real surface
   - Agent: `platform-dev` · Depends on: 2, 3 · Estimated size: M, ~600 changed lines
   - Scope: `tools/qa/layout-rules-17.mjs`, `tools/qa/layout-check.mjs`, `src/lib/layout-check-ct1.test.ts` (new).
   - Design sections: "D5 and D2 contrast / CT1".
