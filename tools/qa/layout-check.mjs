@@ -203,6 +203,12 @@
 //                            (the marks step), Receipts (the close step) and the landing. Always a
 //                            BLOCKER, with no --require. Spec 17 requirements 2.3, 2.7 and 2.10.
 //
+// GO1   ghost-overlap         (GitHub issue #583, tools/qa/layout-rules-17.mjs) at 390x844 on the Remember
+//                            step (recall), at its start and scrolled to the bottom: no text line or
+//                            visible control rect overlaps the Ghost's drawn box. No opaque-panel exemption.
+//                            Each overlap is a BLOCKER that names the text or control, the layer and the px overlap.
+//                            It replaces GT1 and the G1 opaque-ancestor skip on that step.
+//
 // CW1   content-column-width  (GitHub issue #581, tools/qa/layout-rules-17.mjs)
 //                            at 390x844 and 360x640: the [data-content-column] content box is at least
 //                            viewport minus 48 px. Read on every step shot() captures, on Press the seal,
@@ -321,10 +327,12 @@ import {
   sectionRuns,
   summaryLines,
 } from "./layout-scope.mjs";
-import { CT1_SIZES, CW1_SIZES, cwFailures, frFailures, readCt1Failures, readFr1Reading } from "./layout-rules-17.mjs";
+import { CT1_SIZES, CW1_SIZES, cwFailures, frFailures, goFailures, readCt1Failures, readFr1Reading } from "./layout-rules-17.mjs";
 
 // FR1 (GitHub issue #577) runs at these sizes on every step the walk shoots. It always blocks.
 const FR1_SIZES = ["1440x900", "390x844"];
+// GO1 (GitHub issue #583) runs on the Remember step at these sizes. It replaces GT1 and the G1 opaque skip there.
+const GO1_SIZES = ["390x844"];
 
 const DEFAULT_SIZES = ["1366x800", "1280x800", "360x640", "390x844", "2560x1440"];
 const ALL_SIZES = ["360x640", "390x844", "1024x768", "1280x720", "1280x800", "1366x800", "1440x900", "1920x1080", "2560x1440"];
@@ -1696,6 +1704,85 @@ async function checkCw1(page, ctx) {
   if (failures.length === 0) ctx.rep.add("ok", "CW1", `content column ${reading.width} px at viewport ${reading.viewport} px`);
 }
 
+// GO1 (GitHub issue #583). Measures only: the Ghost's drawn box, one rect per text line (a Range per
+// text node, with no opaque-ancestor exemption) and a rect per visible control. goFailures decides.
+const GO1_READ = () => {
+  const rect = (r) => ({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
+  const shown = (el) => {
+    const r = el.getBoundingClientRect();
+    if (!(r.width > 0 && r.height > 0)) return false;
+    return !el.checkVisibility || el.checkVisibility({ visibilityProperty: true, opacityProperty: true });
+  };
+  // The Ghost's drawn box (requirement 2.6, design D4 and D7): the union of the bare SVG box, the
+  // body and fold paths (the hem is the body path's lower edge, measured as drawn) and the glow. The
+  // glow is the .ghostGlow wrapper (the SVG's parent) plus the largest blur its drop-shadow filter
+  // paints, read from the computed filter, so the drawn shadow is measured and not guessed.
+  const ghostEl = document.querySelector("[data-ghost-box]");
+  const union = (rects) => ({
+    left: Math.min(...rects.map((r) => r.left)),
+    top: Math.min(...rects.map((r) => r.top)),
+    right: Math.max(...rects.map((r) => r.right)),
+    bottom: Math.max(...rects.map((r) => r.bottom)),
+  });
+  let ghost = null;
+  if (ghostEl) {
+    const parts = [ghostEl.getBoundingClientRect()];
+    for (const path of ghostEl.querySelectorAll("path")) parts.push(path.getBoundingClientRect());
+    const glowEl = ghostEl.parentElement;
+    if (glowEl) {
+      const glow = glowEl.getBoundingClientRect();
+      const filter = getComputedStyle(glowEl).filter || "none";
+      const pad = Math.max(0, ...[...filter.matchAll(/(-?\d*\.?\d+)px/g)].map((m) => Math.abs(parseFloat(m[1]))));
+      parts.push({ left: glow.left - pad, top: glow.top - pad, right: glow.right + pad, bottom: glow.bottom + pad });
+    }
+    ghost = rect(union(parts));
+  }
+  const text = [];
+  const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+  for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+    const value = n.textContent.trim();
+    const parent = n.parentElement;
+    if (!value || !parent || parent.closest("script, style, noscript") || !shown(parent)) continue;
+    const range = document.createRange();
+    range.selectNodeContents(n);
+    for (const r of range.getClientRects()) {
+      if (r.width > 0 && r.height > 0) text.push({ label: value.slice(0, 40), rect: rect(r) });
+    }
+  }
+  const controls = [...document.querySelectorAll('button, a[href], input, select, textarea, [role="button"]')]
+    .filter(shown)
+    .map((el) => ({
+      label: (el.getAttribute("aria-label") || el.textContent || el.value || "").trim().slice(0, 40) || el.tagName.toLowerCase(),
+      rect: rect(el.getBoundingClientRect()),
+    }));
+  return { ghost, text, controls };
+};
+
+// GO1 on the Remember step: reads at the start, scrolls to the bottom and reads again, then puts the
+// scroll back. Every overlap is a BLOCKER. A missing Ghost box fails too (goFailures says so).
+async function checkGo1(page, ctx, label) {
+  const startY = await page.evaluate(() => window.scrollY);
+  const readings = [["at the start", await page.evaluate(GO1_READ)]];
+  await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
+  await sleep(250);
+  readings.push(["scrolled to the bottom", await page.evaluate(GO1_READ)]);
+  await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), startY);
+  let count = 0;
+  for (const [where, reading] of readings) {
+    for (const f of goFailures(reading)) {
+      count += 1;
+      ctx.rep.add("blocker", "GO1", `${f.message} (${label}, ${where})`, f.check);
+    }
+  }
+  if (count === 0) ctx.rep.add("ok", "GO1", `no text or control overlaps the Ghost (${label}, at the start and scrolled to the bottom)`);
+}
+
+// The Ghost check on a Remember step: GO1 at GO1_SIZES, the G1 body check everywhere else.
+async function checkRememberGhost(page, ctx, label) {
+  if (GO1_SIZES.includes(ctx.size)) return checkGo1(page, ctx, label);
+  return checkGhostBody(page, ctx);
+}
+
 // CT1 on Press the seal. checkPressEnvelope (P1) measures only the sizes in SEAL_MIN_PX, so this
 // walks /demo/live to the seal step at every CT1 size, with the same text and Next presses, then reads CT1.
 async function checkPressContrast(context, ctx) {
@@ -2433,7 +2520,12 @@ async function checkStepFit(page, ctx) {
   report(ctx, result("SI1", "step-indicator-fit", problems.length ? "fail" : "pass", `items=${r.items} lines=${r.lines}${problems.length ? ` (${problems.slice(0, 4).join("; ")})` : ""} threshold=${SI1_ITEMS} items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=${maxLines}`));
 }
 // GT1 at the Stage start, then again with the page scrolled to the bottom.
-async function checkGhostText(page, ctx) {
+async function checkGhostText(page, ctx, { replacedByGo1 = false } = {}) {
+  // On the Remember step at GO1_SIZES, GO1 (checkGo1) replaces GT1, so GT1 is only noted there.
+  if (replacedByGo1 && GO1_SIZES.includes(ctx.size)) {
+    report(ctx, result("GT1", "ghost-over-text", "missing", `replaced by GO1 on the Remember step at ${ctx.size}`));
+    return;
+  }
   // Below 600 px the Ghost fix is spec 10 task 5's (X2.1), which also removes the
   // pick-up press that scrolls the page. Until then GT1 prints a note on the phone.
   // Patch ai removes this tolerance.
@@ -2895,13 +2987,13 @@ async function personaWalk(page, ctx, p, via) {
     { name: "advance", sel: '[data-fit="advance"]' },
   ]));
   await guard(ctx, "F2", () => checkSoil(page, ctx));
-  await guard(ctx, "G1", () => checkGhostBody(page, ctx));
+  await guard(ctx, "G1", () => checkRememberGhost(page, ctx, "recall"));
   await guard(ctx, "G2", () => checkGhostCentre(page, ctx, "recall"));
   await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
   await guard(ctx, "ST1", () => checkStepIndicator(page, ctx, "recall"));
   await guard(ctx, "F3", () => checkPersonaTestify(page, ctx));
   await guard(ctx, "SI1", () => checkStepFit(page, ctx));
-  await guard(ctx, "GT1", () => checkGhostText(page, ctx));
+  await guard(ctx, "GT1", () => checkGhostText(page, ctx, { replacedByGo1: true }));
   await guard(ctx, "CF1", () => checkCardFit(page, ctx));
   if (!ctx.pickedUp) {
     await guard(ctx, "GZ1", async () => {
@@ -2914,7 +3006,7 @@ async function personaWalk(page, ctx, p, via) {
     // CT1 after question 1 is answered: question 2 is on screen, so Previous question exists.
     if (i === 1) await guard(ctx, "CT1", () => checkCt1(page, ctx));
     if (i === 1) await guard(ctx, "CW1", () => checkCw1(page, ctx));
-    if (i > 0) await guard(ctx, "G1", () => checkGhostBody(page, ctx));
+    if (i > 0) await guard(ctx, "G1", () => checkRememberGhost(page, ctx, `question ${i + 1}`));
     if (i === 0 || control === RECORD) await guard(ctx, "BTN", () => checkMainButton(page, ctx, control));
   });
   if (problem) {

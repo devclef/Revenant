@@ -25,6 +25,13 @@
 //   readFr1Reading(page)          reads a loaded page: active element, Tab, next control. No input before the read.
 //   readFr1(options)              opens a page at a URL and size, reads it with readFr1Reading, then closes the page.
 //   cwFailures(reading)           CW1 failures for one reading; [] when the content column is wide enough.
+//   rectOverlap(a, b)             overlap of two rects in px, or null when they do not overlap strictly.
+//   goFailures(reading)           GO1 failures for one reading; [] when no text or control meets the Ghost.
+//
+// GO1 (GitHub issue #583): no text line or control rect overlaps the Ghost drawn box. The reading is
+//   { ghost, text, controls }: ghost is one rect or null, text is [{ label, rect }] (one rect per text
+//   node Range), controls is [{ label, rect }]. A rect is { left, top, right, bottom } in CSS pixels,
+//   the shape getBoundingClientRect returns. Edges that only touch do not overlap.
 //
 // CW1 (GitHub issue #581, spec 17 D3): the [data-content-column] content box is at least
 //   viewport width minus 48 px. The reading is { width, viewport }: width is the column's content
@@ -202,4 +209,64 @@ export function cwFailures(reading) {
     return [`CW1 content column ${width} px, want at least ${minimum} px (viewport ${viewport} px minus ${CW1_INSET_PX})`];
   }
   return [];
+}
+
+/** True when a rect has four finite numbers. Anything else is not a measurement. */
+function isMeasuredRect(rect) {
+  if (!rect) return false;
+  return [rect.left, rect.top, rect.right, rect.bottom].every((value) => typeof value === "number" && Number.isFinite(value));
+}
+
+/**
+ * Overlap of two rects in CSS pixels, or null when they do not overlap. The test is strict:
+ * rects that only share an edge have zero overlap and return null.
+ * Pure function with no DOM dependency.
+ */
+export function rectOverlap(a, b) {
+  const width = Math.min(a.right, b.right) - Math.max(a.left, b.left);
+  const height = Math.min(a.bottom, b.bottom) - Math.max(a.top, b.top);
+  if (!(width > 0) || !(height > 0)) return null;
+  return { width, height };
+}
+
+/**
+ * GO1 failures for one reading. An empty array means no text line or control meets the Ghost.
+ * Each failure names the layer (text or control), the element label and the overlap in px.
+ * A missing Ghost box or a missing rect fails as "no measurement", so a check never passes silently.
+ */
+export function goFailures(reading) {
+  const ghost = reading?.ghost ?? null;
+  if (!isMeasuredRect(ghost)) {
+    return [{ id: "GO1", check: "ghost-overlap", layer: null, message: "GO1 no [data-ghost-box] rect to measure." }];
+  }
+
+  const layers = [
+    { layer: "text", items: Array.isArray(reading?.text) ? reading.text : [] },
+    { layer: "control", items: Array.isArray(reading?.controls) ? reading.controls : [] },
+  ];
+  const failures = [];
+  for (const { layer, items } of layers) {
+    for (const item of items) {
+      const label = String(item?.label ?? "").trim().slice(0, 80) || layer;
+      if (!isMeasuredRect(item?.rect)) {
+        failures.push({ id: "GO1", check: "ghost-overlap", layer, message: `GO1 no measurement for ${layer} "${label}".` });
+        continue;
+      }
+      const overlap = rectOverlap(item.rect, ghost);
+      if (overlap) {
+        failures.push({
+          id: "GO1",
+          check: "ghost-overlap",
+          layer,
+          message: `GO1 ${layer} "${label}" overlaps the Ghost by ${round(overlap.width)} px wide and ${round(overlap.height)} px tall.`,
+        });
+      }
+    }
+  }
+  return failures;
+}
+
+/** Rounds to one decimal place for messages. */
+function round(value) {
+  return Math.round(value * 10) / 10;
 }
