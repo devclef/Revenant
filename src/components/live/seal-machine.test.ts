@@ -82,8 +82,8 @@ describe("Property 15: the Seal_Page never prompts after prepare and seals only 
             expect(["creating", "confirming"]).not.toContain(next.tag);
           }
 
-          // sealed is reachable only from sealing.
-          if (next.tag === "sealed") {
+          // sealed is reachable only from sealing (sealed then stays sealed).
+          if (next.tag === "sealed" && prev.tag !== "sealed") {
             expect(prev.tag).toBe("sealing");
           }
 
