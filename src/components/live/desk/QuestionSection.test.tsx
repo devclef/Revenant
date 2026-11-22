@@ -28,7 +28,7 @@ describe("QuestionSection (spec 14, W6)", () => {
     const html = render();
     expect(html).toMatch(/<fieldset[^>]*data-question-section=""[^>]*>/);
     expect(html).toContain(`>${DESK_COPY.psLegend}</legend>`);
-    expect(html).toContain("When it opens, you answer each one from memory");
+    expect(html).toContain("Answer each one now. When it opens, you&#x27;re asked again from memory");
   });
 
   it("renders one row per question, in order", () => {

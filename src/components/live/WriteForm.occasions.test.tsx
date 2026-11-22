@@ -82,7 +82,9 @@ describe("WriteForm Occasion row above the letter field (spec 11, L2.1)", () => 
 
   it("drops the answer-in-letter line and keeps the one question hint under the rows", () => {
     const html = render();
-    expect(html).not.toContain(LIVE_COPY.answerInLetter);
+    expect(html).not.toContain(
+      "Answer them in your letter too, in your own words.",
+    );
     expect(html).toContain(
       DESK_COPY.psIntro.replace(/'/g, "&#x27;"),
     );
