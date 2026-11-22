@@ -291,11 +291,9 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - Add a source test that the R10.1, R10.6, R14.3, R5.4, NB1, GC1, DL1 and PV1 verdict tests still exist. Run the file until it passes.
     - _Requirements: 2.10, 2.11, 3.9_
 
-## Owner edits after the last task
-
-These files are owner-only, so no task changes them. The owner makes these edits in the owner's own PR after task 15 merges:
-
-- Add `step "layout-check (blockers)"; node tools/qa/layout-gate.mjs` to `scripts/check.sh`, after the build and the JS budget. It runs when `CI` or `LAYOUT_CHECK=1` is set and prints a skip line otherwise, so a laptop without Chromium or Postgres still passes.
-- Set `CHROMIUM_PATH: /usr/bin/google-chrome` on the `scripts/check.sh` step in `.github/workflows/ci.yml`, keeping `DATABASE_URL` as it is. `ci-gate` already requires `checks`, so the gate job is unchanged.
-- Edit `.github/agents.json` only if a path above needs a role it does not have today. None is expected, since `tools/qa/**` and `src/lib/*.test.ts` are platform-dev's.
-- Add a line about the new step to `docs/agent-loop.md`.
+## Owner edits (done before task 1)
+The owner has already made the owner-only edits, so no task changes these files:
+- `scripts/check.sh` runs `node tools/qa/layout-gate.mjs` as the step "layout-check (blockers)" after the JS budget, when `CI` or `LAYOUT_CHECK=1` is set. It is skipped until `tools/qa/layout-gate.mjs` exists, so tasks 1 to 14 are unaffected. Once task 15 adds the gate script, it must pass in CI as part of that task's PR.
+- `.github/workflows/ci.yml` sets `CHROMIUM_PATH: /usr/bin/google-chrome` on the `scripts/check.sh` step. `DATABASE_URL` is unchanged, and `ci-gate` already requires `checks`.
+- `.github/agents.json` needs no change: `tools/qa/**` and `src/lib/*.test.ts` are platform-dev's.
+- `docs/agent-loop.md` describes the new step.

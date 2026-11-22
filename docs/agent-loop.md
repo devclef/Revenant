@@ -95,6 +95,7 @@ Not every hook output reaches the agent. In kiro-cli 2.35 the output of a `postT
 ## Layout check
 
 Spec 07 layout checks run as one script, not by hand. It is `tools/qa/layout-check.mjs`, started with `npm run layout-check -- --url http://localhost:<port>` against a running app with the demo personas sealed (`npm run seal-personas`).
+Spec 17 adds `tools/qa/layout-gate.mjs`, which runs the layout-check blockers against a built app. `scripts/check.sh` runs it as the step "layout-check (blockers)" when `CI` or `LAYOUT_CHECK=1` is set, so `ci-gate` fails on a blocker. It is skipped without those, and until the gate script exists.
 
 - **What it walks:** the landing page (if it is a scene yet), `/demo`, and the Maya persona from intact through recall (two questions), marks, the seal (if the build has it), the letter, the figures and the close. Stages the build doesn't have yet are notes, not failures.
 - **Sizes:** 1280×800 and 360×640 by default. `--all-sizes` runs the seven spec 07 sizes, for the polish pass in spec 07 task 10. `--sizes 360x640,1280x800` picks any others.

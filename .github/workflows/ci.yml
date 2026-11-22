@@ -40,6 +40,7 @@ jobs:
       - name: scripts/check.sh
         env:
           DATABASE_URL: postgres://postgres:ci@localhost:5432/revenant_test
+          CHROMIUM_PATH: /usr/bin/google-chrome
         run: bash scripts/check.sh
 
   smoke:
