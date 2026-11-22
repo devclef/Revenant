@@ -103,7 +103,7 @@ export function SealStep({
     tag === "sealing";
 
   return (
-    <div data-seal-step="" className={styles.step}>
+    <div data-seal-step="" className={styles.step} data-content-column="">
       <div data-seal-intro="" className={styles.intro}>
         {showHeading ? (
           <h1 className={styles.heading} data-step-heading="" tabIndex={-1}>

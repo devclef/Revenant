@@ -613,7 +613,11 @@ function RevealBody({
       ) : null}
 
       {stage >= 2 ? (
-        <div className={receiptsStyles.receipts} data-receipts="">
+        <div
+          className={receiptsStyles.receipts}
+          data-receipts=""
+          data-content-column=""
+        >
           {showQuestions ? (
             <section
               className={receiptsStyles.questions}
