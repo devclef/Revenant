@@ -284,7 +284,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Copy evidence: tone-check for `reveal/copy.ts` if changed.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 12. Press the seal, quick and solemn
+- [x] 12. Press the seal, quick and solemn
   - Agent: `frontend-dev` · Depends on: 5 · Estimated size: S, ~450 changed lines
   - Scope: `src/components/live/copy.ts`, `src/components/live/press/copy.ts`, `src/components/live/press/press-status.ts`, `src/components/live/seal-step/seal-steps.ts`, `src/components/live/seal-step/seal-step.module.css`, the Seal step component under `src/components/live/seal-step/`, and the `*.test.ts(x)` next to each.
   - Design sections: "13. Press the seal", items 8 and 9, Property 12.
