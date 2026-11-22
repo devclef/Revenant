@@ -19,7 +19,8 @@ import { LocalViewProvider } from "../local-view";
 import { SkipProvider } from "../skip";
 import { SoundEnabledContext } from "../sound/SoundEnabledContext";
 import { soundCues } from "../sound/cues";
-import { useState, type ReactNode } from "react";
+import { useCallback, useState, type ReactNode } from "react";
+import { SoundSlotContext } from "./SoundSlotContext";
 
 import styles from "./scene.module.css";
 import "./tokens.css";
@@ -61,6 +62,12 @@ export type SceneShellProps =
        * The Ghost itself is passed in by the page's own content.
        */
       backdrop?: boolean;
+      /**
+       * Shows the sound control in the Top_Bar sound slot. The shell holds the
+       * sound state, and the slot stays hidden until the Opening_Flow reports
+       * that it has mounted (SoundSlotContext). Default off.
+       */
+      sound?: boolean;
       children: ReactNode;
     };
 
@@ -81,18 +88,22 @@ function SceneFrame(props: SceneShellProps) {
 
   // The sound state for the page visit (spec 09 C4.4). It lives here, above the
   // persona page's content, so the Top_Bar toggle and the Seal_Break read the
-  // same value. In memory only; a new visit starts off.
+  // same value. In memory only; a new visit starts off. A plain page shows the
+  // same control when it asks for sound (`sound`), and the slot stays reserved
+  // and hidden until the Opening_Flow has mounted.
   const [soundOn, setSoundOn] = useState(false);
+  const [soundSlotReady, setSoundSlotReady] = useState(false);
+  const reportSoundSlot = useCallback(() => setSoundSlotReady(true), []);
+  const onSoundChange = (next: boolean) => {
+    setSoundOn(next);
+    soundCues.onToggle(next);
+  };
   const sound: TopBarSound | undefined =
     props.variant === "persona"
-      ? {
-          enabled: soundOn,
-          onChange: (next) => {
-            setSoundOn(next);
-            soundCues.onToggle(next);
-          },
-        }
-      : undefined;
+      ? { enabled: soundOn, onChange: onSoundChange }
+      : props.variant === "plain" && props.sound === true
+        ? { enabled: soundOn, onChange: onSoundChange, reserved: !soundSlotReady }
+        : undefined;
 
   // The current Stage of the persona page's Ceremony region, reported up by
   // CeremonyRegion through StageReportContext. The Top_Bar reads it to show the
@@ -120,6 +131,7 @@ function SceneFrame(props: SceneShellProps) {
           };
 
   return (
+    <SoundSlotContext.Provider value={reportSoundSlot}>
     <SoundEnabledContext.Provider value={soundOn}>
     <StageReportContext.Provider
       value={props.variant === "persona" ? setTopBarStage : null}
@@ -138,7 +150,7 @@ function SceneFrame(props: SceneShellProps) {
       {props.variant === "persona" ? (
         <TopBar personaName={props.personaName} sound={sound} stage={topBarStage} />
       ) : props.variant === "plain" ? (
-        <TopBar demo={props.demo ?? true} controls={props.controls ?? "calm"} />
+        <TopBar demo={props.demo ?? true} controls={props.controls ?? "calm"} sound={sound} />
       ) : props.variant === "index" ? (
         <TopBar demo={props.demo ?? true} />
       ) : (
@@ -169,5 +181,6 @@ function SceneFrame(props: SceneShellProps) {
     </PersonaStageContext.Provider>
     </StageReportContext.Provider>
     </SoundEnabledContext.Provider>
+    </SoundSlotContext.Provider>
   );
 }

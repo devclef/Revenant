@@ -32,6 +32,11 @@ export type SoundToggleProps = {
   variant?: "desk" | "topbar";
   /** Marks the rightmost Top_Bar control (`data-topbar-last`). Topbar only. */
   last?: boolean;
+  /**
+   * Holds the Top_Bar slot without showing the control (`visibility: hidden`).
+   * The plain Scene sets it until the Opening_Flow has mounted. Topbar only.
+   */
+  reserved?: boolean;
 };
 
 export function SoundToggle({
@@ -39,6 +44,7 @@ export function SoundToggle({
   enabled: controlled,
   variant = "desk",
   last = false,
+  reserved = false,
 }: SoundToggleProps) {
   const own = useSoundEnabled();
   const enabled = controlled ?? own.enabled;
@@ -61,6 +67,7 @@ export function SoundToggle({
         data-topbar-sound
         data-topbar-slot="sound"
         data-topbar-last={last ? true : undefined}
+        style={reserved ? { visibility: "hidden" } : undefined}
         onClick={press}
       >
         <SoundIcon off={!enabled} className={topbarStyles.controlIcon} />

@@ -575,6 +575,31 @@ function RevealBody({
   // figures (stage 3), or after the letter with none (stage 2).
   const sealEndShown = figureCount === 0 ? stage >= 2 : stage >= 3;
 
+  // At stage 3 with figures, the letter folds after them (spec 15 R12.2): the
+  // figures come straight after the question pairs, and the letter sits in a
+  // closed disclosure after the figures. Without figures, or before stage 3,
+  // the letter keeps its place after the question pairs.
+  const foldLetter = stage === 3 && figureCount > 0;
+  const letterStage = (
+    <div
+      className={`${styles.stage} ${styles.fade} ${styles.letterCol}`}
+      data-letter-stage=""
+    >
+      {/* The letter in full, as it was sealed. The fingerprint moved to
+          the seal line after the figures (R12.6). A folded letter mounts
+          still: its disclosure is closed, so nothing unfolds under it. */}
+      <LetterPaper
+        opened={opened}
+        personaName={personaName}
+        variant={variant}
+        letterId={letterId}
+        still={jumpedToEnd || foldLetter}
+        collapsible={foldLetter}
+        letterKind={letterKind}
+      />
+    </div>
+  );
+
   return (
     <section className={styles.reveal}>
       {showMarks && !marksGone ? (
@@ -604,22 +629,7 @@ function RevealBody({
             </section>
           ) : null}
 
-          <div
-            className={`${styles.stage} ${styles.fade} ${styles.letterCol}`}
-            data-letter-stage=""
-          >
-            {/* The letter in full, as it was sealed. The fingerprint moved to
-                the seal line after the figures (R12.6). */}
-            <LetterPaper
-              opened={opened}
-              personaName={personaName}
-              variant={variant}
-              letterId={letterId}
-              still={jumpedToEnd}
-              collapsible={stage >= 3 && isPhone}
-              letterKind={letterKind}
-            />
-          </div>
+          {foldLetter ? null : letterStage}
 
           {stage >= 3 && figures !== null && record !== null ? (
             <FigureReceipt count={figureCount}>
@@ -638,6 +648,8 @@ function RevealBody({
               <SelfReportedOnly payload={opened.payload} />
             </FigureReceipt>
           ) : null}
+
+          {foldLetter ? letterStage : null}
 
           {sealEndShown ? (
             <div className={`${styles.stage} ${styles.fade}`}>
