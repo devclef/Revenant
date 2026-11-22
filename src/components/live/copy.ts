@@ -23,7 +23,7 @@ export const LIVE_COPY = {
   sealHeading: "Press the seal.",
   /** The one in-browser paragraph of the Seal step (spec 14, S3.3). */
   sealParagraph:
-    'You\'ll press the wax twice: once to make your passkey, once to set the seal. The passkey is named "Revenant demo" in your passkey manager.',
+    "Press the wax twice: once to make your passkey, once to set the seal.",
   /** The text control that opens the cross-device line (spec 14, S5.2). */
   crossDeviceQuestion: "Opening on another device?",
   /** The text control that returns to the Write step (spec 14, S5.3). */
@@ -246,7 +246,7 @@ export const LIVE_COPY = {
   /** The Author_Question rows on the Write step (spec 10, C2.1). */
   authorQuestionsLegend: "Questions for your future self",
   authorQuestionsHint:
-    "When the letter opens, you'll answer these from memory before you read it.",
+    "Answer each one now. When it opens, you're asked again from memory before you read it.",
   /** `{n}` is the row number, starting at 1. */
   authorQuestionLabel: "Question {n}",
   authorQuestionRemove: "Remove question {n}",
@@ -255,8 +255,6 @@ export const LIVE_COPY = {
   /** Announced to screen readers after a row is removed. `{n}` is its number. */
   authorQuestionRemoved: "Question {n} removed.",
   authorQuestionAdd: "Add a question",
-  /** Shown after the rows, so the author knows they can answer in the letter too. */
-  answerInLetter: "Answer them in your letter too, in your own words.",
   /** Shown after the row was touched or a seal was attempted (C2.3). */
   questionTooLong: "Keep each question to 200 characters or fewer.",
   /** Shown after the answer was touched or a seal was attempted (spec 15, R7.3). */

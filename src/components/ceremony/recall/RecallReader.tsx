@@ -35,10 +35,6 @@ type PersonaTestify = Extract<TestifyContextProps, { kind: "persona" }>;
  * Memory_Line unchanged.
  */
 function ReadingTestify({ testify }: { testify: PersonaTestify }) {
-  const writtenText = CEREMONY_COPY.envelopeWrittenAsOf.replace(
-    "{date}",
-    formatCalendarDate(testify.writtenAsOf),
-  );
   const opensText = CEREMONY_COPY.envelopeOpens.replace(
     "{date}",
     formatLetterDate(testify.opensAt, { kind: "utc" }),
@@ -55,7 +51,7 @@ function ReadingTestify({ testify }: { testify: PersonaTestify }) {
       <p className={introStyles.testifyFrom}>
         {REVEAL_COPY.contextFrom.replace("{name}", testify.personaName)}
       </p>
-      <p className={introStyles.testifyDates}>{`${writtenText} · ${opensText}`}</p>
+      <p className={introStyles.testifyDates}>{opensText}</p>
       <p className={introStyles.testifySeal}>{REVEAL_COPY.sealIntact}</p>
     </section>
   );
@@ -95,10 +91,7 @@ export function RecallReader({
   const asOf =
     writtenAsOf === undefined
       ? null
-      : REVEAL_COPY.questionCounterAsOf.replace(
-          "{date}",
-          formatCalendarDate(writtenAsOf),
-        );
+      : REVEAL_COPY.askedAsOf.replace("{date}", formatCalendarDate(writtenAsOf));
 
   return (
     <>
@@ -109,16 +102,9 @@ export function RecallReader({
       )}
       <section className={`${paper.paper} ${styles.reader}`} data-paper="" data-recall-reader="">
         <p className={styles.counter} data-fit="counter">
-          {asOf === null ? (
-            counter
-          ) : (
-            <>
-              {counter}
-              {REVEAL_COPY.questionCounterSeparator}
-              <span className={styles.nowrap}>{asOf}</span>
-            </>
-          )}
+          {counter}
         </p>
+        {asOf === null ? null : <p className={styles.asOf}>{asOf}</p>}
         <div className={styles.qRow}>
           <WaxDisc n={index + 1} />
           <h2

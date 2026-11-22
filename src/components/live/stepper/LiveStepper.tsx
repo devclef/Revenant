@@ -3,7 +3,6 @@
 import { useLayoutEffect, useRef, useState, type ReactNode } from "react";
 
 import { useCalmInForce } from "@/components/ceremony/motion";
-import { useKeepInVisualViewport } from "@/components/ui/use-keep-in-visual-viewport";
 
 import { LIVE_COPY } from "../copy";
 import type { WriteDraft, WriteDraftEvent } from "../write-draft";
@@ -84,8 +83,6 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
   // Calm is on under reduced motion or the judge's Calm control. Calm scrolls
   // without animation.
   const calm = useCalmInForce();
-  // Keeps the focused field and its Next above the on-screen keyboard (P9).
-  useKeepInVisualViewport(primaryRef, calm);
   const previousStep = useRef<LiveStep>(state.step);
 
   useLayoutEffect(() => {

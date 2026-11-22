@@ -521,8 +521,8 @@ describe("CeremonyRoot controls prop", () => {
 //
 // `controls="host"` is the embedded Live_Reveal. The page holds the one motion
 // control, so the region renders no Calm and no Skip, even while a sequence
-// runs. The sound toggle and the default Stage announcement stay as in region
-// mode; the persona step lines never appear.
+// runs. The default Stage announcement stays as in region mode; the persona
+// step lines never appear. The sound control lives in the Top_Bar only.
 
 describe("CeremonyRoot host mode (spec X2)", () => {
   it("renders no Calm and no Skip, even while a sequence runs", () => {
@@ -537,9 +537,19 @@ describe("CeremonyRoot host mode (spec X2)", () => {
     }
   });
 
-  it("keeps the sound toggle and its note, as region mode does", () => {
-    expect(rootMarkup({ controls: "host" })).toContain(CEREMONY_COPY.soundNote);
-    expect(rootMarkup({ controls: "region" })).toContain(CEREMONY_COPY.soundNote);
+  it("renders no sound toggle and no sound note in any mode", () => {
+    for (const controls of ["host", "region", "topbar"] as const) {
+      const markup = rootMarkup({ controls });
+      expect(markup, controls).not.toContain(CEREMONY_COPY.soundNote);
+      expect(markup, controls).not.toContain("data-topbar-sound");
+      expect(markup, controls).not.toContain(CEREMONY_COPY.soundOn);
+      expect(markup, controls).not.toContain(CEREMONY_COPY.soundOff);
+    }
+  });
+
+  it("keeps the default Stage announcement in host mode without a sound control", () => {
+    const hostLine = emergingStatus("loading");
+    expect(rootMarkup({ controls: "host" })).toContain(hostLine);
   });
 
   it("announces the Stage line unchanged, with no persona step line", () => {
@@ -750,7 +760,7 @@ describe("CeremonyRoot persona Step_Indicator", () => {
       { tag: "reveal", opened: OPENED, record: RECORD, stage: 3 },
       "persona",
     );
-    expect(html).toContain(esc("Step 4 of 4: See the receipts"));
+    expect(html).toContain(esc("Step 4 of 4: Receipts"));
   });
 
   it("keeps the Stage line in live mode, with the three-step track and no four-step Step_Indicator", () => {

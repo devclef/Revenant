@@ -42,16 +42,13 @@
 // `Math.random` and `Date.now` are never called in render, and this module
 // imports no `@/lib/crypto` (the ceremony source scan enforces both).
 
-import { useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
 import { CEREMONY_COPY } from "./copy";
 import { LiveRegion, LiveRegionProvider } from "./LiveRegion";
 import { LocalViewProvider, useLocalView } from "./local-view";
 import { useMotion, type MotionMode } from "./motion";
 import { useSequence } from "./skip";
-import { SoundToggle } from "./sound/SoundToggle";
-import { SoundEnabledContext } from "./sound/SoundEnabledContext";
-import { soundCues } from "./sound/cues";
 import { StageContext, useStageReport } from "./stage-context";
 import {
   emergingStatus,
@@ -87,8 +84,8 @@ export type CeremonyRootProps = {
    * mode) renders them inside the region. `"topbar"` (persona mode) renders
    * neither, because the Top_Bar holds them (spec 07, R8.3). `"host"` (the
    * embedded Live_Reveal, spec X2) renders no Calm and no Skip in the region,
-   * because the page holds the one motion control. It keeps the sound toggle
-   * and the default Stage announcement, as `"region"` does.
+   * because the page holds the one motion control. It keeps the default Stage
+   * announcement, as `"region"` does. The sound control is never in the region.
    */
   controls?: "topbar" | "region" | "host";
   /** The one view for the current Stage, rendered inside the region. */
@@ -305,15 +302,6 @@ function CeremonyRegion({
   const { hasActive, skipAll } = useSequence();
   const { localView } = useLocalView();
 
-  // The sound toggle's state (R14.1). Off by default and in memory only. The
-  // Seal_Break reads it through SoundEnabledContext below. The toggle itself
-  // keeps its own copy, and both change on the same press.
-  const [soundOn, setSoundOn] = useState(false);
-  // On the persona page (`controls="topbar"`) the Top_Bar owns the sound state,
-  // above this region (SceneShell). This region then passes that state down, so
-  // the Seal_Break follows the Top_Bar toggle. Live pages (`region`) keep their own.
-  const inheritedSound = useContext(SoundEnabledContext);
-
   // The Stage for the current state at the live local view (design.md "Stage
   // resolution"). On the server and first render `localView` is
   // `DEFAULT_LOCAL_VIEW`, so the static markup reports the settled Stage
@@ -459,10 +447,10 @@ function CeremonyRegion({
   // Top_Bar renders them (spec 07, R8.3), so the page has one of each. In `host`
   // mode the page holds the one motion control (spec X2), so neither renders.
   const showRegionControls = controls === "region";
-  // The sound toggle renders in `region` and `host` mode. Only `topbar` hands
-  // the sound state to the Top_Bar (spec 07 task 5).
-  const ownsSound = controls !== "topbar";
 
+  // The sound control lives in the Top_Bar slot only (SceneShell). The region
+  // renders none, and the Seal_Break reads the state from SoundEnabledContext
+  // above this region.
   return (
     <div
       ref={regionRef}
@@ -473,7 +461,6 @@ function CeremonyRegion({
       data-ceremony-motion={motionAttr}
       className={`${styles.desk} ${className ? `${styles.ceremony} ${className}` : styles.ceremony}`}
     >
-      <SoundEnabledContext.Provider value={ownsSound ? soundOn : inheritedSound}>
         <StageContext.Provider value={stage}>
         <LiveRegion message={liveLine} />
         {showRegionControls ? (
@@ -484,24 +471,6 @@ function CeremonyRegion({
           >
             {calmLabel}
           </button>
-        ) : null}
-        {/* The sound toggle and its note render in the region only. On the
-            persona page (`topbar`) they do not belong to the pre-reveal Stages:
-            design.md "Sound toggle placement" moves them into the `marks`
-            column (spec 07 task 5). Rendering them here would also fill the
-            narrow band above the Soil strip and push the status card onto it. */}
-        {ownsSound ? (
-          <>
-            <SoundToggle
-              onChange={(next) => {
-                setSoundOn(next);
-                soundCues.onToggle(next);
-              }}
-            />
-            <p className={`${styles.desk} ${styles.soundNote}`}>
-              {CEREMONY_COPY.soundNote}
-            </p>
-          </>
         ) : null}
         {showRegionControls && hasActive ? (
           <button type="button" className={controlClass} onClick={skipAll}>
@@ -518,7 +487,6 @@ function CeremonyRegion({
         ) : null}
         <div data-stage-content>{children}</div>
         </StageContext.Provider>
-      </SoundEnabledContext.Provider>
     </div>
   );
 }

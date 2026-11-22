@@ -137,6 +137,22 @@ describe("EU persona letter header (stage 2)", () => {
 });
 
 describe("EU persona figure label (stage 3)", () => {
+  it("reads 'historical record, retrieved {date}' for a now figure in a persona letter", () => {
+    const html = renderToStaticMarkup(
+      createElement(FigureLine, {
+        figure: THEN_FIGURE,
+        role: "now",
+        letterKind: "persona",
+      }),
+    );
+    expect(html).toContain(
+      REVEAL_COPY.labelHistoricalRecord.replace(
+        "{date}",
+        formatLetterDate("2024-05-20T09:00:00Z", { kind: "utc" }),
+      ),
+    );
+  });
+
   it("reads 'historical record, retrieved {date}' for the then figure", () => {
     const html = renderToStaticMarkup(
       createElement(FigureLine, {
@@ -162,7 +178,10 @@ describe("EU persona figure label (stage 3)", () => {
       }),
     );
     expect(html).toContain(formatPeriod("2024-05", "European Union"));
-    expect(html).toContain("EUR per 1,000 litres");
+    // The row shows the displayed unit. The sealed unit appears only in the
+    // rescale note, which ReceiptCard prints once per card.
+    expect(html).toContain("EUR per litre");
+    expect(html).not.toContain("EUR per 1,000 litres");
     expect(html).toContain("European Union");
   });
 

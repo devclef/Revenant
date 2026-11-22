@@ -73,7 +73,7 @@ const hasWord = (text: string, word: string): boolean =>
 
 describe("Property 23, example checks: the R24.3 table matches exactly", () => {
   it("takes the headline from BRAND_COPY, with no Accent part (F2)", () => {
-    expect(BRAND_COPY.tagline).toBe("Memory rewrites itself. Revenant doesn't.");
+    expect(BRAND_COPY.tagline).toBe("Memory drifts with time. A sealed letter doesn't.");
     expect(SCENE_COPY).not.toHaveProperty("headlineAccent");
   });
 
@@ -98,7 +98,8 @@ describe("Property 23, example checks: the R24.3 table matches exactly", () => {
   });
 
   it("holds the Figure_Entry and Recall_Pager strings", () => {
-    expect(REVEAL_COPY.yourAnswer).toBe("Your answer");
+    expect(REVEAL_COPY.yourAnswer).toBe("You remembered, just now");
+    expect(REVEAL_COPY.answerSpokenPrefix).toBe("Your answer");
     expect(REVEAL_COPY.noAnswer).toBe("No answer");
     expect(REVEAL_COPY.nextQuestion).toBe("Next question");
     expect(REVEAL_COPY.previousQuestion).toBe("Previous question");
@@ -116,7 +117,7 @@ describe("Property 23, example checks: the R24.3 table matches exactly", () => {
 
   it("holds the close line, close link, close note and restart", () => {
     expect(CEREMONY_COPY.closeLine).toBe(
-      "Your testimony sits beside the record. What lies between them is yours to read.",
+      "What you remembered sits beside the record. What lies between them is yours to read.",
     );
     expect(CEREMONY_COPY.closeLink).toBe(
       "Seal your own. It opens 30 seconds after you seal it.",

@@ -2,6 +2,8 @@
 
 import { useId } from "react";
 
+import { KeepGroup } from "@/components/ui/KeepGroup";
+
 import {
   selfReportedFieldKey,
   selfReportedRowProblems,
@@ -119,7 +121,7 @@ export function OwnNumberView({
         ? ""
         : (PROBLEM_TEXT[problemKey] ?? "");
     return (
-      <div key={field} className={styles.ownField}>
+      <KeepGroup as="div" key={field} className={styles.ownField}>
         <label htmlFor={inputId} className={styles.ownLabel}>
           {LABEL[field]}
         </label>
@@ -143,7 +145,7 @@ export function OwnNumberView({
             {message}
           </p>
         ) : null}
-      </div>
+      </KeepGroup>
     );
   }
 }

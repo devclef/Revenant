@@ -3,6 +3,7 @@
 import { useLayoutEffect, useRef, useState } from "react";
 
 import { DemoLabel } from "@/components/demo/DemoLabel";
+import { KeepGroup } from "@/components/ui/KeepGroup";
 
 import type { PickableSeries } from "./catalogue-list";
 import { AuthorQuestions } from "./AuthorQuestions";
@@ -735,7 +736,7 @@ export function WriteForm({
       ) : null}
 
       {shows("write") ? (
-        <div className={styles.field}>
+        <KeepGroup as="div" className={styles.field}>
           <label htmlFor="live-letter" className={styles.label}>
             {LIVE_COPY.letterLabel}
           </label>
@@ -759,7 +760,7 @@ export function WriteForm({
           <p id="live-letter-problem" className={styles.problem}>
             {letterProblem}
           </p>
-        </div>
+        </KeepGroup>
       ) : null}
 
       {shows("write") ? authorQuestions : null}

@@ -2,7 +2,6 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { displayChangeResult, rescaledChangeInputs } from "./change-display";
 import { REVEAL_COPY } from "./copy";
 import { FormulaLine } from "./FormulaLine";
 import {
@@ -55,11 +54,13 @@ function render(
   result: Extract<ChangeResult, { comparable: true }>,
   sourceUrls: ReadonlyArray<string | undefined> = [SOURCE_URL, SOURCE_URL],
   seriesId: string = THEN.series_id,
+  k: number = 0,
 ): string {
   return renderToStaticMarkup(
     createElement(FormulaLine, {
       result,
       shown: formatChange(result, THEN.region),
+      k,
       seriesId,
       sourceUrls,
     }),
@@ -94,15 +95,10 @@ describe("FormulaLine formula text", () => {
       period: "2024-05",
     };
     const EU_NOW: Readonly<FigureV1> = { ...EU_THEN, value: "1900.00", period: "2026-05" };
-    const inputs = rescaledChangeInputs(
-      EU_THEN.value,
-      EU_NOW.value,
-      { divisor: 1000, unit: "EUR per litre" },
-      EU_THEN.unit,
-    );
-    const shown = displayChangeResult(comparable(EU_THEN, EU_NOW), inputs);
-    const html = render(shown, [SOURCE_URL]);
-    expect(html).toContain("(1.9 - 1.8) / 1.8 x 100");
+    // k = 3 moves each sealed input three places left: per litre, five decimals
+    // kept (the sealed 2 decimals plus 3).
+    const html = render(comparable(EU_THEN, EU_NOW), [SOURCE_URL], EU_THEN.series_id, 3);
+    expect(html).toContain("(1.90000 - 1.80000) / 1.80000 x 100");
     const visibleText = html.replace(/<[^>]*>/g, "");
     expect(visibleText).not.toContain("1800.00");
     expect(visibleText).not.toContain("1900.00");

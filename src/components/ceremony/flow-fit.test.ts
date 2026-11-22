@@ -195,7 +195,7 @@ describe("break-stage step row clears the Compact_Ghost box at 360 wide (issue #
     expect(ghostAspect).toBeCloseTo(1.2, 10);
   });
 
-  it("keeps the 'Your testimony is recorded.' line in flow, never positioned over the Ghost", () => {
+  it("keeps the break line (data-break-line) in flow, never positioned over the Ghost", () => {
     // The line is the .hint paragraph on the Break the seal stage (SealBreak.tsx,
     // data-break-line). It must take its place in the column's flow, below the
     // Step_Indicator row, so it cannot sit on the Compact_Ghost's box.

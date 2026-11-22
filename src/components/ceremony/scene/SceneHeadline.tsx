@@ -6,7 +6,7 @@
 // `demoHeading` on `/demo`. It carries no Tagline and no Eyebrow.
 //
 // The landing page keeps its Tagline. `splitTagline` still lives here, so the
-// landing hero can keep "Revenant doesn't." on one line (F2.3).
+// landing hero can keep "letter doesn't." on one line (F2.3).
 //
 // `data-scene-ceiling` marks the element whose bottom sets the dust ceiling in
 // the Soil_Canvas (R6.16).
@@ -14,12 +14,12 @@
 import styles from "./scene.module.css";
 
 /** The part of the Tagline kept together on one line. */
-const KEPT_TOGETHER = "Revenant doesn't.";
+const KEPT_TOGETHER = "letter doesn't.";
 
 const NBSP = "\u00a0";
 
 /**
- * Splits the Tagline so that "Revenant doesn't." can sit in a nowrap span.
+ * Splits the Tagline so that "letter doesn't." can sit in a nowrap span.
  * `before` is the text ahead of it, and `kept` is that phrase with a
  * non-breaking space between its two words. A tagline without the phrase is
  * returned whole in `before`.
@@ -33,6 +33,31 @@ export function splitTagline(tagline: string): { before: string; kept: string } 
     before: tagline.slice(0, at),
     kept: KEPT_TOGETHER.replace(" ", NBSP),
   };
+}
+
+/**
+ * Splits the text ahead of the kept phrase into its first sentence and the
+ * rest. The sentence ends at the first ". ". Text without one is all sentence.
+ */
+export function splitFirstSentence(before: string): { sentence: string; rest: string } {
+  const end = before.indexOf(". ");
+  if (end < 0) {
+    return { sentence: before, rest: "" };
+  }
+  return { sentence: before.slice(0, end + 1), rest: before.slice(end + 1) };
+}
+
+/**
+ * Joins the last two words of a sentence with a non-breaking space, so
+ * "with time." never breaks between "with" and "time.". Only the rendered
+ * text changes; the Brand_Copy string keeps its ordinary spaces.
+ */
+export function joinLastWords(sentence: string): string {
+  const at = sentence.lastIndexOf(" ");
+  if (at < 0) {
+    return sentence;
+  }
+  return sentence.slice(0, at) + NBSP + sentence.slice(at + 1);
 }
 
 export type SceneHeadlineProps = {

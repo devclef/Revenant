@@ -311,9 +311,9 @@ describe("FiguresThenNow markup", () => {
     if (!result.comparable) return;
 
     const display = formatChange(result, GASOLINE_THEN.region);
-    // The direction word, signed difference and the two periods are all shown.
+    // The direction word, unsigned magnitude and the two periods are all shown.
     expect(html).toContain(display.direction);
-    expect(html).toContain(display.difference);
+    expect(html).toContain(display.differenceMagnitude);
     expect(html).toContain(display.thenPeriod);
     expect(html).toContain(display.nowPeriod);
     // The formula line names the exact formula the calculation used.

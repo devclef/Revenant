@@ -18,6 +18,7 @@
 // src/lib/crypto, src/lib/db or Node built-ins.
 
 import type { ChangeResult } from "./change";
+import { parseDecimal, roundDecimal, toDecimalString } from "./decimal";
 import { localeForRegion } from "./locale";
 
 const MINUS = "\u2212"; // U+2212 MINUS SIGN, not the hyphen-minus "-".
@@ -33,6 +34,16 @@ export interface ChangeDisplay {
   difference: string;
   /** The signed percentage to one fraction digit, or `null` when undefined. */
   percent: string | null;
+  /**
+   * The unsigned difference, rounded at the same fraction digits as
+   * `difference`, e.g. `"3.00"` or `"0.000"` for an unchanged value. No sign.
+   */
+  differenceMagnitude: string;
+  /**
+   * The unsigned percentage to one fraction digit with its `%`, e.g. `"33.3%"`,
+   * or `null` when `percent` is `null`. No sign.
+   */
+  percentMagnitude: string | null;
   /** The then period, formatted for display. */
   thenPeriod: string;
   /** The now period, formatted for display. */
@@ -183,7 +194,18 @@ export function formatChange(
   const differenceText =
     numericSign + formatValue(magnitude(result.difference), region, diffDigits);
 
+  // Unsigned magnitudes: the same exact difference and percent, rounded half
+  // away from zero at the row's decimals with roundDecimal, then formatted.
+  const differenceMagnitude = formatValue(
+    toDecimalString(
+      roundDecimal(parseDecimal(magnitude(result.difference)), diffDigits),
+    ),
+    region,
+    diffDigits,
+  );
+
   let percentText: string | null = null;
+  let percentMagnitude: string | null = null;
   if (result.percent !== null) {
     const p = result.percent.value;
     let percentSign: "" | "+" | typeof MINUS;
@@ -195,12 +217,19 @@ export function formatChange(
       percentSign = "+";
     }
     percentText = `${percentSign}${formatValue(magnitude(p), region, 1)}%`;
+    percentMagnitude = `${formatValue(
+      toDecimalString(roundDecimal(parseDecimal(magnitude(p)), 1)),
+      region,
+      1,
+    )}%`;
   }
 
   return {
     direction,
     difference: differenceText,
     percent: percentText,
+    differenceMagnitude,
+    percentMagnitude,
     thenPeriod: formatPeriod(result.then.period, region),
     nowPeriod: formatPeriod(result.now.period, region),
   };

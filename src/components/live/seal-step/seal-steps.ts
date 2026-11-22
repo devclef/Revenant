@@ -18,8 +18,10 @@ export type SealStepsView = {
 /**
  * The state of each press for a seal state. Before a backup choice nothing is
  * current. After it, the first press is the next action. Once the passkey is
- * made the second press is the next action, and while the letter is prepared
- * or sealed the second press stays current with no hint of its own.
+ * made the second press is the next action. Press one's hint is `stepOneHint`
+ * while it is pending or current, and `stepPasskeyMade` once it is done. Press
+ * two's hint is `stepTwoHint` only in the confirming state, so it is null in
+ * `created` and while the letter is prepared or sealed.
  */
 export function sealStepsView(input: {
   tag: PressStatusTag;
@@ -28,7 +30,7 @@ export function sealStepsView(input: {
   const { tag, backupChoice } = input;
   if (tag === "write" && backupChoice === null) {
     return {
-      one: { state: "pending", hint: null },
+      one: { state: "pending", hint: PRESS_COPY.stepOneHint },
       two: { state: "pending", hint: null },
     };
   }
@@ -41,7 +43,7 @@ export function sealStepsView(input: {
   if (tag === "created") {
     return {
       one: { state: "done", hint: PRESS_COPY.stepPasskeyMade },
-      two: { state: "current", hint: PRESS_COPY.stepTwoHint },
+      two: { state: "current", hint: null },
     };
   }
   // confirming, preparing, sealing: the first press is done.

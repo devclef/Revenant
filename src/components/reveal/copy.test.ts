@@ -203,12 +203,34 @@ describe("REVEAL_COPY claims with code behind them", () => {
 
 describe("spec 09 ritual copy (C2, F4, design.md Copy)", () => {
   it("names the reveal stages and the recall intro with the ritual words", () => {
-    expect(REVEAL_COPY.stage1Title).toBe("Your testimony");
+    expect(REVEAL_COPY.stage1Title).toBe("You remembered, just now");
     expect(REVEAL_COPY.stage2Next).toBe("See the receipts");
     expect(REVEAL_COPY.stage3Title).toBe("The receipts");
     expect(REVEAL_COPY.recallIntro).toBe(
-      "This letter was written as of {date}. Before you read it, testify: say what you remember about that time.",
+      "Before you read it, say what you remember about that time.",
     );
+  });
+
+  it("names the track steps Unlock, Remember and Receipts, exactly", () => {
+    expect([...REVEAL_COPY.letterTrackSteps]).toEqual([
+      "Unlock",
+      "Remember",
+      "Receipts",
+    ]);
+  });
+
+  it("has the Remember help text exactly (the spec gives no other wording)", () => {
+    expect(REVEAL_COPY.recallHint).toBe(
+      "Answer from memory. You can mark any question as no answer.",
+    );
+    expect(REVEAL_COPY.answerHint).toBe(
+      "What did you answer? Write what you remember.",
+    );
+  });
+
+  it("holds no date and no testify word in the recall intro", () => {
+    expect(REVEAL_COPY.recallIntro).not.toContain("{date}");
+    expect(REVEAL_COPY.recallIntro).not.toMatch(/testif|testimon/i);
   });
 
   it("keeps the retired ritual names out of the reveal copy", () => {

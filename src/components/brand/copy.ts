@@ -10,9 +10,9 @@
 
 export const BRAND_COPY = {
   eyebrow: "The wax seal, resurrected.",
-  tagline: "Memory rewrites itself. Revenant doesn't.",
+  tagline: "Memory drifts with time. A sealed letter doesn't.",
   heroSentence:
-    "Seal what you believe now, a goal, a worry, a decision. When it opens, you testify first, then read what you wrote.",
+    "Seal what you believe now, a goal, a worry, a decision. When it opens, you remember first, then read what you wrote.",
   ritualSteps: [
     {
       name: "Write",
@@ -23,12 +23,12 @@ export const BRAND_COPY = {
       line: "Lock the letter with your passkey. The live demo locks it for 30 seconds.",
     },
     {
-      name: "Testify",
+      name: "Remember",
       line: "When it opens, write what you think you answered, before a word is shown.",
     },
     {
-      name: "See the receipts",
-      line: "Your testimony beside what you wrote, then any numbers then and now.",
+      name: "Receipts",
+      line: "What you remembered beside what you wrote, then any numbers then and now.",
     },
   ],
   sealMapping: [

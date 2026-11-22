@@ -60,7 +60,8 @@
  * inline user-facing literal.
  */
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import { SoundSlotContext } from "@/components/ceremony/scene/SoundSlotContext";
 import { PersonaGhost } from "@/components/ceremony/scene/PersonaGhost";
 import { SceneBackdrop } from "@/components/ceremony/scene/SceneBackdrop";
 import { ghostPresent } from "@/components/ceremony/scene/ghost-presence";
@@ -277,6 +278,12 @@ export function OpeningFlow({
           },
   );
   const { state, retry } = flow;
+  // Tells the plain Scene that this flow has mounted, so its Top_Bar sound slot
+  // shows (SoundSlotContext). Outside a plain Scene the default does nothing.
+  const reportSoundSlot = useContext(SoundSlotContext);
+  useEffect(() => {
+    reportSoundSlot();
+  }, [reportSoundSlot]);
   const KeyStep = useKeyStep(state.tag === "awaiting_key");
   // An embedded flow is the Live_Reveal inside the stepper (spec X2).
   const isEmbedded = embedded !== undefined;

@@ -2,6 +2,8 @@
 
 import { useLayoutEffect, useRef, type ReactNode, type RefObject } from "react";
 
+import { KeepGroup } from "@/components/ui/KeepGroup";
+
 import { LIVE_COPY } from "../copy";
 import { countCodePoints } from "../form";
 import letterField from "../letter-field.module.css";
@@ -74,32 +76,34 @@ export function LetterSheet({
         <SheetDate />
       </div>
 
-      <label htmlFor="live-letter" className={styles.visuallyHidden}>
-        {LIVE_COPY.letterLabel}
-      </label>
-      <textarea
-        id="live-letter"
-        ref={field}
-        className={`${styles.letter} ${letterField.sheetLetter}`}
-        placeholder={placeholder}
-        value={value}
-        aria-describedby="live-letter-count live-letter-problem"
-        onChange={(event) => onChange(event.target.value)}
-        onBlur={onBlur}
-      />
+      <KeepGroup as="div">
+        <label htmlFor="live-letter" className={styles.visuallyHidden}>
+          {LIVE_COPY.letterLabel}
+        </label>
+        <textarea
+          id="live-letter"
+          ref={field}
+          className={`${styles.letter} ${letterField.sheetLetter}`}
+          placeholder={placeholder}
+          value={value}
+          aria-describedby="live-letter-count live-letter-problem"
+          onChange={(event) => onChange(event.target.value)}
+          onBlur={onBlur}
+        />
 
-      <div className={styles.bottomRow}>
-        <p className={`${styles.signOff} ${letterField.sheetSerif}`}>
-          {DESK_COPY.signOff}
-        </p>
-        <p id="live-letter-count" className={styles.count}>
-          {letterCountText(value)}
-        </p>
-      </div>
+        <div className={styles.bottomRow}>
+          <p className={`${styles.signOff} ${letterField.sheetSerif}`}>
+            {DESK_COPY.signOff}
+          </p>
+          <p id="live-letter-count" className={styles.count}>
+            {letterCountText(value)}
+          </p>
+        </div>
 
-      <p id="live-letter-problem" className={styles.problem}>
-        {problem}
-      </p>
+        <p id="live-letter-problem" className={styles.problem}>
+          {problem}
+        </p>
+      </KeepGroup>
 
       <div
         className={styles.perforation}

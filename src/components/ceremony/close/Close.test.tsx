@@ -30,7 +30,7 @@ describe("Close, persona kind", () => {
     expect(html).toMatch(/<h2[^>]*>/);
     expect(html).toContain(CEREMONY_COPY.closeLine);
     expect(CEREMONY_COPY.closeLine).toBe(
-      "Your testimony sits beside the record. What lies between them is yours to read.",
+      "What you remembered sits beside the record. What lies between them is yours to read.",
     );
   });
 
@@ -145,7 +145,7 @@ describe("Close, real kind", () => {
 describe("Close, persona kind with no figures (spec 11 L5.2)", () => {
   it("uses the exact no-figures closing line", () => {
     expect(CEREMONY_COPY.closeLineNoFigures).toBe(
-      "Her testimony and her letter are side by side. What they say is yours to read.",
+      "Her recollections and her letter are side by side. What they say is yours to read.",
     );
   });
 

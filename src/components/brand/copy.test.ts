@@ -9,12 +9,12 @@ import { BRAND_COPY } from "./copy";
 describe("BRAND_COPY", () => {
   it("has the eyebrow and tagline exactly", () => {
     expect(BRAND_COPY.eyebrow).toBe("The wax seal, resurrected.");
-    expect(BRAND_COPY.tagline).toBe("Memory rewrites itself. Revenant doesn't.");
+    expect(BRAND_COPY.tagline).toBe("Memory drifts with time. A sealed letter doesn't.");
   });
 
   it("has the hero sentence exactly", () => {
     expect(BRAND_COPY.heroSentence).toBe(
-      "Seal what you believe now, a goal, a worry, a decision. When it opens, you testify first, then read what you wrote.",
+      "Seal what you believe now, a goal, a worry, a decision. When it opens, you remember first, then read what you wrote.",
     );
   });
 
@@ -30,12 +30,12 @@ describe("BRAND_COPY", () => {
         line: "Lock the letter with your passkey. The live demo locks it for 30 seconds.",
       },
       {
-        name: "Testify",
+        name: "Remember",
         line: "When it opens, write what you think you answered, before a word is shown.",
       },
       {
-        name: "See the receipts",
-        line: "Your testimony beside what you wrote, then any numbers then and now.",
+        name: "Receipts",
+        line: "What you remembered beside what you wrote, then any numbers then and now.",
       },
     ]);
   });

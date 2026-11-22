@@ -135,7 +135,7 @@ function displayedChange(then: FigureV1, now: FigureV1) {
   const inputs =
     rescale === undefined
       ? undefined
-      : rescaledChangeInputs(then.value, now.value, rescale, then.unit);
+      : rescaledChangeInputs(then.value, now.value, rescale);
   const shown =
     inputs === undefined ? change : displayChangeResult(change, inputs);
 

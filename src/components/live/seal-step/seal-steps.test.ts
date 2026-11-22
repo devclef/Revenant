@@ -5,13 +5,31 @@
 
 import { describe, expect, it } from "vitest";
 
+import { LIVE_COPY } from "../copy";
 import { PRESS_COPY } from "../press/copy";
 import { sealStepsView } from "./seal-steps";
+
+describe("Seal step wording (spec 16, Requirement 14)", () => {
+  it("pins the step paragraph, the first press hint and the passkey made hint", () => {
+    expect(LIVE_COPY.sealParagraph).toBe(
+      "Press the wax twice: once to make your passkey, once to set the seal.",
+    );
+    expect(PRESS_COPY.stepOneHint).toBe(
+      'Press the wax. The passkey is saved as "Revenant demo".',
+    );
+    expect(PRESS_COPY.stepPasskeyMade).toBe(
+      'Passkey made. Saved as "Revenant demo".',
+    );
+  });
+});
 
 describe("sealStepsView", () => {
   it("leaves both presses pending before a backup choice (seal-choose)", () => {
     const view = sealStepsView({ tag: "write", backupChoice: null });
-    expect(view.one).toEqual({ state: "pending", hint: null });
+    expect(view.one).toEqual({
+      state: "pending",
+      hint: PRESS_COPY.stepOneHint,
+    });
     expect(view.two).toEqual({ state: "pending", hint: null });
   });
 
@@ -24,21 +42,21 @@ describe("sealStepsView", () => {
     expect(view.two.state).toBe("pending");
   });
 
-  it("marks the passkey made and the second press current (seal-step-2)", () => {
+  it("marks the passkey made and the second press current with no hint (seal-step-2)", () => {
     const view = sealStepsView({ tag: "created", backupChoice: "card" });
     expect(view.one).toEqual({
       state: "done",
       hint: PRESS_COPY.stepPasskeyMade,
     });
-    expect(view.two).toEqual({
-      state: "current",
-      hint: PRESS_COPY.stepTwoHint,
-    });
+    expect(view.two).toEqual({ state: "current", hint: null });
   });
 
   it("keeps the first press current while its passkey prompt runs", () => {
     const view = sealStepsView({ tag: "creating", backupChoice: "card" });
-    expect(view.one.state).toBe("current");
+    expect(view.one).toEqual({
+      state: "current",
+      hint: PRESS_COPY.stepOneHint,
+    });
     expect(view.two.state).toBe("pending");
   });
 

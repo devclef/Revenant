@@ -66,8 +66,8 @@ describe("landing page `/`", () => {
     const headline = /<h1[^>]*>(.*?)<\/h1>/s.exec(html);
     expect(headline).not.toBeNull();
     // The Tagline from Brand_Copy (F2). textOf folds the non-breaking space in
-    // "Revenant doesn't." into a plain space.
-    expect(textOf(headline?.[1] ?? "")).toBe("Memory rewrites itself. Revenant doesn't.");
+    // "letter doesn't." into a plain space.
+    expect(textOf(headline?.[1] ?? "")).toBe("Memory drifts with time. A sealed letter doesn't.");
   });
 
   it("renders the Scene root with data-ceremony=\"scene\"", () => {

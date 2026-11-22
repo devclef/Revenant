@@ -30,12 +30,14 @@ import { CEREMONY_COPY } from "../copy";
 import {
   canAdvance,
   canAdvanceText,
+  checkField,
   draftTextFor,
   initialField,
   pickReading,
   resolvedValue,
   setFromScale,
   typeText,
+  unreadableShown,
   type FieldState,
 } from "./recall-field";
 import { formatCalendarDate } from "@/components/ui/letter-date";
@@ -196,8 +198,19 @@ export function RecallPager({
     if (text !== (drafts[id] ?? EMPTY_DRAFT).text) onEdit(id, text);
   }
 
+  // Run the unreadable check on a number field: on blur, on an advance attempt
+  // and on a press in its Nav_Row (11.2). Only the `checked` flag changes, so
+  // the draft is not sent again.
+  function checkNumberField(id: string) {
+    setFields((previous) => {
+      const current = previous[id] ?? initialField(drafts[id] ?? EMPTY_DRAFT);
+      return { ...previous, [id]: checkField(current) };
+    });
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (question.answer_type === "number") checkNumberField(question.id);
     // A text answer that is empty or too long is refused here, so the judge
     // sees the message and the question does not advance (C4.6).
     const current = drafts[question.id] ?? EMPTY_DRAFT;
@@ -239,10 +252,8 @@ export function RecallPager({
   const resolved = field === null ? null : resolvedValue(field);
   const reading =
     field !== null && field.parse.kind === "ambiguous" ? field.parse : null;
-  const unreadable =
-    field !== null &&
-    field.parse.kind === "rejected" &&
-    field.parse.reason !== "empty";
+  // The message and aria-invalid show only after the check ran (11.1, 11.2).
+  const unreadable = field !== null && unreadableShown(field);
   // The Mark follows the field's value. An ambiguous field with no pick keeps
   // the Mark where it was (R32.5).
   const markValue =
@@ -307,15 +318,13 @@ export function RecallPager({
   // date on it, so the layout check can find it on every question.
   const liveCounter = writtenAsOf === undefined && writtenOnDay !== "";
 
-  // The intro sits on the first question only (R11.15). A persona letter names
-  // its written-as-of date; a Live_Letter gets the hint alone.
+  // The intro sits on the first question only (R11.15). A persona letter gets
+  // the recall intro; a Live_Letter gets the hint alone. Neither names a date.
   const intro = !isFirst
     ? null
     : writtenAsOf === undefined
       ? REVEAL_COPY.recallHint
-      : fill(REVEAL_COPY.recallIntro, {
-          date: formatCalendarDate(writtenAsOf),
-        });
+      : REVEAL_COPY.recallIntro;
 
   // The line above an author question (spec 15, 11.1). It names the date the
   // letter was sealed, or the persona's written-as-of date. It is only for text
@@ -438,6 +447,7 @@ export function RecallPager({
                   aria-describedby={
                     describedBy === "" ? undefined : describedBy
                   }
+                  onBlur={() => checkNumberField(question.id)}
                   onChange={(event) =>
                     field === null
                       ? onEdit(question.id, event.target.value)
@@ -546,7 +556,7 @@ export function RecallPager({
                 onEdit={(id, text) =>
                   applyField(id, setFromScale(fieldFor(id), text))
                 }
-                spokenPrefix={REVEAL_COPY.yourAnswer}
+                spokenPrefix={REVEAL_COPY.answerSpokenPrefix}
               />
             ) : null}
 
@@ -571,6 +581,7 @@ export function RecallPager({
                 mainLabel={isLast ? submitLabel : REVEAL_COPY.nextQuestion}
                 mainDisabled={submitting || !ready}
                 onMain={() => formRef.current?.requestSubmit()}
+                onRowPress={() => checkNumberField(question.id)}
               />
             ) : null}
 

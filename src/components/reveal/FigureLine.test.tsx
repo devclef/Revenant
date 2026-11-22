@@ -7,6 +7,7 @@
 import { describe, expect, it } from "vitest";
 
 import { figureLabel, receiptFigureOf, receiptSourceOf } from "./FigureLine";
+import { rescaleNoteText } from "./change-display";
 import { REVEAL_COPY } from "./copy";
 import { formatPeriod, type DisplayRescale } from "@/lib/figures";
 import type { FigureV1 } from "@/lib/seal-format";
@@ -55,8 +56,11 @@ describe("provenance labels (R13.1 to R13.4)", () => {
     expect(figureLabel(OFFICIAL, "then", "real")).not.toContain("historical record");
   });
 
-  it("reads retrieved for a now figure whatever the letter kind", () => {
-    for (const kind of ["persona", "live", "real"] as const) {
+  it("reads historical record for a now figure in a persona letter, retrieved otherwise", () => {
+    expect(figureLabel(OFFICIAL, "now", "persona")).toBe(
+      "historical record, retrieved 30 Oct 2024",
+    );
+    for (const kind of ["live", "real"] as const) {
       expect(figureLabel(OFFICIAL, "now", kind)).toBe("retrieved 30 Oct 2024");
     }
   });
@@ -75,7 +79,7 @@ describe("provenance labels (R13.1 to R13.4)", () => {
 
   it("uses the UTC date, so a late-evening retrieval never shifts a day", () => {
     const late = { ...OFFICIAL, retrieved_at: "2024-10-30T23:30:00Z" };
-    expect(figureLabel(late, "now", "persona")).toBe("retrieved 30 Oct 2024");
+    expect(figureLabel(late, "now", "live")).toBe("retrieved 30 Oct 2024");
   });
 });
 
@@ -88,20 +92,22 @@ describe("receiptFigureOf builds the Then and Now row (C3.1, R11.1 to R11.3)", (
     expect(row.period).toBe(formatPeriod("2024-10", "U.S. city average"));
     expect(row.region).toBe("U.S. city average");
     expect(row.label).toBe("historical record, retrieved 30 Oct 2024");
-    expect(row.note).toBeUndefined();
   });
 
-  it("shows the rescaled value and unit with the rescale note (R11.10)", () => {
+  it("shows the rescaled value and unit, with no note on the row (R11.10)", () => {
     const rescale: DisplayRescale = { divisor: 1000, unit: "EUR per litre" };
     const eu: Readonly<FigureV1> = { ...OFFICIAL, value: "3412", unit: "EUR per 1,000 litres" };
     const row = receiptFigureOf(eu, "now", "persona", rescale);
     expect(row.value).toBe("3.41");
     expect(row.unit).toBe("EUR per litre");
-    expect(row.note).toBe(
-      REVEAL_COPY.rescaledNote
-        .replace("{toUnit}", "EUR per litre")
-        .replace("{fromUnit}", "EUR per 1,000 litres"),
+    expect("note" in row).toBe(false);
+  });
+
+  it("builds the one rescale note from the stored and the displayed unit", () => {
+    expect(rescaleNoteText("EUR per 1,000 litres", "EUR per litre")).toBe(
+      "Shown in EUR per litre. Published in EUR per 1,000 litres.",
     );
+    expect(rescaleNoteText("USD per gallon", "USD per gallon")).toBeUndefined();
   });
 
   it("never changes the stored value when a rescale applies", () => {
@@ -138,16 +144,12 @@ describe("receiptFigureOf routes values through displayFigureValue (K1)", () => 
     const row = receiptFigureOf(eu, "now", "persona");
     expect(row.value).toBe("1.95");
     expect(row.unit).toBe("EUR per litre");
-    expect(row.note).toBe(
-      REVEAL_COPY.rescaledNote
-        .replace("{toUnit}", "EUR per litre")
-        .replace("{fromUnit}", "EUR per 1,000 litres"),
-    );
+    expect("note" in row).toBe(false);
   });
 
   it("uses the short retrieved date in the label, e.g. 'retrieved 30 Oct 2026'", () => {
     const recent = { ...OFFICIAL, retrieved_at: "2026-10-30T14:02:11Z" };
-    expect(receiptFigureOf(recent, "now", "persona").label).toBe("retrieved 30 Oct 2026");
+    expect(receiptFigureOf(recent, "now", "live").label).toBe("retrieved 30 Oct 2026");
     expect(figureLabel(recent, "then", "live")).toBe(
       "sealed with the letter, retrieved 30 Oct 2026",
     );

@@ -144,21 +144,47 @@ describe("Live_Letter receipts order (spec 10 C9.3)", () => {
     expect(pair).toBeLessThan(letter);
   });
 
-  it("shows the figures after the letter at stage 3", () => {
+  it("shows the figures before the letter at stage 3, so the letter folds after them", () => {
     const markup = renderReveal({ stage: 3 });
     const testimony = indexOfOrFail(markup, "data-author-testimony");
-    const letter = indexOfOrFail(markup, "data-letter-text");
     const figures = indexOfOrFail(markup, "data-figures-panel");
-    expect(testimony).toBeLessThan(letter);
-    expect(letter).toBeLessThan(figures);
+    const letter = indexOfOrFail(markup, "data-letter-text");
+    expect(testimony).toBeLessThan(figures);
+    expect(figures).toBeLessThan(letter);
   });
 
-  it("ends the column with the seal line and the end card, after the figures", () => {
+  it("ends the column with the letter, the seal line and the end card, after the figures", () => {
     const markup = renderReveal({ stage: 3 });
     const figures = indexOfOrFail(markup, "data-figures-panel");
+    const letter = indexOfOrFail(markup, "data-letter-text");
     const seal = indexOfOrFail(markup, "data-seal-line");
     const end = indexOfOrFail(markup, "data-end-card");
-    expect(figures).toBeLessThan(seal);
+    expect(figures).toBeLessThan(letter);
+    expect(letter).toBeLessThan(seal);
     expect(seal).toBeLessThan(end);
+  });
+
+  it("keeps the letter unfolded at stage 2, before any figures", () => {
+    const markup = renderReveal({ stage: 2 });
+    expect(markup).not.toContain("data-letter-disclosure");
+    expect(markup).not.toContain("data-figures-panel");
+  });
+
+  it("folds the letter closed after the figures at stage 3, with no motion", () => {
+    const markup = renderReveal({ stage: 3 });
+    const details = indexOfOrFail(markup, "data-letter-disclosure");
+    const figures = indexOfOrFail(markup, "data-figures-panel");
+    expect(details).toBeGreaterThan(figures);
+    // The disclosure is closed on first render: no `open` attribute.
+    expect(markup).toMatch(/<details[^>]*data-letter-disclosure=""[^>]*>/);
+    expect(markup).not.toMatch(/<details[^>]* open/);
+    // The folded letter mounts still, so no unfold runs under the closed disclosure.
+    expect(markup).toContain('data-light="static"');
+  });
+
+  it("folds the letter at stage 3 on a phone too", () => {
+    const markup = renderReveal({ stage: 3, phone: true });
+    expect(markup).toMatch(/<details[^>]*data-letter-disclosure=""/);
+    expect(markup).not.toMatch(/<details[^>]* open/);
   });
 });

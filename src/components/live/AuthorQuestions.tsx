@@ -2,6 +2,7 @@
 
 import { useEffect, useId, useRef, useState } from "react";
 
+import { KeepGroup } from "@/components/ui/KeepGroup";
 import { DESK_COPY } from "./desk/copy";
 import { DEFAULT_QUESTION } from "./occasions";
 import {
@@ -82,10 +83,14 @@ export function AuthorQuestions({
 
   useEffect(() => {
     if (pendingFocus === null) return;
+    // preventScroll: a press that adds or edits a row must not move the page
+    // (spec 16, requirement 1.1).
     if (pendingFocus.kind === "add") {
-      addRef.current?.focus();
+      addRef.current?.focus({ preventScroll: true });
     } else {
-      textareaRefs.current.get(pendingFocus.index)?.focus();
+      textareaRefs.current
+        .get(pendingFocus.index)
+        ?.focus({ preventScroll: true });
     }
     setPendingFocus(null);
   }, [pendingFocus, questions.length]);
@@ -134,7 +139,8 @@ export function AuthorQuestions({
             ? DESK_COPY.answerMissing.replace("{n}", String(n))
             : undefined;
         return (
-          <div
+          <KeepGroup
+            as="div"
             key={index}
             className={styles.questionRow}
             {...(text !== DEFAULT_QUESTION
@@ -192,7 +198,7 @@ export function AuthorQuestions({
                 {answerProblem}
               </p>
             ) : null}
-          </div>
+          </KeepGroup>
         );
       })}
       <p role="status" aria-live="polite" className={styles.visuallyHidden}>

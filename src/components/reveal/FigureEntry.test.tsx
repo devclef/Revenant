@@ -170,8 +170,9 @@ describe("FigureEntry shows the figures in the display rescale (R11.10)", () => 
     const note = REVEAL_COPY.rescaledNote
       .replace("{toUnit}", "EUR per litre")
       .replace("{fromUnit}", "EUR per 1,000 litres");
-    // Under the then row, under the now row, and on the change line (C8.4).
-    expect(count(html, note)).toBe(3);
+    // Under the then row and under the now row (C8.4). The change line no longer
+    // repeats it; ReceiptCard prints it once.
+    expect(count(html, note)).toBe(1);
   });
 });
 
@@ -359,7 +360,9 @@ describe("FigureEntry shows the change line in the rescaled unit (C8.4, eu-tomas
         rescale,
       }),
     );
-    expect(html).toContain(`${REVEAL_COPY.formulaLabel}: (1.9 - 1.8) / 1.8 x 100`);
+    expect(html).toContain(
+      `${REVEAL_COPY.formulaLabel}: (1.90000 - 1.80000) / 1.80000 x 100`,
+    );
     expect(html).not.toContain("(1900.00 - 1800.00)");
     expect(html).toContain(
       REVEAL_COPY.rescaledNote
@@ -377,8 +380,10 @@ describe("FigureEntry shows the change line in the rescaled unit (C8.4, eu-tomas
         rescale,
       }),
     );
-    // Per litre, EUR per litre has display precision 2: +0.10, not +100.00 or +0.1.
-    expect(html).toContain("+0.10");
+    // Per litre, EUR per litre has display precision 2: 0.10, not 100.00 or 0.1.
+    // The change line prints the unsigned magnitude.
+    expect(html).toContain("0.10");
+    expect(html).not.toContain("+0.10");
     expect(html).not.toContain("+100.00");
   });
 });

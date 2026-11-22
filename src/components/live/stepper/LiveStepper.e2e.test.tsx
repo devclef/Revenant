@@ -293,12 +293,12 @@ describe("Live_Stepper end to end: Write to Receipts (spec 10 C2, C9.2, C9.3)", 
     expect(typed).toBeLessThan(letter);
   });
 
-  it("Receipts show the figures after the letter at stage 3", () => {
+  it("Receipts show the figures before the letter at stage 3, so the letter folds after them", () => {
     const markup = renderReceipts(3);
     const testimony = indexOfOrFail(markup, "data-author-testimony");
-    const letter = indexOfOrFail(markup, "data-letter-text");
     const figures = indexOfOrFail(markup, "data-figures-panel");
-    expect(testimony).toBeLessThan(letter);
-    expect(letter).toBeLessThan(figures);
+    const letter = indexOfOrFail(markup, "data-letter-text");
+    expect(testimony).toBeLessThan(figures);
+    expect(figures).toBeLessThan(letter);
   });
 });

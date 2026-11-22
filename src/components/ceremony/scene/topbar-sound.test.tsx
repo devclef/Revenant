@@ -14,7 +14,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import { CEREMONY_COPY } from "../copy";
-import { SceneShell } from "./SceneShell";
+import { SceneShell, type SceneShellProps } from "./SceneShell";
 import { TopBar, type TopBarSound } from "./TopBar";
 
 let skipActive = false;
@@ -158,5 +158,67 @@ describe("the sound control keeps the Calm look at both widths (P5.2)", () => {
     expect(scene).toMatch(
       /@media \(max-width: 599\.98px\) \{[\s\S]*?\.control \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;/,
     );
+  });
+});
+
+describe("the sound control on a plain page (spec 09 sound placement)", () => {
+  const plain = (sound: boolean | undefined, controls?: "calm" | "none"): string => {
+    const props: SceneShellProps = {
+      variant: "plain",
+      demo: false,
+      controls,
+      sound,
+      children: createElement("p", null, "PLAIN_CONTENT"),
+    };
+    return renderToStaticMarkup(createElement(SceneShell, props));
+  };
+
+  it("renders no sound control on a plain page that does not ask for it", () => {
+    expect(plain(undefined)).not.toContain("data-topbar-sound");
+  });
+
+  it("renders the sound control after Calm and before the content when the page asks for it", () => {
+    const html = plain(true);
+    const calm = at(html, 'data-topbar-slot="calm"');
+    const sound = at(html, "data-topbar-sound");
+    const content = at(html, "PLAIN_CONTENT");
+    expect(calm).toBeGreaterThanOrEqual(0);
+    expect(sound).toBeGreaterThan(calm);
+    expect(content).toBeGreaterThan(sound);
+  });
+
+  it("keeps the sound slot reserved and hidden until the Opening_Flow has mounted", () => {
+    expect(plain(true)).toMatch(/data-topbar-sound[^>]*visibility:hidden/);
+  });
+
+  it("shows the sound slot in the bar on the letter page, where Calm and Skip are off", () => {
+    const html = plain(true, "none");
+    expect(html).toMatch(/data-topbar-sound/);
+    expect(html).not.toMatch(/data-topbar-slot="calm"/);
+    expect(html).not.toMatch(/data-topbar-slot="skip"/);
+  });
+
+  it("does not hide a sound control that is not reserved", () => {
+    const html = bar({ enabled: false, onChange: () => {}, reserved: false }, false);
+    expect(html).toContain("data-topbar-sound");
+    expect(html).not.toContain("visibility:hidden");
+  });
+
+  it("reports the Opening_Flow mount through SoundSlotContext, which the shell listens to", () => {
+    const flow = readFileSync(
+      resolve(__dirname, "..", "..", "reveal", "OpeningFlow.tsx"),
+      "utf8",
+    );
+    const shell = readFileSync(resolve(__dirname, "SceneShell.tsx"), "utf8");
+    expect(flow).toMatch(/useContext\(SoundSlotContext\)/);
+    expect(flow).toMatch(/reportSoundSlot\(\)/);
+    expect(shell).toMatch(/setSoundSlotReady\(true\)/);
+  });
+
+  it("passes sound to the plain Scene on the live demo page and the letter page", () => {
+    const live = readFileSync(resolve(__dirname, "..", "..", "..", "app", "demo", "live", "page.tsx"), "utf8");
+    const letter = readFileSync(resolve(__dirname, "..", "..", "..", "app", "l", "[id]", "page.tsx"), "utf8");
+    expect(live).toMatch(/variant="plain"[^>]*\bsound\b/);
+    expect(letter).toMatch(/variant="plain"[^>]*\bsound\b/);
   });
 });

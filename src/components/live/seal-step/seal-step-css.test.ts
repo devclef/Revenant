@@ -149,3 +149,33 @@ describe("Press_Envelope (spec 14, S6.1 to S6.5)", () => {
     );
   });
 });
+
+describe("Seal step intro block (spec 16, task 12, from 900 px)", () => {
+  const stepTsx = readFileSync(join(here, "SealStep.tsx"), "utf8");
+  const mediaBody =
+    /@media \(min-width: 900px\)\s*\{([\s\S]*?)\n\}/.exec(stepCss)?.[1] ?? "";
+
+  it("finds the warning in the spanning intro block from 900 px", () => {
+    expect(mediaBody).toMatch(/\.intro\s*\{[^}]*grid-column:\s*1 \/ -1;/);
+    const intro = stepTsx.indexOf('data-seal-intro=""');
+    const text = stepTsx.indexOf('data-seal-text=""');
+    expect(intro).toBeGreaterThan(-1);
+    expect(text).toBeGreaterThan(intro);
+    const introBlock = stepTsx.slice(intro, text);
+    expect(introBlock).toContain('data-warning-text=""');
+    expect(introBlock).toContain("data-step-heading");
+    expect(introBlock).toContain("LIVE_COPY.sealParagraph");
+  });
+
+  it("puts no disclosure around the warning", () => {
+    const intro = stepTsx.indexOf('data-seal-intro=""');
+    const text = stepTsx.indexOf('data-seal-text=""');
+    expect(stepTsx.slice(intro, text)).not.toMatch(/<details|<summary/);
+  });
+
+  it("keeps the single column below 900 px", () => {
+    expect(ruleBody(stepCss, ".step")).toMatch(
+      /grid-template-columns:\s*minmax\(0,\s*1fr\);/,
+    );
+  });
+});

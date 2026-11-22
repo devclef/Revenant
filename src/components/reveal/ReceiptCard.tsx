@@ -42,8 +42,6 @@ export type ReceiptFigure = {
   region: string;
   /** The provenance label, for example "historical record, retrieved …". */
   label: string;
-  /** A note shown after the row, for example a display rescale note. */
-  note?: string;
 };
 
 /** The source control at the foot of the card. */
@@ -107,6 +105,11 @@ export type ReceiptCardProps = {
    * `nowSource` are not drawn. The answer and the source control still are.
    */
   single?: boolean;
+  /**
+   * The display-rescale note for this card (R11.10), printed once. Absent when
+   * the figure is shown in the unit it was sealed in.
+   */
+  rescaleNote?: string;
 };
 
 function isMessage(
@@ -176,9 +179,6 @@ function FigureContent({
         <span className={styles.region}>{figure.region}</span>
         {" · "}
         <span className={styles.fixtureLabel}>{figure.label}</span>
-        {figure.note === undefined ? null : (
-          <span className={styles.period}> · {figure.note}</span>
-        )}
       </span>
     </>
   );
@@ -250,6 +250,7 @@ export function ReceiptCard({
   formula,
   primary = false,
   single = false,
+  rescaleNote,
 }: ReceiptCardProps) {
   if (single) {
     return (
@@ -269,6 +270,12 @@ export function ReceiptCard({
         <p className={styles.figRow} data-receipt-row="single">
           <FigureContent role="single" figure={then} />
         </p>
+
+        {rescaleNote === undefined ? null : (
+          <p className={styles.period} data-rescale-note="">
+            {rescaleNote}
+          </p>
+        )}
 
         {displayPrecisionForUnit(unit) === undefined ? null : (
           <p className={styles.period} data-rounded-note="">
@@ -317,6 +324,12 @@ export function ReceiptCard({
 
       {nowNote === undefined ? null : (
         <p className={styles.period}>{nowNote}</p>
+      )}
+
+      {rescaleNote === undefined ? null : (
+        <p className={styles.period} data-rescale-note="">
+          {rescaleNote}
+        </p>
       )}
 
       {displayPrecisionForUnit(unit) === undefined ? null : (

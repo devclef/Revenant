@@ -104,6 +104,13 @@ const RING_PATHS: readonly string[] = Array.from({ length: HOLD_PROGRESS_SEGMENT
 export type SealBreakProps = {
   /** The persona key that seeds the WaxSeal's decorative pattern (R8.4). */
   patternKey: string;
+  /**
+   * Whether the reader's own answers are recorded for this letter. True shows
+   * `testimonyRecorded` above the hint. False, for the text persona (Priya),
+   * shows `recollectionsRead`, because no answer of the reader's is recorded.
+   * Each letter kind gets exactly one of the two lines.
+   */
+  recorded: boolean;
   /** The seal's Fingerprint hash: the relief is drawn from it. Absent keeps the Blank_Signet (U5.1). */
   envelopeHash?: string;
   /** The seal controller from `useSealBreak`, owned by OpeningFlow. */
@@ -236,6 +243,7 @@ function flakeStyle(index: number): CSSProperties {
  */
 export function SealBreak({
   patternKey,
+  recorded,
   envelopeHash,
   seal,
   calm: calmProp,
@@ -347,11 +355,15 @@ export function SealBreak({
     </HeldSeal>
   );
 
-  // The testimony line sits above the hint, as drawn on `break` (spec 15 R12.1).
+  // The break line sits above the hint, as drawn on `break` (spec 15 R12.1).
+  // One line per letter kind: the recorded line when the reader's answers are
+  // kept, the recollectionsRead line for the text persona.
   const hint = (
     <>
       <p className={styles.hint} data-break-line="">
-        {CEREMONY_COPY.testimonyRecorded}
+        {recorded
+          ? CEREMONY_COPY.testimonyRecorded
+          : CEREMONY_COPY.recollectionsRead}
       </p>
       <p className={styles.hint}>{CEREMONY_COPY.sealHint}</p>
     </>

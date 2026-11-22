@@ -254,6 +254,7 @@ describe("focusable elements under aria-hidden, every Stage (spec 11 X5.4)", () 
             null,
             createElement(SealBreak, {
               patternKey: "maya",
+              recorded: true,
               seal: stubSeal(),
               calm: false,
               hasFigures: true,

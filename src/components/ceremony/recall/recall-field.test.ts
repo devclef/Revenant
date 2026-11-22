@@ -3,14 +3,17 @@ import fc from "fast-check";
 import {
   canAdvance,
   canAdvanceText,
+  checkField,
   draftTextFor,
   initialField,
+  isUnreadable,
   pickReading,
   resolvedValue,
   setFromScale,
   textCodePoints,
   textValidity,
   typeText,
+  unreadableShown,
   type FieldState,
 } from "./recall-field";
 import { TEXT_ANSWER_MAX_CODE_POINTS } from "@/lib/recall/limits";
@@ -238,5 +241,105 @@ describe("canAdvanceText: a text question is ready when valid or No answer is se
     const question = PAYLOAD_TEXT_1.recall_questions[0];
     expect(question.answer_type).toBe("text");
     expect(canAdvanceText(question.text, false)).toBe(true);
+  });
+});
+
+// Feature: 08-judge-polish, Task 1 (checked state and unreadable check, R32.7, R32.13).
+
+describe("isUnreadable", () => {
+  it("is true for text that cannot be read, such as 12a or -3", () => {
+    expect(isUnreadable("12a")).toBe(true);
+    expect(isUnreadable("-3")).toBe(true);
+  });
+
+  it("is true for a number longer than 40 characters", () => {
+    expect(isUnreadable("1".repeat(41))).toBe(true);
+  });
+
+  it("is false for a number still being written, such as 4.", () => {
+    expect(isUnreadable("4.")).toBe(false);
+    expect(isUnreadable("4,")).toBe(false);
+    expect(isUnreadable(" 4. ")).toBe(false);
+  });
+
+  it("is false for empty text", () => {
+    expect(isUnreadable("")).toBe(false);
+    expect(isUnreadable("   ")).toBe(false);
+  });
+
+  it("is false for a readable value and for an ambiguous entry", () => {
+    expect(isUnreadable("3.47")).toBe(false);
+    expect(isUnreadable("1.585")).toBe(false);
+  });
+});
+
+describe("checked and the unreadable message", () => {
+  it("starts unchecked, so no message shows for a new field", () => {
+    const s = initialField({ text: "", noAnswer: false });
+    expect(s.checked).toBe(false);
+    expect(unreadableShown(s)).toBe(false);
+  });
+
+  it("does not show the message for unreadable text until the check runs", () => {
+    const s = typed(empty, "12a");
+    expect(s.checked).toBe(false);
+    expect(unreadableShown(s)).toBe(false);
+  });
+
+  it("shows the message for unreadable text once the check runs", () => {
+    const s = checkField(typed(empty, "12a"));
+    expect(s.checked).toBe(true);
+    expect(unreadableShown(s)).toBe(true);
+    expect(canAdvance(s, false)).toBe(false);
+  });
+
+  it("keeps checked while the text stays unreadable", () => {
+    const checked = checkField(typed(empty, "12a"));
+    const s = typed(checked, "12ab");
+    expect(s.checked).toBe(true);
+    expect(unreadableShown(s)).toBe(true);
+  });
+
+  it("clears checked when the text becomes readable again", () => {
+    const checked = checkField(typed(empty, "12a"));
+    const s = typed(checked, "12");
+    expect(s.checked).toBe(false);
+    expect(unreadableShown(s)).toBe(false);
+  });
+
+  it("does not show the message for 4. while focused, and shows it after checkField", () => {
+    // Typing "4." is exempt (typeText). The check on blur reads the parse, so "4." is unreadable.
+    const typing = typed(empty, "4.");
+    expect(typing.checked).toBe(false);
+    expect(unreadableShown(typing)).toBe(false);
+
+    const s = checkField(typing);
+    expect(s.checked).toBe(true);
+    expect(unreadableShown(s)).toBe(true);
+  });
+
+  it("keeps empty text unchecked", () => {
+    const s = checkField(typed(empty, ""));
+    expect(s.checked).toBe(false);
+    expect(unreadableShown(s)).toBe(false);
+  });
+
+  it("clears checked when a reading is picked", () => {
+    // An ambiguous field is never unreadable, so set checked by hand to prove
+    // that pickReading clears it.
+    const ambiguous: FieldState = {
+      ...typed(empty, "1.585"),
+      checked: true,
+    };
+    const s = pickReading(ambiguous, "decimal");
+    expect(s.checked).toBe(false);
+  });
+
+  it("clears checked when the scale moves", () => {
+    const checked = checkField(typed(empty, "12a"));
+    const s = setFromScale(checked, "3");
+    expect(s.checked).toBe(false);
+    expect(unreadableShown(s)).toBe(false);
+    expect(s.mark).toBe("3");
   });
 });

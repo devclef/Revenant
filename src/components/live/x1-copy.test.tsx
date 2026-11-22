@@ -32,7 +32,7 @@ const X1_STRINGS = {
  *
  * Not in this fixture, because `all` did not render them at ba2cd6c:
  * - `receiptsAction`: its button sat under `section === "write"` only.
- * - `answerInLetter`: no component rendered it; the tests only assert it is absent.
+ * - `answerInLetter`: deleted from LIVE_COPY by spec 16 (Write desk), with no replacement.
  */
 const BA2CD6C_ALL_KEYS = {
   receiptsSummary: "Receipts",
@@ -42,11 +42,10 @@ const BA2CD6C_ALL_KEYS = {
     'Your device will ask for the passkey twice. Each time, you press a button first. The passkey will be named "Revenant demo" in your passkey manager.',
 } as const;
 
-/** The six keys X1.5 names. Their values are the ba2cd6c copy, unchanged by X1. */
+/** The X1.5 keys. Their values are the ba2cd6c copy, unchanged by X1. `answerInLetter` was deleted by spec 16. */
 const X1_5_VALUES: Record<string, string> = {
   receiptsAction: "Add a receipt",
   receiptsSummary: "Receipts",
-  answerInLetter: "Answer them in your letter too, in your own words.",
   authorQuestionAdd: "Add a question",
   occasionLegend: "What is it about?",
   passkeySteps: BA2CD6C_ALL_KEYS.passkeySteps,
@@ -142,8 +141,8 @@ describe("X1.1 to X1.4: exact wording", () => {
 });
 
 describe("X1.5: WriteForm keys by section", () => {
-  it("the six X1.5 keys are all LIVE_COPY keys", () => {
-    expect(X1_5_KEYS).toHaveLength(6);
+  it("the five X1.5 keys still in LIVE_COPY are all present", () => {
+    expect(X1_5_KEYS).toHaveLength(5);
     for (const key of X1_5_KEYS) {
       expect(LIVE_COPY).toHaveProperty(key);
     }

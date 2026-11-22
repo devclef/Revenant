@@ -49,7 +49,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
 
 ## Tasks
 
-- [ ] 1. Keep_Hook fix and the Press_Test
+- [x] 1. Keep_Hook fix and the Press_Test
   - Agent: `frontend-dev` · Depends on: none · Estimated size: M, ~900 changed lines
   - Scope: `src/components/ui/use-keep-in-visual-viewport.ts`, `src/components/ui/KeepGroup.tsx` (new), `src/components/live/stepper/LiveStepper.tsx`, `src/components/live/desk/QuestionRow.tsx`, `desk/LetterSheet.tsx`, `src/components/live/WriteForm.tsx`, `AuthorQuestions.tsx`, `desk/OwnNumberView.tsx`, `SelfReportedRows.tsx`, `UnlockView.tsx`, `src/test/integration/press-test.test.ts` (new), `press-test-helpers.ts` (new), `live-walk-helpers.ts`, `live-walk.test.ts` (shared launch helpers only), `package.json` (the `live-walk` script), and the `*.test.ts(x)` next to each.
   - Design sections: "1. Keep_Hook", "2. Press_Test", Properties 1 and 2.
@@ -78,7 +78,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Earlier-spec tests changed or retired: `use-keep-in-visual-viewport.hook.test.ts` (focusin and resize cases expect a scroll on any focus), `use-keep-in-visual-viewport.test.ts`, any `LiveStepper*.test.tsx` that asserts the `primaryRef` call; name each.
   - Validation: `bash scripts/check.sh`; `WALK=1 npm run live-walk` against a local production build.
 
-- [ ] 2. Retired-word scanner that reads string values
+- [x] 2. Retired-word scanner that reads string values
   - Agent: `platform-dev` · Depends on: 1 · Estimated size: S, ~400 changed lines
   - Scope: `src/test/user-strings.ts` (new), `src/test/retired-phrases.test.ts`, and the `*.test.ts` next to them.
   - Design sections: "4. Retired-word scanner", Property 10.
@@ -96,7 +96,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Earlier-spec tests changed or retired: `retired-phrases.test.ts` (`AVOIDED_WORDS` now reads values only); name any other.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 3. Remember and the Remembered_Phrase
+- [x] 3. Remember and the Remembered_Phrase
   - Agent: `frontend-dev` · Depends on: 2 · Estimated size: M, ~900 changed lines
   - Scope: `src/components/brand/copy.ts`, `src/components/ceremony/copy.ts`, `src/components/reveal/copy.ts`, `src/components/live/copy.ts`, `src/components/live/desk/copy.ts` (`receiptIntro` only), `src/components/landing/copy.ts` (no change to `noSealBody`, task 13 does it), `src/components/ceremony/recall/RecallPager.tsx`, `src/test/integration/live-walk-helpers.ts` (step names), `src/test/retired-phrases.test.ts` (pending list), and the `*.test.ts(x)` next to each.
   - Design sections: "3. Remember, the Remembered_Phrase and the break line" (not the break line), "Where the code differs from the requirements" items 1 to 5.
@@ -118,7 +118,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Copy evidence: tone-check for every changed copy file.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 4. The headline
+- [x] 4. The headline
   - Agent: `frontend-dev` · Depends on: 2 · Estimated size: S, ~300 changed lines
   - Scope: `src/components/brand/copy.ts` (`tagline`), `src/components/ceremony/scene/SceneHeadline.tsx`, `src/components/landing/LandingHero.tsx`, `src/components/landing/landing.module.css`, `src/app/opengraph-image.tsx`, `src/components/ceremony/ASSETS.md`, `src/test/retired-phrases.test.ts`, and the tests named in 5.7.
   - Design sections: "5. Headline".
@@ -134,7 +134,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Copy evidence: tone-check for `brand/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 5. Write says you answer now
+- [x] 5. Write says you answer now
   - Agent: `frontend-dev` · Depends on: 3 · Estimated size: S, ~200 changed lines
   - Scope: `src/components/live/desk/copy.ts`, `src/components/live/copy.ts`, `src/components/live/AuthorQuestions.tsx`, and the `*.test.ts(x)` next to each.
   - Design sections: "6. Write desk strings".
@@ -150,7 +150,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Copy evidence: tone-check for `live/copy.ts` and `desk/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 6. Published_Precision, formula inputs and unsigned magnitudes
+- [x] 6. Published_Precision, formula inputs and unsigned magnitudes
   - Agent: `data-dev` · Depends on: 1 · Estimated size: S, ~400 changed lines
   - Scope: `src/lib/figures/published-precision.ts` (new), `src/lib/figures/formula-input.ts` (new), `src/lib/figures/decimal.ts` (`roundDecimal`), `src/lib/figures/format-change.ts`, `src/lib/figures/index.ts`, and the `*.test.ts` next to each.
   - Design sections: "8. Change line, formula and Published_Precision" (the `src/lib/figures` parts), Properties 5 and 6.
@@ -175,7 +175,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Earlier-spec tests changed or retired: `format-change*.test.ts` if it asserts the exact shape of `ChangeDisplay`; name any.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 7. The figure card: At opening, the change line, the formula and one rescale note
+- [x] 7. The figure card: At opening, the change line, the formula and one rescale note
   - Agent: `frontend-dev` · Depends on: 3, 6 · Estimated size: M, ~900 changed lines
   - Scope: `src/components/reveal/copy.ts`, `src/components/ceremony/copy.ts`, `src/components/reveal/ChangeLine.tsx`, `formula.ts`, `FigureEntry.tsx`, `FigureLine.tsx`, `change-display.ts`, `ReceiptCard.tsx`, `FiguresThenNow.tsx`, `src/components/ceremony/figures/NumberLine.tsx`, and the `*.test.ts(x)` next to each.
   - Design sections: "7. At opening", "8. Change line, formula and Published_Precision" (the reveal parts), "9. One rescale note per card", Properties 3, 4, 7 and 13.
@@ -210,7 +210,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Copy evidence: tone-check for `reveal/copy.ts` and `ceremony/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 8. Receipts order, the live column and sound in the Top_Bar
+- [x] 8. Receipts order, the live column and sound in the Top_Bar
   - Agent: `frontend-dev` · Depends on: 7 · Estimated size: M, ~800 changed lines
   - Scope: `src/components/reveal/Reveal.tsx`, `src/components/reveal/receipts.module.css`, `src/components/ceremony/letter/LetterBlock.tsx` (only if `collapsible` needs a change), `src/components/ceremony/CeremonyRoot.tsx`, `src/components/ceremony/scene/SceneShell.tsx`, `src/components/ceremony/scene/` Top_Bar sound slot, `src/components/reveal/OpeningFlow.tsx`, `src/app/demo/live/**`, `src/app/l/[id]/**`, and the `*.test.ts(x)` next to each.
   - Design sections: "10. Receipts order and live step 6", Property 8.
@@ -231,7 +231,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Earlier-spec tests changed or retired: `Reveal.receipts-order.test.tsx`, `Reveal.no-figures.test.tsx`, `CeremonyRoot.test.tsx`, `topbar-sound.test.tsx`, `LetterBlock*.test.tsx` if it pins the phone-only fold; name each.
   - Validation: `bash scripts/check.sh`; `node scripts/check-js-budget.mjs` after `npm run build` (the Top_Bar sound slot touches `/demo/live` and `/l/{id}`).
 
-- [ ] 9. The number field waits until you finish
+- [x] 9. The number field waits until you finish
   - Agent: `frontend-dev` · Depends on: 3 · Estimated size: S, ~400 changed lines
   - Scope: `src/components/ceremony/recall/recall-field.ts`, `RecallPager.tsx`, `src/components/ceremony/copy.ts` (`numberUnreadable` only if 11.7 calls for it), and the `*.test.ts(x)` next to each.
   - Design sections: "11. Number field", Property 9, item 11.
@@ -249,7 +249,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Earlier-spec tests changed or retired: `RecallPager.field.test.tsx` (message on first paint of "12a"), `recall-field*.test.ts`; name each.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 10. Break the seal says what happened
+- [x] 10. Break the seal says what happened
   - Agent: `frontend-dev` · Depends on: 3 · Estimated size: S, ~250 changed lines
   - Scope: `src/components/ceremony/copy.ts`, `src/components/ceremony/seal/SealBreak.tsx`, `src/components/reveal/Reveal.tsx` (the `recorded` prop only), `src/test/retired-phrases.test.ts` (pending list), and the `*.test.ts(x)` next to each.
   - Design sections: "3. Remember, the Remembered_Phrase and the break line" (the break line).
@@ -265,7 +265,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Copy evidence: tone-check for `ceremony/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 11. The persona Remember step names its date once
+- [x] 11. The persona Remember step names its date once
   - Agent: `frontend-dev` · Depends on: 9, 10 · Estimated size: S, ~350 changed lines
   - Scope: `src/components/ceremony/recall/RecallPager.tsx`, `RecallReader.tsx`, `src/components/reveal/TestifyContext.tsx`, `ReadingTestify` (its file under `src/components/reveal/`), `src/components/reveal/copy.ts`, and the `*.test.ts(x)` next to each.
   - Design sections: "12. Persona date once", item 6, Property 11.
@@ -284,7 +284,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Copy evidence: tone-check for `reveal/copy.ts` if changed.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 12. Press the seal, quick and solemn
+- [x] 12. Press the seal, quick and solemn
   - Agent: `frontend-dev` · Depends on: 5 · Estimated size: S, ~450 changed lines
   - Scope: `src/components/live/copy.ts`, `src/components/live/press/copy.ts`, `src/components/live/press/press-status.ts`, `src/components/live/seal-step/seal-steps.ts`, `src/components/live/seal-step/seal-step.module.css`, the Seal step component under `src/components/live/seal-step/`, and the `*.test.ts(x)` next to each.
   - Design sections: "13. Press the seal", items 8 and 9, Property 12.
@@ -305,7 +305,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Copy evidence: tone-check for `live/copy.ts` and `press/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 13. What we resurrected, short
+- [x] 13. What we resurrected, short
   - Agent: `frontend-dev` · Depends on: 3, 4 · Estimated size: S, ~300 changed lines
   - Scope: `src/components/landing/copy.ts`, `src/components/landing/ResurrectionSection.tsx`, `src/components/landing/NoSealSection.tsx`, `src/components/landing/landing.module.css` if needed, `src/test/retired-phrases.test.ts` (pending list), and the `*.test.ts(x)` next to each.
   - Design sections: "14. Home section".
@@ -323,7 +323,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Copy evidence: tone-check for `landing/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 14. README and video script
+- [x] 14. README and video script
   - Agent: `platform-dev` · Depends on: 4, 8, 13 · Estimated size: S, ~300 changed lines
   - Scope: `README.md`, `docs/video-script.md`, `src/test/docs-wording.test.ts` (new).
   - Design sections: "15. QA tooling and docs" (the docs part).
