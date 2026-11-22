@@ -83,6 +83,7 @@ export function LetterCard({
       data-surface="paper"
       data-seal-hash={fingerprint !== null ? envelopeHash : undefined}
       data-paper=""
+      data-demo-label={showDemoLabel ? "" : undefined}
       data-wax-seal={showSeal ? "" : undefined}
     >
       {showDemoLabel ? <DemoLabel /> : null}

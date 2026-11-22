@@ -125,6 +125,7 @@ describe("LetterCard", () => {
   it("keeps the Demo label and the seal by default", () => {
     const out = html();
     expect(out).toContain("data-demo-label");
+    expect(out).toContain('data-demo-label="" data-wax-seal=""');
     expect(out).toContain('data-wax-seal=""');
     expect(out).toContain('data-surface="paper"');
   });
@@ -155,19 +156,6 @@ describe("LetterCard", () => {
       }),
     );
     expect(out).not.toContain("data-wax-seal");
-    expect(out).not.toMatch(/<svg[^>]*data-seal-hash/);
-  });
-
-  it("omits the wax seal when showSeal is false", () => {
-    const out = renderToStaticMarkup(
-      createElement(LetterCard, {
-        letterId: LETTER_ID,
-        appOrigin: APP_ORIGIN,
-        opensAt: OPENS_AT,
-        envelopeHash: ENVELOPE_HASH,
-        showSeal: false,
-      }),
-    );
     expect(out).not.toMatch(/<svg[^>]*data-seal-hash/);
     // The rest of the card stays.
     expect(out).toContain(LIVE_COPY.letterCardTitle);
