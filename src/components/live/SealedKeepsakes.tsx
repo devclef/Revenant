@@ -24,6 +24,8 @@ export interface SealedKeepsakesProps {
   envelopeHash: string;
   /** Draw the wax seal on the letter card. Defaults to true. */
   showSeal?: boolean;
+  /** Show the Demo label on the letter card. Defaults to true. */
+  showDemoLabel?: boolean;
 }
 
 export function SealedKeepsakes({
@@ -32,6 +34,7 @@ export function SealedKeepsakes({
   opensAt,
   envelopeHash,
   showSeal = true,
+  showDemoLabel = true,
 }: SealedKeepsakesProps) {
   function onDownloadIcs(): void {
     const text = buildKeepsakeIcs({
@@ -52,6 +55,7 @@ export function SealedKeepsakes({
         opensAt={opensAt}
         envelopeHash={envelopeHash}
         showSeal={showSeal}
+        showDemoLabel={showDemoLabel}
       />
       <div className={styles.noPrint}>
         <button type="button" className={styles.secondary} onClick={onDownloadIcs} data-live-ics>

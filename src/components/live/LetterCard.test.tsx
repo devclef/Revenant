@@ -122,6 +122,42 @@ describe("LetterCard", () => {
     expect(html()).toMatch(/<svg[^>]*data-seal-hash="[^"]*"/);
   });
 
+  it("keeps the Demo label and the seal by default", () => {
+    const out = html();
+    expect(out).toContain("data-demo-label");
+    expect(out).toContain('data-wax-seal=""');
+    expect(out).toContain('data-surface="paper"');
+  });
+
+  it("omits data-demo-label when showDemoLabel is false", () => {
+    const out = renderToStaticMarkup(
+      createElement(LetterCard, {
+        letterId: LETTER_ID,
+        appOrigin: APP_ORIGIN,
+        opensAt: OPENS_AT,
+        envelopeHash: ENVELOPE_HASH,
+        showDemoLabel: false,
+      }),
+    );
+    expect(out).not.toContain("data-demo-label");
+    expect(out).not.toContain(DEMO_COPY.demoLabel);
+    expect(out).toContain(LIVE_COPY.letterCardTitle);
+  });
+
+  it("omits the seal and its data-wax-seal marker when showSeal is false", () => {
+    const out = renderToStaticMarkup(
+      createElement(LetterCard, {
+        letterId: LETTER_ID,
+        appOrigin: APP_ORIGIN,
+        opensAt: OPENS_AT,
+        envelopeHash: ENVELOPE_HASH,
+        showSeal: false,
+      }),
+    );
+    expect(out).not.toContain("data-wax-seal");
+    expect(out).not.toMatch(/<svg[^>]*data-seal-hash/);
+  });
+
   it("omits the wax seal when showSeal is false", () => {
     const out = renderToStaticMarkup(
       createElement(LetterCard, {

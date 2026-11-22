@@ -40,6 +40,8 @@ export interface LetterCardProps {
   envelopeHash: string;
   /** Draw the wax seal at the top of the card. Defaults to true. */
   showSeal?: boolean;
+  /** Show the Demo label on the card. Defaults to true. */
+  showDemoLabel?: boolean;
 }
 
 export function LetterCard({
@@ -48,6 +50,7 @@ export function LetterCard({
   opensAt,
   envelopeHash,
   showSeal = true,
+  showDemoLabel = true,
 }: LetterCardProps) {
   const headingId = useId();
   const linkText = letterLinkText(appOrigin, letterId);
@@ -80,8 +83,9 @@ export function LetterCard({
       data-surface="paper"
       data-seal-hash={fingerprint !== null ? envelopeHash : undefined}
       data-paper=""
+      data-wax-seal={showSeal ? "" : undefined}
     >
-      <DemoLabel />
+      {showDemoLabel ? <DemoLabel /> : null}
       {/* The seal is drawn from the same hash as the Fingerprint below (U4.1, U5.4). */}
       {showSeal ? <WaxSeal hash={envelopeHash} size={72} className={styles.cardSeal} /> : null}
       <h2 id={headingId} className={styles.cardTitle}>
