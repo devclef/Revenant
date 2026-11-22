@@ -66,7 +66,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - Add a property test over random outline style, width, colour alpha and interactive flag: FR1 fails exactly when a non-interactive element has a visible outline. Run the file until it passes.
     - _Requirements: 2.8, 2.10, 3.10_
 
-- [ ] 3. D5: "Previous question" readable on the recall card
+- [x] 3. D5: "Previous question" readable on the recall card
   - Agent: `frontend-dev` · Depends on: none · Estimated size: S, ~100 changed lines
   - Scope: `src/components/ceremony/recall/NavRow.module.css`, `src/components/ceremony/recall/nav-row-colour.test.ts` (new).
   - Design sections: "D5 and D2 contrast / CT1".
