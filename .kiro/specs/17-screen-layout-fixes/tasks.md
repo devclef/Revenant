@@ -99,7 +99,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - Add a property test over random colour pairs and font sizes: CT1 agrees with the WCAG formula and the large-text threshold switch. Run the file until it passes.
     - _Requirements: 2.3, 2.7, 2.10_
 
-- [ ] 5. D3: receipts column at least the viewport minus 48 px on a phone
+- [x] 5. D3: receipts column at least the viewport minus 48 px on a phone
   - Agent: `frontend-dev` · Depends on: none · Estimated size: M, ~300 changed lines
   - Scope: `src/components/ceremony/scene/scene.module.css`, `src/components/reveal/receipts.module.css`, the TSX files under `src/components/reveal/`, `src/components/ceremony/` and `src/components/live/` that render the receipts, recall, write and seal columns (attribute only), `src/components/ceremony/scene/content-column.test.ts` (new).
   - Design sections: "D3 / CW1".
