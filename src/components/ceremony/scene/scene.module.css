@@ -653,6 +653,7 @@
      constants-css.test.ts checks this value equals MARKS_COLUMN_MAX. */
   .personaColumn:has(> :is([data-ceremony="marks"], [data-ceremony="seal"])) {
     max-width: min(28rem, 40vw);
+    padding-block-end: var(--soil-clear);
   }
 
   /* Spec 08 R3.2: after the Ghost leaves (letter, figures, close) the column
