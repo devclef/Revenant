@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 import { goFailures, rectOverlap } from "../../tools/qa/layout-rules-17.mjs";
@@ -13,6 +15,11 @@ const TEXT_OVERLAPPING: Rect = { left: 36, top: 206, right: 348, bottom: 224 };
 
 // The same line moved below the drawn bottom of the Ghost.
 const TEXT_BELOW: Rect = { left: 36, top: 216, right: 348, bottom: 234 };
+
+// The Ghost's drawn box with the hem extended downward: the bare box bottom at 208 plus a
+// 6 px hem extent gives 214. The main-branch text (top 206) still overlaps it, and the
+// TEXT_BELOW line (top 216) still clears it. The 6 px value is a fixture, not a measurement.
+const GHOST_WITH_HEM: Rect = { left: 164, top: 143, right: 220, bottom: 214 };
 
 describe("GO1 text and controls clear of the Ghost", () => {
   it("fails the failing main reading, where text crosses the Ghost box", () => {
@@ -48,6 +55,37 @@ describe("GO1 text and controls clear of the Ghost", () => {
     expect(failures).toHaveLength(1);
     expect(failures[0].layer).toBe("text");
     expect(failures[0].message).toContain("card body under opaque panel");
+  });
+
+  it("fails the main-branch text against the extended drawn box that includes the hem", () => {
+    const failures = goFailures({
+      ghost: GHOST_WITH_HEM,
+      text: [{ label: "Your letter is sealed", rect: TEXT_OVERLAPPING }],
+      controls: [],
+    });
+    expect(failures).toHaveLength(1);
+    expect(failures[0].layer).toBe("text");
+    expect(failures[0].message).toContain("Your letter is sealed");
+  });
+
+  it("passes TEXT_BELOW against the extended drawn box", () => {
+    const failures = goFailures({
+      ghost: GHOST_WITH_HEM,
+      text: [{ label: "Your letter is sealed", rect: TEXT_BELOW }],
+      controls: [],
+    });
+    expect(failures).toEqual([]);
+  });
+
+  it("reads the glow and hem extents into the Ghost rect in GO1_READ", () => {
+    const source = readFileSync(resolve(__dirname, "../../tools/qa/layout-check.mjs"), "utf8");
+    const start = source.indexOf("const GO1_READ");
+    expect(start).toBeGreaterThan(-1);
+    const body = source.slice(start, source.indexOf("\n};", start));
+    expect(body).toContain("[data-ghost-box]");
+    expect(body).toContain('querySelectorAll("path")');
+    expect(body).toContain("ghostGlow");
+    expect(body).toContain("drop-shadow");
   });
 
   it("fails a control that overlaps the Ghost and names the control layer", () => {
