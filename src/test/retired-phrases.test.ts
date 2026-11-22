@@ -331,12 +331,6 @@ interface PendingRetiredWord {
 }
 
 const PENDING_RETIRED_WORDS: readonly PendingRetiredWord[] = [
-  // src/components/ceremony/copy.ts.
-  {
-    path: "src/components/ceremony/copy.ts",
-    value: "Your testimony is recorded.",
-    task: 10,
-  },
   // src/components/landing/copy.ts, removed by task 13 (short home section).
   {
     path: "src/components/landing/copy.ts",

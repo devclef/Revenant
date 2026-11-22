@@ -504,6 +504,7 @@ function RevealBody({
                           ? (letterId ?? personaName)
                           : personaName
                       }
+                      recorded={testimony === undefined}
                       envelopeHash={opened.envelopeHash}
                       seal={seal ?? INERT_SEAL}
                       showAll={stage === 1}

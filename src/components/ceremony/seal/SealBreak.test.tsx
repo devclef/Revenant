@@ -47,6 +47,7 @@ const renderSealBreak = (overrides: Partial<SealBreakProps> = {}): string =>
           null,
           createElement(SealBreak, {
             patternKey: "us-maya",
+            recorded: true,
             seal: SETTLED,
             ...overrides,
           }),
