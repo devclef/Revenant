@@ -10,5 +10,5 @@ import styles from "./DemoLabel.module.css";
  * only globals.css ink tokens -- no judgement colour, text clears WCAG 2.2 AA.
  */
 export function DemoLabel() {
-  return <span className={styles.badge}>{DEMO_COPY.demoLabel}</span>;
+  return <span className={styles.badge} data-demo-label="">{DEMO_COPY.demoLabel}</span>;
 }

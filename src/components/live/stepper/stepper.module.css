@@ -137,6 +137,12 @@
   line-height: 1.15;
 }
 
+/* The heading on the desk (the Wait step has no paper card) takes the desk text
+   colour, so it never inherits the paper ink. */
+.heading[data-surface="desk"] {
+  color: var(--text);
+}
+
 /* A12: a heading that takes focus from script shows a ring only for keyboard
    focus. A pointer press does not show one. */
 .heading:where([tabindex="-1"]):focus:not(:focus-visible) {

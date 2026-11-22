@@ -174,6 +174,7 @@ export function WaxSeal({
       viewBox={`0 0 ${VIEWBOX} ${VIEWBOX}`}
       aria-hidden="true"
       focusable="false"
+      data-wax-seal=""
       {...reliefData}
     >
       <defs>

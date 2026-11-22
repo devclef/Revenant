@@ -77,6 +77,7 @@ export function LetterCard({
       className={`${paper.paper} ${styles.card}`}
       aria-labelledby={headingId}
       data-live-letter-card
+      data-surface="paper"
       data-seal-hash={fingerprint !== null ? envelopeHash : undefined}
       data-paper=""
     >
