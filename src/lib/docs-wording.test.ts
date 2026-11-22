@@ -5,7 +5,10 @@ import { describe, expect, it } from "vitest";
 // Spec 16, Requirement 17.4 and 17.5. Lives under src/lib (the agent's own
 // test path), not src/test, per the platform-dev test location rule.
 const readDoc = (relative: string): string =>
-  readFileSync(fileURLToPath(new URL(`../../${relative}`, import.meta.url)), "utf8");
+  readFileSync(
+    fileURLToPath(new URL(`../../${relative}`, import.meta.url)),
+    "utf8",
+  );
 
 const README = readDoc("README.md");
 const VIDEO_SCRIPT = readDoc("docs/video-script.md");
@@ -32,7 +35,9 @@ describe("README and video script wording (spec 16, Requirement 17.4)", () => {
     );
 
     expect(VIDEO_SCRIPT).toContain(RECEIPTS_LETTER_FOLD);
-    expect(VIDEO_SCRIPT.indexOf("The figures, if the letter holds any")).toBeGreaterThan(-1);
+    expect(
+      VIDEO_SCRIPT.indexOf("The figures, if the letter holds any"),
+    ).toBeGreaterThan(-1);
     expect(VIDEO_SCRIPT.indexOf(RECEIPTS_LETTER_FOLD)).toBeGreaterThan(
       VIDEO_SCRIPT.indexOf("The figures, if the letter holds any"),
     );
