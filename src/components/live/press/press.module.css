@@ -103,7 +103,7 @@
   border-radius: 50%;
   background-color: var(--wax);
   transform: translate(-50%, -50%)
-    scale(calc(0.15 + 0.85 * var(--press-progress)));
+    scale(calc(0.25 + 0.75 * var(--press-progress)));
 }
 
 /* Unready: the seal shows at 35 % before a backup choice (spec 15, task 9). */

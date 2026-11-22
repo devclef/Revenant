@@ -23,9 +23,9 @@ function ruleBody(css: string, selector: string): string {
 }
 
 describe("Seal step layout (spec 14, S3.1 and S3.2)", () => {
-  it("caps the step at 1240 px with 32 px side padding", () => {
+  it("fills the surface with 32 px side padding", () => {
     const body = ruleBody(stepCss, ".step");
-    expect(body).toMatch(/max-width:\s*1240px;/);
+    expect(body).toMatch(/inline-size:\s*100%;/);
     expect(body).toMatch(/padding:\s*32px;/);
   });
 
