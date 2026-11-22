@@ -90,8 +90,10 @@
           "npm run seal-personas*",
           "PORT=* npm start*",
           "PORT=* DATABASE_URL=* npm start*",
+          "RP_ID=* npm start*",
           "DATABASE_URL=* npm run db:migrate",
           "DATABASE_URL=* npm run seal-personas*",
+          "DATABASE_URL=* npm run fetch-figures*",
           "kill *"
         ],
         "effect": "allow"

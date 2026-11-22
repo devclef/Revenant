@@ -56,6 +56,17 @@ if [[ -f package.json ]]; then
     step "JS budget"
     node scripts/check-js-budget.mjs
   fi
+  # Spec 17: the layout rules that blocked real screens. Needs Chromium and a
+  # database with the personas sealed, so it runs in CI or with LAYOUT_CHECK=1
+  # and is skipped on a bare laptop. Skipped until the gate script exists.
+  if [[ -f tools/qa/layout-gate.mjs ]]; then
+    if [[ -n "${CI:-}" || "${LAYOUT_CHECK:-}" == 1 ]]; then
+      step "layout-check (blockers)"
+      node tools/qa/layout-gate.mjs
+    else
+      echo "(layout-check skipped: set LAYOUT_CHECK=1 to run it; CI always does)"
+    fi
+  fi
 fi
 
 if [[ -f deploy/helm/revenant/Chart.yaml ]] && command -v helm >/dev/null; then

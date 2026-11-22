@@ -32,10 +32,13 @@ EXTRA_SHELL = {
                      "curl *localhost*", "curl *127.0.0.1*"],
     # Same local-app set as qa (throwaway Postgres, migrate, seal personas, start the
     # app) so frontend-dev can look at its own work. See the qa note below.
+    # The layout baseline (`npm run layout-check -- --baseline main`) needs the app started
+    # with RP_ID and the figures fetched, the way tools/qa/layout-baseline.mjs builds main.
     "frontend-dev": ["docker run*", "docker rm*", "docker stop*",
                      "npm run build", "npm start*", "npm run db:migrate", "npm run seal-personas*",
-                     "PORT=* npm start*", "PORT=* DATABASE_URL=* npm start*",
+                     "PORT=* npm start*", "PORT=* DATABASE_URL=* npm start*", "RP_ID=* npm start*",
                      "DATABASE_URL=* npm run db:migrate", "DATABASE_URL=* npm run seal-personas*",
+                     "DATABASE_URL=* npm run fetch-figures*",
                      "kill *"],
     "data-dev": CONTAINER_SHELL,
     # Tasks with integration tests pass DATABASE_URL inline for a local test database.
@@ -48,8 +51,9 @@ EXTRA_SHELL = {
     "qa": ["git fetch origin*", "git merge-base*", "helm lint*", "helm template*",
            "docker run*", "docker rm*", "docker stop*",
            "npm run build", "npm start*", "npm run db:migrate", "npm run seal-personas*",
-           "PORT=* npm start*", "PORT=* DATABASE_URL=* npm start*",
+           "PORT=* npm start*", "PORT=* DATABASE_URL=* npm start*", "RP_ID=* npm start*",
            "DATABASE_URL=* npm run db:migrate", "DATABASE_URL=* npm run seal-personas*",
+           "DATABASE_URL=* npm run fetch-figures*",
            "kill *"],
 }
 DENY_SHELL = [

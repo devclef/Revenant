@@ -158,16 +158,32 @@ class Specs(unittest.TestCase):
     def test_frontend_steps_include_browser_check(self):
         spec = d.dev_spec(issue(3, []), "frontend-dev")
         self.assertIn("The last step also includes the layout check from "
-                      ".kiro/agents/prompts/frontend-dev.md ('Look at your work'): build and start the app, "
-                      "run `npm run layout-check -- --url <app>`", spec)
+                      ".kiro/agents/prompts/frontend-dev.md ('Look at your work'): build and start the app "
+                      "with `RP_ID=localhost`, then run the check once: `npm run layout-check -- --url <app> "
+                      "--baseline main --quiet --only-sizes 1280x800,1440x900,390x844 --stages", spec)
         steps = spec.split("## Steps", 1)[1].split("## Reading the spec", 1)[0]
         self.assertIn("layout check", steps)
+
+    def test_layout_step_uses_the_cached_baseline_not_a_main_build(self):
+        # #578 spent 50 min in this step: two full runs on its build, then npm ci, a build
+        # of origin/main in a second worktree and a third run, to learn its 4 blockers were
+        # already on main. The baseline now comes from `--baseline main`.
+        spec = d.dev_spec(issue(3, []), "frontend-dev")
+        self.assertIn("never build `origin/main` yourself", spec)
+        self.assertNotIn("second worktree", spec)
+        self.assertIn("`(new)`", spec)
+        root = Path(d.__file__).resolve().parents[2] / ".kiro" / "agents" / "prompts"
+        for name in ("qa.md", "frontend-dev.md"):
+            text = (root / name).read_text()
+            self.assertIn("--baseline main", text, name)
+            self.assertNotIn("second worktree", text, name)
+            self.assertNotIn("about a minute", text, name)
 
     def test_layout_blockers_already_on_main_are_not_the_agents(self):
         # A fix run can't clear a blocker main already has; asking it to did send #515
         # back three times and block it.
         spec = d.dev_spec(issue(3, []), "frontend-dev")
-        self.assertIn("A BLOCKER that `origin/main` already has", spec)
+        self.assertIn("a BLOCKER that `origin/main` already has", spec)
         root = Path(d.__file__).resolve().parents[2] / ".kiro" / "agents" / "prompts"
         for name in ("qa.md", "frontend-dev.md"):
             self.assertIn("origin/main", (root / name).read_text(), name)
