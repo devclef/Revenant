@@ -22,9 +22,20 @@ export interface SealedKeepsakesProps {
   opensAt: string;
   /** The sealing Fingerprint: 64 lowercase hex characters, shown on the card. */
   envelopeHash: string;
+  /** Draw the wax seal on the letter card. Defaults to true. */
+  showSeal?: boolean;
+  /** Show the Demo label on the letter card. Defaults to true. */
+  showDemoLabel?: boolean;
 }
 
-export function SealedKeepsakes({ letterId, appOrigin, opensAt, envelopeHash }: SealedKeepsakesProps) {
+export function SealedKeepsakes({
+  letterId,
+  appOrigin,
+  opensAt,
+  envelopeHash,
+  showSeal = true,
+  showDemoLabel = true,
+}: SealedKeepsakesProps) {
   function onDownloadIcs(): void {
     const text = buildKeepsakeIcs({
       letterId,
@@ -43,6 +54,8 @@ export function SealedKeepsakes({ letterId, appOrigin, opensAt, envelopeHash }: 
         appOrigin={appOrigin}
         opensAt={opensAt}
         envelopeHash={envelopeHash}
+        showSeal={showSeal}
+        showDemoLabel={showDemoLabel}
       />
       <div className={styles.noPrint}>
         <button type="button" className={styles.secondary} onClick={onDownloadIcs} data-live-ics>

@@ -284,12 +284,12 @@ describe("reduceStepper", () => {
 // Spec 12, X1: the Primary_Card is drawn for Write, Seal and Wait only. Testify
 // and Receipts sit on the desk, inside the Reveal_Host below the card.
 describe("hasPrimaryCard (X1)", () => {
-  it("is true for write and wait", () => {
+  it("is true for write only", () => {
     expect(hasPrimaryCard("write")).toBe(true);
-    expect(hasPrimaryCard("wait")).toBe(true);
   });
 
-  it("is false for seal, testify and receipts", () => {
+  it("is false for wait, seal, testify and receipts", () => {
+    expect(hasPrimaryCard("wait")).toBe(false);
     expect(hasPrimaryCard("seal")).toBe(false);
     expect(hasPrimaryCard("testify")).toBe(false);
     expect(hasPrimaryCard("receipts")).toBe(false);

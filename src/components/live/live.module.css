@@ -46,11 +46,18 @@
   line-height: 1.6;
 }
 
-/* The Wait step's panel once the card has dropped away (Testify and Receipts,
-   spec 12, X1). It sits on the desk, so it sets the desk text colour and no
-   paper. */
+/* The Wait step's panel on the desk (spec 12, X1, issue #588). It sits on the
+   dark desk, so it sets the desk text colour and no paper. The Wait step uses
+   this class in place of the shared paper .panel. The border is the token line
+   colour, so the page keeps no colour literal outside print and QR. */
 .deskPanel {
   position: relative;
+  box-sizing: border-box;
+  max-width: 40rem;
+  margin: 0 auto;
+  padding: clamp(1.25rem, 4vw, 2.5rem);
+  border: 1px solid var(--line);
+  border-radius: 10px;
   color: var(--text);
   font-family: var(--font-sans);
   font-size: 1.125rem;

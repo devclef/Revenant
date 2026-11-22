@@ -131,12 +131,12 @@ export function flowMounted(step: LiveStep, _countdownDone: boolean): boolean {
 }
 
 /**
- * Whether a step is drawn on the Primary_Card (spec 12, X1). Write, Seal and
- * Wait are on the card. Testify and Receipts sit on the desk, below the card,
+ * Whether a step is drawn on the Primary_Card (spec 12, X1). Write and Seal are
+ * on the card. Wait, Testify and Receipts sit on the desk, below the card,
  * inside the Reveal_Host.
  */
 export function hasPrimaryCard(step: LiveStep): boolean {
-  return step === "write" || step === "wait";
+  return step === "write";
 }
 
 /**

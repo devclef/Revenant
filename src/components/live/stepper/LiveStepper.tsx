@@ -164,7 +164,7 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
           data-primary-control={card ? "" : undefined}
         >
           {stepperDrawsHeading(state.step) ? (
-            <h2 data-step-heading="" tabIndex={-1} className={styles.heading}>
+            <h2 data-step-heading="" data-surface={card ? "paper" : "desk"} tabIndex={-1} className={styles.heading}>
               {stepName(state.step)}
             </h2>
           ) : null}

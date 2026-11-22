@@ -131,10 +131,21 @@
   /* Focus and scrollIntoView land the heading below the fixed Top_Bar. TopBar
      keeps --topbar-clear at the bar's real height (96 px when it is unset). */
   scroll-margin-top: calc(var(--topbar-clear, 96px) + 16px);
-  color: var(--ink);
+  color: var(--text);
   font-size: clamp(1.5rem, 4vw, 2rem);
   font-weight: 800;
   line-height: 1.15;
+}
+
+/* The heading colour follows its surface (LiveStepper sets data-surface from
+   the card flag). A paper card takes the paper ink; the desk takes the desk
+   text colour. The heading never inherits the other surface's colour. */
+.heading[data-surface="paper"] {
+  color: var(--ink);
+}
+
+.heading[data-surface="desk"] {
+  color: var(--text);
 }
 
 /* A12: a heading that takes focus from script shows a ring only for keyboard

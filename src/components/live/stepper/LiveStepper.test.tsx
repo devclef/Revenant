@@ -119,19 +119,13 @@ describe("LiveStepper", () => {
     expect(render("write")).toContain("data-card");
   });
 
-  it("puts the heading, fields and Next inside one data-primary-control group", () => {
+  it("draws no data-primary-control group on wait, and the content keeps its Next", () => {
     const html = render("wait", () =>
       createElement("button", { type: "button" }, "Next"),
     );
-    // The hook appears once. The group runs from its opening tag to the card's
-    // closing </section>, so nested divs in the step content cannot cut it short.
-    expect(html.match(/data-primary-control/g)).toHaveLength(1);
-    const start = html.indexOf("data-primary-control");
-    const end = html.indexOf("</section>", start);
-    expect(end).toBeGreaterThan(start);
-    const group = html.slice(start, end);
-    expect(group).toContain(">Wait</h2>");
-    expect(group).toContain(">Next<");
+    expect(html).not.toContain("data-primary-control");
+    expect(html).toMatch(/<h2[^>]*>Wait<\/h2>/);
+    expect(html).toContain(">Next<");
   });
 
   it("carries the step on the card so the layout check can tell them apart", () => {
@@ -213,21 +207,18 @@ describe("LiveStepper Reveal_Host and Primary_Card (X1)", () => {
     );
   });
 
-  it("draws the Primary_Card on write and wait", () => {
-    for (const step of ["write", "wait"] as const) {
-      expect(render(step)).toMatch(
-        new RegExp(`<section[^>]*data-card=""[^>]*data-step="${step}"`),
-      );
-    }
+  it("draws the Primary_Card on write only", () => {
+    expect(render("write")).toMatch(
+      /<section[^>]*data-card=""[^>]*data-step="write"/,
+    );
   });
 
-  it("draws no Primary_Card on seal, testify or receipts", () => {
-    for (const step of ["seal", "testify", "receipts"] as const) {
+  it("draws no Primary_Card on wait, seal, testify or receipts", () => {
+    for (const step of ["wait", "seal", "testify", "receipts"] as const) {
       const html = render(step);
       expect(html).toContain(`data-step="${step}"`);
       expect(html).not.toContain("data-card");
       expect(html).not.toContain("data-primary-control");
-      expect(html).not.toContain("<h2");
     }
   });
 
@@ -236,9 +227,11 @@ describe("LiveStepper Reveal_Host and Primary_Card (X1)", () => {
     expect(render("testify")).not.toMatch(/<h2/);
   });
 
-  it("draws no h2 on Write or Seal, and one h2 on Wait (spec 14, S7)", () => {
+  it("draws no h2 on Write, Seal, Testify or Receipts, and one h2 on Wait (spec 14, S7; issue #588)", () => {
     expect(render("write")).not.toContain("<h2");
     expect(render("seal")).not.toContain("<h2");
+    expect(render("testify")).not.toContain("<h2");
+    expect(render("receipts")).not.toContain("<h2");
     expect(render("wait").match(/<h2/g)).toHaveLength(1);
   });
 
