@@ -28,6 +28,8 @@ tools/*
 !tools/qa
 tools/qa/*
 !tools/qa/layout-check.mjs
+!tools/qa/layout-scope.mjs
+!tools/qa/layout-baseline.mjs
 !tools/qa/journey-check.mjs
 scripts/
 # ...except the migration entrypoint, which the runtime image invokes
