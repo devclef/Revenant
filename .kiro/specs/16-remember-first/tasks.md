@@ -265,7 +265,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Copy evidence: tone-check for `ceremony/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 11. The persona Remember step names its date once
+- [x] 11. The persona Remember step names its date once
   - Agent: `frontend-dev` · Depends on: 9, 10 · Estimated size: S, ~350 changed lines
   - Scope: `src/components/ceremony/recall/RecallPager.tsx`, `RecallReader.tsx`, `src/components/reveal/TestifyContext.tsx`, `ReadingTestify` (its file under `src/components/reveal/`), `src/components/reveal/copy.ts`, and the `*.test.ts(x)` next to each.
   - Design sections: "12. Persona date once", item 6, Property 11.
