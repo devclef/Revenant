@@ -77,14 +77,19 @@ describe("GO1 text and controls clear of the Ghost", () => {
     expect(failures).toEqual([]);
   });
 
-  it("reads the glow and hem extents into the Ghost rect in GO1_READ", () => {
+  it("reads the hem path and glow extents into the Ghost rect in GO1_READ", () => {
     const source = readFileSync(resolve(__dirname, "../../tools/qa/layout-check.mjs"), "utf8");
     const start = source.indexOf("const GO1_READ");
     expect(start).toBeGreaterThan(-1);
-    const body = source.slice(start, source.indexOf("\n};", start));
+    const end = source.indexOf("\n};", start);
+    expect(end).toBeGreaterThan(start);
+    const body = source.slice(start, end);
     expect(body).toContain("[data-ghost-box]");
-    expect(body).toContain('querySelectorAll("path")');
-    expect(body).toContain("ghostGlow");
+    // Hem: every path in the Ghost SVG (the body path's lower edge) joins the union.
+    expect(body).toContain('for (const path of ghostEl.querySelectorAll("path")) parts.push(path.getBoundingClientRect());');
+    // Glow: the .ghostGlow wrapper, grown by the drop-shadow blur, joins the union.
+    expect(body).toContain("const glowEl = ghostEl.parentElement;");
+    expect(body).toContain("parts.push({ left: glow.left - pad");
     expect(body).toContain("drop-shadow");
   });
 
