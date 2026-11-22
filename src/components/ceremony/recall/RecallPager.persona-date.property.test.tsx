@@ -4,8 +4,10 @@
 // or later, Priya's included), the visible text of the rendered Remember screen
 // contains the formatted date exactly once. It is in the counter for a figure
 // question and in the "As of {date} you asked yourself:" line for an author
-// question. The live and /l/{id} screens (a sealing day, not a written-as-of
-// date) are checked too, so they keep naming their own day once.
+// question. The live path is checked too: a live or real letter passes its
+// sealing day (`writtenOn`) to the same RecallPager, and `/l/{id}` reaches it
+// through OpeningFlow in live mode. This test renders RecallPager directly; it
+// does not render the /l/{id} route itself.
 // Validates spec 16 Requirements 13.1, 13.2, 13.4, 13.5.
 
 import { createElement } from "react";
