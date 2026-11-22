@@ -429,6 +429,22 @@
   pointer-events: none;
 }
 
+/* The Ghost's drawn bottom on the phone, before the First_Step (the risen pose,
+   not the Compact_Ghost). The hem is the lowest drawn point, SVG y 230 of the
+   240-unit viewBox (BODY_PATH in ghost-geometry.ts). The Ghost_Box is 1.2 W tall
+   with W = min(26vh, 170px). Its bottom edge is 3vh below --soil-top (.ghost has
+   bottom: -3vh on a zero-height .pit), and the risen pose lifts it 3 % of its
+   height (--ghost-risen). The hem bottom is therefore
+   --soil-top + 3vh - 1.2 W * (1 + 0.03 - 230 / 240).
+   1.2 W * 0.071667 = 0.086 W, which gives the value below. The glow's blur
+   (26 px) is decoration and is not counted. The layer is positioned from the top
+   of the document, so this is a document-space length. */
+@media (max-width: 599.98px) {
+  .ghostLayer {
+    --ghost-bottom: calc(var(--soil-top) + 3vh - 0.086 * min(26vh, 170px));
+  }
+}
+
 /* Below 600 px the persona layer scrolls with the page. The landing Ghost and
    the live demo keep the fixed layer above. The persona Stage nests the layer
    inside its ceremony wrapper, so the rule matches the layer at any depth under
