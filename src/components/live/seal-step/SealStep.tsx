@@ -104,7 +104,7 @@ export function SealStep({
 
   return (
     <div data-seal-step="" className={styles.step}>
-      <div data-seal-text="" className={styles.text}>
+      <div data-seal-intro="" className={styles.intro}>
         {showHeading ? (
           <h1 className={styles.heading} data-step-heading="" tabIndex={-1}>
             {LIVE_COPY.sealHeading}
@@ -114,6 +114,8 @@ export function SealStep({
         <p className={styles.body} data-warning-text="">
           {LIVE_COPY.warning}
         </p>
+      </div>
+      <div data-seal-text="" className={styles.text}>
         <BackupChoice
           value={backupChoice}
           onChange={onBackupChoice}
