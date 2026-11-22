@@ -7,7 +7,7 @@
  * focusable part is at least 44 CSS px square (P1.2).
  *
  * --press-progress (0 to 1) is written by usePressEnvelope each frame. The
- * wax scales with it through `transform` only.
+ * wax grows with it from a 44 px floor at rest to its full size at 1.
  */
 
 .wrap {
@@ -93,17 +93,22 @@
   pointer-events: none;
 }
 
-/* The wax: 112 px at 440 px wide, in proportion below that (S6.3). */
+/*
+ * The wax: 112 px at 440 px wide, in proportion below that (S6.3). At rest it
+ * is 44 px, the smallest visible seal (issue #586). Progress 1 gives the full
+ * size, so the width interpolates from 44 px to the full size.
+ */
 .wax {
   position: absolute;
   top: 58%;
   left: 50%;
-  width: calc(min(440px, 100cqi) * 112 / 440);
+  width: calc(
+    44px + (min(440px, 100cqi) * 112 / 440 - 44px) * var(--press-progress)
+  );
   aspect-ratio: 1;
   border-radius: 50%;
   background-color: var(--wax);
-  transform: translate(-50%, -50%)
-    scale(calc(0.25 + 0.75 * var(--press-progress)));
+  transform: translate(-50%, -50%);
 }
 
 /* Unready: the seal shows at 35 % before a backup choice (spec 15, task 9). */

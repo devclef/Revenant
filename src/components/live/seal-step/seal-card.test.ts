@@ -76,15 +76,23 @@ describe("Seal step panel fill (issue #586)", () => {
 });
 
 describe("wax floor (issue #586)", () => {
-  const waxScale = (progress: number): number => 0.25 + 0.75 * progress;
+  /** Width of the wax in px for a press column of `containerPx`, at progress p. */
+  const waxWidth = (containerPx: number, progress: number): number => {
+    const full = (Math.min(440, containerPx) * 112) / 440;
+    return 44 + (full - 44) * progress;
+  };
 
-  it("rests the wax at scale 0.25 and reaches full size at progress 1", () => {
+  it("rests the wax at 44 px and grows it to full size at progress 1", () => {
     expect(pressCss).toMatch(
-      /scale\(calc\(0\.25 \+ 0\.75 \* var\(--press-progress\)\)\);/,
+      /width:\s*calc\(\s*44px \+ \(min\(440px, 100cqi\) \* 112 \/ 440 - 44px\) \* var\(--press-progress\)\s*\);/,
     );
-    expect(waxScale(0)).toBe(0.25);
-    expect(waxScale(1)).toBe(1);
-    expect(waxScale(0.5)).toBeCloseTo(0.625);
+    expect(pressCss).not.toMatch(/scale\(calc\(0\.25/);
+    for (const px of [296, 362, 440, 1000]) {
+      expect(waxWidth(px, 0)).toBeGreaterThanOrEqual(44);
+    }
+    expect(waxWidth(440, 1)).toBe(112);
+    expect(waxWidth(300, 1)).toBeCloseTo((300 * 112) / 440);
+    expect(waxWidth(440, 0.5)).toBeCloseTo(78);
   });
 
   it("keeps the press-and-hold pool stages unchanged", () => {
