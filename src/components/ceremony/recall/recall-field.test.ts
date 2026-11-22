@@ -307,10 +307,15 @@ describe("checked and the unreadable message", () => {
     expect(unreadableShown(s)).toBe(false);
   });
 
-  it("keeps 4. readable: no message after the check", () => {
-    const s = checkField(typed(empty, "4."));
-    expect(s.checked).toBe(false);
-    expect(unreadableShown(s)).toBe(false);
+  it("does not show the message for 4. while focused, and shows it after checkField", () => {
+    // Typing "4." is exempt (typeText). The check on blur reads the parse, so "4." is unreadable.
+    const typing = typed(empty, "4.");
+    expect(typing.checked).toBe(false);
+    expect(unreadableShown(typing)).toBe(false);
+
+    const s = checkField(typing);
+    expect(s.checked).toBe(true);
+    expect(unreadableShown(s)).toBe(true);
   });
 
   it("keeps empty text unchecked", () => {

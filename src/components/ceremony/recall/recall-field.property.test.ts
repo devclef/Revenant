@@ -5,6 +5,7 @@ import {
   draftTextFor,
   initialField,
   isUnreadable,
+  isUnreadableEntry,
   canAdvance,
   pickReading,
   resolvedValue,
@@ -98,7 +99,7 @@ describe("Property 9: the number message waits for a check", () => {
               break;
             case "blur":
             case "attempt":
-              shown = isUnreadable(s.typed);
+              shown = isUnreadableEntry(s.typed);
               break;
             case "scale":
               shown = false;

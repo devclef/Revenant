@@ -53,16 +53,26 @@ export function initialField(draft: Draft): FieldState {
 }
 
 /**
- * Whether the text is unreadable (R32.7): rejected as unreadable or too long.
- * Empty text is not unreadable (R32.13). A number still being written, such as
- * "4." before its digits, is not unreadable either, so no message shows while
- * the judge is typing.
+ * Whether the parse of the text is unreadable (R32.7): rejected as unreadable
+ * or too long. Empty text is not unreadable (R32.13). This reads the parse
+ * result only, so a trailing separator such as "4." is unreadable here. It is
+ * used when the check runs (checkField, unreadableShown).
+ */
+export function isUnreadableEntry(text: string): boolean {
+  const parse = parseRecallNumber(text);
+  return parse.kind === "rejected" && parse.reason !== "empty";
+}
+
+/**
+ * Whether the text is unreadable while the judge types. A number still being
+ * written, such as "4." before its digits, is not unreadable here, so typeText
+ * never keeps the message for it. The check on blur, submit or paging uses
+ * isUnreadableEntry instead.
  */
 export function isUnreadable(text: string): boolean {
   const trimmed = text.trim();
   if (/^[0-9]+[.,]$/.test(trimmed)) return false;
-  const parse = parseRecallNumber(text);
-  return parse.kind === "rejected" && parse.reason !== "empty";
+  return isUnreadableEntry(text);
 }
 
 /**
@@ -90,12 +100,12 @@ export function typeText(prev: FieldState, text: string): FieldState {
  * and readable text never shows the message.
  */
 export function checkField(prev: FieldState): FieldState {
-  return { ...prev, checked: isUnreadable(prev.typed) };
+  return { ...prev, checked: isUnreadableEntry(prev.typed) };
 }
 
 /** Whether the unreadable message shows for this field (R32.7, R32.13). */
 export function unreadableShown(s: FieldState): boolean {
-  return s.checked && isUnreadable(s.typed);
+  return s.checked && isUnreadableEntry(s.typed);
 }
 
 /**
