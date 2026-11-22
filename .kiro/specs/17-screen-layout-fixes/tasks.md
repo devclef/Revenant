@@ -132,7 +132,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - Add a property test for random viewport widths from 360 to 899: CW1 fails exactly when the column is under `width - 48`. Run the file until it passes.
     - _Requirements: 2.5, 2.10, 3.6_
 
-- [ ] 7. D4: Ghost clear of the intro text on the phone Remember step
+- [x] 7. D4: Ghost clear of the intro text on the phone Remember step
   - Agent: `frontend-dev` · Depends on: none · Estimated size: M, ~300 changed lines
   - Scope: `src/components/ceremony/scene/scene.module.css`, `src/components/ceremony/scene/Ghost.tsx`, `src/components/ceremony/scene/PersonaGhost.tsx`, `src/components/ceremony/intro/intro.module.css`, `src/components/ceremony/intro/ghost-clear.test.ts` (new).
   - Design sections: "D4 and D7 overlap / GO1".
