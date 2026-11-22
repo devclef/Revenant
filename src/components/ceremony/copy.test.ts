@@ -211,6 +211,9 @@ describe("CEREMONY_COPY tone and neutrality", () => {
     expect(CEREMONY_COPY.recollectionsRead).toBe(
       "You've read her recollections. Nothing of yours is recorded.",
     );
+    expect(CEREMONY_COPY.stageLive.marks).toBe(
+      "What you remembered is recorded.",
+    );
     expect(CEREMONY_COPY.envelopeOpens).toBe("Opens {date}");
   });
 
