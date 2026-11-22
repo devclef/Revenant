@@ -315,8 +315,8 @@ describe("the Suggestion_Pills (W8.1, W8.2)", () => {
     );
   });
 
-  it("makes each pill 40 px tall, fully rounded, with a 1 px rgba(74, 64, 54, 0.35) border", () => {
-    expect(valuesOf(sectionCss, ".pill", "min-height")).toContain("40px");
+  it("makes each pill 44 px tall, fully rounded, with a 1 px rgba(74, 64, 54, 0.35) border", () => {
+    expect(valuesOf(sectionCss, ".pill", "min-height")).toContain("44px");
     expect(valuesOf(sectionCss, ".pill", "border-radius")).toContain("999px");
     expect(valuesOf(sectionCss, ".pill", "border")).toContain(
       "1px solid rgba(74, 64, 54, 0.35)",
