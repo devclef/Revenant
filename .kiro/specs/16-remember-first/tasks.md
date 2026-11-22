@@ -210,7 +210,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Copy evidence: tone-check for `reveal/copy.ts` and `ceremony/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 8. Receipts order, the live column and sound in the Top_Bar
+- [x] 8. Receipts order, the live column and sound in the Top_Bar
   - Agent: `frontend-dev` · Depends on: 7 · Estimated size: M, ~800 changed lines
   - Scope: `src/components/reveal/Reveal.tsx`, `src/components/reveal/receipts.module.css`, `src/components/ceremony/letter/LetterBlock.tsx` (only if `collapsible` needs a change), `src/components/ceremony/CeremonyRoot.tsx`, `src/components/ceremony/scene/SceneShell.tsx`, `src/components/ceremony/scene/` Top_Bar sound slot, `src/components/reveal/OpeningFlow.tsx`, `src/app/demo/live/**`, `src/app/l/[id]/**`, and the `*.test.ts(x)` next to each.
   - Design sections: "10. Receipts order and live step 6", Property 8.
