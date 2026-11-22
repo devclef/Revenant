@@ -64,7 +64,9 @@ describe("break step: testimony line above the hint (requirement 12.1)", () => {
   });
 
   it("uses the exact sentence from the drawn break screen", () => {
-    expect(CEREMONY_COPY.testimonyRecorded).toBe("Your testimony is recorded.");
+    expect(CEREMONY_COPY.testimonyRecorded).toBe(
+      "What you remembered is recorded.",
+    );
   });
 });
 
