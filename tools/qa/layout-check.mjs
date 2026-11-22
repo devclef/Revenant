@@ -6142,7 +6142,7 @@ async function runSize(browser, base, size, opts, rep) {
       await guard(ctx, "FP1", () => checkFastestPath(context, ctx, PERSONAS[0]));
     }
     if (runs("live")) await guard(ctx, "P1", () => checkPressEnvelope(context, ctx));
-    if (runs("live")) await guard(ctx, "press-rules", () => checkPressContrast(context, ctx));
+    if (runs("live")) await guard(ctx, "CT1", () => checkPressContrast(context, ctx));
     await guard(ctx, "walk", () => otherPages(context, ctx));
   } finally {
     await context.close();
