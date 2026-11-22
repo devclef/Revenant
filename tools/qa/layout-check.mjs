@@ -205,8 +205,9 @@
 //
 // CW1   content-column-width  (GitHub issue #581, tools/qa/layout-rules-17.mjs)
 //                            at 390x844 and 360x640: the [data-content-column] content box is at least
-//                            viewport minus 48 px. Read on each step that calls CT1. A step with no
-//                            column is skipped. Any failing reading is a BLOCKER.
+//                            viewport minus 48 px. Read on every step shot() captures, on Press the seal,
+//                            and beside the R10.6 live-receipts comparison. A page with no column is
+//                            skipped. Any failing reading is a BLOCKER.
 //
 // Line format: <PASS|BLOCKER|polish|note> <id> <name> <WxH> <stage> <detail>.
 // The spec 08 and spec 09 checks put the measured values and threshold=<...> in <detail>.
@@ -1640,6 +1641,7 @@ async function shot(page, ctx, stage, { keepScroll = false } = {}) {
   // A screenshot can restart the page's transitions, so the layout is read again once they finish.
   await settle(page);
   await guard(ctx, "FR1", () => checkFr1(page, ctx));
+  await guard(ctx, "CW1", () => checkCw1(page, ctx));
   ctx.rep.add("ok", "shot", file);
 }
 
@@ -1675,7 +1677,7 @@ async function checkCt1(page, ctx) {
 }
 
 // CW1 (GitHub issue #581): the [data-content-column] content box is at least viewport minus 48 px.
-// It runs at CW1_SIZES only. A step with no [data-content-column] has no column to measure, so it is
+// It runs at CW1_SIZES only. A page with no [data-content-column] has no column to measure, so it is
 // skipped rather than failed. Any failing reading is a BLOCKER.
 async function checkCw1(page, ctx) {
   if (!CW1_SIZES.includes(ctx.size)) return;
@@ -2710,7 +2712,6 @@ async function landing(context, ctx) {
     } else {
       await shot(page, ctx, "scene");
       await guard(ctx, "CT1", () => checkCt1(page, ctx));
-      await guard(ctx, "CW1", () => checkCw1(page, ctx));
       await guard(ctx, "F2", () => checkSoil(page, ctx));
       if (start) await guard(ctx, "BTN", () => checkMainButton(page, ctx, start, true, "link"));
       await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
@@ -2939,7 +2940,6 @@ async function personaWalk(page, ctx, p, via) {
   await guard(ctx, "G2", () => checkGhostCentre(page, ctx, "marks"));
   await guard(ctx, "BTN", () => checkMainButton(page, ctx, BREAK_SEAL));
   await guard(ctx, "CT1", () => checkCt1(page, ctx));
-  await guard(ctx, "CW1", () => checkCw1(page, ctx));
   await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
   await guard(ctx, "T2", () => checkTicks(page, ctx));
   await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
@@ -3052,7 +3052,6 @@ async function personaWalk(page, ctx, p, via) {
     await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
     await shot(page, ctx, S("close"));
     await guard(ctx, "CT1", () => checkCt1(page, ctx));
-    await guard(ctx, "CW1", () => checkCw1(page, ctx));
     await guard(ctx, "F2", () => checkSoil(page, ctx));
     await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
     await guard(ctx, "FT1", () => checkFooter(page, ctx));
@@ -5952,6 +5951,8 @@ async function checkSpec16Rows(browser, base, size, rep, required, scope = {}) {
             report(ctx, missingRow("R10.6", "live-column", "no [data-receipts] on live step 6"));
             return;
           }
+          // CW1 reads the live receipts column beside the R10.6 comparison.
+          await guard(ctx, "CW1", () => checkCw1(page, ctx));
           const blocks = r.blocks.filter((b) => b.kind === "pair" || b.kind === "figure" || b.kind === "letter");
           report(ctx, verdictRow("R10.6", "live-column", receiptColumnFailures({ centre: r.centre, width: r.width, viewportCentre: r.viewportCentre, personaWidth, blocks }), `centre=${num(r.centre)} viewport centre=${num(r.viewportCentre)} width=${num(r.width)} persona=${personaWidth === null ? "n/a" : num(personaWidth)} viewport=${ctx.size}`, "one column centred within 1 px, as wide as the persona receipts column within 1 px"));
         } finally {
