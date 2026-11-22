@@ -235,7 +235,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - Add a property test over random panel and surface widths: SF1 fails exactly when the ratio is under 0.99. Run the file until it passes.
     - _Requirements: 2.1, 2.2, 2.10_
 
-- [ ] 13. D2: Wait step on the desk with one Demo label and one wax seal
+- [x] 13. D2: Wait step on the desk with one Demo label and one wax seal
   - Agent: `frontend-dev` · Depends on: 11 · Estimated size: M, ~400 changed lines
   - Scope: `src/components/live/stepper/live-steps.ts`, `src/components/live/live.module.css`, `src/components/live/stepper/LiveWaitStep.tsx`, `src/components/live/stepper/stepper.module.css`, `src/components/live/LetterCard.tsx` and its stylesheet, `src/components/live/LetterCard.test.tsx`, `src/components/live/stepper/wait-step.test.ts` (new).
   - Design sections: "D1 and D2 cards / SF1", "D5 and D2 contrast / CT1", "D2 duplicates / UQ1".
