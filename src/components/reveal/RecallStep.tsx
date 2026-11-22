@@ -85,7 +85,11 @@ export function RecallStep({
   return (
     <>
       {testify === undefined ? null : <TestifyContext {...testify} />}
-      <section className={`${paper.paper} ${styles.recall}`} data-paper="">
+      <section
+        className={`${paper.paper} ${styles.recall}`}
+        data-paper=""
+        data-content-column=""
+      >
         <RecallPager
           payload={opened.payload}
           drafts={drafts}

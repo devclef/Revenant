@@ -198,7 +198,7 @@ export function WriteDesk({
         intro={DESK_COPY.intro}
       />
       <OccasionPills chosen={chosenOccasion} onChoose={onChooseOccasion} />
-      <div className={styles.row}>
+      <div className={styles.row} data-content-column="">
         <div className={styles.sheetColumn}>
           <LetterSheet
             value={text}
