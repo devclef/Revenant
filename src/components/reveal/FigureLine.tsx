@@ -25,8 +25,9 @@ import type { ReceiptFigure, ReceiptSource } from "./ReceiptCard";
  *
  * `{date}` is `retrieved_at` in UTC, so it never shifts under the viewer's
  * timezone (data-integrity.md). When the series carries a `display_rescale`,
- * the value is shown rescaled (exact, display-only) with the note saying what
- * was rescaled from what (R11.10). The stored value is never changed.
+ * the value is shown rescaled (exact, display-only). The rescale note is not
+ * part of the row: ReceiptCard prints it once per card (R11.10). The stored
+ * value is never changed.
  *
  * Every string comes from copy.ts (R15.1). These helpers read no clock beyond
  * the formatters they call, hold no state and touch no storage.
