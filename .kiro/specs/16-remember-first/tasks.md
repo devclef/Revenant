@@ -338,7 +338,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Earlier-spec tests changed or retired: any test that reads `README.md` or the video script; name each.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 15. Layout rows, the Live_Walk names and `page.tsx`
+- [x] 15. Layout rows, the Live_Walk names and `page.tsx`
   - Agent: `platform-dev` · Depends on: 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14 · Estimated size: M, ~1,000 changed lines
   - Scope: `tools/qa/layout-check.mjs`, `tools/qa/journey-check.mjs`, `src/test/integration/live-walk*.ts`, `src/app/page.tsx`, and the tests that cover them.
   - Design sections: "15. QA tooling and docs".
