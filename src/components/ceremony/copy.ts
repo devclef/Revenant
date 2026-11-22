@@ -60,7 +60,10 @@ export const CEREMONY_COPY = {
   // --- Seal break ---
 
   /** The line above the hint: the reader's testimony is kept before the seal breaks (spec 15 R12.1). */
-  testimonyRecorded: "Your testimony is recorded.",
+  testimonyRecorded: "What you remembered is recorded.",
+
+  /** The break line for the text persona (Priya), where no answer of the reader's is recorded. */
+  recollectionsRead: "You've read her recollections. Nothing of yours is recorded.",
 
   /** The hint above the wax seal (spec 10 C6.4). It names no position. */
   sealHint: "Press and hold the wax seal to break it, or use the button.",
@@ -171,7 +174,7 @@ export const CEREMONY_COPY = {
     /** The recall step, before the letter is opened. */
     recall: "Remember first. Then read.",
     /** The remembered answers, placed as ink marks. */
-    marks: "Your answers are placed.",
+    marks: "What you remembered is recorded.",
     /** The seal, waiting to be broken. */
     seal: "The seal is ready to break.",
     /** The open letter. */
