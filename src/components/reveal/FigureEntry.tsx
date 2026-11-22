@@ -13,6 +13,7 @@ import { FormulaLine } from "./FormulaLine";
 import {
   displayChangeResult,
   rescaledChangeInputs,
+  rescaleNoteText,
 } from "./change-display";
 import {
   differenceDigitsFor,
@@ -121,7 +122,7 @@ export function FigureEntry({
   const displayInputs =
     rescale === undefined
       ? undefined
-      : rescaledChangeInputs(then.value, now.value, rescale, then.unit);
+      : rescaledChangeInputs(then.value, now.value, rescale);
   const shownChange =
     displayInputs === undefined
       ? change
@@ -153,6 +154,7 @@ export function FigureEntry({
         then={receiptFigureOf(then, "then", letterKind, rescale)}
         now={receiptFigureOf(now, "now", letterKind, rescale)}
         nowNote={nowNote}
+        rescaleNote={rescaleNoteText(then.unit, unit)}
         primary={primary}
         numberLine={
           <NumberLine

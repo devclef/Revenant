@@ -439,7 +439,7 @@ export const REVEAL_COPY = {
    * The display-rescale note (R11.10). `{toUnit}` is the shown unit and
    * `{fromUnit}` is the published unit.
    */
-  rescaledNote: "Shown per {toUnit}. Published per {fromUnit}.",
+  rescaledNote: "Shown in {toUnit}. Published in {fromUnit}.",
 
   /**
    * The source-details line with the exact sealed value (P5.2). `{value}` and

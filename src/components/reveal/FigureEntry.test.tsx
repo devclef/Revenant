@@ -172,7 +172,7 @@ describe("FigureEntry shows the figures in the display rescale (R11.10)", () => 
       .replace("{fromUnit}", "EUR per 1,000 litres");
     // Under the then row and under the now row (C8.4). The change line no longer
     // repeats it; ReceiptCard prints it once.
-    expect(count(html, note)).toBe(2);
+    expect(count(html, note)).toBe(1);
   });
 });
 

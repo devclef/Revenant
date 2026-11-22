@@ -178,7 +178,10 @@ describe("EU persona figure label (stage 3)", () => {
       }),
     );
     expect(html).toContain(formatPeriod("2024-05", "European Union"));
-    expect(html).toContain("EUR per 1,000 litres");
+    // The row shows the displayed unit. The sealed unit appears only in the
+    // rescale note, which ReceiptCard prints once per card.
+    expect(html).toContain("EUR per litre");
+    expect(html).not.toContain("EUR per 1,000 litres");
     expect(html).toContain("European Union");
   });
 

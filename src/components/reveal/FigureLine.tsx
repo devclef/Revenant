@@ -87,20 +87,12 @@ export function receiptFigureOf(
   _displayRescale?: Readonly<DisplayRescale>,
 ): ReceiptFigure {
   const shown = displayFigureValue(figure.value, figure.unit, figure.region);
-  // A rescale applies exactly when the shown unit differs from the sealed unit.
-  const note =
-    shown.unit === figure.unit
-      ? undefined
-      : REVEAL_COPY.rescaledNote
-          .replace("{toUnit}", shown.unit)
-          .replace("{fromUnit}", figure.unit);
   return {
     value: shown.text,
     unit: shown.unit,
     period: formatPeriod(figure.period, figure.region),
     region: figure.region,
     label: figureLabel(figure, role, letterKind),
-    note,
   };
 }
 
