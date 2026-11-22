@@ -12,7 +12,11 @@ import styles from "./landing.module.css";
 export function RitualSection() {
   return (
     <section className={styles.section} aria-labelledby="ritual-title">
-      <h2 id="ritual-title" className={styles.sectionTitle}>
+      <h2
+        id="ritual-title"
+        className={styles.sectionTitle}
+        data-block="ritual-title"
+      >
         {LANDING_SECTION_COPY.ritualTitle}
       </h2>
       <ol className={styles.ritualList} data-block="ritual">
