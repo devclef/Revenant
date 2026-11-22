@@ -323,7 +323,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Copy evidence: tone-check for `landing/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 14. README and video script
+- [x] 14. README and video script
   - Agent: `platform-dev` · Depends on: 4, 8, 13 · Estimated size: S, ~300 changed lines
   - Scope: `README.md`, `docs/video-script.md`, `src/test/docs-wording.test.ts` (new).
   - Design sections: "15. QA tooling and docs" (the docs part).
