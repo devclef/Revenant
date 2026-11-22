@@ -12,6 +12,9 @@
 //   DOM reader are src/lib/layout-check-ct1.ts. They load only when CT1 runs, so the other QA
 //   tools still load on a Node without TypeScript type stripping. CT1 runs at 390x844 and
 //   360x640 on the steps layout-check.mjs names. Any failing text is a BLOCKER.
+//   Thresholds (src/lib/layout-check-ct1.ts): normal text 4.5:1; large text 3:1, where large means
+//   24 px or more, or 18.66 px or more at weight 700. Bold text below those sizes is normal text.
+//   Tests: src/lib/layout-check-ct1.test.ts (21 tests, including a fast-check property).
 //
 // Exports:
 //   CT1_SIZES                     the viewports CT1 runs at.
