@@ -318,8 +318,8 @@ export function RecallPager({
   // date on it, so the layout check can find it on every question.
   const liveCounter = writtenAsOf === undefined && writtenOnDay !== "";
 
-  // The intro sits on the first question only (R11.15). A persona letter names
-  // its written-as-of date; a Live_Letter gets the hint alone.
+  // The intro sits on the first question only (R11.15). A persona letter gets
+  // the recall intro; a Live_Letter gets the hint alone. Neither names a date.
   const intro = !isFirst
     ? null
     : writtenAsOf === undefined
