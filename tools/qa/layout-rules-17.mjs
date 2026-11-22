@@ -24,6 +24,12 @@
 //   frFailures(reading)           FR1 failures for one reading; [] when both checks pass.
 //   readFr1Reading(page)          reads a loaded page: active element, Tab, next control. No input before the read.
 //   readFr1(options)              opens a page at a URL and size, reads it with readFr1Reading, then closes the page.
+//   cwFailures(reading)           CW1 failures for one reading; [] when the content column is wide enough.
+//
+// CW1 (GitHub issue #581, spec 17 D3): the [data-content-column] content box is at least
+//   viewport width minus 48 px. The reading is { width, viewport }: width is the column's content
+//   box width in CSS pixels (border-box width minus padding and border), viewport is the layout
+//   viewport width in CSS pixels. Both are numbers; anything else fails as "no measurement".
 //
 // The reading shape, as produced by readFr1Reading:
 //   {
@@ -172,4 +178,25 @@ export async function readCt1Failures(page) {
   const ct1 = await import("../../src/lib/layout-check-ct1.ts");
   const readings = await ct1.readTextContrast(page);
   return readings.flatMap((reading) => ct1.ctFailures(reading));
+}
+
+// CW1 (GitHub issue #581). The content column keeps at least this much room under a phone viewport.
+export const CW1_INSET_PX = 48;
+
+/**
+ * CW1 failures for one reading: { width, viewport } in CSS pixels. An empty array means the
+ * content column is at least viewport minus CW1_INSET_PX wide. Equal to the minimum passes.
+ * Each failure starts with "CW1" and names the measured width and the minimum it needed.
+ */
+export function cwFailures(reading) {
+  const width = reading?.width;
+  const viewport = reading?.viewport;
+  if (typeof width !== "number" || !Number.isFinite(width) || typeof viewport !== "number" || !Number.isFinite(viewport)) {
+    return ["CW1 no [data-content-column] width to measure"];
+  }
+  const minimum = viewport - CW1_INSET_PX;
+  if (width < minimum) {
+    return [`CW1 content column ${width} px, want at least ${minimum} px (viewport ${viewport} px minus ${CW1_INSET_PX})`];
+  }
+  return [];
 }
