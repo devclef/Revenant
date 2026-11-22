@@ -46,8 +46,9 @@
   line-height: 1.6;
 }
 
-/* The Wait step's panel on the desk (spec 12, X1). It sits on the dark desk,
-   so it sets the desk text colour and no paper. The border is the token line
+/* The Wait step's panel on the desk (spec 12, X1, issue #588). It sits on the
+   dark desk, so it sets the desk text colour and no paper. The Wait step uses
+   this class in place of the shared paper .panel. The border is the token line
    colour, so the page keeps no colour literal outside print and QR. */
 .deskPanel {
   position: relative;

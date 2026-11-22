@@ -140,7 +140,7 @@ export function LiveWaitStep({
   const sink = heldGhostSink(done, calm);
 
   return (
-    <div className={waiting ? styles.panel : styles.deskPanel} data-live-wait>
+    <div className={styles.deskPanel} data-live-wait>
       {/* The Ghost on the Testify step (spec 13, F4.1). It stands in the first
           viewport above the flow, as the persona Testify step draws it. Its box
           has a fixed height, so the question, the answer control and the verdict
@@ -237,6 +237,7 @@ export function LiveWaitStep({
               opensAt={state.opensAt}
               envelopeHash={state.envelopeHash}
               showSeal={false}
+              showDemoLabel={false}
             />
           </section>
         </>

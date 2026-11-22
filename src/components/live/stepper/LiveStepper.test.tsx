@@ -227,9 +227,11 @@ describe("LiveStepper Reveal_Host and Primary_Card (X1)", () => {
     expect(render("testify")).not.toMatch(/<h2/);
   });
 
-  it("draws no h2 on Write or Seal, and one h2 on Wait (spec 14, S7)", () => {
+  it("draws no h2 on Write, Seal, Testify or Receipts, and one h2 on Wait (spec 14, S7; issue #588)", () => {
     expect(render("write")).not.toContain("<h2");
     expect(render("seal")).not.toContain("<h2");
+    expect(render("testify")).not.toContain("<h2");
+    expect(render("receipts")).not.toContain("<h2");
     expect(render("wait").match(/<h2/g)).toHaveLength(1);
   });
 
