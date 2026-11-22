@@ -113,7 +113,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - _Preservation: `min(34rem, 46vw)` at 900 px and wider; receipts order unchanged_
     - _Requirements: 1.5, 2.5, 3.6_
 
-- [ ] 6. CW1 rule: minimum content width
+- [x] 6. CW1 rule: minimum content width
   - Agent: `platform-dev` · Depends on: 4, 5 · Estimated size: M, ~350 changed lines
   - Scope: `tools/qa/layout-rules-17.mjs`, `tools/qa/layout-check.mjs`, `src/lib/layout-check-cw1.test.ts` (new).
   - Design sections: "D3 / CW1".
