@@ -125,15 +125,23 @@ describe("the two readings of an Ambiguous_Input (R32.4)", () => {
   });
 });
 
-describe("the unreadable message (R32.7)", () => {
-  it("shows the fixed example and keeps the field invalid", () => {
+describe("the unreadable message (R32.7, 11.1, 11.5)", () => {
+  // 11.1: the message waits for a check. A first paint has not been checked,
+  // so "12a" shows no message and no unreadable aria-invalid. Blur, submit and
+  // the Nav_Row press run the check (RecallPager.tsx checkNumberField), and the
+  // state change is covered by recall-field.test.ts.
+  it("shows no message and no unreadable aria-invalid on first paint of \"12a\" (11.1)", () => {
     const markup = render("12a");
-    expect(markup).toContain(CEREMONY_COPY.numberUnreadable);
-    expect(markup).toContain('aria-invalid="true"');
+    expect(markup).not.toContain(CEREMONY_COPY.numberUnreadable);
+    expect(markup).not.toContain('aria-invalid="true"');
   });
 
-  it("keeps the next control disabled for an unreadable field", () => {
+  it("keeps the next control disabled for an unreadable field (11.5)", () => {
     expect(nextButton(render("12a"))).toContain("disabled");
+  });
+
+  it("shows no value in the Recall_Scale label for an unreadable field (11.5)", () => {
+    expect(render("12a")).toContain(CEREMONY_COPY.recallNoMarkYet);
   });
 });
 
