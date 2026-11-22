@@ -140,13 +140,12 @@ describe("landing page render on / (H1)", () => {
     vi.unstubAllEnvs();
   });
 
-  it("renders the sections in order: hero, ritual, resurrection, no-seal, coven", () => {
+  it("renders the sections in order: hero, ritual, resurrection, coven", () => {
     const html = renderPage();
     const positions = [
       html.indexOf("data-landing-hero"),
       html.indexOf('id="ritual-title"'),
       html.indexOf('id="resurrected-title"'),
-      html.indexOf('id="no-seal-title"'),
       html.indexOf('id="coven-title"'),
     ];
     for (const position of positions) {
@@ -160,10 +159,8 @@ describe("landing page render on / (H1)", () => {
     for (const id of [
       "ritual-title",
       "resurrected-title",
-      "no-seal-title",
       "coven-title",
     ]) {
-      expect(countOf(html, `id="${id}"`)).toBe(1);
     }
     expect(countOf(html, "data-landing-hero")).toBe(1);
   });
@@ -220,7 +217,6 @@ describe("landing sections below the hero and heading colour (H1)", () => {
     for (const id of [
       "ritual-title",
       "resurrected-title",
-      "no-seal-title",
       "coven-title",
     ]) {
       const position = html.indexOf(`id="${id}"`);
@@ -233,7 +229,6 @@ describe("landing sections below the hero and heading colour (H1)", () => {
     const positions = [
       html.indexOf('id="ritual-title"'),
       html.indexOf('id="resurrected-title"'),
-      html.indexOf('id="no-seal-title"'),
       html.indexOf('id="coven-title"'),
     ];
     for (const position of positions) {

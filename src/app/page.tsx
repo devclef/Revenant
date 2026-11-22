@@ -3,7 +3,6 @@ import type { CSSProperties } from "react";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { CovenStrip } from "@/components/landing/CovenStrip";
 import { LandingHero } from "@/components/landing/LandingHero";
-import { NoSealSection } from "@/components/landing/NoSealSection";
 import { ResurrectionSection } from "@/components/landing/ResurrectionSection";
 import { RitualSection } from "@/components/landing/RitualSection";
 import { PERSONAS } from "@/lib/personas";
@@ -61,7 +60,6 @@ export default function Home() {
           <>
             <RitualSection />
             <ResurrectionSection />
-            <NoSealSection />
             <CovenStrip />
           </>
         }

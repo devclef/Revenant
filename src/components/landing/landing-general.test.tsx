@@ -14,7 +14,6 @@ import { renderToStaticMarkup } from "react-dom/server";
 
 import { LANDING_SECTION_COPY } from "./copy";
 import { CovenStrip } from "./CovenStrip";
-import { NoSealSection } from "./NoSealSection";
 import { ResurrectionSection } from "./ResurrectionSection";
 import { RitualSection } from "./RitualSection";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
@@ -94,7 +93,6 @@ describe("Retired_Phrase search over the rendered sections (H1)", () => {
   const rendered = [
     renderToStaticMarkup(<RitualSection />),
     renderToStaticMarkup(<ResurrectionSection />),
-    renderToStaticMarkup(<NoSealSection />),
     renderToStaticMarkup(<CovenStrip />),
   ]
     .join(" ")
@@ -175,7 +173,6 @@ describe("SceneShell below slot (H1)", () => {
           <>
             <RitualSection />
             <ResurrectionSection />
-            <NoSealSection />
             <CovenStrip />
           </>
         }
@@ -183,12 +180,7 @@ describe("SceneShell below slot (H1)", () => {
         <p>hero</p>
       </SceneShell>,
     );
-    const ids = [
-      "ritual-title",
-      "resurrected-title",
-      "no-seal-title",
-      "coven-title",
-    ];
+    const ids = ["ritual-title", "resurrected-title", "coven-title"];
     const positions = ids.map((id) => html.indexOf(`id="${id}"`));
     for (const position of positions) expect(position).toBeGreaterThan(-1);
     expect([...positions].sort((a, b) => a - b)).toEqual(positions);
@@ -202,7 +194,6 @@ describe("SceneShell below slot (H1)", () => {
     const files = [
       join(here, "RitualSection.tsx"),
       join(here, "ResurrectionSection.tsx"),
-      join(here, "NoSealSection.tsx"),
       join(here, "CovenStrip.tsx"),
       resolve(here, "../ceremony/scene/SceneShell.tsx"),
     ];
