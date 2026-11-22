@@ -6,12 +6,21 @@
 // Next control. The state changes (typing, picking) are covered by the field
 // tests in recall-field.test.ts.
 
+import { readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 import { renderToStaticMarkup } from "react-dom/server";
 
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import { CEREMONY_COPY } from "../copy";
 import { RecallPager, type RecallPagerProps } from "./RecallPager";
+import {
+  checkField,
+  initialField,
+  typeText,
+  unreadableShown,
+} from "./recall-field";
 import type { PayloadV1 } from "@/lib/seal-format";
 
 type Payload = Pick<PayloadV1, "metrics" | "recall_questions">;
@@ -226,5 +235,54 @@ describe("number question order and the Nav_Row main button (T2.1, T2.3, T2.5)",
     expect(advance).toBeGreaterThan(nav);
     expect(markup).toContain(`>${REVEAL_COPY.nextQuestion}</button>`);
     expect(markup).not.toContain(REVEAL_COPY.previousQuestion);
+  });
+});
+
+// 11.1 to 11.4 and 11.6: the message follows the check, not the typing. The
+// pager is static markup here, so the blur, submit and Nav_Row press paths are
+// checked two ways: the state sequence below runs the same functions the pager
+// calls, and the source guard confirms each event is wired to them.
+describe("the unreadable message follows the check (11.1 to 11.4, 11.6)", () => {
+  it("shows no message for \"4.\" or \"12a\" while the judge is still typing", () => {
+    let s = initialField({ text: "", noAnswer: false });
+    s = typeText(s, "4.");
+    expect(unreadableShown(s)).toBe(false);
+    s = typeText(s, "12a");
+    expect(unreadableShown(s)).toBe(false);
+  });
+
+  it("shows the message for \"12a\" after blur", () => {
+    let s = initialField({ text: "", noAnswer: false });
+    s = checkField(typeText(s, "12a"));
+    expect(unreadableShown(s)).toBe(true);
+  });
+
+  it("shows the message for \"4.\" after blur, since a trailing separator is unreadable", () => {
+    let s = initialField({ text: "", noAnswer: false });
+    s = checkField(typeText(s, "4."));
+    expect(unreadableShown(s)).toBe(true);
+  });
+
+  it("clears the message on the next readable or empty edit", () => {
+    let s = checkField(typeText(initialField({ text: "", noAnswer: false }), "12a"));
+    s = typeText(s, "12");
+    expect(unreadableShown(s)).toBe(false);
+    s = checkField(typeText(s, "12a"));
+    s = typeText(s, "");
+    expect(unreadableShown(s)).toBe(false);
+  });
+
+  it("wires blur, submit and the Nav_Row press to the check", () => {
+    const source = readFileSync(
+      resolve(dirname(fileURLToPath(import.meta.url)), "RecallPager.tsx"),
+      "utf8",
+    );
+    expect(source).toContain("onBlur={() => checkNumberField(question.id)}");
+    expect(source).toMatch(
+      /function handleSubmit[\s\S]*?checkNumberField\(question\.id\)/,
+    );
+    expect(source).toContain("onRowPress={() => checkNumberField(question.id)}");
+    expect(source).toMatch(/mainDisabled=\{submitting \|\| !ready\}/);
+    expect(source).toMatch(/aria-invalid=\{isInvalid \|\| unreadable\}/);
   });
 });
