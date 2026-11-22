@@ -27,11 +27,21 @@
 //   cwFailures(reading)           CW1 failures for one reading; [] when the content column is wide enough.
 //   rectOverlap(a, b)             overlap of two rects in px, or null when they do not overlap strictly.
 //   goFailures(reading)           GO1 failures for one reading; [] when no text or control meets the Ghost.
+//   readGo1Soil(page)             reads the [data-soil-strip] rect for GO1's reading.soil, or null.
+//   readLc1Reading(page)          reads [data-figures-column] and [data-seal-group] rects from a loaded page.
+//   lcFailures(reading)           LC1 failures for one reading; [] when the columns are coherent.
+//
+// LC1 (GitHub issue #585, spec 17 D7): the Seal group sits at most 64 px right of the figures column and
+//   its top lies inside the column's top and bottom. The reading is { figures, sealGroup }: each is one
+//   rect { left, top, right, bottom } in CSS pixels, or null when the element is not on the page.
+//   A gap of exactly 64 px passes; 65 px fails. A missing rect fails as "no measurement".
 //
 // GO1 (GitHub issue #583): no text line or control rect overlaps the Ghost drawn box. The reading is
 //   { ghost, text, controls }: ghost is one rect or null, text is [{ label, rect }] (one rect per text
 //   node Range), controls is [{ label, rect }]. A rect is { left, top, right, bottom } in CSS pixels,
 //   the shape getBoundingClientRect returns. Edges that only touch do not overlap.
+//   GO1 also tests each text rect against the optional soil rect ([data-soil-strip]); a text line that
+//   overlaps the Soil strip fails with check "soil-overlap". No soil key, or soil null, skips that test.
 //
 // CW1 (GitHub issue #581, spec 17 D3): the [data-content-column] content box is at least
 //   viewport width minus 48 px. The reading is { width, viewport }: width is the column's content
@@ -230,9 +240,13 @@ export function rectOverlap(a, b) {
 }
 
 /**
- * GO1 failures for one reading. An empty array means no text line or control meets the Ghost.
- * Each failure names the layer (text or control), the element label and the overlap in px.
- * A missing Ghost box or a missing rect fails as "no measurement", so a check never passes silently.
+ * GO1 failures for one reading. An empty array means no text line or control meets the Ghost,
+ * and no text line meets the Soil strip when the reading carries one.
+ * The reading is { ghost, text, controls, soil? }. soil is the [data-soil-strip] rect, or null when
+ * the page has no strip. When soil is absent or null the Soil check is skipped; a measured soil
+ * rect is tested against every text line. Each failure names the layer (text or control), the element
+ * label and the overlap in px. A missing Ghost box or a missing rect fails as "no measurement", so a
+ * check never passes silently.
  */
 export function goFailures(reading) {
   const ghost = reading?.ghost ?? null;
@@ -240,6 +254,7 @@ export function goFailures(reading) {
     return [{ id: "GO1", check: "ghost-overlap", layer: null, message: "GO1 no [data-ghost-box] rect to measure." }];
   }
 
+  const soil = reading?.soil ?? null;
   const layers = [
     { layer: "text", items: Array.isArray(reading?.text) ? reading.text : [] },
     { layer: "control", items: Array.isArray(reading?.controls) ? reading.controls : [] },
@@ -261,6 +276,17 @@ export function goFailures(reading) {
           message: `GO1 ${layer} "${label}" overlaps the Ghost by ${round(overlap.width)} px wide and ${round(overlap.height)} px tall.`,
         });
       }
+      if (layer === "text" && isMeasuredRect(soil)) {
+        const soilOverlap = rectOverlap(item.rect, soil);
+        if (soilOverlap) {
+          failures.push({
+            id: "GO1",
+            check: "soil-overlap",
+            layer,
+            message: `GO1 text "${label}" overlaps the Soil strip by ${round(soilOverlap.width)} px wide and ${round(soilOverlap.height)} px tall.`,
+          });
+        }
+      }
     }
   }
   return failures;
@@ -269,4 +295,67 @@ export function goFailures(reading) {
 /** Rounds to one decimal place for messages. */
 function round(value) {
   return Math.round(value * 10) / 10;
+}
+
+// LC1 (GitHub issue #585). The Seal group may sit at most this far right of the figures column.
+export const LC1_MAX_GAP_PX = 64;
+
+/** Script run inside the page. Reads the figures column and the Seal group as plain rects. */
+const READ_LC1 = () => {
+  const rectOf = (selector) => {
+    const el = document.querySelector(selector);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+  };
+  return { figures: rectOf("[data-figures-column]"), sealGroup: rectOf("[data-seal-group]") };
+};
+
+// GO1 soil reader: the [data-soil-strip] rect for goFailures' reading.soil, or null when the page has no strip.
+const READ_GO1_SOIL = () => {
+  const el = document.querySelector("[data-soil-strip]");
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  return { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+};
+
+/** Reads the Soil strip rect for GO1 from a loaded page. Sends no input. */
+export async function readGo1Soil(page) {
+  return page.evaluate(READ_GO1_SOIL);
+}
+
+/** Reads LC1 values from a page that is already at the Break the seal step. Sends no input. */
+export async function readLc1Reading(page) {
+  return page.evaluate(READ_LC1);
+}
+
+/**
+ * LC1 failures for one reading. An empty array means the columns are coherent:
+ * the Seal group starts at most LC1_MAX_GAP_PX right of the figures column, and its top
+ * lies within the column's top and bottom. Each failure names the check and the measured value.
+ */
+export function lcFailures(reading) {
+  const figures = reading?.figures ?? null;
+  const sealGroup = reading?.sealGroup ?? null;
+  if (!isMeasuredRect(figures) || !isMeasuredRect(sealGroup)) {
+    return [{ id: "LC1", check: "column-coherence", message: "LC1 no [data-figures-column] or [data-seal-group] rect to measure." }];
+  }
+
+  const failures = [];
+  const gap = sealGroup.left - figures.right;
+  if (gap > LC1_MAX_GAP_PX) {
+    failures.push({
+      id: "LC1",
+      check: "column-gap",
+      message: `LC1 Seal group starts ${round(gap)} px right of the figures column, want at most ${LC1_MAX_GAP_PX} px.`,
+    });
+  }
+  if (sealGroup.top < figures.top || sealGroup.top > figures.bottom) {
+    failures.push({
+      id: "LC1",
+      check: "column-top",
+      message: `LC1 Seal group top ${round(sealGroup.top)} px is outside the figures column, ${round(figures.top)} px to ${round(figures.bottom)} px.`,
+    });
+  }
+  return failures;
 }

@@ -208,6 +208,12 @@
 //                            visible control rect overlaps the Ghost's drawn box. No opaque-panel exemption.
 //                            Each overlap is a BLOCKER that names the text or control, the layer and the px overlap.
 //                            It replaces GT1 and the G1 opaque-ancestor skip on that step.
+//                            GO1 also tests every text line against the [data-soil-strip] rect (soil-overlap).
+//                            On Break the seal (Maya's walk, marks stage) at 1440x900 and 390x844.
+//
+// LC1   column-coherence      (GitHub issue #585, tools/qa/layout-rules-17.mjs) on Break the seal at 1440x900
+//                            (Maya's walk): the Seal group starts at most 64 px right of the figures column,
+//                            and its top lies inside the column's top and bottom. Any failure is a BLOCKER.
 //
 // CW1   content-column-width  (GitHub issue #581, tools/qa/layout-rules-17.mjs)
 //                            at 390x844 and 360x640: the [data-content-column] content box is at least
@@ -327,12 +333,27 @@ import {
   sectionRuns,
   summaryLines,
 } from "./layout-scope.mjs";
-import { CT1_SIZES, CW1_SIZES, cwFailures, frFailures, goFailures, readCt1Failures, readFr1Reading } from "./layout-rules-17.mjs";
+import {
+  CT1_SIZES,
+  CW1_SIZES,
+  cwFailures,
+  frFailures,
+  goFailures,
+  lcFailures,
+  readCt1Failures,
+  readFr1Reading,
+  readGo1Soil,
+  readLc1Reading,
+} from "./layout-rules-17.mjs";
 
 // FR1 (GitHub issue #577) runs at these sizes on every step the walk shoots. It always blocks.
 const FR1_SIZES = ["1440x900", "390x844"];
 // GO1 (GitHub issue #583) runs on the Remember step at these sizes. It replaces GT1 and the G1 opaque skip there.
 const GO1_SIZES = ["390x844"];
+// GO1 also runs on Break the seal (the marks stage) at these sizes, with the Soil strip check.
+const GO1_BREAK_SIZES = ["1440x900", "390x844"];
+// LC1 (GitHub issue #585) runs on Break the seal at these sizes.
+const LC1_SIZES = ["1440x900"];
 
 const DEFAULT_SIZES = ["1366x800", "1280x800", "360x640", "390x844", "2560x1440"];
 const ALL_SIZES = ["360x640", "390x844", "1024x768", "1280x720", "1280x800", "1366x800", "1440x900", "1920x1080", "2560x1440"];
@@ -1762,10 +1783,11 @@ const GO1_READ = () => {
 // scroll back. Every overlap is a BLOCKER. A missing Ghost box fails too (goFailures says so).
 async function checkGo1(page, ctx, label) {
   const startY = await page.evaluate(() => window.scrollY);
-  const readings = [["at the start", await page.evaluate(GO1_READ)]];
+  const soil = await readGo1Soil(page);
+  const readings = [["at the start", { ...(await page.evaluate(GO1_READ)), soil }]];
   await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
   await sleep(250);
-  readings.push(["scrolled to the bottom", await page.evaluate(GO1_READ)]);
+  readings.push(["scrolled to the bottom", { ...(await page.evaluate(GO1_READ)), soil }]);
   await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), startY);
   let count = 0;
   for (const [where, reading] of readings) {
@@ -1775,6 +1797,20 @@ async function checkGo1(page, ctx, label) {
     }
   }
   if (count === 0) ctx.rep.add("ok", "GO1", `no text or control overlaps the Ghost (${label}, at the start and scrolled to the bottom)`);
+}
+
+// GO1 on Break the seal (marks stage) at GO1_BREAK_SIZES, including the Soil strip overlap.
+async function checkGo1Break(page, ctx) {
+  if (!GO1_BREAK_SIZES.includes(ctx.size)) return;
+  await checkGo1(page, ctx, "Break the seal");
+}
+
+// LC1 on Break the seal at LC1_SIZES: the Seal group sits beside the figures column.
+async function checkLc1(page, ctx) {
+  if (!LC1_SIZES.includes(ctx.size)) return;
+  const failures = lcFailures(await readLc1Reading(page));
+  for (const f of failures) ctx.rep.add("blocker", "LC1", f.message, f.check);
+  if (failures.length === 0) ctx.rep.add("ok", "LC1", `Seal group beside the figures column at ${ctx.size}`);
 }
 
 // The Ghost check on a Remember step: GO1 at GO1_SIZES, the G1 body check everywhere else.
@@ -3030,6 +3066,8 @@ async function personaWalk(page, ctx, p, via) {
   await guard(ctx, "F2", () => checkSoil(page, ctx));
   await guard(ctx, "G1", () => checkGhostBody(page, ctx));
   await guard(ctx, "G2", () => checkGhostCentre(page, ctx, "marks"));
+  await guard(ctx, "GO1", () => checkGo1Break(page, ctx));
+  await guard(ctx, "LC1", () => checkLc1(page, ctx));
   await guard(ctx, "BTN", () => checkMainButton(page, ctx, BREAK_SEAL));
   await guard(ctx, "CT1", () => checkCt1(page, ctx));
   await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
