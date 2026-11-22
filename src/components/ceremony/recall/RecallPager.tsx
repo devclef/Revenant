@@ -583,7 +583,7 @@ export function RecallPager({
                 mainLabel={isLast ? submitLabel : REVEAL_COPY.nextQuestion}
                 mainDisabled={submitting || !ready}
                 onMain={() => formRef.current?.requestSubmit()}
-                onPointerDownCapture={() => checkNumberField(question.id)}
+                onRowPress={() => checkNumberField(question.id)}
               />
             ) : null}
 

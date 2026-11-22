@@ -25,8 +25,8 @@ export type NavRowProps = {
   mainDisabled: boolean;
   /** Runs the main action (advance, or submit on the last question). */
   onMain: () => void;
-  /** Runs on a pointer press anywhere in the row, before the press reaches a control. */
-  onPointerDownCapture?: () => void;
+  /** Runs when the reader presses anywhere in the row, before the press reaches a control. */
+  onRowPress?: () => void;
 };
 
 export function NavRow({
@@ -35,13 +35,13 @@ export function NavRow({
   mainLabel,
   mainDisabled,
   onMain,
-  onPointerDownCapture,
+  onRowPress,
 }: NavRowProps) {
   return (
     <div
       className={styles.navRow}
       data-nav-row=""
-      onPointerDownCapture={onPointerDownCapture}
+      onPointerDownCapture={onRowPress}
     >
       {showPrevious ? (
         <button type="button" className={styles.previous} onClick={onPrevious}>
