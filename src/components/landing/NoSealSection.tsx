@@ -1,17 +1,10 @@
 // Feature: 09-demo-polish (F6.2, F6.3)
 //
-// What no wax seal could do: at most three sentences, from landing/copy.ts.
-
-import { LANDING_SECTION_COPY } from "./copy";
-import styles from "./landing.module.css";
+// The no-seal text now lives in ResurrectionSection, under "What we
+// resurrected". This component renders nothing. src/app/page.tsx still imports
+// it (platform-dev owns that file). Spec 16 task 15 drops the import from
+// page.tsx, and task 16 deletes this file.
 
 export function NoSealSection() {
-  return (
-    <section className={styles.section} aria-labelledby="no-seal-title">
-      <h2 id="no-seal-title" className={styles.sectionTitle}>
-        {LANDING_SECTION_COPY.noSealTitle}
-      </h2>
-      <p className={styles.body}>{LANDING_SECTION_COPY.noSealBody}</p>
-    </section>
-  );
+  return null;
 }

@@ -1,8 +1,9 @@
-// Feature: 09-demo-polish (F6.1, B3.3)
+// Feature: 09-demo-polish (F6.1, B3.3), changed by 16 task 15
 //
-// What we resurrected: the pli cacheté story in at most four sentences, then
-// the four Seal_Mapping rows from the Brand_Copy module. The paragraph names no
-// historical number or date, so it links to no source (B3.3).
+// What we resurrected: the wax seal in one sentence, then the one thing no wax
+// seal could do, then the maker's story under "Why I built it". The paragraphs
+// name no historical number or date, so they link to no source (B3.3). The
+// seal mapping table is on /how-it-is-sealed, not here.
 
 import { LANDING_SECTION_COPY } from "./copy";
 import styles from "./landing.module.css";
@@ -18,22 +19,9 @@ export function ResurrectionSection() {
           {sentence}
         </p>
       ))}
-      <table className={styles.sealTable} data-block="seal-mapping">
-        <thead>
-          <tr>
-            <th scope="col">Part of the wax seal</th>
-            <th scope="col">Its Revenant replacement</th>
-          </tr>
-        </thead>
-        <tbody>
-          {LANDING_SECTION_COPY.sealMapping.map((row) => (
-            <tr key={row.seal}>
-              <td data-label="Part of the wax seal">{row.seal}</td>
-              <td data-label="Its Revenant replacement">{row.revenant}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <p className={styles.body}>{LANDING_SECTION_COPY.noSealBody}</p>
+      <h3 className={styles.makerTitle}>{LANDING_SECTION_COPY.makerTitle}</h3>
+      <p className={styles.body}>{LANDING_SECTION_COPY.makerBody}</p>
     </section>
   );
 }

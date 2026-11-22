@@ -330,22 +330,7 @@ interface PendingRetiredWord {
   task: 3 | 10 | 13;
 }
 
-const PENDING_RETIRED_WORDS: readonly PendingRetiredWord[] = [
-  // src/components/landing/copy.ts, removed by task 13 (short home section).
-  {
-    path: "src/components/landing/copy.ts",
-    value:
-      "A seal proves the letter wasn't changed. It can't stop your memory changing. So before you read, you testify, and Revenant never says what the gap means.",
-    task: 13,
-  },
-  // The rendered / page, which repeats the copy above.
-  {
-    path: "rendered /",
-    value:
-      "A seal proves the letter wasn't changed. It can't stop your memory changing. So before you read, you testify, and Revenant never says what the gap means.",
-    task: 13,
-  },
-];
+const PENDING_RETIRED_WORDS: readonly PendingRetiredWord[] = [];
 
 /** One line per hit, for a failure message: "file:line \"value\"". */
 function formatUserString(entry: UserString): string {

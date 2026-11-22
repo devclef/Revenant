@@ -53,21 +53,46 @@ describe("RitualSection", () => {
 });
 
 describe("ResurrectionSection", () => {
-  it("renders the story heading and at most four sentences", () => {
+  it("renders the story heading, the one-sentence story and the no-seal sentences", () => {
     const html = render(<ResurrectionSection />);
     expect(html).toContain(LANDING_SECTION_COPY.resurrectedTitle);
-    expect(LANDING_SECTION_COPY.resurrectedBody.length).toBeLessThanOrEqual(4);
-    const text = LANDING_SECTION_COPY.resurrectedBody.join(" ");
-    expect(sentenceCount(text)).toBeLessThanOrEqual(4);
+    expect(LANDING_SECTION_COPY.resurrectedBody).toHaveLength(1);
+    expect(html).toContain(LANDING_SECTION_COPY.resurrectedBody[0]);
+    expect(html).toContain(LANDING_SECTION_COPY.noSealBody);
   });
 
-  it("renders the four Seal_Mapping rows from Brand_Copy", () => {
+  it("holds at most three sentences for the story and the no-seal text (16.15.1)", () => {
+    const text = [...LANDING_SECTION_COPY.resurrectedBody, LANDING_SECTION_COPY.noSealBody].join(" ");
+    expect(sentenceCount(text)).toBeLessThanOrEqual(3);
+  });
+
+  it("ends with the maker's story under 'Why I built it' with at most two sentences (16.15.4)", () => {
     const html = render(<ResurrectionSection />);
-    expect(html.match(/<tbody>[\s\S]*<\/tbody>/)?.[0].match(/<tr>/g)?.length).toBe(4);
-    for (const row of BRAND_COPY.sealMapping) {
-      expect(html).toContain(row.seal);
-      expect(html).toContain(row.revenant);
+    expect(LANDING_SECTION_COPY.makerTitle).toBe("Why I built it");
+    expect(html).toMatch(/<h3[^>]*>Why I built it<\/h3>/);
+    expect(html.indexOf("Why I built it")).toBeGreaterThan(html.indexOf(LANDING_SECTION_COPY.noSealBody));
+    expect(html).toContain(LANDING_SECTION_COPY.makerBody);
+    expect(sentenceCount(LANDING_SECTION_COPY.makerBody)).toBeLessThanOrEqual(2);
+  });
+
+  it("keeps every sentence of the section at 25 words or fewer", () => {
+    const text = [
+      ...LANDING_SECTION_COPY.resurrectedBody,
+      LANDING_SECTION_COPY.noSealBody,
+      LANDING_SECTION_COPY.makerBody,
+    ].join(" ");
+    const sentences = text.split(/(?<=[.!?])\s+/).filter((s) => s.trim().length > 0);
+    for (const sentence of sentences) {
+      expect(sentence.split(/\s+/).length).toBeLessThanOrEqual(25);
+      expect(sentence).not.toContain("!");
     }
+  });
+
+  it("renders no seal mapping table on the home page (16.15.3)", () => {
+    const html = render(<ResurrectionSection />);
+    expect(html).not.toContain("<table");
+    expect(html).not.toContain("data-block=\"seal-mapping\"");
+    expect(html).not.toContain(BRAND_COPY.sealMapping[0].seal);
   });
 
   it("names no historical number or date, so it links to no source", () => {
@@ -77,29 +102,36 @@ describe("ResurrectionSection", () => {
   });
 
   it("holds no banned word", () => {
-    const text = LANDING_SECTION_COPY.resurrectedBody.join(" ").toLowerCase();
+    const text = [
+      ...LANDING_SECTION_COPY.resurrectedBody,
+      LANDING_SECTION_COPY.noSealBody,
+      LANDING_SECTION_COPY.makerBody,
+    ]
+      .join(" ")
+      .toLowerCase();
     for (const word of BANNED) expect(text).not.toContain(word);
   });
 
-  // H1.4: the story is about a letter in general. The last sentence changed from
-  // the seal-part sentence to the any-part-of-life sentence, so this asserts the
-  // new wording and that no fuel price is named as what a letter holds.
-  it("says a letter can hold any part of life and names no fuel price", () => {
-    const text = LANDING_SECTION_COPY.resurrectedBody.join(" ").toLowerCase();
-    expect(text).toContain("a letter in it can hold any part of life");
+  it("names no fuel price as what a letter holds", () => {
+    const text = [
+      ...LANDING_SECTION_COPY.resurrectedBody,
+      LANDING_SECTION_COPY.noSealBody,
+      LANDING_SECTION_COPY.makerBody,
+    ]
+      .join(" ")
+      .toLowerCase();
     expect(text).not.toMatch(/fuel|gallon|petrol|gasoline/);
   });
 });
 
 describe("NoSealSection", () => {
-  it("renders the title and body", () => {
-    const html = render(<NoSealSection />);
-    expect(html).toContain("What no wax seal could do");
-    expect(html).toContain(LANDING_SECTION_COPY.noSealBody);
+  it("renders nothing; its text sits in ResurrectionSection (16.15.2)", () => {
+    expect(render(<NoSealSection />)).toBe("");
+    expect(render(<ResurrectionSection />)).not.toContain("What no wax seal could do");
   });
 
   it("uses at most three sentences and no banned word", () => {
-    expect(sentenceCount(LANDING_SECTION_COPY.noSealBody)).toBeLessThanOrEqual(3);
+    expect(sentenceCount(LANDING_SECTION_COPY.noSealBody)).toBeLessThanOrEqual(2);
     const body = LANDING_SECTION_COPY.noSealBody.toLowerCase();
     for (const word of BANNED) expect(body).not.toContain(word);
   });
