@@ -271,9 +271,38 @@
 // The W8 heading-offset row (W8.2) reads data-topbar and data-live-stepper, not any
 // attribute above.
 
-import { existsSync, mkdirSync, realpathSync } from "node:fs";
-import { join, resolve } from "node:path";
+//
+// Speed and scope (owner change, see docs/agent-loop.md "Layout check"):
+//   --jobs N           sections run N at a time in one browser (default 4; --jobs 1 is
+//                      the old one-after-another order). Output keeps the section order.
+//   --stages a,b       only the sections of these stage groups (layout-scope.mjs STAGE_GROUPS).
+//   --only-sizes a,b   every section, the walk included, only at these sizes.
+//   --quiet            prints only BLOCKER lines, "could not run" notes and the summary.
+//                      The full output always goes to <shots>/layout-check.log.
+//   --save-blockers f  writes the run's BLOCKER and polish rows to f (JSON).
+//   --baseline f|main  marks each BLOCKER new or already on main; only new ones fail.
+//                      "main" asks tools/qa/layout-baseline.mjs for the cached main run.
+// A browser that closes part-way is started again and the section re-run once. SIGHUP is
+// ignored, so a closed terminal no longer kills the browser; SIGTERM and SIGINT stop the
+// run and still print the summary. Exit 3 means the run did not finish.
+
+import { appendFileSync, existsSync, mkdirSync, readFileSync, realpathSync, writeFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+
+import {
+  ALL_STAGE_GROUPS,
+  baselineGaps,
+  blockersFile,
+  matchBaseline,
+  parseSizeList,
+  parseStages,
+  personaOfStage,
+  readBlockersFile,
+  resultOf,
+  sectionRuns,
+  summaryLines,
+} from "./layout-scope.mjs";
 
 const DEFAULT_SIZES = ["1366x800", "1280x800", "360x640", "390x844", "2560x1440"];
 const ALL_SIZES = ["360x640", "390x844", "1024x768", "1280x720", "1280x800", "1366x800", "1440x900", "1920x1080", "2560x1440"];
@@ -1467,8 +1496,10 @@ async function settle(page, maxMs = 5000) {
   await sleep(200);
 }
 
-function parseArgs(argv) {
-  const opts = { url: null, sizes: DEFAULT_SIZES, shots: "layout-check-shots", chromium: null, require: [] };
+export const DEFAULT_JOBS = 4;
+
+export function parseArgs(argv) {
+  const opts = { url: null, sizes: DEFAULT_SIZES, shots: "layout-check-shots", chromium: null, require: [], stages: null, onlySizes: null, quiet: false, jobs: DEFAULT_JOBS, baseline: null, saveBlockers: null };
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     const take = () => {
@@ -1482,7 +1513,17 @@ function parseArgs(argv) {
     else if (arg === "--require") opts.require = take().split(",").map((s) => s.trim()).filter(Boolean);
     else if (arg === "--shots") opts.shots = take();
     else if (arg === "--chromium") opts.chromium = take();
-    else if (arg === "--help" || arg === "-h") opts.help = true;
+    else if (arg === "--stages") opts.stages = parseStages(take());
+    else if (arg === "--only-sizes") opts.onlySizes = parseSizeList(take(), "--only-sizes");
+    else if (arg === "--quiet") opts.quiet = true;
+    else if (arg === "--baseline") opts.baseline = take();
+    else if (arg === "--save-blockers") opts.saveBlockers = take();
+    else if (arg === "--jobs") {
+      const raw = take();
+      const n = Number(raw);
+      if (!Number.isInteger(n) || n < 1 || n > 16) throw new Error(`--jobs must be a whole number from 1 to 16, not "${raw}"`);
+      opts.jobs = n;
+    } else if (arg === "--help" || arg === "-h") opts.help = true;
     else throw new Error(`unknown option ${arg}`);
   }
   if (!opts.help) {
@@ -1495,35 +1536,59 @@ function parseArgs(argv) {
     for (const size of opts.sizes) {
       if (!/^\d+x\d+$/.test(size)) throw new Error(`size "${size}" must look like 1280x800`);
     }
+    // The walk runs at the --sizes that --only-sizes keeps (possibly none).
+    if (opts.onlySizes) {
+      opts.sizes = opts.sizes.filter((s) => opts.onlySizes.includes(s));
+    }
   }
   return opts;
 }
 
 const LEVEL_LABEL = { blocker: "BLOCKER", polish: "polish", note: "note", ok: "PASS" };
 
-function makeReport() {
+// One report per section. `emit` receives every output line as { kind, text }:
+// kind is "log", "stage" or the row level; `couldNotRun` marks a note about a
+// check that threw. The run prints the lines of each section in section order.
+export function makeReport(emit = (line) => console.log(line.text)) {
   const items = [];
+  const rows = [];
   const counts = { blocker: 0, polish: 0, note: 0 };
   let ctx = null;
   return {
     items,
+    rows,
     counts,
     setContext(next) {
       ctx = next;
     },
+    log(text) {
+      emit({ kind: "log", text });
+    },
     stage(stage) {
       if (!ctx) return;
       ctx.stage = stage;
-      console.log(`\n[${ctx.size}] ${stage}`);
+      emit({ kind: "stage", text: `\n[${ctx.size}] ${stage}` });
     },
     // One line per result: <level> <id> <name> <WxH> <stage> <detail>. `name` is
     // the spec 08 check name, or "-" for the older checks.
     add(level, check, detail, name = "-") {
       if (level in counts) counts[level] += 1;
-      if (level === "blocker") items.push({ size: ctx?.size, stage: ctx?.stage, check, detail });
-      console.log(`  ${LEVEL_LABEL[level].padEnd(7)} ${check.padEnd(5)} ${name.padEnd(14)} ${ctx?.size ?? "-"} ${ctx?.stage ?? "-"} ${detail}`);
+      const stage = ctx?.stage ?? null;
+      const row = { level, size: ctx?.size, stage, persona: ctx?.persona ?? personaOfStage(stage), check, name, detail };
+      if (level === "blocker") items.push(row);
+      if (level === "blocker" || level === "polish") rows.push(row);
+      emit({
+        kind: level,
+        couldNotRun: level === "note" && /could not run/.test(String(detail)),
+        text: `  ${LEVEL_LABEL[level].padEnd(7)} ${check.padEnd(5)} ${name.padEnd(14)} ${ctx?.size ?? "-"} ${stage ?? "-"} ${detail}`,
+      });
     },
   };
+}
+
+// --quiet keeps BLOCKER lines and the notes about a check that could not run.
+export function quietKeeps(line) {
+  return line.kind === "blocker" || line.couldNotRun === true;
 }
 
 async function stageOf(page) {
@@ -2499,8 +2564,32 @@ async function guard(ctx, label, fn) {
   try {
     await fn();
   } catch (error) {
-    ctx.rep.add("note", label, `could not run: ${String(error.message ?? error).split("\n")[0]}`);
+    if (error instanceof NotOnBuild) ctx.rep.add("note", label, `not on this build: ${error.message}`);
+    else ctx.rep.add("note", label, `could not run: ${String(error.message ?? error).split("\n")[0]}`);
   }
+}
+
+// An element a row needs is not on the page. guard() prints it as a "not on this build" note.
+class NotOnBuild extends Error {}
+
+// How long a row looks for an element before it calls it absent. The page has loaded and
+// settled by then; without this check an absent element waited out Playwright's 30 s
+// action timeout (S2, S, W7, W12, the X2.1 setup clicks, W5.2, the P1 Next presses).
+const PRESENT_MS = 2000;
+
+async function present(locator, timeout = PRESENT_MS) {
+  return locator.first().waitFor({ state: "attached", timeout }).then(() => true, () => false);
+}
+
+// The old `.click().catch(() => {})` for a control a row only sets up: skipped when absent.
+async function clickIfPresent(locator) {
+  if (await present(locator)) await locator.click().catch(() => {});
+}
+
+// Throws NotOnBuild when `locator` is absent, so a guarded row reports it at once.
+async function need(locator, what) {
+  if (!(await present(locator))) throw new NotOnBuild(`no ${what}`);
+  return locator;
 }
 
 async function newPage(context) {
@@ -2622,6 +2711,7 @@ async function index(context, ctx) {
 // Enter, so FV1 reads both cases at every size.
 async function persona(context, ctx, p, via) {
   const page = await newPage(context);
+  ctx.persona = p.key;
   ctx.ghostHook = false;
   ctx.intactCentre = null;
   ctx.pickedUp = false;
@@ -2633,6 +2723,7 @@ async function persona(context, ctx, p, via) {
     const where = ctx.stage ? ` at the ${ctx.stage} stage` : "";
     ctx.rep.add("blocker", "walk", `the flow stopped${where}: ${String(error.message ?? error).split("\n")[0]}`);
   } finally {
+    ctx.persona = undefined;
     await page.close();
   }
 }
@@ -2953,7 +3044,8 @@ export function write17Failures(r) {
 // X1 on the other letter pages (R27.4). /l/[id] needs a sealed live letter, which
 // this walk does not create, so it measures the page an unknown id renders.
 async function otherPages(context, ctx) {
-  for (const [stage, path] of [["live", "/demo/live"], ["letter-page", "/l/layoutcheck-unknown-id"]]) {
+  for (const [stage, path, group] of [["live", "/demo/live", "live"], ["letter-page", "/l/layoutcheck-unknown-id", "letter-page"]]) {
+    if (!sectionRuns({ group }, ctx.scope)) continue;
     ctx.rep.stage(stage);
     const page = await newPage(context);
     try {
@@ -3026,7 +3118,7 @@ async function checkPersonaSealRow(browser, base, size, rep, required) {
   const context = await browser.newContext({ viewport: { width: w, height: h } });
   const ctx = { size, w, h, base, rep, stage: null, required, memo: {}, ghostHook: false };
   rep.setContext(ctx);
-  console.log(`\n==== ${size} (U9) ====`);
+  rep.log(`\n==== ${size} (U9) ====`);
   try {
     rep.stage("demo-seals");
     const page = await newPage(context);
@@ -3248,14 +3340,14 @@ async function checkPressEnvelope(context, ctx) {
       report(ctx, result("P1", "press-envelope", "missing", `/demo/live answered HTTP ${res?.status() ?? "none"}; Press_Envelope not measured`));
       return;
     }
-    await page.locator("textarea").first().fill(P1_LIVE_TEXT).catch(() => {});
+    if (await present(page.locator("textarea"))) await page.locator("textarea").first().fill(P1_LIVE_TEXT).catch(() => {});
     await guard(ctx, "W", () => checkWriteRow(page, ctx));
     const next = page.getByRole("button", { name: "Next", exact: true }).first();
     // W8 runs after every Next press, so each step change gets its own heading row (W8.2).
     let measured = false;
     for (let i = 0; i < P1_MAX_NEXT_PRESSES; i += 1) {
       if ((await page.locator('[data-live-step="seal"]').count()) > 0) break;
-      await next.click({ timeout: 10_000 }).catch(() => {});
+      if (await present(next)) await next.click({ timeout: 10_000 }).catch(() => {});
       await sleep(800);
       await guard(ctx, "W8", () => checkHeadingOffset(page, ctx, `Next press ${i + 1}`));
       measured = true;
@@ -4306,7 +4398,7 @@ async function checkStepTrack(page, ctx, stage) {
 }
 
 async function checkStepChange(page, ctx) {
-  await page.getByRole("button", { name: FOLD_LABEL }).click();
+  await (await need(page.getByRole("button", { name: FOLD_LABEL }), `"${FOLD_LABEL}" button`)).click();
   await page.waitForSelector("[data-seal-step]", { timeout: WAIT_MS });
   await sleep(1000);
   const first = await page.evaluate(STEP_READ);
@@ -4381,7 +4473,7 @@ async function checkSealRows(page, ctx) {
       ? verdictRow("S3.4", "warning-to-seal", s34Failures(sealBottom), `viewport=${ctx.size}`, "seal bottom at most 844 px below the Warning_Text top")
       : missingRow("S3.4", "warning-to-seal", "no [data-warning-text] or [data-press-envelope]"));
   }
-  await page.locator('[data-backup-card="skip"]').click();
+  await (await need(page.locator('[data-backup-card="skip"]'), '[data-backup-card="skip"] backup card')).click();
   await sleep(300);
   const after = await page.evaluate(SEAL_READ);
   await checkPress(page, ctx, "chosen", after);
@@ -4414,7 +4506,7 @@ async function checkDeskRows(browser, base, size, rep, required) {
   const context = await browser.newContext({ viewport: { width: w, height: h } });
   const ctx = { size, w, h, base, rep, stage: null, required, memo: {}, ghostHook: false };
   rep.setContext(ctx);
-  console.log(`\n==== ${size} (Q1.1 desk rows) ====`);
+  rep.log(`\n==== ${size} (Q1.1 desk rows) ====`);
   try {
     const page = await newPage(context);
     try {
@@ -4432,6 +4524,7 @@ async function checkDeskRows(browser, base, size, rep, required) {
       await guard(ctx, "W5.2", () => checkRuledBaseline(context, ctx));
       if (SEAL_SIZES.includes(size)) {
         await guard(ctx, "S2", async () => {
+          await need(page.locator("#live-letter"), "#live-letter on /demo/live");
           await page.fill("#live-letter", DESK_LETTER);
           await checkStepChange(page, ctx);
         });
@@ -4524,7 +4617,7 @@ async function checkRuledBaseline(context, ctx) {
       return;
     }
     await page.evaluate(() => document.fonts.ready);
-    await page.fill("#live-letter", Array.from({ length: W52_LINES }, (_, i) => `Line ${i + 1}`).join("\n")).catch(() => {});
+    if (await present(page.locator("#live-letter"))) await page.fill("#live-letter", Array.from({ length: W52_LINES }, (_, i) => `Line ${i + 1}`).join("\n")).catch(() => {});
     await sleep(300);
     const raw = await page.evaluate(W52_READ);
     report(ctx, w52Row({ viewport: ctx.size, raw }));
@@ -5187,7 +5280,7 @@ async function runX21Controls(page, ctx) {
   await x21Control(page, ctx, { name: "Add a letter", locator: page.getByRole("button", { name: "Add a letter", exact: true }) });
   await x21Control(page, ctx, { name: "+ Write my own", locator: writeOwn() });
   for (let i = 0; i < 2 && (await page.locator("[data-question-row]").count()) < 2; i++) {
-    await writeOwn().click().catch(() => {});
+    if (await present(writeOwn())) await writeOwn().click().catch(() => {});
     await sleep(200);
   }
   await x21Control(page, ctx, { name: "Remove", locator: page.getByRole("button", { name: /^Remove/ }) });
@@ -5201,7 +5294,7 @@ async function runX21Controls(page, ctx) {
   for (let i = 0; i < inputCount; i++) {
     await x21Control(page, ctx, { name: `own-number input ${i + 1}`, locator: inputs.nth(i) });
   }
-  await publicPrice().click().catch(() => {});
+  if (await present(publicPrice())) await publicPrice().click().catch(() => {});
   await sleep(200);
   await x21Control(page, ctx, { name: "Figure_Row", locator: page.locator("[data-figure-row]"), toggles: true });
   await x21Control(page, ctx, { name: "Details", locator: page.locator("[data-figure-details]"), toggles: true });
@@ -5220,7 +5313,7 @@ async function checkWriteRows(page, ctx) {
   const w5 = await page.evaluate(W5_READ);
   report(ctx, w5 ? verdictRow("W5", "letter-field", w5Failures({ field: w5 }), `height=${num(w5.height, 0)} viewport=${ctx.size}`, "21 px text on 32 px lines, no border, transparent, at least 296 px tall, labelled \"Your letter\"") : missingRow("W5", "letter-field", "no #live-letter"));
 
-  await page.getByRole("button", { name: "Write my own", exact: true }).click().catch(() => {});
+  await clickIfPresent(page.getByRole("button", { name: "Write my own", exact: true }));
   await sleep(300);
   const w7 = await page.evaluate(W7_READ);
   report(ctx, w7 ? verdictRow("W7", "question-row", w7Failures({ row: w7 }), `viewport=${ctx.size}`, "Wax_Disc 30 px, 21 px question, 13 px Lock_Line, Remove at least 44 px") : missingRow("W7", "question-row", "no [data-question-row] after \"+ Write my own\""));
@@ -5244,11 +5337,11 @@ async function checkWriteRows(page, ctx) {
   const figures = await page.evaluate(W11_READ);
   report(ctx, figures.length ? verdictRow("W11", "public-price-rows", w11Failures({ rows: figures }), `rows=${figures.length} viewport=${ctx.size}`, "rows at least 56 px, 8 px radius, unselected #0b0912 with 1px #2a2340, no Accent") : missingRow("W11", "public-price-rows", "no [data-figure-row] (no series offered on this build)"));
 
-  await page.getByRole("button", { name: "A number of my own", exact: true }).click().catch(() => {});
+  await clickIfPresent(page.getByRole("button", { name: "A number of my own", exact: true }));
   await sleep(200);
   const w12 = await page.evaluate(W12_READ);
   report(ctx, w12 ? verdictRow("W12", "own-number", w12Failures({ inputs: w12 }), `inputs=${w12.length} viewport=${ctx.size}`, "four 44 px inputs, 8 px radius, #0b0912 fill, 1px #3a3350 border") : missingRow("W12", "own-number", "no [data-own-number]"));
-  await page.getByRole("button", { name: "A public price", exact: true }).click().catch(() => {});
+  await clickIfPresent(page.getByRole("button", { name: "A public price", exact: true }));
 
   const rehearsal = await page.evaluate(() => document.querySelectorAll("[data-live-rehearsal]").length);
   report(ctx, verdictRow("W13.4", "rehearsal-line", rehearsal === 1 ? [] : [`${rehearsal} rehearsal lines, want 1`], `count=${rehearsal} viewport=${ctx.size}`, "the Rehearsal_Line once on the Write step"));
@@ -5260,9 +5353,9 @@ async function checkWriteRows(page, ctx) {
 async function checkPersonaRows(browser, base, p, size, rep, required) {
   const [w, h] = parseSize(size);
   const context = await browser.newContext({ viewport: { width: w, height: h } });
-  const ctx = { size, w, h, base, rep, stage: null, required, memo: {}, ghostHook: false };
+  const ctx = { size, w, h, base, rep, stage: null, required, memo: {}, ghostHook: false, persona: p.key };
   rep.setContext(ctx);
-  console.log(`\n==== ${size} (${p.key} Q1.1 rows) ====`);
+  rep.log(`\n==== ${size} (${p.key} Q1.1 rows) ====`);
   const page = await newPage(context);
   try {
     rep.stage(`${p.key}-recall`);
@@ -5360,6 +5453,7 @@ async function checkTopBarSteps(browser, base, size, rep, required) {
     await page.evaluate(() => document.fonts.ready);
     await sleep(500);
     const steps = [{ label: "write", ...(await page.evaluate(B_READ)) }];
+    await need(page.locator("#live-letter"), "#live-letter on /demo/live; the B1.2 Top_Bar rows are not measured");
     await page.fill("#live-letter", DESK_LETTER);
     const answers = page.locator("[data-answer-input]");
     const answerTexts = fillAnswerTexts(await answers.count());
@@ -5394,13 +5488,16 @@ async function checkTopBarSteps(browser, base, size, rep, required) {
 }
 
 // B2.1 on the listed pages at top, half and end scroll. Desktop size.
-async function checkSoilStrips(browser, base, rep, required) {
-  const size = "1440x900";
+export const SOIL_SIZE = "1440x900";
+export const SOIL_PAGES = [["/", "landing"], ["/demo", "demo"], [PERSONA_PATH, "persona"], [LIVE_PATH, "live"]];
+
+async function checkSoilStrips(browser, base, rep, required, scope = {}) {
+  const size = SOIL_SIZE;
   const [w, h] = parseSize(size);
   const context = await browser.newContext({ viewport: { width: w, height: h } });
   const ctx = { size, w, h, base, rep, stage: "soil", required, memo: {}, ghostHook: false };
   rep.setContext(ctx);
-  const pages = ["/", "/demo", PERSONA_PATH, LIVE_PATH];
+  const pages = SOIL_PAGES.filter(([, group]) => sectionRuns({ group }, scope)).map(([path]) => path);
   try {
     for (const path of pages) {
       const page = await newPage(context);
@@ -5471,6 +5568,9 @@ async function checkDemoRows(browser, base, size, rep, required) {
 // (CTAP2, PRF), waits out the 30-second lock and opens it, so it needs the database.
 
 const S16_SIZES = ["1440x900", "390x844"];
+const TOP_BAR_STEP_SIZES = ["360x640", "390x844"];
+const DEMO_ROW_SIZES = ["1440x900", "390x844"];
+const PERSONA_ROW_SIZES = ["360x640", "390x844", "1440x900"];
 const S16_LOCK_WAIT_MS = 31000;
 const S16_STEP_MS = 30000;
 const S16_LETTER = "A letter for the spec 16 layout rows.";
@@ -5575,6 +5675,9 @@ async function s16Hero(context, ctx, base) {
 // public price ticked, then the fold. Returns once the Seal step is shown and its scroll is done.
 async function s16LiveToSeal(page, base, { figure }) {
   await page.goto(`${base}${LIVE_PATH}`, { waitUntil: "load" });
+  // The Write step is in the server HTML. A page without any live step (no RP_ID, or a build
+  // before the live demo) has nothing to wait for.
+  await need(page.locator("[data-live-step]"), `[data-live-step] on ${LIVE_PATH}`);
   await page.locator('[data-live-step="write"]').waitFor({ state: "visible", timeout: S16_STEP_MS });
   await page.evaluate(() => document.fonts.ready);
   await page.fill("#live-letter", S16_LETTER);
@@ -5688,22 +5791,24 @@ async function s16LiveReceipts(context, page, base, read) {
     step = "break the seal and receipts";
     return await s16BreakAndReceipts(page);
   } catch (error) {
+    if (error instanceof NotOnBuild) throw new NotOnBuild(`live step "${step}": ${error.message}`);
     throw new Error(`live step "${step}": ${String(error.message ?? error).split("\n")[0]}`);
   }
 }
 
-async function checkSpec16Rows(browser, base, size, rep, required) {
+async function checkSpec16Rows(browser, base, size, rep, required, scope = {}) {
+  const runs = (group) => sectionRuns({ group }, scope);
   const [w, h] = parseSize(size);
-  console.log(`\n==== ${size} (spec 16 rows of 17.3) ====`);
+  rep.log(`\n==== ${size} (spec 16 rows of 17.3) ====`);
   let personaWidth = null;
   for (const calm of [false, true]) {
     const context = await browser.newContext({ viewport: { width: w, height: h }, reducedMotion: calm ? "reduce" : "no-preference" });
     const ctx = s16Ctx(rep, size, required, calm);
     rep.setContext(ctx);
     try {
-      await guard(ctx, "R5.4", () => s16Hero(context, ctx, base));
+      if (runs("landing")) await guard(ctx, "R5.4", () => s16Hero(context, ctx, base));
       if (!calm) {
-        await guard(ctx, "R14.3", async () => {
+        if (runs("live")) await guard(ctx, "R14.3", async () => {
           ctx.rep.stage("seal calm=off");
           const page = await newPage(context);
           try {
@@ -5715,7 +5820,8 @@ async function checkSpec16Rows(browser, base, size, rep, required) {
         });
         continue;
       }
-      await guard(ctx, "R10.1", async () => {
+      // R10.6 compares the live column with the persona one, so live runs R10.1 too.
+      if (runs(["persona", "live"])) await guard(ctx, "R10.1", async () => {
         ctx.rep.stage("us-maya receipts");
         const page = await newPage(context);
         try {
@@ -5726,7 +5832,7 @@ async function checkSpec16Rows(browser, base, size, rep, required) {
           await page.close();
         }
       });
-      await guard(ctx, "R10.6", async () => {
+      if (runs("live")) await guard(ctx, "R10.6", async () => {
         ctx.rep.stage("live seal to receipts calm=on");
         const page = await newPage(context);
         try {
@@ -5751,20 +5857,25 @@ async function checkSpec16Rows(browser, base, size, rep, required) {
   }
 }
 
+// The walk at one size. Each part runs only when its stage group is in --stages.
 async function runSize(browser, base, size, opts, rep) {
   const [w, h] = size.split("x").map(Number);
   const context = await browser.newContext({ viewport: { width: w, height: h } });
-  const ctx = { size, w, h, base, shotsDir: opts.shots, rep, intactCentre: null, stage: null, hasFiguresHeading: false, required: opts.required, memo: opts.memo, ghostHook: false };
+  const scope = { stages: opts.stages };
+  const ctx = { size, w, h, base, shotsDir: opts.shots, rep, intactCentre: null, stage: null, hasFiguresHeading: false, required: opts.required, memo: {}, ghostHook: false, scope };
+  const runs = (group) => sectionRuns({ group }, scope);
   rep.setContext(ctx);
-  console.log(`\n==== ${size} ====`);
+  rep.log(`\n==== ${size} ====`);
   try {
-    await guard(ctx, "walk", () => landing(context, ctx));
-    await guard(ctx, "walk", () => index(context, ctx));
-    await guard(ctx, "walk", () => persona(context, ctx, PERSONAS[0], "mouse"));
-    await guard(ctx, "walk", () => persona(context, ctx, PERSONAS[1], "keyboard"));
-    await guard(ctx, "walk", () => showAll(context, ctx));
-    await guard(ctx, "FP1", () => checkFastestPath(context, ctx, PERSONAS[0]));
-    await guard(ctx, "P1", () => checkPressEnvelope(context, ctx));
+    if (runs("landing")) await guard(ctx, "walk", () => landing(context, ctx));
+    if (runs("demo")) await guard(ctx, "walk", () => index(context, ctx));
+    if (runs("persona")) {
+      await guard(ctx, "walk", () => persona(context, ctx, PERSONAS[0], "mouse"));
+      await guard(ctx, "walk", () => persona(context, ctx, PERSONAS[1], "keyboard"));
+      await guard(ctx, "walk", () => showAll(context, ctx));
+      await guard(ctx, "FP1", () => checkFastestPath(context, ctx, PERSONAS[0]));
+    }
+    if (runs("live")) await guard(ctx, "P1", () => checkPressEnvelope(context, ctx));
     await guard(ctx, "walk", () => otherPages(context, ctx));
   } finally {
     await context.close();
@@ -5772,7 +5883,69 @@ async function runSize(browser, base, size, opts, rep) {
 }
 
 function printUsage() {
-  console.log(`Usage: npm run layout-check -- --url <origin> [--sizes WxH,WxH] [--all-sizes] [--require ID,ID] [--shots <dir>] [--chromium <path>]`);
+  console.log(`Usage: npm run layout-check -- --url <origin> [--sizes WxH,WxH] [--all-sizes] [--only-sizes WxH,WxH] [--stages ${ALL_STAGE_GROUPS.join(",")}] [--require ID,ID] [--baseline <file>|main] [--save-blockers <file>] [--quiet] [--jobs N] [--shots <dir>] [--chromium <path>]`);
+}
+
+// The sections of a run, in the order the output prints them. `groups` are the
+// stage groups a section belongs to and `size` its viewport; --stages and
+// --only-sizes drop the rest. Pure, so tests can check what a scoped run covers.
+export function planSections(opts) {
+  const scope = { stages: opts.stages ?? null, onlySizes: opts.onlySizes ?? null };
+  const all = [];
+  for (const size of opts.sizes) all.push({ kind: "walk", name: `walk ${size}`, label: "walk", size, groups: ALL_STAGE_GROUPS });
+  for (const size of U9_SIZES) all.push({ kind: "u9", name: `U9 ${size}`, label: "U9", size, groups: ["demo"] });
+  for (const size of DESK_SIZES) all.push({ kind: "desk", name: `desk rows ${size}`, label: "desk", size, groups: ["live"] });
+  for (const size of TOP_BAR_STEP_SIZES) all.push({ kind: "topbar", name: `Top_Bar steps ${size}`, label: "B1.2", size, groups: ["live"] });
+  for (const size of DEMO_ROW_SIZES) all.push({ kind: "demo", name: `demo rows ${size}`, label: "D1", size, groups: ["demo"] });
+  for (const size of PERSONA_ROW_SIZES) {
+    for (const p of PERSONAS) all.push({ kind: "personaRows", name: `${p.key} rows ${size}`, label: "persona", size, persona: p, groups: ["persona"] });
+  }
+  all.push({ kind: "soil", name: `Soil strips ${SOIL_SIZE}`, label: "B2.1", size: SOIL_SIZE, groups: SOIL_PAGES.map(([, g]) => g) });
+  for (const size of S16_SIZES) all.push({ kind: "s16", name: `spec 16 rows ${size}`, label: "R10", size, groups: ["landing", "persona", "live"] });
+  // The walk's size list is already cut to --only-sizes by parseArgs.
+  return all.filter((s) => sectionRuns({ group: s.groups, size: s.kind === "walk" ? null : s.size }, scope));
+}
+
+function sectionRunner(section, opts) {
+  const scope = { stages: opts.stages ?? null, onlySizes: opts.onlySizes ?? null };
+  const { size } = section;
+  switch (section.kind) {
+    case "walk": return (browser, rep) => runSize(browser, opts.url, size, opts, rep);
+    case "u9": return (browser, rep) => checkPersonaSealRow(browser, opts.url, size, rep, opts.required);
+    case "desk": return (browser, rep) => checkDeskRows(browser, opts.url, size, rep, opts.required);
+    case "topbar": return (browser, rep) => checkTopBarSteps(browser, opts.url, size, rep, opts.required);
+    case "demo": return (browser, rep) => checkDemoRows(browser, opts.url, size, rep, opts.required);
+    case "personaRows": return (browser, rep) => checkPersonaRows(browser, opts.url, section.persona, size, rep, opts.required);
+    case "soil": return (browser, rep) => checkSoilStrips(browser, opts.url, rep, opts.required, scope);
+    case "s16": return (browser, rep) => checkSpec16Rows(browser, opts.url, size, rep, opts.required, scope);
+    default: throw new Error(`unknown section ${section.kind}`);
+  }
+}
+
+async function loadBaseline(opts, out) {
+  if (!opts.baseline) return { rows: null, note: null };
+  try {
+    let file;
+    let label;
+    if (opts.baseline === "main") {
+      const { resolveBaseline } = await import("./layout-baseline.mjs");
+      const got = await resolveBaseline({ log: (text) => out(`baseline: ${text}`) });
+      file = got.file;
+      label = `main ${got.commit.slice(0, 12)}${got.cached ? " (cached)" : " (built for this run)"}`;
+    } else {
+      file = resolve(opts.baseline);
+      label = opts.baseline;
+    }
+    const data = readBlockersFile(JSON.parse(readFileSync(file, "utf8")));
+    const run = { sizes: opts.sizes, onlySizes: opts.onlySizes, stages: opts.stages };
+    const gaps = baselineGaps(data.run, run);
+    const gapNote = gaps.length ? `; it did not cover ${gaps.join(", ")}, so blockers there count as new` : "";
+    const partial = data.complete ? "" : "; the baseline run did not finish";
+    return { rows: data.blockers, note: `${label}${gapNote}${partial}` };
+  } catch (error) {
+    const note = `${opts.baseline === "main" ? "main" : opts.baseline} could not be used (${String(error.message ?? error).split("\n")[0]}); every BLOCKER counts as new`;
+    return { rows: [], note };
+  }
 }
 
 async function main() {
@@ -5806,6 +5979,20 @@ async function main() {
     return 2;
   }
 
+  // /demo/live renders its "not available on this server" panel when the app runs without
+  // RP_ID. Every live row is then a note, so the run says so in its summary.
+  let setupWarning = null;
+  if (sectionRuns({ group: "live" }, { stages: opts.stages })) {
+    try {
+      const res = await fetch(`${opts.url}${LIVE_PATH}`);
+      if ((await res.text()).includes('id="live-unavailable-heading"')) {
+        setupWarning = `${LIVE_PATH} says sealing is not available on this server, so the live rows are not measured. Start the app with RP_ID=localhost APP_ORIGIN=${opts.url}.`;
+      }
+    } catch {
+      // The walk reports a page that does not load.
+    }
+  }
+
   const executablePath = opts.chromium ?? process.env.CHROMIUM_PATH ?? (existsSync("/usr/bin/chromium") ? "/usr/bin/chromium" : undefined);
   if (executablePath && !existsSync(executablePath)) {
     console.error(`layout-check: no Chromium at ${executablePath}. Pass --chromium <path>.`);
@@ -5813,65 +6000,180 @@ async function main() {
   }
 
   opts.shots = resolve(opts.shots);
-  let browser;
+  mkdirSync(opts.shots, { recursive: true });
+  const logFile = join(opts.shots, "layout-check.log");
+  writeFileSync(logFile, "");
+  // A closed terminal must not stop the run: the log file still gets every line.
+  process.stdout.on("error", () => {});
+  const out = (text, toStdout = true) => {
+    try {
+      appendFileSync(logFile, `${text}\n`);
+    } catch {
+      // The log is a copy; stdout still has the line.
+    }
+    if (toStdout) console.log(text);
+  };
+  const print = (line) => out(line.text, !opts.quiet || quietKeeps(line));
+
+  const baseline = await loadBaseline(opts, out);
+
+  // Playwright's own SIGHUP and SIGTERM handlers close the browser and leave the
+  // script running, so every later row failed with "Target page, context or browser
+  // has been closed" and the run died before its summary. The run handles them here.
+  const launch = () => chromium.launch({ executablePath, headless: true, handleSIGHUP: false, handleSIGINT: false, handleSIGTERM: false });
+  const holder = { browser: null, relaunching: null };
   try {
-    browser = await chromium.launch({ executablePath, headless: true });
+    holder.browser = await launch();
   } catch (error) {
     console.error(`layout-check: could not start Chromium: ${error.message.split("\n")[0]}`);
     return 2;
   }
+  const freshBrowser = async (old) => {
+    if (holder.browser !== old && holder.browser.isConnected()) return holder.browser;
+    if (!holder.relaunching) {
+      holder.relaunching = launch().then(
+        (b) => {
+          holder.browser = b;
+          holder.relaunching = null;
+          return b;
+        },
+        (error) => {
+          holder.relaunching = null;
+          throw error;
+        },
+      );
+    }
+    return holder.relaunching;
+  };
+  let stopped = null;
+  process.on("SIGHUP", () => out(`layout-check: SIGHUP ignored (the terminal closed); the run goes on. Full output: ${logFile}`, false));
+  for (const signal of ["SIGTERM", "SIGINT"]) {
+    process.on(signal, () => {
+      if (stopped) process.exit(3);
+      stopped = signal;
+      out(`layout-check: ${signal}: stopping; the summary covers what ran`);
+      holder.browser?.close().catch(() => {});
+    });
+  }
 
-  const rep = makeReport();
-  console.log(`Revenant layout check: ${opts.url}`);
-  console.log(`Sizes: ${opts.sizes.join(", ")}. Screenshots: ${opts.shots}`);
+  out(`Revenant layout check: ${opts.url}`);
+  out(`Sizes: ${opts.sizes.length ? opts.sizes.join(", ") : "none (the walk is skipped)"}. Screenshots: ${opts.shots}`);
+  if (opts.onlySizes) out(`Only sizes: ${opts.onlySizes.join(", ")}`);
+  out(`Stages: ${opts.stages ? opts.stages.join(", ") : `all (${ALL_STAGE_GROUPS.join(", ")})`}. Jobs: ${opts.jobs}. Full output: ${logFile}`);
   // --require: the spec 09 checks whose failures are BLOCKERs. An unknown ID is a note.
+  const argsRep = makeReport(print);
   opts.required = new Set();
   for (const id of opts.require) {
     const known = REQUIRABLE_CHECKS.find((c) => c.toLowerCase() === id.toLowerCase());
     if (known) opts.required.add(known);
-    else rep.add("note", "args", `--require: unknown check ID "${id}" ignored (known: ${REQUIRABLE_CHECKS.join(",")})`);
+    else argsRep.add("note", "args", `--require: unknown check ID "${id}" ignored (known: ${REQUIRABLE_CHECKS.join(",")})`);
   }
-  console.log(`Required: ${opts.required.size ? [...opts.required].join(", ") : "none (spec 09 and spec 10 checks print polish)"}`);
-  opts.memo = {};
-  try {
-    for (const size of opts.sizes) {
-      await runSize(browser, opts.url, size, opts, rep);
-    }
-    for (const size of U9_SIZES) {
-      await checkPersonaSealRow(browser, opts.url, size, rep, opts.required);
-    }
-    for (const size of DESK_SIZES) {
-      await checkDeskRows(browser, opts.url, size, rep, opts.required);
-    }
-    for (const size of ["360x640", "390x844"]) {
-      await checkTopBarSteps(browser, opts.url, size, rep, opts.required);
-    }
-    for (const size of ["1440x900", "390x844"]) {
-      await checkDemoRows(browser, opts.url, size, rep, opts.required);
-    }
-    for (const size of ["360x640", "390x844", "1440x900"]) {
-      for (const p of PERSONAS) {
-        await checkPersonaRows(browser, opts.url, p, size, rep, opts.required);
+  if (setupWarning) out(`Setup: ${setupWarning}`);
+  out(`Required: ${opts.required.size ? [...opts.required].join(", ") : "none (spec 09 and spec 10 checks print polish)"}`);
+
+  const sections = planSections(opts).map((s) => ({ ...s, run: sectionRunner(s, opts) }));
+  const results = new Array(sections.length).fill(null);
+
+  async function runSection(section) {
+    let retried = false;
+    for (;;) {
+      const lines = [];
+      const rep = makeReport((line) => lines.push(line));
+      if (retried) lines.push({ kind: "log", couldNotRun: true, text: `  note    ${section.label.padEnd(5)} -              ${section.size} - the browser closed during "${section.name}"; started again and ran the section again` });
+      const browser = holder.browser;
+      const t0 = Date.now();
+      let error = null;
+      try {
+        await section.run(browser, rep);
+      } catch (e) {
+        error = e;
       }
+      const lost = !browser.isConnected();
+      if (lost && !stopped && !retried) {
+        retried = true;
+        try {
+          await freshBrowser(browser);
+          continue;
+        } catch (e) {
+          error = e;
+        }
+      }
+      if (error) {
+        if (error instanceof NotOnBuild) rep.add("note", section.label, `not on this build: ${error.message}`);
+        else rep.add("note", section.label, `could not run: ${String(error.message ?? error).split("\n")[0]}`);
+      }
+      const incomplete = lost ? `${section.name} (${stopped ? `stopped by ${stopped}` : "the browser closed again"})` : null;
+      return { rep, lines, ms: Date.now() - t0, incomplete };
     }
-    await checkSoilStrips(browser, opts.url, rep, opts.required);
-    for (const size of S16_SIZES) {
-      await checkSpec16Rows(browser, opts.url, size, rep, opts.required);
-    }
-  } finally {
-    await browser.close();
   }
 
-  const seconds = ((Date.now() - started) / 1000).toFixed(1);
-  console.log("\n==== Summary ====");
-  if (rep.items.length) {
-    console.log("Blockers:");
-    for (const item of rep.items) console.log(`  [${item.size}] ${item.stage ?? "-"}  ${item.check}  ${item.detail}`);
+  let next = 0;
+  let printed = 0;
+  const flush = () => {
+    while (printed < sections.length && results[printed]) {
+      for (const line of results[printed].lines) print(line);
+      printed += 1;
+    }
+  };
+  const worker = async () => {
+    while (!stopped && next < sections.length) {
+      const i = next++;
+      results[i] = await runSection(sections[i]);
+      flush();
+    }
+  };
+  try {
+    await Promise.all(Array.from({ length: Math.min(opts.jobs, sections.length) }, worker));
+  } finally {
+    await holder.browser?.close().catch(() => {});
   }
-  console.log(`Blockers: ${rep.counts.blocker}   Polish: ${rep.counts.polish}   Not reached: ${rep.counts.note}`);
-  console.log(`Time: ${seconds} s`);
-  console.log(rep.counts.blocker ? "Result: FAIL (blockers)" : "Result: PASS (no blockers)");
-  return rep.counts.blocker ? 1 : 0;
+  for (let i = printed; i < sections.length; i++) {
+    if (results[i]) for (const line of results[i].lines) print(line);
+  }
+
+  const counts = { ...argsRep.counts };
+  const items = [];
+  const rows = [];
+  const incomplete = [];
+  for (let i = 0; i < sections.length; i++) {
+    const r = results[i];
+    if (!r) {
+      incomplete.push(`${sections[i].name} (not started: stopped by ${stopped ?? "an error"})`);
+      continue;
+    }
+    for (const k of Object.keys(counts)) counts[k] += r.rep.counts[k];
+    items.push(...r.rep.items);
+    rows.push(...r.rep.rows);
+    if (r.incomplete) incomplete.push(r.incomplete);
+  }
+
+  out("\nSections (seconds):", false);
+  for (let i = 0; i < sections.length; i++) out(`  ${sections[i].name}: ${results[i] ? (results[i].ms / 1000).toFixed(1) : "not run"}`, false);
+
+  if (opts.saveBlockers) {
+    const file = resolve(opts.saveBlockers);
+    mkdirSync(dirname(file), { recursive: true });
+    const run = { url: opts.url, sizes: opts.sizes, onlySizes: opts.onlySizes, stages: opts.stages, required: [...opts.required] };
+    writeFileSync(file, `${JSON.stringify(blockersFile({ rows, counts, run, complete: incomplete.length === 0 }), null, 2)}\n`);
+  }
+
+  const marked = baseline.rows ? matchBaseline(items, baseline.rows, { required: [...opts.required] }) : null;
+  const seconds = ((Date.now() - started) / 1000).toFixed(1);
+  out("\n==== Summary ====");
+  if (items.length) {
+    out("Blockers:");
+    const list = marked ? marked.blockers : items;
+    for (const item of list) {
+      const tag = marked ? (item.onMain ? "(already on main) " : "(new) ") : "";
+      out(`  [${item.size}] ${item.stage ?? "-"}  ${item.check}  ${tag}${item.detail}`);
+    }
+  }
+  for (const line of summaryLines({ counts, marked, incomplete, baselineNote: baseline.note })) out(line);
+  if (setupWarning) out(`Setup: ${setupWarning}`);
+  out(`Time: ${seconds} s`);
+  const result = resultOf({ counts, marked, incomplete });
+  out(result.line);
+  return result.code;
 }
 
 // Runs only as a command, so tools/qa/journey-check.mjs can import runPhoneChecks

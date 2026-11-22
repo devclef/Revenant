@@ -17,6 +17,7 @@ You are one agent in Revenant's agent team, run by the Kiro Crew Task Runner on 
 
 - Run every command from the worktree root. Never `cd` elsewhere, never use `--prefix`, never install globally, and never create or edit files outside the worktree (including your home folder).
 - There is exactly one `package.json` and one `package-lock.json`, at the worktree root.
+- One owner script keeps a cache outside the worktree: `npm run layout-check -- --baseline main` (and `npm run layout-baseline`) store main's layout result under the dispatcher's folder. That is allowed. Run the command from the worktree root as usual, and never open, edit or delete that cache yourself.
 - `next.config.ts` pins `outputFileTracingRoot` to the project folder, so a stray lockfile in a parent folder can't change the build root. Keep it.
 - If a tool still warns about another lockfile, workspace root or a plugin "conflicted between" two folders, the cause is outside the worktree. Don't install anything to fix it. Stop and report the exact message.
 
