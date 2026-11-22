@@ -145,7 +145,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - _Preservation: Ghost position, copy and lifetime (emergence to break) unchanged_
     - _Requirements: 1.6, 2.6, 3.1, 3.5_
 
-- [ ] 8. GO1 rule (Ghost): text and controls clear of the Ghost
+- [x] 8. GO1 rule (Ghost): text and controls clear of the Ghost
   - Agent: `platform-dev` · Depends on: 6, 7 · Estimated size: M, ~450 changed lines
   - Scope: `tools/qa/layout-rules-17.mjs`, `tools/qa/layout-check.mjs`, `src/lib/layout-check-go1.test.ts` (new).
   - Design sections: "D4 and D7 overlap / GO1".
