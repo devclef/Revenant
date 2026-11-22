@@ -231,7 +231,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Earlier-spec tests changed or retired: `Reveal.receipts-order.test.tsx`, `Reveal.no-figures.test.tsx`, `CeremonyRoot.test.tsx`, `topbar-sound.test.tsx`, `LetterBlock*.test.tsx` if it pins the phone-only fold; name each.
   - Validation: `bash scripts/check.sh`; `node scripts/check-js-budget.mjs` after `npm run build` (the Top_Bar sound slot touches `/demo/live` and `/l/{id}`).
 
-- [ ] 9. The number field waits until you finish
+- [x] 9. The number field waits until you finish
   - Agent: `frontend-dev` · Depends on: 3 · Estimated size: S, ~400 changed lines
   - Scope: `src/components/ceremony/recall/recall-field.ts`, `RecallPager.tsx`, `src/components/ceremony/copy.ts` (`numberUnreadable` only if 11.7 calls for it), and the `*.test.ts(x)` next to each.
   - Design sections: "11. Number field", Property 9, item 11.
