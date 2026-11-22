@@ -186,7 +186,6 @@ describe("SceneShell below slot (H1)", () => {
     const ids = [
       "ritual-title",
       "resurrected-title",
-      "no-seal-title",
       "coven-title",
     ];
     const positions = ids.map((id) => html.indexOf(`id="${id}"`));

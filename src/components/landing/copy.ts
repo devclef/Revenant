@@ -46,29 +46,32 @@ export const LANDING_SECTION_COPY = {
   resurrectedTitle: "What we resurrected",
 
   /**
-   * The pli cacheté story, at most four sentences, with the classroom time
-   * capsule only as an example (F6.1). Paraphrases the README's "What we
-   * resurrected".
+   * What a wax seal showed, in one sentence (16.15.1). Names no number or date,
+   * so it links to no source.
    */
   resurrectedBody: [
-    "The French Académie des sciences has kept plis cachetés for centuries: sealed envelopes that people deposit to prove what they knew, and when.",
-    "A classroom time capsule works the same way: a letter to your future self, sealed and mailed back years later.",
-    "The seal carries the meaning: this was written then, by you, and nobody has touched it since.",
-    "Revenant rebuilds that envelope for the browser, and a letter in it can hold any part of life.",
+    "For centuries, a wax seal showed that a letter was written then and nobody had opened it since.",
   ],
 
-  /** The heading of the section on what no wax seal could do (F6.2). */
-  noSealTitle: "What no wax seal could do",
-
-  /** At most three sentences, with none of the F1.3 banned words (F6.2, F6.3). */
+  /**
+   * What no wax seal could do, in two sentences (16.15.1). Read under the
+   * "What we resurrected" heading, with no separate heading of its own.
+   */
   noSealBody:
-    "A seal proves the letter wasn't changed. It can't stop your memory changing. So before you read, you testify, and Revenant never says what the gap means.",
+    "No wax seal could make you remember first. Revenant asks before you read, and never says what the gap means.",
+
+  /** The maker's story heading, shown under the short section (16.15.4). */
+  makerTitle: "Why I built it",
+
+  /**
+   * The maker's story in the first person, at most two sentences (16.15.4).
+   * The "fifteen years" is the maker's own recollection, not a sourced figure.
+   */
+  makerBody:
+    "My English teacher had us write letters to ourselves, then mailed them back fifteen years later. What I read wasn't what I remembered.",
 
   /** The ritual steps from Brand_Copy, in README order (B3.2). */
   ritualSteps: BRAND_COPY.ritualSteps,
-
-  /** The four seal mapping rows from Brand_Copy (F6.1). */
-  sealMapping: BRAND_COPY.sealMapping,
 
   /** The heading above the Coven_Strip (B3.5). */
   covenTitle: "Built by a coven of Kiro agents",

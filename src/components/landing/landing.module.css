@@ -335,6 +335,16 @@
   line-height: 1.6;
 }
 
+/* The maker's story heading. The global h3 rule uses the paper ink, which is
+   unreadable on this desk, so the colour is set here. */
+.makerTitle {
+  margin: 1rem 0 0;
+  color: var(--text);
+  font-size: 1.15rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
 /* Five rectangular cards with rounded corners, stacked on the phone. */
 /* H2: one column below 600 px, two from 600 px, four from 1024 px. Equal row
    and column gaps, and stretched cards so every card in a row is as tall as
