@@ -183,6 +183,9 @@ export async function readCt1Failures(page) {
 // CW1 (GitHub issue #581). The content column keeps at least this much room under a phone viewport.
 export const CW1_INSET_PX = 48;
 
+// The viewports CW1 runs at.
+export const CW1_SIZES = ["390x844", "360x640"];
+
 /**
  * CW1 failures for one reading: { width, viewport } in CSS pixels. An empty array means the
  * content column is at least viewport minus CW1_INSET_PX wide. Equal to the minimum passes.

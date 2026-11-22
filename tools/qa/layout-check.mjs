@@ -203,6 +203,11 @@
 //                            (the marks step), Receipts (the close step) and the landing. Always a
 //                            BLOCKER, with no --require. Spec 17 requirements 2.3, 2.7 and 2.10.
 //
+// CW1   content-column-width  (GitHub issue #581, tools/qa/layout-rules-17.mjs)
+//                            at 390x844 and 360x640: the [data-content-column] content box is at least
+//                            viewport minus 48 px. Read on each step that calls CT1. A step with no
+//                            column is skipped. Any failing reading is a BLOCKER.
+//
 // Line format: <PASS|BLOCKER|polish|note> <id> <name> <WxH> <stage> <detail>.
 // The spec 08 and spec 09 checks put the measured values and threshold=<...> in <detail>.
 //
@@ -315,7 +320,7 @@ import {
   sectionRuns,
   summaryLines,
 } from "./layout-scope.mjs";
-import { CT1_SIZES, frFailures, readCt1Failures, readFr1Reading } from "./layout-rules-17.mjs";
+import { CT1_SIZES, CW1_SIZES, cwFailures, frFailures, readCt1Failures, readFr1Reading } from "./layout-rules-17.mjs";
 
 // FR1 (GitHub issue #577) runs at these sizes on every step the walk shoots. It always blocks.
 const FR1_SIZES = ["1440x900", "390x844"];
@@ -1669,6 +1674,26 @@ async function checkCt1(page, ctx) {
   if (failures.length === 0) ctx.rep.add("ok", "CT1", "text meets contrast on its surface");
 }
 
+// CW1 (GitHub issue #581): the [data-content-column] content box is at least viewport minus 48 px.
+// It runs at CW1_SIZES only. A step with no [data-content-column] has no column to measure, so it is
+// skipped rather than failed. Any failing reading is a BLOCKER.
+async function checkCw1(page, ctx) {
+  if (!CW1_SIZES.includes(ctx.size)) return;
+  const reading = await page.evaluate(() => {
+    const el = document.querySelector("[data-content-column]");
+    if (!el) return null;
+    const rect = el.getBoundingClientRect();
+    const style = getComputedStyle(el);
+    const px = (value) => parseFloat(value) || 0;
+    const width = rect.width - px(style.borderLeftWidth) - px(style.borderRightWidth) - px(style.paddingLeft) - px(style.paddingRight);
+    return { width, viewport: document.documentElement.clientWidth };
+  });
+  if (!reading) return;
+  const failures = cwFailures(reading);
+  for (const message of failures) ctx.rep.add("blocker", "CW1", message, "content-column-width");
+  if (failures.length === 0) ctx.rep.add("ok", "CW1", `content column ${reading.width} px at viewport ${reading.viewport} px`);
+}
+
 // CT1 on Press the seal. checkPressEnvelope (P1) measures only the sizes in SEAL_MIN_PX, so this
 // walks /demo/live to the seal step at every CT1 size, with the same text and Next presses, then reads CT1.
 async function checkPressContrast(context, ctx) {
@@ -1688,6 +1713,7 @@ async function checkPressContrast(context, ctx) {
       await sleep(800);
     }
     await checkCt1(page, ctx);
+    await checkCw1(page, ctx);
   } finally {
     await page.close();
   }
@@ -2684,6 +2710,7 @@ async function landing(context, ctx) {
     } else {
       await shot(page, ctx, "scene");
       await guard(ctx, "CT1", () => checkCt1(page, ctx));
+      await guard(ctx, "CW1", () => checkCw1(page, ctx));
       await guard(ctx, "F2", () => checkSoil(page, ctx));
       if (start) await guard(ctx, "BTN", () => checkMainButton(page, ctx, start, true, "link"));
       await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
@@ -2885,6 +2912,7 @@ async function personaWalk(page, ctx, p, via) {
   const problem = await answerAll(page, answers, async (i, control) => {
     // CT1 after question 1 is answered: question 2 is on screen, so Previous question exists.
     if (i === 1) await guard(ctx, "CT1", () => checkCt1(page, ctx));
+    if (i === 1) await guard(ctx, "CW1", () => checkCw1(page, ctx));
     if (i > 0) await guard(ctx, "G1", () => checkGhostBody(page, ctx));
     if (i === 0 || control === RECORD) await guard(ctx, "BTN", () => checkMainButton(page, ctx, control));
   });
@@ -2911,6 +2939,7 @@ async function personaWalk(page, ctx, p, via) {
   await guard(ctx, "G2", () => checkGhostCentre(page, ctx, "marks"));
   await guard(ctx, "BTN", () => checkMainButton(page, ctx, BREAK_SEAL));
   await guard(ctx, "CT1", () => checkCt1(page, ctx));
+  await guard(ctx, "CW1", () => checkCw1(page, ctx));
   await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
   await guard(ctx, "T2", () => checkTicks(page, ctx));
   await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
@@ -3023,6 +3052,7 @@ async function personaWalk(page, ctx, p, via) {
     await guard(ctx, "X1", () => checkScrollWidth(page, ctx));
     await shot(page, ctx, S("close"));
     await guard(ctx, "CT1", () => checkCt1(page, ctx));
+    await guard(ctx, "CW1", () => checkCw1(page, ctx));
     await guard(ctx, "F2", () => checkSoil(page, ctx));
     await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
     await guard(ctx, "FT1", () => checkFooter(page, ctx));
