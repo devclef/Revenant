@@ -19,7 +19,7 @@
   --pad: clamp(1rem, 3vw, 2.5rem);
   --soil-top: 69vh;
   --soil-band: 8vh;
-  --content-column-max: min(34rem, 46vw);
+  --content-column-max: min(34rem, 100%);
   /* The Soil_Band's drawn height (--soil-band) plus 16 px. The Scene content
      reserves this at its bottom, so the last text ends above the band at the
      end of the scroll (spec 14 B2.1). */
@@ -609,6 +609,7 @@
 /* Wide layout, at or above 900 px. */
 @media (min-width: 900px) {
   .scene {
+    --content-column-max: min(34rem, 46vw);
     --soil-top: 74vh;
     --soil-band: 14vh;
     /* The Ghost's centre line and the light's x at wide widths: 72 % of the
