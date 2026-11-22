@@ -249,7 +249,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Earlier-spec tests changed or retired: `RecallPager.field.test.tsx` (message on first paint of "12a"), `recall-field*.test.ts`; name each.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 10. Break the seal says what happened
+- [x] 10. Break the seal says what happened
   - Agent: `frontend-dev` · Depends on: 3 · Estimated size: S, ~250 changed lines
   - Scope: `src/components/ceremony/copy.ts`, `src/components/ceremony/seal/SealBreak.tsx`, `src/components/reveal/Reveal.tsx` (the `recorded` prop only), `src/test/retired-phrases.test.ts` (pending list), and the `*.test.ts(x)` next to each.
   - Design sections: "3. Remember, the Remembered_Phrase and the break line" (the break line).
