@@ -158,5 +158,9 @@ export function FiguresFadeUp({ count, children }: FiguresFadeUpProps) {
     };
   }, []);
 
-  return <div ref={columnRef}>{children}</div>;
+  return (
+    <div ref={columnRef} data-figures-column="">
+      {children}
+    </div>
+  );
 }
