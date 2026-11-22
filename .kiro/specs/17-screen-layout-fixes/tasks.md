@@ -33,7 +33,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
 
 ## Tasks
 
-- [ ] 1. D6: no focus box on a script-focused heading
+- [x] 1. D6: no focus box on a script-focused heading
   - Agent: `frontend-dev` · Depends on: none · Estimated size: S, ~120 changed lines
   - Scope: `src/components/ceremony/ceremony.module.css`, `src/components/ceremony/recall/RecallReader.module.css`, `src/components/ceremony/focus-ring-heading.test.ts` (new).
   - Design sections: "D6 / FR1", "Why the existing checks missed each defect".
