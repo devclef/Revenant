@@ -12,7 +12,6 @@ import { describe, expect, it } from "vitest";
 import { BRAND_COPY } from "@/components/brand/copy";
 
 import { LANDING_SECTION_COPY } from "./copy";
-import { NoSealSection } from "./NoSealSection";
 import { ResurrectionSection } from "./ResurrectionSection";
 import { RitualSection } from "./RitualSection";
 
@@ -124,15 +123,3 @@ describe("ResurrectionSection", () => {
   });
 });
 
-describe("NoSealSection", () => {
-  it("renders nothing; its text sits in ResurrectionSection (16.15.2)", () => {
-    expect(render(<NoSealSection />)).toBe("");
-    expect(render(<ResurrectionSection />)).not.toContain("What no wax seal could do");
-  });
-
-  it("uses at most three sentences and no banned word", () => {
-    expect(sentenceCount(LANDING_SECTION_COPY.noSealBody)).toBeLessThanOrEqual(2);
-    const body = LANDING_SECTION_COPY.noSealBody.toLowerCase();
-    for (const word of BANNED) expect(body).not.toContain(word);
-  });
-});

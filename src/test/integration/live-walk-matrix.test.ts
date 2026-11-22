@@ -108,11 +108,11 @@ describe("matrixShotNames with a step filter", () => {
   it("keeps only the named steps, in walk order", () => {
     const entry = WALK_MATRIX.find((e) => e.id === "390x844-one-figure");
     expect(entry).toBeDefined();
-    const names = matrixShotNames(entry!, ["write", "seal", "testify"]);
+    const names = matrixShotNames(entry!, ["write", "seal", "remember"]);
     expect(names).toEqual([
       "live-01-write-390x844.png",
       "live-06-seal-390x844.png",
-      "live-13-testify-390x844.png",
+      "live-13-remember-390x844.png",
     ]);
   });
 

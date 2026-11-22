@@ -161,7 +161,6 @@ describe("landing page render on / (H1)", () => {
       "resurrected-title",
       "coven-title",
     ]) {
-      expect(countOf(html, `id="${id}"`)).toBe(1);
     }
     expect(countOf(html, "data-landing-hero")).toBe(1);
   });

@@ -61,6 +61,10 @@ import {
   checkPressEnvelopeClearOfText,
   checkPressStatusLine,
   checkQuickPressAddsNone,
+  checkQuickPressNotMade,
+  checkTrackNames,
+  LIVE_TRACK_NAMES,
+  PERSONA_TRACK_NAMES,
   checkRunShots,
   checkSealMarks,
   checkSealOrangeButtons,
@@ -321,12 +325,26 @@ async function readPage(
     );
     // Matches StepTrack: the ol inside [data-step-indicator] marks the
     // current li with aria-current="step" (LiveStepper.tsx wraps it in data-live-stepper).
+    // Requirement 17.1: the names of the first visible Step_Track, and its phone line.
+    const track = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-step-track]"),
+    ).find((el) => el.getClientRects().length > 0);
+    const phone = track?.querySelector<HTMLElement>(":scope > p") ?? null;
     return {
       scrollWidth: document.documentElement.scrollWidth,
       clientWidth: document.documentElement.clientWidth,
       clipCandidates,
       contrastSamples,
       currentStep: current?.textContent?.trim() ?? null,
+      trackNames: track
+        ? Array.from(track.querySelectorAll("ol > li")).map(
+            (li) => li.textContent?.trim() ?? "",
+          )
+        : null,
+      trackPhone:
+        phone && phone.getClientRects().length > 0
+          ? (phone.textContent?.trim() ?? null)
+          : null,
       bodyText: document.body.innerText,
     };
   })) as Omit<PageSnapshot, "motionControls" | "consoleErrors">;
@@ -434,16 +452,16 @@ async function readPressLine(page: Page): Promise<string | null> {
   return line.first().textContent();
 }
 
-/** Checks that the Testify counter says "you wrote this on" on every question it was read on (Q1.4). */
+/** Checks that the Remember counter says "you wrote this on" on every question it was read on (Q1.4). */
 function checkWrittenOnCounter(texts: readonly (string | null)[]): StepCheck {
   const expected =
-    'the live Testify counter says \"you wrote this on\" on every question';
+    'the live Remember counter says \"you wrote this on\" on every question';
   if (texts.length === 0) {
     return {
       ok: false,
       expected,
       message:
-        "FAIL no Testify question was reached, so the counter was not read",
+        "FAIL no Remember question was reached, so the counter was not read",
     };
   }
   const bad = texts.findIndex(
@@ -459,12 +477,12 @@ function checkWrittenOnCounter(texts: readonly (string | null)[]): StepCheck {
     expected,
     message:
       shown === null
-        ? `FAIL the live Testify counter is missing on question ${bad + 1}`
-        : `FAIL the live Testify counter on question ${bad + 1} reads \"${shown.trim()}\"`,
+        ? `FAIL the live Remember counter is missing on question ${bad + 1}`
+        : `FAIL the live Remember counter on question ${bad + 1} reads \"${shown.trim()}\"`,
   };
 }
 
-/** Checks that the Testify counter is shown on the desk's receipt checklist for an own number. */
+/** Checks that the Remember counter is shown on the desk's receipt checklist for an own number. */
 function checkOwnNumberOnChecklist(text: string): StepCheck {
   const expected = "A receipt shows 1 own number after the own number is typed";
   if (/1 own number/.test(text)) {
@@ -728,7 +746,7 @@ async function pressSealEarly(c: WalkContext): Promise<void> {
 }
 
 /**
- * The recall stage: answer every question in turn, then go on. Reads the Testify
+ * The recall stage: answer every question in turn, then go on. Reads the Remember
  * counter on each question into `counters`. Returns the count answered.
  */
 async function answerEveryQuestion(
@@ -745,8 +763,12 @@ async function answerEveryQuestion(
     counters.push(
       (await counter.count()) > 0 ? await counter.first().textContent() : null,
     );
-    const numberField = recall.locator('input[type="number"]').first();
-    const textField = recall.locator('textarea, input[type="text"]').first();
+    // A figure question's field is text with a decimal keypad (spec 16, 11.1); an
+    // author question's field is a textarea.
+    const numberField = recall
+      .locator('input[inputmode="decimal"], input[type="number"]')
+      .first();
+    const textField = recall.locator("textarea").first();
     if ((await numberField.count()) > 0) {
       // A number question is a figure question (spec 15, R11.3).
       await numberField.fill("12");
@@ -761,7 +783,7 @@ async function answerEveryQuestion(
         .locator('button[aria-label]:not([aria-label*="motion" i])')
         .first();
       if ((await control.count()) === 0) {
-        throw new Error("No recall answer control found on the Testify stage.");
+        throw new Error("No recall answer control found on the Remember step.");
       }
       await control.click();
       figure += 1;
@@ -791,7 +813,7 @@ async function answerEveryQuestion(
 
 /**
  * Presses "Open your letter" on the Wait card, then the passkey unlock on the
- * Testify step (spec 15, R9.5 and R9.6). The Wait card has no link out of the
+ * Remember step (spec 15, R9.5 and R9.6). The Wait card has no link out of the
  * page any more, so the `/l/<id>` path is read from its Keep_Section first, for
  * the Q1.4 page check.
  */
@@ -828,6 +850,15 @@ async function breakSeal(c: WalkContext, method: BreakMethod): Promise<string> {
     await c.page.locator("[data-seal-button]").click();
   } else {
     await c.page.locator("[data-skip-link]").click();
+    // The Skip_Link goes past the letter, straight to the receipts when the letter
+    // has figures (skipToReceipts), so any later stage counts.
+    await c.page
+      .locator(
+        '[data-ceremony="letter"], [data-ceremony="figures"], [data-ceremony="close"]',
+      )
+      .first()
+      .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+    return `Seal broken with ${BREAK_LABELS[method]}. Stage shown: ${await currentStage(c.page)}.`;
   }
   await c.page
     .locator('[data-ceremony="letter"]')
@@ -1048,6 +1079,7 @@ async function runWalk(
           checks.push(
             ...checkStepSnapshot(stage.step, snapshot, {
               letterText: run.persona ? undefined : LETTER_TEXT,
+              track: run.persona ? PERSONA_TRACK_NAMES : LIVE_TRACK_NAMES,
             }),
           );
           // Q1.2 and Q1.4 layout rules, read on every step change. A rule whose
@@ -1163,7 +1195,7 @@ async function runWalk(
 /**
  * The live stages, Write to Close, for one run. The one-figure variant ticks a
  * public price on the receipt. Every run types the own number, checks the
- * Testify counter and then walks the whole flow.
+ * Remember counter and then walks the whole flow.
  */
 function liveStages(run: WalkRun): StageAction[] {
   // The passkey count after the seal's create prompt, read again by the setting press.
@@ -1413,14 +1445,44 @@ function liveStages(run: WalkRun): StageAction[] {
         }
         await pressSealEnvelope(c, run);
         // Q1.2: a second quick press while the passkey prompt is open adds no prompt.
-        const beforeQuick = await readPasskeyCounts(c.page);
+        // The virtual authenticator answers at once, so the prompt is often closed by
+        // now. A press after it closes is the setting press, which would seal the
+        // letter, so the quick press is made only while the prompt is still open.
+        // The press starts the create prompt asynchronously; wait until it is counted,
+        // so the quick press is measured against it and not against its start.
         await c.page
-          .getByRole("button", { name: PRESS_COPY.name, exact: true })
-          .click();
-        const afterQuick = await readPasskeyCounts(c.page);
-        checks.push(
-          checkQuickPressAddsNone(beforeQuick.total, afterQuick.total),
-        );
+          .waitForFunction(
+            () =>
+              (
+                (window as unknown as { __passkeyCalls?: string[] })
+                  .__passkeyCalls ?? []
+              ).length > 0,
+            undefined,
+            { timeout: 5_000 },
+          )
+          .catch(() => {});
+        // The state is read and the press made in one browser task, so the prompt
+        // cannot close between the two.
+        const beforeQuick = await readPasskeyCounts(c.page);
+        const tag = await c.page.evaluate((name: string) => {
+          const step = document
+            .querySelector("[data-live-step]")
+            ?.getAttribute("data-live-step");
+          if (step === "creating") {
+            document
+              .querySelector<HTMLElement>(`button[aria-label="${name}"]`)
+              ?.click();
+          }
+          return step ?? null;
+        }, PRESS_COPY.name);
+        if (tag === "creating") {
+          const afterQuick = await readPasskeyCounts(c.page);
+          checks.push(
+            checkQuickPressAddsNone(beforeQuick.total, afterQuick.total),
+          );
+        } else {
+          checks.push(checkQuickPressNotMade(tag));
+        }
         await c.page
           .locator('[data-live-step="created"]')
           .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
@@ -1474,11 +1536,11 @@ function liveStages(run: WalkRun): StageAction[] {
         await c.page
           .locator('[data-ceremony="recall"]')
           .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
-        return '"Open your letter" pressed, unlocked with the passkey. Testify stage shown.';
+        return '"Open your letter" pressed, unlocked with the passkey. Remember step shown.';
       },
     },
     {
-      step: "testify",
+      step: "remember",
       act: async (c, checks) => {
         const counters: (string | null)[] = [];
         const answered = await answerEveryQuestion(c, counters);
@@ -1501,11 +1563,18 @@ function liveStages(run: WalkRun): StageAction[] {
           .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
         return "Break the seal stage shown, seal not yet touched.";
       },
-      afterShot: (c) => breakSeal(c, run.method),
+      // Under Calm a hold on the seal starts nothing by design (useSealBreak: the
+      // Seal_Button breaks it at once), so a Calm run breaks with the button.
+      afterShot: (c) =>
+        breakSeal(c, run.reduced && run.method === "hold" ? "button" : run.method),
     },
     {
       step: "letter",
       act: async (c) => {
+        const stage = await currentStage(c.page);
+        if (stage === "figures" || stage === "close") {
+          return `Letter stage passed by the Skip_Link. Stage shown: ${stage}.`;
+        }
         await c.page
           .locator('[data-ceremony="letter"]')
           .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
@@ -1538,6 +1607,14 @@ function liveStages(run: WalkRun): StageAction[] {
     {
       step: "close",
       act: async (c) => {
+        if ((await currentStage(c.page)) === "figures") {
+          // Spec 16: the Close shows in the end card once the figures have settled,
+          // with no control between them. Wait for that first.
+          await c.page
+            .locator('[data-ceremony="close"]')
+            .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS })
+            .catch(() => {});
+        }
         if ((await currentStage(c.page)) === "figures") {
           // A letter with figures leaves the receipts by one more control.
           const next = c.page
@@ -1653,6 +1730,17 @@ const LIVE_RUNS: readonly WalkRun[] = [
   },
 ];
 
+/** The step-track findings of a run (Requirement 17.1), as describeDefect writes them. */
+function trackDefects(walk: WalkResult): string[] {
+  return walk.rows
+    .flatMap((row) => row.result.defects.map(describeDefect))
+    .filter((line) =>
+      /the step track reads|the phone line reads|no step track on the page/.test(
+        line,
+      ),
+    );
+}
+
 /** Every persona run: each width, with motion on and reduced (TAMPER_MATRIX). */
 const PERSONA_RUNS: readonly WalkRun[] = TAMPER_MATRIX.map((entry) => ({
   size: { width: entry.width, height: entry.height },
@@ -1676,6 +1764,11 @@ describe.skipIf(!walkEnabled(process.env))("live walk", () => {
         .map((check) => check.message);
       reportRun(run, walk, runStartMs, notes);
       expect(walk.rows.length).toBeGreaterThan(0);
+      // Requirement 17.1: the walk gets past Receipts (a failed stage ends the run, so
+      // "close" in reached means Receipts completed), and every step track it read
+      // shows the six names of 2.1. Other findings are reported, not asserted.
+      expect(walk.reached).toContain("close");
+      expect(trackDefects(walk)).toEqual([]);
     },
     VIEWPORT_TIMEOUT_MS,
   );
@@ -1693,3 +1786,119 @@ describe.skipIf(!walkEnabled(process.env))("live walk: persona tamper", () => {
     VIEWPORT_TIMEOUT_MS,
   );
 });
+
+/** The personas whose step tracks are walked (spec 16, 17.1), with the track each shows (2.1). */
+const TRACK_PERSONAS = [
+  { key: "us-maya", names: PERSONA_TRACK_NAMES },
+  { key: "eu-tomas", names: PERSONA_TRACK_NAMES },
+  { key: "us-priya", names: PERSONA_TRACK_NAMES.slice(0, 3) },
+] as const;
+
+/** The Step_Track names and phone line of the first visible track on the page. */
+async function readTrack(
+  page: Page,
+): Promise<{ names: string[] | null; phone: string | null }> {
+  return page.evaluate(() => {
+    const track = Array.from(
+      document.querySelectorAll<HTMLElement>("[data-step-track]"),
+    ).find((el) => el.getClientRects().length > 0);
+    if (!track) return { names: null, phone: null };
+    const phone = track.querySelector<HTMLElement>(":scope > p");
+    return {
+      names: Array.from(track.querySelectorAll("ol > li")).map(
+        (li) => li.textContent?.trim() ?? "",
+      ),
+      phone:
+        phone && phone.getClientRects().length > 0
+          ? (phone.textContent?.trim() ?? null)
+          : null,
+    };
+  });
+}
+
+/**
+ * Walks one persona page from Remember to its last step, reading the Step_Track at
+ * each stage it reaches. Returns one line per stage and the failed checks.
+ */
+async function walkPersonaTrack(
+  page: Page,
+  key: string,
+  expected: readonly string[],
+): Promise<{ seen: string[]; failures: string[] }> {
+  await page.goto(`${BASE_URL}/demo/personas/${key}`);
+  await page
+    .locator('[data-ceremony="recall"]')
+    .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
+  const seen: string[] = [];
+  const failures: string[] = [];
+  let last = "";
+  for (let guard = 0; guard < 30; guard += 1) {
+    await page.waitForTimeout(SETTLE_MS);
+    const stage = await currentStage(page);
+    if (stage !== last) {
+      const track = await readTrack(page);
+      const check = checkTrackNames(track.names, track.phone, expected);
+      seen.push(`${stage}: ${check.message}`);
+      if (!check.ok) failures.push(`${key} ${stage}: ${check.message}`);
+      last = stage;
+    }
+    if (stage === "figures" || stage === "close") break;
+    if (stage === "recall") {
+      const recall = page.locator('[data-ceremony="recall"]');
+      const decimal = recall.locator('input[inputmode="decimal"]').first();
+      if ((await decimal.count()) > 0 && !(await decimal.inputValue()).trim()) {
+        await decimal.fill("3");
+      }
+      const text = recall.locator("textarea").first();
+      if ((await text.count()) > 0 && !(await text.inputValue()).trim()) {
+        await text.fill("Walk answer");
+      }
+      await recall
+        .getByRole("button", {
+          name: /^(next question|record my answers|break the seal)$/i,
+        })
+        .first()
+        .click();
+    } else if (stage === "marks") {
+      await page.locator("[data-seal-button]").first().click();
+    } else if (stage === "letter") {
+      const next = page.locator('[data-advance="figures"]');
+      // A letter with no figures ends on the Read step.
+      if ((await next.count()) === 0) break;
+      await next.first().click();
+    }
+  }
+  return { seen, failures };
+}
+
+describe.skipIf(!walkEnabled(process.env))(
+  "live walk: persona step tracks (spec 16, 17.1)",
+  () => {
+    it.each(
+      TRACK_PERSONAS.flatMap((p) =>
+        WALK_SIZES.map(
+          (size) => [`${p.key} ${size.width}x${size.height}`, p, size] as const,
+        ),
+      ),
+    )(
+      "reads the step track from Remember to the last step: %s",
+      async (_label, p, size) => {
+        const browser = await chromium.launch({
+          headless: true,
+          executablePath: process.env.CHROMIUM_PATH || undefined,
+        });
+        try {
+          const context = await browser.newContext({ viewport: size });
+          const page = await context.newPage();
+          const { seen, failures } = await walkPersonaTrack(page, p.key, p.names);
+          console.log([`Persona track: ${p.key} ${size.width}x${size.height}`, ...seen].join("\n"));
+          expect(seen.length).toBeGreaterThan(1);
+          expect(failures).toEqual([]);
+        } finally {
+          await browser.close();
+        }
+      },
+      VIEWPORT_TIMEOUT_MS,
+    );
+  },
+);

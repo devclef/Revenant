@@ -74,10 +74,10 @@
 //                             of its width (spec 13 F1.4). Row ID LF1 because F1 is the fit row.
 //   LF2   ritual-cards        / at 1440x900 (wide rules) and 390x844 (one column): ritual card padding,
 //                             text width, gaps and body text, and no clipped text (spec 13 F2.1 to F2.3).
-//   F3    persona-testify     persona Testify step at 1440x900: the fictional notice clear of the
+//   F3    persona-remember     persona Remember step at 1440x900: the fictional notice clear of the
 //                             Step_Indicator labels, question, answer and continue control in the
 //                             viewport (spec 13 F3.1, F3.2). The notice count was retired: B1.4 counts it.
-//   F4    live-testify        live Testify step (after a passkey seal, so reached by Live_Walk): Ghost
+//   F4    live-remember       live Remember step (after a passkey seal, so reached by Live_Walk): Ghost
 //                             inside the viewport, verdict 16 px below the Top_Bar, Ghost clear of the
 //                             question, answer and verdict (spec 13 F4.1 to F4.3).
 //   HW1   hero-wide           2560x1440: the / h1 font size is at least 1.5 times its 1366x800 size.
@@ -167,13 +167,29 @@
 //                            viewport centre (tone.md: the ghost is part of the column).
 //   DL1   one-demo-label     /demo and each persona recall: exactly one "Demo" text leaf,
 //                            the Top_Bar chip counted.
-//   PV1   primary-in-view    recall (Testify) at 360x640, 390x844 and 1440x900: the
+//   PV1   primary-in-view    recall (Remember) at 360x640, 390x844 and 1440x900: the
 //                            [data-primary-control] button is inside the viewport. Press the
 //                            seal, Wait, Unlock and Break the seal are measured by the Live_Walk
 //                            (spec 15 task 14.2), not here.
 // Already covered, so no row was added: "one persona notice" is B1.4 (the notice counted
 // once in the Top_Bar), and "the Skip slot is stable" is B1.2 (the slots keep their place
 // across the steps).
+//
+// Spec 16 rows (spec 16 requirement 17.3, task 15), at 1440x900 and 390x844. Like the
+// spec 15 rows they block on any failure, with no --require (checkSpec16Rows):
+//   R10.1 receipts-order     Maya's Receipts step and live step 6: question pairs, figure
+//                            cards, the letter, the seal line, the end card, top to bottom;
+//                            the letter folded shut under "Read the letter again".
+//   R10.6 live-column        live step 6: [data-receipts] and each question pair, figure card
+//                            and the letter centred within 1 px of the viewport centre, and
+//                            the column within 1 px of Maya's receipts column width.
+//   R14.3 passkey-warning    live Press the seal, after the step scroll and before any reader
+//                            action: [data-warning-text] unfolded, inside the layout viewport,
+//                            its bottom above the wax top. Calm off and on.
+//   R5.4  hero-lines         /: at 1440x900 "Memory drifts with time." on one line box (5.4);
+//                            at 390x844 no headline line holds one word (5.5). Calm off and on.
+// R10.6 seals a real live demo letter with a virtual passkey (CTAP2 with PRF) and waits out
+// the 30-second lock, so it needs the app's database and RP_ID set to the --url host.
 //
 // Line format: <PASS|BLOCKER|polish|note> <id> <name> <WxH> <stage> <detail>.
 // The spec 08 and spec 09 checks put the measured values and threshold=<...> in <detail>.
@@ -323,7 +339,7 @@ const LETTER_PHONE_MIN_PX = 280;
 const FOCUS_DRIFT_MAX_PX = 1;
 const FOCUS_SETTLE_MS = 1000;
 // Spec 15 rows. They always block (see report) and need no --require.
-const SPEC15_CHECKS = ["NB1", "GC1", "DL1", "PV1"];
+const SPEC15_CHECKS = ["NB1", "GC1", "DL1", "PV1", "R10.1", "R10.6", "R14.3", "R5.4"];
 const GC1_CENTRE_TOL_PX = 8;
 // The text of the Top_Bar's Demo chip (scene/copy.ts) and of the DemoLabel (demo/copy.ts).
 const SPEC15_DEMO_LABEL = "Demo";
@@ -355,7 +371,7 @@ const LANDING_HOOK = '[data-cta="primary"]';
 const SHOW_ALL = "Show everything";
 const SHOW_ALL_LABEL = /^(Show everything|Skip to the receipts)$/;
 const LIVE_PATH = "/demo/live";
-const LIVE_UNREACHED = "created, confirming, sealing, sealed, the wait, unlock, testify and receipts";
+const LIVE_UNREACHED = "created, confirming, sealing, sealed, the wait, unlock, remember and receipts";
 const SEALED_BODY = JSON.stringify({ status: "sealed", opensAt: "2099-01-01T00:00:00.000Z" });
 
 // ---------------------------------------------------------------------------
@@ -1836,7 +1852,7 @@ async function checkDemoLabel(page, ctx) {
   report(ctx, verdictRow("DL1", "one-demo-label", dl1Failures({ count: r.demoLabels }), `labels=${r.demoLabels} viewport=${ctx.size}`, "one Demo label"));
 }
 
-// GC1, PV1 and DL1 on the persona Testify step (recall), reached by checkPersonaRows.
+// GC1, PV1 and DL1 on the persona Remember step (recall), reached by checkPersonaRows.
 async function checkRecallRows15(page, ctx) {
   const r = await page.evaluate(SPEC15_READ, { demoLabel: SPEC15_DEMO_LABEL });
   const detail = `viewport=${ctx.size}`;
@@ -3280,7 +3296,7 @@ async function checkPressEnvelope(context, ctx) {
 // T1, TG2, W, W8, LF1, LF2, F3 and F4 (spec 13 groups T, W, F). Each failure message names
 // its requirement ID. The pure verdicts below are exported for unit tests; the readers run in
 // the page and the checks report one row each. Rows the walk cannot reach (the Wait and live
-// Testify steps need a passkey seal) report missing.
+// Remember steps need a passkey seal) report missing.
 const WIDE_MIN_PX = 900; // the desktop rules apply at this width and wider (1440 is measured)
 const TOP_BAR_GAP_PX = 16;
 const LF_SIZES = [H27_SIZE, "390x844"];
@@ -3384,7 +3400,7 @@ export function lf2Failures({ items, w }) {
   return out;
 }
 
-// F3 (F3.1, F3.2) on the persona Testify step at 1440x900. The fictional notice does not
+// F3 (F3.1, F3.2) on the persona Remember step at 1440x900. The fictional notice does not
 // overlap a Step_Indicator label; the question, the answer control and the control to go on lie
 // inside the viewport. A null answer or continue control is skipped.
 // F3.4 (the notice count) was retired: B1.4 checks that the element whose text equals
@@ -3401,11 +3417,11 @@ export function f3Failures({ w, h, notice, labels, question, answer, cont }) {
   return out;
 }
 
-// F4 (F4.1 to F4.3) on the live Testify step. The Ghost is drawn inside the viewport, the verdict
+// F4 (F4.1 to F4.3) on the live Remember step. The Ghost is drawn inside the viewport, the verdict
 // line starts 16 px below the Top_Bar, and the Ghost covers neither the question, the answer
 // control nor the verdict. others is a list of [name, rect] pairs; null rects are skipped. Pure.
 export function f4Failures({ w, h, ghost, topBarBottom, verdict, others }) {
-  if (!ghost) return ["F4.1 no Ghost drawn on the live Testify step"];
+  if (!ghost) return ["F4.1 no Ghost drawn on the live Remember step"];
   const out = [];
   if (!rectInViewport(ghost, w, h)) out.push("F4.1 the Ghost is not inside the First_Viewport");
   if (verdict && topBarBottom !== null && verdict.top - topBarBottom < TOP_BAR_GAP_PX - 0.5) {
@@ -3513,7 +3529,7 @@ const LF2_READ = () => {
   return { missing: false, items };
 };
 
-// F3: the persona Testify step. The notice is the first visible paragraph that says it is
+// F3: the persona Remember step. The notice is the first visible paragraph that says it is
 // fictional. The control to go on is the last visible button.
 const F3_READ = () => {
   const box = (el) => {
@@ -3536,7 +3552,7 @@ const F3_READ = () => {
   };
 };
 
-// T1, TG2 and F4: the Wait step and the live Testify step. Both exist only after a passkey
+// T1, TG2 and F4: the Wait step and the live Remember step. Both exist only after a passkey
 // seal, so a page without them returns null for each.
 const LIVE_STAGE_READ = () => {
   const box = (el) => {
@@ -3612,11 +3628,11 @@ async function checkHeadingOffset(page, ctx, label = "the step change") {
   report(ctx, w8Row({ label, viewport: ctx.size, r }));
 }
 
-// T1, TG2 and F4 need the Wait and live Testify steps, which come after a passkey seal. This
+// T1, TG2 and F4 need the Wait and live Remember steps, which come after a passkey seal. This
 // check reads them if the page is there and reports missing otherwise (Live_Walk measures them).
 async function checkLiveStages(page, ctx) {
   const r = await page.evaluate(LIVE_STAGE_READ);
-  const unreached = "not reached: the Wait and live Testify steps come after a passkey seal, which this check does not make; Live_Walk measures them";
+  const unreached = "not reached: the Wait and live Remember steps come after a passkey seal, which this check does not make; Live_Walk measures them";
   if (!r.wait) {
     report(ctx, result("T1", "wait-envelope", "missing", unreached));
     report(ctx, result("TG2", "wait-ghost", "missing", unreached));
@@ -3634,7 +3650,7 @@ async function checkLiveStages(page, ctx) {
     }
   }
   if (!r.testify) {
-    report(ctx, result("F4", "live-testify", "missing", unreached));
+    report(ctx, result("F4", "live-remember", "missing", unreached));
     return;
   }
   const { ghost, verdict, question, answer } = r.testify;
@@ -3647,7 +3663,7 @@ async function checkLiveStages(page, ctx) {
     others: [["question", question], ["answer control", answer], ["verdict line", verdict]],
   });
   const detail = `ghost=${px(ghost.top)}..${px(ghost.bottom)} verdict top=${verdict ? px(verdict.top) : "n/a"} topBarBottom=${r.topBarBottom === null ? "n/a" : px(r.topBarBottom)} viewport=${ctx.size} threshold=Ghost inside the viewport, verdict at least 16px below the Top_Bar, Ghost clear of question, answer and verdict${problems.length ? ` (${problems.join("; ")})` : ""}`;
-  report(ctx, result("F4", "live-testify", problems.length ? "fail" : "pass", detail));
+  report(ctx, result("F4", "live-remember", problems.length ? "fail" : "pass", detail));
 }
 
 async function checkLandingHalves(page, ctx) {
@@ -3683,12 +3699,12 @@ async function checkPersonaTestify(page, ctx) {
   if (ctx.size !== H27_SIZE) return;
   const r = await page.evaluate(F3_READ);
   if (!r.notice) {
-    report(ctx, result("F3", "persona-testify", "missing", "no fictional notice on the Testify step to measure"));
+    report(ctx, result("F3", "persona-remember", "missing", "no fictional notice on the Remember step to measure"));
     return;
   }
   const problems = f3Failures({ w: ctx.w, h: ctx.h, notice: r.notice, labels: r.labels, question: r.question, answer: r.answer, cont: r.cont });
   const detail = `notice=${px(r.notice.top)}..${px(r.notice.bottom)} labels=${r.labels.length} question=${r.question ? px(r.question.bottom) : "n/a"} continue="${r.contText}" viewport=${ctx.size} threshold=notice clear of the step labels, question, answer and continue control inside the viewport${problems.length ? ` (${problems.join("; ")})` : ""}`;
-  report(ctx, result("F3", "persona-testify", problems.length ? "fail" : "pass", detail));
+  report(ctx, result("F3", "persona-remember", problems.length ? "fail" : "pass", detail));
 }
 
 // ---------------------------------------------------------------------------
@@ -3702,7 +3718,7 @@ const SEAL_SIZES = ["1440x900", "390x844"];
 const DESK_LETTER = "A letter for the desk check.";
 const FOLD_LABEL = "Fold it and press the seal";
 const Q11_TOL_PX = 1;
-const Q11_LABELS = ["Write", "Press the seal", "Wait", "Testify", "Break the seal", "Receipts"];
+const Q11_LABELS = ["Write", "Press the seal", "Wait", "Remember", "Break the seal", "Receipts"];
 const S1_STYLE = {
   current: { dot: 12, dotBg: "#ff7b1c", label: "#ffffff", weight: 700 },
   done: { dot: 8, dotBg: "#bdb4dc", label: "#bdb4dc" },
@@ -4180,6 +4196,91 @@ const FOLD_REACH_READ = () => {
   const r = fold.getBoundingClientRect();
   return r.top >= 0 && r.bottom <= window.innerHeight;
 };
+
+// --- Spec 16 rows (17.3) ----------------------------------------------------
+// Pure verdicts for the four rows of 17.3. Each takes the measurements a browser
+// read gives and returns the failure strings; an empty list is a pass. Each row
+// runs at 1440x900 and 390x844.
+
+const S16_CENTRE_TOL_PX = 1;
+const S16_RECEIPT_RANK = { pair: 0, figure: 1, letter: 2, seal: 3, end: 4 };
+
+/** 10.1 (and 10.8): the Receipts blocks read top to bottom, and the letter is folded shut. */
+export function receiptsOrderFailures({ blocks, letterClosed }) {
+  const out = [];
+  const ordered = [...blocks].sort((a, b) => a.top - b.top);
+  let last = -1;
+  for (const b of ordered) {
+    const rank = S16_RECEIPT_RANK[b.kind];
+    if (rank === undefined) {
+      out.push(`10.1 unknown block "${b.kind}"`);
+      continue;
+    }
+    if (rank < last) out.push(`10.1 "${b.kind}" sits after a later block`);
+    last = Math.max(last, rank);
+  }
+  for (const kind of ["letter", "seal", "end"]) {
+    if (!blocks.some((b) => b.kind === kind)) out.push(`10.1 no "${kind}" block`);
+  }
+  if (letterClosed !== true) out.push("10.2 the letter is not folded under Read the letter again");
+  return out;
+}
+
+/**
+ * 10.6: live step 6 column centred on the viewport and as wide as the persona receipts column.
+ * `blocks` (optional) is each question pair, figure card and letter with its own centre; each
+ * must share the viewport centre too.
+ * @param {{ centre: number, width: number, viewportCentre: number, personaWidth: number | null | undefined, blocks?: { kind: string, centre: number }[] }} args
+ */
+export function receiptColumnFailures({ centre, width, viewportCentre, personaWidth, blocks = [] }) {
+  const out = [];
+  if (Math.abs(centre - viewportCentre) > S16_CENTRE_TOL_PX) {
+    out.push(`10.6 column centre ${centre} px, want ${viewportCentre} px within ${S16_CENTRE_TOL_PX} px`);
+  }
+  for (const b of blocks) {
+    if (Math.abs(b.centre - viewportCentre) > S16_CENTRE_TOL_PX) {
+      out.push(`10.6 "${b.kind}" centre ${b.centre} px, want ${viewportCentre} px within ${S16_CENTRE_TOL_PX} px`);
+    }
+  }
+  if (personaWidth === null || personaWidth === undefined) {
+    out.push("10.6 no persona receipts column to compare its width with");
+  } else if (Math.abs(width - personaWidth) > S16_CENTRE_TOL_PX) {
+    out.push(`10.6 column width ${width} px, persona ${personaWidth} px within ${S16_CENTRE_TOL_PX} px`);
+  }
+  return out;
+}
+
+/** 14.3 (6.3): the lost-passkey warning is unfolded, inside the viewport and above the wax. */
+export function passkeyWarningFailures({ unfolded, top, bottom, waxTop, viewportH }) {
+  const out = [];
+  if (!unfolded) out.push("14.3 the lost-passkey warning is folded");
+  if (top === null || bottom === null) {
+    out.push("14.3 no lost-passkey warning to measure");
+    return out;
+  }
+  if (top < 0 || bottom > viewportH) out.push(`14.3 warning ${top}-${bottom} px is outside the ${viewportH} px viewport`);
+  if (waxTop === null || waxTop === undefined) out.push("14.3 no wax to measure against");
+  else if (bottom > waxTop) out.push(`14.3 warning bottom ${bottom} px is below the wax top ${waxTop} px`);
+  return out;
+}
+
+/**
+ * 5.4 and 5.5: at 1440x900 the first sentence of the hero headline takes one line box;
+ * at 390x844 no headline line holds one word. `lines` is the rendered line texts.
+ */
+export function heroLineFailures({ w, firstSentenceLines, lines }) {
+  const out = [];
+  if (w === 1440) {
+    if (firstSentenceLines !== 1) out.push(`5.4 "Memory drifts with time." takes ${firstSentenceLines} line boxes, want 1`);
+  } else if (w === 390) {
+    lines.forEach((text, i) => {
+      if (text.trim().split(/\s+/).filter(Boolean).length === 1) out.push(`5.5 line ${i + 1} "${text.trim()}" holds one word`);
+    });
+  } else {
+    out.push(`5.4/5.5 no rule for viewport width ${w}`);
+  }
+  return out;
+}
 
 // --- Row runners ------------------------------------------------------------
 
@@ -5363,6 +5464,293 @@ async function checkDemoRows(browser, base, size, rep, required) {
   }
 }
 
+// --- Spec 16 row runner (17.3) ---------------------------------------------
+// The rows of 17.3 at 1440x900 and 390x844. Each fails as a BLOCKER, with no --require.
+// 5.4/5.5 and 14.3 run with Calm off and on (reduced motion emulated). 10.1 runs on the
+// Maya Receipts step and on live step 6. 10.6 seals a live letter with a virtual passkey
+// (CTAP2, PRF), waits out the 30-second lock and opens it, so it needs the database.
+
+const S16_SIZES = ["1440x900", "390x844"];
+const S16_LOCK_WAIT_MS = 31000;
+const S16_STEP_MS = 30000;
+const S16_LETTER = "A letter for the spec 16 layout rows.";
+
+const HERO_LINES_READ = () => {
+  const h1 = document.querySelector('[data-block="headline"]');
+  if (!h1) return null;
+  const first = h1.querySelector("[data-hero-first]");
+  const words = [];
+  const walker = document.createTreeWalker(h1, NodeFilter.SHOW_TEXT);
+  for (let node = walker.nextNode(); node; node = walker.nextNode()) {
+    const text = node.textContent ?? "";
+    const re = /\S+/g;
+    for (let m = re.exec(text); m; m = re.exec(text)) {
+      const range = document.createRange();
+      range.setStart(node, m.index);
+      range.setEnd(node, m.index + m[0].length);
+      const rect = range.getClientRects()[0];
+      if (rect) words.push({ text: m[0], top: rect.top, first: !!first && first.contains(node) });
+    }
+  }
+  const lines = [];
+  for (const word of words) {
+    const line = lines.find((l) => Math.abs(l.top - word.top) <= 2);
+    if (line) line.words.push(word);
+    else lines.push({ top: word.top, words: [word] });
+  }
+  lines.sort((a, b) => a.top - b.top);
+  return {
+    firstSentenceLines: lines.filter((l) => l.words.some((wd) => wd.first)).length,
+    lines: lines.map((l) => l.words.map((wd) => wd.text).join(" ")),
+  };
+};
+
+const RECEIPTS_READ = () => {
+  const col = document.querySelector("[data-receipts]");
+  if (!col) return null;
+  const vc = document.documentElement.clientWidth / 2;
+  const kinds = [
+    ["pair", "[data-question-pair]"],
+    ["figure", "[data-figure-entry]"],
+    ["letter", "[data-letter-stage]"],
+    ["seal", "[data-seal-line]"],
+    ["end", "[data-end-card]"],
+  ];
+  const blocks = [];
+  for (const [kind, sel] of kinds) {
+    for (const el of col.querySelectorAll(sel)) {
+      const r = el.getBoundingClientRect();
+      blocks.push({ kind, top: r.top + window.scrollY, centre: r.left + r.width / 2 });
+    }
+  }
+  const disclosure = col.querySelector("[data-letter-stage] [data-letter-disclosure]");
+  const text = col.querySelector("[data-letter-stage] [data-letter-text]");
+  const textHidden = !text || text.getClientRects().length === 0 || !text.checkVisibility();
+  const c = col.getBoundingClientRect();
+  return {
+    blocks,
+    letterClosed: !!disclosure && disclosure.open === false && textHidden,
+    centre: c.left + c.width / 2,
+    width: c.width,
+    viewportCentre: vc,
+  };
+};
+
+const WARNING_READ = () => {
+  const warn = document.querySelector("[data-warning-text]");
+  const wax = document.querySelector("[data-wax-relief]")?.parentElement ?? null;
+  const w = warn ? warn.getBoundingClientRect() : null;
+  return {
+    unfolded: !!warn && !warn.closest("details:not([open])") && warn.checkVisibility(),
+    top: w ? w.top : null,
+    bottom: w ? w.bottom : null,
+    waxTop: wax ? wax.getBoundingClientRect().top : null,
+    viewportH: document.documentElement.clientHeight,
+    scrollY: window.scrollY,
+  };
+};
+
+function s16Ctx(rep, size, required, calm) {
+  const [w, h] = parseSize(size);
+  return { size, w, h, rep, stage: null, required, memo: {}, ghostHook: false, calm };
+}
+
+async function s16Hero(context, ctx, base) {
+  ctx.rep.stage(`hero calm=${ctx.calm ? "on" : "off"}`);
+  const page = await newPage(context);
+  try {
+    await page.goto(`${base}/`, { waitUntil: "load" });
+    await page.evaluate(() => document.fonts.ready);
+    await sleep(800);
+    const r = await page.evaluate(HERO_LINES_READ);
+    report(ctx, r
+      ? verdictRow("R5.4", "hero-lines", heroLineFailures({ w: ctx.w, firstSentenceLines: r.firstSentenceLines, lines: r.lines }), `lines=${JSON.stringify(r.lines)} calm=${ctx.calm ? "on" : "off"} viewport=${ctx.size}`, ctx.w === 1440 ? "the first sentence on one line box (5.4)" : "no headline line holds one word (5.5)")
+      : missingRow("R5.4", "hero-lines", 'no [data-block="headline"] on /'));
+  } finally {
+    await page.close();
+  }
+}
+
+// Write step to Press the seal on /demo/live: letter, every question answered, optionally one
+// public price ticked, then the fold. Returns once the Seal step is shown and its scroll is done.
+async function s16LiveToSeal(page, base, { figure }) {
+  await page.goto(`${base}${LIVE_PATH}`, { waitUntil: "load" });
+  await page.locator('[data-live-step="write"]').waitFor({ state: "visible", timeout: S16_STEP_MS });
+  await page.evaluate(() => document.fonts.ready);
+  await page.fill("#live-letter", S16_LETTER);
+  const answers = page.locator("[data-answer-input]");
+  const texts = fillAnswerTexts(await answers.count());
+  for (let i = 0; i < texts.length; i += 1) await answers.nth(i).fill(texts[i]);
+  if (figure) {
+    const panel = page.locator("[data-receipt-panel]").first();
+    if (await panel.evaluate((el) => el.tagName === "DETAILS" && !el.open)) await panel.locator("summary").first().click();
+    await page.getByRole("button", { name: "A public price", exact: true }).click();
+    await page.locator("[data-figure-row]").first().click();
+  }
+  await page.locator("[data-fold-button]").first().click();
+  await page.locator("[data-seal-step]").first().waitFor({ state: "visible", timeout: S16_STEP_MS });
+  await sleep(1200);
+}
+
+function s16Warning(ctx, r) {
+  report(ctx, verdictRow("R14.3", "passkey-warning", passkeyWarningFailures(r), `warning=${num(r.top ?? NaN, 0)}..${num(r.bottom ?? NaN, 0)} wax top=${num(r.waxTop ?? NaN, 0)} scrollY=${num(r.scrollY, 0)} calm=${ctx.calm ? "on" : "off"} viewport=${ctx.size}`, "unfolded, inside the layout viewport and ending above the wax top, no scroll by the reader"));
+}
+
+function s16Order(ctx, where, r) {
+  if (!r) {
+    report(ctx, missingRow("R10.1", "receipts-order", `no [data-receipts] on ${where}`));
+    return;
+  }
+  const order = [...r.blocks].sort((a, b) => a.top - b.top).map((b) => b.kind).join(",");
+  report(ctx, verdictRow("R10.1", "receipts-order", receiptsOrderFailures(r), `on=${where} order=${order} letterClosed=${r.letterClosed} viewport=${ctx.size}`, "question pairs, figures, the folded letter, the seal line, the end card; the letter closed"));
+}
+
+// Maya: Remember, Break the seal with the button, then See the receipts. Returns the
+// [data-receipts] read, or throws when a step is not reached.
+async function s16PersonaReceipts(page, base) {
+  await page.goto(`${base}${PERSONA_PATH}`, { waitUntil: "load" });
+  const first = await reachRecall(page);
+  if (first === null) throw new Error("neither recall nor a pick-up button");
+  if (first === "pickup") {
+    await page.getByRole("button", { name: PICK_UP, exact: true }).click({ timeout: WAIT_MS });
+    if (!(await waitForStage(page, "recall"))) throw new Error("recall not reached");
+  }
+  await sleep(800);
+  const problem = await answerAll(page, PERSONAS[0].answers(""));
+  if (problem) throw new Error(problem);
+  if (!(await waitForStage(page, "marks"))) throw new Error("Break the seal not reached");
+  await sleep(800);
+  return s16BreakAndReceipts(page);
+}
+
+async function s16BreakAndReceipts(page) {
+  await page.locator("[data-seal-button]").first().click({ timeout: S16_STEP_MS });
+  await page.locator('[data-ceremony="letter"]').waitFor({ state: "visible", timeout: S16_STEP_MS });
+  const next = await figuresButton(page);
+  if (!next) throw new Error("no See the receipts control on the letter step");
+  await next.loc.click({ timeout: WAIT_MS });
+  await page.locator('[data-ceremony="figures"], [data-ceremony="close"]').first().waitFor({ state: "visible", timeout: S16_STEP_MS });
+  await page.locator("[data-receipts] [data-end-card]").first().waitFor({ state: "attached", timeout: S16_STEP_MS });
+  await sleep(1500);
+  return page.evaluate(RECEIPTS_READ);
+}
+
+// Live Remember: every question answered (text, number or a scale control), then on.
+async function s16LiveRemember(page) {
+  const recall = page.locator('[data-ceremony="recall"]');
+  for (let i = 0; i < 12; i += 1) {
+    if ((await stageOf(page)) !== "recall") return;
+    // A figure question's field is text with a decimal keypad; an author question's is a textarea.
+    const numberField = recall.locator('input[inputmode="decimal"], input[type="number"]').first();
+    const textField = recall.locator("textarea").first();
+    if ((await numberField.count()) > 0) await numberField.fill("12");
+    else if ((await textField.count()) > 0) await textField.fill(`Remembered ${i + 1}`);
+    else await recall.locator('button[aria-label]:not([aria-label*="motion" i])').first().click();
+    const next = recall.getByRole("button", { name: /^(next question|next|continue)$/i }).first();
+    if ((await next.count()) > 0) await next.click();
+    else await recall.getByRole("button", { name: /break the seal|record|submit|save/i }).first().click();
+    await sleep(400);
+  }
+  throw new Error("more than 12 questions on the live Remember step");
+}
+
+async function s16LiveReceipts(context, page, base, read) {
+  let step = "virtual passkey";
+  try {
+    const cdp = await context.newCDPSession(page);
+    await cdp.send("WebAuthn.enable");
+    await cdp.send("WebAuthn.addVirtualAuthenticator", {
+      options: { protocol: "ctap2", transport: "internal", hasResidentKey: true, hasUserVerification: true, isUserVerified: true, hasPrf: true, automaticPresenceSimulation: true },
+    });
+    step = "write";
+    await s16LiveToSeal(page, base, { figure: true });
+    read.warning = await page.evaluate(WARNING_READ);
+    step = "backup choice";
+    await page.locator('[data-backup-card="skip"]').first().click({ timeout: WAIT_MS });
+    await sleep(300);
+    // Calm is on in this context, so the press is one click, not a hold.
+    step = "first press";
+    await page.getByRole("button", { name: "Press the seal", exact: true }).click({ timeout: WAIT_MS });
+    await page.locator('[data-press-mode="setting"]').waitFor({ state: "visible", timeout: S16_STEP_MS });
+    step = "setting press";
+    await page.locator('[data-press-mode="setting"]').click({ timeout: WAIT_MS });
+    await page.locator('[data-live-step="sealed"]').waitFor({ state: "visible", timeout: S16_STEP_MS });
+    step = "wait";
+    await sleep(S16_LOCK_WAIT_MS);
+    step = "open and unlock";
+    await page.getByRole("button", { name: "Open your letter", exact: true }).click({ timeout: S16_STEP_MS });
+    await page.getByRole("button", { name: /unlock with your passkey/i }).click({ timeout: S16_STEP_MS });
+    await page.locator('[data-ceremony="recall"]').waitFor({ state: "visible", timeout: S16_STEP_MS });
+    step = "remember";
+    await s16LiveRemember(page);
+    await page.locator('[data-ceremony="marks"]').waitFor({ state: "visible", timeout: S16_STEP_MS });
+    await sleep(800);
+    step = "break the seal and receipts";
+    return await s16BreakAndReceipts(page);
+  } catch (error) {
+    throw new Error(`live step "${step}": ${String(error.message ?? error).split("\n")[0]}`);
+  }
+}
+
+async function checkSpec16Rows(browser, base, size, rep, required) {
+  const [w, h] = parseSize(size);
+  console.log(`\n==== ${size} (spec 16 rows of 17.3) ====`);
+  let personaWidth = null;
+  for (const calm of [false, true]) {
+    const context = await browser.newContext({ viewport: { width: w, height: h }, reducedMotion: calm ? "reduce" : "no-preference" });
+    const ctx = s16Ctx(rep, size, required, calm);
+    rep.setContext(ctx);
+    try {
+      await guard(ctx, "R5.4", () => s16Hero(context, ctx, base));
+      if (!calm) {
+        await guard(ctx, "R14.3", async () => {
+          ctx.rep.stage("seal calm=off");
+          const page = await newPage(context);
+          try {
+            await s16LiveToSeal(page, base, { figure: false });
+            s16Warning(ctx, await page.evaluate(WARNING_READ));
+          } finally {
+            await page.close();
+          }
+        });
+        continue;
+      }
+      await guard(ctx, "R10.1", async () => {
+        ctx.rep.stage("us-maya receipts");
+        const page = await newPage(context);
+        try {
+          const r = await s16PersonaReceipts(page, base);
+          personaWidth = r ? r.width : null;
+          s16Order(ctx, PERSONA_PATH, r);
+        } finally {
+          await page.close();
+        }
+      });
+      await guard(ctx, "R10.6", async () => {
+        ctx.rep.stage("live seal to receipts calm=on");
+        const page = await newPage(context);
+        try {
+          // 14.3 with Calm on is read on the way, before the backup choice.
+          const read = { warning: null };
+          const r = await s16LiveReceipts(context, page, base, read);
+          if (read.warning) s16Warning(ctx, read.warning);
+          s16Order(ctx, LIVE_PATH, r);
+          if (!r) {
+            report(ctx, missingRow("R10.6", "live-column", "no [data-receipts] on live step 6"));
+            return;
+          }
+          const blocks = r.blocks.filter((b) => b.kind === "pair" || b.kind === "figure" || b.kind === "letter");
+          report(ctx, verdictRow("R10.6", "live-column", receiptColumnFailures({ centre: r.centre, width: r.width, viewportCentre: r.viewportCentre, personaWidth, blocks }), `centre=${num(r.centre)} viewport centre=${num(r.viewportCentre)} width=${num(r.width)} persona=${personaWidth === null ? "n/a" : num(personaWidth)} viewport=${ctx.size}`, "one column centred within 1 px, as wide as the persona receipts column within 1 px"));
+        } finally {
+          await page.close();
+        }
+      });
+    } finally {
+      await context.close();
+    }
+  }
+}
+
 async function runSize(browser, base, size, opts, rep) {
   const [w, h] = size.split("x").map(Number);
   const context = await browser.newContext({ viewport: { width: w, height: h } });
@@ -5467,6 +5855,9 @@ async function main() {
       }
     }
     await checkSoilStrips(browser, opts.url, rep, opts.required);
+    for (const size of S16_SIZES) {
+      await checkSpec16Rows(browser, opts.url, size, rep, opts.required);
+    }
   } finally {
     await browser.close();
   }

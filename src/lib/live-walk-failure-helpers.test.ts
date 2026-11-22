@@ -60,7 +60,7 @@ describe("checkTestifyKinds (spec 15, Testify answer kinds)", () => {
     });
     expect(check.ok).toBe(false);
     expect(check.message).toBe(
-      "FAIL Testify answered 1 author question(s) and 0 figure question(s)",
+      "FAIL the Remember step answered 1 author question(s) and 0 figure question(s)",
     );
   });
 });
