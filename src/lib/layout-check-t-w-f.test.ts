@@ -486,7 +486,7 @@ describe("f4Failures (F4.1 to F4.3)", () => {
         verdict,
         others: [],
       }),
-    ).toEqual(["F4.1 no Ghost drawn on the live Testify step"]);
+    ).toEqual(["F4.1 no Ghost drawn on the live Remember step"]);
   });
 
   it("names F4.2 when the verdict line starts less than 16 px below the Top_Bar", () => {

@@ -64,6 +64,27 @@ describe("row 10.6 live step 6 column", () => {
     expect(out).toEqual(["10.6 column width 597 px, persona 600 px within 1 px"]);
   });
 
+  it("passes blocks that share the viewport centre", () => {
+    const blocks = [
+      { kind: "pair", centre: 720.5 },
+      { kind: "figure", centre: 719.6 },
+      { kind: "letter", centre: 720 },
+    ];
+    expect(
+      receiptColumnFailures({ centre: 720, width: 600, viewportCentre: 720, personaWidth: 600, blocks }),
+    ).toEqual([]);
+  });
+
+  it("fails a figure card 4 px off the viewport centre", () => {
+    const blocks = [
+      { kind: "pair", centre: 720 },
+      { kind: "figure", centre: 724 },
+    ];
+    expect(
+      receiptColumnFailures({ centre: 720, width: 600, viewportCentre: 720, personaWidth: 600, blocks }),
+    ).toEqual(['10.6 "figure" centre 724 px, want 720 px within 1 px']);
+  });
+
   it("fails when there is no persona column to compare with", () => {
     const out = receiptColumnFailures({ centre: 720, width: 600, viewportCentre: 720, personaWidth: null });
     expect(out).toEqual(["10.6 no persona receipts column to compare its width with"]);

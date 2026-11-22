@@ -414,6 +414,10 @@ export type PageSnapshot = {
   contrastSamples: ContrastSample[];
   /** The text of the current Step_Indicator item (`aria-current="step"`), or null. */
   currentStep: string | null;
+  /** Every step name in the first visible [data-step-track], in order, or null with none. */
+  trackNames?: string[] | null;
+  /** The track's phone line ("Step {n} of {total} · {label}") when it is shown, else null. */
+  trackPhone?: string | null;
   bodyText: string;
   motionControls: number;
   /** Console and page errors raised since the previous step. */
@@ -559,7 +563,7 @@ export function checkConsoleErrors(messages: readonly string[]): StepCheck {
 export function checkStepSnapshot(
   step: WalkStepName,
   snapshot: PageSnapshot,
-  options: { letterText?: string } = {},
+  options: { letterText?: string; track?: readonly string[] } = {},
 ): StepCheck[] {
   const checks: StepCheck[] = [
     checkHorizontalScroll(snapshot.scrollWidth, snapshot.clientWidth),
@@ -570,6 +574,16 @@ export function checkStepSnapshot(
   const indicator = STEP_INDICATOR_EXPECTATIONS[step];
   if (indicator) {
     checks.push(checkStepIndicator(snapshot.currentStep, indicator));
+  }
+
+  if (options.track !== undefined && snapshot.trackNames !== undefined) {
+    checks.push(
+      checkTrackNames(
+        snapshot.trackNames,
+        snapshot.trackPhone ?? null,
+        options.track,
+      ),
+    );
   }
 
   // A run that could not be measured is a defect here, not a pass: the walk
@@ -893,6 +907,72 @@ export function checkQuickPressAddsNone(
     expected,
     message: `FAIL a second quick press added ${after - before} passkey prompt(s)`,
   };
+}
+
+/**
+ * The quick press of Q1.2 could not be made because the create prompt had already
+ * closed (the virtual authenticator answers at once). Not a product defect, so the
+ * check passes and says why it was not made.
+ */
+export function checkQuickPressNotMade(tag: string | null): StepCheck {
+  const expected =
+    "a second quick press during a prompt adds no passkey prompt";
+  return {
+    ok: true,
+    expected,
+    message: `SKIP the quick press: the create prompt had closed before it (step "${tag ?? "none"}")`,
+  };
+}
+
+/**
+ * The step names of spec 16, Requirement 2.1, for each track the walk reads.
+ * `/demo/live` has six steps; a persona letter with figures has four.
+ */
+export const LIVE_TRACK_NAMES = [
+  "Write",
+  "Press the seal",
+  "Wait",
+  "Remember",
+  "Break the seal",
+  "Receipts",
+] as const;
+export const PERSONA_TRACK_NAMES = [
+  "Remember",
+  "Break the seal",
+  "Read",
+  "Receipts",
+] as const;
+
+/**
+ * Requirement 17.1 (2.1): the step track lists exactly the expected names, in order,
+ * and its phone line, when shown, reads "Step {n} of {total} · {label}" with the
+ * label one of them.
+ */
+export function checkTrackNames(
+  names: readonly string[] | null,
+  phoneLine: string | null,
+  expected: readonly string[],
+): StepCheck {
+  const want = `the step track reads "${expected.join(" · ")}"`;
+  if (names === null) {
+    return { ok: false, expected: want, message: "FAIL no step track on the page" };
+  }
+  const got = names.join(" · ");
+  if (got !== expected.join(" · ")) {
+    return { ok: false, expected: want, message: `FAIL the step track reads "${got}"` };
+  }
+  if (phoneLine !== null) {
+    const match = /^Step (\d+) of (\d+) · (.+)$/.exec(phoneLine);
+    const n = match ? Number(match[1]) : NaN;
+    if (
+      !match ||
+      Number(match[2]) !== expected.length ||
+      expected[n - 1] !== match[3]
+    ) {
+      return { ok: false, expected: want, message: `FAIL the phone line reads "${phoneLine}"` };
+    }
+  }
+  return { ok: true, expected: want, message: `PASS the step track reads "${got}"` };
 }
 
 /** A box in CSS pixels, as `getBoundingClientRect` reports it. */
@@ -1391,20 +1471,20 @@ export function checkAccentButtonCount(
   };
 }
 
-/** The phrase the live Testify counter must not show (Q1.4). */
+/** The phrase the live Remember counter must not show (Q1.4). */
 export const TESTIFY_COUNTER_FORBIDDEN = /you wrote this on/i;
 
 /**
- * The live Testify counter (`[data-recall-counter]`) must not say "you wrote
+ * The live Remember counter (`[data-recall-counter]`) must not say "you wrote
  * this on" (Q1.4). A missing counter fails, because the check cannot run without it.
  */
 export function checkTestifyCounter(text: string | null): StepCheck {
-  const expected = 'the live Testify counter does not say "you wrote this on"';
+  const expected = 'the live Remember counter does not say "you wrote this on"';
   if (text === null) {
     return {
       ok: false,
       expected,
-      message: "FAIL the live Testify counter is missing",
+      message: "FAIL the live Remember counter is missing",
     };
   }
   if (!TESTIFY_COUNTER_FORBIDDEN.test(text)) {
@@ -1417,7 +1497,7 @@ export function checkTestifyCounter(text: string | null): StepCheck {
   return {
     ok: false,
     expected,
-    message: `FAIL the live Testify counter reads "${text.trim()}"`,
+    message: `FAIL the live Remember counter reads "${text.trim()}"`,
   };
 }
 
@@ -1456,7 +1536,7 @@ export function checkUnansweredFold(input: {
 }
 
 /**
- * The Testify step answers one author question (typed text) and, in the
+ * The Remember step answers one author question (typed text) and, in the
  * one-figure variant, one figure question (a number or a scale). Without a
  * figure in the letter, no figure question is expected.
  */
@@ -1466,7 +1546,7 @@ export function checkTestifyKinds(input: {
   hasFigure: boolean;
 }): StepCheck {
   const expected =
-    "Testify answers at least one author question, and one figure question when the letter has a figure";
+    "the Remember step answers at least one author question, and one figure question when the letter has a figure";
   const figureOk = !input.hasFigure || input.figureAnswered >= 1;
   if (input.authorAnswered >= 1 && figureOk) {
     return { ok: true, expected, message: `PASS ${expected}` };
@@ -1474,6 +1554,6 @@ export function checkTestifyKinds(input: {
   return {
     ok: false,
     expected,
-    message: `FAIL Testify answered ${input.authorAnswered} author question(s) and ${input.figureAnswered} figure question(s)`,
+    message: `FAIL the Remember step answered ${input.authorAnswered} author question(s) and ${input.figureAnswered} figure question(s)`,
   };
 }

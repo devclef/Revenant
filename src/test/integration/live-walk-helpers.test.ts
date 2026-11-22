@@ -17,6 +17,9 @@ import {
   checkPressStatusLine,
   checkStepTrackClearOfTopBar,
   checkTestifyCounter,
+  checkTrackNames,
+  LIVE_TRACK_NAMES,
+  PERSONA_TRACK_NAMES,
   checkTopbarSlotStable,
   checkTamperRunNoPasskey,
   reliefPathOf,
@@ -1462,11 +1465,11 @@ describe("checkAccentButtonCount (Q1.4)", () => {
 });
 
 describe("checkTestifyCounter (Q1.4)", () => {
-  it("passes a live Testify counter that does not say you wrote this on", () => {
+  it("passes a live Remember counter that does not say you wrote this on", () => {
     const check = checkTestifyCounter("Question 1 of 3");
     expect(check.ok).toBe(true);
     expect(check.message).toBe(
-      'PASS the live Testify counter does not say "you wrote this on" (counter reads "Question 1 of 3")',
+      'PASS the live Remember counter does not say "you wrote this on" (counter reads "Question 1 of 3")',
     );
   });
 
@@ -1474,7 +1477,48 @@ describe("checkTestifyCounter (Q1.4)", () => {
     const check = checkTestifyCounter("You wrote this on 12 March");
     expect(check.ok).toBe(false);
     expect(check.message).toBe(
-      'FAIL the live Testify counter reads "You wrote this on 12 March"',
+      'FAIL the live Remember counter reads "You wrote this on 12 March"',
+    );
+  });
+});
+
+describe("checkTrackNames (spec 16, 17.1 and 2.1)", () => {
+  it("passes the six live names with a matching phone line", () => {
+    const check = checkTrackNames(
+      [...LIVE_TRACK_NAMES],
+      "Step 4 of 6 · Remember",
+      LIVE_TRACK_NAMES,
+    );
+    expect(check.ok).toBe(true);
+  });
+
+  it("passes the four persona names with no phone line", () => {
+    expect(
+      checkTrackNames([...PERSONA_TRACK_NAMES], null, PERSONA_TRACK_NAMES).ok,
+    ).toBe(true);
+  });
+
+  it("fails a track that still says Testify", () => {
+    const names = ["Write", "Press the seal", "Wait", "Testify", "Break the seal", "Receipts"];
+    const check = checkTrackNames(names, null, LIVE_TRACK_NAMES);
+    expect(check.ok).toBe(false);
+    expect(check.message).toBe(
+      'FAIL the step track reads "Write · Press the seal · Wait · Testify · Break the seal · Receipts"',
+    );
+  });
+
+  it("fails a phone line whose label is not the step it numbers", () => {
+    const check = checkTrackNames(
+      [...LIVE_TRACK_NAMES],
+      "Step 4 of 6 · Wait",
+      LIVE_TRACK_NAMES,
+    );
+    expect(check.message).toBe('FAIL the phone line reads "Step 4 of 6 · Wait"');
+  });
+
+  it("fails a page with no step track", () => {
+    expect(checkTrackNames(null, null, LIVE_TRACK_NAMES).message).toBe(
+      "FAIL no step track on the page",
     );
   });
 });
