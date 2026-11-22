@@ -318,15 +318,13 @@ export function RecallPager({
   // date on it, so the layout check can find it on every question.
   const liveCounter = writtenAsOf === undefined && writtenOnDay !== "";
 
-  // The intro sits on the first question only (R11.15). A persona letter names
-  // its written-as-of date; a Live_Letter gets the hint alone.
+  // The intro sits on the first question only (R11.15). A persona letter gets
+  // the recall intro; a Live_Letter gets the hint alone. Neither names a date.
   const intro = !isFirst
     ? null
     : writtenAsOf === undefined
       ? REVEAL_COPY.recallHint
-      : fill(REVEAL_COPY.recallIntro, {
-          date: formatCalendarDate(writtenAsOf),
-        });
+      : REVEAL_COPY.recallIntro;
 
   // The line above an author question (spec 15, 11.1). It names the date the
   // letter was sealed, or the persona's written-as-of date. It is only for text
