@@ -15,7 +15,7 @@ A wax seal did two jobs: it showed whose letter it was, and whether anyone broke
 
 Since 1735 the French Académie des sciences has kept *plis cachetés*, sealed envelopes that prove what someone knew, and when. Even Pasteur used them.
 
-When I was in school, my teacher had us write letters to our future selves, then mailed them back years later. Email and cloud drives took the letter digital and left the seal behind: a file can be edited, read by the operator, and opened any time.
+In school we wrote letters to our future selves, and they were mailed back to us years later. Email and cloud drives took the letter digital and left the seal behind: a file can be edited, read by the operator, and opened any time.
 
 ## The wax seal, job by job
 
