@@ -38,6 +38,13 @@
   outline: none;
 }
 
+/* A script-focused heading draws no ring (see ceremony.module.css). */
+h1[tabindex="-1"]:focus,
+h2[tabindex="-1"]:focus,
+[data-step-heading]:focus {
+  outline: none;
+}
+
 /* The question row, the same as RecallPager's: the Wax_Disc (aria-hidden, so it
    is not in the question's name) sits 16 px left of the question heading. */
 .qRow {
