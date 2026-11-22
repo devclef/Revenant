@@ -324,9 +324,7 @@ export function RecallPager({
     ? null
     : writtenAsOf === undefined
       ? REVEAL_COPY.recallHint
-      : fill(REVEAL_COPY.recallIntro, {
-          date: formatCalendarDate(writtenAsOf),
-        });
+      : REVEAL_COPY.recallIntro;
 
   // The line above an author question (spec 15, 11.1). It names the date the
   // letter was sealed, or the persona's written-as-of date. It is only for text

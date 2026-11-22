@@ -13,7 +13,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import { REVEAL_COPY } from "@/components/reveal/copy";
 import { showsHeldDates } from "@/components/reveal/held-envelope";
-import { formatCalendarDate, formatLetterDate } from "@/components/ui/letter-date";
+import { formatLetterDate } from "@/components/ui/letter-date";
 import { CEREMONY_COPY } from "../copy";
 import { Envelope } from "../envelope/Envelope";
 import { PersonaIntro } from "./PersonaIntro";
@@ -61,9 +61,10 @@ describe("TestifyContext: persona letter", () => {
     expect(html).toContain(REVEAL_COPY.contextFrom.replace("{name}", "Maya"));
   });
 
-  it("shows Written as of and Opens on one line, with the dates", () => {
+  it("shows the opening date on the dates line and no written-as-of line", () => {
     const html = render(persona);
-    expect(html).toContain("Written as of 12 May 2024 · Opens 5 November 2024");
+    expect(html).toContain("Opens 5 November 2024");
+    expect(html).not.toContain("Written as of");
   });
 
   it("ends with the seal-verified statement", () => {
@@ -165,21 +166,16 @@ describe("TestifyContext: the four recall items appear once (spec 11 P3.5)", () 
     "%s: counts each recall item exactly once in recall",
     (_key, p) => {
       const html = recallMarkup(p);
-      const writtenText = CEREMONY_COPY.envelopeWrittenAsOf.replace(
-        "{date}",
-        formatCalendarDate(p.written_as_of),
-      );
       const opensText = CEREMONY_COPY.envelopeOpens.replace(
         "{date}",
         formatLetterDate(p.opens_at, { kind: "utc" }),
       );
       const counts = {
         fictionalNote: countOf(html, personaNoticeText(p.display_name)),
-        writtenAsOf: countOf(html, writtenText),
         opens: countOf(html, opensText),
         sealIntact: countOf(html, REVEAL_COPY.sealIntact),
       };
-      expect(counts).toEqual({ fictionalNote: 1, writtenAsOf: 1, opens: 1, sealIntact: 1 });
+      expect(counts).toEqual({ fictionalNote: 1, opens: 1, sealIntact: 1 });
     },
   );
 
@@ -251,7 +247,7 @@ describe("TestifyContext: notice once and content order (spec 07 F3.1)", () => {
     const html = render(persona);
     const parts = [
       REVEAL_COPY.contextFrom.replace("{name}", "Maya"),
-      "Written as of 12 May 2024 · Opens 5 November 2024",
+      "Opens 5 November 2024",
       REVEAL_COPY.sealIntact,
       "You lived through May 2024 too.",
     ];

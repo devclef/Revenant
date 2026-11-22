@@ -35,10 +35,6 @@ type PersonaTestify = Extract<TestifyContextProps, { kind: "persona" }>;
  * Memory_Line unchanged.
  */
 function ReadingTestify({ testify }: { testify: PersonaTestify }) {
-  const writtenText = CEREMONY_COPY.envelopeWrittenAsOf.replace(
-    "{date}",
-    formatCalendarDate(testify.writtenAsOf),
-  );
   const opensText = CEREMONY_COPY.envelopeOpens.replace(
     "{date}",
     formatLetterDate(testify.opensAt, { kind: "utc" }),
@@ -55,7 +51,7 @@ function ReadingTestify({ testify }: { testify: PersonaTestify }) {
       <p className={introStyles.testifyFrom}>
         {REVEAL_COPY.contextFrom.replace("{name}", testify.personaName)}
       </p>
-      <p className={introStyles.testifyDates}>{`${writtenText} · ${opensText}`}</p>
+      <p className={introStyles.testifyDates}>{opensText}</p>
       <p className={introStyles.testifySeal}>{REVEAL_COPY.sealIntact}</p>
     </section>
   );
