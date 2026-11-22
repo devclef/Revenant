@@ -552,7 +552,9 @@ describe("Property 17: views never render letter content before the reveal", () 
           /<button[^>]*>Break the seal<\/button>/.test(html),
           `${state.tag} must not render the seal-break button after the break`,
         ).toBe(false);
-        expect(html.includes("Read the letter")).toBe(false);
+        // The folded letter at stage 3 is a disclosure summarised "Read the
+        // letter again", which is not the old button, so match the exact label.
+        expect(html.includes(">Read the letter<")).toBe(false);
       }),
       { numRuns: 100 },
     );
