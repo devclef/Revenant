@@ -62,8 +62,9 @@ function useCompact(): boolean {
 
 /**
  * The controls at the end of the Top_Bar. `calm` shows Calm, and Skip while a
- * sequence is registered. `none` shows no controls, for a region that brings
- * its own Calm, Skip and sound (the Letter_Page).
+ * sequence is registered. `none` shows neither, for a region that brings its
+ * own Calm and Skip (the Letter_Page). The sound control still shows when the
+ * page passes sound state.
  */
 export type TopBarControls = "calm" | "none";
 
@@ -95,6 +96,8 @@ export type TopBarProps = {
 export type TopBarSound = {
   enabled: boolean;
   onChange: (next: boolean) => void;
+  /** Holds the slot, hidden, until the page's sound is ready (SoundSlotContext). */
+  reserved?: boolean;
 };
 
 /** The persona notice with the persona's name filled in. */
@@ -181,44 +184,49 @@ export function TopBar({
           {personaNoticeText(personaName)}
         </p>
       ) : null}
-      {controls === "none" ? null : (
+      {controls === "none" && sound === undefined ? null : (
         <div className={styles.controls}>
-          {hasActive ? (
-            <button
-              type="button"
-              className={styles.control}
-              data-topbar-slot="skip"
-              aria-label={CEREMONY_COPY.skip}
-              title={CEREMONY_COPY.skip}
-              onClick={skipAll}
-            >
-              <SkipIcon className={styles.controlIcon} />
-              <span className={styles.controlLabel}>{CEREMONY_COPY.skip}</span>
-            </button>
-          ) : (
-            <span
-              className={styles.skipReserve}
-              data-topbar-reserve=""
-              aria-hidden="true"
-            />
+          {controls === "none" ? null : (
+            <>
+              {hasActive ? (
+                <button
+                  type="button"
+                  className={styles.control}
+                  data-topbar-slot="skip"
+                  aria-label={CEREMONY_COPY.skip}
+                  title={CEREMONY_COPY.skip}
+                  onClick={skipAll}
+                >
+                  <SkipIcon className={styles.controlIcon} />
+                  <span className={styles.controlLabel}>{CEREMONY_COPY.skip}</span>
+                </button>
+              ) : (
+                <span
+                  className={styles.skipReserve}
+                  data-topbar-reserve=""
+                  aria-hidden="true"
+                />
+              )}
+              <button
+                type="button"
+                className={styles.control}
+                data-topbar-slot="calm"
+                data-topbar-last={sound === undefined ? true : undefined}
+                aria-label={calmLabel}
+                title={calmLabel}
+                onClick={() => setCalm(!calmOn)}
+              >
+                <MotionIcon off={calmOn} className={styles.controlIcon} />
+                <span className={styles.controlLabel}>{calmLabel}</span>
+              </button>
+            </>
           )}
-          <button
-            type="button"
-            className={styles.control}
-            data-topbar-slot="calm"
-            data-topbar-last={sound === undefined ? true : undefined}
-            aria-label={calmLabel}
-            title={calmLabel}
-            onClick={() => setCalm(!calmOn)}
-          >
-            <MotionIcon off={calmOn} className={styles.controlIcon} />
-            <span className={styles.controlLabel}>{calmLabel}</span>
-          </button>
           {sound !== undefined ? (
             <SoundToggle
               variant="topbar"
               enabled={sound.enabled}
               onChange={sound.onChange}
+              reserved={sound.reserved}
               last
             />
           ) : null}

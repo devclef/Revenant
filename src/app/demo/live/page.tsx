@@ -26,7 +26,7 @@ export default function LiveDemoPage() {
   const appOrigin = (process.env.APP_ORIGIN ?? "").trim().replace(/\/+$/, "");
 
   return (
-    <SceneShell variant="plain" demo backdrop>
+    <SceneShell variant="plain" demo backdrop sound>
       {rpId === "" ? (
         <Unavailable />
       ) : (

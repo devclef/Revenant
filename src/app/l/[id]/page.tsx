@@ -46,7 +46,7 @@ export default async function LetterPage({
   }
 
   return (
-    <SceneShell variant="plain" demo={false} controls="none">
+    <SceneShell variant="plain" demo={false} controls="none" sound>
       <LiveLetter letterId={id} />
     </SceneShell>
   );

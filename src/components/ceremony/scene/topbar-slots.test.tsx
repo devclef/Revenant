@@ -295,13 +295,13 @@ describe('the /l/[id] bar and controls="none" (spec 14 B1)', () => {
     expect(slotOrder(header)).toEqual(["wordmark"]);
   });
 
-  it('renders none of Calm, sound or Skip from TopBar with controls="none"', () => {
+  it('renders no Calm or Skip from TopBar with controls="none", and keeps the sound control', () => {
     const header = headerOf(
       renderTopBar({ personaName: PERSONA, controls: "none", sound: SOUND }),
     );
     expect(slotOrder(header)).not.toContain("calm");
-    expect(slotOrder(header)).not.toContain("sound");
     expect(slotOrder(header)).not.toContain("skip");
     expect(header).not.toContain(`aria-label="${SKIP}"`);
+    expect(slotOrder(header)).toContain("sound");
   });
 });
