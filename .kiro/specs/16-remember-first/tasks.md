@@ -175,7 +175,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Earlier-spec tests changed or retired: `format-change*.test.ts` if it asserts the exact shape of `ChangeDisplay`; name any.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 7. The figure card: At opening, the change line, the formula and one rescale note
+- [x] 7. The figure card: At opening, the change line, the formula and one rescale note
   - Agent: `frontend-dev` · Depends on: 3, 6 · Estimated size: M, ~900 changed lines
   - Scope: `src/components/reveal/copy.ts`, `src/components/ceremony/copy.ts`, `src/components/reveal/ChangeLine.tsx`, `formula.ts`, `FigureEntry.tsx`, `FigureLine.tsx`, `change-display.ts`, `ReceiptCard.tsx`, `FiguresThenNow.tsx`, `src/components/ceremony/figures/NumberLine.tsx`, and the `*.test.ts(x)` next to each.
   - Design sections: "7. At opening", "8. Change line, formula and Published_Precision" (the reveal parts), "9. One rescale note per card", Properties 3, 4, 7 and 13.
