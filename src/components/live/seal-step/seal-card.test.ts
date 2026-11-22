@@ -33,8 +33,8 @@ describe("hasPrimaryCard", () => {
     expect(hasPrimaryCard("seal")).toBe(false);
   });
 
-  it("is true for the wait step", () => {
-    expect(hasPrimaryCard("wait")).toBe(true);
+  it("is false for the wait step", () => {
+    expect(hasPrimaryCard("wait")).toBe(false);
   });
 
   it("is false for the testify, break and receipts steps", () => {
