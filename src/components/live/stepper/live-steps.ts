@@ -136,7 +136,7 @@ export function flowMounted(step: LiveStep, _countdownDone: boolean): boolean {
  * inside the Reveal_Host.
  */
 export function hasPrimaryCard(step: LiveStep): boolean {
-  return step === "write" || step === "seal" || step === "wait";
+  return step === "write" || step === "wait";
 }
 
 /**
