@@ -1713,8 +1713,30 @@ const GO1_READ = () => {
     if (!(r.width > 0 && r.height > 0)) return false;
     return !el.checkVisibility || el.checkVisibility({ visibilityProperty: true, opacityProperty: true });
   };
+  // The Ghost's drawn box (requirement 2.6, design D4 and D7): the union of the bare SVG box, the
+  // body and fold paths (the hem is the body path's lower edge, measured as drawn) and the glow. The
+  // glow is the .ghostGlow wrapper (the SVG's parent) plus the largest blur its drop-shadow filter
+  // paints, read from the computed filter, so the drawn shadow is measured and not guessed.
   const ghostEl = document.querySelector("[data-ghost-box]");
-  const ghost = ghostEl ? rect(ghostEl.getBoundingClientRect()) : null;
+  const union = (rects) => ({
+    left: Math.min(...rects.map((r) => r.left)),
+    top: Math.min(...rects.map((r) => r.top)),
+    right: Math.max(...rects.map((r) => r.right)),
+    bottom: Math.max(...rects.map((r) => r.bottom)),
+  });
+  let ghost = null;
+  if (ghostEl) {
+    const parts = [ghostEl.getBoundingClientRect()];
+    for (const path of ghostEl.querySelectorAll("path")) parts.push(path.getBoundingClientRect());
+    const glowEl = ghostEl.parentElement;
+    if (glowEl) {
+      const glow = glowEl.getBoundingClientRect();
+      const filter = getComputedStyle(glowEl).filter || "none";
+      const pad = Math.max(0, ...[...filter.matchAll(/(-?\d*\.?\d+)px/g)].map((m) => Math.abs(parseFloat(m[1]))));
+      parts.push({ left: glow.left - pad, top: glow.top - pad, right: glow.right + pad, bottom: glow.bottom + pad });
+    }
+    ghost = rect(union(parts));
+  }
   const text = [];
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   for (let n = walker.nextNode(); n; n = walker.nextNode()) {
