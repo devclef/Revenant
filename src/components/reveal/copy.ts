@@ -462,6 +462,7 @@ export const REVEAL_COPY = {
    * trailing space; it names no direction and carries no judgement.
    */
   periodRange: " to ",
+  changeSeparator: " · ",
 
   /**
    * Shown in place of a Now_Figure while the figures request is in flight. Only

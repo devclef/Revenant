@@ -137,6 +137,10 @@ export function FigureEntry({
     receiptSourceOf(then).sourceUrl,
     receiptSourceOf(now).sourceUrl,
   ];
+  // The base-ten power of the display rescale: 3 for a divisor of 1000. The
+  // divisor is an exact power of ten, so its digit count minus one is the power.
+  const rescaleExponent =
+    rescale === undefined ? 0 : String(rescale.divisor).length - 1;
 
   return (
     <MotionProvider>
@@ -163,17 +167,13 @@ export function FigureEntry({
           />
         }
         change={
-          <ChangeLine
-            changeText={changeText}
-            then={then}
-            now={now}
-            display={displayInputs}
-          />
+          <ChangeLine changeText={changeText} then={then} now={now} />
         }
         formula={
           <FormulaLine
-            result={shownChange}
+            result={change}
             shown={changeText}
+            k={rescaleExponent}
             seriesId={then.series_id}
             sourceUrls={sourceUrls}
           />
