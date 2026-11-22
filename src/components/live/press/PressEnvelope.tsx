@@ -101,6 +101,7 @@ export function PressEnvelope({
         aria-describedby={lineId}
         aria-disabled={blocked ? "true" : "false"}
         data-seal-pose={pose}
+        data-press-target=""
         data-pool-stage={stage ?? undefined}
         data-press-mode={inert ? "inert" : mode}
         data-press-running={running && !inert ? "" : undefined}
@@ -111,7 +112,7 @@ export function PressEnvelope({
       >
         <span className={styles.envelope} aria-hidden="true">
           <span className={styles.flap} />
-          <span className={styles.wax}>
+          <span className={styles.wax} data-wax="">
             <svg
               className={styles.relief}
               viewBox="0 0 24 24"

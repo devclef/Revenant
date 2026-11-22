@@ -106,10 +106,11 @@ describe("LiveStepper", () => {
     );
   });
 
-  it("keeps the data-primary-control and data-card hooks on the Seal step", () => {
+  it("draws the Seal step bare, with no Primary_Card hooks", () => {
     const html = render("seal");
-    expect(html).toMatch(/<section[^>]*data-card[^>]*data-step="seal"/);
-    expect(html.match(/data-primary-control/g)).toHaveLength(1);
+    expect(html).toContain('data-step="seal"');
+    expect(html).not.toContain("data-card");
+    expect(html).not.toContain("data-primary-control");
     // Seal draws no h2 here; its heading comes from the page (task 7).
     expect(html).not.toContain("<h2");
   });
@@ -212,16 +213,16 @@ describe("LiveStepper Reveal_Host and Primary_Card (X1)", () => {
     );
   });
 
-  it("draws the Primary_Card on write, seal and wait", () => {
-    for (const step of ["write", "seal", "wait"] as const) {
+  it("draws the Primary_Card on write and wait", () => {
+    for (const step of ["write", "wait"] as const) {
       expect(render(step)).toMatch(
         new RegExp(`<section[^>]*data-card=""[^>]*data-step="${step}"`),
       );
     }
   });
 
-  it("draws no Primary_Card on testify or receipts", () => {
-    for (const step of ["testify", "receipts"] as const) {
+  it("draws no Primary_Card on seal, testify or receipts", () => {
+    for (const step of ["seal", "testify", "receipts"] as const) {
       const html = render(step);
       expect(html).toContain(`data-step="${step}"`);
       expect(html).not.toContain("data-card");

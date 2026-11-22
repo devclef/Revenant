@@ -23,9 +23,9 @@ function ruleBody(css: string, selector: string): string {
 }
 
 describe("Seal step layout (spec 14, S3.1 and S3.2)", () => {
-  it("caps the step at 1240 px with 32 px side padding", () => {
+  it("fills the surface with 32 px side padding", () => {
     const body = ruleBody(stepCss, ".step");
-    expect(body).toMatch(/max-width:\s*1240px;/);
+    expect(body).toMatch(/inline-size:\s*100%;/);
     expect(body).toMatch(/padding:\s*32px;/);
   });
 
@@ -113,7 +113,7 @@ describe("Press_Envelope (spec 14, S6.1 to S6.5)", () => {
   it("scales the wax to 112 px at 440 px and centres it on the flap point", () => {
     const body = ruleBody(pressCss, ".wax");
     expect(body).toMatch(
-      /width:\s*calc\(min\(440px,\s*100cqi\)\s*\*\s*112\s*\/\s*440\);/,
+      /width:\s*calc\(\s*44px \+ \(min\(440px,\s*100cqi\) \* 112 \/ 440 - 44px\) \* var\(--press-progress\)\s*\);/,
     );
     expect(body).toMatch(/top:\s*58%;/);
     expect(body).toMatch(/left:\s*50%;/);
