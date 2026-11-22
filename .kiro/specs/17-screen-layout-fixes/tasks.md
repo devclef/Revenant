@@ -46,7 +46,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - _Preservation: `focusHeading` unchanged; control focus rings unchanged; one h1 per step_
     - _Requirements: 1.8, 2.8, 3.10_
 
-- [ ] 2. FR1 rule: script-focused heading draws no outline
+- [x] 2. FR1 rule: script-focused heading draws no outline
   - Agent: `platform-dev` · Depends on: 1 · Estimated size: M, ~400 changed lines
   - Scope: `tools/qa/layout-rules-17.mjs` (new), `tools/qa/layout-check.mjs`, `src/lib/layout-check-fr1.test.ts` (new).
   - Design sections: "Shared rule module", "D6 / FR1".
