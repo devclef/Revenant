@@ -165,7 +165,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - Add a property test over random rect pairs: GO1 fails exactly when the rects intersect. Run the file until it passes.
     - _Requirements: 2.6, 2.10_
 
-- [ ] 9. D7: Break the seal columns grouped and Soil clear of text
+- [x] 9. D7: Break the seal columns grouped and Soil clear of text
   - Agent: `frontend-dev` · Depends on: none · Estimated size: M, ~450 changed lines
   - Scope: `src/components/ceremony/scene/scene.module.css`, `src/components/ceremony/scene/layout.ts`, `src/components/ceremony/seal/**` and `src/components/ceremony/figures/**` (attributes and placement only), `src/components/ceremony/scene/SoilStrip.tsx` (attribute only), `src/components/ceremony/scene/break-columns.test.ts` (new).
   - Design sections: "D4 and D7 overlap / GO1", "D7 grouping / LC1".
