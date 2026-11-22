@@ -39,6 +39,8 @@
 //   { ghost, text, controls }: ghost is one rect or null, text is [{ label, rect }] (one rect per text
 //   node Range), controls is [{ label, rect }]. A rect is { left, top, right, bottom } in CSS pixels,
 //   the shape getBoundingClientRect returns. Edges that only touch do not overlap.
+//   GO1 also tests each text rect against the optional soil rect ([data-soil-strip]); a text line that
+//   overlaps the Soil strip fails with check "soil-overlap". No soil key, or soil null, skips that test.
 //
 // CW1 (GitHub issue #581, spec 17 D3): the [data-content-column] content box is at least
 //   viewport width minus 48 px. The reading is { width, viewport }: width is the column's content
@@ -237,9 +239,13 @@ export function rectOverlap(a, b) {
 }
 
 /**
- * GO1 failures for one reading. An empty array means no text line or control meets the Ghost.
- * Each failure names the layer (text or control), the element label and the overlap in px.
- * A missing Ghost box or a missing rect fails as "no measurement", so a check never passes silently.
+ * GO1 failures for one reading. An empty array means no text line or control meets the Ghost,
+ * and no text line meets the Soil strip when the reading carries one.
+ * The reading is { ghost, text, controls, soil? }. soil is the [data-soil-strip] rect, or null when
+ * the page has no strip. When soil is absent or null the Soil check is skipped; a measured soil
+ * rect is tested against every text line. Each failure names the layer (text or control), the element
+ * label and the overlap in px. A missing Ghost box or a missing rect fails as "no measurement", so a
+ * check never passes silently.
  */
 export function goFailures(reading) {
   const ghost = reading?.ghost ?? null;
@@ -247,6 +253,7 @@ export function goFailures(reading) {
     return [{ id: "GO1", check: "ghost-overlap", layer: null, message: "GO1 no [data-ghost-box] rect to measure." }];
   }
 
+  const soil = reading?.soil ?? null;
   const layers = [
     { layer: "text", items: Array.isArray(reading?.text) ? reading.text : [] },
     { layer: "control", items: Array.isArray(reading?.controls) ? reading.controls : [] },
@@ -267,6 +274,17 @@ export function goFailures(reading) {
           layer,
           message: `GO1 ${layer} "${label}" overlaps the Ghost by ${round(overlap.width)} px wide and ${round(overlap.height)} px tall.`,
         });
+      }
+      if (layer === "text" && isMeasuredRect(soil)) {
+        const soilOverlap = rectOverlap(item.rect, soil);
+        if (soilOverlap) {
+          failures.push({
+            id: "GO1",
+            check: "soil-overlap",
+            layer,
+            message: `GO1 text "${label}" overlaps the Soil strip by ${round(soilOverlap.width)} px wide and ${round(soilOverlap.height)} px tall.`,
+          });
+        }
       }
     }
   }
