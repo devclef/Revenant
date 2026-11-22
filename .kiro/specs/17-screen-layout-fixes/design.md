@@ -9,7 +9,7 @@ Seven screens of the live demo and the persona demos are visibly broken (D1 to D
 
 Three decisions are made and stated as such:
 
-- `layout-check` runs inside `scripts/check.sh`, which `ci.yml` runs and `ci-gate` requires. A blocker fails `ci-gate`.
+- The loop builds `tools/qa/layout-gate.mjs`. The owner wires it into `scripts/check.sh`, which `ci.yml` runs and `ci-gate` requires, so a blocker fails `ci-gate`.
 - The Wait step shows one wax seal in the first viewport. The sealed envelope keeps its seal. The letter card keeps all its content, its link and its calendar and backup controls. Only the card's decorative wax mark is not drawn while the card is shown inside the Wait step (the printable card and PDF are generated elsewhere and are unchanged).
 - On Maya's Break the seal at 900 px and wider, the Seal group's left edge is at most 64 px from the right edge of the figures column.
 
@@ -128,7 +128,7 @@ _For any_ screen state where the bug condition does NOT hold (isBugCondition ret
 
 Property 3: Gate - A blocker fails the required check
 
-_For any_ pull request build where one of the eight rules fails on a covered screen and size, `scripts/check.sh` SHALL exit non-zero, so `ci-gate` fails.
+_For any_ pull request build where one of the eight rules fails on a covered screen and size, `tools/qa/layout-gate.mjs` SHALL exit non-zero, and once the owner has wired it into `scripts/check.sh`, `ci-gate` fails.
 
 **Validates: Requirements 2.10, 2.11**
 
@@ -145,7 +145,7 @@ Each rule exports a verdict function and a browser reader string, and `layout-ch
 #### Per-defect fix and paired rule
 
 **D6 / FR1 (focus ring on a script-focused heading)**
-- Fix: in `globals.css`, `ceremony.module.css` and `RecallReader.module.css`, add `h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus, [data-step-heading]:focus { outline: none }`, scoped to non-interactive focus targets. `.desk :focus-visible` and `.onPaper :focus-visible` stay for every control. `focusHeading` is unchanged, so 3.10 holds.
+- Fix: in `ceremony.module.css` and `RecallReader.module.css` (`globals.css` is platform-dev's and is not touched), add `h1[tabindex="-1"]:focus, h2[tabindex="-1"]:focus, [data-step-heading]:focus { outline: none }`, scoped to non-interactive focus targets. `.desk :focus-visible` and `.onPaper :focus-visible` stay for every control. `focusHeading` is unchanged, so 3.10 holds.
 - Rule FR1: load the step with no input; read `document.activeElement`; compute `getComputedStyle(el).outlineStyle`/`outlineWidth`/`outlineColor` (visible when style is not `none`, width above 0 and colour alpha above 0). Fail when the active element is non-interactive (`tabindex="-1"` and not a link, button, input, select, textarea or `[role=button]`) and its outline is visible. Then press Tab once, read the new active element, and fail when it is interactive and its outline is not visible (a control the reader tabs to must show a ring). Runs on every step the walk reaches, at both sizes.
 
 **D5 and D2 contrast / CT1 (computed colour against the real composited background)**
@@ -180,11 +180,10 @@ Each rule exports a verdict function and a browser reader string, and `layout-ch
 
 #### Gate
 
-**Files**: `tools/qa/layout-gate.mjs` (new), `scripts/check.sh`, `.github/workflows/ci.yml`, `package.json` (script `layout-gate`)
+**Files built by the loop**: `tools/qa/layout-gate.mjs` (new), `package.json` (script `layout-gate`), `src/lib/layout-gate.test.ts`.
 
-- `layout-gate.mjs` exports `buildGateArgs(env)` (pure: sizes `1440x900,390x844`, the Chromium path from `CHROMIUM_PATH`, shots to a temp dir) and a `main()` that starts `node .next/standalone/server.js` on a free port, waits on `/api/health`, prepares the demo personas the way the smoke job and README prepare them (migrate, then `seal-personas`), runs `layout-check.mjs --url`, stops the server, and returns the exit code of `layout-check`. `layout-check` already exits 1 on a blocker.
-- `scripts/check.sh` gains one step after `build` and the JS budget: `step "layout-check (blockers)"; node tools/qa/layout-gate.mjs`. It runs when `CI` is set or `LAYOUT_CHECK=1`, and prints a skip line otherwise so a laptop without Chromium or Postgres still passes `check.sh`. The file is owner-only in `docs/agent-loop.md`, and this spec is the owner's decision to change it, so the unit that edits it names `scripts/check.sh` in its issue and the path rule in `.github/agents.json` lists it for that unit.
-- `ci.yml` sets `CHROMIUM_PATH: /usr/bin/google-chrome` on the `scripts/check.sh` step (the same binary `journey-check.yml` uses) and passes `DATABASE_URL` as it does today. `ci-gate` already requires `checks`, so no change to the gate job is needed. The check runs on every pull request, which is a superset of the paths named in 2.11.
+- `layout-gate.mjs` exports `buildGateArgs(env)` (pure: sizes `1440x900,390x844`, the Chromium path from `CHROMIUM_PATH`, shots to a temp dir, no `--require`) and a `main()` that starts `node .next/standalone/server.js` on a free port, waits on `/api/health`, prepares the demo personas the way the smoke job and README prepare them (migrate, then `seal-personas`), runs `layout-check.mjs --url`, stops the server, and returns the exit code of `layout-check`. `layout-check` already exits 1 on a blocker.
+- **Owner edits after the last task** (agents cannot change these files): add `step "layout-check (blockers)"; node tools/qa/layout-gate.mjs` to `scripts/check.sh` after the build and the JS budget, running when `CI` is set or `LAYOUT_CHECK=1` and printing a skip line otherwise; set `CHROMIUM_PATH: /usr/bin/google-chrome` on the `scripts/check.sh` step in `ci.yml` (the binary `journey-check.yml` uses); adjust `.github/agents.json` only if needed; note the step in `docs/agent-loop.md`. `ci-gate` already requires `checks`, so the gate job is unchanged.
 - No Helm change: no environment variable, port, probe, migration or job is added to the app, so the chart `version` does not change.
 
 ## Testing Strategy
@@ -262,22 +261,29 @@ END FOR
 ### Integration Tests
 
 - `layout-check` against the built app, through `layout-gate.mjs`, at 1440x900 and 390x844: the eight rules run on Press the seal, Wait (virtual-passkey walk), Remember, Break the seal, Receipts and the landing page, and the run exits 1 on any failure and 0 on today's fixed build.
-- `scripts/check.sh` with `CI=1`: the layout step runs after the build and a failing rule fails the script, so `ci-gate` fails.
+- After the owner wires the gate, `scripts/check.sh` with `CI=1` runs the layout step after the build and a failing rule fails the script, so `ci-gate` fails.
 - The existing spec 15 and spec 16 rows and `journey-check` J1 to J9 keep passing.
 
 ## Work Units
 
-Each unit is one commit that changes files. Each holds a code or config change, the paired rule, and its test with the unfixed-main fixture. Order matters only where noted.
+Each defect is two tasks, one per role, so each PR stays inside one role's paths in `.github/agents.json`. The frontend-dev task holds the CSS or component fix, the `data-*` hooks and a source test. The platform-dev task holds the rule in `tools/qa/layout-rules-17.mjs`, its wiring in `tools/qa/layout-check.mjs` and `src/lib/layout-check-<rule>.test.ts` with the unfixed-main failing fixture and the post-fix passing fixture, and depends on the fix. `src/app/globals.css` is platform-dev's, so the D6 fix is made in the two ceremony stylesheets that own the rings. Tasks run in numeric order.
 
-| Unit | Defect | Files changed | Rule and test in the same commit |
-|---|---|---|---|
-| 1 | D6 | `globals.css`, `ceremony.module.css`, `RecallReader.module.css`; new `tools/qa/layout-rules-17.mjs` (FR1 verdict and reader), wired into `layout-check.mjs` | FR1 plus `layout-check-fr1.test.ts` (outline fixture from main, source test of the new selectors) |
-| 2 | D5 | `recall/NavRow.module.css`; CT1 verdict and reader added to `layout-rules-17.mjs`, wired on Remember after question 1 | CT1 plus `layout-check-ct1.test.ts` (`#ffffff` on `#f6ead4` fixture, compositing and gradient cases, source test of the new colours) |
-| 3 | D3 | `scene.module.css`, `receipts.module.css`, `data-content-column` on the receipts, recall, write and seal columns; CW1 added | CW1 plus `layout-check-cw1.test.ts` (179.4 px fixture, boundary at 342) |
-| 4 | D4 | Ghost layer CSS (`--ghost-bottom`) and the Persona_Intro margin; GO1 added for the Ghost, including text inside opaque ancestors, at start and scrolled to the bottom | GO1 plus `layout-check-go1.test.ts` (`36..348 x 206..224` against the Ghost box fixture, opaque-ancestor case) |
-| 5 | D7 | `scene.module.css` grid for figures and Seal group, `padding-block-end: var(--soil-clear)`, `data-figures-column` and `data-seal-group` hooks; LC1 added, GO1 extended to the Soil strip | LC1 and GO1-Soil plus `layout-check-lc1.test.ts` (gap 134 fixture, 64 and 65 boundary, Soil overlap `419..440` fixture) |
-| 6 | D1 | `live-steps.ts` (`hasPrimaryCard()` false for `seal`), `seal-step.module.css`, `press.module.css`, `data-wax` and `data-press-target` hooks; SF1 and TT1 added | SF1 and TT1 plus `layout-check-sf1-tt1.test.ts` (1040 in 1360, wax 15 and 10 fixtures, 44 px boundary, button-does-not-stand-in case) |
-| 7 | D2 | `live-steps.ts` (`wait`), `live.module.css`, `LiveWaitStep.tsx` (no in-panel `DemoLabel`), `LetterCard` `showSeal` prop, `stepper.module.css` `data-surface` heading colour; UQ1 added, CT1 wired on Wait through the virtual-passkey walk, SF1 wired on Wait | UQ1 plus `layout-check-uq1.test.ts` (2 labels and 2 seals fixture) and the Wait cases in the CT1 test file |
-| 8 | Gate | `tools/qa/layout-gate.mjs`, `scripts/check.sh`, `.github/workflows/ci.yml`, `package.json`, `.github/agents.json` path for the unit, and the header comment of `layout-check.mjs` stating that the eight rules block with no `--require` | `layout-gate.test.ts` for `buildGateArgs`, and a source test that `check.sh` calls the gate and `ci.yml` sets `CHROMIUM_PATH` |
+| Task | Role | Defect | Files | Rule and test |
+|---|---|---|---|---|
+| 1 | frontend-dev | D6 | `ceremony.module.css`, `RecallReader.module.css` | source test `focus-ring-heading.test.ts` |
+| 2 | platform-dev | D6 | `layout-rules-17.mjs` (new), `layout-check.mjs` | FR1, `layout-check-fr1.test.ts` |
+| 3 | frontend-dev | D5 | `ceremony/recall/NavRow.module.css` | source test `nav-row-colour.test.ts` |
+| 4 | platform-dev | D5 | `layout-rules-17.mjs`, `layout-check.mjs` | CT1, `layout-check-ct1.test.ts` |
+| 5 | frontend-dev | D3 | `scene.module.css`, `receipts.module.css`, `data-content-column` hooks | source test `content-column.test.ts` |
+| 6 | platform-dev | D3 | `layout-rules-17.mjs`, `layout-check.mjs` | CW1, `layout-check-cw1.test.ts` |
+| 7 | frontend-dev | D4 | Ghost layer CSS, `intro.module.css`, `data-ghost-box` | source test `ghost-clear.test.ts` |
+| 8 | platform-dev | D4 | `layout-rules-17.mjs`, `layout-check.mjs` | GO1 (Ghost), `layout-check-go1.test.ts` |
+| 9 | frontend-dev | D7 | `scene.module.css`, `layout.ts`, `data-figures-column`, `data-seal-group`, `data-soil-strip` | source test `break-columns.test.ts` |
+| 10 | platform-dev | D7 | `layout-rules-17.mjs`, `layout-check.mjs` | LC1 and GO1 (Soil), `layout-check-lc1.test.ts` |
+| 11 | frontend-dev | D1 | `live-steps.ts`, `seal-step.module.css`, `press.module.css`, hooks | source test `seal-card.test.ts` |
+| 12 | platform-dev | D1 | `layout-rules-17.mjs`, `layout-check.mjs` | SF1 and TT1, `layout-check-sf1-tt1.test.ts` |
+| 13 | frontend-dev | D2 | `live-steps.ts`, `live.module.css`, `LiveWaitStep.tsx`, `LetterCard.tsx`, `stepper.module.css` | source test `wait-step.test.ts` |
+| 14 | platform-dev | D2 | `layout-rules-17.mjs`, `layout-check.mjs` | UQ1, CT1 and SF1 on Wait, `layout-check-uq1.test.ts` |
+| 15 | platform-dev | Gate | `tools/qa/layout-gate.mjs`, `package.json` | `layout-gate.test.ts` |
 
-Units 1 to 7 are independent of each other except that unit 2 creates the CT1 reader that unit 7 wires on a second step, and unit 1 creates the shared module the others extend. Unit 8 comes last so the gate enforces rules that already pass on the fixed build.
+Rule tasks depend on the previous rule task as well as their fix, because they all edit `layout-rules-17.mjs` and `layout-check.mjs`. Task 15 comes last so the gate enforces rules that already pass on the fixed build. The owner then wires the gate into `scripts/check.sh` and `ci.yml` (see "Gate").
