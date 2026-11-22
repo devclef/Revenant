@@ -1,7 +1,6 @@
 /*
  * The Nav_Row layout (spec 14, T1.5). The main button uses the shared primary
- * style from ui/buttons.module.css. "Previous question" is an outline control
- * with white text, because the recall surface is the dark Scene and not paper.
+ * style from ui/buttons.module.css.
  */
 
 .navRow {
@@ -16,11 +15,12 @@
   flex: 1 1 0;
 }
 
+/* The control sits on the cream paper surface, so it takes the paper ink. */
 .previous {
   font: inherit;
-  color: #ffffff;
+  color: var(--ink);
   background-color: transparent;
-  border: 1px solid #8f86ad;
+  border: 1px solid var(--ink);
   border-radius: 2px;
   min-height: 44px;
   min-width: 44px;
