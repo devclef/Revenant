@@ -170,13 +170,13 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Scope: `src/components/ceremony/scene/scene.module.css`, `src/components/ceremony/scene/layout.ts`, `src/components/ceremony/seal/**` and `src/components/ceremony/figures/**` (attributes and placement only), `src/components/ceremony/scene/SoilStrip.tsx` (attribute only), `src/components/ceremony/scene/break-columns.test.ts` (new).
   - Design sections: "D4 and D7 overlap / GO1", "D7 grouping / LC1".
 
-  - [ ] 9.1 Put figures and Seal group on one grid and reserve the Soil clearance
-    - At 900 px and wider, the figures column and the Seal group share one grid with `column-gap: 48px`. The Seal group is a grid item right of the figures with its top aligned to the figures column's top, and is no longer positioned from `--ghost-cx` and `--ghost-w`. The marks column gets `padding-block-end: var(--soil-clear)`.
+  - [ ] 9.1 Reserve the Soil clearance under the marks column
+    - At 900 px and wider, the marks column gets `padding-block-end: var(--soil-clear)`, so no text line sits under the Soil_Band. The Seal group keeps its current position, which is set from `--ghost-cx` and `--ghost-w` (the #515 fix). Figures and the Seal group are not placed on a shared grid, because they never appear on screen together (`marks` and `seal` come before `figures`).
     - Add `data-figures-column`, `data-seal-group` and `data-soil-strip` (if missing) to the components that render them.
-    - Create the source test: the grid, `column-gap: 48px` and `padding-block-end: var(--soil-clear)` exist, the Seal group no longer reads `--ghost-cx` or `--ghost-w`, and the layout below 900 px is unchanged. Run it until it passes.
-    - _Bug_Condition: isBugCondition(S) where S.persona AND S.step = "break" AND S.width >= 900 AND (EXISTS t IN S.text : overlaps(t.box, S.soil.drawnBox) OR S.sealGroup.left - S.figures.right > 64)_
-    - _Expected_Behavior: Soil clear of every text line; Seal group at most 64 px from the figures column with its top inside the column's span_
-    - _Preservation: layout below 900 px unchanged; figures, provenance and copy unchanged_
+    - Create the source test: `padding-block-end: var(--soil-clear)` exists in the 900 px rules, the Seal group still reads `--ghost-cx`, and the layout below 900 px is unchanged. Run it until it passes.
+    - _Bug_Condition: isBugCondition(S) where S.persona AND S.step = "break" AND S.width >= 900 AND EXISTS t IN S.text : overlaps(t.box, S.soil.drawnBox)_
+    - _Expected_Behavior: Soil clear of every text line at 900 px and wider_
+    - _Preservation: layout below 900 px unchanged; figures, provenance and copy unchanged; Seal group position unchanged (#515)_
     - _Requirements: 1.9, 2.9, 3.7_
 
 - [ ] 10. LC1 rule and GO1 (Soil): columns coherent, Soil clear
