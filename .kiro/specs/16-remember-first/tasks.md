@@ -305,7 +305,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Copy evidence: tone-check for `live/copy.ts` and `press/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 13. What we resurrected, short
+- [x] 13. What we resurrected, short
   - Agent: `frontend-dev` · Depends on: 3, 4 · Estimated size: S, ~300 changed lines
   - Scope: `src/components/landing/copy.ts`, `src/components/landing/ResurrectionSection.tsx`, `src/components/landing/NoSealSection.tsx`, `src/components/landing/landing.module.css` if needed, `src/test/retired-phrases.test.ts` (pending list), and the `*.test.ts(x)` next to each.
   - Design sections: "14. Home section".
