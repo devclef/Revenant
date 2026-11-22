@@ -18,13 +18,20 @@ describe("SealSteps", () => {
     );
   });
 
-  it("renders the done press with its passkey line and the current press with its hint", () => {
+  it("renders the done press with its passkey line and the current press without a hint when created", () => {
     const html = renderToStaticMarkup(
       <SealSteps tag="created" backupChoice="card" />,
     );
     expect(html).toMatch(/data-seal-step-state="done"/);
     expect(html).toMatch(/data-seal-step-state="current"/);
     expect(html).toContain(PRESS_COPY.stepPasskeyMade.replace(/"/g, "&quot;"));
+    expect(html).not.toContain(PRESS_COPY.stepTwoHint);
+  });
+
+  it("shows the second press hint while it waits for the device", () => {
+    const html = renderToStaticMarkup(
+      <SealSteps tag="confirming" backupChoice="card" />,
+    );
     expect(html).toContain(PRESS_COPY.stepTwoHint);
   });
 
