@@ -76,22 +76,39 @@ describe("Seal step panel fill (issue #586)", () => {
 });
 
 describe("wax floor (issue #586)", () => {
-  /** Width of the wax in px for a press column of `containerPx`, at progress p. */
-  const waxWidth = (containerPx: number, progress: number): number => {
-    const full = (Math.min(440, containerPx) * 112) / 440;
-    return 44 + (full - 44) * progress;
+  /*
+   * Evaluates the width expression that press.module.css sets on .wax, so the
+   * test reads the real CSS rather than a copy of its formula. `100cqi` is the
+   * press column width and `var(--press-progress)` is the progress.
+   */
+  const waxExpression = (): string => {
+    const body = ruleBody(pressCss, ".wax");
+    const m = /width:\s*calc\(([\s\S]*?)\);\s*\n/.exec(body);
+    if (!m) throw new Error("the .wax width calc is missing");
+    return m[1].replace(/\s+/g, " ").trim();
   };
 
-  it("rests the wax at 44 px and grows it to full size at progress 1", () => {
-    expect(pressCss).toMatch(
-      /width:\s*calc\(\s*44px \+ \(min\(440px, 100cqi\) \* 112 \/ 440 - 44px\) \* var\(--press-progress\)\s*\);/,
-    );
+  /** Rendered wax width in px for a press column of `containerPx` at `progress`. */
+  const waxWidth = (containerPx: number, progress: number): number => {
+    const expr = waxExpression()
+      .replace(/100cqi/g, "W")
+      .replace(/var\(--press-progress\)/g, "P")
+      .replace(/(\d+(?:\.\d+)?)px/g, "$1");
+    return new Function("min", "W", "P", `return ${expr};`)(
+      Math.min,
+      containerPx,
+      progress,
+    ) as number;
+  };
+
+  it("rests the wax at 44 px at 360, 390 and 1440 px and grows it to full size at progress 1", () => {
     expect(pressCss).not.toMatch(/scale\(calc\(0\.25/);
-    for (const px of [296, 362, 440, 1000]) {
+    for (const px of [360, 390, 1440]) {
       expect(waxWidth(px, 0)).toBeGreaterThanOrEqual(44);
+      expect(waxWidth(px, 0)).toBeCloseTo(44);
+      expect(waxWidth(px, 1)).toBeCloseTo(Math.min(440, px) * (112 / 440));
     }
-    expect(waxWidth(440, 1)).toBe(112);
-    expect(waxWidth(300, 1)).toBeCloseTo((300 * 112) / 440);
+    expect(waxWidth(440, 1)).toBeCloseTo(112);
     expect(waxWidth(440, 0.5)).toBeCloseTo(78);
   });
 
