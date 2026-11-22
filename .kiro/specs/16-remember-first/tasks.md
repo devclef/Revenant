@@ -134,7 +134,7 @@ Requirements 2.10, 10.9 and 15.6 change `.kiro/steering/tone.md`, `product.md`, 
   - Copy evidence: tone-check for `brand/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 5. Write says you answer now
+- [x] 5. Write says you answer now
   - Agent: `frontend-dev` · Depends on: 3 · Estimated size: S, ~200 changed lines
   - Scope: `src/components/live/desk/copy.ts`, `src/components/live/copy.ts`, `src/components/live/AuthorQuestions.tsx`, and the `*.test.ts(x)` next to each.
   - Design sections: "6. Write desk strings".
