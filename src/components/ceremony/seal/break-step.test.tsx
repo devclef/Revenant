@@ -28,7 +28,7 @@ const SETTLED: SealController = {
   connect: () => undefined,
 };
 
-function render(): string {
+function render(recorded = true): string {
   return renderToStaticMarkup(
     createElement(
       MotionProvider,
@@ -39,12 +39,47 @@ function render(): string {
         createElement(
           LiveRegionProvider,
           null,
-          createElement(SealBreak, { patternKey: "us-maya", seal: SETTLED }),
+          createElement(SealBreak, { patternKey: "us-maya", recorded, seal: SETTLED }),
         ),
       ),
     ),
   );
 }
+
+/** The break line the reader sees: the one `data-break-line` paragraph. */
+function breakLineOf(markup: string): string {
+  const match = markup.match(/data-break-line="">([^<]*)</);
+  return match ? match[1].replace(/&#x27;/g, "'") : "";
+}
+
+describe("break step: one break line per letter kind (spec 15 R12.1)", () => {
+  // Reveal passes recorded = true when the reader's own answers are kept, and
+  // false on the text persona walk, where her testimony stands in for the record.
+  const KINDS: ReadonlyArray<{ kind: string; recorded: boolean; line: string }> = [
+    { kind: "live demo", recorded: true, line: CEREMONY_COPY.testimonyRecorded },
+    { kind: "real letter", recorded: true, line: CEREMONY_COPY.testimonyRecorded },
+    { kind: "fuel persona", recorded: true, line: CEREMONY_COPY.testimonyRecorded },
+    { kind: "Priya (text persona)", recorded: false, line: CEREMONY_COPY.recollectionsRead },
+  ];
+
+  for (const { kind, recorded, line } of KINDS) {
+    it(`${kind} gets exactly its one line`, () => {
+      const markup = render(recorded);
+      expect(breakLineOf(markup)).toBe(line);
+      const other =
+        line === CEREMONY_COPY.testimonyRecorded
+          ? CEREMONY_COPY.recollectionsRead
+          : CEREMONY_COPY.testimonyRecorded;
+      expect(markup).not.toContain(other);
+    });
+  }
+
+  it("Priya's line says nothing of the reader's is recorded", () => {
+    expect(CEREMONY_COPY.recollectionsRead).toBe(
+      "You've read her recollections. Nothing of yours is recorded.",
+    );
+  });
+});
 
 describe("break step: testimony line above the hint (requirement 12.1)", () => {
   it("renders the testimony line before the hint and the button", () => {
