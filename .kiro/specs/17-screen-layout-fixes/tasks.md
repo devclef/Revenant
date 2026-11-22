@@ -199,7 +199,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - Add a property test over random gaps: LC1 fails exactly when the gap exceeds 64. Run the file until it passes.
     - _Requirements: 2.9, 2.10_
 
-- [ ] 11. D1: Seal panel fills its surface and the wax is at least 44 px at rest
+- [x] 11. D1: Seal panel fills its surface and the wax is at least 44 px at rest
   - Agent: `frontend-dev` · Depends on: none · Estimated size: M, ~350 changed lines
   - Scope: `src/components/live/stepper/live-steps.ts`, `src/components/live/seal-step/seal-step.module.css`, `src/components/live/press/press.module.css`, the Seal step and press TSX files under `src/components/live/` (attributes only), `src/components/live/seal-step/seal-card.test.ts` (new).
   - Design sections: "D1 and D2 cards / SF1", "D1 wax / TT1".
