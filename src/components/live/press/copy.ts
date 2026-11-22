@@ -23,7 +23,7 @@ export const PRESS_COPY = {
   /** The two presses listed under the wax (spec 15, task 9; screens 9 to 15). */
   stepOne: "Make your passkey",
   stepTwo: "Set the seal",
-  stepOneHint: "Press the wax to make your passkey.",
-  stepPasskeyMade: "Passkey made",
+  stepOneHint: 'Press the wax. The passkey is saved as "Revenant demo".',
+  stepPasskeyMade: 'Passkey made. Saved as "Revenant demo".',
   stepTwoHint: "Your device will ask once more to set the seal. Press the wax.",
 } as const;

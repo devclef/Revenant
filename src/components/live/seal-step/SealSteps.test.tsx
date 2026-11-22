@@ -24,7 +24,7 @@ describe("SealSteps", () => {
     );
     expect(html).toMatch(/data-seal-step-state="done"/);
     expect(html).toMatch(/data-seal-step-state="current"/);
-    expect(html).toContain(PRESS_COPY.stepPasskeyMade);
+    expect(html).toContain(PRESS_COPY.stepPasskeyMade.replace(/"/g, "&quot;"));
     expect(html).toContain(PRESS_COPY.stepTwoHint);
   });
 
