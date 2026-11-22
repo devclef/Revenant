@@ -38,9 +38,17 @@ export interface LetterCardProps {
   opensAt: string;
   /** The sealing Fingerprint: 64 lowercase hex characters, from the seal response. */
   envelopeHash: string;
+  /** Draw the wax seal at the top of the card. Defaults to true. */
+  showSeal?: boolean;
 }
 
-export function LetterCard({ letterId, appOrigin, opensAt, envelopeHash }: LetterCardProps) {
+export function LetterCard({
+  letterId,
+  appOrigin,
+  opensAt,
+  envelopeHash,
+  showSeal = true,
+}: LetterCardProps) {
   const headingId = useId();
   const linkText = letterLinkText(appOrigin, letterId);
   const qr = useMemo(() => qrPath(encodeQr(linkText, "M")), [linkText]);
@@ -74,7 +82,7 @@ export function LetterCard({ letterId, appOrigin, opensAt, envelopeHash }: Lette
     >
       <DemoLabel />
       {/* The seal is drawn from the same hash as the Fingerprint below (U4.1, U5.4). */}
-      <WaxSeal hash={envelopeHash} size={72} className={styles.cardSeal} />
+      {showSeal ? <WaxSeal hash={envelopeHash} size={72} className={styles.cardSeal} /> : null}
       <h2 id={headingId} className={styles.cardTitle}>
         {LIVE_COPY.letterCardTitle}
       </h2>

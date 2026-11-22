@@ -118,6 +118,26 @@ describe("LetterCard", () => {
     expect(hashOf(card as string)).toBe(hashOf(page));
   });
 
+  it("draws the wax seal by default", () => {
+    expect(html()).toMatch(/<svg[^>]*data-seal-hash="[^"]*"/);
+  });
+
+  it("omits the wax seal when showSeal is false", () => {
+    const out = renderToStaticMarkup(
+      createElement(LetterCard, {
+        letterId: LETTER_ID,
+        appOrigin: APP_ORIGIN,
+        opensAt: OPENS_AT,
+        envelopeHash: ENVELOPE_HASH,
+        showSeal: false,
+      }),
+    );
+    expect(out).not.toMatch(/<svg[^>]*data-seal-hash/);
+    // The rest of the card stays.
+    expect(out).toContain(LIVE_COPY.letterCardTitle);
+    expect(out).toContain("data-live-card-qr");
+  });
+
   it("draws the Blank_Signet and no data-seal-hash for a malformed hash (U5.1)", () => {
     const out = renderToStaticMarkup(
       createElement(LetterCard, {
