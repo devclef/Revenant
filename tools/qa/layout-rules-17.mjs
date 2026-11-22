@@ -27,6 +27,7 @@
 //   cwFailures(reading)           CW1 failures for one reading; [] when the content column is wide enough.
 //   rectOverlap(a, b)             overlap of two rects in px, or null when they do not overlap strictly.
 //   goFailures(reading)           GO1 failures for one reading; [] when no text or control meets the Ghost.
+//   readGo1Soil(page)             reads the [data-soil-strip] rect for GO1's reading.soil, or null.
 //   readLc1Reading(page)          reads [data-figures-column] and [data-seal-group] rects from a loaded page.
 //   lcFailures(reading)           LC1 failures for one reading; [] when the columns are coherent.
 //
@@ -309,6 +310,19 @@ const READ_LC1 = () => {
   };
   return { figures: rectOf("[data-figures-column]"), sealGroup: rectOf("[data-seal-group]") };
 };
+
+// GO1 soil reader: the [data-soil-strip] rect for goFailures' reading.soil, or null when the page has no strip.
+const READ_GO1_SOIL = () => {
+  const el = document.querySelector("[data-soil-strip]");
+  if (!el) return null;
+  const r = el.getBoundingClientRect();
+  return { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+};
+
+/** Reads the Soil strip rect for GO1 from a loaded page. Sends no input. */
+export async function readGo1Soil(page) {
+  return page.evaluate(READ_GO1_SOIL);
+}
 
 /** Reads LC1 values from a page that is already at the Break the seal step. Sends no input. */
 export async function readLc1Reading(page) {
