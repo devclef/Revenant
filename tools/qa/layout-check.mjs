@@ -191,6 +191,11 @@
 // R10.6 seals a real live demo letter with a virtual passkey (CTAP2 with PRF) and waits out
 // the 30-second lock, so it needs the app's database and RP_ID set to the --url host.
 //
+// FR1   script-focus-outline  (GitHub issue #577, tools/qa/layout-rules-17.mjs) at 1440x900 and 390x844,
+//                            on every step the walk shoots: a script-focused non-control draws no
+//                            outline, and Tab once reaches a visible focus ring. Always a BLOCKER,
+//                            with no --require. The row presses Tab, then puts scroll and focus back.
+//
 // Line format: <PASS|BLOCKER|polish|note> <id> <name> <WxH> <stage> <detail>.
 // The spec 08 and spec 09 checks put the measured values and threshold=<...> in <detail>.
 //
@@ -303,6 +308,10 @@ import {
   sectionRuns,
   summaryLines,
 } from "./layout-scope.mjs";
+import { frFailures, readFr1Reading } from "./layout-rules-17.mjs";
+
+// FR1 (GitHub issue #577) runs at these sizes on every step the walk shoots. It always blocks.
+const FR1_SIZES = ["1440x900", "390x844"];
 
 const DEFAULT_SIZES = ["1366x800", "1280x800", "360x640", "390x844", "2560x1440"];
 const ALL_SIZES = ["360x640", "390x844", "1024x768", "1280x720", "1280x800", "1366x800", "1440x900", "1920x1080", "2560x1440"];
@@ -1618,7 +1627,28 @@ async function shot(page, ctx, stage, { keepScroll = false } = {}) {
   await page.screenshot({ path: file });
   // A screenshot can restart the page's transitions, so the layout is read again once they finish.
   await settle(page);
+  await guard(ctx, "FR1", () => checkFr1(page, ctx));
   ctx.rep.add("ok", "shot", file);
+}
+
+// FR1 (GitHub issue #577): a script-focused non-control draws no outline, and Tab once reaches a focus ring.
+// It presses Tab, so the page's scroll position and focused element are put back afterwards.
+async function checkFr1(page, ctx) {
+  if (!FR1_SIZES.includes(ctx.size)) return;
+  const scrollY = await page.evaluate(() => {
+    window.__fr1Focused = document.activeElement;
+    return window.scrollY;
+  });
+  const reading = await readFr1Reading(page);
+  await page.evaluate((y) => {
+    window.scrollTo(0, y);
+    const prev = window.__fr1Focused;
+    delete window.__fr1Focused;
+    if (prev && prev !== document.body && typeof prev.focus === "function") prev.focus({ preventScroll: true });
+  }, scrollY);
+  const failures = frFailures(reading);
+  for (const f of failures) ctx.rep.add("blocker", "FR1", f.message, f.check);
+  if (failures.length === 0) ctx.rep.add("ok", "FR1", "script-focused headings draw no outline and Tab reaches a focus ring");
 }
 
 function checkSoil(page, ctx) {
