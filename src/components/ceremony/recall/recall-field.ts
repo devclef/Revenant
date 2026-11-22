@@ -26,6 +26,13 @@ export type FieldState = {
   pick: Reading | null;
   /** The canonical value the Mark sits on, or null when no Mark is drawn. */
   mark: string | null;
+  /**
+   * Whether the check has run on the current unreadable text (set by
+   * checkField). typeText keeps it only while the text stays unreadable;
+   * pickReading and setFromScale clear it. The unreadable message shows only
+   * when this is set (see unreadableShown).
+   */
+  checked: boolean;
 };
 
 /** The canonical value of a parse, or null when it has none. */
@@ -41,20 +48,54 @@ export function initialField(draft: Draft): FieldState {
     parse,
     pick: null,
     mark: valueOf(parse),
+    checked: false,
   };
+}
+
+/**
+ * Whether the text is unreadable (R32.7): rejected as unreadable or too long.
+ * Empty text is not unreadable (R32.13). A number still being written, such as
+ * "4." before its digits, is not unreadable either, so no message shows while
+ * the judge is typing.
+ */
+export function isUnreadable(text: string): boolean {
+  const trimmed = text.trim();
+  if (/^[0-9]+[.,]$/.test(trimmed)) return false;
+  const parse = parseRecallNumber(text);
+  return parse.kind === "rejected" && parse.reason !== "empty";
 }
 
 /**
  * The field after the judge types. The pick is dropped (R32.12). The Mark
  * moves for a value, clears for an empty field, and otherwise stays where it
- * was (R32.5, R32.7).
+ * was (R32.5, R32.7). `checked` survives only while the text stays unreadable.
  */
 export function typeText(prev: FieldState, text: string): FieldState {
   const parse = parseRecallNumber(text);
   let mark = prev.mark;
   if (parse.kind === "value") mark = parse.value;
   else if (parse.kind === "rejected" && parse.reason === "empty") mark = null;
-  return { typed: text, parse, pick: null, mark };
+  return {
+    typed: text,
+    parse,
+    pick: null,
+    mark,
+    checked: prev.checked && isUnreadable(text),
+  };
+}
+
+/**
+ * The field after the check runs (on blur, on submit or on a paging action).
+ * `checked` is set when the text is unreadable and cleared otherwise, so empty
+ * and readable text never shows the message.
+ */
+export function checkField(prev: FieldState): FieldState {
+  return { ...prev, checked: isUnreadable(prev.typed) };
+}
+
+/** Whether the unreadable message shows for this field (R32.7, R32.13). */
+export function unreadableShown(s: FieldState): boolean {
+  return s.checked && isUnreadable(s.typed);
 }
 
 /**
@@ -65,7 +106,7 @@ export function pickReading(prev: FieldState, reading: Reading): FieldState {
   if (prev.parse.kind !== "ambiguous") return prev;
   const value =
     reading === "decimal" ? prev.parse.decimal : prev.parse.grouping;
-  return { ...prev, pick: reading, mark: value };
+  return { ...prev, pick: reading, mark: value, checked: false };
 }
 
 /**
@@ -78,6 +119,7 @@ export function setFromScale(prev: FieldState, canonical: string): FieldState {
     parse: parseRecallNumber(canonical),
     pick: null,
     mark: canonical,
+    checked: false,
   };
 }
 
