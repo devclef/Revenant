@@ -45,3 +45,19 @@ describe("shared content column width (spec 15 D3, #580)", () => {
     expect(read(relative)).toMatch(/data-content-column=""/);
   });
 });
+
+describe("live Write row inset on a phone (spec 15 D3, #580)", () => {
+  const deskCss = read("../../live/desk/desk.module.css");
+  const phoneStart = deskCss.indexOf("@media (max-width: 599px)");
+  const phoneEnd = deskCss.indexOf("\n}\n", phoneStart);
+  const phoneBlock = phoneStart >= 0 && phoneEnd > phoneStart ? deskCss.slice(phoneStart, phoneEnd) : "";
+
+  it("keeps the 32 px desktop container padding outside the phone query", () => {
+    const base = deskCss.slice(0, phoneStart);
+    expect(base).toMatch(/\.container\s*\{[^}]*padding-inline:\s*32px\s*;/);
+  });
+
+  it("uses 24 px side padding on a phone, so the panel is the viewport minus 48 px", () => {
+    expect(phoneBlock).toMatch(/\.container\s*\{[^}]*padding-inline:\s*24px\s*;/);
+  });
+});
