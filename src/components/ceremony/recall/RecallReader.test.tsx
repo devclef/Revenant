@@ -80,17 +80,21 @@ describe("RecallReader (Text_Persona reading view)", () => {
     }
   });
 
-  it("names the question and the written-as-of date in the counter", () => {
+  it("keeps the date out of the counter and names it in an As of line above the question", () => {
     const html = render(0);
-    expect(html).toContain(
-      REVEAL_COPY.questionCounter.replace("{n}", "1").replace("{total}", "2"),
-    );
-    expect(html).toContain(
-      REVEAL_COPY.questionCounterAsOf.replace(
-        "{date}",
-        formatCalendarDate("2024-05-12"),
-      ),
-    );
+    const counter = REVEAL_COPY.questionCounter.replace("{n}", "1").replace("{total}", "2");
+    expect(html).toContain(counter);
+    expect(html).not.toContain(REVEAL_COPY.questionCounterAsOf.replace("{date}", formatCalendarDate("2024-05-12")));
+    const asOf = REVEAL_COPY.askedAsOf.replace("{date}", formatCalendarDate("2024-05-12"));
+    expect(html).toContain(asOf);
+    expect(html.indexOf(asOf)).toBeLessThan(html.indexOf(TESTIMONY[0].question));
+    expect(html.indexOf(counter)).toBeLessThan(html.indexOf(asOf));
+  });
+
+  it("omits the As of line when no written-as-of date is given", () => {
+    const html = render(0, { writtenAsOf: undefined });
+    expect(html).toContain(REVEAL_COPY.questionCounter.replace("{n}", "1").replace("{total}", "2"));
+    expect(html).not.toContain(REVEAL_COPY.askedAsOf.replace("{date}", formatCalendarDate("2024-05-12")));
   });
 
   it("renders nothing for an index outside the testimony", () => {

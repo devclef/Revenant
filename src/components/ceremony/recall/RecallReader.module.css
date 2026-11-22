@@ -17,14 +17,11 @@
   margin-inline: auto;
 }
 
-.counter {
+.counter,
+.asOf {
   margin: 0;
   color: var(--ink-soft);
   font-variant-numeric: tabular-nums;
-}
-
-.nowrap {
-  white-space: nowrap;
 }
 
 .question {

@@ -91,10 +91,7 @@ export function RecallReader({
   const asOf =
     writtenAsOf === undefined
       ? null
-      : REVEAL_COPY.questionCounterAsOf.replace(
-          "{date}",
-          formatCalendarDate(writtenAsOf),
-        );
+      : REVEAL_COPY.askedAsOf.replace("{date}", formatCalendarDate(writtenAsOf));
 
   return (
     <>
@@ -105,16 +102,9 @@ export function RecallReader({
       )}
       <section className={`${paper.paper} ${styles.reader}`} data-paper="" data-recall-reader="">
         <p className={styles.counter} data-fit="counter">
-          {asOf === null ? (
-            counter
-          ) : (
-            <>
-              {counter}
-              {REVEAL_COPY.questionCounterSeparator}
-              <span className={styles.nowrap}>{asOf}</span>
-            </>
-          )}
+          {counter}
         </p>
+        {asOf === null ? null : <p className={styles.asOf}>{asOf}</p>}
         <div className={styles.qRow}>
           <WaxDisc n={index + 1} />
           <h2
