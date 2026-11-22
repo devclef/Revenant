@@ -52,7 +52,13 @@ export function figureLabel(
   // retrieved_at is a UTC instant, so it always reads the same in any zone.
   const retrievedDate = formatShortDate(figure.retrieved_at);
   if (role === "now") {
-    return REVEAL_COPY.labelRetrieved.replace("{date}", retrievedDate);
+    // A persona now figure is the official record for the opening week, so it
+    // reads as a historical record like a persona then figure (R13.1).
+    const nowTemplate =
+      letterKind === "persona"
+        ? REVEAL_COPY.labelHistoricalRecord
+        : REVEAL_COPY.labelRetrieved;
+    return nowTemplate.replace("{date}", retrievedDate);
   }
   // A persona then figure is a historical record (R13.1); a live or real then
   // figure was sealed with the letter (R13.2).

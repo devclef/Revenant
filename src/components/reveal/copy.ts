@@ -377,8 +377,8 @@ export const REVEAL_COPY = {
   /** Label on the then figure. */
   then: "Then",
 
-  /** Label on the now figure. */
-  now: "Now",
+  /** Label on the now figure: the figure as it stood at opening. */
+  now: "At opening",
 
   /**
    * The fixture note, shown once at the top of stage 3 when any shown figure

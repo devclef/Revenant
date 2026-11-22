@@ -55,8 +55,11 @@ describe("provenance labels (R13.1 to R13.4)", () => {
     expect(figureLabel(OFFICIAL, "then", "real")).not.toContain("historical record");
   });
 
-  it("reads retrieved for a now figure whatever the letter kind", () => {
-    for (const kind of ["persona", "live", "real"] as const) {
+  it("reads historical record for a now figure in a persona letter, retrieved otherwise", () => {
+    expect(figureLabel(OFFICIAL, "now", "persona")).toBe(
+      "historical record, retrieved 30 Oct 2024",
+    );
+    for (const kind of ["live", "real"] as const) {
       expect(figureLabel(OFFICIAL, "now", kind)).toBe("retrieved 30 Oct 2024");
     }
   });
@@ -75,7 +78,7 @@ describe("provenance labels (R13.1 to R13.4)", () => {
 
   it("uses the UTC date, so a late-evening retrieval never shifts a day", () => {
     const late = { ...OFFICIAL, retrieved_at: "2024-10-30T23:30:00Z" };
-    expect(figureLabel(late, "now", "persona")).toBe("retrieved 30 Oct 2024");
+    expect(figureLabel(late, "now", "live")).toBe("retrieved 30 Oct 2024");
   });
 });
 
@@ -147,7 +150,7 @@ describe("receiptFigureOf routes values through displayFigureValue (K1)", () => 
 
   it("uses the short retrieved date in the label, e.g. 'retrieved 30 Oct 2026'", () => {
     const recent = { ...OFFICIAL, retrieved_at: "2026-10-30T14:02:11Z" };
-    expect(receiptFigureOf(recent, "now", "persona").label).toBe("retrieved 30 Oct 2026");
+    expect(receiptFigureOf(recent, "now", "live").label).toBe("retrieved 30 Oct 2026");
     expect(figureLabel(recent, "then", "live")).toBe(
       "sealed with the letter, retrieved 30 Oct 2026",
     );
