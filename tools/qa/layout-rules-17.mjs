@@ -27,6 +27,13 @@
 //   cwFailures(reading)           CW1 failures for one reading; [] when the content column is wide enough.
 //   rectOverlap(a, b)             overlap of two rects in px, or null when they do not overlap strictly.
 //   goFailures(reading)           GO1 failures for one reading; [] when no text or control meets the Ghost.
+//   readLc1Reading(page)          reads [data-figures-column] and [data-seal-group] rects from a loaded page.
+//   lcFailures(reading)           LC1 failures for one reading; [] when the columns are coherent.
+//
+// LC1 (GitHub issue #585, spec 17 D7): the Seal group sits at most 64 px right of the figures column and
+//   its top lies inside the column's top and bottom. The reading is { figures, sealGroup }: each is one
+//   rect { left, top, right, bottom } in CSS pixels, or null when the element is not on the page.
+//   A gap of exactly 64 px passes; 65 px fails. A missing rect fails as "no measurement".
 //
 // GO1 (GitHub issue #583): no text line or control rect overlaps the Ghost drawn box. The reading is
 //   { ghost, text, controls }: ghost is one rect or null, text is [{ label, rect }] (one rect per text
@@ -269,4 +276,54 @@ export function goFailures(reading) {
 /** Rounds to one decimal place for messages. */
 function round(value) {
   return Math.round(value * 10) / 10;
+}
+
+// LC1 (GitHub issue #585). The Seal group may sit at most this far right of the figures column.
+export const LC1_MAX_GAP_PX = 64;
+
+/** Script run inside the page. Reads the figures column and the Seal group as plain rects. */
+const READ_LC1 = () => {
+  const rectOf = (selector) => {
+    const el = document.querySelector(selector);
+    if (!el) return null;
+    const r = el.getBoundingClientRect();
+    return { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+  };
+  return { figures: rectOf("[data-figures-column]"), sealGroup: rectOf("[data-seal-group]") };
+};
+
+/** Reads LC1 values from a page that is already at the Break the seal step. Sends no input. */
+export async function readLc1Reading(page) {
+  return page.evaluate(READ_LC1);
+}
+
+/**
+ * LC1 failures for one reading. An empty array means the columns are coherent:
+ * the Seal group starts at most LC1_MAX_GAP_PX right of the figures column, and its top
+ * lies within the column's top and bottom. Each failure names the check and the measured value.
+ */
+export function lcFailures(reading) {
+  const figures = reading?.figures ?? null;
+  const sealGroup = reading?.sealGroup ?? null;
+  if (!isMeasuredRect(figures) || !isMeasuredRect(sealGroup)) {
+    return [{ id: "LC1", check: "column-coherence", message: "LC1 no [data-figures-column] or [data-seal-group] rect to measure." }];
+  }
+
+  const failures = [];
+  const gap = sealGroup.left - figures.right;
+  if (gap > LC1_MAX_GAP_PX) {
+    failures.push({
+      id: "LC1",
+      check: "column-gap",
+      message: `LC1 Seal group starts ${round(gap)} px right of the figures column, want at most ${LC1_MAX_GAP_PX} px.`,
+    });
+  }
+  if (sealGroup.top < figures.top || sealGroup.top > figures.bottom) {
+    failures.push({
+      id: "LC1",
+      check: "column-top",
+      message: `LC1 Seal group top ${round(sealGroup.top)} px is outside the figures column, ${round(figures.top)} px to ${round(figures.bottom)} px.`,
+    });
+  }
+  return failures;
 }
