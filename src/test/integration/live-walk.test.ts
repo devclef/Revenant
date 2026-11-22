@@ -1478,7 +1478,7 @@ function liveStages(run: WalkRun): StageAction[] {
       },
     },
     {
-      step: "testify",
+      step: "remember",
       act: async (c, checks) => {
         const counters: (string | null)[] = [];
         const answered = await answerEveryQuestion(c, counters);

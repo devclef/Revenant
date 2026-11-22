@@ -355,7 +355,7 @@ const LANDING_HOOK = '[data-cta="primary"]';
 const SHOW_ALL = "Show everything";
 const SHOW_ALL_LABEL = /^(Show everything|Skip to the receipts)$/;
 const LIVE_PATH = "/demo/live";
-const LIVE_UNREACHED = "created, confirming, sealing, sealed, the wait, unlock, testify and receipts";
+const LIVE_UNREACHED = "created, confirming, sealing, sealed, the wait, unlock, remember and receipts";
 const SEALED_BODY = JSON.stringify({ status: "sealed", opensAt: "2099-01-01T00:00:00.000Z" });
 
 // ---------------------------------------------------------------------------
@@ -3702,7 +3702,7 @@ const SEAL_SIZES = ["1440x900", "390x844"];
 const DESK_LETTER = "A letter for the desk check.";
 const FOLD_LABEL = "Fold it and press the seal";
 const Q11_TOL_PX = 1;
-const Q11_LABELS = ["Write", "Press the seal", "Wait", "Testify", "Break the seal", "Receipts"];
+const Q11_LABELS = ["Write", "Press the seal", "Wait", "Remember", "Break the seal", "Receipts"];
 const S1_STYLE = {
   current: { dot: 12, dotBg: "#ff7b1c", label: "#ffffff", weight: 700 },
   done: { dot: 8, dotBg: "#bdb4dc", label: "#bdb4dc" },
@@ -4180,6 +4180,81 @@ const FOLD_REACH_READ = () => {
   const r = fold.getBoundingClientRect();
   return r.top >= 0 && r.bottom <= window.innerHeight;
 };
+
+// --- Spec 16 rows (17.3) ----------------------------------------------------
+// Pure verdicts for the four rows of 17.3. Each takes the measurements a browser
+// read gives and returns the failure strings; an empty list is a pass. Each row
+// runs at 1440x900 and 390x844.
+
+const S16_CENTRE_TOL_PX = 1;
+const S16_RECEIPT_RANK = { pair: 0, figure: 1, letter: 2, seal: 3, end: 4 };
+
+/** 10.1 (and 10.8): the Receipts blocks read top to bottom, and the letter is folded shut. */
+export function receiptsOrderFailures({ blocks, letterClosed }) {
+  const out = [];
+  const ordered = [...blocks].sort((a, b) => a.top - b.top);
+  let last = -1;
+  for (const b of ordered) {
+    const rank = S16_RECEIPT_RANK[b.kind];
+    if (rank === undefined) {
+      out.push(`10.1 unknown block "${b.kind}"`);
+      continue;
+    }
+    if (rank < last) out.push(`10.1 "${b.kind}" sits after a later block`);
+    last = Math.max(last, rank);
+  }
+  for (const kind of ["letter", "seal", "end"]) {
+    if (!blocks.some((b) => b.kind === kind)) out.push(`10.1 no "${kind}" block`);
+  }
+  if (letterClosed !== true) out.push("10.2 the letter is not folded under Read the letter again");
+  return out;
+}
+
+/** 10.6: live step 6 column centred on the viewport and as wide as the persona receipts column. */
+export function receiptColumnFailures({ centre, width, viewportCentre, personaWidth }) {
+  const out = [];
+  if (Math.abs(centre - viewportCentre) > S16_CENTRE_TOL_PX) {
+    out.push(`10.6 column centre ${centre} px, want ${viewportCentre} px within ${S16_CENTRE_TOL_PX} px`);
+  }
+  if (personaWidth === null || personaWidth === undefined) {
+    out.push("10.6 no persona receipts column to compare its width with");
+  } else if (Math.abs(width - personaWidth) > S16_CENTRE_TOL_PX) {
+    out.push(`10.6 column width ${width} px, persona ${personaWidth} px within ${S16_CENTRE_TOL_PX} px`);
+  }
+  return out;
+}
+
+/** 14.3 (6.3): the lost-passkey warning is unfolded, inside the viewport and above the wax. */
+export function passkeyWarningFailures({ unfolded, top, bottom, waxTop, viewportH }) {
+  const out = [];
+  if (!unfolded) out.push("14.3 the lost-passkey warning is folded");
+  if (top === null || bottom === null) {
+    out.push("14.3 no lost-passkey warning to measure");
+    return out;
+  }
+  if (top < 0 || bottom > viewportH) out.push(`14.3 warning ${top}-${bottom} px is outside the ${viewportH} px viewport`);
+  if (waxTop === null || waxTop === undefined) out.push("14.3 no wax to measure against");
+  else if (bottom > waxTop) out.push(`14.3 warning bottom ${bottom} px is below the wax top ${waxTop} px`);
+  return out;
+}
+
+/**
+ * 5.4 and 5.5: at 1440x900 the first sentence of the hero headline takes one line box;
+ * at 390x844 no headline line holds one word. `lines` is the rendered line texts.
+ */
+export function heroLineFailures({ w, firstSentenceLines, lines }) {
+  const out = [];
+  if (w === 1440) {
+    if (firstSentenceLines !== 1) out.push(`5.4 "Memory drifts with time." takes ${firstSentenceLines} line boxes, want 1`);
+  } else if (w === 390) {
+    lines.forEach((text, i) => {
+      if (text.trim().split(/\s+/).filter(Boolean).length === 1) out.push(`5.5 line ${i + 1} "${text.trim()}" holds one word`);
+    });
+  } else {
+    out.push(`5.4/5.5 no rule for viewport width ${w}`);
+  }
+  return out;
+}
 
 // --- Row runners ------------------------------------------------------------
 

@@ -127,7 +127,7 @@ describe("stepShotName", () => {
       "setting",
       "wait",
       "open-letter",
-      "testify",
+      "remember",
       "marks",
       "letter",
       "figures",
@@ -567,7 +567,7 @@ describe("checkStepIndicator", () => {
   });
 
   it("fails when the current item disagrees or is missing", () => {
-    expect(checkStepIndicator("Testify", /^break the seal$/i).ok).toBe(false);
+    expect(checkStepIndicator("Remember", /^break the seal$/i).ok).toBe(false);
     expect(checkStepIndicator(null, /^break the seal$/i).message).toContain(
       "missing",
     );
@@ -604,7 +604,7 @@ describe("checkStepSnapshot and defectsFromChecks", () => {
   });
 
   it("checks the Step_Indicator only at steps that have an expectation", () => {
-    const wrongItem = { ...CLEAN_SNAPSHOT, currentStep: "Testify" };
+    const wrongItem = { ...CLEAN_SNAPSHOT, currentStep: "Remember" };
     expect(
       defectsFromChecks("marks", checkStepSnapshot("marks", wrongItem)).map(
         (d) => d.observed,
