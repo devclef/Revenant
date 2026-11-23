@@ -250,7 +250,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - _Preservation: "Seal your own letter" and all copy unchanged; letter card content and controls unchanged; steps and the 30-second lock unchanged_
     - _Requirements: 1.3, 1.4, 2.3, 2.4, 3.1, 3.2, 3.10_
 
-- [ ] 14. UQ1 rule, with CT1 and SF1 on the Wait step
+- [x] 14. UQ1 rule, with CT1 and SF1 on the Wait step
   - Agent: `platform-dev` · Depends on: 12, 13 · Estimated size: M, ~450 changed lines
   - Scope: `tools/qa/layout-rules-17.mjs`, `tools/qa/layout-check.mjs`, `src/lib/layout-check-uq1.test.ts` (new), `src/lib/layout-check-ct1.test.ts`.
   - Design sections: "D2 duplicates / UQ1", "D5 and D2 contrast / CT1".
