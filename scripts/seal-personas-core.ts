@@ -17,6 +17,8 @@
 // never pulls crypto in through here; the frontend boundary test checks that.
 
 import type { Persona } from "@/lib/personas";
+import { checkAnswerText, checkLetterText } from "@/lib/personas";
+import { expectedPrices } from "@/lib/personas/price-lines";
 import type { LetterRow } from "@/lib/letter-store/queries";
 import { generateRecallQuestions } from "@/lib/recall";
 import {
@@ -118,6 +120,12 @@ export type Deps = {
    * version 1.
    */
   sealedAnswers?: SealedAnswers;
+  /**
+   * Pre-written recollections by persona key (content/personas/letters/
+   * answers.json). They are never sealed or stored; they are checked by
+   * {@link checkPersonaTexts} before any write, like the sealed answers.
+   */
+  recollections?: SealedAnswers;
   /** Read an existing letter row by ID, or `null` when none exists. */
   findLetter(id: string): Promise<FoundLetter | null>;
   /** Insert one sealed persona letter. Throws on a rejected write. */
@@ -407,6 +415,57 @@ function fixtureError(personaKey: string, seriesId: string): Error {
 }
 
 /**
+ * Check every persona letter and every answer before anything is sealed
+ * (Requirement 6.8). It runs checkLetterText on each letter and checkAnswerText
+ * on each sealed answer and each recollection, and returns every problem in
+ * list order. An empty list means every text passed.
+ *
+ * The sealed answers are the author's own words, so they are checked with
+ * `sealed: true`, which lets them say "changing my mind". Recollections are
+ * checked without that exception. A persona whose "then" figure is missing is
+ * skipped for the price-line comparison, because expectedPrices throws there;
+ * buildPersonaPayload already reports that persona as `missing_then_figure`.
+ *
+ * Pure: it reads only the injected letter texts and writes nothing.
+ */
+export function checkPersonaTexts(
+  deps: Pick<
+    Deps,
+    "personas" | "readLetterText" | "figures" | "sealedAnswers" | "recollections"
+  >,
+): string[] {
+  const problems: string[] = [];
+
+  for (const persona of deps.personas) {
+    const text = deps.readLetterText(persona.letter_path);
+    let prices: string[];
+    try {
+      prices = expectedPrices(persona, deps.figures);
+    } catch (error) {
+      if (error instanceof RangeError) {
+        continue;
+      }
+      throw error;
+    }
+    problems.push(...checkLetterText(persona.key, text, prices));
+  }
+
+  for (const [key, answers] of Object.entries(deps.sealedAnswers ?? {})) {
+    answers.forEach((answer, index) => {
+      problems.push(...checkAnswerText(key, index, answer, { sealed: true }));
+    });
+  }
+
+  for (const [key, answers] of Object.entries(deps.recollections ?? {})) {
+    answers.forEach((answer, index) => {
+      problems.push(...checkAnswerText(key, index, answer));
+    });
+  }
+
+  return problems;
+}
+
+/**
  * Seal every persona in `deps.personas`, in list order, each isolated in its
  * own try/catch so one failure never stops the rest (R4.14).
  *
@@ -438,9 +497,16 @@ function fixtureError(personaKey: string, seriesId: string): Error {
  */
 export async function sealPersonas(
   deps: Deps,
-): Promise<{ results: PersonaResult[]; exitCode: 0 | 1 }> {
+): Promise<{ results: PersonaResult[]; exitCode: 0 | 1; problems: string[] }> {
   // Runs before any read or write. A fixture persona throws and nothing is stored.
   assertNoFixtureFigures(deps.personas, deps.figures);
+
+  // Requirement 6.8: every letter and answer passes the text checks before the
+  // first insert. Any problem stops the whole run with no results and no write.
+  const problems = checkPersonaTexts(deps);
+  if (problems.length > 0) {
+    return { results: [], exitCode: 1, problems };
+  }
 
   const results: PersonaResult[] = [];
 
@@ -457,7 +523,7 @@ export async function sealPersonas(
   }
 
   const exitCode: 0 | 1 = results.some((r) => r.result === "failed") ? 1 : 0;
-  return { results, exitCode };
+  return { results, exitCode, problems: [] };
 }
 
 /**

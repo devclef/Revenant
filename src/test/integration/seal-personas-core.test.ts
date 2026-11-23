@@ -51,6 +51,7 @@ import type {
 } from "@/lib/figures";
 import { loadFigureFile } from "@/lib/figures";
 import { thenAndNow } from "@/lib/figures/then-now";
+import { expectedPrices } from "@/lib/personas/price-lines";
 import { generateRecallQuestions } from "@/lib/recall";
 import {
   canonicalize,
@@ -185,9 +186,11 @@ const mondayArb: fc.Arbitrary<string> = fc
 // 400 days), so sealLetter's "written_as_of not later than sealedAt" rule holds.
 const SEALED_AT = "2099-01-01T00:00:00.000Z";
 
-// A rounded, schema-valid value like "3.41": 0-9999 units, 2 decimals.
+// A rounded, schema-valid value like "3.41": 0-999 units, 2 decimals. Below
+// 1,000 so the price line is written without a thousands separator, which is
+// how a persona letter states its price (PRICE_RE in price-lines.ts).
 const valueArb: fc.Arbitrary<string> = fc
-  .tuple(fc.integer({ min: 0, max: 9999 }), fc.integer({ min: 0, max: 99 }))
+  .tuple(fc.integer({ min: 0, max: 999 }), fc.integer({ min: 0, max: 99 }))
   .map(([whole, cents]) => `${whole}.${cents < 10 ? "0" : ""}${cents}`);
 
 function fixtureMetric(n: number): MetricDefinitionV1 {
@@ -376,6 +379,21 @@ const letterTextArb: fc.Arbitrary<string> = fc.constantFrom(
   "The windows are open for the first time this year. Work is steady.",
   "I filled the tank on the way home and kept the receipt in the glove box.",
 );
+
+/**
+ * Append the Letter_Price_Line phrases a persona's letter must state, so a
+ * generated letter passes the pre-seal text check (checkPersonaTexts). Each
+ * tracked "then" figure is written as "about $<value>", as the persona letters
+ * do. Other text is unchanged.
+ */
+function withPriceLines(
+  text: string,
+  persona: Persona,
+  figures: LoadedFigures,
+): string {
+  const phrases = expectedPrices(persona, figures).map((p) => `about $${p}`);
+  return [text, ...phrases].join(" ");
+}
 
 // =============================================================================
 // (b) Property 15: buildPersonaPayload.
@@ -682,7 +700,10 @@ describe("sealPersonas (insert-only fake store, real crypto)", () => {
             letter_path: `letters/gen-${i}.txt`,
           }));
           const texts = new Map(
-            personas.map((p, i) => [p.letter_path, rawTexts[i]]),
+            personas.map((p, i) => [
+              p.letter_path,
+              withPriceLines(rawTexts[i], p, figures.loaded),
+            ]),
           );
 
           // --- Arrange three distinct outcomes by seeding the store. --------
@@ -838,7 +859,12 @@ describe("sealPersonas (insert-only fake store, real crypto)", () => {
           const before = store.snapshots.get(persona.letter_id)!;
 
           // The persona now carries textB, so its freshly built payload differs.
-          const texts = new Map([[persona.letter_path, textB]]);
+          const texts = new Map([
+            [
+              persona.letter_path,
+              withPriceLines(textB, persona, figures.loaded),
+            ],
+          ]);
           const deps = fixedDeps([persona], figures.loaded, store, texts);
           const run = await sealPersonas(deps);
 
