@@ -123,8 +123,10 @@ describe("committed Persona_List intro_line and opening date", () => {
     const maya = parsePersonaList(rawPersonaList).personas.find(
       (p) => p.key === "us-maya",
     );
+    const rawMaya = rawPersonaList.personas.find((p) => p.key === "us-maya");
     expect(maya).toBeDefined();
-    expect(maya?.opens_at).toBe(`${maya?.opens_at.slice(0, 10)}T00:00:00.000Z`);
+    expect(maya?.opens_at).toBe(rawMaya?.opens_at);
+    expect(maya?.opens_at).toMatch(/T00:00:00\.000Z$/);
     expect("opening_event" in (maya ?? {})).toBe(false);
   });
 

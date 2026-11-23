@@ -17,10 +17,18 @@ import { periodEnd } from "@/lib/figures/periods";
 import { thenAndNow } from "@/lib/figures/then-now";
 import fuelFile from "@/lib/figures/real/fuel-figures.json";
 
+import rawPersonaList from "../../../content/personas/personas.json";
+
 import { PERSONAS } from "./index";
 
 // Presence is asserted by the first test below, so the non-null assertion is safe.
 const eu = PERSONAS.find((p) => p.key === "eu-tomas")!;
+
+/** The committed Persona_List entry, read straight from the JSON file. */
+const rawEu = rawPersonaList.personas.find((p) => p.key === "eu-tomas");
+if (rawEu === undefined) {
+  throw new Error("test setup: no eu-tomas in personas.json");
+}
 
 type FuelRow = (typeof fuelFile.figures)[number];
 
@@ -56,7 +64,8 @@ describe("EU persona entry (eu-tomas)", () => {
   });
 
   it("opens at 00:00 UTC on its listed opening date with no event name", () => {
-    expect(eu.opens_at).toBe(`${eu.opens_at.slice(0, 10)}T00:00:00.000Z`);
+    expect(eu.opens_at).toBe(rawEu.opens_at);
+    expect(eu.opens_at).toMatch(/T00:00:00\.000Z$/);
     expect("opening_event" in eu).toBe(false);
   });
 
