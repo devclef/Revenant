@@ -241,7 +241,7 @@ No task below starts until that PR is merged. The other open questions keep the 
   - Close this issue when `design.md` on `main` holds no "pending" cell.
   - _Requirements: 4.1, 4.2, 4.3, 4.4, 4.5, 4.7, 4.8, 7.4, 12.8_
 
-- [ ] 10. Owner: Approval_Gate (blocking checkpoint)
+- [x] 10. Owner: Approval_Gate (blocking checkpoint)
   - Agent: `owner` · Depends on: 1, 2, 3, 4, 5, 6, 7, 8, 9 · Estimated size: n/a (owner step, not dispatched)
   - Ensure all tests pass on `main` (`bash scripts/check.sh`), and ask the user if questions arise.
   - Only the owner does this step. No agent writes or edits the Approval_Gate section or a copy-test reviewer result.
