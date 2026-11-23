@@ -11,6 +11,7 @@ A wax seal did two jobs: it showed whose letter it was, and whether anyone broke
 <p align="center">
   <img src="docs/readme-hero2x.png" alt="Revenant concept one-pager: the ghost holding the sealed envelope, then the three steps Write and press the seal, Testify, See the receipts" width="800">
   <br><em>The concept one-pager. The fuel figures are real EIA records; the counts in its footer are out of date.</em>
+  <br><em>This picture shows the earlier persona letters, written as of an earlier date.</em>
 </p>
 
 Since 1735 the French Académie des sciences has kept *plis cachetés*, sealed envelopes that prove what someone knew, and when. Even Pasteur used them.
