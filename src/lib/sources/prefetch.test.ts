@@ -42,6 +42,7 @@ import {
   findProvenanceMismatches,
   findWeeklyGaps,
   runPrefetch,
+  type PrefetchDeps,
 } from "./prefetch";
 import type { FetchResult, Fetcher } from "./types";
 import {
@@ -315,7 +316,7 @@ function addedFor(report: Report, metricId: string): number {
 /** Run runPrefetch and return the PrefetchError it threw, or fail. */
 async function prefetchError(
   existingJson: unknown | null,
-  deps: { fetcher: Fetcher; now: () => Date },
+  deps: PrefetchDeps,
 ): Promise<PrefetchError> {
   try {
     await runPrefetch(existingJson, deps);
@@ -557,21 +558,18 @@ describe("runPrefetch — a backfill throws PrefetchError kind backfill", () => 
 // An adapter failure propagates a SourceError.
 // ---------------------------------------------------------------------------
 
-describe("runPrefetch — a failed download fails only its own series", () => {
-  it("a 500 on the gasoline download is reported as failed; the other series are still stored", async () => {
+describe("runPrefetch — a failed download writes nothing (spec 08, R21.2)", () => {
+  it("a 500 on the gasoline download throws series_failed and returns no file", async () => {
     const { fetcher } = recordedFetcher({ gasolineStatus: 500 });
-    const outcome = await runPrefetch(null, { fetcher, now: fixedNow });
 
-    expect(outcome.failed).toEqual([
+    const error = await prefetchError(null, { fetcher, now: fixedNow });
+
+    expect(error.kind).toBe("series_failed");
+    expect(error.findings).toEqual([
       { metricId: GASOLINE, reason: "source http_status" },
     ]);
-    expect(outcome.succeeded).not.toContain(GASOLINE);
-    expect(outcome.succeeded).toContain("us-diesel");
-    // Nothing from the failed series is stored; the other series are.
-    const loaded = loadFigureFile(JSON.parse(outcome.text), CATALOGUE);
-    expect(loaded.series.get(GASOLINE)?.figures ?? []).toHaveLength(0);
-    expect(loaded.series.get("us-diesel")?.figures.length).toBeGreaterThan(0);
-    assertNoBannedWords(outcome.failed[0].reason);
+    // The run threw, so no serialised text is returned and nothing is written.
+    assertNoBannedWords(error.message);
   });
 });
 
@@ -668,6 +666,91 @@ describe("runPrefetch — a bad committed file throws FigureDataError", () => {
       expect((error as FigureDataError).rule).toBe("shape");
       assertNoBannedWords((error as FigureDataError).message);
     }
+  });
+});
+
+// --- Fail-closed checks in runPrefetch (spec 18, task 2.2) ------------------
+//
+// Every value in these runs is a clearly-fake constant from the synthetic
+// workbook. None is a real figure.
+
+const EXCEL_EPOCH_MS = Date.UTC(1899, 11, 30);
+const DAY_MS = 86_400_000;
+
+/** Mondays from 2023-06-05 through 2026-10-26, one week apart, with no gap. */
+function contiguousDataRows(): CellSpec[][] {
+  const rows: CellSpec[][] = [];
+  const last = Date.UTC(2026, 9, 26);
+  for (let t = Date.UTC(2023, 5, 5); t <= last; t += 7 * DAY_MS) {
+    rows.push([
+      serialCell((t - EXCEL_EPOCH_MS) / DAY_MS, "dd/mm/yy"),
+      textCell("EU_"),
+      numberCell(1700.0),
+      numberCell(1500.0),
+    ]);
+  }
+  return rows;
+}
+
+describe("runPrefetch — weekly_gap lists every gap in a persona series", () => {
+  it("throws weekly_gap carrying all three gaps in the euro95 series", async () => {
+    // The default synthetic rows skip weeks for euro95 (PETROL).
+    const { fetcher } = recordedFetcher({
+      bulletinBytes: syntheticBulletin(),
+    });
+
+    const error = await prefetchError(null, {
+      fetcher,
+      now: fixedNow,
+      coverage: [{ metricId: PETROL, from: "2026-10-20", to: "2026-10-26" }],
+    });
+
+    expect(error.kind).toBe("weekly_gap");
+    expect(error.findings).toEqual([
+      { metricId: PETROL, before: "2023-06-12", after: "2024-05-06" },
+      { metricId: PETROL, before: "2024-05-06", after: "2024-11-04" },
+      { metricId: PETROL, before: "2024-11-04", after: "2026-10-19" },
+    ]);
+    expect(error.report).not.toBeNull();
+    assertNoBannedWords(error.message);
+  });
+});
+
+describe("runPrefetch — opening_coverage lists every unmet need", () => {
+  const needs = [
+    { metricId: PETROL, from: "2025-01-07", to: "2025-01-12" },
+    { metricId: EU_DIESEL, from: "2026-10-20", to: "2026-10-26" },
+  ];
+
+  it("throws opening_coverage for the need with no period in its window", async () => {
+    const { fetcher } = recordedFetcher({
+      bulletinBytes: syntheticBulletin({ dataRows: contiguousDataRows() }),
+    });
+
+    const error = await prefetchError(null, {
+      fetcher,
+      now: fixedNow,
+      coverage: needs,
+    });
+
+    expect(error.kind).toBe("opening_coverage");
+    // PETROL's window 2025-01-07 to 2025-01-12 holds no Monday; its latest is 2026-10-26.
+    expect(error.findings).toEqual([{ metricId: PETROL, latest: "2026-10-26" }]);
+    assertNoBannedWords(error.message);
+  });
+
+  it("resolves when every need has a period inside its window", async () => {
+    const { fetcher } = recordedFetcher({
+      bulletinBytes: syntheticBulletin({ dataRows: contiguousDataRows() }),
+    });
+
+    const outcome = await runPrefetch(null, {
+      fetcher,
+      now: fixedNow,
+      coverage: [needs[1]],
+    });
+
+    expect(outcome.text).toContain("2026-10-26");
   });
 });
 

@@ -46,24 +46,50 @@ export type { SeriesValidation } from "./validate";
 export interface PrefetchDeps {
   fetcher?: Fetcher;
   now?: () => Date;
+  /**
+   * The Persona_List's coverage needs (spec 18). Their metric ids are the
+   * Persona_Series, checked for Weekly_Gap; each need must be met by a period.
+   * Omitted or empty means no Weekly_Gap or opening coverage check runs.
+   */
+  coverage?: readonly CoverageNeed[];
 }
 
 /**
- * Which of the three run-ending checks failed (design.md "Prefetch"):
+ * Which run-ending check failed (design.md "Prefetch"):
  *
  *  - `backfill`: a fresh point was earlier than its series' latest existing
  *    period, so the whole run fails and nothing is written.
  *  - `column_letter`: a Bulletin catalogue entry's `column <LETTER> "<KEY>"`
  *    text disagreed with the letter the Adapter found the key in.
  *  - `coverage`: a series' earliest figure is later than the required date.
+ *  - `weekly_gap`: a Persona_Series has two neighbouring periods not 7 days apart.
+ *  - `opening_coverage`: a coverage need has no period of its series in its window.
+ *  - `provenance`: an added figure's unit, region, source or series_id differs from its series.
+ *  - `series_failed`: at least one series failed to download or validate, so
+ *    the run writes nothing (spec 08, R21.2).
  */
-export type PrefetchErrorKind = "backfill" | "column_letter" | "coverage";
+export type PrefetchErrorKind =
+  | "backfill"
+  | "column_letter"
+  | "coverage"
+  | "weekly_gap"
+  | "opening_coverage"
+  | "provenance"
+  | "series_failed";
+
+/** One finding a fail-closed check reported. */
+export type PrefetchFinding =
+  | WeeklyGap
+  | CoverageMiss
+  | ProvenanceMismatch
+  | FailedSeries;
 
 /**
  * A run-ending prefetch failure. `report` carries the merge {@link Report} for
- * the `backfill` and `coverage` kinds, so the script entry can still print what
+ * every kind raised after the merge, so the script entry can still print what
  * the run found before the failure line; it is `null` for `column_letter`,
- * which fails before any merge.
+ * which fails before any merge. `findings` carries every finding of the kind
+ * (empty for the kinds that carry none), never only the first.
  *
  * The message states only what happened and never says a value rose, fell,
  * improved, worsened, was corrected or revised (data-integrity.md,
@@ -72,12 +98,19 @@ export type PrefetchErrorKind = "backfill" | "column_letter" | "coverage";
 export class PrefetchError extends Error {
   readonly kind: PrefetchErrorKind;
   readonly report: Report | null;
+  readonly findings: readonly PrefetchFinding[];
 
-  constructor(kind: PrefetchErrorKind, message: string, report: Report | null) {
+  constructor(
+    kind: PrefetchErrorKind,
+    message: string,
+    report: Report | null,
+    findings: readonly PrefetchFinding[] = [],
+  ) {
     super(message);
     this.name = "PrefetchError";
     this.kind = kind;
     this.report = report;
+    this.findings = findings;
   }
 }
 
@@ -470,11 +503,57 @@ export async function runPrefetch(
     );
   }
 
-  // 5. Coverage check (R6.5) for every series that did not fail this run.
+  // 5. Fail-closed checks (spec 18), after the merge and before serialising. Each
+  //    kind carries every finding of that kind. A failed download comes first,
+  //    so a persona series that failed is reported as failed and not also as a
+  //    coverage miss on its stale committed data.
   const failedIds = new Set(failed.map((f) => f.metricId));
+  if (failed.length > 0) {
+    throw new PrefetchError(
+      "series_failed",
+      `series_failed: ${failed.map((f) => `${f.metricId} (${f.reason})`).join("; ")}`,
+      merged.report,
+      failed,
+    );
+  }
+
+  const coverage = deps?.coverage ?? [];
+  const personaIds = [...new Set(coverage.map((need) => need.metricId))];
+  const gaps = findWeeklyGaps(merged.figures, personaIds);
+  if (gaps.length > 0) {
+    throw new PrefetchError(
+      "weekly_gap",
+      `weekly_gap: ${gaps.map((g) => `${g.metricId} ${g.before} to ${g.after}`).join("; ")}`,
+      merged.report,
+      gaps,
+    );
+  }
+
+  const misses = findCoverageMisses(merged.figures, coverage);
+  if (misses.length > 0) {
+    throw new PrefetchError(
+      "opening_coverage",
+      `opening_coverage: ${misses.map((m) => `${m.metricId} latest ${m.latest ?? "none"}`).join("; ")}`,
+      merged.report,
+      misses,
+    );
+  }
+
+  const added = merged.figures.slice(existing.length);
+  const mismatches = findProvenanceMismatches(existing, added);
+  if (mismatches.length > 0) {
+    throw new PrefetchError(
+      "provenance",
+      `provenance: ${mismatches.map((m) => `${m.metricId} ${m.period} ${m.field}`).join("; ")}`,
+      merged.report,
+      mismatches,
+    );
+  }
+
+  // 6. Coverage check (R6.5) for every series that did not fail this run.
   checkCoverage(merged.figures, merged.report, failedIds);
 
-  // 6. Serialise deterministically, then prove the text loads against the
+  // 7. Serialise deterministically, then prove the text loads against the
   //    catalogue. A FigureDataError from loadFigureFile propagates unchanged.
   const text = serialiseFigureFile(merged.figures);
   loadFigureFile(JSON.parse(text), CATALOGUE);
