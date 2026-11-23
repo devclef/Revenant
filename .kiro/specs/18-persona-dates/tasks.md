@@ -233,7 +233,7 @@ No task below starts until that PR is merged. The other open questions keep the 
   - Earlier-spec tests changed or retired: none expected; name any.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 9. Owner: fill the at-opening rows and re-present the design
+- [x] 9. Owner: fill the at-opening rows and re-present the design
   - Agent: `owner` · Depends on: 3, 7 · Estimated size: n/a (owner step, not dispatched)
   - The owner (or the owner's own Kiro session, committing as the owner) copies the eight rows from task 3's commit body into "The eight Persona_Figures" in `design.md`, replacing each "pending" cell. Each value is copied from task 3's report, which was read from the committed file. Nothing is typed from memory.
   - Fix the then rows if task 3 reported a difference, and replace any Sample_Candidate task 3 listed, with its spread class worked out against the shown then value as in the design. Any approval recorded before this no longer counts (Requirement 4.7).
