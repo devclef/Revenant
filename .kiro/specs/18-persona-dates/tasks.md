@@ -178,7 +178,7 @@ No task below starts until that PR is merged. The other open questions keep the 
   - Earlier-spec tests changed or retired: the six files and `retired-ids-scan.test.ts`; name each.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 6. Tests that describe a Persona read the Persona_List
+- [x] 6. Tests that describe a Persona read the Persona_List
   - Agent: `frontend-dev` · Depends on: 5 · Estimated size: M, ~900 changed lines (mostly tests)
   - Scope: the rows marked **R**, **F→** and **C** under `src/components/` and `src/lib/personas/` in the design's per-file table (component 8), and `src/lib/personas/samples.test.ts`. Not `src/lib/figures/` (task 7) or the content files.
   - Design sections: "8. Date_Guard" (the per-file actions), "2. Screens read dates", "6. Sample answers", Property 9.
