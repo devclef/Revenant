@@ -10,6 +10,7 @@ import fc from "fast-check";
 
 import type { FigureV1, MetricDefinitionV1 } from "@/lib/seal-format";
 
+import { CATALOGUE } from "./catalogue";
 import fetchStatus from "./real/fetch-status.json";
 import {
   parseFiguresResponse,
@@ -382,7 +383,12 @@ describe("Property 24: the browser picks the now figure by its series alone", ()
 });
 
 describe("fetch-status.json", () => {
-  it("starts as an empty series map", () => {
-    expect(fetchStatus).toEqual({});
+  it("maps catalogue metric ids to ISO UTC timestamps", () => {
+    const ids = new Set(CATALOGUE.map((c) => c.metric.id));
+    for (const [id, at] of Object.entries(fetchStatus)) {
+      expect(ids.has(id), id).toBe(true);
+      expect(at, id).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d+)?Z$/);
+      expect(Number.isNaN(Date.parse(at as string)), id).toBe(false);
+    }
   });
 });

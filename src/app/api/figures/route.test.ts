@@ -8,6 +8,7 @@ import fc from "fast-check";
 import { CATALOGUE } from "@/lib/figures/catalogue";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
 import { parseFiguresResponse, type FiguresResponseV1 } from "@/lib/figures/now";
+import fetchStatusFile from "@/lib/figures/real/fetch-status.json";
 import realFile from "@/lib/figures/real/fuel-figures.json";
 import { loadFigureFile } from "@/lib/figures/load";
 import type { FigureV1 } from "@/lib/seal-format";
@@ -99,11 +100,14 @@ describe("GET /api/figures (file mode)", () => {
     expect(GET.length).toBe(0);
   });
 
-  it("gives last_success_at null for every series while fetch-status.json is empty", async () => {
+  it("gives each series the last_success_at in fetch-status.json, or null without an entry", async () => {
     const body = await getBody();
+    const status = fetchStatusFile as Record<string, string>;
 
     for (const entry of body.series) {
-      expect(entry.last_success_at, entry.metric.id).toBeNull();
+      expect(entry.last_success_at, entry.metric.id).toBe(
+        status[entry.metric.id] ?? null,
+      );
     }
   });
 
@@ -169,7 +173,7 @@ describe("Property 23 (file-mode part): the Figures_API lists every series with 
             buildFiguresResponse({
               loaded: DEMO_FIGURES,
               catalogue: CATALOGUE,
-              fetchStatus: {},
+              fetchStatus: fetchStatusFile,
               sourceMode: "file",
               generatedAt: "",
             }).series,

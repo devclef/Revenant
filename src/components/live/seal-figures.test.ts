@@ -16,7 +16,11 @@ import type { FiguresResponseV1 } from "@/lib/figures/now";
 import { loadedFiguresFromResponse, listPickableFromResponse, sealFiguresFrom } from "./catalogue-list";
 
 const FIRST_ID = [...DEMO_FIGURES.series.keys()][0]!;
-const TODAY = "2026-11-06";
+// The latest period across the bundled figures, so TODAY is never earlier than
+// the newest figure after a refetch.
+const TODAY = [...DEMO_FIGURES.series.values()]
+  .flatMap((s) => s.figures.map((f) => f.period))
+  .reduce((a, b) => (b > a ? b : a));
 
 function withoutSeries(response: FiguresResponseV1, metricId: string) {
   return {
