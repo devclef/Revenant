@@ -1837,8 +1837,8 @@ function readPersona(key: string): PersonaEntry {
 }
 
 /**
- * The UTC instant of a provenance date ("retrieved 17 Nov 2026") as an ISO
- * string, or null when the line has no readable date.
+ * The UTC instant of a provenance date ("retrieved" followed by a day, short
+ * month and year) as an ISO string, or null when the line has no readable date.
  */
 function retrievedIso(text: string): string | null {
   const match = /retrieved\s+(\d{1,2}\s+[A-Za-z]+\.?\s+\d{4})/.exec(text);
