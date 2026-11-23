@@ -18,7 +18,7 @@ import type { Found, LoadedFigures, Missing } from "./types";
 
 /** The part of a persona that the "now" figures need. */
 export interface PersonaForNow {
-  opens_at: string; // ISO instant at 00:00 UTC, e.g. "2024-11-05T00:00:00.000Z"
+  opens_at: string; // ISO instant at 00:00 UTC, form "YYYY-MM-DDT00:00:00.000Z"
   metrics: readonly { metric_id: string }[];
 }
 
