@@ -52,7 +52,7 @@ describe("at-opening reads the Persona_List", () => {
   );
 });
 
-describe("personaNowResponse: Maya (opens 5 November 2024)", () => {
+describe("personaNowResponse: Maya", () => {
   const body = personaNowResponse(MAYA, LOADED, GENERATED_AT);
 
   it("returns the revenant-figures-v1 body with one series per metric", () => {
@@ -124,7 +124,7 @@ describe("personaNowResponse: Maya (opens 5 November 2024)", () => {
   });
 });
 
-describe("personaNowResponse: Tomás (opens 9 June 2024)", () => {
+describe("personaNowResponse: Tomás", () => {
   const body = personaNowResponse(TOMAS, LOADED, GENERATED_AT);
 
   it("returns one series per metric", () => {
