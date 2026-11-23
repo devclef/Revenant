@@ -260,6 +260,8 @@
 //              persona letter (neutrality.md, data-integrity.md)
 //            - a spec 09 check that failed and whose ID was passed with --require
 //            - a spec 15 row (NB1, GC1, DL1, PV1) that failed, with no --require
+//            - the spec 17 rows SF1, TT1, CT1, UQ1, CW1, GO1, FR1 and LC1 that failed.
+//              They block with no --require. Any blocker makes the process exit 1.
 //   polish   Reported, never fails the run. Every other layout measure: 1 px drift,
 //            margins, the Top_Bar height, dust height, a date wrapping, a sideways
 //            Ghost move, and any size other than 1280x800 for the button rule.

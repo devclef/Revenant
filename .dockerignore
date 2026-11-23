@@ -32,6 +32,7 @@ tools/qa/*
 !tools/qa/layout-baseline.mjs
 !tools/qa/journey-check.mjs
 !tools/qa/layout-rules-17.mjs
+!tools/qa/layout-gate.mjs
 scripts/
 # ...except the migration entrypoint, which the runtime image invokes
 # (`node scripts/migrate.mjs`). Un-ignore just that one file.
