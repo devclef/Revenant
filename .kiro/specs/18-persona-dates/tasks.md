@@ -89,7 +89,7 @@ No task below starts until that PR is merged. The other open questions keep the 
   - Earlier-spec tests changed or retired: `letter-checks.test.ts` (political-term message), `banned-terms*.test.ts`, `schema.test.ts` if it pins an error message; name each.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 2. Fail-closed Prefetch_Script
+- [x] 2. Fail-closed Prefetch_Script
   - Agent: `data-dev` · Depends on: none · Estimated size: M, ~700 changed lines
   - Scope: `src/lib/sources/prefetch.ts`, `scripts/prefetch-figures-main.ts`, and the `*.test.ts` next to each. No adapter changes, and `refresh.ts` merge rules stay (Requirement 15.2).
   - Design sections: "3. Prefetch_Script", Properties 1 to 5.
