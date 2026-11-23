@@ -30,6 +30,8 @@
 //   readGo1Soil(page)             reads the [data-soil-strip] rect for GO1's reading.soil, or null.
 //   readLc1Reading(page)          reads [data-figures-column] and [data-seal-group] rects from a loaded page.
 //   lcFailures(reading)           LC1 failures for one reading; [] when the columns are coherent.
+//   uqFailures(reading)           UQ1 failures for one reading; [] when one Demo label and one wax seal show.
+//   readUq1Reading(page)          reads visible Demo labels (plus the Top_Bar chip) and wax seals on the Wait step.
 //
 // LC1 (GitHub issue #585, spec 17 D7): the Seal group sits at most 64 px right of the figures column and
 //   its top lies inside the column's top and bottom. The reading is { figures, sealGroup }: each is one
@@ -549,4 +551,77 @@ const READ_TT1 = () => {
 /** Reads TT1 values from a page at the Press the seal step, before any pointer event. Sends no input. */
 export async function readTt1Reading(page) {
   return { targets: await page.evaluate(READ_TT1) };
+}
+
+// UQ1 (GitHub issue #589, spec 17 unique-quiet rules): one "Demo" label and one wax seal on the Wait
+// step's first screen. The reading is { demoLabels, seals }: demoLabels counts visible [data-demo-label]
+// elements plus the Top_Bar "Demo" chip (a leaf element whose text is "Demo" and that carries no
+// [data-demo-label]); seals counts visible [data-wax-seal] elements whose rect meets the first viewport.
+// Any count other than 1 is a failure.
+export const UQ1_WANT = 1;
+
+/**
+ * UQ1 failures for one reading. An empty array means exactly one Demo label and exactly one wax seal
+ * are visible. Each failure names the count, what was counted and the count wanted.
+ */
+export function uqFailures(reading) {
+  const demoLabels = reading?.demoLabels;
+  const seals = reading?.seals;
+  const measured = [demoLabels, seals].every((value) => typeof value === "number" && Number.isFinite(value));
+  if (!measured) {
+    return [{ id: "UQ1", check: "unique-demo-label-and-seal", message: "UQ1 no Demo label or wax seal count to measure." }];
+  }
+
+  const failures = [];
+  if (demoLabels !== UQ1_WANT) {
+    failures.push({
+      id: "UQ1",
+      check: "unique-demo-label",
+      message: `UQ1 ${demoLabels} visible "Demo" labels, want ${UQ1_WANT}.`,
+    });
+  }
+  if (seals !== UQ1_WANT) {
+    failures.push({
+      id: "UQ1",
+      check: "unique-wax-seal",
+      message: `UQ1 ${seals} visible wax seals in the first viewport, want ${UQ1_WANT}.`,
+    });
+  }
+  return failures;
+}
+
+/**
+ * Script run inside the page. Counts visible Demo labels, the Top_Bar Demo chip and wax seals in the
+ * first viewport. Visible means laid out (a client rect with width and height) and not hidden by
+ * visibility. Sends no input.
+ */
+const READ_UQ1 = (demoLabel) => {
+  const visible = (el) => {
+    if (!el) return false;
+    if (getComputedStyle(el).visibility === "hidden") return false;
+    const rects = el.getClientRects();
+    if (rects.length === 0) return false;
+    const r = el.getBoundingClientRect();
+    return r.width > 0 && r.height > 0;
+  };
+  const labels = [...document.querySelectorAll("[data-demo-label]")].filter(visible).length;
+  const chips = [...document.body.querySelectorAll("*")].filter(
+    (el) =>
+      el.children.length === 0 &&
+      el.textContent.trim() === demoLabel &&
+      !el.closest("[data-demo-label]") &&
+      visible(el),
+  ).length;
+  const viewportHeight = window.innerHeight;
+  const seals = [...document.querySelectorAll("[data-wax-seal]")].filter((el) => {
+    if (!visible(el)) return false;
+    const r = el.getBoundingClientRect();
+    return r.bottom > 0 && r.top < viewportHeight;
+  }).length;
+  return { demoLabels: labels + chips, seals };
+};
+
+/** Reads UQ1 values from a page at the Wait step. Sends no input. */
+export async function readUq1Reading(page) {
+  return page.evaluate(READ_UQ1, "Demo");
 }

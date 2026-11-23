@@ -354,8 +354,10 @@ import {
   readLc1Reading,
   readSf1Reading,
   readTt1Reading,
+  readUq1Reading,
   sfFailures,
   ttFailures,
+  uqFailures,
 } from "./layout-rules-17.mjs";
 
 // SF1 and TT1 (GitHub issue #587) run on Press the seal at these sizes. Each failure is a BLOCKER.
@@ -1872,6 +1874,52 @@ export async function checkSf1Tt1(page, ctx) {
   const tt = ttFailures(await readTt1Reading(page));
   for (const f of tt) ctx.rep.add("blocker", "TT1", f.message, f.check);
   if (tt.length === 0) ctx.rep.add("ok", "TT1", `press target wax mark meets the size floor at ${ctx.size}`);
+}
+
+// UQ1 (one Demo label and one wax seal), CT1 (text contrast) and SF1 (Seal panel fill) on the Wait
+// step (GitHub issue #589). Wait comes after a passkey seal, so this walks /demo/live through the
+// virtual passkey to the sealed step, with reduced motion so the press is one click. It runs only at
+// WAIT_RULE_SIZES. Each failure is a BLOCKER.
+export const WAIT_RULE_SIZES = ["1440x900", "390x844"];
+
+async function checkWaitRules(browser, ctx) {
+  if (!WAIT_RULE_SIZES.includes(ctx.size)) return;
+  ctx.rep.log(`UQ1, CT1 and SF1 on the Wait step at ${ctx.size}`);
+  const context = await browser.newContext({ viewport: { width: ctx.w, height: ctx.h }, reducedMotion: "reduce" });
+  try {
+    const page = await newPage(context);
+    try {
+      const cdp = await context.newCDPSession(page);
+      await cdp.send("WebAuthn.enable");
+      await cdp.send("WebAuthn.addVirtualAuthenticator", {
+        options: { protocol: "ctap2", transport: "internal", hasResidentKey: true, hasUserVerification: true, isUserVerified: true, hasPrf: true, automaticPresenceSimulation: true },
+      });
+      await s16LiveToSeal(page, ctx.base, { figure: false });
+      await page.locator('[data-backup-card="skip"]').first().click({ timeout: WAIT_MS });
+      await sleep(300);
+      await page.getByRole("button", { name: "Press the seal", exact: true }).click({ timeout: WAIT_MS });
+      await page.locator('[data-press-mode="setting"]').waitFor({ state: "visible", timeout: S16_STEP_MS });
+      await page.locator('[data-press-mode="setting"]').click({ timeout: WAIT_MS });
+      await page.locator('[data-live-step="sealed"]').waitFor({ state: "visible", timeout: S16_STEP_MS });
+      await sleep(800);
+
+      const uq = uqFailures(await readUq1Reading(page));
+      for (const f of uq) ctx.rep.add("blocker", "UQ1", f.message, f.check);
+      if (uq.length === 0) ctx.rep.add("ok", "UQ1", `one Demo label and one wax seal on the Wait step at ${ctx.size}`);
+
+      const ct = await readCt1Failures(page);
+      for (const f of ct) ctx.rep.add("blocker", "CT1", `${f.selector} "${f.text}" needs ${f.required}:1 contrast: ${f.reason}`, "text-contrast");
+      if (ct.length === 0) ctx.rep.add("ok", "CT1", `text meets contrast on the Wait step at ${ctx.size}`);
+
+      const sf = sfFailures(await readSf1Reading(page));
+      for (const f of sf) ctx.rep.add("blocker", "SF1", f.message, f.check);
+      if (sf.length === 0) ctx.rep.add("ok", "SF1", `Seal panel fills its surface on the Wait step at ${ctx.size}`);
+    } finally {
+      await page.close();
+    }
+  } finally {
+    await context.close();
+  }
 }
 
 function checkSoil(page, ctx) {
@@ -6145,6 +6193,7 @@ async function runSize(browser, base, size, opts, rep) {
     }
     if (runs("live")) await guard(ctx, "P1", () => checkPressEnvelope(context, ctx));
     if (runs("live")) await guard(ctx, "CT1", () => checkPressContrast(context, ctx));
+    if (runs("live")) await guard(ctx, "UQ1", () => checkWaitRules(browser, ctx));
     await guard(ctx, "walk", () => otherPages(context, ctx));
   } finally {
     await context.close();
