@@ -140,7 +140,9 @@ export function LiveWaitStep({
   const sink = heldGhostSink(done, calm);
 
   return (
-    <div className={styles.deskPanel} data-live-wait>
+    // Only the Wait step draws the desk panel's frame. On the later steps this
+    // wrapper holds at most the held Ghost, so a frame would be an empty box.
+    <div className={waiting ? styles.deskPanel : styles.deskSlot} data-live-wait>
       {/* The Ghost on the Testify step (spec 13, F4.1). It stands in the first
           viewport above the flow, as the persona Testify step draws it. Its box
           has a fixed height, so the question, the answer control and the verdict
@@ -158,16 +160,16 @@ export function LiveWaitStep({
           ghost={<LiveGhost sink={sink} />}
         >
           {done ? (
-            <p className={styles.status} role="status" data-live-countdown="ready">
+            <p className={`${styles.status} ${styles.onDesk}`} role="status" data-live-countdown="ready">
               {LIVE_COPY.countdownDone}
             </p>
           ) : (
-            <p className={styles.status} role="status" data-live-countdown="ticking">
+            <p className={`${styles.status} ${styles.onDesk}`} role="status" data-live-countdown="ticking">
               {LIVE_COPY.countdown.replace("{seconds}", String(seconds))}
             </p>
           )}
           {rehearsal ? (
-            <p className={styles.intro} data-live-rehearsal="">
+            <p className={`${styles.intro} ${styles.onDesk}`} data-live-rehearsal="">
               {LIVE_COPY.rehearsalLine}
             </p>
           ) : null}
@@ -196,7 +198,7 @@ export function LiveWaitStep({
         <>
           {/* The key reminder sits with the unlock control it describes (D1.5). */}
           {showKeyReminder ? (
-            <p className={`${styles.intro} ${styles.noPrint}`}>{LIVE_COPY.keyReminder}</p>
+            <p className={`${styles.intro} ${styles.onDesk} ${styles.noPrint}`}>{LIVE_COPY.keyReminder}</p>
           ) : null}
           {done ? (
             <div className={`${styles.actions} ${styles.noPrint}`}>
@@ -222,7 +224,7 @@ export function LiveWaitStep({
                 <div className={`${styles.backupOffer} ${styles.noPrint}`}>
                   <button
                     type="button"
-                    className={styles.secondary}
+                    className={`${styles.secondary} ${styles.onDesk}`}
                     onClick={() => setShowBackupCard(true)}
                     data-live-backup-offer
                   >
@@ -238,6 +240,7 @@ export function LiveWaitStep({
               envelopeHash={state.envelopeHash}
               showSeal={false}
               showDemoLabel={false}
+              surface="desk"
             />
           </section>
         </>

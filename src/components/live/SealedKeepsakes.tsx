@@ -26,6 +26,12 @@ export interface SealedKeepsakesProps {
   showSeal?: boolean;
   /** Show the Demo label on the letter card. Defaults to true. */
   showDemoLabel?: boolean;
+  /**
+   * The surface the keepsakes sit on, outside the paper letter card. "paper"
+   * (the default) keeps the paper ink; "desk" sets the desk text colours for
+   * the line above the card and the calendar button below it.
+   */
+  surface?: "paper" | "desk";
 }
 
 export function SealedKeepsakes({
@@ -35,7 +41,9 @@ export function SealedKeepsakes({
   envelopeHash,
   showSeal = true,
   showDemoLabel = true,
+  surface = "paper",
 }: SealedKeepsakesProps) {
+  const onDesk = surface === "desk" ? ` ${styles.onDesk}` : "";
   function onDownloadIcs(): void {
     const text = buildKeepsakeIcs({
       letterId,
@@ -48,7 +56,7 @@ export function SealedKeepsakes({
 
   return (
     <div className={styles.keepsakes} data-live-keepsakes>
-      <p className={styles.intro}>{LIVE_COPY.sealDrawnFrom}</p>
+      <p className={`${styles.intro}${onDesk}`}>{LIVE_COPY.sealDrawnFrom}</p>
       <LetterCard
         letterId={letterId}
         appOrigin={appOrigin}
@@ -58,7 +66,7 @@ export function SealedKeepsakes({
         showDemoLabel={showDemoLabel}
       />
       <div className={styles.noPrint}>
-        <button type="button" className={styles.secondary} onClick={onDownloadIcs} data-live-ics>
+        <button type="button" className={`${styles.secondary}${onDesk}`} onClick={onDownloadIcs} data-live-ics>
           {LIVE_COPY.downloadIcs}
         </button>
       </div>

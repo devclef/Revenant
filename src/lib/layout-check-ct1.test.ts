@@ -315,4 +315,47 @@ describe("Wait step cases", () => {
       }),
     ).toEqual([]);
   });
+
+  // The D2 regression: after the Wait step moved onto the desk, four lines kept the
+  // paper ink. Measured on main at 1440x900 and 390x844: ink rgb(31, 27, 22) on the
+  // desk rgb(11, 9, 18), with the panel's transparent layers in front of it.
+  const PAPER_INK = "rgb(31, 27, 22)";
+  const PAPER_INK_SOFT = "rgb(74, 64, 54)";
+  const DESK = "rgb(11, 9, 18)";
+  const ON_DESK = ["rgba(0, 0, 0, 0)", "rgba(0, 0, 0, 0)", DESK];
+
+  it.each([
+    ["p", "Time remaining: 29 seconds.", PAPER_INK_SOFT, 15],
+    ["p", "This is a rehearsal: a real letter stays sealed for months, and this one opens in 30 seconds.", PAPER_INK, 18],
+    ["p", "This seal is drawn from the letter's fingerprint.", PAPER_INK, 18],
+    ["button", "Add to your calendar", PAPER_INK, 16],
+  ])("fails %s \"%s\" in paper ink on the desk", (selector, text, ink, fontSize) => {
+    const [failure] = ctFailures({
+      selector,
+      text,
+      ink,
+      fontSize,
+      fontWeight: selector === "button" ? 600 : 400,
+      surface: { kind: "solid", backdrops: ON_DESK },
+    });
+    expect(failure).toBeDefined();
+    expect(failure.ratio).toBeLessThan(2);
+    expect(failure.required).toBe(4.5);
+  });
+
+  it.each([
+    ["the countdown in --muted", "rgb(189, 180, 220)", 15],
+    ["the rehearsal line, seal line and calendar button in --text", "rgb(245, 243, 255)", 16],
+  ])("passes %s on the desk", (_name, ink, fontSize) => {
+    expect(
+      ctFailures({
+        selector: "p",
+        text: "Desk text",
+        ink,
+        fontSize,
+        fontWeight: 400,
+        surface: { kind: "solid", backdrops: ON_DESK },
+      }),
+    ).toEqual([]);
+  });
 });

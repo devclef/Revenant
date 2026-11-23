@@ -16,6 +16,7 @@ Spec 17 fixes seven broken screens of the live demo and the persona demos (D1 to
 | 11, 12 | D1 Seal panel and wax size | SF1, TT1 | frontend-dev, platform-dev |
 | 13, 14 | D2 Wait step | UQ1, CT1 and SF1 on Wait | frontend-dev, platform-dev |
 | 15 | Gate script | none | platform-dev |
+| 16 | D7 again on desktop: step track gap, Soil clearance, Seal group beside the marks, Ghost overlap | LC1, GO1 | frontend-dev |
 
 Each task is one GitHub issue and one PR for one role, inside that role's paths in `.github/agents.json` (plus `shared`). "Depends on" lists only task numbers of this spec. The agent loop runs one task at a time and takes the lowest-numbered ready issue.
 
@@ -290,6 +291,33 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - **Property 2: Preservation** - Existing verdict tests stay
     - Add a source test that the R10.1, R10.6, R14.3, R5.4, NB1, GC1, DL1 and PV1 verdict tests still exist. Run the file until it passes.
     - _Requirements: 2.10, 2.11, 3.9_
+
+- [ ] 16. D7 again: desktop Break the seal and Remember clear of the step track, the Soil and the Ghost
+  - Agent: `frontend-dev` · Depends on: none · Estimated size: M, ~300 changed lines
+  - Scope: `src/components/ceremony/scene/scene.module.css`, `src/components/ceremony/scene/layout.ts`, `src/components/ceremony/ceremony.module.css` (the step track and the first block under it only), `src/components/ceremony/seal/**`, `src/components/reveal/Reveal.tsx` and `src/components/reveal/reveal.module.css` (placement only), `src/components/ceremony/scene/break-columns.test.ts`.
+  - Design sections: "D4 and D7 overlap / GO1", "D7 grouping / LC1".
+  - Why: the D7 fix (#600) moved the figures off the Soil box but left them touching it, and kept the Seal group placed from the Ghost. The gate first measured these screens when GO1 and LC1 were tightened (Soil clearance, the step track gap, LC1 on the marks card). Judges will use a desktop, so these are the screens that matter for the demo.
+
+  - [ ] 16.1 Clear the step track, the Soil and the Ghost at 1440x900
+    - On the Remember step, the first line under the step track ("A letter from Maya", "A letter from Tomás") starts at least 16 px below the track. Measured on main: 1 px.
+    - On Break the seal, the heading "You remembered, just now" starts at least 16 px below the step track (main: -1 px); the Seal group's left edge is at most 64 px right of the marks card `[data-card="marks"]`, with its top inside the card's span (main: 154 px); no text line is within 8 px of the Soil strip's box (main: "3.79 USD per gallon" and "1.62 EUR per litre" 17 px into it); and no text or control overlaps the Ghost's drawn box (main: "What you remembered is recorded." and "Press and hold the wax seal to break it," inside the glow).
+    - This replaces task 9.1's decision that the Seal group keeps its position from `--ghost-cx` (#515). The Seal group and the Ghost move together so the Ghost still holds the envelope; the layout below 900 px is unchanged.
+    - Update `break-columns.test.ts` so its source assertions match the new placement. Run it until it passes.
+    - _Bug_Condition: isBugCondition(S) where S.persona AND S.step IN {"recall", "break"} AND S.width >= 900 AND (gap(track, firstLine) < 16 OR S.sealGroup.left - S.marks.right > 64 OR EXISTS t IN S.text : gap(t.box, S.soil.box) < 8 OR EXISTS t IN S.text + S.controls : overlaps(t.box, S.ghost.drawnBox))_
+    - _Expected_Behavior: at 1440x900, for us-maya and eu-tomas, `layout-check` reports no GO1 or LC1 blocker on the recall and marks stages_
+    - _Preservation: layout below 900 px unchanged; figures, provenance, copy, controls and step order unchanged; the Ghost still holds the envelope until the break_
+    - _Requirements: 2.6, 2.9, 3.7_
+    - After merge the owner removes the matching 1440x900 GO1 and LC1 entries from `tools/qa/layout-gate-baseline.json` (platform-dev's path, outside this task's scope), so the gate blocks them from then on.
+
+## Deferred (not a task yet)
+
+Not numbered, so `spec_sync` opens no issue for it. Promote it to a task after the demo.
+
+- **Phone layout on the persona demo and `/demo/live` (390x844).** Judges are expected to use a desktop, so this waits. Entries in `tools/qa/layout-gate-baseline.json`, measured on main:
+  - GO1 soil-overlap on Remember question 2 (16 for us-maya, 17 for eu-tomas): the answer scale numbers, the unit line and the sample-answer note sit on the Soil strip, at the start and scrolled to the bottom.
+  - GO1 soil-overlap on Break the seal (3 per persona): "Press and hold the wax seal to break it," and the "Break the seal" button, scrolled to the bottom.
+  - GO1 ghost-overlap on Remember and Break the seal, already in the baseline before this change.
+  - CW1 on `/demo/live`: the content column is 310 px on the Write step and 294 px on Press the seal, want at least 342 px.
 
 ## Owner edits (done before task 1)
 The owner has already made the owner-only edits, so no task changes these files:
