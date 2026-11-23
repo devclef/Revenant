@@ -30,11 +30,6 @@ const RETRIEVED_AT_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 const PERIOD_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const PLACEHOLDER_RETRIEVED_AT = "2000-01-01T00:00:00Z";
 const EARLY_COVERAGE_LIMIT = "2023-06-07";
-// The latest opens_at date in the Persona_List. The committed file must hold a
-// period after it, so the persona "now" figures can be read from it.
-const LATE_COVERAGE_LIMIT = PERSONAS.map((persona) => persona.opens_at.slice(0, 10)).reduce(
-  (latest, date) => (date > latest ? date : latest),
-);
 const MIN_FIGURES_PER_SERIES = 178;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -145,13 +140,12 @@ function utcMillis(period: string): number {
 }
 
 describe("committed real figure file: coverage, spacing and serialisation", () => {
-  it("covers every catalogue series from on or before 2023-06-07 to after 2024-11-05", () => {
+  it("covers every catalogue series from on or before 2023-06-07", () => {
     const groups = figuresBySeries();
     for (const entry of CATALOGUE) {
       const periods = (groups.get(entry.metric.id) ?? []).map((figure) => figure.period);
       expect(periods.length).toBeGreaterThan(0);
       expect(periods.some((period) => period <= EARLY_COVERAGE_LIMIT)).toBe(true);
-      expect(periods.some((period) => period > LATE_COVERAGE_LIMIT)).toBe(true);
     }
   });
 

@@ -194,7 +194,7 @@ series-failed <metricId> reason=<token>
 
 `retrieved_at` stays per download (`downloadedAt`), so the added weeks carry the refetch time, and the committed weeks keep `2026-11-01T16:39:37Z` or `2026-11-01T16:39:38Z` (Requirement 2.5). The then figures are committed weeks, so their "historical record, retrieved" label shows 1 Nov 2026, and the at-opening figures show the refetch date (Requirement 2.7, open question 2).
 
-Tests that pin the last period `2026-10-26` (`bundled-latest`, `real-file.test.ts`, `then-now.test.ts` "now" assertions) read the last period from the Figure_File instead (Requirement 2.8). `real-file.test.ts` `LATE_COVERAGE_LIMIT` becomes the latest `opens_at` date in the Persona_List, and a new assertion checks that each persona metric's `figureAtOpening` period falls in the coverage window.
+Tests that pin the last period `2026-10-26` (`bundled-latest`, `real-file.test.ts`, `then-now.test.ts` "now" assertions) read the last period from the Figure_File instead (Requirement 2.8). `real-file.test.ts` drops `LATE_COVERAGE_LIMIT` and its "period after the limit" assertion, because the committed file can never hold a period after an `opens_at` that is the day after its last period. The check is the assertion that each persona metric's `figureAtOpening` period falls in the seven days up to its `opens_at`.
 
 ### 4. Banned terms — Requirement 8
 
@@ -252,7 +252,7 @@ Indexes are 1-based. `CLEAN_WORDS` in `letter-checks.property.test.ts` holds no 
 
 The texts are in "Data Models". Two new checks join the existing ones in `persona-texts.test.ts`:
 
-- **Season words (5.2, 6.1 to 6.3).** In the letter files: no whole-word month name from January to September and no whole word `spring`, `summer`, `springtime` or `summertime`, in any case. Requirement 5.2 allows "may" as a verb. The test bans the whole word `May` only with a capital M, so "may" as a verb passes and "Maybe" is not a whole-word match. The three letters use neither. In intro lines, questions, sealed answers and recollections: no month other than November, no weekday other than Sunday, and no season word other than autumn, fall or winter.
+- **Season words (5.2, 6.1 to 6.3).** In the letter files: no whole-word month name from January to September and no whole word `spring`, `summer`, `springtime` or `summertime`, in any case. Requirement 5.2 allows "may" as a verb. The test bans the whole word `May` only with a capital M, so "may" as a verb passes and "Maybe" is not a whole-word match. The three letters use neither. In intro lines, questions, sealed answers and recollections: no month other than November and no season word other than autumn, fall or winter. Weekdays are not checked, as in the letter files: a habit on another weekday does not contradict a letter written on a Sunday (decision 15).
 - **Period words (5.6).** `weekOfMonthWords(period)` in `src/lib/personas/price-lines.ts` returns "first week of November" for days 1 to 7, "second week of …" for 8 to 14, and so on to "fifth" for 29 to 31. The test finds each price phrase, takes the sentence that holds it, and checks that the sentence contains `weekOfMonthWords(then.period)` for that series.
 
 The no-exclamation-mark rule (5.11) and the plain-text rule (5.10: no `<tag>`, no `#` at a line start, no `*`, `_` or backtick emphasis, no `- ` or `1. ` list marker, no `[text](url)`) are added to `checkLetterText`.
@@ -929,6 +929,7 @@ Only the owner fills this section. An agent does not write or edit it. A change 
 | 12 | README hero image | Caption under the image. Retake optional. |
 | 13 | Priya's questions | Unchanged. |
 | 14 | Recollection length limit | The code's 500 code points stays, which is inside Requirement 6.3's 1,000. |
+| 15 | Weekday rule in Requirements 6.1 to 6.3 | Removed on 2026-11-23. The rule ("no weekday other than Sunday") contradicted the approved intro lines "Saturday deliveries" (us-maya) and "a Saturday class" (us-priya). A habit on another weekday does not contradict a letter written on a Sunday, and `letterSeasonWord` already ignores weekdays. Months and seasons are still checked. |
 
 Questions 10 and 11 change what `requirements.md` says. If the owner prefers the requirements as written, the design changes back, or the requirements are updated before tasks start.
 

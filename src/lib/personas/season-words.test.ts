@@ -96,11 +96,11 @@ describe("textSeasonWord (intro lines, questions, answers, recollections, R6.1 t
   });
 
   it.each([
-    ["Monday", "I start on Monday."],
-    ["Saturday", "We ride on Saturday."],
-    ["friday", "The van comes on friday."],
-  ])("rejects a weekday other than Sunday: %s", (day, sentence) => {
-    expect(textSeasonWord(sentence)).toBe(day);
+    "I start on Monday.",
+    "We ride on Saturday.",
+    "The van comes on friday.",
+  ])("does not report a weekday: %s", (sentence) => {
+    expect(textSeasonWord(sentence)).toBeNull();
   });
 
   it.each(["spring", "Summer", "springtime", "SUMMERTIME"])(
@@ -116,7 +116,8 @@ describe("textSeasonWord (intro lines, questions, answers, recollections, R6.1 t
   });
 
   it("reports the earliest offending word", () => {
-    expect(textSeasonWord("On Monday in summer.")).toBe("Monday");
-    expect(textSeasonWord("In summer on Monday.")).toBe("summer");
+    expect(textSeasonWord("On Monday in summer.")).toBe("summer");
+    expect(textSeasonWord("In March on Monday, then summer.")).toBe("March");
+    expect(textSeasonWord("In summer, then March.")).toBe("summer");
   });
 });

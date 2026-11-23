@@ -1,4 +1,4 @@
-// Season, month and weekday word checks for persona texts (spec 18 R5.2,
+// Season and month word checks for persona texts (spec 18 R5.2,
 // R6.1 to R6.3; design.md "5. Persona_Texts and their checks").
 //
 // The persona letters are written for one Sunday in November, so their text
@@ -7,8 +7,9 @@
 // - letterSeasonWord: the letter files. No month name from January to
 //   September and no whole word spring, summer, springtime or summertime.
 // - textSeasonWord: intro lines, Priya's questions, sealed answers and
-//   recollections. No month other than November, no weekday other than
-//   Sunday, and no season word other than autumn, fall or winter.
+//   recollections. No month other than November and no season word other
+//   than autumn, fall or winter. Weekdays are not checked: a habit on another
+//   weekday does not contradict a letter written on a Sunday.
 //
 // "May" is checked only with a capital M, so the verb "may" passes and
 // "Maybe" is not a whole-word match. Every other month and season word is
@@ -30,17 +31,6 @@ export const MONTH_NAMES: readonly string[] = Object.freeze([
   "October",
   "November",
   "December",
-]);
-
-/** English weekday names, Monday first. */
-const WEEKDAY_NAMES: readonly string[] = Object.freeze([
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
 ]);
 
 /** Season words that no persona text may use. */
@@ -85,7 +75,6 @@ const LETTER_MONTHS = MONTH_NAMES.slice(0, 9).filter((name) => name !== "May");
 const TEXT_MONTHS = MONTH_NAMES.filter(
   (name) => name !== "May" && name !== "November",
 );
-const TEXT_WEEKDAYS = WEEKDAY_NAMES.filter((name) => name !== "Sunday");
 
 const LETTER_PATTERNS: readonly RegExp[] = Object.freeze([
   wordRegex(LETTER_MONTHS),
@@ -96,7 +85,6 @@ const LETTER_PATTERNS: readonly RegExp[] = Object.freeze([
 const TEXT_PATTERNS: readonly RegExp[] = Object.freeze([
   wordRegex(TEXT_MONTHS),
   MAY_RE,
-  wordRegex(TEXT_WEEKDAYS),
   wordRegex(BANNED_SEASON_WORDS),
 ]);
 
@@ -111,10 +99,9 @@ export function letterSeasonWord(text: string): string | null {
 }
 
 /**
- * The first month, weekday or season word in an intro line, question, sealed
- * answer or recollection that breaks R6.1 to R6.3: a month other than
- * November, a weekday other than Sunday, or spring, summer, springtime or
- * summertime.
+ * The first month or season word in an intro line, question, sealed answer or
+ * recollection that breaks R6.1 to R6.3: a month other than November, or
+ * spring, summer, springtime or summertime. Weekdays are not reported.
  *
  * @returns the offending word as written, or null when the text is clean
  */
