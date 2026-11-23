@@ -78,7 +78,7 @@ function problemsFor(raw: unknown): string[] {
 // --- A known-good list to mutate --------------------------------------------
 
 // Two distinct, valid 22-char base64url letter IDs (16 bytes each).
-const ID_A = "wom_GdH6gqP6AGgnyhIMgA";
+const ID_A = RETIRED_LETTER_IDS[0];
 const ID_B = "AAAAAAAAAAAAAAAAAAAAAA";
 // A valid envelope_hash: 64 lowercase hex characters (spec 13 U4.4).
 const HASH_A = "5925def5dd62f6719db9f9bbc05fbbf210eac1fdd3d4c3018b3b97cb84a4728f";

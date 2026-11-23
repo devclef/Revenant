@@ -1,9 +1,12 @@
+
+import { execFileSync } from "node:child_process";
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join, relative, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import { RETIRED_LETTER_IDS } from "../lib/personas";
 import * as brandCopy from "./brand/copy";
 import * as ceremonyCopy from "./ceremony/copy";
 import * as demoCopy from "./demo/copy";
@@ -19,11 +22,11 @@ import * as uiCopy from "./ui/copy";
 /**
  * Two guards for spec 10 group E (issue #312).
  *
- * 1. Retired persona letter IDs. The IDs listed as `retired_letter_ids` in the
- *    Persona_List (content/personas/personas.json) must not appear in any
- *    non-test file under src/ or content/, other than the Persona_List itself.
- *    The two IDs checked here are the ones named in the E1 ticket. Every ID in
- *    the list is checked, so a future retirement is covered too.
+ * 1. Retired persona letter IDs. Every ID in RETIRED_LETTER_IDS (the
+ *    `retired_letter_ids` of content/personas/personas.json) must not appear
+ *    in any tracked file, except the Persona_List itself and the specs under
+ *    .kiro/specs/. The scan reads the list from RETIRED_LETTER_IDS and the file
+ *    list from `git ls-files`. If git is unavailable the test fails.
  *
  * 2. Copy wording. Every copy module under src/components must avoid the
  *    claims that the E1 audit removed. Each pattern below matches a decision
@@ -41,23 +44,7 @@ import * as uiCopy from "./ui/copy";
 
 const PROJECT_ROOT = fileURLToPath(new URL("../../", import.meta.url));
 const PERSONA_LIST = "content/personas/personas.json";
-const SCANNED_ROOTS = ["src", "content"];
-const TEXT_EXTENSIONS = new Set([
-  ".ts",
-  ".tsx",
-  ".js",
-  ".mjs",
-  ".cjs",
-  ".json",
-  ".txt",
-  ".md",
-  ".css",
-  ".html",
-  ".svg",
-  ".yaml",
-  ".yml",
-  ".sql",
-]);
+const SPECS_DIR = ".kiro/specs/";
 
 const TEST_FILE = /\.test\.[cm]?[jt]sx?$/;
 
@@ -79,49 +66,62 @@ function walk(dir: string): string[] {
   return out;
 }
 
-function extensionOf(path: string): string {
-  const dot = path.lastIndexOf(".");
-  return dot === -1 ? "" : path.slice(dot);
+/** Tracked files from git. Throws when git is unavailable or fails. */
+function trackedFiles(): string[] {
+  const out = execFileSync("git", ["ls-files", "-z"], {
+    cwd: PROJECT_ROOT,
+    encoding: "utf8",
+    maxBuffer: 256 * 1024 * 1024,
+  });
+  return out.split("\0").filter((path) => path.length > 0);
 }
 
-function readPersonaList(): { retired: string[] } {
-  const parsed = JSON.parse(readFileSync(join(PROJECT_ROOT, PERSONA_LIST), "utf8")) as {
-    retired_letter_ids?: unknown;
-  };
-  if (!Array.isArray(parsed.retired_letter_ids)) {
-    throw new Error(`${PERSONA_LIST} has no retired_letter_ids array`);
+interface ScannedFile {
+  path: string;
+  text: string;
+}
+
+/** Each retired ID found in a file outside the exempt paths, naming the file. */
+function findRetiredIdHits(files: readonly ScannedFile[], ids: readonly string[]): string[] {
+  const hits: string[] = [];
+  for (const { path, text } of files) {
+    if (path === PERSONA_LIST || path.startsWith(SPECS_DIR)) continue;
+    for (const id of ids) {
+      if (text.includes(id)) hits.push(`${path} contains retired ID ${id}`);
+    }
   }
-  return { retired: parsed.retired_letter_ids.map(String) };
+  return hits;
 }
 
 describe("retired persona letter IDs", () => {
-  const { retired } = readPersonaList();
-
-  it("lists the two IDs the E1 ticket names", () => {
-    expect(retired).toEqual(
-      expect.arrayContaining(["ydsos6hcjdEUOs3sK42RQg", "8t6Bz4bWlaUky-byt1mzGg"]),
-    );
+  it("reads the retired IDs from RETIRED_LETTER_IDS", () => {
+    expect(RETIRED_LETTER_IDS.length).toBeGreaterThan(0);
+    expect(RETIRED_LETTER_IDS.every((id) => id.length > 0)).toBe(true);
   });
 
-  it("appears in no non-test file under src/ or content/ except the Persona_List", () => {
-    const files = SCANNED_ROOTS.flatMap((root) => walk(join(PROJECT_ROOT, root))).filter(
-      (path) =>
-        path !== PERSONA_LIST &&
-        TEXT_EXTENSIONS.has(extensionOf(path)) &&
-        !TEST_FILE.test(path),
-    );
+  it("appears in no tracked file outside the Persona_List and .kiro/specs/", () => {
+    const files = trackedFiles();
 
-    // Guard against a vacuous pass: the scan must read real source files.
+    // Guard against a vacuous pass: the scan must see the real repository.
     expect(files.length).toBeGreaterThan(100);
 
-    const hits: string[] = [];
-    for (const path of files) {
-      const text = readFileSync(join(PROJECT_ROOT, path), "utf8");
-      for (const id of retired) {
-        if (text.includes(id)) hits.push(`${path} contains retired ID ${id}`);
-      }
-    }
-    expect(hits).toEqual([]);
+    const scanned: ScannedFile[] = files.map((path) => ({
+      path,
+      text: readFileSync(join(PROJECT_ROOT, path), "utf8"),
+    }));
+    expect(findRetiredIdHits(scanned, RETIRED_LETTER_IDS)).toEqual([]);
+  });
+
+  it("fails when a retired ID is planted in a tracked file under src/", () => {
+    const planted = "src/components/planted-retired-id.ts";
+    const clean = "src/components/clean-file.ts";
+    const id = RETIRED_LETTER_IDS[0];
+    const tracked: ScannedFile[] = [
+      { path: clean, text: `export const NOTHING = "plain text";` },
+      { path: planted, text: `export const LETTER = "${id}";` },
+    ];
+    const hits = findRetiredIdHits(tracked, RETIRED_LETTER_IDS);
+    expect(hits).toEqual([`${planted} contains retired ID ${id}`]);
   });
 });
 

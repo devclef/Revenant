@@ -10,10 +10,11 @@ import rawPersonaList from "../../../content/personas/personas.json";
 
 import { isLetterId } from "../seal-format/base64url";
 
+import { RETIRED_LETTER_IDS } from "./index";
 import { parsePersonaList } from "./schema";
 
-// A valid 22-char base64url letter ID (16 bytes).
-const ID_A = "wom_GdH6gqP6AGgnyhIMgA";
+// A valid 22-char base64url letter ID (16 bytes), taken from the retired list.
+const ID_A = RETIRED_LETTER_IDS[0];
 
 /** A one-persona list whose intro_line is the given value. */
 function listWithIntro(introLine: unknown): unknown {
