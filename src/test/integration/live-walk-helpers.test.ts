@@ -1541,13 +1541,41 @@ function personaRow(key: string): PersonaDateRow {
   return row;
 }
 
+const ENGLISH_MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+/** The en-GB long date for a `YYYY-MM-DD` string, built here so the expectation is not the formatter. */
+function longDateOf(iso: string): string {
+  const [year, month, day] = iso.split("-");
+  return `${Number(day)} ${ENGLISH_MONTHS[Number(month) - 1]} ${year}`;
+}
+
+/** The "Month YYYY" form of a `YYYY-MM-DD` string. */
+function monthYearOf(iso: string): string {
+  const [year, month] = iso.split("-");
+  return `${ENGLISH_MONTHS[Number(month) - 1]} ${year}`;
+}
+
 describe("expectedPersonaDates and checkPersonaDateStrings (spec 18, 16.2)", () => {
   it("formats each walk persona's Persona_List dates with the letter-date formatters", () => {
     for (const key of WALK_PERSONA_KEYS) {
-      const expected = expectedPersonaDates(personaRow(key));
-      expect(expected.writtenAsOf).toBe("17 November 2024");
-      expect(expected.memoryMonth).toBe("November 2024");
-      expect(expected.opensOn).toBe("17 November 2026");
+      const row = personaRow(key);
+      const expected = expectedPersonaDates(row);
+      expect(expected.writtenAsOf).toBe(longDateOf(row.written_as_of));
+      expect(expected.memoryMonth).toBe(monthYearOf(row.written_as_of));
+      expect(expected.opensOn).toBe(longDateOf(row.opens_at.slice(0, 10)));
     }
   });
 
@@ -1555,12 +1583,12 @@ describe("expectedPersonaDates and checkPersonaDateStrings (spec 18, 16.2)", () 
     const expected = expectedPersonaDates(personaRow("us-maya"));
     const check = checkPersonaDateStrings(
       expected,
-      "Maya is fictional. This letter was written as of 17 November 2024. Opens 17 November 2026",
+      `Maya is fictional. This letter was written as of ${expected.writtenAsOf}. Opens ${expected.opensOn}`,
       { written: true, memory: true, opening: true },
     );
     expect(check.ok).toBe(true);
     expect(check.message).toBe(
-      'PASS us-maya shows written as of "17 November 2024", memory month "November 2024", opens on "17 November 2026"',
+      `PASS us-maya shows written as of "${expected.writtenAsOf}", memory month "${expected.memoryMonth}", opens on "${expected.opensOn}"`,
     );
   });
 
@@ -1573,14 +1601,14 @@ describe("expectedPersonaDates and checkPersonaDateStrings (spec 18, 16.2)", () 
     );
     expect(check.ok).toBe(false);
     expect(check.message).toBe(
-      'FAIL us-maya does not show written as of "17 November 2024"',
+      `FAIL us-maya does not show written as of "${expected.writtenAsOf}"`,
     );
   });
 
   it("fails when letter-date.ts cannot format a Persona_List date", () => {
     const expected = expectedPersonaDates({
       key: "broken",
-      written_as_of: "2024-11-17",
+      written_as_of: "2023-06-05",
       opens_at: "not-a-date",
     });
     const check = checkPersonaDateStrings(expected, "Opens", { opening: true });
@@ -1630,7 +1658,7 @@ describe("checkSealedForDemoLine (spec 18, 16.3)", () => {
 
 describe("findStaleWalkText and checkWalkLetterText (spec 18, 16.5)", () => {
   it("passes letter text with the new dates and new prices", () => {
-    expect(findStaleWalkText("Regular was about $3.91 a gallon, opens 17 November 2026.")).toEqual([]);
+    expect(findStaleWalkText("Regular was about $3.91 a gallon, opens 1 January 2027.")).toEqual([]);
     const check = checkWalkLetterText(
       ["Regular was about $3.91 a gallon."],
       "us-maya letter text",

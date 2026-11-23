@@ -1589,14 +1589,14 @@ export type PersonaDateRow = {
   opens_at: string;
 };
 
-/** The date strings a persona step shows, each formatted by `letter-date.ts`. */
+/** The expected en-GB long date for a Persona_Dates value (`written_as_of` or `opens_at`). */
 export type PersonaDateExpectation = {
   key: string;
-  /** "17 November 2024", from `written_as_of` (`letterDisclosure`). */
+  /** The written-as-of date, long form (`letterDisclosure`). */
   writtenAsOf: string;
-  /** "November 2024", from `written_as_of` (the memory line, fuel personas only). */
+  /** The written-as-of month and year (the memory line, fuel personas only). */
   memoryMonth: string;
-  /** "17 November 2026", from the date part of `opens_at` (`envelopeOpens`). */
+  /** The opening date, long form, from the date part of `opens_at` (`envelopeOpens`). */
   opensOn: string;
 };
 
