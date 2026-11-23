@@ -36,5 +36,6 @@ describe("break the seal columns (17 D7)", () => {
     const group = ruleBody(css, ".marksLayer [data-seal-group]");
     expect(group).toMatch(/min\(28rem,\s*40vw\)\s*\+\s*24px/);
     expect(group).toMatch(/var\(--ghost-cx\)/);
+    expect(group).toMatch(/top:\s*calc\(var\(--soil-top\)\s*\+\s*3vh/);
   });
 });
