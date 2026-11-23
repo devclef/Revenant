@@ -21,6 +21,7 @@ import type { FigureV1 } from "@/lib/seal-format";
 import { fetchEiaSeries } from "./eia";
 import type { EiaResult } from "./eia";
 import { SourceError } from "./errors";
+import { COVERAGE_LATEST_START } from "./coverage-start";
 import { fetchBulletin } from "./oil-bulletin";
 import type { BulletinKey, BulletinResult } from "./oil-bulletin";
 import {
@@ -46,24 +47,50 @@ export type { SeriesValidation } from "./validate";
 export interface PrefetchDeps {
   fetcher?: Fetcher;
   now?: () => Date;
+  /**
+   * The Persona_List's coverage needs (spec 18). Their metric ids are the
+   * Persona_Series, checked for Weekly_Gap; each need must be met by a period.
+   * Omitted or empty means no Weekly_Gap or opening coverage check runs.
+   */
+  coverage?: readonly CoverageNeed[];
 }
 
 /**
- * Which of the three run-ending checks failed (design.md "Prefetch"):
+ * Which run-ending check failed (design.md "Prefetch"):
  *
  *  - `backfill`: a fresh point was earlier than its series' latest existing
  *    period, so the whole run fails and nothing is written.
  *  - `column_letter`: a Bulletin catalogue entry's `column <LETTER> "<KEY>"`
  *    text disagreed with the letter the Adapter found the key in.
  *  - `coverage`: a series' earliest figure is later than the required date.
+ *  - `weekly_gap`: a Persona_Series has two neighbouring periods not 7 days apart.
+ *  - `opening_coverage`: a coverage need has no period of its series in its window.
+ *  - `provenance`: an added figure's unit, region, source or series_id differs from its series.
+ *  - `series_failed`: at least one series failed to download or validate, so
+ *    the run writes nothing (spec 08, R21.2).
  */
-export type PrefetchErrorKind = "backfill" | "column_letter" | "coverage";
+export type PrefetchErrorKind =
+  | "backfill"
+  | "column_letter"
+  | "coverage"
+  | "weekly_gap"
+  | "opening_coverage"
+  | "provenance"
+  | "series_failed";
+
+/** One finding a fail-closed check reported. */
+export type PrefetchFinding =
+  | WeeklyGap
+  | CoverageMiss
+  | ProvenanceMismatch
+  | FailedSeries;
 
 /**
  * A run-ending prefetch failure. `report` carries the merge {@link Report} for
- * the `backfill` and `coverage` kinds, so the script entry can still print what
+ * every kind raised after the merge, so the script entry can still print what
  * the run found before the failure line; it is `null` for `column_letter`,
- * which fails before any merge.
+ * which fails before any merge. `findings` carries every finding of the kind
+ * (empty for the kinds that carry none), never only the first.
  *
  * The message states only what happened and never says a value rose, fell,
  * improved, worsened, was corrected or revised (data-integrity.md,
@@ -72,12 +99,19 @@ export type PrefetchErrorKind = "backfill" | "column_letter" | "coverage";
 export class PrefetchError extends Error {
   readonly kind: PrefetchErrorKind;
   readonly report: Report | null;
+  readonly findings: readonly PrefetchFinding[];
 
-  constructor(kind: PrefetchErrorKind, message: string, report: Report | null) {
+  constructor(
+    kind: PrefetchErrorKind,
+    message: string,
+    report: Report | null,
+    findings: readonly PrefetchFinding[] = [],
+  ) {
     super(message);
     this.name = "PrefetchError";
     this.kind = kind;
     this.report = report;
+    this.findings = findings;
   }
 }
 
@@ -262,14 +296,6 @@ function buildFresh(
 }
 
 // --- Coverage check (R6.5) ---------------------------------------------------
-
-/**
- * The latest start the merged file may have for any series: each series' very
- * first figure must fall on or before this date, so every series reaches back
- * through the demo windows. String comparison of `YYYY-MM-DD` matches the
- * figures layer's own weekly ordering.
- */
-const COVERAGE_LATEST_START = "2023-06-07";
 
 /**
  * Check that each catalogue series' earliest figure period is on or before
@@ -470,11 +496,57 @@ export async function runPrefetch(
     );
   }
 
-  // 5. Coverage check (R6.5) for every series that did not fail this run.
+  // 5. Fail-closed checks (spec 18), after the merge and before serialising. Each
+  //    kind carries every finding of that kind. A failed download comes first,
+  //    so a persona series that failed is reported as failed and not also as a
+  //    coverage miss on its stale committed data.
   const failedIds = new Set(failed.map((f) => f.metricId));
+  if (failed.length > 0) {
+    throw new PrefetchError(
+      "series_failed",
+      `${failed.map((f) => `series ${f.metricId} reason=${f.reason}`).join("; ")}`,
+      merged.report,
+      failed,
+    );
+  }
+
+  const coverage = deps?.coverage ?? [];
+  const personaIds = [...new Set(coverage.map((need) => need.metricId))];
+  const gaps = findWeeklyGaps(merged.figures, personaIds);
+  if (gaps.length > 0) {
+    throw new PrefetchError(
+      "weekly_gap",
+      `weekly_gap: ${gaps.map((g) => `${g.metricId} ${g.before} to ${g.after}`).join("; ")}`,
+      merged.report,
+      gaps,
+    );
+  }
+
+  const misses = findCoverageMisses(merged.figures, coverage);
+  if (misses.length > 0) {
+    throw new PrefetchError(
+      "opening_coverage",
+      `opening_coverage: ${misses.map((m) => `${m.metricId} latest ${m.latest ?? "none"}`).join("; ")}`,
+      merged.report,
+      misses,
+    );
+  }
+
+  const added = merged.figures.slice(existing.length);
+  const mismatches = findProvenanceMismatches(existing, added);
+  if (mismatches.length > 0) {
+    throw new PrefetchError(
+      "provenance",
+      `provenance: ${mismatches.map((m) => `${m.metricId} ${m.period} ${m.field}`).join("; ")}`,
+      merged.report,
+      mismatches,
+    );
+  }
+
+  // 6. Coverage check (R6.5) for every series that did not fail this run.
   checkCoverage(merged.figures, merged.report, failedIds);
 
-  // 6. Serialise deterministically, then prove the text loads against the
+  // 7. Serialise deterministically, then prove the text loads against the
   //    catalogue. A FigureDataError from loadFigureFile propagates unchanged.
   const text = serialiseFigureFile(merged.figures);
   loadFigureFile(JSON.parse(text), CATALOGUE);
@@ -483,4 +555,117 @@ export async function runPrefetch(
     (id) => !failedIds.has(id),
   );
   return { text, report: merged.report, failed, succeeded, runStartedAt };
+}
+
+// --- Pure finders (spec 18-persona-dates, Prefetch_Script) -------------------
+
+/** A Weekly_Gap: two consecutive periods of one series not exactly 7 days apart. */
+export type WeeklyGap = { metricId: string; before: string; after: string };
+
+/** One series must hold a period in `[from, to]` inclusive. */
+export type CoverageNeed = { metricId: string; from: string; to: string };
+
+/** A coverage need no period of its series satisfies; `latest` is `null` when the series has no figures. */
+export type CoverageMiss = { metricId: string; latest: string | null };
+
+/** The provenance fields a figure must share with its series. */
+export type ProvenanceField = "unit" | "region" | "source" | "series_id";
+
+/** An added figure whose provenance field differs from its series. */
+export type ProvenanceMismatch = {
+  metricId: string;
+  period: string;
+  field: ProvenanceField;
+};
+
+const WEEK_MS = 7 * 86_400_000;
+
+/** A `YYYY-MM-DD` period as UTC milliseconds; a malformed period gives `NaN`. */
+function utcMs(period: string): number {
+  const [year, month, day] = period.split("-").map(Number);
+  return Date.UTC(year, month - 1, day);
+}
+
+/**
+ * Report every pair of neighbouring periods, per series in `metricIds`, that
+ * are not exactly 7 days apart. Each series is sorted by period first. A
+ * duplicate period is a gap of 0 days, so it is reported too. A series with
+ * fewer than two figures has no gaps.
+ */
+export function findWeeklyGaps(
+  figures: readonly FigureV1[],
+  metricIds: readonly string[],
+): WeeklyGap[] {
+  const gaps: WeeklyGap[] = [];
+  for (const metricId of metricIds) {
+    const periods = figures
+      .filter((fig) => fig.metric_id === metricId)
+      .map((fig) => fig.period)
+      .sort();
+    for (let i = 1; i < periods.length; i++) {
+      const before = periods[i - 1];
+      const after = periods[i];
+      if (utcMs(after) - utcMs(before) !== WEEK_MS) {
+        gaps.push({ metricId, before, after });
+      }
+    }
+  }
+  return gaps;
+}
+
+/**
+ * Report each coverage need that no period of its series lies in. A period is
+ * inside the window when `from <= period <= to`; `YYYY-MM-DD` strings compare in
+ * date order. `latest` is the series' latest period, or `null` when it has none.
+ */
+export function findCoverageMisses(
+  figures: readonly FigureV1[],
+  needs: readonly CoverageNeed[],
+): CoverageMiss[] {
+  const misses: CoverageMiss[] = [];
+  for (const need of needs) {
+    const periods = figures
+      .filter((fig) => fig.metric_id === need.metricId)
+      .map((fig) => fig.period);
+    const covered = periods.some((p) => p >= need.from && p <= need.to);
+    if (covered) continue;
+    const latest =
+      periods.length === 0
+        ? null
+        : periods.reduce((max, p) => (p > max ? p : max));
+    misses.push({ metricId: need.metricId, latest });
+  }
+  return misses;
+}
+
+/**
+ * Report each added figure whose `unit`, `region`, `source` or `series_id`
+ * differs from its series. The series reference is the existing figure with the
+ * latest period for that metric. An added figure whose metric has no existing
+ * figures has nothing to differ from, so it is not reported.
+ */
+export function findProvenanceMismatches(
+  existing: readonly FigureV1[],
+  added: readonly FigureV1[],
+): ProvenanceMismatch[] {
+  const fields: readonly ProvenanceField[] = [
+    "unit",
+    "region",
+    "source",
+    "series_id",
+  ];
+  const mismatches: ProvenanceMismatch[] = [];
+  for (const fig of added) {
+    const series = existing.filter((e) => e.metric_id === fig.metric_id);
+    if (series.length === 0) continue;
+    const reference = series.reduce((latest, e) =>
+      e.period > latest.period ? e : latest,
+    );
+    for (const field of fields) {
+      if (fig[field] !== reference[field]) {
+        mismatches.push({ metricId: fig.metric_id, period: fig.period, field });
+      }
+    }
+  }
+  return mismatches;
 }
