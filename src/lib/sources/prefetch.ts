@@ -484,3 +484,116 @@ export async function runPrefetch(
   );
   return { text, report: merged.report, failed, succeeded, runStartedAt };
 }
+
+// --- Pure finders (spec 18-persona-dates, Prefetch_Script) -------------------
+
+/** A Weekly_Gap: two consecutive periods of one series not exactly 7 days apart. */
+export type WeeklyGap = { metricId: string; before: string; after: string };
+
+/** One series must hold a period in `[from, to]` inclusive. */
+export type CoverageNeed = { metricId: string; from: string; to: string };
+
+/** A coverage need no period of its series satisfies; `latest` is `null` when the series has no figures. */
+export type CoverageMiss = { metricId: string; latest: string | null };
+
+/** The provenance fields a figure must share with its series. */
+export type ProvenanceField = "unit" | "region" | "source" | "series_id";
+
+/** An added figure whose provenance field differs from its series. */
+export type ProvenanceMismatch = {
+  metricId: string;
+  period: string;
+  field: ProvenanceField;
+};
+
+const WEEK_MS = 7 * 86_400_000;
+
+/** A `YYYY-MM-DD` period as UTC milliseconds; a malformed period gives `NaN`. */
+function utcMs(period: string): number {
+  const [year, month, day] = period.split("-").map(Number);
+  return Date.UTC(year, month - 1, day);
+}
+
+/**
+ * Report every pair of neighbouring periods, per series in `metricIds`, that
+ * are not exactly 7 days apart. Each series is sorted by period first. A
+ * duplicate period is a gap of 0 days, so it is reported too. A series with
+ * fewer than two figures has no gaps.
+ */
+export function findWeeklyGaps(
+  figures: readonly FigureV1[],
+  metricIds: readonly string[],
+): WeeklyGap[] {
+  const gaps: WeeklyGap[] = [];
+  for (const metricId of metricIds) {
+    const periods = figures
+      .filter((fig) => fig.metric_id === metricId)
+      .map((fig) => fig.period)
+      .sort();
+    for (let i = 1; i < periods.length; i++) {
+      const before = periods[i - 1];
+      const after = periods[i];
+      if (utcMs(after) - utcMs(before) !== WEEK_MS) {
+        gaps.push({ metricId, before, after });
+      }
+    }
+  }
+  return gaps;
+}
+
+/**
+ * Report each coverage need that no period of its series lies in. A period is
+ * inside the window when `from <= period <= to`; `YYYY-MM-DD` strings compare in
+ * date order. `latest` is the series' latest period, or `null` when it has none.
+ */
+export function findCoverageMisses(
+  figures: readonly FigureV1[],
+  needs: readonly CoverageNeed[],
+): CoverageMiss[] {
+  const misses: CoverageMiss[] = [];
+  for (const need of needs) {
+    const periods = figures
+      .filter((fig) => fig.metric_id === need.metricId)
+      .map((fig) => fig.period);
+    const covered = periods.some((p) => p >= need.from && p <= need.to);
+    if (covered) continue;
+    const latest =
+      periods.length === 0
+        ? null
+        : periods.reduce((max, p) => (p > max ? p : max));
+    misses.push({ metricId: need.metricId, latest });
+  }
+  return misses;
+}
+
+/**
+ * Report each added figure whose `unit`, `region`, `source` or `series_id`
+ * differs from its series. The series reference is the existing figure with the
+ * latest period for that metric. An added figure whose metric has no existing
+ * figures has nothing to differ from, so it is not reported.
+ */
+export function findProvenanceMismatches(
+  existing: readonly FigureV1[],
+  added: readonly FigureV1[],
+): ProvenanceMismatch[] {
+  const fields: readonly ProvenanceField[] = [
+    "unit",
+    "region",
+    "source",
+    "series_id",
+  ];
+  const mismatches: ProvenanceMismatch[] = [];
+  for (const fig of added) {
+    const series = existing.filter((e) => e.metric_id === fig.metric_id);
+    if (series.length === 0) continue;
+    const reference = series.reduce((latest, e) =>
+      e.period > latest.period ? e : latest,
+    );
+    for (const field of fields) {
+      if (fig[field] !== reference[field]) {
+        mismatches.push({ metricId: fig.metric_id, period: fig.period, field });
+      }
+    }
+  }
+  return mismatches;
+}

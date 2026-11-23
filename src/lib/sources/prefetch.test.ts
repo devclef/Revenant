@@ -28,6 +28,7 @@ import { dirname, join } from "node:path";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { CATALOGUE, FigureDataError, loadFigureFile } from "@/lib/figures";
+import type { FigureV1 } from "@/lib/seal-format";
 
 import {
   BULLETIN_PAGE,
@@ -35,7 +36,13 @@ import {
   type BulletinKey,
 } from "./oil-bulletin";
 import { formatReportLine, type Report } from "./refresh";
-import { PrefetchError, runPrefetch } from "./prefetch";
+import {
+  PrefetchError,
+  findCoverageMisses,
+  findProvenanceMismatches,
+  findWeeklyGaps,
+  runPrefetch,
+} from "./prefetch";
 import type { FetchResult, Fetcher } from "./types";
 import {
   buildXlsx,
@@ -672,5 +679,145 @@ describe("recorded workbook URL identity", () => {
     expect(new URL(RESOLVED_FILE_URL).searchParams.get("filename")).toBe(
       BULLETIN_FILE_NAME,
     );
+  });
+});
+
+// --- Pure finders (spec 18, tasks 2.1, 2.3 and 2.7 examples) -----------------
+//
+// Every figure below is a FIXTURE: its source and series id start with FIXTURE
+// and its value is a placeholder. None of these numbers is a real figure.
+
+const FIXTURE_SOURCE = "FIXTURE publisher";
+const FIXTURE_SERIES = "FIXTURE-SERIES";
+
+function fixtureFigure(
+  metricId: string,
+  period: string,
+  overrides: Partial<
+    Pick<FigureV1, "unit" | "region" | "source" | "series_id">
+  > = {},
+): FigureV1 {
+  return {
+    kind: "official",
+    metric_id: metricId,
+    value: "1.000",
+    unit: "FIXTURE unit",
+    region: "FIXTURE region",
+    period,
+    source: FIXTURE_SOURCE,
+    series_id: FIXTURE_SERIES,
+    source_url: "https://energy.ec.europa.eu/fixture",
+    ...overrides,
+  } as FigureV1;
+}
+
+describe("findWeeklyGaps", () => {
+  it("reports nothing for a gap-free run of Mondays", () => {
+    const figures = [
+      fixtureFigure(PETROL, "2024-11-04"),
+      fixtureFigure(PETROL, "2024-11-11"),
+      fixtureFigure(PETROL, "2024-11-18"),
+    ];
+    expect(findWeeklyGaps(figures, [PETROL])).toEqual([]);
+  });
+
+  it("reports the neighbouring pair that skips a week", () => {
+    const figures = [
+      fixtureFigure(PETROL, "2024-11-04"),
+      fixtureFigure(PETROL, "2024-11-18"),
+    ];
+    expect(findWeeklyGaps(figures, [PETROL])).toEqual([
+      { metricId: PETROL, before: "2024-11-04", after: "2024-11-18" },
+    ]);
+  });
+
+  it("sorts by period before comparing neighbours", () => {
+    const figures = [
+      fixtureFigure(PETROL, "2024-11-18"),
+      fixtureFigure(PETROL, "2024-11-04"),
+      fixtureFigure(PETROL, "2024-11-11"),
+    ];
+    expect(findWeeklyGaps(figures, [PETROL])).toEqual([]);
+  });
+
+  it("reports a duplicate period as a gap of 0 days", () => {
+    const figures = [
+      fixtureFigure(PETROL, "2024-11-04"),
+      fixtureFigure(PETROL, "2024-11-04"),
+    ];
+    expect(findWeeklyGaps(figures, [PETROL])).toEqual([
+      { metricId: PETROL, before: "2024-11-04", after: "2024-11-04" },
+    ]);
+  });
+
+  it("checks only the series it is given", () => {
+    const figures = [
+      fixtureFigure(PETROL, "2024-11-04"),
+      fixtureFigure(PETROL, "2024-11-18"),
+      fixtureFigure(EU_DIESEL, "2024-11-04"),
+      fixtureFigure(EU_DIESEL, "2024-11-11"),
+    ];
+    expect(findWeeklyGaps(figures, [EU_DIESEL])).toEqual([]);
+  });
+});
+
+describe("findCoverageMisses", () => {
+  const need = { metricId: PETROL, from: "2024-11-11", to: "2024-11-17" };
+
+  it("reports nothing when a period lies inside the window, both ends inclusive", () => {
+    expect(
+      findCoverageMisses([fixtureFigure(PETROL, "2024-11-11")], [need]),
+    ).toEqual([]);
+    expect(
+      findCoverageMisses([fixtureFigure(PETROL, "2024-11-17")], [need]),
+    ).toEqual([]);
+  });
+
+  it("reports the series with its latest period when none lies in the window", () => {
+    expect(
+      findCoverageMisses([fixtureFigure(PETROL, "2024-11-04")], [need]),
+    ).toEqual([{ metricId: PETROL, latest: "2024-11-04" }]);
+  });
+
+  it("reports latest as null when the series has no figures", () => {
+    expect(findCoverageMisses([], [need])).toEqual([
+      { metricId: PETROL, latest: null },
+    ]);
+  });
+});
+
+describe("findProvenanceMismatches", () => {
+  it("reports nothing when the added figure matches its series on every field", () => {
+    const existing = [fixtureFigure(PETROL, "2024-11-04")];
+    const added = [fixtureFigure(PETROL, "2024-11-11")];
+    expect(findProvenanceMismatches(existing, added)).toEqual([]);
+  });
+
+  it("reports each differing field with the metric and period of the added figure", () => {
+    const existing = [fixtureFigure(PETROL, "2024-11-04")];
+    const added = [
+      fixtureFigure(PETROL, "2024-11-11", {
+        unit: "FIXTURE other unit",
+        series_id: "FIXTURE-OTHER",
+      }),
+    ];
+    expect(findProvenanceMismatches(existing, added)).toEqual([
+      { metricId: PETROL, period: "2024-11-11", field: "unit" },
+      { metricId: PETROL, period: "2024-11-11", field: "series_id" },
+    ]);
+  });
+
+  it("compares against the series' latest existing figure", () => {
+    const existing = [
+      fixtureFigure(PETROL, "2024-11-04", { region: "FIXTURE old region" }),
+      fixtureFigure(PETROL, "2024-11-11"),
+    ];
+    const added = [fixtureFigure(PETROL, "2024-11-18")];
+    expect(findProvenanceMismatches(existing, added)).toEqual([]);
+  });
+
+  it("reports nothing for a metric the existing figures do not hold", () => {
+    const added = [fixtureFigure(EU_DIESEL, "2024-11-11")];
+    expect(findProvenanceMismatches([], added)).toEqual([]);
   });
 });
