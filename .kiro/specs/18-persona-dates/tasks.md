@@ -164,7 +164,7 @@ No task below starts until that PR is merged. The other open questions keep the 
   - Copy evidence: tone-check for `reveal/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 5. Retired ids are read from the list
+- [x] 5. Retired ids are read from the list
   - Agent: `frontend-dev` · Depends on: 4 · Estimated size: S, ~250 changed lines (tests)
   - Scope: `src/components/retired-ids-scan.test.ts`, the six test files `git grep wom_GdH6gqP6AGgnyhIMgA` finds (including `src/lib/personas/intro-line.test.ts` and `src/components/reveal/OpeningFlow.live.test.tsx`).
   - Design sections: "10. Retired ids".
