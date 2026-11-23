@@ -135,10 +135,11 @@ describe("sample values stay out of tests and baseline", () => {
 
   it.each(SAMPLE_FREE_FILES)("%s holds no quoted sample value", (file) => {
     const text = readFileSync(resolve(REPO_ROOT, file), "utf8");
-    const found = values.filter((value) => {
-      const escaped = value.replace(/\./g, "\\.");
-      return new RegExp(`["'\`]${escaped}["'\`]`).test(text);
-    });
+    const found = values.filter((value) =>
+      ['"', "'", "`"].some((quote) =>
+        text.includes(`${quote}${value}${quote}`),
+      ),
+    );
     expect(found).toEqual([]);
   });
 });
