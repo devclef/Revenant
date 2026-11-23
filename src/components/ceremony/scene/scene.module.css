@@ -852,11 +852,19 @@
     /* The group sits left of the Ghost body, but never left of the column's
        left edge (frame left plus side pad), so it stays inside the viewport at
        1280 and 1366 wide, where the Ghost body edge alone would put it below 0. */
+    /* D7 (spec 17, LC1): the group sits 24 px right of the marks card's right
+       edge, so it stays within 64 px of the card. The card's right edge is the
+       column's left edge plus its width (min(28rem, 40vw), the marks cap). The
+       Ghost-based left still caps the group, so it never moves right of the
+       old position. */
     left: calc(
       max(
         var(--frame-l) + var(--pad),
-        var(--ghost-cx) - var(--ghost-w) / 2 + var(--ghost-w) * 0.12 - var(--seal-group-gap) -
-          14rem
+        min(
+          var(--ghost-cx) - var(--ghost-w) / 2 + var(--ghost-w) * 0.12 - var(--seal-group-gap) -
+            14rem,
+          var(--frame-l) + var(--pad) + min(28rem, 40vw) + 24px
+        )
       )
     );
     top: calc(var(--soil-top) + 3vh - var(--ghost-w) * 0.54621);

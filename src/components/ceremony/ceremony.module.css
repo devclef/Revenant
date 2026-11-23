@@ -240,3 +240,15 @@ h2[tabindex="-1"]:focus,
     width: 100%;
   }
 }
+
+/*
+ * Clearance under the Step_Track (CeremonyRoot.tsx, StepTrack). At 900 px and
+ * wider the first line of a Stage (the "A letter from" line on Remember, the
+ * "You remembered, just now" heading on Break the seal) sits at least 16 px
+ * below the track. Below 900 px the spacing stays as it was.
+ */
+@media (min-width: 900px) {
+  .ceremony [data-step-track] + [data-stage-content] {
+    padding-block-start: 1rem;
+  }
+}

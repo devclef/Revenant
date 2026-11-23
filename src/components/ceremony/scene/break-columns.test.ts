@@ -1,9 +1,9 @@
 // Feature: 17-screen-layout-fixes (task 9.1, D7)
 //
 // The marks column reserves the Soil_Band clearance at 900 px and wider. Below
-// 900 px the rules keep their previous values. The Seal_Group keeps its
-// Ghost-based position: that positioning fixed the Ghost covering the marks
-// text and the Break the seal control (#515), so it is not removed here.
+// 900 px the rules keep their previous values. The Seal_Group sits 24 px right
+// of the marks card (17 D7), capped by the Ghost-based position from #515 so it
+// never moves right of its old place.
 
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const css = readFileSync(join(here, "scene.module.css"), "utf8");
+const ceremonyCss = readFileSync(join(here, "..", "ceremony.module.css"), "utf8");
 
 /** The declarations of the first rule whose selector matches `selector`. */
 function ruleBody(source: string, selector: string): string {
@@ -32,8 +33,16 @@ describe("break the seal columns (17 D7)", () => {
     expect(css).toMatch(/@media \(max-width: 899\.98px\) \{\s*\.heldEnvelope \{\s*top: 47%;/);
   });
 
-  it("keeps the Seal_Group positioned from the Ghost (#515)", () => {
+  it("keeps 16 px clearance under the step track at 900 px and wider", () => {
+    expect(ceremonyCss).toMatch(
+      /@media \(min-width: 900px\) \{\s*\.ceremony \[data-step-track\] \+ \[data-stage-content\] \{\s*padding-block-start: 1rem;/,
+    );
+  });
+
+  it("anchors the Seal_Group to the marks card, 24 px to its right (17 D7)", () => {
     const group = ruleBody(css, ".marksLayer [data-seal-group]");
+    expect(group).toMatch(/min\(28rem,\s*40vw\)\s*\+\s*24px/);
     expect(group).toMatch(/var\(--ghost-cx\)/);
+    expect(group).toMatch(/top:\s*calc\(var\(--soil-top\)\s*\+\s*3vh/);
   });
 });
