@@ -25,6 +25,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import type { Persona } from "@/lib/personas";
 import type { CatalogueSeries, FigureFile, LoadedFigures } from "@/lib/figures";
 import { loadFigureFile } from "@/lib/figures";
+import { expectedPrices } from "@/lib/personas/price-lines";
 import {
   canonicalize,
   encodeBase64url,
@@ -97,7 +98,7 @@ const textPersona: Persona = {
   letter_path: "letters/fake-text.txt",
 };
 
-const FUEL_TEXT =
+const FUEL_BODY =
   "A fake letter about the car and the week ahead. I kept the receipts.";
 const TEXT_TEXT = "A fake letter about a quiet Sunday. I hope you remember it.";
 
@@ -165,6 +166,13 @@ const fakeFile: FigureFile = {
 };
 
 const FIGURES: LoadedFigures = loadFigureFile(fakeFile, []);
+
+// The fuel letter states each tracked "then" price as "about $<value>", the
+// Letter_Price_Line form the pre-seal text check requires (checkPersonaTexts).
+const FUEL_TEXT = [
+  FUEL_BODY,
+  ...expectedPrices(fuelPersona, FIGURES).map((p) => `about $${p}`),
+].join(" ");
 
 // ---------------------------------------------------------------------------
 // Deterministic randomness and in-memory deps
