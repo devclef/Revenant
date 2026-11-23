@@ -511,7 +511,7 @@ export async function runPrefetch(
   if (failed.length > 0) {
     throw new PrefetchError(
       "series_failed",
-      `series_failed: ${failed.map((f) => `${f.metricId} (${f.reason})`).join("; ")}`,
+      `${failed.map((f) => `series ${f.metricId} reason=${f.reason}`).join("; ")}`,
       merged.report,
       failed,
     );

@@ -509,7 +509,7 @@ describe("main — no printed or error line carries a banned direction word", ()
 // --- A failed series: exit 1, the others stored, status kept (spec 08, R21.2) --
 
 describe("main — one series fails", () => {
-  it("stores the other series, writes the status, prints one failure line per failed series and exits 1", async () => {
+  it("writes nothing, prints one failure line for the failed series and exits 1", async () => {
     const store = new Map<string, string>();
     const capture = newCapture();
     await main(
@@ -524,11 +524,9 @@ describe("main — one series fails", () => {
     expect(capture.errors).toEqual([
       "prefetch failed: series us-gasoline-regular reason=source http_status",
     ]);
-    // The figure file and the status file are both written.
-    expect(store.has(TARGET)).toBe(true);
-    const status = JSON.parse(store.get(STATUS) ?? "{}") as Record<string, string>;
-    expect(status["us-gasoline-regular"]).toBeUndefined();
-    expect(status["us-diesel"]).toBeDefined();
-    expect(status["eu-petrol-euro95"]).toBeDefined();
+    // A failed series ends the run with no write (spec 08, R21.2): neither the
+    // figure file nor the status file is written.
+    expect(store.has(TARGET)).toBe(false);
+    expect(store.has(STATUS)).toBe(false);
   });
 });
