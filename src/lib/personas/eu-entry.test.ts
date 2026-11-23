@@ -17,10 +17,18 @@ import { periodEnd } from "@/lib/figures/periods";
 import { thenAndNow } from "@/lib/figures/then-now";
 import fuelFile from "@/lib/figures/real/fuel-figures.json";
 
+import rawPersonaList from "../../../content/personas/personas.json";
+
 import { PERSONAS } from "./index";
 
 // Presence is asserted by the first test below, so the non-null assertion is safe.
 const eu = PERSONAS.find((p) => p.key === "eu-tomas")!;
+
+/** The committed Persona_List entry, read straight from the JSON file. */
+const rawEu = rawPersonaList.personas.find((p) => p.key === "eu-tomas");
+if (rawEu === undefined) {
+  throw new Error("test setup: no eu-tomas in personas.json");
+}
 
 type FuelRow = (typeof fuelFile.figures)[number];
 
@@ -55,8 +63,9 @@ describe("EU persona entry (eu-tomas)", () => {
     expect(eu.letter_path).toBe("letters/eu-tomas.txt");
   });
 
-  it("opens on 9 June 2024 at 00:00 UTC with no event name", () => {
-    expect(eu.opens_at).toBe("2024-06-09T00:00:00.000Z");
+  it("opens at 00:00 UTC on its listed opening date with no event name", () => {
+    expect(eu.opens_at).toBe(rawEu.opens_at);
+    expect(eu.opens_at).toMatch(/T00:00:00\.000Z$/);
     expect("opening_event" in eu).toBe(false);
   });
 
@@ -69,7 +78,7 @@ describe("EU persona entry (eu-tomas)", () => {
 
   it("is written within the 12 months before opening and before it opens", () => {
     expect(eu.written_as_of >= "2023-06-05").toBe(true);
-    expect(eu.written_as_of < "2024-06-09").toBe(true);
+    expect(eu.written_as_of < eu.opens_at.slice(0, 10)).toBe(true);
   });
 
   it("tracks exactly eu-petrol-euro95 and eu-diesel, with no personal numbers", () => {

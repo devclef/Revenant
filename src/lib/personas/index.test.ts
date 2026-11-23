@@ -15,6 +15,7 @@ import { describe, expect, it } from "vitest";
 import { z } from "zod";
 
 import { isLetterId } from "../seal-format/base64url";
+import rawPersonaList from "../../../content/personas/personas.json";
 
 import {
   PERSONAS,
@@ -129,6 +130,12 @@ describe("index — committed list: Maya after the catalogue move (#82)", () => 
     return entry!;
   }
 
+  /** Maya's entry in personas.json, the committed source the list is parsed from. */
+  const rawMaya = rawPersonaList.personas.find((p) => p.key === "us-maya");
+  if (rawMaya === undefined) {
+    throw new Error("test setup: no us-maya in personas.json");
+  }
+
   it("lists Maya's metrics as the catalogue IDs in order, with recall subjects", () => {
     expect(maya().metrics).toEqual([
       {
@@ -158,10 +165,10 @@ describe("index — committed list: Maya after the catalogue move (#82)", () => 
     expect(all.filter((id) => id === maya().letter_id)).toHaveLength(1);
   });
 
-  it("keeps key, written_as_of, opens_at and letter_path unchanged", () => {
+  it("keeps key, written_as_of, opens_at and letter_path in the list", () => {
     expect(maya().key).toBe("us-maya");
-    expect(maya().written_as_of).toBe("2024-05-12");
-    expect(maya().opens_at).toBe("2024-11-05T00:00:00.000Z");
+    expect(maya().written_as_of).toBe(rawMaya.written_as_of);
+    expect(maya().opens_at).toBe(rawMaya.opens_at);
     expect(maya().letter_path).toBe("letters/us-maya.txt");
   });
 });

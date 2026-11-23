@@ -11,7 +11,7 @@
 import { calendarDayIn, formatCalendarDate } from "@/components/ui/letter-date";
 
 /**
- * "17 November 2026": the calendar day of the ISO instant in `timeZone`, in
+ * "19 November 2026": the calendar day of the ISO instant in `timeZone`, in
  * the en-GB long form. Returns "" when the instant is not a date.
  */
 export function formatWrittenOn(sealedAtIso: string, timeZone: string): string {

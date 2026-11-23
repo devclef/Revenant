@@ -35,6 +35,16 @@ import { figuresResponseFrom } from "./figures-stub";
 const STAGES = [1, 2, 3] as const;
 const PERSONA_NOW = figuresResponseFrom(DEMO_FIGURES);
 
+/** The opening instant of one persona, read from the Persona_List. */
+function personaOpensAt(key: string): string {
+  const persona = PERSONAS.find((p) => p.key === key);
+  if (persona === undefined) {
+    throw new Error(`test setup: no ${key} in the Persona_List`);
+  }
+  return persona.opens_at;
+}
+const US_OPENS_AT = personaOpensAt("us-maya");
+
 const RECORD: RecallRecordV2 = { version: 2, answers: [] };
 
 function metricFor(metricId: string): MetricDefinitionV1 {
@@ -88,7 +98,7 @@ function openedNoFigures(letterId: string): Opened {
     letterId,
     header: {
       sealedAt: "2024-10-01T00:00:00.000Z",
-      opensAt: "2024-11-05T00:00:00.000Z",
+      opensAt: US_OPENS_AT,
     },
     openingKey: {} as unknown as CryptoKey,
     envelopeHash:
@@ -189,7 +199,7 @@ describe("the Remembered_Phrase on a real letter and a live letter (spec 16, tas
         opened: openedWithFigures(
           "letter-live",
           "2024-10-01",
-          "2024-11-05T00:00:00.000Z",
+          US_OPENS_AT,
           FIGURE_PERSONAS[0]?.metrics.map((m) => m.metric_id) ?? [],
         ),
         personaNow: PERSONA_NOW,
@@ -206,7 +216,7 @@ describe("the Text_Persona Priya on every reveal stage (spec 16, task 6)", () =>
     letterId: "letter-priya",
     header: {
       sealedAt: "2024-10-01T00:00:00.000Z",
-      opensAt: "2024-11-05T00:00:00.000Z",
+      opensAt: personaOpensAt("us-priya"),
     },
     openingKey: {} as unknown as CryptoKey,
     envelopeHash:

@@ -41,9 +41,9 @@ describe("formatWrittenOn (Property 6)", () => {
   });
 
   it("uses the reader's zone at the day boundary", () => {
-    // 23:30 UTC on 16 Nov is already 17 Nov in Stockholm (UTC+1 in November).
-    const iso = "2026-11-16T23:30:00.000Z";
-    expect(formatWrittenOn(iso, "UTC")).toBe("16 November 2026");
-    expect(formatWrittenOn(iso, "Europe/Stockholm")).toBe("17 November 2026");
+    // 23:30 UTC on 18 Nov is already 19 Nov in Stockholm (UTC+1 in November).
+    const iso = "2026-11-18T23:30:00.000Z";
+    expect(formatWrittenOn(iso, "UTC")).toBe("18 November 2026");
+    expect(formatWrittenOn(iso, "Europe/Stockholm")).toBe("19 November 2026");
   });
 });

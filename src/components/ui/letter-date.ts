@@ -79,7 +79,7 @@ export function formatLetterDate(instant: string, zone: LetterZone): string {
 
 /**
  * Format a plain calendar date given as `YYYY-MM-DD`
- * (e.g. `persona.written_as_of`) as "12 May 2024".
+ * (e.g. `persona.written_as_of`) as its en-GB day date, e.g. "30 October 2026".
  *
  * The date is read at UTC midnight so the day never shifts under the viewer's
  * timezone.
@@ -99,7 +99,7 @@ const UTC_MONTH_FORMATTER = new Intl.DateTimeFormat("en-GB", {
 
 /**
  * Format a plain calendar date given as `YYYY-MM-DD` as its month and year in
- * en-GB, e.g. "May 2024" for "2024-05-12" (spec 10 C4.2, the Memory_Line). Read
+ * en-GB, e.g. "October 2026" for "2026-10-30" (spec 10 C4.2, the Memory_Line). Read
  * at UTC midnight, so the month never shifts under the viewer's timezone.
  * Returns "" when the input is not a date.
  */
@@ -113,7 +113,7 @@ export function formatCalendarMonth(date: string): string {
 }
 
 /**
- * "Tuesday, 17 November 2026" for an instant, as the calendar day it falls on in
+ * "Thursday, 19 November 2026" for an instant, as the calendar day it falls on in
  * `timeZone` (spec 14, W4.2). The comma after the weekday is ours, not the
  * locale's, so the shape is exact. Returns "" for an invalid instant.
  */

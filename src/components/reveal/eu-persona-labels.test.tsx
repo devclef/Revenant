@@ -15,6 +15,7 @@ import {
   formatLetterDate,
 } from "@/components/ui/letter-date";
 import { formatPeriod } from "@/lib/figures";
+import { PERSONAS } from "@/lib/personas";
 import type { FigureV1, PayloadV1 } from "@/lib/seal-format";
 
 /** One figure's Then or Now row, drawn the way FiguresThenNow draws it. */
@@ -48,8 +49,13 @@ function FigureLine({
  */
 
 const PERSONA_NAME = "Tomás";
-const WRITTEN_AS_OF = "2024-05-12";
-const OPENS_AT_DATE = "2024-06-09";
+const EU_PERSONA = PERSONAS.find((p) => p.key === "eu-tomas");
+if (EU_PERSONA === undefined) {
+  throw new Error("test setup: no eu-tomas persona in the Persona_List");
+}
+const WRITTEN_AS_OF = EU_PERSONA.written_as_of;
+const OPENS_AT = EU_PERSONA.opens_at;
+const OPENS_AT_DATE = OPENS_AT.slice(0, 10);
 // The header's seal instant is the real seal run time, not a persona date.
 const SEALED_AT = "2026-11-06T10:00:00.000Z";
 
@@ -95,7 +101,7 @@ const PAYLOAD = {
 
 const OPENED: Opened = {
   letterId: "eu-tomas-test",
-  header: { sealedAt: SEALED_AT, opensAt: `${OPENS_AT_DATE}T00:00:00.000Z` },
+  header: { sealedAt: SEALED_AT, opensAt: OPENS_AT },
   openingKey: {} as unknown as CryptoKey,
   envelopeHash:
     "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef",

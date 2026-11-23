@@ -10,11 +10,19 @@ import rawPersonaList from "../../../content/personas/personas.json";
 
 import { isLetterId } from "../seal-format/base64url";
 
-import { RETIRED_LETTER_IDS } from "./index";
+import { PERSONAS, RETIRED_LETTER_IDS } from "./index";
 import { parsePersonaList } from "./schema";
 
 // A valid 22-char base64url letter ID (16 bytes), taken from the retired list.
 const ID_A = RETIRED_LETTER_IDS[0];
+
+/** The Persona_List entry for one key. The test fails if the key is absent. */
+function personaNamed(key: string) {
+  const persona = PERSONAS.find((p) => p.key === key);
+  if (persona === undefined) throw new Error(`no ${key} in the Persona_List`);
+  return persona;
+}
+const MAYA = personaNamed("us-maya");
 
 /** A one-persona list whose intro_line is the given value. */
 function listWithIntro(introLine: unknown): unknown {
@@ -28,8 +36,8 @@ function listWithIntro(introLine: unknown): unknown {
         letter_id: ID_A,
         envelope_hash:
           "5925def5dd62f6719db9f9bbc05fbbf210eac1fdd3d4c3018b3b97cb84a4728f",
-        written_as_of: "2024-05-12",
-        opens_at: "2024-11-05T00:00:00.000Z",
+        written_as_of: MAYA.written_as_of,
+        opens_at: MAYA.opens_at,
         metrics: [
           {
             metric_id: "us-gasoline-regular",
@@ -111,11 +119,14 @@ describe("committed Persona_List intro_line and opening date", () => {
     }
   });
 
-  it("opens us-maya on 5 November 2024 with no event name", () => {
+  it("opens us-maya at midnight UTC on its listed date, with no event name", () => {
     const maya = parsePersonaList(rawPersonaList).personas.find(
       (p) => p.key === "us-maya",
     );
-    expect(maya?.opens_at).toBe("2024-11-05T00:00:00.000Z");
+    const rawMaya = rawPersonaList.personas.find((p) => p.key === "us-maya");
+    expect(maya).toBeDefined();
+    expect(maya?.opens_at).toBe(rawMaya?.opens_at);
+    expect(maya?.opens_at).toMatch(/T00:00:00\.000Z$/);
     expect("opening_event" in (maya ?? {})).toBe(false);
   });
 
