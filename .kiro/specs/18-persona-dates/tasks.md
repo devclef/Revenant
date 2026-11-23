@@ -214,7 +214,7 @@ No task below starts until that PR is merged. The other open questions keep the 
   - Earlier-spec tests changed or retired: `at-opening.test.ts`; name its reason.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 8. The Sealing_Script checks every Persona_Text before it seals
+- [x] 8. The Sealing_Script checks every Persona_Text before it seals
   - Agent: `crypto-dev` · Depends on: 1 · Estimated size: S, ~300 changed lines
   - Scope: `scripts/seal-personas.ts`, `scripts/seal-personas-core.ts`, and their tests.
   - Design sections: "9. Reseal", "Error Handling", Testing Strategy ("Seal payload").
