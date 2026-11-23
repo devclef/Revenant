@@ -249,7 +249,7 @@ No task below starts until that PR is merged. The other open questions keep the 
   - The owner closes this issue. Tasks 11 to 17 start only after it is closed.
   - _Requirements: 4.6, 4.9, 4.10, 6.11, 11.3_
 
-- [ ] 11. PR A: dates, ids, texts, samples, copy-test records and the Date_Guard
+- [x] 11. PR A: dates, ids, texts, samples, copy-test records and the Date_Guard
   - Agent: `frontend-dev` (steering commit by the owner, task 11.7) · Depends on: 10 · Estimated size: L, ~1,500 changed lines plus content
   - Scope: `content/personas/personas.json`, `content/personas/letters/us-maya.txt`, `eu-tomas.txt`, `us-priya.txt`, `sealed-answers.json`, `answers.json`, `samples.json`, `us-copy-test.md`, `eu-copy-test.md`, `us-priya-copy-test.md`, `src/lib/personas/samples.test.ts`, `persona-texts.test.ts`, `letter-prices.test.ts`, `price-lines.test.ts`, `src/test/persona-dates-guard.test.ts` (new), `src/test/persona-dates-guard.property.test.ts` (new), `src/components/reveal/copy.ts` (only if the owner changed the sealed-for-demo wording at the gate), and the tests the move outdates.
   - Design sections: "1. Persona_List", "5. Persona_Texts and their checks", "6. Sample answers", "7. Copy-test records", "8. Date_Guard", "Data Models", Properties 12 and 13.
