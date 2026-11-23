@@ -320,12 +320,7 @@ export async function main(deps: MainDeps = defaultDeps()): Promise<void> {
       for (const finding of err.findings) {
         deps.log(formatFinding(err.kind, finding));
       }
-      const hasFindings = err.findings.length > 0;
-      deps.errorLog(
-        hasFindings
-          ? `prefetch failed: ${err.kind}`
-          : `prefetch failed: ${err.message}`,
-      );
+      deps.errorLog(`prefetch failed: ${err.kind}`);
     } else {
       const detail = err instanceof Error ? err.message : String(err);
       deps.errorLog(`prefetch failed: ${detail}`);
