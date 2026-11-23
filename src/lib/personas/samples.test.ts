@@ -40,7 +40,9 @@ function questions() {
         DEMO_FIGURES,
       );
       if (!result.then.found) {
-        throw new Error(`no then figure for ${metric.metric_id}`);
+        throw new Error(
+          `no then figure for ${metric.metric_id} (${persona.key}, written_as_of ${persona.written_as_of}): ${result.then.reason}`,
+        );
       }
       return {
         persona,
