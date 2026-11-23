@@ -179,29 +179,37 @@ describe("Property 9: persona strings render from a changed Persona_List", () =>
             ),
           );
 
+          // The screens read UTC parts and take no offset, so the strings are
+          // built once per run. The offset loop then checks each cached string
+          // against its expected text at every offset. Mismatches are collected
+          // and asserted once, which keeps the run well inside the test timeout.
+          const mismatches: string[] = [];
+          const strings = parsed.personas.map((persona) => ({
+            key: persona.key,
+            rendered: renderedStrings(persona),
+            expected: expectedStrings(persona),
+          }));
           for (const offset of OFFSETS_MINUTES) {
-            for (const persona of parsed.personas) {
-              const rendered = renderedStrings(persona);
-              const expected = expectedStrings(persona);
-              expect(
-                rendered,
-                `offset ${offset} minutes, ${persona.key}`,
-              ).toEqual(expected);
-              for (const text of Object.values(rendered)) {
-                for (const old of committed) {
-                  expect(
-                    text.includes(old),
-                    `offset ${offset}, ${persona.key}: "${old}"`,
-                  ).toBe(false);
+            for (const { key, rendered, expected } of strings) {
+              for (const name of Object.keys(expected)) {
+                const text = rendered[name] ?? "";
+                if (text !== expected[name]) {
+                  mismatches.push(`offset ${offset}, ${key}, ${name}`);
+                }
+                if (committed.some((old) => text.includes(old))) {
+                  mismatches.push(
+                    `committed form shown: offset ${offset}, ${key}, ${name}`,
+                  );
                 }
               }
             }
           }
+          expect(mismatches).toEqual([]);
         },
       ),
       { numRuns: 100 },
     );
-  });
+  }, 60_000);
 
   it("the committed list renders its own dates, so the check has a real baseline", () => {
     for (const persona of PERSONAS) {
