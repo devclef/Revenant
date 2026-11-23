@@ -33,9 +33,82 @@ import { constants as fsConstants } from "node:fs";
 import { readFile, writeFile, rename, access } from "node:fs/promises";
 import path from "node:path";
 
-import { runPrefetch, PrefetchError, parseFetchStatus, updateFetchStatus } from "@/lib/sources/prefetch";
+import { PERSONAS } from "@/lib/personas";
+import type { Persona } from "@/lib/personas";
+import {
+  runPrefetch,
+  PrefetchError,
+  parseFetchStatus,
+  updateFetchStatus,
+  type CoverageMiss,
+  type CoverageNeed,
+  type FailedSeries,
+  type PrefetchErrorKind,
+  type PrefetchFinding,
+  type PrefetchOutcome,
+  type ProvenanceMismatch,
+  type WeeklyGap,
+} from "@/lib/sources/prefetch";
 import { formatReportLine, type Report } from "@/lib/sources/refresh";
 import type { Fetcher } from "@/lib/sources/types";
+
+/** Days before a persona's opening date that its coverage window starts on (spec 18). */
+const COVERAGE_WINDOW_DAYS = 6;
+
+/** The day count from `date` (`YYYY-MM-DD`) shifted by `days`, as `YYYY-MM-DD` in UTC. */
+function shiftDate(date: string, days: number): string {
+  const [year, month, day] = date.split("-").map(Number);
+  const ms = Date.UTC(year, month - 1, day) + days * 86_400_000;
+  return new Date(ms).toISOString().slice(0, 10);
+}
+
+/**
+ * The coverage needs of the Persona_List (spec 18, design.md section 3). For
+ * each persona metric, the window is the date part of its `opens_at` and the
+ * six days before it. The dates come from the list, never from a literal here.
+ */
+export function buildCoverage(personas: readonly Persona[]): CoverageNeed[] {
+  const needs: CoverageNeed[] = [];
+  for (const persona of personas) {
+    const to = persona.opens_at.slice(0, 10);
+    const from = shiftDate(to, -COVERAGE_WINDOW_DAYS);
+    for (const metric of persona.metrics) {
+      needs.push({ metricId: metric.metric_id, from, to });
+    }
+  }
+  return needs;
+}
+
+/**
+ * The printed line for one finding, in the `formatReportLine` style of the
+ * design. Each kind has its own shape; the fields are series ids, periods,
+ * field names and fixed reason tokens only, never a secret or a URL.
+ */
+export function formatFinding(
+  kind: PrefetchErrorKind,
+  finding: PrefetchFinding,
+): string {
+  switch (kind) {
+    case "weekly_gap": {
+      const gap = finding as WeeklyGap;
+      return `weekly-gap ${gap.metricId} ${gap.before} ${gap.after}`;
+    }
+    case "opening_coverage": {
+      const miss = finding as CoverageMiss;
+      return `opening-coverage ${miss.metricId} latest ${miss.latest ?? "none"}`;
+    }
+    case "provenance": {
+      const mismatch = finding as ProvenanceMismatch;
+      return `provenance ${mismatch.metricId} ${mismatch.period} ${mismatch.field}`;
+    }
+    case "series_failed": {
+      const failed = finding as FailedSeries;
+      return `series-failed ${failed.metricId} reason=${failed.reason}`;
+    }
+    default:
+      throw new Error(`no finding line for kind ${kind}`);
+  }
+}
 
 /**
  * The fetch status file (spec 08, R21.2): one run start time per series that
@@ -81,6 +154,19 @@ export interface MainDeps {
    * with no network (R2.6, R8.1).
    */
   fetcher?: Fetcher;
+  /**
+   * The prefetch run. Omitted in production (`runPrefetch`); a test passes a
+   * stub to raise a chosen finding kind without needing the data to produce it.
+   */
+  run?: (
+    existingJson: unknown | null,
+    deps: { now: () => Date; fetcher?: Fetcher; coverage?: readonly CoverageNeed[] },
+  ) => Promise<PrefetchOutcome>;
+  /**
+   * The coverage needs passed to the run. Omitted in production, where they come
+   * from the Persona_List through {@link buildCoverage}.
+   */
+  coverage?: readonly CoverageNeed[];
 }
 
 /** The real dependencies: node:fs promises, `process` and the system clock. */
@@ -182,12 +268,11 @@ async function replaceFile(
 
 /**
  * Run the prefetch entry with the given dependencies (design.md "Script
- * entry"). It reads the Real_File and the fetch status if they exist, calls
- * `runPrefetch`, writes both files, prints the Report and exits 1 when any
- * series failed, else 0. On a thrown error it prints one
- * `prefetch failed: <detail>` line (after any report lines a `backfill` or
- * `coverage` {@link PrefetchError} carries) and exits 1 without touching either
- * target. It never throws out of itself: every path ends in `exit`.
+ * entry"). It reads the Real_File and the fetch status if they exist, runs the
+ * fail-closed prefetch with the Persona_List coverage, writes both files only
+ * when every check passes, prints the Report and exits 0. A failed check prints
+ * its finding lines, then one `prefetch failed:` line, exits 1 and leaves both
+ * targets untouched. It never throws out of itself: every path ends in `exit`.
  */
 export async function main(deps: MainDeps = defaultDeps()): Promise<void> {
   try {
@@ -200,9 +285,12 @@ export async function main(deps: MainDeps = defaultDeps()): Promise<void> {
       : null;
     const existingStatus = statusJson === null ? {} : parseFetchStatus(statusJson);
 
-    const outcome = await runPrefetch(existingJson, {
+    const run = deps.run ?? runPrefetch;
+    const coverage = deps.coverage ?? buildCoverage(PERSONAS);
+    const outcome = await run(existingJson, {
       now: deps.now,
       fetcher: deps.fetcher,
+      coverage,
     });
     const { text, report } = outcome;
     const statusText = updateFetchStatus(
@@ -217,28 +305,31 @@ export async function main(deps: MainDeps = defaultDeps()): Promise<void> {
     await replaceFile(deps, STATUS_PATH, statusText);
 
     printReport(report, deps.log);
-
-    // Any failed series makes the run fail (R21.2), even though the other series
-    // were stored. One line per failed series names it and why.
-    for (const failure of outcome.failed) {
-      deps.errorLog(
-        `prefetch failed: series ${failure.metricId} reason=${failure.reason}`,
-      );
-    }
-    deps.exit(outcome.failed.length > 0 ? 1 : 0);
+    deps.exit(0);
   } catch (err) {
-    // For a backfill or coverage failure, print the report it carries first
-    // (every backfill line visible), then the single failure line.
-    if (
-      err instanceof PrefetchError &&
-      err.report !== null &&
-      (err.kind === "backfill" || err.kind === "coverage")
-    ) {
-      printReport(err.report, deps.log);
+    // A backfill or coverage failure prints the report it carries first, so every
+    // backfill line is visible. Each finding of the other fail-closed kinds prints
+    // one line. Then exactly one failure line names the kind.
+    if (err instanceof PrefetchError) {
+      if (
+        err.report !== null &&
+        (err.kind === "backfill" || err.kind === "coverage")
+      ) {
+        printReport(err.report, deps.log);
+      }
+      for (const finding of err.findings) {
+        deps.log(formatFinding(err.kind, finding));
+      }
+      const hasFindings = err.findings.length > 0;
+      deps.errorLog(
+        hasFindings
+          ? `prefetch failed: ${err.kind}`
+          : `prefetch failed: ${err.message}`,
+      );
+    } else {
+      const detail = err instanceof Error ? err.message : String(err);
+      deps.errorLog(`prefetch failed: ${detail}`);
     }
-
-    const detail = err instanceof Error ? err.message : String(err);
-    deps.errorLog(`prefetch failed: ${detail}`);
     deps.exit(1);
   }
 }

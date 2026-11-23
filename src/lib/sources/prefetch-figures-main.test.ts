@@ -211,6 +211,9 @@ function memoryDeps(options: {
     errorLog: (line) => capture.errors.push(line),
     now: fixedNow,
     fetcher,
+    // The persona coverage is its own rule, tested in prefetch-main.test.ts. These
+    // cases exercise the write, report and failure paths, so they run with none.
+    coverage: options.coverage ?? [],
   };
 }
 
@@ -521,9 +524,10 @@ describe("main — one series fails", () => {
     );
 
     expect(capture.exitCode).toBe(1);
-    expect(capture.errors).toEqual([
-      "prefetch failed: series us-gasoline-regular reason=source http_status",
+    expect(capture.logs).toEqual([
+      "series-failed us-gasoline-regular reason=source http_status",
     ]);
+    expect(capture.errors).toEqual(["prefetch failed: series_failed"]);
     // A failed series ends the run with no write (spec 08, R21.2): neither the
     // figure file nor the status file is written.
     expect(store.has(TARGET)).toBe(false);

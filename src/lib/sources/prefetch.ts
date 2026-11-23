@@ -21,6 +21,7 @@ import type { FigureV1 } from "@/lib/seal-format";
 import { fetchEiaSeries } from "./eia";
 import type { EiaResult } from "./eia";
 import { SourceError } from "./errors";
+import { COVERAGE_LATEST_START } from "./coverage-start";
 import { fetchBulletin } from "./oil-bulletin";
 import type { BulletinKey, BulletinResult } from "./oil-bulletin";
 import {
@@ -295,14 +296,6 @@ function buildFresh(
 }
 
 // --- Coverage check (R6.5) ---------------------------------------------------
-
-/**
- * The latest start the merged file may have for any series: each series' very
- * first figure must fall on or before this date, so every series reaches back
- * through the demo windows. String comparison of `YYYY-MM-DD` matches the
- * figures layer's own weekly ordering.
- */
-const COVERAGE_LATEST_START = "2023-06-07";
 
 /**
  * Check that each catalogue series' earliest figure period is on or before
