@@ -200,7 +200,7 @@ No task below starts until that PR is merged. The other open questions keep the 
   - Earlier-spec tests changed or retired: every R and F→ file above; name each with its reason.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 7. `at-opening` reads the list
+- [x] 7. `at-opening` reads the list
   - Agent: `data-dev` · Depends on: 3 · Estimated size: S, ~150 changed lines
   - Scope: `src/lib/figures/at-opening.test.ts`, the comment lines of `src/lib/figures/at-opening.ts`.
   - Design sections: "8. Date_Guard" (per-file rows for `at-opening`).
