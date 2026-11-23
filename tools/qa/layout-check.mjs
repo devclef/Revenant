@@ -201,7 +201,9 @@
 //                            at 390x844 and 360x640: every visible text element meets WCAG 2.2 AA
 //                            contrast on the surface it is painted on (4.5:1, or 3:1 for large text).
 //                            Read on Press the seal, Remember (after question 1), Break the seal
-//                            (the marks step), Receipts (the close step) and the landing. Always a
+//                            (the marks step), Receipts (the close step) and the landing, and on Wait
+//                            at 1440x900 and 390x844. A walk that does not reach Press the seal or Wait
+//                            is itself a CT1 BLOCKER, never a note, so an unreachable page cannot pass. Always a
 //                            BLOCKER, with no --require. Spec 17 requirements 2.3, 2.7 and 2.10.
 //
 // GO1   ghost-overlap         (GitHub issue #583, tools/qa/layout-rules-17.mjs) at 390x844 on the Remember
@@ -209,12 +211,17 @@
 //                            visible control rect overlaps the Ghost's drawn box. No opaque-panel exemption.
 //                            Each overlap is a BLOCKER that names the text or control, the layer and the px overlap.
 //                            It replaces GT1 and the G1 opaque-ancestor skip on that step.
-//                            GO1 also tests every text line against the [data-soil-strip] rect (soil-overlap).
+//                            GO1 also tests every text line against the [data-soil-strip] rect, read again
+//                            after the scroll: an overlap fails (soil-overlap), and so does a line closer
+//                            than 8 px, touching included (soil-clearance).
 //                            On Break the seal (Maya's walk, marks stage) at 1440x900 and 390x844.
 //
 // LC1   column-coherence      (GitHub issue #585, tools/qa/layout-rules-17.mjs) on Break the seal at 1440x900
-//                            (Maya's walk): the Seal group starts at most 64 px right of the figures column,
-//                            and its top lies inside the column's top and bottom. Any failure is a BLOCKER.
+//                            (the persona walks): the Seal group starts at most 64 px right of the column
+//                            beside it ([data-figures-column], else the marks card, which is what Break the
+//                            seal shows), and its top lies inside the column's top and bottom. On Break the
+//                            seal and on Remember, the first text line under [data-step-track] starts at
+//                            least 16 px below the track (track-gap). Any failure is a BLOCKER.
 //
 // CW1   content-column-width  (GitHub issue #581, tools/qa/layout-rules-17.mjs)
 //                            at 390x844 and 360x640: the [data-content-column] content box is at least
@@ -351,6 +358,7 @@ import {
   frFailures,
   goFailures,
   lcFailures,
+  lcTrackFailures,
   readCt1Failures,
   readFr1Reading,
   readGo1Soil,
@@ -1833,11 +1841,12 @@ const GO1_READ = () => {
 // scroll back. Every overlap is a BLOCKER. A missing Ghost box fails too (goFailures says so).
 async function checkGo1(page, ctx, label) {
   const startY = await page.evaluate(() => window.scrollY);
-  const soil = await readGo1Soil(page);
-  const readings = [["at the start", { ...(await page.evaluate(GO1_READ)), soil }]];
+  // The Soil strip is read with each text reading: its rect is in viewport coordinates, so the
+  // start-of-step rect does not match the text after the scroll.
+  const readings = [["at the start", { ...(await page.evaluate(GO1_READ)), soil: await readGo1Soil(page) }]];
   await page.evaluate(() => window.scrollTo({ top: document.documentElement.scrollHeight, behavior: "instant" }));
   await sleep(250);
-  readings.push(["scrolled to the bottom", { ...(await page.evaluate(GO1_READ)), soil }]);
+  readings.push(["scrolled to the bottom", { ...(await page.evaluate(GO1_READ)), soil: await readGo1Soil(page) }]);
   await page.evaluate((y) => window.scrollTo({ top: y, behavior: "instant" }), startY);
   let count = 0;
   for (const [where, reading] of readings) {
@@ -1855,12 +1864,19 @@ async function checkGo1Break(page, ctx) {
   await checkGo1(page, ctx, "Break the seal");
 }
 
-// LC1 on Break the seal at LC1_SIZES: the Seal group sits beside the figures column.
-async function checkLc1(page, ctx) {
+// LC1 on Break the seal at LC1_SIZES: the Seal group sits beside the column (the marks card on
+// this step), and the first line under the step track is clear of it. With { trackOnly } (the
+// Remember step) only the step track gap is read.
+async function checkLc1(page, ctx, { trackOnly = false, label = "Break the seal" } = {}) {
   if (!LC1_SIZES.includes(ctx.size)) return;
-  const failures = lcFailures(await readLc1Reading(page));
-  for (const f of failures) ctx.rep.add("blocker", "LC1", f.message, f.check);
-  if (failures.length === 0) ctx.rep.add("ok", "LC1", `Seal group beside the figures column at ${ctx.size}`);
+  const reading = await readLc1Reading(page);
+  const failures = [...(trackOnly ? [] : lcFailures(reading)), ...lcTrackFailures(reading)];
+  for (const f of failures) ctx.rep.add("blocker", "LC1", `${f.message} (${label})`, f.check);
+  if (failures.length === 0) {
+    ctx.rep.add("ok", "LC1", trackOnly
+      ? `first line clear of the step track at ${ctx.size} (${label})`
+      : `Seal group beside the column and the first line clear of the step track at ${ctx.size} (${label})`);
+  }
 }
 
 // The Ghost check on a Remember step: GO1 at GO1_SIZES, the G1 body check everywhere else.
@@ -1881,12 +1897,20 @@ async function checkPressContrast(context, ctx) {
       ctx.rep.add("note", "CT1", `/demo/live answered HTTP ${res?.status() ?? "none"}; Press the seal not read for contrast`);
       return;
     }
-    if (await present(page.locator("textarea"))) await page.locator("textarea").first().fill(P1_LIVE_TEXT).catch(() => {});
-    const next = page.getByRole("button", { name: "Next", exact: true }).first();
-    for (let i = 0; i < P1_MAX_NEXT_PRESSES; i += 1) {
-      if ((await page.locator('[data-live-step="seal"]').count()) > 0) break;
-      if (await present(next)) await next.click({ timeout: 10_000 }).catch(() => {});
-      await sleep(800);
+    // The same walk the Wait rules use: letter, answers, then the fold button. Without Press the
+    // seal on screen CT1 read the Write step and passed, as it did on main, so not reaching it is
+    // a blocker for every rule this page owns at this size.
+    try {
+      await s16LiveToSeal(page, ctx.base, { figure: false });
+    } catch (error) {
+      const where = await page.locator("[data-live-step]").first().getAttribute("data-live-step", { timeout: 1000 }).catch(() => null);
+      const why = `${String(error?.message ?? error).split("\n")[0]} (data-live-step=${where ?? "none"})`;
+      if (CT1_SIZES.includes(ctx.size)) ctx.rep.add("blocker", "CT1", `CT1 Press the seal was not reached at ${ctx.size}, so its text was not measured: ${why}. Want: [data-seal-step] on screen.`, "text-contrast");
+      if (SF1_TT1_SIZES.includes(ctx.size)) {
+        ctx.rep.add("blocker", "SF1", `SF1 Press the seal was not reached at ${ctx.size}: ${why}.`, "panel-fills-surface");
+        ctx.rep.add("blocker", "TT1", `TT1 Press the seal was not reached at ${ctx.size}: ${why}.`, "wax-target-size");
+      }
+      return;
     }
     await checkCt1(page, ctx);
     await checkCw1(page, ctx);
@@ -1927,13 +1951,25 @@ async function checkWaitRules(browser, ctx) {
       await cdp.send("WebAuthn.addVirtualAuthenticator", {
         options: { protocol: "ctap2", transport: "internal", hasResidentKey: true, hasUserVerification: true, isUserVerified: true, hasPrf: true, automaticPresenceSimulation: true },
       });
-      await s16LiveToSeal(page, ctx.base, { figure: false });
-      await page.locator('[data-backup-card="skip"]').first().click({ timeout: WAIT_MS });
-      await sleep(300);
-      await page.getByRole("button", { name: "Press the seal", exact: true }).click({ timeout: WAIT_MS });
-      await page.locator('[data-press-mode="setting"]').waitFor({ state: "visible", timeout: S16_STEP_MS });
-      await page.locator('[data-press-mode="setting"]').click({ timeout: WAIT_MS });
-      await page.locator('[data-live-step="sealed"]').waitFor({ state: "visible", timeout: S16_STEP_MS });
+      // A walk that does not reach Wait fails all three rules. As a guard() note it hid the
+      // D2 regression: the gate's server had no RP_ID, /demo/live showed its unavailable state,
+      // and CT1, UQ1 and SF1 on Wait never measured anything.
+      try {
+        await s16LiveToSeal(page, ctx.base, { figure: false });
+        await page.locator('[data-backup-card="skip"]').first().click({ timeout: WAIT_MS });
+        await sleep(300);
+        await page.getByRole("button", { name: "Press the seal", exact: true }).click({ timeout: WAIT_MS });
+        await page.locator('[data-press-mode="setting"]').waitFor({ state: "visible", timeout: S16_STEP_MS });
+        await page.locator('[data-press-mode="setting"]').click({ timeout: WAIT_MS });
+        await page.locator('[data-live-step="sealed"]').waitFor({ state: "visible", timeout: S16_STEP_MS });
+      } catch (error) {
+        const where = await page.locator("[data-live-step]").first().getAttribute("data-live-step", { timeout: 1000 }).catch(() => null);
+        const why = `${String(error?.message ?? error).split("\n")[0]} (data-live-step=${where ?? "none"})`;
+        for (const [id, check] of [["UQ1", "unique-demo-label-and-seal"], ["CT1", "text-contrast"], ["SF1", "panel-fills-surface"]]) {
+          ctx.rep.add("blocker", id, `${id} the Wait step was not reached at ${ctx.size}, so nothing was measured: ${why}. Want: the virtual-passkey walk reaches [data-live-step="sealed"].`, check);
+        }
+        return;
+      }
       await sleep(800);
 
       const uq = uqFailures(await readUq1Reading(page));
@@ -3143,6 +3179,7 @@ async function personaWalk(page, ctx, p, via) {
   ]));
   await guard(ctx, "F2", () => checkSoil(page, ctx));
   await guard(ctx, "G1", () => checkRememberGhost(page, ctx, "recall"));
+  await guard(ctx, "LC1", () => checkLc1(page, ctx, { trackOnly: true, label: "Remember" }));
   await guard(ctx, "G2", () => checkGhostCentre(page, ctx, "recall"));
   await guard(ctx, "NT1", () => checkNeutrality(page, ctx));
   await guard(ctx, "ST1", () => checkStepIndicator(page, ctx, "recall"));
@@ -3606,7 +3643,8 @@ const LS1_READ = () => {
 // control or of one of its descendants. Largest means the largest visible leaf (or the
 // press itself), so a wrapper box never counts.
 const P1_READ = () => {
-  const step = document.querySelector('[data-live-step="seal"]');
+  // data-live-step holds the seal state tag (editing, sealed...), never "seal"; the step is [data-seal-step].
+  const step = document.querySelector("[data-seal-step]");
   if (!step) return { missing: true };
   const press = step.querySelector("button[data-seal-pose]");
   if (!press) return { missing: true };
@@ -3652,7 +3690,7 @@ const P1_READ = () => {
 
 // P1: the Warning_Text box on the seal step, or null when it is not there.
 const P1_WARNING = (start) => {
-  const p = [...document.querySelectorAll('[data-live-step="seal"] p')].find((el) => (el.textContent || "").trim().startsWith(start));
+  const p = [...document.querySelectorAll("[data-seal-step] p")].find((el) => (el.textContent || "").trim().startsWith(start));
   if (!p) return null;
   const r = p.getBoundingClientRect();
   return { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
@@ -3697,12 +3735,18 @@ async function checkPressEnvelope(context, ctx) {
     }
     if (await present(page.locator("textarea"))) await page.locator("textarea").first().fill(P1_LIVE_TEXT).catch(() => {});
     await guard(ctx, "W", () => checkWriteRow(page, ctx));
+    // The question answers must be filled before the Write step lets the letter fold.
+    const answers = page.locator("[data-answer-input]");
+    const texts = fillAnswerTexts(await answers.count());
+    for (let i = 0; i < texts.length; i += 1) await answers.nth(i).fill(texts[i]).catch(() => {});
     const next = page.getByRole("button", { name: "Next", exact: true }).first();
-    // W8 runs after every Next press, so each step change gets its own heading row (W8.2).
+    // W8 runs after every step press, so each step change gets its own heading row (W8.2).
     let measured = false;
     for (let i = 0; i < P1_MAX_NEXT_PRESSES; i += 1) {
-      if ((await page.locator('[data-live-step="seal"]').count()) > 0) break;
-      if (await present(next)) await next.click({ timeout: 10_000 }).catch(() => {});
+      if ((await page.locator("[data-seal-step]").count()) > 0) break;
+      // Spec 14 replaced Next on the Write desk with the fold button; press it when there is no Next.
+      if (await present(next, 500)) await next.click({ timeout: 10_000 }).catch(() => {});
+      else await clickIfPresent(page.locator("[data-fold-button]").first());
       await sleep(800);
       await guard(ctx, "W8", () => checkHeadingOffset(page, ctx, `Next press ${i + 1}`));
       measured = true;

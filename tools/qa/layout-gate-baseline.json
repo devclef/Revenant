@@ -1,8 +1,8 @@
 {
   "format": "revenant-layout-blockers/1",
-  "createdAt": "2026-11-23T06:46:43.324Z",
+  "createdAt": "2026-11-23T10:44:33.872Z",
   "complete": true,
-  "note": "Blockers main had when the layout gate landed (issue #590). The gate fails only on blockers not listed here. Remove entries as they are fixed.",
+  "note": "Blockers main had when the layout gate landed (issue #590), refreshed when the gate first reached /demo/live with a passkey and GO1 and LC1 were tightened. Desktop (1440x900) persona entries are tracked by the desktop Break the seal and Remember layout issue; 390x844 entries by the deferred phone layout issue. The gate fails only on blockers not listed here. Remove entries as they are fixed.",
   "run": {
     "url": "-",
     "sizes": ["1440x900", "390x844"],
@@ -11,7 +11,7 @@
     "required": []
   },
   "counts": {
-    "blocker": 175
+    "blocker": 214
   },
   "blockers": [
     {
@@ -25,6 +25,15 @@
     },
     {
       "level": "blocker",
+      "check": "LC1",
+      "name": "track-gap",
+      "size": "1440x900",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "LC1 text \"A letter from Maya\" starts 1 px below the step track, want at least 16 px. (Remember)"
+    },
+    {
+      "level": "blocker",
       "check": "GO1",
       "name": "ghost-overlap",
       "size": "1440x900",
@@ -57,7 +66,7 @@
       "size": "1440x900",
       "persona": "us-maya",
       "stage": "marks",
-      "detail": "GO1 text \"3.79 USD per gallon\" overlaps the Soil strip by 166.3 px wide and 17.1 px tall. (Break the seal, at the start)"
+      "detail": "GO1 text \"3.79 USD per gallon\" overlaps the Soil strip by 166.3 px wide and 17.1 px tall, want at least 8 px clear. (Break the seal, at the start)"
     },
     {
       "level": "blocker",
@@ -88,12 +97,39 @@
     },
     {
       "level": "blocker",
-      "check": "LC1",
-      "name": "column-coherence",
+      "check": "GO1",
+      "name": "soil-overlap",
       "size": "1440x900",
       "persona": "us-maya",
       "stage": "marks",
-      "detail": "LC1 no [data-figures-column] or [data-seal-group] rect to measure."
+      "detail": "GO1 text \"3.79 USD per gallon\" overlaps the Soil strip by 166.3 px wide and 17.1 px tall, want at least 8 px clear. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "LC1",
+      "name": "column-gap",
+      "size": "1440x900",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "LC1 Seal group starts 153.8 px right of the column [data-card=\"marks\"], want at most 64 px. (Break the seal)"
+    },
+    {
+      "level": "blocker",
+      "check": "LC1",
+      "name": "track-gap",
+      "size": "1440x900",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "LC1 text \"You remembered, just now\" starts -1 px below the step track, want at least 16 px. (Break the seal)"
+    },
+    {
+      "level": "blocker",
+      "check": "LC1",
+      "name": "track-gap",
+      "size": "1440x900",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "LC1 text \"A letter from Tomás\" starts 1 px below the step track, want at least 16 px. (Remember)"
     },
     {
       "level": "blocker",
@@ -129,7 +165,7 @@
       "size": "1440x900",
       "persona": "eu-tomas",
       "stage": "eu-tomas/marks",
-      "detail": "GO1 text \"1.62 EUR per litre\" overlaps the Soil strip by 145.9 px wide and 17.1 px tall. (Break the seal, at the start)"
+      "detail": "GO1 text \"1.62 EUR per litre\" overlaps the Soil strip by 145.9 px wide and 17.1 px tall, want at least 8 px clear. (Break the seal, at the start)"
     },
     {
       "level": "blocker",
@@ -160,12 +196,30 @@
     },
     {
       "level": "blocker",
-      "check": "LC1",
-      "name": "column-coherence",
+      "check": "GO1",
+      "name": "soil-overlap",
       "size": "1440x900",
       "persona": "eu-tomas",
       "stage": "eu-tomas/marks",
-      "detail": "LC1 no [data-figures-column] or [data-seal-group] rect to measure."
+      "detail": "GO1 text \"1.62 EUR per litre\" overlaps the Soil strip by 145.9 px wide and 17.1 px tall, want at least 8 px clear. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "LC1",
+      "name": "column-gap",
+      "size": "1440x900",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "LC1 Seal group starts 153.8 px right of the column [data-card=\"marks\"], want at most 64 px. (Break the seal)"
+    },
+    {
+      "level": "blocker",
+      "check": "LC1",
+      "name": "track-gap",
+      "size": "1440x900",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "LC1 text \"You remembered, just now\" starts -1 px below the step track, want at least 16 px. (Break the seal)"
     },
     {
       "level": "blocker",
@@ -175,24 +229,6 @@
       "persona": "eu-tomas",
       "stage": "eu-tomas/close",
       "detail": "Script-focused h2 (tabindex -1) draws an outline: style solid, width 2px, colour rgb(245, 243, 255)."
-    },
-    {
-      "level": "blocker",
-      "check": "SF1",
-      "name": "panel-fills-surface",
-      "size": "1440x900",
-      "persona": "-",
-      "stage": "fastest path",
-      "detail": "SF1 no [data-seal-step] panel, surface or cream row to measure."
-    },
-    {
-      "level": "blocker",
-      "check": "TT1",
-      "name": "wax-target-size",
-      "size": "1440x900",
-      "persona": "-",
-      "stage": "fastest path",
-      "detail": "TT1 no [data-press-target] found to measure."
     },
     {
       "level": "blocker",
@@ -282,7 +318,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"0\" overlaps the Soil strip by 7.6 px wide and 15 px tall. (recall, at the start)"
+      "detail": "GO1 text \"0\" overlaps the Soil strip by 7.6 px wide and 15 px tall, want at least 8 px clear. (recall, at the start)"
     },
     {
       "level": "blocker",
@@ -291,7 +327,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"2\" overlaps the Soil strip by 7.3 px wide and 15 px tall. (recall, at the start)"
+      "detail": "GO1 text \"2\" overlaps the Soil strip by 7.3 px wide and 15 px tall, want at least 8 px clear. (recall, at the start)"
     },
     {
       "level": "blocker",
@@ -300,7 +336,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"4\" overlaps the Soil strip by 7.8 px wide and 15 px tall. (recall, at the start)"
+      "detail": "GO1 text \"4\" overlaps the Soil strip by 7.8 px wide and 15 px tall, want at least 8 px clear. (recall, at the start)"
     },
     {
       "level": "blocker",
@@ -309,7 +345,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"6\" overlaps the Soil strip by 7.5 px wide and 15 px tall. (recall, at the start)"
+      "detail": "GO1 text \"6\" overlaps the Soil strip by 7.5 px wide and 15 px tall, want at least 8 px clear. (recall, at the start)"
     },
     {
       "level": "blocker",
@@ -318,7 +354,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"8\" overlaps the Soil strip by 7.4 px wide and 15 px tall. (recall, at the start)"
+      "detail": "GO1 text \"8\" overlaps the Soil strip by 7.4 px wide and 15 px tall, want at least 8 px clear. (recall, at the start)"
     },
     {
       "level": "blocker",
@@ -327,7 +363,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"10\" overlaps the Soil strip by 12.5 px wide and 15 px tall. (recall, at the start)"
+      "detail": "GO1 text \"10\" overlaps the Soil strip by 12.5 px wide and 15 px tall, want at least 8 px clear. (recall, at the start)"
     },
     {
       "level": "blocker",
@@ -336,7 +372,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"Look closer at the mark\" overlaps the Soil strip by 191.8 px wide and 20 px tall. (recall, at the start)"
+      "detail": "GO1 text \"Look closer at the mark\" overlaps the Soil strip by 191.8 px wide and 20 px tall, want at least 8 px clear. (recall, at the start)"
     },
     {
       "level": "blocker",
@@ -404,6 +440,69 @@
     {
       "level": "blocker",
       "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"0\" overlaps the Soil strip by 7.6 px wide and 15 px tall, want at least 8 px clear. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"2\" overlaps the Soil strip by 7.3 px wide and 15 px tall, want at least 8 px clear. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"4\" overlaps the Soil strip by 7.8 px wide and 15 px tall, want at least 8 px clear. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"6\" overlaps the Soil strip by 7.5 px wide and 15 px tall, want at least 8 px clear. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"8\" overlaps the Soil strip by 7.4 px wide and 15 px tall, want at least 8 px clear. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"10\" overlaps the Soil strip by 12.5 px wide and 15 px tall, want at least 8 px clear. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Look closer at the mark\" overlaps the Soil strip by 191.8 px wide and 20 px tall, want at least 8 px clear. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
       "name": "ghost-overlap",
       "size": "390x844",
       "persona": "us-maya",
@@ -435,25 +534,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "button \"Look closer at the mark\" needs 4.5:1 contrast: contrast 1.00:1 is below 4.5:1"
-    },
-    {
-      "level": "blocker",
-      "check": "CT1",
-      "name": "text-contrast",
-      "size": "390x844",
-      "persona": "us-maya",
-      "stage": "recall",
       "detail": "label \"No answer\" needs 4.5:1 contrast: contrast 2.09:1 is below 4.5:1"
-    },
-    {
-      "level": "blocker",
-      "check": "CT1",
-      "name": "text-contrast",
-      "size": "390x844",
-      "persona": "us-maya",
-      "stage": "recall",
-      "detail": "button \"Previous question\" needs 4.5:1 contrast: contrast 1.00:1 is below 4.5:1"
     },
     {
       "level": "blocker",
@@ -543,7 +624,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"The seal is intact. Nothing here has cha\" overlaps the Ghost by 126.2 px wide and 3.9 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"The seal is intact. Nothing here has cha\" overlaps the Ghost by 126.2 px wide and 3.8 px tall. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -552,7 +633,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"A sample answer is filled in. Change it\" overlaps the Soil strip by 182.9 px wide and 2.6 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"A sample answer is filled in. Change it\" overlaps the Soil strip by 182.9 px wide and 2.6 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -561,7 +642,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"3.79\" overlaps the Soil strip by 37.6 px wide and 20 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"3.79\" overlaps the Soil strip by 37.6 px wide and 20 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -570,7 +651,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"USD per gallon\" overlaps the Soil strip by 98.9 px wide and 17 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"USD per gallon\" overlaps the Soil strip by 98.9 px wide and 17 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -579,7 +660,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"0\" overlaps the Soil strip by 7.6 px wide and 0.5 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"0\" overlaps the Soil strip by 7.6 px wide and 0.5 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -588,7 +669,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"2\" overlaps the Soil strip by 7.3 px wide and 0.5 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"2\" overlaps the Soil strip by 7.3 px wide and 0.5 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -597,7 +678,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"4\" overlaps the Soil strip by 7.8 px wide and 0.5 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"4\" overlaps the Soil strip by 7.8 px wide and 0.5 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -606,7 +687,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"6\" overlaps the Soil strip by 7.5 px wide and 0.5 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"6\" overlaps the Soil strip by 7.5 px wide and 0.5 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -615,7 +696,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"8\" overlaps the Soil strip by 7.4 px wide and 0.5 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"8\" overlaps the Soil strip by 7.4 px wide and 0.5 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -624,7 +705,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "recall",
-      "detail": "GO1 text \"10\" overlaps the Soil strip by 12.5 px wide and 0.5 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"10\" overlaps the Soil strip by 12.5 px wide and 0.5 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -710,6 +791,87 @@
     {
       "level": "blocker",
       "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"A sample answer is filled in. Change it\" overlaps the Soil strip by 182.9 px wide and 2.6 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"3.79\" overlaps the Soil strip by 37.6 px wide and 20 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"USD per gallon\" overlaps the Soil strip by 98.9 px wide and 17 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"0\" overlaps the Soil strip by 7.6 px wide and 0.5 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"2\" overlaps the Soil strip by 7.3 px wide and 0.5 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"4\" overlaps the Soil strip by 7.8 px wide and 0.5 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"6\" overlaps the Soil strip by 7.5 px wide and 0.5 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"8\" overlaps the Soil strip by 7.4 px wide and 0.5 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"10\" overlaps the Soil strip by 12.5 px wide and 0.5 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
       "name": "ghost-overlap",
       "size": "390x844",
       "persona": "us-maya",
@@ -777,7 +939,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "marks",
-      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Soil strip by 309.8 px wide and 10 px tall. (Break the seal, at the start)"
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Soil strip by 309.8 px wide and 10 px tall, want at least 8 px clear. (Break the seal, at the start)"
     },
     {
       "level": "blocker",
@@ -786,7 +948,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "marks",
-      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Soil strip by 139.8 px wide and 20 px tall. (Break the seal, at the start)"
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Soil strip by 139.8 px wide and 20 px tall, want at least 8 px clear. (Break the seal, at the start)"
     },
     {
       "level": "blocker",
@@ -795,7 +957,7 @@
       "size": "390x844",
       "persona": "us-maya",
       "stage": "marks",
-      "detail": "GO1 text \"Break the seal\" overlaps the Soil strip by 116 px wide and 3.4 px tall. (Break the seal, at the start)"
+      "detail": "GO1 text \"Break the seal\" overlaps the Soil strip by 116 px wide and 3.4 px tall, want at least 8 px clear. (Break the seal, at the start)"
     },
     {
       "level": "blocker",
@@ -841,6 +1003,33 @@
       "persona": "us-maya",
       "stage": "marks",
       "detail": "GO1 text \"You remembered, just now\" overlaps the Ghost by 118.5 px wide and 16.3 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Soil strip by 309.8 px wide and 10 px tall, want at least 8 px clear. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Soil strip by 139.8 px wide and 20 px tall, want at least 8 px clear. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Break the seal\" overlaps the Soil strip by 116 px wide and 3.4 px tall, want at least 8 px clear. (Break the seal, scrolled to the bottom)"
     },
     {
       "level": "blocker",
@@ -948,7 +1137,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"0\" overlaps the Soil strip by 7.6 px wide and 15 px tall. (recall, at the start)"
+      "detail": "GO1 text \"0\" overlaps the Soil strip by 7.6 px wide and 15 px tall, want at least 8 px clear. (recall, at the start)"
     },
     {
       "level": "blocker",
@@ -957,7 +1146,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"0.5\" overlaps the Soil strip by 17.7 px wide and 15 px tall. (recall, at the start)"
+      "detail": "GO1 text \"0.5\" overlaps the Soil strip by 17.7 px wide and 15 px tall, want at least 8 px clear. (recall, at the start)"
     },
     {
       "level": "blocker",
@@ -966,7 +1155,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"1\" overlaps the Soil strip by 4.9 px wide and 15 px tall. (recall, at the start)"
+      "detail": "GO1 text \"1\" overlaps the Soil strip by 4.9 px wide and 15 px tall, want at least 8 px clear. (recall, at the start)"
     },
     {
       "level": "blocker",
@@ -975,7 +1164,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"1.5\" overlaps the Soil strip by 15.3 px wide and 15 px tall. (recall, at the start)"
+      "detail": "GO1 text \"1.5\" overlaps the Soil strip by 15.3 px wide and 15 px tall, want at least 8 px clear. (recall, at the start)"
     },
     {
       "level": "blocker",
@@ -984,7 +1173,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"2\" overlaps the Soil strip by 7.3 px wide and 15 px tall. (recall, at the start)"
+      "detail": "GO1 text \"2\" overlaps the Soil strip by 7.3 px wide and 15 px tall, want at least 8 px clear. (recall, at the start)"
     },
     {
       "level": "blocker",
@@ -993,7 +1182,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"2.5\" overlaps the Soil strip by 17.7 px wide and 15 px tall. (recall, at the start)"
+      "detail": "GO1 text \"2.5\" overlaps the Soil strip by 17.7 px wide and 15 px tall, want at least 8 px clear. (recall, at the start)"
     },
     {
       "level": "blocker",
@@ -1002,7 +1191,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"3\" overlaps the Soil strip by 7.4 px wide and 15 px tall. (recall, at the start)"
+      "detail": "GO1 text \"3\" overlaps the Soil strip by 7.4 px wide and 15 px tall, want at least 8 px clear. (recall, at the start)"
     },
     {
       "level": "blocker",
@@ -1011,7 +1200,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"Look closer at the mark\" overlaps the Soil strip by 191.8 px wide and 20 px tall. (recall, at the start)"
+      "detail": "GO1 text \"Look closer at the mark\" overlaps the Soil strip by 191.8 px wide and 20 px tall, want at least 8 px clear. (recall, at the start)"
     },
     {
       "level": "blocker",
@@ -1020,7 +1209,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"Tomás's letter\" overlaps the Ghost by 34.8 px wide and 16.1 px tall. (recall, scrolled to the bottom)"
+      "detail": "GO1 text \"Tomás's letter\" overlaps the Ghost by 34.8 px wide and 16.2 px tall. (recall, scrolled to the bottom)"
     },
     {
       "level": "blocker",
@@ -1029,7 +1218,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"Step 1 of 4: Remember\" overlaps the Ghost by 85.7 px wide and 8.1 px tall. (recall, scrolled to the bottom)"
+      "detail": "GO1 text \"Step 1 of 4: Remember\" overlaps the Ghost by 85.7 px wide and 8.2 px tall. (recall, scrolled to the bottom)"
     },
     {
       "level": "blocker",
@@ -1079,6 +1268,78 @@
     {
       "level": "blocker",
       "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"0\" overlaps the Soil strip by 7.6 px wide and 15 px tall, want at least 8 px clear. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"0.5\" overlaps the Soil strip by 17.7 px wide and 15 px tall, want at least 8 px clear. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"1\" overlaps the Soil strip by 4.9 px wide and 15 px tall, want at least 8 px clear. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"1.5\" overlaps the Soil strip by 15.3 px wide and 15 px tall, want at least 8 px clear. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"2\" overlaps the Soil strip by 7.3 px wide and 15 px tall, want at least 8 px clear. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"2.5\" overlaps the Soil strip by 17.7 px wide and 15 px tall, want at least 8 px clear. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"3\" overlaps the Soil strip by 7.4 px wide and 15 px tall, want at least 8 px clear. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Look closer at the mark\" overlaps the Soil strip by 191.8 px wide and 20 px tall, want at least 8 px clear. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
       "name": "ghost-overlap",
       "size": "390x844",
       "persona": "eu-tomas",
@@ -1110,25 +1371,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "button \"Look closer at the mark\" needs 4.5:1 contrast: contrast 1.00:1 is below 4.5:1"
-    },
-    {
-      "level": "blocker",
-      "check": "CT1",
-      "name": "text-contrast",
-      "size": "390x844",
-      "persona": "eu-tomas",
-      "stage": "eu-tomas/recall",
       "detail": "label \"No answer\" needs 4.5:1 contrast: contrast 2.09:1 is below 4.5:1"
-    },
-    {
-      "level": "blocker",
-      "check": "CT1",
-      "name": "text-contrast",
-      "size": "390x844",
-      "persona": "eu-tomas",
-      "stage": "eu-tomas/recall",
-      "detail": "button \"Previous question\" needs 4.5:1 contrast: contrast 1.00:1 is below 4.5:1"
     },
     {
       "level": "blocker",
@@ -1218,7 +1461,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"The seal is intact. Nothing here has cha\" overlaps the Ghost by 126.2 px wide and 4.1 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"The seal is intact. Nothing here has cha\" overlaps the Ghost by 126.2 px wide and 4 px tall. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -1227,7 +1470,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"A sample answer is filled in. Change it\" overlaps the Soil strip by 182.9 px wide and 2.6 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"A sample answer is filled in. Change it\" overlaps the Soil strip by 182.9 px wide and 2.6 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -1236,7 +1479,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"1.62\" overlaps the Soil strip by 37.6 px wide and 20 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"1.62\" overlaps the Soil strip by 37.6 px wide and 20 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -1245,7 +1488,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"EUR per litre\" overlaps the Soil strip by 81.9 px wide and 17 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"EUR per litre\" overlaps the Soil strip by 81.9 px wide and 17 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -1254,7 +1497,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"0\" overlaps the Soil strip by 7.6 px wide and 0.5 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"0\" overlaps the Soil strip by 7.6 px wide and 0.5 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -1263,7 +1506,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"0.5\" overlaps the Soil strip by 17.7 px wide and 0.5 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"0.5\" overlaps the Soil strip by 17.7 px wide and 0.5 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -1272,7 +1515,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"1\" overlaps the Soil strip by 4.9 px wide and 0.5 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"1\" overlaps the Soil strip by 4.9 px wide and 0.5 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -1281,7 +1524,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"1.5\" overlaps the Soil strip by 15.3 px wide and 0.5 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"1.5\" overlaps the Soil strip by 15.3 px wide and 0.5 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -1290,7 +1533,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"2\" overlaps the Soil strip by 7.3 px wide and 0.5 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"2\" overlaps the Soil strip by 7.3 px wide and 0.5 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -1299,7 +1542,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"2.5\" overlaps the Soil strip by 17.7 px wide and 0.5 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"2.5\" overlaps the Soil strip by 17.7 px wide and 0.5 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -1308,7 +1551,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"3\" overlaps the Soil strip by 7.4 px wide and 0.5 px tall. (question 2, at the start)"
+      "detail": "GO1 text \"3\" overlaps the Soil strip by 7.4 px wide and 0.5 px tall, want at least 8 px clear. (question 2, at the start)"
     },
     {
       "level": "blocker",
@@ -1389,7 +1632,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"The seal is intact. Nothing here has cha\" overlaps the Ghost by 126.2 px wide and 4.3 px tall. (question 2, scrolled to the bottom)"
+      "detail": "GO1 text \"The seal is intact. Nothing here has cha\" overlaps the Ghost by 126.2 px wide and 4.2 px tall. (question 2, scrolled to the bottom)"
     },
     {
       "level": "blocker",
@@ -1398,7 +1641,88 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/recall",
-      "detail": "GO1 text \"No answer\" overlaps the Soil strip by 85 px wide and 11.6 px tall. (question 2, scrolled to the bottom)"
+      "detail": "GO1 text \"A sample answer is filled in. Change it\" overlaps the Soil strip by 182.9 px wide and 2.6 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"1.62\" overlaps the Soil strip by 37.6 px wide and 20 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"EUR per litre\" overlaps the Soil strip by 81.9 px wide and 17 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"0\" overlaps the Soil strip by 7.6 px wide and 0.5 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"0.5\" overlaps the Soil strip by 17.7 px wide and 0.5 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"1\" overlaps the Soil strip by 4.9 px wide and 0.5 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"1.5\" overlaps the Soil strip by 15.3 px wide and 0.5 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"2\" overlaps the Soil strip by 7.3 px wide and 0.5 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"2.5\" overlaps the Soil strip by 17.7 px wide and 0.5 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"3\" overlaps the Soil strip by 7.4 px wide and 0.5 px tall, want at least 8 px clear. (question 2, scrolled to the bottom)"
     },
     {
       "level": "blocker",
@@ -1470,7 +1794,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/marks",
-      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Soil strip by 309.8 px wide and 10 px tall. (Break the seal, at the start)"
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Soil strip by 309.8 px wide and 10 px tall, want at least 8 px clear. (Break the seal, at the start)"
     },
     {
       "level": "blocker",
@@ -1479,7 +1803,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/marks",
-      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Soil strip by 139.8 px wide and 20 px tall. (Break the seal, at the start)"
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Soil strip by 139.8 px wide and 20 px tall, want at least 8 px clear. (Break the seal, at the start)"
     },
     {
       "level": "blocker",
@@ -1488,7 +1812,7 @@
       "size": "390x844",
       "persona": "eu-tomas",
       "stage": "eu-tomas/marks",
-      "detail": "GO1 text \"Break the seal\" overlaps the Soil strip by 116 px wide and 3.4 px tall. (Break the seal, at the start)"
+      "detail": "GO1 text \"Break the seal\" overlaps the Soil strip by 116 px wide and 3.4 px tall, want at least 8 px clear. (Break the seal, at the start)"
     },
     {
       "level": "blocker",
@@ -1538,6 +1862,33 @@
     {
       "level": "blocker",
       "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Soil strip by 309.8 px wide and 10 px tall, want at least 8 px clear. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Soil strip by 139.8 px wide and 20 px tall, want at least 8 px clear. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Break the seal\" overlaps the Soil strip by 116 px wide and 3.4 px tall, want at least 8 px clear. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
       "name": "ghost-overlap",
       "size": "390x844",
       "persona": "eu-tomas",
@@ -1573,21 +1924,21 @@
     },
     {
       "level": "blocker",
-      "check": "SF1",
-      "name": "panel-fills-surface",
+      "check": "CW1",
+      "name": "content-column-width",
       "size": "390x844",
       "persona": "-",
       "stage": "fastest path",
-      "detail": "SF1 no [data-seal-step] panel, surface or cream row to measure."
+      "detail": "CW1 content column 294 px, want at least 342 px (viewport 390 px minus 48)"
     },
     {
       "level": "blocker",
-      "check": "TT1",
-      "name": "wax-target-size",
+      "check": "CW1",
+      "name": "content-column-width",
       "size": "390x844",
       "persona": "-",
-      "stage": "fastest path",
-      "detail": "TT1 no [data-press-target] found to measure."
+      "stage": "live",
+      "detail": "CW1 content column 310 px, want at least 342 px (viewport 390 px minus 48)"
     }
   ]
 }

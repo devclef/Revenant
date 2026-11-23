@@ -6,7 +6,7 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { buildGateArgs, GATE_BASELINE, main, stageStaticAssets } from "../../tools/qa/layout-gate.mjs";
+import { buildGateArgs, GATE_BASELINE, main, serverEnv, stageStaticAssets } from "../../tools/qa/layout-gate.mjs";
 import { readBlockersFile } from "../../tools/qa/layout-scope.mjs";
 
 const spawnMock = vi.hoisted(() => vi.fn());
@@ -98,6 +98,25 @@ describe("buildGateArgs", () => {
   });
 });
 
+describe("serverEnv", () => {
+  // Without a valid RP_ID /demo/live renders its unavailable state, so the live walk
+  // never reached Wait and CT1, UQ1 and SF1 there measured nothing (spec 17 D2 regression).
+  it("serves the app with RP_ID localhost and APP_ORIGIN on the gate's port", () => {
+    const env = serverEnv(4321, { DATABASE_URL: "postgres://x" });
+    expect(env.RP_ID).toBe("localhost");
+    expect(env.APP_ORIGIN).toBe("http://localhost:4321");
+    expect(env.PORT).toBe("4321");
+    expect(env.HOSTNAME).toBe("127.0.0.1");
+    expect(env.DATABASE_URL).toBe("postgres://x");
+  });
+
+  it("overrides a caller's RP_ID and APP_ORIGIN, which the gate's origin could not use", () => {
+    const env = serverEnv(4321, { RP_ID: "revenant.devclef.se", APP_ORIGIN: "https://revenant.devclef.se" });
+    expect(env.RP_ID).toBe("localhost");
+    expect(env.APP_ORIGIN).toBe("http://localhost:4321");
+  });
+});
+
 describe("main", () => {
   beforeEach(() => {
     spawnMock.mockReset();
@@ -135,6 +154,28 @@ describe("main", () => {
     expect(server).toBeDefined();
     expect(server?.child.killSignals).toEqual(["SIGTERM"]);
     expect(server?.child.signalCode).toBe("SIGTERM");
+  });
+
+  it("points layout-check at the localhost origin the server is configured for", async () => {
+    const spawned: { args: string[]; child: FakeChild }[] = [];
+    spawnMock.mockImplementation((_cmd: string, args: string[]) => {
+      const child = fakeChild(args, {
+        "scripts/migrate.mjs": 0,
+        "dist/seal-personas.mjs": 0,
+        "tools/qa/layout-check.mjs": 0,
+      });
+      spawned.push({ args, child });
+      return child;
+    });
+
+    await main({});
+
+    const server = spawnMock.mock.calls.find((c) => c[1][0] === ".next/standalone/server.js");
+    const origin = server?.[2]?.env?.APP_ORIGIN as string;
+    expect(origin).toMatch(/^http:\/\/localhost:\d+$/);
+    const layoutCheck = spawned.find((s) => s.args[0] === "tools/qa/layout-check.mjs");
+    const url = layoutCheck?.args[layoutCheck.args.indexOf("--url") + 1];
+    expect(url).toBe(origin);
   });
 });
 

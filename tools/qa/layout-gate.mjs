@@ -1,7 +1,8 @@
 // Gate script: runs the layout check against the built standalone app (issue #590).
 //
 // Steps, in order:
-//   1. Start `node .next/standalone/server.js` on a free port (PORT, HOSTNAME 127.0.0.1).
+//   1. Start `node .next/standalone/server.js` on a free port (PORT, HOSTNAME 127.0.0.1), with
+//      RP_ID localhost and APP_ORIGIN http://localhost:<port>, so /demo/live can seal with a passkey.
 //   2. Poll GET /api/health until it answers 200.
 //   3. Run the database migrations, then the persona sealing, against DATABASE_URL.
 //   4. Run tools/qa/layout-check.mjs --url <server url> with the args from buildGateArgs.
@@ -78,9 +79,32 @@ export async function stageStaticAssets(root = ROOT) {
   }
 }
 
-function startServer(port, env) {  return spawn(process.execPath, [".next/standalone/server.js"], {
+/**
+ * The app server's environment. RP_ID and APP_ORIGIN are always localhost on the
+ * gate's port: without them /demo/live renders its "unavailable" state, so the
+ * live walk never reaches Press the seal or Wait, and the rules there measure
+ * nothing. An IP address is not a valid WebAuthn RP ID, so the page is served on
+ * localhost, which browsers treat as a secure context. A caller's RP_ID or
+ * APP_ORIGIN (for example revenant.devclef.se) would fail the same way, so it is
+ * overridden.
+ * @param {number} port
+ * @param {Record<string, string | undefined>} env
+ * @returns {Record<string, string | undefined>}
+ */
+export function serverEnv(port, env) {
+  return {
+    ...env,
+    PORT: String(port),
+    HOSTNAME: "127.0.0.1",
+    RP_ID: "localhost",
+    APP_ORIGIN: `http://localhost:${port}`,
+  };
+}
+
+function startServer(port, env) {
+  return spawn(process.execPath, [".next/standalone/server.js"], {
     cwd: ROOT,
-    env: { ...env, PORT: String(port), HOSTNAME: "127.0.0.1" },
+    env: serverEnv(port, env),
     stdio: "inherit",
   });
 }
@@ -135,10 +159,13 @@ export async function main(env = process.env) {
   let server;
   try {
     const port = await freePort();
-    const baseUrl = `http://127.0.0.1:${port}`;
+    // The health probe uses the address the server binds. layout-check opens the
+    // pages on localhost, the origin the passkeys are bound to (serverEnv).
+    const healthUrl = `http://127.0.0.1:${port}`;
+    const baseUrl = `http://localhost:${port}`;
     await stageStaticAssets();
     server = startServer(port, env);
-    await waitForHealth(baseUrl, server);
+    await waitForHealth(healthUrl, server);
 
     const migrateCode = await runNode(["scripts/migrate.mjs"], env);
     if (migrateCode !== 0) {

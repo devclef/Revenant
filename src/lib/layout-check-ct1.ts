@@ -386,10 +386,15 @@ async function readSurfacePixels(
       el.setAttribute("data-ct1-probe", "");
       const style = document.createElement("style");
       style.id = "ct1-probe-style";
+      // The text, and the element's own border, outline and shadow, are hidden. A
+      // button's border is drawn in its ink, so left in the picture it would be read
+      // as the surface and every outlined button would measure 1:1.
       style.textContent =
         "[data-ct1-probe], [data-ct1-probe] * { color: transparent !important; " +
         "-webkit-text-fill-color: transparent !important; text-shadow: none !important; " +
-        "caret-color: transparent !important; text-decoration-color: transparent !important; }";
+        "caret-color: transparent !important; text-decoration-color: transparent !important; " +
+        "border-color: transparent !important; outline-color: transparent !important; " +
+        "box-shadow: none !important; }";
       document.head.append(style);
       const r = el.getBoundingClientRect();
       const x = Math.max(0, r.left);

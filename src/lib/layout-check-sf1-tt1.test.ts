@@ -22,6 +22,19 @@ describe("SF1 Seal panel fills its surface", () => {
     expect(failures[0].message).toContain("1360 px");
   });
 
+  // The Wait step's panel sits on the desk with no step card (spec 17 D2): 640 px wide and
+  // centred in a 1360 px column at 1440x900. Only a cream strip beside it fails there.
+  it("skips the width test for a panel on the desk with no card, and keeps the cream-strip test", () => {
+    expect(sfFailures({ panelWidth: 640, surfaceWidth: 1360, creamRun: 0, onCard: false })).toEqual([]);
+    const failures = sfFailures({ panelWidth: 640, surfaceWidth: 1360, creamRun: 3, onCard: false });
+    expect(failures.map((f) => f.check)).toEqual(["cream-strip"]);
+  });
+
+  it("keeps the width test for a panel on a card", () => {
+    const failures = sfFailures({ panelWidth: 1040, surfaceWidth: 1360, creamRun: 0, onCard: true });
+    expect(failures.map((f) => f.check)).toEqual(["panel-width"]);
+  });
+
   it("passes when the panel is equal to the surface width", () => {
     expect(sfFailures({ panelWidth: 1360, surfaceWidth: 1360, creamRun: 0 })).toEqual([]);
   });

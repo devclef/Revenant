@@ -30,6 +30,8 @@
 //   readGo1Soil(page)             reads the [data-soil-strip] rect for GO1's reading.soil, or null.
 //   readLc1Reading(page)          reads [data-figures-column] and [data-seal-group] rects from a loaded page.
 //   lcFailures(reading)           LC1 failures for one reading; [] when the columns are coherent.
+//   lcTrackFailures(reading)      LC1 failures for the step track gap; [] when the first line under it is clear.
+//   rectGap(a, b)                 distance in px between two rects that do not overlap; 0 when they touch.
 //   uqFailures(reading)           UQ1 failures for one reading; [] when one Demo label and one wax seal show.
 //   readUq1Reading(page)          reads visible Demo labels (plus the Top_Bar chip) and wax seals on the Wait step.
 //
@@ -37,13 +39,17 @@
 //   its top lies inside the column's top and bottom. The reading is { figures, sealGroup }: each is one
 //   rect { left, top, right, bottom } in CSS pixels, or null when the element is not on the page.
 //   A gap of exactly 64 px passes; 65 px fails. A missing rect fails as "no measurement".
+//   The column is [data-figures-column], or the marks card [data-card="marks"] when the figures
+//   are not on screen (Break the seal shows the marks). LC1 also reads the step track: the
+//   first text line under [data-step-track] starts at least 16 px below it (lcTrackFailures).
 //
 // GO1 (GitHub issue #583): no text line or control rect overlaps the Ghost drawn box. The reading is
 //   { ghost, text, controls }: ghost is one rect or null, text is [{ label, rect }] (one rect per text
 //   node Range), controls is [{ label, rect }]. A rect is { left, top, right, bottom } in CSS pixels,
 //   the shape getBoundingClientRect returns. Edges that only touch do not overlap.
 //   GO1 also tests each text rect against the optional soil rect ([data-soil-strip]); a text line that
-//   overlaps the Soil strip fails with check "soil-overlap". No soil key, or soil null, skips that test.
+//   overlaps the Soil strip fails with check "soil-overlap", and one closer than 8 px (touching
+//   included) fails with "soil-clearance". No soil key, or soil null, skips that test.
 //
 // CW1 (GitHub issue #581, spec 17 D3): the [data-content-column] content box is at least
 //   viewport width minus 48 px. The reading is { width, viewport }: width is the column's content
@@ -285,13 +291,39 @@ export function goFailures(reading) {
             id: "GO1",
             check: "soil-overlap",
             layer,
-            message: `GO1 text "${label}" overlaps the Soil strip by ${round(soilOverlap.width)} px wide and ${round(soilOverlap.height)} px tall.`,
+            message: `GO1 text "${label}" overlaps the Soil strip by ${round(soilOverlap.width)} px wide and ${round(soilOverlap.height)} px tall, want at least ${GO1_SOIL_CLEAR_PX} px clear.`,
           });
+        } else {
+          // Touching, or closer than GO1_SOIL_CLEAR_PX, fails too: the strip's drawn crest
+          // rises above its box edge, so a line that only touches the box sits on the dirt.
+          const gap = rectGap(item.rect, soil);
+          if (gap < GO1_SOIL_CLEAR_PX) {
+            failures.push({
+              id: "GO1",
+              check: "soil-clearance",
+              layer,
+              message: `GO1 text "${label}" is ${round(gap)} px from the Soil strip, want at least ${GO1_SOIL_CLEAR_PX} px clear.`,
+            });
+          }
         }
       }
     }
   }
   return failures;
+}
+
+// GO1: a text line must stay at least this far from the Soil strip's box. Touching fails.
+export const GO1_SOIL_CLEAR_PX = 8;
+
+/**
+ * Distance in CSS px between two rects that do not overlap: the larger of the horizontal
+ * and vertical gaps, 0 when they touch on an edge or a corner. Negative values never occur
+ * for rects that do not overlap; callers test rectOverlap first.
+ */
+export function rectGap(a, b) {
+  const dx = Math.max(b.left - a.right, a.left - b.right, 0);
+  const dy = Math.max(b.top - a.bottom, a.top - b.bottom, 0);
+  return Math.max(dx, dy);
 }
 
 /** Rounds to one decimal place for messages. */
@@ -302,15 +334,57 @@ function round(value) {
 // LC1 (GitHub issue #585). The Seal group may sit at most this far right of the figures column.
 export const LC1_MAX_GAP_PX = 64;
 
-/** Script run inside the page. Reads the figures column and the Seal group as plain rects. */
+// LC1: the first text line under the step track starts at least this far below the track.
+// 16 px is the gap W8 already asks between the Top_Bar and a step heading.
+export const LC1_TRACK_CLEAR_PX = 16;
+
+/**
+ * Script run inside the page. Reads the column the Seal group sits beside, the Seal group,
+ * the step track and the nearest text line under the track, as plain rects.
+ *
+ * The column is [data-figures-column] when the figures show, else the marks card
+ * ([data-card="marks"]): Break the seal shows the marks, not the figures, so a reader of
+ * [data-figures-column] alone never measured the screen it was written for.
+ */
 const READ_LC1 = () => {
-  const rectOf = (selector) => {
-    const el = document.querySelector(selector);
-    if (!el) return null;
+  const plain = (r) => ({ left: r.left, top: r.top, right: r.right, bottom: r.bottom });
+  const shown = (el) => {
     const r = el.getBoundingClientRect();
-    return { left: r.left, top: r.top, right: r.right, bottom: r.bottom };
+    return r.width > 0 && r.height > 0;
   };
-  return { figures: rectOf("[data-figures-column]"), sealGroup: rectOf("[data-seal-group]") };
+  const rectOf = (selector) => {
+    const el = [...document.querySelectorAll(selector)].find(shown);
+    return el ? plain(el.getBoundingClientRect()) : null;
+  };
+  const figuresEl = [...document.querySelectorAll("[data-figures-column]")].find(shown);
+  const columnSource = figuresEl ? "[data-figures-column]" : '[data-card="marks"]';
+  const figures = figuresEl ? plain(figuresEl.getBoundingClientRect()) : rectOf('[data-card="marks"]');
+
+  const trackEl = [...document.querySelectorAll("[data-step-track]")].find(shown) ?? null;
+  const track = trackEl ? plain(trackEl.getBoundingClientRect()) : null;
+  let below = null;
+  if (trackEl && track) {
+    const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      const value = (n.textContent ?? "").trim();
+      const parent = n.parentElement;
+      if (!value || !parent || trackEl.contains(parent) || parent.closest("script, style, noscript")) continue;
+      const cs = getComputedStyle(parent);
+      if (cs.visibility === "hidden" || (parent.checkVisibility && !parent.checkVisibility({ opacityProperty: true }))) continue;
+      // Screen-reader-only text (a 1 px clipped box, such as "Step 1 of 4: Remember") is not drawn.
+      const box = parent.getBoundingClientRect();
+      if (box.width <= 1 || box.height <= 1) continue;
+      const range = document.createRange();
+      range.selectNodeContents(n);
+      for (const r of range.getClientRects()) {
+        if (!(r.width > 0 && r.height > 0)) continue;
+        // Only lines in the track's column, from the track's top down.
+        if (r.right <= track.left || r.left >= track.right || r.bottom <= track.top) continue;
+        if (!below || r.top < below.rect.top) below = { label: value.slice(0, 40), rect: plain(r) };
+      }
+    }
+  }
+  return { figures, columnSource, sealGroup: rectOf("[data-seal-group]"), track, below };
 };
 
 // GO1 soil reader: the [data-soil-strip] rect for goFailures' reading.soil, or null when the page has no strip.
@@ -340,29 +414,57 @@ export function lcFailures(reading) {
   const figures = reading?.figures ?? null;
   const sealGroup = reading?.sealGroup ?? null;
   if (!isMeasuredRect(figures) || !isMeasuredRect(sealGroup)) {
-    return [{ id: "LC1", check: "column-coherence", message: "LC1 no [data-figures-column] or [data-seal-group] rect to measure." }];
+    return [{ id: "LC1", check: "column-coherence", message: "LC1 no [data-figures-column], [data-card=\"marks\"] or [data-seal-group] rect to measure." }];
   }
 
   const failures = [];
+  const column = reading?.columnSource ?? "[data-figures-column]";
   const gap = sealGroup.left - figures.right;
   if (gap > LC1_MAX_GAP_PX) {
     failures.push({
       id: "LC1",
       check: "column-gap",
-      message: `LC1 Seal group starts ${round(gap)} px right of the figures column, want at most ${LC1_MAX_GAP_PX} px.`,
+      message: `LC1 Seal group starts ${round(gap)} px right of the column ${column}, want at most ${LC1_MAX_GAP_PX} px.`,
     });
   }
   if (sealGroup.top < figures.top || sealGroup.top > figures.bottom) {
     failures.push({
       id: "LC1",
       check: "column-top",
-      message: `LC1 Seal group top ${round(sealGroup.top)} px is outside the figures column, ${round(figures.top)} px to ${round(figures.bottom)} px.`,
+      message: `LC1 Seal group top ${round(sealGroup.top)} px is outside the column ${column}, ${round(figures.top)} px to ${round(figures.bottom)} px.`,
     });
   }
   return failures;
 }
+/**
+ * LC1 step track failures for one reading. The first text line under the step track must
+ * start at least LC1_TRACK_CLEAR_PX below the track's bottom; a line that touches or
+ * overlaps the track fails. The reading is { track, below } from readLc1Reading. A missing
+ * track fails as "no measurement"; a track with no text under it passes.
+ */
+export function lcTrackFailures(reading) {
+  const track = reading?.track ?? null;
+  if (!isMeasuredRect(track)) {
+    return [{ id: "LC1", check: "track-gap", message: "LC1 no [data-step-track] rect to measure." }];
+  }
+  const below = reading?.below ?? null;
+  if (!below) return [];
+  if (!isMeasuredRect(below.rect)) {
+    return [{ id: "LC1", check: "track-gap", message: `LC1 no measurement for text "${String(below.label ?? "").trim()}" under the step track.` }];
+  }
+  const gap = below.rect.top - track.bottom;
+  if (gap >= LC1_TRACK_CLEAR_PX) return [];
+  const label = String(below.label ?? "").trim().slice(0, 80) || "text";
+  return [{
+    id: "LC1",
+    check: "track-gap",
+    message: `LC1 text "${label}" starts ${round(gap)} px below the step track, want at least ${LC1_TRACK_CLEAR_PX} px.`,
+  }];
+}
+
 // SF1 (GitHub issue #587, spec 17 D1, bugfix 2.1): the Seal panel fills its surface. The reading is
-//   { panelWidth, surfaceWidth, creamRun }, widths in CSS px. creamRun is the widest run, in CSS px, of
+//   { panelWidth, surfaceWidth, creamRun, onCard? }, widths in CSS px. onCard false (a panel on the
+//   desk with no [data-card], the Wait step) skips the width test and keeps the cream-strip test. creamRun is the widest run, in CSS px, of
 //   cream pixels (each channel within SF1_CREAM_TOLERANCE of SF1_CREAM) on a row through the panel's
 //   middle, outside the panel. A run wider than SF1_MAX_CREAM_RUN_PX is a cream strip beside the panel.
 //   Any failure is a BLOCKER.
@@ -408,12 +510,14 @@ export function sfFailures(reading) {
   const creamRun = reading?.creamRun;
   const measured = [panelWidth, surfaceWidth, creamRun].every((value) => typeof value === "number" && Number.isFinite(value));
   if (!measured) {
-    return [{ id: "SF1", check: "panel-fills-surface", message: "SF1 no [data-seal-step] panel, surface or cream row to measure." }];
+    return [{ id: "SF1", check: "panel-fills-surface", message: "SF1 no [data-seal-step] or [data-live-wait] panel, surface or cream row to measure." }];
   }
 
   const failures = [];
   const minimum = SF1_RATIO * surfaceWidth;
-  if (panelWidth < minimum) {
+  // The width test is for a panel inside a step card (Press the seal). A panel on the desk with
+  // no card (the Wait step) is centred by design; only a cream strip beside it is a failure.
+  if (reading?.onCard !== false && panelWidth < minimum) {
     failures.push({
       id: "SF1",
       check: "panel-width",
@@ -432,15 +536,18 @@ export function sfFailures(reading) {
 
 /** Script run inside the page. Reads the Seal panel, its surface and the viewport. Sends no input. */
 const READ_SF1 = () => {
-  const panel = document.querySelector("[data-seal-step]");
+  // Press the seal's panel, or on the Wait step the Wait panel ([data-live-wait]).
+  const panel = document.querySelector("[data-seal-step]") ?? document.querySelector("[data-live-wait]");
   if (!panel) return null;
-  const surface = panel.closest("[data-card]") ?? panel.parentElement;
+  const card = panel.closest("[data-card]");
+  const surface = card ?? panel.parentElement;
   if (!surface) return null;
   const rectOf = (el) => {
     const r = el.getBoundingClientRect();
     return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
   };
   return {
+    onCard: card !== null,
     panel: rectOf(panel),
     surface: rectOf(surface),
     viewport: { width: window.innerWidth, height: window.innerHeight },
@@ -469,12 +576,16 @@ const DECODE_ROW = async (b64) => {
 export async function readSf1Reading(page) {
   const rects = await page.evaluate(READ_SF1);
   if (!rects) return { panelWidth: null, surfaceWidth: null, creamRun: null };
-  const { panel, surface, viewport } = rects;
+  const { panel, surface, viewport, onCard } = rects;
   const left = Math.max(0, surface.left);
   const right = Math.min(viewport.width, surface.right);
-  const midY = Math.round(panel.top + panel.height / 2);
+  // The middle of the panel's visible part. The Wait panel is taller than a 900 px viewport,
+  // so the middle of the whole panel can sit below the fold.
+  const visibleTop = Math.max(0, panel.top);
+  const visibleBottom = Math.min(viewport.height, panel.bottom);
+  const midY = Math.round(visibleTop + (visibleBottom - visibleTop) / 2);
   if (!(right > left) || midY < 0 || midY >= viewport.height) {
-    return { panelWidth: panel.width, surfaceWidth: surface.width, creamRun: null };
+    return { panelWidth: panel.width, surfaceWidth: surface.width, creamRun: null, onCard };
   }
 
   const png = await page.screenshot({ clip: { x: left, y: midY, width: right - left, height: 1 } });
@@ -491,7 +602,7 @@ export async function readSf1Reading(page) {
   const excludeFrom = Math.round((panel.left - left) * scale);
   const excludeTo = Math.round((panel.right - left) * scale);
   const runPx = creamRunPx(row.rgba, excludeFrom, excludeTo);
-  return { panelWidth: panel.width, surfaceWidth: surface.width, creamRun: runPx / scale };
+  return { panelWidth: panel.width, surfaceWidth: surface.width, creamRun: runPx / scale, onCard };
 }
 
 // TT1 (GitHub issue #587, spec 17 D1, bugfix 2.2): the visible wax mark the reader presses is at least

@@ -15,6 +15,8 @@ import { LIVE_COPY } from "../copy";
 import { formatLocalDateTime } from "../format";
 import type { SealedState } from "../SealedView";
 
+import styles from "../live.module.css";
+
 import { LiveWaitStep } from "./LiveWaitStep";
 
 // Calm_Mode is one switch in the motion context. Reduced motion turns it on as
@@ -394,5 +396,31 @@ describe("LiveWaitStep loads the opening flow with next/dynamic", () => {
 
   it("has no static import of OpeningFlow", () => {
     expect(source).not.toMatch(/import\s*\{\s*OpeningFlow\s*\}\s*from/);
+  });
+});
+
+// Spec 17 regression on /demo/live: the wrapper kept the Wait panel's frame on
+// Remember, Break the seal and Receipts, where the flow is portalled out of it.
+// The frame drew an empty outlined box under "Seal your own letter".
+describe("LiveWaitStep wrapper frame", () => {
+  it("frames the panel on the Wait step only", () => {
+    const wrapperClass = (html: string) => /data-live-wait/.test(html) ? /^<div class="([^"]*)" data-live-wait/.exec(html)?.[1] : undefined;
+    const wait = wrapperClass(render("wait", OPENS_MS - 60_000));
+    expect(styles.deskPanel).toBeTruthy();
+    expect(styles.deskSlot).toBeTruthy();
+    expect(wait).toBe(styles.deskPanel);
+    for (const step of ["testify", "break", "receipts"] as const) {
+      const cls = wrapperClass(render(step, OPENS_MS + 60_000));
+      expect(cls).toBe(styles.deskSlot);
+      expect(cls).not.toBe(styles.deskPanel);
+    }
+  });
+
+  it("sets the desk colours on the text and controls outside the letter card", () => {
+    const html = render("wait", OPENS_MS - 60_000);
+    const onDesk = (attr: string) =>
+      new RegExp(`class="[^"]*\\b${styles.onDesk}\\b[^"]*"[^>]*${attr}`).test(html);
+    expect(onDesk('data-live-countdown="ticking"')).toBe(true);
+    expect(onDesk("data-live-ics")).toBe(true);
   });
 });
