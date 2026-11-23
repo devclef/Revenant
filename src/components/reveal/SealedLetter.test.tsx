@@ -4,7 +4,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
-import { SealedLetter } from "./SealedLetter";
+import { SealedLetter, SealedLetterCaption } from "./SealedLetter";
 import { REVEAL_COPY } from "./copy";
 import {
   formatCalendarDate,
@@ -184,6 +184,42 @@ describe("SealedLetter markup", () => {
       formatLetterDate(OPENED.header.opensAt, { kind: "utc" }),
     );
   });
+
+  it("shows the sealed-for-demo line with only the sealing date for a valid sealedAt (Property 11, R10.4)", () => {
+    const html = render(OPENED);
+    const sealedDate = formatLetterDate(OPENED.header.sealedAt, { kind: "utc" });
+    expect(html).toContain(`Sealed later, for this demo, on ${sealedDate}.`);
+    // Only the sealing date appears on that line: the opening date and the
+    // written-as-of date are not repeated in it.
+    const opensDate = formatLetterDate(OPENED.header.opensAt, { kind: "utc" });
+    expect(html).not.toContain(opensDate);
+  });
+
+  it.each([
+    ["an empty sealedAt", ""],
+    ["an unparseable sealedAt", "not-a-date"],
+  ])(
+    "renders no sealed-for-demo paragraph and no placeholder for %s (Property 11, R10.5, R10.6)",
+    (_label, sealedAt) => {
+      const openedBadDate: Opened = {
+        ...OPENED,
+        header: { ...OPENED.header, sealedAt },
+      };
+      const html = renderToStaticMarkup(
+        createElement(SealedLetterCaption, {
+          opened: openedBadDate,
+          personaName: PERSONA_NAME,
+        }),
+      );
+      // The sealed-for-demo line is gone, with no date and no placeholder text.
+      expect(html).not.toContain("Sealed later, for this demo");
+      expect(html).not.toContain("Invalid Date");
+      expect(html).not.toContain("undefined");
+      // Only the disclosure paragraph remains: one <p>, the persona line.
+      expect(html.match(/<p[\s>]/g)?.length ?? 0).toBe(1);
+      expect(html).toContain("data-persona-disclosure");
+    },
+  );
 
   it("adds no commentary beyond the four stage-2 elements", () => {
     const html = render(OPENED);
