@@ -31,6 +31,9 @@ import { PERSONAS, RETIRED_LETTER_IDS } from "./index";
 const KEY_RE = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
 function formatIssue(raw: unknown, issue: z.core.$ZodIssue): string {
+  // Cross-check messages already name the persona (`persona "<key>" <field>
+  // <problem>`), so they pass through unchanged.
+  if (/^persona ("|#)/.test(issue.message)) return issue.message;
   const path = issue.path;
   if (path[0] === "personas" && typeof path[1] === "number") {
     const index = path[1];
@@ -42,11 +45,11 @@ function formatIssue(raw: unknown, issue: z.core.$ZodIssue): string {
       typeof (persona as { key?: unknown }).key === "string"
         ? (persona as { key: string }).key
         : undefined;
-    // Fall back to the index when the key is missing or itself invalid
-    // (design.md: "falling back to the list index when the key itself is
-    // invalid").
+    // Fall back to the 1-based list position when the key is missing or itself
+    // invalid (design.md: "falling back to the list index when the key itself
+    // is invalid").
     const key =
-      rawKey !== undefined && KEY_RE.test(rawKey) ? rawKey : `#${index}`;
+      rawKey !== undefined && KEY_RE.test(rawKey) ? rawKey : `#${index + 1}`;
     const field = path.slice(2).join(".") || "(persona)";
     return `persona "${key}": ${field}: ${issue.message}`;
   }
@@ -141,8 +144,19 @@ describe("parsePersonaList — field rules reject bad input", () => {
     const list = validList();
     list.personas[0].key = "US_Maya"; // underscore + uppercase: invalid
     const problems = problemsFor(list);
-    // The key is invalid, so the message falls back to the index, not the key.
-    expect(problems).toContainEqual(expect.stringContaining('persona "#0": key:'));
+    // The key is invalid, so the message falls back to the 1-based position.
+    expect(problems).toContainEqual(expect.stringContaining('persona "#1": key:'));
+  });
+
+  it("numbers the fallback persona from 1 when a later key is invalid", () => {
+    const list = validList();
+    const second = structuredClone(list.personas[0]);
+    second.key = "Bad Key";
+    second.letter_id = ID_B;
+    list.personas.push(second);
+    expect(problemsFor(list)).toContainEqual(
+      expect.stringContaining('persona "#2": key:'),
+    );
   });
 
   it("rejects a leading/trailing/doubled hyphen in the key", () => {
@@ -212,24 +226,24 @@ describe("parsePersonaList — field rules reject bad input", () => {
   it("rejects a non-calendar written_as_of", () => {
     const list = validList();
     list.personas[0].written_as_of = "2024-02-30"; // not a real date
-    expect(
-      problemsFor(list).some((p) => p.startsWith('persona "us-maya": written_as_of:')),
-    ).toBe(true);
+    expect(problemsFor(list)).toEqual([
+      'persona "us-maya": written_as_of must be a real YYYY-MM-DD date',
+    ]);
   });
 
   it("rejects opens_at that is not millisecond-Z form", () => {
     const list = validList();
     list.personas[0].opens_at = "2024-11-05T00:00:00Z"; // no .sss
-    expect(
-      problemsFor(list).some((p) => p.startsWith('persona "us-maya": opens_at:')),
-    ).toBe(true);
+    expect(problemsFor(list)).toEqual([
+      'persona "us-maya": opens_at must be YYYY-MM-DDTHH:mm:ss.sssZ',
+    ]);
   });
 
   it("rejects an opens_at instant that does not round-trip", () => {
     const list = validList();
     list.personas[0].opens_at = "2024-11-05T24:00:00.000Z"; // hour 24 is invalid
     expect(
-      problemsFor(list).some((p) => p.startsWith('persona "us-maya": opens_at:')),
+      problemsFor(list).some((p) => p.startsWith('persona "us-maya": opens_at must be')),
     ).toBe(true);
   });
 
@@ -267,7 +281,9 @@ describe("parsePersonaList — opens_at must be after written_as_of midnight", (
     list.personas[0].written_as_of = "2024-11-05";
     list.personas[0].opens_at = "2024-11-05T00:00:00.000Z";
     expect(
-      problemsFor(list).some((p) => p.startsWith('persona "us-maya": opens_at:')),
+      problemsFor(list).some((p) =>
+        p.startsWith('persona "us-maya": opens_at must be later than written_as_of midnight UTC'),
+      ),
     ).toBe(true);
   });
 
@@ -276,7 +292,9 @@ describe("parsePersonaList — opens_at must be after written_as_of midnight", (
     list.personas[0].written_as_of = "2024-11-05";
     list.personas[0].opens_at = "2024-05-12T00:00:00.000Z";
     expect(
-      problemsFor(list).some((p) => p.startsWith('persona "us-maya": opens_at:')),
+      problemsFor(list).some((p) =>
+        p.startsWith('persona "us-maya": opens_at must be later than written_as_of midnight UTC'),
+      ),
     ).toBe(true);
   });
 });
@@ -422,6 +440,16 @@ describe("parsePersonaList — author_questions rules", () => {
     expect(() => parsePersonaList(list)).not.toThrow();
     list.personas[0].author_questions = ["\u{1F56F}".repeat(201)];
     expect(() => parsePersonaList(list)).toThrow();
+  });
+
+  it("rejects an author question with an election, party or public-event term", () => {
+    const list = textPersona();
+    list.personas[0].author_questions = ["What did the Christmas holiday cost you?"];
+    expect(
+      problemsFor(list).some((p) =>
+        p.startsWith('persona "us-maya": author_questions.0:'),
+      ),
+    ).toBe(true);
   });
 
   it("rejects a persona with neither author_questions nor metrics", () => {

@@ -10,11 +10,13 @@
 // Pure module: no DOM, clock, randomness or I/O.
 
 import { DEMO_FIGURES } from "@/lib/figures/demo";
+import { isRealDate } from "@/lib/figures/periods";
 import type { LoadedFigures } from "@/lib/figures/types";
 import { thenAndNow } from "@/lib/figures/then-now";
 
 import type { Persona } from "./schema";
 import { recordCandidate } from "./record-candidate";
+import { MONTH_NAMES } from "./season-words";
 
 /**
  * A price phrase in a persona letter: "about", then "$" or "€", then a number
@@ -22,6 +24,33 @@ import { recordCandidate } from "./record-candidate";
  * matchAll (which copies the regex) rather than exec on this shared object.
  */
 export const PRICE_RE = /about (?:\$|€)([0-9]+\.[0-9]{2})(?![0-9])/g;
+
+const WEEK_ORDINALS: readonly string[] = Object.freeze([
+  "first",
+  "second",
+  "third",
+  "fourth",
+  "fifth",
+]);
+
+/**
+ * The period of a Letter_Price_Line in words, for example
+ * "second week of November" for the weekly period "2024-11-11" (spec 18 R5.6).
+ * The week is "first" for days 1 to 7, "second" for 8 to 14, "third" for 15
+ * to 21, "fourth" for 22 to 28 and "fifth" for 29 to 31.
+ *
+ * Takes a weekly "YYYY-MM-DD" period, which is its start date. Throws RangeError
+ * for any other string, because a price line is never described by a guess.
+ */
+export function weekOfMonthWords(period: string): string {
+  if (!isRealDate(period)) {
+    throw new RangeError(`weekOfMonthWords: not a real date: "${period}"`);
+  }
+  const month = Number(period.slice(5, 7));
+  const day = Number(period.slice(8, 10));
+  const ordinal = WEEK_ORDINALS[Math.min(Math.floor((day - 1) / 7), 4)];
+  return `${ordinal} week of ${MONTH_NAMES[month - 1]}`;
+}
 
 /**
  * The Letter_Price_Line numbers a persona letter must state, one per tracked
