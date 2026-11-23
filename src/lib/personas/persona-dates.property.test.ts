@@ -48,14 +48,14 @@ const pad2 = (n: number): string => String(n).padStart(2, "0");
 
 // --- Expected forms, built from the UTC parts of the stored value ------------
 
-// "5 November 2024" for a YYYY-MM-DD date or a UTC instant.
+// Day form: day, month name and year, for a YYYY-MM-DD date or a UTC instant.
 function dayForm(value: string): string {
   const iso = value.length === 10 ? `${value}T00:00:00.000Z` : value;
   const d = new Date(iso);
   return `${d.getUTCDate()} ${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
 }
 
-// "November 2024" for a YYYY-MM-DD date.
+// Month form: month name and year, for a YYYY-MM-DD date.
 function monthForm(date: string): string {
   const d = new Date(`${date}T00:00:00.000Z`);
   return `${MONTHS[d.getUTCMonth()]} ${d.getUTCFullYear()}`;

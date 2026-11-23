@@ -20,9 +20,9 @@ Revenant never takes a political side. It shows people their own words and real 
 - Call a sample answer, or any answer, right, close, near, wrong, off or accurate, in the UI or in persona copy.
 - Show an event name next to a persona opening date.
 
-## Election dates (demo windows now, suggested opening dates later)
+## Election dates (suggested opening dates, after the MVP)
 
-- In the MVP, election dates only set the demo persona windows, and they are shown as plain dates with no event name. Describing a date in plain terms ("2028 U.S. presidential election day") applies only to suggested opening dates after the MVP.
+- In the MVP, election dates are not used. Persona dates are plain dates set in `content/personas/personas.json`, and a persona opening date is shown with no event name. Describing a date in plain terms ("2028 U.S. presidential election day") applies only to suggested opening dates after the MVP.
 - The event list includes events across jurisdictions and types and is not curated toward any outcome.
 - Event dates come from an official source and follow the same provenance rules as data (see `data-integrity.md`).
 

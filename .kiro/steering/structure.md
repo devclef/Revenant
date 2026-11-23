@@ -64,7 +64,7 @@ Planned layout. Update this file when the structure changes.
 │       ├── figures/         # Provenance types, comparability checks, then-vs-now change
 │       ├── sources/         # One adapter per publisher: eia, bls, oil-bulletin, eurostat, scb
 │       ├── recall/          # Writes recall questions at sealing time; they are then sealed
-│       ├── events/          # Election dates with provenance for the demo windows
+│       ├── events/          # Planned: event dates with provenance, for suggested opening dates after the MVP
 │       └── db/              # Drizzle schema and client
 └── .env.example
 ```

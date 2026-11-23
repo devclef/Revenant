@@ -288,7 +288,7 @@ const realSealedAnswers: unknown = JSON.parse(
 
 // The approved sealed answer 2, word for word (content/personas/letters/sealed-answers.json).
 const APPROVED_SEALED_ANSWER_2 =
-  "The extra morning shift. I keep changing my mind, and either way I am worried I will fall behind on my reading.";
+  "The extra morning shift. I keep changing my mind, and either way I worry that I will fall behind on the reading list.";
 
 describe("sealed-answers.json", () => {
   it("passes validatePersonaAnswers as sealed answers", () => {
