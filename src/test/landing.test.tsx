@@ -224,9 +224,11 @@ describe("landing Ghost in the server HTML (R9.15)", () => {
     state.personas = [MAYA];
   });
 
-  it("server-renders one hero Ghost pit in the static HTML, with no backdrop Ghost", () => {
+  it("server-renders one backdrop Ghost pit in the static HTML, with no hero Ghost", () => {
     const html = renderToStaticMarkup(createElement(Home));
     expect(html.match(/data-ghost-pit/g)).toHaveLength(1);
+    expect(html).toContain('id="ghost-body-landing"');
+    expect(html).not.toContain('id="ghost-body-hero"');
   });
 
   it("holds no Envelope: no data-envelope in the pit, and the Accent link sits outside it", () => {

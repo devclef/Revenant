@@ -84,9 +84,10 @@ describe("landing hero stacking rule below 600 px", () => {
     expect(css).toMatch(/\.sealFrame \{\s*width: min\(100%, 420px\);\s*\}/);
   });
 
-  it("narrows the drawn Landing_Ghost placement through the Scene's --ghost-w", () => {
-    expect(phoneBlock()).toMatch(
-      /:global\(\[data-ghost-pit\]\) > div \{\s*--ghost-w: min\(20vh, 128px\);\s*\}/,
+  it("sets no phone Landing_Ghost width: the landing Ghost is hidden below 900 px", () => {
+    expect(phoneBlock()).not.toContain("--ghost-w");
+    expect(css).toMatch(
+      /:global\(body:has\(\[data-landing-hero\]\)\) :global\(\[data-ghost-layer\]\) \{\s*display: none;\s*\}/,
     );
   });
 });

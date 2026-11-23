@@ -66,16 +66,16 @@ describe("HeroEnvelope seal size (landing.module.css)", () => {
   });
 });
 
-describe("HeroEnvelope ghost (L2)", () => {
-  it("draws one decorative sheet Ghost before the envelope", () => {
-    expect(html.match(/data-hero-pit/g)).toHaveLength(1);
-    expect(html).toContain("data-hero-ghost");
-    expect(html.indexOf("data-hero-ghost")).toBeLessThan(
-      html.indexOf("data-envelope-state"),
-    );
+describe("HeroEnvelope draws no ghost", () => {
+  // The page's one ghost is the backdrop Landing_Ghost (src/app/page.tsx).
+  it("renders no Ghost pit, hero ghost box or ghost gradient", () => {
+    expect(html).not.toContain("data-ghost-pit");
+    expect(html).not.toContain("data-hero-pit");
+    expect(html).not.toContain("data-hero-ghost");
+    expect(html).not.toContain("ghost-body-");
   });
 
-  it("uses its own gradient id", () => {
-    expect(html).toContain('id="ghost-body-hero"');
+  it("still renders the envelope", () => {
+    expect(html).toContain("data-envelope-state");
   });
 });

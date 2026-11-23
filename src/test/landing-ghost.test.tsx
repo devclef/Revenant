@@ -16,20 +16,24 @@ import Home from "@/app/page";
 describe("landing Ghost in the server HTML (R9.15)", () => {
   const html = renderToStaticMarkup(createElement(Home));
 
-  it("renders one Ghost, the hero Ghost from HeroEnvelope, and no backdrop Ghost", () => {
+  it("renders one Ghost, the backdrop Ghost, and no hero Ghost", () => {
     expect(html.match(/data-ghost-pit/g)).toHaveLength(1);
+    expect(html).not.toContain("data-hero-pit");
+    expect(html).not.toContain("data-hero-ghost");
   });
 
-  it("renders the hero Ghost after the hero headline", () => {
+  it("renders the Ghost inside the backdrop Ghost layer, before the hero headline", () => {
+    const layerAt = html.indexOf("data-ghost-layer");
     const ghostAt = html.indexOf("data-ghost-pit");
     const headlineAt = html.indexOf("<h1");
-    expect(ghostAt).toBeGreaterThanOrEqual(0);
-    expect(ghostAt).toBeGreaterThan(headlineAt);
+    expect(layerAt).toBeGreaterThanOrEqual(0);
+    expect(ghostAt).toBeGreaterThan(layerAt);
+    expect(ghostAt).toBeLessThan(headlineAt);
   });
 
-  it("uses the hero gradient id for the Ghost body", () => {
-    expect(html).toContain('id="ghost-body-hero"');
-    expect(html).not.toContain('id="ghost-body-landing"');
+  it("uses the landing gradient id for the Ghost body", () => {
+    expect(html).toContain('id="ghost-body-landing"');
+    expect(html).not.toContain('id="ghost-body-hero"');
   });
 
   it("renders no Envelope inside the Ghost", () => {
@@ -39,12 +43,12 @@ describe("landing Ghost in the server HTML (R9.15)", () => {
     expect(pitMarkup).not.toContain("envelope");
   });
 
-  it("places the Accent link inside the landing column, before the Ghost", () => {
+  it("places the Accent link inside the landing column, after the Ghost", () => {
     const columnAt = html.indexOf("data-landing-column");
     const pitAt = html.indexOf("data-ghost-pit");
     const linkAt = html.indexOf('href="/demo"');
     expect(columnAt).toBeGreaterThanOrEqual(0);
     expect(linkAt).toBeGreaterThan(columnAt);
-    expect(linkAt).toBeLessThan(pitAt);
+    expect(linkAt).toBeGreaterThan(pitAt);
   });
 });
