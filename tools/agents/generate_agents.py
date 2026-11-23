@@ -28,8 +28,16 @@ COMMON_SHELL = [
 ]
 CONTAINER_SHELL = ["docker run*", "docker rm*", "docker stop*", "docker logs*"]
 EXTRA_SHELL = {
+    # Spec 18 tasks 13 and 17 run the local stack and the Live_Walk as platform-dev, so it
+    # gets the local-app set frontend-dev has, plus the WALK=1 forms for the Live_Walk.
     "platform-dev": ["docker build*", *CONTAINER_SHELL, "helm lint*", "helm template*",
-                     "curl *localhost*", "curl *127.0.0.1*"],
+                     "curl *localhost*", "curl *127.0.0.1*",
+                     "npm run build", "npm start*", "npm run db:migrate", "npm run seal-personas*",
+                     "PORT=* npm start*", "PORT=* DATABASE_URL=* npm start*", "RP_ID=* npm start*",
+                     "DATABASE_URL=* npm run db:migrate", "DATABASE_URL=* npm run seal-personas*",
+                     "DATABASE_URL=* npm run fetch-figures*",
+                     "WALK=1 npm *", "DATABASE_URL=* WALK=1 npm *",
+                     "kill *"],
     # Same local-app set as qa (throwaway Postgres, migrate, seal personas, start the
     # app) so frontend-dev can look at its own work. See the qa note below.
     # The layout baseline (`npm run layout-check -- --baseline main`) needs the app started
