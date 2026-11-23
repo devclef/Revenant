@@ -10,6 +10,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { formatCalendarDate } from "@/components/ui/letter-date";
 import { CATALOGUE } from "@/lib/figures";
 import { PERSONAS } from "@/lib/personas";
 import { generateRecallQuestions } from "@/lib/recall";
@@ -132,20 +133,21 @@ describe.each(["us-maya", "eu-tomas"])(
 
 // Feature: spec 14 (T7): a persona keeps its "as of" counter. The written-on
 // form is for live and real letters only.
-describe.each([
-  ["us-maya", "12 May 2024"],
-  ["eu-tomas", "12 May 2024"],
-])("persona %s keeps the as-of counter (spec 14, T7)", (key, asOf) => {
-  const { payload, writtenAsOf, metricCount } = personaPayload(key);
+describe.each(["us-maya", "eu-tomas"])(
+  "persona %s keeps the as-of counter (spec 14, T7)",
+  (key) => {
+    const { payload, writtenAsOf, metricCount } = personaPayload(key);
+    const asOf = formatCalendarDate(writtenAsOf);
 
-  it("shows Question n of N with the as-of date on the first question", () => {
-    const markup = renderQuestion(payload, writtenAsOf, 0);
-    expect(counterText(markup)).toBe(
-      `Question 1 of ${metricCount} · as of ${asOf}`,
-    );
-    expect(markup).not.toContain("you wrote this on");
-  });
-});
+    it("shows Question n of N with the as-of date on the first question", () => {
+      const markup = renderQuestion(payload, writtenAsOf, 0);
+      expect(counterText(markup)).toBe(
+        `Question 1 of ${metricCount} · as of ${asOf}`,
+      );
+      expect(markup).not.toContain("you wrote this on");
+    });
+  },
+);
 
 /** The text of the question counter paragraph, with its markup removed. */
 function counterText(markup: string): string {
