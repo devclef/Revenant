@@ -8,6 +8,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { LIVE_COPY } from "@/components/live/copy";
 import { OpeningFlow } from "@/components/reveal/OpeningFlow";
 import { REVEAL_COPY } from "@/components/reveal/copy";
+import { RETIRED_LETTER_IDS } from "@/lib/personas";
 
 /**
  * Tests for the Letter_Page server component at `/l/[id]` (spec 06 task 8,
@@ -29,7 +30,7 @@ import LetterNotFound from "./not-found";
 
 const here = dirname(fileURLToPath(import.meta.url));
 // A real letter ID shape, the same one the persona list uses.
-const VALID_ID = "wom_GdH6gqP6AGgnyhIMgA";
+const VALID_ID = RETIRED_LETTER_IDS[0];
 
 beforeEach(() => {
   notFound.mockClear();

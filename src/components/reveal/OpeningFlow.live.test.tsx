@@ -11,6 +11,7 @@ import { REVEAL_COPY } from "./copy";
 import type { FlowState, UnlockInfo } from "./opening-machine";
 import { OpeningFlow } from "./OpeningFlow";
 import { stageFor, stageListFor } from "@/components/ceremony/stages";
+import { RETIRED_LETTER_IDS } from "@/lib/personas";
 
 /**
  * Markup tests for the live mode of `OpeningFlow` (spec 06 task 8, R17.2 to
@@ -46,7 +47,7 @@ vi.mock("./useOpeningFlow", () => ({
   },
 }));
 
-const LETTER_ID = "wom_GdH6gqP6AGgnyhIMgA";
+const LETTER_ID = RETIRED_LETTER_IDS[0];
 const OPENS_AT = "2020-01-01T00:00:00.000Z";
 const PASSKEY_AND_BACKUP: UnlockInfo = {
   passkey: { rpId: "letters.example" },

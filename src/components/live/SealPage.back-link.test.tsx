@@ -2,6 +2,8 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
+import { RETIRED_LETTER_IDS } from "@/lib/personas";
+
 import { LIVE_COPY } from "./copy";
 import type { SealState } from "./seal-machine";
 
@@ -47,7 +49,7 @@ const ALL_STATES: SealState[] = [
   { tag: "fallback_key", passkeyCreated: false },
   {
     tag: "sealed",
-    letterId: "wom_GdH6gqP6AGgnyhIMgA",
+    letterId: RETIRED_LETTER_IDS[0],
     sealedAt: "2026-11-05T21:00:00.000Z",
     opensAt: "2026-11-05T21:01:00.000Z",
     offsetMs: 0,

@@ -22,12 +22,18 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
  * reach the network during render.
  */
 
+// `@/lib/personas` is mocked below without the retired list, so the real
+// module is loaded here to read a retired ID from it.
+const { RETIRED_LETTER_IDS } = await vi.importActual<typeof import("@/lib/personas")>(
+  "@/lib/personas",
+);
+
 /** One example persona, enough to prove the known-key render passes props. */
 const PERSONA = {
   key: "us-maya",
   display_name: "Maya",
   region: "United States",
-  letter_id: "wom_GdH6gqP6AGgnyhIMgA",
+  letter_id: RETIRED_LETTER_IDS[0],
   written_as_of: "2024-05-12",
   opens_at: "2024-11-05T00:00:00.000Z",
   intro_line: "Maya, who works early shifts at a clinic, writes on a May Sunday.",
