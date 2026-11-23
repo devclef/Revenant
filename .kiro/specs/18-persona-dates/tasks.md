@@ -146,7 +146,7 @@ No task below starts until that PR is merged. The other open questions keep the 
   - Earlier-spec tests changed or retired: `real-file.test.ts` (coverage limit), the `bundled-latest` tests, any "now" assertion pinned to `2026-10-26`; name each.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 4. The sealed-for-demo line
+- [x] 4. The sealed-for-demo line
   - Agent: `frontend-dev` · Depends on: 1 · Estimated size: S, ~200 changed lines
   - Scope: `src/components/reveal/copy.ts` (`sealedForThisDemo` only), `src/components/reveal/SealedLetter.tsx`, and the `*.test.tsx` next to them.
   - Design sections: "2. Screens read dates" (the sealed-for-demo line), Property 11.
