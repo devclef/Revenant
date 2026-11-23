@@ -244,6 +244,7 @@ describe("SealedLetter markup", () => {
   });
 });
 
+// Feature: 18-persona-dates, Property 11: The sealed-for-demo line shows only the sealing date
 describe("Property 11: the sealed-for-demo line takes only the seal date (R10.4, R10.5, R10.6)", () => {
   const SEALED_LINE = "Sealed later, for this demo, on ";
 
