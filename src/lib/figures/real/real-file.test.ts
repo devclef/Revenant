@@ -13,9 +13,11 @@ import { fileURLToPath } from "node:url";
 
 import { describe, expect, it } from "vitest";
 
+import { PERSONAS } from "@/lib/personas";
 import type { FigureV1 } from "@/lib/seal-format";
 import { serialiseFigureFile } from "@/lib/sources/refresh";
 
+import { figureAtOpening } from "../at-opening";
 import { CATALOGUE } from "../catalogue";
 import { loadFigureFile } from "../load";
 import { isRealDate } from "../periods";
@@ -28,7 +30,11 @@ const RETRIEVED_AT_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z$/;
 const PERIOD_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 const PLACEHOLDER_RETRIEVED_AT = "2000-01-01T00:00:00Z";
 const EARLY_COVERAGE_LIMIT = "2023-06-07";
-const LATE_COVERAGE_LIMIT = "2024-11-05";
+// The latest opens_at date in the Persona_List. The committed file must hold a
+// period after it, so the persona "now" figures can be read from it.
+const LATE_COVERAGE_LIMIT = PERSONAS.map((persona) => persona.opens_at.slice(0, 10)).reduce(
+  (latest, date) => (date > latest ? date : latest),
+);
 const MIN_FIGURES_PER_SERIES = 178;
 const WEEK_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -168,5 +174,24 @@ describe("committed real figure file: coverage, spacing and serialisation", () =
   it("is exactly what serialiseFigureFile produces from its own parsed content", () => {
     const parsed = JSON.parse(raw) as { figures: FigureV1[] };
     expect(serialiseFigureFile(parsed.figures)).toBe(raw);
+  });
+});
+
+describe("committed real figure file: persona opening windows", () => {
+  it("gives each persona metric a figure dated within the seven days up to its opens_at", () => {
+    for (const persona of PERSONAS) {
+      const opensDate = persona.opens_at.slice(0, 10);
+      const opensMillis = utcMillis(opensDate);
+      for (const metric of persona.metrics) {
+        const result = figureAtOpening(metric.metric_id, persona.opens_at, loaded);
+        expect(result.found, `${persona.key} ${metric.metric_id}`).toBe(true);
+        if (!result.found) continue;
+        const periodMillis = utcMillis(result.figure.period);
+        expect(periodMillis <= opensMillis, `${persona.key} ${metric.metric_id}`).toBe(true);
+        expect(periodMillis >= opensMillis - WEEK_MS, `${persona.key} ${metric.metric_id}`).toBe(
+          true,
+        );
+      }
+    }
   });
 });
