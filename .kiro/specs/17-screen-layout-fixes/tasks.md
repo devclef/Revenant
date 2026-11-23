@@ -215,7 +215,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - _Preservation: Write desk and `.deskCard` unchanged; press-and-hold stages, halo and passkey prompt unchanged_
     - _Requirements: 1.1, 1.2, 2.1, 2.2, 3.3, 3.4_
 
-- [ ] 12. SF1 and TT1 rules: panel fills surface, wax meets target size
+- [x] 12. SF1 and TT1 rules: panel fills surface, wax meets target size
   - Agent: `platform-dev` · Depends on: 10, 11 · Estimated size: M, ~500 changed lines
   - Scope: `tools/qa/layout-rules-17.mjs`, `tools/qa/layout-check.mjs`, `src/lib/layout-check-sf1-tt1.test.ts` (new).
   - Design sections: "D1 and D2 cards / SF1", "D1 wax / TT1".
