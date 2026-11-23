@@ -434,7 +434,7 @@ describe("runPrefetch — a differing value is a revision and is kept", () => {
     });
 
     // The source value (4.269) differs from the committed one, so it is reported
-    // as a revision and appended as a Revision_Row (spec 08, R20.17).
+    // as a revision and no figure is added for it (spec 08, R20.17).
     expect(second.report.revisions).toContainEqual({
       metricId: GASOLINE,
       period: "2026-10-26",
@@ -442,15 +442,13 @@ describe("runPrefetch — a differing value is a revision and is kept", () => {
       source: "4.269",
     });
 
-    // The committed row is kept unchanged; the new row sits after it and is the
-    // newest by retrieved_at.
+    // The committed row is kept unchanged and is the only row for the period.
     const loaded = loadFigureFile(JSON.parse(second.text), CATALOGUE);
     const rows = loaded.series
       .get(GASOLINE)
       ?.figures.filter((f) => f.period === "2026-10-26") ?? [];
-    expect(rows.map((f) => f.value)).toEqual([committed, "4.269"]);
+    expect(rows.map((f) => f.value)).toEqual([committed]);
     expect(rows[0].retrieved_at).toBe("2026-11-01T12:00:00Z");
-    expect(rows[1].retrieved_at).toBe("2026-11-02T14:02:11Z");
 
     assertReportNeutral(second.report);
     assertNoBannedWords(second.text);

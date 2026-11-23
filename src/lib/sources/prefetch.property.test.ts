@@ -433,16 +433,15 @@ describe("Property 4: The refetch only appends", () => {
             expect(got?.value).toBe(baselineByKey.get(keyOf(f))?.value);
           }
 
-          // The differing committed value is reported once and appended as one
-          // Revision_Row with the fresh value and this run's retrieved_at.
+          // The differing committed value is reported once as a revision and
+          // adds no row: no figure carries this run's retrieved_at for it.
           expect(out.report.revisions).toHaveLength(1);
-          const revision = outByRow.get(`${keyOf(tampered)}|${LATER_STAMP}`);
-          expect(revision?.value).toBe(
-            baselineByKey.get(keyOf(tampered))?.value,
-          );
+          expect(
+            outByRow.get(`${keyOf(tampered)}|${LATER_STAMP}`),
+          ).toBeUndefined();
 
-          // Output rows: the baseline rows, plus one Revision_Row.
-          expect(outFigures).toHaveLength(baselineFigures.length + 1);
+          // Output rows: the baseline rows, with no Revision_Row added.
+          expect(outFigures).toHaveLength(baselineFigures.length);
         },
       ),
       { numRuns: 100 },
