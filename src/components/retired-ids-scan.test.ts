@@ -114,11 +114,13 @@ describe("retired persona letter IDs", () => {
 
   it("fails when a retired ID is planted in a tracked file under src/", () => {
     const planted = "src/components/planted-retired-id.ts";
+    const clean = "src/components/clean-file.ts";
     const id = RETIRED_LETTER_IDS[0];
-    const hits = findRetiredIdHits(
-      [{ path: planted, text: `export const LETTER = "${id}";` }],
-      RETIRED_LETTER_IDS,
-    );
+    const tracked: ScannedFile[] = [
+      { path: clean, text: `export const NOTHING = "plain text";` },
+      { path: planted, text: `export const LETTER = "${id}";` },
+    ];
+    const hits = findRetiredIdHits(tracked, RETIRED_LETTER_IDS);
     expect(hits).toEqual([`${planted} contains retired ID ${id}`]);
   });
 });
