@@ -128,4 +128,16 @@ describe("preserved layout-check verdicts", () => {
       expect(layoutCheckSource).toContain(`verdictRow("${id}"`);
     });
   }
+
+  // The NB1, GC1, DL1 and PV1 verdict helpers have unit tests in their own test file.
+  const spec15TestSource = readFileSync(
+    fileURLToPath(new URL("./layout-check-spec15-rows.test.ts", import.meta.url)),
+    "utf8",
+  );
+
+  for (const helper of ["nb1Failures", "gc1Failures", "dl1Failures", "pv1Failures"]) {
+    it(`keeps the ${helper} verdict tests`, () => {
+      expect(spec15TestSource).toContain(`describe("${helper}"`);
+    });
+  }
 });
