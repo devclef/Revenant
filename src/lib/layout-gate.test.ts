@@ -1,4 +1,6 @@
+import { readFileSync } from "node:fs";
 import { EventEmitter } from "node:events";
+import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildGateArgs, main } from "../../tools/qa/layout-gate.mjs";
@@ -105,4 +107,25 @@ describe("main", () => {
     expect(server?.child.killSignals).toEqual(["SIGTERM"]);
     expect(server?.child.signalCode).toBe("SIGTERM");
   });
+});
+
+describe("preserved layout-check verdicts", () => {
+  // The gate runs tools/qa/layout-check.mjs unchanged, so its verdict rows must stay.
+  // These checks read the source; they do not run a browser.
+  const layoutCheckSource = readFileSync(
+    fileURLToPath(new URL("../../tools/qa/layout-check.mjs", import.meta.url)),
+    "utf8",
+  );
+
+  for (const id of ["R10.1", "R10.6", "R14.3", "R5.4"]) {
+    it(`still has the ${id} verdict`, () => {
+      expect(layoutCheckSource).toContain(`"${id}"`);
+    });
+  }
+
+  for (const id of ["NB1", "GC1", "DL1", "PV1"]) {
+    it(`still emits the ${id} verdict row`, () => {
+      expect(layoutCheckSource).toContain(`verdictRow("${id}"`);
+    });
+  }
 });
