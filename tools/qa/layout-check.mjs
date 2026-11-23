@@ -748,6 +748,35 @@ const R1_READ = () =>
 // LG1 (R9.10, R9.11, R27.7): the Landing_Ghost is visible and its body is clear of
 // the headline's line boxes and the Accent link. The body box uses the same
 // fractions as G1.
+// The persona Remember step pre-fills each figure question with a sample answer,
+// picked per visit from a seed drawn with crypto.getRandomValues on one
+// Uint32Array (src/components/reveal/sample-seed.ts). The picked value moves the
+// scale readout, so a run could report a CT1 or GO1 row that another run of the
+// same commit did not, and the baseline gate failed at random. Every context
+// this script opens returns this fixed value for that one call shape, so the
+// same build always shows the same samples. Every other getRandomValues call
+// (Uint8Array nonces and keys) is untouched.
+const SAMPLE_SEED = 1;
+function pinSampleSeedInPage(seed) {
+  const original = crypto.getRandomValues.bind(crypto);
+  crypto.getRandomValues = (array) => {
+    if (array instanceof Uint32Array && array.length === 1) {
+      array[0] = seed;
+      return array;
+    }
+    return original(array);
+  };
+}
+function pinSampleSeed(browser) {
+  const newContext = browser.newContext.bind(browser);
+  browser.newContext = async (options) => {
+    const context = await newContext(options);
+    await context.addInitScript(pinSampleSeedInPage, SAMPLE_SEED);
+    return context;
+  };
+  return browser;
+}
+
 const LG1_HIDDEN_BELOW_PX = 900;
 const LG1_READ = (startPattern) => {
   const pit = document.querySelector("[data-ghost-pit]");
@@ -6350,7 +6379,7 @@ async function main() {
   // Playwright's own SIGHUP and SIGTERM handlers close the browser and leave the
   // script running, so every later row failed with "Target page, context or browser
   // has been closed" and the run died before its summary. The run handles them here.
-  const launch = () => chromium.launch({ executablePath, headless: true, handleSIGHUP: false, handleSIGINT: false, handleSIGTERM: false });
+  const launch = async () => pinSampleSeed(await chromium.launch({ executablePath, headless: true, handleSIGHUP: false, handleSIGINT: false, handleSIGTERM: false }));
   const holder = { browser: null, relaunching: null };
   try {
     holder.browser = await launch();
