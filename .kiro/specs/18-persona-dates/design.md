@@ -305,7 +305,7 @@ export function scanText(path: string, text: string, forms: readonly DateForm[])
 - Forms come from `PERSONAS` (`written_as_of`, `opens_at`) through `formatCalendarDate`, `formatShortDate` and `formatCalendarMonth`. The test file itself holds no date literal.
 - A file with a NUL byte is skipped as binary.
 - Matching: ISO date, ISO instant, day date and short date are exact, case-sensitive substrings per line. A month form matches when the text before it on the line does not end with one or two digits and a space or no-break space (item 1 of "Where the code differs"; open question 10).
-- Figure_File fields: a `period` or `retrieved_at` value that contains a form is exempt for that field only (Requirement 12.8). No such value exists today: periods are Mondays and both new dates are not Mondays (17 November 2024 is a Sunday, 17 November 2026 a Tuesday). Task 3 checks the refetched `retrieved_at` values and lists any here.
+- Figure_File fields: a `period` or `retrieved_at` value that contains a form is exempt for that field only (Requirement 12.8). No such value exists today: periods are Mondays and both new dates are not Mondays (17 November 2024 is a Sunday, 17 November 2026 a Tuesday). Task 9 checked the file refetched on 2026-11-23: none.
 - `PERSONAS` empty or unreadable: the test fails with "Date_Guard: content/personas/personas.json yielded no persona dates" (Requirement 12.9).
 - All findings are collected and reported in one failure: `<path>:<line>: "<form>"`.
 
@@ -473,15 +473,15 @@ Shared fields:
 | Persona | Metric | Side | Value as stored | Value as shown | Unit | Region | Period | Source | series_id | source_url | retrieved_at |
 |---|---|---|---|---|---|---|---|---|---|---|---|
 | us-maya | us-gasoline-regular | Then | 3.052 | 3.05 USD per gallon | USD per gallon | U.S. | 2024-11-11 | EIA (above) | EMM_EPMR_PTE_NUS_DPG | https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMM_EPMR_PTE_NUS_DPG&f=W | 2026-11-01T16:39:37Z |
-| us-maya | us-gasoline-regular | At opening | pending refetch (task 3) | pending | USD per gallon | U.S. | pending | EIA (above) | EMM_EPMR_PTE_NUS_DPG | https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMM_EPMR_PTE_NUS_DPG&f=W | pending |
+| us-maya | us-gasoline-regular | At opening | 3.805 | 3.81 USD per gallon | USD per gallon | U.S. | 2026-11-16 | EIA (above) | EMM_EPMR_PTE_NUS_DPG | https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMM_EPMR_PTE_NUS_DPG&f=W | 2026-11-23T19:40:49Z |
 | us-maya | us-diesel | Then | 3.521 | 3.52 USD per gallon | USD per gallon | U.S. | 2024-11-11 | EIA (above) | EMD_EPD2D_PTE_NUS_DPG | https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMD_EPD2D_PTE_NUS_DPG&f=W | 2026-11-01T16:39:37Z |
-| us-maya | us-diesel | At opening | pending refetch (task 3) | pending | USD per gallon | U.S. | pending | EIA (above) | EMD_EPD2D_PTE_NUS_DPG | https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMD_EPD2D_PTE_NUS_DPG&f=W | pending |
+| us-maya | us-diesel | At opening | 5.937 | 5.94 USD per gallon | USD per gallon | U.S. | 2026-11-16 | EIA (above) | EMD_EPD2D_PTE_NUS_DPG | https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMD_EPD2D_PTE_NUS_DPG&f=W | 2026-11-23T19:40:49Z |
 | eu-tomas | eu-petrol-euro95 | Then | 1631.0766322029144 | 1.63 EUR per litre | EUR per 1,000 litres | EU27, weighted average | 2024-11-11 | Oil Bulletin (above) | petrol (above) | Oil Bulletin page (above) | 2026-11-01T16:39:38Z |
-| eu-tomas | eu-petrol-euro95 | At opening | pending refetch (task 3) | pending | EUR per 1,000 litres | EU27, weighted average | pending | Oil Bulletin (above) | petrol (above) | Oil Bulletin page (above) | pending |
+| eu-tomas | eu-petrol-euro95 | At opening | 1829.367794653689 | 1.83 EUR per litre | EUR per 1,000 litres | EU27, weighted average | 2026-11-16 | Oil Bulletin (above) | petrol (above) | Oil Bulletin page (above) | 2026-11-23T19:40:49Z |
 | eu-tomas | eu-diesel | Then | 1534.9327680766019 | 1.53 EUR per litre | EUR per 1,000 litres | EU27, weighted average | 2024-11-11 | Oil Bulletin (above) | diesel (above) | Oil Bulletin page (above) | 2026-11-01T16:39:38Z |
-| eu-tomas | eu-diesel | At opening | pending refetch (task 3) | pending | EUR per 1,000 litres | EU27, weighted average | pending | Oil Bulletin (above) | diesel (above) | Oil Bulletin page (above) | pending |
+| eu-tomas | eu-diesel | At opening | 2049.7103140755485 | 2.05 EUR per litre | EUR per 1,000 litres | EU27, weighted average | 2026-11-16 | Oil Bulletin (above) | diesel (above) | Oil Bulletin page (above) | 2026-11-23T19:40:49Z |
 
-Task 3 fills each "pending" cell by copying it from the refetched file through `figureAtOpening(metricId, "2026-11-17T00:00:00.000Z", …)`, re-reads the four then rows from the same file, and stops if any then value differs from this table (Requirement 4.7). The design is then presented again for the Approval_Gate.
+The four at-opening rows were filled in task 9 from the file refetched on 2026-11-23, read through `figureAtOpening(metricId, "2026-11-17T00:00:00.000Z", …)`. The four then rows were re-read from the same file and none differs from this table (Requirement 4.7). The design is presented again for the Approval_Gate.
 
 Priya's letter holds no figure.
 

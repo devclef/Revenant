@@ -12,6 +12,7 @@ import { DEMO_FIGURES } from "./demo";
 import { CATALOGUE } from "./catalogue";
 import { loadFigureFile } from "./load";
 import fixture from "./demo/us-fuel.fixture.json";
+import realFile from "./real/fuel-figures.json";
 import type { Found, Missing } from "./types";
 
 // The fixture alone, loaded the same way DEMO_FIGURES loads it.
@@ -91,8 +92,13 @@ describe("thenAndNow on the demo figures", () => {
     assertFound(now);
     expect(then.figure.period).toBe("2024-11-04");
     expect(then.figure.value).toBe("3.069");
-    expect(now.figure.period).toBe("2026-10-26");
-    expect(now.figure.value).toBe("4.269");
+    // "now" is the last us-gasoline-regular figure in the committed file.
+    const gasoline = (
+      realFile as { figures: { metric_id: string; period: string; value: string }[] }
+    ).figures.filter((f) => f.metric_id === "us-gasoline-regular");
+    const last = gasoline.reduce((a, b) => (b.period > a.period ? b : a));
+    expect(now.figure.period).toBe(last.period);
+    expect(now.figure.value).toBe(last.value);
   });
 
   it("an unknown series id: unknown_series for both", () => {
