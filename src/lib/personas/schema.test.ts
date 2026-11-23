@@ -471,7 +471,7 @@ describe("the real Persona_List — Text_Persona and fuel personas", () => {
     expect(priya).toBeDefined();
     expect(priya?.metrics).toEqual([]);
     expect(priya?.author_questions).toHaveLength(2);
-    expect(priya?.opens_at).toBe("2024-11-05T00:00:00.000Z");
+    expect(priya?.opens_at).toBe("2026-11-17T00:00:00.000Z");
     expect(RETIRED_LETTER_IDS).not.toContain(priya?.letter_id);
   });
 

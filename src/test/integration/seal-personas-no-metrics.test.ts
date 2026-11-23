@@ -186,14 +186,14 @@ describe("buildPersonaPayload: a persona with no metrics", () => {
 
 describe("buildPersonaPayload: the fuel personas are unchanged", () => {
   // Expected SHA-256 of canonicalize(payload) for each fuel persona, built with
-  // the committed letter text and DEMO_FIGURES. Taken from the pre-change
-  // module and compared byte for byte, so any change to the metric path breaks
-  // this test.
+  // the approved letter text (spec 18 PR A) and DEMO_FIGURES. Taken from the
+  // built module and compared byte for byte, so any change to the payload
+  // breaks this test. Re-take these values whenever a persona text or date changes.
   const EXPECTED_SHA256: Record<string, string> = {
     "us-maya":
-      "0866d7bf8c7d7455b6dcd48704e9d16c6d4565aa2d60dd94776261df888d350b",
+      "08419e954c74ba339d5e7fa80346095d8e41b3aecadfd820910e02f6b195a20a",
     "eu-tomas":
-      "e814c438679c13c58e46f1c9163a99297dc9cf5bd10df1a21560827435a1a0f4",
+      "18c7df596f7c510e992ccfad946646005b7e233ab809c22e3f0a0fcf01653cf4",
   };
 
   it("pins exactly the two fuel personas", () => {

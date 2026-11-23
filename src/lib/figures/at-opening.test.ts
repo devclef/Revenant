@@ -61,7 +61,7 @@ describe("personaNowResponse: Maya", () => {
     expect(body.series).toHaveLength(2);
   });
 
-  it("holds the 4 November 2024 gasoline record", () => {
+  it("holds the 16 November 2026 gasoline record", () => {
     expect(body.series[0]).toEqual({
       metric: {
         id: "us-gasoline-regular",
@@ -78,21 +78,21 @@ describe("personaNowResponse: Maya", () => {
       figure: {
         kind: "official",
         metric_id: "us-gasoline-regular",
-        value: "3.069",
+        value: "3.805",
         unit: "USD per gallon",
         region: "U.S.",
-        period: "2024-11-04",
+        period: "2026-11-16",
         source:
           "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
         series_id: "EMM_EPMR_PTE_NUS_DPG",
-        retrieved_at: "2026-11-01T16:39:37Z",
+        retrieved_at: "2026-11-23T19:40:49Z",
         source_url:
           "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMM_EPMR_PTE_NUS_DPG&f=W",
       },
     });
   });
 
-  it("holds the 4 November 2024 diesel record", () => {
+  it("holds the 16 November 2026 diesel record", () => {
     expect(body.series[1]).toEqual({
       metric: {
         id: "us-diesel",
@@ -109,14 +109,14 @@ describe("personaNowResponse: Maya", () => {
       figure: {
         kind: "official",
         metric_id: "us-diesel",
-        value: "3.536",
+        value: "5.937",
         unit: "USD per gallon",
         region: "U.S.",
-        period: "2024-11-04",
+        period: "2026-11-16",
         source:
           "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
         series_id: "EMD_EPD2D_PTE_NUS_DPG",
-        retrieved_at: "2026-11-01T16:39:37Z",
+        retrieved_at: "2026-11-23T19:40:49Z",
         source_url:
           "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMD_EPD2D_PTE_NUS_DPG&f=W",
       },
@@ -131,35 +131,35 @@ describe("personaNowResponse: Tomás", () => {
     expect(body.series).toHaveLength(2);
   });
 
-  it("holds the 3 June 2024 petrol record", () => {
+  it("holds the 16 November 2026 petrol record", () => {
     expect(body.series[0]?.figure).toEqual({
       kind: "official",
       metric_id: "eu-petrol-euro95",
-      value: "1741.8449858013737",
+      value: "1829.367794653689",
       unit: "EUR per 1,000 litres",
       region: "EU27, weighted average",
-      period: "2024-06-03",
+      period: "2026-11-16",
       source: "European Commission, Weekly Oil Bulletin",
       series_id:
         'File Weekly_Oil_Bulletin_Prices_History_maticni_4web.xlsx, sheet "Prices with taxes", column C "EU_price_with_tax_euro95", country EU27 weighted average (rows marked EU_)',
-      retrieved_at: "2026-11-01T16:39:38Z",
+      retrieved_at: "2026-11-23T19:40:49Z",
       source_url:
         "https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en",
     });
   });
 
-  it("holds the 3 June 2024 diesel record", () => {
+  it("holds the 16 November 2026 diesel record", () => {
     expect(body.series[1]?.figure).toEqual({
       kind: "official",
       metric_id: "eu-diesel",
-      value: "1601.4368204069326",
+      value: "2049.7103140755485",
       unit: "EUR per 1,000 litres",
       region: "EU27, weighted average",
-      period: "2024-06-03",
+      period: "2026-11-16",
       source: "European Commission, Weekly Oil Bulletin",
       series_id:
         'File Weekly_Oil_Bulletin_Prices_History_maticni_4web.xlsx, sheet "Prices with taxes", column D "EU_price_with_tax_diesel", country EU27 weighted average (rows marked EU_)',
-      retrieved_at: "2026-11-01T16:39:38Z",
+      retrieved_at: "2026-11-23T19:40:49Z",
       source_url:
         "https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en",
     });

@@ -218,7 +218,7 @@ describe("parseSampleCandidates strictness (C5.1, C5.3)", () => {
 // C5.2, C5.11). The four Then_Values are the design's values for the four
 // persona Figure_Questions.
 describe("Property 16: no sample answer equals the Then_Value at display precision", () => {
-  const DESIGN_THEN_VALUES = ["1.65", "1.79", "3.64", "3.89"];
+  const DESIGN_THEN_VALUES = ["1.53", "1.63", "3.05", "3.52"];
 
   it("writes the four persona Then_Values at display precision as the design names them", () => {
     const shown = questions()
