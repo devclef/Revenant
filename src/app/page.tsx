@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 
+import { Ghost } from "@/components/ceremony/scene/Ghost";
 import { SceneShell } from "@/components/ceremony/scene/SceneShell";
 import { CovenStrip } from "@/components/landing/CovenStrip";
 import { LandingHero } from "@/components/landing/LandingHero";
@@ -37,12 +38,16 @@ const HERO_STYLE: CSSProperties = {
 /**
  * Landing page `/` (design.md "SceneShell, TopBar and the landing page",
  * "No JavaScript on `/`", spec 07 task 7, spec 09 B1). A server component: no
- * "use client", no Ghost, no crypto, no API or database import. It is the only
- * route that renders the Scene with `variant="landing"`.
+ * "use client", no crypto, no API or database import. It is the only route that
+ * renders the Scene with `variant="landing"`.
  *
  * The LandingHero (the one h1, the Accent button to /demo and the optional
- * live-demo button) sits in the Scene with the Landing_Ghost and the light. How
- * and GitHub are linked once, in the site footer from the root layout.
+ * live-demo button) sits in the Scene with the light and the Landing_Ghost. The
+ * Landing_Ghost is the page's one ghost: it rises from the Soil light on the
+ * right at 900 px and wider and scrolls away with the hero. Below 900 px it is
+ * hidden by CSS (landing.module.css), so the server HTML is the same at every
+ * width. How and GitHub are linked once, in the site footer from the root
+ * layout.
  */
 export default function Home() {
   const personaCount = PERSONAS.length;
@@ -64,7 +69,9 @@ export default function Home() {
           </>
         }
       >
-        <LandingBackdrop />
+        <LandingBackdrop>
+          <Ghost gradientId="ghost-body-landing" />
+        </LandingBackdrop>
         <div style={HERO_STYLE}>
           <LandingHero personaCount={personaCount} demo2On={demo2On} />
         </div>

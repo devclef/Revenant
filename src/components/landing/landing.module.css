@@ -7,7 +7,8 @@
  */
 
 /* Stacked column. Source order is the phone order (OD12 c): eyebrow,
-   headline, sentence, calls to action, then the Landing_Ghost box. */
+   headline, sentence, then the seal box (the calls to action take order 1 on
+   phones, so they follow the seal box there). */
 .hero {
   display: flex;
   flex-direction: column;
@@ -110,9 +111,11 @@
     order: 1;
   }
 
-  /* The drawn Landing_Ghost is narrower here, so its body clears the Hero_Sentence.
-     The width variable belongs to the shared Scene placement (scene.module.css),
-     which this file does not own. The selector only matches the landing Ghost. */
+  /* This selector is not scoped: in the production build this file shares a
+     CSS chunk with every page, so it also sets the phone Ghost width on the
+     persona and live pages, whose layout relies on it. The landing Ghost itself
+     is hidden below 900 px (see the rule further down). The width variable
+     belongs to the shared Scene placement (scene.module.css). */
   :global([data-ghost-pit]) > div {
     --ghost-w: min(20vh, 128px);
   }
@@ -138,59 +141,14 @@
   width: min(100%, 420px);
 }
 
-/* The sheet Ghost behind the envelope (issue #433, L2). It fills the seal box
-   top to bottom and is 8 % wider than the envelope frame, so its sides reach
-   around the envelope. It is clipped to the box, so it never reaches the h1, a
-   control or the sections below. It sits behind the envelope and passes pointer
-   events through. */
-.heroGhost {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 50%;
-  z-index: 0;
-  width: calc(min(100%, 420px) * 1.08);
-  transform: translateX(-50%);
-  overflow: hidden;
-  pointer-events: none;
-}
-
-.heroGhost :global([data-ghost-pit][data-hero-pit]) {
-  position: absolute;
-  inset: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  transform: none;
-  animation-duration: 0s;
-  animation-delay: 0s;
-}
-
-/* The shared Ghost_Box hangs left of the pit point by half its width (scene
-   .ghost). In the hero box the pit fills the seal box, so the Ghost_Box must
-   start at the box's left edge, or its drawing is clipped into a hard strip. */
-.heroGhost :global([data-hero-pit]) > div {
-  left: 0;
-  top: 0;
-  bottom: auto;
-  width: 100%;
-  height: 100%;
-  aspect-ratio: auto;
-}
-
-.heroGhost :global([data-hero-pit]) :global([data-ghost-bob]) {
-  animation-duration: 0s;
-  animation-delay: 0s;
-}
-
+/* The envelope draws above the wax glow (.sealBox::before, z-index -1). */
 .sealFrame {
   position: relative;
   z-index: 1;
 }
 
 /* Short phones (360 x 640): the envelope is narrower and the calls to action
-   are 44 px tall, so both calls to action end inside the first viewport (PH1).
-   The Landing_Ghost sits inside the seal box and shrinks with it. */
+   are 44 px tall, so both calls to action end inside the first viewport (PH1). */
 @media (max-width: 599.98px) and (max-height: 700px) {
   .sealFrame {
     width: min(100%, 200px);
@@ -210,7 +168,7 @@
 }
 
 /* The wax glow behind the seal. It sits inside the seal box only (inset 0), so
-   it never reaches the text above or the ghost below. Its rest state is the
+   it never reaches the text around the seal box. Its rest state is the
    same at every motion setting: opacity 0.6 and no transform. Opacity and
    transform only. */
 .sealBox::before {
@@ -313,6 +271,17 @@
      and stays put. */
   .headline {
     font-size: clamp(4.5rem, 5.6vw, 5.5rem);
+  }
+
+  /* From 1920 px the hero is centred in the first viewport, so the headline
+     sits lower and its nowrap first line reaches past the Ghost's left edge.
+     At the shared size, min(50vh, 560px), the Ghost's head overlapped the end
+     of "time." at 1920 x 1080. The landing Ghost is a little smaller here, so
+     its head stays below that line. The pit (its x, the Soil line and the
+     light) does not move. The width variable belongs to the shared Scene
+     placement (scene.module.css); this selector only matches the landing pit. */
+  :global(body:has([data-landing-hero])) :global([data-ghost-pit]) {
+    --ghost-w: min(44vh, 560px);
   }
 }
 
@@ -484,31 +453,51 @@
   }
 }
 
-/* H1 step 1 (phones): below 900 px the Ghost layer is fixed to the window, so
-   ritual cards that scroll under it would show its glow behind their text. The
-   cards take the page background, so the Ghost does not show through steps 3
-   and 4. The frame that holds the sections sits above the Ghost layer in
-   scene.module.css (.landingBelowFrame). */
+/* H1 step 1 (phones): below 900 px the ritual cards take the page background,
+   so no backdrop glow shows behind their text. The frame that holds the
+   sections sits above the Ghost layer in scene.module.css (.landingBelowFrame). */
 @media (max-width: 899.98px) {
   .ritualCard {
     background: var(--bg);
+  }
+
+  /* No Landing_Ghost below 900 px: on phones its body covered the wax seal.
+     It is hidden here, not left out of the markup, so the server HTML is the
+     same at every width. Scoped to the landing page, so the persona and live
+     demo Ghosts are untouched. */
+  :global(body:has([data-landing-hero])) :global([data-ghost-layer]) {
+    display: none;
   }
 }
 
 /* H1 step 1: the landing Ghost stops being fixed below the hero at 900 px and
    wider (owner-accepted). The Ghost layer is `position: fixed` in
    scene.module.css, which this file does not own. Here it is pinned to the top
-   of the document with the height of one viewport, so the first screen looks
-   the same and the Ghost scrolls away with the hero. The sections below then
-   use the full frame width instead of stopping at the Ghost's left edge. */
+   of the document with the size of one viewport, so the first screen looks the
+   same and the Ghost scrolls away with the hero. The sections below then use
+   the full frame width instead of stopping at the Ghost's left edge. */
 @media (min-width: 900px) {
-  /* The containing block is the landing column, which starts 5rem down (the
-     scene's `main` padding-top at 900 px and wider). The negative top cancels
-     that offset, so the Ghost sits where the fixed layer sat at scroll 0. */
+  /* The containing block is the landing column (position: relative), which is
+     only min(34rem, 46vw) wide and starts at the scene's `main` padding: 5rem
+     down and --frame-l + --pad in from the left. The negative top and left
+     cancel that offset and the layer takes the full viewport width, so the pit
+     at --ghost-cx (72 % of the frame, in viewport terms) sits where the fixed
+     layer drew it at scroll 0 and is not clipped. */
   :global(body:has([data-landing-hero])) :global([data-ghost-layer]) {
     position: absolute;
-    inset: calc(-1 * 5rem) 0 auto 0;
+    top: calc(-1 * 5rem);
+    left: calc(-1 * (var(--frame-l) + var(--pad)));
+    right: auto;
+    bottom: auto;
+    width: 100vw;
     height: 100vh;
+  }
+
+  /* 100vw counts a classic scrollbar, so the layer can reach a few pixels past
+     the page's right edge. Clip that sideways overflow on the landing Scene
+     only, so the page never scrolls sideways. Vertical overflow stays visible. */
+  :global(body:has([data-landing-hero])) :global([data-ceremony="scene"]) {
+    overflow-x: clip;
   }
 }
 
