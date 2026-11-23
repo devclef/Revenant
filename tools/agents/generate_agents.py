@@ -94,9 +94,12 @@ def playwright_server(shots_dir: str) -> dict:
 PLAYWRIGHT_DENY = ["playwright/browser_run_code_unsafe", "playwright/browser_file_upload"]
 MCP_SERVERS = {role: {"playwright": playwright_server(d)} for role, d in SHOTS_DIRS.items()}
 # Optional per-role model. A role not listed here has no "model" field and keeps
-# using Auto.
+# using Auto. qa and frontend-dev are on claude-sonnet-5.5; platform-dev, data-dev
+# and crypto-dev are on claude-haiku-5.5.
 MODEL = "claude-haiku-5.5"
-MODELS = {role: MODEL for role in DESCRIPTIONS}
+SONNET_MODEL = "claude-sonnet-5.5"
+MODEL_OVERRIDES = {"qa": SONNET_MODEL, "frontend-dev": SONNET_MODEL}
+MODELS = {role: MODEL_OVERRIDES.get(role, MODEL) for role in DESCRIPTIONS}
 OWNER_ONLY = [".kiro/**", ".github/**", "tools/agents/**", "tools/dispatcher/**", "tools/hooks/**", "scripts/check.sh"]
 
 # Hooks (kiro-cli object form). The scripts live in tools/hooks/ (owner-only) and

@@ -15,10 +15,18 @@ OWNERSHIP = json.loads((ROOT / ".github/agents.json").read_text())
 
 
 class Models(unittest.TestCase):
-    def test_every_role_uses_haiku(self):
+    def test_each_role_uses_its_expected_model(self):
         self.assertEqual(set(ga.MODELS), set(ga.DESCRIPTIONS))
-        for role in ga.DESCRIPTIONS:
-            self.assertEqual(ga.build(role, OWNERSHIP)["model"], "claude-haiku-5.5")
+        expected = {
+            "qa": "claude-sonnet-5.5",
+            "frontend-dev": "claude-sonnet-5.5",
+            "platform-dev": "claude-haiku-5.5",
+            "data-dev": "claude-haiku-5.5",
+            "crypto-dev": "claude-haiku-5.5",
+        }
+        self.assertEqual(set(ga.DESCRIPTIONS), set(expected))
+        for role, model in expected.items():
+            self.assertEqual(ga.build(role, OWNERSHIP)["model"], model)
 
     def test_role_without_a_model_entry_has_no_field(self):
         with mock.patch.dict(ga.MODELS, clear=True):
