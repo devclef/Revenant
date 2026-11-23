@@ -6,7 +6,8 @@ import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { buildGateArgs, main, stageStaticAssets } from "../../tools/qa/layout-gate.mjs";
+import { buildGateArgs, GATE_BASELINE, main, stageStaticAssets } from "../../tools/qa/layout-gate.mjs";
+import { readBlockersFile } from "../../tools/qa/layout-scope.mjs";
 
 const spawnMock = vi.hoisted(() => vi.fn());
 
@@ -69,6 +70,31 @@ describe("buildGateArgs", () => {
   it("never contains --require", () => {
     expect(buildGateArgs({})).not.toContain("--require");
     expect(buildGateArgs({ CHROMIUM_PATH: "/usr/bin/chromium" })).not.toContain("--require");
+  });
+
+  it("passes the committed main baseline, so only new blockers fail", () => {
+    expect(existsSync(GATE_BASELINE)).toBe(true);
+    const args = buildGateArgs({});
+    const i = args.indexOf("--baseline");
+    expect(i).toBeGreaterThan(-1);
+    expect(args[i + 1]).toBe(GATE_BASELINE);
+  });
+
+  it("omits --baseline when there is no baseline file", () => {
+    expect(buildGateArgs({}, { baseline: null })).not.toContain("--baseline");
+  });
+
+  it("saves the run's blockers when LAYOUT_GATE_SAVE is set", () => {
+    const args = buildGateArgs({ LAYOUT_GATE_SAVE: "/tmp/b.json" });
+    const i = args.indexOf("--save-blockers");
+    expect(args[i + 1]).toBe("/tmp/b.json");
+    expect(buildGateArgs({})).not.toContain("--save-blockers");
+  });
+
+  it("keeps a baseline file layout-check can read", () => {
+    const data = readBlockersFile(JSON.parse(readFileSync(GATE_BASELINE, "utf8")));
+    expect(data.blockers.length).toBeGreaterThan(0);
+    expect(data.blockers.every((b: { level?: string }) => b.level === "blocker")).toBe(true);
   });
 });
 

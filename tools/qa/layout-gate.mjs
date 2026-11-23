@@ -26,16 +26,24 @@ const HEALTH_PATH = "/api/health";
 const HEALTH_ATTEMPTS = 120;
 const HEALTH_INTERVAL_MS = 500;
 const STOP_TIMEOUT_MS = 5000;
+// The blockers main already had when the gate landed. layout-check marks a blocker
+// found here as "on main" and fails only on new ones, so the gate stops regressions
+// without failing every PR on existing layout debt. Shrink it as blockers are fixed;
+// refresh it with LAYOUT_GATE_SAVE=<file> npm run layout-gate on main.
+export const GATE_BASELINE = join(ROOT, "tools", "qa", "layout-gate-baseline.json");
 
 /**
  * The layout-check arguments for the gate, without --url (main adds that).
  * Never includes --require, so only the always-blocking rules can fail the gate.
  * @param {Record<string, string | undefined>} env
+ * @param {{ baseline?: string | null }} [options] the baseline file, when it exists
  * @returns {string[]}
  */
-export function buildGateArgs(env) {
+export function buildGateArgs(env, { baseline = existsSync(GATE_BASELINE) ? GATE_BASELINE : null } = {}) {
   const args = ["--sizes", GATE_SIZES, "--shots", join(tmpdir(), "revenant-layout-gate")];
   if (env.CHROMIUM_PATH) args.push("--chromium", env.CHROMIUM_PATH);
+  if (baseline) args.push("--baseline", baseline);
+  if (env.LAYOUT_GATE_SAVE) args.push("--save-blockers", env.LAYOUT_GATE_SAVE);
   return args;
 }
 

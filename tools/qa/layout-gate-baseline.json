@@ -1,0 +1,1593 @@
+{
+  "format": "revenant-layout-blockers/1",
+  "createdAt": "2026-11-23T06:46:43.324Z",
+  "complete": true,
+  "note": "Blockers main had when the layout gate landed (issue #590). The gate fails only on blockers not listed here. Remove entries as they are fixed.",
+  "run": {
+    "url": "-",
+    "sizes": ["1440x900", "390x844"],
+    "onlySizes": null,
+    "stages": null,
+    "required": []
+  },
+  "counts": {
+    "blocker": 175
+  },
+  "blockers": [
+    {
+      "level": "blocker",
+      "check": "H1.6",
+      "name": "landing-sections",
+      "size": "1440x900",
+      "persona": "-",
+      "stage": "scene",
+      "detail": "hero=504px ritual-title=1180px resurrected-title=1180px coven-title=1180px viewport=1440x900 threshold=content box at least 864px (60% of width) (hero 504px is narrower than 864px)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "1440x900",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"What you remembered is recorded.\" overlaps the Ghost by 34.7 px wide and 20 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "1440x900",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Ghost by 57.2 px wide and 20 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "1440x900",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Ghost by 4 px wide and 20 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "1440x900",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"3.79 USD per gallon\" overlaps the Soil strip by 166.3 px wide and 17.1 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "1440x900",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"What you remembered is recorded.\" overlaps the Ghost by 34.7 px wide and 20 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "1440x900",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Ghost by 57.2 px wide and 20 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "1440x900",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Ghost by 4 px wide and 20 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "LC1",
+      "name": "column-coherence",
+      "size": "1440x900",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "LC1 no [data-figures-column] or [data-seal-group] rect to measure."
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "1440x900",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"What you remembered is recorded.\" overlaps the Ghost by 34.7 px wide and 20 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "1440x900",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Ghost by 57.2 px wide and 20 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "1440x900",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Ghost by 4 px wide and 20 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "1440x900",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"1.62 EUR per litre\" overlaps the Soil strip by 145.9 px wide and 17.1 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "1440x900",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"What you remembered is recorded.\" overlaps the Ghost by 34.7 px wide and 20 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "1440x900",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Ghost by 57.2 px wide and 20 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "1440x900",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Ghost by 4 px wide and 20 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "LC1",
+      "name": "column-coherence",
+      "size": "1440x900",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "LC1 no [data-figures-column] or [data-seal-group] rect to measure."
+    },
+    {
+      "level": "blocker",
+      "check": "FR1",
+      "name": "script-focus-outline",
+      "size": "1440x900",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/close",
+      "detail": "Script-focused h2 (tabindex -1) draws an outline: style solid, width 2px, colour rgb(245, 243, 255)."
+    },
+    {
+      "level": "blocker",
+      "check": "SF1",
+      "name": "panel-fills-surface",
+      "size": "1440x900",
+      "persona": "-",
+      "stage": "fastest path",
+      "detail": "SF1 no [data-seal-step] panel, surface or cream row to measure."
+    },
+    {
+      "level": "blocker",
+      "check": "TT1",
+      "name": "wax-target-size",
+      "size": "1440x900",
+      "persona": "-",
+      "stage": "fastest path",
+      "detail": "TT1 no [data-press-target] found to measure."
+    },
+    {
+      "level": "blocker",
+      "check": "CT1",
+      "name": "text-contrast",
+      "size": "390x844",
+      "persona": "-",
+      "stage": "scene",
+      "detail": "a \"Open the demo letters\" needs 4.5:1 contrast: contrast 2.36:1 is below 4.5:1"
+    },
+    {
+      "level": "blocker",
+      "check": "CW1",
+      "name": "content-column-width",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "CW1 content column 278 px, want at least 342 px (viewport 390 px minus 48)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Maya's letter\" overlaps the Ghost by 22 px wide and 16.2 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Step 1 of 4: Remember\" overlaps the Ghost by 85.7 px wide and 8.2 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Break the seal\" overlaps the Ghost by 25.8 px wide and 16 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Receipts\" overlaps the Ghost by 39.5 px wide and 16 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"A letter from Maya\" overlaps the Ghost by 37.5 px wide and 19 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Opens 5 November 2024\" overlaps the Ghost by 87.9 px wide and 19 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"The seal is intact. Nothing here has cha\" overlaps the Ghost by 126.2 px wide and 2.6 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"0\" overlaps the Soil strip by 7.6 px wide and 15 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"2\" overlaps the Soil strip by 7.3 px wide and 15 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"4\" overlaps the Soil strip by 7.8 px wide and 15 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"6\" overlaps the Soil strip by 7.5 px wide and 15 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"8\" overlaps the Soil strip by 7.4 px wide and 15 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"10\" overlaps the Soil strip by 12.5 px wide and 15 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Look closer at the mark\" overlaps the Soil strip by 191.8 px wide and 20 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Maya's letter\" overlaps the Ghost by 22 px wide and 16.1 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Step 1 of 4: Remember\" overlaps the Ghost by 85.7 px wide and 8.1 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Break the seal\" overlaps the Ghost by 25.8 px wide and 16 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Receipts\" overlaps the Ghost by 39.5 px wide and 16 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"A letter from Maya\" overlaps the Ghost by 37.5 px wide and 19 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Opens 5 November 2024\" overlaps the Ghost by 87.9 px wide and 19 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"The seal is intact. Nothing here has cha\" overlaps the Ghost by 126.2 px wide and 2.6 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 control \"revenant\" overlaps the Ghost by 91.1 px wide and 6.3 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 control \"Turn sound on\" overlaps the Ghost by 27.1 px wide and 6.3 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "CT1",
+      "name": "text-contrast",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "span#recall-q2-unit \"in USD per gallon\" needs 4.5:1 contrast: contrast 1.29:1 is below 4.5:1"
+    },
+    {
+      "level": "blocker",
+      "check": "CT1",
+      "name": "text-contrast",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "button \"Look closer at the mark\" needs 4.5:1 contrast: contrast 1.00:1 is below 4.5:1"
+    },
+    {
+      "level": "blocker",
+      "check": "CT1",
+      "name": "text-contrast",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "label \"No answer\" needs 4.5:1 contrast: contrast 2.09:1 is below 4.5:1"
+    },
+    {
+      "level": "blocker",
+      "check": "CT1",
+      "name": "text-contrast",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "button \"Previous question\" needs 4.5:1 contrast: contrast 1.00:1 is below 4.5:1"
+    },
+    {
+      "level": "blocker",
+      "check": "CW1",
+      "name": "content-column-width",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "CW1 content column 278 px, want at least 342 px (viewport 390 px minus 48)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"revenant\" overlaps the Ghost by 91.1 px wide and 1 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Maya is fictional. This letter was prepa\" overlaps the Ghost by 126.2 px wide and 14 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Maya's letter\" overlaps the Ghost by 22 px wide and 14.9 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Step 1 of 4: Remember\" overlaps the Ghost by 85.7 px wide and 6.9 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Break the seal\" overlaps the Ghost by 25.8 px wide and 16 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Receipts\" overlaps the Ghost by 39.5 px wide and 16 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"A letter from Maya\" overlaps the Ghost by 37.5 px wide and 19 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Opens 5 November 2024\" overlaps the Ghost by 87.9 px wide and 19 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"The seal is intact. Nothing here has cha\" overlaps the Ghost by 126.2 px wide and 3.9 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"A sample answer is filled in. Change it\" overlaps the Soil strip by 182.9 px wide and 2.6 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"3.79\" overlaps the Soil strip by 37.6 px wide and 20 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"USD per gallon\" overlaps the Soil strip by 98.9 px wide and 17 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"0\" overlaps the Soil strip by 7.6 px wide and 0.5 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"2\" overlaps the Soil strip by 7.3 px wide and 0.5 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"4\" overlaps the Soil strip by 7.8 px wide and 0.5 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"6\" overlaps the Soil strip by 7.5 px wide and 0.5 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"8\" overlaps the Soil strip by 7.4 px wide and 0.5 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"10\" overlaps the Soil strip by 12.5 px wide and 0.5 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 control \"revenant\" overlaps the Ghost by 91.1 px wide and 14.5 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 control \"Turn sound on\" overlaps the Ghost by 27.1 px wide and 14.5 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Maya's letter\" overlaps the Ghost by 22 px wide and 14.6 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Step 1 of 4: Remember\" overlaps the Ghost by 85.7 px wide and 6.6 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Break the seal\" overlaps the Ghost by 25.8 px wide and 16 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Receipts\" overlaps the Ghost by 39.5 px wide and 16 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"A letter from Maya\" overlaps the Ghost by 37.5 px wide and 19 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"Opens 5 November 2024\" overlaps the Ghost by 87.9 px wide and 19 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 text \"The seal is intact. Nothing here has cha\" overlaps the Ghost by 126.2 px wide and 4.2 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 control \"revenant\" overlaps the Ghost by 91.1 px wide and 7.9 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "recall",
+      "detail": "GO1 control \"Turn sound on\" overlaps the Ghost by 27.1 px wide and 7.9 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Maya's letter\" overlaps the Ghost by 22 px wide and 14.5 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Step 2 of 4: Break the seal\" overlaps the Ghost by 115.5 px wide and 6.5 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Break the seal\" overlaps the Ghost by 26.2 px wide and 16 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Receipts\" overlaps the Ghost by 39.5 px wide and 16 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"You remembered, just now\" overlaps the Ghost by 118.5 px wide and 16.3 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Soil strip by 309.8 px wide and 10 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Soil strip by 139.8 px wide and 20 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Break the seal\" overlaps the Soil strip by 116 px wide and 3.4 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Maya's letter\" overlaps the Ghost by 22 px wide and 14.5 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Step 2 of 4: Break the seal\" overlaps the Ghost by 115.5 px wide and 6.5 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Break the seal\" overlaps the Ghost by 26.2 px wide and 16 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"Receipts\" overlaps the Ghost by 39.5 px wide and 16 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 text \"You remembered, just now\" overlaps the Ghost by 118.5 px wide and 16.3 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 control \"revenant\" overlaps the Ghost by 91.1 px wide and 8 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "marks",
+      "detail": "GO1 control \"Turn sound on\" overlaps the Ghost by 27.1 px wide and 8 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "CT1",
+      "name": "text-contrast",
+      "size": "390x844",
+      "persona": "us-maya",
+      "stage": "close",
+      "detail": "span \"demo letter\" needs 4.5:1 contrast: contrast 1.15:1 is below 4.5:1"
+    },
+    {
+      "level": "blocker",
+      "check": "CW1",
+      "name": "content-column-width",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "CW1 content column 278 px, want at least 342 px (viewport 390 px minus 48)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Tomás's letter\" overlaps the Ghost by 34.8 px wide and 16.2 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Step 1 of 4: Remember\" overlaps the Ghost by 85.7 px wide and 8.2 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Break the seal\" overlaps the Ghost by 25.8 px wide and 16 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Receipts\" overlaps the Ghost by 39.5 px wide and 16 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"A letter from Tomás\" overlaps the Ghost by 45.9 px wide and 19 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Opens 9 June 2024\" overlaps the Ghost by 49.1 px wide and 19 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"The seal is intact. Nothing here has cha\" overlaps the Ghost by 126.2 px wide and 2.6 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"0\" overlaps the Soil strip by 7.6 px wide and 15 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"0.5\" overlaps the Soil strip by 17.7 px wide and 15 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"1\" overlaps the Soil strip by 4.9 px wide and 15 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"1.5\" overlaps the Soil strip by 15.3 px wide and 15 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"2\" overlaps the Soil strip by 7.3 px wide and 15 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"2.5\" overlaps the Soil strip by 17.7 px wide and 15 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"3\" overlaps the Soil strip by 7.4 px wide and 15 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Look closer at the mark\" overlaps the Soil strip by 191.8 px wide and 20 px tall. (recall, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Tomás's letter\" overlaps the Ghost by 34.8 px wide and 16.1 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Step 1 of 4: Remember\" overlaps the Ghost by 85.7 px wide and 8.1 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Break the seal\" overlaps the Ghost by 25.8 px wide and 16 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Receipts\" overlaps the Ghost by 39.5 px wide and 16 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"A letter from Tomás\" overlaps the Ghost by 45.9 px wide and 19 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Opens 9 June 2024\" overlaps the Ghost by 49.1 px wide and 19 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"The seal is intact. Nothing here has cha\" overlaps the Ghost by 126.2 px wide and 2.6 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 control \"revenant\" overlaps the Ghost by 91.1 px wide and 6.3 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 control \"Turn sound on\" overlaps the Ghost by 27.1 px wide and 6.3 px tall. (recall, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "CT1",
+      "name": "text-contrast",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "p#recall-q2-unit-help \"Published per 1,000 litres, shown per litre.\" needs 4.5:1 contrast: contrast 1.29:1 is below 4.5:1"
+    },
+    {
+      "level": "blocker",
+      "check": "CT1",
+      "name": "text-contrast",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "button \"Look closer at the mark\" needs 4.5:1 contrast: contrast 1.00:1 is below 4.5:1"
+    },
+    {
+      "level": "blocker",
+      "check": "CT1",
+      "name": "text-contrast",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "label \"No answer\" needs 4.5:1 contrast: contrast 2.09:1 is below 4.5:1"
+    },
+    {
+      "level": "blocker",
+      "check": "CT1",
+      "name": "text-contrast",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "button \"Previous question\" needs 4.5:1 contrast: contrast 1.00:1 is below 4.5:1"
+    },
+    {
+      "level": "blocker",
+      "check": "CW1",
+      "name": "content-column-width",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "CW1 content column 278 px, want at least 342 px (viewport 390 px minus 48)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"revenant\" overlaps the Ghost by 91.1 px wide and 16.8 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Tomás is fictional. This letter was prep\" overlaps the Ghost by 126.2 px wide and 14 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Tomás's letter\" overlaps the Ghost by 34.8 px wide and 14.7 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Step 1 of 4: Remember\" overlaps the Ghost by 85.7 px wide and 6.7 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Break the seal\" overlaps the Ghost by 25.8 px wide and 16 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Receipts\" overlaps the Ghost by 39.5 px wide and 16 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"A letter from Tomás\" overlaps the Ghost by 45.9 px wide and 19 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Opens 9 June 2024\" overlaps the Ghost by 49.1 px wide and 19 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"The seal is intact. Nothing here has cha\" overlaps the Ghost by 126.2 px wide and 4.1 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"A sample answer is filled in. Change it\" overlaps the Soil strip by 182.9 px wide and 2.6 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"1.62\" overlaps the Soil strip by 37.6 px wide and 20 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"EUR per litre\" overlaps the Soil strip by 81.9 px wide and 17 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"0\" overlaps the Soil strip by 7.6 px wide and 0.5 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"0.5\" overlaps the Soil strip by 17.7 px wide and 0.5 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"1\" overlaps the Soil strip by 4.9 px wide and 0.5 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"1.5\" overlaps the Soil strip by 15.3 px wide and 0.5 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"2\" overlaps the Soil strip by 7.3 px wide and 0.5 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"2.5\" overlaps the Soil strip by 17.7 px wide and 0.5 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"3\" overlaps the Soil strip by 7.4 px wide and 0.5 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 control \"revenant\" overlaps the Ghost by 91.1 px wide and 30.3 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 control \"Turn sound on\" overlaps the Ghost by 27.1 px wide and 30.3 px tall. (question 2, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Tomás's letter\" overlaps the Ghost by 34.8 px wide and 14.5 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Step 1 of 4: Remember\" overlaps the Ghost by 85.7 px wide and 6.5 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Break the seal\" overlaps the Ghost by 25.8 px wide and 16 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Receipts\" overlaps the Ghost by 39.5 px wide and 16 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"A letter from Tomás\" overlaps the Ghost by 45.9 px wide and 19 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"Opens 9 June 2024\" overlaps the Ghost by 49.1 px wide and 19 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"The seal is intact. Nothing here has cha\" overlaps the Ghost by 126.2 px wide and 4.3 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 text \"No answer\" overlaps the Soil strip by 85 px wide and 11.6 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 control \"revenant\" overlaps the Ghost by 91.1 px wide and 8 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/recall",
+      "detail": "GO1 control \"Turn sound on\" overlaps the Ghost by 27.1 px wide and 8 px tall. (question 2, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Tomás's letter\" overlaps the Ghost by 34.8 px wide and 14.5 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Step 2 of 4: Break the seal\" overlaps the Ghost by 115.5 px wide and 6.5 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Break the seal\" overlaps the Ghost by 26.2 px wide and 16 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Receipts\" overlaps the Ghost by 39.5 px wide and 16 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"You remembered, just now\" overlaps the Ghost by 118.5 px wide and 16.3 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Soil strip by 309.8 px wide and 10 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Press and hold the wax seal to break it,\" overlaps the Soil strip by 139.8 px wide and 20 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "soil-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Break the seal\" overlaps the Soil strip by 116 px wide and 3.4 px tall. (Break the seal, at the start)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Tomás's letter\" overlaps the Ghost by 34.8 px wide and 14.5 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Step 2 of 4: Break the seal\" overlaps the Ghost by 115.5 px wide and 6.5 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Break the seal\" overlaps the Ghost by 26.2 px wide and 16 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"Receipts\" overlaps the Ghost by 39.5 px wide and 16 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 text \"You remembered, just now\" overlaps the Ghost by 118.5 px wide and 16.3 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 control \"revenant\" overlaps the Ghost by 91.1 px wide and 8 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "GO1",
+      "name": "ghost-overlap",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/marks",
+      "detail": "GO1 control \"Turn sound on\" overlaps the Ghost by 27.1 px wide and 8 px tall. (Break the seal, scrolled to the bottom)"
+    },
+    {
+      "level": "blocker",
+      "check": "FR1",
+      "name": "script-focus-outline",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/close",
+      "detail": "Script-focused h2 (tabindex -1) draws an outline: style solid, width 2px, colour rgb(245, 243, 255)."
+    },
+    {
+      "level": "blocker",
+      "check": "CT1",
+      "name": "text-contrast",
+      "size": "390x844",
+      "persona": "eu-tomas",
+      "stage": "eu-tomas/close",
+      "detail": "span \"demo letter\" needs 4.5:1 contrast: contrast 1.15:1 is below 4.5:1"
+    },
+    {
+      "level": "blocker",
+      "check": "SF1",
+      "name": "panel-fills-surface",
+      "size": "390x844",
+      "persona": "-",
+      "stage": "fastest path",
+      "detail": "SF1 no [data-seal-step] panel, surface or cream row to measure."
+    },
+    {
+      "level": "blocker",
+      "check": "TT1",
+      "name": "wax-target-size",
+      "size": "390x844",
+      "persona": "-",
+      "stage": "fastest path",
+      "detail": "TT1 no [data-press-target] found to measure."
+    }
+  ]
+}
