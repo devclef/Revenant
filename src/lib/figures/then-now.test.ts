@@ -87,12 +87,15 @@ describe("thenAndNow on the demo figures", () => {
       "2024-11-05",
       DEMO_FIGURES,
     );
+    const gasoline =
+      DEMO_FIGURES.series.get("us-gasoline-regular")?.figures ?? [];
+    const last = gasoline[gasoline.length - 1];
     assertFound(then);
     assertFound(now);
     expect(then.figure.period).toBe("2024-11-04");
     expect(then.figure.value).toBe("3.069");
-    expect(now.figure.period).toBe("2026-10-26");
-    expect(now.figure.value).toBe("4.269");
+    expect(now.figure.period).toBe(last.period);
+    expect(now.figure.value).toBe(last.value);
   });
 
   it("an unknown series id: unknown_series for both", () => {
