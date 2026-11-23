@@ -26,11 +26,9 @@ import { firstBannedTerm } from "./banned-terms";
 
 // key: a URL segment. Lowercase alphanumerics in hyphen-separated groups, with
 // no leading, trailing or doubled hyphen, 1-40 characters.
-const keySchema = z
-  .string()
-  .min(1)
-  .max(40)
-  .regex(/^[a-z0-9]+(-[a-z0-9]+)*$/);
+const KEY_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
+
+const keySchema = z.string().min(1).max(40).regex(KEY_PATTERN);
 
 // display_name and region: 1-60 characters.
 const nameSchema = z.string().min(1).max(60);
@@ -40,20 +38,20 @@ const letterIdSchema = z.string().refine(isLetterId, {
   message: "letter_id must be 22 base64url characters decoding to 16 bytes",
 });
 
-// written_as_of: a real YYYY-MM-DD calendar date.
-const writtenAsOfSchema = z.string().refine(isRealDate, {
-  message: "written_as_of must be a real YYYY-MM-DD date",
-});
+// written_as_of and opens_at are checked in the cross-check below, not here.
+// A field-level message cannot name the persona, and the list error must read
+// `persona "<key>": <field> <problem>`.
+const writtenAsOfSchema = z.string();
+const opensAtSchema = z.string();
+
+const OPENS_AT_PATTERN = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/;
 
 // opens_at: a millisecond-precision UTC instant that round-trips through Date.
-const opensAtSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/, {
-    message: "opens_at must be YYYY-MM-DDTHH:mm:ss.sssZ",
-  })
-  .refine((s) => new Date(s).toISOString() === s, {
-    message: "opens_at must be a real instant",
-  });
+function isRealOpensAt(s: string): boolean {
+  if (!OPENS_AT_PATTERN.test(s)) return false;
+  const time = Date.parse(s);
+  return !Number.isNaN(time) && new Date(time).toISOString() === s;
+}
 
 // envelope_hash: the SHA-256 fingerprint of the sealed envelope, exactly 64
 // lowercase hex characters (spec 13 U4.4). Anything else is refused.
@@ -142,6 +140,12 @@ export const personaListSchema = personaListBaseSchema.superRefine(
     for (let i = 0; i < list.personas.length; i++) {
       const persona = list.personas[i];
 
+      // The list error names the persona by key. An invalid key falls back to
+      // the 1-based list position, the same numbering the report uses.
+      const label = KEY_PATTERN.test(persona.key)
+        ? `persona "${persona.key}"`
+        : `persona #${i + 1}`;
+
       // A persona needs at least one question or one metric (the Text_Persona
       // has questions and no metrics; a fuel persona has metrics).
       if (
@@ -178,14 +182,35 @@ export const personaListSchema = personaListBaseSchema.superRefine(
         seenLetterIds.add(persona.letter_id);
       }
 
-      // opens_at must be later than written_as_of midnight UTC (R1.5).
-      const writtenMidnight = `${persona.written_as_of}T00:00:00.000Z`;
-      if (Date.parse(persona.opens_at) <= Date.parse(writtenMidnight)) {
+      // written_as_of must be a real calendar date and opens_at a real UTC
+      // instant. Both messages name the persona.
+      const writtenValid = isRealDate(persona.written_as_of);
+      if (!writtenValid) {
         ctx.addIssue({
           code: "custom",
-          message: "opens_at must be later than written_as_of midnight UTC",
+          message: `${label} written_as_of must be a real YYYY-MM-DD date`,
+          path: ["personas", i, "written_as_of"],
+        });
+      }
+      const opensValid = isRealOpensAt(persona.opens_at);
+      if (!opensValid) {
+        ctx.addIssue({
+          code: "custom",
+          message: `${label} opens_at must be YYYY-MM-DDTHH:mm:ss.sssZ`,
           path: ["personas", i, "opens_at"],
         });
+      }
+
+      // opens_at must be later than written_as_of midnight UTC (R1.5).
+      if (writtenValid && opensValid) {
+        const writtenMidnight = `${persona.written_as_of}T00:00:00.000Z`;
+        if (Date.parse(persona.opens_at) <= Date.parse(writtenMidnight)) {
+          ctx.addIssue({
+            code: "custom",
+            message: `${label} opens_at must be later than written_as_of midnight UTC`,
+            path: ["personas", i, "opens_at"],
+          });
+        }
       }
 
       // Metrics: unique metric_id, each present in DEMO_FIGURES.series, and
