@@ -26,7 +26,7 @@
  * It needs headless Chromium, so it cannot run in CI without a browser. Without
  * WALK=1 the suites are skipped and exit 0.
  */
-import { existsSync, mkdirSync, statSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, statSync } from "node:fs";
 import path from "node:path";
 
 import { chromium, type BrowserContext, type Page } from "playwright-core";
@@ -65,6 +65,12 @@ import {
   checkTrackNames,
   LIVE_TRACK_NAMES,
   PERSONA_TRACK_NAMES,
+  buildReceiptsReport,
+  checkPersonaDateStrings,
+  checkSealedForDemoLine,
+  checkWalkLetterText,
+  expectedPersonaDates,
+  FUEL_PERSONA_KEYS,
   checkRunShots,
   checkSealMarks,
   checkSealOrangeButtons,
@@ -77,6 +83,7 @@ import {
   checkUnansweredFold,
   countPasskeyCalls,
   defectsFromChecks,
+  findSealedForDemoLine,
   missingShotDefect,
   RECORD_SHOT_PREFIX,
   recordStepResult,
@@ -100,6 +107,8 @@ import {
   type StepCheck,
   type WalkDefect,
   type WalkStepName,
+  type PersonaDateRow,
+  type ReceiptFigureRead,
   type WalkStepResult,
 } from "./live-walk-helpers";
 import {
@@ -1816,22 +1825,146 @@ async function readTrack(
   });
 }
 
+/** A persona entry from content/personas/personas.json, as far as the walk reads it. */
+type PersonaEntry = PersonaDateRow & {
+  letter_id: string;
+  metrics: { metric_id: string }[];
+};
+
+/** The persona entry for one key. Throws when the key is not in personas.json. */
+function readPersona(key: string): PersonaEntry {
+  const file = JSON.parse(
+    readFileSync(path.resolve("content/personas/personas.json"), "utf8"),
+  ) as { personas: PersonaEntry[] };
+  const row = file.personas.find((persona) => persona.key === key);
+  if (!row) throw new Error(`No persona ${key} in personas.json`);
+  return row;
+}
+
 /**
- * Walks one persona page from Remember to its last step, reading the Step_Track at
- * each stage it reaches. Returns one line per stage and the failed checks.
+ * The UTC instant of a provenance date ("retrieved" followed by a day, short
+ * month and year) as an ISO string, or null when the line has no readable date.
+ */
+function retrievedIso(text: string): string | null {
+  const match = /retrieved\s+(\d{1,2}\s+[A-Za-z]+\.?\s+\d{4})/.exec(text);
+  if (!match) return null;
+  const ms = Date.parse(`${match[1].replace(/\.$/, "")} UTC`);
+  return Number.isNaN(ms) ? null : new Date(ms).toISOString();
+}
+
+/**
+ * The `sealedAt` the server serves for a persona letter, read from its header in
+ * `GET /api/letters/<id>`. Null when the response is not openable or has no
+ * readable `sealedAt`.
+ */
+async function servedSealedAt(letterId: string): Promise<string | null> {
+  const response = await fetch(`${BASE_URL}/api/letters/${letterId}`);
+  if (!response.ok) return null;
+  const body = (await response.json()) as {
+    envelope?: { sealedAt?: unknown };
+  };
+  const sealedAt = body.envelope?.sealedAt;
+  return typeof sealedAt === "string" ? sealedAt : null;
+}
+
+/**
+ * The receipt figures on the page, in card order, read for the receipts report.
+ * `metricIds` is the persona's metric order from personas.json. The returned
+ * `problems` name what could not be read, so nothing is filled in by hand.
+ */
+async function readReceiptFigures(
+  page: Page,
+  metricIds: readonly string[],
+): Promise<{ figures: ReceiptFigureRead[]; problems: string[] }> {
+  const cards = (await page.evaluate(() =>
+    Array.from(document.querySelectorAll("[data-receipt-card]")).map(
+      (card) => {
+        const row = (role: "then" | "now") => {
+          const el = card.querySelector(`[data-receipt-row="${role}"]`);
+          if (!el) return null;
+          return {
+            value:
+              el.querySelector("[data-role]")?.textContent?.trim() ?? "",
+            period:
+              el.querySelector('[class*="period"]')?.textContent?.trim() ?? "",
+            text: el.textContent ?? "",
+          };
+        };
+        return { then: row("then"), now: row("now") };
+      },
+    ),
+  )) as {
+    then: { value: string; period: string; text: string } | null;
+    now: { value: string; period: string; text: string } | null;
+  }[];
+
+  const problems: string[] = [];
+  if (cards.length !== metricIds.length) {
+    problems.push(
+      `${cards.length} receipt card(s) on the receipts step, expected ${metricIds.length}`,
+    );
+  }
+  const figures: ReceiptFigureRead[] = [];
+  cards.forEach((card, index) => {
+    const metricId = metricIds[index] ?? `card-${index + 1}`;
+    if (!card.then || !card.now) {
+      problems.push(`${metricId}: the Then or Now row is not on the page`);
+      return;
+    }
+    const thenAt = retrievedIso(card.then.text);
+    const nowAt = retrievedIso(card.now.text);
+    if (!thenAt || !nowAt) {
+      problems.push(`${metricId}: a retrieved date could not be read`);
+      return;
+    }
+    figures.push({
+      metricId,
+      then: { value: card.then.value, period: card.then.period, retrievedAt: thenAt },
+      atOpening: { value: card.now.value, period: card.now.period, retrievedAt: nowAt },
+    });
+  });
+  return { figures, problems };
+}
+
+/** What one persona walk from Remember to its last step found. */
+type PersonaTrackResult = {
+  /** One line per stage: its Step_Track check. */
+  seen: string[];
+  /** Failures the test asserts: Step_Track, persona dates, stale letter text and the sealed-for-demo line. */
+  failures: string[];
+  /** Product findings from the step-1 helpers at each stop. Reported, not asserted. */
+  findings: string[];
+  /** The receipts report lines for a fuel persona. */
+  report: string[];
+  /** True when the walk reached the last step: the figures or close stage, or the Read step of a letter with no figures. */
+  reachedLast: boolean;
+};
+
+/**
+ * Walks one persona page from Remember to its last step. At each stage it reads
+ * the Step_Track, runs the step-1 text checks on the page text, and on the
+ * receipts step of a fuel persona reads the figures into the report builder.
+ * A stage's date checks run at the Remember stop, the only stop where the copy
+ * that carries the dates is confirmed (intro, memory line and opening date).
  */
 async function walkPersonaTrack(
   page: Page,
   key: string,
   expected: readonly string[],
-): Promise<{ seen: string[]; failures: string[] }> {
+): Promise<PersonaTrackResult> {
+  const row = readPersona(key);
+  const isFuel = FUEL_PERSONA_KEYS.has(key);
   await page.goto(`${BASE_URL}/demo/personas/${key}`);
   await page
     .locator('[data-ceremony="recall"]')
     .waitFor({ state: "visible", timeout: STEP_TIMEOUT_MS });
   const seen: string[] = [];
   const failures: string[] = [];
+  const findings: string[] = [];
+  const report: string[] = [];
+  let reachedLast = false;
   let last = "";
+  let sealedLine: string | null = null;
   for (let guard = 0; guard < 30; guard += 1) {
     await page.waitForTimeout(SETTLE_MS);
     const stage = await currentStage(page);
@@ -1840,9 +1973,44 @@ async function walkPersonaTrack(
       const check = checkTrackNames(track.names, track.phone, expected);
       seen.push(`${stage}: ${check.message}`);
       if (!check.ok) failures.push(`${key} ${stage}: ${check.message}`);
+
+      const bodyText = await page.evaluate(() => document.body.innerText);
+      const stale = checkWalkLetterText([bodyText], `${key} ${stage}`);
+      if (!stale.ok) {
+        failures.push(stale.message);
+        findings.push(stale.message);
+      }
+      if (sealedLine === null) sealedLine = findSealedForDemoLine(bodyText);
+
+      if (stage === "recall") {
+        const dates = checkPersonaDateStrings(
+          expectedPersonaDates(row),
+          bodyText,
+          { written: true, memory: isFuel, opening: true },
+        );
+        if (!dates.ok) {
+          failures.push(dates.message);
+          findings.push(dates.message);
+        }
+      }
+      if (stage === "figures" && isFuel) {
+        const receipts = await readReceiptFigures(
+          page,
+          row.metrics.map((metric) => metric.metric_id),
+        );
+        findings.push(...receipts.problems.map((problem) => `${key} receipts: ${problem}`));
+        try {
+          report.push(...buildReceiptsReport(key, receipts.figures).lines);
+        } catch (error) {
+          findings.push(`${key} receipts: ${errorMessage(error)}`);
+        }
+      }
       last = stage;
     }
-    if (stage === "figures" || stage === "close") break;
+    if (stage === "figures" || stage === "close") {
+      reachedLast = true;
+      break;
+    }
     if (stage === "recall") {
       const recall = page.locator('[data-ceremony="recall"]');
       const decimal = recall.locator('input[inputmode="decimal"]').first();
@@ -1863,12 +2031,24 @@ async function walkPersonaTrack(
       await page.locator("[data-seal-button]").first().click();
     } else if (stage === "letter") {
       const next = page.locator('[data-advance="figures"]');
-      // A letter with no figures ends on the Read step.
-      if ((await next.count()) === 0) break;
+      // A letter with no figures ends on the Read step. Only Priya has no figures,
+      // so a fuel persona with no advance control has not reached its last step.
+      if ((await next.count()) === 0) {
+        reachedLast = !isFuel;
+        break;
+      }
       await next.first().click();
     }
   }
-  return { seen, failures };
+  const sealed = checkSealedForDemoLine(
+    sealedLine,
+    await servedSealedAt(row.letter_id),
+  );
+  if (!sealed.ok) {
+    failures.push(`${key} sealed line: ${sealed.message}`);
+    findings.push(`${key} sealed line: ${sealed.message}`);
+  }
+  return { seen, failures, findings, report, reachedLast };
 }
 
 describe.skipIf(!walkEnabled(process.env))(
@@ -1890,10 +2070,26 @@ describe.skipIf(!walkEnabled(process.env))(
         try {
           const context = await browser.newContext({ viewport: size });
           const page = await context.newPage();
-          const { seen, failures } = await walkPersonaTrack(page, p.key, p.names);
-          console.log([`Persona track: ${p.key} ${size.width}x${size.height}`, ...seen].join("\n"));
-          expect(seen.length).toBeGreaterThan(1);
-          expect(failures).toEqual([]);
+          const result = await walkPersonaTrack(page, p.key, p.names);
+          const findingLines =
+            result.findings.length > 0
+              ? [
+                  "For task 19 (product findings. The walk does not fail on these.)",
+                  ...result.findings.map((line) => `- ${line}`),
+                ]
+              : [];
+          console.log(
+            [
+              `Persona track: ${p.key} ${size.width}x${size.height}`,
+              ...result.seen,
+              ...result.report,
+              ...findingLines,
+            ].join("\n"),
+          );
+          // A walk that stops before its last step fails, so a truncated walk never passes.
+          expect(result.seen.length).toBeGreaterThan(1);
+          expect(result.reachedLast).toBe(true);
+          expect(result.failures).toEqual([]);
         } finally {
           await browser.close();
         }
@@ -1902,3 +2098,4 @@ describe.skipIf(!walkEnabled(process.env))(
     );
   },
 );
+

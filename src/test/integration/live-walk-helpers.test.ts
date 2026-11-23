@@ -64,8 +64,20 @@ import {
   walkShotName,
   type BoxRect,
   type FigureRowPaint,
+  buildReceiptsReport,
+  checkPersonaDateStrings,
+  checkSealedForDemoLine,
+  checkWalkLetterText,
+  expectedPersonaDates,
+  expectedSealedForDemoLine,
+  findSealedForDemoLine,
+  findStaleWalkText,
+  WALK_PERSONA_KEYS,
+  type PersonaDateRow,
+  type ReceiptFigureRead,
   type PageSnapshot,
 } from "./live-walk-helpers";
+import personaList from "../../../content/personas/personas.json";
 
 describe("stepShotName", () => {
   it("names the first and last steps with a two-digit order", () => {
@@ -1519,6 +1531,230 @@ describe("checkTrackNames (spec 16, 17.1 and 2.1)", () => {
   it("fails a page with no step track", () => {
     expect(checkTrackNames(null, null, LIVE_TRACK_NAMES).message).toBe(
       "FAIL no step track on the page",
+    );
+  });
+});
+
+/** The Persona_List entry for one key. Throws when the list has no such persona. */
+function personaRow(key: string): PersonaDateRow {
+  const row = personaList.personas.find((persona) => persona.key === key);
+  if (!row) throw new Error(`no persona ${key} in personas.json`);
+  return row;
+}
+
+const ENGLISH_MONTHS = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
+/** The en-GB long date for a `YYYY-MM-DD` string, built here so the expectation is not the formatter. */
+function longDateOf(iso: string): string {
+  const [year, month, day] = iso.split("-");
+  return `${Number(day)} ${ENGLISH_MONTHS[Number(month) - 1]} ${year}`;
+}
+
+/** The "Month YYYY" form of a `YYYY-MM-DD` string. */
+function monthYearOf(iso: string): string {
+  const [year, month] = iso.split("-");
+  return `${ENGLISH_MONTHS[Number(month) - 1]} ${year}`;
+}
+
+describe("expectedPersonaDates and checkPersonaDateStrings (spec 18, 16.2)", () => {
+  it("formats each walk persona's Persona_List dates with the letter-date formatters", () => {
+    for (const key of WALK_PERSONA_KEYS) {
+      const row = personaRow(key);
+      const expected = expectedPersonaDates(row);
+      expect(expected.writtenAsOf).toBe(longDateOf(row.written_as_of));
+      expect(expected.memoryMonth).toBe(monthYearOf(row.written_as_of));
+      expect(expected.opensOn).toBe(longDateOf(row.opens_at.slice(0, 10)));
+    }
+  });
+
+  it("passes a step that shows the formatted written-as-of and opening dates", () => {
+    const expected = expectedPersonaDates(personaRow("us-maya"));
+    const check = checkPersonaDateStrings(
+      expected,
+      `Maya is fictional. This letter was written as of ${expected.writtenAsOf}. Opens ${expected.opensOn}`,
+      { written: true, memory: true, opening: true },
+    );
+    expect(check.ok).toBe(true);
+    expect(check.message).toBe(
+      `PASS us-maya shows written as of "${expected.writtenAsOf}", memory month "${expected.memoryMonth}", opens on "${expected.opensOn}"`,
+    );
+  });
+
+  it("fails a step that still shows an Old_Persona_Date for the written-as-of line", () => {
+    const expected = expectedPersonaDates(personaRow("us-maya"));
+    const check = checkPersonaDateStrings(
+      expected,
+      "This letter was written as of 5 November 2024.",
+      { written: true },
+    );
+    expect(check.ok).toBe(false);
+    expect(check.message).toBe(
+      `FAIL us-maya does not show written as of "${expected.writtenAsOf}"`,
+    );
+  });
+
+  it("fails when letter-date.ts cannot format a Persona_List date", () => {
+    const expected = expectedPersonaDates({
+      key: "broken",
+      written_as_of: "2023-06-05",
+      opens_at: "not-a-date",
+    });
+    const check = checkPersonaDateStrings(expected, "Opens", { opening: true });
+    expect(check.ok).toBe(false);
+    expect(check.message).toBe(
+      "FAIL broken: letter-date.ts formatted no opens on from personas.json",
+    );
+  });
+});
+
+describe("checkSealedForDemoLine (spec 18, 16.3)", () => {
+  it("passes when the line uses the approved wording and the header's sealedAt date", () => {
+    const check = checkSealedForDemoLine(
+      "Sealed later, for this demo, on 25 November 2026.",
+      "2026-11-25T10:00:00.000Z",
+    );
+    expect(check.ok).toBe(true);
+    expect(check.message).toBe(
+      'PASS sealed-for-demo line reads "Sealed later, for this demo, on 25 November 2026."',
+    );
+  });
+
+  it("fails when the line's date is not the header's sealedAt date", () => {
+    const check = checkSealedForDemoLine(
+      "Sealed later, for this demo, on 25 November 2026.",
+      "2026-11-26T10:00:00.000Z",
+    );
+    expect(check.ok).toBe(false);
+    expect(check.message).toBe(
+      'FAIL sealed-for-demo line reads "Sealed later, for this demo, on 25 November 2026.", expected "Sealed later, for this demo, on 26 November 2026."',
+    );
+  });
+
+  it("fails when the page shows no sealed-for-demo line", () => {
+    expect(checkSealedForDemoLine(null, "2026-11-25T10:00:00.000Z").message).toBe(
+      'FAIL no sealed-for-demo line on the page, expected "Sealed later, for this demo, on 25 November 2026."',
+    );
+  });
+
+  it("fails when the served header has no readable sealedAt", () => {
+    expect(expectedSealedForDemoLine("not-a-date")).toBeNull();
+    expect(checkSealedForDemoLine("Sealed later, for this demo, on 25 November 2026.", "not-a-date").message).toBe(
+      "FAIL the served header has no readable sealedAt",
+    );
+  });
+});
+
+describe("findSealedForDemoLine (spec 18, 16.3)", () => {
+  it("reads the sealed-for-demo line from the page text, trimmed", () => {
+    const body = "Maya's letter\n  Sealed later, for this demo, on 25 November 2026.  \nRead on";
+    expect(findSealedForDemoLine(body)).toBe(
+      "Sealed later, for this demo, on 25 November 2026.",
+    );
+  });
+
+  it("returns null when the page text has no sealed-for-demo line", () => {
+    expect(findSealedForDemoLine("Maya's letter\nRead on")).toBeNull();
+  });
+});
+
+describe("findStaleWalkText and checkWalkLetterText (spec 18, 16.5)", () => {
+  it("passes letter text with the new dates and new prices", () => {
+    expect(findStaleWalkText("Regular was about $3.91 a gallon, opens 1 January 2027.")).toEqual([]);
+    const check = checkWalkLetterText(
+      ["Regular was about $3.91 a gallon."],
+      "us-maya letter text",
+    );
+    expect(check.ok).toBe(true);
+    expect(check.message).toBe(
+      "PASS us-maya letter text has no Old_Persona_Date or pre-reseal price",
+    );
+  });
+
+  it("does not count a stale term inside a longer number or word", () => {
+    expect(findStaleWalkText("On 15 Nov 2024 it cost $3.640")).toEqual([]);
+  });
+
+  it("fails letter text that holds an Old_Persona_Date and a pre-reseal price", () => {
+    const check = checkWalkLetterText(
+      ["I wrote this on 5 November 2024.", "Regular was about $3.64 a gallon."],
+      "us-maya letter text",
+    );
+    expect(check.ok).toBe(false);
+    expect(check.message).toBe(
+      'FAIL us-maya letter text shows "5 November 2024", "$3.64"',
+    );
+  });
+
+  it("fails a Price_Line that quotes the pre-reseal EUR form", () => {
+    expect(findStaleWalkText("Petrol was about EUR 1.79 a litre.")).toEqual([
+      "EUR 1.79",
+    ]);
+  });
+});
+
+describe("buildReceiptsReport (spec 18, 16.4)", () => {
+  const figures: ReceiptFigureRead[] = [
+    {
+      metricId: "fixture-metric-a",
+      then: {
+        value: "FIXTURE 1.00",
+        period: "2024-11-11",
+        retrievedAt: "2026-11-01T16:39:37Z",
+      },
+      atOpening: {
+        value: "FIXTURE 2.00",
+        period: "2026-11-16",
+        retrievedAt: "2026-11-01T16:39:37Z",
+      },
+    },
+  ];
+
+  it("lists each side's value, period and retrieved date, in order", () => {
+    const report = buildReceiptsReport("us-maya", figures);
+    expect(report.rows).toEqual([
+      { metricId: "fixture-metric-a", side: "then", value: "FIXTURE 1.00", period: "2024-11-11" },
+      { metricId: "fixture-metric-a", side: "at opening", value: "FIXTURE 2.00", period: "2026-11-16" },
+    ]);
+    expect(report.retrieved).toEqual([
+      { metricId: "fixture-metric-a", side: "then", retrievedOn: "2026-11-01" },
+      { metricId: "fixture-metric-a", side: "at opening", retrievedOn: "2026-11-01" },
+    ]);
+    expect(report.lines).toEqual([
+      "us-maya | fixture-metric-a | then | FIXTURE 1.00 | 2024-11-11",
+      "us-maya | fixture-metric-a | at opening | FIXTURE 2.00 | 2026-11-16",
+      "us-maya | fixture-metric-a | then | historical record, retrieved 2026-11-01",
+      "us-maya | fixture-metric-a | at opening | historical record, retrieved 2026-11-01",
+    ]);
+  });
+
+  it("refuses a persona with no figures", () => {
+    expect(() => buildReceiptsReport("us-priya", figures)).toThrow(
+      "buildReceiptsReport: us-priya has no figures",
+    );
+  });
+
+  it("refuses a retrieved_at with no date part", () => {
+    const bad: ReceiptFigureRead[] = [
+      {
+        ...figures[0],
+        then: { ...figures[0].then, retrievedAt: "not-a-date" },
+      },
+    ];
+    expect(() => buildReceiptsReport("eu-tomas", bad)).toThrow(
+      'buildReceiptsReport: retrieved_at has no date part: "not-a-date"',
     );
   });
 });
