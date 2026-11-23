@@ -56,7 +56,7 @@ No task below starts until that PR is merged. The other open questions keep the 
 
 ## Tasks
 
-- [ ] 1. Banned-terms rule table and persona text checks
+- [x] 1. Banned-terms rule table and persona text checks
   - Agent: `frontend-dev` · Depends on: none · Estimated size: M, ~900 changed lines
   - Scope: `src/lib/personas/banned-terms.ts`, `letter-checks.ts`, `price-lines.ts` (`weekOfMonthWords`), `season-words.ts` (new), `schema.ts`, `answers.ts` (only to call `firstBannedTerm`), `src/lib/personas/persona-texts.test.ts` (new), and the `*.test.ts` next to each.
   - Design sections: "4. Banned terms", "5. Persona_Texts and their checks", "1. Persona_List" (the schema additions), Properties 6, 7, 8 and 10.
