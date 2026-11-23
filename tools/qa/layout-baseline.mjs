@@ -177,11 +177,9 @@ function extract(root, commit, work, logFile) {
     archive.stdout.pipe(tar.stdin);
     archive.stderr.on("data", (c) => appendFileSync(logFile, c));
     tar.stderr.on("data", (c) => appendFileSync(logFile, c));
-    let archiveCode = null;
-    archive.on("close", (code) => {
-      archiveCode = code;
-    });
-    tar.on("close", (code) => (code === 0 && archiveCode === 0 ? resolvePromise() : reject(new Error(`git archive | tar failed (${archiveCode}/${code})`))));
+    // Wait for both exits: tar can close before git archive reports its code.
+    const closed = (child) => new Promise((r) => child.on("close", (code) => r(code)));
+    Promise.all([closed(archive), closed(tar)]).then(([a, t]) => (a === 0 && t === 0 ? resolvePromise() : reject(new Error(`git archive | tar failed (${a}/${t})`))));
   });
 }
 
