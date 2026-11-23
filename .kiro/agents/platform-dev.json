@@ -113,7 +113,20 @@
           "helm lint*",
           "helm template*",
           "curl *localhost*",
-          "curl *127.0.0.1*"
+          "curl *127.0.0.1*",
+          "npm run build",
+          "npm start*",
+          "npm run db:migrate",
+          "npm run seal-personas*",
+          "PORT=* npm start*",
+          "PORT=* DATABASE_URL=* npm start*",
+          "RP_ID=* npm start*",
+          "DATABASE_URL=* npm run db:migrate",
+          "DATABASE_URL=* npm run seal-personas*",
+          "DATABASE_URL=* npm run fetch-figures*",
+          "WALK=1 npm *",
+          "DATABASE_URL=* WALK=1 npm *",
+          "kill *"
         ],
         "effect": "allow"
       },
