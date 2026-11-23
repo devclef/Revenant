@@ -8,26 +8,51 @@
 import fc from "fast-check";
 import { describe, expect, it } from "vitest";
 
+import { PERSONAS } from "../personas";
 import { CATALOGUE } from "./catalogue";
 import { figureAtOpening, personaNowResponse } from "./at-opening";
 import { loadFigureFile } from "./load";
 import fuelFigures from "./real/fuel-figures.json";
+import { thenAndNow } from "./then-now";
 import type { LoadedFigures } from "./types";
 
 const LOADED = loadFigureFile(fuelFigures, CATALOGUE);
 const GENERATED_AT = "2026-11-19T20:00:00Z";
 
-const MAYA = {
-  opens_at: "2024-11-05T00:00:00.000Z",
-  metrics: [{ metric_id: "us-gasoline-regular" }, { metric_id: "us-diesel" }],
-};
+// Maya and Tomás come from the Persona_List, so their opening dates and metrics
+// are the ones the demo shows. The expectations below are read from that list
+// and from the Figure_File, not from dates copied into this test.
+function personaByKey(key: string) {
+  const persona = PERSONAS.find((p) => p.key === key);
+  if (persona === undefined) {
+    throw new Error(`persona missing from Persona_List: ${key}`);
+  }
+  return persona;
+}
 
-const TOMAS = {
-  opens_at: "2024-06-09T00:00:00.000Z",
-  metrics: [{ metric_id: "eu-petrol-euro95" }, { metric_id: "eu-diesel" }],
-};
+const MAYA = personaByKey("us-maya");
+const TOMAS = personaByKey("eu-tomas");
 
-describe("personaNowResponse: Maya (opens 5 November 2024)", () => {
+describe("at-opening reads the Persona_List", () => {
+  it.each([
+    ["Maya", MAYA],
+    ["Tomás", TOMAS],
+  ])(
+    "%s: figureAtOpening and thenAndNow return the same figure for each metric",
+    (_name, persona) => {
+      const date = persona.opens_at.slice(0, 10);
+      for (const m of persona.metrics) {
+        const expected = thenAndNow(m.metric_id, date, LOADED).then;
+        expect(expected.found).toBe(true);
+        expect(figureAtOpening(m.metric_id, persona.opens_at, LOADED)).toEqual(
+          expected,
+        );
+      }
+    },
+  );
+});
+
+describe("personaNowResponse: Maya", () => {
   const body = personaNowResponse(MAYA, LOADED, GENERATED_AT);
 
   it("returns the revenant-figures-v1 body with one series per metric", () => {
@@ -99,7 +124,7 @@ describe("personaNowResponse: Maya (opens 5 November 2024)", () => {
   });
 });
 
-describe("personaNowResponse: Tomás (opens 9 June 2024)", () => {
+describe("personaNowResponse: Tomás", () => {
   const body = personaNowResponse(TOMAS, LOADED, GENERATED_AT);
 
   it("returns one series per metric", () => {

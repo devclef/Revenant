@@ -18,12 +18,13 @@ import type { Found, LoadedFigures, Missing } from "./types";
 
 /** The part of a persona that the "now" figures need. */
 export interface PersonaForNow {
-  opens_at: string; // UTC timestamp, e.g. "2024-11-05T00:00:00.000Z"
+  opens_at: string; // ISO instant at 00:00 UTC, form "YYYY-MM-DDT00:00:00.000Z"
   metrics: readonly { metric_id: string }[];
 }
 
 /**
  * The latest figure for `metricId` at or before the date part of `opensAt`.
+ * `opensAt` is an ISO instant at 00:00 UTC; only its date part is used.
  *
  * @returns the frozen figure with its provenance, or a gap with its reason.
  */
