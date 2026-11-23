@@ -13,6 +13,8 @@
 // Usage: npm run layout-gate   (run `npm run build` first, so .next/standalone exists)
 
 import { spawn } from "node:child_process";
+import { existsSync } from "node:fs";
+import { cp } from "node:fs/promises";
 import { createServer } from "node:net";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
@@ -49,8 +51,26 @@ function freePort() {
   });
 }
 
-function startServer(port, env) {
-  return spawn(process.execPath, [".next/standalone/server.js"], {
+/**
+ * Copies `.next/static` and `public` next to the standalone server, as the
+ * Dockerfile does. Without this the server answers 404 for every stylesheet
+ * and script, so the page renders unstyled and layout-check measures that.
+ * A missing source is skipped.
+ * @param {string} [root]
+ */
+export async function stageStaticAssets(root = ROOT) {
+  const standalone = join(root, ".next", "standalone");
+  const copies = [
+    [join(root, ".next", "static"), join(standalone, ".next", "static")],
+    [join(root, "public"), join(standalone, "public")],
+  ];
+  for (const [from, to] of copies) {
+    if (!existsSync(from)) continue;
+    await cp(from, to, { recursive: true, force: true });
+  }
+}
+
+function startServer(port, env) {  return spawn(process.execPath, [".next/standalone/server.js"], {
     cwd: ROOT,
     env: { ...env, PORT: String(port), HOSTNAME: "127.0.0.1" },
     stdio: "inherit",
@@ -108,6 +128,7 @@ export async function main(env = process.env) {
   try {
     const port = await freePort();
     const baseUrl = `http://127.0.0.1:${port}`;
+    await stageStaticAssets();
     server = startServer(port, env);
     await waitForHealth(baseUrl, server);
 

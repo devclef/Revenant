@@ -1,9 +1,12 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { EventEmitter } from "node:events";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { buildGateArgs, main } from "../../tools/qa/layout-gate.mjs";
+import { buildGateArgs, main, stageStaticAssets } from "../../tools/qa/layout-gate.mjs";
 
 const spawnMock = vi.hoisted(() => vi.fn());
 
@@ -106,6 +109,36 @@ describe("main", () => {
     expect(server).toBeDefined();
     expect(server?.child.killSignals).toEqual(["SIGTERM"]);
     expect(server?.child.signalCode).toBe("SIGTERM");
+  });
+});
+
+describe("stageStaticAssets", () => {
+  it("copies .next/static and public into the standalone folder", async () => {
+    const root = await mkdtemp(join(tmpdir(), "gate-static-"));
+    try {
+      await mkdir(join(root, ".next", "static", "chunks"), { recursive: true });
+      await writeFile(join(root, ".next", "static", "chunks", "a.css"), "body{}");
+      await mkdir(join(root, "public"), { recursive: true });
+      await writeFile(join(root, "public", "favicon.ico"), "x");
+
+      await stageStaticAssets(root);
+
+      const css = await readFile(join(root, ".next", "standalone", ".next", "static", "chunks", "a.css"), "utf8");
+      expect(css).toBe("body{}");
+      expect(existsSync(join(root, ".next", "standalone", "public", "favicon.ico"))).toBe(true);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
+  });
+
+  it("skips sources that do not exist", async () => {
+    const root = await mkdtemp(join(tmpdir(), "gate-static-"));
+    try {
+      await expect(stageStaticAssets(root)).resolves.toBeUndefined();
+      expect(existsSync(join(root, ".next", "standalone"))).toBe(false);
+    } finally {
+      await rm(root, { recursive: true, force: true });
+    }
   });
 });
 
