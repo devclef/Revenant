@@ -18,7 +18,11 @@ import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 
 import { checkLetterText } from "./letter-checks";
-import { CURRENCY_WORDS, ELECTION_PARTY_TERMS } from "./banned-terms";
+import {
+  CURRENCY_WORDS,
+  ELECTION_PARTY_TERMS,
+  findBannedTerms,
+} from "./banned-terms";
 
 // --- A vocabulary that is clean by construction ------------------------------
 //
@@ -411,5 +415,54 @@ describe("Property 14: a term in the middle of a word does not fail", () => {
     expect(
       checkLetterText(KEY, "An apolicy sort of day, nothing planned.", NO_PRICES),
     ).toEqual([]);
+  });
+});
+
+// --- Property 7: clean text matches no banned term (spec 18, R8.3, R8.8) -----
+//
+// Words that look close to a banned term but are not one. A text built from
+// CLEAN_WORDS and these words must match no banned term. "black Friday" is the
+// one banned phrase these words can form side by side, so the generator drops
+// that adjacent pair.
+const NEGATIVE_WORDS = [
+  "pollen",
+  "pollinate",
+  "electric",
+  "selection",
+  "primary",
+  "remember",
+  "remembered",
+  "black",
+  "Friday",
+  "state",
+  "day",
+  "holy",
+] as const;
+
+describe("Property 7: clean text matches no banned term", () => {
+  it("every clean and negative word matches no banned term on its own", () => {
+    for (const word of [...CLEAN_WORDS, ...NEGATIVE_WORDS]) {
+      expect(findBannedTerms(word)).toEqual([]);
+    }
+  });
+
+  it("text of clean and negative words matches no banned term and passes checkLetterText", () => {
+    const vocabulary = [...CLEAN_WORDS, ...NEGATIVE_WORDS];
+    fc.assert(
+      fc.property(
+        fc
+          .array(fc.constantFrom(...vocabulary), { minLength: 3, maxLength: 40 })
+          .filter(
+            (words) =>
+              !words.some((w, i) => w === "black" && words[i + 1] === "Friday"),
+          )
+          .map((words) => words.join(" ")),
+        (text) => {
+          expect(findBannedTerms(text)).toEqual([]);
+          expect(checkLetterText(KEY, text, NO_PRICES)).toEqual([]);
+        },
+      ),
+      { numRuns: 100 },
+    );
   });
 });
