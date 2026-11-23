@@ -12,6 +12,7 @@ import { describe, expect, it } from "vitest";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const css = readFileSync(join(here, "scene.module.css"), "utf8");
+const ceremonyCss = readFileSync(join(here, "..", "ceremony.module.css"), "utf8");
 
 /** The declarations of the first rule whose selector matches `selector`. */
 function ruleBody(source: string, selector: string): string {
@@ -30,6 +31,12 @@ describe("break the seal columns (17 D7)", () => {
   it("keeps the rules below 900 px at their previous values", () => {
     expect(ruleBody(css, ".soilStrip")).toMatch(/top:\s*var\(--soil-top\)/);
     expect(css).toMatch(/@media \(max-width: 899\.98px\) \{\s*\.heldEnvelope \{\s*top: 47%;/);
+  });
+
+  it("keeps 16 px clearance under the step track at 900 px and wider", () => {
+    expect(ceremonyCss).toMatch(
+      /@media \(min-width: 900px\) \{\s*\.ceremony \[data-step-track\] \+ \[data-stage-content\] \{\s*padding-block-start: 1rem;/,
+    );
   });
 
   it("anchors the Seal_Group to the marks card, 24 px to its right (17 D7)", () => {
