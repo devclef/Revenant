@@ -1,9 +1,17 @@
 /**
- * Pure helpers for the Live_Walk (spec 12, Q1 and Q2). No browser, no network,
- * no imports. The walk replay in `live-walk.test.ts` uses them to name Step_Shots,
+ * Pure helpers for the Live_Walk (spec 12, Q1 and Q2). No browser and no network.
+ * The persona date checks (spec 18) import the letter-date formatters only. The
+ * walk replay in `live-walk.test.ts` uses them to name Step_Shots,
  * list the expected set, report missing shots, count Motion_Controls, look for
  * placeholder figures in the final reveal, and record each step's result.
  */
+
+import {
+  formatCalendarDate,
+  formatCalendarMonth,
+  formatLetterDate,
+  letterZoneFor,
+} from "@/components/ui/letter-date";
 
 /**
  * The nineteen steps of the walk, in order. `<step>` in a Step_Shot name is one of these.
@@ -1556,4 +1564,312 @@ export function checkTestifyKinds(input: {
     expected,
     message: `FAIL the Remember step answered ${input.authorAnswered} author question(s) and ${input.figureAnswered} figure question(s)`,
   };
+}
+
+/* ---------------------------------------------------------------------------
+ * Persona walk checks (spec 18, Requirements 16.1 to 16.5). The Live_Walk reads
+ * the page and passes the text it found in. These functions decide.
+ * ------------------------------------------------------------------------- */
+
+/** The three persona slugs the Live_Walk visits, in walk order. */
+export const WALK_PERSONA_KEYS = ["us-maya", "eu-tomas", "us-priya"] as const;
+
+export type WalkPersonaKey = (typeof WALK_PERSONA_KEYS)[number];
+
+/** The fuel personas have a memory line and a receipts step with figures. Priya has neither. */
+export const FUEL_PERSONA_KEYS: ReadonlySet<string> = new Set([
+  "us-maya",
+  "eu-tomas",
+]);
+
+/** The fields of a Persona_List entry that the date checks read. */
+export type PersonaDateRow = {
+  key: string;
+  written_as_of: string;
+  opens_at: string;
+};
+
+/** The date strings a persona step shows, each formatted by `letter-date.ts`. */
+export type PersonaDateExpectation = {
+  key: string;
+  /** "17 November 2024", from `written_as_of` (`letterDisclosure`). */
+  writtenAsOf: string;
+  /** "November 2024", from `written_as_of` (the memory line, fuel personas only). */
+  memoryMonth: string;
+  /** "17 November 2026", from the date part of `opens_at` (`envelopeOpens`). */
+  opensOn: string;
+};
+
+/**
+ * Format a Persona_List entry's dates with the `letter-date.ts` formatters. The
+ * formatters return "" for an unreadable date, and the checks below fail on "".
+ */
+export function expectedPersonaDates(
+  row: PersonaDateRow,
+): PersonaDateExpectation {
+  return {
+    key: row.key,
+    writtenAsOf: formatCalendarDate(row.written_as_of),
+    memoryMonth: formatCalendarMonth(row.written_as_of),
+    opensOn: formatLetterDate(
+      row.opens_at,
+      letterZoneFor("persona", row.opens_at, "UTC"),
+    ),
+  };
+}
+
+/** Which persona date strings a step shows. Only the flagged ones are checked. */
+export type PersonaDateSlots = {
+  written?: boolean;
+  memory?: boolean;
+  opening?: boolean;
+};
+
+/**
+ * Check that a step's text contains each persona date its slots flag. A value
+ * that `letter-date.ts` could not format fails, so an empty expectation never passes.
+ */
+export function checkPersonaDateStrings(
+  expected: PersonaDateExpectation,
+  stepText: string,
+  shows: PersonaDateSlots,
+): StepCheck {
+  const required: { label: string; value: string }[] = [];
+  if (shows.written) {
+    required.push({ label: "written as of", value: expected.writtenAsOf });
+  }
+  if (shows.memory) {
+    required.push({ label: "memory month", value: expected.memoryMonth });
+  }
+  if (shows.opening) {
+    required.push({ label: "opens on", value: expected.opensOn });
+  }
+  const expectation = required.length
+    ? required.map((item) => `${item.label} "${item.value}"`).join(", ")
+    : "no persona date";
+  const unformatted = required.filter((item) => item.value === "");
+  if (unformatted.length > 0) {
+    return {
+      ok: false,
+      expected: expectation,
+      message: `FAIL ${expected.key}: letter-date.ts formatted no ${unformatted
+        .map((item) => item.label)
+        .join(", ")} from personas.json`,
+    };
+  }
+  const missing = required.filter((item) => !stepText.includes(item.value));
+  if (missing.length === 0) {
+    return {
+      ok: true,
+      expected: expectation,
+      message: `PASS ${expected.key} shows ${expectation}`,
+    };
+  }
+  return {
+    ok: false,
+    expected: expectation,
+    message: `FAIL ${expected.key} does not show ${missing
+      .map((item) => `${item.label} "${item.value}"`)
+      .join(", ")}`,
+  };
+}
+
+/** The approved sealed-for-demo wording (spec 18, Requirement 10.5). `{sealedAt}` is the date. */
+export const SEALED_FOR_DEMO_TEMPLATE =
+  "Sealed later, for this demo, on {sealedAt}.";
+
+/**
+ * The sealed-for-demo line expected for a served header's `sealedAt`, with the
+ * date in the en-GB long form (UTC, as personas are shown). Null when unreadable.
+ */
+export function expectedSealedForDemoLine(sealedAt: string): string | null {
+  const date = formatLetterDate(sealedAt, { kind: "utc" });
+  return date === "" ? null : SEALED_FOR_DEMO_TEMPLATE.replace("{sealedAt}", date);
+}
+
+/**
+ * Check the sealed-for-demo line on the page against the served header's
+ * `sealedAt` and the approved wording. `line` is null when the page shows no such line.
+ */
+export function checkSealedForDemoLine(
+  line: string | null,
+  headerSealedAt: string | null,
+): StepCheck {
+  const expected =
+    headerSealedAt === null ? null : expectedSealedForDemoLine(headerSealedAt);
+  if (expected === null) {
+    return {
+      ok: false,
+      expected: "a header sealedAt that parses",
+      message: "FAIL the served header has no readable sealedAt",
+    };
+  }
+  if (line === null) {
+    return {
+      ok: false,
+      expected: `"${expected}"`,
+      message: `FAIL no sealed-for-demo line on the page, expected "${expected}"`,
+    };
+  }
+  if (line.trim() === expected) {
+    return {
+      ok: true,
+      expected: `"${expected}"`,
+      message: `PASS sealed-for-demo line reads "${expected}"`,
+    };
+  }
+  return {
+    ok: false,
+    expected: `"${expected}"`,
+    message: `FAIL sealed-for-demo line reads "${line.trim()}", expected "${expected}"`,
+  };
+}
+
+/** Old_Persona_Date forms (spec 18 glossary). Each is matched as a whole token. */
+export const OLD_PERSONA_DATE_FORMS: readonly string[] = [
+  "2024-05-12",
+  "12 May 2024",
+  "12 May",
+  "May 2024",
+  "2024-11-05",
+  "2024-11-05T00:00:00.000Z",
+  "5 November 2024",
+  "5 Nov 2024",
+  "2024-06-09",
+  "2024-06-09T00:00:00.000Z",
+  "9 June 2024",
+  "9 Jun 2024",
+];
+
+/** Pre-reseal price strings, in the sign form and the "EUR" form the ticket uses. */
+export const PRE_RESEAL_PRICES: readonly string[] = [
+  "$3.64",
+  "$3.89",
+  "€1.79",
+  "€1.65",
+  "EUR 1.79",
+  "EUR 1.65",
+];
+
+/** Escape a literal for use inside a RegExp. */
+function escapeForRegExp(literal: string): string {
+  return literal.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/**
+ * Return the Old_Persona_Date forms and pre-reseal price strings found in `text`,
+ * in list order. A term inside a longer number or word does not count
+ * (so "15 Nov 2024" or "$3.640" do not match).
+ */
+export function findStaleWalkText(text: string): string[] {
+  return [...OLD_PERSONA_DATE_FORMS, ...PRE_RESEAL_PRICES].filter((term) =>
+    new RegExp(`(?<![\\w.-])${escapeForRegExp(term)}(?![\\w-])`).test(text),
+  );
+}
+
+/**
+ * Check letter text and Price_Lines (`texts`) for stale strings. `where` names
+ * the step or the persona in the message, for example "us-maya letter text".
+ */
+export function checkWalkLetterText(
+  texts: readonly string[],
+  where: string,
+): StepCheck {
+  const expected = "no Old_Persona_Date and no pre-reseal price string";
+  const found = new Set<string>();
+  for (const text of texts) {
+    for (const hit of findStaleWalkText(text)) found.add(hit);
+  }
+  if (found.size === 0) {
+    return {
+      ok: true,
+      expected,
+      message: `PASS ${where} has no Old_Persona_Date or pre-reseal price`,
+    };
+  }
+  return {
+    ok: false,
+    expected,
+    message: `FAIL ${where} shows ${[...found]
+      .map((term) => `"${term}"`)
+      .join(", ")}`,
+  };
+}
+
+/** One figure as the Live_Walk read it from the Receipts step. Values are already as shown. */
+export type ReceiptFigureRead = {
+  metricId: string;
+  then: { value: string; period: string; retrievedAt: string };
+  atOpening: { value: string; period: string; retrievedAt: string };
+};
+
+/** One line of the receipts report: a value and its period, for one side of one metric. */
+export type ReceiptsReportRow = {
+  metricId: string;
+  side: "then" | "at opening";
+  value: string;
+  period: string;
+};
+
+/** One "historical record, retrieved" date, read from `retrieved_at` (its date part). */
+export type ReceiptsRetrieved = {
+  metricId: string;
+  side: "then" | "at opening";
+  retrievedOn: string;
+};
+
+export type ReceiptsReport = {
+  persona: string;
+  rows: ReceiptsReportRow[];
+  retrieved: ReceiptsRetrieved[];
+  lines: string[];
+};
+
+/**
+ * Build the receipts report for a fuel persona: four rows per metric (then value
+ * and period, at-opening value and period) and one retrieved date per side. The
+ * values are passed in as read from the page, so nothing is typed by hand.
+ * Throws RangeError for a non-fuel persona or a `retrieved_at` without a date part.
+ */
+export function buildReceiptsReport(
+  persona: string,
+  figures: readonly ReceiptFigureRead[],
+): ReceiptsReport {
+  if (!FUEL_PERSONA_KEYS.has(persona)) {
+    throw new RangeError(`buildReceiptsReport: ${persona} has no figures`);
+  }
+  const rows: ReceiptsReportRow[] = [];
+  const retrieved: ReceiptsRetrieved[] = [];
+  for (const figure of figures) {
+    const sides = [
+      { side: "then" as const, read: figure.then },
+      { side: "at opening" as const, read: figure.atOpening },
+    ];
+    for (const { side, read } of sides) {
+      const retrievedOn = read.retrievedAt.slice(0, 10);
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(retrievedOn)) {
+        throw new RangeError(
+          `buildReceiptsReport: retrieved_at has no date part: "${read.retrievedAt}"`,
+        );
+      }
+      rows.push({
+        metricId: figure.metricId,
+        side,
+        value: read.value,
+        period: read.period,
+      });
+      retrieved.push({ metricId: figure.metricId, side, retrievedOn });
+    }
+  }
+  const lines = [
+    ...rows.map(
+      (row) =>
+        `${persona} | ${row.metricId} | ${row.side} | ${row.value} | ${row.period}`,
+    ),
+    ...retrieved.map(
+      (item) =>
+        `${persona} | ${item.metricId} | ${item.side} | historical record, retrieved ${item.retrievedOn}`,
+    ),
+  ];
+  return { persona, rows, retrieved, lines };
 }
