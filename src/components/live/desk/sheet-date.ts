@@ -16,7 +16,7 @@ import {
 const DAY_PATTERN = /^(\d{4})-(\d{2})-(\d{2})$/;
 
 /**
- * "Tuesday, 17 November 2026" for the instant, as the calendar day it falls on
+ * "Thursday, 19 November 2026" for the instant, as the calendar day it falls on
  * in the given IANA zone. Returns "" for an invalid instant.
  */
 export function formatSheetDate(instant: Date, timeZone: string): string {
@@ -24,7 +24,7 @@ export function formatSheetDate(instant: Date, timeZone: string): string {
 }
 
 /**
- * "17 November 2026" for a YYYY-MM-DD calendar day. Returns "" when the input
+ * "19 November 2026" for a YYYY-MM-DD calendar day. Returns "" when the input
  * is not a real calendar day (for example "2026-02-30" or "2026-13-01").
  */
 export function formatDatedDay(day: string): string {

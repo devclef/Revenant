@@ -163,7 +163,7 @@ function buttonTag(markup: string, label: string): string {
 
 describe("the recall counter on author questions (spec 15, 11.4)", () => {
   const sealed = {
-    sealedAt: "2026-11-17T09:00:00Z",
+    sealedAt: "2026-11-18T09:00:00Z",
     timeZone: "UTC",
   };
 
@@ -182,11 +182,11 @@ describe("the recall counter on author questions (spec 15, 11.4)", () => {
   it("names the sealing day in the asked line, in the zone it is given", () => {
     const markup = render(textPayload, {
       writtenOn: {
-        sealedAt: "2026-11-17T23:30:00Z",
+        sealedAt: "2026-11-18T23:30:00Z",
         timeZone: "Europe/Stockholm",
       },
     });
-    expect(markup).toContain("On 18 November 2026 you asked yourself:");
+    expect(markup).toContain("On 19 November 2026 you asked yourself:");
   });
 
   it("keeps the plain counter when the sealing instant does not parse", () => {

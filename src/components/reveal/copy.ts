@@ -67,7 +67,7 @@ export const REVEAL_COPY = {
   /**
    * The Memory_Line on a persona letter (spec 10 C4.2): it frames the testimony
    * as the reader's own memory of the written-as-of month. `{month}` is that
-   * month in en-GB, e.g. "May 2024".
+   * month in en-GB, taken from `written_as_of` (the month and year of the letter's date).
    */
   memoryLine: "You lived through {month} too. Answer from your own memory of it.",
 

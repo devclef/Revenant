@@ -107,20 +107,20 @@ describe("sheet date formatters (Property 6, spec 14 W4.2, W12.2)", () => {
   });
 
   it("uses the zone's day at the edges of the zone's day, not the UTC day", () => {
-    // 23:30 UTC on 17 November is already 18 November in Kiritimati (UTC+14).
-    const kiritimati = new Date("2026-11-17T23:30:00.000Z");
+    // 23:30 UTC on 19 November is already 20 November in Kiritimati (UTC+14).
+    const kiritimati = new Date("2026-11-19T23:30:00.000Z");
     expect(localCalendarDay(kiritimati, "Pacific/Kiritimati")).toBe(
-      "2026-11-18",
+      "2026-11-20",
     );
     expect(formatSheetDate(kiritimati, "Pacific/Kiritimati")).toBe(
-      "Wednesday, 18 November 2026",
+      "Friday, 20 November 2026",
     );
 
-    // 10:00 UTC on 18 November is still 17 November in Pago Pago (UTC-11).
-    const pagoPago = new Date("2026-11-18T10:00:00.000Z");
-    expect(localCalendarDay(pagoPago, "Pacific/Pago_Pago")).toBe("2026-11-17");
+    // 10:00 UTC on 20 November is still 19 November in Pago Pago (UTC-11).
+    const pagoPago = new Date("2026-11-20T10:00:00.000Z");
+    expect(localCalendarDay(pagoPago, "Pacific/Pago_Pago")).toBe("2026-11-19");
     expect(formatSheetDate(pagoPago, "Pacific/Pago_Pago")).toBe(
-      "Tuesday, 17 November 2026",
+      "Thursday, 19 November 2026",
     );
   });
 
