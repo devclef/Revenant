@@ -411,7 +411,7 @@ describe("Property 4: The refetch only appends", () => {
           );
           const outFigures = figuresOf(out.text);
           // A row is identified by its period and its own retrieved_at, so a
-          // Revision_Row sits beside the committed row for the same period.
+          // row written by this run would be told apart from the committed row.
           const rowKey = (f: FigureV1): string =>
             `${keyOf(f)}|${f.retrieved_at}`;
           const outByRow = new Map(outFigures.map((f) => [rowKey(f), f]));
