@@ -27,6 +27,7 @@
 
 import letterTexts from "virtual:persona-letter-texts";
 import sealedAnswers from "virtual:persona-sealed-answers";
+import recollections from "../content/personas/letters/answers.json";
 
 async function main(): Promise<void> {
   // `--hashes` runs before the DATABASE_URL guard and touches no database. It
@@ -65,7 +66,7 @@ async function main(): Promise<void> {
   );
 
   try {
-    const { results } = await sealPersonas({
+    const { results, exitCode, problems } = await sealPersonas({
       personas: PERSONAS,
       // The letter texts are inlined into the bundle as a map from letter_path
       // to text (virtual:persona-letter-texts); no filesystem read at run time.
@@ -80,20 +81,28 @@ async function main(): Promise<void> {
       // Inlined from content/personas/letters/sealed-answers.json by the build;
       // {} when that file is absent, so every persona is sealed as version 1.
       sealedAnswers,
+      // Checked before sealing (Requirement 6.8). Never sealed or stored.
+      recollections,
       findLetter,
       storePersonaLetter,
       now: () => new Date(),
       randomBytes: (n) => crypto.getRandomValues(new Uint8Array(n)),
     });
 
+    // The text checks ran before any write. Print every problem and stop; no
+    // persona line is printed and no row is inserted (Requirement 6.8).
+    for (const problem of problems) {
+      process.stderr.write(`seal-personas: ${problem}\n`);
+    }
+
     // One fixed line per persona. Nothing else is printed (R8.*).
     for (const result of results) {
       process.stdout.write(`${formatResultLine(result)}\n`);
     }
 
-    // The exit code is 1 when any persona failed, else 0 (R4.14). Set via
-    // process.exitCode (not exit()) so the stream writes above flush.
-    process.exitCode = results.some((r) => r.result === "failed") ? 1 : 0;
+    // The exit code is 1 when any persona failed or a text check failed, else
+    // 0 (R4.14). Set via process.exitCode (not exit()) so the writes flush.
+    process.exitCode = exitCode;
   } finally {
     // Always close the client so the process can exit cleanly, even on a throw.
     await getSql().end({ timeout: 5 });

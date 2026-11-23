@@ -162,24 +162,22 @@ describe("buildPersonaPayload: a persona with no metrics", () => {
     ]);
   });
 
-  it("fails with invalid_payload, and stores nothing, when the payload breaks the v1 schema", async () => {
+  it("fails with invalid_payload from the builder, and the sealing run stores nothing, when the letter is empty", async () => {
     // An empty letter fails the schema's letter_text rule (1 to 5000 code
     // points), so the no-metrics build must refuse it.
     const built = buildPersonaPayload(textPersona, "", DEMO_FIGURES);
     expect(built).toEqual({ ok: false, reason: "invalid_payload" });
 
+    // The pre-seal text check (Requirement 6.8) catches the empty letter
+    // before any build: the run returns its problems, no persona line, and
+    // no insert.
     const store = new InsertOnlyStore();
     const run = await sealPersonas(
       depsFor([textPersona], store, new Map([[textPersona.letter_path, ""]])),
     );
-    expect(run.results).toEqual([
-      {
-        key: textPersona.key,
-        letterId: textPersona.letter_id,
-        result: "failed",
-        reason: "invalid_payload",
-      },
-    ]);
+    expect(run.results).toEqual([]);
+    expect(run.problems.length).toBeGreaterThan(0);
+    expect(run.problems.every((p) => p.includes(textPersona.key))).toBe(true);
     expect(run.exitCode).toBe(1);
     expect(store.insertCount).toBe(0);
     expect(store.get(textPersona.letter_id)).toBeUndefined();
