@@ -783,11 +783,11 @@ Expected answers in order: **Y N N N N Y Y N**. "Agent" is the agent's answers i
 
 Only the owner fills this section. An agent does not write or edit it. A change to any letter, intro line, question, sealed answer, recollection, figure row, price line or sample above, after this entry is filled, voids it (Requirement 4.10).
 
-- Owner's name:
-- Approval date:
-- Commit id of the approved `design.md`:
-- Sealing waits for Jacob Morgan's copy-test pass (Requirement 6.11): yes / no
-- Changes to the proposed wording (sealed-for-demo line, steering lines), if any:
+- Owner's name: Jacob Morgan
+- Approval date: 2026-11-23
+- Commit id of the approved `design.md`: 600d45af67e8f8d2bc9fd27625735d359e163aa4
+- Sealing waits for Jacob Morgan's copy-test pass (Requirement 6.11): no
+- Changes to the proposed wording (sealed-for-demo line, steering lines), if any: none
 
 ## Correctness Properties
 
