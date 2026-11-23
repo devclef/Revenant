@@ -123,7 +123,7 @@ No task below starts until that PR is merged. The other open questions keep the 
   - Earlier-spec tests changed or retired: `prefetch*.test.ts` cases that expect a partial write and exit 1 on a failed series (spec 08 R21.2 for the Prefetch_Script); name each.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 3. The refetch and the Persona_Figures report
+- [x] 3. The refetch and the Persona_Figures report
   - Agent: `data-dev` · Depends on: 2 · Estimated size: S, ~300 changed lines plus the figure file
   - Scope: `src/lib/figures/real/fuel-figures.json`, `src/lib/figures/real/fetch-status.json`, `src/lib/figures/real/real-file.test.ts`, the `bundled-latest` tests, and the "now" assertions in tests that pin the last period `2026-10-26`. Not `then-now.test.ts`'s rule tests on fixture figures.
   - Design sections: "3. Prefetch_Script", "The eight Persona_Figures", "Sample_Candidates", "Error Handling".
