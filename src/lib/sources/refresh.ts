@@ -139,7 +139,7 @@ function retrievedAfter(a: FigureV1, b: FigureV1): boolean {
 
 /**
  * Build one official figure from the catalogue metric and a fresh series'
- * download provenance. Used for new periods and for Revision_Rows alike.
+ * download provenance. Used for newly added periods.
  */
 function officialFigure(
   series: CatalogueSeriesLike,
@@ -180,8 +180,9 @@ type CatalogueSeriesLike = {
  * figures and the matching fresh series are reconciled:
  *
  *  - A fresh point whose `metric_id|period` key already exists is a revision
- *    when its value differs; the existing figure is reported and kept exactly
- *    as parsed — its `value` and `retrieved_at` are never recomputed.
+ *    when its value differs; the revision is reported and no figure is added.
+ *    The committed figure is kept exactly as parsed — its `value` and
+ *    `retrieved_at` are never recomputed or replaced.
  *  - A fresh point earlier than the series' latest existing period is a
  *    backfill: it is reported with that latest period, and nothing is added.
  *  - Otherwise the fresh point is added as a new official figure built from the
@@ -267,9 +268,9 @@ export function mergeRefresh(
         const existingFig = newestByKey.get(key(metricId, point.period));
 
         if (existingFig) {
-          // Present already: a changed value is appended as a Revision_Row with
-          // its own retrieved_at. Every stored row stays exactly as it was
-          // (R20.17). An equal value adds nothing.
+          // Present already: a changed value is reported as a revision and no
+          // figure is added. The committed row keeps its value and retrieved_at
+          // exactly as parsed (R20.17). An equal value adds nothing either.
           if (existingFig.value !== point.value) {
             report.revisions.push({
               metricId,
@@ -277,9 +278,6 @@ export function mergeRefresh(
               committed: existingFig.value,
               source: point.value,
             });
-            added.push(
-              officialFigure(series, point.period, point.value, freshSeries),
-            );
           }
           continue;
         }

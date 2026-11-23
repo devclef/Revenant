@@ -434,7 +434,7 @@ describe("runPrefetch — a differing value is a revision and is kept", () => {
     });
 
     // The source value (4.269) differs from the committed one, so it is reported
-    // as a revision and appended as a Revision_Row (spec 08, R20.17).
+    // as a revision and no figure is added for it (spec 08, R20.17).
     expect(second.report.revisions).toContainEqual({
       metricId: GASOLINE,
       period: "2026-10-26",
@@ -442,18 +442,62 @@ describe("runPrefetch — a differing value is a revision and is kept", () => {
       source: "4.269",
     });
 
-    // The committed row is kept unchanged; the new row sits after it and is the
-    // newest by retrieved_at.
+    // The committed row is kept unchanged and is the only row for the period.
     const loaded = loadFigureFile(JSON.parse(second.text), CATALOGUE);
     const rows = loaded.series
       .get(GASOLINE)
       ?.figures.filter((f) => f.period === "2026-10-26") ?? [];
-    expect(rows.map((f) => f.value)).toEqual([committed, "4.269"]);
+    expect(rows.map((f) => f.value)).toEqual([committed]);
     expect(rows[0].retrieved_at).toBe("2026-11-01T12:00:00Z");
-    expect(rows[1].retrieved_at).toBe("2026-11-02T14:02:11Z");
 
     assertReportNeutral(second.report);
     assertNoBannedWords(second.text);
+  });
+
+  it("reports the revision and raises no weekly_gap when persona coverage is set", async () => {
+    // A gap-free synthetic Bulletin, so the persona series has no Weekly_Gap
+    // and the only finding in this run is the revision.
+    const bulletinBytes = syntheticBulletin({ dataRows: contiguousDataRows() });
+
+    const first = await runPrefetch(null, {
+      fetcher: recordedFetcher({ bulletinBytes }).fetcher,
+      now: fixedNow,
+    });
+
+    const file = JSON.parse(first.text) as {
+      figures: { metric_id: string; period: string; value: string }[];
+    };
+    const target = file.figures.find(
+      (f) => f.metric_id === GASOLINE && f.period === "2026-10-26",
+    );
+    expect(target).toBeDefined();
+    const committed = "9.999";
+    (target as { value: string }).value = committed;
+
+    // Persona coverage on EU_DIESEL: the synthetic series holds a Monday in the
+    // window, so no opening_coverage finding is raised either.
+    const second = await runPrefetch(file, {
+      fetcher: recordedFetcher({ bulletinBytes }).fetcher,
+      now: laterNow,
+      coverage: [{ metricId: EU_DIESEL, from: "2026-10-20", to: "2026-10-26" }],
+    });
+
+    // The run resolves (a weekly_gap would have thrown a PrefetchError), and the
+    // revision is reported with the committed value kept.
+    expect(second.report.revisions).toContainEqual({
+      metricId: GASOLINE,
+      period: "2026-10-26",
+      committed,
+      source: "4.269",
+    });
+
+    const loaded = loadFigureFile(JSON.parse(second.text), CATALOGUE);
+    const rows = loaded.series
+      .get(GASOLINE)
+      ?.figures.filter((f) => f.period === "2026-10-26") ?? [];
+    expect(rows.map((f) => f.value)).toEqual([committed]);
+
+    assertReportNeutral(second.report);
   });
 });
 

@@ -184,16 +184,11 @@ describe("mergeRefresh — revision", () => {
     expect(result.ok).toBe(true);
     if (!result.ok) return;
     // The committed figure is kept exactly as it was: value, retrieved_at and
-    // object reference (R20.17). The changed value is appended as a Revision_Row
-    // carrying the fresh download's retrieved_at.
-    expect(result.figures).toHaveLength(2);
+    // object reference (R20.17). The changed value adds no figure.
+    expect(result.figures).toHaveLength(1);
     expect(result.figures[0]).toBe(existingFig);
     expect(result.figures[0].value).toBe("1.111");
     expect(result.figures[0].retrieved_at).toBe("2019-05-05T00:00:00Z");
-    expect(result.figures[1].kind === "official" && result.figures[1].value).toBe(
-      "1.999",
-    );
-    expect(result.figures[1].retrieved_at).toBe(DOWNLOADED_AT);
     // A revision is not counted as a new period.
     expect(result.report.perSeries).toHaveLength(0);
     expect(result.report.revisions).toEqual([
