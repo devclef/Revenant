@@ -2,6 +2,8 @@ import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { describe, expect, it } from "vitest";
 
+import { RETIRED_LETTER_IDS } from "./personas";
+
 // Spec 18, Requirements 12 and 13 (Date_Guard). The README and the video
 // script must not carry any retired persona date, retired letter id or price
 // quoted from a letter before it was resealed. Lives under src/lib (the
@@ -33,17 +35,19 @@ const OLD_PERSONA_DATES = [
   "9 Jun 2024",
 ];
 
-// Old_Letter_Id, spec 18 glossary: us-maya, eu-tomas, us-priya.
-const OLD_LETTER_IDS = [
-  "NvKu8C4wTJsMYe8uv1AkAQ",
-  "zGQh3PULIzdSxkyu9elzUA",
-  "9cvEPNCigWy7H7peQprIWg",
-];
+// Old_Letter_Id: read from retired_letter_ids in content/personas/personas.json.
+// The ids are not written out here, so this file stays clear of the
+// retired-ids scan in src/components/retired-ids-scan.test.ts.
+const OLD_LETTER_IDS: readonly string[] = RETIRED_LETTER_IDS;
 
 // Prices quoted in the pre-reseal letters of Maya and Tomás (spec 18, Current state).
 const PRE_RESEAL_PRICES = ["$3.64", "$3.89", "€1.79", "€1.65"];
 
 describe("README and video script carry no retired persona values (spec 18, Date_Guard)", () => {
+  it("has retired letter ids to check against", () => {
+    expect(OLD_LETTER_IDS.length).toBeGreaterThan(0);
+  });
+
   for (const [file, text] of Object.entries(DOCS)) {
     it(`${file} contains no Old_Persona_Date`, () => {
       for (const date of OLD_PERSONA_DATES) {
