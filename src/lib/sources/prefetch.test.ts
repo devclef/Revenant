@@ -453,6 +453,52 @@ describe("runPrefetch — a differing value is a revision and is kept", () => {
     assertReportNeutral(second.report);
     assertNoBannedWords(second.text);
   });
+
+  it("reports the revision and raises no weekly_gap when persona coverage is set", async () => {
+    // A gap-free synthetic Bulletin, so the persona series has no Weekly_Gap
+    // and the only finding in this run is the revision.
+    const bulletinBytes = syntheticBulletin({ dataRows: contiguousDataRows() });
+
+    const first = await runPrefetch(null, {
+      fetcher: recordedFetcher({ bulletinBytes }).fetcher,
+      now: fixedNow,
+    });
+
+    const file = JSON.parse(first.text) as {
+      figures: { metric_id: string; period: string; value: string }[];
+    };
+    const target = file.figures.find(
+      (f) => f.metric_id === GASOLINE && f.period === "2026-10-26",
+    );
+    expect(target).toBeDefined();
+    const committed = "9.999";
+    (target as { value: string }).value = committed;
+
+    // Persona coverage on EU_DIESEL: the synthetic series holds a Monday in the
+    // window, so no opening_coverage finding is raised either.
+    const second = await runPrefetch(file, {
+      fetcher: recordedFetcher({ bulletinBytes }).fetcher,
+      now: laterNow,
+      coverage: [{ metricId: EU_DIESEL, from: "2026-10-20", to: "2026-10-26" }],
+    });
+
+    // The run resolves (a weekly_gap would have thrown a PrefetchError), and the
+    // revision is reported with the committed value kept.
+    expect(second.report.revisions).toContainEqual({
+      metricId: GASOLINE,
+      period: "2026-10-26",
+      committed,
+      source: "4.269",
+    });
+
+    const loaded = loadFigureFile(JSON.parse(second.text), CATALOGUE);
+    const rows = loaded.series
+      .get(GASOLINE)
+      ?.figures.filter((f) => f.period === "2026-10-26") ?? [];
+    expect(rows.map((f) => f.value)).toEqual([committed]);
+
+    assertReportNeutral(second.report);
+  });
 });
 
 // ---------------------------------------------------------------------------
