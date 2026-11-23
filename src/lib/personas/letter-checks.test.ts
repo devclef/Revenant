@@ -198,6 +198,96 @@ describe("checkLetterText — price lines (P1)", () => {
   });
 });
 
+describe("checkLetterText — plain text only", () => {
+  it("accepts a sentence with no exclamation mark", () => {
+    expect(
+      checkLetterText(KEY, "The kettle is on and the rain has stopped.", NO_PRICES),
+    ).toEqual([]);
+  });
+
+  it("rejects an exclamation mark and names its 1-based position", () => {
+    // "The kettle is on!" — the mark is the 17th character.
+    expect(
+      checkLetterText(KEY, "The kettle is on!", NO_PRICES),
+    ).toEqual([
+      `persona "${KEY}": letter_text: contains exclamation mark at position 17`,
+    ]);
+  });
+
+  it("accepts a less-than sign that is not an HTML tag", () => {
+    expect(
+      checkLetterText(KEY, "She said a < b, which made sense.", NO_PRICES),
+    ).toEqual([]);
+  });
+
+  it("rejects an HTML tag and names its position", () => {
+    // "She said " is 9 characters, so the tag opens at position 10.
+    expect(
+      checkLetterText(KEY, "She said <b>bold</b> things.", NO_PRICES),
+    ).toContainEqual(
+      `persona "${KEY}": letter_text: contains HTML tag at position 10`,
+    );
+  });
+
+  it("accepts a hash sign that is not at the start of a line", () => {
+    expect(
+      checkLetterText(KEY, "The heading # sign was on the jar.", NO_PRICES),
+    ).toEqual([]);
+  });
+
+  it("rejects a Markdown heading at the start of a line", () => {
+    expect(
+      checkLetterText(KEY, "# Our summer\nThe rest of the letter.", NO_PRICES),
+    ).toContainEqual(
+      `persona "${KEY}": letter_text: contains Markdown heading at position 1`,
+    );
+  });
+
+  it("accepts a lone asterisk that is not emphasis", () => {
+    expect(
+      checkLetterText(KEY, "A star * alone remains on the page.", NO_PRICES),
+    ).toEqual([]);
+  });
+
+  it("rejects Markdown emphasis and names its position", () => {
+    // "This is " is 8 characters, so the emphasis run starts at position 9.
+    expect(
+      checkLetterText(KEY, "This is **bold** text.", NO_PRICES),
+    ).toContainEqual(
+      `persona "${KEY}": letter_text: contains Markdown emphasis at position 9`,
+    );
+  });
+
+  it("accepts a dash in the middle of a line", () => {
+    expect(
+      checkLetterText(KEY, "I bought milk - and eggs - on Friday.", NO_PRICES),
+    ).toEqual([]);
+  });
+
+  it("rejects a list marker at the start of a line", () => {
+    expect(
+      checkLetterText(KEY, "- milk\n- eggs", NO_PRICES),
+    ).toContainEqual(
+      `persona "${KEY}": letter_text: contains Markdown list marker at position 1`,
+    );
+  });
+
+  it("accepts square brackets with no link target", () => {
+    expect(
+      checkLetterText(KEY, "The shop is by the square [see the sign].", NO_PRICES),
+    ).toEqual([]);
+  });
+
+  it("rejects a Markdown link and names its position", () => {
+    // "Read " is 5 characters, so the link opens at position 6.
+    expect(
+      checkLetterText(KEY, "Read [the notes](https://example.com) later.", NO_PRICES),
+    ).toContainEqual(
+      `persona "${KEY}": letter_text: contains Markdown link at position 6`,
+    );
+  });
+});
+
 describe("checkLetterText — currency words (R1.8)", () => {
   // One concrete, whole-word instance per CURRENCY_WORDS source fragment. Each
   // fragment is a bare regex alternation; these literals all match it and are

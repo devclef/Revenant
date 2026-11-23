@@ -38,6 +38,19 @@ const ANSWER_REFERENCE_REGEX = /(?:^|[^A-Za-z0-9_])(letter|remember|forget)/i;
 const ANSWER_MIND_REGEX =
   /\bchang(?:e|es|ed|ing)\s+(?:(?:her|his|my|their|your)\s+)?mind\b/i;
 
+// Plain-text rules for a letter (persona letters are plain text only). Each
+// entry names the rule in the problem message.
+const PLAIN_TEXT_RULES: readonly { name: string; regex: RegExp }[] = [
+  { name: "exclamation mark", regex: /!/g },
+  { name: "HTML tag", regex: /<\/?[A-Za-z][^>\n]*>/g },
+  { name: "Markdown heading", regex: /^#{1,6}\s/gm },
+  { name: "Markdown emphasis", regex: /\*\*[^*\n]*\S\*\*|__[^_\n]*\S__/g },
+  { name: "Markdown emphasis", regex: /(^|[^\w*])\*(?=\S)[^*\n]*\S\*/gm },
+  { name: "Markdown list marker", regex: /^[ \t]*(?:[-*+]|\d+[.)])[ \t]+/gm },
+  { name: "Markdown link", regex: /\[[^\]\n]*\]\([^)\n]*\)/g },
+  { name: "link", regex: /https?:\/\/\S+/g },
+];
+
 /**
  * Check a persona letter's text against R1.6 (length and non-empty), P1
  * (Letter_Price_Line phrases match the expected prices exactly; apart from
@@ -108,6 +121,18 @@ export function checkLetterText(
   const bannedTerm = firstBannedTerm(text);
   if (bannedTerm !== null) {
     problems.push(`${prefix}: contains political term "${bannedTerm}"`);
+  }
+
+  // Plain text only: no exclamation mark, HTML tag, Markdown heading, emphasis,
+  // list marker or link. Each match is reported with its 1-based position, counted
+  // in code points. A rule with a capture group 1 (the character before an
+  // emphasis run) reports the position of the marker itself.
+  for (const rule of PLAIN_TEXT_RULES) {
+    for (const match of text.matchAll(rule.regex)) {
+      const lead = match[1]?.length ?? 0;
+      const position = [...text.slice(0, (match.index ?? 0) + lead)].length + 1;
+      problems.push(`${prefix}: contains ${rule.name} at position ${position}`);
+    }
   }
 
   return problems;
