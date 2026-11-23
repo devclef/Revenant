@@ -359,3 +359,194 @@ export function lcFailures(reading) {
   }
   return failures;
 }
+// SF1 (GitHub issue #587, spec 17 D1, bugfix 2.1): the Seal panel fills its surface. The reading is
+//   { panelWidth, surfaceWidth, creamRun }, widths in CSS px. creamRun is the widest run, in CSS px, of
+//   cream pixels (each channel within SF1_CREAM_TOLERANCE of SF1_CREAM) on a row through the panel's
+//   middle, outside the panel. A run wider than SF1_MAX_CREAM_RUN_PX is a cream strip beside the panel.
+//   Any failure is a BLOCKER.
+export const SF1_RATIO = 0.99;
+export const SF1_CREAM = [246, 234, 212];
+export const SF1_CREAM_TOLERANCE = 8;
+export const SF1_MAX_CREAM_RUN_PX = 2;
+
+/** True when an RGB triple is cream within SF1_CREAM_TOLERANCE on every channel. */
+function isCream(r, g, b) {
+  return (
+    Math.abs(r - SF1_CREAM[0]) <= SF1_CREAM_TOLERANCE &&
+    Math.abs(g - SF1_CREAM[1]) <= SF1_CREAM_TOLERANCE &&
+    Math.abs(b - SF1_CREAM[2]) <= SF1_CREAM_TOLERANCE
+  );
+}
+
+/**
+ * Widest run of cream pixels in one row of RGBA bytes, in image pixels. Pixels with index in
+ * [excludeFrom, excludeTo) belong to the panel and break a run. Pure function.
+ */
+export function creamRunPx(rgba, excludeFrom, excludeTo) {
+  const width = Math.floor(rgba.length / 4);
+  let best = 0;
+  let run = 0;
+  for (let x = 0; x < width; x += 1) {
+    const inPanel = x >= excludeFrom && x < excludeTo;
+    const i = x * 4;
+    const cream = !inPanel && isCream(rgba[i], rgba[i + 1], rgba[i + 2]);
+    run = cream ? run + 1 : 0;
+    if (run > best) best = run;
+  }
+  return best;
+}
+
+/**
+ * SF1 failures for one reading. An empty array means the panel fills at least 99% of its surface
+ * and no cream strip wider than SF1_MAX_CREAM_RUN_PX sits beside it.
+ */
+export function sfFailures(reading) {
+  const panelWidth = reading?.panelWidth;
+  const surfaceWidth = reading?.surfaceWidth;
+  const creamRun = reading?.creamRun;
+  const measured = [panelWidth, surfaceWidth, creamRun].every((value) => typeof value === "number" && Number.isFinite(value));
+  if (!measured) {
+    return [{ id: "SF1", check: "panel-fills-surface", message: "SF1 no [data-seal-step] panel, surface or cream row to measure." }];
+  }
+
+  const failures = [];
+  const minimum = SF1_RATIO * surfaceWidth;
+  if (panelWidth < minimum) {
+    failures.push({
+      id: "SF1",
+      check: "panel-width",
+      message: `SF1 Seal panel is ${round(panelWidth)} px wide in a ${round(surfaceWidth)} px surface, want at least ${round(minimum)} px (99%).`,
+    });
+  }
+  if (creamRun > SF1_MAX_CREAM_RUN_PX) {
+    failures.push({
+      id: "SF1",
+      check: "cream-strip",
+      message: `SF1 a cream strip ${round(creamRun)} px wide sits beside the Seal panel, want at most ${SF1_MAX_CREAM_RUN_PX} px.`,
+    });
+  }
+  return failures;
+}
+
+/** Script run inside the page. Reads the Seal panel, its surface and the viewport. Sends no input. */
+const READ_SF1 = () => {
+  const panel = document.querySelector("[data-seal-step]");
+  if (!panel) return null;
+  const surface = panel.closest("[data-card]") ?? panel.parentElement;
+  if (!surface) return null;
+  const rectOf = (el) => {
+    const r = el.getBoundingClientRect();
+    return { left: r.left, top: r.top, right: r.right, bottom: r.bottom, width: r.width, height: r.height };
+  };
+  return {
+    panel: rectOf(panel),
+    surface: rectOf(surface),
+    viewport: { width: window.innerWidth, height: window.innerHeight },
+  };
+};
+
+/** Script run in a blank page. Decodes a PNG (base64) and returns the first row as RGBA bytes. */
+const DECODE_ROW = async (b64) => {
+  const img = new Image();
+  img.src = `data:image/png;base64,${b64}`;
+  await img.decode();
+  const canvas = document.createElement("canvas");
+  canvas.width = img.width;
+  canvas.height = img.height;
+  const ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+  const data = ctx.getImageData(0, 0, img.width, 1).data;
+  return { width: img.width, rgba: Array.from(data) };
+};
+
+/**
+ * Reads SF1 values from a page already at the Press the seal step. It takes one clipped screenshot
+ * row through the panel's middle, decodes it in a blank page of the same context, and measures the
+ * cream run outside the panel. The row is null when the panel's middle is outside the viewport.
+ */
+export async function readSf1Reading(page) {
+  const rects = await page.evaluate(READ_SF1);
+  if (!rects) return { panelWidth: null, surfaceWidth: null, creamRun: null };
+  const { panel, surface, viewport } = rects;
+  const left = Math.max(0, surface.left);
+  const right = Math.min(viewport.width, surface.right);
+  const midY = Math.round(panel.top + panel.height / 2);
+  if (!(right > left) || midY < 0 || midY >= viewport.height) {
+    return { panelWidth: panel.width, surfaceWidth: surface.width, creamRun: null };
+  }
+
+  const png = await page.screenshot({ clip: { x: left, y: midY, width: right - left, height: 1 } });
+  const probe = await page.context().newPage();
+  let row;
+  try {
+    await probe.goto("about:blank");
+    row = await probe.evaluate(DECODE_ROW, png.toString("base64"));
+  } finally {
+    await probe.close();
+  }
+
+  const scale = row.width / (right - left);
+  const excludeFrom = Math.round((panel.left - left) * scale);
+  const excludeTo = Math.round((panel.right - left) * scale);
+  const runPx = creamRunPx(row.rgba, excludeFrom, excludeTo);
+  return { panelWidth: panel.width, surfaceWidth: surface.width, creamRun: runPx / scale };
+}
+
+// TT1 (GitHub issue #587, spec 17 D1, bugfix 2.2): the visible wax mark the reader presses is at least
+// TT1_MIN_PX square at rest. The reading is { targets: [{ label, wax }] }, one entry per press target,
+// where wax is { width, height } in CSS px of the [data-wax] mark (the transform included), or null when
+// the target holds no mark. The button wrapper's size never stands in for the mark. Any failure is a BLOCKER.
+export const TT1_MIN_PX = 44;
+
+/**
+ * TT1 failures for one reading. An empty array means every press target's wax mark is at least
+ * TT1_MIN_PX in both width and height. A target with no measurable mark fails.
+ */
+export function ttFailures(reading) {
+  const targets = Array.isArray(reading?.targets) ? reading.targets : [];
+  if (targets.length === 0) {
+    return [{ id: "TT1", check: "wax-target-size", message: "TT1 no [data-press-target] found to measure." }];
+  }
+
+  const failures = [];
+  for (const target of targets) {
+    const label = String(target?.label ?? "").trim().slice(0, 80) || "press target";
+    const wax = target?.wax ?? null;
+    const measured = wax && Number.isFinite(wax.width) && Number.isFinite(wax.height);
+    if (!measured) {
+      failures.push({ id: "TT1", check: "wax-target-size", message: `TT1 no [data-wax] mark measured for "${label}".` });
+      continue;
+    }
+    if (wax.width < TT1_MIN_PX || wax.height < TT1_MIN_PX) {
+      failures.push({
+        id: "TT1",
+        check: "wax-target-size",
+        message: `TT1 wax mark for "${label}" is ${round(wax.width)} x ${round(wax.height)} px at rest, want at least ${TT1_MIN_PX} x ${TT1_MIN_PX} px.`,
+      });
+    }
+  }
+  return failures;
+}
+
+/**
+ * Script run inside the page. One entry per press target: [data-press-target], or a role=button that
+ * holds a [data-wax] mark. Reads the mark's rect only. Sends no input, so it reads the step at rest.
+ */
+const READ_TT1 = () => {
+  const root = document.querySelector("[data-seal-step]") ?? document;
+  const targets = Array.from(root.querySelectorAll("[data-press-target], [role='button']")).filter(
+    (el) => el.matches("[data-press-target]") || el.querySelector("[data-wax]"),
+  );
+  return targets.map((el) => {
+    const label = (el.getAttribute("aria-label") ?? el.textContent ?? "").trim().slice(0, 80);
+    const wax = el.matches("[data-wax]") ? el : el.querySelector("[data-wax]");
+    if (!wax) return { label, wax: null };
+    const r = wax.getBoundingClientRect();
+    return { label, wax: { width: r.width, height: r.height } };
+  });
+};
+
+/** Reads TT1 values from a page at the Press the seal step, before any pointer event. Sends no input. */
+export async function readTt1Reading(page) {
+  return { targets: await page.evaluate(READ_TT1) };
+}

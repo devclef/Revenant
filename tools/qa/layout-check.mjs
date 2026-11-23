@@ -221,6 +221,14 @@
 //                            and beside the R10.6 live-receipts comparison. A page with no column is
 //                            skipped. Any failing reading is a BLOCKER.
 //
+// SF1   panel-fills-surface   (GitHub issue #587, tools/qa/layout-rules-17.mjs) on Press the seal at
+//                            1440x900, 390x844 and 360x640: the Seal panel is at least 99% of its
+//                            surface width, and no cream strip wider than 2 px sits beside it.
+//                            Any failure is a BLOCKER.
+// TT1   wax-target-size       (GitHub issue #587, tools/qa/layout-rules-17.mjs) on Press the seal at the
+//                            same sizes: each [data-wax] press mark is at least 44 x 44 px at rest.
+//                            Any failure is a BLOCKER.
+//
 // Line format: <PASS|BLOCKER|polish|note> <id> <name> <WxH> <stage> <detail>.
 // The spec 08 and spec 09 checks put the measured values and threshold=<...> in <detail>.
 //
@@ -344,7 +352,14 @@ import {
   readFr1Reading,
   readGo1Soil,
   readLc1Reading,
+  readSf1Reading,
+  readTt1Reading,
+  sfFailures,
+  ttFailures,
 } from "./layout-rules-17.mjs";
+
+// SF1 and TT1 (GitHub issue #587) run on Press the seal at these sizes. Each failure is a BLOCKER.
+export const SF1_TT1_SIZES = ["1440x900", "390x844", "360x640"];
 
 // FR1 (GitHub issue #577) runs at these sizes on every step the walk shoots. It always blocks.
 const FR1_SIZES = ["1440x900", "390x844"];
@@ -1819,10 +1834,11 @@ async function checkRememberGhost(page, ctx, label) {
   return checkGhostBody(page, ctx);
 }
 
-// CT1 on Press the seal. checkPressEnvelope (P1) measures only the sizes in SEAL_MIN_PX, so this
-// walks /demo/live to the seal step at every CT1 size, with the same text and Next presses, then reads CT1.
+// CT1 and SF1/TT1 on Press the seal. checkPressEnvelope (P1) measures only the sizes in SEAL_MIN_PX, so this
+// walks /demo/live to the seal step at every CT1 and SF1_TT1 size, with the same text and Next presses.
+// checkCt1, checkCw1 and checkSf1Tt1 each keep their own size gate, so a size runs only the checks it owns.
 async function checkPressContrast(context, ctx) {
-  if (!CT1_SIZES.includes(ctx.size)) return;
+  if (!CT1_SIZES.includes(ctx.size) && !SF1_TT1_SIZES.includes(ctx.size)) return;
   const page = await newPage(context);
   try {
     const res = await page.goto(`${ctx.base}/demo/live`, { waitUntil: "load" });
@@ -1839,9 +1855,23 @@ async function checkPressContrast(context, ctx) {
     }
     await checkCt1(page, ctx);
     await checkCw1(page, ctx);
+    await checkSf1Tt1(page, ctx);
   } finally {
     await page.close();
   }
+}
+
+// SF1 (the Seal panel fills its surface, no cream strip beside it) and TT1 (the wax mark is at least
+// TT1_MIN_PX square at rest). Both read the Press the seal step at rest. Each failure is a BLOCKER.
+export async function checkSf1Tt1(page, ctx) {
+  if (!SF1_TT1_SIZES.includes(ctx.size)) return;
+  ctx.rep.log(`SF1 and TT1 on Press the seal at ${ctx.size}`);
+  const sf = sfFailures(await readSf1Reading(page));
+  for (const f of sf) ctx.rep.add("blocker", "SF1", f.message, f.check);
+  if (sf.length === 0) ctx.rep.add("ok", "SF1", `Seal panel fills its surface at ${ctx.size}`);
+  const tt = ttFailures(await readTt1Reading(page));
+  for (const f of tt) ctx.rep.add("blocker", "TT1", f.message, f.check);
+  if (tt.length === 0) ctx.rep.add("ok", "TT1", `press target wax mark meets the size floor at ${ctx.size}`);
 }
 
 function checkSoil(page, ctx) {
