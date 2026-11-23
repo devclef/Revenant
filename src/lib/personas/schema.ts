@@ -143,8 +143,8 @@ export const personaListSchema = personaListBaseSchema.superRefine(
       // The list error names the persona by key. An invalid key falls back to
       // the 1-based list position, the same numbering the report uses.
       const label = KEY_PATTERN.test(persona.key)
-        ? `persona "${persona.key}"`
-        : `persona #${i + 1}`;
+        ? `persona "${persona.key}":`
+        : `persona #${i + 1}:`;
 
       // A persona needs at least one question or one metric (the Text_Persona
       // has questions and no metrics; a fuel persona has metrics).

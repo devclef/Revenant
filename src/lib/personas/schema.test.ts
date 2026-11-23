@@ -227,7 +227,7 @@ describe("parsePersonaList — field rules reject bad input", () => {
     const list = validList();
     list.personas[0].written_as_of = "2024-02-30"; // not a real date
     expect(problemsFor(list)).toEqual([
-      'persona "us-maya" written_as_of must be a real YYYY-MM-DD date',
+      'persona "us-maya": written_as_of must be a real YYYY-MM-DD date',
     ]);
   });
 
@@ -235,7 +235,7 @@ describe("parsePersonaList — field rules reject bad input", () => {
     const list = validList();
     list.personas[0].opens_at = "2024-11-05T00:00:00Z"; // no .sss
     expect(problemsFor(list)).toEqual([
-      'persona "us-maya" opens_at must be YYYY-MM-DDTHH:mm:ss.sssZ',
+      'persona "us-maya": opens_at must be YYYY-MM-DDTHH:mm:ss.sssZ',
     ]);
   });
 
@@ -243,7 +243,7 @@ describe("parsePersonaList — field rules reject bad input", () => {
     const list = validList();
     list.personas[0].opens_at = "2024-11-05T24:00:00.000Z"; // hour 24 is invalid
     expect(
-      problemsFor(list).some((p) => p.startsWith('persona "us-maya" opens_at must be')),
+      problemsFor(list).some((p) => p.startsWith('persona "us-maya": opens_at must be')),
     ).toBe(true);
   });
 
@@ -282,7 +282,7 @@ describe("parsePersonaList — opens_at must be after written_as_of midnight", (
     list.personas[0].opens_at = "2024-11-05T00:00:00.000Z";
     expect(
       problemsFor(list).some((p) =>
-        p.startsWith('persona "us-maya" opens_at must be later than written_as_of midnight UTC'),
+        p.startsWith('persona "us-maya": opens_at must be later than written_as_of midnight UTC'),
       ),
     ).toBe(true);
   });
@@ -293,7 +293,7 @@ describe("parsePersonaList — opens_at must be after written_as_of midnight", (
     list.personas[0].opens_at = "2024-05-12T00:00:00.000Z";
     expect(
       problemsFor(list).some((p) =>
-        p.startsWith('persona "us-maya" opens_at must be later than written_as_of midnight UTC'),
+        p.startsWith('persona "us-maya": opens_at must be later than written_as_of midnight UTC'),
       ),
     ).toBe(true);
   });
