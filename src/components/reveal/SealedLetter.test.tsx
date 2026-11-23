@@ -28,7 +28,7 @@ import type { PayloadV1 } from "@/lib/seal-format";
  * - "Written as of {date}" — but only when the payload carries `written_as_of`
  *   (R10.2);
  * - the demo letter label, always (R10.3);
- * - "Sealed for the demo on {sealedAt}" derived from the envelope header
+ * - "Sealed later, for this demo, on {sealedAt}." derived from the envelope header
  *   (R10.4), never from the clock or the opening date.
  *
  * The fixture `Opened` mirrors the Property 17 test's PAYLOAD/OPENED so the two

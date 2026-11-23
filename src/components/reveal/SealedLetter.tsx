@@ -93,10 +93,9 @@ export function SealedLetterCaption({
           .replace("{name}", personaName)
           .replace("{writtenAsOf}", formatCalendarDate(payload.written_as_of));
 
-  const sealedForThisDemo = REVEAL_COPY.sealedForThisDemo.replace(
-    "{sealedAt}",
-    formatLetterDate(header.sealedAt, { kind: "utc" }),
-  );
+  const sealedDate = formatLetterDate(header.sealedAt, { kind: "utc" });
+  const sealedForThisDemo =
+    sealedDate === "" ? undefined : REVEAL_COPY.sealedForThisDemo.replace("{sealedAt}", sealedDate);
 
   return (
     <>
@@ -110,7 +109,9 @@ export function SealedLetterCaption({
         </p>
       )}
 
-      <p className={styles.period}>{sealedForThisDemo}</p>
+      {sealedForThisDemo === undefined ? null : (
+        <p className={styles.period}>{sealedForThisDemo}</p>
+      )}
     </>
   );
 }

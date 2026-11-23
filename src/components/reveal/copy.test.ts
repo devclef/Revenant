@@ -252,7 +252,7 @@ describe("spec 09 persona disclosure, verdict and Fingerprint copy (C6, C4.2)", 
   });
 
   it("gives the seal line its exact text (C6.3)", () => {
-    expect(REVEAL_COPY.sealedForThisDemo).toBe("Sealed for this demo on {sealedAt}");
+    expect(REVEAL_COPY.sealedForThisDemo).toBe("Sealed later, for this demo, on {sealedAt}.");
   });
 
   it("gives the seal verdict and the closed Fingerprint strings their exact text (C6.4)", () => {
