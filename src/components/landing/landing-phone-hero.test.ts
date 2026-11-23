@@ -79,13 +79,9 @@ describe("landing hero below 600 px (landing.module.css)", () => {
 });
 
 describe("landing Landing_Ghost box below 600 px (spec 10 X2.5)", () => {
-  it("hides the landing Ghost layer below 900 px instead of narrowing it, and has no landing .ghost box rule", () => {
+  it("keeps the Scene ghost width rule in the phone block, and has no landing .ghost box rule", () => {
     const block = phoneBlock();
-    expect(block).not.toContain("--ghost-w");
-    const narrowAt = css.indexOf("@media (max-width: 899.98px) {");
-    expect(narrowAt).toBeGreaterThan(-1);
-    const narrow = css.slice(narrowAt, css.indexOf("\n}\n", narrowAt) + 3);
-    expect(narrow).toMatch(/:global\(body:has\(\[data-landing-hero\]\)\) :global\(\[data-ghost-layer\]\) \{\s*display: none;\s*\}/);
+    expect(block).toMatch(/:global\(\[data-ghost-pit\]\) > div \{\s*--ghost-w: min\(20vh, 128px\);\s*\}/);
     // The landing .ghost box was replaced by the hero seal box (issue #429).
     expect(css).not.toMatch(/\.ghost \{/);
   });

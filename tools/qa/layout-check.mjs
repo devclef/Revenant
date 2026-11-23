@@ -20,8 +20,9 @@
 //   L1  line-labels     figures and close: no two Number_Line labels overlap.
 //   R1  recall-in-view  recall, scrolled to the top: question, field and next
 //                       control are inside the viewport.
-//   LG1 landing-ghost   /: the Landing_Ghost is visible and its body covers no
-//                       headline line and not the Accent link.
+//   LG1 landing-ghost   /: at 900 px and wider the Landing_Ghost is visible and
+//                       its body covers no headline line and not the Accent link.
+//                       Below 900 px it must be hidden (it covered the wax seal).
 //   T2, FT1             polish only: tick labels, and the footer against the Soil.
 //   BAND1               retired: it measured a light band down the Soil strip. Spec 15
 //                       deletes the Envelope's dirt group (design.md, Envelope), so the
@@ -747,6 +748,7 @@ const R1_READ = () =>
 // LG1 (R9.10, R9.11, R27.7): the Landing_Ghost is visible and its body is clear of
 // the headline's line boxes and the Accent link. The body box uses the same
 // fractions as G1.
+const LG1_HIDDEN_BELOW_PX = 900;
 const LG1_READ = (startPattern) => {
   const pit = document.querySelector("[data-ghost-pit]");
   if (!pit) return { missing: true };
@@ -2136,6 +2138,14 @@ async function checkLandingGhost(page, ctx) {
     return;
   }
   const visible = r.width > 0 && r.height > 0 && r.opacity > 0 && r.inViewport;
+  // Below 900 px the landing hides its Ghost layer with CSS (landing.module.css),
+  // so on a phone the Ghost must not be drawn at all.
+  const viewportWidth = page.viewportSize()?.width ?? 0;
+  if (viewportWidth < LG1_HIDDEN_BELOW_PX) {
+    const detail = `box=${r.width.toFixed(0)}x${r.height.toFixed(0)}px threshold=hidden below ${LG1_HIDDEN_BELOW_PX}px`;
+    ctx.rep.add(visible ? "blocker" : "ok", "LG1", detail, "landing-ghost");
+    return;
+  }
   const detail = `box=${r.width.toFixed(0)}x${r.height.toFixed(0)}px opacity=${r.opacity.toFixed(2)} inViewport=${r.inViewport} overlaps=${r.hits.length ? r.hits.join(",") : "none"} threshold=visible, no overlap`;
   ctx.rep.add(visible && !r.hits.length ? "ok" : "blocker", "LG1", detail, "landing-ghost");
 }

@@ -110,6 +110,15 @@
   .actions {
     order: 1;
   }
+
+  /* This selector is not scoped: in the production build this file shares a
+     CSS chunk with every page, so it also sets the phone Ghost width on the
+     persona and live pages, whose layout relies on it. The landing Ghost itself
+     is hidden below 900 px (see the rule further down). The width variable
+     belongs to the shared Scene placement (scene.module.css). */
+  :global([data-ghost-pit]) > div {
+    --ghost-w: min(20vh, 128px);
+  }
 }
 
 /* The hero seal (issue #429). The box is the envelope's own height, so the
