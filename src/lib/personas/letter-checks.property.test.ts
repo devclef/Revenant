@@ -316,6 +316,9 @@ describe("Property 14: inserting an election/party term fails and names it", () 
         }),
         fc.integer({ min: 0, max: 10000 }),
         (text, term, caseMask, suffix, rawPos) => {
+          // `poll` and `polls` match only as whole words (spec 18 R8.2), so a
+          // letter suffix on them is not a match and is out of this property.
+          fc.pre(!(["poll", "polls"].includes(term) && suffix.length > 0));
           const cased = recase(term, caseMask);
           const written = cased + suffix.join("");
           // A leading space makes the inserted token a word start; a trailing
