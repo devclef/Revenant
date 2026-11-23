@@ -1725,6 +1725,20 @@ export function checkSealedForDemoLine(
   };
 }
 
+/**
+ * The sealed-for-demo line in the page text: the first line that starts with the
+ * approved wording's lead-in (everything before `{sealedAt}`), trimmed. Null when
+ * no line starts that way. The date is not checked here: `checkSealedForDemoLine` does that.
+ */
+export function findSealedForDemoLine(bodyText: string): string | null {
+  const leadIn = SEALED_FOR_DEMO_TEMPLATE.split("{sealedAt}")[0];
+  const line = bodyText
+    .split("\n")
+    .map((text) => text.trim())
+    .find((text) => text.startsWith(leadIn));
+  return line ?? null;
+}
+
 /** Old_Persona_Date forms (spec 18 glossary). Each is matched as a whole token. */
 export const OLD_PERSONA_DATE_FORMS: readonly string[] = [
   "2024-05-12",

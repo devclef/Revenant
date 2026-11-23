@@ -67,6 +67,7 @@ import {
   PERSONA_TRACK_NAMES,
   buildReceiptsReport,
   checkPersonaDateStrings,
+  checkSealedForDemoLine,
   checkWalkLetterText,
   expectedPersonaDates,
   FUEL_PERSONA_KEYS,
@@ -82,6 +83,7 @@ import {
   checkUnansweredFold,
   countPasskeyCalls,
   defectsFromChecks,
+  findSealedForDemoLine,
   missingShotDefect,
   RECORD_SHOT_PREFIX,
   recordStepResult,
@@ -1824,7 +1826,10 @@ async function readTrack(
 }
 
 /** A persona entry from content/personas/personas.json, as far as the walk reads it. */
-type PersonaEntry = PersonaDateRow & { metrics: { metric_id: string }[] };
+type PersonaEntry = PersonaDateRow & {
+  letter_id: string;
+  metrics: { metric_id: string }[];
+};
 
 /** The persona entry for one key. Throws when the key is not in personas.json. */
 function readPersona(key: string): PersonaEntry {
@@ -1845,6 +1850,21 @@ function retrievedIso(text: string): string | null {
   if (!match) return null;
   const ms = Date.parse(`${match[1].replace(/\.$/, "")} UTC`);
   return Number.isNaN(ms) ? null : new Date(ms).toISOString();
+}
+
+/**
+ * The `sealedAt` the server serves for a persona letter, read from its header in
+ * `GET /api/letters/<id>`. Null when the response is not openable or has no
+ * readable `sealedAt`.
+ */
+async function servedSealedAt(letterId: string): Promise<string | null> {
+  const response = await fetch(`${BASE_URL}/api/letters/${letterId}`);
+  if (!response.ok) return null;
+  const body = (await response.json()) as {
+    envelope?: { sealedAt?: unknown };
+  };
+  const sealedAt = body.envelope?.sealedAt;
+  return typeof sealedAt === "string" ? sealedAt : null;
 }
 
 /**
@@ -1910,7 +1930,7 @@ async function readReceiptFigures(
 type PersonaTrackResult = {
   /** One line per stage: its Step_Track check. */
   seen: string[];
-  /** Step_Track failures, which the test asserts. */
+  /** Failures the test asserts: Step_Track, persona dates, stale letter text and the sealed-for-demo line. */
   failures: string[];
   /** Product findings from the step-1 helpers at each stop. Reported, not asserted. */
   findings: string[];
@@ -1944,6 +1964,7 @@ async function walkPersonaTrack(
   const report: string[] = [];
   let reachedLast = false;
   let last = "";
+  let sealedLine: string | null = null;
   for (let guard = 0; guard < 30; guard += 1) {
     await page.waitForTimeout(SETTLE_MS);
     const stage = await currentStage(page);
@@ -1955,7 +1976,11 @@ async function walkPersonaTrack(
 
       const bodyText = await page.evaluate(() => document.body.innerText);
       const stale = checkWalkLetterText([bodyText], `${key} ${stage}`);
-      if (!stale.ok) findings.push(stale.message);
+      if (!stale.ok) {
+        failures.push(stale.message);
+        findings.push(stale.message);
+      }
+      if (sealedLine === null) sealedLine = findSealedForDemoLine(bodyText);
 
       if (stage === "recall") {
         const dates = checkPersonaDateStrings(
@@ -1963,7 +1988,10 @@ async function walkPersonaTrack(
           bodyText,
           { written: true, memory: isFuel, opening: true },
         );
-        if (!dates.ok) findings.push(dates.message);
+        if (!dates.ok) {
+          failures.push(dates.message);
+          findings.push(dates.message);
+        }
       }
       if (stage === "figures" && isFuel) {
         const receipts = await readReceiptFigures(
@@ -2011,6 +2039,14 @@ async function walkPersonaTrack(
       }
       await next.first().click();
     }
+  }
+  const sealed = checkSealedForDemoLine(
+    sealedLine,
+    await servedSealedAt(row.letter_id),
+  );
+  if (!sealed.ok) {
+    failures.push(`${key} sealed line: ${sealed.message}`);
+    findings.push(`${key} sealed line: ${sealed.message}`);
   }
   return { seen, failures, findings, report, reachedLast };
 }

@@ -70,6 +70,7 @@ import {
   checkWalkLetterText,
   expectedPersonaDates,
   expectedSealedForDemoLine,
+  findSealedForDemoLine,
   findStaleWalkText,
   WALK_PERSONA_KEYS,
   type PersonaDateRow,
@@ -1653,6 +1654,19 @@ describe("checkSealedForDemoLine (spec 18, 16.3)", () => {
     expect(checkSealedForDemoLine("Sealed later, for this demo, on 25 November 2026.", "not-a-date").message).toBe(
       "FAIL the served header has no readable sealedAt",
     );
+  });
+});
+
+describe("findSealedForDemoLine (spec 18, 16.3)", () => {
+  it("reads the sealed-for-demo line from the page text, trimmed", () => {
+    const body = "Maya's letter\n  Sealed later, for this demo, on 25 November 2026.  \nRead on";
+    expect(findSealedForDemoLine(body)).toBe(
+      "Sealed later, for this demo, on 25 November 2026.",
+    );
+  });
+
+  it("returns null when the page text has no sealed-for-demo line", () => {
+    expect(findSealedForDemoLine("Maya's letter\nRead on")).toBeNull();
   });
 });
 
