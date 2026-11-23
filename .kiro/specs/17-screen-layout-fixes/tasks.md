@@ -292,7 +292,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - Add a source test that the R10.1, R10.6, R14.3, R5.4, NB1, GC1, DL1 and PV1 verdict tests still exist. Run the file until it passes.
     - _Requirements: 2.10, 2.11, 3.9_
 
-- [ ] 16. D7 again: desktop Break the seal and Remember clear of the step track, the Soil and the Ghost
+- [x] 16. D7 again: desktop Break the seal and Remember clear of the step track, the Soil and the Ghost
   - Agent: `frontend-dev` · Depends on: none · Estimated size: M, ~300 changed lines
   - Scope: `src/components/ceremony/scene/scene.module.css`, `src/components/ceremony/scene/layout.ts`, `src/components/ceremony/ceremony.module.css` (the step track and the first block under it only), `src/components/ceremony/seal/**`, `src/components/reveal/Reveal.tsx` and `src/components/reveal/reveal.module.css` (placement only), `src/components/ceremony/scene/break-columns.test.ts`.
   - Design sections: "D4 and D7 overlap / GO1", "D7 grouping / LC1".
