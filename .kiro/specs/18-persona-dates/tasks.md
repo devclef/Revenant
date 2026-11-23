@@ -288,7 +288,7 @@ No task below starts until that PR is merged. The other open questions keep the 
   - Copy evidence: tone-check for the three letter files and, if changed, `reveal/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 12. README, video script and the journey check
+- [x] 12. README, video script and the journey check
   - Agent: `platform-dev` · Depends on: 11 · Estimated size: S, ~150 changed lines
   - Scope: `README.md`, `docs/video-script.md`, `tools/qa/journey-check.mjs` (only if step 3 finds a literal).
   - Design sections: "11. QA tools and docs".
