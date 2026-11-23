@@ -3,6 +3,7 @@ import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import fc from "fast-check";
 
 import { SealedLetter, SealedLetterCaption } from "./SealedLetter";
 import { REVEAL_COPY } from "./copy";
@@ -171,7 +172,7 @@ describe("SealedLetter markup", () => {
     );
   });
 
-  it('shows "Sealed for this demo on {sealedAt}" derived from the header (R10.4, C6.3)', () => {
+  it('shows "Sealed later, for this demo, on {sealedAt}." derived from the header (R10.4, C6.3)', () => {
     const html = render(OPENED);
     expect(html).toContain(
       REVEAL_COPY.sealedForThisDemo.replace(
@@ -240,6 +241,59 @@ describe("SealedLetter markup", () => {
     for (const needle of forbidden) {
       expect(html, `stage 2 must not render "${needle}"`).not.toContain(needle);
     }
+  });
+});
+
+describe("Property 11: the sealed-for-demo line takes only the seal date (R10.4, R10.5, R10.6)", () => {
+  const SEALED_LINE = "Sealed later, for this demo, on ";
+
+  function renderCaption(sealedAt: string, opensAt: string): string {
+    return renderToStaticMarkup(
+      createElement(SealedLetterCaption, {
+        opened: { ...OPENED, header: { ...OPENED.header, sealedAt, opensAt } },
+        personaName: PERSONA_NAME,
+      }),
+    );
+  }
+
+  it("shows the line with the seal date, or no line, for any arbitrary string as sealedAt", () => {
+    fc.assert(
+      fc.property(fc.string({ maxLength: 40 }), (sealedAt) => {
+        const html = renderCaption(sealedAt, OPENED.header.opensAt);
+        const sealedDate = formatLetterDate(sealedAt, { kind: "utc" });
+        if (sealedDate === "") {
+          expect(html).not.toContain("Sealed later, for this demo");
+        } else {
+          expect(html).toContain(`${SEALED_LINE}${sealedDate}.`);
+        }
+        expect(html).not.toContain("Invalid Date");
+        expect(html).not.toContain("undefined");
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  it("takes the seal date, never the opening or written-as-of date, for any valid ISO instant", () => {
+    const instantArb = fc
+      .date({
+        min: new Date("1900-01-01T00:00:00.000Z"),
+        max: new Date("2099-12-31T23:59:59.000Z"),
+        noInvalidDate: true,
+      })
+      .map((d) => d.toISOString());
+    fc.assert(
+      fc.property(instantArb, instantArb, (sealedAt, opensAt) => {
+        const html = renderCaption(sealedAt, opensAt);
+        const sealedDate = formatLetterDate(sealedAt, { kind: "utc" });
+        expect(sealedDate).not.toBe("");
+        expect(html).toContain(`${SEALED_LINE}${sealedDate}.`);
+        const line = html.match(/Sealed later, for this demo, on ([^<]*)</);
+        expect(line?.[1]).toBe(`${sealedDate}.`);
+        expect(html).not.toContain("Invalid Date");
+        expect(html).not.toContain("undefined");
+      }),
+      { numRuns: 100 },
+    );
   });
 });
 
