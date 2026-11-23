@@ -1,9 +1,9 @@
 // Feature: 17-screen-layout-fixes (task 9.1, D7)
 //
 // The marks column reserves the Soil_Band clearance at 900 px and wider. Below
-// 900 px the rules keep their previous values. The Seal_Group keeps its
-// Ghost-based position: that positioning fixed the Ghost covering the marks
-// text and the Break the seal control (#515), so it is not removed here.
+// 900 px the rules keep their previous values. The Seal_Group sits 24 px right
+// of the marks card (17 D7), capped by the Ghost-based position from #515 so it
+// never moves right of its old place.
 
 import { readFileSync } from "node:fs";
 import { dirname, join } from "node:path";
@@ -32,8 +32,9 @@ describe("break the seal columns (17 D7)", () => {
     expect(css).toMatch(/@media \(max-width: 899\.98px\) \{\s*\.heldEnvelope \{\s*top: 47%;/);
   });
 
-  it("keeps the Seal_Group positioned from the Ghost (#515)", () => {
+  it("anchors the Seal_Group to the marks card, 24 px to its right (17 D7)", () => {
     const group = ruleBody(css, ".marksLayer [data-seal-group]");
+    expect(group).toMatch(/min\(28rem,\s*40vw\)\s*\+\s*24px/);
     expect(group).toMatch(/var\(--ghost-cx\)/);
   });
 });
