@@ -424,6 +424,16 @@ describe("parsePersonaList — author_questions rules", () => {
     expect(() => parsePersonaList(list)).toThrow();
   });
 
+  it("rejects an author question with an election, party or public-event term", () => {
+    const list = textPersona();
+    list.personas[0].author_questions = ["What did the Christmas holiday cost you?"];
+    expect(
+      problemsFor(list).some((p) =>
+        p.startsWith('persona "us-maya": author_questions.0:'),
+      ),
+    ).toBe(true);
+  });
+
   it("rejects a persona with neither author_questions nor metrics", () => {
     const list = validList();
     list.personas[0].metrics = [];

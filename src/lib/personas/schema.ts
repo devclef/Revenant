@@ -20,7 +20,7 @@ import { isRealDate } from "@/lib/figures";
 import { DEMO_FIGURES } from "@/lib/figures/demo";
 import { checkRecallSubject } from "@/lib/recall";
 
-import { firstPoliticalTerm } from "./banned-terms";
+import { firstBannedTerm } from "./banned-terms";
 
 // --- Field schemas -----------------------------------------------------------
 
@@ -76,7 +76,7 @@ const introLineSchema = z
   .refine((s) => !/\d/.test(s), {
     message: "intro_line must not contain a digit",
   })
-  .refine((s) => firstPoliticalTerm(s) === null, {
+  .refine((s) => firstBannedTerm(s) === null, {
     message: "intro_line must not contain an election or party term (R1.10)",
   });
 
@@ -86,14 +86,21 @@ const metricSchema = z.strictObject({
 });
 
 // author_questions: one Author_Question, 1 to 200 code points. Counted by code
-// point, not UTF-16 unit, so an astral character counts once.
-const authorQuestionSchema = z.string().refine(
-  (s) => {
-    const n = [...s].length;
-    return n >= 1 && n <= 200;
-  },
-  { message: "author_questions entries must be 1 to 200 code points" },
-);
+// point, not UTF-16 unit, so an astral character counts once. The question
+// holds no election, party or public-event term (spec 18 R8.5).
+const authorQuestionSchema = z
+  .string()
+  .refine(
+    (s) => {
+      const n = [...s].length;
+      return n >= 1 && n <= 200;
+    },
+    { message: "author_questions entries must be 1 to 200 code points" },
+  )
+  .refine((s) => firstBannedTerm(s) === null, {
+    message:
+      "author_questions entries must not contain an election, party or public-event term (R8.5)",
+  });
 
 const personaSchema = z.strictObject({
   key: keySchema,

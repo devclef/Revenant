@@ -7,7 +7,7 @@
 //
 // Pure module: no I/O, no third-party dependencies.
 
-import { firstCurrencyWord, firstPoliticalTerm } from "./banned-terms";
+import { firstBannedTerm, firstCurrencyWord } from "./banned-terms";
 import { PRICE_RE } from "./price-lines";
 
 // Currency symbols forbidden by R1.8.
@@ -104,10 +104,10 @@ export function checkLetterText(
     problems.push(`${prefix}: contains currency word "${currencyWord}"`);
   }
 
-  // R1.10: no election or party term at the start of a word (case-insensitive).
-  const politicalTerm = firstPoliticalTerm(text);
-  if (politicalTerm !== null) {
-    problems.push(`${prefix}: contains political term "${politicalTerm}"`);
+  // R1.10 and spec 18 R8: no election, party or public-event term (firstBannedTerm).
+  const bannedTerm = firstBannedTerm(text);
+  if (bannedTerm !== null) {
+    problems.push(`${prefix}: contains political term "${bannedTerm}"`);
   }
 
   return problems;
@@ -161,9 +161,9 @@ export function checkAnswerText(
     problems.push(`${prefix}: contains currency word "${currencyWord}"`);
   }
 
-  const politicalTerm = firstPoliticalTerm(text);
-  if (politicalTerm !== null) {
-    problems.push(`${prefix}: contains political term "${politicalTerm}"`);
+  const bannedTerm = firstBannedTerm(text);
+  if (bannedTerm !== null) {
+    problems.push(`${prefix}: contains political term "${bannedTerm}"`);
   }
 
   const verdictMatch = ANSWER_VERDICT_REGEX.exec(text);
