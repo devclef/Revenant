@@ -1834,10 +1834,11 @@ async function checkRememberGhost(page, ctx, label) {
   return checkGhostBody(page, ctx);
 }
 
-// CT1 on Press the seal. checkPressEnvelope (P1) measures only the sizes in SEAL_MIN_PX, so this
-// walks /demo/live to the seal step at every CT1 size, with the same text and Next presses, then reads CT1.
+// CT1 and SF1/TT1 on Press the seal. checkPressEnvelope (P1) measures only the sizes in SEAL_MIN_PX, so this
+// walks /demo/live to the seal step at every CT1 and SF1_TT1 size, with the same text and Next presses.
+// checkCt1, checkCw1 and checkSf1Tt1 each keep their own size gate, so a size runs only the checks it owns.
 async function checkPressContrast(context, ctx) {
-  if (!CT1_SIZES.includes(ctx.size)) return;
+  if (!CT1_SIZES.includes(ctx.size) && !SF1_TT1_SIZES.includes(ctx.size)) return;
   const page = await newPage(context);
   try {
     const res = await page.goto(`${ctx.base}/demo/live`, { waitUntil: "load" });
@@ -1864,6 +1865,7 @@ async function checkPressContrast(context, ctx) {
 // TT1_MIN_PX square at rest). Both read the Press the seal step at rest. Each failure is a BLOCKER.
 async function checkSf1Tt1(page, ctx) {
   if (!SF1_TT1_SIZES.includes(ctx.size)) return;
+  ctx.rep.log(`SF1 and TT1 on Press the seal at ${ctx.size}`);
   const sf = sfFailures(await readSf1Reading(page));
   for (const f of sf) ctx.rep.add("blocker", "SF1", f.message, f.check);
   if (sf.length === 0) ctx.rep.add("ok", "SF1", `Seal panel fills its surface at ${ctx.size}`);
