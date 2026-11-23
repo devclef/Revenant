@@ -303,7 +303,7 @@ No task below starts until that PR is merged. The other open questions keep the 
       - _Requirements: 13.2, 13.6, 13.7_
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 13. Live_Walk assertions, local reseal and the layout baseline
+- [x] 13. Live_Walk assertions, local reseal and the layout baseline
   - Agent: `platform-dev` · Depends on: 11, 12 · Estimated size: M, ~800 changed lines
   - Scope: `src/test/integration/live-walk.test.ts`, `live-walk-helpers.ts`, `tools/qa/layout-gate-baseline.json`, and the tests that cover them.
   - Design sections: "9. Reseal" (the local check), "11. QA tools and docs", Testing Strategy (integration and browser checks).
