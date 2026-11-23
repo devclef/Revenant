@@ -54,7 +54,7 @@ The gap between memory and record is the product. Revenant does not interpret th
 - **Regions:** United States, European Union, and Sweden.
 - **No predictions in the MVP.** Users can't make scored predictions yet. The rules in `neutrality.md` apply if they are added later.
 - **No wages in the MVP.** No wage statistics and no "hours of work". The reveal shows figures then vs now and the change between them. Hours of work may come back after the MVP.
-- **Data sources and recall questions are tuned after the MVP works.** Start with a small set of series that are easy to fetch and cover the demo windows, then refine.
+- **Data sources and recall questions are tuned after the MVP works.** Start with a small set of series that are easy to fetch and cover the persona dates, then refine.
 - **Opening date is fixed at sealing.** It opens at 00:00 in the user's timezone at sealing, stored as a UTC `opens_at`. Real letters must open at least 3 months after sealing.
 - **No public events as openings in the MVP.** Later, upcoming elections may be suggested as dates. A suggestion only fills in a plain date; the letter never follows an event if it moves.
 - **Regions and currencies:** US in USD, EU in EUR (EU-wide averages wherever an official source publishes one), Sweden in SEK. No currency conversion.
@@ -80,10 +80,7 @@ Judges can't wait years, so there are two demos. Both live at `/demo`, are clear
 
 Pre-sealed letters from fictional people, each written as of a date in its window and set to open on a fixed date. Judges get the opening experience without a passkey: open the letter, remember first, break the seal, see the receipts. The persona page opens straight on the first question.
 
-- One or two personas per region, chosen from these fixed windows (the 12 months up to and including the date):
-  - **US:** up to 5 November 2024.
-  - **EU:** up to 9 June 2024.
-  - **Sweden:** up to 11 September 2022 (the window before the most recent one, which is too recent to show a meaningful gap).
+- Each persona letter is written as of one date and opens on one date, both set in `content/personas/personas.json`. Today every persona is written as of a November Sunday and opens two years later.
 - The fuel personas ask only the figure questions. Each question comes with a sample answer, labelled as a sample, that the judge can keep or change. For the fuel personas what the judge remembers is their own memory of that month.
 - One persona is the exception. Her letter carries her own questions, each with an answer she sealed, and no figures. At opening the judge reads her fictional recollection of each answer, breaks the seal, and sees each recollection beside her sealed answer, then her letter. The recollections are pre-written content, labelled as fictional on every screen that shows them. No answer of the judge's is recorded for this persona.
 - The fuel personas and the live demo make the judge remember first. The text persona shows what a recollection beside a letter looks like, in someone else's words.
@@ -110,7 +107,7 @@ The hackathon demo comes first, not the full product.
 
 1. **01 Skeleton.** Deployable site, health checks, image, Helm chart. Done.
 2. **02 Sealed letters.** Sealed letter format, browser crypto with a known demo key (no passkey or PRF), the first migration (letters, demo letters, openings, immutability triggers), and the API routes to get a letter, release its server secret after the opening date, and store encrypted recall answers.
-3. **02 Demo figures (data-dev, alongside 02).** Two or three official series per region that cover the demo windows and today, delivered as a JSON file with full provenance. No fetch job.
+3. **02 Demo figures (data-dev, alongside 02).** Two or three official series per region that cover the persona dates and today, delivered as a JSON file with full provenance. No fetch job.
 4. **03 Persona demo** at `/demo`: pick a persona, answer the recall questions, break the seal, then see the answers, the letter, and the figures then vs now.
 5. **Live passkey demo**, if time allows.
 6. Remaining product work (passkey sealing for real letters, backup key card, PDF cards, `.ics`, the daily fetch job) after the demo.
