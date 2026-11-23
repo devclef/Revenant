@@ -13,7 +13,7 @@ import styles from "./reveal.module.css";
  *
  * - `SealedLetterCaption` is the Caption_Block, which sits on the dark above
  *   the paper: the Stage heading (a real `h2`), the Letter_Disclosure line and
- *   the "Sealed for this demo on {date}" line for a Persona_Letter, or the
+ *   the "Sealed later, for this demo, on {date}." line for a Persona_Letter, or the
  *   local "Sealed on {date and time}" line for a Live_Letter.
  * - `SealedLetterText` is the Letter_Text alone: one `<p>` whose only child is
  *   the sealed text, `white-space: pre-wrap` from the stylesheet.
