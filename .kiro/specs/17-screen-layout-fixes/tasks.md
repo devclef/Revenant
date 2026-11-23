@@ -270,7 +270,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
     - Add a property test over random label and seal counts: UQ1 passes exactly when both are 1. Run both files until they pass.
     - _Requirements: 2.3, 2.4, 2.10_
 
-- [ ] 15. Gate script: run layout-check against the built app
+- [x] 15. Gate script: run layout-check against the built app
   - Agent: `platform-dev` · Depends on: 14 · Estimated size: M, ~350 changed lines
   - Scope: `tools/qa/layout-gate.mjs` (new), `tools/qa/layout-check.mjs` (header comment only), `package.json` (the `layout-gate` script), `src/lib/layout-gate.test.ts` (new).
   - Design sections: "Gate".
