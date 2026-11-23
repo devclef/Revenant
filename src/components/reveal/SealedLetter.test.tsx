@@ -3,8 +3,9 @@ import { join } from "node:path";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import fc from "fast-check";
 
-import { SealedLetter } from "./SealedLetter";
+import { SealedLetter, SealedLetterCaption } from "./SealedLetter";
 import { REVEAL_COPY } from "./copy";
 import {
   formatCalendarDate,
@@ -28,7 +29,7 @@ import type { PayloadV1 } from "@/lib/seal-format";
  * - "Written as of {date}" — but only when the payload carries `written_as_of`
  *   (R10.2);
  * - the demo letter label, always (R10.3);
- * - "Sealed for the demo on {sealedAt}" derived from the envelope header
+ * - "Sealed later, for this demo, on {sealedAt}." derived from the envelope header
  *   (R10.4), never from the clock or the opening date.
  *
  * The fixture `Opened` mirrors the Property 17 test's PAYLOAD/OPENED so the two
@@ -171,7 +172,7 @@ describe("SealedLetter markup", () => {
     );
   });
 
-  it('shows "Sealed for this demo on {sealedAt}" derived from the header (R10.4, C6.3)', () => {
+  it('shows "Sealed later, for this demo, on {sealedAt}." derived from the header (R10.4, C6.3)', () => {
     const html = render(OPENED);
     expect(html).toContain(
       REVEAL_COPY.sealedForThisDemo.replace(
@@ -184,6 +185,42 @@ describe("SealedLetter markup", () => {
       formatLetterDate(OPENED.header.opensAt, { kind: "utc" }),
     );
   });
+
+  it("shows the sealed-for-demo line with only the sealing date for a valid sealedAt (Property 11, R10.4)", () => {
+    const html = render(OPENED);
+    const sealedDate = formatLetterDate(OPENED.header.sealedAt, { kind: "utc" });
+    expect(html).toContain(`Sealed later, for this demo, on ${sealedDate}.`);
+    // Only the sealing date appears on that line: the opening date and the
+    // written-as-of date are not repeated in it.
+    const opensDate = formatLetterDate(OPENED.header.opensAt, { kind: "utc" });
+    expect(html).not.toContain(opensDate);
+  });
+
+  it.each([
+    ["an empty sealedAt", ""],
+    ["an unparseable sealedAt", "not-a-date"],
+  ])(
+    "renders no sealed-for-demo paragraph and no placeholder for %s (Property 11, R10.5, R10.6)",
+    (_label, sealedAt) => {
+      const openedBadDate: Opened = {
+        ...OPENED,
+        header: { ...OPENED.header, sealedAt },
+      };
+      const html = renderToStaticMarkup(
+        createElement(SealedLetterCaption, {
+          opened: openedBadDate,
+          personaName: PERSONA_NAME,
+        }),
+      );
+      // The sealed-for-demo line is gone, with no date and no placeholder text.
+      expect(html).not.toContain("Sealed later, for this demo");
+      expect(html).not.toContain("Invalid Date");
+      expect(html).not.toContain("undefined");
+      // Only the disclosure paragraph remains: one <p>, the persona line.
+      expect(html.match(/<p[\s>]/g)?.length ?? 0).toBe(1);
+      expect(html).toContain("data-persona-disclosure");
+    },
+  );
 
   it("adds no commentary beyond the four stage-2 elements", () => {
     const html = render(OPENED);
@@ -204,6 +241,60 @@ describe("SealedLetter markup", () => {
     for (const needle of forbidden) {
       expect(html, `stage 2 must not render "${needle}"`).not.toContain(needle);
     }
+  });
+});
+
+// Feature: 18-persona-dates, Property 11: The sealed-for-demo line shows only the sealing date
+describe("Property 11: the sealed-for-demo line takes only the seal date (R10.4, R10.5, R10.6)", () => {
+  const SEALED_LINE = "Sealed later, for this demo, on ";
+
+  function renderCaption(sealedAt: string, opensAt: string): string {
+    return renderToStaticMarkup(
+      createElement(SealedLetterCaption, {
+        opened: { ...OPENED, header: { ...OPENED.header, sealedAt, opensAt } },
+        personaName: PERSONA_NAME,
+      }),
+    );
+  }
+
+  it("shows the line with the seal date, or no line, for any arbitrary string as sealedAt", () => {
+    fc.assert(
+      fc.property(fc.string({ maxLength: 40 }), (sealedAt) => {
+        const html = renderCaption(sealedAt, OPENED.header.opensAt);
+        const sealedDate = formatLetterDate(sealedAt, { kind: "utc" });
+        if (sealedDate === "") {
+          expect(html).not.toContain("Sealed later, for this demo");
+        } else {
+          expect(html).toContain(`${SEALED_LINE}${sealedDate}.`);
+        }
+        expect(html).not.toContain("Invalid Date");
+        expect(html).not.toContain("undefined");
+      }),
+      { numRuns: 100 },
+    );
+  });
+
+  it("takes the seal date, never the opening or written-as-of date, for any valid ISO instant", () => {
+    const instantArb = fc
+      .date({
+        min: new Date("1900-01-01T00:00:00.000Z"),
+        max: new Date("2099-12-31T23:59:59.000Z"),
+        noInvalidDate: true,
+      })
+      .map((d) => d.toISOString());
+    fc.assert(
+      fc.property(instantArb, instantArb, (sealedAt, opensAt) => {
+        const html = renderCaption(sealedAt, opensAt);
+        const sealedDate = formatLetterDate(sealedAt, { kind: "utc" });
+        expect(sealedDate).not.toBe("");
+        expect(html).toContain(`${SEALED_LINE}${sealedDate}.`);
+        const line = html.match(/Sealed later, for this demo, on ([^<]*)</);
+        expect(line?.[1]).toBe(`${sealedDate}.`);
+        expect(html).not.toContain("Invalid Date");
+        expect(html).not.toContain("undefined");
+      }),
+      { numRuns: 100 },
+    );
   });
 });
 

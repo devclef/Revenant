@@ -299,7 +299,7 @@ export const REVEAL_COPY = {
    * The seal line at a persona letter (C6.3), in the Caption_Block. `{sealedAt}`
    * is the header's seal date, the only date that says when the demo was sealed.
    */
-  sealedForThisDemo: "Sealed for this demo on {sealedAt}",
+  sealedForThisDemo: "Sealed later, for this demo, on {sealedAt}.",
 
   /** The control that advances from the letter to the figures (R9.4). */
   stage2Next: "See the receipts",

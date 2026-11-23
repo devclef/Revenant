@@ -131,7 +131,7 @@ describe("EU persona letter header (stage 2)", () => {
     expect(html.toLowerCase()).not.toContain("sealed on");
     expect(html).not.toContain(formatCalendarDate(OPENS_AT_DATE));
     expect(html).not.toContain(
-      `Sealed for this demo on ${formatCalendarDate(WRITTEN_AS_OF)}`,
+      `Sealed later, for this demo, on ${formatCalendarDate(WRITTEN_AS_OF)}.`,
     );
   });
 });
