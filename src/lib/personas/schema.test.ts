@@ -471,7 +471,11 @@ describe("the real Persona_List — Text_Persona and fuel personas", () => {
     expect(priya).toBeDefined();
     expect(priya?.metrics).toEqual([]);
     expect(priya?.author_questions).toHaveLength(2);
-    expect(priya?.opens_at).toBe("2026-11-17T00:00:00.000Z");
+    const others = PERSONAS.filter((p) => p.key !== "us-priya");
+    expect(others.length).toBeGreaterThan(0);
+    for (const other of others) expect(priya?.opens_at).toBe(other.opens_at);
+    expect(new Date(priya?.opens_at ?? "").toISOString()).toBe(priya?.opens_at);
+    expect(priya?.opens_at.endsWith("Z")).toBe(true);
     expect(RETIRED_LETTER_IDS).not.toContain(priya?.letter_id);
   });
 

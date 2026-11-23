@@ -889,21 +889,21 @@ describe("findWeeklyGaps", () => {
 });
 
 describe("findCoverageMisses", () => {
-  const need = { metricId: PETROL, from: "2024-11-11", to: "2024-11-17" };
+  const need = { metricId: PETROL, from: "2024-11-04", to: "2024-11-10" };
 
   it("reports nothing when a period lies inside the window, both ends inclusive", () => {
     expect(
-      findCoverageMisses([fixtureFigure(PETROL, "2024-11-11")], [need]),
+      findCoverageMisses([fixtureFigure(PETROL, "2024-11-04")], [need]),
     ).toEqual([]);
     expect(
-      findCoverageMisses([fixtureFigure(PETROL, "2024-11-17")], [need]),
+      findCoverageMisses([fixtureFigure(PETROL, "2024-11-10")], [need]),
     ).toEqual([]);
   });
 
   it("reports the series with its latest period when none lies in the window", () => {
     expect(
-      findCoverageMisses([fixtureFigure(PETROL, "2024-11-04")], [need]),
-    ).toEqual([{ metricId: PETROL, latest: "2024-11-04" }]);
+      findCoverageMisses([fixtureFigure(PETROL, "2024-10-28")], [need]),
+    ).toEqual([{ metricId: PETROL, latest: "2024-10-28" }]);
   });
 
   it("reports latest as null when the series has no figures", () => {

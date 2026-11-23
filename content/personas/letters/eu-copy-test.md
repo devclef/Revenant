@@ -92,7 +92,7 @@ Two sentences in `content/personas/letters/eu-tomas.txt` quote a figure from the
 
 ## History: spec 18 replaced the dates this section names.
 
-### Removal of the opening event (spec 10 X4, issue #300)
+## Removal of the opening event (spec 10 X4, issue #300)
 
 - Removed: `opening_event` of `eu-tomas`, "European Parliament election", 2024-06-09, from `content/personas/personas.json`. The schema no longer accepts `opening_event`, and the persona UI shows only "Opens {date}" with no event name and no source link.
 - Opening date kept: 2024-06-09T00:00:00.000Z, shown as a plain date.

@@ -13,13 +13,19 @@ import { describe, expect, it } from "vitest";
 import { figureAtOpening } from "../at-opening";
 import { CATALOGUE } from "../catalogue";
 import { loadFigureFile } from "../load";
+import { PERSONAS } from "../../personas";
 import { thenAndNow } from "../then-now";
 
 const FILE_PATH = fileURLToPath(
   new URL("./fuel-figures.json", import.meta.url),
 );
-const WRITTEN_AS_OF = "2024-11-17";
-const OPENS_AT = "2026-11-17T00:00:00.000Z";
+
+// Each persona's dates are read from the Persona_List by key, never typed here.
+function personaDates(key: string): { writtenAsOf: string; opensAt: string } {
+  const persona = PERSONAS.find((p) => p.key === key);
+  if (!persona) throw new Error(`persona ${key} is not in the Persona_List`);
+  return { writtenAsOf: persona.written_as_of, opensAt: persona.opens_at };
+}
 
 const PERSONA_METRICS: ReadonlyArray<{ persona: string; metric: string }> = [
   { persona: "us-maya", metric: "us-gasoline-regular" },
@@ -53,14 +59,14 @@ const PROVENANCE_FIELDS = [
 describe("Persona_Figures: then figures at the written-as-of date", () => {
   for (const { persona, metric } of PERSONA_METRICS) {
     it(`${persona} ${metric} has full provenance`, () => {
-      const result = thenAndNow(metric, WRITTEN_AS_OF, loaded).then;
+      const result = thenAndNow(metric, personaDates(persona).writtenAsOf, loaded).then;
       expect(result.found, `${persona} ${metric}`).toBe(true);
       if (!result.found) return;
       const row = asRecord(result.figure);
       for (const field of PROVENANCE_FIELDS) {
         expect(row[field], `${persona} ${metric} ${field}`).toBeTruthy();
       }
-      expect(result.figure.period <= WRITTEN_AS_OF).toBe(true);
+      expect(result.figure.period <= personaDates(persona).writtenAsOf).toBe(true);
     });
   }
 });
@@ -68,14 +74,14 @@ describe("Persona_Figures: then figures at the written-as-of date", () => {
 describe("Persona_Figures: at-opening figures", () => {
   for (const { persona, metric } of PERSONA_METRICS) {
     it(`${persona} ${metric} has full provenance`, () => {
-      const result = figureAtOpening(metric, OPENS_AT, loaded);
+      const result = figureAtOpening(metric, personaDates(persona).opensAt, loaded);
       expect(result.found, `${persona} ${metric}`).toBe(true);
       if (!result.found) return;
       const row = asRecord(result.figure);
       for (const field of PROVENANCE_FIELDS) {
         expect(row[field], `${persona} ${metric} ${field}`).toBeTruthy();
       }
-      expect(result.figure.period <= OPENS_AT.slice(0, 10)).toBe(true);
+      expect(result.figure.period <= personaDates(persona).opensAt.slice(0, 10)).toBe(true);
     });
   }
 });
