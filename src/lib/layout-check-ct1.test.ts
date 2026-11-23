@@ -274,3 +274,45 @@ describe("property: CT1 agrees with the WCAG formula", () => {
     );
   });
 });
+describe("Wait step cases", () => {
+  // The Wait heading is white. On the cream paper it has about 1.2:1 and must fail.
+  // The dark Wait surface is the scene background, #0b0912 (--bg in scene/tokens.css).
+  const DARK_WAIT_SURFACE = "#0b0912";
+
+  it("fails the white h1 \"Seal your own letter\" on the cream paper", () => {
+    const [failure] = ctFailures({
+      selector: "h1",
+      text: "Seal your own letter",
+      ink: WHITE,
+      fontSize: 40,
+      fontWeight: 700,
+      surface: { kind: "solid", backdrops: [CREAM] },
+    });
+    expect(failure).toBeDefined();
+    expect(failure.ratio).toBeLessThan(1.2);
+    expect(failure.required).toBe(3);
+  });
+
+  it("passes white text on the dark Wait surface", () => {
+    expect(
+      ctFailures({
+        selector: "h1",
+        text: "Seal your own letter",
+        ink: WHITE,
+        fontSize: 40,
+        fontWeight: 700,
+        surface: { kind: "solid", backdrops: [DARK_WAIT_SURFACE] },
+      }),
+    ).toEqual([]);
+    expect(
+      ctFailures({
+        selector: "p",
+        text: "Body copy",
+        ink: WHITE,
+        fontSize: 16,
+        fontWeight: 400,
+        surface: { kind: "solid", backdrops: [DARK_WAIT_SURFACE] },
+      }),
+    ).toEqual([]);
+  });
+});
