@@ -6,7 +6,7 @@ import { thenAndNow } from "@/lib/figures/then-now";
 
 import { PERSONAS } from "./index";
 import { recordCandidate } from "./record-candidate";
-import { PRICE_RE, expectedPrices } from "./price-lines";
+import { PRICE_RE, expectedPrices, weekOfMonthWords } from "./price-lines";
 
 const TWO_DECIMALS = /^[0-9]+\.[0-9]{2}$/;
 
@@ -71,5 +71,46 @@ describe("expectedPrices", () => {
     const empty: LoadedFigures = { fixture: false, series: new Map() };
     const [persona] = PERSONAS;
     expect(() => expectedPrices(persona, empty)).toThrow(RangeError);
+  });
+});
+
+describe("weekOfMonthWords", () => {
+  it.each([
+    ["2024-11-01", "first week of November"],
+    ["2024-11-07", "first week of November"],
+    ["2024-11-08", "second week of November"],
+    ["2024-11-11", "second week of November"],
+    ["2024-11-14", "second week of November"],
+    ["2024-11-15", "third week of November"],
+    ["2024-11-21", "third week of November"],
+    ["2024-11-22", "fourth week of November"],
+    ["2024-11-28", "fourth week of November"],
+    ["2024-11-29", "fifth week of November"],
+    ["2024-11-30", "fifth week of November"],
+  ])("names the week of %s as %s", (period, words) => {
+    expect(weekOfMonthWords(period)).toBe(words);
+  });
+
+  it("checks each day range boundary in every month length", () => {
+    // 31-day month: day 31 is the fifth week.
+    expect(weekOfMonthWords("2024-05-31")).toBe("fifth week of May");
+    // Leap-year February: day 29 exists and is the fifth week.
+    expect(weekOfMonthWords("2024-02-29")).toBe("fifth week of February");
+    // Non-leap February ends on day 28, the fourth week.
+    expect(weekOfMonthWords("2026-02-28")).toBe("fourth week of February");
+    // The first week of a month that starts on a Monday.
+    expect(weekOfMonthWords("2026-11-16")).toBe("third week of November");
+  });
+
+  it("names the month of the period's own start date", () => {
+    expect(weekOfMonthWords("2024-05-06")).toBe("first week of May");
+    expect(weekOfMonthWords("2024-12-02")).toBe("first week of December");
+  });
+
+  it("rejects a period that is not a real calendar date", () => {
+    expect(() => weekOfMonthWords("2024-02-30")).toThrow(RangeError);
+    expect(() => weekOfMonthWords("2024-13-01")).toThrow(RangeError);
+    expect(() => weekOfMonthWords("2024-11")).toThrow(RangeError);
+    expect(() => weekOfMonthWords("")).toThrow(RangeError);
   });
 });
