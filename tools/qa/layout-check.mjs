@@ -359,7 +359,7 @@ import {
 } from "./layout-rules-17.mjs";
 
 // SF1 and TT1 (GitHub issue #587) run on Press the seal at these sizes. Each failure is a BLOCKER.
-const SF1_TT1_SIZES = ["1440x900", "390x844", "360x640"];
+export const SF1_TT1_SIZES = ["1440x900", "390x844", "360x640"];
 
 // FR1 (GitHub issue #577) runs at these sizes on every step the walk shoots. It always blocks.
 const FR1_SIZES = ["1440x900", "390x844"];
@@ -1863,7 +1863,7 @@ async function checkPressContrast(context, ctx) {
 
 // SF1 (the Seal panel fills its surface, no cream strip beside it) and TT1 (the wax mark is at least
 // TT1_MIN_PX square at rest). Both read the Press the seal step at rest. Each failure is a BLOCKER.
-async function checkSf1Tt1(page, ctx) {
+export async function checkSf1Tt1(page, ctx) {
   if (!SF1_TT1_SIZES.includes(ctx.size)) return;
   ctx.rep.log(`SF1 and TT1 on Press the seal at ${ctx.size}`);
   const sf = sfFailures(await readSf1Reading(page));

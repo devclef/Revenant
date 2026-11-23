@@ -1,6 +1,15 @@
 import { describe, expect, it } from "vitest";
 import fc from "fast-check";
-import { sfFailures, ttFailures, SF1_RATIO, TT1_MIN_PX } from "../../tools/qa/layout-rules-17.mjs";
+import {
+  CT1_SIZES,
+  creamRunPx,
+  readSf1Reading,
+  sfFailures,
+  ttFailures,
+  SF1_RATIO,
+  TT1_MIN_PX,
+} from "../../tools/qa/layout-rules-17.mjs";
+import { checkSf1Tt1, makeReport, SF1_TT1_SIZES } from "../../tools/qa/layout-check.mjs";
 
 // SF1 (GitHub issue #587): the Seal panel fills at least 99% of its surface, with no cream strip beside it.
 describe("SF1 Seal panel fills its surface", () => {
@@ -95,5 +104,94 @@ describe("TT1 wax mark meets the target size", () => {
     const failures = ttFailures({ targets: [] });
     expect(failures).toHaveLength(1);
     expect(failures[0].message).toContain("no [data-press-target]");
+  });
+});
+
+// Wiring: checkSf1Tt1 runs at SF1_TT1_SIZES only. The fake page answers each reader's script from the
+// marker it contains: READ_TT1 names [data-press-target], READ_SF1 does not.
+describe("SF1 and TT1 size gate on Press the seal", () => {
+  function fakePage(calls: string[]) {
+    return {
+      evaluate: async (fn: (...args: unknown[]) => unknown) => {
+        if (String(fn).includes("data-press-target")) {
+          calls.push("tt1");
+          return [{ label: "Press the seal", wax: { width: 392, height: 253 } }];
+        }
+        calls.push("sf1");
+        return null;
+      },
+    };
+  }
+
+  function ctxFor(size: string) {
+    const rep = makeReport(() => {});
+    rep.setContext({ size, stage: "Press the seal", persona: null });
+    return { size, rep };
+  }
+
+  it("lists the three SF1 and TT1 sizes", () => {
+    expect(SF1_TT1_SIZES).toEqual(["1440x900", "390x844", "360x640"]);
+  });
+
+  it("keeps 1440x900 as an SF1-only size outside the CT1 sizes", () => {
+    expect(CT1_SIZES).toEqual(["390x844", "360x640"]);
+    expect(SF1_TT1_SIZES.filter((size) => !CT1_SIZES.includes(size))).toEqual(["1440x900"]);
+  });
+
+  it.each(["1440x900", "390x844", "360x640"])("evaluates SF1 and TT1 at %s", async (size) => {
+    const calls: string[] = [];
+    const ctx = ctxFor(size);
+    await checkSf1Tt1(fakePage(calls) as never, ctx as never);
+    expect(calls).toEqual(["sf1", "tt1"]);
+    // The fake page has no Seal panel, so SF1 reports a missing measurement and TT1 passes.
+    expect(ctx.rep.items.map((row: { check: string; name: string }) => [row.check, row.name])).toEqual([
+      ["SF1", "panel-fills-surface"],
+    ]);
+  });
+
+  it("skips SF1 and TT1 at a size that neither gate owns", async () => {
+    const calls: string[] = [];
+    const ctx = ctxFor("800x600");
+    await checkSf1Tt1(fakePage(calls) as never, ctx as never);
+    expect(calls).toEqual([]);
+    expect(ctx.rep.items).toEqual([]);
+  });
+});
+
+// readSf1Reading and its cream-strip reader, creamRunPx. The pixel rows are small RGBA fixtures.
+describe("readSf1Reading cream strip", () => {
+  const CREAM = [246, 234, 212, 255];
+  const INK = [31, 27, 22, 255];
+  const rowOf = (...pixels: number[][]) => pixels.flat();
+
+  it("finds a 3 px cream run beside the panel", () => {
+    expect(creamRunPx(rowOf(INK, CREAM, CREAM, CREAM, INK), 0, 0)).toBe(3);
+  });
+
+  it("breaks the run at the panel's pixels", () => {
+    // Five cream pixels with the panel over x = 1 and 2 leave runs of 1 and 2.
+    const row = rowOf(CREAM, CREAM, CREAM, CREAM, CREAM);
+    expect(creamRunPx(row, 1, 3)).toBe(2);
+  });
+
+  it("counts a channel 8 steps off cream as cream and 9 steps off as not", () => {
+    expect(creamRunPx(rowOf([254, 234, 212, 255]), 0, 0)).toBe(1);
+    expect(creamRunPx(rowOf([255, 234, 212, 255]), 0, 0)).toBe(0);
+  });
+
+  it("returns null measurements when the page has no Seal panel", async () => {
+    const page = { evaluate: async () => null };
+    expect(await readSf1Reading(page as never)).toEqual({ panelWidth: null, surfaceWidth: null, creamRun: null });
+  });
+
+  it("returns no cream run when the panel's middle is above the viewport", async () => {
+    const page = {
+      evaluate: async () => ({
+        panel: { left: 100, top: -500, right: 1100, bottom: -400, width: 1000, height: 100 },
+        surface: { left: 0, top: -500, right: 1200, bottom: -400, width: 1200, height: 100 },
+        viewport: { width: 1200, height: 800 },
+      }),
+    };
+    expect(await readSf1Reading(page as never)).toEqual({ panelWidth: 1000, surfaceWidth: 1200, creamRun: null });
   });
 });
