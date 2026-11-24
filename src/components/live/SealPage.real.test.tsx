@@ -412,10 +412,11 @@ describe("Real_Mode failure screens carry no demo or test-notice text", () => {
 });
 
 // The opening date is held by SealPage in its own state (`opensOn`), not in the
-// stepper reducer. Back only sends an event to the reducer, so the date stays.
-// Clicks cannot run in this Node environment, so the check renders the Seal
-// step's picker with a chosen date, and reads SealPage's source for the state.
-describe("Real_Mode opening date survives Back", () => {
+// stepper reducer. These checks do not press Back: clicks cannot run in this Node
+// environment (no DOM library). They render the Seal step's picker with a chosen
+// date and read SealPage's source for the state. The Back transition itself is
+// untested here.
+describe("Real_Mode opening date on the Seal step (Back not exercised)", () => {
   const CHOSEN = "2029-11-24";
 
   function renderSealStepWithDate(value: string | null): string {
