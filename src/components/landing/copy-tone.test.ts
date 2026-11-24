@@ -16,6 +16,11 @@ describe("landing copy tone and neutrality", () => {
     expect(strings.length).toBeGreaterThan(0);
   });
 
+  it("has the real seal link string", () => {
+    expect(LANDING_COPY.realSealLink).toBe("Seal a real letter");
+    expect(strings).toContain("Seal a real letter");
+  });
+
   it("passes the tone and neutrality checks", () => {
     for (const text of strings) {
       expect(toneProblems(text), text).toEqual([]);
