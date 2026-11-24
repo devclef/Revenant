@@ -154,7 +154,7 @@ New copy is final as written in the design's new-copy table.
   - Copy evidence: tone-check for `live/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 5. Date_Picker dark surface, Keep_Step and failure screens without Demo text
+- [x] 5. Date_Picker dark surface, Keep_Step and failure screens without Demo text
   - Agent: `frontend-dev` · Depends on: 4 · Estimated size: M, ~700 changed lines
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `src/components/live/RealDatePicker.tsx`, `real-date-picker.module.css` (new), `SealedView.tsx`, `BackupKeyCard.tsx`, `SealFailure.tsx`, `BackupFallback.tsx`, `desk/FigureRows.tsx`, `desk/ReceiptPanel.tsx`, and the tests next to each.
