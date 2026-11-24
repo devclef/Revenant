@@ -90,6 +90,9 @@ const SURFACE: Record<string, Surface> = {
   formula: "desk",
   src: "desk",
   source: "desk",
+  // The check-at-source link sits inside .src or the desk change line; the
+  // class sets only its tap-target box, so the link keeps the desk text.
+  checkLink: "desk",
   letter: "paper",
   paper: "paper",
   sheet: "none",

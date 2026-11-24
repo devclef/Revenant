@@ -140,7 +140,12 @@ function SourceControl({
       {source.asPublished === undefined ? null : <p>{source.asPublished}</p>}
       {!checkLink || source.sourceUrl === undefined ? null : (
         <p>
-          <a href={source.sourceUrl} rel="noreferrer noopener" target="_blank">
+          <a
+            className={styles.checkLink}
+            href={source.sourceUrl}
+            rel="noreferrer noopener"
+            target="_blank"
+          >
             {REVEAL_COPY.checkAtSource}
           </a>
         </p>

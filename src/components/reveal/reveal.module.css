@@ -682,6 +682,15 @@
   }
 }
 
+/* The "Check this figure at the source" link is a 44 px tall touch target at
+   every width (Journey_Check J6 PH7). Only the box grows; the text keeps its
+   size, colour and place in the card. */
+.checkLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
 /* --- Spec 08 R14.3: the opening Fingerprint block --- */
 
 /*

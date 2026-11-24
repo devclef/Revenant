@@ -59,6 +59,7 @@ export function FormulaLine({
         source.startsWith("url:") ? (
           <p key={source}>
             <a
+              className={styles.checkLink}
               href={source.slice("url:".length)}
               rel="noreferrer noopener"
               target="_blank"

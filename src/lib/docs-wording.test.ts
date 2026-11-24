@@ -48,9 +48,15 @@ describe("README and video script wording (spec 16, Requirement 17.4)", () => {
     expect(README).not.toContain("fifteen years");
   });
 
-  it("keeps Testify in the README image alt text (Requirement 17.5)", () => {
+  // Requirement 17.5: the alt text names the words the image shows today. The
+  // owner redrew the one-pager in 6467582, so it now shows the three steps
+  // Write and press the seal, Remember first, and Receipts, and no Testify.
+  it("names the words the README image shows today in its alt text (Requirement 17.5)", () => {
     const alt = /<img[^>]*alt="([^"]*)"/.exec(README)?.[1] ?? "";
-    expect(alt).toContain("Testify");
+    expect(alt).toContain("Write and press the seal");
+    expect(alt).toContain("Remember first");
+    expect(alt).toContain("Receipts");
+    expect(alt).not.toMatch(/testif|testimon/i);
   });
 
   it("keeps the provenance comments in the video script", () => {
