@@ -321,8 +321,6 @@ export const REAL_COPY = {
     "Your letter opens at midnight on this date. It must be at least three months after you seal it. You cannot change the date once it is sealed.",
   dateChosen: "Opens at midnight on {date}, in your time zone.",
   utcFallback: "It opens at midnight UTC.",
-  testNotice:
-    "This is a test site. A letter sealed here can only be opened here, or with its backup key.",
   passkeyUserName: "Revenant letter · opens {date}",
   tooEarly:
     "That date is too soon. A letter must open at least three months after it is sealed. Choose a later date and try again. Nothing was sealed, and your letter is still here.",

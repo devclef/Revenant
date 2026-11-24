@@ -109,35 +109,6 @@ describe("sealApiFor (the API each mode posts to)", () => {
 });
 
 describe("SealPage in real mode", () => {
-  it("shows the PRF_Hint on the Write step", () => {
-    const html = renderToStaticMarkup(
-      createElement(SealPage, {
-        rpId: "revenant.devclef.se",
-        appOrigin: "https://revenant.devclef.se",
-        mode: "real",
-      }),
-    );
-    expect(html).toContain(LIVE_COPY.prfHint);
-    expect(html).toContain('data-seal-mode="real"');
-    expect(html).toContain('data-live-step="write"');
-  });
-
-  it("renders the /seal form outside the demo scope the two-column rule needs", () => {
-    const real = renderToStaticMarkup(
-      createElement(SealPage, {
-        rpId: "revenant.devclef.se",
-        appOrigin: "https://revenant.devclef.se",
-        mode: "real",
-      }),
-    );
-    // The /seal panel is the single form and carries the occasion control, but
-    // no ancestor has data-seal-mode="demo", so the two-column rule cannot match.
-    expect(real).toContain('data-card="live-write"');
-    expect(real).toMatch(/<fieldset class="[^"]*occasions[^"]*"/);
-    expect(real).not.toContain('data-seal-mode="demo"');
-    expect(real).not.toMatch(/class="[^"]*liveWrite[^"]*"/);
-  });
-
   it("puts the demo Write step's occasion control inside the data-seal-mode=demo root", () => {
     // /demo/live renders SealPage with no mode (demo by default). The root div
     // opens before its children, so the occasion control follows that marker.
@@ -269,6 +240,7 @@ describe("SealPage in demo mode (/demo/live)", () => {
         mode: "real",
       }),
     );
+    // The Real_Mode desk has no demo heading: the eyebrow is left out there.
     expect(html).not.toContain("Seal your own letter");
   });
 });

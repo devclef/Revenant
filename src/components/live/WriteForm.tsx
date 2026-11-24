@@ -47,6 +47,7 @@ import type { SealState } from "./seal-machine";
 import { SelfReportedRows } from "./SelfReportedRows";
 import { StepStatus } from "./StepStatus";
 import { SealStep } from "./seal-step/SealStep";
+import sealStepStyles from "./seal-step/seal-step.module.css";
 import type { PressStatusTag } from "./seal-step/press-status";
 import {
   DEFAULT_QUESTION,
@@ -657,6 +658,7 @@ export function WriteForm({
     series,
     figuresStatus,
     selected: metricIds,
+    real: mode === "real",
     onToggleFigure: (metricId: string) => {
       onTouch(TOUCH_FIELDS.figures);
       onToggleFigure(metricId);
@@ -691,6 +693,7 @@ export function WriteForm({
         receipt={deskReceipt}
         check={checkInput}
         rehearsal={rehearsal}
+        real={realDate !== undefined}
         onFoldPass={() => onNext?.()}
         onFoldFail={() => {
           onTouch(TOUCH_FIELDS.letter);
@@ -702,6 +705,23 @@ export function WriteForm({
       />
     );
   }
+
+  /** The opening date picker of a real letter, on the given surface (spec 19). */
+  const datePicker = (surface: "paper" | "dark") =>
+    realDate === undefined ? null : (
+      <RealDatePicker
+        surface={surface}
+        value={realDate.value}
+        min={realDate.min}
+        timeZoneFallback={realDate.timeZoneFallback}
+        problem={dateProblem}
+        onChange={(date) => {
+          onTouch(TOUCH_FIELDS.date);
+          realDate.onChange(date);
+        }}
+        onTouch={() => onTouch(TOUCH_FIELDS.date)}
+      />
+    );
 
   const body = (
     <>
@@ -766,22 +786,7 @@ export function WriteForm({
       {shows("write") ? authorQuestions : null}
 
       {shows("write") ? receipts : null}
-      {all && realDate !== undefined ? (
-        <>
-          <p className={styles.explain}>{REAL_COPY.testNotice}</p>
-          <RealDatePicker
-            value={realDate.value}
-            min={realDate.min}
-            timeZoneFallback={realDate.timeZoneFallback}
-            problem={dateProblem}
-            onChange={(date) => {
-              onTouch(TOUCH_FIELDS.date);
-              realDate.onChange(date);
-            }}
-            onTouch={() => onTouch(TOUCH_FIELDS.date)}
-          />
-        </>
-      ) : null}
+      {all && realDate !== undefined ? datePicker("paper") : null}
 
       {all && prfHint === "missing" ? (
         <p className={styles.hint} role="status">
@@ -895,6 +900,16 @@ export function WriteForm({
           onCreatePress={onCreatePress}
           onConfirmPress={onConfirmPress}
           onAttempt={onAttempt}
+          real={mode === "real"}
+          needsDate={dateMissing}
+          opening={
+            realDate !== undefined ? (
+              <>
+                <p className={sealStepStyles.intro}>{REAL_COPY.intro}</p>
+                {datePicker("dark")}
+              </>
+            ) : undefined
+          }
         />
       ) : null}
 
