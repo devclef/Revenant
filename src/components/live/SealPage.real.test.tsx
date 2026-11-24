@@ -370,3 +370,31 @@ describe("Real_Mode requests and failure screens", () => {
     });
   }
 });
+
+describe("Real_Mode failure screens carry no demo or test-notice text", () => {
+  for (const tag of FAILURE_TAGS) {
+    it(`keeps every forbidden marker and phrase out of ${tag}`, () => {
+      const pair = PAIRS.find((candidate) => candidate.state.tag === tag);
+      if (pair === undefined) throw new Error(`no pair for ${tag}`);
+      const html = renderReal(pair.step, pair.state);
+      for (const marker of FORBIDDEN_MARKUP) {
+        expect(html, marker).not.toContain(marker);
+      }
+      const text = visibleText(html);
+      for (const pattern of FORBIDDEN_VISIBLE) {
+        expect(text, String(pattern)).not.toMatch(pattern);
+      }
+    });
+
+    it(`hands the ${tag} screen the Real_Routes api`, () => {
+      const pair = PAIRS.find((candidate) => candidate.state.tag === tag);
+      if (pair === undefined) throw new Error(`no pair for ${tag}`);
+      stub.calls = [];
+      renderReal(pair.step, pair.state);
+      expect(stub.calls.length).toBeGreaterThan(0);
+      for (const call of stub.calls) {
+        expect((call.deps as SealDeps).api).toBe(realLetterSealApi);
+      }
+    });
+  }
+});
