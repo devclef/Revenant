@@ -258,49 +258,62 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
       data-seal-mode={mode}
       data-live-step={state.tag}
     >
-      <p className={styles.backToDemo}>
-        <Link href="/demo">{LIVE_COPY.backToDemo}</Link>
-      </p>
       {mode === "demo" ? (
-        <StageReportContext.Provider value={reportStage}>
-          <LiveStepper
-            state={stepper}
-            dispatch={dispatchStepper}
-            renderStep={renderDemoStep}
-          />
-        </StageReportContext.Provider>
-      ) : (
-        renderState()
-      )}
+        <p className={styles.backToDemo}>
+          <Link href="/demo">{LIVE_COPY.backToDemo}</Link>
+        </p>
+      ) : null}
+      <StageReportContext.Provider value={reportStage}>
+        <LiveStepper
+          state={stepper}
+          dispatch={dispatchStepper}
+          renderStep={renderStep}
+        />
+      </StageReportContext.Provider>
     </div>
   );
 
   /**
-   * One stepper step in demo mode: its one h1, then its content. The Write
-   * step's h1 is inside its desk, and the Seal step gets a temporary h1 (see
-   * stepHeading). Every other step shows the page heading, so each step has
-   * exactly one h1.
+   * One stepper step: its heading, then its content. The Write step's h1 is
+   * inside its desk, and the Seal step gets a temporary h1 (see stepHeading).
+   * Every other step shows the page heading, so each step has exactly one h1.
+   * Demo_Mode and Real_Mode pick the heading rule for their own steps.
    */
-  function renderDemoStep(view: StepView) {
+  function renderStep(view: StepView) {
     // The Seal step's own h1 (SealStep, spec 14 S3.2) is the step's heading
     // while the seal form shows, so the temporary Seal h1 is not rendered.
-    const sealOwnsHeading =
+    const demoSealOwnsHeading =
       view.step === "seal" && SEAL_FORM_TAGS.has(state.tag);
+    const ownsHeading =
+      mode === "real"
+        ? realOwnsHeading(view.step, state.tag)
+        : demoSealOwnsHeading;
     return (
       <>
-        {sealOwnsHeading ? null : stepHeading(view.step)}
-        {demoStepContent(view)}
+        {ownsHeading ? null : stepHeading(view.step)}
+        {stepContent(view)}
       </>
     );
   }
 
   /**
-   * The content of one stepper step in demo mode. Once the seal is stored the
-   * sealed view takes over. The failure and fallback screens replace the step
-   * content too. Until then the step picks which part of the write form shows.
+   * The content of one stepper step, in this order: the sealed view once the
+   * seal is stored, then the failure and fallback screens, then the write
+   * form, which shows the part of the form the step needs.
    */
-  function demoStepContent(view: StepView) {
+  function stepContent(view: StepView) {
     if (state.tag === "sealed") {
+      if (mode === "real") {
+        return (
+          <SealedView
+            state={state}
+            appOrigin={appOrigin}
+            nowMs={deps?.nowMs ?? Date.now}
+            getBackupKeyText={flow.getBackupKeyText}
+            real
+          />
+        );
+      }
       // Wait, Testify and Receipts share one card: the countdown, then the
       // embedded Opening_Flow (spec 09, D5). The seal's own state stays
       // `sealed` for the rest of the page.
@@ -320,15 +333,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
         </SealedStep>
       );
     }
-    switch (state.tag) {
-      case "cannot_lock":
-      case "cancelled":
-      case "failed":
-      case "fallback_key":
-        return renderState();
-      default:
-        break;
-    }
+    if (FAILURE_TAGS.has(state.tag)) return failureScreen();
     const section: WriteSection = view.step === "write" ? "write" : "seal";
     // The Rehearsal_Line no longer sits under the Write step's action row. It
     // moves under the Fold_Button on the desk (spec 14, W9.3 and task 3).
@@ -341,18 +346,9 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
     });
   }
 
-  function renderState() {
+  /** The failure and fallback screens: cannot_lock, cancelled, failed, fallback_key. */
+  function failureScreen() {
     switch (state.tag) {
-      case "sealed":
-        return (
-          <SealedView
-            state={state}
-            appOrigin={appOrigin}
-            nowMs={deps?.nowMs ?? Date.now}
-            getBackupKeyText={flow.getBackupKeyText}
-            real={mode === "real"}
-          />
-        );
       case "cannot_lock":
       case "cancelled":
       case "failed":
@@ -361,6 +357,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
             state={state}
             onRetry={flow.onRetry}
             onFallbackStart={flow.onFallbackStart}
+            real={mode === "real"}
           />
         );
       case "fallback_key": {
@@ -373,13 +370,12 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
             keyText={fallbackKeyText}
             onSealPress={flow.onFallbackSealPress}
             onDecline={flow.onFallbackDecline}
+            real={mode === "real"}
           />
         );
       }
       default:
-        // write, creating, created, confirming, preparing, sealing: the write
-        // form knows which of its controls to show for each step.
-        return writeForm();
+        return null;
     }
   }
 
@@ -478,6 +474,31 @@ const SEAL_FORM_TAGS: ReadonlySet<string> = new Set([
   "preparing",
   "sealing",
 ]);
+
+/** The seal states that replace the step content with a failure or fallback screen. */
+const FAILURE_TAGS: ReadonlySet<string> = new Set([
+  "cannot_lock",
+  "cancelled",
+  "failed",
+  "fallback_key",
+]);
+
+/**
+ * Real_Mode: whether the step's content already holds its own heading, so the
+ * temporary page h1 is not drawn. The Write desk, every seal form state and the
+ * screens with their own title (Keep, cannot_lock, cancelled, fallback_key) do.
+ * Only `failed` has no title of its own and keeps the temporary "Press the seal" h1.
+ */
+function realOwnsHeading(step: StepperStep, tag: string): boolean {
+  return (
+    step === "write" ||
+    SEAL_FORM_TAGS.has(tag) ||
+    tag === "sealed" ||
+    tag === "cannot_lock" ||
+    tag === "cancelled" ||
+    tag === "fallback_key"
+  );
+}
 
 /**
  * The one h1 of a demo step. The Write step's h1 is the desk's StepHeader

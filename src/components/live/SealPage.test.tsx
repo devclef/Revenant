@@ -109,17 +109,23 @@ describe("sealApiFor (the API each mode posts to)", () => {
 });
 
 describe("SealPage in real mode", () => {
-  it("shows the PRF_Hint on the Write step", () => {
-    const html = renderToStaticMarkup(
-      createElement(SealPage, {
-        rpId: "revenant.devclef.se",
-        appOrigin: "https://revenant.devclef.se",
-        mode: "real",
-      }),
-    );
-    expect(html).toContain(LIVE_COPY.prfHint);
-    expect(html).toContain('data-seal-mode="real"');
-    expect(html).toContain('data-live-step="write"');
+  it("shows the PRF_Hint on the Press the seal step, not on Write", () => {
+    const base = {
+      rpId: "revenant.devclef.se",
+      appOrigin: "https://revenant.devclef.se",
+      mode: "real" as const,
+    };
+    // The hint is drawn by the Seal_Step (SealStep), so the stepper is set to Seal.
+    pageStub.step = "seal";
+    try {
+      const html = renderToStaticMarkup(createElement(SealPage, base));
+      expect(html).toContain(LIVE_COPY.prfHint);
+      expect(html).toContain('data-seal-mode="real"');
+    } finally {
+      pageStub.step = null;
+    }
+    const write = renderToStaticMarkup(createElement(SealPage, base));
+    expect(write).toContain('data-live-step="write"');
   });
 
   it("renders the /seal form outside the demo scope the two-column rule needs", () => {
@@ -132,7 +138,8 @@ describe("SealPage in real mode", () => {
     );
     // The /seal panel is the single form and carries the occasion control, but
     // no ancestor has data-seal-mode="demo", so the two-column rule cannot match.
-    expect(real).toContain('data-card="live-write"');
+    // Real_Mode draws the write step inside the Live_Stepper (spec 19).
+    expect(real).toContain("data-live-stepper");
     expect(real).toMatch(/<fieldset class="[^"]*occasions[^"]*"/);
     expect(real).not.toContain('data-seal-mode="demo"');
     expect(real).not.toMatch(/class="[^"]*liveWrite[^"]*"/);
@@ -269,7 +276,9 @@ describe("SealPage in demo mode (/demo/live)", () => {
         mode: "real",
       }),
     );
-    expect(html).not.toContain("Seal your own letter");
+    // The page's h1 is the demo heading. The desk eyebrow shares the same
+    // string in both modes and is not checked here.
+    expect(html).not.toMatch(/<h1[^>]*>Seal your own letter<\/h1>/);
   });
 });
 
