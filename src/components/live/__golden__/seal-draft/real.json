@@ -1,0 +1,233 @@
+{
+  "mode": "real",
+  "draft": {
+    "text": "The bins go out on Tuesdays. The garden fence needs replacing.",
+    "metricIds": [
+      "us-gasoline-regular"
+    ],
+    "questions": [
+      "What worries me most right now?",
+      "What do I want to have finished by spring?"
+    ],
+    "answers": [
+      "The cost of the car repairs.",
+      "The garden fence."
+    ],
+    "selfReported": [],
+    "figures": {
+      "fixture": false,
+      "series": {
+        "__map": [
+          [
+            "us-gasoline-regular",
+            {
+              "metric": {
+                "id": "us-gasoline-regular",
+                "display_name": "Regular gasoline (all formulations), retail price",
+                "unit": "USD per gallon",
+                "region": "U.S.",
+                "source": "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
+                "series_id": "EMM_EPMR_PTE_NUS_DPG"
+              },
+              "period_type": "weekly",
+              "figures": [
+                {
+                  "kind": "official",
+                  "metric_id": "us-gasoline-regular",
+                  "value": "3.805",
+                  "unit": "USD per gallon",
+                  "region": "U.S.",
+                  "period": "2026-11-16",
+                  "source": "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
+                  "series_id": "EMM_EPMR_PTE_NUS_DPG",
+                  "retrieved_at": "2026-11-23T19:40:49Z",
+                  "source_url": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMM_EPMR_PTE_NUS_DPG&f=W"
+                }
+              ]
+            }
+          ],
+          [
+            "us-diesel",
+            {
+              "metric": {
+                "id": "us-diesel",
+                "display_name": "No. 2 diesel, retail price",
+                "unit": "USD per gallon",
+                "region": "U.S.",
+                "source": "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
+                "series_id": "EMD_EPD2D_PTE_NUS_DPG"
+              },
+              "period_type": "weekly",
+              "figures": [
+                {
+                  "kind": "official",
+                  "metric_id": "us-diesel",
+                  "value": "5.937",
+                  "unit": "USD per gallon",
+                  "region": "U.S.",
+                  "period": "2026-11-16",
+                  "source": "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
+                  "series_id": "EMD_EPD2D_PTE_NUS_DPG",
+                  "retrieved_at": "2026-11-23T19:40:49Z",
+                  "source_url": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMD_EPD2D_PTE_NUS_DPG&f=W"
+                }
+              ]
+            }
+          ],
+          [
+            "eu-petrol-euro95",
+            {
+              "metric": {
+                "id": "eu-petrol-euro95",
+                "display_name": "Euro-super 95 petrol, retail price including taxes",
+                "unit": "EUR per 1,000 litres",
+                "region": "EU27, weighted average",
+                "source": "European Commission, Weekly Oil Bulletin",
+                "series_id": "File Weekly_Oil_Bulletin_Prices_History_maticni_4web.xlsx, sheet \"Prices with taxes\", column C \"EU_price_with_tax_euro95\", country EU27 weighted average (rows marked EU_)"
+              },
+              "period_type": "weekly",
+              "figures": [
+                {
+                  "kind": "official",
+                  "metric_id": "eu-petrol-euro95",
+                  "value": "1829.367794653689",
+                  "unit": "EUR per 1,000 litres",
+                  "region": "EU27, weighted average",
+                  "period": "2026-11-16",
+                  "source": "European Commission, Weekly Oil Bulletin",
+                  "series_id": "File Weekly_Oil_Bulletin_Prices_History_maticni_4web.xlsx, sheet \"Prices with taxes\", column C \"EU_price_with_tax_euro95\", country EU27 weighted average (rows marked EU_)",
+                  "retrieved_at": "2026-11-23T19:40:49Z",
+                  "source_url": "https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en"
+                }
+              ]
+            }
+          ],
+          [
+            "eu-diesel",
+            {
+              "metric": {
+                "id": "eu-diesel",
+                "display_name": "Automotive diesel, retail price including taxes",
+                "unit": "EUR per 1,000 litres",
+                "region": "EU27, weighted average",
+                "source": "European Commission, Weekly Oil Bulletin",
+                "series_id": "File Weekly_Oil_Bulletin_Prices_History_maticni_4web.xlsx, sheet \"Prices with taxes\", column D \"EU_price_with_tax_diesel\", country EU27 weighted average (rows marked EU_)"
+              },
+              "period_type": "weekly",
+              "figures": [
+                {
+                  "kind": "official",
+                  "metric_id": "eu-diesel",
+                  "value": "2049.7103140755485",
+                  "unit": "EUR per 1,000 litres",
+                  "region": "EU27, weighted average",
+                  "period": "2026-11-16",
+                  "source": "European Commission, Weekly Oil Bulletin",
+                  "series_id": "File Weekly_Oil_Bulletin_Prices_History_maticni_4web.xlsx, sheet \"Prices with taxes\", column D \"EU_price_with_tax_diesel\", country EU27 weighted average (rows marked EU_)",
+                  "retrieved_at": "2026-11-23T19:40:49Z",
+                  "source_url": "https://energy.ec.europa.eu/data-and-analysis/weekly-oil-bulletin_en"
+                }
+              ]
+            }
+          ]
+        ]
+      }
+    },
+    "backupCard": false,
+    "real": {
+      "opensOn": "2027-06-01",
+      "timeZone": "UTC"
+    }
+  },
+  "requests": [
+    {
+      "method": "POST",
+      "path": "/api/letters/prepare",
+      "body": null
+    },
+    {
+      "method": "POST",
+      "path": "/api/letters/seal",
+      "body": {
+        "letterId": "BxIdKDM-SVRfanWAi5ahrA",
+        "envelope": {
+          "letterId": "BxIdKDM-SVRfanWAi5ahrA",
+          "sealedAt": "2026-11-24T14:00:00.000Z",
+          "opensAt": "2027-06-01T00:00:00.000Z",
+          "payloadNonce": "z2lyF99PyQaCSviO",
+          "wrappedDeks": [
+            {
+              "factor": "passkey",
+              "nonce": "TR6q_PwJp2PxyCCN",
+              "wrappedKey": "5VrrvIxSYNDKuU989ZdiW4T31Edewtb0L9Sj0ZQGMckmyBLN6iAuUhthuqc67TC7"
+            }
+          ],
+          "rpId": "localhost",
+          "credentialId": "XuABbN023pB_Dvhx89GH7MpGuCOqG1WFysVkkTZH-iQ",
+          "prfSalt": "OKmxoKBLuFrb_V_2CIWF8PFUFvy9YdmwC6n7yCIgcOk",
+          "formatVersion": 2,
+          "payloadCiphertext": "fPZYEZsz8y64y0nolt7tfiM_htK0b3IP4DmLewciEdy-YKz-8dqkln_Yq0oY0xPf6GulCEs2MmZQDut8Sg1SPA2YEQga2n4xCm953qbVjXobYR77JklSV6GCpbNrruLuU97tR9sOTtQlWhLYZJ8s7gpQ8XSpXWeIoPx4jTLz29x95YbYnuOaRLv2wQrwmhB2UzSNJpwMFVRkYL227OUOcpzneSzh3yyUP1klkIE8X8LLo8qp3_U_WgBppNieTMVyie-WNsLLhV1FQLS6GbM1jPe4th5yo1HQdUlG8IKChzZkXbqMjvCxuAUTl3GrI70cwHwGD0P9topF6m8clEMeoNo4iHZp3IiagUUYkr54B_4Isv6ojinUYF2MKhVxd7YDJ04FQ1Cxd61Eb-6f-LK7JN0xuc0IYG8DrMU8iRCfCjWocjdOPkQotDqJk1xdQec8-ErRoxoIvbgkuVTXU8Ir-7bYkfRuSx71q4B3HUsv8qvaNm07Tha3Bi-zsYm73ACca4jVNzS3olgqXfYEIKAN1BDAV5FLYHt3xfmDz2AuLDpQhK6qRJyGeQ68B40zgLrFgBVqZxmO9ePiT8_2mbtXqKEEnE_iaTBx94jFjvFrPwU0m-YC6LlWadPMXW36eEsxCs_NAJ_TTvW7WVwW5YFT02Y0vnDZigEg9t2pwlKDXJ9exqVdfTz1i3iaLw0pgSQLBRwzYQtzlmjKKSRfA0ld98f8wQBwEUIqIrfYmUZOgE_OzGtdcCe693MubGWqwmv7iW3Vu-N2bCnOEVnKpKchXdrzgO1TenGefAHWAG2PXOYVrLDGBMIKlEgIy8JZyFartPLmrilDDCPyn-JoXf5dkPEEjxWIrtY5u7z9BvBw5AtbWQgbz371GUlWqovAFZaxWBNxNtNuO_k3OD9XyXcx6V7e6vBsaylINLAsUzOcTN2k7Ki2L67UGr5kV9tSVlZHMZ28uY7jba1QmFrQCoFB5gTCoAsM1Fs3WdTm-Zg20IHtKiolbjLM67O9OSHoIf_ZIkaByqCE9SAwDh2QyDe8mde7fxm0cocFRmrmKB4iNXEYhjW6hnIVvsJVbmmEFCv2ixNMLkQlN2W8FRZBMXU8TdkfRwsATKAl5Yqsn5lhkb-9pB_yZpdec523fkcajkf2enNwAPMJqX3RyhIE7XQSlB-kAS7rCc0d_D9axfL8czZfkCjspt9i81YO6X8xdE3ReYZUBU2UNk8IdcYzzT1Ehwpfei9brJpnwJNK4TFsc4iiotatwEjNdp9oiuwYhh-9dTWr3H2NtrNb40L8sLxbAUd-M-MN_VAvuB61PoG9_euqn5vpuxdJrX0t3a4hxaUG_x1rjYpeaAdSREXOnT90sQ4HirkIsP3AX1kACXRqBSSEXeWigr4WUUrzmLZsmEk961YN1Wf5_gwTurT6sIER-gyYS1yl6qsg9aRqgrrtBoetaGsfPFFkwNJw3fhwFb3Yc5yhbp3yvO97l6CTRSksW5XlDC6l4qHKWDJ4revHHkox5zyJMUn8y3rAtqQm-7yV15IqTT5pphi95MnUbO4HQARcVyO_HxcGU9hNWVI4orxxKhyKsmYWQ-jY39fGoxhIF5BMCCOUWMwe"
+        },
+        "envelopeHash": "8c1af7ea24b8d6c7c1db63969ca17e9092a0890b388ed26b22311fa872620250"
+      }
+    }
+  ],
+  "outcome": {
+    "type": "SEALED",
+    "letterId": "BxIdKDM-SVRfanWAi5ahrA",
+    "sealedAt": "2026-11-24T14:00:00.000Z",
+    "opensAt": "2027-06-01T00:00:00.000Z",
+    "offsetMs": 0,
+    "factors": "passkey",
+    "envelopeHash": "8c1af7ea24b8d6c7c1db63969ca17e9092a0890b388ed26b22311fa872620250"
+  },
+  "envelopeHash": "8c1af7ea24b8d6c7c1db63969ca17e9092a0890b388ed26b22311fa872620250",
+  "payload": {
+    "format_version": 2,
+    "letter_text": "The bins go out on Tuesdays. The garden fence needs replacing.",
+    "metrics": [
+      {
+        "id": "us-gasoline-regular",
+        "display_name": "Regular gasoline (all formulations), retail price",
+        "unit": "USD per gallon",
+        "region": "U.S.",
+        "source": "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
+        "series_id": "EMM_EPMR_PTE_NUS_DPG"
+      }
+    ],
+    "figures": [
+      {
+        "kind": "official",
+        "metric_id": "us-gasoline-regular",
+        "value": "3.805",
+        "unit": "USD per gallon",
+        "region": "U.S.",
+        "period": "2026-11-16",
+        "source": "U.S. Energy Information Administration (EIA), Weekly Retail Gasoline and Diesel Prices",
+        "series_id": "EMM_EPMR_PTE_NUS_DPG",
+        "retrieved_at": "2026-11-23T19:40:49Z",
+        "source_url": "https://www.eia.gov/dnav/pet/hist/LeafHandler.ashx?n=PET&s=EMM_EPMR_PTE_NUS_DPG&f=W"
+      }
+    ],
+    "recall_questions": [
+      {
+        "id": "a1",
+        "answer_type": "text",
+        "text": "What worries me most right now?",
+        "sealed_answer": "The cost of the car repairs."
+      },
+      {
+        "id": "a2",
+        "answer_type": "text",
+        "text": "What do I want to have finished by spring?",
+        "sealed_answer": "The garden fence."
+      },
+      {
+        "id": "q1",
+        "answer_type": "number",
+        "text": "What do you think a gallon of regular gasoline cost then?",
+        "metric_id": "us-gasoline-regular"
+      }
+    ]
+  }
+}
