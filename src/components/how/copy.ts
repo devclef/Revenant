@@ -40,7 +40,7 @@ export const HOW_COPY = {
     {
       id: "two-ways-in",
       title: "Two ways in",
-      body: "Your passkey and your backup key can each open the letter, but only after the opening date. Neither opens it before. A lost passkey with no backup key means the letter is lost, and Revenant cannot recover it.",
+      body: "Your passkey and your backup key can each open the letter, but only after the opening date. Neither opens it before. A lost passkey with no backup key means the letter is lost, and Efterhand cannot recover it.",
     },
     {
       id: "needs-revenant",

@@ -150,7 +150,7 @@ describe("the passkey name", () => {
     await pressCreate(deps, REAL_COPY.passkeyUserName.replace("{date}", "12 May 2027"));
     expect(createPasskey).toHaveBeenCalledWith(deps.port, {
       rpId: "revenant.devclef.se",
-      userName: "Revenant letter · opens 12 May 2027",
+      userName: "Efterhand letter · opens 12 May 2027",
     });
   });
 

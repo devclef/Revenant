@@ -72,7 +72,7 @@ export function LetterCard({
       // The same seal the page draws, from the same hash (U4.3).
       seal: { hash: envelopeHash },
     });
-    downloadTextFile(svg, `revenant-letter-card-${letterId.replace(/[^A-Za-z0-9-]/g, "")}.svg`, "image/svg+xml;charset=utf-8");
+    downloadTextFile(svg, `efterhand-letter-card-${letterId.replace(/[^A-Za-z0-9-]/g, "")}.svg`, "image/svg+xml;charset=utf-8");
   }
 
   return (

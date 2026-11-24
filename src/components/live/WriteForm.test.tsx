@@ -93,8 +93,8 @@ describe("WriteForm", () => {
     }
   });
 
-  it("names Revenant demo in the passkey explanation", () => {
-    expect(LIVE_COPY.passkeySteps).toContain("Revenant demo");
+  it("names Efterhand demo in the passkey explanation", () => {
+    expect(LIVE_COPY.passkeySteps).toContain("Efterhand demo");
     expect(html).toContain(esc(LIVE_COPY.passkeySteps));
   });
 

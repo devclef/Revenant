@@ -47,7 +47,7 @@ export function buildKeepsakeIcs(input: KeepsakeIcsInput): string {
 
 /** A file name that holds only letters, digits and hyphens. */
 export function icsFileName(letterId: string): string {
-  return `revenant-letter-${letterId.replace(/[^A-Za-z0-9-]/g, "")}.ics`;
+  return `efterhand-letter-${letterId.replace(/[^A-Za-z0-9-]/g, "")}.ics`;
 }
 
 /** The browser calls a download needs. A test passes fakes; the page uses the real ones. */

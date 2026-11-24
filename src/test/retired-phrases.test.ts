@@ -23,7 +23,7 @@ vi.mock("server-only", () => ({}));
  * Framing guard (spec 09, F8.1 and F8.2, design.md "F. Framing"). Retired
  * phrases must not return in user-facing copy: the source, the rendered `/`
  * and the page metadata. The time capsule may appear as an example; it is
- * flagged only where a sentence says Revenant resurrects, revives or brings it
+ * flagged only where a sentence says Efterhand resurrects, revives or brings it
  * back.
  */
 
@@ -39,7 +39,7 @@ const RETIRED_PHRASES: readonly RetiredPhrase[] = [
   },
   { name: "\"rose-tinted\"", pattern: /rose[- ]tinted/i },
   {
-    name: "a time capsule named as what Revenant resurrects or revives",
+    name: "a time capsule named as what Efterhand resurrects or revives",
     pattern:
       /\b(resurrect\w*|revive\w*|brings?\s+back|bring\w*\s+back)\b[^.!?]{0,60}\btime[- ]capsules?\b/i,
   },
@@ -208,9 +208,9 @@ describe("F8.2 classroom time capsule", () => {
     ).toBe(false);
   });
 
-  it("flags a time capsule that Revenant resurrects", () => {
+  it("flags a time capsule that Efterhand resurrects", () => {
     expect(
-      RETIRED_PHRASES[2].pattern.test("Revenant resurrects the time capsule."),
+      RETIRED_PHRASES[2].pattern.test("Efterhand resurrects the time capsule."),
     ).toBe(true);
     expect(
       RETIRED_PHRASES[3].pattern.test("The time capsule was brought back."),

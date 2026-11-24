@@ -81,12 +81,12 @@ export const LIVE_COPY = {
   receiptsUnavailable:
     "Receipts can't be added right now. Your letter doesn't need one.",
   passkeySteps:
-    'Your device will ask for the passkey twice. Each time, you press a button first. The passkey will be named "Revenant demo" in your passkey manager.',
+    'Your device will ask for the passkey twice. Each time, you press a button first. The passkey will be named "Efterhand demo" in your passkey manager.',
   crossDeviceSummary: "Opening on another device",
   crossDevice:
     'A passkey may not work on a device from a different ecosystem. To open this letter, use a device that has the passkey, or your computer\'s "use a phone" option.',
   warning:
-    "A lost or deleted passkey means this letter can never be opened, unless you also keep its backup key. Revenant cannot recover it.",
+    "A lost or deleted passkey means this letter can never be opened, unless you also keep its backup key. Efterhand cannot recover it.",
   warningLabel:
     "I understand that a lost or deleted passkey means this letter can never be opened, unless I keep its backup key.",
   createButton: "Press the seal with your passkey",
@@ -132,7 +132,7 @@ export const LIVE_COPY = {
   cannotLockNext2:
     "You can also seal with a backup key instead, or open a persona letter.",
   passkeyDeleteNote:
-    'If your device created a passkey named "Revenant demo", you can delete it from your passkey manager.',
+    'If your device created a passkey named "Efterhand demo", you can delete it from your passkey manager.',
   fallbackButton: "Seal with a backup key instead",
   backToDemo: "Back to the demo",
   cancelledTitle: "Nothing was sealed",
@@ -152,7 +152,7 @@ export const LIVE_COPY = {
   fallbackTitle: "Your backup key",
   fallbackIntro:
     "This key is the only way to open this letter. Save it somewhere safe.",
-  fallbackWarning: "A lost key means a lost letter. Revenant cannot recover it.",
+  fallbackWarning: "A lost key means a lost letter. Efterhand cannot recover it.",
   copyKey: "Copy",
   copied: "Copied",
   /** The no-passkey instruction above the key and the last line (spec 15, task 9; screen 14). */
@@ -321,7 +321,7 @@ export const REAL_COPY = {
     "Your letter opens at midnight on this date. It must be at least three months after you seal it. You cannot change the date once it is sealed.",
   dateChosen: "Opens at midnight on {date}, in your time zone.",
   utcFallback: "It opens at midnight UTC.",
-  passkeyUserName: "Revenant letter · opens {date}",
+  passkeyUserName: "Efterhand letter · opens {date}",
   tooEarly:
     "That date is too soon. A letter must open at least three months after it is sealed. Choose a later date and try again. Nothing was sealed, and your letter is still here.",
   invalidDate:
@@ -340,7 +340,7 @@ export const REAL_COPY = {
   keepStep: "Keep",
   /** The press status line while no opening date is chosen (spec 19, Requirement 3.4). */
   pressNeedsDate: "Choose an opening date first.",
-  /** The first press's hint in Real_Mode. The passkey is named for the opening date, not "Revenant demo". */
+  /** The first press's hint in Real_Mode. The passkey is named for the opening date, not "Efterhand demo". */
   stepOneHint: "Press the wax. The passkey is named for this letter's opening date.",
   /** The first press's hint once the passkey is made (spec 19, Requirement 4.11). */
   stepPasskeyMade: "Passkey made. It is named for this letter's opening date.",

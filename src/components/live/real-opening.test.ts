@@ -34,7 +34,7 @@ describe("checkRealOpening", () => {
     expect(check).toEqual({
       ok: true,
       opensAt: opensAtFor("2027-05-12", tz),
-      userName: "Revenant letter · opens 12 May 2027",
+      userName: "Efterhand letter · opens 12 May 2027",
     });
   });
 

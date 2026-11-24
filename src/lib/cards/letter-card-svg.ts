@@ -26,7 +26,7 @@ export interface LetterCardSvgInput {
   title: string;
   /** The opening-date line, already formatted, e.g. "Opens 30 October 2026, 12:00 CET". */
   opensLabel: string;
-  /** The letter link, e.g. "https://revenant.devclef.se/l/abc". */
+  /** The letter link, e.g. "https://efterhand.devclef.se/l/abc". */
   link: string;
   /** The Fingerprint label, e.g. "Fingerprint at sealing". */
   fingerprintLabel: string;

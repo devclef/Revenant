@@ -22,7 +22,7 @@ describe("buildIcs output", () => {
     const expected = [
       "BEGIN:VCALENDAR",
       "VERSION:2.0",
-      "PRODID:-//Revenant//Live demo//EN",
+      "PRODID:-//Efterhand//Live demo//EN",
       "BEGIN:VEVENT",
       "UID:abc123@revenant.devclef.se",
       "DTSTAMP:20261101T100000Z",
@@ -59,7 +59,7 @@ describe("buildIcs output", () => {
     expect(parsed.endsAt).toBe("2026-11-02T20:15:00.000Z");
     expect(parsed.uid).toBe("abc123@revenant.devclef.se");
     expect(parsed.url).toBe(BASE.link);
-    expect(parsed.prodid).toBe("-//Revenant//Live demo//EN");
+    expect(parsed.prodid).toBe("-//Efterhand//Live demo//EN");
   });
 
   it("carries a display alarm that fires at the start", () => {

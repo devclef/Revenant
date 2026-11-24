@@ -39,7 +39,7 @@ const BA2CD6C_ALL_KEYS = {
   authorQuestionAdd: "Add a question",
   occasionLegend: "What is it about?",
   passkeySteps:
-    'Your device will ask for the passkey twice. Each time, you press a button first. The passkey will be named "Revenant demo" in your passkey manager.',
+    'Your device will ask for the passkey twice. Each time, you press a button first. The passkey will be named "Efterhand demo" in your passkey manager.',
 } as const;
 
 /** The X1.5 keys. Their values are the ba2cd6c copy, unchanged by X1. `answerInLetter` was deleted by spec 16. */

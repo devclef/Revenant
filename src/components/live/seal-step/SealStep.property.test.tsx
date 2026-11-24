@@ -56,7 +56,7 @@ function sentencesOf(text: string): string[] {
 }
 
 describe("Seal step text (spec 16, Property 12)", () => {
-  it("shows the warning once, Revenant demo once, and no sentence twice", () => {
+  it("shows the warning once, Efterhand demo once, and no sentence twice", () => {
     fc.assert(
       fc.property(
         tagArb,
@@ -93,7 +93,7 @@ describe("Seal step text (spec 16, Property 12)", () => {
           const text = visibleText(html);
 
           expect(countOf(text, LIVE_COPY.warning)).toBe(1);
-          expect(countOf(text, "Revenant demo")).toBe(1);
+          expect(countOf(text, "Efterhand demo")).toBe(1);
 
           const sentences = sentencesOf(text);
           expect(new Set(sentences).size).toBe(sentences.length);

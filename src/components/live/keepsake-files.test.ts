@@ -46,10 +46,10 @@ describe("buildKeepsakeIcs", () => {
     expect(text.replace(/\r\n/g, "").includes("\n")).toBe(false);
   });
 
-  it("has one VEVENT with the Revenant product id", () => {
+  it("has one VEVENT with the Efterhand product id", () => {
     const text = ics();
     expect(text.startsWith("BEGIN:VCALENDAR\r\n")).toBe(true);
-    expect(text).toContain("PRODID:-//Revenant//Live demo//EN");
+    expect(text).toContain("PRODID:-//Efterhand//Live demo//EN");
     expect(text.match(/BEGIN:VEVENT/g)).toHaveLength(1);
     expect(text.match(/END:VEVENT/g)).toHaveLength(1);
   });
@@ -85,7 +85,7 @@ describe("buildKeepsakeIcs", () => {
 
 describe("icsFileName", () => {
   it("keeps letters, digits and hyphens only", () => {
-    expect(icsFileName("abc-123/../x")).toBe("revenant-letter-abc-123x.ics");
+    expect(icsFileName("abc-123/../x")).toBe("efterhand-letter-abc-123x.ics");
   });
 });
 

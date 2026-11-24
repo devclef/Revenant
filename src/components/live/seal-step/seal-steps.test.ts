@@ -15,10 +15,10 @@ describe("Seal step wording (spec 16, Requirement 14)", () => {
       "Press the wax twice: once to make your passkey, once to set the seal.",
     );
     expect(PRESS_COPY.stepOneHint).toBe(
-      'Press the wax. The passkey is saved as "Revenant demo".',
+      'Press the wax. The passkey is saved as "Efterhand demo".',
     );
     expect(PRESS_COPY.stepPasskeyMade).toBe(
-      'Passkey made. Saved as "Revenant demo".',
+      'Passkey made. Saved as "Efterhand demo".',
     );
   });
 });

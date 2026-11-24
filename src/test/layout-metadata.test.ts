@@ -33,12 +33,12 @@ describe("root layout metadata", () => {
     return mod.generateMetadata();
   }
 
-  it("uses the title template '%s · Revenant'", async () => {
+  it("uses the title template '%s · Efterhand'", async () => {
     process.env[ORIGIN_ENV] = "https://revenant.devclef.se";
     const meta = await loadMetadata();
     expect(meta.title).toEqual({
-      default: "Revenant",
-      template: "%s · Revenant",
+      default: "Efterhand",
+      template: "%s · Efterhand",
     });
   });
 

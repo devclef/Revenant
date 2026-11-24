@@ -39,8 +39,8 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     metadataBase: new URL(origin || FALLBACK_ORIGIN),
     title: {
-      default: "Revenant",
-      template: "%s · Revenant",
+      default: "Efterhand",
+      template: "%s · Efterhand",
     },
     description: HOME_DESCRIPTION,
     icons: {

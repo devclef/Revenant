@@ -37,7 +37,7 @@ describe("SCENE_COPY is exact (Property 23)", () => {
   });
 
   it("holds the wordmark and the demo chip", () => {
-    expect(SCENE_COPY.wordmark).toBe("revenant");
+    expect(SCENE_COPY.wordmark).toBe("efterhand");
     expect(SCENE_COPY.demoChip).toBe("Demo");
   });
 

@@ -25,7 +25,7 @@ export const SCENE_COPY = {
   },
 
   /** The wordmark in the Top_Bar, shown in capitals by CSS. */
-  wordmark: "revenant",
+  wordmark: "efterhand",
 
   /** The chip beside the wordmark that marks the demo, shown in capitals by CSS. */
   demoChip: "Demo",

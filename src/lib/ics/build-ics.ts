@@ -13,7 +13,7 @@ export const ICS_EVENT_MINUTES = 15;
 /** Trigger for the reminder alarm: fire at the start of the event. */
 export const ICS_ALARM_TRIGGER = "PT0S";
 
-const PRODID = "-//Revenant//Live demo//EN";
+const PRODID = "-//Efterhand//Live demo//EN";
 const MAX_LINE_OCTETS = 75;
 const ENCODER = new TextEncoder();
 
