@@ -205,7 +205,7 @@ New copy is final as written in the design's new-copy table.
   - Copy evidence: tone-check for `live/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 7. Landing_Hero Real_Seal_Link, copy and CSS
+- [x] 7. Landing_Hero Real_Seal_Link, copy and CSS
   - Agent: `frontend-dev` · Depends on: none · Estimated size: S, ~350 changed lines
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `src/components/landing/LandingHero.tsx`, `src/components/landing/copy.ts`, `src/components/landing/landing.module.css`, `LandingHero.test.tsx`, `LandingHero.real-link.property.test.tsx` (new), and the landing CSS test next to the module.
