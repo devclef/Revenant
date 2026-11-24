@@ -225,7 +225,7 @@ New copy is final as written in the design's new-copy table.
   - Copy evidence: tone-check for `landing/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 8. Landing_Page reads `realSealingOn()` per request
+- [x] 8. Landing_Page reads `realSealingOn()` per request
   - Agent: `platform-dev` · Depends on: 7 · Estimated size: S, ~150 changed lines
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `src/app/page.tsx`, `src/app/page.test.tsx`, `src/lib/feature-flags-client.test.ts` (new, a source scan; `src/lib/*.test.ts` is platform-dev's).
