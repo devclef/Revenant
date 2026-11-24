@@ -203,11 +203,11 @@ const SAMPLES = JSON.parse(readFileSync(SAMPLES_FILE, "utf8")) as Record<string,
  * LIVE CHECK (spec 14 T2.5). Opens each persona's Testify step at 390 x 844 in
  * Chromium and measures every number question that shows its Sample_Note. It needs
  * a running app with the persona letters sealed (`npm run seal-personas`). Set
- * REVENANT_LAYOUT_URL to the app origin, for example http://localhost:3939, and
- * REVENANT_CHROMIUM to a Chromium path when the bundled one is not installed.
- * Without REVENANT_LAYOUT_URL the block is skipped, so `npm test` stays offline.
+ * EFTERHAND_LAYOUT_URL to the app origin, for example http://localhost:3939, and
+ * EFTERHAND_CHROMIUM to a Chromium path when the bundled one is not installed.
+ * Without EFTERHAND_LAYOUT_URL the block is skipped, so `npm test` stays offline.
  */
-const LAYOUT_URL = process.env.REVENANT_LAYOUT_URL ?? "";
+const LAYOUT_URL = process.env.EFTERHAND_LAYOUT_URL ?? "";
 const VIEWPORT = { width: 390, height: 844 };
 const PICK_UP = "Pick up the letter";
 const NEXT = "Next question";
@@ -269,7 +269,7 @@ describe.skipIf(!LAYOUT_URL)(
   () => {
     let browser: Browser;
     beforeAll(async () => {
-      browser = await chromium.launch({ executablePath: process.env.REVENANT_CHROMIUM || undefined });
+      browser = await chromium.launch({ executablePath: process.env.EFTERHAND_CHROMIUM || undefined });
     });
     afterAll(async () => {
       await browser?.close();
