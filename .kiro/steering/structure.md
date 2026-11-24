@@ -20,7 +20,7 @@ Planned layout. Update this file when the structure changes.
 ├── tools/                   # Owner-only: agent generator, dispatcher, PR policy
 ├── scripts/check.sh         # Owner-only: the one "is this OK?" command
 ├── deploy/
-│   └── helm/efterhand/       # Helm chart with Postgres (see deploy.md); kept in sync with the app. No Fleet config here.
+│   └── helm/revenant/       # Helm chart with Postgres (see deploy.md); kept in sync with the app. No Fleet config here.
 ├── Dockerfile               # One image for web, migrations and the fetch job
 ├── content/
 │   └── personas/            # Demo persona letters (text only, reviewed against neutrality.md)

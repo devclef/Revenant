@@ -4,9 +4,9 @@ inclusion: always
 
 # Neutrality
 
-Efterhand never takes a political side. It shows people their own words and real data, and lets them draw their own conclusions. Someone on any side of any issue should be able to use it and feel it treated them fairly.
+Revenant never takes a political side. It shows people their own words and real data, and lets them draw their own conclusions. Someone on any side of any issue should be able to use it and feel it treated them fairly.
 
-## Efterhand does not
+## Revenant does not
 
 - Explain, attribute or speculate on why a number changed ("because of policy X", "under this government").
 - Name, praise or criticise parties, candidates, officials or movements in product copy.
@@ -28,7 +28,7 @@ Efterhand never takes a political side. It shows people their own words and real
 
 ## Demo persona letters
 
-Persona letters are written by us, so they speak for Efterhand. They must:
+Persona letters are written by us, so they speak for Revenant. They must:
 
 - Be about everyday life: work, family, bills, plans, hopes. No opinions on parties, candidates, policies or the election itself.
 - Not mention who the persona plans to vote for, or whether they will vote.
@@ -42,7 +42,7 @@ Occasion starters and questions follow the same rules: everyday life only, no le
 ## Predictions (not in the MVP; rules for when they are added)
 
 - Predictions must be resolvable against a named source and a specific figure ("Average U.S. gasoline price in Nov 2028 will be above $4.00/gal, per EIA").
-- Efterhand scores the prediction mechanically. It does not reward or comment on what was predicted, only whether it resolved.
+- Revenant scores the prediction mechanically. It does not reward or comment on what was predicted, only whether it resolved.
 - Predictions about who will win an election or about subjective outcomes are not scored.
 
 ## Copy test

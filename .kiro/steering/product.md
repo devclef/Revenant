@@ -2,11 +2,11 @@
 inclusion: always
 ---
 
-# Product: Efterhand
+# Product: Revenant
 
 **Tagline:** "The wax seal, resurrected. Memory drifts with time. A sealed letter doesn't."
 
-Efterhand seals what you believe now, in any part of life: goals for the year, a worry at work, family, a decision. Prices are one example of a receipt, never a requirement.
+Revenant seals what you believe now, in any part of life: goals for the year, a worry at work, family, a decision. Prices are one example of a receipt, never a requirement.
 
 Built for the Kiroween hackathon, Resurrection category. The technology being resurrected is the wax seal: the plis cachetés the French Académie des sciences has kept since 1735, sealed envelopes that prove what someone knew, and when. A classroom time capsule, a letter to your future self that a teacher mails back years later, works the same way.
 
@@ -16,7 +16,7 @@ Memory rewrites itself. Every time you recall something, you edit it a little, a
 
 ## What's new
 
-The one thing no wax seal could do: Efterhand makes you remember first, before you read. The gap between what you remembered and the record is the product, and Efterhand never says what it means. A letter may hold any part of life. Official figures are one kind of receipt, and a letter does not need them.
+The one thing no wax seal could do: Revenant makes you remember first, before you read. The gap between what you remembered and the record is the product, and Revenant never says what it means. A letter may hold any part of life. Official figures are one kind of receipt, and a letter does not need them.
 
 ## Core loop
 
@@ -27,18 +27,18 @@ The one thing no wax seal could do: Efterhand makes you remember first, before y
 3. **Press the seal.** Choose an opening date at least 3 months away and lock the letter with a passkey. Everything needed to open the letter goes inside it: the letter, the figures with their sources, the recall questions and the author's answer to each. The letter does not rely on any data source or app feature still existing when it opens. The user locks it with a passkey (fingerprint, face or device PIN) and can also download a backup key card.
 4. **Keep.** The user gets a letter card with a QR code and an `.ics` calendar file for the opening date.
 5. **Wait.** Sealed contents are immutable and hidden, including from the author. Scanning the QR code before the opening date shows only that the letter is still sealed and a countdown.
-6. **Remember.** After the opening date, the user scans the QR code and unlocks with their passkey or backup key. Efterhand asks the sealed questions *before* showing anything: for each question the user wrote, they write what they think they answered. Then come the questions about the figures. What they remembered is recorded before anything sealed is shown.
-7. **See the receipts.** Efterhand shows, in order:
+6. **Remember.** After the opening date, the user scans the QR code and unlocks with their passkey or backup key. Revenant asks the sealed questions *before* showing anything: for each question the user wrote, they write what they think they answered. Then come the questions about the figures. What they remembered is recorded before anything sealed is shown.
+7. **See the receipts.** Revenant shows, in order:
    - Each of their own questions, with what they remembered just now beside what they wrote on the sealing day, with no comment on the difference. What they remembered about the figures sits with the figures.
    - What they actually wrote (then), in full.
    - The numbers then vs now, with the plain change between them. This appears only when the letter holds figures. On the Receipts step the questions come first, then the figures. The letter, already read, is folded after the figures under "Read the letter again". A letter with no figures ends on what they remembered and the letter, shown in full.
 
-The gap between memory and record is the product. Efterhand does not interpret that gap for the user.
+The gap between memory and record is the product. Revenant does not interpret that gap for the user.
 
 ## Non-negotiables
 
 - **Data integrity.** See `data-integrity.md`. Every number has a source, period, unit and region. Nothing is invented or estimated. Sealed data never changes.
-- **Neutrality.** See `neutrality.md`. Efterhand never takes a political side. It only shows people their own words and real data.
+- **Neutrality.** See `neutrality.md`. Revenant never takes a political side. It only shows people their own words and real data.
 - **Tone.** See `tone.md`. A ghost of your past self rising out of the dark with your letter: purple light, one orange seal. Spooky but respectful, never cheesy.
 - **Privacy.** The operator cannot read letters, personal numbers or recall answers. See `tech.md` and `crypto.md`.
 
@@ -68,8 +68,8 @@ The gap between memory and record is the product. Efterhand does not interpret t
 - **Letter card:** a QR code that is just a link with the letter's random ID. It contains no key. Before the opening date it shows "still sealed" and a countdown. After, it leads to unlock, recall and reveal.
 - **Backup key card:** a separate download. It is the only place the backup key exists. It also carries the letter link, so after the opening date the card alone opens the letter. The card says to keep it like a house key.
 - **Calendar file:** an `.ics` file with the opening date and the same link, generated at sealing.
-- **Domain:** the MVP and testing run on `efterhand.devclef.se`. Passkeys are bound to that domain. If production moves to a different domain later, letters sealed on `efterhand.devclef.se` can only be opened there or with their backup key. Treat letters sealed before the final domain is chosen as test letters.
-- **Dependence on Efterhand (MVP):** opening a letter requires the Efterhand server, which holds the time-lock secret. Accepted for the MVP; see `tech.md`.
+- **Domain:** the MVP and testing run on `revenant.devclef.se`. Passkeys are bound to that domain. If production moves to a different domain later, letters sealed on `revenant.devclef.se` can only be opened there or with their backup key. Treat letters sealed before the final domain is chosen as test letters.
+- **Dependence on Revenant (MVP):** opening a letter requires the Revenant server, which holds the time-lock secret. Accepted for the MVP; see `tech.md`.
 - **Real sealing (`/seal`):** on for judging (`REAL_SEALING=on`), with no test-letter notice. It uses the same stepper as `/demo/live` for Write and Press the seal, then ends on a Keep step with the sealed view. The home page links to it with one quiet text link while it is on.
 - **Delivery:** no email or post in the MVP. The letter card and calendar file are how the user finds the letter again.
 
@@ -94,11 +94,11 @@ Pre-sealed letters from fictional people, each written as of a date in its windo
 
 ### Demo 2: Lock and unlock
 
-This demo shows the unlock capability. The judge writes a short letter, optionally adds figures, and seals it for real with their own passkey (and optionally a backup key). Efterhand generates a new letter card (QR) and `.ics` file for it. The time lock is 30 seconds instead of years. When the countdown ends, they scan the QR code and unlock with the same passkey.
+This demo shows the unlock capability. The judge writes a short letter, optionally adds figures, and seals it for real with their own passkey (and optionally a backup key). Revenant generates a new letter card (QR) and `.ics` file for it. The time lock is 30 seconds instead of years. When the countdown ends, they scan the QR code and unlock with the same passkey.
 
 - The 30-second lock exists only for demo letters. The server rejects short locks for real letters.
 - The judge can ask their own question. The Write step offers Occasions, and every Occasion starts with one default question in the author's own voice, which they answer, change or remove. The demo is a rehearsal of a letter that would normally stay sealed for months, and says so. Figures are optional. The payoff leads with each question, what the judge remembers 30 seconds later beside what they wrote, then the letter; any figures come after. With figures, the Receipts step folds the letter, already read, after them (core loop step 7).
-- The judge's passkey is real and will appear in their passkey manager, named so it is obviously a Efterhand demo.
+- The judge's passkey is real and will appear in their passkey manager, named so it is obviously a Revenant demo.
 - After 30 seconds the "now" figures will match "then". That is expected; the then-vs-now story belongs to Demo 1.
 - Details of this flow are refined after the MVP is up.
 
@@ -115,7 +115,7 @@ The hackathon demo comes first, not the full product.
 
 ## Open product questions
 
-- Final production domain (subdomain of devclef.se or a new domain). MVP uses `efterhand.devclef.se`.
+- Final production domain (subdomain of devclef.se or a new domain). MVP uses `revenant.devclef.se`.
 - Which personas and figures to use in Demo 1.
 - Delivery method for opened letters (email, physical mail, other).
 - Full metric list per region and final recall question wording (after the MVP works).
