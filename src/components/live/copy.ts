@@ -347,7 +347,7 @@ export const REAL_COPY = {
   /** The first press's hint once the passkey is made (spec 19, Requirement 4.11). */
   stepPasskeyMade: "Passkey made. It is named for this letter's opening date.",
   /** The receipt card message when no figure can be sealed. Plain text, no link (spec 19). */
-  figuresNoneAvailable: "No figure can be sealed at the moment. Your letter doesn't need one.",
+  figuresNoneAvailable: "No figure can be sealed right now. Your letter doesn't need one.",
   /** The cannot-lock screen note about a passkey this device may have created. */
   passkeyDeleteNote:
     "If your device created a passkey for this letter, you can delete it from your passkey manager.",
@@ -356,7 +356,7 @@ export const REAL_COPY = {
     "Your device clock differs from Revenant's clock by too much. Nothing was sealed. Check your device time and try again.",
   /** The failed screen when the server is busy. */
   busyBody:
-    "Revenant is busy at the moment. Nothing was sealed. Try again later. Your letter is still here.",
+    "Revenant is busy right now. Nothing was sealed. Try again later. Your letter is still here.",
 } as const;
 
 /** The short field names used in the partly filled row message (selfReportedMissing). */
