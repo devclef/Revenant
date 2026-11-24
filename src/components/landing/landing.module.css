@@ -94,6 +94,32 @@
   outline-offset: 3px;
 }
 
+/* The real seal link (spec 09, Requirement B1): a quiet text link to /seal,
+   shown only while realSealing is on. It is plain text in --text on --bg: no
+   fill, no border, and no Accent, because orange is the reader's own action.
+   The link is at least 44 by 44 px. */
+.realSeal {
+  margin: 0;
+  color: var(--text);
+}
+
+.realSealLink {
+  display: inline-flex;
+  align-items: center;
+  min-height: 2.75rem;
+  min-width: 2.75rem;
+  background: none;
+  border: none;
+  color: var(--text);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.realSealLink:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 3px;
+}
+
 /* Phone hero (below 600 px): the calls to action take order 1, so the seal
    box, which keeps its place after the Hero_Sentence in the source, sits above
    them. The seal box takes the height of its envelope. */
@@ -108,6 +134,11 @@
   }
 
   .actions {
+    order: 1;
+  }
+
+  /* The real seal link (B1) follows the calls to action on phones. */
+  .realSeal {
     order: 1;
   }
 
