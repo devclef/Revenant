@@ -26,7 +26,7 @@ describe("opengraph-image route", () => {
   it("joins letter and doesn't. with a non-breaking space in the rendered headline", () => {
     expect(source).toContain('const NBSP = "\\u00a0";');
     expect(source).toContain("letter${NBSP}doesn't.");
-    expect(source).not.toContain("Revenant${NBSP}doesn't.");
+    expect(source).not.toContain("Efterhand${NBSP}doesn't.");
   });
 
   it("renders a PNG response", async () => {

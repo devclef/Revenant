@@ -150,7 +150,7 @@
 }
 
 /* Narrow: the Tagline is four lines, and at the default size its last line
-   ("Revenant doesn't.") reaches into the Ghost_Body_Box (G1 at 360x640). A
+   ("letter doesn't.") reaches into the Ghost_Body_Box (G1 at 360x640). A
    smaller headline keeps the block in the top band above the Ghost. Desktop
    keeps the size above. */
 @media (max-width: 899.98px) {
@@ -614,7 +614,7 @@
   color: var(--muted);
 }
 
-/* "Revenant doesn't." stays on one line (F2). */
+/* "letter doesn't." stays on one line (F2). */
 .nowrap {
   white-space: nowrap;
 }
