@@ -3,6 +3,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { REAL_COPY } from "../copy";
 import { PRESS_COPY } from "../press/copy";
 import { SealSteps } from "./SealSteps";
 
@@ -41,5 +42,22 @@ describe("SealSteps", () => {
     );
     expect(html).not.toMatch(/data-seal-step-state="current"/);
     expect(html.match(/data-seal-step-state="pending"/g)?.length).toBe(2);
+  });
+});
+
+describe("SealSteps real input (spec 19)", () => {
+  it("renders the REAL_COPY first-press hint when real is set", () => {
+    const html = renderToStaticMarkup(
+      <SealSteps tag="write" backupChoice="card" real />,
+    );
+    expect(html).toContain(REAL_COPY.stepOneHint.replace(/'/g, "&#x27;"));
+    expect(html).not.toContain(PRESS_COPY.stepOneHint.replace(/"/g, "&quot;"));
+  });
+
+  it("renders the demo hint when real is omitted", () => {
+    const html = renderToStaticMarkup(
+      <SealSteps tag="write" backupChoice="card" />,
+    );
+    expect(html).toContain(PRESS_COPY.stepOneHint.replace(/"/g, "&quot;"));
   });
 });

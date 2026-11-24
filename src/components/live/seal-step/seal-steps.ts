@@ -4,6 +4,7 @@
 // data. Each press is `pending`, `current` or `done`. Only the reader's own
 // next press is `current`, and only `current` carries its hint line.
 
+import { REAL_COPY } from "../copy";
 import { PRESS_COPY } from "../press/copy";
 import type { BackupChoiceValue } from "../write-draft";
 import type { PressStatusTag } from "./press-status";
@@ -26,29 +27,35 @@ export type SealStepsView = {
 export function sealStepsView(input: {
   tag: PressStatusTag;
   backupChoice: BackupChoiceValue | null;
+  real?: boolean;
 }): SealStepsView {
   const { tag, backupChoice } = input;
+  // Real_Mode swaps the two first-press hints for their REAL_COPY wording.
+  const stepOneHint =
+    input.real === true ? REAL_COPY.stepOneHint : PRESS_COPY.stepOneHint;
+  const stepPasskeyMade =
+    input.real === true ? REAL_COPY.stepPasskeyMade : PRESS_COPY.stepPasskeyMade;
   if (tag === "write" && backupChoice === null) {
     return {
-      one: { state: "pending", hint: PRESS_COPY.stepOneHint },
+      one: { state: "pending", hint: stepOneHint },
       two: { state: "pending", hint: null },
     };
   }
   if (tag === "write" || tag === "creating") {
     return {
-      one: { state: "current", hint: PRESS_COPY.stepOneHint },
+      one: { state: "current", hint: stepOneHint },
       two: { state: "pending", hint: null },
     };
   }
   if (tag === "created") {
     return {
-      one: { state: "done", hint: PRESS_COPY.stepPasskeyMade },
+      one: { state: "done", hint: stepPasskeyMade },
       two: { state: "current", hint: null },
     };
   }
   // confirming, preparing, sealing: the first press is done.
   return {
-    one: { state: "done", hint: PRESS_COPY.stepPasskeyMade },
+    one: { state: "done", hint: stepPasskeyMade },
     two: {
       state: "current",
       hint: tag === "confirming" ? PRESS_COPY.stepTwoHint : null,

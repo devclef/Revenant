@@ -15,6 +15,8 @@ import styles from "./seal-step.module.css";
 export type SealStepsProps = {
   tag: PressStatusTag;
   backupChoice: BackupChoiceValue | null;
+  /** Real_Mode step copy (spec 19). Defaults to the demo wording. */
+  real?: boolean;
 };
 
 function StepItem({
@@ -41,8 +43,8 @@ function StepItem({
   );
 }
 
-export function SealSteps({ tag, backupChoice }: SealStepsProps) {
-  const view = sealStepsView({ tag, backupChoice });
+export function SealSteps({ tag, backupChoice, real }: SealStepsProps) {
+  const view = sealStepsView({ tag, backupChoice, real });
   return (
     <ol className={styles.steps} data-seal-steps="">
       <StepItem
