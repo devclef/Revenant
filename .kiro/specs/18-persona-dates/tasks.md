@@ -323,7 +323,7 @@ No task below starts until that PR is merged. The other open questions keep the 
   - Earlier-spec tests changed or retired: walk and layout tests whose rows or steps change; name each.
   - Validation: `bash scripts/check.sh`; `node scripts/check-js-budget.mjs` after `npm run build`.
 
-- [ ] 14. Owner: deploy PR A and seal in the init container
+- [x] 14. Owner: deploy PR A and seal in the init container
   - Agent: `owner` · Depends on: 11, 12, 13 · Estimated size: n/a (owner step, not dispatched)
   - Before the rollout, check the Approval_Gate still counts and, if Requirement 6.11 applies, that Jacob Morgan has recorded a pass in each copy-test record.
   - Record `SELECT count(*) FROM demo_letters` on production.
