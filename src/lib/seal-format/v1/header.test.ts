@@ -58,7 +58,7 @@ const ciphertextArb = fc
 // Optional passkey fields.
 const rpIdArb = fc.constantFrom(
   "localhost",
-  "revenant.devclef.se",
+  "efterhand.devclef.se",
   "example.com",
   "a.b.c.example.org",
 );
@@ -390,7 +390,7 @@ const mutations: ReadonlyArray<MutationEntry> = [
     (h) => {
       if ((h as { rpId?: string }).rpId !== undefined) return undefined; // only on backup-only
       const c = clone(h);
-      c.rpId = "revenant.devclef.se";
+      c.rpId = "efterhand.devclef.se";
       return c;
     },
   ],

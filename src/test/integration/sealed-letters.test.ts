@@ -238,7 +238,7 @@ describeDb("seal, store, open, record answers, immutability (integration)", () =
     // opening instant is in the past, the row is openable and the route hands
     // back the full envelope and hash.
     const letterRes = await getLetter(
-      new Request(`https://revenant.test/api/letters/${sealed.letterId}`),
+      new Request(`https://efterhand.test/api/letters/${sealed.letterId}`),
       { params: Promise.resolve({ id: sealed.letterId }) },
     );
     expect(letterRes.status).toBe(200);
@@ -260,7 +260,7 @@ describeDb("seal, store, open, record answers, immutability (integration)", () =
     // GET handler. The opening instant is past, so the secret is released.
     const secretRes = await getSecret(
       new Request(
-        `https://revenant.test/api/letters/${sealed.letterId}/secret`,
+        `https://efterhand.test/api/letters/${sealed.letterId}/secret`,
       ),
       { params: Promise.resolve({ id: sealed.letterId }) },
     );
@@ -308,7 +308,7 @@ describeDb("seal, store, open, record answers, immutability (integration)", () =
     // opening instant and the demo flag — never the envelope or its hash, so a
     // scan before `opens_at` learns nothing about the contents.
     const letterRes = await getLetter(
-      new Request(`https://revenant.test/api/letters/${sealed.letterId}`),
+      new Request(`https://efterhand.test/api/letters/${sealed.letterId}`),
       { params: Promise.resolve({ id: sealed.letterId }) },
     );
     expect(letterRes.status).toBe(200);
@@ -327,7 +327,7 @@ describeDb("seal, store, open, record answers, immutability (integration)", () =
     // never the server secret.
     const secretRes = await getSecret(
       new Request(
-        `https://revenant.test/api/letters/${sealed.letterId}/secret`,
+        `https://efterhand.test/api/letters/${sealed.letterId}/secret`,
       ),
       { params: Promise.resolve({ id: sealed.letterId }) },
     );
@@ -343,7 +343,7 @@ describeDb("seal, store, open, record answers, immutability (integration)", () =
     const ciphertext = encodeBase64url(new Uint8Array(randomBytes(48)));
     const nonce = encodeBase64url(new Uint8Array(randomBytes(12)));
     const openingRes = await postOpening(
-      new Request("https://revenant.test/api/openings", {
+      new Request("https://efterhand.test/api/openings", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ letterId: sealed.letterId, ciphertext, nonce }),
@@ -404,7 +404,7 @@ describeDb("seal, store, open, record answers, immutability (integration)", () =
       answers,
     );
     const openingRes = await postOpening(
-      new Request("https://revenant.test/api/openings", {
+      new Request("https://efterhand.test/api/openings", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -444,7 +444,7 @@ describeDb("seal, store, open, record answers, immutability (integration)", () =
   });
 
   // --- Step 5: immutability triggers. Every sealed table carries a
-  // `revenant_forbid_change` BEFORE UPDATE OR DELETE trigger that raises, so no
+  // `efterhand_forbid_change` BEFORE UPDATE OR DELETE trigger that raises, so no
   // application code can alter or remove a sealed row (data-integrity.md:
   // "Enforce this at the database level, not just in app logic"). This proves it
   // directly with the raw client on one row of each table — `letters`,
@@ -499,7 +499,7 @@ describeDb("seal, store, open, record answers, immutability (integration)", () =
       { "q-fuel": { answer_type: "number", value: "2.89" } },
     );
     const openingRes = await postOpening(
-      new Request("https://revenant.test/api/openings", {
+      new Request("https://efterhand.test/api/openings", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({
@@ -517,7 +517,7 @@ describeDb("seal, store, open, record answers, immutability (integration)", () =
 
     /**
      * Prove a single row is immutable: read it, assert a parameterised UPDATE
-     * and a parameterised DELETE each reject (the `revenant_forbid_change`
+     * and a parameterised DELETE each reject (the `efterhand_forbid_change`
      * trigger raises), and after each rejection re-read the row and assert it
      * deep-equals the pre-attempt read. `readOne`, `attemptUpdate` and
      * `attemptDelete` all target the same single row by its key.

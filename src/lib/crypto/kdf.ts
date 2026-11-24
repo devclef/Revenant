@@ -11,12 +11,12 @@
 //   DEK  (random 256-bit, encrypts the payload)
 //    └─ wrapped by KEK_backup = HKDF(ikm = backupKey ‖ serverSecret,
 //                                    salt = letterId,
-//                                    info = "revenant-kek-backup-v1")
-//   openingKey = HKDF(ikm = DEK, salt = letterId, info = "revenant-opening-v1")
+//                                    info = "efterhand-kek-backup-v1")
+//   openingKey = HKDF(ikm = DEK, salt = letterId, info = "efterhand-opening-v1")
 //
 // `serverSecret` is part of KEK_backup, so the backup factor cannot unwrap the
 // DEK before the server releases the secret at the opening date. The passkey
-// KEK (`revenant-kek-passkey-v1`) is derived in the passkey module, not here.
+// KEK (`efterhand-kek-passkey-v1`) is derived in the passkey module, not here.
 //
 // WebCrypto only, browser-safe: the one platform call is
 // `globalThis.crypto.subtle`. This module imports no `node:` module and
@@ -26,9 +26,9 @@
 import type { BackupKeyBytes } from "./errors";
 
 /** Info strings, fixed per crypto.md. Never change the meaning of one. */
-const INFO_KEK_BACKUP = "revenant-kek-backup-v1";
-const INFO_OPENING = "revenant-opening-v1";
-const INFO_KEK_PASSKEY = "revenant-kek-passkey-v1";
+const INFO_KEK_BACKUP = "efterhand-kek-backup-v1";
+const INFO_OPENING = "efterhand-opening-v1";
+const INFO_KEK_PASSKEY = "efterhand-kek-passkey-v1";
 
 const LETTER_ID_BYTES = 16;
 const SERVER_SECRET_BYTES = 32;
@@ -104,7 +104,7 @@ async function hkdfToAesGcmKey(
  *   KEK_backup = HKDF-SHA256(
  *     ikm  = backupKey(16) ‖ serverSecret(32),
  *     salt = letterId(16),
- *     info = "revenant-kek-backup-v1",
+ *     info = "efterhand-kek-backup-v1",
  *   )
  *
  * Returned as a non-extractable AES-256-GCM `CryptoKey` used to wrap/unwrap the
@@ -140,7 +140,7 @@ export async function deriveBackupKek(
  *   openingKey = HKDF-SHA256(
  *     ikm  = DEK(32),
  *     salt = letterId(16),
- *     info = "revenant-opening-v1",
+ *     info = "efterhand-opening-v1",
  *   )
  *
  * Returned as a non-extractable AES-256-GCM `CryptoKey` used to encrypt the
@@ -168,7 +168,7 @@ export async function deriveOpeningKey(
  *   KEK_passkey = HKDF-SHA256(
  *     ikm  = prfOutput(32) ‖ serverSecret(32),
  *     salt = letterId(16),
- *     info = "revenant-kek-passkey-v1",
+ *     info = "efterhand-kek-passkey-v1",
  *   )
  *
  * `prfOutput` is the WebAuthn PRF result for the letter's `prfSalt`. Returned as

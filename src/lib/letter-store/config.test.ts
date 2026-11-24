@@ -27,7 +27,7 @@ describe("readRpId", () => {
   });
 
   it("returns the trimmed value", () => {
-    process.env.RP_ID = "  revenant.devclef.se \n";
-    expect(readRpId()).toBe("revenant.devclef.se");
+    process.env.RP_ID = "  efterhand.devclef.se \n";
+    expect(readRpId()).toBe("efterhand.devclef.se");
   });
 });

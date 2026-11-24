@@ -99,7 +99,7 @@ async function sealRawPlaintext(opts: {
   globalThis.crypto.getRandomValues(dek);
 
   // KEK_backup = HKDF-SHA256(ikm = backupKey ‖ serverSecret, salt = letterId,
-  // info = "revenant-kek-backup-v1").
+  // info = "efterhand-kek-backup-v1").
   const ikm = concat(backupKey, serverSecret);
   const hkdfBase = await subtle.importKey("raw", ikm, "HKDF", false, [
     "deriveKey",
@@ -109,7 +109,7 @@ async function sealRawPlaintext(opts: {
       name: "HKDF",
       hash: "SHA-256",
       salt: toView(letterId),
-      info: utf8.encode("revenant-kek-backup-v1"),
+      info: utf8.encode("efterhand-kek-backup-v1"),
     },
     hkdfBase,
     { name: "AES-GCM", length: 256 },

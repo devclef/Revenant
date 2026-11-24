@@ -1937,7 +1937,7 @@ export async function attachPrfAuthenticator(page: Page): Promise<string> {
 export const TEST_POSTGRES_IMAGE = "postgres:17-alpine";
 
 /** The database created inside the throwaway container. */
-export const TEST_DB_NAME = "revenant";
+export const TEST_DB_NAME = "efterhand";
 
 const TEST_DB_USER = "postgres";
 
@@ -1949,7 +1949,7 @@ export type TestPostgres = { name: string; databaseUrl: string };
  * before it removes anything.
  */
 export function testContainerName(): string {
-  return `revenant-test-pg-${randomBytes(4).toString("hex")}`;
+  return `efterhand-test-pg-${randomBytes(4).toString("hex")}`;
 }
 
 /**

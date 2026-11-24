@@ -343,7 +343,7 @@ describeDb("live letters (integration)", () => {
 
     it("rolls the whole file back when 0001 fails: kind stays persona-only and no 0001 row is recorded", async () => {
       const db = await createScratchDatabase(SHARED_URL);
-      const folder = mkdtempSync(join(tmpdir(), "revenant-0000-"));
+      const folder = mkdtempSync(join(tmpdir(), "efterhand-0000-"));
       try {
         // A migrations folder that holds only 0000.
         const journal = JSON.parse(

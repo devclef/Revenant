@@ -20,9 +20,9 @@ import type {
 
 // --- Constants (design.md "Constants") ---------------------------------------
 
-export const PASSKEY_RP_NAME = "Revenant";
-export const PASSKEY_USER_NAME = "Revenant demo";
-export const PASSKEY_USER_DISPLAY_NAME = "Revenant demo";
+export const PASSKEY_RP_NAME = "Efterhand";
+export const PASSKEY_USER_NAME = "Efterhand demo";
+export const PASSKEY_USER_DISPLAY_NAME = "Efterhand demo";
 export const PASSKEY_TIMEOUT_MS = 120_000;
 export const PASSKEY_PUBKEY_ALGS: readonly number[] = [-7, -257];
 export const PRF_SALT_BYTES = 32;

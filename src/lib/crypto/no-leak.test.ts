@@ -15,7 +15,7 @@ import { decodeBase64url, encodeBase64url } from "../seal-format";
 // calls made inside seal and open, so the test does not depend on a hard-coded
 // list of where a key happens to live.
 
-const RP_ID = "revenant.devclef.se";
+const RP_ID = "efterhand.devclef.se";
 const SEALED_AT = "2026-10-31T12:00:00.000Z";
 const OPENS_AT = "2027-02-01T00:00:00.000Z";
 const RUNS = 100;

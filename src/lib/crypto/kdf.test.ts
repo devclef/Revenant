@@ -23,7 +23,7 @@ const LETTER_ID = Uint8Array.from(
   Array.from({ length: 16 }, (_, i) => 0xa0 + i),
 ); // a0 a1 ... af
 
-const INFO_KEK_BACKUP = "revenant-kek-backup-v1";
+const INFO_KEK_BACKUP = "efterhand-kek-backup-v1";
 
 /** Concatenate byte arrays into one fresh ArrayBuffer-backed view. */
 const concat = (...parts: Uint8Array[]): Uint8Array<ArrayBuffer> => {
@@ -79,7 +79,7 @@ describe("deriveBackupKek known-answer test (vs node:crypto hkdfSync)", () => {
     );
 
     const iv = new Uint8Array(12).fill(7);
-    const plaintext = new TextEncoder().encode("revenant-kat-plaintext");
+    const plaintext = new TextEncoder().encode("efterhand-kat-plaintext");
 
     // Encrypt under the module key, decrypt under the reference key. A match
     // proves the two derived keys are byte-for-byte identical.
@@ -179,7 +179,7 @@ describe("derivePasskeyKek known-answer test (vs node:crypto hkdfSync)", () => {
           "sha256",
           concat(PRF_OUTPUT, SERVER_SECRET),
           LETTER_ID,
-          "revenant-kek-passkey-v1",
+          "efterhand-kek-passkey-v1",
           32,
         ),
       ),

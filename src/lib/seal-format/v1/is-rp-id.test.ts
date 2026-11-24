@@ -8,7 +8,7 @@ describe("isRpId", () => {
   it("accepts lowercase hostnames and localhost", () => {
     for (const s of [
       "localhost",
-      "revenant.devclef.se",
+      "efterhand.devclef.se",
       "a",
       "a-b.example.com",
       "x1.y2",
@@ -20,9 +20,9 @@ describe("isRpId", () => {
   it("refuses uppercase, empty, ports, paths and bad labels", () => {
     for (const s of [
       "",
-      "Revenant.devclef.se",
-      "revenant.devclef.se:443",
-      "https://revenant.devclef.se",
+      "Efterhand.devclef.se",
+      "efterhand.devclef.se:443",
+      "https://efterhand.devclef.se",
       "rev/enant",
       "-bad.example",
       "bad-.example",

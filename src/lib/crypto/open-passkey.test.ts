@@ -14,7 +14,7 @@ import {
 // Feature: 06-lock-and-unlock, task 3: openLetter with a passkey (R9). WebCrypto
 // only; the passkey PRF comes from the fake authenticator.
 
-const RP_ID = "revenant.devclef.se";
+const RP_ID = "efterhand.devclef.se";
 const SEALED_AT = "2026-10-31T12:00:00.000Z";
 const OPENS_AT = "2027-02-01T00:00:00.000Z";
 

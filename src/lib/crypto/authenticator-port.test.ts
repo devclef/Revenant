@@ -9,7 +9,7 @@ import {
   type PortGetOptions,
 } from "./authenticator-port";
 
-const RP_ID = "revenant.devclef.se";
+const RP_ID = "efterhand.devclef.se";
 
 function bytes(...values: number[]): Uint8Array {
   return Uint8Array.from(values);
@@ -22,10 +22,10 @@ function buffer(...values: number[]): ArrayBuffer {
 function createOptions(): PortCreateOptions {
   return {
     rpId: RP_ID,
-    rpName: "Revenant",
+    rpName: "Efterhand",
     userId: bytes(1, 2, 3),
-    userName: "Revenant demo",
-    userDisplayName: "Revenant demo",
+    userName: "Efterhand demo",
+    userDisplayName: "Efterhand demo",
     challenge: bytes(9, 9),
     pubKeyCredParams: [{ type: "public-key", alg: -7 }],
     residentKey: "required",
@@ -120,8 +120,8 @@ describe("browserAuthenticatorPort create options", () => {
     };
     const publicKey = arg.publicKey;
     expect(publicKey).toMatchObject({
-      rp: { id: RP_ID, name: "Revenant" },
-      user: { name: "Revenant demo", displayName: "Revenant demo" },
+      rp: { id: RP_ID, name: "Efterhand" },
+      user: { name: "Efterhand demo", displayName: "Efterhand demo" },
       attestation: "none",
       timeout: 120_000,
       authenticatorSelection: {

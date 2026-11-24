@@ -24,7 +24,7 @@ import {
 import { createFakeAuthenticator } from "./testing/fake-authenticator";
 import type { FakeAuthenticator } from "./testing/fake-authenticator";
 
-const RP_ID = "revenant.devclef.se";
+const RP_ID = "efterhand.devclef.se";
 
 /** A port that returns a fixed credential ID from `get`, to test a mismatch. */
 function portReturningOtherCredential(fake: FakeAuthenticator): AuthenticatorPort {
@@ -59,10 +59,10 @@ describe("createPasskey", () => {
 
   it("uses the userName given to createPasskey", async () => {
     const fake = createFakeAuthenticator();
-    await createPasskey(fake, { rpId: RP_ID, userName: "Revenant real letter" });
+    await createPasskey(fake, { rpId: RP_ID, userName: "Efterhand real letter" });
     const options = fake.calls[0].options as unknown as Record<string, unknown>;
-    expect(options.userName).toBe("Revenant real letter");
-    expect(options.userDisplayName).toBe("Revenant demo");
+    expect(options.userName).toBe("Efterhand real letter");
+    expect(options.userDisplayName).toBe("Efterhand demo");
   });
 
   it("sends the R7.2 create options", async () => {
@@ -71,12 +71,12 @@ describe("createPasskey", () => {
     const options = fake.calls[0].options as unknown as Record<string, unknown>;
 
     expect(options.rpId).toBe(RP_ID);
-    expect(options.rpName).toBe("Revenant");
-    expect(PASSKEY_RP_NAME).toBe("Revenant");
-    expect(options.userName).toBe("Revenant demo");
-    expect(options.userDisplayName).toBe("Revenant demo");
-    expect(PASSKEY_USER_NAME).toBe("Revenant demo");
-    expect(PASSKEY_USER_DISPLAY_NAME).toBe("Revenant demo");
+    expect(options.rpName).toBe("Efterhand");
+    expect(PASSKEY_RP_NAME).toBe("Efterhand");
+    expect(options.userName).toBe("Efterhand demo");
+    expect(options.userDisplayName).toBe("Efterhand demo");
+    expect(PASSKEY_USER_NAME).toBe("Efterhand demo");
+    expect(PASSKEY_USER_DISPLAY_NAME).toBe("Efterhand demo");
 
     const userId = options.userId as Uint8Array;
     expect(userId).toBeInstanceOf(Uint8Array);
@@ -375,8 +375,8 @@ describe("assertPasskey", () => {
     const callsBefore = fake.calls.length;
     for (const host of [
       "example.com",
-      "revenant.devclef.se.evil.example",
-      "REVENANT.DEVCLEF.SE",
+      "efterhand.devclef.se.evil.example",
+      "EFTERHAND.DEVCLEF.SE",
       "",
       "localhost",
     ]) {

@@ -92,7 +92,7 @@ describe("checkRectInside", () => {
 describe("testContainerName", () => {
   it("names the container so the remover accepts it", () => {
     const name = testContainerName();
-    expect(name).toMatch(/^revenant-test-pg-[0-9a-f]{8}$/);
+    expect(name).toMatch(/^efterhand-test-pg-[0-9a-f]{8}$/);
     expect(name).toContain("test");
   });
 
@@ -103,7 +103,7 @@ describe("testContainerName", () => {
 
 describe("removeTestPostgres", () => {
   it("refuses a container name without 'test' before calling docker", async () => {
-    await expect(removeTestPostgres("revenant-pg-prod")).rejects.toThrow(
+    await expect(removeTestPostgres("efterhand-pg-prod")).rejects.toThrow(
       /must contain "test"/,
     );
   });
@@ -111,7 +111,7 @@ describe("removeTestPostgres", () => {
 
 describe("databaseCommandEnv", () => {
   it("returns a copy with DATABASE_URL and leaves process.env untouched", () => {
-    const url = "postgres://postgres:secret@127.0.0.1:5999/revenant";
+    const url = "postgres://postgres:secret@127.0.0.1:5999/efterhand";
     const env = databaseCommandEnv(url);
     expect(env.DATABASE_URL).toBe(url);
     expect(process.env.DATABASE_URL).not.toBe(url);

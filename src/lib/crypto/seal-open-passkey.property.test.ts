@@ -17,7 +17,7 @@ import {
 // (design.md Properties 6, 7 and 8). Each property runs 100 times
 // (fast-check numRuns: 100). WebCrypto only; the passkey comes from the fake.
 
-const RP_ID = "revenant.devclef.se";
+const RP_ID = "efterhand.devclef.se";
 const SEALED_AT = "2026-10-31T12:00:00.000Z";
 const OPENS_AT = "2027-02-01T00:00:00.000Z";
 const RUNS = 100;
@@ -221,7 +221,7 @@ describe("Property 8: wrong keys and changes never open the letter", () => {
             salt[index % salt.length] ^= 0x01;
             changed = { ...envelope, prfSalt: encodeBase64url(salt) };
           } else {
-            changed = { ...envelope, rpId: "other.revenant.example" };
+            changed = { ...envelope, rpId: "other.efterhand.example" };
           }
           const hash = await envelopeHash(changed);
 

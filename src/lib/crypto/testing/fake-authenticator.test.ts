@@ -11,10 +11,10 @@ const SALT = Uint8Array.from({ length: 32 }, (_, i) => i);
 function createOptions(): PortCreateOptions {
   return {
     rpId: "localhost",
-    rpName: "Revenant",
+    rpName: "Efterhand",
     userId: new Uint8Array(16),
-    userName: "Revenant demo",
-    userDisplayName: "Revenant demo",
+    userName: "Efterhand demo",
+    userDisplayName: "Efterhand demo",
     challenge: new Uint8Array(32),
     pubKeyCredParams: [{ type: "public-key", alg: -7 }],
     residentKey: "required",

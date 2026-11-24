@@ -14,7 +14,7 @@ import { decodeBase64url, parseEnvelope } from "../seal-format";
 // to R8.8). WebCrypto only; the passkey comes from the fake authenticator, so
 // no WebAuthn is needed.
 
-const RP_ID = "revenant.devclef.se";
+const RP_ID = "efterhand.devclef.se";
 const SEALED_AT = "2026-10-31T12:00:00.000Z";
 const OPENS_AT = "2027-02-01T00:00:00.000Z";
 
@@ -163,7 +163,7 @@ describe("sealLetter input checks run before any derivation", () => {
     ["prfSalt of 31 bytes", (f) => ({ ...f, prfSalt: fresh(31) })],
     ["an empty credentialId", (f) => ({ ...f, credentialId: new Uint8Array(0) })],
     ["a credentialId of 1024 bytes", (f) => ({ ...f, credentialId: fresh(1024) })],
-    ["an uppercase rpId", (f) => ({ ...f, rpId: "Revenant.example" })],
+    ["an uppercase rpId", (f) => ({ ...f, rpId: "Efterhand.example" })],
     ["an empty rpId", (f) => ({ ...f, rpId: "" })],
     ["an rpId with an underscore", (f) => ({ ...f, rpId: "bad_host.example" })],
   ];

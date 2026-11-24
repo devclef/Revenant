@@ -1,0 +1,18 @@
+{
+  "envelope": {
+    "letterId": "BRAbJjE8R1JdaHN-iZSfqg",
+    "sealedAt": "2026-10-31T12:00:00.000Z",
+    "opensAt": "2027-02-01T00:00:00.000Z",
+    "payloadNonce": "XPzBmdT9YaSLo09g",
+    "wrappedDeks": [
+      {
+        "factor": "backup",
+        "nonce": "ku0A17BPzoW_CEKB",
+        "wrappedKey": "l-KI_VOdpA2kyCOatlo7SyM6HIxOwDe2dNbnS2ztwP4I2EM4UnAmaAMXXu9m6D1C"
+      }
+    ],
+    "formatVersion": 2,
+    "payloadCiphertext": "78GVzAs71-IogMb1e8aw7vBqfcFvyJFoUGEW9zKrgsJhiPSlLVN1nXjjjGdfdOLlMh0Nn4byk86s7pNm6Uyvd8cHN_tgf_j-VyPO0og6AGesOxfHF3mcxtP-TMO08DW3MnOeK7PfQspdm0Sr8aNMDW5-YOWMrwQsUQo9oIRp7ATwPdnwiQBtVCUlPqGgXFfUlE_4wjP_7xzCOaQb10D2EpreY6uEzdvPHWURVQTO6BRmFKZdRa-5QhBxtM3DM5zWBK4Bl8cMUNrsVidBUKN7HCtPSaQaO95RohIYVsmnpgGnQRE05I8bLjHzv_Yhzczyld0rT5xaT63ct-K_7d-Cp3O5bb_yUmAk_WL9qiLE-_D6M6rZVGsMU4zY2oSEtMQ-Movzh3Mush8hXZzCth7JPB29zXrSzupbm64tDr9HCndyx5bFC4zNPbXKHfrezD8dG5XOmKllGSUBhFw1RbJSkFsJG7IyKmyb7oJm34WO3vYTFhWtI-f4pnC91JJCqPd0soRUSAjJDJG2rjGPeitRwQeYpg1djA3n2vjhHH_IE8uYzSkFENCLKsTlIi0ta-yyl9BH-oBC2pFZJiiy_Te_iNeR5CwyNJObNw"
+  },
+  "envelopeHash": "27e8f9cf5e54faaada5f43d5b3695464820b553a81e1ebd4704a91f5d7eb8877"
+}
