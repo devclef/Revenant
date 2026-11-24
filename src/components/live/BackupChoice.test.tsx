@@ -10,6 +10,7 @@ const render = (
   value: "card" | "skip" | null = null,
   problem?: string,
   disabled?: boolean,
+  skipHelp?: boolean,
 ) =>
   renderToStaticMarkup(
     createElement(BackupChoice, {
@@ -17,6 +18,7 @@ const render = (
       onChange: () => {},
       problem,
       disabled,
+      skipHelp,
     }),
   );
 
@@ -113,5 +115,38 @@ describe("BackupChoice (spec 13, P7; spec 14, S4)", () => {
     expect(render(null)).not.toContain(
       'aria-describedby="live-backup-choice-problem"',
     );
+  });
+
+  it("keeps the skip help line and its link by default (skipHelp defaults to true)", () => {
+    const html = render();
+    expect(html).toContain(`aria-describedby="live-backup-choice-skip-help"`);
+    expect(html).toMatch(/<span id="live-backup-choice-skip-help"/);
+    expect(html).toContain(LIVE_COPY.backupChoiceSkipHelp);
+    expect(html).toEqual(render(null, undefined, false, true));
+  });
+
+  it("with skipHelp={false}, shows the skip title once and no skip help line", () => {
+    const html = render(null, undefined, false, false);
+    const occurrences = html.split(LIVE_COPY.backupChoiceSkip).length - 1;
+    expect(occurrences).toBe(1);
+    expect(html).not.toContain(LIVE_COPY.backupChoiceSkipHelp);
+    expect(html).not.toMatch(/<span id="live-backup-choice-skip-help"/);
+  });
+
+  it("with skipHelp={false}, leaves no dangling aria-describedby on the skip radio", () => {
+    const html = render(null, undefined, false, false);
+    const skip =
+      html.match(/<input[^>]*id="live-backup-choice-skip"[^>]*>/)?.[0] ?? "";
+    expect(skip).not.toBe("");
+    expect(skip).not.toContain("aria-describedby");
+    expect(html).not.toContain(
+      `aria-describedby="live-backup-choice-skip-help"`,
+    );
+  });
+
+  it("with skipHelp={false}, keeps the card option's help line", () => {
+    const html = render(null, undefined, false, false);
+    expect(html).toContain(`aria-describedby="live-backup-choice-card-help"`);
+    expect(html).toContain(LIVE_COPY.backupChoiceCardHelp);
   });
 });
