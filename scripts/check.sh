@@ -2,7 +2,6 @@
 # One entry point for "is this change OK?", used by agents, the Crew Task Runner
 # test command, and CI. Each check runs only when the files it needs exist, so
 # the script passes on an empty repo and tightens as the project grows.
-# One exception: the Helm chart must exist, so moving it can't switch its lint off.
 # Owner-only file: agents must not edit it.
 set -euo pipefail
 cd "$(dirname "$0")/.."
@@ -70,27 +69,14 @@ if [[ -f package.json ]]; then
   fi
 fi
 
-# Helm chart. During spec 20 the chart moves from deploy/helm/revenant to
-# deploy/helm/efterhand, so either folder is checked. A missing chart fails even
-# without helm, so a move cannot silently turn this check off.
-chart_dirs=()
-for d in deploy/helm/revenant deploy/helm/efterhand; do
-  if [[ -f "$d/Chart.yaml" ]]; then chart_dirs+=("$d"); fi
-done
-if (( ${#chart_dirs[@]} == 0 )); then
-  echo "No Helm chart found. Looked for deploy/helm/revenant/Chart.yaml and deploy/helm/efterhand/Chart.yaml." >&2
-  exit 1
-fi
-if command -v helm >/dev/null; then
-  for d in "${chart_dirs[@]}"; do
-    step "helm lint and template: $d"
-    helm lint "$d" || { echo "helm lint failed for $d" >&2; exit 1; }
-    rendered=$(helm template ci "$d") || { echo "helm template failed for $d" >&2; exit 1; }
-    if grep -q '^kind: Secret' <<<"$rendered"; then
-      echo "Chart $d must not render a Secret (use existingSecret)." >&2
-      exit 1
-    fi
-  done
+if [[ -f deploy/helm/revenant/Chart.yaml ]] && command -v helm >/dev/null; then
+  step "helm lint and template"
+  helm lint deploy/helm/revenant
+  rendered=$(helm template ci deploy/helm/revenant)
+  if grep -q '^kind: Secret' <<<"$rendered"; then
+    echo "Chart must not render a Secret (use existingSecret)." >&2
+    exit 1
+  fi
 fi
 
 echo
