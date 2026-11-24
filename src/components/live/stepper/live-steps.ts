@@ -170,9 +170,9 @@ export function stepForStage(stage: Stage): LiveStep | null {
  * once the countdown has reached zero, so the letter request is made once, at
  * zero (D5.2). Testify and Receipts keep it mounted.
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept so flowPortalTarget's callers keep their shape
 export function flowMounted(
   step: StepperStep,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept so flowPortalTarget's callers keep their shape
   _countdownDone: boolean,
 ): boolean {
   // `break` is the seal break inside the reveal (issue #385). The flow must
