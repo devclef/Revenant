@@ -34,6 +34,7 @@ import {
   stepIndex as todayStepIndex,
   type StepperAction,
   type StepperState,
+  type StepperStep,
 } from "./live-steps";
 
 // ---- Copied from the baseline (3bee3055), verbatim apart from this comment. ----
@@ -160,7 +161,9 @@ const STAGE_SET: Record<Stage, true> = {
 const STAGES = Object.keys(STAGE_SET) as Stage[];
 
 const modeArb = fc.constantFrom<WriteMode>("demo");
-const stepArb = fc.constantFrom(...LIVE_STEPS);
+// GOTO targets include `sealed`, which is not a Demo_Step_List step. The
+// Demo_Mode reducer must ignore it, as the copy does.
+const stepArb = fc.constantFrom<StepperStep>(...LIVE_STEPS, "sealed");
 const stageArb = fc.constantFrom(...STAGES);
 
 const draftEventArb: fc.Arbitrary<WriteDraftEvent> = fc.oneof(
@@ -243,6 +246,7 @@ describe("live-steps oracle (spec 19, task 1.2)", () => {
             expect(nextToday.draft).toEqual(nextOracle.draft);
             expect(nextToday.sealed).toBe(nextOracle.sealed);
             expect(nextToday.stage).toBe(nextOracle.stage);
+            expect(nextToday.mode).toBe("demo");
             // A same-object return is the reducer's "nothing changed" answer. Both
             // reducers must agree on which actions give it.
             expect(Object.is(nextToday, today)).toBe(
