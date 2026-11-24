@@ -24,13 +24,23 @@ import {
 const stepArb: fc.Arbitrary<LiveStep> = fc.constantFrom(...LIVE_STEPS);
 
 describe("Property 1: the Step_Track marks one current step", () => {
-  it("has exactly one current state, at the index of the step", () => {
-    fc.assert(
-      fc.property(stepArb, (step) => {
-        const index = stepIndex(step);
-        const states = stepTrackStates(index);
+  // Validates Requirements 2.2 and 2.6: for any step count from 1 to 6 and any
+  // current step inside it, exactly one entry is current, at that step's index.
+  it("has exactly one current state for any step count from 1 to 6", () => {
+    const countAndIndexArb = fc
+      .integer({ min: 1, max: 6 })
+      .chain((stepCount) =>
+        fc.tuple(
+          fc.constant(stepCount),
+          fc.integer({ min: 0, max: stepCount - 1 }),
+        ),
+      );
 
-        expect(states).toHaveLength(LIVE_STEPS.length);
+    fc.assert(
+      fc.property(countAndIndexArb, ([stepCount, index]) => {
+        const states = stepTrackStates(index, stepCount);
+
+        expect(states).toHaveLength(stepCount);
         expect(states.filter((state) => state === "current")).toHaveLength(1);
         expect(states[index]).toBe("current");
       }),
