@@ -244,12 +244,15 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
   }, [crypto, state.tag, liveFigures, flowCreatePress]);
 
   // Once the seal is stored, the draft is dropped from the stepper state and
-  // Back is no longer offered (spec 09, D2.3). Every mode does this once.
+  // Back is no longer offered (spec 09, D2.3). Every mode does this once. In
+  // Real_Mode the stepper then moves to the sealed step (Keep). Demo_Mode moves
+  // from Seal to Wait through SealedStep instead.
   useEffect(() => {
     if (state.tag === "sealed" && !stepper.sealed) {
       dispatchStepper({ type: "SEALED" });
+      if (mode === "real") dispatchStepper({ type: "GOTO", step: "sealed" });
     }
-  }, [state.tag, stepper.sealed]);
+  }, [state.tag, stepper.sealed, mode]);
 
   return (
     <div

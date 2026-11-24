@@ -126,6 +126,11 @@ describe("SealPage in real mode", () => {
     }
     const write = renderToStaticMarkup(createElement(SealPage, base));
     expect(write).toContain('data-live-step="write"');
+    // The Write step is the desk in Real_Mode too (spec 19): the PRF_Hint is
+    // drawn only by the Seal step, and the old single form card is not rendered.
+    expect(write).not.toContain(LIVE_COPY.prfHint);
+    expect(write).toContain('data-write-desk=""');
+    expect(write).not.toContain('data-card="live-write"');
   });
 
   it("renders the /seal form outside the demo scope the two-column rule needs", () => {
@@ -143,6 +148,9 @@ describe("SealPage in real mode", () => {
     expect(real).toMatch(/<fieldset class="[^"]*occasions[^"]*"/);
     expect(real).not.toContain('data-seal-mode="demo"');
     expect(real).not.toMatch(/class="[^"]*liveWrite[^"]*"/);
+    // The real Write step is the desk (spec 19), so the test notice is gone.
+    expect(real).toContain('data-write-desk=""');
+    expect(real).not.toContain("This is a test site.");
   });
 
   it("puts the demo Write step's occasion control inside the data-seal-mode=demo root", () => {
