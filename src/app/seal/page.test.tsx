@@ -16,8 +16,16 @@ vi.mock("@/components/live/SealPage", () => ({
   },
 }));
 
+// Capture the props the page hands to SceneShell.
+const sceneShellCalls: Array<Record<string, unknown>> = [];
 vi.mock("@/components/ceremony/scene/SceneShell", () => ({
-  SceneShell: ({ children }: { children: unknown }) => children,
+  SceneShell: ({
+    children,
+    ...props
+  }: { children: unknown } & Record<string, unknown>) => {
+    sceneShellCalls.push(props);
+    return children;
+  },
 }));
 
 // The not-found screen (BrandedPage) uses the motion and skip providers.
@@ -35,6 +43,7 @@ afterEach(() => {
   vi.unstubAllEnvs();
   vi.resetModules();
   sealPageCalls.length = 0;
+  sceneShellCalls.length = 0;
 });
 
 async function loadPage() {
@@ -74,6 +83,43 @@ describe("/seal page", () => {
       rpId: "revenant.devclef.se",
       appOrigin: "https://revenant.devclef.se",
       mode: "real",
+    });
+  });
+
+  it("sits on the plain Scene with the backdrop, no demo chip and no sound", async () => {
+    vi.stubEnv("REAL_SEALING", "on");
+    vi.stubEnv("RP_ID", "revenant.devclef.se");
+    const RealSealPage = await loadPage();
+    renderToStaticMarkup(createElement(RealSealPage));
+    expect(sceneShellCalls).toHaveLength(1);
+    expect(sceneShellCalls[0]).toMatchObject({
+      variant: "plain",
+      demo: false,
+      backdrop: true,
+    });
+    expect(sceneShellCalls[0]).not.toHaveProperty("sound");
+  });
+
+  it("renders no Live_Stepper on the not-found screen (REAL_SEALING off)", async () => {
+    vi.stubEnv("REAL_SEALING", "");
+    vi.stubEnv("RP_ID", "revenant.devclef.se");
+    const RealSealPage = await loadPage();
+    const html = renderToStaticMarkup(createElement(RealSealPage));
+    expect(html).not.toContain("data-live-stepper");
+    expect(sealPageCalls).toHaveLength(0);
+  });
+
+  it("renders no Live_Stepper when RP_ID is empty, and no SealPage", async () => {
+    vi.stubEnv("REAL_SEALING", "on");
+    vi.stubEnv("RP_ID", "   ");
+    const RealSealPage = await loadPage();
+    const html = renderToStaticMarkup(createElement(RealSealPage));
+    expect(html).not.toContain("data-live-stepper");
+    expect(sealPageCalls).toHaveLength(0);
+    expect(sceneShellCalls[0]).toMatchObject({
+      variant: "plain",
+      demo: false,
+      backdrop: true,
     });
   });
 });
