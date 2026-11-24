@@ -125,16 +125,20 @@ export function SealStep({
         </p>
       </div>
       <div data-seal-text="" className={styles.text}>
-        {opening !== undefined ? (
-          <div data-seal-opening="">{opening}</div>
-        ) : null}
-        <BackupChoice
-          value={backupChoice}
-          onChange={onBackupChoice}
-          problem={backupChoiceProblem}
-          disabled={tag !== "write"}
-          skipHelp={!real}
-        />
+        {/* The opening and the Backup_Choice share one child slot, so the
+            links after them keep the child index React uses for useId. */}
+        <>
+          {opening !== undefined ? (
+            <div data-seal-opening="">{opening}</div>
+          ) : null}
+          <BackupChoice
+            value={backupChoice}
+            onChange={onBackupChoice}
+            problem={backupChoiceProblem}
+            disabled={tag !== "write"}
+            skipHelp={!real}
+          />
+        </>
         {prfMissing ? (
           <p className={styles.body} role="status">
             {LIVE_COPY.prfHint}
