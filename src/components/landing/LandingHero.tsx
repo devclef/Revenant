@@ -32,9 +32,15 @@ export type LandingHeroProps = {
   personaCount: number;
   /** Whether the live demo (Demo 2) is on. Shows the secondary call to action. */
   demo2On: boolean;
+  /** Whether REAL_SEALING is on. Shows the quiet link to the real sealing flow. */
+  realSealing?: boolean;
 };
 
-export function LandingHero({ personaCount, demo2On }: LandingHeroProps) {
+export function LandingHero({
+  personaCount,
+  demo2On,
+  realSealing = false,
+}: LandingHeroProps) {
   const { before, kept } = splitTagline(BRAND_COPY.tagline);
   const { sentence, rest } = splitFirstSentence(before);
   // One persona gets the singular label. Two or more get the plural.
@@ -76,6 +82,13 @@ export function LandingHero({ personaCount, demo2On }: LandingHeroProps) {
           </Link>
         ) : null}
       </div>
+      {realSealing ? (
+        <p className={styles.realSeal} data-real-seal="">
+          <Link href="/seal" className={styles.realSealLink}>
+            {LANDING_COPY.realSealLink}
+          </Link>
+        </p>
+      ) : null}
       <div data-block="seal">
         <HeroEnvelope />
       </div>

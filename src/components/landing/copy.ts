@@ -25,6 +25,9 @@ export const LANDING_COPY = {
 
   /** The outlined call to action to the live demo, shown while Demo_2_On. */
   secondaryCta: "Seal your own. It opens 30 seconds after you seal it.",
+
+  /** The link to the real sealing flow, shown while REAL_SEALING is on. */
+  realSealLink: "Seal a real letter",
 } as const;
 
 export type LandingCopy = typeof LANDING_COPY;

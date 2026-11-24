@@ -111,3 +111,48 @@ describe("LandingHero blocks and reserved ghost box", () => {
     expect(html).toContain("data-landing-seal");
   });
 });
+
+describe("LandingHero real seal link while REAL_SEALING is on", () => {
+  function realMarkup(realSealing?: boolean, personaCount = 1, demo2On = false): string {
+    return renderToStaticMarkup(
+      <LandingHero
+        personaCount={personaCount}
+        demo2On={demo2On}
+        realSealing={realSealing}
+      />,
+    );
+  }
+
+  it("renders no real seal link while realSealing is off", () => {
+    expect(realMarkup(false)).not.toContain("data-real-seal");
+    expect(realMarkup(false)).not.toContain(LANDING_COPY.realSealLink);
+  });
+
+  it("renders no real seal link when the prop is omitted (default false)", () => {
+    expect(realMarkup(undefined)).not.toContain("data-real-seal");
+  });
+
+  it("renders the real seal link to /seal while realSealing is on", () => {
+    const html = realMarkup(true);
+    const para = html.match(/<p ([^>]*data-real-seal=""[^>]*)>(.*?)<\/p>/);
+    expect(para).not.toBeNull();
+    const link = para?.[2].match(/<a ([^>]*)>([^<]*)<\/a>/);
+    expect(link).not.toBeNull();
+    expect(link?.[1]).toContain('href="/seal"');
+    expect(link?.[2]).toBe(LANDING_COPY.realSealLink);
+  });
+
+  it("gives the real seal link no data-cta, cta, accent or outlined class", () => {
+    const html = realMarkup(true);
+    const para = html.match(/<p [^>]*data-real-seal=""[^>]*>(.*?)<\/p>/);
+    expect(para?.[1]).not.toContain("data-cta");
+    expect(para?.[1]).not.toMatch(/accent|outlined|cta/);
+  });
+
+  it("places the real seal link after the actions and before the seal block", () => {
+    const html = realMarkup(true);
+    const real = html.indexOf("data-real-seal");
+    expect(html.indexOf('data-block="actions"')).toBeLessThan(real);
+    expect(real).toBeLessThan(html.indexOf('data-block="seal"'));
+  });
+});
