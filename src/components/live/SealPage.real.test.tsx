@@ -282,6 +282,13 @@ describe("Real_Mode Write step", () => {
     expect(html).not.toContain('id="real-opens-on"');
     expect(html).not.toContain(REAL_COPY.intro);
   });
+
+  it("shows no 'Seal your own letter' text on the desk", () => {
+    const html = renderReal("write", { tag: "write" });
+    expect(html).toContain('data-write-desk=""');
+    expect(html).not.toContain(LIVE_COPY.liveHeading);
+    expect(html).not.toContain("Seal your own letter");
+  });
 });
 
 describe("Real_Mode press with no opening date", () => {

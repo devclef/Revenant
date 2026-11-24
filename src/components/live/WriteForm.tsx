@@ -693,6 +693,7 @@ export function WriteForm({
         receipt={deskReceipt}
         check={checkInput}
         rehearsal={rehearsal}
+        real={realDate !== undefined}
         onFoldPass={() => onNext?.()}
         onFoldFail={() => {
           onTouch(TOUCH_FIELDS.letter);

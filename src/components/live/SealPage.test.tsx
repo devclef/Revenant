@@ -240,9 +240,8 @@ describe("SealPage in demo mode (/demo/live)", () => {
         mode: "real",
       }),
     );
-    // The page's h1 is the demo heading. The desk eyebrow shares the same
-    // string in both modes and is not checked here.
-    expect(html).not.toMatch(/<h1[^>]*>Seal your own letter<\/h1>/);
+    // The Real_Mode desk has no demo heading: the eyebrow is left out there.
+    expect(html).not.toContain("Seal your own letter");
   });
 });
 

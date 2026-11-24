@@ -51,6 +51,11 @@ export interface WriteDeskProps {
   check: WriteCheckInput;
   /** Shows the Rehearsal_Line under the Fold_Button. Set only on /demo/live. */
   rehearsal?: boolean;
+  /**
+   * Real_Mode (`/seal`). The desk eyebrow "Seal your own letter" is the demo
+   * heading, so it is left out here. Demo_Mode keeps it.
+   */
+  real?: boolean;
   /** The Write_Check passed and the Fold_Button was pressed: move to Seal. */
   onFoldPass: () => void;
   /**
@@ -136,6 +141,7 @@ export function WriteDesk({
   receipt,
   check,
   rehearsal = false,
+  real = false,
   onFoldPass,
   onFoldFail,
 }: WriteDeskProps) {
@@ -193,7 +199,7 @@ export function WriteDesk({
     >
       <StepHeader
         headingId="live-write-heading"
-        eyebrow={LIVE_COPY.liveHeading}
+        eyebrow={real ? undefined : LIVE_COPY.liveHeading}
         heading={DESK_COPY.heading}
         intro={DESK_COPY.intro}
       />
