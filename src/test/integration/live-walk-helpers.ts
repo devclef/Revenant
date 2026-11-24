@@ -1,10 +1,17 @@
 /**
- * Pure helpers for the Live_Walk (spec 12, Q1 and Q2). No browser and no network.
- * The persona date checks (spec 18) import the letter-date formatters only. The
- * walk replay in `live-walk.test.ts` uses them to name Step_Shots,
- * list the expected set, report missing shots, count Motion_Controls, look for
- * placeholder figures in the final reveal, and record each step's result.
+ * Helpers for the Live_Walk (spec 12, Q1 and Q2). Most are pure. The browser and
+ * container helpers at the end of this file start headless Chromium with a virtual
+ * passkey, and a throwaway Postgres container for the real walk. They run only when
+ * a walk test calls them. The walk replay in `live-walk.test.ts` uses the pure
+ * helpers to name Step_Shots, list the expected set, report missing shots, count
+ * Motion_Controls, look for placeholder figures in the final reveal, and record
+ * each step's result.
  */
+
+import { execFile } from "node:child_process";
+import { randomBytes } from "node:crypto";
+
+import { chromium, type Browser, type Page } from "playwright-core";
 
 import {
   formatCalendarDate,
@@ -1886,4 +1893,225 @@ export function buildReceiptsReport(
     ),
   ];
   return { persona, rows, retrieved, lines };
+}
+
+/* ---------------------------------------------------------------------------
+ * Browser, passkey, container and box helpers for the real walk.
+ * ------------------------------------------------------------------------- */
+
+/**
+ * Start headless Chromium for the walk. It uses `CHROMIUM_PATH` when that is set,
+ * otherwise Playwright's own build. The caller closes the browser.
+ */
+export async function launchWalkBrowser(): Promise<Browser> {
+  return chromium.launch({
+    headless: true,
+    executablePath: process.env.CHROMIUM_PATH || undefined,
+  });
+}
+
+/**
+ * Attach a virtual WebAuthn authenticator to the page's target. It is an internal
+ * CTAP2 platform authenticator with resident keys, user verification and the PRF
+ * extension, so `navigator.credentials` calls complete without a real device.
+ * Returns the authenticator id that the CDP session reports.
+ */
+export async function attachPrfAuthenticator(page: Page): Promise<string> {
+  const session = await page.context().newCDPSession(page);
+  await session.send("WebAuthn.enable", { enableUI: false });
+  const result = (await session.send("WebAuthn.addVirtualAuthenticator", {
+    options: {
+      protocol: "ctap2",
+      transport: "internal",
+      hasResidentKey: true,
+      hasUserVerification: true,
+      isUserVerified: true,
+      hasPrf: true,
+      automaticPresenceSimulation: true,
+    },
+  })) as { authenticatorId: string };
+  return result.authenticatorId;
+}
+
+/** The image the walk database runs. It matches the image the Helm chart deploys. */
+export const TEST_POSTGRES_IMAGE = "postgres:17-alpine";
+
+/** The database created inside the throwaway container. */
+export const TEST_DB_NAME = "revenant";
+
+const TEST_DB_USER = "postgres";
+
+/** A throwaway Postgres container. The URL holds the generated password, so never log it. */
+export type TestPostgres = { name: string; databaseUrl: string };
+
+/**
+ * A new container name. It always contains "test", which the remover checks
+ * before it removes anything.
+ */
+export function testContainerName(): string {
+  return `revenant-test-pg-${randomBytes(4).toString("hex")}`;
+}
+
+/**
+ * Run the docker CLI with the given argv. Returns trimmed stdout. Errors carry
+ * docker's stderr, which never contains a secret, because secrets go through
+ * `env` and never through argv.
+ */
+function runDocker(args: string[], env: NodeJS.ProcessEnv = process.env): Promise<string> {
+  return new Promise((resolve, reject) => {
+    execFile(
+      "docker",
+      args,
+      { env, maxBuffer: 1024 * 1024 },
+      (error, stdout, stderr) => {
+        if (error) {
+          const detail = stderr.trim() || error.message;
+          reject(new Error(`docker ${args[0]} failed: ${detail}`));
+          return;
+        }
+        resolve(stdout.trim());
+      },
+    );
+  });
+}
+
+/**
+ * The environment for one child command that needs the database. It is a fresh
+ * object, so `DATABASE_URL` is passed to that command only and is never set on
+ * `process.env`.
+ */
+export function databaseCommandEnv(databaseUrl: string): NodeJS.ProcessEnv {
+  return { ...process.env, DATABASE_URL: databaseUrl };
+}
+
+/** Wait for the container's Postgres to accept TCP connections, up to `attempts` seconds. */
+async function waitForPostgres(name: string, attempts: number): Promise<void> {
+  for (let i = 0; i < attempts; i += 1) {
+    try {
+      await runDocker([
+        "exec",
+        name,
+        "pg_isready",
+        "-h",
+        "127.0.0.1",
+        "-U",
+        TEST_DB_USER,
+      ]);
+      return;
+    } catch {
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+  }
+  throw new Error(`Postgres in container ${name} did not accept connections in time`);
+}
+
+/**
+ * Start a throwaway Postgres container on a free loopback port and wait until it
+ * accepts connections. The password reaches docker through its environment, not
+ * argv. If start-up fails, the container is removed before the error is thrown.
+ */
+export async function startTestPostgres(): Promise<TestPostgres> {
+  const name = testContainerName();
+  const password = randomBytes(18).toString("base64url");
+  try {
+    await runDocker(
+      [
+        "run",
+        "-d",
+        "--name",
+        name,
+        "-e",
+        "POSTGRES_PASSWORD",
+        "-e",
+        `POSTGRES_DB=${TEST_DB_NAME}`,
+        "-p",
+        "127.0.0.1::5432",
+        TEST_POSTGRES_IMAGE,
+      ],
+      { ...process.env, POSTGRES_PASSWORD: password },
+    );
+    const mapping = await runDocker(["port", name, "5432"]);
+    const firstLine = mapping.split("\n")[0]?.trim() ?? "";
+    const port = Number(firstLine.split(":").pop());
+    if (!Number.isInteger(port) || port <= 0) {
+      throw new Error(`could not read the host port of container ${name}`);
+    }
+    await waitForPostgres(name, 60);
+    return {
+      name,
+      databaseUrl: `postgres://${TEST_DB_USER}:${encodeURIComponent(password)}@127.0.0.1:${port}/${TEST_DB_NAME}`,
+    };
+  } catch (error) {
+    await removeTestPostgres(name).catch(() => undefined);
+    throw error;
+  }
+}
+
+/**
+ * Force-remove a test container. It refuses any name without "test", so it cannot
+ * remove a container it did not start. A container that is already gone is not an error.
+ */
+export async function removeTestPostgres(name: string): Promise<void> {
+  if (!name.includes("test")) {
+    throw new Error(`Refusing to remove container "${name}": its name must contain "test".`);
+  }
+  try {
+    await runDocker(["rm", "-f", "-v", name]);
+  } catch (error) {
+    if (error instanceof Error && /No such container/i.test(error.message)) return;
+    throw error;
+  }
+}
+
+/**
+ * Run `run` against a fresh test Postgres. The container is removed in a finally
+ * path, so a failing walk still cleans up.
+ */
+export async function withTestPostgres<T>(
+  run: (db: TestPostgres) => Promise<T>,
+): Promise<T> {
+  const db = await startTestPostgres();
+  try {
+    return await run(db);
+  } finally {
+    await removeTestPostgres(db.name);
+  }
+}
+
+/**
+ * Slack, in CSS pixels, for subpixel rounding when a box is checked against the
+ * box that holds it.
+ */
+export const BOX_INSIDE_TOLERANCE_PX = 0.5;
+
+/**
+ * Whether `inner` lies fully inside `outer` on every side, within `tolerance`.
+ * An empty inner box (zero width or height) is not inside anything, so it fails.
+ */
+export function rectInside(
+  inner: BoxRect,
+  outer: BoxRect,
+  tolerance: number = BOX_INSIDE_TOLERANCE_PX,
+): boolean {
+  if (inner.right <= inner.left || inner.bottom <= inner.top) return false;
+  return (
+    inner.left >= outer.left - tolerance &&
+    inner.right <= outer.right + tolerance &&
+    inner.top >= outer.top - tolerance &&
+    inner.bottom <= outer.bottom + tolerance
+  );
+}
+
+/** One check for `rectInside`, with both boxes in the message so a failure shows the geometry. */
+export function checkRectInside(
+  label: string,
+  inner: BoxRect,
+  outer: BoxRect,
+): StepCheck {
+  const expected = `${label} sits fully inside its container`;
+  const geometry = `inner ${JSON.stringify(inner)}, outer ${JSON.stringify(outer)}`;
+  if (rectInside(inner, outer)) {
+    return { ok: true, expected, message: `PASS ${expected}` };
+  }
+  return { ok: false, expected, message: `FAIL ${label} is not fully inside its container (${geometry})` };
 }
