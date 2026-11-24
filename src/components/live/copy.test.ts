@@ -120,7 +120,7 @@ describe("LIVE_COPY claims with code behind them", () => {
   it("says no letter text was sent when the passkey fails, not that nothing was stored (the prepare route writes a draft row)", () => {
     expect(LIVE_COPY.cannotLockBody).not.toContain("nothing was stored");
     expect(LIVE_COPY.cannotLockBody).toContain(
-      "none of its text was sent to Revenant",
+      "none of its text was sent to Efterhand",
     );
   });
 });
@@ -274,7 +274,7 @@ describe("LIVE_COPY rehearsal line (spec 11, L4.1)", () => {
 describe("LIVE_COPY picker keys (spec 12 K2, K3)", () => {
   it("pickerNote is the plain note about figures not yet fetched, without judgement", () => {
     expect(LIVE_COPY.pickerNote).toBe(
-      "Revenant hasn't fetched newer figures yet. Each figure below shows the date it was retrieved.",
+      "Efterhand hasn't fetched newer figures yet. Each figure below shows the date it was retrieved.",
     );
     expect(LIVE_COPY.pickerNote).not.toMatch(/\b(rose|fell|soar|good|bad|up|down)\b/i);
   });

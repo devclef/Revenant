@@ -99,13 +99,13 @@ describe("nowMessageFor exact outcome per branch (issue #339, X3.1)", () => {
 
   it("returns nowRetired only when the series is missing from the response", () => {
     expect(nowMessageFor({ kind: "series_missing" })).toBe(
-      "Revenant no longer publishes this series. The sealed figure is shown on its own.",
+      "Efterhand no longer publishes this series. The sealed figure is shown on its own.",
     );
   });
 
   it("returns nowNotYet when the series is listed but has no figure", () => {
     expect(nowMessageFor({ kind: "no_figure" })).toBe(
-      "Revenant hasn't fetched a figure for this series yet. The sealed figure is shown on its own.",
+      "Efterhand hasn't fetched a figure for this series yet. The sealed figure is shown on its own.",
     );
   });
 
@@ -117,7 +117,7 @@ describe("nowMessageFor exact outcome per branch (issue #339, X3.1)", () => {
         retrievedAt: "2026-10-30T14:02:11Z",
       }),
     ).toBe(
-      "Revenant hasn't fetched a newer figure yet. This one was retrieved 30 October 2026.",
+      "Efterhand hasn't fetched a newer figure yet. This one was retrieved 30 October 2026.",
     );
   });
 
@@ -176,7 +176,7 @@ describe("Now_Figure message copy (A3.6)", () => {
 
   it("the fallback note names the retrieved date", () => {
     expect(NOW_MESSAGES.fallbackNote).toBe(
-      "Revenant hasn't fetched a newer figure yet. This one was retrieved 30 October 2026.",
+      "Efterhand hasn't fetched a newer figure yet. This one was retrieved 30 October 2026.",
     );
   });
 });

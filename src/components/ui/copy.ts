@@ -63,12 +63,12 @@ export const UI_COPY = {
     letter: {
       title: "Your letter",
       description:
-        "A letter sealed with Revenant. It stays closed until its opening date.",
+        "A letter sealed with Efterhand. It stays closed until its opening date.",
     },
     howItIsSealed: {
       title: "How a letter is sealed",
       description:
-        "How a Revenant letter is sealed, what it holds, and what Revenant cannot read.",
+        "How an Efterhand letter is sealed, what it holds, and what Efterhand cannot read.",
     },
     notFound: {
       title: "Not found",

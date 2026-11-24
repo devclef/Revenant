@@ -119,7 +119,7 @@ describe("How_Page statements (R18.1 to R18.5)", () => {
     const body = sectionBody("needs-revenant");
     expect(html).toContain(body);
     expect(body).toContain(
-      "this Revenant server must release its time-lock secret",
+      "this Efterhand server must release its time-lock secret",
     );
     expect(body).toContain(
       "If the service or its database is gone, sealed letters cannot be opened",

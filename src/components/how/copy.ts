@@ -44,8 +44,8 @@ export const HOW_COPY = {
     },
     {
       id: "needs-revenant",
-      title: "Opening needs Revenant",
-      body: "To open a letter, this Revenant server must release its time-lock secret. If the service or its database is gone, sealed letters cannot be opened. Keep your letter card and any backup key card, because they are how you find the letter again.",
+      title: "Opening needs Efterhand",
+      body: "To open a letter, this Efterhand server must release its time-lock secret. If the service or its database is gone, sealed letters cannot be opened. Keep your letter card and any backup key card, because they are how you find the letter again.",
     },
     {
       id: "fingerprint",
@@ -55,7 +55,7 @@ export const HOW_COPY = {
     {
       id: "test-letters",
       title: "Test letters",
-      body: "Letters sealed on revenant.devclef.se count as test letters. If Revenant moves to another domain, those letters can be opened only on revenant.devclef.se or with their backup key, because passkeys are tied to the domain they were made on.",
+      body: "Letters sealed on revenant.devclef.se count as test letters. If Efterhand moves to another domain, those letters can be opened only on revenant.devclef.se or with their backup key, because passkeys are tied to the domain they were made on.",
     },
   ] as const satisfies readonly HowSection[],
 

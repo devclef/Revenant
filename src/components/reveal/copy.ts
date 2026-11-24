@@ -116,7 +116,7 @@ export const REVEAL_COPY = {
 
   /** The letter is in a format this version can't read (unsupported_format). */
   unsupportedFormat:
-    "This letter was sealed in a format this version of Revenant can't read. Try again after the next update, or go back to the demo letters.",
+    "This letter was sealed in a format this version of Efterhand can't read. Try again after the next update, or go back to the demo letters.",
 
   /** The letter opened but its contents are malformed (invalid_payload). */
   invalidPayload:
@@ -475,7 +475,7 @@ export const REVEAL_COPY = {
    * longer published, or the series has no figure. The then figure stays with it.
    */
   nowUnavailableMissing:
-    "This figure is no longer published by Revenant. The figure written then is shown with it.",
+    "This figure is no longer published by Efterhand. The figure written then is shown with it.",
 
   /**
    * The figures request failed: a network error, a non-2xx status or a body
@@ -491,21 +491,21 @@ export const REVEAL_COPY = {
    * published" (issue #250, A3.1).
    */
   nowRetired:
-    "Revenant no longer publishes this series. The sealed figure is shown on its own.",
+    "Efterhand no longer publishes this series. The sealed figure is shown on its own.",
 
   /**
    * The series is in the catalogue but has no figure yet (A3.2). It never says
    * the series is gone.
    */
   nowNotYet:
-    "Revenant hasn't fetched a figure for this series yet. The sealed figure is shown on its own.",
+    "Efterhand hasn't fetched a figure for this series yet. The sealed figure is shown on its own.",
 
   /**
    * The now figure is a bundled fallback, not a stored one (A3.3). `{date}` is
    * the figure's retrieved date in UTC.
    */
   fallbackNote:
-    "Revenant hasn't fetched a newer figure yet. This one was retrieved {date}.",
+    "Efterhand hasn't fetched a newer figure yet. This one was retrieved {date}.",
 
   /**
    * The one line on a Single_Figure_View card (spec 12 Z2.2): the sealed figure

@@ -59,7 +59,7 @@ export const LIVE_COPY = {
   figurePeriod: "Period: {period}",
   /** The Picker_Note: shown once above the picker list when any figure is a fallback (spec 12 K3.1). */
   pickerNote:
-    "Revenant hasn't fetched newer figures yet. Each figure below shows the date it was retrieved.",
+    "Efterhand hasn't fetched newer figures yet. Each figure below shows the date it was retrieved.",
   /** The retrieved date on a fallback row, as a Short_Date (spec 12 K2.4). `{date}` is the Short_Date. */
   pickerRetrieved: "Retrieved {date}",
   /** The period on a picker row, as a Short_Date or the period's own form (spec 12 K2.4). `{period}` is that text. */
@@ -126,7 +126,7 @@ export const LIVE_COPY = {
     "Sealing your own letter is not available on this server. Go back to the demo.",
   cannotLockTitle: "This device cannot lock a letter with a passkey",
   cannotLockBody:
-    "Your letter has not been sealed, and none of its text was sent to Revenant. Seal it with a backup key instead.",
+    "Your letter has not been sealed, and none of its text was sent to Efterhand. Seal it with a backup key instead.",
   cannotLockNext1:
     "Try another device or browser. If your browser offers it, choose the option to use a phone or tablet.",
   cannotLockNext2:
@@ -144,7 +144,7 @@ export const LIVE_COPY = {
   failedServerBody:
     "The server could not finish. Nothing was sealed, and your letter is still here. Try again.",
   clockBody:
-    "Your device clock differs from Revenant's clock by more than the demo allows. Nothing was sealed. Check your device time and try again.",
+    "Your device clock differs from Efterhand's clock by more than the demo allows. Nothing was sealed. Check your device time and try again.",
   busyBody:
     "The live demo is busy right now. Nothing was sealed. Try again later. Your letter is still here.",
   missingThenBody:
@@ -220,7 +220,7 @@ export const LIVE_COPY = {
   printCard: "Print or save as PDF",
   downloadIcs: "Add to your calendar",
   icsSummary: "Your letter opens",
-  icsDescription: "Open your Revenant letter: {link}",
+  icsDescription: "Open your Efterhand letter: {link}",
   backupCardOption: "Also make a backup key card",
   backupCardOptionHint:
     "A backup key opens the letter on its own after the opening date. Keep it like a house key.",
@@ -273,7 +273,7 @@ export const LIVE_COPY = {
   selfReportedTitle: "Your own numbers",
   /** Explains the group: sealed as typed, labelled self-reported, never official. */
   selfReportedHint:
-    "Add numbers only you know, such as your own rent. They are sealed as you type them and labelled self-reported. Revenant does not check them against any source.",
+    "Add numbers only you know, such as your own rent. They are sealed as you type them and labelled self-reported. Efterhand does not check them against any source.",
   selfReportedAdd: "Add a number of your own",
   /** The label on each own-number Receipt_Row. Own numbers are never official. */
   selfReportedTag: "self-reported",
@@ -325,7 +325,7 @@ export const REAL_COPY = {
   tooEarly:
     "That date is too soon. A letter must open at least three months after it is sealed. Choose a later date and try again. Nothing was sealed, and your letter is still here.",
   invalidDate:
-    "Revenant could not seal the letter with that date. Choose another date and try again. Nothing was sealed, and your letter is still here.",
+    "Efterhand could not seal the letter with that date. Choose another date and try again. Nothing was sealed, and your letter is still here.",
   dateMissing: "Choose an opening date before you seal.",
   stillSealed: "This letter is still sealed.",
   /**
@@ -351,10 +351,10 @@ export const REAL_COPY = {
     "If your device created a passkey for this letter, you can delete it from your passkey manager.",
   /** The failed screen when the device clock is too far from Revenant's clock. */
   clockBody:
-    "Your device clock differs from Revenant's clock by too much. Nothing was sealed. Check your device time and try again.",
+    "Your device clock differs from Efterhand's clock by too much. Nothing was sealed. Check your device time and try again.",
   /** The failed screen when the server is busy. */
   busyBody:
-    "Revenant is busy right now. Nothing was sealed. Try again later. Your letter is still here.",
+    "Efterhand is busy right now. Nothing was sealed. Try again later. Your letter is still here.",
 } as const;
 
 /** The short field names used in the partly filled row message (selfReportedMissing). */
