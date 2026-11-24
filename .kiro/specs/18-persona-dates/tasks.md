@@ -333,7 +333,7 @@ No task below starts until that PR is merged. The other open questions keep the 
   - J10 fails from here until task 16. That is expected.
   - _Requirements: 6.11, 11.4, 11.6, 11.8, 11.11_
 
-- [ ] 15. PR B: record the three production hashes
+- [x] 15. PR B: record the three production hashes
   - Agent: `frontend-dev` · Depends on: 14 · Estimated size: S, 3 changed lines
   - Scope: the three `envelope_hash` values in `content/personas/personas.json`.
   - Design sections: "9. Reseal".
