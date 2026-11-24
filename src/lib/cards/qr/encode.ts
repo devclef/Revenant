@@ -90,12 +90,13 @@ function interleave(data: readonly number[], version: number, level: QrLevel): n
   return out;
 }
 
-function buildMasked(version: number, level: QrLevel, codewords: readonly number[], mask: number): QrGrid {
+// Format information is drawn after the mask is scored, as the reference
+// encoder (qrencode) does. Scoring with it in place picks other masks.
+function buildMasked(version: number, codewords: readonly number[], mask: number): QrGrid {
   const grid = createGrid(version);
   drawFunctionPatterns(grid, version);
   placeCodewords(grid, codewords);
   applyMask(grid, mask);
-  drawFormatBits(grid, level, mask);
   return grid;
 }
 
@@ -114,11 +115,12 @@ export function encodeQr(text: string, level: QrLevel = "M"): QrMatrix {
 
   let best: { grid: QrGrid; mask: number; penalty: number } | null = null;
   for (const mask of MASKS) {
-    const grid = buildMasked(version, level, codewords, mask);
+    const grid = buildMasked(version, codewords, mask);
     const penalty = penaltyScore(grid.modules);
     if (best === null || penalty < best.penalty) best = { grid, mask, penalty };
   }
   if (best === null) throw new RangeError("no mask could be applied");
+  drawFormatBits(best.grid, level, best.mask);
 
   return {
     size: best.grid.size,
