@@ -70,6 +70,7 @@ The gap between memory and record is the product. Revenant does not interpret th
 - **Calendar file:** an `.ics` file with the opening date and the same link, generated at sealing.
 - **Domain:** the MVP and testing run on `revenant.devclef.se`. Passkeys are bound to that domain. If production moves to a different domain later, letters sealed on `revenant.devclef.se` can only be opened there or with their backup key. Treat letters sealed before the final domain is chosen as test letters.
 - **Dependence on Revenant (MVP):** opening a letter requires the Revenant server, which holds the time-lock secret. Accepted for the MVP; see `tech.md`.
+- **Real sealing (`/seal`):** on for judging (`REAL_SEALING=on`), with no test-letter notice. It uses the same stepper as `/demo/live` for Write and Press the seal, then ends on a Keep step with the sealed view. The home page links to it with one quiet text link while it is on.
 - **Delivery:** no email or post in the MVP. The letter card and calendar file are how the user finds the letter again.
 
 ## Demo mode (for judges)
@@ -115,7 +116,6 @@ The hackathon demo comes first, not the full product.
 ## Open product questions
 
 - Final production domain (subdomain of devclef.se or a new domain). MVP uses `revenant.devclef.se`.
-- Whether real sealing (`/seal`) is switched on for judging, with a visible test-letter notice. Go or no-go on 20 November 2026; with no decision it stays off.
 - Which personas and figures to use in Demo 1.
 - Delivery method for opened letters (email, physical mail, other).
 - Full metric list per region and final recall question wording (after the MVP works).
