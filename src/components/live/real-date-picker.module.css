@@ -1,0 +1,69 @@
+/*
+ * The Date_Picker on the dark Seal_Step surface (spec 19, Components 6). The
+ * Seal_Step sits on the desk colour #0b0912, so the paper ink of live.module.css
+ * would not meet AA here. The class names match live.module.css, and
+ * RealDatePicker picks this module for surface "dark".
+ *
+ * Text colours come from the seal-step body colour and white. Input focus uses
+ * the orange Accent, the one place orange marks "you" on this surface.
+ */
+
+.field {
+  margin: 1.5rem 0;
+  border: 0;
+  padding: 0;
+}
+
+.label {
+  display: block;
+  padding: 0;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  font-weight: 600;
+  color: #ffffff;
+}
+
+.hint {
+  margin: 0.25rem 0 0.5rem;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  color: #bdb4dc;
+}
+
+.count {
+  margin: 0.375rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.875rem;
+  color: #bdb4dc;
+}
+
+.problem {
+  margin: 0.375rem 0 0;
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  color: #ffffff;
+}
+
+.problem:empty {
+  display: none;
+}
+
+.dateInput {
+  display: block;
+  box-sizing: border-box;
+  min-height: 44px;
+  max-width: 100%;
+  padding: 0.5rem 0.75rem;
+  font-family: var(--font-sans);
+  font-size: 1rem;
+  color: #ffffff;
+  background-color: transparent;
+  border: 1px solid #bdb4dc;
+  border-radius: 3px;
+  color-scheme: dark;
+}
+
+.dateInput:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
