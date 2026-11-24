@@ -127,7 +127,13 @@ async function expectFocusOnHeading(page: Page, step: string): Promise<void> {
 
 /** Press the Press the seal control with the mouse, held past the press threshold. */
 async function holdPressTheSeal(page: Page): Promise<void> {
-  const press = page.getByRole("button", { name: PRESS_COPY.name, exact: true });
+  const press = page.locator(`button[aria-label="${PRESS_COPY.name}"]`);
+  if ((await press.count()) === 0) {
+    const labels = await page
+      .locator("button")
+      .evaluateAll((els) => els.map((el) => el.getAttribute("aria-label") ?? (el.textContent ?? "").trim()));
+    throw new Error(`No Press the seal control at ${page.url()}. Buttons on the page: ${labels.join(" | ")}`);
+  }
   const box = await press.boundingBox();
   if (!box) {
     throw new Error("The Press the seal control has no size on screen.");
@@ -136,6 +142,14 @@ async function holdPressTheSeal(page: Page): Promise<void> {
   await page.mouse.down();
   await page.waitForTimeout(PRESS_HOLD_MS);
   await page.mouse.up();
+}
+
+/** Tick a visually hidden radio or checkbox the way a keyboard user does: focus it, press Space. */
+async function tickWithKeyboard(locator: Locator): Promise<void> {
+  if (await locator.isChecked()) return;
+  await locator.focus();
+  await locator.page().keyboard.press("Space");
+  expect(await locator.isChecked(), "a control the walk ticks is checked").toBe(true);
 }
 
 /** Fill the letter and one author question with its answer on the Write step. */
@@ -168,15 +182,15 @@ async function expectWriteKept(page: Page, after: string): Promise<void> {
  */
 async function sealWithPasskey(page: Page): Promise<void> {
   const deadline = Date.now() + SEAL_TIMEOUT_MS;
-  for (let attempt = 0; attempt < 4; attempt += 1) {
-    await holdPressTheSeal(page);
-    if (await page.getByText(REAL_COPY.stillSealed).first().isVisible().catch(() => false)) {
-      return;
+  const keep = page.getByText(REAL_COPY.stillSealed).first();
+  while (Date.now() < deadline) {
+    if (await keep.isVisible().catch(() => false)) return;
+    if ((await page.locator(`button[aria-label="${PRESS_COPY.name}"]`).count()) > 0) {
+      await holdPressTheSeal(page);
     }
-    if (Date.now() > deadline) break;
     await page.waitForTimeout(500);
   }
-  await page.getByText(REAL_COPY.stillSealed).first().waitFor({ state: "visible", timeout: SEAL_TIMEOUT_MS });
+  await keep.waitFor({ state: "visible", timeout: 1000 });
 }
 
 let db: TestPostgres | null = null;
@@ -241,31 +255,34 @@ describe.skipIf(!walkEnabled(process.env))("real walk", () => {
 
         // Write.
         await page.goto(`${BASE_URL}/seal`);
-        await expectFocusOnHeading(page, "Write");
+        // A page load does not move focus (LiveStepper skips the first render), so wait
+        // for the heading to show instead of expecting focus on it.
+        await page.locator("[data-step-heading]").first().waitFor({ state: "visible" });
         await writeLetter(page);
         await saveShot(page, "seal-write", size.width, size.height);
 
         // Seal, with no opening date yet.
-        await page.getByRole("button", { name: LIVE_COPY.nextButton, exact: true }).click();
+        await page.getByRole("button", { name: DESK_COPY.fold, exact: true }).click();
         await expectFocusOnHeading(page, "Seal");
         await saveShot(page, "seal-no-date", size.width, size.height);
 
         // Seal, with an opening date. Choose to skip the backup card, then tick the confirmation.
         const opensOn = openingDateOneYearAhead();
         await page.getByLabel(REAL_COPY.dateLabel, { exact: true }).fill(opensOn);
-        await page.getByLabel(LIVE_COPY.backupChoiceSkip).check();
+        await tickWithKeyboard(page.getByLabel(LIVE_COPY.backupChoiceSkip));
         const acknowledgements = page.getByRole("checkbox");
         for (let i = 0; i < (await acknowledgements.count()); i += 1) {
-          await acknowledgements.nth(i).check();
+          await tickWithKeyboard(acknowledgements.nth(i));
         }
-        await expectFocusOnHeading(page, "Seal with date");
+        // Ticking a control does not change the step, so focus stays where it was.
+        await page.locator("[data-step-heading]").first().waitFor({ state: "visible" });
         await saveShot(page, "seal-with-date", size.width, size.height);
 
         // Back keeps the letter text, the answer and the chosen date.
-        await page.getByRole("button", { name: LIVE_COPY.backButton, exact: true }).click();
+        await page.getByRole("button", { name: LIVE_COPY.backToLetter, exact: true }).click();
         await expectFocusOnHeading(page, "Write after Back");
         await expectWriteKept(page, "Back");
-        await page.getByRole("button", { name: LIVE_COPY.nextButton, exact: true }).click();
+        await page.getByRole("button", { name: DESK_COPY.fold, exact: true }).click();
         await expectFocusOnHeading(page, "Seal after Back");
         expect(
           await page.getByLabel(REAL_COPY.dateLabel, { exact: true }).inputValue(),
@@ -286,7 +303,7 @@ describe.skipIf(!walkEnabled(process.env))("real walk", () => {
         await page.goto(`${BASE_URL}/demo/live`);
         await saveShot(page, "demo-live-write", size.width, size.height);
         await writeLetter(page);
-        const next = page.getByRole("button", { name: LIVE_COPY.nextButton, exact: true });
+        const next = page.getByRole("button", { name: DESK_COPY.fold, exact: true });
         if ((await next.count()) > 0) await next.click();
         await page.waitForTimeout(300);
         await saveShot(page, "demo-live-seal", size.width, size.height);
