@@ -6,6 +6,7 @@ import { CovenStrip } from "@/components/landing/CovenStrip";
 import { LandingHero } from "@/components/landing/LandingHero";
 import { ResurrectionSection } from "@/components/landing/ResurrectionSection";
 import { RitualSection } from "@/components/landing/RitualSection";
+import { realSealingOn } from "@/lib/feature-flags";
 import { PERSONAS } from "@/lib/personas";
 import { pageMetadata } from "@/lib/page-metadata";
 
@@ -52,6 +53,7 @@ const HERO_STYLE: CSSProperties = {
 export default function Home() {
   const personaCount = PERSONAS.length;
   const demo2On = (process.env.RP_ID ?? "").trim() !== "";
+  const realSealing = realSealingOn();
 
   return (
     <>
@@ -73,7 +75,11 @@ export default function Home() {
           <Ghost gradientId="ghost-body-landing" />
         </LandingBackdrop>
         <div style={HERO_STYLE}>
-          <LandingHero personaCount={personaCount} demo2On={demo2On} />
+          <LandingHero
+            personaCount={personaCount}
+            demo2On={demo2On}
+            realSealing={realSealing}
+          />
         </div>
       </SceneShell>
     </>
