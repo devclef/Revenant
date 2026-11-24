@@ -1,6 +1,9 @@
+import { readFileSync } from "node:fs";
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+import { DEMO_FIGURES } from "@/lib/figures/demo";
 
 import {
   PREPARE_PATH,
@@ -12,7 +15,9 @@ import { LIVE_COPY, REAL_COPY } from "./copy";
 import { DESK_COPY } from "./desk/copy";
 import type { SealState } from "./seal-machine";
 import type { SealDeps } from "./seal-runner";
+import { listPickableSeries } from "./catalogue-list";
 import { SealStep } from "./seal-step/SealStep";
+import { WriteForm, type WriteFormProps } from "./WriteForm";
 import {
   initialStepperState,
   reduceStepper,
@@ -404,4 +409,58 @@ describe("Real_Mode failure screens carry no demo or test-notice text", () => {
       }
     });
   }
+});
+
+// The opening date is held by SealPage in its own state (`opensOn`), not in the
+// stepper reducer. Back only sends an event to the reducer, so the date stays.
+// Clicks cannot run in this Node environment, so the check renders the Seal
+// step's picker with a chosen date, and reads SealPage's source for the state.
+describe("Real_Mode opening date survives Back", () => {
+  const CHOSEN = "2029-11-24";
+
+  function renderSealStepWithDate(value: string | null): string {
+    const props: WriteFormProps = {
+      series: listPickableSeries(DEMO_FIGURES),
+      state: { tag: "write" },
+      cryptoLoaded: true,
+      onCreatePress: () => {},
+      onConfirmPress: () => {},
+      text: "",
+      metricIds: [],
+      warningTicked: false,
+      backupCardTicked: false,
+      onTextChange: () => {},
+      onToggleFigure: () => {},
+      onWarningChange: () => {},
+      onBackupCardChange: () => {},
+      section: "seal",
+      onNext: () => {},
+      onBack: () => {},
+      realDate: {
+        value,
+        min: "2027-01-01",
+        timeZoneFallback: false,
+        onChange: () => {},
+      },
+    };
+    return renderToStaticMarkup(createElement(WriteForm, props));
+  }
+
+  it("the Seal step shows the chosen date in the picker", () => {
+    const html = renderSealStepWithDate(CHOSEN);
+    const input = html.match(/<input[^>]*id="real-opens-on"[^>]*>/)?.[0] ?? "";
+    expect(input).toContain(`value="${CHOSEN}"`);
+  });
+
+  it("the Back control is enabled on the Seal step with a date chosen", () => {
+    const back = backButtonTag(renderSealStepWithDate(CHOSEN));
+    expect(back).toBeDefined();
+    expect(back).not.toContain("disabled");
+  });
+
+  it("SealPage holds the date in its own state and passes it to the picker", () => {
+    const source = readFileSync(new URL("./SealPage.tsx", import.meta.url), "utf8");
+    expect(source).toContain("const [opensOn, setOpensOn] = useState<string | null>(null);");
+    expect(source).toContain("value: opensOn,");
+  });
 });
