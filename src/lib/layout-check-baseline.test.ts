@@ -242,20 +242,20 @@ describe("quietKeeps", () => {
 });
 
 describe("baselineName", () => {
-  const commit = "0123456789abcdef0123456789abcdef01234567";
+  const key = "0123456789abcdef0123456789abcdef01234567";
 
-  it("is the commit when the check scripts are main's", () => {
-    expect(baselineName({ commit, scripts: ["a", "b"], mainScripts: ["a", "b"] })).toBe(`${commit}.json`);
+  it("is the key when the check scripts are main's", () => {
+    expect(baselineName({ key, scripts: ["a", "b"], mainScripts: ["a", "b"] })).toBe(`${key}.json`);
   });
 
   it("carries a script hash when a check script differs or is new", () => {
-    const changed = baselineName({ commit, scripts: ["a", "c"], mainScripts: ["a", "b"] });
-    expect(changed).toMatch(new RegExp(`^${commit}-script-[0-9a-f]{12}\\.json$`));
-    expect(baselineName({ commit, scripts: ["a", "b"], mainScripts: ["a", null] })).not.toBe(`${commit}.json`);
-    expect(baselineName({ commit, scripts: ["a", "c"], mainScripts: ["x", "y"] })).toBe(changed);
+    const changed = baselineName({ key, scripts: ["a", "c"], mainScripts: ["a", "b"] });
+    expect(changed).toMatch(new RegExp(`^${key}-script-[0-9a-f]{12}\\.json$`));
+    expect(baselineName({ key, scripts: ["a", "b"], mainScripts: ["a", null] })).not.toBe(`${key}.json`);
+    expect(baselineName({ key, scripts: ["a", "c"], mainScripts: ["x", "y"] })).toBe(changed);
   });
 
-  it("rejects something that is not a commit id", () => {
-    expect(() => baselineName({ commit: "main", scripts: [], mainScripts: [] })).toThrow(/not a commit id/);
+  it("rejects something that is not a cache key", () => {
+    expect(() => baselineName({ key: "main", scripts: [], mainScripts: [] })).toThrow(/not a cache key/);
   });
 });
