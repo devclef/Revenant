@@ -18,14 +18,14 @@ import {
   stepIndex,
   stepName,
   stepperDrawsHeading,
-  type LiveStep,
   type StepperAction,
   type StepperState,
+  type StepperStep,
 } from "./live-steps";
 
 /** What a step's content receives from the stepper. */
 export interface StepView {
-  step: LiveStep;
+  step: StepperStep;
   /** The write draft, kept across steps until the seal is stored. */
   draft: WriteDraft;
   /** Applies one form event to the draft. */
@@ -41,7 +41,7 @@ export interface StepView {
    * Opening_Flow when the reader reaches Testify or Receipts. It never moves
    * back and never moves the stepper on its own.
    */
-  advanceTo: (step: LiveStep) => void;
+  advanceTo: (step: StepperStep) => void;
   /**
    * The Reveal_Host, a sibling after the Primary_Card (spec 12, X1). The
    * embedded Opening_Flow is portalled into it. Null until the host mounts.
@@ -83,7 +83,7 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
   // Calm is on under reduced motion or the judge's Calm control. Calm scrolls
   // without animation.
   const calm = useCalmInForce();
-  const previousStep = useRef<LiveStep>(state.step);
+  const previousStep = useRef<StepperStep>(state.step);
 
   useLayoutEffect(() => {
     // Skip the first render, so a page load does not steal focus.

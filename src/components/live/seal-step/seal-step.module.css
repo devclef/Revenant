@@ -16,6 +16,15 @@
   color: #ffffff;
 }
 
+/* On a phone the page already insets 16 px, so 32 px side padding would leave
+   the content column 294 px wide at 390 px. 8 px keeps it within the CW1 floor
+   (viewport minus 48 px). */
+@media (max-width: 600px) {
+  .step {
+    padding-inline: 8px;
+  }
+}
+
 .text {
   max-width: 520px;
   min-width: 0;

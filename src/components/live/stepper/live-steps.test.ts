@@ -11,6 +11,8 @@ import { CLEARED_WRITE_DRAFT, INITIAL_WRITE_DRAFT } from "../write-draft";
 import {
   LIVE_STEPS,
   LIVE_STEP_NAMES,
+  REAL_STEPS,
+  REAL_STEP_NAMES,
   canGoBack,
   flowMounted,
   flowPortalTarget,
@@ -20,6 +22,7 @@ import {
   reduceStepper,
   stepForFlowPhase,
   stepForStage,
+  stepIndex,
   stepName,
   stepTrackStates,
   stepperDrawsHeading,
@@ -409,3 +412,99 @@ describe("reduceStepper STAGE (issue #385)", () => {
   });
 });
 
+
+// Spec 19, Requirements 1.1, 1.4 and 8.1: the Real_Step_List and Real_Mode lookups.
+describe("Real_Mode step list (spec 19)", () => {
+  it("lists write, seal and sealed, named Write, Press the seal and Keep", () => {
+    expect([...REAL_STEPS]).toEqual(["write", "seal", "sealed"]);
+    expect([...REAL_STEP_NAMES]).toEqual(["Write", "Press the seal", "Keep"]);
+  });
+
+  it("gives stepIndex 0, 1 and 2 for the real steps in Real_Mode", () => {
+    expect(stepIndex("write", "real")).toBe(0);
+    expect(stepIndex("seal", "real")).toBe(1);
+    expect(stepIndex("sealed", "real")).toBe(2);
+  });
+
+  it("gives stepName the real name for each real step", () => {
+    expect(stepName("write", "real")).toBe("Write");
+    expect(stepName("seal", "real")).toBe("Press the seal");
+    expect(stepName("sealed", "real")).toBe("Keep");
+  });
+
+  it("offers Back in Real_Mode only on seal before the seal is stored", () => {
+    expect(canGoBack("write", false, "real")).toBe(false);
+    expect(canGoBack("seal", false, "real")).toBe(true);
+    expect(canGoBack("seal", true, "real")).toBe(false);
+    expect(canGoBack("sealed", false, "real")).toBe(false);
+  });
+
+  it("creates a demo state on write by default, and a real state on write in real mode", () => {
+    const demo = initialStepperState();
+    expect(demo.step).toBe("write");
+    expect(demo.mode).toBe("demo");
+    expect(initialStepperState("write", "real").mode).toBe("real");
+  });
+
+  // Requirement 1.10: a step outside the Real_Step_List starts on write.
+  it("starts a real state on write when given a step outside the real list", () => {
+    expect(initialStepperState("wait", "real").step).toBe("write");
+    expect(initialStepperState("testify", "real").step).toBe("write");
+  });
+
+  // Requirement 1.5: Back from seal goes to write and keeps the draft.
+  it("moves seal back to write in Real_Mode and keeps the draft", () => {
+    let state = initialStepperState("write", "real");
+    state = reduceStepper(state, {
+      type: "DRAFT",
+      event: { type: "TEXT_CHANGED", text: "Dear me" },
+    });
+    state = reduceStepper(state, { type: "NEXT" });
+    const back = reduceStepper(state, { type: "BACK" });
+    expect(back.step).toBe("write");
+    expect(back.draft).toEqual(state.draft);
+    expect(back.draft.text).toBe("Dear me");
+  });
+
+  it("returns the same state for a Back that Real_Mode does not offer", () => {
+    const write = initialStepperState("write", "real");
+    expect(reduceStepper(write, { type: "BACK" })).toBe(write);
+  });
+
+  // Requirement 1.6: NEXT moves write to seal, and seal to sealed only once sealed.
+  it("moves write to seal on NEXT, and seal to sealed only once the seal is stored", () => {
+    const write = initialStepperState("write", "real");
+    const seal = reduceStepper(write, { type: "NEXT" });
+    expect(seal.step).toBe("seal");
+    expect(reduceStepper(seal, { type: "NEXT" })).toBe(seal);
+
+    const sealed = reduceStepper(seal, { type: "SEALED" });
+    expect(reduceStepper(sealed, { type: "NEXT" }).step).toBe("sealed");
+  });
+
+  it("returns the same state for NEXT on sealed", () => {
+    const done = initialStepperState("sealed", "real");
+    expect(reduceStepper(done, { type: "NEXT" })).toBe(done);
+  });
+
+  // Requirement 1.7: a GOTO that Real_Mode does not allow returns the same state.
+  it("returns the same state for a Real_Mode GOTO that is not allowed", () => {
+    const write = initialStepperState("write", "real");
+    const seal = reduceStepper(write, { type: "NEXT" });
+    expect(reduceStepper(write, { type: "GOTO", step: "wait" })).toBe(write);
+    expect(reduceStepper(seal, { type: "GOTO", step: "write" })).toBe(seal);
+    expect(reduceStepper(seal, { type: "GOTO", step: "seal" })).toBe(seal);
+    expect(reduceStepper(seal, { type: "GOTO", step: "sealed" })).toBe(seal);
+  });
+
+  // Requirement 1.8: STAGE stores the Stage and never moves the step in Real_Mode.
+  it("stores the Stage without moving the step in Real_Mode", () => {
+    const seal = reduceStepper(initialStepperState("write", "real"), {
+      type: "NEXT",
+    });
+    const next = reduceStepper(seal, { type: "STAGE", stage: "marks" });
+    expect(next.step).toBe("seal");
+    expect(next.stage).toBe("marks");
+    expect(reduceStepper(next, { type: "STAGE", stage: "marks" })).toBe(next);
+  });
+});
