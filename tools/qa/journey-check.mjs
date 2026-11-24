@@ -12,7 +12,7 @@
 //                       date. Runs on the 00:47 UTC run and on manual runs only
 //                       (OD8), because each walk stores one encrypted
 //                       Recall_Record of "no answer" in the openings table.
-//   J3 live-picker      /demo/live offers at least one enabled figure checkbox.
+//   J3 live-picker      /demo/live offers at least one enabled figure row.
 //   J4 assets           /icon.svg and /opengraph-image answer HTTP 200.
 //   J5 scroll-width     /, /demo, /demo/live, /how-it-is-sealed and the first
 //                       Stage of both persona pages: no sideways scroll at the
@@ -352,18 +352,14 @@ async function checkJ10(ctx) {
   }
 }
 
+// Since spec 14 (the Write desk) the figures are `aria-pressed` Figure_Rows in
+// the receipt card, not checkboxes. A row past the limit is `aria-disabled`.
+// The rows render once the figures list has loaded.
+const J3_ROW = '[data-receipt-view="public"] [data-figure-row]:not([aria-disabled="true"])';
+
 async function checkJ3(page, ctx) {
-  const picker = page.locator('[data-card="live-figures"]');
-  if ((await picker.count()) === 0) {
-    const letter = page.locator("textarea").first();
-    if ((await letter.count()) > 0) {
-      // Typed only in the browser. Nothing is sent: the draft stays client-side until sealing.
-      await letter.fill("Journey check.");
-      await page.getByRole("button", { name: "Next", exact: true }).first().click().catch(() => {});
-    }
-    await picker.first().waitFor({ timeout: STAGE_TIMEOUT_MS }).catch(() => {});
-  }
-  const enabled = await page.locator('[data-card="live-figures"] input[type="checkbox"]:not([disabled])').count();
+  await page.locator(J3_ROW).first().waitFor({ state: "attached", timeout: STAGE_TIMEOUT_MS }).catch(() => {});
+  const enabled = await page.locator(J3_ROW).count();
   ctx.add(res("J3", "/demo/live", enabled > 0 ? "pass" : "fail", `enabled=${enabled}`, ">=1"));
 }
 
