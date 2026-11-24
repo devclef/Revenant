@@ -239,7 +239,7 @@ New copy is final as written in the design's new-copy table.
   - Earlier-spec tests changed or retired: none expected; name any.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 9. Real walk, landing check, QA_Shots and evidence
+- [x] 9. Real walk, landing check, QA_Shots and evidence
   - Agent: `platform-dev` · Depends on: 6, 8 · Estimated size: M, ~600 changed lines (mostly tests)
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `src/test/integration/real-walk.test.ts` (new), `src/test/integration/live-walk-helpers.ts` (only to share helpers, no behaviour change for `live-walk.test.ts`). The QA_Shots are written to `qa-shots/real-walk/`, which is gitignored, so they are not committed; the shot list and the comparison go in a commit message body.
