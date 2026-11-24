@@ -130,7 +130,7 @@ New copy is final as written in the design's new-copy table.
   - Earlier-spec tests changed or retired: none expected; name any.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 4. Real copy, Seal_Step lines, Backup_Choice and the `opening` slot
+- [x] 4. Real copy, Seal_Step lines, Backup_Choice and the `opening` slot
   - Agent: `frontend-dev` · Depends on: 3 · Estimated size: M, ~600 changed lines
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `src/components/live/copy.ts`, `seal-step/SealStep.tsx`, `seal-step/SealSteps.tsx`, `seal-step/seal-steps.ts`, `seal-step/press-status.ts`, `src/components/live/BackupChoice.tsx`, `real-copy-tone.test.ts` (new), `seal-step/real-lines.property.test.ts` (new), and the tests next to each. `press/` does not change.
