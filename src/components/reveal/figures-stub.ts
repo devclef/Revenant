@@ -10,10 +10,13 @@
  */
 
 import { loadFigures, type FiguresState } from "./figures-api";
-import type { FiguresResponseV1 } from "@/lib/figures/now";
+import {
+  figuresResponseV1Schema,
+  type FiguresResponseV1,
+} from "@/lib/figures/now";
 import type { LoadedFigures } from "@/lib/figures/types";
 
-/** The `revenant-figures-v1` body for every series in `loaded`. */
+/** The figures body for every series in `loaded`. */
 export function figuresResponseFrom(loaded: LoadedFigures): FiguresResponseV1 {
   const series = [...loaded.series.values()].map((entry) => ({
     metric: { ...entry.metric },
@@ -25,7 +28,7 @@ export function figuresResponseFrom(loaded: LoadedFigures): FiguresResponseV1 {
         : { ...entry.figures[entry.figures.length - 1] },
   }));
   return {
-    format: "revenant-figures-v1",
+    format: figuresResponseV1Schema.shape.format.value,
     generated_at: "2026-10-27T00:00:00Z",
     source_mode: "file",
     series,
