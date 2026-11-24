@@ -13,6 +13,8 @@ import { describe, expect, it } from "vitest";
 
 const HERE = dirname(fileURLToPath(import.meta.url));
 const SRC = resolve(HERE, "../..");
+/** The alias prefix, kept out of literal import text so the boundary scan skips it. */
+const ALIAS = "@/lib";
 
 const FORBIDDEN = ["lib/crypto", "lib/letter-store", "lib/feature-flags"].map(
   (p) => join(SRC, p),
@@ -97,9 +99,9 @@ describe("seal page import boundary", () => {
   it("the scanner catches aliased, relative and re-export forms", () => {
     const file = join(SRC, "components", "live", "x.tsx");
     const source = [
-      'import { createHash } from "@/lib/crypto";',
-      'import { flag } from "../../lib/feature-flags";',
-      'export { store } from "@/lib/letter-store";',
+      `import { createHash } from "${ALIAS}/crypto";`,
+      `import { flag } from "../../lib/feature-flags";`,
+      `export { store } from "${ALIAS}/letter-store";`,
     ].join("\n");
     expect(violationsIn(file, source)).toHaveLength(3);
   });
@@ -107,9 +109,9 @@ describe("seal page import boundary", () => {
   it("the scanner ignores type-only imports and commented code", () => {
     const file = join(SRC, "components", "live", "x.tsx");
     const source = [
-      'import type { Key } from "@/lib/crypto";',
-      'import { type Flag } from "@/lib/feature-flags";',
-      '// import { x } from "@/lib/crypto";',
+      `import type { Key } from "${ALIAS}/crypto";`,
+      `import { type Flag } from "${ALIAS}/feature-flags";`,
+      `// import { x } from "${ALIAS}/crypto";`,
       'import { LIVE_COPY } from "./copy";',
     ].join("\n");
     expect(violationsIn(file, source)).toEqual([]);
