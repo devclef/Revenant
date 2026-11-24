@@ -116,3 +116,18 @@ describe("BackupFallback key handling", () => {
     expect(groups.join("-")).toBe(keyText);
   });
 });
+
+describe("BackupFallback real mode", () => {
+  it("shows the Demo label in demo mode", () => {
+    expect(renderHtml()).toContain("data-demo-label");
+  });
+
+  it("omits the Demo label in real mode and keeps the key, the warning and the no-passkey line", () => {
+    const html = renderHtml({ real: true });
+    expect(html).not.toContain("data-demo-label");
+    expect(html).toContain(LIVE_COPY.fallbackTitle);
+    expect(html).toContain(LIVE_COPY.fallbackWarning);
+    expect(html).toContain(LIVE_COPY.noPrfOther);
+    expect(html).toContain("ABCD");
+  });
+});

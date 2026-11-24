@@ -36,6 +36,8 @@ export interface BackupFallbackProps {
   onSealPress: () => void;
   /** Declines the fallback. Seals nothing and sends nothing. */
   onDecline: () => void;
+  /** Real mode (the `/seal` letter): no Demo label is shown. */
+  real?: boolean;
 }
 
 /**
@@ -46,7 +48,12 @@ export function keyGroups(keyText: string): string[] {
   return keyText.split("-").filter((group) => group.length > 0);
 }
 
-export function BackupFallback({ keyText, onSealPress, onDecline }: BackupFallbackProps) {
+export function BackupFallback({
+  keyText,
+  onSealPress,
+  onDecline,
+  real = false,
+}: BackupFallbackProps) {
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
 
@@ -59,7 +66,7 @@ export function BackupFallback({ keyText, onSealPress, onDecline }: BackupFallba
 
   return (
     <div className={styles.panel} data-live-fallback="backup">
-      <DemoLabel />
+      {real ? null : <DemoLabel />}
       <h1 className={styles.heading}>{LIVE_COPY.fallbackTitle}</h1>
       <p className={styles.intro}>{LIVE_COPY.fallbackIntro}</p>
       <p className={styles.intro} data-no-prf-press="">

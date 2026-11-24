@@ -52,16 +52,22 @@ export interface SealFailureProps {
    * is rendered disabled.
    */
   onFallbackStart?: () => void;
+  /**
+   * Real mode (the `/seal` letter). The /demo link and the demo-only
+   * passkey wording are left out, and the copy comes from REAL_COPY.
+   */
+  real?: boolean;
 }
 
 function failedBody(
   state: Extract<SealState, { tag: "failed" }>,
+  real: boolean,
 ): string {
   switch (state.kind) {
     case "clock":
-      return LIVE_COPY.clockBody;
+      return real ? REAL_COPY.clockBody : LIVE_COPY.clockBody;
     case "busy":
-      return LIVE_COPY.busyBody;
+      return real ? REAL_COPY.busyBody : LIVE_COPY.busyBody;
     case "missing_then":
       return LIVE_COPY.missingThenBody.replace(
         "{name}",
@@ -78,7 +84,12 @@ function failedBody(
   }
 }
 
-export function SealFailure({ state, onRetry, onFallbackStart }: SealFailureProps) {
+export function SealFailure({
+  state,
+  onRetry,
+  onFallbackStart,
+  real = false,
+}: SealFailureProps) {
   if (state.tag === "cannot_lock") {
     return (
       <div className={styles.panel} data-live-failure="cannot_lock">
@@ -87,7 +98,9 @@ export function SealFailure({ state, onRetry, onFallbackStart }: SealFailureProp
         <p className={styles.intro}>{LIVE_COPY.cannotLockNext1}</p>
         <p className={styles.intro}>{LIVE_COPY.cannotLockNext2}</p>
         {state.passkeyCreated ? (
-          <p className={styles.intro}>{LIVE_COPY.passkeyDeleteNote}</p>
+          <p className={styles.intro}>
+            {real ? REAL_COPY.passkeyDeleteNote : LIVE_COPY.passkeyDeleteNote}
+          </p>
         ) : null}
         <div className={styles.actions}>
           <button
@@ -99,11 +112,13 @@ export function SealFailure({ state, onRetry, onFallbackStart }: SealFailureProp
             {LIVE_COPY.fallbackButton}
           </button>
         </div>
-        <p>
-          <a className={styles.backLink} href="/demo">
-            {LIVE_COPY.backToDemo}
-          </a>
-        </p>
+        {real ? null : (
+          <p>
+            <a className={styles.backLink} href="/demo">
+              {LIVE_COPY.backToDemo}
+            </a>
+          </p>
+        )}
       </div>
     );
   }
@@ -124,7 +139,7 @@ export function SealFailure({ state, onRetry, onFallbackStart }: SealFailureProp
 
   return (
     <div className={styles.panel} data-live-failure={`failed-${state.kind}`}>
-      <p className={styles.intro}>{failedBody(state)}</p>
+      <p className={styles.intro}>{failedBody(state, real)}</p>
       <div className={styles.actions}>
         <button type="button" className={styles.primary} onClick={onRetry}>
           {LIVE_COPY.tryAgain}
