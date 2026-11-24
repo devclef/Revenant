@@ -79,6 +79,23 @@ describe("BackupKeyCard — static markup", () => {
   });
 });
 
+describe("BackupKeyCard — showDemoLabel", () => {
+  it("omits the Demo label and its marker when showDemoLabel is false", () => {
+    const html = renderToStaticMarkup(
+      createElement(BackupKeyCard, {
+        letterId: LETTER_ID,
+        appOrigin: APP_ORIGIN,
+        keyText: KEY,
+        showDemoLabel: false,
+      }),
+    );
+    expect(html).not.toContain("data-demo-label");
+    expect(html).not.toContain(DEMO_COPY.demoLabel);
+    expect(html).toContain(LIVE_COPY.backupCardTitle);
+    expect(html).toContain("data-live-backup-card");
+  });
+});
+
 describe("BackupKeyCard — no network, storage or logging (R21.3–R21.5)", () => {
   it("its source makes no request, writes no storage, and logs nothing", () => {
     const source = readFileSync(new URL("./BackupKeyCard.tsx", import.meta.url), "utf8");
