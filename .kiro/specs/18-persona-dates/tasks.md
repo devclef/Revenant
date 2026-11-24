@@ -346,7 +346,7 @@ No task below starts until that PR is merged. The other open questions keep the 
       - _Requirements: 11.5, 11.8_
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 16. Owner: deploy PR B
+- [x] 16. Owner: deploy PR B
   - Agent: `owner` · Depends on: 15 · Estimated size: n/a (owner step, not dispatched)
   - Bump the image tag in the GitOps repo to the image built from PR B's merge. The init container finds the three rows already stored and inserts nothing; confirm the row count is unchanged from task 14.
   - Run the journey check (or wait for the six-hourly run) and post the J2 and J10 result lines in this issue.
