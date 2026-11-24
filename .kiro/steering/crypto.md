@@ -10,7 +10,7 @@ Loads only when working on crypto, the sealed format, or the routes that store l
 ## Goals
 
 1. The operator cannot read a letter, its personal numbers or the recall answers.
-2. Nobody can open a letter through Revenant before its opening date, even with the passkey or backup key.
+2. Nobody can open a letter through Efterhand before its opening date, even with the passkey or backup key.
 3. After the opening date, the passkey or the backup key opens the letter, on any supported device.
 4. Any change to a sealed letter is detected.
 
@@ -27,10 +27,10 @@ All from WebCrypto, in the browser. No custom crypto, no third-party crypto libr
 
 ```
 DEK  (random 256-bit, encrypts the payload)
- ├─ wrapped by KEK_passkey = HKDF(ikm = PRF output ‖ serverSecret, salt = letterId, info = "revenant-kek-passkey-v1")
- └─ wrapped by KEK_backup  = HKDF(ikm = backupKey ‖ serverSecret,  salt = letterId, info = "revenant-kek-backup-v1")
+ ├─ wrapped by KEK_passkey = HKDF(ikm = PRF output ‖ serverSecret, salt = letterId, info = "efterhand-kek-passkey-v1")
+ └─ wrapped by KEK_backup  = HKDF(ikm = backupKey ‖ serverSecret,  salt = letterId, info = "efterhand-kek-backup-v1")
 
-Opening records key = HKDF(ikm = DEK, salt = letterId, info = "revenant-opening-v1")
+Opening records key = HKDF(ikm = DEK, salt = letterId, info = "efterhand-opening-v1")
 ```
 
 - **DEK:** generated in the browser. Encrypts the payload with AES-256-GCM, with AAD set to the canonical envelope header.
@@ -40,8 +40,8 @@ Opening records key = HKDF(ikm = DEK, salt = letterId, info = "revenant-opening-
 
 ## Passkey (WebAuthn PRF)
 
-- RP ID comes from config (`RP_ID`), never from the request host. MVP and testing use `revenant.devclef.se`; local development uses `localhost`. The RP ID is stored in each envelope header so a letter always knows which domain its passkey belongs to.
-- One new passkey per letter, discoverable (`residentKey: "required"`), `userVerification: "required"`. The user name shown in the passkey manager identifies the letter, for example `Revenant letter · opens 5 Nov 2030`. Demo passkeys are named `Revenant demo`.
+- RP ID comes from config (`RP_ID`), never from the request host. MVP and testing use `efterhand.devclef.se`; local development uses `localhost`. The RP ID is stored in each envelope header so a letter always knows which domain its passkey belongs to.
+- One new passkey per letter, discoverable (`residentKey: "required"`), `userVerification: "required"`. The user name shown in the passkey manager identifies the letter, for example `Efterhand letter · opens 5 Nov 2030`. Demo passkeys are named `Efterhand demo`.
 - PRF input: a random 32-byte `prfSalt` per letter, stored in the header.
 - The server does not verify WebAuthn assertions. The passkey is a key source, not a login. Security comes from the PRF output, which never leaves the browser.
 
@@ -97,7 +97,7 @@ The header must not reveal what the letter contains or tracks.
 | Threat | Protection | Accepted risk |
 |---|---|---|
 | Operator or database breach reads letters | Payload and opening records are encrypted. The server never sees the PRF output, backup key or DEK. | Metadata is visible: `sealedAt`, `opensAt`, letter count. |
-| Author or someone with their key opens early | serverSecret is part of every KEK and is released only after `opensAt`. | The author knows what they wrote and could copy it before sealing. The lock stops early opening through Revenant, not memory. An operator or breach with the serverSecret can bypass the lock, but still needs a key. |
+| Author or someone with their key opens early | serverSecret is part of every KEK and is released only after `opensAt`. | The author knows what they wrote and could copy it before sealing. The lock stops early opening through Efterhand, not memory. An operator or breach with the serverSecret can bypass the lock, but still needs a key. |
 | Someone finds the letter card (QR) | The card holds only a link. Before the date: countdown. After: still needs passkey or backup key. | They learn the opening date. |
 | Someone finds the backup key card | Before the date: useless. | The card holds the link and the key, so after the date it alone opens the letter. Users are told to store it like a house key. |
 | Stolen phone with the passkey | `userVerification: "required"` needs fingerprint, face or PIN. | A compromised or unlocked device. |
@@ -105,7 +105,7 @@ The header must not reveal what the letter contains or tracks.
 | Tampering with sealed data | Database triggers block updates and deletes; envelope hash; AES-GCM tags. | Deletion by the operator (availability, not integrity). |
 | Malicious or injected JavaScript (XSS, compromised dependency, malicious deploy) | Strict CSP, no third-party scripts or analytics on sealing and opening pages, pinned lockfile, minimal dependencies. | This is the main residual risk. Browser crypto is only as trustworthy as the code the server serves. |
 | Lost passkey, deleted passkey, or PRF inconsistency across devices | Backup key card; PRF check at sealing. | The backup key is optional. A user who skipped it and loses the passkey loses the letter forever. |
-| Domain changed (MVP runs on `revenant.devclef.se`) | RP ID stored in each header. | Passkeys only work on their original domain. On a new domain, only the backup key opens older letters. |
-| Revenant shuts down | | Accepted for MVP: letters can't be opened. |
+| Domain changed (MVP runs on `efterhand.devclef.se`) | RP ID stored in each header. | Passkeys only work on their original domain. On a new domain, only the backup key opens older letters. |
+| Efterhand shuts down | | Accepted for MVP: letters can't be opened. |
 
 Out of scope: coercion of the user, compromised operating systems, nation-state attackers.

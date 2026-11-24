@@ -5,14 +5,14 @@ fileMatchPattern: ["deploy/**", ".github/workflows/**", "Dockerfile", ".dockerig
 
 # Deployment: Docker, Helm and CI
 
-Revenant runs on the user's self-hosted, internet-facing cluster: an RKE2 guest cluster provisioned by Rancher on Harvester. The user deploys it with Fleet from their own GitOps repository. This repository provides only two things: the Helm chart and the container image. No Fleet configuration lives here. The always-loaded rule in `tech.md` requires the chart to stay in sync with the app.
+Efterhand runs on the user's self-hosted, internet-facing cluster: an RKE2 guest cluster provisioned by Rancher on Harvester. The user deploys it with Fleet from their own GitOps repository. This repository provides only two things: the Helm chart and the container image. No Fleet configuration lives here. The always-loaded rule in `tech.md` requires the chart to stay in sync with the app.
 
 ## Image
 
 - One multi-stage `Dockerfile` producing a small image from Next.js `output: "standalone"`.
 - Runs as a non-root user with a read-only root filesystem where possible.
 - The same image runs three things: the web server, database migrations, and the daily fetch script.
-- Published to `ghcr.io/devclef/revenant`.
+- Published to `ghcr.io/devclef/efterhand`.
 - Tags: the full git commit SHA on every push to `main`, and the version (for example `0.3.0`) on git tags `v*`. The chart's default `image.tag` is its `appVersion`. Never rely on `latest`.
 - `dev`: a moving tag, set by the same build as the SHA tag, that always points at the newest `main` build. It is for the iterative cycle only, so the deployer can pin `image.tag: dev` and restart the pod instead of editing a hash. It is never moved by `v*` builds and must not be used for an installation holding real letters. Using it needs `image.pullPolicy: Always` and a pod restart to pick up a new build.
 
@@ -28,14 +28,14 @@ Revenant runs on the user's self-hosted, internet-facing cluster: an RKE2 guest 
 ## Chart layout
 
 ```
-deploy/helm/revenant/
+deploy/helm/efterhand/
 ├── Chart.yaml           # version bumped on every chart change; appVersion = app version
 ├── values.yaml          # every setting documented, no secrets, sensible defaults for this cluster
 ├── .helmignore
 └── templates/
     ├── deployment.yaml      # web app; init containers wait for Postgres, then run migrations
     ├── service.yaml
-    ├── ingress.yaml         # host revenant.devclef.se, TLS via cert-manager
+    ├── ingress.yaml         # host efterhand.devclef.se, TLS via cert-manager
     ├── fetch-cronjob.yaml   # daily figure fetch, concurrencyPolicy: Forbid
     ├── configmap.yaml       # RP_ID, APP_ORIGIN and other non-secret config
     ├── postgres-statefulset.yaml
@@ -69,7 +69,7 @@ deploy/helm/revenant/
 
 ### Ingress and HTTPS
 
-- `ingressClassName` and the cert-manager `cluster-issuer` annotation are values, not hardcoded. The user's Let's Encrypt setup issues the certificate for `revenant.devclef.se`.
+- `ingressClassName` and the cert-manager `cluster-issuer` annotation are values, not hardcoded. The user's Let's Encrypt setup issues the certificate for `efterhand.devclef.se`.
 - Passkeys only work on a secure origin matching `RP_ID`, so TLS is required and the ingress host must equal `RP_ID`.
 - The chart adds no authentication annotations. Letter links, the demo pages and the static assets must be publicly reachable, so the app must not be placed behind Authentik forward-auth or another SSO proxy.
 

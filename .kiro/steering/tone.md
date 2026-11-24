@@ -4,7 +4,7 @@ inclusion: always
 
 # Tone and Visual Voice
 
-Revenant is the wax seal, resurrected. A sealed letter comes back out of the dark, carried by the ghost of your past self, and before you read it you remember first. The mood is a dark room and one shaft of purple light: something you buried comes back up, carrying your letter. It is spooky the way a quiet night is spooky, not the way a haunted house ride is.
+Efterhand is the wax seal, resurrected. A sealed letter comes back out of the dark, carried by the ghost of your past self, and before you read it you remember first. The mood is a dark room and one shaft of purple light: something you buried comes back up, carrying your letter. It is spooky the way a quiet night is spooky, not the way a haunted house ride is.
 
 ## The feeling
 
@@ -41,7 +41,7 @@ Revenant is the wax seal, resurrected. A sealed letter comes back out of the dar
 
 ## Moments that matter
 
-- **Arrival:** dark first, then the light finds the soil. The headline says what Revenant is before anything moves.
+- **Arrival:** dark first, then the light finds the soil. The headline says what Efterhand is before anything moves.
 - **Emergence:** the ghost rises out of the soil holding the sealed envelope while the seal is really checked. The letter is offered only once the check has passed.
 - **Sealing:** feels final and a little solemn. Make it clear the letter can't be changed after this.
 - **Waiting:** the sealed letter is visible but unreadable, held and unopened.

@@ -18,9 +18,9 @@ The goal is a working, demonstrable product for a hackathon, not scale. Prefer t
 | Encryption | WebCrypto, in the browser only | Details in `crypto.md`. |
 | Unlocking | WebAuthn passkeys with the PRF extension, via the browser API directly | No server-side WebAuthn library; the server never verifies assertions. |
 | Cards and calendar | QR codes, PDF cards and `.ics` generated in the browser | Backup key material must never reach the server. |
-| Container | One Docker image for the app, migrations and the fetch job, at `ghcr.io/devclef/revenant` | Built and pushed by GitHub Actions. |
+| Container | One Docker image for the app, migrations and the fetch job, at `ghcr.io/devclef/efterhand` | Built and pushed by GitHub Actions. |
 | Deployment | Helm chart in this repo. The user deploys it with Fleet from a separate GitOps repo to their RKE2 cluster (Rancher on Harvester). | Details in `deploy.md`. |
-| Domain | `revenant.devclef.se` for MVP and testing | Passkeys are bound to the domain (RP ID) and need HTTPS. |
+| Domain | `efterhand.devclef.se` for MVP and testing | Passkeys are bound to the domain (RP ID) and need HTTPS. |
 | Package manager | npm | |
 
 Not in the MVP: user accounts and login, email or any other delivery channel, LLM features, rate limiting and spam protection, public events as opening triggers, languages other than English.
@@ -72,11 +72,11 @@ All generated in the browser at sealing, after the seal is stored.
 
 - **Letter card:** printable PDF and image with a QR code of `https://<domain>/l/<letterId>`, the opening date, and nothing secret.
 - **Backup key card:** separate PDF download with the letter link and the backup key, in text and as a QR code with the key in the URL fragment (see `crypto.md`). Never uploaded or cached by the server or a service worker.
-- **`.ics` file:** one event at `opens_at` (stored and written in UTC), titled in Revenant's voice, with the letter link in the description and `URL` field, and a reminder alarm. It contains no letter content, no figures and no key.
+- **`.ics` file:** one event at `opens_at` (stored and written in UTC), titled in Efterhand's voice, with the letter link in the description and `URL` field, and a reminder alarm. It contains no letter content, no figures and no key.
 
 ### Known limitation (accepted for MVP)
 
-Opening depends on Revenant's server releasing the server secret. If the service or its database is gone, sealed letters cannot be opened. Post-MVP options: let users download their encrypted envelope, and publish server secrets after `opens_at` so envelopes can be opened without Revenant.
+Opening depends on Efterhand's server releasing the server secret. If the service or its database is gone, sealed letters cannot be opened. Post-MVP options: let users download their encrypted envelope, and publish server secrets after `opens_at` so envelopes can be opened without Efterhand.
 
 ## Integrity enforcement
 
@@ -107,7 +107,7 @@ Where only an index exists, show it as an index with percentage change. Never co
 ## Secrets and configuration
 
 - All secrets come from environment variables: `DATABASE_URL`, and any source API keys (for example `BLS_API_KEY`, `EIA_API_KEY`). Never commit them, and never log them. In Kubernetes they come from a Secret (see `deploy.md`).
-- `RP_ID` and `APP_ORIGIN` are fixed configuration: `revenant.devclef.se` and `https://revenant.devclef.se` for the MVP, `localhost` for local development outside the cluster.
+- `RP_ID` and `APP_ORIGIN` are fixed configuration: `efterhand.devclef.se` and `https://efterhand.devclef.se` for the MVP, `localhost` for local development outside the cluster.
 - Keep a `.env.example` listing every variable name with no values.
 
 ## Conventions
@@ -122,4 +122,4 @@ Where only an index exists, show it as an index with percentage change. Never co
 
 ## Keep the Helm chart in sync
 
-The chart in `deploy/helm/revenant` is part of the product, not an afterthought. Any change that adds or renames an environment variable, secret, port, health endpoint, migration step or scheduled job must update the chart, its `values.yaml`, and `.env.example` in the same change, and bump the chart `version`. See `deploy.md`.
+The chart in `deploy/helm/efterhand` is part of the product, not an afterthought. Any change that adds or renames an environment variable, secret, port, health endpoint, migration step or scheduled job must update the chart, its `values.yaml`, and `.env.example` in the same change, and bump the chart `version`. See `deploy.md`.

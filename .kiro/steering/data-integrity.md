@@ -4,7 +4,7 @@ inclusion: always
 
 # Data Integrity
 
-Revenant's credibility rests entirely on its numbers. A single invented or altered figure breaks the product. These rules override convenience, deadlines and UI polish.
+Efterhand's credibility rests entirely on its numbers. A single invented or altered figure breaks the product. These rules override convenience, deadlines and UI polish.
 
 ## Every figure carries provenance
 
@@ -17,7 +17,7 @@ No number is stored or displayed without all of:
 | `region` | Geographic scope as the source defines it | `U.S. city average` |
 | `period` | The period the figure describes | `2026-09` |
 | `source` | Publisher and series identifier | `U.S. EIA, series EMM_EPMR_PTE_NUS_DPG` |
-| `retrieved_at` | When Revenant fetched it (UTC) | `2026-10-30T14:02:11Z` |
+| `retrieved_at` | When Efterhand fetched it (UTC) | `2026-10-30T14:02:11Z` |
 | `source_url` | Link a user can follow to check it | |
 
 Self-reported personal numbers use `source = self-reported` and are always labelled as such in the UI. They are never mixed into or presented as official data.
@@ -47,7 +47,7 @@ Derived values (in the MVP, only the change between then and now) are allowed on
 
 ## Sealed data is immutable
 
-- Sealed figures are stored inside the sealed letter itself, with full provenance. They are never re-fetched, looked up from a shared table, or reconstructed at opening. A sealed letter must still show its figures if the source, the series or Revenant's catalogue no longer exists.
+- Sealed figures are stored inside the sealed letter itself, with full provenance. They are never re-fetched, looked up from a shared table, or reconstructed at opening. A sealed letter must still show its figures if the source, the series or Efterhand's catalogue no longer exists.
 - Once sealed, the letter, snapshot figures, recall questions, the answers sealed with them and opening condition cannot be updated or deleted by application code. Enforce this at the database level, not just in app logic.
 - Store a cryptographic hash (SHA-256) of the canonical sealed envelope at sealing time, and verify it when the letter opens (see `crypto.md`). Show the user that verification passed. If it fails, say so and do not present the data as trustworthy.
 - If a source later revises a historical figure, the sealed value stays as it was. The reveal may show the revision separately and clearly labelled, never as a replacement.
