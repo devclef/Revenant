@@ -15,6 +15,18 @@ const css = readFileSync(resolve(here, "landing.module.css"), "utf8").replace(
   "",
 );
 
+const tokens = readFileSync(
+  resolve(here, "../ceremony/scene/tokens.css"),
+  "utf8",
+);
+
+/** Reads one colour token from tokens.css, as a #rrggbb string. */
+function token(name: string): string {
+  const match = new RegExp(`--${name}:\\s*(#[0-9a-fA-F]{6})\\s*;`).exec(tokens);
+  if (!match) throw new Error(`token not found: --${name}`);
+  return match[1];
+}
+
 /** Returns the declarations of the first rule whose selector matches exactly. */
 function body(selector: string): string {
   const escaped = selector.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -23,6 +35,13 @@ function body(selector: string): string {
   );
   if (!match) throw new Error(`rule not found: ${selector}`);
   return match[1];
+}
+
+/** The text of one @media block, from its opening line to the next column-0 brace. */
+function media(query: string): string {
+  const start = css.indexOf(query);
+  if (start < 0) throw new Error(`media block not found: ${query}`);
+  return css.slice(start, css.indexOf("\n}\n", start));
 }
 
 /** WCAG 2.x relative luminance of a #rrggbb colour. */
@@ -40,9 +59,21 @@ function contrast(a: string, b: string): number {
 }
 
 describe("landing real seal link CSS", () => {
-  it("has a .realSeal rule in the text colour with no class named for accent", () => {
-    expect(body(".realSeal")).toMatch(/color:\s*var\(--text\)/);
+  it("has a .realSeal rule on the desk background, in the text colour, with no class named for accent", () => {
+    const seal = body(".realSeal");
+    expect(seal).toMatch(/background:\s*var\(--bg\)/);
+    expect(seal).toMatch(/color:\s*var\(--text\)/);
     expect(css).not.toMatch(/\.realSeal[\w-]*accent/i);
+  });
+
+  it("aligns the .realSeal box to the start of the hero column", () => {
+    expect(body(".realSeal")).toMatch(/align-self:\s*flex-start/);
+  });
+
+  it("pulls the .realSeal box up by a negative top margin on desktop", () => {
+    expect(media("@media (min-width: 600px) {")).toMatch(
+      /\.realSeal\s*\{\s*margin-top:\s*-\d+(\.\d+)?rem;\s*\}/,
+    );
   });
 
   it("sets the link to at least 2.75rem tall and wide, in --text, with no fill or border", () => {
@@ -61,14 +92,15 @@ describe("landing real seal link CSS", () => {
     expect(focus).toMatch(/outline-offset:\s*\d+px/);
   });
 
-  it("puts the real seal link at order 1 on phones", () => {
-    const start = css.indexOf("@media (max-width: 599.98px) {");
-    expect(start).toBeGreaterThanOrEqual(0);
-    const phone = css.slice(start, css.indexOf("\n}\n", start));
-    expect(phone).toMatch(/\.realSeal\s*\{\s*order:\s*1;\s*\}/);
+  it("puts the real seal link at order 1 with a phone margin-top, after the calls to action", () => {
+    const phone = media("@media (max-width: 599.98px) {");
+    expect(phone).toMatch(
+      /\.realSeal\s*\{\s*order:\s*1;\s*margin-top:\s*0\.25rem;\s*\}/,
+    );
+    expect(phone).toMatch(/\.actions\s*\{\s*order:\s*1;\s*\}/);
   });
 
-  it("keeps the --text on --bg pair above 4.5:1", () => {
-    expect(contrast("#f5f3ff", "#0b0912")).toBeGreaterThan(4.5);
+  it("keeps the --text on --bg pair above 4.5:1, using the scene tokens", () => {
+    expect(contrast(token("text"), token("bg"))).toBeGreaterThan(4.5);
   });
 });

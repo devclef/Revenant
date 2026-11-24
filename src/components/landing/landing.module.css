@@ -99,7 +99,9 @@
    fill, no border, and no Accent, because orange is the reader's own action.
    The link is at least 44 by 44 px. */
 .realSeal {
+  align-self: flex-start;
   margin: 0;
+  background: var(--bg);
   color: var(--text);
 }
 
@@ -140,6 +142,7 @@
   /* The real seal link (B1) follows the calls to action on phones. */
   .realSeal {
     order: 1;
+    margin-top: 0.25rem;
   }
 
   /* This selector is not scoped: in the production build this file shares a
@@ -263,6 +266,11 @@
 @media (min-width: 600px) {
   .headline {
     font-size: clamp(2.5rem, 6vw, 4.5rem);
+  }
+
+  /* Desktop: the link sits closer to the calls to action above it. */
+  .realSeal {
+    margin-top: -0.5rem;
   }
 
   .actions {
