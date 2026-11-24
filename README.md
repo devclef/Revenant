@@ -9,9 +9,8 @@ A wax seal did two jobs: it showed whose letter it was, and whether anyone broke
 **Kiroween 2026 · Resurrection**
 
 <p align="center">
-  <img src="docs/readme-hero2x.png" alt="Revenant concept one-pager: the ghost holding the sealed envelope, then the three steps Write and press the seal, Testify, See the receipts" width="800">
-  <br><em>The concept one-pager. The fuel figures are real EIA records; the counts in its footer are out of date.</em>
-  <br><em>This picture shows the earlier persona letters, written as of an earlier date.</em>
+  <img src="docs/readme-hero@2x.png" alt="Revenant one-pager: the ghost holding the sealed envelope under a shaft of purple light, then the three steps Write and press the seal, Remember first, and Receipts, with U.S. regular gasoline at 3.05 USD per gallon in the week of 11 Nov 2024 and 3.81 in the week of 16 Nov 2026" width="800">
+  <br><em>The one-pager. The gasoline figures are real U.S. EIA records (series EMM_EPMR_PTE_NUS_DPG, weeks of 11 Nov 2024 and 16 Nov 2026, USD per gallon). The question and the two answers are an example, not a sealed letter.</em>
 </p>
 
 Since 1735 the French Académie des sciences has kept *plis cachetés*, sealed envelopes that prove what someone knew, and when. Even Pasteur used them.
@@ -74,12 +73,12 @@ Real letters at `/seal` are built but switched off for judging. Opening needs th
 I wrote the steering, the specs and the dispatcher. A crew of Kiro agents wrote the product; almost none of the code was typed by a human. The detail is in [docs/kiro-writeup.md](docs/kiro-writeup.md).
 
 - **Steering:** 8 docs of non-negotiables (data integrity, neutrality, tone, crypto and more). Crypto rules load only for crypto code.
-- **Specs:** 16 spec folders. One task is one GitHub issue and one pull request.
+- **Specs:** 19 spec folders. One task is one GitHub issue and one pull request.
 - **Custom agents:** `platform-dev`, `crypto-dev`, `data-dev`, `frontend-dev`, each fenced to its own paths, and a `qa` agent that reviews every PR in a headless browser.
 - **Hooks:** a tone check on copy, a path-scope check per agent, crypto tests on save and a ceremony-truth check.
 - **MCP:** Playwright MCP lets `qa` and `frontend-dev` click through each build and cite screenshots.
-- **Property-based testing:** 72 fast-check property test files cover the adapters, the change formula and the sealed format.
-- **Kiro Crew** runs the build loop: claim an issue, build, open a PR, CI, QA, merge or retry. After three failed fixes it asks me. 280 pull requests merged so far.
+- **Property-based testing:** 92 fast-check property test files cover the adapters, the change formula and the sealed format.
+- **Kiro Crew** runs the build loop: claim an issue, build, open a PR, CI, QA, merge or retry. After three failed fixes it asks me. 349 pull requests merged so far.
 
 ```mermaid
 flowchart TB

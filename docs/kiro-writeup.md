@@ -1,10 +1,8 @@
 # How Revenant was built with Kiro
 
-Every number below was counted at `main` commit `a8bd7e15f8acf8a26e0ef8668ce11a823034be5b` (20 November 2026), with the command next to it. Run `git checkout a8bd7e1` first to recompute a count. Pull request counts come from the GitHub API and include everything merged up to the moment the command runs.
+Every number below was counted at `main` commit `7065dcd388616a6b05eb22dd29e4112169b27b6c` (24 November 2026), with the command next to it. Run `git checkout 7065dcd` first to recompute a count. Pull request counts come from the GitHub API and include everything merged up to the moment the command runs.
 
-<!-- OWNER: before submission, recount at the final main SHA and replace the SHA and every number in this file. Fill in each OWNER note, using the Evidence list under it; delete a note once its text is written. -->
-
-Evidence: SHA `git rev-parse origin/main`; merged pull requests `gh pr list --state merged --limit 1000 --json number -q length` → 280 on 20 November 2026; commits by agent tag, specs, property files and agents in the sections below.
+Merged pull requests: `gh pr list --state merged --limit 2000 --json number -q length` → 349 on 24 November 2026. Of those, 271 came from a role agent's `agent/` branch (`gh pr list --state merged --limit 2000 --json headRefName -q '[.[]|select(.headRefName|startswith("agent/"))]|length'`).
 
 ## 1. Kiro surfaces
 
@@ -14,12 +12,7 @@ Revenant used three Kiro surfaces:
 - **The Kiro IDE** is where the owner wrote steering and specs, and where the IDE hooks in `.kiro/hooks/` run on save.
 - **The Kiro CLI** (`kiro-cli`) runs each role agent inside Crew's Task Runner. The agents are defined in `.kiro/agents/*.json` and installed into `~/.kiro/agents/` (see `docs/agent-loop.md`).
 
-<!-- OWNER: say in two or three sentences how the three differed in practice in this project. -->
-
-Evidence:
-- Crew loop: `ls tools/dispatcher/` and `docs/agent-loop.md`; every build PR is tagged by role (`git log --format=%s | grep -oE '^\[[a-z-]+\]' | sort | uniq -c`).
-- IDE: `ls .kiro/hooks/ .kiro/steering/ .kiro/specs/`.
-- CLI: `ls .kiro/agents/*.json` and the `kiro-cli` step in `docs/agent-loop.md`.
+In practice the IDE was the owner's desk: requirements, designs, task lists and steering were written and revised there, one spec at a time. The CLI did the typing, with no human in the session. Each run was one role agent on one issue, on `claude-haiku-5.5` for `platform-dev`, `crypto-dev` and `data-dev` and `claude-sonnet-5.5` for `frontend-dev` and `qa` (`grep '"model"' .kiro/agents/*.json`). Crew connected the two: it decided what ran next, retried failures, and handed an issue back to the owner only after three failed fix runs. Ten issues reached `status:blocked` over the whole build (`gh issue list --label status:blocked --state all --json number -q length`).
 
 ## 2. The custom agents
 
@@ -33,7 +26,7 @@ Evidence:
 | `frontend-dev` | Pages, components, styling, cards, `.ics`, recall wording, persona text. |
 | `qa` | Writes nothing in the product. Reviews each PR against its ticket and the steering docs in a headless browser and writes `.qa/verdict.json`. |
 
-Commits by agent tag (`git log --format=%s | grep -oE '^\[[a-z-]+\]' | sort | uniq -c`): frontend-dev 140, platform-dev 41, data-dev 25, crypto-dev 15, owner 14, dispatcher 1.
+Commits by agent tag (`git log --format=%s | grep -oE '^\[[a-z-]+\]' | sort | uniq -c`): frontend-dev 171, platform-dev 55, data-dev 30, crypto-dev 16, owner 16, dispatcher 1.
 
 ## 3. Hooks
 
@@ -44,16 +37,16 @@ Commits by agent tag (`git log --format=%s | grep -oE '^\[[a-z-]+\]' | sort | un
   - `agents-check-on-save`: checks the generated agents still match `.github/agents.json`.
 - **Agent stop hooks** (the `hooks.stop` entry in each `.kiro/agents/*.json`): every build agent runs `tools/hooks/scope-check.py` for its role, and `frontend-dev` also runs `tools/hooks/tone-check.mjs`, before a run can finish.
 
-<!-- OWNER: one real block, with its PR or run: the word or path that was stopped and what the agent changed. -->
+The hook log on the build machine (`~/kiro/revenant-crew/hooks.log`, not in git) covers 31 October to 24 November 2026. Leaving out the hooks' own test runs, it records 7,227 scope-check runs with 35 blocks and 2,998 tone-check runs with 5 blocks (`grep -v role=test hooks.log | grep -c 'hook=scope-check.*result=block'`, and the same for `tone-check`).
 
-Evidence:
-- Retired phrases the tone check blocks: `grep -n 'retired phrase' tools/hooks/tone-check.mjs` and the `RETIRED_PHRASES` list in that file.
-- Find a PR where a hook fired: `gh pr list --state merged --limit 1000 --search 'tone-check OR scope-check' --json number,title`, then open the PR's run log.
-- Hook log on the build machine: `hooks.log` in the agent working directory.
+Two blocks, with what the agent did next:
+
+- **A path the agent did not own.** On 1 November 2026, between 21:40 and 21:52 UTC, the scope check stopped `frontend-dev` six times. The run had written `drizzle/0001_live_letters.sql`, `src/lib/letter-store/*` and `src/lib/seal-format/live-constants.ts`, the migration, store and sealed-format code for live demo letters, which belong to `crypto-dev` and `platform-dev`. The run could not finish while those files were in its tree. The migration and the letter store landed through `crypto-dev` in [PR #139](https://github.com/devclef/Revenant/pull/139), and the change-calculator option the same run had tried to add to `src/lib/figures/change.ts` landed through `data-dev` in [PR #144](https://github.com/devclef/Revenant/pull/144).
+- **A banned word in code.** In [PR #534](https://github.com/devclef/Revenant/pull/534) the tone check flagged `src/components/copy-tone.ts`, the module that checks copy for banned words. It held those words and an exclamation mark as quoted strings, and the hook reads quoted strings as visible copy. The agent rewrote the word lists as regex literals, built the exclamation fixture in `copy-tone.test.ts` at runtime with `String.fromCharCode(33)`, and kept the checker's behaviour unchanged. The PR body records the fix.
 
 ## 4. Spec-driven development compared with vibe coding
 
-Specs 01 to 11 have no open task; specs 12 to 15 are in progress (`git ls-files .kiro/specs | cut -d/ -f3 | sort -u | wc -l` → 16 folders, two of them numbered 02). Each spec has requirements, a design and a task list. Each task became one GitHub issue and one pull request for one role.
+The repository has 19 spec folders (`git ls-files .kiro/specs | cut -d/ -f3 | sort -u | wc -l` → 19; two are numbered 02). Each spec has requirements, a design and a task list. Each task became one GitHub issue and one pull request for one role. Every task is done except three: the final walk of spec 15, and the fix-up and final walk of spec 16.
 
 | Spec | Tasks |
 |---|---|
@@ -73,17 +66,19 @@ Specs 01 to 11 have no open task; specs 12 to 15 are in progress (`git ls-files 
 | 13 The seal | 23 |
 | 14 Write desk | 20 |
 | 15 The flow | 16 |
+| 16 Remember first | 17 |
+| 17 Screen layout fixes | 16 |
+| 18 Persona dates | 17 |
 
 Command: `for d in .kiro/specs/*/; do echo "$d $(grep -cE '^- \[[ x]\] [0-9]+\.' $d/tasks.md)"; done`.
 
-Merged pull requests: `gh pr list --state merged --limit 1000 --json number -q length` → 280 on 20 November 2026.
+What the spec loop gave that vibe coding would not:
 
-<!-- OWNER: what the spec loop gave that vibe coding would not have, and where you still vibe-coded. -->
+- **Traceability.** Every change to the product can be followed from a requirement to a task, an issue and a pull request. For example `.kiro/specs/11-any-letter/tasks.md` task 22 → issue [#356](https://github.com/devclef/Revenant/issues/356) → [PR #380](https://github.com/devclef/Revenant/pull/380).
+- **Work an unattended agent could do.** A task carries its scope, its out-of-scope list and its acceptance criteria, so a CLI run with no human in it could finish it and QA could check it against the same text. Issue [#212](https://github.com/devclef/Revenant/issues/212) is a typical ticket: one file in scope, the drawing code out of scope, three checkable criteria.
+- **A place to correct course.** When production showed a gap, the fix went into a spec first, then into tickets. Spec 09 opens with the figures failure in section 9 below (`.kiro/specs/09-demo-polish/requirements.md`, F1), and spec 11 rewrote the product from fuel-price letters to letters about any part of life (`.kiro/specs/11-any-letter/requirements.md`, X1).
 
-Evidence:
-- Spec to issue to PR: `.kiro/specs/11-any-letter/tasks.md` task 22 → issue #356 → PR #380 (`gh pr view 380`).
-- A spec that was rewritten after production showed a gap: spec 09 (`.kiro/specs/09-demo-polish/requirements.md`, F1) and spec 11 (`.kiro/specs/11-any-letter/requirements.md`, X1).
-- Work outside a spec: `git log --format='%h %s' | grep -v -E '\(#[0-9]+\)$'` lists commits that did not come through a ticket PR.
+Where it was still vibe coding: the loop itself. Of 661 non-merge commits, 85 did not come through a ticket pull request (`git log --no-merges --format='%h %s' | grep -v -E '\(#[0-9]+\)$' | grep -vc 'Tick completed'`). They are mostly the owner's direct work on the dispatcher, the QA prompt, CI, agent prompts and steering, changed as problems showed up, for example `1b5f997` (one Task Runner run at a time) and `12a64b3` (an unfinished browser walk is a minor finding). The dispatcher and the build loop had no spec.
 
 ## 5. Steering
 
@@ -95,30 +90,22 @@ The `qa` and `frontend-dev` agents use the Playwright MCP server (`mcpServers.pl
 
 ## 7. Property-based testing
 
-The tests use fast-check. `git ls-files '*.property.test.*' | wc -l` → 72 property test files, covering the source adapters, the then-vs-now change, the sealed payload round trip, the opening state machine, the persona letter checks and the ceremony gates.
+The tests use fast-check. `git ls-files '*.property.test.*' | wc -l` → 92 property test files, covering the source adapters, the then-vs-now change, the sealed payload round trip, the opening state machine, the persona letter checks and the ceremony gates. Each is tagged `// Feature: <spec>, Property N: <title>`.
 
-<!-- OWNER: list concrete bugs a property caught that example tests missed, each with its PR or commit. Candidates to check: `git log --format='%h %s' -i --grep=property`. -->
+A bug a property caught that the example tests missed:
 
-Evidence:
-- The property files: `git ls-files '*.property.test.*'`; the tag on each is `// Feature: <spec>, Property N: <title>`.
-- Candidate commits to read for a caught bug: `git log --format='%h %s' -i -E --grep='counterexample|fast-check|shrunk'`, including `6b05a9c` (E1, #331) and `914b15b` (the then/now helper, #56). Confirm each one caught a bug before citing it.
-- Re-run one: `npx vitest run src/lib/figures/then-now.property.test.ts`.
+- **A clod drawn above the dust ceiling** (`6b05a9c`, [PR #331](https://github.com/devclef/Revenant/pull/331)). The property "never draws dust or clods above the ceiling, for any Top_Bar, headline and translateY" in `soil-canvas.test.ts` failed on some random seeds. `clodPoint` returned the launch point unchanged at `tauS = 0`, because its step loop does not run. When the headline sits below the soil top, the launch point is above the ceiling, so the clod was drawn above it for that frame. The fix starts the clod at `max(launch y, ceiling)`.
+
+The same property flaked once before for a reason that was not a bug: issue [#212](https://github.com/devclef/Revenant/issues/212) found a dust point at y 331.2 against a ceiling of 331.20000000000005, and `59ec3be` ([PR #216](https://github.com/devclef/Revenant/pull/216)) loosened the assertion by 1e-9. Telling the two apart took reading the counterexample, and the second failure was real.
+
+Re-run one: `npx vitest run src/components/ceremony/scene/soil-canvas.test.ts`.
 
 ## 8. Kiro powers
 
-<!-- OWNER: say plainly whether Kiro powers were used, and why or why not (E1.3). -->
-
-Evidence:
-- The repository has no powers directory and no power is named in the agent files: `ls .kiro/` → `agents hooks settings specs steering`.
-- Check the IDE on the owner's machine for installed powers before writing either answer.
+Kiro powers were not used. No power is installed on the build machine (`~/.kiro/powers/installed.json` lists `"installedPowers": []`), the repository has no powers directory (`ls .kiro/` → `agents hooks settings specs steering`), and no agent file names one. What powers would package, rules plus tools for one domain, the project already had in steering with `fileMatch` inclusion (`crypto.md`, `deploy.md`) and in the Playwright MCP server named in the agent files.
 
 ## 9. What went wrong once
 
 Spec 09 opened with a production failure (spec 09 requirements, F1): no persona reveal showed a now figure, because `GET /api/figures` returned `figure: null` for all four series in database mode. QA had passed every PR, because QA ran the app locally with the figures API in file mode and nothing checked production. Spec 09 added the Journey_Check (`.github/workflows/journey-check.yml`, `tools/qa/journey-check.mjs`), which opens the judge's pages on production every six hours and opens an issue when a check fails, and committed the spec 08 Freshness_Check.
 
-<!-- OWNER: link the first Journey_Check run and the issue it opened. -->
-
-Evidence:
-- First failed run: [run 42530503661](https://github.com/devclef/Revenant/actions/runs/42530503661), 8 November 2026 (`gh run list --workflow journey-check.yml --limit 100 --json databaseId,createdAt,conclusion`).
-- The issue it opened: [#318](https://github.com/devclef/Revenant/issues/318) (`gh issue list --label journey:failure --state all`).
-- Spec 09's account of the failure: `.kiro/specs/09-demo-polish/requirements.md`, F1.
+The first Journey_Check run failed: [run 42530503661](https://github.com/devclef/Revenant/actions/runs/42530503661), 8 November 2026 at 22:29 UTC. It opened issue [#318](https://github.com/devclef/Revenant/issues/318), "Journey check: failure", now closed. Commands: `gh run list --workflow journey-check.yml --limit 100 --json databaseId,createdAt,conclusion` and `gh issue list --label journey:failure --state all`.
