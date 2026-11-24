@@ -339,6 +339,7 @@ export const REAL_COPY = {
   /** The same hint when the stated maximum is 1. */
   figuresHintRealOne:
     "Choose 1 figure, or none if you write a question above. It is sealed as published, with its period and source.",
+  keepStep: "Keep",
 } as const;
 
 /** The short field names used in the partly filled row message (selfReportedMissing). */
