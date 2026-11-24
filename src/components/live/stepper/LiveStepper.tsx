@@ -10,13 +10,12 @@ import type { WriteDraft, WriteDraftEvent } from "../write-draft";
 import styles from "./stepper.module.css";
 import { StepTrack } from "./StepTrack";
 import {
-  LIVE_STEPS,
-  LIVE_STEP_NAMES,
   canGoBack,
   hasPrimaryCard,
   movesFocus,
   stepIndex,
   stepName,
+  stepNamesFor,
   stepperDrawsHeading,
   type StepperAction,
   type StepperState,
@@ -120,7 +119,7 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
     dispatchDraft: (event) => dispatch({ type: "DRAFT", event }),
     next: () => dispatch({ type: "NEXT" }),
     back: () => dispatch({ type: "BACK" }),
-    canGoBack: canGoBack(state.step, state.sealed),
+    canGoBack: canGoBack(state.step, state.sealed, state.mode),
     advanceTo: (step) => dispatch({ type: "GOTO", step }),
     host,
   };
@@ -129,22 +128,26 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
   // content inside it (the Wait step with its flow) is not remounted when the
   // card drops away on Testify and Receipts.
   const card = hasPrimaryCard(state.step);
+  // The mode's own step list, so the track, the announcement and the heading
+  // match the steps the reader actually sees.
+  const names = stepNamesFor(state.mode);
+  const position = stepIndex(state.step, state.mode);
 
   return (
     <div className={styles.stepper} data-live-stepper>
       <div ref={trackRef} className={styles.track}>
         <StepTrack
-          steps={LIVE_STEP_NAMES}
-          current={stepIndex(state.step)}
+          steps={names}
+          current={position}
           label={LIVE_COPY.stepsLabel}
           phoneTemplate={LIVE_COPY.stepTrackPhone}
         />
         {/* The one live region of the stepper (spec 14, S1.5). */}
         <p className={styles.announce} role="status" aria-live="polite">
           {LIVE_COPY.stepAnnounce
-            .replace("{n}", String(stepIndex(state.step) + 1))
-            .replace("{total}", String(LIVE_STEPS.length))
-            .replace("{label}", stepName(state.step))}
+            .replace("{n}", String(position + 1))
+            .replace("{total}", String(names.length))
+            .replace("{label}", stepName(state.step, state.mode))}
         </p>
       </div>
       <section
@@ -165,7 +168,7 @@ export function LiveStepper({ state, dispatch, renderStep }: LiveStepperProps) {
         >
           {stepperDrawsHeading(state.step) ? (
             <h2 data-step-heading="" data-surface={card ? "paper" : "desk"} tabIndex={-1} className={styles.heading}>
-              {stepName(state.step)}
+              {stepName(state.step, state.mode)}
             </h2>
           ) : null}
           {renderStep(view)}

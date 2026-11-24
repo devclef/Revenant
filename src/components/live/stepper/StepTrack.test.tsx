@@ -13,6 +13,7 @@ import { LIVE_COPY } from "../copy";
 import {
   LIVE_STEPS,
   LIVE_STEP_NAMES,
+  REAL_STEP_NAMES,
   initialStepperState,
   stepIndex,
 } from "./live-steps";
@@ -92,5 +93,73 @@ describe("step-track.module.css exists beside the component", () => {
   it("is readable", () => {
     const css = readFileSync(join(__dirname, "step-track.module.css"), "utf8");
     expect(css.length).toBeGreaterThan(0);
+  });
+});
+
+// Spec 19. The Step_Track takes the mode's own names, so Real_Mode shows three
+// dots and Demo_Mode keeps six.
+describe("StepTrack in Real_Mode (spec 19)", () => {
+  function realTrackHtml(position: number): string {
+    return renderToStaticMarkup(
+      createElement(StepTrack, {
+        steps: REAL_STEP_NAMES,
+        current: position,
+        label: LIVE_COPY.stepsLabel,
+        phoneTemplate: LIVE_COPY.stepTrackPhone,
+      }),
+    );
+  }
+
+  it("renders three items labelled Write, Press the seal and Keep", () => {
+    const html = realTrackHtml(0);
+    expect(html.match(/<li\b/g)).toHaveLength(3);
+    expect(html).toContain(">Write<");
+    expect(html).toContain(">Press the seal<");
+    expect(html).toContain(">Keep<");
+  });
+
+  it("marks one current item per position, with done before and todo after", () => {
+    for (let position = 0; position < 3; position++) {
+      const html = realTrackHtml(position);
+      const items = html.match(/<li\b[\s\S]*?<\/li>/g) ?? [];
+      const states = items.map(
+        (item) => item.match(/data-state="(\w+)"/)?.[1] ?? "",
+      );
+      const expected = [0, 1, 2].map((index) =>
+        index < position ? "done" : index === position ? "current" : "todo",
+      );
+      expect(states, `position ${position}`).toEqual(expected);
+      expect(
+        html.match(/aria-current="step"/g) ?? [],
+        `position ${position}`,
+      ).toHaveLength(1);
+      expect(items[position], `position ${position}`).toContain(
+        'aria-current="step"',
+      );
+    }
+  });
+
+  it("gives the phone line as Step n of 3 · label for n 1 to 3", () => {
+    const labels = ["Write", "Press the seal", "Keep"];
+    for (let position = 0; position < 3; position++) {
+      const html = realTrackHtml(position);
+      expect(html).toMatch(
+        new RegExp(
+          `<p[^>]*aria-hidden="true"[^>]*>Step ${position + 1} of 3 · ${labels[position]}</p>`,
+        ),
+      );
+    }
+  });
+});
+
+describe("StepTrack in Demo_Mode (spec 19)", () => {
+  it("keeps six dots and the Step n of 6 phone line at every step", () => {
+    LIVE_STEPS.forEach((step, index) => {
+      const html = trackHtml(step);
+      expect(html.match(/<li\b/g), step).toHaveLength(6);
+      expect(html, step).toContain(
+        `Step ${index + 1} of 6 · ${LIVE_STEP_NAMES[index]}`,
+      );
+    });
   });
 });

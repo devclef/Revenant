@@ -16,9 +16,11 @@ import { LiveStepper, type StepView } from "./LiveStepper";
 import {
   LIVE_STEPS,
   LIVE_STEP_NAMES,
+  REAL_STEP_NAMES,
   initialStepperState,
   stepIndex,
   type LiveStep,
+  type StepperStep,
 } from "./live-steps";
 import { StepTrack } from "./StepTrack";
 
@@ -315,5 +317,78 @@ describe("LiveStepper heading focus (W8)", () => {
     expect(stepperCss).toMatch(
       /\.track \{[^}]*scroll-margin-top:\s*calc\(var\(--topbar-clear, 96px\) \+ 24px\)/,
     );
+  });
+});
+
+// Real_Mode (spec 19). The stepper reads the mode's own list: three steps,
+// Write, Press the seal and Keep, where Keep is the sealed view.
+describe("LiveStepper in Real_Mode", () => {
+  function renderReal(step: StepperStep): string {
+    return renderToStaticMarkup(
+      createElement(LiveStepper, {
+        state: initialStepperState(step, "real"),
+        dispatch: () => undefined,
+        renderStep: () => null,
+      }),
+    );
+  }
+
+  /** The state of each step dot, in order, and whether it carries aria-current. */
+  function dots(html: string): { state: string; current: boolean }[] {
+    const items = html.match(/<li\b[\s\S]*?<\/li>/g) ?? [];
+    return items.map((item) => ({
+      state: item.match(/data-state="(\w+)"/)?.[1] ?? "",
+      current: item.includes('aria-current="step"'),
+    }));
+  }
+
+  it("lists three dots labelled Write, Press the seal and Keep", () => {
+    const html = renderReal("write");
+    expect(indicatorNames(html)).toEqual([...REAL_STEP_NAMES]);
+    expect(indicatorNames(html)).toEqual(["Write", "Press the seal", "Keep"]);
+    expect(html.match(/<li\b/g)).toHaveLength(3);
+  });
+
+  it("marks exactly one current step, with done before and todo after", () => {
+    const cases: [StepperStep, number][] = [
+      ["write", 0],
+      ["seal", 1],
+      ["sealed", 2],
+    ];
+    for (const [step, position] of cases) {
+      const html = renderReal(step);
+      const expected = [0, 1, 2].map((index) => ({
+        state:
+          index < position ? "done" : index === position ? "current" : "todo",
+        current: index === position,
+      }));
+      expect(dots(html), step).toEqual(expected);
+      expect(html.match(/aria-current="step"/g), step).toHaveLength(1);
+    }
+  });
+
+  it("announces Step n of 3 with the step name, for n 1 to 3", () => {
+    const cases: [StepperStep, number, string][] = [
+      ["write", 1, "Write"],
+      ["seal", 2, "Press the seal"],
+      ["sealed", 3, "Keep"],
+    ];
+    for (const [step, n, label] of cases) {
+      const html = renderReal(step);
+      expect(html, step).toContain(`Step ${n} of 3: ${label}`);
+      expect(html, step).toContain(`Step ${n} of 3 · ${label}`);
+    }
+  });
+
+  it("never shows the demo count of six in Real_Mode", () => {
+    const html = renderReal("seal");
+    expect(html).not.toContain("of 6");
+    expect(html.match(/<li\b/g)).toHaveLength(3);
+  });
+
+  it("keeps the six-dot Demo_Mode list with Step n of 6", () => {
+    const html = render("seal");
+    expect(html.match(/<li\b/g)).toHaveLength(6);
+    expect(html).toContain("Step 2 of 6: Press the seal");
   });
 });
