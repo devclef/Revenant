@@ -37,7 +37,7 @@ import {
   initialStepperState,
   reduceStepper,
   stepName,
-  type LiveStep,
+  type StepperStep,
 } from "./stepper/live-steps";
 import { browserTimeZone } from "@/components/ui/letter-date";
 import { earliestOpeningDate } from "@/lib/seal-format";
@@ -485,7 +485,7 @@ const SEAL_FORM_TAGS: ReadonlySet<string> = new Set([
  * temporary h1 that takes focus when the step opens. The other steps hold the
  * page's liveHeading.
  */
-function stepHeading(step: LiveStep): ReactNode {
+function stepHeading(step: StepperStep): ReactNode {
   if (step === "write") return null;
   if (step === "seal") {
     return (

@@ -14,7 +14,6 @@ import type { Stage } from "@/components/ceremony/stages";
 import type { FlowState } from "@/components/reveal/opening-machine";
 
 import { LIVE_COPY, REAL_COPY } from "../copy";
-import type { WriteMode } from "../form";
 import {
   CLEARED_WRITE_DRAFT,
   initialWriteDraft,
@@ -44,10 +43,11 @@ export type LiveStep = (typeof LIVE_STEPS)[number];
 export type StepperMode = "demo" | "real";
 
 /**
- * The three steps of the real stepper on /seal: write, press the seal, keep.
- * A real letter has no Wait, Testify, Break or Receipts step (spec 08, R15).
+ * The three steps of the real stepper on /seal: write, press the seal, and the
+ * sealed step (shown as Keep). A real letter has no Wait, Testify, Break or
+ * Receipts step (spec 08, R15).
  */
-export const REAL_STEPS = ["write", "seal", "keep"] as const;
+export const REAL_STEPS = ["write", "seal", "sealed"] as const;
 
 export type RealStep = (typeof REAL_STEPS)[number];
 
@@ -99,7 +99,7 @@ export function canGoBack(
 ): boolean {
   if (sealed) return false;
   const index = stepIndex(step, mode);
-  const noBackFrom: StepperStep = mode === "real" ? "keep" : "wait";
+  const noBackFrom: StepperStep = mode === "real" ? "sealed" : "wait";
   return index > 0 && index < stepIndex(noBackFrom, mode);
 }
 
@@ -221,7 +221,9 @@ export function movesFocus(from: StepperStep, to: StepperStep): boolean {
 }
 
 export interface StepperState {
-  step: LiveStep;
+  /** The mode the state was created for. No action changes it. */
+  mode: StepperMode;
+  step: StepperStep;
   draft: WriteDraft;
   /** True once the seal is stored. The draft is dropped at that point. */
   sealed: boolean;
@@ -234,39 +236,63 @@ export type StepperAction =
   | { type: "BACK" }
   | { type: "DRAFT"; event: WriteDraftEvent }
   | { type: "SEALED" }
-  | { type: "GOTO"; step: LiveStep }
+  | { type: "GOTO"; step: StepperStep }
   | { type: "STAGE"; stage: Stage };
 
 /**
- * The stepper state before anything is typed. `mode` picks the draft: demo
- * starts with the Live_Prefill row, real (`/seal`) with no row (spec 10, C2).
+ * The stepper state before anything is typed. `mode` picks the step list and
+ * the draft: demo starts with the Live_Prefill row, real (`/seal`) with no row
+ * (spec 10, C2). A step outside the mode's list starts on `write`. Real mode
+ * starting on `sealed` creates the sealed state with the draft cleared.
  */
 export function initialStepperState(
-  step: LiveStep = "write",
-  mode: WriteMode = "demo",
+  step: StepperStep = "write",
+  mode: StepperMode = "demo",
 ): StepperState {
+  if (mode === "real" && step === "sealed") {
+    return {
+      mode,
+      step,
+      draft: CLEARED_WRITE_DRAFT,
+      sealed: true,
+      stage: "emerging",
+    };
+  }
+  const start = stepsFor(mode).includes(step) ? step : "write";
   return {
-    step,
+    mode,
+    step: start,
     draft: initialWriteDraft(mode),
     sealed: false,
     stage: "emerging",
   };
 }
 
+/** Dispatches on the state's mode. Neither reducer writes `mode`. */
 export function reduceStepper(
   state: StepperState,
   action: StepperAction,
 ): StepperState {
+  return state.mode === "real"
+    ? reduceReal(state, action)
+    : reduceDemo(state, action);
+}
+
+/** The Demo_Mode reducer. Its body is the reducer from before spec 19. */
+function reduceDemo(state: StepperState, action: StepperAction): StepperState {
   switch (action.type) {
     case "NEXT": {
-      const index = stepIndex(state.step);
+      const index = stepIndex(state.step, "demo");
       const last = LIVE_STEPS.length - 1;
       if (index >= last) return state;
       return { ...state, step: LIVE_STEPS[index + 1] };
     }
     case "BACK": {
-      if (!canGoBack(state.step, state.sealed)) return state;
-      return { ...state, step: LIVE_STEPS[stepIndex(state.step) - 1] };
+      if (!canGoBack(state.step, state.sealed, "demo")) return state;
+      return {
+        ...state,
+        step: LIVE_STEPS[stepIndex(state.step, "demo") - 1],
+      };
     }
     case "DRAFT": {
       if (state.sealed) return state;
@@ -277,7 +303,9 @@ export function reduceStepper(
     case "GOTO": {
       // Forward only. A step at or before the current one changes nothing, and
       // returning the same state keeps React from re-rendering.
-      if (stepIndex(action.step) <= stepIndex(state.step)) return state;
+      if (stepIndex(action.step, "demo") <= stepIndex(state.step, "demo")) {
+        return state;
+      }
       return { ...state, step: action.step };
     }
     case "STAGE": {
@@ -286,11 +314,53 @@ export function reduceStepper(
       // no step, leaves the step where it is. The step never moves back.
       const target = stepForStage(action.stage);
       const next =
-        target !== null && stepIndex(target) > stepIndex(state.step)
+        target !== null &&
+        stepIndex(target, "demo") > stepIndex(state.step, "demo")
           ? target
           : state.step;
       if (next === state.step && state.stage === action.stage) return state;
       return { ...state, stage: action.stage, step: next };
+    }
+  }
+}
+
+/**
+ * The Real_Mode reducer for /seal. Its steps are REAL_STEPS. Back is offered
+ * only on `seal` before the seal is stored, and `sealed` is reached only after
+ * the seal is stored.
+ */
+function reduceReal(state: StepperState, action: StepperAction): StepperState {
+  switch (action.type) {
+    case "NEXT": {
+      if (state.step === "write") return { ...state, step: "seal" };
+      if (state.step === "seal" && state.sealed) {
+        return { ...state, step: "sealed" };
+      }
+      return state;
+    }
+    case "BACK": {
+      if (!canGoBack(state.step, state.sealed, "real")) return state;
+      return { ...state, step: "write" };
+    }
+    case "DRAFT": {
+      if (state.sealed) return state;
+      return { ...state, draft: reduceWriteDraft(state.draft, action.event) };
+    }
+    case "SEALED":
+      return { ...state, sealed: true, draft: CLEARED_WRITE_DRAFT };
+    case "GOTO": {
+      const target = action.step;
+      if (!stepsFor("real").includes(target)) return state;
+      if (stepIndex(target, "real") <= stepIndex(state.step, "real")) {
+        return state;
+      }
+      if (target === "sealed" && !state.sealed) return state;
+      return { ...state, step: target };
+    }
+    case "STAGE": {
+      // The step never moves in Real_Mode. Only the stored Stage changes.
+      if (state.stage === action.stage) return state;
+      return { ...state, stage: action.stage };
     }
   }
 }

@@ -35,7 +35,11 @@ import type { SealedState } from "../SealedView";
 import { LiveGhost } from "./LiveGhost";
 import { SealedEnvelopeView } from "./SealedEnvelopeView";
 import { heldGhostSink } from "./HeldGhost";
-import { flowPortalTarget, stepForFlowPhase, type LiveStep } from "./live-steps";
+import {
+  flowPortalTarget,
+  stepForFlowPhase,
+  type StepperStep,
+} from "./live-steps";
 
 /**
  * The opening flow, loaded when the Wait card mounts. It is split out of the
@@ -68,9 +72,9 @@ export interface LiveWaitStepProps {
   /** The app origin (APP_ORIGIN) without a trailing slash. */
   appOrigin: string;
   /** The stepper's current step. Wait, Testify and Receipts all use this card. */
-  step: LiveStep;
+  step: StepperStep;
   /** Moves the stepper forward to a later step. */
-  advanceTo: (step: LiveStep) => void;
+  advanceTo: (step: StepperStep) => void;
   /** The clock for the countdown. Defaults to Date.now; a test fixes it. */
   nowMs?: () => number;
   /** Reads the printed backup key from the seal flow, if it is still held. */

@@ -159,7 +159,7 @@ const STAGE_SET: Record<Stage, true> = {
 };
 const STAGES = Object.keys(STAGE_SET) as Stage[];
 
-const modeArb = fc.constantFrom<WriteMode>("demo", "real");
+const modeArb = fc.constantFrom<WriteMode>("demo");
 const stepArb = fc.constantFrom(...LIVE_STEPS);
 const stageArb = fc.constantFrom(...STAGES);
 
@@ -204,13 +204,14 @@ function asOracleAction(action: StepperAction): OracleStepperAction {
 }
 
 describe("live-steps oracle (spec 19, task 1.2)", () => {
-  it("the copied initial state equals today's for both modes and every step", () => {
-    for (const mode of ["demo", "real"] as const) {
-      for (const step of LIVE_STEPS) {
-        expect(initialStepperState(step, mode)).toEqual(
-          todayInitialStepperState(step, mode),
-        );
-      }
+  it("the copied initial state equals today's for demo mode and every step", () => {
+    // The oracle is the Demo_Mode reducer of 3bee3055. Today's state adds the
+    // `mode` field, which the copy has no reason to carry, so it is set here.
+    for (const step of LIVE_STEPS) {
+      expect(todayInitialStepperState(step, "demo")).toEqual({
+        ...initialStepperState(step, "demo"),
+        mode: "demo",
+      });
     }
   });
 
