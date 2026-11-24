@@ -352,7 +352,7 @@ No task below starts until that PR is merged. The other open questions keep the 
   - Run the journey check (or wait for the six-hourly run) and post the J2 and J10 result lines in this issue.
   - _Requirements: 11.5, 11.6, 13.1_
 
-- [ ] 17. Final verification on merged `main`, report only
+- [x] 17. Final verification on merged `main`, report only
   - Agent: `platform-dev` · Depends on: 1, 2, 3, 4, 5, 6, 7, 8, 11, 12, 13, 15, 16 · Estimated size: S, one empty commit
   - Scope: none. The record is the body of one empty commit (`git commit --allow-empty`).
   - Steps:
