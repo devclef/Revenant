@@ -261,7 +261,7 @@ New copy is final as written in the design's new-copy table.
   - Earlier-spec tests changed or retired: none expected; name any.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 10. Final verification on merged `main`, report only
+- [x] 10. Final verification on merged `main`, report only
   - Agent: `platform-dev` · Depends on: 1, 2, 3, 4, 5, 6, 7, 8, 9 · Estimated size: S, one empty commit
   - Follow 'Rules for every task' in tasks.md.
   - Scope: none. The record is the body of one empty commit (`git commit --allow-empty`). Change no source file.
