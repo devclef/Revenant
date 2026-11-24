@@ -75,7 +75,7 @@ New copy is final as written in the design's new-copy table.
   - Earlier-spec tests changed or retired: none.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 2. Stepper_Module: modes, the Real_Step_List and the real reducer
+- [x] 2. Stepper_Module: modes, the Real_Step_List and the real reducer
   - Agent: `frontend-dev` · Depends on: 1 · Estimated size: M, ~700 changed lines
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `src/components/live/stepper/live-steps.ts`, `src/components/live/copy.ts` (only `REAL_COPY.keepStep`), `live-steps.test.ts`, `live-steps.oracle.property.test.ts`, `real-steps.property.test.ts` (new), `step-lookups.property.test.ts` (new).
