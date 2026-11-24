@@ -51,7 +51,7 @@ New copy is final as written in the design's new-copy table.
 
 ## Tasks
 
-- [ ] 1. Goldens and the reducer oracle, recorded at the baseline
+- [x] 1. Goldens and the reducer oracle, recorded at the baseline
   - Agent: `frontend-dev` · Depends on: none · Estimated size: M, ~900 changed lines (tests and golden files)
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `src/components/live/SealPage.demo-golden.test.tsx` (new), `src/components/live/seal-draft.golden.test.tsx` (new), `src/components/live/__golden__/**` (new), `src/components/live/stepper/live-steps.oracle.property.test.ts` (new). No non-test source file changes in this task.
