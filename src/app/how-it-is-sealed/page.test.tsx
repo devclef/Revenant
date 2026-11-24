@@ -51,7 +51,7 @@ describe("How_Page headings", () => {
     expect(text).toContain(HOW_COPY.mappingHeaders.revenant);
     for (const row of BRAND_COPY.sealMapping) {
       expect(text).toContain(row.seal);
-      expect(text).toContain(row.revenant);
+      expect(text).toContain(row.efterhand);
     }
   });
 
@@ -64,7 +64,7 @@ describe("How_Page headings", () => {
     expect(firstRowAt).toBeGreaterThan(text.indexOf(`>${HOW_COPY.heading}</h1>`));
     expect(firstRowAt).toBeLessThan(text.indexOf("<h2"));
     expect(rows.slice(-BRAND_COPY.sealMapping.length)).toEqual(
-      BRAND_COPY.sealMapping.map((row) => [row.seal, row.revenant]),
+      BRAND_COPY.sealMapping.map((row) => [row.seal, row.efterhand]),
     );
   });
 

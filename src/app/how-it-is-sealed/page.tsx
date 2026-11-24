@@ -38,7 +38,7 @@ export default function HowItIsSealedPage() {
             {BRAND_COPY.sealMapping.map((row) => (
               <tr key={row.seal}>
                 <td>{row.seal}</td>
-                <td>{row.revenant}</td>
+                <td>{row.efterhand}</td>
               </tr>
             ))}
           </tbody>

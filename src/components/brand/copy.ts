@@ -34,19 +34,19 @@ export const BRAND_COPY = {
   sealMapping: [
     {
       seal: "Wax that shows whether it was broken",
-      revenant: "A SHA-256 hash of the sealed envelope, plus the AES-GCM tag",
+      efterhand: "A SHA-256 hash of the sealed envelope, plus the AES-GCM tag",
     },
     {
       seal: "The folded paper that hides the page",
-      revenant: "AES-GCM encryption in your browser; the server stores ciphertext, never the letter text",
+      efterhand: "AES-GCM encryption in your browser; the server stores ciphertext, never the letter text",
     },
     {
       seal: "The signet ring that made it yours",
-      revenant: "A passkey (WebAuthn PRF), with an optional backup key card",
+      efterhand: "A passkey (WebAuthn PRF), with an optional backup key card",
     },
     {
       seal: "The archivist who won't open it early",
-      revenant: "A server time lock that releases its half of the key on the opening date",
+      efterhand: "A server time lock that releases its half of the key on the opening date",
     },
   ],
 } as const;
