@@ -21,6 +21,11 @@ export interface BackupChoiceProps {
   problem?: string;
   /** The radios are disabled while a passkey prompt or the sealing runs (S4.7). */
   disabled?: boolean;
+  /**
+   * Whether the skip card shows its help line. Defaults to true. When false,
+   * the skip card shows only its title and has no help span or description link.
+   */
+  skipHelp?: boolean;
 }
 
 const OPTIONS: readonly {
@@ -48,6 +53,7 @@ export function BackupChoice({
   onChange,
   problem,
   disabled = false,
+  skipHelp = true,
 }: BackupChoiceProps) {
   const problemId = "live-backup-choice-problem";
   return (
@@ -60,6 +66,7 @@ export function BackupChoice({
       <div className={cards.cards}>
         {OPTIONS.map((option) => {
           const helpId = `${option.id}-help`;
+          const showHelp = option.value !== "skip" || skipHelp;
           return (
             <label
               key={option.value}
@@ -73,16 +80,18 @@ export function BackupChoice({
                 name="live-backup-choice"
                 value={option.value}
                 className={cards.radio}
-                aria-describedby={helpId}
+                aria-describedby={showHelp ? helpId : undefined}
                 disabled={disabled}
                 checked={value === option.value}
                 onChange={() => onChange(option.value)}
               />
               <span className={cards.circle} aria-hidden="true" />
               <span className={cards.title}>{option.label}</span>
-              <span id={helpId} className={cards.help}>
-                {option.help}
-              </span>
+              {showHelp ? (
+                <span id={helpId} className={cards.help}>
+                  {option.help}
+                </span>
+              ) : null}
             </label>
           );
         })}

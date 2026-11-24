@@ -8,7 +8,7 @@
 // column below 900 px, text first. The step owns its own dark surface, so its
 // text colours never come from the paper panel.
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import { useCalmInForce } from "@/components/ceremony/motion";
 
@@ -52,6 +52,12 @@ export type SealStepProps = {
   onCreatePress: () => void;
   onConfirmPress: () => void;
   onAttempt: () => void;
+  /** Real_Mode (spec 19): the real wording and the skip-help rule. Default false. */
+  real?: boolean;
+  /** Real_Mode with no opening date yet: the press line asks for one. */
+  needsDate?: boolean;
+  /** Rendered first in the text column, above the Backup_Choice and the press. */
+  opening?: ReactNode;
 };
 
 /** The motion setting from the Calm control and the reduced-motion media query (S6.9). */
@@ -91,11 +97,14 @@ export function SealStep({
   onCreatePress,
   onConfirmPress,
   onAttempt,
+  real = false,
+  needsDate = false,
+  opening,
 }: SealStepProps) {
   const motion = useMotionSetting();
   // pressStatusLine alone chooses the line: it never reads "choose first" once
   // a choice exists (P1.5).
-  const status = pressStatusLine({ tag, backupChoice, motion });
+  const status = pressStatusLine({ tag, backupChoice, motion, needsDate });
   const running =
     tag === "creating" ||
     tag === "confirming" ||
@@ -116,12 +125,20 @@ export function SealStep({
         </p>
       </div>
       <div data-seal-text="" className={styles.text}>
-        <BackupChoice
-          value={backupChoice}
-          onChange={onBackupChoice}
-          problem={backupChoiceProblem}
-          disabled={tag !== "write"}
-        />
+        {/* The opening and the Backup_Choice share one child slot, so the
+            links after them keep the child index React uses for useId. */}
+        <>
+          {opening !== undefined ? (
+            <div data-seal-opening="">{opening}</div>
+          ) : null}
+          <BackupChoice
+            value={backupChoice}
+            onChange={onBackupChoice}
+            problem={backupChoiceProblem}
+            disabled={tag !== "write"}
+            skipHelp={!real}
+          />
+        </>
         {prfMissing ? (
           <p className={styles.body} role="status">
             {LIVE_COPY.prfHint}
@@ -152,7 +169,7 @@ export function SealStep({
           onConfirmPress={onConfirmPress}
           onAttempt={onAttempt}
         />
-        <SealSteps tag={tag} backupChoice={backupChoice} />
+        <SealSteps tag={tag} backupChoice={backupChoice} real={real} />
       </div>
     </div>
   );

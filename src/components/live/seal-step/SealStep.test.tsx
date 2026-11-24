@@ -199,3 +199,21 @@ describe("SealStep press column (spec 14, S6)", () => {
     }
   });
 });
+
+describe("SealStep opening slot (spec 19)", () => {
+  it("places the opening before the backup choice and the press", () => {
+    const html = render({
+      opening: createElement("p", null, "OPENING_MARK"),
+    });
+    const at = html.indexOf('data-seal-opening=""');
+    expect(at).toBeGreaterThan(-1);
+    expect(html.indexOf("OPENING_MARK")).toBeGreaterThan(at);
+    expect(at).toBeLessThan(html.indexOf('data-backup-choice=""'));
+    expect(at).toBeLessThan(html.indexOf('data-press-column=""'));
+    expect(at).toBeGreaterThan(html.indexOf('data-seal-text=""'));
+  });
+
+  it("renders no opening wrapper when no opening is given", () => {
+    expect(render()).not.toContain('data-seal-opening=""');
+  });
+});

@@ -4,7 +4,7 @@
 // the Seal step (spec 14, design section 1.5). No React here, so the table
 // can be tested as plain data.
 
-import { LIVE_COPY } from "../copy";
+import { LIVE_COPY, REAL_COPY } from "../copy";
 import { PRESS_COPY } from "../press/copy";
 import type { BackupChoiceValue } from "../write-draft";
 
@@ -20,16 +20,22 @@ export type PressStatusTag = "write" | "creating" | "created" | "confirming" | "
  * The Press_Status_Line for every seal state before the letter is stored.
  * Never empty. The line keeps the `write` text for every motion setting while
  * the crypto module has not loaded, so the line says what the seal is for.
+ * With `needsDate` true (Real_Mode, no opening date yet) the `write` line with
+ * a backup choice reads `REAL_COPY.pressNeedsDate` instead of the press text.
  */
 export function pressStatusLine(input: {
   tag: PressStatusTag;
   backupChoice: BackupChoiceValue | null;
   motion: MotionSetting;
+  needsDate?: boolean;
 }): PressStatus {
   switch (input.tag) {
     case "write":
       if (input.backupChoice === null) {
         return { text: PRESS_COPY.chooseFirst, tone: "muted" };
+      }
+      if (input.needsDate === true) {
+        return { text: REAL_COPY.pressNeedsDate, tone: "muted" };
       }
       return {
         text: input.motion === "full" ? PRESS_COPY.holdToSeal : PRESS_COPY.pressToSeal,

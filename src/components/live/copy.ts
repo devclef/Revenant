@@ -340,6 +340,23 @@ export const REAL_COPY = {
   figuresHintRealOne:
     "Choose 1 figure, or none if you write a question above. It is sealed as published, with its period and source.",
   keepStep: "Keep",
+  /** The press status line while no opening date is chosen (spec 19, Requirement 3.4). */
+  pressNeedsDate: "Choose an opening date first.",
+  /** The first press's hint in Real_Mode. The passkey is named for the opening date, not "Revenant demo". */
+  stepOneHint: "Press the wax. The passkey is named for this letter's opening date.",
+  /** The first press's hint once the passkey is made (spec 19, Requirement 4.11). */
+  stepPasskeyMade: "Passkey made. It is named for this letter's opening date.",
+  /** The receipt card message when no figure can be sealed. Plain text, no link (spec 19). */
+  figuresNoneAvailable: "No figure can be sealed right now. Your letter doesn't need one.",
+  /** The cannot-lock screen note about a passkey this device may have created. */
+  passkeyDeleteNote:
+    "If your device created a passkey for this letter, you can delete it from your passkey manager.",
+  /** The failed screen when the device clock is too far from Revenant's clock. */
+  clockBody:
+    "Your device clock differs from Revenant's clock by too much. Nothing was sealed. Check your device time and try again.",
+  /** The failed screen when the server is busy. */
+  busyBody:
+    "Revenant is busy right now. Nothing was sealed. Try again later. Your letter is still here.",
 } as const;
 
 /** The short field names used in the partly filled row message (selfReportedMissing). */
