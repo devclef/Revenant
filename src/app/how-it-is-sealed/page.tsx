@@ -31,7 +31,7 @@ export default function HowItIsSealedPage() {
           <thead>
             <tr>
               <th scope="col">{HOW_COPY.mappingHeaders.seal}</th>
-              <th scope="col">{HOW_COPY.mappingHeaders.revenant}</th>
+              <th scope="col">{HOW_COPY.mappingHeaders.efterhand}</th>
             </tr>
           </thead>
           <tbody>

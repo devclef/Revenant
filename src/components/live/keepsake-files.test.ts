@@ -35,7 +35,7 @@ describe("domainOf", () => {
   });
 
   it("falls back when the origin is not a URL", () => {
-    expect(domainOf("")).toBe("revenant");
+    expect(domainOf("")).toBe("efterhand");
   });
 });
 

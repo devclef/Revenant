@@ -23,7 +23,7 @@ export const HOW_COPY = {
   /** The column headers of the Seal_Mapping table, which opens the page. */
   mappingHeaders: {
     seal: "The wax seal",
-    revenant: "Revenant",
+    efterhand: "Efterhand",
   },
 
   sections: [

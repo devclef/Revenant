@@ -2,7 +2,7 @@
  * Test-only helper. Returns the text of every text node in an HTML string
  * that sits outside any element carrying a `data-user-content` attribute.
  * Text inside such an element (a letter, a testimony answer) is user content
- * and is never returned, so copy checks only see Efterhand's own words.
+ * and is never returned, so copy checks only see Revenant's own words.
  *
  * The project has no HTML parser in its devDependencies, so this is a small
  * tokenizer for server-rendered markup. It skips comments and doctypes,

@@ -18,7 +18,7 @@ export function domainOf(appOrigin: string): string {
   try {
     return new URL(appOrigin).host;
   } catch {
-    return "revenant";
+    return "efterhand";
   }
 }
 

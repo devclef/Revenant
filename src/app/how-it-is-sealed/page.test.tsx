@@ -48,7 +48,7 @@ describe("How_Page headings", () => {
     const text = html.replace(/&#x27;/g, "'");
     expect(html.match(/<tbody>[\s\S]*<\/tbody>/)?.[0].match(/<tr>/g)).toHaveLength(4);
     expect(text).toContain(HOW_COPY.mappingHeaders.seal);
-    expect(text).toContain(HOW_COPY.mappingHeaders.revenant);
+    expect(text).toContain(HOW_COPY.mappingHeaders.efterhand);
     for (const row of BRAND_COPY.sealMapping) {
       expect(text).toContain(row.seal);
       expect(text).toContain(row.efterhand);
