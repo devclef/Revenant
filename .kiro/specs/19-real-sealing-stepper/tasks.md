@@ -110,7 +110,7 @@ New copy is final as written in the design's new-copy table.
   - Copy evidence: tone-check for `live/copy.ts`.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 3. Live_Stepper and Step_Track read the mode's list
+- [x] 3. Live_Stepper and Step_Track read the mode's list
   - Agent: `frontend-dev` · Depends on: 2 · Estimated size: S, ~300 changed lines
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `src/components/live/stepper/LiveStepper.tsx`, `LiveStepper.test.tsx`, `StepTrack.test.tsx`, `step-track.property.test.ts`. `step-track.ts` and `StepTrack.tsx` do not change.
