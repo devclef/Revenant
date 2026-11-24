@@ -177,7 +177,7 @@ New copy is final as written in the design's new-copy table.
   - Earlier-spec tests changed or retired: none expected; name any.
   - Validation: `bash scripts/check.sh`.
 
-- [ ] 6. SealPage runs Real_Mode in the Live_Stepper; WriteForm wiring; `/seal` backdrop
+- [x] 6. SealPage runs Real_Mode in the Live_Stepper; WriteForm wiring; `/seal` backdrop
   - Agent: `frontend-dev` · Depends on: 5 · Estimated size: L, ~1,200 changed lines
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `src/components/live/SealPage.tsx`, `src/components/live/WriteForm.tsx`, `src/components/live/copy.ts` (only removing `REAL_COPY.testNotice`), `src/app/seal/page.tsx`, `SealPage.real.test.tsx` (new), `SealPage.test.tsx`, `src/app/seal/page.test.tsx`, `src/components/live/seal-page-imports.test.ts` (new), `src/components/live/test-notice-scan.test.ts` (new).
