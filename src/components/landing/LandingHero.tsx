@@ -83,7 +83,7 @@ export function LandingHero({
         ) : null}
       </div>
       {realSealing ? (
-        <p className={styles.realSeal} data-real-seal="">
+        <p className={styles.realSeal} data-real-seal="" data-block="real-seal">
           <Link href="/seal" className={styles.realSealLink}>
             {LANDING_COPY.realSealLink}
           </Link>

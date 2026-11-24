@@ -149,6 +149,13 @@ describe("LandingHero real seal link while REAL_SEALING is on", () => {
     expect(para?.[1]).not.toMatch(/accent|outlined|cta/);
   });
 
+  // The Journey_Check's PH2 measures gaps between [data-block] boxes; without
+  // its own block the link reads as dead space below the actions.
+  it("marks the real seal link as a content block", () => {
+    const para = realMarkup(true).match(/<p [^>]*data-real-seal=""[^>]*>/);
+    expect(para?.[0]).toContain('data-block="real-seal"');
+  });
+
   it("places the real seal link after the actions and before the seal block", () => {
     const html = realMarkup(true);
     const real = html.indexOf("data-real-seal");
