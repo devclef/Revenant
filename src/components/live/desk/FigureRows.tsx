@@ -8,7 +8,7 @@ import { shortNameFor } from "@/components/reveal/short-names";
 import { formatShortDate } from "@/components/ui/letter-date";
 
 import { regionGroupFor, type PickableSeries } from "../catalogue-list";
-import { LIVE_COPY } from "../copy";
+import { LIVE_COPY, REAL_COPY } from "../copy";
 import type { FigureDetail } from "../FigurePicker";
 import { pickerHint } from "../figure-hint";
 import { figureLimit } from "../form";
@@ -32,6 +32,8 @@ export interface FigureRowsProps {
   onToggle: (metricId: string) => void;
   /** Value and source per metric id. A row with no entry shows no value. */
   details?: ReadonlyMap<string, FigureDetail>;
+  /** Real mode (the `/seal` letter): the none line is plain text, with no link. */
+  real?: boolean;
 }
 
 /** The region of a row in words: the group heading, or the figure's own region. */
@@ -54,12 +56,21 @@ export function FigureRows({
   selected,
   onToggle,
   details,
+  real = false,
 }: FigureRowsProps) {
   const detailsId = useId();
   const [detailsOpen, setDetailsOpen] = useState(false);
   const limitNoteRef = useRef<HTMLParagraphElement>(null);
   const limit = figureLimit(series.length);
   const hint = pickerHint(limit);
+
+  if (hint.key === "none" && real) {
+    return (
+      <p className={styles.figuresNone} data-figure-rows="">
+        {REAL_COPY.figuresNoneAvailable}
+      </p>
+    );
+  }
 
   if (hint.key === "none") {
     const [before = "", after = ""] =

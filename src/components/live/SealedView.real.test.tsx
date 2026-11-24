@@ -8,6 +8,8 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
+import { DEMO_COPY } from "@/components/demo/copy";
+
 import { LIVE_COPY, REAL_COPY } from "./copy";
 import { formatLocalDateTime } from "./format";
 import { SealedView, type SealedState, type SealedViewProps } from "./SealedView";
@@ -70,6 +72,29 @@ describe("SealedView, real sealed body before opens_at", () => {
 
   it("marks the body as real", () => {
     expect(html()).toContain("data-live-real");
+  });
+
+  it("renders no Demo label anywhere in the real body (the view, the letter card)", () => {
+    const out = html();
+    expect(out).not.toContain("data-demo-label");
+    expect(out).not.toContain(DEMO_COPY.demoLabel);
+    expect(out).toContain(LIVE_COPY.letterCardTitle);
+  });
+
+  it("gives the heading the step-heading marker and makes it focusable", () => {
+    const h1 = html().match(/<h1[^>]*>/)?.[0] ?? "";
+    expect(h1).toContain('data-step-heading=""');
+    expect(h1).toContain('tabindex="-1"');
+  });
+});
+
+describe("SealedView, Demo label and heading when real is off", () => {
+  it("keeps the Demo label and a heading without the step marker", () => {
+    const out = renderHtml();
+    expect(out).toContain("data-demo-label");
+    const h1 = out.match(/<h1[^>]*>/)?.[0] ?? "";
+    expect(h1).not.toContain("data-step-heading");
+    expect(h1).not.toContain("tabindex");
   });
 });
 

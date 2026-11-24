@@ -27,6 +27,8 @@ export interface BackupKeyCardProps {
   appOrigin: string;
   /** The printed key from formatBackupKey: 27 characters with hyphens. */
   keyText: string;
+  /** Show the Demo label on the card. Defaults to true. */
+  showDemoLabel?: boolean;
 }
 
 /**
@@ -37,7 +39,12 @@ export function backupKeyFragmentUrl(appOrigin: string, letterId: string, keyTex
   return `${letterLinkText(appOrigin, letterId)}#k=${keyText.replace(/-/g, "")}`;
 }
 
-export function BackupKeyCard({ letterId, appOrigin, keyText }: BackupKeyCardProps) {
+export function BackupKeyCard({
+  letterId,
+  appOrigin,
+  keyText,
+  showDemoLabel = true,
+}: BackupKeyCardProps) {
   const headingId = useId();
   const linkText = letterLinkText(appOrigin, letterId);
   const qr = useMemo(
@@ -47,7 +54,7 @@ export function BackupKeyCard({ letterId, appOrigin, keyText }: BackupKeyCardPro
 
   return (
     <section className={styles.card} aria-labelledby={headingId} data-live-backup-card>
-      <DemoLabel />
+      {showDemoLabel ? <DemoLabel /> : null}
       <h2 id={headingId} className={styles.cardTitle}>
         {LIVE_COPY.backupCardTitle}
       </h2>

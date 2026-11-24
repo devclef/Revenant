@@ -134,8 +134,14 @@ export function SealedView({
   return (
     <div className={styles.panel} data-card="live-sealed" data-live-sealed={state.factors} data-live-real={real ? "" : undefined}>
       <div className={styles.noPrint}>
-        <DemoLabel />
-        <h1 className={styles.heading}>{real ? REAL_COPY.stillSealed : LIVE_COPY.sealedTitle}</h1>
+        {real ? null : <DemoLabel />}
+        <h1
+          className={styles.heading}
+          data-step-heading={real ? "" : undefined}
+          tabIndex={real ? -1 : undefined}
+        >
+          {real ? REAL_COPY.stillSealed : LIVE_COPY.sealedTitle}
+        </h1>
         {real ? null : <p className={styles.intro}>{LIVE_COPY.sealedBody}</p>}
 
         <p className={styles.intro}>
@@ -190,6 +196,7 @@ export function SealedView({
         appOrigin={appOrigin}
         opensAt={state.opensAt}
         envelopeHash={state.envelopeHash}
+        showDemoLabel={!real}
       />
 
       {offerBackupCard && backupKeyText !== null ? (
@@ -199,6 +206,7 @@ export function SealedView({
               letterId={state.letterId}
               appOrigin={appOrigin}
               keyText={backupKeyText}
+              showDemoLabel={!real}
             />
           </div>
         ) : (

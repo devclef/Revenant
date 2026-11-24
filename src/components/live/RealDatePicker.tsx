@@ -3,9 +3,12 @@
 import { formatCalendarDate } from "@/components/ui/letter-date";
 
 import { REAL_COPY } from "./copy";
-import styles from "./live.module.css";
+import darkStyles from "./real-date-picker.module.css";
+import paperStyles from "./live.module.css";
 
 export interface RealDatePickerProps {
+  /** "paper" for the cream paper panel, "dark" for the Seal_Step's desk colour. */
+  surface?: "paper" | "dark";
   /** The chosen `YYYY-MM-DD`, or null while none is chosen. */
   value: string | null;
   /** The earliest allowed opening date, `YYYY-MM-DD`. Sets the input's min. */
@@ -25,6 +28,7 @@ export interface RealDatePickerProps {
  * page checks the date again at each press (see real-opening.ts).
  */
 export function RealDatePicker({
+  surface = "paper",
   value,
   min,
   timeZoneFallback,
@@ -32,6 +36,7 @@ export function RealDatePicker({
   onChange,
   onTouch = () => {},
 }: RealDatePickerProps) {
+  const styles = surface === "dark" ? darkStyles : paperStyles;
   return (
     <div className={styles.field}>
       <label htmlFor="real-opens-on" className={styles.label}>

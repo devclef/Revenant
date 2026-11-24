@@ -44,6 +44,8 @@ export interface ReceiptPanelProps {
   view: ReceiptView;
   /** Called with the view the visitor picked. */
   onViewChange: (view: ReceiptView) => void;
+  /** Real mode (the `/seal` letter), passed on to the figure rows. */
+  real?: boolean;
 }
 
 /**
@@ -91,6 +93,7 @@ export function ReceiptPanel({
   onOwnNumberChange,
   view,
   onViewChange,
+  real = false,
 }: ReceiptPanelProps) {
   const headingId = useId();
   const phone = usePhone();
@@ -110,6 +113,7 @@ export function ReceiptPanel({
         selected={selected}
         onToggle={onToggleFigure}
         details={details}
+        real={real}
       />
     );
 
