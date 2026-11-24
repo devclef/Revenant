@@ -57,7 +57,7 @@ Also fixed: page titles may show both names between the merges of task 3 (layout
 
 ## Tasks
 
-- [ ] 1. Step 1 · Steering docs renamed
+- [x] 1. Step 1 · Steering docs renamed
   - Agent: `owner` · Depends on: none · Estimated size: n/a (owner commit, no role PR)
   - Follow 'Rules for every task' in tasks.md.
   - Scope: the eight files in `.kiro/steering/` (`crypto.md`, `data-integrity.md`, `deploy.md`, `neutrality.md`, `product.md`, `structure.md`, `tech.md`, `tone.md`). Nothing else.
