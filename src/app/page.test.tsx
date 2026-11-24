@@ -251,3 +251,45 @@ describe("landing heading colour in globals.css (H1)", () => {
     expect(css).toMatch(rule);
   });
 });
+
+describe("landing page real seal link follows REAL_SEALING (B1)", () => {
+  beforeEach(() => {
+    vi.stubEnv("RP_ID", "");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  // One module, one import: REAL_SEALING is read per call, so the same Home
+  // function is rendered twice with the env changed in between.
+  it("renders exactly one Real_Seal_Link between the actions and seal blocks with REAL_SEALING=on, then none with off", () => {
+    vi.stubEnv("REAL_SEALING", "on");
+    const on = renderPage();
+
+    const actionsAt = on.indexOf('data-block="actions"');
+    const realSealAt = on.indexOf("data-real-seal");
+    const sealAt = on.indexOf('data-block="seal"');
+    expect(actionsAt).toBeGreaterThan(-1);
+    expect(realSealAt).toBeGreaterThan(-1);
+    expect(sealAt).toBeGreaterThan(-1);
+    expect(countOf(on, "data-real-seal")).toBe(1);
+    expect(actionsAt).toBeLessThan(realSealAt);
+    expect(realSealAt).toBeLessThan(sealAt);
+
+    const linkMatch = /<a [^>]*href="\/seal"[^>]*>(.*?)<\/a>/s.exec(on);
+    expect(linkMatch).not.toBeNull();
+    expect(linkMatch?.[0]).not.toContain("data-cta");
+    expect(textOf(linkMatch?.[1] ?? "")).toBe(LANDING_COPY.realSealLink);
+    expect(textOf(on)).toContain(LANDING_COPY.realSealLink);
+    expect(countOf(on, 'data-cta="')).toBeLessThanOrEqual(2);
+
+    vi.stubEnv("REAL_SEALING", "off");
+    const off = renderPage();
+
+    expect(off).not.toContain("data-real-seal");
+    expect(off).not.toContain('href="/seal"');
+    expect(textOf(off)).not.toContain(LANDING_COPY.realSealLink);
+    expect(countOf(off, 'data-cta="')).toBeLessThanOrEqual(2);
+  });
+});

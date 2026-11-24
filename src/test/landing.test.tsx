@@ -108,7 +108,7 @@ describe("landing page `/`", () => {
   });
 
   it("leaves How and GitHub to the footer, and links no /seal", () => {
-    vi.stubEnv("REAL_SEALING", "on");
+    vi.stubEnv("REAL_SEALING", "off");
     const html = decode(render([MAYA]));
     expect(html).not.toContain('href="/how-it-is-sealed"');
     expect(html).not.toContain('href="https://github.com/devclef/Revenant"');
