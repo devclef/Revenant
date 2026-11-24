@@ -103,4 +103,8 @@ describe("landing real seal link CSS", () => {
   it("keeps the --text on --bg pair above 4.5:1, using the scene tokens", () => {
     expect(contrast(token("text"), token("bg"))).toBeGreaterThan(4.5);
   });
+
+  it("keeps #f5f3ff on #0b0912 above 4.5:1", () => {
+    expect(contrast("#f5f3ff", "#0b0912")).toBeGreaterThan(4.5);
+  });
 });
