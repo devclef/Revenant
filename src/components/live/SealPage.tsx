@@ -377,9 +377,8 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
           />
         );
       }
-      default:
-        return null;
     }
+    return null;
   }
 
   /** The write form. `nav` is set only by the stepper, to show one step. */
