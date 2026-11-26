@@ -259,7 +259,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Copy evidence: tone-check for `live/copy.ts`.
   - Validation: `npx vitest run src/components/live`, the two golden tests from the rules, then the done check.
 
-- [ ] 8. Part B: the Simulated_Port
+- [x] 8. Part B: the Simulated_Port
   - Agent: `crypto-dev` · Depends on: none · Estimated size: S, ~150 changed lines plus tests
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `src/lib/crypto/simulated-port.ts` (new), `src/lib/crypto/index.ts` (added lines only), `src/lib/crypto/simulated-port.test.ts` (new), `src/lib/crypto/simulated-port.property.test.ts` (new), `src/lib/crypto/simulated-port.scan.test.ts` (new). No other file under `src/lib/crypto/` changes.
