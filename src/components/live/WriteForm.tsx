@@ -506,6 +506,10 @@ export function WriteForm({
     state.tag === "sealing";
   const pressBlocked =
     !inCreated && (!formReady || backupChoice === null || inputBlocked);
+  // The Backup_Only_Start is blocked by the same readiness and input checks as
+  // the press, but not by the Backup_Choice: it is the path that skips the
+  // choice (spec 13, P7).
+  const backupOnlyBlocked = !formReady || inputBlocked;
   // Only the choose-first line shows while no option is picked (P1.5). Once an
   // option is picked and the press is blocked by the fields, the fix-fields line
   // shows instead, so the status line is never blank and never reads as "choose
@@ -895,6 +899,7 @@ export function WriteForm({
           questionCount={questions.filter((row) => row.trim() !== "").length}
           prfMissing={prfHint === "missing"}
           onBackupStart={onBackupStart}
+          backupOnlyBlocked={backupOnlyBlocked}
           onBack={onBack}
           showHeading={sealHeading}
           onCreatePress={onCreatePress}
