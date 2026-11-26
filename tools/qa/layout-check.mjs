@@ -189,9 +189,11 @@
 //   R10.6 live-column        live step 6: [data-receipts] and each question pair, figure card
 //                            and the letter centred within 1 px of the viewport centre, and
 //                            the column within 1 px of Maya's receipts column width. Two
-//                            readings: split (splitColumnFailures, with the split marker) and
-//                            the current column check (receiptColumnFailures). The current
-//                            column check is removed by task 5.
+//                            readings: split (splitColumnFailures, with the split marker): the
+//                            record column (the union of the non-letter blocks) and the letter
+//                            column side by side, tops level, each at least 280 px wide. Folded
+//                            (receiptColumnFailures, today's build): one centred column with the
+//                            letter folded shut under it. The folded reading is removed by task 5.
 //   R14.3 passkey-warning    live Press the seal, after the step scroll and before any reader
 //                            action: [data-warning-text] unfolded, inside the layout viewport,
 //                            its bottom above the wax top. Calm off and on.
