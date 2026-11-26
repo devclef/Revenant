@@ -32,7 +32,7 @@ Full rules, key hierarchy and threat model are in `crypto.md`, which loads when 
 - The browser encrypts. The server only ever stores ciphertext, the unencrypted header, and the per-letter time-lock `serverSecret`.
 - A letter has a random content key that is wrapped twice: once with a key from the user's passkey (WebAuthn PRF), and once with a backup key. Both wraps also require the `serverSecret`.
 - The server releases the `serverSecret` only when its UTC clock is at or after `opens_at`. The client clock never decides.
-- PRF support must be checked at sealing on the user's actual device. If it passes, the backup key is optional. If it fails, the backup key is required.
+- PRF support must be checked at sealing on the user's actual device. If it passes, the backup key is optional. If it fails, the backup key is required. The author may skip the passkey and seal with the backup key only. In the simulated-passkey mode of `/demo/live`, the check runs against the in-memory simulated port and the backup key is required.
 - The backup key, PRF output and content key never leave the browser and are never logged.
 - Recall answers are encrypted too, so the operator can't read them.
 

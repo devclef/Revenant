@@ -57,6 +57,7 @@ Planned layout. Update this file when the structure changes.
 │   │       └── buttons.module.css  # the shared primary button
 │   └── lib/
 │       ├── crypto/          # Browser-only: WebAuthn PRF, HKDF, AES-GCM, backup key, envelope hash
+│       │   └── simulated-port.ts  # Software passkey for live demo letters only (/demo/live); never reachable from /seal or /l/[id]
 │       ├── seal-format/     # Versioned sealed payload schema (one module per format_version)
 │       ├── cards/           # Browser-only: letter card (QR link) and backup key card (PDF)
 │       ├── ics/             # Browser-only: calendar file for the opening date

@@ -57,6 +57,8 @@ Support depends on browser, OS and passkey provider, and some providers only ret
 
 If the check passes, the backup key is optional. Skipping it requires an explicit confirmation that a lost passkey means the letter can never be opened.
 
+A backup-key-only seal skips the check and stores no passkey wrap. For live demo letters only, the simulated port passes the check in software: its PRF is HMAC-SHA256 over a random, non-extractable key held in memory for one page. Real letters never use it.
+
 Sealing from a computer without a capable platform passkey should offer the browser's "use a phone or tablet" option, which can create the passkey on the phone. The sealing screen also explains that a passkey may not be usable on a device from a different ecosystem, and what to do instead (the "use a phone" option, or the backup key).
 
 ## Backup key
@@ -91,6 +93,7 @@ The header must not reveal what the letter contains or tracks.
 
 - Persona letters are sealed by a script with a published demo backup key and an `opensAt` in the past. The persona page opens them with that key. Persona letters have no passkey wrap and never prompt for a passkey.
 - Live demo letters use the real flow, including the PRF check, letter card and `.ics`, with `opensAt = sealedAt + 30 seconds`. The server accepts this only for the demo table.
+- Live demo letters may also be backup-only, or sealed with the simulated port: a random 32-byte secret per page, imported as a non-extractable HMAC-SHA256 key, never stored, logged or sent. A simulated letter always carries the backup wrap too. `/seal` never offers the simulated port.
 
 ## Threat model
 

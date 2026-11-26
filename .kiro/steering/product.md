@@ -31,7 +31,7 @@ The one thing no wax seal could do: Revenant makes you remember first, before yo
 7. **See the receipts.** Revenant shows, in order:
    - Each of their own questions, with what they remembered just now beside what they wrote on the sealing day, with no comment on the difference. What they remembered about the figures sits with the figures.
    - What they actually wrote (then), in full.
-   - The numbers then vs now, with the plain change between them. This appears only when the letter holds figures. On the Receipts step the questions come first, then the figures. The letter, already read, is folded after the figures under "Read the letter again". A letter with no figures ends on what they remembered and the letter, shown in full.
+   - The numbers then vs now, with the plain change between them. This appears only when the letter holds figures. On the Receipts step the questions come first, then the letter, then the figures. The letter stays open: beside the questions and figures on a wide screen, and in its place before the figures on a phone. A letter with no figures ends on what they remembered and the letter, shown in full.
 
 The gap between memory and record is the product. Revenant does not interpret that gap for the user.
 
@@ -62,7 +62,7 @@ The gap between memory and record is the product. Revenant does not interpret th
 - **Letter content:** plain text only, at most 5,000 characters.
 - **Hosting (MVP):** the user's self-hosted RKE2 cluster, internet-facing with Let's Encrypt HTTPS, deployed by the user's own Fleet GitOps repo. This repo provides the Helm chart (with Postgres included) and the image on GHCR (see `deploy.md`). Spam protection and rate limiting are handled later.
 - **Remember step (MVP):** the questions the author wrote for their future self (up to three, sealed as written with the author's answer to each), then fixed questions generated from the figures the user tracked, if any ("What do you think a gallon of gas cost then?"). AI-generated questions based on the letter text are a post-MVP idea and must still follow `neutrality.md`.
-- **Unlocking:** a passkey using the WebAuthn PRF extension, unlocked with fingerprint, face or device PIN. A backup key card is offered as a second way in and is optional when the passkey works. Skipping it needs an explicit confirmation that a lost passkey means a lost letter. If the user's passkey can't produce a PRF key at sealing, the backup key becomes required.
+- **Unlocking:** a passkey using the WebAuthn PRF extension, unlocked with fingerprint, face or device PIN. A backup key card is offered as a second way in and is optional when the passkey works. Skipping it needs an explicit confirmation that a lost passkey means a lost letter. If the user's passkey can't produce a PRF key at sealing, the backup key becomes required. The author may also seal with the backup key only, before any passkey prompt, on `/demo/live` and `/seal`. That letter has no passkey wrap and opens only with its backup key.
 - **Opening on another device:** passkeys may not move between ecosystems (for example from iCloud to an Android phone). The sealing screen explains this in plain words: open on a device that has the passkey, use a computer's "use a phone" option, or use the backup key.
 - **Server time lock:** unchanged. Neither the passkey nor the backup key can open a letter before its opening date.
 - **Letter card:** a QR code that is just a link with the letter's random ID. It contains no key. Before the opening date it shows "still sealed" and a countdown. After, it leads to unlock, recall and reveal.
@@ -94,11 +94,11 @@ Pre-sealed letters from fictional people, each written as of a date in its windo
 
 ### Demo 2: Lock and unlock
 
-This demo shows the unlock capability. The judge writes a short letter, optionally adds figures, and seals it for real with their own passkey (and optionally a backup key). Revenant generates a new letter card (QR) and `.ics` file for it. The time lock is 30 seconds instead of years. When the countdown ends, they scan the QR code and unlock with the same passkey.
+This demo shows the unlock capability. The judge writes a short letter, optionally adds figures, and seals it for real with their own passkey (and optionally a backup key). Revenant generates a new letter card (QR) and `.ics` file for it. The time lock is 30 seconds instead of years. When the countdown ends, they scan the QR code and unlock with the same passkey. A judge whose computer can't use passkeys may seal with the backup key only, or turn on the simulated passkey. The simulated passkey lives only in that tab, no passkey is saved on the device, and the backup key is required. The in-page unlock uses the simulated passkey; after a reload only the backup key opens the letter.
 
 - The 30-second lock exists only for demo letters. The server rejects short locks for real letters.
-- The judge can ask their own question. The Write step offers Occasions, and every Occasion starts with one default question in the author's own voice, which they answer, change or remove. The demo is a rehearsal of a letter that would normally stay sealed for months, and says so. Figures are optional. The payoff leads with each question, what the judge remembers 30 seconds later beside what they wrote, then the letter; any figures come after. With figures, the Receipts step folds the letter, already read, after them (core loop step 7).
-- The judge's passkey is real and will appear in their passkey manager, named so it is obviously a Revenant demo.
+- The judge can ask their own question. The Write step offers Occasions, and every Occasion starts with one default question in the author's own voice, which they answer, change or remove. The demo is a rehearsal of a letter that would normally stay sealed for months, and says so. Figures are optional. The payoff leads with each question, what the judge remembers 30 seconds later beside what they wrote, then the letter; any figures come after. With figures, the Receipts step keeps the letter open, beside the figures on a wide screen and before them on a phone (core loop step 7).
+- The judge's passkey is real and will appear in their passkey manager, named so it is obviously a Revenant demo. With the simulated passkey nothing is saved, and the page says so.
 - After 30 seconds the "now" figures will match "then". That is expected; the then-vs-now story belongs to Demo 1.
 - Details of this flow are refined after the MVP is up.
 
