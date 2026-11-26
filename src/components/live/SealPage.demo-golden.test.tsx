@@ -51,8 +51,12 @@ vi.mock("./useSealFlow", () => ({
   }),
 }));
 
+// The module is loaded in the browser before the Write form is ready. The
+// mock stands in for it so the static render shows the ready form.
+const LOADED_CRYPTO = {} as never;
+
 vi.mock("./useCryptoModule", () => ({
-  useCryptoModule: () => null,
+  useCryptoModule: () => LOADED_CRYPTO,
 }));
 
 vi.mock("./prf-hint", async (importOriginal) => ({
