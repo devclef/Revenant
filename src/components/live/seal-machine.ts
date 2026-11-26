@@ -16,6 +16,9 @@ export type SealFailureKind =
   /** Real_Letter only: the seal route refused the date or the request (400). */
   | "invalid_date";
 
+/** Where the backup-key fallback started: the cannot_lock screen or the Seal_Step. */
+export type FallbackOrigin = "cannot_lock" | "seal_step";
+
 export type SealState =
   | { tag: "write" }
   | { tag: "creating" }
@@ -23,7 +26,7 @@ export type SealState =
   | { tag: "confirming" }
   | { tag: "preparing" }
   | { tag: "sealing" }
-  | { tag: "fallback_key"; passkeyCreated: boolean }
+  | { tag: "fallback_key"; origin: FallbackOrigin; passkeyCreated: boolean }
   | {
       tag: "sealed";
       letterId: string;
@@ -58,7 +61,9 @@ export type SealEvent =
   | { type: "FAILED"; kind: SealFailureKind; metricId?: string; passkeyCreated: boolean }
   | { type: "CANCELLED" }
   | { type: "RETRY" }
-  // Backup-key fallback, entered from cannot_lock.
+  // Backup-key fallback. SEAL_STEP_BACKUP_START enters it from the Seal_Step
+  // (write); FALLBACK_START enters it from cannot_lock.
+  | { type: "SEAL_STEP_BACKUP_START" }
   | { type: "FALLBACK_START" }
   | { type: "FALLBACK_SEAL_PRESS" }
   | { type: "FALLBACK_DECLINE" };
@@ -77,7 +82,14 @@ function failedState(event: Extract<SealEvent, { type: "FAILED" }>): SealState {
 export function sealReducer(state: SealState, event: SealEvent): SealState {
   switch (state.tag) {
     case "write":
-      return event.type === "CREATE_PRESS" ? { tag: "creating" } : state;
+      switch (event.type) {
+        case "CREATE_PRESS":
+          return { tag: "creating" };
+        case "SEAL_STEP_BACKUP_START":
+          return { tag: "fallback_key", origin: "seal_step", passkeyCreated: false };
+        default:
+          return state;
+      }
 
     case "creating":
       switch (event.type) {
@@ -145,7 +157,11 @@ export function sealReducer(state: SealState, event: SealEvent): SealState {
         case "RETRY":
           return { tag: "write" };
         case "FALLBACK_START":
-          return { tag: "fallback_key", passkeyCreated: state.passkeyCreated };
+          return {
+            tag: "fallback_key",
+            origin: "cannot_lock",
+            passkeyCreated: state.passkeyCreated,
+          };
         default:
           return state;
       }
@@ -159,7 +175,11 @@ export function sealReducer(state: SealState, event: SealEvent): SealState {
         case "FALLBACK_SEAL_PRESS":
           return { tag: "preparing" };
         case "FALLBACK_DECLINE":
-          return { tag: "cannot_lock", passkeyCreated: state.passkeyCreated };
+          // Declining from the Seal_Step returns to the form; from cannot_lock it
+          // shows the cannot-lock screen again.
+          return state.origin === "seal_step"
+            ? { tag: "write" }
+            : { tag: "cannot_lock", passkeyCreated: state.passkeyCreated };
         default:
           return state;
       }

@@ -46,7 +46,7 @@ const ALL_STATES: SealState[] = [
   { tag: "confirming" },
   { tag: "preparing" },
   { tag: "sealing" },
-  { tag: "fallback_key", passkeyCreated: false },
+  { tag: "fallback_key", origin: "cannot_lock", passkeyCreated: false },
   {
     tag: "sealed",
     letterId: RETIRED_LETTER_IDS[0],

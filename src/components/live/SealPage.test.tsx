@@ -481,7 +481,9 @@ describe("SealPage shows the Seal_Button only on the Press the seal step (spec 2
   });
 
   it("renders no Seal_Button on fallback_key", () => {
-    expect(render({ tag: "fallback_key", passkeyCreated: false })).not.toContain("data-seal-button");
+    expect(
+      render({ tag: "fallback_key", origin: "cannot_lock", passkeyCreated: false }),
+    ).not.toContain("data-seal-button");
   });
 
   it("renders no Seal_Button once the letter is sealed", () => {

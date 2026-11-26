@@ -173,7 +173,7 @@ const PAIRS: Pair[] = [
   {
     name: "seal / fallback_key",
     step: "seal",
-    state: { tag: "fallback_key", passkeyCreated: false },
+    state: { tag: "fallback_key", origin: "cannot_lock", passkeyCreated: false },
     h1: LIVE_COPY.fallbackTitle,
   },
   {

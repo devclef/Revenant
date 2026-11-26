@@ -181,31 +181,44 @@ describe("sealReducer transitions", () => {
   it("moves cannot_lock to fallback_key on FALLBACK_START and keeps passkeyCreated", () => {
     expect(
       sealReducer({ tag: "cannot_lock", passkeyCreated: true }, { type: "FALLBACK_START" }),
-    ).toEqual({ tag: "fallback_key", passkeyCreated: true });
+    ).toEqual({ tag: "fallback_key", origin: "cannot_lock", passkeyCreated: true });
     expect(
       sealReducer({ tag: "cannot_lock", passkeyCreated: false }, { type: "FALLBACK_START" }),
-    ).toEqual({ tag: "fallback_key", passkeyCreated: false });
+    ).toEqual({ tag: "fallback_key", origin: "cannot_lock", passkeyCreated: false });
   });
 
   it("moves fallback_key to preparing on FALLBACK_SEAL_PRESS", () => {
     expect(
-      sealReducer({ tag: "fallback_key", passkeyCreated: true }, { type: "FALLBACK_SEAL_PRESS" }),
+      sealReducer(
+        { tag: "fallback_key", origin: "cannot_lock", passkeyCreated: true },
+        { type: "FALLBACK_SEAL_PRESS" },
+      ),
     ).toEqual({ tag: "preparing" });
   });
 
   it("moves fallback_key back to cannot_lock on FALLBACK_DECLINE with the same passkeyCreated", () => {
     expect(
-      sealReducer({ tag: "fallback_key", passkeyCreated: true }, { type: "FALLBACK_DECLINE" }),
+      sealReducer(
+        { tag: "fallback_key", origin: "cannot_lock", passkeyCreated: true },
+        { type: "FALLBACK_DECLINE" },
+      ),
     ).toEqual({ tag: "cannot_lock", passkeyCreated: true });
     expect(
-      sealReducer({ tag: "fallback_key", passkeyCreated: false }, { type: "FALLBACK_DECLINE" }),
+      sealReducer(
+        { tag: "fallback_key", origin: "cannot_lock", passkeyCreated: false },
+        { type: "FALLBACK_DECLINE" },
+      ),
     ).toEqual({ tag: "cannot_lock", passkeyCreated: false });
   });
 
   it("ignores fallback events outside their source states", () => {
     expect(sealReducer(INITIAL_SEAL_STATE, { type: "FALLBACK_START" })).toBe(INITIAL_SEAL_STATE);
     expect(sealReducer(INITIAL_SEAL_STATE, { type: "FALLBACK_DECLINE" })).toBe(INITIAL_SEAL_STATE);
-    const fallback: SealState = { tag: "fallback_key", passkeyCreated: false };
+    const fallback: SealState = {
+      tag: "fallback_key",
+      origin: "cannot_lock",
+      passkeyCreated: false,
+    };
     expect(sealReducer(fallback, { type: "FALLBACK_START" })).toBe(fallback);
     expect(sealReducer(fallback, { type: "RETRY" })).toBe(fallback);
   });
