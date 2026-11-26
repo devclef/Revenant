@@ -474,6 +474,10 @@ const LETTER_PHONE_MIN_PX = 280;
 const FOCUS_DRIFT_MAX_PX = 1;
 const FOCUS_SETTLE_MS = 1000;
 // Spec 15 rows. They always block (see report) and need no --require.
+// R10.1 (receipts order) and R10.6 (live column) each have a split reading, used when the
+// receipts carry [data-receipts-layout="split"], and a folded reading, used by today's build.
+// The folded reading (receiptsOrderFailuresFolded for R10.1, receiptColumnFailures for R10.6)
+// is removed by task 5.
 const SPEC15_CHECKS = ["NB1", "GC1", "DL1", "PV1", "R10.1", "R10.6", "R14.3", "R5.4"];
 // Spec 20 Part D readings (see the header). They block on any failure, like the spec 15 rows.
 const S20_CHECKS = ["S20.c", "S20.d", "S20.e", "S20.f", "S20.f-reduced", "S20.g", "S20.long"];
