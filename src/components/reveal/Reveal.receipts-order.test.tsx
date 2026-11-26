@@ -144,23 +144,24 @@ describe("Live_Letter receipts order (spec 10 C9.3)", () => {
     expect(pair).toBeLessThan(letter);
   });
 
-  it("shows the figures before the letter at stage 3, so the letter folds after them", () => {
+  it("places the one open letter after the question pairs and before the figures at stage 3", () => {
     const markup = renderReveal({ stage: 3 });
     const testimony = indexOfOrFail(markup, "data-author-testimony");
-    const figures = indexOfOrFail(markup, "data-figures-panel");
     const letter = indexOfOrFail(markup, "data-letter-text");
-    expect(testimony).toBeLessThan(figures);
-    expect(figures).toBeLessThan(letter);
+    const figures = indexOfOrFail(markup, "data-figures-panel");
+    expect(testimony).toBeLessThan(letter);
+    expect(letter).toBeLessThan(figures);
+    expect(markup.match(/data-letter-text/g)).toHaveLength(1);
   });
 
-  it("ends the column with the letter, the seal line and the end card, after the figures", () => {
+  it("ends the column with the figures, the seal line and the end card, after the letter", () => {
     const markup = renderReveal({ stage: 3 });
-    const figures = indexOfOrFail(markup, "data-figures-panel");
     const letter = indexOfOrFail(markup, "data-letter-text");
+    const figures = indexOfOrFail(markup, "data-figures-panel");
     const seal = indexOfOrFail(markup, "data-seal-line");
     const end = indexOfOrFail(markup, "data-end-card");
-    expect(figures).toBeLessThan(letter);
-    expect(letter).toBeLessThan(seal);
+    expect(letter).toBeLessThan(figures);
+    expect(figures).toBeLessThan(seal);
     expect(seal).toBeLessThan(end);
   });
 
@@ -170,21 +171,15 @@ describe("Live_Letter receipts order (spec 10 C9.3)", () => {
     expect(markup).not.toContain("data-figures-panel");
   });
 
-  it("folds the letter closed after the figures at stage 3, with no motion", () => {
+  it("never folds the letter at stage 3: no disclosure wraps it", () => {
     const markup = renderReveal({ stage: 3 });
-    const details = indexOfOrFail(markup, "data-letter-disclosure");
-    const figures = indexOfOrFail(markup, "data-figures-panel");
-    expect(details).toBeGreaterThan(figures);
-    // The disclosure is closed on first render: no `open` attribute.
-    expect(markup).toMatch(/<details[^>]*data-letter-disclosure=""[^>]*>/);
-    expect(markup).not.toMatch(/<details[^>]* open/);
-    // The folded letter mounts still, so no unfold runs under the closed disclosure.
-    expect(markup).toContain('data-light="static"');
+    expect(markup).not.toContain("data-letter-disclosure");
+    expect(markup).toContain("data-letter-stage");
   });
 
-  it("folds the letter at stage 3 on a phone too", () => {
+  it("keeps the letter open at stage 3 on a phone too", () => {
     const markup = renderReveal({ stage: 3, phone: true });
-    expect(markup).toMatch(/<details[^>]*data-letter-disclosure=""/);
-    expect(markup).not.toMatch(/<details[^>]* open/);
+    expect(markup).not.toContain("data-letter-disclosure");
+    expect(markup).toMatch(/data-letter-text/);
   });
 });
