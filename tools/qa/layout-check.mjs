@@ -178,12 +178,22 @@
 //
 // Spec 16 rows (spec 16 requirement 17.3, task 15), at 1440x900 and 390x844. Like the
 // spec 15 rows they block on any failure, with no --require (checkSpec16Rows):
-//   R10.1 receipts-order     Maya's Receipts step and live step 6: question pairs, figure
-//                            cards, the letter, the seal line, the end card, top to bottom;
-//                            the letter folded shut under "Read the letter again".
+//   R10.1 receipts-order     Maya's Receipts step and live step 6. Two readings:
+//                            split (receiptsOrderFailures, with the split marker): question
+//                            pairs, figure cards, the seal line and the end card top to bottom,
+//                            the letter beside the receipts rather than after the figures, no
+//                            fold control on the page, and the letter text visible.
+//                            folded (receiptsOrderFailuresFolded, today's build): the same
+//                            blocks top to bottom, with the letter folded shut under "Read the
+//                            letter again". The folded reading is removed by task 5.
 //   R10.6 live-column        live step 6: [data-receipts] and each question pair, figure card
 //                            and the letter centred within 1 px of the viewport centre, and
-//                            the column within 1 px of Maya's receipts column width.
+//                            the column within 1 px of Maya's receipts column width. Two
+//                            readings: split (splitColumnFailures, with the split marker): the
+//                            record column (the union of the non-letter blocks) and the letter
+//                            column side by side, tops level, each at least 280 px wide. Folded
+//                            (receiptColumnFailures, today's build): one centred column with the
+//                            letter folded shut under it. The folded reading is removed by task 5.
 //   R14.3 passkey-warning    live Press the seal, after the step scroll and before any reader
 //                            action: [data-warning-text] unfolded, inside the layout viewport,
 //                            its bottom above the wax top. Calm off and on.
@@ -191,6 +201,23 @@
 //                            at 390x844 no headline line holds one word (5.5). Calm off and on.
 // R10.6 seals a real live demo letter with a virtual passkey (CTAP2 with PRF) and waits out
 // the 30-second lock, so it needs the app's database and RP_ID set to the --url host.
+//
+// Spec 20 Part D readings (spec 20 design "QA browser steps", c to g). They run on the receipts
+// of Maya and of live step 6 and report "missing" unless the receipts carry
+// [data-receipts-layout="split"]. S20.long runs at 1280x800 with a 5,000-character letter.
+//   S20.c column-placement   900 px and wider: the letter column starts right of the record column,
+//                            tops level within 1 px. Narrower: no two blocks sit side by side.
+//   S20.d letter-sticks      900 px and wider only: after scrolling to the end, the letter column top
+//                            is 0 to 32 px under the Top_Bar, unless the receipts end has reached its bottom.
+//   S20.e focus-in-view      the Figures_Heading lies between the Top_Bar and the viewport bottom,
+//                            1 s after the move. Only its position is read; document.activeElement
+//                            is not checked, so focus is covered by the FV1 and N1 rows instead.
+//   S20.f letter-motion      full motion: at most one animate call on the letter, and the letter
+//                            node held before the move is still the one shown 2 s after it.
+//   S20.f-reduced            reduced motion: no animate call and no animation on the letter.
+//   S20.g figure-accent      no figure text is drawn in --accent.
+//   S20.long long-letter     the letter column has tabindex 0, End scrolls it, and the last
+//                            character comes into view.
 //
 // FR1   script-focus-outline  (GitHub issue #577, tools/qa/layout-rules-17.mjs) at 1440x900 and 390x844,
 //                            on every step the walk shoots: a script-focused non-control draws no
@@ -447,7 +474,13 @@ const LETTER_PHONE_MIN_PX = 280;
 const FOCUS_DRIFT_MAX_PX = 1;
 const FOCUS_SETTLE_MS = 1000;
 // Spec 15 rows. They always block (see report) and need no --require.
+// R10.1 (receipts order) and R10.6 (live column) each have a split reading, used when the
+// receipts carry [data-receipts-layout="split"], and a folded reading, used by today's build.
+// The folded reading (receiptsOrderFailuresFolded for R10.1, receiptColumnFailures for R10.6)
+// is removed by task 5.
 const SPEC15_CHECKS = ["NB1", "GC1", "DL1", "PV1", "R10.1", "R10.6", "R14.3", "R5.4"];
+// Spec 20 Part D readings (see the header). They block on any failure, like the spec 15 rows.
+const S20_CHECKS = ["S20.c", "S20.d", "S20.e", "S20.f", "S20.f-reduced", "S20.g", "S20.long"];
 const GC1_CENTRE_TOL_PX = 8;
 // The text of the Top_Bar's Demo chip (scene/copy.ts) and of the DemoLabel (demo/copy.ts).
 const SPEC15_DEMO_LABEL = "Demo";
@@ -2352,7 +2385,7 @@ const result = (id, name, status, detail) => ({ id, name, status, detail });
 
 function report(ctx, r) {
   if (!r) return;
-  const level = r.status === "pass" ? "ok" : r.status === "missing" ? "note" : ctx.required.has(r.id) || SPEC15_CHECKS.includes(r.id) ? "blocker" : "polish";
+  const level = r.status === "pass" ? "ok" : r.status === "missing" ? "note" : ctx.required.has(r.id) || SPEC15_CHECKS.includes(r.id) || S20_CHECKS.includes(r.id) ? "blocker" : "polish";
   ctx.rep.add(level, r.id, r.detail, r.name);
 }
 
@@ -4696,8 +4729,11 @@ const FOLD_REACH_READ = () => {
 const S16_CENTRE_TOL_PX = 1;
 const S16_RECEIPT_RANK = { pair: 0, figure: 1, letter: 2, seal: 3, end: 4 };
 
-/** 10.1 (and 10.8): the Receipts blocks read top to bottom, and the letter is folded shut. */
-export function receiptsOrderFailures({ blocks, letterClosed }) {
+/**
+ * Folded reading of 10.1 (and 10.8), used by builds without the split marker. Removed by task 5.
+ * The Receipts blocks read top to bottom, and the letter is folded shut.
+ */
+export function receiptsOrderFailuresFolded({ blocks, letterClosed }) {
   const out = [];
   const ordered = [...blocks].sort((a, b) => a.top - b.top);
   let last = -1;
@@ -4714,6 +4750,69 @@ export function receiptsOrderFailures({ blocks, letterClosed }) {
     if (!blocks.some((b) => b.kind === kind)) out.push(`10.1 no "${kind}" block`);
   }
   if (letterClosed !== true) out.push("10.2 the letter is not folded under Read the letter again");
+  return out;
+}
+
+/**
+ * Split reading of 10.1: the open letter sits beside the receipts in order.
+ * `blocks` are question pairs, figure cards, the letter, the seal line and the end card, each
+ * with its top. `disclosurePresent` is true when a fold or "Read the letter again" control is
+ * on the page. `letterTextVisible` is false when the letter text has no client rect or fails
+ * checkVisibility().
+ * @param {{ blocks: { kind: string, top: number }[], disclosurePresent: boolean, letterTextVisible: boolean }} args
+ */
+export function receiptsOrderFailures({ blocks, disclosurePresent, letterTextVisible }) {
+  const out = [];
+  const ordered = blocks.filter((b) => b.kind !== "letter").sort((a, b) => a.top - b.top);
+  let last = -1;
+  for (const b of ordered) {
+    const rank = S16_RECEIPT_RANK[b.kind];
+    if (rank === undefined) {
+      out.push(`10.1 unknown block "${b.kind}"`);
+      continue;
+    }
+    if (rank < last) out.push(`10.1 "${b.kind}" sits after a later block`);
+    last = Math.max(last, rank);
+  }
+  for (const kind of ["letter", "seal", "end"]) {
+    if (!blocks.some((b) => b.kind === kind)) out.push(`10.1 no "${kind}" block`);
+  }
+  const letter = blocks.find((b) => b.kind === "letter");
+  const figureTops = blocks.filter((b) => b.kind === "figure").map((b) => b.top);
+  if (letter && figureTops.length > 0 && letter.top > Math.min(...figureTops)) {
+    out.push("10.1 the letter sits after the figures");
+  }
+  if (disclosurePresent === true) out.push("10.2 a fold or Read the letter again control is on the page");
+  if (letterTextVisible !== true) out.push("10.2 the letter text is not visible");
+  return out;
+}
+
+/**
+ * Split reading of 10.6: the record column and the letter column sit side by side, centred on
+ * the viewport, and the live width matches the persona receipts column. Each column is at
+ * least 280 px wide. `record` and `letter` are boxes with `left`, `right` and `top` in px.
+ * @param {{ record: { left: number, right: number, top: number }, letter: { left: number, right: number, top: number }, width: number, centre: number, viewportCentre: number, personaWidth: number | null | undefined }} args
+ */
+export function splitColumnFailures({ record, letter, width, centre, viewportCentre, personaWidth }) {
+  const out = [];
+  if (record.right > letter.left && letter.right > record.left) {
+    out.push("10.6 the record column overlaps the letter column");
+  }
+  if (Math.abs(record.top - letter.top) > S16_CENTRE_TOL_PX) {
+    out.push(`10.6 column tops ${record.top} px and ${letter.top} px differ by more than ${S16_CENTRE_TOL_PX} px`);
+  }
+  for (const [name, box] of [["record", record], ["letter", letter]]) {
+    const colWidth = box.right - box.left;
+    if (colWidth < 280) out.push(`10.6 the ${name} column is ${colWidth} px, want at least 280 px`);
+  }
+  if (Math.abs(centre - viewportCentre) > S16_CENTRE_TOL_PX) {
+    out.push(`10.6 column centre ${centre} px, want ${viewportCentre} px within ${S16_CENTRE_TOL_PX} px`);
+  }
+  if (personaWidth === null || personaWidth === undefined) {
+    out.push("10.6 no persona receipts column to compare its width with");
+  } else if (Math.abs(width - personaWidth) > S16_CENTRE_TOL_PX) {
+    out.push(`10.6 column width ${width} px, persona ${personaWidth} px within ${S16_CENTRE_TOL_PX} px`);
+  }
   return out;
 }
 
@@ -4738,6 +4837,108 @@ export function receiptColumnFailures({ centre, width, viewportCentre, personaWi
   } else if (Math.abs(width - personaWidth) > S16_CENTRE_TOL_PX) {
     out.push(`10.6 column width ${width} px, persona ${personaWidth} px within ${S16_CENTRE_TOL_PX} px`);
   }
+  return out;
+}
+
+// --- Spec 20 Part D readings (design "QA browser steps", c to g) -------------
+const S20_TOL_PX = 1;
+const S20_STICK_MAX_PX = 32;
+const S20_WIDE_PX = 900;
+const S20_LONG_SIZE = "1280x800";
+const S20_LONG_LENGTH = 5000;
+const S20_LONG_TAIL = " The last line of this letter is here.";
+const S20_LONG_LETTER = "A letter that is long enough to scroll inside its own column. ".repeat(100).slice(0, S20_LONG_LENGTH - S20_LONG_TAIL.length) + S20_LONG_TAIL;
+
+/**
+ * S20.c: at 900 px and wider the letter column starts right of the record column and its top is
+ * level with the record column's top. Below 900 px no two blocks sit side by side.
+ * @param {{ w: number, record: { left: number, right: number, top: number } | null, letter: { left: number, right: number, top: number } | null, blocks: { kind: string, top: number, bottom: number }[] }} args
+ */
+export function placementFailures({ w, record, letter, blocks }) {
+  const out = [];
+  if (w >= S20_WIDE_PX) {
+    if (!record || !letter) return ["S20.c no record or letter column to place"];
+    if (letter.left < record.right) {
+      out.push(`S20.c letter column starts at ${Math.round(letter.left)} px, before the record column ends at ${Math.round(record.right)} px`);
+    }
+    if (Math.abs(letter.top - record.top) > S20_TOL_PX) {
+      out.push(`S20.c column tops ${Math.round(record.top)} px and ${Math.round(letter.top)} px differ by more than ${S20_TOL_PX} px`);
+    }
+    return out;
+  }
+  const ordered = [...blocks].sort((a, b) => a.top - b.top);
+  for (let i = 1; i < ordered.length; i += 1) {
+    const prev = ordered[i - 1];
+    const cur = ordered[i];
+    if (cur.top < prev.bottom - S20_TOL_PX) out.push(`S20.c "${cur.kind}" sits beside "${prev.kind}" in one column`);
+  }
+  return out;
+}
+
+/**
+ * S20.d: the letter column top sits 0 to 32 px under the Top_Bar, unless the receipts end has
+ * reached the letter's bottom edge (the column then scrolls up with the receipts).
+ * @param {{ top: number | null, barBottom: number | null, areaBottom: number | null, letterBottom: number | null }} args
+ */
+export function stickyFailures({ top, barBottom, areaBottom, letterBottom }) {
+  if (top === null || barBottom === null) return ["S20.d no letter column or Top_Bar to measure"];
+  if (areaBottom !== null && letterBottom !== null && areaBottom <= letterBottom + S20_TOL_PX) return [];
+  if (top < barBottom - S20_TOL_PX || top > barBottom + S20_STICK_MAX_PX + S20_TOL_PX) {
+    return [`S20.d letter top ${Math.round(top)} px, want ${Math.round(barBottom)} to ${Math.round(barBottom + S20_STICK_MAX_PX)} px`];
+  }
+  return [];
+}
+
+/**
+ * S20.e: the focused Figures_Heading is fully between the Top_Bar and the viewport bottom.
+ * @param {{ top: number | null, bottom: number | null, barBottom: number | null, viewportH: number }} args
+ */
+export function focusHeadingFailures({ top, bottom, barBottom, viewportH }) {
+  if (top === null || bottom === null || barBottom === null) return ["S20.e no Figures_Heading or Top_Bar to measure"];
+  const out = [];
+  if (top < barBottom - S20_TOL_PX) out.push(`S20.e heading top ${Math.round(top)} px is above the Top_Bar bottom ${Math.round(barBottom)} px`);
+  if (bottom > viewportH + S20_TOL_PX) out.push(`S20.e heading bottom ${Math.round(bottom)} px is below the ${viewportH} px viewport`);
+  return out;
+}
+
+/**
+ * S20.f and S20.f-reduced: the letter's motion after "See the receipts". `calls` counts animate
+ * calls on the letter since the page loaded, `animations` counts animations on its subtree that
+ * started after the move, and `nodeKept` says the held letter node is still the shown one.
+ * @param {{ reduced: boolean, calls: number | null, nodeKept: boolean, animations: number }} args
+ */
+export function letterMotionFailures({ reduced, calls, nodeKept, animations }) {
+  if (calls === null || calls === undefined) return ["S20.f no animate count was recorded"];
+  const out = [];
+  if (reduced) {
+    if (calls > 0) out.push(`S20.f-reduced ${calls} animate call(s) on the letter, want 0`);
+    if (animations > 0) out.push(`S20.f-reduced ${animations} animation(s) on the letter subtree, want 0`);
+    return out;
+  }
+  if (calls > 1) out.push(`S20.f ${calls} animate calls on the letter, want at most 1 (its unfold)`);
+  if (nodeKept !== true) out.push("S20.f the letter node held before the move is not the one shown 2,000 ms after it");
+  return out;
+}
+
+/**
+ * S20.g: no figure text has the computed colour of --accent.
+ * @param {{ accent: string | null, colours: { label: string, colour: string }[] }} args
+ */
+export function figureAccentFailures({ accent, colours }) {
+  if (!accent) return ["S20.g no --accent token to compare with"];
+  return colours.filter((c) => c.colour === accent).map((c) => `S20.g "${c.label}" is drawn in --accent`);
+}
+
+/**
+ * S20.long: the letter column is focusable, scrolls by End, and shows the last character after it.
+ * @param {{ tabindex: string | null, overflowing: boolean, scrolledBy: number, lastCharVisible: boolean }} args
+ */
+export function longLetterFailures({ tabindex, overflowing, scrolledBy, lastCharVisible }) {
+  const out = [];
+  if (tabindex !== "0") out.push(`S20.long the letter column has tabindex ${tabindex ?? "none"}, want "0"`);
+  if (!overflowing) out.push("S20.long the letter column does not scroll on its own at 1280x800");
+  else if (!(scrolledBy > 0)) out.push("S20.long End did not scroll the letter column");
+  if (lastCharVisible !== true) out.push("S20.long the last character of the letter is not in view after End");
   return out;
 }
 
@@ -6016,22 +6217,44 @@ const RECEIPTS_READ = () => {
     ["end", "[data-end-card]"],
   ];
   const blocks = [];
+  // The record box is the union of the non-letter blocks (question pairs, figures, seal line,
+  // end card). Falls back to the column box when the receipts hold none of them.
+  let unionLeft = Infinity;
+  let unionRight = -Infinity;
+  let unionTop = Infinity;
+  let recordBlocks = 0;
   for (const [kind, sel] of kinds) {
     for (const el of col.querySelectorAll(sel)) {
       const r = el.getBoundingClientRect();
-      blocks.push({ kind, top: r.top + window.scrollY, centre: r.left + r.width / 2 });
+      blocks.push({ kind, top: r.top + window.scrollY, bottom: r.bottom + window.scrollY, centre: r.left + r.width / 2 });
+      if (kind === "letter") continue;
+      recordBlocks += 1;
+      unionLeft = Math.min(unionLeft, r.left);
+      unionRight = Math.max(unionRight, r.right);
+      unionTop = Math.min(unionTop, r.top);
     }
   }
   const disclosure = col.querySelector("[data-letter-stage] [data-letter-disclosure]");
   const text = col.querySelector("[data-letter-stage] [data-letter-text]");
   const textHidden = !text || text.getClientRects().length === 0 || !text.checkVisibility();
   const c = col.getBoundingClientRect();
+  const letterStage = col.querySelector("[data-letter-stage]");
+  const lr = letterStage ? letterStage.getBoundingClientRect() : null;
+  const record = recordBlocks > 0
+    ? { left: unionLeft, right: unionRight, top: unionTop + window.scrollY }
+    : { left: c.left, right: c.right, top: c.top + window.scrollY };
   return {
     blocks,
     letterClosed: !!disclosure && disclosure.open === false && textHidden,
     centre: c.left + c.width / 2,
-    width: c.width,
+    width: record.right - record.left,
     viewportCentre: vc,
+    // Split marker: the open letter sits beside the receipts (spec 20 part D).
+    split: col.getAttribute("data-receipts-layout") === "split",
+    disclosurePresent: !!col.querySelector("[data-letter-disclosure]"),
+    letterTextVisible: !!text && text.getClientRects().length > 0 && text.checkVisibility(),
+    record,
+    letter: lr ? { left: lr.left, right: lr.right, top: lr.top + window.scrollY } : null,
   };
 };
 
@@ -6072,14 +6295,14 @@ async function s16Hero(context, ctx, base) {
 
 // Write step to Press the seal on /demo/live: letter, every question answered, optionally one
 // public price ticked, then the fold. Returns once the Seal step is shown and its scroll is done.
-async function s16LiveToSeal(page, base, { figure }) {
+async function s16LiveToSeal(page, base, { figure, letter = S16_LETTER }) {
   await page.goto(`${base}${LIVE_PATH}`, { waitUntil: "load" });
   // The Write step is in the server HTML. A page without any live step (no RP_ID, or a build
   // before the live demo) has nothing to wait for.
   await need(page.locator("[data-live-step]"), `[data-live-step] on ${LIVE_PATH}`);
   await page.locator('[data-live-step="write"]').waitFor({ state: "visible", timeout: S16_STEP_MS });
   await page.evaluate(() => document.fonts.ready);
-  await page.fill("#live-letter", S16_LETTER);
+  await page.fill("#live-letter", letter);
   const answers = page.locator("[data-answer-input]");
   const texts = fillAnswerTexts(await answers.count());
   for (let i = 0; i < texts.length; i += 1) await answers.nth(i).fill(texts[i]);
@@ -6104,7 +6327,14 @@ function s16Order(ctx, where, r) {
     return;
   }
   const order = [...r.blocks].sort((a, b) => a.top - b.top).map((b) => b.kind).join(",");
-  report(ctx, verdictRow("R10.1", "receipts-order", receiptsOrderFailures(r), `on=${where} order=${order} letterClosed=${r.letterClosed} viewport=${ctx.size}`, "question pairs, figures, the folded letter, the seal line, the end card; the letter closed"));
+  // The split reading applies only when the build marks the receipts column as split.
+  const failures = r.split
+    ? receiptsOrderFailures({ blocks: r.blocks, disclosurePresent: r.disclosurePresent, letterTextVisible: r.letterTextVisible })
+    : receiptsOrderFailuresFolded(r);
+  const want = r.split
+    ? "question pairs, figures, the open letter beside them, the seal line, the end card; no fold on the letter"
+    : "question pairs, figures, the folded letter, the seal line, the end card; the letter closed";
+  report(ctx, verdictRow("R10.1", "receipts-order", failures, `on=${where} split=${r.split} order=${order} letterClosed=${r.letterClosed} viewport=${ctx.size}`, want));
 }
 
 // Maya: Remember, Break the seal with the button, then See the receipts. Returns the
@@ -6130,11 +6360,15 @@ async function s16BreakAndReceipts(page) {
   await page.locator('[data-ceremony="letter"]').waitFor({ state: "visible", timeout: S16_STEP_MS });
   const next = await figuresButton(page);
   if (!next) throw new Error("no See the receipts control on the letter step");
+  await page.evaluate(S20_HOLD);
   await next.loc.click({ timeout: WAIT_MS });
   await page.locator('[data-ceremony="figures"], [data-ceremony="close"]').first().waitFor({ state: "visible", timeout: S16_STEP_MS });
   await page.locator("[data-receipts] [data-end-card]").first().waitFor({ state: "attached", timeout: S16_STEP_MS });
-  await sleep(1500);
-  return page.evaluate(RECEIPTS_READ);
+  // 2,000 ms after the move: the S20.f window and the S20.e focus window (1,000 ms) both fit.
+  await sleep(2000);
+  const read = await page.evaluate(RECEIPTS_READ);
+  if (read) read.s20 = await page.evaluate(S20_READ);
+  return read;
 }
 
 // Live Remember: every question answered (text, number or a scale control), then on.
@@ -6156,7 +6390,7 @@ async function s16LiveRemember(page) {
   throw new Error("more than 12 questions on the live Remember step");
 }
 
-async function s16LiveReceipts(context, page, base, read) {
+async function s16LiveReceipts(context, page, base, read, letter = S16_LETTER) {
   let step = "virtual passkey";
   try {
     const cdp = await context.newCDPSession(page);
@@ -6165,7 +6399,7 @@ async function s16LiveReceipts(context, page, base, read) {
       options: { protocol: "ctap2", transport: "internal", hasResidentKey: true, hasUserVerification: true, isUserVerified: true, hasPrf: true, automaticPresenceSimulation: true },
     });
     step = "write";
-    await s16LiveToSeal(page, base, { figure: true });
+    await s16LiveToSeal(page, base, { figure: true, letter });
     read.warning = await page.evaluate(WARNING_READ);
     step = "backup choice";
     await page.locator('[data-backup-card="skip"]').first().click({ timeout: WAIT_MS });
@@ -6195,6 +6429,183 @@ async function s16LiveReceipts(context, page, base, read) {
   }
 }
 
+// Spec 20 page-side reads. S20_SPY is an init script: it counts animate calls whose target is on
+// the letter. S20_HOLD runs just before "See the receipts" and holds the letter node.
+const S20_SPY = () => {
+  window.__s20Calls = 0;
+  const original = Element.prototype.animate;
+  if (typeof original !== "function") return;
+  Element.prototype.animate = function animateSpy(...args) {
+    if (this.closest && this.closest("[data-letter-stage]")) window.__s20Calls += 1;
+    return original.apply(this, args);
+  };
+};
+
+const S20_HOLD = () => {
+  window.__s20Held = document.querySelector("[data-letter-stage]");
+  window.__s20Move = document.timeline ? document.timeline.currentTime : performance.now();
+  return !!window.__s20Held;
+};
+
+const S20_READ = () => {
+  const bar = document.querySelector("[data-topbar]") ?? document.querySelector("header");
+  const heading = document.querySelector("[data-figures-heading]");
+  const stage = document.querySelector("[data-letter-stage]");
+  const held = window.__s20Held ?? null;
+  const moved = window.__s20Move ?? 0;
+  const token = getComputedStyle(document.documentElement).getPropertyValue("--accent").trim();
+  const probe = document.createElement("span");
+  probe.style.color = "var(--accent)";
+  document.body.appendChild(probe);
+  const accent = token === "" ? null : getComputedStyle(probe).color;
+  probe.remove();
+  const colours = [];
+  for (const entry of document.querySelectorAll("[data-receipts] [data-figure-entry]")) {
+    for (const el of entry.querySelectorAll("*")) {
+      const hasText = [...el.childNodes].some((n) => n.nodeType === Node.TEXT_NODE && (n.textContent ?? "").trim() !== "");
+      if (hasText) colours.push({ label: (el.textContent ?? "").trim().slice(0, 30), colour: getComputedStyle(el).color });
+    }
+  }
+  const animations = document.getAnimations().filter((a) => {
+    const target = a.effect ? a.effect.target : null;
+    if (!target || !target.closest || !target.closest("[data-letter-stage]")) return false;
+    return a.startTime === null || a.startTime >= moved;
+  }).length;
+  const hr = heading ? heading.getBoundingClientRect() : null;
+  return {
+    calls: window.__s20Calls ?? null,
+    nodeKept: !!held && held.isConnected && held === stage,
+    animations,
+    accent,
+    colours,
+    barBottom: bar ? bar.getBoundingClientRect().bottom : null,
+    viewportH: document.documentElement.clientHeight,
+    headingTop: hr ? hr.top : null,
+    headingBottom: hr ? hr.bottom : null,
+  };
+};
+
+const S20_STICK_READ = () => {
+  const bar = document.querySelector("[data-topbar]") ?? document.querySelector("header");
+  const area = document.querySelector("[data-receipts]");
+  const letter = document.querySelector("[data-letter-stage]");
+  return {
+    top: letter ? letter.getBoundingClientRect().top : null,
+    barBottom: bar ? bar.getBoundingClientRect().bottom : null,
+    areaBottom: area ? area.getBoundingClientRect().bottom : null,
+    letterBottom: letter ? letter.getBoundingClientRect().bottom : null,
+  };
+};
+
+const S20_LONG_BEFORE = () => {
+  const col = document.querySelector("[data-letter-stage]");
+  if (!col) return null;
+  return { tabindex: col.getAttribute("tabindex"), overflowing: col.scrollHeight > col.clientHeight + 1, scrollTop: col.scrollTop };
+};
+
+const S20_LONG_AFTER = () => {
+  const col = document.querySelector("[data-letter-stage]");
+  const text = col ? col.querySelector("[data-letter-text]") : null;
+  if (!col) return null;
+  let last = null;
+  if (text) {
+    const walker = document.createTreeWalker(text, NodeFilter.SHOW_TEXT);
+    for (let n = walker.nextNode(); n; n = walker.nextNode()) {
+      if ((n.textContent ?? "").length > 0) last = n;
+    }
+  }
+  let lastCharVisible = false;
+  if (last) {
+    const len = (last.textContent ?? "").length;
+    const range = document.createRange();
+    range.setStart(last, len - 1);
+    range.setEnd(last, len);
+    const r = range.getBoundingClientRect();
+    const c = col.getBoundingClientRect();
+    lastCharVisible = r.width > 0 && r.top >= c.top - S20_TOL_PX && r.bottom <= c.bottom + S20_TOL_PX && r.top >= 0 && r.bottom <= window.innerHeight + S20_TOL_PX;
+  }
+  return { scrollTop: col.scrollTop, lastCharVisible };
+};
+
+/**
+ * The Spec 20 readings on one receipts read. `reduced` says the run used reduced motion. The
+ * wide-width S20.d reading scrolls the page to its end, so it runs last.
+ */
+async function s20Readings(page, ctx, r, { reduced, where }) {
+  const motionId = reduced ? "S20.f-reduced" : "S20.f";
+  const motionName = reduced ? "letter-motion-reduced" : "letter-motion";
+  if (!r || !r.split || !r.s20) {
+    const why = r ? `no [data-receipts-layout="split"] on ${where}` : `no [data-receipts] on ${where}`;
+    for (const [id, name] of [["S20.c", "column-placement"], ["S20.d", "letter-sticks"], ["S20.e", "focus-in-view"], [motionId, motionName], ["S20.g", "figure-accent"]]) {
+      report(ctx, missingRow(id, name, why));
+    }
+    return;
+  }
+  const s = r.s20;
+  const at = `${where} viewport=${ctx.size}`;
+  report(ctx, verdictRow("S20.c", "column-placement", placementFailures({ w: ctx.w, record: r.record, letter: r.letter, blocks: r.blocks }), `${at} record=${num(r.record?.left, 0)}..${num(r.record?.right, 0)} letter=${num(r.letter?.left, 0)}..${num(r.letter?.right, 0)}`, ctx.w >= S20_WIDE_PX ? "letter column right of the record column, tops level within 1 px" : "no two blocks side by side in one column"));
+  report(ctx, verdictRow(motionId, motionName, letterMotionFailures({ reduced, calls: s.calls, nodeKept: s.nodeKept, animations: s.animations }), `${at} animate calls=${s.calls ?? "n/a"} animations after move=${s.animations} node kept=${s.nodeKept}`, reduced ? "no animate call and no animation on the letter" : "at most one animate call on the letter; the same letter node 2,000 ms after the move"));
+  report(ctx, verdictRow("S20.e", "focus-in-view", focusHeadingFailures({ top: s.headingTop, bottom: s.headingBottom, barBottom: s.barBottom, viewportH: s.viewportH }), `${at} heading=${num(s.headingTop, 0)}..${num(s.headingBottom, 0)} bar bottom=${num(s.barBottom, 0)}`, "Figures_Heading between the Top_Bar and the viewport bottom, 1 s after the move"));
+  report(ctx, verdictRow("S20.g", "figure-accent", figureAccentFailures({ accent: s.accent, colours: s.colours }), `${at} figure text colours=${s.colours.length} accent=${s.accent ?? "none"}`, "no figure value, change line, period or label in --accent"));
+  if (ctx.w < S20_WIDE_PX) {
+    report(ctx, result("S20.d", "letter-sticks", "missing", `only checked at 900 px and wider; ${at}`));
+    return;
+  }
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await sleep(400);
+  const d = await page.evaluate(S20_STICK_READ);
+  report(ctx, verdictRow("S20.d", "letter-sticks", stickyFailures(d), `letter top=${num(d.top, 0)} bar bottom=${num(d.barBottom, 0)} area bottom=${num(d.areaBottom, 0)} letter bottom=${num(d.letterBottom, 0)} ${at}`, "letter top 0 to 32 px under the Top_Bar, unless the receipts end has reached the letter bottom"));
+}
+
+/** S20.long: focus the letter column, press End, then read whether the last character shows. */
+async function s20LongLetter(page, ctx, r) {
+  if (!r) {
+    report(ctx, missingRow("S20.long", "long-letter", "no [data-receipts] on live step 6"));
+    return;
+  }
+  if (!r.split) {
+    report(ctx, missingRow("S20.long", "long-letter", 'no [data-receipts-layout="split"] on live step 6'));
+    return;
+  }
+  const before = await page.evaluate(S20_LONG_BEFORE);
+  if (!before) {
+    report(ctx, missingRow("S20.long", "long-letter", "no [data-letter-stage] on live step 6"));
+    return;
+  }
+  await page.locator("[data-letter-stage]").first().focus();
+  await page.keyboard.press("End");
+  await sleep(400);
+  const after = await page.evaluate(S20_LONG_AFTER);
+  report(ctx, verdictRow("S20.long", "long-letter", longLetterFailures({
+    tabindex: before.tabindex,
+    overflowing: before.overflowing,
+    scrolledBy: after ? after.scrollTop - before.scrollTop : 0,
+    lastCharVisible: after ? after.lastCharVisible : false,
+  }), `${LIVE_PATH} ${S20_LONG_SIZE} letter=${S20_LONG_LENGTH} tabindex=${before.tabindex ?? "none"} overflowing=${before.overflowing} viewport=${ctx.size}`, "tabindex 0, the column scrolls by End, the last character in view"));
+}
+
+/** The 1280x800 run with the 5,000-character letter: the live receipts, reduced motion. */
+async function s20LongRun(browser, base, rep, required) {
+  const [w, h] = parseSize(S20_LONG_SIZE);
+  const context = await browser.newContext({ viewport: { width: w, height: h }, reducedMotion: "reduce" });
+  await context.addInitScript(S20_SPY);
+  const ctx = s16Ctx(rep, S20_LONG_SIZE, required, true);
+  rep.setContext(ctx);
+  rep.log(`\n==== ${S20_LONG_SIZE} (spec 20 Part D, long letter) ====`);
+  try {
+    const page = await newPage(context);
+    try {
+      const r = await s16LiveReceipts(context, page, base, { warning: null }, S20_LONG_LETTER);
+      await s20LongLetter(page, ctx, r);
+      await s20Readings(page, ctx, r, { reduced: true, where: `${LIVE_PATH} long letter` });
+    } finally {
+      await page.close();
+    }
+  } finally {
+    await context.close();
+  }
+}
+
 async function checkSpec16Rows(browser, base, size, rep, required, scope = {}) {
   const runs = (group) => sectionRuns({ group }, scope);
   const [w, h] = parseSize(size);
@@ -6202,11 +6613,23 @@ async function checkSpec16Rows(browser, base, size, rep, required, scope = {}) {
   let personaWidth = null;
   for (const calm of [false, true]) {
     const context = await browser.newContext({ viewport: { width: w, height: h }, reducedMotion: calm ? "reduce" : "no-preference" });
+    await context.addInitScript(S20_SPY);
     const ctx = s16Ctx(rep, size, required, calm);
     rep.setContext(ctx);
     try {
       if (runs("landing")) await guard(ctx, "R5.4", () => s16Hero(context, ctx, base));
       if (!calm) {
+        // Spec 20 full-motion readings (S20.f) on Maya's receipts.
+        if (runs("persona")) await guard(ctx, "S20.f", async () => {
+          ctx.rep.stage("us-maya receipts calm=off");
+          const page = await newPage(context);
+          try {
+            const r = await s16PersonaReceipts(page, base);
+            await s20Readings(page, ctx, r, { reduced: false, where: PERSONA_PATH });
+          } finally {
+            await page.close();
+          }
+        });
         if (runs("live")) await guard(ctx, "R14.3", async () => {
           ctx.rep.stage("seal calm=off");
           const page = await newPage(context);
@@ -6244,14 +6667,24 @@ async function checkSpec16Rows(browser, base, size, rep, required, scope = {}) {
             report(ctx, missingRow("R10.6", "live-column", "no [data-receipts] on live step 6"));
             return;
           }
+          await s20Readings(page, ctx, r, { reduced: true, where: LIVE_PATH });
           // CW1 reads the live receipts column beside the R10.6 comparison.
           await guard(ctx, "CW1", () => checkCw1(page, ctx));
           const blocks = r.blocks.filter((b) => b.kind === "pair" || b.kind === "figure" || b.kind === "letter");
-          report(ctx, verdictRow("R10.6", "live-column", receiptColumnFailures({ centre: r.centre, width: r.width, viewportCentre: r.viewportCentre, personaWidth, blocks }), `centre=${num(r.centre)} viewport centre=${num(r.viewportCentre)} width=${num(r.width)} persona=${personaWidth === null ? "n/a" : num(personaWidth)} viewport=${ctx.size}`, "one column centred within 1 px, as wide as the persona receipts column within 1 px"));
+          let failures;
+          if (r.split && !r.letter) failures = ["10.6 no letter column on live step 6"];
+          else if (r.split) failures = splitColumnFailures({ record: r.record, letter: r.letter, width: r.width, centre: r.centre, viewportCentre: r.viewportCentre, personaWidth });
+          else failures = receiptColumnFailures({ centre: r.centre, width: r.width, viewportCentre: r.viewportCentre, personaWidth, blocks });
+          report(ctx, verdictRow("R10.6", "live-column", failures, `split=${r.split} centre=${num(r.centre)} viewport centre=${num(r.viewportCentre)} width=${num(r.width)} persona=${personaWidth === null ? "n/a" : num(personaWidth)} viewport=${ctx.size}`, r.split ? "record and letter columns side by side, tops level, each centred on the viewport within 1 px and the record column as wide as the persona receipts column within 1 px" : "one column centred within 1 px, as wide as the persona receipts column within 1 px"));
         } finally {
           await page.close();
         }
       });
+      // The long-letter run is 1280x800 whatever the size; it runs once, with the first size.
+      if (calm && runs("live") && size === S16_SIZES[0]) {
+        await guard(ctx, "S20.long", () => s20LongRun(browser, base, rep, required));
+        rep.setContext(ctx);
+      }
     } finally {
       await context.close();
     }
