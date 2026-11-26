@@ -68,12 +68,25 @@ describe("the receipts letter column reads no viewport width", () => {
   });
 });
 
+/** Docs and the QA layout check that describe or drive the receipts flow. Paths are repo-root relative. */
+const repoRoot = resolve(srcRoot, "..");
+const EXTRA_SCAN_FILES = ["README.md", "docs/video-script.md", "tools/qa/layout-check.mjs"];
+
 describe("no control reads 'Read the letter again'", () => {
   it("no non-test file under src/ contains the phrase, in any case", () => {
     const files = sourceFiles(srcRoot);
     expect(files.length).toBeGreaterThan(0);
     const hits = files.filter((file) =>
       readFileSync(resolve(srcRoot, file), "utf8")
+        .toLowerCase()
+        .includes("read the letter again"),
+    );
+    expect(hits).toEqual([]);
+  });
+
+  it("README.md, docs/video-script.md and tools/qa/layout-check.mjs do not contain the phrase", () => {
+    const hits = EXTRA_SCAN_FILES.filter((file) =>
+      readFileSync(resolve(repoRoot, file), "utf8")
         .toLowerCase()
         .includes("read the letter again"),
     );
