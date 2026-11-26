@@ -203,12 +203,13 @@
 // Spec 20 Part D readings (spec 20 design "QA browser steps", c to g). They run on the receipts
 // of Maya and of live step 6 and report "missing" unless the receipts carry
 // [data-receipts-layout="split"]. S20.long runs at 1280x800 with a 5,000-character letter.
-//   S20.c column-placement   1280 and wider: the letter column starts right of the record column,
+//   S20.c column-placement   900 px and wider: the letter column starts right of the record column,
 //                            tops level within 1 px. Narrower: no two blocks sit side by side.
-//   S20.d letter-sticks      wide only: after scrolling to the end, the letter column top is 0 to
-//                            32 px under the Top_Bar, unless the receipts end has reached its bottom.
-//   S20.e focus-in-view      the focused Figures_Heading lies between the Top_Bar and the viewport
-//                            bottom, 1 s after the move.
+//   S20.d letter-sticks      900 px and wider only: after scrolling to the end, the letter column top
+//                            is 0 to 32 px under the Top_Bar, unless the receipts end has reached its bottom.
+//   S20.e focus-in-view      the Figures_Heading lies between the Top_Bar and the viewport bottom,
+//                            1 s after the move. Only its position is read; document.activeElement
+//                            is not checked, so focus is covered by the FV1 and N1 rows instead.
 //   S20.f letter-motion      full motion: at most one animate call on the letter, and the letter
 //                            node held before the move is still the one shown 2 s after it.
 //   S20.f-reduced            reduced motion: no animate call and no animation on the letter.
@@ -6210,10 +6211,21 @@ const RECEIPTS_READ = () => {
     ["end", "[data-end-card]"],
   ];
   const blocks = [];
+  // The record box is the union of the non-letter blocks (question pairs, figures, seal line,
+  // end card). Falls back to the column box when the receipts hold none of them.
+  let unionLeft = Infinity;
+  let unionRight = -Infinity;
+  let unionTop = Infinity;
+  let recordBlocks = 0;
   for (const [kind, sel] of kinds) {
     for (const el of col.querySelectorAll(sel)) {
       const r = el.getBoundingClientRect();
       blocks.push({ kind, top: r.top + window.scrollY, bottom: r.bottom + window.scrollY, centre: r.left + r.width / 2 });
+      if (kind === "letter") continue;
+      recordBlocks += 1;
+      unionLeft = Math.min(unionLeft, r.left);
+      unionRight = Math.max(unionRight, r.right);
+      unionTop = Math.min(unionTop, r.top);
     }
   }
   const disclosure = col.querySelector("[data-letter-stage] [data-letter-disclosure]");
@@ -6222,17 +6234,20 @@ const RECEIPTS_READ = () => {
   const c = col.getBoundingClientRect();
   const letterStage = col.querySelector("[data-letter-stage]");
   const lr = letterStage ? letterStage.getBoundingClientRect() : null;
+  const record = recordBlocks > 0
+    ? { left: unionLeft, right: unionRight, top: unionTop + window.scrollY }
+    : { left: c.left, right: c.right, top: c.top + window.scrollY };
   return {
     blocks,
     letterClosed: !!disclosure && disclosure.open === false && textHidden,
     centre: c.left + c.width / 2,
-    width: c.width,
+    width: record.right - record.left,
     viewportCentre: vc,
     // Split marker: the open letter sits beside the receipts (spec 20 part D).
     split: col.getAttribute("data-receipts-layout") === "split",
     disclosurePresent: !!col.querySelector("[data-letter-disclosure]"),
     letterTextVisible: !!text && text.getClientRects().length > 0 && text.checkVisibility(),
-    record: { left: c.left, right: c.right, top: c.top + window.scrollY },
+    record,
     letter: lr ? { left: lr.left, right: lr.right, top: lr.top + window.scrollY } : null,
   };
 };
