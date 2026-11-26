@@ -468,18 +468,20 @@ describe("SealPage backup-only seal (spec 06, Part A)", () => {
     expect(html).toContain("data-backup-only-start");
   });
 
-  it("the demo fallback_key screen has exactly one h1", () => {
-    pageStub.step = "seal";
-    flowStub.state = { tag: "fallback_key", origin: "seal_step", passkeyCreated: false };
+  it("the demo fallback_key screen has exactly one h1, from either origin", () => {
     flowStub.keyText = "AAAA-BBBB-CCCC-DDDD-EEEE-FFFF-GGG";
-    const html = renderToStaticMarkup(
-      createElement(SealPage, {
-        rpId: "revenant.devclef.se",
-        appOrigin: "https://revenant.devclef.se",
-        mode: "demo",
-      }),
-    );
-    expect(html.split("<h1").length - 1).toBe(1);
+    for (const origin of ["seal_step", "cannot_lock"] as const) {
+      pageStub.step = origin === "seal_step" ? "seal" : null;
+      flowStub.state = { tag: "fallback_key", origin, passkeyCreated: false };
+      const html = renderToStaticMarkup(
+        createElement(SealPage, {
+          rpId: "revenant.devclef.se",
+          appOrigin: "https://revenant.devclef.se",
+          mode: "demo",
+        }),
+      );
+      expect(html.split("<h1").length - 1, origin).toBe(1);
+    }
   });
 });
 
