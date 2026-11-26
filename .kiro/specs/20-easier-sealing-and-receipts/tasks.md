@@ -170,7 +170,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Copy evidence: tone-check for `reveal/copy.ts`.
   - Validation: `npx vitest run src/components/reveal src/components/ceremony`, the two golden tests from the rules, then the done check. CI's layout gate uses task 3's new readings for this build.
 
-- [ ] 5. Part D: docs, Layout_Check cleanup and the receipts walk
+- [x] 5. Part D: docs, Layout_Check cleanup and the receipts walk
   - Agent: `platform-dev` · Depends on: 4 · Estimated size: S, ~300 changed lines
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `README.md` (line 54 only), `docs/video-script.md` (line 99 only), `tools/qa/layout-check.mjs`, `src/lib/docs-wording.test.ts`, `src/lib/layout-check-spec16-rows.test.ts`, `src/components/reveal/no-fold-scan.test.ts` (shared, extend only).
