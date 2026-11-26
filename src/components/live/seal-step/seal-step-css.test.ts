@@ -204,6 +204,13 @@ describe("Seal_Button size and accent-free controls (spec 20, Part C)", () => {
 
   it("gives the PRF fallback button no accent colour at rest", () => {
     expect(ruleBody(stepCss, ".fallback")).not.toMatch(ORANGE);
+    expect(ruleBody(stepCss, ".fallback")).not.toMatch(/--accent/);
+  });
+
+  it("keeps the PRF fallback button at least 44 x 44 px", () => {
+    const body = ruleBody(stepCss, ".fallback");
+    expect(body).toMatch(/min-width:\s*44px;/);
+    expect(body).toMatch(/min-height:\s*44px;/);
   });
 
   it("gives the Backup_Choice cards no accent colour at rest", () => {
