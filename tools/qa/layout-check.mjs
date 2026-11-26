@@ -178,12 +178,20 @@
 //
 // Spec 16 rows (spec 16 requirement 17.3, task 15), at 1440x900 and 390x844. Like the
 // spec 15 rows they block on any failure, with no --require (checkSpec16Rows):
-//   R10.1 receipts-order     Maya's Receipts step and live step 6: question pairs, figure
-//                            cards, the letter, the seal line, the end card, top to bottom;
-//                            the letter folded shut under "Read the letter again".
+//   R10.1 receipts-order     Maya's Receipts step and live step 6. Two readings:
+//                            split (receiptsOrderFailures, with the split marker): question
+//                            pairs, figure cards, the seal line and the end card top to bottom,
+//                            the letter beside the receipts rather than after the figures, no
+//                            fold control on the page, and the letter text visible.
+//                            folded (receiptsOrderFailuresFolded, today's build): the same
+//                            blocks top to bottom, with the letter folded shut under "Read the
+//                            letter again". The folded reading is removed by task 5.
 //   R10.6 live-column        live step 6: [data-receipts] and each question pair, figure card
 //                            and the letter centred within 1 px of the viewport centre, and
-//                            the column within 1 px of Maya's receipts column width.
+//                            the column within 1 px of Maya's receipts column width. Two
+//                            readings: split (splitColumnFailures, with the split marker) and
+//                            the current column check (receiptColumnFailures). The current
+//                            column check is removed by task 5.
 //   R14.3 passkey-warning    live Press the seal, after the step scroll and before any reader
 //                            action: [data-warning-text] unfolded, inside the layout viewport,
 //                            its bottom above the wax top. Calm off and on.
@@ -4696,8 +4704,11 @@ const FOLD_REACH_READ = () => {
 const S16_CENTRE_TOL_PX = 1;
 const S16_RECEIPT_RANK = { pair: 0, figure: 1, letter: 2, seal: 3, end: 4 };
 
-/** 10.1 (and 10.8): the Receipts blocks read top to bottom, and the letter is folded shut. */
-export function receiptsOrderFailures({ blocks, letterClosed }) {
+/**
+ * Folded reading of 10.1 (and 10.8), used by builds without the split marker. Removed by task 5.
+ * The Receipts blocks read top to bottom, and the letter is folded shut.
+ */
+export function receiptsOrderFailuresFolded({ blocks, letterClosed }) {
   const out = [];
   const ordered = [...blocks].sort((a, b) => a.top - b.top);
   let last = -1;
@@ -4714,6 +4725,69 @@ export function receiptsOrderFailures({ blocks, letterClosed }) {
     if (!blocks.some((b) => b.kind === kind)) out.push(`10.1 no "${kind}" block`);
   }
   if (letterClosed !== true) out.push("10.2 the letter is not folded under Read the letter again");
+  return out;
+}
+
+/**
+ * Split reading of 10.1: the open letter sits beside the receipts in order.
+ * `blocks` are question pairs, figure cards, the letter, the seal line and the end card, each
+ * with its top. `disclosurePresent` is true when a fold or "Read the letter again" control is
+ * on the page. `letterTextVisible` is false when the letter text has no client rect or fails
+ * checkVisibility().
+ * @param {{ blocks: { kind: string, top: number }[], disclosurePresent: boolean, letterTextVisible: boolean }} args
+ */
+export function receiptsOrderFailures({ blocks, disclosurePresent, letterTextVisible }) {
+  const out = [];
+  const ordered = blocks.filter((b) => b.kind !== "letter").sort((a, b) => a.top - b.top);
+  let last = -1;
+  for (const b of ordered) {
+    const rank = S16_RECEIPT_RANK[b.kind];
+    if (rank === undefined) {
+      out.push(`10.1 unknown block "${b.kind}"`);
+      continue;
+    }
+    if (rank < last) out.push(`10.1 "${b.kind}" sits after a later block`);
+    last = Math.max(last, rank);
+  }
+  for (const kind of ["letter", "seal", "end"]) {
+    if (!blocks.some((b) => b.kind === kind)) out.push(`10.1 no "${kind}" block`);
+  }
+  const letter = blocks.find((b) => b.kind === "letter");
+  const figureTops = blocks.filter((b) => b.kind === "figure").map((b) => b.top);
+  if (letter && figureTops.length > 0 && letter.top > Math.min(...figureTops)) {
+    out.push("10.1 the letter sits after the figures");
+  }
+  if (disclosurePresent === true) out.push("10.2 a fold or Read the letter again control is on the page");
+  if (letterTextVisible !== true) out.push("10.2 the letter text is not visible");
+  return out;
+}
+
+/**
+ * Split reading of 10.6: the record column and the letter column sit side by side, centred on
+ * the viewport, and the live width matches the persona receipts column. Each column is at
+ * least 280 px wide. `record` and `letter` are boxes with `left`, `right` and `top` in px.
+ * @param {{ record: { left: number, right: number, top: number }, letter: { left: number, right: number, top: number }, width: number, centre: number, viewportCentre: number, personaWidth: number | null | undefined }} args
+ */
+export function splitColumnFailures({ record, letter, width, centre, viewportCentre, personaWidth }) {
+  const out = [];
+  if (record.right > letter.left && letter.right > record.left) {
+    out.push("10.6 the record column overlaps the letter column");
+  }
+  if (Math.abs(record.top - letter.top) > S16_CENTRE_TOL_PX) {
+    out.push(`10.6 column tops ${record.top} px and ${letter.top} px differ by more than ${S16_CENTRE_TOL_PX} px`);
+  }
+  for (const [name, box] of [["record", record], ["letter", letter]]) {
+    const colWidth = box.right - box.left;
+    if (colWidth < 280) out.push(`10.6 the ${name} column is ${colWidth} px, want at least 280 px`);
+  }
+  if (Math.abs(centre - viewportCentre) > S16_CENTRE_TOL_PX) {
+    out.push(`10.6 column centre ${centre} px, want ${viewportCentre} px within ${S16_CENTRE_TOL_PX} px`);
+  }
+  if (personaWidth === null || personaWidth === undefined) {
+    out.push("10.6 no persona receipts column to compare its width with");
+  } else if (Math.abs(width - personaWidth) > S16_CENTRE_TOL_PX) {
+    out.push(`10.6 column width ${width} px, persona ${personaWidth} px within ${S16_CENTRE_TOL_PX} px`);
+  }
   return out;
 }
 
@@ -6104,7 +6178,7 @@ function s16Order(ctx, where, r) {
     return;
   }
   const order = [...r.blocks].sort((a, b) => a.top - b.top).map((b) => b.kind).join(",");
-  report(ctx, verdictRow("R10.1", "receipts-order", receiptsOrderFailures(r), `on=${where} order=${order} letterClosed=${r.letterClosed} viewport=${ctx.size}`, "question pairs, figures, the folded letter, the seal line, the end card; the letter closed"));
+  report(ctx, verdictRow("R10.1", "receipts-order", receiptsOrderFailuresFolded(r), `on=${where} order=${order} letterClosed=${r.letterClosed} viewport=${ctx.size}`, "question pairs, figures, the folded letter, the seal line, the end card; the letter closed"));
 }
 
 // Maya: Remember, Break the seal with the button, then See the receipts. Returns the

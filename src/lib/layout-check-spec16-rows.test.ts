@@ -4,7 +4,7 @@ import {
   heroLineFailures,
   passkeyWarningFailures,
   receiptColumnFailures,
-  receiptsOrderFailures,
+  receiptsOrderFailuresFolded,
 } from "../../tools/qa/layout-check.mjs";
 
 /** Unit tests for the spec 16 layout rows of 17.3 in tools/qa/layout-check.mjs. */
@@ -19,7 +19,7 @@ const ORDERED = [
 
 describe("row 10.1 receipts order and closed letter", () => {
   it("passes blocks in the order of 10.1 with the letter closed", () => {
-    expect(receiptsOrderFailures({ blocks: ORDERED, letterClosed: true })).toEqual([]);
+    expect(receiptsOrderFailuresFolded({ blocks: ORDERED, letterClosed: true })).toEqual([]);
   });
 
   it("fails a letter that sits above a figure card", () => {
@@ -30,19 +30,19 @@ describe("row 10.1 receipts order and closed letter", () => {
       { kind: "seal", top: 700 },
       { kind: "end", top: 800 },
     ];
-    const out = receiptsOrderFailures({ blocks, letterClosed: true });
+    const out = receiptsOrderFailuresFolded({ blocks, letterClosed: true });
     expect(out).toEqual(['10.1 "figure" sits after a later block']);
   });
 
   it("fails an open letter", () => {
-    expect(receiptsOrderFailures({ blocks: ORDERED, letterClosed: false })).toEqual([
+    expect(receiptsOrderFailuresFolded({ blocks: ORDERED, letterClosed: false })).toEqual([
       "10.2 the letter is not folded under Read the letter again",
     ]);
   });
 
   it("fails when the end card is missing", () => {
     const blocks = ORDERED.filter((b) => b.kind !== "end");
-    expect(receiptsOrderFailures({ blocks, letterClosed: true })).toEqual(['10.1 no "end" block']);
+    expect(receiptsOrderFailuresFolded({ blocks, letterClosed: true })).toEqual(['10.1 no "end" block']);
   });
 });
 
