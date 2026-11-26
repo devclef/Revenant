@@ -41,6 +41,15 @@ describe("README and video script wording (spec 16, Requirement 17.4)", () => {
     expect(VIDEO_SCRIPT).not.toContain(RECEIPTS_LETTER_FOLD);
   });
 
+  it("keeps the fold out of the receipts lines in both files (Requirement 6.5)", () => {
+    const readmeReceipts = /^6\. \*\*Receipts\.\*\*.*$/m.exec(README)?.[0] ?? "";
+    const videoReceipts = /^\s*3\. The letter, in full.*$/m.exec(VIDEO_SCRIPT)?.[0] ?? "";
+    expect(readmeReceipts).not.toBe("");
+    expect(videoReceipts).not.toBe("");
+    expect(readmeReceipts).not.toMatch(/fold/i);
+    expect(videoReceipts).not.toMatch(/fold/i);
+  });
+
   it("no longer contains the retired teacher and tenure detail in the README", () => {
     expect(README).not.toContain("English teacher");
     expect(README).not.toContain("fifteen years");
