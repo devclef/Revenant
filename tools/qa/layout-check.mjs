@@ -3599,18 +3599,19 @@ export function landingSealFailures({ seal, h1, cta, minWidth, w, h }) {
 }
 
 // P1: the seal step's measurements. Returns the failure reasons; an empty list passes. Pure.
-// accentCount counts the orange controls other than the Press_Envelope and an orange
-// Seal_Button inside [data-press-column]. sealButtonIsAccent is true when that Seal_Button is orange.
-export function p1Failures({ largestIsPress, press, accentCount, pressIsAccent, sealButtonIsAccent, warningBefore, warningDuring }) {
+// accentCount is every orange control on the step, the Press_Envelope included. sealButtonIsAccent
+// is true when the Seal_Button is orange and inside [data-press-column], so one more orange control
+// is allowed. Without a Seal_Button, one orange control (the press) is expected.
+export function p1Failures({ largestIsPress, press, accentCount, pressIsAccent, sealButtonIsAccent = false, warningBefore, warningDuring }) {
   const out = [];
   if (!largestIsPress) out.push("P1.1 the Press_Envelope is not the largest element on the step");
   if (!press || press.tag !== "BUTTON" || press.width < PRESS_MIN_PX || press.height < PRESS_MIN_PX) {
     const size = press ? `${press.width.toFixed(0)}x${press.height.toFixed(0)}px on a ${press.tag}` : "missing";
     out.push(`P1.2 Press_Envelope hit area is ${size}, need a focusable button of at least ${PRESS_MIN_PX}x${PRESS_MIN_PX}px`);
   }
-  if (accentCount !== 0 || !pressIsAccent) {
-    const seal = sealButtonIsAccent ? " plus the orange Seal_Button" : "";
-    out.push(`P1.3 ${accentCount} other orange control(s)${seal} beside the Press_Envelope (orange ${pressIsAccent ? "yes" : "no"}), need the Press_Envelope alone, or the Press_Envelope plus one Seal_Button inside [data-press-column]`);
+  const allowed = sealButtonIsAccent ? 2 : 1;
+  if (accentCount !== allowed || !pressIsAccent) {
+    out.push(`P1.3 ${accentCount} orange control(s), need ${allowed}: the Press_Envelope alone, or the Press_Envelope plus one Seal_Button inside [data-press-column]`);
   }
   if (!warningBefore || !warningDuring) out.push("P1.4 Warning_Text not found before or during the hold");
   else if (!rectsSame(warningBefore, warningDuring)) out.push("P1.4 Warning_Text moved during the hold");
@@ -3693,7 +3694,7 @@ const P1_READ = () => {
     largestIsPress: largest.el === press,
     largest: largest.el ? box(largest.el) : null,
     press: box(press),
-    accentCount: accentControls.filter((el) => el !== press && !(sealButtonIsAccent && el === sealEl)).length,
+    accentCount: accentControls.length,
     pressIsAccent: accentControls.includes(press),
     sealButtonIsAccent,
   };
