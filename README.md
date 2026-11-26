@@ -51,7 +51,7 @@ So before the seal breaks, you remember first. You write what you think you answ
 3. **Keep.** A letter card with a QR link, a backup key card and an `.ics` file.
 4. **Wait.** Scanning early shows "still sealed" and a countdown.
 5. **Remember.** After the opening date, open the letter and unlock with your passkey. Revenant recalls each question you wrote, and you write what you remember answering. What you remember is stored before anything sealed is shown.
-6. **Receipts.** Break the seal. Each question with what you remembered beside the answer you sealed. Then any figures, then and now. Then the letter, folded under "Read the letter again" when there are figures. Revenant does not explain the difference.
+6. **Receipts.** Break the seal. Each question with what you remembered beside the answer you sealed. The letter stays open, beside them on a wide screen and in its place on a phone. Then any figures, then and now. Revenant does not explain the difference.
 
 <!-- TODO(owner): ceremony screenshot. On https://revenant.devclef.se/demo/personas/us-maya at 1440x900, answer both questions, then capture the Break the seal step: the ghost risen from the soil holding the envelope, orange seal centred, before pressing. Save as docs/ceremony-break.png and add it here. -->
 
