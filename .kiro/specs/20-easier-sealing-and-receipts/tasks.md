@@ -138,7 +138,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: none. The folded-reading tests stay until task 5.
   - Validation: `npx vitest run src/lib` and `bash scripts/check.sh`.
 
-- [ ] 4. Part D: the open letter on the receipts
+- [x] 4. Part D: the open letter on the receipts
   - Agent: `frontend-dev` · Depends on: 3 · Estimated size: M, ~700 changed lines
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `src/components/reveal/Reveal.tsx`, `reveal/LetterColumn.tsx` (new), `reveal/own-scroll.ts` (new), `reveal/receipts.module.css`, `reveal/reveal.module.css`, `reveal/SealedLetter.tsx`, `reveal/copy.ts`, `src/components/ceremony/letter/LetterBlock.tsx`, `ceremony/letter/LetterBlock.module.css`, and the tests named below. `ceremony/stages.ts` does not change.
