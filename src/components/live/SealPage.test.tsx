@@ -1,8 +1,11 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { realLetterSealApi, realSealApi, REAL_PREPARE_PATH, REAL_SEAL_PATH, PREPARE_PATH } from "./api";
+import { realLetterSealApi, realSealApi, REAL_PREPARE_PATH, REAL_SEAL_PATH, PREPARE_PATH, SEAL_PATH } from "./api";
 import { LIVE_COPY, REAL_COPY } from "./copy";
 import { DESK_COPY } from "./desk/copy";
 import { shortUnit } from "./desk/figure-row-text";
@@ -25,6 +28,7 @@ vi.mock("./useSealFlow", () => ({
     onCreatePress: () => {},
     onConfirmPress: () => {},
     onFallbackStart: () => {},
+    onBackupOnlyStart: () => true,
     onFallbackSealPress: () => {},
     onFallbackDecline: () => {},
     onRetry: () => {},
@@ -432,6 +436,58 @@ describe("SealPage rehearsal line (spec 11, L4.1, L4.3)", () => {
   });
 });
 
+describe("SealPage backup-only seal (spec 06, Part A)", () => {
+  afterEach(() => {
+    flowStub.state = { tag: "write" };
+    flowStub.keyText = null;
+    pageStub.step = null;
+  });
+
+  it("each mode's backup-only seal posts only to that mode's routes", async () => {
+    const fetchMock = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(async () => new Response(null, { status: 404 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    for (const mode of ["demo", "real"] as const) {
+      fetchMock.mockClear();
+      const api = sealApiFor(mode);
+      await api.prepare();
+      await api.seal({ letterId: "L", envelope: {}, envelopeHash: "h" });
+      const urls = fetchMock.mock.calls.map((call) => String(call[0]));
+      const expected = mode === "demo" ? [PREPARE_PATH, SEAL_PATH] : [REAL_PREPARE_PATH, REAL_SEAL_PATH];
+      expect(urls, mode).toEqual(expected);
+    }
+  });
+
+  it("the write step offers Backup_Only_Start on the Seal step", () => {
+    pageStub.step = "seal";
+    flowStub.state = { tag: "write" };
+    const html = renderToStaticMarkup(
+      createElement(SealPage, {
+        rpId: "revenant.devclef.se",
+        appOrigin: "https://revenant.devclef.se",
+        mode: "demo",
+      }),
+    );
+    expect(html).toContain("data-backup-only-start");
+  });
+
+  it("the demo fallback_key screen has exactly one h1, from either origin", () => {
+    flowStub.keyText = "AAAA-BBBB-CCCC-DDDD-EEEE-FFFF-GGG";
+    for (const origin of ["seal_step", "cannot_lock"] as const) {
+      pageStub.step = origin === "seal_step" ? "seal" : null;
+      flowStub.state = { tag: "fallback_key", origin, passkeyCreated: false };
+      const html = renderToStaticMarkup(
+        createElement(SealPage, {
+          rpId: "revenant.devclef.se",
+          appOrigin: "https://revenant.devclef.se",
+          mode: "demo",
+        }),
+      );
+      expect(html.split("<h1").length - 1, origin).toBe(1);
+    }
+  });
+});
+
 describe("SealPage shows the Seal_Button only on the Press the seal step (spec 20, Part C)", () => {
   const sealedState: SealState = {
     tag: "sealed",
@@ -488,5 +544,32 @@ describe("SealPage shows the Seal_Button only on the Press the seal step (spec 2
 
   it("renders no Seal_Button once the letter is sealed", () => {
     expect(render(sealedState)).not.toContain("data-seal-button");
+  });
+});
+
+describe("SealPage Not now drops the frozen figures (spec 20, Part A)", () => {
+  // The handler needs a click, and this suite renders static markup only, so
+  // the handler body is read from the source. The browser walk checks the
+  // behaviour live.
+  const here = dirname(fileURLToPath(import.meta.url));
+  const source = readFileSync(join(here, "SealPage.tsx"), "utf8");
+  const start = source.indexOf("const onFallbackDecline = useCallback(");
+  const end = source.indexOf("}, [fallbackOrigin, flowFallbackDecline]);", start);
+  const body = source.slice(start, end);
+
+  it("finds the onFallbackDecline handler in SealPage.tsx", () => {
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+  });
+
+  it("returns before touching the figures unless the fallback came from the Seal step", () => {
+    const guard = body.indexOf('if (origin !== "seal_step") return;');
+    expect(guard).toBeGreaterThan(-1);
+    expect(body.indexOf("setPressedFigures(null)")).toBeGreaterThan(guard);
+  });
+
+  it("moves focus to the step heading in a frame after Not now from the Seal step", () => {
+    expect(body).toContain("window.requestAnimationFrame");
+    expect(body).toContain("[data-step-heading]");
   });
 });

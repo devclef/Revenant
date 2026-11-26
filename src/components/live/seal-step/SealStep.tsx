@@ -49,8 +49,10 @@ export type SealStepProps = {
   questionCount: number;
   /** The PRF check failed at sealing, so the backup key is required. */
   prfMissing: boolean;
-  /** Starts the PRF-missing fallback. Absent means the fallback is not offered. */
+  /** Starts the backup-only path (Backup_Only_Start). Absent means the button is not offered. */
   onBackupStart?: () => void;
+  /** True while the backup-only start is blocked: aria-disabled, and a click calls onAttempt. */
+  backupOnlyBlocked?: boolean;
   /** Present only while the Write step can go back (S5.6). */
   onBack?: () => void;
   /** False when the page holds the step's h1 (any step but Seal). Default true. */
@@ -100,6 +102,7 @@ export function SealStep({
   questionCount,
   prfMissing,
   onBackupStart,
+  backupOnlyBlocked = false,
   onBack,
   showHeading = true,
   onCreatePress,
@@ -188,11 +191,19 @@ export function SealStep({
             {LIVE_COPY.prfHint}
           </p>
         ) : null}
-        {prfMissing && onBackupStart !== undefined ? (
+        {tag === "write" && onBackupStart !== undefined ? (
           <button
             type="button"
             className={styles.fallback}
-            onClick={onBackupStart}
+            data-backup-only-start=""
+            aria-disabled={backupOnlyBlocked ? true : undefined}
+            onClick={() => {
+              if (backupOnlyBlocked) {
+                onAttempt();
+                return;
+              }
+              onBackupStart();
+            }}
           >
             {LIVE_COPY.fallbackButton}
           </button>

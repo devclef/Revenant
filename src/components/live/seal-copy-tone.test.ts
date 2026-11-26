@@ -9,7 +9,7 @@ import { describe, expect, it } from "vitest";
 
 import { toneProblems } from "@/components/copy-tone";
 
-import { REAL_COPY } from "./copy";
+import { LIVE_COPY, REAL_COPY } from "./copy";
 import { PRESS_COPY } from "./press/copy";
 
 const NAMED: ReadonlyArray<readonly [string, string, string]> = [
@@ -49,6 +49,16 @@ const NAMED: ReadonlyArray<readonly [string, string, string]> = [
     "REAL_COPY.stepOneHint",
     REAL_COPY.stepOneHint,
     "Press the wax, or use the button under it. The passkey is named for this letter's opening date.",
+  ],
+  [
+    "LIVE_COPY.noPrfPress",
+    LIVE_COPY.noPrfPress,
+    "Save the key and tick the box. Then choose Seal with this key.",
+  ],
+  [
+    "REAL_COPY.intro",
+    REAL_COPY.intro,
+    "Your letter is sealed in this browser with your passkey or a backup key.",
   ],
 ];
 

@@ -95,13 +95,53 @@ describe("SealStep text column (spec 14, S3.1 to S3.4)", () => {
     expect(html).not.toContain('data-step-heading=""');
   });
 
-  it("offers the PRF fallback button only when the PRF check is missing", () => {
+  it("offers Backup_Only_Start for every PRF hint value once onBackupStart is set", () => {
+    for (const prfMissing of [false, true]) {
+      const html = render({ prfMissing, onBackupStart: () => undefined });
+      expect(html).toMatch(/<button[^>]*data-backup-only-start=""[^>]*>/);
+      expect(html).toContain(LIVE_COPY.fallbackButton);
+    }
+  });
+
+  it("offers no Backup_Only_Start when onBackupStart is absent", () => {
+    for (const prfMissing of [false, true]) {
+      const html = render({ prfMissing });
+      expect(html).not.toContain("data-backup-only-start");
+      expect(html).not.toContain(LIVE_COPY.fallbackButton);
+    }
+  });
+
+  it("shows the PRF hint only while the PRF check is missing", () => {
     expect(
       render({ prfMissing: false, onBackupStart: () => undefined }),
-    ).not.toContain(LIVE_COPY.fallbackButton);
+    ).not.toContain(LIVE_COPY.prfHint);
     const html = render({ prfMissing: true, onBackupStart: () => undefined });
-    expect(html).toContain(LIVE_COPY.fallbackButton);
     expect(html).toContain(LIVE_COPY.prfHint);
+  });
+
+  it("places Backup_Only_Start after the Backup_Choice and before the links", () => {
+    const html = render({ onBackupStart: () => undefined });
+    const start = html.indexOf("data-backup-only-start");
+    expect(start).toBeGreaterThan(html.indexOf('data-backup-choice=""'));
+    expect(start).toBeLessThan(html.indexOf('data-seal-links=""'));
+  });
+
+  it("marks Backup_Only_Start aria-disabled, with no disabled attribute, while blocked", () => {
+    const blocked = render({
+      onBackupStart: () => undefined,
+      backupOnlyBlocked: true,
+    });
+    expect(blocked).toMatch(
+      /<button[^>]*data-backup-only-start=""[^>]*aria-disabled="true"[^>]*>/,
+    );
+    expect(blocked).not.toMatch(/<button[^>]*data-backup-only-start=""[^>]*disabled=""/);
+    const open = render({
+      onBackupStart: () => undefined,
+      backupOnlyBlocked: false,
+    });
+    const openTag = /<button[^>]*data-backup-only-start=""[^>]*>/.exec(open)?.[0];
+    expect(openTag).toBeDefined();
+    expect(openTag).not.toContain("aria-disabled");
   });
 
   it("passes the fields problem to the Backup_Choice as its message", () => {
@@ -319,5 +359,101 @@ describe("SealStep Seal_Button placement and wiring (spec 20, Part C)", () => {
     const source = readFileSync(join(here, "SealButton.tsx"), "utf8");
     expect(source).not.toMatch(/onPointer/);
     expect(source).not.toMatch(/onMouseDown/);
+  });
+});
+
+describe("SealStep Backup_Only_Start is gated to the write tag (spec 20, Part A)", () => {
+  const NON_WRITE_TAGS = [
+    "creating",
+    "created",
+    "confirming",
+    "preparing",
+    "sealing",
+  ] as const;
+
+  it("offers Backup_Only_Start in the write tag once onBackupStart is set", () => {
+    const html = render({ tag: "write", onBackupStart: () => undefined });
+    expect(html).toMatch(/<button[^>]*data-backup-only-start=""[^>]*>/);
+  });
+
+  it.each(NON_WRITE_TAGS)(
+    "hides Backup_Only_Start in the %s tag even when onBackupStart is set",
+    (tag) => {
+      const html = render({ tag, onBackupStart: () => undefined });
+      expect(html).not.toContain("data-backup-only-start");
+      expect(html).not.toContain(LIVE_COPY.fallbackButton);
+    },
+  );
+
+  it("shows Backup_Only_Start with aria-disabled=\"true\" while blocked in the write tag", () => {
+    const html = render({
+      tag: "write",
+      onBackupStart: () => undefined,
+      backupOnlyBlocked: true,
+    });
+    expect(html).toMatch(
+      /<button[^>]*data-backup-only-start=""[^>]*aria-disabled="true"[^>]*>/,
+    );
+  });
+});
+
+describe("SealStep Backup_Only_Start per Backup_Choice and PRF hint (spec 20, Part A)", () => {
+  // PrfHint is `missing` or `none`; SealStep takes it as the boolean prfMissing.
+  // An unknown capability reads as `none`, so it is the not-missing case.
+  const PRF_CASES: ReadonlyArray<{ name: string; prfMissing: boolean }> = [
+    { name: "none", prfMissing: false },
+    { name: "unknown", prfMissing: false },
+    { name: "missing", prfMissing: true },
+  ];
+  const CHOICES: ReadonlyArray<SealStepProps["backupChoice"]> = [null, "card", "skip"];
+
+  function buttonTag(html: string): string | undefined {
+    return /<button[^>]*data-backup-only-start=""[^>]*>/.exec(html)?.[0];
+  }
+
+  for (const prf of PRF_CASES) {
+    for (const backupChoice of CHOICES) {
+      const label = `${backupChoice ?? "no choice"}`;
+
+      it(`renders Backup_Only_Start for PRF hint ${prf.name} with ${label}, enabled`, () => {
+        const html = render({
+          tag: "write",
+          prfMissing: prf.prfMissing,
+          backupChoice,
+          onBackupStart: () => undefined,
+          backupOnlyBlocked: false,
+        });
+        const tag = buttonTag(html);
+        expect(tag).toBeDefined();
+        expect(tag).not.toContain("aria-disabled");
+        expect(tag).not.toMatch(/\sdisabled=""/);
+      });
+
+      it(`marks Backup_Only_Start aria-disabled with no disabled attribute for PRF hint ${prf.name} with ${label}`, () => {
+        const html = render({
+          tag: "write",
+          prfMissing: prf.prfMissing,
+          backupChoice,
+          onBackupStart: () => undefined,
+          backupOnlyBlocked: true,
+        });
+        const tag = buttonTag(html);
+        expect(tag).toBeDefined();
+        expect(tag).toContain('aria-disabled="true"');
+        expect(tag).not.toMatch(/\sdisabled=""/);
+      });
+    }
+  }
+
+  it("leaves Backup_Only_Start enabled with backupChoice null", () => {
+    const html = render({
+      tag: "write",
+      backupChoice: null,
+      onBackupStart: () => undefined,
+      backupOnlyBlocked: false,
+    });
+    const tag = buttonTag(html);
+    expect(tag).toBeDefined();
+    expect(tag).not.toContain("aria-disabled");
   });
 });

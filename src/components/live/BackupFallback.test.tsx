@@ -18,6 +18,7 @@ function renderHtml(overrides: Partial<BackupFallbackProps> = {}): string {
   return renderToStaticMarkup(
     createElement(BackupFallback, {
       keyText: KEY,
+      origin: "cannot_lock",
       onSealPress: () => undefined,
       onDecline: () => undefined,
       ...overrides,
@@ -100,6 +101,7 @@ describe("BackupFallback key handling", () => {
     renderToStaticMarkup(
       createElement(BackupFallback, {
         keyText,
+        origin: "cannot_lock",
         onSealPress: () => undefined,
         onDecline: () => undefined,
       }),
@@ -114,6 +116,51 @@ describe("BackupFallback key handling", () => {
     const groups = keyGroups(keyText);
     expect(groups.slice(0, -1).every((group) => group.length === 4)).toBe(true);
     expect(groups.join("-")).toBe(keyText);
+  });
+});
+
+describe("BackupFallback origin", () => {
+  it("shows noPrfOther only when the fallback came from cannot_lock", () => {
+    expect(renderHtml({ origin: "cannot_lock" })).toContain(LIVE_COPY.noPrfOther);
+    expect(renderHtml({ origin: "seal_step" })).not.toContain(LIVE_COPY.noPrfOther);
+    expect(renderHtml({ origin: "seal_step" })).not.toContain("data-no-prf-other");
+  });
+
+  it("keeps the key, Copy, intro, warning, checkbox and seal control for seal_step", () => {
+    const txt = renderText({ origin: "seal_step" });
+    expect(txt).toContain(LIVE_COPY.fallbackIntro);
+    expect(txt).toContain(LIVE_COPY.fallbackWarning);
+    expect(txt).toContain(LIVE_COPY.savedLabel);
+    expect(txt).toContain(LIVE_COPY.copyKey);
+    expect(txt).toContain(LIVE_COPY.sealWithKey);
+    expect(renderHtml({ origin: "seal_step" })).toMatch(/<button[^>]*\bdisabled\b[^>]*>[^<]*Seal with this key/);
+  });
+});
+
+describe("BackupFallback heading and copy", () => {
+  it("gives the h1 data-step-heading and tabindex -1", () => {
+    const h1 = renderHtml().match(/<h1[^>]*>/)?.[0] ?? "";
+    expect(h1).toContain('data-step-heading=""');
+    expect(h1).toContain('tabindex="-1"');
+    expect(renderHtml()).toContain(LIVE_COPY.fallbackTitle);
+  });
+
+  it("gives the h1 the same attributes for seal_step", () => {
+    const h1 = renderHtml({ origin: "seal_step", real: true }).match(/<h1[^>]*>/)?.[0] ?? "";
+    expect(h1).toContain('data-step-heading=""');
+    expect(h1).toContain('tabindex="-1"');
+  });
+
+  it("names the seal control in noPrfPress and does not mention wax", () => {
+    expect(LIVE_COPY.noPrfPress).toContain("Seal with this key");
+    expect(LIVE_COPY.noPrfPress).not.toMatch(/wax/i);
+    expect(renderText()).toContain(LIVE_COPY.noPrfPress);
+    expect(renderText()).not.toMatch(/press the wax/i);
+  });
+
+  it("shows no Demo label in real mode for either origin", () => {
+    expect(renderHtml({ origin: "cannot_lock", real: true })).not.toContain("data-demo-label");
+    expect(renderHtml({ origin: "seal_step", real: true })).not.toContain("data-demo-label");
   });
 });
 

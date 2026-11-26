@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useReducer, useState, type ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useReducer, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 
 import "@/components/ceremony/scene/tokens.css";
@@ -12,7 +12,7 @@ import type { LoadedFigures } from "@/lib/figures";
 import { realLetterSealApi, realSealApi, type SealApi } from "./api";
 import { sealFiguresFrom } from "./catalogue-list";
 import { LIVE_COPY } from "./copy";
-import { BackupFallback } from "./BackupFallback";
+import { BackupFallback, type BackupFallbackOrigin } from "./BackupFallback";
 import styles from "./live.module.css";
 import { SealedView } from "./SealedView";
 import { SealFailure } from "./SealFailure";
@@ -243,6 +243,40 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
     flowCreatePress();
   }, [crypto, state.tag, liveFigures, flowCreatePress]);
 
+  // Where the current fallback_key screen started. Not now returns the Seal
+  // step only for the Backup_Only_Start; a cannot_lock fallback is unchanged.
+  const [fallbackOrigin, setFallbackOrigin] = useState<BackupFallbackOrigin>("cannot_lock");
+  const rootRef = useRef<HTMLDivElement>(null);
+  const flowFallbackStart = flow.onFallbackStart;
+  const flowBackupOnlyStart = flow.onBackupOnlyStart;
+  const flowFallbackDecline = flow.onFallbackDecline;
+
+  const onFallbackStart = useCallback(() => {
+    setFallbackOrigin("cannot_lock");
+    flowFallbackStart();
+  }, [flowFallbackStart]);
+
+  // Backup_Only_Start freezes the figures the way the Create_Press does, once
+  // the flow has accepted the start. A refused start freezes nothing.
+  const onBackupOnlyStart = useCallback(() => {
+    if (!flowBackupOnlyStart()) return;
+    setFallbackOrigin("seal_step");
+    setPressedFigures(liveFigures);
+  }, [flowBackupOnlyStart, liveFigures]);
+
+  // Not now from a Seal_Step fallback drops the frozen figures, so the Seal
+  // step seals with the live figures again, and moves focus to the step heading
+  // once the frame has painted. A cannot_lock fallback keeps its figures.
+  const onFallbackDecline = useCallback(() => {
+    const origin = fallbackOrigin;
+    flowFallbackDecline();
+    if (origin !== "seal_step") return;
+    setPressedFigures(null);
+    window.requestAnimationFrame(() => {
+      rootRef.current?.querySelector<HTMLElement>("[data-step-heading]")?.focus();
+    });
+  }, [fallbackOrigin, flowFallbackDecline]);
+
   // Once the seal is stored, the draft is dropped from the stepper state and
   // Back is no longer offered (spec 09, D2.3). Every mode does this once. In
   // Real_Mode the stepper then moves to the sealed step (Keep). Demo_Mode moves
@@ -256,6 +290,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
 
   return (
     <div
+      ref={rootRef}
       data-rp-id={rpId}
       data-app-origin={appOrigin}
       data-seal-mode={mode}
@@ -286,7 +321,8 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
     // The Seal step's own h1 (SealStep, spec 14 S3.2) is the step's heading
     // while the seal form shows, so the temporary Seal h1 is not rendered.
     const demoSealOwnsHeading =
-      view.step === "seal" && SEAL_FORM_TAGS.has(state.tag);
+      view.step === "seal" &&
+      (SEAL_FORM_TAGS.has(state.tag) || state.tag === "fallback_key");
     const ownsHeading =
       mode === "real"
         ? realOwnsHeading(view.step, state.tag)
@@ -359,7 +395,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
           <SealFailure
             state={state}
             onRetry={flow.onRetry}
-            onFallbackStart={flow.onFallbackStart}
+            onFallbackStart={onFallbackStart}
             real={mode === "real"}
           />
         );
@@ -372,8 +408,10 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
           <BackupFallback
             keyText={fallbackKeyText}
             onSealPress={flow.onFallbackSealPress}
-            onDecline={flow.onFallbackDecline}
+            onDecline={onFallbackDecline}
             real={mode === "real"}
+            origin={fallbackOrigin}
+            focusOnMount={fallbackOrigin === "seal_step"}
           />
         );
       }
@@ -452,6 +490,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
         }
         onCreatePress={onCreatePress}
         onConfirmPress={flow.onConfirmPress}
+        onBackupStart={onBackupOnlyStart}
         realDate={
           mode === "real"
             ? {
