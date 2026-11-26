@@ -28,6 +28,12 @@ export interface SealFlow {
   onCreatePress: () => void;
   onConfirmPress: () => void;
   onFallbackStart: () => void;
+  /**
+   * Starts the backup-key fallback from the Seal_Step, without a passkey. Returns
+   * true only when it started: the flow must be idle at write, and no press may
+   * be in flight.
+   */
+  onBackupOnlyStart: () => boolean;
   onFallbackSealPress: () => void;
   onFallbackDecline: () => void;
   onRetry: () => void;
@@ -180,6 +186,18 @@ export function useSealFlow(deps: SealDeps | null, draft: SealDraft): SealFlow {
     send({ type: "FALLBACK_START" });
   }, [deps, holdBackupKey, send]);
 
+  /**
+   * Starts the backup-key fallback from the Seal_Step. The key is generated here,
+   * from the loaded module, and only from write with no press in flight.
+   */
+  const onBackupOnlyStart = useCallback((): boolean => {
+    if (deps === null || inFlight.current || phase.current.tag !== "write") return false;
+    const bytes = deps.crypto.generateBackupKey();
+    holdBackupKey(bytes, deps.crypto.formatBackupKey(bytes));
+    send({ type: "SEAL_STEP_BACKUP_START" });
+    return true;
+  }, [deps, holdBackupKey, send]);
+
   /** Declines the fallback. Drops the key and seals nothing; no request is sent. */
   const onFallbackDecline = useCallback(() => {
     if (phase.current.tag !== "fallback_key") return;
@@ -231,6 +249,7 @@ export function useSealFlow(deps: SealDeps | null, draft: SealDraft): SealFlow {
     onCreatePress,
     onConfirmPress,
     onFallbackStart,
+    onBackupOnlyStart,
     onFallbackSealPress,
     onFallbackDecline,
     onRetry,

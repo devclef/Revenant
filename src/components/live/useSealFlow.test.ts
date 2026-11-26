@@ -16,8 +16,18 @@ import type { CryptoModule } from "./crypto-module";
 import type { PrepareResult, SealApi, SealPostResult } from "./api";
 import type { SealDeps, SealDraft } from "./seal-runner";
 import { useSealFlow, type SealFlow } from "./useSealFlow";
+import { sealReducer } from "./seal-machine";
 import { catalogueMetric, makeFigures } from "./test-figures";
 import { encodeBase64url } from "@/lib/seal-format";
+
+// A pass-through spy on the reducer. The hook keeps its state private, so the
+// failed state's passkeyCreated flag is read from what the reducer returns.
+// The implementation is the real reducer, so no other test changes.
+vi.mock("./seal-machine", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./seal-machine")>();
+  return { ...actual, sealReducer: vi.fn(actual.sealReducer) };
+});
+const sealReducerSpy = vi.mocked(sealReducer);
 
 const T0 = Date.parse("2026-11-02T10:00:00.000Z");
 
@@ -384,5 +394,104 @@ describe("useSealFlow fake port: one create and at most one get under repeated p
     await waitUntil(() => api.seal.mock.calls.length > 0);
     expect(createSpy).toHaveBeenCalledTimes(1);
     expect(getSpy.mock.calls.length).toBeLessThanOrEqual(1);
+  });
+});
+
+/**
+ * Backup-only start from the Seal_Step (design 3.2, R7.6, R8.x). The state is
+ * not readable from the handlers, so "back at write" is checked by
+ * onBackupOnlyStart, which returns true only from write with no press in flight.
+ */
+describe("useSealFlow backup-only start from the Seal_Step", () => {
+  it("after Not now from seal_step the state is write and no key is held", async () => {
+    const { deps } = await fallbackDeps();
+    const flow = mount(deps, draft());
+    expect(flow.onBackupOnlyStart()).toBe(true);
+    expect(flow.getBackupKeyText()).not.toBeNull();
+
+    flow.onFallbackDecline();
+
+    expect(flow.getBackupKeyText()).toBeNull();
+    expect(flow.onBackupOnlyStart()).toBe(true);
+  });
+
+  it("two starts with a seeded source give different keys", async () => {
+    const { deps } = await fallbackDeps();
+    const flow = mount(deps, draft());
+    // A deterministic source: each call fills the buffer with the next value.
+    let seed = 0;
+    const spy = vi
+      .spyOn(globalThis.crypto, "getRandomValues")
+      .mockImplementation((arr) => {
+        seed += 1;
+        if (arr !== null) new Uint8Array(arr.buffer, arr.byteOffset, arr.byteLength).fill(seed);
+        return arr;
+      });
+    try {
+      expect(flow.onBackupOnlyStart()).toBe(true);
+      const first = flow.getBackupKeyText();
+      flow.onFallbackDecline();
+      expect(flow.onBackupOnlyStart()).toBe(true);
+      const second = flow.getBackupKeyText();
+
+      expect(first).not.toBeNull();
+      expect(second).not.toBeNull();
+      expect(second).not.toBe(first);
+    } finally {
+      spy.mockRestore();
+    }
+  });
+
+  it("a double Seal with this key sends one prepare request", async () => {
+    const { deps, api } = await fallbackDeps();
+    const flow = mount(deps, draft());
+    expect(flow.onBackupOnlyStart()).toBe(true);
+
+    flow.onFallbackSealPress();
+    flow.onFallbackSealPress();
+    await waitUntil(() => api.seal.mock.calls.length > 0);
+
+    expect(api.prepare).toHaveBeenCalledTimes(1);
+    expect(api.seal).toHaveBeenCalledTimes(1);
+  });
+
+  it("a failed seal clears the key and leaves the flow at failed until Try again", async () => {
+    const { deps, api } = await fallbackDeps();
+    api.seal.mockResolvedValueOnce({ ok: false, kind: "server" });
+    const flow = mount(deps, draft());
+    expect(flow.onBackupOnlyStart()).toBe(true);
+
+    sealReducerSpy.mockClear();
+    flow.onFallbackSealPress();
+    await waitUntil(() => flow.getBackupKeyText() === null);
+
+    expect(flow.getBackupKeyText()).toBeNull();
+    // The FAILED event from the backup-only seal carries no passkey, and the
+    // reducer keeps that flag in the failed state it returns.
+    const failedIndex = sealReducerSpy.mock.calls.findIndex(
+      ([, event]) => event.type === "FAILED",
+    );
+    expect(failedIndex).toBeGreaterThanOrEqual(0);
+    expect(sealReducerSpy.mock.calls[failedIndex]?.[1]).toMatchObject({ passkeyCreated: false });
+    expect(sealReducerSpy.mock.results[failedIndex]?.value).toMatchObject({
+      tag: "failed",
+      passkeyCreated: false,
+    });
+    // Failed is not write, so a backup-only start is refused.
+    expect(flow.onBackupOnlyStart()).toBe(false);
+  });
+
+  it("Try again returns to write with no key held", async () => {
+    const { deps, api } = await fallbackDeps();
+    api.seal.mockResolvedValueOnce({ ok: false, kind: "server" });
+    const flow = mount(deps, draft());
+    expect(flow.onBackupOnlyStart()).toBe(true);
+    flow.onFallbackSealPress();
+    await waitUntil(() => flow.getBackupKeyText() === null);
+
+    flow.onRetry();
+
+    expect(flow.getBackupKeyText()).toBeNull();
+    expect(flow.onBackupOnlyStart()).toBe(true);
   });
 });

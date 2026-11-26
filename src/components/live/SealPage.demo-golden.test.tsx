@@ -178,7 +178,7 @@ const CASES: readonly GoldenCase[] = [
   {
     step: "seal",
     tag: "fallback_key",
-    state: { tag: "fallback_key", passkeyCreated: false },
+    state: { tag: "fallback_key", origin: "cannot_lock", passkeyCreated: false },
   },
   ...(["wait", "testify", "break", "receipts"] as const).flatMap((step) =>
     (["passkey", "backup"] as const).map((factors) => ({
