@@ -246,6 +246,9 @@ describe("Property 8: the receipts order does not depend on direction", () => {
         const markup = renderStage3(picked, direction);
         expect(markup).not.toContain("data-letter-disclosure");
         expect(markup.match(/data-letter-text/g)).toHaveLength(1);
+        expect(markup.match(/data-letter-stage/g)).toHaveLength(1);
+        expect(markup).toContain('data-receipts-layout="split"');
+        expect(markup.toLowerCase()).not.toContain("read the letter again");
       }),
       { numRuns: 50 },
     );
