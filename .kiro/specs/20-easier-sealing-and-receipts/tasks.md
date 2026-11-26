@@ -119,7 +119,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Copy evidence: tone-check for `live/press/copy.ts` and `live/copy.ts`.
   - Validation: `npx vitest run src/components/live` and the two golden tests from the rules, then the done check.
 
-- [ ] 3. Part D: Layout_Check readings for the open letter
+- [x] 3. Part D: Layout_Check readings for the open letter
   - Agent: `platform-dev` · Depends on: none · Estimated size: M, ~600 changed lines
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `tools/qa/layout-check.mjs`, `src/lib/layout-check-spec16-rows.test.ts`.
