@@ -93,9 +93,11 @@
   color: var(--muted);
 }
 
-/* The judge's own answer (orange means "you", R3.9). */
+/* The judge's own answer. Its text takes the surface colour, not --accent: a
+   figure label never carries the accent (spec 20 R9). The orange Mark ring
+   above still marks "you" on the axis. */
 .lineLabelAccent {
-  color: var(--figure-mark);
+  color: inherit;
 }
 
 .lineLabelLine {

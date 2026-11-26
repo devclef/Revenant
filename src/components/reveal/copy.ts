@@ -274,9 +274,6 @@ export const REVEAL_COPY = {
   /** Heading for stage 2 of the reveal: what was written then. */
   stage2Title: "What was written then",
 
-  /** Summary of the letter disclosure on the phone's figures and close Stages. */
-  letterDisclosureSummary: "Read the letter again",
-
   /**
    * The one-line disclosure at a persona letter (C6.1, C6.3): the persona is
    * fictional and the letter was written as of its date. `{name}` is the

@@ -17,14 +17,27 @@
   inline-size: 100%;
   max-inline-size: var(--content-column-max);
   margin-inline: auto;
+  /* The h2 size from globals.css, named here so the split can measure it. */
+  --receipts-heading-size: clamp(1.6rem, 3.5vw, 2.25rem);
 }
 
 .questions {
   margin: 0;
 }
 
+/* The letter column. min-inline-size lets a wide letter shrink inside its
+   track instead of pushing the figures out of the row. */
+.letterColumn {
+  min-inline-size: 0;
+}
+
 .questionsHeading {
   margin: 0 0 1rem;
+  font-size: var(--receipts-heading-size);
+  line-height: 1.2;
+  /* Fixed at 1.2 em: a fallback glyph can make the line box taller than
+     1.2 em, which would move the question pairs off the letter's top line. */
+  block-size: 1.2em;
   color: var(--text);
 }
 
@@ -117,4 +130,43 @@
 .endWhole {
   margin: 0;
   color: var(--muted);
+}
+
+/* The receipts split (spec 15 R12.2): from 900 px, with figures, the questions,
+   the figures, the seal line and the end card stack in the first track, and the
+   open letter sits in a sticky second track that scrolls on its own. */
+@media (min-width: 900px) {
+  .receipts[data-receipts-layout="split"] {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
+    column-gap: 2.5rem;
+    align-items: start;
+  }
+
+  .receipts[data-receipts-layout="split"] > * {
+    grid-column: 1;
+  }
+
+  .receipts[data-receipts-layout="split"] .letterColumn {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    /* The letter starts level with the first record block, below the heading
+       that sits above it (spec 20 R3.2). A figures-only receipt has the figures
+       heading above its first figure: one line of h2 (line-height 1.2) and the
+       h2 bottom margin of 0.5 em, so 1.7 em. With questions, the first block is
+       the first question pair under the questions heading: 1.2 em and 1 rem (see
+       the :has rule below). Margin-top only sets where the letter starts; the
+       sticky range is the grid area. The .stage bottom margin is cleared, so the
+       letter reaches the receipts end. */
+    margin: calc(var(--receipts-heading-size) * 1.7) 0 0;
+    position: sticky;
+    top: var(--topbar-clear);
+    max-block-size: calc(100vh - var(--topbar-clear));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .receipts[data-receipts-layout="split"]:has([data-author-testimony]) .letterColumn {
+    margin-top: calc(var(--receipts-heading-size) * 1.2 + 1rem);
+  }
 }

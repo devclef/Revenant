@@ -46,18 +46,6 @@
   outline-offset: 2px;
 }
 
-/* The phone's closed disclosure around the paper. Its summary sits on the dark,
-   so it is light text, and a touch target of 44 px (P8.4, PH7). */
-.letterDisclosure > summary {
-  min-height: 44px;
-  display: flex;
-  align-items: center;
-  font-family: var(--font-sans);
-  font-weight: 700;
-  color: var(--text, #f5f3ff);
-  cursor: pointer;
-}
-
 /* The paper: flat --paper, the Letter_Text alone. The paper's top and bottom
    padding are at most 1.5 rem each, so the empty space above and below the
    letter is at most 48 px (spec 10 C7.3). */

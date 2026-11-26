@@ -3,9 +3,8 @@
 // For any non-empty set of sealed official figures, and for each change
 // direction (every figure up, every figure down, every figure unchanged), the
 // rendered Reveal at stage 3 holds the same order of blocks: the author's
-// question pairs, the figures, the folded letter, then the seal line and the
-// end card. The folded letter is a details element that is closed on first
-// render.
+// question pairs, the one open letter, the figures, then the seal line and the
+// end card. The letter is never folded into a disclosure.
 //
 // Validates spec 10 requirements 10.1, 10.4, 10.5, 10.8 and 16.4.
 
@@ -196,9 +195,8 @@ function renderStage3(picked: readonly Picked[], direction: Direction): string {
 
 const BLOCKS = [
   "data-author-testimony",
-  "data-figures-panel",
-  "data-letter-disclosure",
   "data-letter-text",
+  "data-figures-panel",
   "data-seal-line",
   "data-end-card",
 ] as const;
@@ -206,9 +204,8 @@ const BLOCKS = [
 /** The expected top-to-bottom order of the blocks at stage 3 with figures. */
 const EXPECTED_ORDER: readonly string[] = [
   "data-author-testimony",
-  "data-figures-panel",
-  "data-letter-disclosure",
   "data-letter-text",
+  "data-figures-panel",
   "data-seal-line",
   "data-end-card",
 ];
@@ -243,28 +240,17 @@ describe("Property 8: the receipts order does not depend on direction", () => {
     );
   });
 
-  it("folds the letter in a details element closed on first render, for any direction", () => {
+  it("never wraps the letter in a disclosure, for any direction", () => {
     fc.assert(
       fc.property(pickedArb, directionArb, (picked, direction) => {
         const markup = renderStage3(picked, direction);
-        expect(markup).toMatch(/<details[^>]*data-letter-disclosure=""[^>]*>/);
-        expect(markup).not.toMatch(/<details[^>]* open[ >=]/);
+        expect(markup).not.toContain("data-letter-disclosure");
+        expect(markup.match(/data-letter-text/g)).toHaveLength(1);
+        expect(markup.match(/data-letter-stage/g)).toHaveLength(1);
+        expect(markup).toContain('data-receipts-layout="split"');
+        expect(markup.toLowerCase()).not.toContain("read the letter again");
       }),
       { numRuns: 50 },
     );
-  });
-});
-
-describe("Property 8: the fold in the markup", () => {
-  it("nests the letter text inside the folded disclosure", () => {
-    const markup = renderStage3(ELIGIBLE.slice(0, 1), "up");
-    const marker = markup.indexOf("data-letter-disclosure");
-    const open = markup.lastIndexOf("<details", marker);
-    const close = markup.indexOf("</details>", open);
-    const letter = markup.indexOf("data-letter-text");
-    expect(marker).toBeGreaterThanOrEqual(0);
-    expect(open).toBeGreaterThanOrEqual(0);
-    expect(letter).toBeGreaterThan(open);
-    expect(letter).toBeLessThan(close);
   });
 });

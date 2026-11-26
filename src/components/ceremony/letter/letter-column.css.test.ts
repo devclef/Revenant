@@ -102,7 +102,9 @@ describe("R1: the letter Stage centres the column at 900 px and wider", () => {
     const figureReceiptTsx = readFileSync(join(REVEAL_DIR, "FigureReceipt.tsx"), "utf8");
     expect(figureReceiptTsx).toMatch(/data-figures-panel=""/);
     expect(revealTsx.match(/<FigureReceipt\b/g)).toHaveLength(2);
-    expect(revealTsx).toMatch(/data-letter-stage=""/);
+    // The letter's stage wrapper now lives in LetterColumn (spec 15 R12.2).
+    const letterColumnTsx = readFileSync(join(REVEAL_DIR, "LetterColumn.tsx"), "utf8");
+    expect(letterColumnTsx).toMatch(/data-letter-stage=""/);
   });
 });
 

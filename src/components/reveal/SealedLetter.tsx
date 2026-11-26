@@ -45,15 +45,9 @@ export type SealedLetterProps = {
    * live letter gets its own seal look. Ignored by the persona variant.
    */
   letterId?: string;
-  /**
-   * When true, the paper sits in a closed disclosure, so the figures Stage
-   * starts near the first Receipt_Card on the phone (P6, P7). The paper is kept
-   * in the document and opens on one tap. Used by `SealedLetter` only.
-   */
-  collapsible?: boolean;
 };
 
-export type SealedLetterCaptionProps = Omit<SealedLetterProps, "collapsible">;
+export type SealedLetterCaptionProps = SealedLetterProps;
 
 /**
  * The Caption_Block: the heading and the labels that sit above the paper.
@@ -142,18 +136,7 @@ export function SealedLetter({
   personaName,
   variant = "persona",
   letterId,
-  collapsible = false,
 }: SealedLetterProps) {
-  const letterText = <SealedLetterText opened={opened} />;
-  const letterBody = collapsible ? (
-    <details className={styles.letterDisclosure} data-letter-disclosure="">
-      <summary>{REVEAL_COPY.letterDisclosureSummary}</summary>
-      {letterText}
-    </details>
-  ) : (
-    letterText
-  );
-
   return (
     <section className={styles.sealedLetter}>
       <SealedLetterCaption
@@ -162,7 +145,7 @@ export function SealedLetter({
         variant={variant}
         letterId={letterId}
       />
-      {letterBody}
+      <SealedLetterText opened={opened} />
     </section>
   );
 }

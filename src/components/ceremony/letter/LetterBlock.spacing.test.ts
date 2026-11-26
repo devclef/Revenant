@@ -103,11 +103,8 @@ describe("Letter controls next to what they act on (C7.2)", () => {
     expect(ruleBody(letterBlock, ".caption")).toMatch(/margin:\s*0 0 1rem;/);
   });
 
-  it("puts the phone letter disclosure summary directly on the paper, with no gap", () => {
+  it("puts the paper directly under its caption, with no margin on the sheet", () => {
     expect(ruleBody(letterBlock, ".sheet")).not.toMatch(/margin/);
-    expect(ruleBody(letterBlock, ".letterDisclosure > summary")).toMatch(
-      /min-height:\s*44px;/,
-    );
   });
 });
 

@@ -257,7 +257,7 @@ describe("spec 09 persona disclosure, verdict and Fingerprint copy (C6, C4.2)", 
 
   it("gives the seal verdict and the closed Fingerprint strings their exact text (C6.4)", () => {
     expect(REVEAL_COPY.sealVerdict).toBe("The seal is intact. This is exactly the text that was sealed.");
-    expect(REVEAL_COPY.letterDisclosureSummary).toBe("Read the letter again");
+    expect(REVEAL_COPY).not.toHaveProperty("letterDisclosureSummary");
     expect(REVEAL_COPY.fingerprintShow).toBe("Show the fingerprint");
     expect(REVEAL_COPY.fingerprintHowLink).toBe("How the seal is checked");
   });

@@ -26,7 +26,6 @@ import {
   type SealedLetterProps,
 } from "@/components/reveal/SealedLetter";
 import type { LetterKind } from "@/components/reveal/FigureLine";
-import { REVEAL_COPY } from "@/components/reveal/copy";
 
 import { CREASE_POSITIONS, EASE_STANDARD, UNFOLD_AT_MS, UNFOLD_MS } from "../constants";
 import { useMotion } from "../motion";
@@ -62,13 +61,6 @@ const UNFOLD_TO = {
   opacity: 1,
 };
 
-/**
- * The Light_Shaft's move from the Soil down to the paper, with the unfold. It
- * uses transform and opacity only (spec 09 L7).
- */
-const SHAFT_FROM = { transform: "translateY(-12%)", opacity: 0 };
-const SHAFT_TO = { transform: "translateY(0)", opacity: 1 };
-
 /** Two horizontal creases, at 1/3 and 2/3 of the paper height (spec 09 L8). */
 function creaseTop(share: number): string {
   return `${(share * 100).toFixed(4)}%`;
@@ -78,10 +70,9 @@ function creaseTop(share: number): string {
 const CREASE_SIDES = ["left", "right"] as const;
 
 export function LetterBlock(props: LetterBlockProps) {
-  const { still = false, caption, collapsible = false, letterKind, ...letterProps } = props;
+  const { still = false, caption, letterKind, ...letterProps } = props;
   const { mode } = useMotion();
   const sheetRef = useRef<HTMLDivElement>(null);
-  const shaftRef = useRef<HTMLDivElement>(null);
   const [stillAtMount] = useState(still);
   // Skip finishes the unfold at once, so the letter sits at its end state.
   const skip = useMaybeSequence();
@@ -112,24 +103,6 @@ export function LetterBlock(props: LetterBlockProps) {
     if (animation === undefined) return undefined;
     const current = animation;
 
-    // The shaft moves with the unfold. If its animation fails, the shaft simply
-    // sits at its final state.
-    let shaftAnimation: Animation | undefined;
-    const shaft = shaftRef.current;
-    if (shaft !== null && typeof shaft.animate === "function") {
-      try {
-        shaftAnimation = shaft.animate([SHAFT_FROM, SHAFT_TO], {
-          duration: UNFOLD_MS,
-          delay: UNFOLD_AT_MS,
-          easing: EASE_STANDARD,
-          fill: "backwards",
-        });
-      } catch {
-        shaftAnimation = undefined;
-      }
-    }
-    const shaftNow = shaftAnimation;
-
     // The unfold is one Skip step. It ends when it finishes, by its own clock or
     // by Skip (finish() fires onfinish), so the step unregisters then.
     let unregister: (() => void) | undefined;
@@ -140,29 +113,24 @@ export function LetterBlock(props: LetterBlockProps) {
         } catch {
           // A finish that throws leaves the paper at its final pose already.
         }
-        try {
-          shaftNow?.finish();
-        } catch {
-          // The shaft is already at its final state if this throws.
-        }
       });
       current.onfinish = () => unregister?.();
     }
     return () => {
       unregister?.();
       current.cancel();
-      shaftNow?.cancel();
     };
   }, [lightStatic, register]);
 
   const paper = (
     <div ref={sheetRef} className={styles.sheet}>
+      {/* The shaft is static in every mode: the letter's sheet is its only
+          animation (spec 20 R5.2, one animate call on the letter). */}
       <div
-        ref={shaftRef}
         className={styles.lightShaft}
         aria-hidden="true"
         data-light-shaft=""
-        data-light={lightStatic ? "static" : "unfold"}
+        data-light="static"
       />
       <article className={styles.paper}>
         <SealedLetterText opened={letterProps.opened} letterKind={letterKind} />
@@ -192,14 +160,7 @@ export function LetterBlock(props: LetterBlockProps) {
         />
         {caption}
       </header>
-      {collapsible ? (
-        <details className={styles.letterDisclosure} data-letter-disclosure="">
-          <summary>{REVEAL_COPY.letterDisclosureSummary}</summary>
-          {paper}
-        </details>
-      ) : (
-        paper
-      )}
+      {paper}
     </div>
   );
 }
