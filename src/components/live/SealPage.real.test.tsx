@@ -145,7 +145,7 @@ interface Pair {
 }
 
 /** Every step and Seal_State pair of the Real_Mode table (spec 19, design). */
-const PAIRS: Pair[] = [
+export const PAIRS: Pair[] = [
   {
     name: "write / write",
     step: "write",
@@ -190,11 +190,17 @@ const PAIRS: Pair[] = [
   },
 ];
 
-function renderReal(step: StepperStep, state: SealState): string {
+export function renderReal(
+  step: StepperStep,
+  state: SealState,
+  extra: Record<string, unknown> = {},
+): string {
   stub.step = step;
   stub.flowState = state;
   try {
-    return renderToStaticMarkup(createElement(SealPage, BASE));
+    return renderToStaticMarkup(
+      createElement(SealPage, { ...BASE, ...extra } as never),
+    );
   } finally {
     stub.step = null;
     stub.flowState = { tag: "write" };
