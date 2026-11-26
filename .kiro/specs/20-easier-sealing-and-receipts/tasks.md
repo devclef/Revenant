@@ -68,7 +68,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: any test pinning "exactly one orange control" in P1. Name each.
   - Validation: `npx vitest run src/lib` and `bash scripts/check.sh`.
 
-- [ ] 2. Part C: Seal_Button, `activate()`, the Press_Status_Line and the press copy
+- [x] 2. Part C: Seal_Button, `activate()`, the Press_Status_Line and the press copy
   - Agent: `frontend-dev` · Depends on: 1 · Estimated size: M, ~700 changed lines plus goldens
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `src/components/live/press/usePressEnvelope.ts`, `press/PressEnvelope.tsx`, `press/copy.ts`, `seal-step/SealStep.tsx`, `seal-step/SealButton.tsx` (new), `seal-step/seal-button.ts` (new), `seal-step/press-status.ts`, `seal-step/seal-step.module.css`, `src/components/live/WriteForm.tsx` (only `fieldProblem` for the Seal_Step), `src/components/live/copy.ts` (only `REAL_COPY.stepOneHint`), `src/components/live/__golden__/seal-page-demo/**`, the tests named below, `src/test/integration/seal-button-walk.test.ts` (new).
