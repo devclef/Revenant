@@ -143,6 +143,9 @@
   .receipts[data-receipts-layout="split"] .letterColumn {
     grid-column: 2;
     grid-row: 1 / span 3;
+    /* Clear the .stage bottom margin: a sticky box keeps its margin, so the
+       letter would stop 2.5rem short of the receipts end. */
+    margin: 0;
     position: sticky;
     top: var(--topbar-clear);
     max-block-size: calc(100vh - var(--topbar-clear));

@@ -103,10 +103,10 @@ describe("LetterColumn", () => {
     expect(tag).toContain("data-letter-scroll");
   });
 
-  it("passes still to the paper, so a settled letter does not unfold", () => {
+  it("passes still to the paper; the unfold is a client effect, so the markup is the same and the letter shows", () => {
     const settled = render(false, true);
     const unsettled = render(false, false);
-    expect(settled).not.toEqual(unsettled);
+    expect(settled).toEqual(unsettled);
     expect(settled).toContain("Body.");
   });
 });

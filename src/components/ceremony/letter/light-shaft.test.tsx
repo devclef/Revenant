@@ -121,8 +121,9 @@ describe("Light_Shaft Calm path (spec 09 L7)", () => {
     expect(render("light")).toMatch(/data-light="static"/);
   });
 
-  it("animates only in full motion, where the shaft moves with the unfold", () => {
-    expect(render("full")).toMatch(/data-light="unfold"/);
+  it("is static in full motion too: the letter's sheet is its only animation (spec 20 R5.2)", () => {
+    expect(render("full")).toMatch(/data-light="static"/);
+    expect(render("full")).not.toMatch(/data-light="unfold"/);
   });
 
   it("is aria-hidden, and it sits before the paper in document order", () => {
@@ -146,12 +147,13 @@ describe("Light_Shaft Calm path (spec 09 L7)", () => {
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)\s*\{\s*\.lightShaft\s*\{[^}]*animation:\s*none/);
   });
 
-  it("derives its static state from the motion mode, and the shaft ref is wired to the animation", () => {
+  it("animates the sheet only, and the shaft has no animate call or ref", () => {
     const source = readFileSync(join(HERE, "LetterBlock.tsx"), "utf8");
     expect(source).toMatch(/const lightStatic = mode !== "full" \|\| stillAtMount;/);
-    expect(source).toContain("ref={shaftRef}");
-    expect(source).toContain("shaft.animate(");
-    expect(source).toContain('data-light={lightStatic ? "static" : "unfold"}');
+    expect(source).toContain("sheet.animate(");
+    expect(source).not.toContain("shaft.animate(");
+    expect(source).not.toContain("shaftRef");
+    expect(source).toContain('data-light="static"');
   });
 });
 
