@@ -134,7 +134,7 @@ describe("Seal step copy (G2.7)", () => {
 
   it("the Setting_State shows one plain line and no Confirm your passkey (P5.5)", () => {
     const html = renderSeal({ state: { tag: "created" }, backupChoice: "skip", warningTicked: true });
-    expect(html).toContain("Your device will ask once more to set the seal. Press the wax.");
+    expect(html).toContain("Your device will ask once more to set the seal. Press the wax, or use the button under it.");
     expect(html).not.toContain("Confirm your passkey");
     expect(html).not.toContain("Press the button to confirm it.");
   });

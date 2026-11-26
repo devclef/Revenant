@@ -341,7 +341,8 @@ export const REAL_COPY = {
   /** The press status line while no opening date is chosen (spec 19, Requirement 3.4). */
   pressNeedsDate: "Choose an opening date first.",
   /** The first press's hint in Real_Mode. The passkey is named for the opening date, not "Revenant demo". */
-  stepOneHint: "Press the wax. The passkey is named for this letter's opening date.",
+  stepOneHint:
+    "Press the wax, or use the button under it. The passkey is named for this letter's opening date.",
   /** The first press's hint once the passkey is made (spec 19, Requirement 4.11). */
   stepPasskeyMade: "Passkey made. It is named for this letter's opening date.",
   /** The receipt card message when no figure can be sealed. Plain text, no link (spec 19). */

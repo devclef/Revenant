@@ -13,16 +13,22 @@ import { DEMO_FIGURES } from "@/lib/figures/demo";
 import { DEFAULT_QUESTION } from "./occasions";
 import { sealReducer, INITIAL_SEAL_STATE, type SealEvent, type SealState } from "./seal-machine";
 
+// The seal state the mocked flow reports. Each test sets it; the default is write.
+const flowStub = vi.hoisted(() => ({
+  state: { tag: "write" } as SealState,
+  keyText: null as string | null,
+}));
+
 vi.mock("./useSealFlow", () => ({
   useSealFlow: () => ({
-    state: { tag: "write" } satisfies SealState,
+    state: flowStub.state,
     onCreatePress: () => {},
     onConfirmPress: () => {},
     onFallbackStart: () => {},
     onFallbackSealPress: () => {},
     onFallbackDecline: () => {},
     onRetry: () => {},
-    getBackupKeyText: () => null,
+    getBackupKeyText: () => flowStub.keyText,
   }),
 }));
 
@@ -423,5 +429,62 @@ describe("SealPage rehearsal line (spec 11, L4.1, L4.3)", () => {
     const html = renderToStaticMarkup(createElement(SealPage, { ...base, mode: "real" }));
     expect(html).toContain('data-live-step="write"');
     expect(html).not.toContain(LIVE_COPY.rehearsalLine);
+  });
+});
+
+describe("SealPage shows the Seal_Button only on the Press the seal step (spec 20, Part C)", () => {
+  const sealedState: SealState = {
+    tag: "sealed",
+    letterId: "letter-1",
+    sealedAt: "2026-11-16T10:00:00.000Z",
+    opensAt: "2027-02-16T00:00:00.000Z",
+    offsetMs: 0,
+    factors: "both",
+    envelopeHash: "a".repeat(64),
+  };
+
+  function render(state: SealState, step: null | import("./stepper/live-steps").LiveStep = "seal"): string {
+    flowStub.state = state;
+    flowStub.keyText = "AAAA-BBBB-CCCC-DDDD-EEEE-FFFF-GGG";
+    pageStub.step = step;
+    return renderToStaticMarkup(
+      createElement(SealPage, {
+        rpId: "revenant.devclef.se",
+        appOrigin: "https://revenant.devclef.se",
+        mode: "demo",
+      }),
+    );
+  }
+
+  afterEach(() => {
+    flowStub.state = { tag: "write" };
+    flowStub.keyText = null;
+    pageStub.step = null;
+  });
+
+  it("renders the Seal_Button on the Press the seal step in the write state", () => {
+    expect(render({ tag: "write" })).toContain("data-seal-button");
+  });
+
+  it("renders no Seal_Button on cannot_lock", () => {
+    expect(render({ tag: "cannot_lock", passkeyCreated: false })).not.toContain("data-seal-button");
+  });
+
+  it("renders no Seal_Button on cancelled", () => {
+    expect(render({ tag: "cancelled" })).not.toContain("data-seal-button");
+  });
+
+  it("renders no Seal_Button on failed", () => {
+    expect(render({ tag: "failed", kind: "network", passkeyCreated: false })).not.toContain(
+      "data-seal-button",
+    );
+  });
+
+  it("renders no Seal_Button on fallback_key", () => {
+    expect(render({ tag: "fallback_key", passkeyCreated: false })).not.toContain("data-seal-button");
+  });
+
+  it("renders no Seal_Button once the letter is sealed", () => {
+    expect(render(sealedState)).not.toContain("data-seal-button");
   });
 });

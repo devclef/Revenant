@@ -179,3 +179,41 @@ describe("Seal step intro block (spec 16, task 12, from 900 px)", () => {
     );
   });
 });
+
+// Feature: 20-easier-sealing-and-receipts (Part C). The Seal_Button is 2.75rem
+// square at least, and the Back link, the PRF fallback and the Backup_Choice
+// cards carry no accent colour in their resting state. Orange is kept for the
+// focus ring and the selected card (tone.md).
+describe("Seal_Button size and accent-free controls (spec 20, Part C)", () => {
+  const backupCss = readFileSync(
+    join(here, "..", "backup-choice.module.css"),
+    "utf8",
+  );
+  const ORANGE = /#ff7b1c|rgba\(255,\s*123,\s*28/i;
+
+  it("sizes the Seal_Button to at least 2.75rem in both directions", () => {
+    const body = ruleBody(stepCss, ".sealButton");
+    expect(body).toMatch(/min-block-size:\s*2\.75rem;/);
+    expect(body).toMatch(/min-inline-size:\s*2\.75rem;/);
+  });
+
+  it("gives the Back link no accent colour at rest", () => {
+    expect(ruleBody(stepCss, ".textLink")).not.toMatch(ORANGE);
+    expect(ruleBody(stepCss, ".links")).not.toMatch(ORANGE);
+  });
+
+  it("gives the PRF fallback button no accent colour at rest", () => {
+    expect(ruleBody(stepCss, ".fallback")).not.toMatch(ORANGE);
+  });
+
+  it("gives the Backup_Choice cards no accent colour at rest", () => {
+    expect(ruleBody(backupCss, ".card")).not.toMatch(ORANGE);
+    expect(ruleBody(backupCss, ".title")).not.toMatch(ORANGE);
+    expect(ruleBody(backupCss, ".help")).not.toMatch(ORANGE);
+  });
+
+  it("keeps the orange on the focus rings of the links and the fallback button", () => {
+    expect(ruleBody(stepCss, ".textLink:focus-visible")).toMatch(/#ff7b1c/i);
+    expect(ruleBody(stepCss, ".fallback:focus-visible")).toMatch(/#ff7b1c/i);
+  });
+});

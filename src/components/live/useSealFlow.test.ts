@@ -361,3 +361,28 @@ describe("useSealFlow backup key text is held in a ref, not in state (R21.3)", (
     expect(source).toMatch(/const backupKeyText = useRef<string \| null>\(null\)/);
   });
 });
+
+describe("useSealFlow fake port: one create and at most one get under repeated presses (spec 20, Part C)", () => {
+  it("three Create_Press calls make one create, and three Confirm_Press calls make at most one get", async () => {
+    const { deps, createSpy, getSpy, api } = await buildDeps();
+    const flow = mount(deps, draft());
+    flow.onCreatePress();
+    flow.onCreatePress();
+    flow.onCreatePress();
+    await waitUntil(() => createSpy.mock.calls.length > 0);
+    await flush();
+    expect(createSpy).toHaveBeenCalledTimes(1);
+
+    await pressUntil(
+      () => {
+        flow.onConfirmPress();
+        flow.onConfirmPress();
+        flow.onConfirmPress();
+      },
+      () => getSpy.mock.calls.length > 0,
+    );
+    await waitUntil(() => api.seal.mock.calls.length > 0);
+    expect(createSpy).toHaveBeenCalledTimes(1);
+    expect(getSpy.mock.calls.length).toBeLessThanOrEqual(1);
+  });
+});

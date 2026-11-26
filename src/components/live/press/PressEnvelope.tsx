@@ -10,6 +10,9 @@
 // - aria-disabled="true" until a Backup_Choice is made (P1.5). A disabled
 //   press starts nothing and reports the attempt through onAttempt.
 // - inert: the control accepts no press (failure and cancel screens, P4.3).
+//
+// PressEnvelope owns the hooks and the props. PressEnvelopeView owns the
+// markup and takes the press binding and the line id from its caller.
 
 import { useId } from "react";
 
@@ -17,7 +20,7 @@ import { PRESS_COPY } from "./copy";
 import type { SealPose } from "./press-pose";
 import { usePressSkip } from "./press-skip";
 import styles from "./press.module.css";
-import { usePressEnvelope } from "./usePressEnvelope";
+import { usePressEnvelope, type UsePressEnvelope } from "./usePressEnvelope";
 
 export type PressEnvelopeProps = {
   /** `write` starts the sealing prompt on a hold or activation. `setting` is the one plain press of the Setting_State. */
@@ -69,7 +72,7 @@ export function PressEnvelope({
   onAttempt = NOOP,
 }: PressEnvelopeProps) {
   const lineId = useId();
-  const { handlers, elementRef, stage } = usePressEnvelope({
+  const press = usePressEnvelope({
     mode: inert ? "inert" : mode,
     disabled,
     instant,
@@ -90,6 +93,60 @@ export function PressEnvelope({
   } else if (!inert && mode === "setting") {
     description = PRESS_COPY.setting;
   }
+
+  const view: PressEnvelopeViewModel = {
+    ...press,
+    mode,
+    inert,
+    blocked,
+    pose,
+    running,
+    ready,
+    tone,
+    caption,
+    description,
+  };
+
+  return <PressEnvelopeView press={view} lineId={lineId} />;
+}
+
+/** What the view draws: the press binding plus the display values for one render. */
+export type PressEnvelopeViewModel = UsePressEnvelope & {
+  mode: "write" | "setting";
+  inert: boolean;
+  /** True when the control is disabled or inert (aria-disabled). */
+  blocked: boolean;
+  pose: SealPose;
+  running: boolean;
+  ready: boolean;
+  tone: "muted" | "accent";
+  caption?: string;
+  /** The plain line under the envelope. */
+  description: string;
+};
+
+export type PressEnvelopeViewProps = {
+  /** The press binding and display values for this render. */
+  press: PressEnvelopeViewModel;
+  /** The id the status line uses; the control points to it with aria-describedby. */
+  lineId: string;
+};
+
+export function PressEnvelopeView({ press, lineId }: PressEnvelopeViewProps) {
+  const {
+    handlers,
+    elementRef,
+    stage,
+    mode,
+    inert,
+    blocked,
+    pose,
+    running,
+    ready,
+    tone,
+    caption,
+    description,
+  } = press;
 
   return (
     <div className={styles.wrap}>

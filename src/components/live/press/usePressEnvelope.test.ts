@@ -278,3 +278,58 @@ describe("createPressController, mode change and reset", () => {
     expect(h.calls.create).toBe(2);
   });
 });
+
+describe("createPressController, activate() (Seal_Button click)", () => {
+  it("starts one write prompt per activation in full motion, with no hold", () => {
+    const h = harness();
+    h.controller.activate();
+    expect(h.calls.create).toBe(1);
+    expect(h.calls.attempt).toBe(0);
+  });
+
+  it("starts one write prompt per activation in instant mode", () => {
+    const h = harness({ instant: true });
+    h.controller.activate();
+    expect(h.calls.create).toBe(1);
+  });
+
+  it("starts one setting prompt per activation in full motion", () => {
+    const h = harness({ mode: "setting" });
+    h.controller.activate();
+    expect(h.calls.confirm).toBe(1);
+    expect(h.calls.create).toBe(0);
+  });
+
+  it("starts one setting prompt per activation in instant mode", () => {
+    const h = harness({ mode: "setting", instant: true });
+    h.controller.activate();
+    expect(h.calls.confirm).toBe(1);
+    expect(h.calls.create).toBe(0);
+  });
+
+  it("calls onAttempt and starts nothing while disabled", () => {
+    const h = harness({ disabled: true });
+    h.controller.activate();
+    h.controller.activate();
+    expect(h.calls.attempt).toBe(2);
+    expect(h.calls.create).toBe(0);
+    expect(h.calls.confirm).toBe(0);
+  });
+
+  it("accepts nothing in inert mode, not even onAttempt", () => {
+    const h = harness({ mode: "inert" });
+    h.controller.activate();
+    expect(h.calls.create).toBe(0);
+    expect(h.calls.confirm).toBe(0);
+    expect(h.calls.attempt).toBe(0);
+  });
+
+  it("does not start a second prompt when the wax already started the press", () => {
+    const h = harness();
+    h.controller.down(0);
+    h.controller.up(SEAL_PRESS_HOLD_MS);
+    expect(h.calls.create).toBe(1);
+    h.controller.activate();
+    expect(h.calls.create).toBe(1);
+  });
+});
