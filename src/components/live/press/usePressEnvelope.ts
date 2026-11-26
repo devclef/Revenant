@@ -60,6 +60,11 @@ export type PressController = {
   tick: (now: number) => boolean;
   /** A click. Keyboard and assistive-technology clicks have detail 0 and start the press. */
   click: (detail: number) => void;
+  /**
+   * The Seal_Button's click. One ACTIVATE whatever the click's detail or the
+   * motion setting. Nothing awaits before the press handler runs.
+   */
+  activate: () => void;
   /** Ends the current press, for example after a failed prompt (RETRY). */
   reset: () => void;
 };
@@ -186,6 +191,16 @@ export function createPressController(
       apply(config, { type: "ACTIVATE" });
     },
 
+    activate() {
+      const config = sync();
+      if (config.mode === "inert") return;
+      if (config.disabled) {
+        config.onAttempt?.();
+        return;
+      }
+      apply(config, { type: "ACTIVATE" });
+    },
+
     reset() {
       state = PRESS_IDLE;
       downOnControl = false;
@@ -209,6 +224,8 @@ export type UsePressEnvelope = {
   /** The wax pool stage, or null when no pool is shown. Changes only on a stage change. */
   stage: PoolStage | null;
   reset: () => void;
+  /** The Seal_Button's click. Stable identity; see `PressController.activate`. */
+  activate: () => void;
 };
 
 /**
@@ -330,10 +347,15 @@ export function usePressEnvelope(
     controller.reset();
   }, [controller]);
 
+  const activate = useCallback(() => {
+    controller.activate();
+  }, [controller]);
+
   return {
     handlers: { onPointerDown, onClick, onContextMenu },
     elementRef,
     stage,
     reset,
+    activate,
   };
 }
