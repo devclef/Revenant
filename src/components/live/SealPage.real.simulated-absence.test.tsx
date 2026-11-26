@@ -12,10 +12,19 @@
  * spy on the crypto module that a real page would load.
  */
 
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+import { createElement } from "react";
+import { renderToStaticMarkup } from "react-dom/server";
 
+import { encodeBase64url } from "@/lib/seal-format";
+
+import type { CryptoModule } from "./crypto-module";
+import type { PrepareResult, SealApi, SealPostResult } from "./api";
 import { LIVE_COPY } from "./copy";
 import { PRESS_COPY } from "./press/copy";
+import type { SealDeps, SealDraft } from "./seal-runner";
+import { catalogueMetric, makeFigures } from "./test-figures";
+import type { SealFlow } from "./useSealFlow";
 import { PAIRS, renderReal } from "./SealPage.real.test";
 
 /** PAIRS had 13 entries at commit c2bf2db8. It may grow, never shrink. */
@@ -80,4 +89,146 @@ describe("Real_Mode renders no Simulated_Mode control or string (Requirement 13.
       });
     }
   }
+});
+
+/**
+ * A driven Real_Mode run (Requirement 17.2 f). The hook is mounted with the same
+ * crypto stub mechanism as useSealFlow.test.ts: the real crypto barrel, a fake
+ * passkey authenticator, and fake routes. The barrel's createSimulatedPort is
+ * replaced with a spy. The run covers a passkey seal with both presses, a
+ * cancelled create followed by a retry, and a backup-only seal. The spy must
+ * never be called.
+ *
+ * SealPage.real.test mocks ./useSealFlow for the static renders above. This
+ * block loads the real hook with vi.importActual, so the mock does not apply.
+ */
+
+type FakeConfig = Parameters<
+  typeof import("@/lib/crypto/testing/fake-authenticator").createFakeAuthenticator
+>[0];
+
+const T0 = Date.parse("2026-11-02T10:00:00.000Z");
+
+const PREPARED: PrepareResult = {
+  ok: true,
+  letterId: encodeBase64url(new Uint8Array(16)),
+  serverSecret: encodeBase64url(new Uint8Array(32)),
+  serverNow: "2026-11-02T10:00:00.000Z",
+};
+
+const SEALED: SealPostResult = {
+  ok: true,
+  letterId: encodeBase64url(new Uint8Array(16)),
+  sealedAt: "2026-11-02T10:00:00.000Z",
+  opensAt: "2026-11-02T10:00:30.000Z",
+  envelopeHash: "a".repeat(64),
+};
+
+function realDraft(): SealDraft {
+  return {
+    text: "A short note.",
+    metricIds: ["us-gasoline-regular"],
+    figures: makeFigures([
+      {
+        metric: catalogueMetric("us-gasoline-regular"),
+        figures: [{ period: "2026-10-26", value: "3.412" }],
+      },
+    ]),
+  };
+}
+
+/** Deps for one run: the real barrel with a spied createSimulatedPort, and fake passkey and routes. */
+async function realRunDeps(config: FakeConfig = {}) {
+  const crypto = await import("@/lib/crypto");
+  const { createFakeAuthenticator } = await import("@/lib/crypto/testing/fake-authenticator");
+  const fake = createFakeAuthenticator(config);
+  const simulatedPortSpy = vi.fn(crypto.createSimulatedPort);
+  const createSpy = vi.fn(fake.create);
+  const getSpy = vi.fn(fake.get);
+  const api = {
+    prepare: vi.fn(async () => PREPARED),
+    seal: vi.fn(async () => SEALED),
+  };
+  const cryptoStub = { ...crypto, createSimulatedPort: simulatedPortSpy };
+  const deps: SealDeps = {
+    crypto: cryptoStub as unknown as CryptoModule,
+    port: {
+      isAvailable: () => fake.isAvailable(),
+      create: createSpy,
+      get: getSpy,
+    },
+    api: api as unknown as SealApi,
+    rpId: "localhost",
+    now: () => T0,
+  };
+  return { deps, simulatedPortSpy, createSpy, getSpy, api };
+}
+
+/** Mounts the real hook once and returns the handlers it produced. */
+async function mountRealFlow(deps: SealDeps | null): Promise<SealFlow> {
+  const { useSealFlow } = await vi.importActual<typeof import("./useSealFlow")>("./useSealFlow");
+  let captured: SealFlow | undefined;
+  function Capture() {
+    captured = useSealFlow(deps, realDraft());
+    return null;
+  }
+  renderToStaticMarkup(createElement(Capture));
+  if (captured === undefined) throw new Error("hook did not render");
+  return captured;
+}
+
+const settle = () => new Promise<void>((resolve) => setTimeout(resolve, 0));
+
+/** Polls until the condition holds. WebCrypto needs several macrotasks to seal. */
+async function waitUntil(condition: () => boolean): Promise<void> {
+  for (let i = 0; i < 500 && !condition(); i++) await settle();
+}
+
+/** Repeats a press after each macrotask until `done` holds, so a refused press is retried. */
+async function pressUntil(press: () => void, done: () => boolean): Promise<void> {
+  for (let i = 0; i < 500 && !done(); i++) {
+    press();
+    await settle();
+  }
+}
+
+describe("Real_Mode driven run never calls createSimulatedPort (Requirement 17.2 f)", () => {
+  it("a passkey seal with both presses, a cancelled create with a retry, and a backup-only seal", async () => {
+    // Run 1: Create_Press, then Confirm_Press, then the seal.
+    const passkeyRun = await realRunDeps();
+    const passkeyFlow = await mountRealFlow(passkeyRun.deps);
+    passkeyFlow.onCreatePress();
+    await waitUntil(() => passkeyRun.createSpy.mock.calls.length > 0);
+    await pressUntil(() => passkeyFlow.onConfirmPress(), () => passkeyRun.getSpy.mock.calls.length > 0);
+    passkeyFlow.onConfirmPress();
+    await waitUntil(() => passkeyRun.api.seal.mock.calls.length > 0);
+    expect(passkeyRun.createSpy).toHaveBeenCalledTimes(1);
+    expect(passkeyRun.getSpy).toHaveBeenCalledTimes(1);
+    expect(passkeyRun.api.seal).toHaveBeenCalledTimes(1);
+    expect(passkeyRun.simulatedPortSpy).not.toHaveBeenCalled();
+
+    // Run 2: the passkey create is cancelled, then Retry lets Create_Press run again.
+    const retryRun = await realRunDeps({ failure: "cancel_create" });
+    const retryFlow = await mountRealFlow(retryRun.deps);
+    retryFlow.onCreatePress();
+    await waitUntil(() => retryRun.createSpy.mock.calls.length > 0);
+    await pressUntil(
+      () => {
+        retryFlow.onRetry();
+        retryFlow.onCreatePress();
+      },
+      () => retryRun.createSpy.mock.calls.length >= 2,
+    );
+    expect(retryRun.createSpy.mock.calls.length).toBeGreaterThanOrEqual(2);
+    expect(retryRun.simulatedPortSpy).not.toHaveBeenCalled();
+
+    // Run 3: a backup-only seal, with no passkey port touched.
+    const backupRun = await realRunDeps();
+    const backupFlow = await mountRealFlow(backupRun.deps);
+    expect(backupFlow.onBackupOnlyStart()).toBe(true);
+    await pressUntil(() => backupFlow.onFallbackSealPress(), () => backupRun.api.seal.mock.calls.length > 0);
+    expect(backupRun.api.seal).toHaveBeenCalledTimes(1);
+    expect(backupRun.createSpy).not.toHaveBeenCalled();
+    expect(backupRun.simulatedPortSpy).not.toHaveBeenCalled();
+  }, 60_000);
 });
