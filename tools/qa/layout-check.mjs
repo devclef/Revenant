@@ -58,8 +58,9 @@
 //                             and the primary call to action are inside it (spec 13 L1.1 to L1.3).
 //                             The row is LS1 because L1 is already the line-labels row.
 //   P1    press-envelope      /demo/live seal step at 1440x900 and 390x844: the Press_Envelope is the
-//                             largest element, a focusable button of at least 44x44 px, the only
-//                             orange control, and the Warning_Text does not move during a short hold
+//                             largest element, a focusable button of at least 44x44 px, and the
+//                             Press_Envelope and at most one Seal_Button inside [data-press-column]
+//                             are the orange controls. The Warning_Text does not move during a short hold
 //                             that sends nothing (spec 13 P1.1 to P1.4 as the failure messages name).
 //   T1    wait-envelope      Wait step (after a passkey seal, so reached by Live_Walk, not here): the
 //                             Sealed_Envelope_View and countdown inside the First_Viewport, and the
@@ -3598,14 +3599,19 @@ export function landingSealFailures({ seal, h1, cta, minWidth, w, h }) {
 }
 
 // P1: the seal step's measurements. Returns the failure reasons; an empty list passes. Pure.
-export function p1Failures({ largestIsPress, press, accentCount, pressIsAccent, warningBefore, warningDuring }) {
+// accentCount counts the orange controls other than the Press_Envelope and an orange
+// Seal_Button inside [data-press-column]. sealButtonIsAccent is true when that Seal_Button is orange.
+export function p1Failures({ largestIsPress, press, accentCount, pressIsAccent, sealButtonIsAccent, warningBefore, warningDuring }) {
   const out = [];
   if (!largestIsPress) out.push("P1.1 the Press_Envelope is not the largest element on the step");
   if (!press || press.tag !== "BUTTON" || press.width < PRESS_MIN_PX || press.height < PRESS_MIN_PX) {
     const size = press ? `${press.width.toFixed(0)}x${press.height.toFixed(0)}px on a ${press.tag}` : "missing";
     out.push(`P1.2 Press_Envelope hit area is ${size}, need a focusable button of at least ${PRESS_MIN_PX}x${PRESS_MIN_PX}px`);
   }
-  if (accentCount !== 1 || !pressIsAccent) out.push(`P1.3 ${accentCount} orange control(s), need exactly one and it the Press_Envelope`);
+  if (accentCount !== 0 || !pressIsAccent) {
+    const seal = sealButtonIsAccent ? " plus the orange Seal_Button" : "";
+    out.push(`P1.3 ${accentCount} other orange control(s)${seal} beside the Press_Envelope (orange ${pressIsAccent ? "yes" : "no"}), need the Press_Envelope alone, or the Press_Envelope plus one Seal_Button inside [data-press-column]`);
+  }
   if (!warningBefore || !warningDuring) out.push("P1.4 Warning_Text not found before or during the hold");
   else if (!rectsSame(warningBefore, warningDuring)) out.push("P1.4 Warning_Text moved during the hold");
   return out;
@@ -3669,6 +3675,10 @@ const P1_READ = () => {
   };
   const controls = [...step.querySelectorAll("button, a, input, select, textarea")].filter(visible);
   const accentControls = controls.filter((el) => orange(el) || [...el.querySelectorAll("*")].some(orange));
+  // The Seal_Button counts as an allowed orange control only when it sits inside the press column.
+  const sealEl = step.querySelector("[data-seal-button]");
+  const sealInColumn = !!sealEl && !!sealEl.closest("[data-press-column]");
+  const sealButtonIsAccent = sealInColumn && (orange(sealEl) || [...sealEl.querySelectorAll("*")].some(orange));
   const isLeaf = (el) => [...el.children].every((c) => !visible(c));
   const candidates = [press, ...[...step.querySelectorAll("*")].filter((el) => el !== press && !press.contains(el) && !el.contains(press) && visible(el) && isLeaf(el))];
   let largest = { el: null, area: -1 };
@@ -3683,8 +3693,9 @@ const P1_READ = () => {
     largestIsPress: largest.el === press,
     largest: largest.el ? box(largest.el) : null,
     press: box(press),
-    accentCount: accentControls.length,
+    accentCount: accentControls.filter((el) => el !== press && !(sealButtonIsAccent && el === sealEl)).length,
     pressIsAccent: accentControls.includes(press),
+    sealButtonIsAccent,
   };
 };
 
@@ -3775,9 +3786,9 @@ async function checkPressEnvelope(context, ctx) {
       await page.mouse.up();
     }
     await sleep(400);
-    const problems = p1Failures({ largestIsPress: r.largestIsPress, press: r.press, accentCount: r.accentCount, pressIsAccent: r.pressIsAccent, warningBefore: before, warningDuring: during });
+    const problems = p1Failures({ largestIsPress: r.largestIsPress, press: r.press, accentCount: r.accentCount, pressIsAccent: r.pressIsAccent, sealButtonIsAccent: r.sealButtonIsAccent, warningBefore: before, warningDuring: during });
     const largest = r.largest ? `${r.largest.tag} ${r.largest.width.toFixed(0)}x${r.largest.height.toFixed(0)}` : "none";
-    const detail = `largest=${largest} press=${r.press.width.toFixed(0)}x${r.press.height.toFixed(0)}px accent=${r.accentCount} warningTop=${before ? before.top.toFixed(1) : "n/a"}->${during ? during.top.toFixed(1) : "n/a"} viewport=${ctx.size} threshold=press largest, 44x44 px focusable, the only orange control, Warning_Text unchanged in a ${P1_HOLD_PROBE_MS} ms hold${problems.length ? ` (${problems.join("; ")})` : ""}`;
+    const detail = `largest=${largest} press=${r.press.width.toFixed(0)}x${r.press.height.toFixed(0)}px accent=${r.accentCount} warningTop=${before ? before.top.toFixed(1) : "n/a"}->${during ? during.top.toFixed(1) : "n/a"} viewport=${ctx.size} threshold=press largest, 44x44 px focusable, Press_Envelope and at most one Seal_Button inside [data-press-column] orange, Warning_Text unchanged in a ${P1_HOLD_PROBE_MS} ms hold${problems.length ? ` (${problems.join("; ")})` : ""}`;
     report(ctx, result("P1", "press-envelope", problems.length ? "fail" : "pass", detail));
   } finally {
     await page.close();
