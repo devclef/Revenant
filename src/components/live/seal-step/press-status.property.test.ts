@@ -151,3 +151,40 @@ describe("pressStatusLine fieldProblem (spec 20, Property 4)", () => {
     );
   });
 });
+
+// Feature: 20-easier-sealing-and-receipts (Part B), Property 4 with the simulated flag.
+// For any Seal_State, Backup_Choice, motion and simulated flag, the line is
+// never empty. With simulated true the creating, created and confirming lines
+// are the Simulated_Mode strings (Requirement 11.7). The write line and the
+// other states are unchanged. Written out here, so the test does not reuse the
+// code under test.
+describe("pressStatusLine simulated flag (spec 20, Property 4)", () => {
+  it("follows the Simulated_Mode table for every Seal_State, choice, motion and flag", () => {
+    fc.assert(
+      fc.property(
+        tagArb,
+        choiceArb,
+        motionArb,
+        fc.boolean(),
+        (tag, backupChoice, motion, simulated) => {
+          const status = pressStatusLine({ tag, backupChoice, motion, simulated });
+          expect(status.text.trim().length).toBeGreaterThan(0);
+          const passkey = expectedLine(tag, backupChoice, motion);
+          if (!simulated) {
+            expect(status).toEqual(passkey);
+            return;
+          }
+          const simulatedText: Partial<Record<PressStatusTag, string>> = {
+            creating: LIVE_COPY.stepCreatingSimulated,
+            created: PRESS_COPY.settingSimulated,
+            confirming: LIVE_COPY.stepConfirmingSimulated,
+          };
+          expect(status).toEqual({
+            text: simulatedText[tag] ?? passkey.text,
+            tone: passkey.tone,
+          });
+        },
+      ),
+    );
+  });
+});

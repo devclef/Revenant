@@ -7,6 +7,7 @@
 import { LIVE_COPY, REAL_COPY } from "../copy";
 import { PRESS_COPY } from "../press/copy";
 import type { BackupChoiceValue } from "../write-draft";
+import { sealStepCopy } from "./simulated-copy";
 
 /** The motion setting: "calm" when the Calm control is on, "reduced" when only the media query matches. */
 export type MotionSetting = "full" | "reduced" | "calm";
@@ -30,9 +31,10 @@ export function pressStatusLine(input: {
   needsDate?: boolean;
   /** Crypto is loaded and a field has a problem (spec 20, Requirement 2.2). */
   fieldProblem?: boolean;
-  /** Simulated_Mode strings (spec 20, Part B). Not read yet; wired in a later task. */
+  /** Simulated_Mode strings (spec 20, Part B, Requirement 11.7). */
   simulated?: boolean;
 }): PressStatus {
+  const copy = sealStepCopy(input.simulated === true);
   switch (input.tag) {
     case "write":
       if (input.backupChoice === null) {
@@ -49,11 +51,11 @@ export function pressStatusLine(input: {
         tone: "accent",
       };
     case "creating":
-      return { text: LIVE_COPY.stepCreating, tone: "muted" };
+      return { text: copy.stepCreating, tone: "muted" };
     case "created":
-      return { text: PRESS_COPY.setting, tone: "muted" };
+      return { text: copy.setting, tone: "muted" };
     case "confirming":
-      return { text: LIVE_COPY.stepConfirming, tone: "muted" };
+      return { text: copy.stepConfirming, tone: "muted" };
     case "preparing":
       return { text: LIVE_COPY.stepPreparing, tone: "muted" };
     case "sealing":
