@@ -23,6 +23,12 @@
   margin: 0;
 }
 
+/* The letter column. min-inline-size lets a wide letter shrink inside its
+   track instead of pushing the figures out of the row. */
+.letterColumn {
+  min-inline-size: 0;
+}
+
 .questionsHeading {
   margin: 0 0 1rem;
   color: var(--text);
