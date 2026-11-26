@@ -11,8 +11,19 @@ import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 
 import { SealButton } from "./SealButton";
+import { sealButtonLabel } from "./seal-button";
+import { pressStatusLine, type PressStatusTag } from "./press-status";
 
 const RUNS = { numRuns: 200 };
+
+const TAGS: readonly PressStatusTag[] = [
+  "write",
+  "creating",
+  "created",
+  "confirming",
+  "preparing",
+  "sealing",
+];
 
 const labelArb = fc.stringMatching(/^[A-Za-z][A-Za-z ]{0,30}[A-Za-z]$/);
 const lineIdArb = fc.stringMatching(/^[a-z][a-z0-9-]{0,20}$/);
@@ -87,6 +98,37 @@ describe("Property 3: the Seal_Button is a native button with aria-disabled and 
           expect(props).not.toHaveProperty("onPointerUp");
           expect(props).not.toHaveProperty("onMouseDown");
           expect(typeof props.onClick).toBe("function");
+        },
+      ),
+      RUNS,
+    );
+  });
+});
+
+// Property 3, simulated flag: Simulated_Mode is not wired yet, so the flag must
+// never change the Seal_Button label or the Press_Status_Line. A false flag and
+// no flag give the same result for every Seal_State.
+describe("Property 3: the simulated flag is always false and changes nothing", () => {
+  it("gives the same Seal_Button label with simulated false as with no flag", () => {
+    fc.assert(
+      fc.property(fc.constantFrom(...TAGS), (tag) => {
+        expect(sealButtonLabel(tag, false)).toBe(sealButtonLabel(tag));
+        expect(sealButtonLabel(tag, false).length).toBeGreaterThan(0);
+      }),
+      RUNS,
+    );
+  });
+
+  it("gives the same Press_Status_Line with simulated false as with no flag", () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom(...TAGS),
+        fc.constantFrom<"card" | "skip" | null>("card", "skip", null),
+        fc.constantFrom<"full" | "reduced" | "calm">("full", "reduced", "calm"),
+        (tag, backupChoice, motion) => {
+          expect(
+            pressStatusLine({ tag, backupChoice, motion, simulated: false }),
+          ).toEqual(pressStatusLine({ tag, backupChoice, motion }));
         },
       ),
       RUNS,
