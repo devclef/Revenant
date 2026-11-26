@@ -4735,8 +4735,8 @@ const S16_RECEIPT_RANK = { pair: 0, figure: 1, letter: 2, seal: 3, end: 4 };
 /**
  * 10.1: the open letter sits beside the receipts in order.
  * `blocks` are question pairs, figure cards, the letter, the seal line and the end card, each
- * with its top. `disclosurePresent` is true when a fold control is on the page. `letterTextVisible` is false when the letter text has no client rect or fails
- * checkVisibility().
+ * with its top. `disclosurePresent` is true when a fold control is on the page.
+ * `letterTextVisible` is false when the letter text has no client rect or fails checkVisibility().
  * @param {{ blocks: { kind: string, top: number }[], disclosurePresent: boolean, letterTextVisible: boolean }} args
  */
 export function receiptsOrderFailures({ blocks, disclosurePresent, letterTextVisible }) {
