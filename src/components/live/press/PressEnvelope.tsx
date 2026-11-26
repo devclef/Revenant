@@ -10,6 +10,9 @@
 // - aria-disabled="true" until a Backup_Choice is made (P1.5). A disabled
 //   press starts nothing and reports the attempt through onAttempt.
 // - inert: the control accepts no press (failure and cancel screens, P4.3).
+//
+// PressEnvelope owns the hooks and the props. PressEnvelopeView owns the
+// markup and takes the press binding and the line id from its caller.
 
 import { useId } from "react";
 
@@ -17,7 +20,7 @@ import { PRESS_COPY } from "./copy";
 import type { SealPose } from "./press-pose";
 import { usePressSkip } from "./press-skip";
 import styles from "./press.module.css";
-import { usePressEnvelope } from "./usePressEnvelope";
+import { usePressEnvelope, type UsePressEnvelope } from "./usePressEnvelope";
 
 export type PressEnvelopeProps = {
   /** `write` starts the sealing prompt on a hold or activation. `setting` is the one plain press of the Setting_State. */
@@ -69,7 +72,7 @@ export function PressEnvelope({
   onAttempt = NOOP,
 }: PressEnvelopeProps) {
   const lineId = useId();
-  const { handlers, elementRef, stage } = usePressEnvelope({
+  const press = usePressEnvelope({
     mode: inert ? "inert" : mode,
     disabled,
     instant,
@@ -90,6 +93,56 @@ export function PressEnvelope({
   } else if (!inert && mode === "setting") {
     description = PRESS_COPY.setting;
   }
+
+  return (
+    <PressEnvelopeView
+      press={press}
+      lineId={lineId}
+      mode={mode}
+      inert={inert}
+      blocked={blocked}
+      pose={pose}
+      running={running}
+      ready={ready}
+      tone={tone}
+      caption={caption}
+      description={description}
+    />
+  );
+}
+
+export type PressEnvelopeViewProps = {
+  /** The press binding from usePressEnvelope: handlers, element ref and pool stage. */
+  press: UsePressEnvelope;
+  /** The id the status line uses; the control points to it with aria-describedby. */
+  lineId: string;
+  mode: "write" | "setting";
+  inert: boolean;
+  /** True when the control is disabled or inert (aria-disabled). */
+  blocked: boolean;
+  pose: SealPose;
+  running: boolean;
+  ready: boolean;
+  tone: "muted" | "accent";
+  caption?: string;
+  /** The plain line under the envelope. */
+  description: string;
+};
+
+export function PressEnvelopeView({
+  press,
+  lineId,
+  mode,
+  inert,
+  blocked,
+  pose,
+  running,
+  ready,
+  tone,
+  caption,
+  description,
+}: PressEnvelopeViewProps) {
+  const { handlers, elementRef, stage } = press;
 
   return (
     <div className={styles.wrap}>
