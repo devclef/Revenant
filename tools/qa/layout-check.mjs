@@ -6100,12 +6100,20 @@ const RECEIPTS_READ = () => {
   const text = col.querySelector("[data-letter-stage] [data-letter-text]");
   const textHidden = !text || text.getClientRects().length === 0 || !text.checkVisibility();
   const c = col.getBoundingClientRect();
+  const letterStage = col.querySelector("[data-letter-stage]");
+  const lr = letterStage ? letterStage.getBoundingClientRect() : null;
   return {
     blocks,
     letterClosed: !!disclosure && disclosure.open === false && textHidden,
     centre: c.left + c.width / 2,
     width: c.width,
     viewportCentre: vc,
+    // Split marker: the open letter sits beside the receipts (spec 20 part D).
+    split: col.getAttribute("data-receipts-layout") === "split",
+    disclosurePresent: !!col.querySelector("[data-letter-disclosure]"),
+    letterTextVisible: !!text && text.getClientRects().length > 0 && text.checkVisibility(),
+    record: { left: c.left, right: c.right, top: c.top + window.scrollY },
+    letter: lr ? { left: lr.left, right: lr.right, top: lr.top + window.scrollY } : null,
   };
 };
 
@@ -6178,7 +6186,14 @@ function s16Order(ctx, where, r) {
     return;
   }
   const order = [...r.blocks].sort((a, b) => a.top - b.top).map((b) => b.kind).join(",");
-  report(ctx, verdictRow("R10.1", "receipts-order", receiptsOrderFailuresFolded(r), `on=${where} order=${order} letterClosed=${r.letterClosed} viewport=${ctx.size}`, "question pairs, figures, the folded letter, the seal line, the end card; the letter closed"));
+  // The split reading applies only when the build marks the receipts column as split.
+  const failures = r.split
+    ? receiptsOrderFailures({ blocks: r.blocks, disclosurePresent: r.disclosurePresent, letterTextVisible: r.letterTextVisible })
+    : receiptsOrderFailuresFolded(r);
+  const want = r.split
+    ? "question pairs, figures, the open letter beside them, the seal line, the end card; no fold on the letter"
+    : "question pairs, figures, the folded letter, the seal line, the end card; the letter closed";
+  report(ctx, verdictRow("R10.1", "receipts-order", failures, `on=${where} split=${r.split} order=${order} letterClosed=${r.letterClosed} viewport=${ctx.size}`, want));
 }
 
 // Maya: Remember, Break the seal with the button, then See the receipts. Returns the
@@ -6321,7 +6336,11 @@ async function checkSpec16Rows(browser, base, size, rep, required, scope = {}) {
           // CW1 reads the live receipts column beside the R10.6 comparison.
           await guard(ctx, "CW1", () => checkCw1(page, ctx));
           const blocks = r.blocks.filter((b) => b.kind === "pair" || b.kind === "figure" || b.kind === "letter");
-          report(ctx, verdictRow("R10.6", "live-column", receiptColumnFailures({ centre: r.centre, width: r.width, viewportCentre: r.viewportCentre, personaWidth, blocks }), `centre=${num(r.centre)} viewport centre=${num(r.viewportCentre)} width=${num(r.width)} persona=${personaWidth === null ? "n/a" : num(personaWidth)} viewport=${ctx.size}`, "one column centred within 1 px, as wide as the persona receipts column within 1 px"));
+          let failures;
+          if (r.split && !r.letter) failures = ["10.6 no letter column on live step 6"];
+          else if (r.split) failures = splitColumnFailures({ record: r.record, letter: r.letter, width: r.width, centre: r.centre, viewportCentre: r.viewportCentre, personaWidth });
+          else failures = receiptColumnFailures({ centre: r.centre, width: r.width, viewportCentre: r.viewportCentre, personaWidth, blocks });
+          report(ctx, verdictRow("R10.6", "live-column", failures, `split=${r.split} centre=${num(r.centre)} viewport centre=${num(r.viewportCentre)} width=${num(r.width)} persona=${personaWidth === null ? "n/a" : num(personaWidth)} viewport=${ctx.size}`, r.split ? "record and letter columns side by side, tops level, each centred on the viewport within 1 px and the record column as wide as the persona receipts column within 1 px" : "one column centred within 1 px, as wide as the persona receipts column within 1 px"));
         } finally {
           await page.close();
         }
