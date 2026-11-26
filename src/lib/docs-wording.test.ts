@@ -27,20 +27,18 @@ describe("README and video script wording (spec 16, Requirement 17.4)", () => {
     expect(VIDEO_SCRIPT).toContain("Remember");
   });
 
-  it("carries the Requirement 10.1 receipts order, with the folded letter last, in both files", () => {
-    expect(README).toContain("Receipts");
-    expect(README.indexOf("Then any figures")).toBeGreaterThan(-1);
-    expect(README.indexOf(RECEIPTS_LETTER_FOLD)).toBeGreaterThan(
-      README.indexOf("Then any figures"),
+  it("states the open-letter receipts wording verbatim in both files (Requirements 6.5, 6.6)", () => {
+    expect(README).toContain(
+      "6. **Receipts.** Break the seal. Each question with what you remembered beside the answer you sealed. The letter stays open, beside them on a wide screen and in its place on a phone. Then any figures, then and now. Revenant does not explain the difference.",
     );
+    expect(VIDEO_SCRIPT).toContain(
+      "3. The letter, in full, on warm paper. It stays open the whole time: beside items 1 and 2 on a wide screen, and between them on a phone.",
+    );
+  });
 
-    expect(VIDEO_SCRIPT).toContain(RECEIPTS_LETTER_FOLD);
-    expect(
-      VIDEO_SCRIPT.indexOf("The figures, if the letter holds any"),
-    ).toBeGreaterThan(-1);
-    expect(VIDEO_SCRIPT.indexOf(RECEIPTS_LETTER_FOLD)).toBeGreaterThan(
-      VIDEO_SCRIPT.indexOf("The figures, if the letter holds any"),
-    );
+  it("contains no 'Read the letter again' fold in either file", () => {
+    expect(README).not.toContain(RECEIPTS_LETTER_FOLD);
+    expect(VIDEO_SCRIPT).not.toContain(RECEIPTS_LETTER_FOLD);
   });
 
   it("no longer contains the retired teacher and tenure detail in the README", () => {
