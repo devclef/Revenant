@@ -47,7 +47,7 @@ vi.mock("./useSealFlow", () => ({
     onFallbackSealPress: () => {},
     onFallbackDecline: () => {},
     onRetry: () => {},
-    getBackupKeyText: () => null,
+    getBackupKeyText: () => "KEY-TEXT",
   }),
 }));
 
