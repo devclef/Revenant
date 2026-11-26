@@ -2,7 +2,7 @@ import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
-import { realLetterSealApi, realSealApi, REAL_PREPARE_PATH, REAL_SEAL_PATH, PREPARE_PATH } from "./api";
+import { realLetterSealApi, realSealApi, REAL_PREPARE_PATH, REAL_SEAL_PATH, PREPARE_PATH, SEAL_PATH } from "./api";
 import { LIVE_COPY, REAL_COPY } from "./copy";
 import { DESK_COPY } from "./desk/copy";
 import { shortUnit } from "./desk/figure-row-text";
@@ -25,6 +25,7 @@ vi.mock("./useSealFlow", () => ({
     onCreatePress: () => {},
     onConfirmPress: () => {},
     onFallbackStart: () => {},
+    onBackupOnlyStart: () => true,
     onFallbackSealPress: () => {},
     onFallbackDecline: () => {},
     onRetry: () => {},
@@ -429,6 +430,56 @@ describe("SealPage rehearsal line (spec 11, L4.1, L4.3)", () => {
     const html = renderToStaticMarkup(createElement(SealPage, { ...base, mode: "real" }));
     expect(html).toContain('data-live-step="write"');
     expect(html).not.toContain(LIVE_COPY.rehearsalLine);
+  });
+});
+
+describe("SealPage backup-only seal (spec 06, Part A)", () => {
+  afterEach(() => {
+    flowStub.state = { tag: "write" };
+    flowStub.keyText = null;
+    pageStub.step = null;
+  });
+
+  it("each mode's backup-only seal posts only to that mode's routes", async () => {
+    const fetchMock = vi.fn<(input: RequestInfo | URL, init?: RequestInit) => Promise<Response>>(async () => new Response(null, { status: 404 }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    for (const mode of ["demo", "real"] as const) {
+      fetchMock.mockClear();
+      const api = sealApiFor(mode);
+      await api.prepare();
+      await api.seal({ letterId: "L", envelope: {}, envelopeHash: "h" });
+      const urls = fetchMock.mock.calls.map((call) => String(call[0]));
+      const expected = mode === "demo" ? [PREPARE_PATH, SEAL_PATH] : [REAL_PREPARE_PATH, REAL_SEAL_PATH];
+      expect(urls, mode).toEqual(expected);
+    }
+  });
+
+  it("the write step offers Backup_Only_Start on the Seal step", () => {
+    pageStub.step = "seal";
+    flowStub.state = { tag: "write" };
+    const html = renderToStaticMarkup(
+      createElement(SealPage, {
+        rpId: "revenant.devclef.se",
+        appOrigin: "https://revenant.devclef.se",
+        mode: "demo",
+      }),
+    );
+    expect(html).toContain("data-backup-only-start");
+  });
+
+  it("the demo fallback_key screen has exactly one h1", () => {
+    pageStub.step = "seal";
+    flowStub.state = { tag: "fallback_key", origin: "seal_step", passkeyCreated: false };
+    flowStub.keyText = "AAAA-BBBB-CCCC-DDDD-EEEE-FFFF-GGG";
+    const html = renderToStaticMarkup(
+      createElement(SealPage, {
+        rpId: "revenant.devclef.se",
+        appOrigin: "https://revenant.devclef.se",
+        mode: "demo",
+      }),
+    );
+    expect(html.split("<h1").length - 1).toBe(1);
   });
 });
 

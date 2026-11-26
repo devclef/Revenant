@@ -29,6 +29,9 @@ import styles from "./live.module.css";
  * Every reader string comes from LIVE_COPY (R19.1).
  */
 
+/** Where the fallback started: a cannot_lock screen or the Seal_Step's Backup_Only_Start. */
+export type BackupFallbackOrigin = "cannot_lock" | "seal_step";
+
 export interface BackupFallbackProps {
   /** The printed key from formatBackupKey: 27 characters in groups of four. */
   keyText: string;
@@ -38,6 +41,10 @@ export interface BackupFallbackProps {
   onDecline: () => void;
   /** Real mode (the `/seal` letter): no Demo label is shown. */
   real?: boolean;
+  /** Where the fallback started. Behaviour that depends on it is added with the copy and focus work. */
+  origin?: BackupFallbackOrigin;
+  /** Asks the screen to take focus on mount. Behaviour is added with the focus work. */
+  focusOnMount?: boolean;
 }
 
 /**
