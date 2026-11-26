@@ -193,7 +193,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: `docs-wording.test.ts` (the fold assertion), the folded-reading cases in `layout-check-spec16-rows.test.ts`. Name each.
   - Validation: `npx vitest run src/lib src/components/reveal` and `LAYOUT_CHECK=1 bash scripts/check.sh`.
 
-- [ ] 6. Part A: seal machine origin and `useSealFlow.onBackupOnlyStart`
+- [x] 6. Part A: seal machine origin and `useSealFlow.onBackupOnlyStart`
   - Agent: `frontend-dev` · Depends on: 2 · Estimated size: S, ~350 changed lines (mostly tests)
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `src/components/live/seal-machine.ts`, `src/components/live/useSealFlow.ts`, and the tests named below. No markup changes, so both golden folders stay unchanged.
