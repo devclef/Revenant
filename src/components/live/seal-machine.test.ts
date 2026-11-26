@@ -223,3 +223,137 @@ describe("sealReducer transitions", () => {
     expect(sealReducer(fallback, { type: "RETRY" })).toBe(fallback);
   });
 });
+
+describe("design 3.1: backup-key fallback table by origin", () => {
+  it("enters the fallback from the Seal_Step with origin seal_step and no passkey", () => {
+    expect(sealReducer({ tag: "write" }, { type: "SEAL_STEP_BACKUP_START" })).toEqual({
+      tag: "fallback_key",
+      origin: "seal_step",
+      passkeyCreated: false,
+    });
+  });
+
+  it("enters the fallback from cannot_lock with origin cannot_lock, keeping passkeyCreated", () => {
+    expect(
+      sealReducer({ tag: "cannot_lock", passkeyCreated: true }, { type: "FALLBACK_START" }),
+    ).toEqual({ tag: "fallback_key", origin: "cannot_lock", passkeyCreated: true });
+  });
+
+  it("declines a seal_step fallback back to the form", () => {
+    expect(
+      sealReducer(
+        { tag: "fallback_key", origin: "seal_step", passkeyCreated: false },
+        { type: "FALLBACK_DECLINE" },
+      ),
+    ).toEqual({ tag: "write" });
+  });
+
+  it("declines a cannot_lock fallback back to the cannot-lock screen", () => {
+    expect(
+      sealReducer(
+        { tag: "fallback_key", origin: "cannot_lock", passkeyCreated: false },
+        { type: "FALLBACK_DECLINE" },
+      ),
+    ).toEqual({ tag: "cannot_lock", passkeyCreated: false });
+  });
+
+  it("seals from either origin through preparing", () => {
+    for (const origin of ["seal_step", "cannot_lock"] as const) {
+      expect(
+        sealReducer(
+          { tag: "fallback_key", origin, passkeyCreated: false },
+          { type: "FALLBACK_SEAL_PRESS" },
+        ),
+      ).toEqual({ tag: "preparing" });
+    }
+  });
+
+  it("returns the same state object for every unhandled state and event pair", () => {
+    const states: SealState[] = [
+      { tag: "write" },
+      { tag: "creating" },
+      { tag: "created" },
+      { tag: "confirming" },
+      { tag: "preparing" },
+      { tag: "sealing" },
+      { tag: "fallback_key", origin: "seal_step", passkeyCreated: false },
+      { tag: "fallback_key", origin: "cannot_lock", passkeyCreated: false },
+      { tag: "fallback_key", origin: "cannot_lock", passkeyCreated: true },
+      {
+        tag: "sealed",
+        letterId: "abc",
+        sealedAt: "2026-11-02T10:00:00.000Z",
+        opensAt: "2026-11-02T10:00:30.000Z",
+        offsetMs: 0,
+        factors: "backup",
+        envelopeHash: "b".repeat(64),
+      },
+      { tag: "cannot_lock", passkeyCreated: false },
+      { tag: "cannot_lock", passkeyCreated: true },
+      { tag: "cancelled" },
+      { tag: "failed", kind: "network", passkeyCreated: false },
+    ];
+
+    const events: SealEvent[] = [
+      { type: "CREATE_PRESS" },
+      { type: "CREATED" },
+      { type: "CONFIRM_PRESS" },
+      { type: "CONFIRMED" },
+      { type: "PREPARED" },
+      {
+        type: "SEALED",
+        letterId: "abc",
+        sealedAt: "2026-11-02T10:00:00.000Z",
+        opensAt: "2026-11-02T10:00:30.000Z",
+        offsetMs: 0,
+        factors: "passkey",
+        envelopeHash: "a".repeat(64),
+      },
+      { type: "CANNOT_LOCK", passkeyCreated: true },
+      { type: "FAILED", kind: "server", passkeyCreated: false },
+      { type: "CANCELLED" },
+      { type: "RETRY" },
+      { type: "SEAL_STEP_BACKUP_START" },
+      { type: "FALLBACK_START" },
+      { type: "FALLBACK_SEAL_PRESS" },
+      { type: "FALLBACK_DECLINE" },
+    ];
+
+    // Every (state, event) pair the reducer handles. All other pairs must
+    // return the state object itself, not a copy.
+    const handled = new Set<string>([
+      "write:CREATE_PRESS",
+      "write:SEAL_STEP_BACKUP_START",
+      "creating:CREATED",
+      "creating:CANCELLED",
+      "creating:CANNOT_LOCK",
+      "creating:FAILED",
+      "created:CONFIRM_PRESS",
+      "confirming:CONFIRMED",
+      "confirming:CANCELLED",
+      "confirming:CANNOT_LOCK",
+      "confirming:FAILED",
+      "preparing:PREPARED",
+      "preparing:FAILED",
+      "sealing:SEALED",
+      "sealing:CANNOT_LOCK",
+      "sealing:FAILED",
+      "cannot_lock:RETRY",
+      "cannot_lock:FALLBACK_START",
+      "cancelled:RETRY",
+      "failed:RETRY",
+      "fallback_key:FALLBACK_SEAL_PRESS",
+      "fallback_key:FALLBACK_DECLINE",
+    ]);
+
+    let checked = 0;
+    for (const state of states) {
+      for (const event of events) {
+        if (handled.has(`${state.tag}:${event.type}`)) continue;
+        expect(sealReducer(state, event), `${state.tag} + ${event.type}`).toBe(state);
+        checked += 1;
+      }
+    }
+    expect(checked).toBeGreaterThan(0);
+  });
+});
