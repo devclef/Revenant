@@ -8,16 +8,22 @@
 // column below 900 px, text first. The step owns its own dark surface, so its
 // text colours never come from the paper panel.
 
-import { useEffect, useState, type ReactNode } from "react";
+import { useEffect, useId, useState, type ReactNode } from "react";
 
 import { useCalmInForce } from "@/components/ceremony/motion";
 
 import { BackupChoice } from "../BackupChoice";
 import { LIVE_COPY } from "../copy";
-import { PressEnvelope } from "../press/PressEnvelope";
+import {
+  PressEnvelopeView,
+  type PressEnvelopeViewModel,
+} from "../press/PressEnvelope";
+import { usePressEnvelope } from "../press/usePressEnvelope";
 import type { BackupChoiceValue } from "../write-draft";
+import { SealButton } from "./SealButton";
 import { SealLinks } from "./SealLinks";
 import { SealSteps } from "./SealSteps";
+import { sealButtonLabel } from "./seal-button";
 import {
   envelopeCaption,
   pressStatusLine,
@@ -111,6 +117,35 @@ export function SealStep({
     tag === "preparing" ||
     tag === "sealing";
 
+  const lineId = useId();
+  const press = usePressEnvelope({
+    mode,
+    disabled: pressBlocked,
+    instant: motion !== "full",
+    onCreatePress,
+    onConfirmPress,
+    onAttempt,
+  });
+  const { reset } = press;
+  // Each return to the write state starts a fresh press, so a press from before
+  // a retry or a Back never carries over.
+  useEffect(() => {
+    if (tag === "write") reset();
+  }, [tag, reset]);
+
+  const view: PressEnvelopeViewModel = {
+    ...press,
+    mode,
+    inert: false,
+    blocked: pressBlocked,
+    pose: "unpressed",
+    running,
+    ready,
+    tone: status.tone,
+    caption: envelopeCaption(questionCount),
+    description: status.text,
+  };
+
   return (
     <div data-seal-step="" className={styles.step} data-content-column="">
       <div data-seal-intro="" className={styles.intro}>
@@ -156,18 +191,12 @@ export function SealStep({
         <SealLinks onBack={onBack} />
       </div>
       <div data-press-column="" className={styles.press}>
-        <PressEnvelope
-          mode={mode}
-          disabled={pressBlocked}
-          instant={motion !== "full"}
-          line={status.text}
-          tone={status.tone}
-          caption={envelopeCaption(questionCount)}
-          ready={ready}
-          running={running}
-          onCreatePress={onCreatePress}
-          onConfirmPress={onConfirmPress}
-          onAttempt={onAttempt}
+        <PressEnvelopeView press={view} lineId={lineId} />
+        <SealButton
+          label={sealButtonLabel(tag)}
+          blocked={pressBlocked}
+          lineId={lineId}
+          onActivate={press.activate}
         />
         <SealSteps tag={tag} backupChoice={backupChoice} real={real} />
       </div>
