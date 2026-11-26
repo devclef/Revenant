@@ -25,7 +25,88 @@ import { PRESS_COPY } from "./press/copy";
 import type { SealDeps, SealDraft } from "./seal-runner";
 import { catalogueMetric, makeFigures } from "./test-figures";
 import type { SealFlow } from "./useSealFlow";
-import { PAIRS, renderReal } from "./SealPage.real.test";
+import { PAIRS } from "./SealPage.real.test";
+import type { SealState } from "./seal-machine";
+import type { StepperStep } from "./stepper/live-steps";
+import { SealPage } from "./SealPage";
+
+// The Real_Mode static render, with the same mocks SealPage.real.test uses.
+// It takes the extra props of the simulated inputs, which the shared helper
+// does not.
+const stub = vi.hoisted(() => ({
+  flowState: { tag: "write" } as import("./seal-machine").SealState,
+  step: null as null | import("./stepper/live-steps").StepperStep,
+  keyText: "test-backup-key" as string | null,
+  crypto: { browserAuthenticatorPort: {} },
+}));
+
+vi.mock("./useSealFlow", () => ({
+  useSealFlow: () => ({
+    state: stub.flowState,
+    onCreatePress: () => {},
+    onConfirmPress: () => {},
+    onFallbackStart: () => {},
+    onFallbackSealPress: () => {},
+    onFallbackDecline: () => {},
+    onRetry: () => {},
+    getBackupKeyText: () => stub.keyText,
+  }),
+}));
+
+vi.mock("./useCryptoModule", () => ({
+  useCryptoModule: () => stub.crypto,
+}));
+
+vi.mock("./prf-hint", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("./prf-hint")>()),
+  usePrfHint: () => "missing",
+}));
+
+vi.mock("@/components/reveal/figures-api", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/components/reveal/figures-api")>()),
+  useFigures: () => ({ status: "loading" }),
+}));
+
+vi.mock("./stepper/LiveStepper", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./stepper/LiveStepper")>();
+  return {
+    ...actual,
+    LiveStepper: (props: import("./stepper/LiveStepper").LiveStepperProps) => {
+      if (stub.step === null) return actual.LiveStepper(props);
+      return actual.LiveStepper({
+        ...props,
+        state: {
+          ...props.state,
+          step: stub.step,
+          sealed: stub.step === "sealed",
+        },
+      });
+    },
+  };
+});
+
+const BASE = {
+  rpId: "revenant.devclef.se",
+  appOrigin: "https://revenant.devclef.se",
+  mode: "real" as const,
+};
+
+function renderReal(
+  step: StepperStep,
+  state: SealState,
+  extra: Record<string, unknown> = {},
+): string {
+  stub.step = step;
+  stub.flowState = state;
+  try {
+    return renderToStaticMarkup(
+      createElement(SealPage, { ...BASE, ...extra } as never),
+    );
+  } finally {
+    stub.step = null;
+    stub.flowState = { tag: "write" };
+  }
+}
 
 /** PAIRS had 13 entries at commit c2bf2db8. It may grow, never shrink. */
 const BASELINE_PAIR_COUNT = 13;
