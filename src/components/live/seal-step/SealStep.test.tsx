@@ -95,13 +95,53 @@ describe("SealStep text column (spec 14, S3.1 to S3.4)", () => {
     expect(html).not.toContain('data-step-heading=""');
   });
 
-  it("offers the PRF fallback button only when the PRF check is missing", () => {
+  it("offers Backup_Only_Start for every PRF hint value once onBackupStart is set", () => {
+    for (const prfMissing of [false, true]) {
+      const html = render({ prfMissing, onBackupStart: () => undefined });
+      expect(html).toMatch(/<button[^>]*data-backup-only-start=""[^>]*>/);
+      expect(html).toContain(LIVE_COPY.fallbackButton);
+    }
+  });
+
+  it("offers no Backup_Only_Start when onBackupStart is absent", () => {
+    for (const prfMissing of [false, true]) {
+      const html = render({ prfMissing });
+      expect(html).not.toContain("data-backup-only-start");
+      expect(html).not.toContain(LIVE_COPY.fallbackButton);
+    }
+  });
+
+  it("shows the PRF hint only while the PRF check is missing", () => {
     expect(
       render({ prfMissing: false, onBackupStart: () => undefined }),
-    ).not.toContain(LIVE_COPY.fallbackButton);
+    ).not.toContain(LIVE_COPY.prfHint);
     const html = render({ prfMissing: true, onBackupStart: () => undefined });
-    expect(html).toContain(LIVE_COPY.fallbackButton);
     expect(html).toContain(LIVE_COPY.prfHint);
+  });
+
+  it("places Backup_Only_Start after the Backup_Choice and before the links", () => {
+    const html = render({ onBackupStart: () => undefined });
+    const start = html.indexOf("data-backup-only-start");
+    expect(start).toBeGreaterThan(html.indexOf('data-backup-choice=""'));
+    expect(start).toBeLessThan(html.indexOf('data-seal-links=""'));
+  });
+
+  it("marks Backup_Only_Start aria-disabled, with no disabled attribute, while blocked", () => {
+    const blocked = render({
+      onBackupStart: () => undefined,
+      backupOnlyBlocked: true,
+    });
+    expect(blocked).toMatch(
+      /<button[^>]*data-backup-only-start=""[^>]*aria-disabled="true"[^>]*>/,
+    );
+    expect(blocked).not.toMatch(/<button[^>]*data-backup-only-start=""[^>]*disabled=""/);
+    const open = render({
+      onBackupStart: () => undefined,
+      backupOnlyBlocked: false,
+    });
+    const openTag = /<button[^>]*data-backup-only-start=""[^>]*>/.exec(open)?.[0];
+    expect(openTag).toBeDefined();
+    expect(openTag).not.toContain("aria-disabled");
   });
 
   it("passes the fields problem to the Backup_Choice as its message", () => {
