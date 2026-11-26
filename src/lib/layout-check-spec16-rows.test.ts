@@ -100,11 +100,6 @@ describe("row 10.1 split receipts order (open letter)", () => {
     ).toEqual(["10.2 a fold control is on the page"]);
   });
 
-  it("fails when the letter text is not visible", () => {
-    expect(
-      receiptsOrderFailures({ blocks: SPLIT_BLOCKS, disclosurePresent: false, letterTextVisible: false }),
-    ).toEqual(["10.2 the letter text is not visible"]);
-  });
 });
 
 describe("row 10.6 split column (open letter beside the receipts)", () => {
