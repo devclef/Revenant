@@ -62,6 +62,8 @@ export type SealStepProps = {
   real?: boolean;
   /** Real_Mode with no opening date yet: the press line asks for one. */
   needsDate?: boolean;
+  /** Crypto is loaded and a field has a problem: the press line says to fix the fields (spec 20, Requirement 2.2). */
+  fieldProblem?: boolean;
   /** Rendered first in the text column, above the Backup_Choice and the press. */
   opening?: ReactNode;
 };
@@ -105,12 +107,19 @@ export function SealStep({
   onAttempt,
   real = false,
   needsDate = false,
+  fieldProblem = false,
   opening,
 }: SealStepProps) {
   const motion = useMotionSetting();
   // pressStatusLine alone chooses the line: it never reads "choose first" once
   // a choice exists (P1.5).
-  const status = pressStatusLine({ tag, backupChoice, motion, needsDate });
+  const status = pressStatusLine({
+    tag,
+    backupChoice,
+    motion,
+    needsDate,
+    fieldProblem,
+  });
   const running =
     tag === "creating" ||
     tag === "confirming" ||

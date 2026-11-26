@@ -28,6 +28,10 @@ export function pressStatusLine(input: {
   backupChoice: BackupChoiceValue | null;
   motion: MotionSetting;
   needsDate?: boolean;
+  /** Crypto is loaded and a field has a problem (spec 20, Requirement 2.2). */
+  fieldProblem?: boolean;
+  /** Simulated_Mode strings (spec 20, Part B). Not read yet; wired in a later task. */
+  simulated?: boolean;
 }): PressStatus {
   switch (input.tag) {
     case "write":
@@ -36,6 +40,9 @@ export function pressStatusLine(input: {
       }
       if (input.needsDate === true) {
         return { text: REAL_COPY.pressNeedsDate, tone: "muted" };
+      }
+      if (input.fieldProblem === true) {
+        return { text: PRESS_COPY.fixFields, tone: "muted" };
       }
       return {
         text: input.motion === "full" ? PRESS_COPY.holdToSeal : PRESS_COPY.pressToSeal,

@@ -902,6 +902,7 @@ export function WriteForm({
           onAttempt={onAttempt}
           real={mode === "real"}
           needsDate={dateMissing}
+          fieldProblem={cryptoLoaded && state.tag === "write" && !buttonLive(state, problems)}
           opening={
             realDate !== undefined ? (
               <>

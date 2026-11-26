@@ -144,14 +144,26 @@ describe("SealStep press column (spec 14, S6)", () => {
     expect(html).toMatch(/data-press-line=""[^>]*data-tone="muted"/);
   });
 
-  it("shows the hold line, not the fix-fields line, when the fields block the press", () => {
+  it("shows the hold line, not the fix-fields line, when no field has a problem", () => {
     const html = render({
       backupChoice: "skip",
       pressBlocked: true,
+      fieldProblem: false,
     });
     expect(html).toContain(PRESS_COPY.holdToSeal);
     expect(html).not.toContain(PRESS_COPY.fixFields);
     expect(html).not.toContain(PRESS_COPY.chooseFirst);
+  });
+
+  it("shows the fix-fields line, not the hold line, when a field has a problem (spec 20, Requirement 2.2)", () => {
+    const html = render({
+      backupChoice: "skip",
+      pressBlocked: true,
+      fieldProblem: true,
+    });
+    expect(html).toContain(PRESS_COPY.fixFields);
+    expect(html).not.toContain(PRESS_COPY.holdToSeal);
+    expect(html).toMatch(/data-press-line=""[^>]*data-tone="muted"/);
   });
 
   it("shows the hold line in accent once a choice is made with full motion", () => {
