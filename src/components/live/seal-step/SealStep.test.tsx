@@ -11,7 +11,11 @@ import { describe, expect, it } from "vitest";
 import { BackupChoice } from "../BackupChoice";
 import { LIVE_COPY } from "../copy";
 import { PRESS_COPY } from "../press/copy";
+import { SealButton } from "./SealButton";
 import { SealStep, type SealStepProps } from "./SealStep";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 const BASE: SealStepProps = {
   tag: "write",
@@ -227,5 +231,93 @@ describe("SealStep opening slot (spec 19)", () => {
 
   it("renders no opening wrapper when no opening is given", () => {
     expect(render()).not.toContain('data-seal-opening=""');
+  });
+});
+
+describe("SealStep Seal_Button placement and wiring (spec 20, Part C)", () => {
+  const here = dirname(fileURLToPath(import.meta.url));
+
+  it("places the Seal_Button in the press column, after the envelope and before the steps", () => {
+    const html = render({
+      backupChoice: "skip",
+      pressBlocked: false,
+      ready: true,
+    });
+    const column = html.indexOf('data-press-column=""');
+    const button = html.indexOf("data-seal-button");
+    const envelope = html.indexOf('aria-label="Press the seal"');
+    const steps = html.indexOf('data-seal-steps=""');
+    expect(column).toBeGreaterThan(-1);
+    expect(button).toBeGreaterThan(column);
+    expect(envelope).toBeGreaterThan(column);
+    expect(button).toBeGreaterThan(envelope);
+    expect(steps).toBeGreaterThan(button);
+  });
+
+  it("holds exactly one Seal_Button, and none in the text column", () => {
+    const html = render({
+      backupChoice: "skip",
+      pressBlocked: false,
+      ready: true,
+    });
+    expect(html.match(/data-seal-button=""/g)?.length).toBe(1);
+    const text = html.slice(0, html.indexOf('data-press-column=""'));
+    expect(text).not.toContain("data-seal-button");
+  });
+
+  it("points the Seal_Button at the status line that shows the fix-fields line", () => {
+    const html = render({
+      backupChoice: "skip",
+      pressBlocked: true,
+      fieldProblem: true,
+    });
+    const described = /data-seal-button=""[^>]*aria-describedby="([^"]+)"/.exec(
+      html,
+    )?.[1];
+    expect(described).toBeTruthy();
+    const line =
+      new RegExp(`id="${described}"[^>]*data-press-line=""[^>]*>([^<]*)<`).exec(
+        html,
+      ) ??
+      new RegExp(`data-press-line=""[^>]*id="${described}"[^>]*>([^<]*)<`).exec(
+        html,
+      );
+    expect(line?.[1]).toBe(PRESS_COPY.fixFields);
+  });
+
+  it("shows the fix-fields line on the Seal step when a field has a problem and a choice is made", () => {
+    const html = render({
+      backupChoice: "card",
+      pressBlocked: true,
+      fieldProblem: true,
+    });
+    expect(html).toContain(PRESS_COPY.fixFields);
+    expect(html).not.toContain(PRESS_COPY.holdToSeal);
+    // pressToSeal's wording also appears in the step hints under the wax, so
+    // check the status line itself.
+    const line = /data-press-line=""[^>]*>([^<]*)</.exec(html)?.[1];
+    expect(line).toBe(PRESS_COPY.fixFields);
+  });
+
+  it("gives the Seal_Button no pointer handlers, so only its click starts the press", () => {
+    const element = SealButton({
+      label: PRESS_COPY.stepOne,
+      blocked: false,
+      lineId: "line",
+      onActivate: () => undefined,
+    });
+    const props = element.props as Record<string, unknown>;
+    expect(props).not.toHaveProperty("onPointerDown");
+    expect(props).not.toHaveProperty("onPointerUp");
+    expect(props).not.toHaveProperty("onPointerCancel");
+    expect(props).not.toHaveProperty("onMouseDown");
+    expect(props).not.toHaveProperty("onKeyDown");
+    expect(typeof props.onClick).toBe("function");
+  });
+
+  it("the Seal_Button source names no pointer handler", () => {
+    const source = readFileSync(join(here, "SealButton.tsx"), "utf8");
+    expect(source).not.toMatch(/onPointer/);
+    expect(source).not.toMatch(/onMouseDown/);
   });
 });
