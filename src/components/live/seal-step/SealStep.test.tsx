@@ -396,3 +396,64 @@ describe("SealStep Backup_Only_Start is gated to the write tag (spec 20, Part A)
     );
   });
 });
+
+describe("SealStep Backup_Only_Start per Backup_Choice and PRF hint (spec 20, Part A)", () => {
+  // PrfHint is `missing` or `none`; SealStep takes it as the boolean prfMissing.
+  // An unknown capability reads as `none`, so it is the not-missing case.
+  const PRF_CASES: ReadonlyArray<{ name: string; prfMissing: boolean }> = [
+    { name: "none", prfMissing: false },
+    { name: "unknown", prfMissing: false },
+    { name: "missing", prfMissing: true },
+  ];
+  const CHOICES: ReadonlyArray<SealStepProps["backupChoice"]> = [null, "card", "skip"];
+
+  function buttonTag(html: string): string | undefined {
+    return /<button[^>]*data-backup-only-start=""[^>]*>/.exec(html)?.[0];
+  }
+
+  for (const prf of PRF_CASES) {
+    for (const backupChoice of CHOICES) {
+      const label = `${backupChoice ?? "no choice"}`;
+
+      it(`renders Backup_Only_Start for PRF hint ${prf.name} with ${label}, enabled`, () => {
+        const html = render({
+          tag: "write",
+          prfMissing: prf.prfMissing,
+          backupChoice,
+          onBackupStart: () => undefined,
+          backupOnlyBlocked: false,
+        });
+        const tag = buttonTag(html);
+        expect(tag).toBeDefined();
+        expect(tag).not.toContain("aria-disabled");
+        expect(tag).not.toMatch(/\sdisabled=""/);
+      });
+
+      it(`marks Backup_Only_Start aria-disabled with no disabled attribute for PRF hint ${prf.name} with ${label}`, () => {
+        const html = render({
+          tag: "write",
+          prfMissing: prf.prfMissing,
+          backupChoice,
+          onBackupStart: () => undefined,
+          backupOnlyBlocked: true,
+        });
+        const tag = buttonTag(html);
+        expect(tag).toBeDefined();
+        expect(tag).toContain('aria-disabled="true"');
+        expect(tag).not.toMatch(/\sdisabled=""/);
+      });
+    }
+  }
+
+  it("leaves Backup_Only_Start enabled with backupChoice null", () => {
+    const html = render({
+      tag: "write",
+      backupChoice: null,
+      onBackupStart: () => undefined,
+      backupOnlyBlocked: false,
+    });
+    const tag = buttonTag(html);
+    expect(tag).toBeDefined();
+    expect(tag).not.toContain("aria-disabled");
+  });
+});

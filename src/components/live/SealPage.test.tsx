@@ -1,6 +1,9 @@
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterEach, describe, expect, it, vi } from "vitest";
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 
 import { realLetterSealApi, realSealApi, REAL_PREPARE_PATH, REAL_SEAL_PATH, PREPARE_PATH, SEAL_PATH } from "./api";
 import { LIVE_COPY, REAL_COPY } from "./copy";
@@ -541,5 +544,32 @@ describe("SealPage shows the Seal_Button only on the Press the seal step (spec 2
 
   it("renders no Seal_Button once the letter is sealed", () => {
     expect(render(sealedState)).not.toContain("data-seal-button");
+  });
+});
+
+describe("SealPage Not now drops the frozen figures (spec 20, Part A)", () => {
+  // The handler needs a click, and this suite renders static markup only, so
+  // the handler body is read from the source. The browser walk checks the
+  // behaviour live.
+  const here = dirname(fileURLToPath(import.meta.url));
+  const source = readFileSync(join(here, "SealPage.tsx"), "utf8");
+  const start = source.indexOf("const onFallbackDecline = useCallback(");
+  const end = source.indexOf("}, [fallbackOrigin, flowFallbackDecline]);", start);
+  const body = source.slice(start, end);
+
+  it("finds the onFallbackDecline handler in SealPage.tsx", () => {
+    expect(start).toBeGreaterThan(-1);
+    expect(end).toBeGreaterThan(start);
+  });
+
+  it("returns before touching the figures unless the fallback came from the Seal step", () => {
+    const guard = body.indexOf('if (origin !== "seal_step") return;');
+    expect(guard).toBeGreaterThan(-1);
+    expect(body.indexOf("setPressedFigures(null)")).toBeGreaterThan(guard);
+  });
+
+  it("moves focus to the step heading in a frame after Not now from the Seal step", () => {
+    expect(body).toContain("window.requestAnimationFrame");
+    expect(body).toContain("[data-step-heading]");
   });
 });
