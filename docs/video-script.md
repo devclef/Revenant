@@ -96,7 +96,7 @@ Not in this list:
 - **On screen:** One scrolling column, in this order:
   1. Each author question as written, with what the reader remembered beside the sealed answer. Nothing comments on a difference or highlights one.
   2. The figures, if the letter holds any: then, now and the reader's answer, each with its period and source. The change line, the formula and the percentage appear only when the two periods differ. When they match, the same-period line shows instead.
-  3. The letter, in full, on warm paper. When the letter holds figures, it sits folded under "Read the letter again".
+  3. The letter, in full, on warm paper. It stays open the whole time: beside items 1 and 2 on a wide screen, and between them on a phone.
   4. The seal line: "The seal is intact. Nothing here has changed since it was sealed.", with a "Show the fingerprint" disclosure.
   5. The end card.
   A live letter with no figures ends on what the reader remembered and the letter, then the seal line and the end card.

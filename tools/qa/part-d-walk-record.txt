@@ -1,0 +1,1516 @@
+Revenant layout check: http://127.0.0.1:3100
+Sizes: 360x640, 768x1024, 1280x800, 1440x900. Screenshots: /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d
+Stages: all (landing, demo, persona, live, letter-page). Jobs: 2. Full output: /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/layout-check.log
+Required: none (spec 09 and spec 10 checks print polish)
+
+==== 360x640 ====
+
+[360x640] scene
+  PASS    shot  -              360x640 scene /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/scene.png
+  BLOCKER CT1   text-contrast  360x640 scene a "Open the demo letters" needs 4.5:1 contrast: contrast 2.36:1 is below 4.5:1
+  BLOCKER F2    -              360x640 scene text or control on the Soil strip: Seal your own. It opens 30 seconds after
+  polish  F2    -              360x640 scene paper panel overlaps the Soil strip (text is on the paper, so it reads): Open the demo letters
+  PASS    BTN   -              360x640 scene main button "[data-cta="primary"]" is fully in view
+  PASS    X1    scroll-width   360x640 scene scrollWidth=360px clientWidth=360px threshold=scrollWidth<=clientWidth
+  PASS    LG1   landing-ghost  360x640 scene box=0x0px threshold=hidden below 900px
+  PASS    NB1   no-dirt-band   360x640 scene dirt=0 viewport=360x640 threshold=no dirt class or [data-dirt]
+  PASS    FT1   footer         360x640 scene footer=588..640px soil=-1225..-1174px threshold=no overlap
+  PASS    NT1   -              360x640 scene no judgement words, exclamation marks or red or green text
+  PASS    CTA1  landing-ctas   360x640 scene primary=519px..563px href=/demo secondary=571px..632px viewport=360x640 threshold=in view at the top, href=/demo
+  PASS    BO1   button-overflow 360x640 scene buttons=1 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 360x640 scene not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   360x640 scene sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  360x640 scene sans=inter measured=10 off=0 threshold=0
+  PASS    PH1   first-viewport 360x640 scene headline=151px..233px Hero_Sentence=249px..349px primary=519px..563px Landing_Ghost=0px..0px secondary=571px..632px viewport=360x640 at scrollY 0 threshold=inside viewport
+  PASS    PH2   dead-space     360x640 scene blocks=5 worstGap=16px below y=135px threshold=<=64px
+  PASS    PH3   headline-lines 360x640 scene lines=3 wordsPerLine=2,2,2 threshold=lines<=3, no lone word before the last line
+  PASS    PH4   topbar-height  360x640 scene height=56.0px compact=true threshold=<=56px
+  PASS    PH7   touch-targets  360x640 scene targets=9 small=0 threshold=>=44x44px
+
+[360x640] emerging
+  PASS    shot  -              360x640 emerging /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/emerging.png
+  PASS    F2    -              360x640 emerging no text or control on the Soil strip
+
+[360x640] sealed
+  PASS    shot  -              360x640 sealed /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/sealed.png
+  PASS    F2    -              360x640 sealed no text or control on the Soil strip
+  polish  F2    -              360x640 sealed paper panel overlaps the Soil strip (text is on the paper, so it reads): This letter is still sealed. It opens on | Try again
+
+[360x640] error
+  PASS    shot  -              360x640 error /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/error.png
+  PASS    F2    -              360x640 error no text or control on the Soil strip
+  polish  F2    -              360x640 error paper panel overlaps the Soil strip (text is on the paper, so it reads): This demo letter hasn't been placed yet.
+
+[360x640] index
+  PASS    shot  -              360x640 index /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/index.png
+  PASS    walk  -              360x640 index /demo links to /demo/personas/us-maya
+  PASS    walk  -              360x640 index /demo links to /demo/personas/eu-tomas
+  PASS    DL1   one-demo-label 360x640 index labels=1 viewport=360x640 threshold=one Demo label
+  PASS    NT1   -              360x640 index no judgement words, exclamation marks or red or green text
+  PASS    BO1   button-overflow 360x640 index buttons=2 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 360x640 index not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   360x640 index sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  360x640 index sans=inter measured=3 off=0 threshold=0
+  PASS    PH3   headline-lines 360x640 index lines=1 wordsPerLine=3 threshold=lines<=2, no lone word before the last line
+  PASS    PH4   topbar-height  360x640 index height=56.0px compact=true threshold=<=56px
+  PASS    PH7   touch-targets  360x640 index targets=7 small=0 threshold=>=44x44px
+
+[360x640] intact
+
+[360x640] recall
+  PASS    walk  -              360x640 recall recall reached on load, with no pick-up press
+  PASS    FC1   load-focus     360x640 recall active=<h2#recall-q1-title> onHeading=true scrollY=0 atLoad=0 threshold=focus on [data-stage-heading], scrollY unchanged
+  PASS    R1    recall-in-view 360x640 recall question=363..420px field=447..491px next=499..547px viewport=360x640 focusScroll=0px threshold=inside viewport at scrollY 0
+  BLOCKER CW1   content-column-width 360x640 recall CW1 content column 254 px, want at least 312 px (viewport 360 px minus 48)
+  PASS    shot  -              360x640 recall /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/recall.png
+  PASS    X1    scroll-width   360x640 recall scrollWidth=360px clientWidth=360px threshold=scrollWidth<=clientWidth
+  PASS    T2    tick-labels    360x640 recall scales=1 overlaps=0 threshold=0
+  PASS    F1    -              360x640 recall named boxes in view and off the Soil strip
+  PASS    F2    -              360x640 recall no text or control on the Soil strip
+  polish  F2    -              360x640 recall paper panel overlaps the Soil strip (text is on the paper, so it reads): Look closer at the mark | No answer | INPUT
+  PASS    G1    -              360x640 recall no text or control on the Ghost body
+  PASS    G2    -              360x640 recall Ghost centre x 180.0 px (expected 180.0)
+  PASS    NT1   -              360x640 recall no judgement words, exclamation marks or red or green text
+  PASS    ST1   step-indicator 360x640 recall steps=4 current=1 lines=1 threshold=present, current=1, lines<=2
+  polish  SI1   step-indicator-fit 360x640 recall items=4 lines=1 ("Remember" clipped (38>12); "Break the seal" clipped (34>8); "Read" clipped (34>8)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=2
+  polish  GT1   ghost-over-text 360x640 recall measured=26 ghostBody=152px..208pxx140px..205px hits=2 (<p> "A letter from Maya"; <p> "A letter from Maya" (scrolled)) threshold=0 outside [data-ghost] on the Ghost_Body_Box (at the Stage start and scrolled to the bottom)
+  note    CF1   card-fit       360x640 recall no [data-card] or [data-stage-panel] at this Stage
+  PASS    BO1   button-overflow 360x640 recall buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  PASS    BC1   control-in-card 360x640 recall containers=1 controls=4 worst=0.0px outside=0 threshold=0.5px
+  PASS    FONT1 fonts-loaded   360x640 recall sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  360x640 recall sans=inter measured=5 off=0 threshold=0
+  PASS    PH1   first-viewport 360x640 recall DIV=315px..359px viewport=360x640 at scrollY 132 (top of [data-stage-content]) threshold=inside viewport
+  note    PH3   headline-lines 360x640 recall the h1 is visually hidden at this Stage
+  PASS    PH4   topbar-height  360x640 recall height=72.2px compact=true threshold=<=96px
+  PASS    PH7   touch-targets  360x640 recall targets=9 small=0 threshold=>=44x44px
+  PASS    BTN   -              360x640 recall main button "Next question" is fully in view
+  BLOCKER CT1   text-contrast  360x640 recall span#recall-q2-unit "in USD per gallon" needs 4.5:1 contrast: contrast 1.29:1 is below 4.5:1
+  BLOCKER CT1   text-contrast  360x640 recall label "No answer" needs 4.5:1 contrast: contrast 2.09:1 is below 4.5:1
+  BLOCKER CW1   content-column-width 360x640 recall CW1 content column 254 px, want at least 312 px (viewport 360 px minus 48)
+  BLOCKER G1    -              360x640 recall text or control on the Ghost body (scrollY 185): "revenant" | control "revenant" | control "Turn sound on"
+  PASS    BTN   -              360x640 recall main button "Record my answers" is fully in view
+
+[360x640] marks
+  PASS    shot  -              360x640 marks /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/marks.png
+  note    F1    -              360x640 marks not on this build: marks-heading, marks-answers
+  polish  F1    -              360x640 marks "break" paper panel overlaps the Soil strip
+  PASS    F2    -              360x640 marks no text or control on the Soil strip
+  polish  F2    -              360x640 marks paper panel overlaps the Soil strip (text is on the paper, so it reads): Break the seal | Skip to the receipts
+  PASS    G1    -              360x640 marks no text or control on the Ghost body
+  PASS    G2    -              360x640 marks Ghost centre x 180.0 px, same as recall
+  polish  BTN   -              360x640 marks main button "Break the seal" is below the fold at 360x640 (bottom 749 px); reachable after scrolling
+  PASS    CT1   -              360x640 marks text meets contrast on its surface
+  PASS    X1    scroll-width   360x640 marks scrollWidth=360px clientWidth=360px threshold=scrollWidth<=clientWidth
+  PASS    NT1   -              360x640 marks no judgement words, exclamation marks or red or green text
+  note    RS1   scale-overlap  360x640 marks not on this build: no [data-recorded-scale]
+  PASS    ST1   step-indicator 360x640 marks steps=4 current=1 lines=1 threshold=present, current=1, lines<=2
+  polish  SI1   step-indicator-fit 360x640 marks items=4 lines=1 ("Remember" clipped (34>8); "Break the seal" clipped (38>12); "Read" clipped (34>8)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=2
+  polish  SG1   seal-group     360x640 marks group=36px..324pxx191px..536px inView=true belowGhost=248.0px (top 248.0px below the Ghost) threshold=top 0 to 24px below [data-ghost], not on it, inside the First_Viewport
+  PASS    AL1   answer-list    360x640 marks present=true onGhost=false onSealGroup=false threshold=present, clear of [data-ghost] and [data-seal-group]
+  PASS    CF1   card-fit       360x640 marks cards=1 worstSlack=0.0px threshold=height minus content<=48px, holds a non-control
+  PASS    BO1   button-overflow 360x640 marks buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  PASS    BC1   control-in-card 360x640 marks containers=1 controls=2 worst=0.0px outside=0 threshold=0.5px
+  PASS    PH1   first-viewport 360x640 marks SPAN=309px..429px Break the seal=549px..593px viewport=360x640 at scrollY 156 (top of [data-stage-content]) threshold=inside viewport
+  note    PH3   headline-lines 360x640 marks the h1 is visually hidden at this Stage
+  PASS    PH4   topbar-height  360x640 marks height=72.2px compact=true threshold=<=96px
+  PASS    PH7   touch-targets  360x640 marks targets=7 small=0 threshold=>=44x44px
+
+[360x640] seal
+  PASS    shot  -              360x640 seal /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/seal.png
+  PASS    G2    -              360x640 seal Ghost centre x 180.0 px, same as recall
+  polish  GZ1   ghost-after-seal 360x640 seal bodyCentre=180px,174px hit=<div class="_9OhQla_track"> threshold=the Ghost or nothing
+
+[360x640] letter
+  PASS    CW1   -              360x640 letter content column 328 px at viewport 360 px
+  PASS    shot  -              360x640 letter /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/letter.png
+  PASS    F2    -              360x640 letter no text or control on the Soil strip
+  PASS    W1    letter-width   360x640 letter width=284.0px (16.7em, [data-letter-text]) threshold=>=280px
+  PASS    X1    scroll-width   360x640 letter scrollWidth=360px clientWidth=360px threshold=scrollWidth<=clientWidth
+  PASS    BTN   -              360x640 letter main button "[data-advance="figures"]" is fully in view
+  PASS    NT1   -              360x640 letter no judgement words, exclamation marks or red or green text
+  PASS    GZ1   ghost-after-seal 360x640 letter ghostElements=0 threshold=0
+  PASS    ST1   step-indicator 360x640 letter steps=4 current=1 lines=1 threshold=present, current=1, lines<=2
+  polish  SI1   step-indicator-fit 360x640 letter items=4 lines=1 ("Remember" clipped (34>8); "Break the seal" clipped (34>8); "Read" clipped (38>12)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=2
+  note    GT1   ghost-over-text 360x640 letter no [data-ghost] box at this Stage
+  note    CF1   card-fit       360x640 letter no [data-card] or [data-stage-panel] at this Stage
+  PASS    BO1   button-overflow 360x640 letter buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 360x640 letter not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   360x640 letter sans=inter sansLoaded=true body=inter serif=ebGaramond serifLoaded=true letter=ebGaramond ([data-letter-text]) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  360x640 letter sans=inter measured=5 off=0 threshold=0
+  PASS    PH1   first-viewport 360x640 letter See the receipts=525px..569px viewport=360x640 at scrollY 212 (top of [data-stage-content]) threshold=inside viewport
+  note    PH3   headline-lines 360x640 letter the h1 is visually hidden at this Stage
+  PASS    PH4   topbar-height  360x640 letter height=72.2px compact=true threshold=<=96px
+  PASS    PH7   touch-targets  360x640 letter targets=7 small=0 threshold=>=44x44px
+
+[360x640] figures
+  PASS    walk  -              360x640 figures figures reached (data-ceremony is figures)
+  PASS    shot  -              360x640 figures /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/figures.png at data-ceremony "figures", scrollY 323
+  PASS    N1    numbers-focus  360x640 figures via="[data-advance="figures"]" focused=true/true top=108.1px (close) then 108.1px (close) barBottom=72.2px viewport=640px drift=0.0px threshold=focused, barBottom<=top<viewport, drift<=1px
+  PASS    FV1   heading-focus-ring 360x640 figures via=mouse outlineStyle=none outlineWidth=3px focused=true focusVisible=false threshold=none
+  PASS    F2    -              360x640 figures no text or control on the Soil strip
+  polish  F2    -              360x640 figures paper panel overlaps the Soil strip (text is on the paper, so it reads): That is the whole letter. Nothing has be | Start over
+  PASS    NT1   -              360x640 figures no judgement words, exclamation marks or red or green text
+  PASS    GZ1   ghost-after-seal 360x640 figures ghostElements=0 threshold=0
+
+[360x640] close
+  PASS    B1    figure-boxes   360x640 close entries=2 boxes=8 outside=0 threshold=0
+  PASS    L1    line-labels    360x640 close labels=6 worst=0.0px² threshold=0px²
+  PASS    X1    scroll-width   360x640 close scrollWidth=360px clientWidth=360px threshold=scrollWidth<=clientWidth
+  PASS    CW1   -              360x640 close content column 328 px at viewport 360 px
+  PASS    shot  -              360x640 close /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/close.png
+  BLOCKER CT1   text-contrast  360x640 close span "demo letter" needs 4.5:1 contrast: contrast 1.15:1 is below 4.5:1
+  PASS    F2    -              360x640 close no text or control on the Soil strip
+  polish  F2    -              360x640 close paper panel overlaps the Soil strip (text is on the paper, so it reads): That is the whole letter. Nothing has be | Start over
+  PASS    NT1   -              360x640 close no judgement words, exclamation marks or red or green text
+  PASS    FT1   footer         360x640 close footer=588..640px soil=227..278px threshold=no overlap
+  PASS    GZ1   ghost-after-seal 360x640 close ghostElements=0 threshold=0
+  PASS    ST1   step-indicator 360x640 close steps=4 current=1 lines=1 threshold=present, current=1, lines<=2
+  polish  SI1   step-indicator-fit 360x640 close items=4 lines=1 ("Remember" clipped (34>8); "Break the seal" clipped (34>8); "Read" clipped (34>8)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=2
+  PASS    TK1   tick-on-axis   360x640 close axes=2 ticks=6 worstTopOffset=0.0px worstLabelGap=4.0px labelOverlaps=0 threshold=top offset 0±0.5px, label gap<=8px, no label overlap
+  note    CF1   card-fit       360x640 close no [data-card] or [data-stage-panel] at this Stage
+  PASS    FONT2 fonts-sans-ui  360x640 close sans=inter measured=8 off=0 threshold=0
+  PASS    BO1   button-overflow 360x640 close buttons=3 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 360x640 close not on this build: no [data-card], fieldset or [data-stage-panel]
+  note    PH1   first-viewport 360x640 close  missing=[data-primary-control] viewport=360x640 at scrollY 212 (top of [data-stage-content]) threshold=inside viewport
+  note    PH3   headline-lines 360x640 close the h1 is visually hidden at this Stage
+  PASS    PH4   topbar-height  360x640 close height=72.2px compact=true threshold=<=96px
+  PASS    PH5   card-containment 360x640 close roots=3 worst=0.0px outside=0 unpainted=none threshold=0px, background painted
+  PASS    PH7   touch-targets  360x640 close targets=13 small=0 threshold=>=44x44px
+
+[360x640] eu-tomas/intact
+
+[360x640] eu-tomas/recall
+  PASS    walk  -              360x640 eu-tomas/recall recall reached on load, with no pick-up press
+  PASS    FC1   load-focus     360x640 eu-tomas/recall active=<h2#recall-q1-title> onHeading=true scrollY=0 atLoad=0 threshold=focus on [data-stage-heading], scrollY unchanged
+  PASS    R1    recall-in-view 360x640 eu-tomas/recall question=363..401px field=459..503px next=511..560px viewport=360x640 focusScroll=0px threshold=inside viewport at scrollY 0
+  BLOCKER CW1   content-column-width 360x640 eu-tomas/recall CW1 content column 254 px, want at least 312 px (viewport 360 px minus 48)
+  PASS    shot  -              360x640 eu-tomas/recall /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/eu-tomas/recall.png
+  PASS    X1    scroll-width   360x640 eu-tomas/recall scrollWidth=360px clientWidth=360px threshold=scrollWidth<=clientWidth
+  PASS    T2    tick-labels    360x640 eu-tomas/recall scales=1 overlaps=0 threshold=0
+  PASS    F1    -              360x640 eu-tomas/recall named boxes in view and off the Soil strip
+  PASS    F2    -              360x640 eu-tomas/recall no text or control on the Soil strip
+  polish  F2    -              360x640 eu-tomas/recall paper panel overlaps the Soil strip (text is on the paper, so it reads): Look closer at the mark | No answer | INPUT
+  PASS    G1    -              360x640 eu-tomas/recall no text or control on the Ghost body
+  PASS    G2    -              360x640 eu-tomas/recall Ghost centre x 180.0 px (expected 180.0)
+  PASS    NT1   -              360x640 eu-tomas/recall no judgement words, exclamation marks or red or green text
+  PASS    ST1   step-indicator 360x640 eu-tomas/recall steps=4 current=1 lines=1 threshold=present, current=1, lines<=2
+  polish  SI1   step-indicator-fit 360x640 eu-tomas/recall items=4 lines=1 ("Remember" clipped (38>12); "Break the seal" clipped (34>8); "Read" clipped (34>8)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=2
+  polish  GT1   ghost-over-text 360x640 eu-tomas/recall measured=27 ghostBody=152px..208pxx140px..205px hits=2 (<p> "A letter from Tomás"; <p> "A letter from Tomás" (scrolled)) threshold=0 outside [data-ghost] on the Ghost_Body_Box (at the Stage start and scrolled to the bottom)
+  note    CF1   card-fit       360x640 eu-tomas/recall no [data-card] or [data-stage-panel] at this Stage
+  PASS    BO1   button-overflow 360x640 eu-tomas/recall buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  PASS    BC1   control-in-card 360x640 eu-tomas/recall containers=1 controls=4 worst=0.0px outside=0 threshold=0.5px
+  PASS    FONT1 fonts-loaded   360x640 eu-tomas/recall sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  360x640 eu-tomas/recall sans=inter measured=5 off=0 threshold=0
+  PASS    PH1   first-viewport 360x640 eu-tomas/recall DIV=327px..371px viewport=360x640 at scrollY 132 (top of [data-stage-content]) threshold=inside viewport
+  note    PH3   headline-lines 360x640 eu-tomas/recall the h1 is visually hidden at this Stage
+  PASS    PH4   topbar-height  360x640 eu-tomas/recall height=72.2px compact=true threshold=<=96px
+  PASS    PH7   touch-targets  360x640 eu-tomas/recall targets=9 small=0 threshold=>=44x44px
+  PASS    BTN   -              360x640 eu-tomas/recall main button "Next question" is fully in view
+  BLOCKER CT1   text-contrast  360x640 eu-tomas/recall p#recall-q2-unit-help "Published per 1,000 litres, shown per litre." needs 4.5:1 contrast: contrast 1.29:1 is below 4.5:1
+  BLOCKER CT1   text-contrast  360x640 eu-tomas/recall span "1.49" needs 4.5:1 contrast: contrast 1.31:1 is below 4.5:1
+  BLOCKER CT1   text-contrast  360x640 eu-tomas/recall label "No answer" needs 4.5:1 contrast: contrast 2.09:1 is below 4.5:1
+  BLOCKER CW1   content-column-width 360x640 eu-tomas/recall CW1 content column 254 px, want at least 312 px (viewport 360 px minus 48)
+  PASS    G1    -              360x640 eu-tomas/recall no text or control on the Ghost body
+  PASS    BTN   -              360x640 eu-tomas/recall main button "Record my answers" is fully in view
+
+[360x640] eu-tomas/marks
+  PASS    shot  -              360x640 eu-tomas/marks /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/eu-tomas/marks.png
+  note    F1    -              360x640 eu-tomas/marks not on this build: marks-heading, marks-answers
+  polish  F1    -              360x640 eu-tomas/marks "break" paper panel overlaps the Soil strip
+  PASS    F2    -              360x640 eu-tomas/marks no text or control on the Soil strip
+  polish  F2    -              360x640 eu-tomas/marks paper panel overlaps the Soil strip (text is on the paper, so it reads): Break the seal | Skip to the receipts
+  PASS    G1    -              360x640 eu-tomas/marks no text or control on the Ghost body
+  PASS    G2    -              360x640 eu-tomas/marks Ghost centre x 180.0 px, same as recall
+  polish  BTN   -              360x640 eu-tomas/marks main button "Break the seal" is below the fold at 360x640 (bottom 772 px); reachable after scrolling
+  PASS    CT1   -              360x640 eu-tomas/marks text meets contrast on its surface
+  PASS    X1    scroll-width   360x640 eu-tomas/marks scrollWidth=360px clientWidth=360px threshold=scrollWidth<=clientWidth
+  PASS    NT1   -              360x640 eu-tomas/marks no judgement words, exclamation marks or red or green text
+  note    RS1   scale-overlap  360x640 eu-tomas/marks not on this build: no [data-recorded-scale]
+  PASS    ST1   step-indicator 360x640 eu-tomas/marks steps=4 current=1 lines=1 threshold=present, current=1, lines<=2
+  polish  SI1   step-indicator-fit 360x640 eu-tomas/marks items=4 lines=1 ("Remember" clipped (34>8); "Break the seal" clipped (38>12); "Read" clipped (34>8)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=2
+  polish  SG1   seal-group     360x640 eu-tomas/marks group=36px..324pxx191px..536px inView=true belowGhost=271.1px (top 271.1px below the Ghost) threshold=top 0 to 24px below [data-ghost], not on it, inside the First_Viewport
+  PASS    AL1   answer-list    360x640 eu-tomas/marks present=true onGhost=false onSealGroup=false threshold=present, clear of [data-ghost] and [data-seal-group]
+  PASS    CF1   card-fit       360x640 eu-tomas/marks cards=1 worstSlack=0.0px threshold=height minus content<=48px, holds a non-control
+  PASS    BO1   button-overflow 360x640 eu-tomas/marks buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  PASS    BC1   control-in-card 360x640 eu-tomas/marks containers=1 controls=2 worst=0.0px outside=0 threshold=0.5px
+  PASS    PH1   first-viewport 360x640 eu-tomas/marks SPAN=332px..452px Break the seal=572px..616px viewport=360x640 at scrollY 156 (top of [data-stage-content]) threshold=inside viewport
+  note    PH3   headline-lines 360x640 eu-tomas/marks the h1 is visually hidden at this Stage
+  PASS    PH4   topbar-height  360x640 eu-tomas/marks height=72.2px compact=true threshold=<=96px
+  PASS    PH7   touch-targets  360x640 eu-tomas/marks targets=7 small=0 threshold=>=44x44px
+
+[360x640] eu-tomas/seal
+  PASS    shot  -              360x640 eu-tomas/seal /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/eu-tomas/seal.png
+  PASS    G2    -              360x640 eu-tomas/seal Ghost centre x 180.0 px, same as recall
+  polish  GZ1   ghost-after-seal 360x640 eu-tomas/seal bodyCentre=180px,174px hit=<div class="_9OhQla_track"> threshold=the Ghost or nothing
+
+[360x640] eu-tomas/letter
+  PASS    CW1   -              360x640 eu-tomas/letter content column 328 px at viewport 360 px
+  PASS    shot  -              360x640 eu-tomas/letter /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/eu-tomas/letter.png
+  PASS    F2    -              360x640 eu-tomas/letter no text or control on the Soil strip
+  PASS    W1    letter-width   360x640 eu-tomas/letter width=284.0px (16.7em, [data-letter-text]) threshold=>=280px
+  PASS    X1    scroll-width   360x640 eu-tomas/letter scrollWidth=360px clientWidth=360px threshold=scrollWidth<=clientWidth
+  PASS    BTN   -              360x640 eu-tomas/letter main button "[data-advance="figures"]" is fully in view
+  PASS    NT1   -              360x640 eu-tomas/letter no judgement words, exclamation marks or red or green text
+  PASS    GZ1   ghost-after-seal 360x640 eu-tomas/letter ghostElements=0 threshold=0
+  PASS    ST1   step-indicator 360x640 eu-tomas/letter steps=4 current=1 lines=1 threshold=present, current=1, lines<=2
+  polish  SI1   step-indicator-fit 360x640 eu-tomas/letter items=4 lines=1 ("Remember" clipped (34>8); "Break the seal" clipped (34>8); "Read" clipped (38>12)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=2
+  note    GT1   ghost-over-text 360x640 eu-tomas/letter no [data-ghost] box at this Stage
+  note    CF1   card-fit       360x640 eu-tomas/letter no [data-card] or [data-stage-panel] at this Stage
+  PASS    BO1   button-overflow 360x640 eu-tomas/letter buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 360x640 eu-tomas/letter not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   360x640 eu-tomas/letter sans=inter sansLoaded=true body=inter serif=ebGaramond serifLoaded=true letter=ebGaramond ([data-letter-text]) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  360x640 eu-tomas/letter sans=inter measured=5 off=0 threshold=0
+  PASS    PH1   first-viewport 360x640 eu-tomas/letter See the receipts=525px..569px viewport=360x640 at scrollY 212 (top of [data-stage-content]) threshold=inside viewport
+  note    PH3   headline-lines 360x640 eu-tomas/letter the h1 is visually hidden at this Stage
+  PASS    PH4   topbar-height  360x640 eu-tomas/letter height=72.2px compact=true threshold=<=96px
+  PASS    PH7   touch-targets  360x640 eu-tomas/letter targets=7 small=0 threshold=>=44x44px
+
+[360x640] eu-tomas/figures
+  PASS    walk  -              360x640 eu-tomas/figures figures reached (data-ceremony is figures)
+  PASS    shot  -              360x640 eu-tomas/figures /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/eu-tomas/figures.png at data-ceremony "figures", scrollY 309
+  PASS    N1    numbers-focus  360x640 eu-tomas/figures via="[data-advance="figures"]" focused=true/true top=107.7px (close) then 107.7px (close) barBottom=72.2px viewport=640px drift=0.0px threshold=focused, barBottom<=top<viewport, drift<=1px
+  PASS    FV1   heading-focus-ring 360x640 eu-tomas/figures via=keyboard outlineStyle=solid outlineWidth=2px focused=true focusVisible=true threshold=not none
+  PASS    F2    -              360x640 eu-tomas/figures no text or control on the Soil strip
+  polish  F2    -              360x640 eu-tomas/figures paper panel overlaps the Soil strip (text is on the paper, so it reads): That is the whole letter. Nothing has be | Start over
+  PASS    NT1   -              360x640 eu-tomas/figures no judgement words, exclamation marks or red or green text
+  PASS    GZ1   ghost-after-seal 360x640 eu-tomas/figures ghostElements=0 threshold=0
+
+[360x640] eu-tomas/close
+  PASS    B1    figure-boxes   360x640 eu-tomas/close entries=2 boxes=8 outside=0 threshold=0
+  PASS    L1    line-labels    360x640 eu-tomas/close labels=6 worst=0.0px² threshold=0px²
+  PASS    X1    scroll-width   360x640 eu-tomas/close scrollWidth=360px clientWidth=360px threshold=scrollWidth<=clientWidth
+  PASS    CW1   -              360x640 eu-tomas/close content column 328 px at viewport 360 px
+  PASS    shot  -              360x640 eu-tomas/close /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/eu-tomas/close.png
+  BLOCKER CT1   text-contrast  360x640 eu-tomas/close span "demo letter" needs 4.5:1 contrast: contrast 1.15:1 is below 4.5:1
+  PASS    F2    -              360x640 eu-tomas/close no text or control on the Soil strip
+  polish  F2    -              360x640 eu-tomas/close paper panel overlaps the Soil strip (text is on the paper, so it reads): That is the whole letter. Nothing has be | Start over
+  PASS    NT1   -              360x640 eu-tomas/close no judgement words, exclamation marks or red or green text
+  PASS    FT1   footer         360x640 eu-tomas/close footer=588..640px soil=227..278px threshold=no overlap
+  PASS    GZ1   ghost-after-seal 360x640 eu-tomas/close ghostElements=0 threshold=0
+  PASS    ST1   step-indicator 360x640 eu-tomas/close steps=4 current=1 lines=1 threshold=present, current=1, lines<=2
+  polish  SI1   step-indicator-fit 360x640 eu-tomas/close items=4 lines=1 ("Remember" clipped (34>8); "Break the seal" clipped (34>8); "Read" clipped (34>8)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=2
+  PASS    TK1   tick-on-axis   360x640 eu-tomas/close axes=2 ticks=6 worstTopOffset=0.0px worstLabelGap=4.0px labelOverlaps=0 threshold=top offset 0±0.5px, label gap<=8px, no label overlap
+  note    CF1   card-fit       360x640 eu-tomas/close no [data-card] or [data-stage-panel] at this Stage
+  PASS    FONT2 fonts-sans-ui  360x640 eu-tomas/close sans=inter measured=8 off=0 threshold=0
+  PASS    BO1   button-overflow 360x640 eu-tomas/close buttons=3 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 360x640 eu-tomas/close not on this build: no [data-card], fieldset or [data-stage-panel]
+  note    PH1   first-viewport 360x640 eu-tomas/close  missing=[data-primary-control] viewport=360x640 at scrollY 212 (top of [data-stage-content]) threshold=inside viewport
+  note    PH3   headline-lines 360x640 eu-tomas/close the h1 is visually hidden at this Stage
+  PASS    PH4   topbar-height  360x640 eu-tomas/close height=72.2px compact=true threshold=<=96px
+  PASS    PH5   card-containment 360x640 eu-tomas/close roots=3 worst=0.0px outside=0 unpainted=none threshold=0px, background painted
+  PASS    PH7   touch-targets  360x640 eu-tomas/close targets=13 small=0 threshold=>=44x44px
+
+[360x640] show everything
+  PASS    N1    numbers-focus  360x640 show everything via="Skip to the receipts" focused=true/true top=108.1px (close) then 108.1px (close) barBottom=72.2px viewport=640px drift=0.0px threshold=focused, barBottom<=top<viewport, drift<=1px
+
+[360x640] fastest path
+  polish  FP1   fastest-path   360x640 fastest path questions=2 presses=0 reachedFiguresHeading=false stoppedAt=recall path=none threshold=<=4 presses to [data-figures-heading]
+  PASS    CT1   -              360x640 fastest path text meets contrast on its surface
+  PASS    CW1   -              360x640 fastest path content column 312 px at viewport 360 px
+SF1 and TT1 on Press the seal at 360x640
+  PASS    SF1   -              360x640 fastest path Seal panel fills its surface at 360x640
+  PASS    TT1   -              360x640 fastest path press target wax mark meets the size floor at 360x640
+
+[360x640] live
+  BLOCKER CW1   content-column-width 360x640 live CW1 content column 280 px, want at least 312 px (viewport 360 px minus 48)
+  PASS    shot  -              360x640 live /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/live.png
+  PASS    X1    scroll-width   360x640 live scrollWidth=360px clientWidth=360px threshold=scrollWidth<=clientWidth
+  PASS    FT1   footer         360x640 live footer=588..640px soil=294..345px threshold=no overlap
+  PASS    NT1   -              360x640 live no judgement words, exclamation marks or red or green text
+  note    W1.6  write-step     360x640 live no Write card with a Letter_Field on /demo/live ([data-card="live-step-write"])
+  PASS    walk  -              360x640 live /demo/live step "write" reached
+  PASS    BO1   button-overflow 360x640 live buttons=11 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  polish  BC1   control-in-card 360x640 live containers=3 controls=14 worst=262.4px outside=4 ("Family" by 20.9px; "A decision" by 133.0px; "A blank page" by 262.4px) threshold=0.5px
+  PASS    FONT1 fonts-loaded   360x640 live sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  polish  FONT2 fonts-sans-ui  360x640 live sans=inter measured=12 off=2 (<button> "+ What did I notice firs" in ebGaramond; <button> "+ What do I most want to" in ebGaramond) threshold=0
+  note    PH1   first-viewport 360x640 live  missing=[data-card="live-step-write"] viewport=360x640 at scrollY 0 threshold=field top and 6 lines inside viewport (W1.6), Next not asserted
+  PASS    PH3   headline-lines 360x640 live lines=2 wordsPerLine=4,3 threshold=lines<=2, no lone word before the last line
+  PASS    PH4   topbar-height  360x640 live height=56.0px compact=true threshold=<=56px
+  PASS    PH7   touch-targets  360x640 live targets=19 small=0 threshold=>=44x44px
+  note    live  -              360x640 live not reached: created, confirming, sealing, sealed, the wait, unlock, remember and receipts (they need a passkey)
+
+[360x640] letter-page
+  note    X1    scroll-width   360x640 letter-page /l/layoutcheck-unknown-id answered HTTP 404; measured that page, not a live letter
+  PASS    shot  -              360x640 letter-page /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/360x640/letter-page.png
+  PASS    X1    scroll-width   360x640 letter-page scrollWidth=360px clientWidth=360px threshold=scrollWidth<=clientWidth
+  PASS    FT1   footer         360x640 letter-page footer=588..640px soil=294..345px threshold=no overlap
+  PASS    NT1   -              360x640 letter-page no judgement words, exclamation marks or red or green text
+  PASS    BO1   button-overflow 360x640 letter-page buttons=1 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 360x640 letter-page not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   360x640 letter-page sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  360x640 letter-page sans=inter measured=2 off=0 threshold=0
+  PASS    PH3   headline-lines 360x640 letter-page lines=1 wordsPerLine=3 threshold=lines<=2, no lone word before the last line
+  PASS    PH4   topbar-height  360x640 letter-page height=56.0px compact=true threshold=<=56px
+  PASS    PH7   touch-targets  360x640 letter-page targets=5 small=0 threshold=>=44x44px
+
+==== 768x1024 ====
+
+[768x1024] scene
+  PASS    shot  -              768x1024 scene /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/768x1024/scene.png
+  PASS    F2    -              768x1024 scene no text or control on the Soil strip
+  PASS    BTN   -              768x1024 scene main button "[data-cta="primary"]" is fully in view
+  PASS    X1    scroll-width   768x1024 scene scrollWidth=768px clientWidth=768px threshold=scrollWidth<=clientWidth
+  PASS    LG1   landing-ghost  768x1024 scene box=0x0px threshold=hidden below 900px
+  PASS    NB1   no-dirt-band   768x1024 scene dirt=0 viewport=768x1024 threshold=no dirt class or [data-dirt]
+  PASS    FT1   footer         768x1024 scene footer=972..1024px soil=-439..-357px threshold=no overlap
+  PASS    NT1   -              768x1024 scene no judgement words, exclamation marks or red or green text
+  PASS    CTA1  landing-ctas   768x1024 scene primary=812px..868px href=/demo secondary=880px..936px viewport=768x1024 threshold=in view at the top, href=/demo
+  PASS    BO1   button-overflow 768x1024 scene buttons=1 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 768x1024 scene not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   768x1024 scene sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  768x1024 scene sans=inter measured=10 off=0 threshold=0
+
+[768x1024] emerging
+  note    emerging -              768x1024 emerging not reached: locator.click: Timeout 8000ms exceeded.
+
+[768x1024] sealed
+  note    sealed -              768x1024 sealed not reached: locator.click: Timeout 8000ms exceeded.
+
+[768x1024] error
+  note    error -              768x1024 error not reached: locator.click: Timeout 8000ms exceeded.
+
+[768x1024] index
+  PASS    shot  -              768x1024 index /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/768x1024/index.png
+  PASS    walk  -              768x1024 index /demo links to /demo/personas/us-maya
+  PASS    walk  -              768x1024 index /demo links to /demo/personas/eu-tomas
+  PASS    DL1   one-demo-label 768x1024 index labels=1 viewport=768x1024 threshold=one Demo label
+  PASS    NT1   -              768x1024 index no judgement words, exclamation marks or red or green text
+  PASS    BO1   button-overflow 768x1024 index buttons=2 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 768x1024 index not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   768x1024 index sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  768x1024 index sans=inter measured=3 off=0 threshold=0
+
+[768x1024] intact
+
+[768x1024] recall
+  PASS    walk  -              768x1024 recall recall reached on load, with no pick-up press
+  PASS    FC1   load-focus     768x1024 recall active=<h2#recall-q1-title> onHeading=true scrollY=0 atLoad=0 threshold=focus on [data-stage-heading], scrollY unchanged
+  BLOCKER R1    recall-in-view 768x1024 recall question=899..937px field=967..1011px next=1022..1066px viewport=768x1024 focusScroll=0px threshold=inside viewport at scrollY 0
+  PASS    shot  -              768x1024 recall /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/768x1024/recall.png
+  PASS    X1    scroll-width   768x1024 recall scrollWidth=768px clientWidth=768px threshold=scrollWidth<=clientWidth
+  PASS    T2    tick-labels    768x1024 recall scales=1 overlaps=0 threshold=0
+  polish  F1    -              768x1024 recall "advance" paper panel overlaps the Soil strip
+  PASS    F2    -              768x1024 recall no text or control on the Soil strip
+  polish  F2    -              768x1024 recall paper panel overlaps the Soil strip (text is on the paper, so it reads): A sample answer is filled in. Change it  | Next question
+  PASS    G1    -              768x1024 recall no text or control on the Ghost body
+  PASS    G2    -              768x1024 recall Ghost centre x 384.0 px (expected 384.0)
+  PASS    NT1   -              768x1024 recall no judgement words, exclamation marks or red or green text
+  polish  ST1   step-indicator 768x1024 recall steps=4 current=1 lines=2 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 768x1024 recall items=4 lines=2 ("Remember" clipped (109>69); "Break the seal" clipped (127>87); "Read" clipped (71>31); "Read" under [data-ghost]) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    GT1   ghost-over-text 768x1024 recall measured=25 ghostBody=332px..436pxx571px..690px hits=0 threshold=0 outside [data-ghost] on the Ghost_Body_Box (at the Stage start and scrolled to the bottom)
+  note    CF1   card-fit       768x1024 recall no [data-card] or [data-stage-panel] at this Stage
+  PASS    BO1   button-overflow 768x1024 recall buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  PASS    BC1   control-in-card 768x1024 recall containers=1 controls=4 worst=0.0px outside=0 threshold=0.5px
+  PASS    FONT1 fonts-loaded   768x1024 recall sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  768x1024 recall sans=inter measured=6 off=0 threshold=0
+  polish  BTN   -              768x1024 recall main button "Next question" is below the fold at 768x1024 (bottom 1066 px); reachable after scrolling
+  PASS    G1    -              768x1024 recall no text or control on the Ghost body
+  polish  BTN   -              768x1024 recall main button "Record my answers" is below the fold at 768x1024 (bottom 1087 px); reachable after scrolling
+
+[768x1024] marks
+  PASS    shot  -              768x1024 marks /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/768x1024/marks.png
+  note    F1    -              768x1024 marks not on this build: marks-heading, marks-answers
+  polish  F1    -              768x1024 marks "break" paper panel overlaps the Soil strip
+  PASS    F2    -              768x1024 marks no text or control on the Soil strip
+  polish  F2    -              768x1024 marks paper panel overlaps the Soil strip (text is on the paper, so it reads): What you remembered is recorded. | Press and hold the wax seal to break it,
+  PASS    G1    -              768x1024 marks no text or control on the Ghost body
+  PASS    G2    -              768x1024 marks Ghost centre x 384.0 px, same as recall
+  polish  BTN   -              768x1024 marks main button "Break the seal" is below the fold at 768x1024 (bottom 1219 px); reachable after scrolling
+  PASS    X1    scroll-width   768x1024 marks scrollWidth=768px clientWidth=768px threshold=scrollWidth<=clientWidth
+  PASS    NT1   -              768x1024 marks no judgement words, exclamation marks or red or green text
+  note    RS1   scale-overlap  768x1024 marks not on this build: no [data-recorded-scale]
+  polish  ST1   step-indicator 768x1024 marks steps=4 current=1 lines=2 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 768x1024 marks items=4 lines=2 ("Remember" clipped (107>67); "Break the seal" clipped (130>90); "Read" clipped (71>31); "Read" under [data-ghost]) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    AL1   answer-list    768x1024 marks present=true onGhost=false onSealGroup=false threshold=present, clear of [data-ghost] and [data-seal-group]
+  PASS    CF1   card-fit       768x1024 marks cards=1 worstSlack=0.0px threshold=height minus content<=48px, holds a non-control
+  PASS    BO1   button-overflow 768x1024 marks buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  PASS    BC1   control-in-card 768x1024 marks containers=1 controls=2 worst=0.0px outside=0 threshold=0.5px
+
+[768x1024] seal
+  PASS    shot  -              768x1024 seal /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/768x1024/seal.png
+  PASS    G2    -              768x1024 seal Ghost centre x 384.0 px, same as recall
+  polish  GZ1   ghost-after-seal 768x1024 seal bodyCentre=384px,633px hit=<div class="M9cNGq_personaColumn"> threshold=the Ghost or nothing
+
+[768x1024] letter
+  PASS    shot  -              768x1024 letter /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/768x1024/letter.png
+  PASS    F2    -              768x1024 letter no text or control on the Soil strip
+  polish  F2    -              768x1024 letter paper panel overlaps the Soil strip (text is on the paper, so it reads): Dear future me,
+It is a Sunday evening i
+  PASS    W1    letter-width   768x1024 letter width=29.3em (498.0px at 17px, [data-letter-text]) threshold=28em..40em
+  PASS    X1    scroll-width   768x1024 letter scrollWidth=768px clientWidth=768px threshold=scrollWidth<=clientWidth
+  polish  BTN   -              768x1024 letter main button "[data-advance="figures"]" is below the fold at 768x1024 (bottom 1231 px); reachable after scrolling
+  PASS    NT1   -              768x1024 letter no judgement words, exclamation marks or red or green text
+  PASS    GZ1   ghost-after-seal 768x1024 letter ghostElements=0 threshold=0
+  PASS    ST1   step-indicator 768x1024 letter steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 768x1024 letter items=4 lines=1 ("Remember" clipped (107>67); "Break the seal" clipped (127>87); "Read" clipped (72>32)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  note    GT1   ghost-over-text 768x1024 letter no [data-ghost] box at this Stage
+  note    CF1   card-fit       768x1024 letter no [data-card] or [data-stage-panel] at this Stage
+  PASS    BO1   button-overflow 768x1024 letter buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 768x1024 letter not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   768x1024 letter sans=inter sansLoaded=true body=inter serif=ebGaramond serifLoaded=true letter=ebGaramond ([data-letter-text]) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  768x1024 letter sans=inter measured=6 off=0 threshold=0
+
+[768x1024] figures
+  PASS    walk  -              768x1024 figures figures reached (data-ceremony is figures)
+  PASS    shot  -              768x1024 figures /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/768x1024/figures.png at data-ceremony "figures", scrollY 1559
+  PASS    N1    numbers-focus  768x1024 figures via="[data-advance="figures"]" focused=true/true top=107.8px (close) then 107.8px (close) barBottom=64.2px viewport=1024px drift=0.0px threshold=focused, barBottom<=top<viewport, drift<=1px
+  PASS    FV1   heading-focus-ring 768x1024 figures via=mouse outlineStyle=none outlineWidth=3px focused=true focusVisible=false threshold=none
+  PASS    F2    -              768x1024 figures no text or control on the Soil strip
+  polish  F2    -              768x1024 figures paper panel overlaps the Soil strip (text is on the paper, so it reads): What you remembered sits beside the reco | Seal your own. It opens 30 seconds after
+  PASS    NT1   -              768x1024 figures no judgement words, exclamation marks or red or green text
+  PASS    GZ1   ghost-after-seal 768x1024 figures ghostElements=0 threshold=0
+
+[768x1024] close
+  PASS    B1    figure-boxes   768x1024 close entries=2 boxes=8 outside=0 threshold=0
+  PASS    L1    line-labels    768x1024 close labels=6 worst=0.0px² threshold=0px²
+  PASS    X1    scroll-width   768x1024 close scrollWidth=768px clientWidth=768px threshold=scrollWidth<=clientWidth
+  PASS    shot  -              768x1024 close /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/768x1024/close.png
+  PASS    F2    -              768x1024 close no text or control on the Soil strip
+  polish  F2    -              768x1024 close paper panel overlaps the Soil strip (text is on the paper, so it reads): What you remembered sits beside the reco | Seal your own. It opens 30 seconds after
+  PASS    NT1   -              768x1024 close no judgement words, exclamation marks or red or green text
+  PASS    FT1   footer         768x1024 close footer=971..1024px soil=460..542px threshold=no overlap
+  PASS    GZ1   ghost-after-seal 768x1024 close ghostElements=0 threshold=0
+  PASS    ST1   step-indicator 768x1024 close steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 768x1024 close items=4 lines=1 ("Remember" clipped (107>67); "Break the seal" clipped (127>87); "Read" clipped (71>31)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    TK1   tick-on-axis   768x1024 close axes=2 ticks=6 worstTopOffset=0.0px worstLabelGap=4.0px labelOverlaps=0 threshold=top offset 0±0.5px, label gap<=8px, no label overlap
+  note    CF1   card-fit       768x1024 close no [data-card] or [data-stage-panel] at this Stage
+  PASS    FONT2 fonts-sans-ui  768x1024 close sans=inter measured=9 off=0 threshold=0
+  PASS    BO1   button-overflow 768x1024 close buttons=3 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 768x1024 close not on this build: no [data-card], fieldset or [data-stage-panel]
+
+[768x1024] eu-tomas/intact
+
+[768x1024] eu-tomas/recall
+  PASS    walk  -              768x1024 eu-tomas/recall recall reached on load, with no pick-up press
+  PASS    FC1   load-focus     768x1024 eu-tomas/recall active=<h2#recall-q1-title> onHeading=true scrollY=0 atLoad=0 threshold=focus on [data-stage-heading], scrollY unchanged
+  BLOCKER R1    recall-in-view 768x1024 eu-tomas/recall question=899..937px field=986..1030px next=1041..1085px viewport=768x1024 focusScroll=0px threshold=inside viewport at scrollY 0
+  PASS    shot  -              768x1024 eu-tomas/recall /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/768x1024/eu-tomas/recall.png
+  PASS    X1    scroll-width   768x1024 eu-tomas/recall scrollWidth=768px clientWidth=768px threshold=scrollWidth<=clientWidth
+  PASS    T2    tick-labels    768x1024 eu-tomas/recall scales=1 overlaps=0 threshold=0
+  polish  F1    -              768x1024 eu-tomas/recall "answer" is not fully in the window (scrolling; fine on a phone)
+  polish  F1    -              768x1024 eu-tomas/recall "advance" paper panel overlaps the Soil strip
+  PASS    F2    -              768x1024 eu-tomas/recall no text or control on the Soil strip
+  polish  F2    -              768x1024 eu-tomas/recall paper panel overlaps the Soil strip (text is on the paper, so it reads): A sample answer is filled in. Change it  | Next question
+  PASS    G1    -              768x1024 eu-tomas/recall no text or control on the Ghost body
+  PASS    G2    -              768x1024 eu-tomas/recall Ghost centre x 384.0 px (expected 384.0)
+  PASS    NT1   -              768x1024 eu-tomas/recall no judgement words, exclamation marks or red or green text
+  polish  ST1   step-indicator 768x1024 eu-tomas/recall steps=4 current=1 lines=2 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 768x1024 eu-tomas/recall items=4 lines=2 ("Remember" clipped (109>69); "Break the seal" clipped (127>87); "Read" clipped (71>31); "Read" under [data-ghost]) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    GT1   ghost-over-text 768x1024 eu-tomas/recall measured=26 ghostBody=332px..436pxx571px..690px hits=0 threshold=0 outside [data-ghost] on the Ghost_Body_Box (at the Stage start and scrolled to the bottom)
+  note    CF1   card-fit       768x1024 eu-tomas/recall no [data-card] or [data-stage-panel] at this Stage
+  PASS    BO1   button-overflow 768x1024 eu-tomas/recall buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  PASS    BC1   control-in-card 768x1024 eu-tomas/recall containers=1 controls=4 worst=0.0px outside=0 threshold=0.5px
+  PASS    FONT1 fonts-loaded   768x1024 eu-tomas/recall sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  768x1024 eu-tomas/recall sans=inter measured=6 off=0 threshold=0
+  polish  BTN   -              768x1024 eu-tomas/recall main button "Next question" is below the fold at 768x1024 (bottom 1085 px); reachable after scrolling
+  PASS    G1    -              768x1024 eu-tomas/recall no text or control on the Ghost body
+  PASS    BTN   -              768x1024 eu-tomas/recall main button "Record my answers" is fully in view
+
+[768x1024] eu-tomas/marks
+  PASS    shot  -              768x1024 eu-tomas/marks /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/768x1024/eu-tomas/marks.png
+  note    F1    -              768x1024 eu-tomas/marks not on this build: marks-heading, marks-answers
+  polish  F1    -              768x1024 eu-tomas/marks "break" paper panel overlaps the Soil strip
+  PASS    F2    -              768x1024 eu-tomas/marks no text or control on the Soil strip
+  polish  F2    -              768x1024 eu-tomas/marks paper panel overlaps the Soil strip (text is on the paper, so it reads): What you remembered is recorded. | Press and hold the wax seal to break it,
+  PASS    G1    -              768x1024 eu-tomas/marks no text or control on the Ghost body
+  PASS    G2    -              768x1024 eu-tomas/marks Ghost centre x 384.0 px, same as recall
+  polish  BTN   -              768x1024 eu-tomas/marks main button "Break the seal" is below the fold at 768x1024 (bottom 1219 px); reachable after scrolling
+  PASS    X1    scroll-width   768x1024 eu-tomas/marks scrollWidth=768px clientWidth=768px threshold=scrollWidth<=clientWidth
+  PASS    NT1   -              768x1024 eu-tomas/marks no judgement words, exclamation marks or red or green text
+  note    RS1   scale-overlap  768x1024 eu-tomas/marks not on this build: no [data-recorded-scale]
+  polish  ST1   step-indicator 768x1024 eu-tomas/marks steps=4 current=1 lines=2 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 768x1024 eu-tomas/marks items=4 lines=2 ("Remember" clipped (107>67); "Break the seal" clipped (130>90); "Read" clipped (71>31); "Read" under [data-ghost]) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    AL1   answer-list    768x1024 eu-tomas/marks present=true onGhost=false onSealGroup=false threshold=present, clear of [data-ghost] and [data-seal-group]
+  PASS    CF1   card-fit       768x1024 eu-tomas/marks cards=1 worstSlack=0.0px threshold=height minus content<=48px, holds a non-control
+  PASS    BO1   button-overflow 768x1024 eu-tomas/marks buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  PASS    BC1   control-in-card 768x1024 eu-tomas/marks containers=1 controls=2 worst=0.0px outside=0 threshold=0.5px
+
+[768x1024] eu-tomas/seal
+  PASS    shot  -              768x1024 eu-tomas/seal /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/768x1024/eu-tomas/seal.png
+  PASS    G2    -              768x1024 eu-tomas/seal Ghost centre x 384.0 px, same as recall
+  polish  GZ1   ghost-after-seal 768x1024 eu-tomas/seal bodyCentre=384px,633px hit=<div class="M9cNGq_personaColumn"> threshold=the Ghost or nothing
+
+[768x1024] eu-tomas/letter
+  PASS    shot  -              768x1024 eu-tomas/letter /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/768x1024/eu-tomas/letter.png
+  PASS    F2    -              768x1024 eu-tomas/letter no text or control on the Soil strip
+  polish  F2    -              768x1024 eu-tomas/letter paper panel overlaps the Soil strip (text is on the paper, so it reads): Dear future me,
+It is a cold Sunday even
+  PASS    W1    letter-width   768x1024 eu-tomas/letter width=29.3em (498.0px at 17px, [data-letter-text]) threshold=28em..40em
+  PASS    X1    scroll-width   768x1024 eu-tomas/letter scrollWidth=768px clientWidth=768px threshold=scrollWidth<=clientWidth
+  polish  BTN   -              768x1024 eu-tomas/letter main button "[data-advance="figures"]" is below the fold at 768x1024 (bottom 1317 px); reachable after scrolling
+  PASS    NT1   -              768x1024 eu-tomas/letter no judgement words, exclamation marks or red or green text
+  PASS    GZ1   ghost-after-seal 768x1024 eu-tomas/letter ghostElements=0 threshold=0
+  PASS    ST1   step-indicator 768x1024 eu-tomas/letter steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 768x1024 eu-tomas/letter items=4 lines=1 ("Remember" clipped (107>67); "Break the seal" clipped (127>87); "Read" clipped (72>32)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  note    GT1   ghost-over-text 768x1024 eu-tomas/letter no [data-ghost] box at this Stage
+  note    CF1   card-fit       768x1024 eu-tomas/letter no [data-card] or [data-stage-panel] at this Stage
+  PASS    BO1   button-overflow 768x1024 eu-tomas/letter buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 768x1024 eu-tomas/letter not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   768x1024 eu-tomas/letter sans=inter sansLoaded=true body=inter serif=ebGaramond serifLoaded=true letter=ebGaramond ([data-letter-text]) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  768x1024 eu-tomas/letter sans=inter measured=6 off=0 threshold=0
+
+[768x1024] eu-tomas/figures
+  PASS    walk  -              768x1024 eu-tomas/figures figures reached (data-ceremony is figures)
+  PASS    shot  -              768x1024 eu-tomas/figures /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/768x1024/eu-tomas/figures.png at data-ceremony "figures", scrollY 1769
+  PASS    N1    numbers-focus  768x1024 eu-tomas/figures via="[data-advance="figures"]" focused=true/true top=108.5px (close) then 108.5px (close) barBottom=64.2px viewport=1024px drift=0.0px threshold=focused, barBottom<=top<viewport, drift<=1px
+  PASS    FV1   heading-focus-ring 768x1024 eu-tomas/figures via=keyboard outlineStyle=solid outlineWidth=2px focused=true focusVisible=true threshold=not none
+  PASS    F2    -              768x1024 eu-tomas/figures no text or control on the Soil strip
+  polish  F2    -              768x1024 eu-tomas/figures paper panel overlaps the Soil strip (text is on the paper, so it reads): What you remembered sits beside the reco | Seal your own. It opens 30 seconds after
+  PASS    NT1   -              768x1024 eu-tomas/figures no judgement words, exclamation marks or red or green text
+  PASS    GZ1   ghost-after-seal 768x1024 eu-tomas/figures ghostElements=0 threshold=0
+
+[768x1024] eu-tomas/close
+  PASS    B1    figure-boxes   768x1024 eu-tomas/close entries=2 boxes=8 outside=0 threshold=0
+  PASS    L1    line-labels    768x1024 eu-tomas/close labels=6 worst=0.0px² threshold=0px²
+  PASS    X1    scroll-width   768x1024 eu-tomas/close scrollWidth=768px clientWidth=768px threshold=scrollWidth<=clientWidth
+  PASS    shot  -              768x1024 eu-tomas/close /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/768x1024/eu-tomas/close.png
+  PASS    F2    -              768x1024 eu-tomas/close no text or control on the Soil strip
+  polish  F2    -              768x1024 eu-tomas/close paper panel overlaps the Soil strip (text is on the paper, so it reads): What you remembered sits beside the reco | Seal your own. It opens 30 seconds after
+  PASS    NT1   -              768x1024 eu-tomas/close no judgement words, exclamation marks or red or green text
+  PASS    FT1   footer         768x1024 eu-tomas/close footer=972..1024px soil=461..543px threshold=no overlap
+  PASS    GZ1   ghost-after-seal 768x1024 eu-tomas/close ghostElements=0 threshold=0
+  PASS    ST1   step-indicator 768x1024 eu-tomas/close steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 768x1024 eu-tomas/close items=4 lines=1 ("Remember" clipped (107>67); "Break the seal" clipped (127>87); "Read" clipped (71>31)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    TK1   tick-on-axis   768x1024 eu-tomas/close axes=2 ticks=6 worstTopOffset=0.0px worstLabelGap=4.0px labelOverlaps=0 threshold=top offset 0±0.5px, label gap<=8px, no label overlap
+  note    CF1   card-fit       768x1024 eu-tomas/close no [data-card] or [data-stage-panel] at this Stage
+  PASS    FONT2 fonts-sans-ui  768x1024 eu-tomas/close sans=inter measured=9 off=0 threshold=0
+  PASS    BO1   button-overflow 768x1024 eu-tomas/close buttons=3 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 768x1024 eu-tomas/close not on this build: no [data-card], fieldset or [data-stage-panel]
+
+[768x1024] show everything
+  PASS    N1    numbers-focus  768x1024 show everything via="Skip to the receipts" focused=true/true top=107.8px (close) then 107.8px (close) barBottom=64.2px viewport=1024px drift=0.0px threshold=focused, barBottom<=top<viewport, drift<=1px
+
+[768x1024] fastest path
+  polish  FP1   fastest-path   768x1024 fastest path questions=2 presses=0 reachedFiguresHeading=false stoppedAt=recall path=none threshold=<=4 presses to [data-figures-heading]
+
+[768x1024] live
+  PASS    shot  -              768x1024 live /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/768x1024/live.png
+  PASS    X1    scroll-width   768x1024 live scrollWidth=768px clientWidth=768px threshold=scrollWidth<=clientWidth
+  PASS    FT1   footer         768x1024 live footer=971..1024px soil=558..640px threshold=no overlap
+  PASS    NT1   -              768x1024 live no judgement words, exclamation marks or red or green text
+  note    W1.6  write-step     768x1024 live no Write card with a Letter_Field on /demo/live ([data-card="live-step-write"])
+  PASS    walk  -              768x1024 live /demo/live step "write" reached
+  PASS    BO1   button-overflow 768x1024 live buttons=18 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  polish  BC1   control-in-card 768x1024 live containers=3 controls=20 worst=8.0px outside=1 ("Remove" by 8.0px) threshold=0.5px
+  PASS    FONT1 fonts-loaded   768x1024 live sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  polish  FONT2 fonts-sans-ui  768x1024 live sans=inter measured=20 off=2 (<button> "+ What did I notice firs" in ebGaramond; <button> "+ What do I most want to" in ebGaramond) threshold=0
+  note    live  -              768x1024 live not reached: created, confirming, sealing, sealed, the wait, unlock, remember and receipts (they need a passkey)
+
+[768x1024] letter-page
+  note    X1    scroll-width   768x1024 letter-page /l/layoutcheck-unknown-id answered HTTP 404; measured that page, not a live letter
+  PASS    shot  -              768x1024 letter-page /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/768x1024/letter-page.png
+  PASS    X1    scroll-width   768x1024 letter-page scrollWidth=768px clientWidth=768px threshold=scrollWidth<=clientWidth
+  PASS    FT1   footer         768x1024 letter-page footer=972..1024px soil=559..640px threshold=no overlap
+  PASS    NT1   -              768x1024 letter-page no judgement words, exclamation marks or red or green text
+  PASS    BO1   button-overflow 768x1024 letter-page buttons=1 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 768x1024 letter-page not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   768x1024 letter-page sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  768x1024 letter-page sans=inter measured=2 off=0 threshold=0
+
+==== 1280x800 ====
+
+[1280x800] scene
+  PASS    shot  -              1280x800 scene /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/scene.png
+  PASS    F2    -              1280x800 scene no text or control on the Soil strip
+  PASS    BTN   -              1280x800 scene main button "[data-cta="primary"]" is fully in view
+  PASS    X1    scroll-width   1280x800 scene scrollWidth=1280px clientWidth=1280px threshold=scrollWidth<=clientWidth
+  BLOCKER LG1   landing-ghost  1280x800 scene box=400x480px opacity=1.00 inViewport=true overlaps=headline threshold=visible, no overlap
+  PASS    NB1   no-dirt-band   1280x800 scene dirt=0 viewport=1280x800 threshold=no dirt class or [data-dirt]
+  PASS    FT1   footer         1280x800 scene footer=747..800px soil=-289..-177px threshold=no overlap
+  PASS    NT1   -              1280x800 scene no judgement words, exclamation marks or red or green text
+  PASS    CTA1  landing-ctas   1280x800 scene primary=456px..512px href=/demo secondary=524px..580px viewport=1280x800 threshold=in view at the top, href=/demo
+  PASS    BO1   button-overflow 1280x800 scene buttons=1 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 1280x800 scene not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   1280x800 scene sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  1280x800 scene sans=inter measured=10 off=0 threshold=0
+
+[1280x800] emerging
+  PASS    shot  -              1280x800 emerging /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/emerging.png
+  PASS    F2    -              1280x800 emerging no text or control on the Soil strip
+
+[1280x800] sealed
+  PASS    shot  -              1280x800 sealed /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/sealed.png
+  PASS    F2    -              1280x800 sealed no text or control on the Soil strip
+
+[1280x800] error
+  PASS    shot  -              1280x800 error /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/error.png
+  PASS    F2    -              1280x800 error no text or control on the Soil strip
+
+[1280x800] index
+  PASS    shot  -              1280x800 index /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/index.png
+  PASS    walk  -              1280x800 index /demo links to /demo/personas/us-maya
+  PASS    walk  -              1280x800 index /demo links to /demo/personas/eu-tomas
+  PASS    DL1   one-demo-label 1280x800 index labels=1 viewport=1280x800 threshold=one Demo label
+  PASS    NT1   -              1280x800 index no judgement words, exclamation marks or red or green text
+  polish  DX1   demo-cards-in-view 1280x800 index /demo/personas/us-maya=bottom 865px(out) /demo/personas/eu-tomas=bottom 865px(out) /demo/personas/us-priya=bottom 865px(out) viewport=1280x800 threshold=inside viewport at scrollY 0
+  PASS    BO1   button-overflow 1280x800 index buttons=2 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 1280x800 index not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   1280x800 index sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  1280x800 index sans=inter measured=3 off=0 threshold=0
+
+[1280x800] intact
+
+[1280x800] recall
+  PASS    walk  -              1280x800 recall recall reached on load, with no pick-up press
+  PASS    FC1   load-focus     1280x800 recall active=<h2#recall-q1-title> onHeading=true scrollY=0 atLoad=0 threshold=focus on [data-stage-heading], scrollY unchanged
+  PASS    R1    recall-in-view 1280x800 recall question=441..551px field=599..668px next=680..724px viewport=1280x800 focusScroll=0px threshold=inside viewport at scrollY 0
+  PASS    shot  -              1280x800 recall /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/recall.png
+  PASS    X1    scroll-width   1280x800 recall scrollWidth=1280px clientWidth=1280px threshold=scrollWidth<=clientWidth
+  PASS    T2    tick-labels    1280x800 recall scales=1 overlaps=0 threshold=0
+  PASS    F1    -              1280x800 recall named boxes in view and off the Soil strip
+  PASS    F2    -              1280x800 recall no text or control on the Soil strip
+  PASS    G1    -              1280x800 recall no text or control on the Ghost body
+  PASS    G2    -              1280x800 recall Ghost centre x 921.6 px (expected 921.6)
+  PASS    NT1   -              1280x800 recall no judgement words, exclamation marks or red or green text
+  PASS    ST1   step-indicator 1280x800 recall steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 1280x800 recall items=4 lines=1 ("Remember" clipped (109>69); "Break the seal" clipped (127>87); "Read" clipped (71>31)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    GT1   ghost-over-text 1280x800 recall measured=25 ghostBody=770px..1074pxx150px..498px hits=0 threshold=0 outside [data-ghost] on the Ghost_Body_Box (at the Stage start and scrolled to the bottom)
+  note    CF1   card-fit       1280x800 recall no [data-card] or [data-stage-panel] at this Stage
+  PASS    BO1   button-overflow 1280x800 recall buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  PASS    BC1   control-in-card 1280x800 recall containers=1 controls=4 worst=0.0px outside=0 threshold=0.5px
+  PASS    FONT1 fonts-loaded   1280x800 recall sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  1280x800 recall sans=inter measured=6 off=0 threshold=0
+  PASS    BTN   -              1280x800 recall main button "Next question" is fully in view
+  PASS    G1    -              1280x800 recall no text or control on the Ghost body
+  PASS    BTN   -              1280x800 recall main button "Record my answers" is fully in view
+
+[1280x800] marks
+  PASS    shot  -              1280x800 marks /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/marks.png
+  note    F1    -              1280x800 marks not on this build: marks-heading, marks-answers
+  polish  F1    -              1280x800 marks "break" paper panel overlaps the Soil strip
+  PASS    F1    -              1280x800 marks named boxes in view and off the Soil strip
+  PASS    F2    -              1280x800 marks no text or control on the Soil strip
+  polish  F2    -              1280x800 marks paper panel overlaps the Soil strip (text is on the paper, so it reads): No. 2 diesel, retail price3.45 USD per g
+  PASS    G1    -              1280x800 marks no text or control on the Ghost body
+  PASS    G2    -              1280x800 marks Ghost centre x 921.6 px, same as recall
+  PASS    BTN   -              1280x800 marks main button "Break the seal" is fully in view
+  PASS    X1    scroll-width   1280x800 marks scrollWidth=1280px clientWidth=1280px threshold=scrollWidth<=clientWidth
+  PASS    NT1   -              1280x800 marks no judgement words, exclamation marks or red or green text
+  note    RS1   scale-overlap  1280x800 marks not on this build: no [data-recorded-scale]
+  PASS    ST1   step-indicator 1280x800 marks steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 1280x800 marks items=4 lines=1 ("Remember" clipped (107>67); "Break the seal" clipped (130>90); "Read" clipped (71>31)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    ET1   seal-on-envelope 1280x800 marks state=turned seal=845px..998pxx330px..483px envelope=794px..1050pxx309px..485px dateLines=0 threshold=seal inside the Envelope, on no [data-date], no two drawn elements overlap
+  polish  SG1   seal-group     1280x800 marks group=510px..734pxx276px..520px inView=true edgeGap=35.2px sealY=406px hintAlign=left (edge gap 35.2px) threshold=clear of the Ghost_Body_Box and the Envelope, edge gap 0 to 24px, seal centre within the group, hint left or centre and unclipped, inside the viewport
+  PASS    AL1   answer-list    1280x800 marks present=true onGhost=false onSealGroup=false threshold=present, clear of [data-ghost] and [data-seal-group]
+  PASS    CF1   card-fit       1280x800 marks cards=1 worstSlack=0.0px threshold=height minus content<=48px, holds a non-control
+  PASS    BO1   button-overflow 1280x800 marks buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  PASS    BC1   control-in-card 1280x800 marks containers=1 controls=0 worst=0.0px outside=0 threshold=0.5px
+
+[1280x800] seal
+  PASS    shot  -              1280x800 seal /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/seal.png
+  PASS    G2    -              1280x800 seal Ghost centre x 921.6 px, same as recall
+  polish  GZ1   ghost-after-seal 1280x800 seal bodyCentre=922px,327px hit=<main class="M9cNGq_main"> threshold=the Ghost or nothing
+
+[1280x800] letter
+  PASS    shot  -              1280x800 letter /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/letter.png
+  PASS    F2    -              1280x800 letter no text or control on the Soil strip
+  polish  F2    -              1280x800 letter paper panel overlaps the Soil strip (text is on the paper, so it reads): See the receipts | Show everything
+  PASS    W1    letter-width   1280x800 letter width=29.2em (496.0px at 17px, [data-letter-text]) threshold=28em..40em
+  PASS    X1    scroll-width   1280x800 letter scrollWidth=1280px clientWidth=1280px threshold=scrollWidth<=clientWidth
+  polish  BTN   -              1280x800 letter main button "[data-advance="figures"]" is below the fold at 1280x800 (bottom 1253 px); reachable after scrolling
+  PASS    NT1   -              1280x800 letter no judgement words, exclamation marks or red or green text
+  PASS    GZ1   ghost-after-seal 1280x800 letter ghostElements=0 threshold=0
+  PASS    ST1   step-indicator 1280x800 letter steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 1280x800 letter items=4 lines=1 ("Remember" clipped (107>67); "Break the seal" clipped (127>87); "Read" clipped (72>32)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  note    GT1   ghost-over-text 1280x800 letter no [data-ghost] box at this Stage
+  note    CF1   card-fit       1280x800 letter no [data-card] or [data-stage-panel] at this Stage
+  PASS    BO1   button-overflow 1280x800 letter buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 1280x800 letter not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   1280x800 letter sans=inter sansLoaded=true body=inter serif=ebGaramond serifLoaded=true letter=ebGaramond ([data-letter-text]) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  1280x800 letter sans=inter measured=6 off=0 threshold=0
+
+[1280x800] figures
+  PASS    walk  -              1280x800 figures figures reached (data-ceremony is figures)
+  PASS    shot  -              1280x800 figures /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/figures.png at data-ceremony "figures", scrollY 1245
+  PASS    N1    numbers-focus  1280x800 figures via="[data-advance="figures"]" focused=true/true top=107.5px (close) then 107.5px (close) barBottom=68.0px viewport=800px drift=0.0px threshold=focused, barBottom<=top<viewport, drift<=1px
+  PASS    FV1   heading-focus-ring 1280x800 figures via=mouse outlineStyle=none outlineWidth=3px focused=true focusVisible=false threshold=none
+  PASS    F2    -              1280x800 figures no text or control on the Soil strip
+  PASS    NT1   -              1280x800 figures no judgement words, exclamation marks or red or green text
+  PASS    GZ1   ghost-after-seal 1280x800 figures ghostElements=0 threshold=0
+
+[1280x800] close
+  polish  RC1   receipts-in-view 1280x800 close firstEntry=169px..1158px viewport=1280x800 scrollY=127 threshold=fully inside viewport
+  PASS    B1    figure-boxes   1280x800 close entries=2 boxes=8 outside=0 threshold=0
+  PASS    L1    line-labels    1280x800 close labels=6 worst=0.0px² threshold=0px²
+  PASS    X1    scroll-width   1280x800 close scrollWidth=1280px clientWidth=1280px threshold=scrollWidth<=clientWidth
+  PASS    shot  -              1280x800 close /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/close.png
+  PASS    F2    -              1280x800 close no text or control on the Soil strip
+  PASS    NT1   -              1280x800 close no judgement words, exclamation marks or red or green text
+  PASS    FT1   footer         1280x800 close footer=748..800px soil=348..460px threshold=no overlap
+  PASS    GZ1   ghost-after-seal 1280x800 close ghostElements=0 threshold=0
+  PASS    ST1   step-indicator 1280x800 close steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 1280x800 close items=4 lines=1 ("Remember" clipped (107>67); "Break the seal" clipped (127>87); "Read" clipped (71>31)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    TK1   tick-on-axis   1280x800 close axes=2 ticks=6 worstTopOffset=0.0px worstLabelGap=4.0px labelOverlaps=0 threshold=top offset 0±0.5px, label gap<=8px, no label overlap
+  note    CF1   card-fit       1280x800 close no [data-card] or [data-stage-panel] at this Stage
+  PASS    FONT2 fonts-sans-ui  1280x800 close sans=inter measured=9 off=0 threshold=0
+  PASS    BO1   button-overflow 1280x800 close buttons=3 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 1280x800 close not on this build: no [data-card], fieldset or [data-stage-panel]
+
+[1280x800] eu-tomas/intact
+
+[1280x800] eu-tomas/recall
+  PASS    walk  -              1280x800 eu-tomas/recall recall reached on load, with no pick-up press
+  PASS    FC1   load-focus     1280x800 eu-tomas/recall active=<h2#recall-q1-title> onHeading=true scrollY=0 atLoad=0 threshold=focus on [data-stage-heading], scrollY unchanged
+  PASS    R1    recall-in-view 1280x800 eu-tomas/recall question=441..551px field=627..696px next=708..752px viewport=1280x800 focusScroll=0px threshold=inside viewport at scrollY 0
+  PASS    shot  -              1280x800 eu-tomas/recall /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/eu-tomas/recall.png
+  PASS    X1    scroll-width   1280x800 eu-tomas/recall scrollWidth=1280px clientWidth=1280px threshold=scrollWidth<=clientWidth
+  PASS    T2    tick-labels    1280x800 eu-tomas/recall scales=1 overlaps=0 threshold=0
+  PASS    F1    -              1280x800 eu-tomas/recall named boxes in view and off the Soil strip
+  PASS    F2    -              1280x800 eu-tomas/recall no text or control on the Soil strip
+  PASS    G1    -              1280x800 eu-tomas/recall no text or control on the Ghost body
+  PASS    G2    -              1280x800 eu-tomas/recall Ghost centre x 921.6 px (expected 921.6)
+  PASS    NT1   -              1280x800 eu-tomas/recall no judgement words, exclamation marks or red or green text
+  PASS    ST1   step-indicator 1280x800 eu-tomas/recall steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 1280x800 eu-tomas/recall items=4 lines=1 ("Remember" clipped (109>69); "Break the seal" clipped (127>87); "Read" clipped (71>31)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    GT1   ghost-over-text 1280x800 eu-tomas/recall measured=26 ghostBody=770px..1074pxx150px..498px hits=0 threshold=0 outside [data-ghost] on the Ghost_Body_Box (at the Stage start and scrolled to the bottom)
+  note    CF1   card-fit       1280x800 eu-tomas/recall no [data-card] or [data-stage-panel] at this Stage
+  PASS    BO1   button-overflow 1280x800 eu-tomas/recall buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  PASS    BC1   control-in-card 1280x800 eu-tomas/recall containers=1 controls=4 worst=0.0px outside=0 threshold=0.5px
+  PASS    FONT1 fonts-loaded   1280x800 eu-tomas/recall sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  1280x800 eu-tomas/recall sans=inter measured=6 off=0 threshold=0
+  PASS    BTN   -              1280x800 eu-tomas/recall main button "Next question" is fully in view
+  PASS    G1    -              1280x800 eu-tomas/recall no text or control on the Ghost body
+  PASS    BTN   -              1280x800 eu-tomas/recall main button "Record my answers" is fully in view
+
+[1280x800] eu-tomas/marks
+  PASS    shot  -              1280x800 eu-tomas/marks /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/eu-tomas/marks.png
+  note    F1    -              1280x800 eu-tomas/marks not on this build: marks-heading, marks-answers
+  polish  F1    -              1280x800 eu-tomas/marks "break" paper panel overlaps the Soil strip
+  PASS    F1    -              1280x800 eu-tomas/marks named boxes in view and off the Soil strip
+  PASS    F2    -              1280x800 eu-tomas/marks no text or control on the Soil strip
+  polish  F2    -              1280x800 eu-tomas/marks paper panel overlaps the Soil strip (text is on the paper, so it reads): Automotive diesel, retail price includin
+  PASS    G1    -              1280x800 eu-tomas/marks no text or control on the Ghost body
+  PASS    G2    -              1280x800 eu-tomas/marks Ghost centre x 921.6 px, same as recall
+  PASS    BTN   -              1280x800 eu-tomas/marks main button "Break the seal" is fully in view
+  PASS    X1    scroll-width   1280x800 eu-tomas/marks scrollWidth=1280px clientWidth=1280px threshold=scrollWidth<=clientWidth
+  PASS    NT1   -              1280x800 eu-tomas/marks no judgement words, exclamation marks or red or green text
+  note    RS1   scale-overlap  1280x800 eu-tomas/marks not on this build: no [data-recorded-scale]
+  PASS    ST1   step-indicator 1280x800 eu-tomas/marks steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 1280x800 eu-tomas/marks items=4 lines=1 ("Remember" clipped (107>67); "Break the seal" clipped (130>90); "Read" clipped (71>31)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    ET1   seal-on-envelope 1280x800 eu-tomas/marks state=turned seal=845px..998pxx330px..483px envelope=794px..1050pxx309px..485px dateLines=0 threshold=seal inside the Envelope, on no [data-date], no two drawn elements overlap
+  polish  SG1   seal-group     1280x800 eu-tomas/marks group=510px..734pxx276px..520px inView=true edgeGap=35.2px sealY=406px hintAlign=left (edge gap 35.2px) threshold=clear of the Ghost_Body_Box and the Envelope, edge gap 0 to 24px, seal centre within the group, hint left or centre and unclipped, inside the viewport
+  PASS    AL1   answer-list    1280x800 eu-tomas/marks present=true onGhost=false onSealGroup=false threshold=present, clear of [data-ghost] and [data-seal-group]
+  PASS    CF1   card-fit       1280x800 eu-tomas/marks cards=1 worstSlack=0.0px threshold=height minus content<=48px, holds a non-control
+  PASS    BO1   button-overflow 1280x800 eu-tomas/marks buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  PASS    BC1   control-in-card 1280x800 eu-tomas/marks containers=1 controls=0 worst=0.0px outside=0 threshold=0.5px
+
+[1280x800] eu-tomas/seal
+  PASS    shot  -              1280x800 eu-tomas/seal /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/eu-tomas/seal.png
+  PASS    G2    -              1280x800 eu-tomas/seal Ghost centre x 921.6 px, same as recall
+  polish  GZ1   ghost-after-seal 1280x800 eu-tomas/seal bodyCentre=922px,327px hit=<main class="M9cNGq_main"> threshold=the Ghost or nothing
+
+[1280x800] eu-tomas/letter
+  PASS    shot  -              1280x800 eu-tomas/letter /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/eu-tomas/letter.png
+  PASS    F2    -              1280x800 eu-tomas/letter no text or control on the Soil strip
+  polish  F2    -              1280x800 eu-tomas/letter paper panel overlaps the Soil strip (text is on the paper, so it reads): See the receipts | Show everything
+  PASS    W1    letter-width   1280x800 eu-tomas/letter width=29.2em (496.0px at 17px, [data-letter-text]) threshold=28em..40em
+  PASS    X1    scroll-width   1280x800 eu-tomas/letter scrollWidth=1280px clientWidth=1280px threshold=scrollWidth<=clientWidth
+  polish  BTN   -              1280x800 eu-tomas/letter main button "[data-advance="figures"]" is below the fold at 1280x800 (bottom 1340 px); reachable after scrolling
+  PASS    NT1   -              1280x800 eu-tomas/letter no judgement words, exclamation marks or red or green text
+  PASS    GZ1   ghost-after-seal 1280x800 eu-tomas/letter ghostElements=0 threshold=0
+  PASS    ST1   step-indicator 1280x800 eu-tomas/letter steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 1280x800 eu-tomas/letter items=4 lines=1 ("Remember" clipped (107>67); "Break the seal" clipped (127>87); "Read" clipped (72>32)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  note    GT1   ghost-over-text 1280x800 eu-tomas/letter no [data-ghost] box at this Stage
+  note    CF1   card-fit       1280x800 eu-tomas/letter no [data-card] or [data-stage-panel] at this Stage
+  PASS    BO1   button-overflow 1280x800 eu-tomas/letter buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 1280x800 eu-tomas/letter not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   1280x800 eu-tomas/letter sans=inter sansLoaded=true body=inter serif=ebGaramond serifLoaded=true letter=ebGaramond ([data-letter-text]) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  1280x800 eu-tomas/letter sans=inter measured=6 off=0 threshold=0
+
+[1280x800] eu-tomas/figures
+  PASS    walk  -              1280x800 eu-tomas/figures figures reached (data-ceremony is figures)
+  PASS    shot  -              1280x800 eu-tomas/figures /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/eu-tomas/figures.png at data-ceremony "figures", scrollY 2021
+  PASS    N1    numbers-focus  1280x800 eu-tomas/figures via="[data-advance="figures"]" focused=true/true top=107.5px (close) then 107.5px (close) barBottom=68.0px viewport=800px drift=0.0px threshold=focused, barBottom<=top<viewport, drift<=1px
+  PASS    FV1   heading-focus-ring 1280x800 eu-tomas/figures via=keyboard outlineStyle=solid outlineWidth=2px focused=true focusVisible=true threshold=not none
+  PASS    F2    -              1280x800 eu-tomas/figures no text or control on the Soil strip
+  PASS    NT1   -              1280x800 eu-tomas/figures no judgement words, exclamation marks or red or green text
+  PASS    GZ1   ghost-after-seal 1280x800 eu-tomas/figures ghostElements=0 threshold=0
+
+[1280x800] eu-tomas/close
+  polish  RC1   receipts-in-view 1280x800 eu-tomas/close firstEntry=169px..1340px viewport=1280x800 scrollY=127 threshold=fully inside viewport
+  PASS    B1    figure-boxes   1280x800 eu-tomas/close entries=2 boxes=8 outside=0 threshold=0
+  PASS    L1    line-labels    1280x800 eu-tomas/close labels=6 worst=0.0px² threshold=0px²
+  PASS    X1    scroll-width   1280x800 eu-tomas/close scrollWidth=1280px clientWidth=1280px threshold=scrollWidth<=clientWidth
+  PASS    shot  -              1280x800 eu-tomas/close /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/eu-tomas/close.png
+  PASS    F2    -              1280x800 eu-tomas/close no text or control on the Soil strip
+  PASS    NT1   -              1280x800 eu-tomas/close no judgement words, exclamation marks or red or green text
+  PASS    FT1   footer         1280x800 eu-tomas/close footer=748..800px soil=348..460px threshold=no overlap
+  PASS    GZ1   ghost-after-seal 1280x800 eu-tomas/close ghostElements=0 threshold=0
+  PASS    ST1   step-indicator 1280x800 eu-tomas/close steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 1280x800 eu-tomas/close items=4 lines=1 ("Remember" clipped (107>67); "Break the seal" clipped (127>87); "Read" clipped (71>31)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    TK1   tick-on-axis   1280x800 eu-tomas/close axes=2 ticks=6 worstTopOffset=0.0px worstLabelGap=4.0px labelOverlaps=0 threshold=top offset 0±0.5px, label gap<=8px, no label overlap
+  note    CF1   card-fit       1280x800 eu-tomas/close no [data-card] or [data-stage-panel] at this Stage
+  PASS    FONT2 fonts-sans-ui  1280x800 eu-tomas/close sans=inter measured=9 off=0 threshold=0
+  PASS    BO1   button-overflow 1280x800 eu-tomas/close buttons=3 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 1280x800 eu-tomas/close not on this build: no [data-card], fieldset or [data-stage-panel]
+
+[1280x800] show everything
+  PASS    N1    numbers-focus  1280x800 show everything via="Skip to the receipts" focused=true/true top=107.5px (close) then 107.5px (close) barBottom=68.0px viewport=800px drift=0.0px threshold=focused, barBottom<=top<viewport, drift<=1px
+
+[1280x800] fastest path
+  polish  FP1   fastest-path   1280x800 fastest path questions=2 presses=0 reachedFiguresHeading=false stoppedAt=recall path=none threshold=<=4 presses to [data-figures-heading]
+
+[1280x800] live
+  PASS    shot  -              1280x800 live /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/live.png
+  PASS    X1    scroll-width   1280x800 live scrollWidth=1280px clientWidth=1280px threshold=scrollWidth<=clientWidth
+  PASS    FT1   footer         1280x800 live footer=748..800px soil=540..652px threshold=no overlap
+  PASS    NT1   -              1280x800 live no judgement words, exclamation marks or red or green text
+  note    W1.6  write-step     1280x800 live no Write card with a Letter_Field on /demo/live ([data-card="live-step-write"])
+  PASS    walk  -              1280x800 live /demo/live step "write" reached
+  PASS    BO1   button-overflow 1280x800 live buttons=18 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  polish  BC1   control-in-card 1280x800 live containers=3 controls=20 worst=8.0px outside=1 ("Remove" by 8.0px) threshold=0.5px
+  PASS    FONT1 fonts-loaded   1280x800 live sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  polish  FONT2 fonts-sans-ui  1280x800 live sans=inter measured=20 off=2 (<button> "+ What did I notice firs" in ebGaramond; <button> "+ What do I most want to" in ebGaramond) threshold=0
+  note    live  -              1280x800 live not reached: created, confirming, sealing, sealed, the wait, unlock, remember and receipts (they need a passkey)
+
+[1280x800] letter-page
+  note    X1    scroll-width   1280x800 letter-page /l/layoutcheck-unknown-id answered HTTP 404; measured that page, not a live letter
+  PASS    shot  -              1280x800 letter-page /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1280x800/letter-page.png
+  PASS    X1    scroll-width   1280x800 letter-page scrollWidth=1280px clientWidth=1280px threshold=scrollWidth<=clientWidth
+  PASS    FT1   footer         1280x800 letter-page footer=748..800px soil=230..342px threshold=no overlap
+  PASS    NT1   -              1280x800 letter-page no judgement words, exclamation marks or red or green text
+  PASS    BO1   button-overflow 1280x800 letter-page buttons=1 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 1280x800 letter-page not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   1280x800 letter-page sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  1280x800 letter-page sans=inter measured=2 off=0 threshold=0
+
+==== 1440x900 ====
+
+[1440x900] scene
+  PASS    FR1   -              1440x900 scene script-focused headings draw no outline and Tab reaches a focus ring
+  PASS    shot  -              1440x900 scene /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/scene.png
+  PASS    F2    -              1440x900 scene no text or control on the Soil strip
+  PASS    BTN   -              1440x900 scene main button "[data-cta="primary"]" is fully in view
+  PASS    X1    scroll-width   1440x900 scene scrollWidth=1440px clientWidth=1440px threshold=scrollWidth<=clientWidth
+  PASS    LG1   landing-ghost  1440x900 scene box=450x540px opacity=1.00 inViewport=true overlaps=none threshold=visible, no overlap
+  PASS    NB1   no-dirt-band   1440x900 scene dirt=0 viewport=1440x900 threshold=no dirt class or [data-dirt]
+  PASS    FT1   footer         1440x900 scene footer=847..900px soil=-197..-71px threshold=no overlap
+  PASS    NT1   -              1440x900 scene no judgement words, exclamation marks or red or green text
+  PASS    CTA1  landing-ctas   1440x900 scene primary=456px..512px href=/demo secondary=524px..580px viewport=1440x900 threshold=in view at the top, href=/demo
+  polish  LS1   landing-seal   1440x900 scene width=504.0px viewport=1440x900 threshold=width>=160px (L1.2), seal, h1 and primary call to action inside the First_Viewport (L1.1, L1.3) (L1.1 landing seal is not inside the First_Viewport)
+  BLOCKER H1.6  landing-sections 1440x900 scene hero=504px ritual-title=1180px resurrected-title=1180px coven-title=1180px viewport=1440x900 threshold=content box at least 864px (60% of width) (hero 504px is narrower than 864px)
+  PASS    LF1   landing-halves 1440x900 scene The ritual=60px..1240px What we resurrected=60px..1240px Built by a coven of Kiro agent=60px..1240px viewport=1440x900 threshold=content reaches past 60% of each section's content box
+  PASS    LF2   ritual-cards   1440x900 scene card1=pad 24px text 227px body 16px/24px card2=pad 24px text 227px body 16px/24px card3=pad 24px text 227px body 16px/24px card4=pad 24px text 227px body 16px/24px viewport=1440x900 threshold=24px padding, 200px text width, 24px between cards, 16px body text at 1.5
+  PASS    H2.7  ritual         1440x900 scene 4 items in 1 row(s) tops=1062px,1062px,1062px,1062px viewport=1440x900 threshold=4 items in 1 row
+  PASS    BO1   button-overflow 1440x900 scene buttons=1 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 1440x900 scene not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   1440x900 scene sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  1440x900 scene sans=inter measured=10 off=0 threshold=0
+
+[1440x900] emerging
+  PASS    FR1   -              1440x900 emerging script-focused headings draw no outline and Tab reaches a focus ring
+  PASS    shot  -              1440x900 emerging /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/emerging.png
+  PASS    F2    -              1440x900 emerging no text or control on the Soil strip
+  polish  F2    -              1440x900 emerging paper panel overlaps the Soil strip (text is on the paper, so it reads): Bringing the letter into the light.
+
+[1440x900] sealed
+  PASS    FR1   -              1440x900 sealed script-focused headings draw no outline and Tab reaches a focus ring
+  PASS    shot  -              1440x900 sealed /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/sealed.png
+  PASS    F2    -              1440x900 sealed no text or control on the Soil strip
+
+[1440x900] error
+  PASS    FR1   -              1440x900 error script-focused headings draw no outline and Tab reaches a focus ring
+  PASS    shot  -              1440x900 error /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/error.png
+  PASS    F2    -              1440x900 error no text or control on the Soil strip
+
+[1440x900] index
+  PASS    FR1   -              1440x900 index script-focused headings draw no outline and Tab reaches a focus ring
+  PASS    shot  -              1440x900 index /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/index.png
+  PASS    walk  -              1440x900 index /demo links to /demo/personas/us-maya
+  PASS    walk  -              1440x900 index /demo links to /demo/personas/eu-tomas
+  PASS    DL1   one-demo-label 1440x900 index labels=1 viewport=1440x900 threshold=one Demo label
+  PASS    NT1   -              1440x900 index no judgement words, exclamation marks or red or green text
+  PASS    BO1   button-overflow 1440x900 index buttons=2 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 1440x900 index not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   1440x900 index sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  1440x900 index sans=inter measured=3 off=0 threshold=0
+
+[1440x900] intact
+
+[1440x900] recall
+  PASS    walk  -              1440x900 recall recall reached on load, with no pick-up press
+  PASS    FC1   load-focus     1440x900 recall active=<h2#recall-q1-title> onHeading=true scrollY=0 atLoad=0 threshold=focus on [data-stage-heading], scrollY unchanged
+  PASS    R1    recall-in-view 1440x900 recall question=444..553px field=602..671px next=683..727px viewport=1440x900 focusScroll=0px threshold=inside viewport at scrollY 0
+  PASS    FR1   -              1440x900 recall script-focused headings draw no outline and Tab reaches a focus ring
+  PASS    shot  -              1440x900 recall /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/recall.png
+  PASS    X1    scroll-width   1440x900 recall scrollWidth=1440px clientWidth=1440px threshold=scrollWidth<=clientWidth
+  PASS    T2    tick-labels    1440x900 recall scales=1 overlaps=0 threshold=0
+  PASS    F1    -              1440x900 recall named boxes in view and off the Soil strip
+  PASS    F2    -              1440x900 recall no text or control on the Soil strip
+  PASS    G1    -              1440x900 recall no text or control on the Ghost body
+  PASS    LC1   -              1440x900 recall first line clear of the step track at 1440x900 (Remember)
+  PASS    G2    -              1440x900 recall Ghost centre x 1036.8 px (expected 1036.8)
+  PASS    NT1   -              1440x900 recall no judgement words, exclamation marks or red or green text
+  PASS    ST1   step-indicator 1440x900 recall steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  PASS    F3    persona-remember 1440x900 recall notice=26px..42px labels=4 question=553px continue="Next question" viewport=1440x900 threshold=notice clear of the step labels, question, answer and continue control inside the viewport
+  polish  SI1   step-indicator-fit 1440x900 recall items=4 lines=1 ("Remember" clipped (109>69); "Break the seal" clipped (127>87); "Read" clipped (71>31)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    GT1   ghost-over-text 1440x900 recall measured=25 ghostBody=866px..1208pxx169px..560px hits=0 threshold=0 outside [data-ghost] on the Ghost_Body_Box (at the Stage start and scrolled to the bottom)
+  note    CF1   card-fit       1440x900 recall no [data-card] or [data-stage-panel] at this Stage
+  PASS    BO1   button-overflow 1440x900 recall buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  PASS    BC1   control-in-card 1440x900 recall containers=1 controls=4 worst=0.0px outside=0 threshold=0.5px
+  PASS    FONT1 fonts-loaded   1440x900 recall sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  1440x900 recall sans=inter measured=6 off=0 threshold=0
+  PASS    BTN   -              1440x900 recall main button "Next question" is fully in view
+  PASS    G1    -              1440x900 recall no text or control on the Ghost body
+  PASS    BTN   -              1440x900 recall main button "Record my answers" is fully in view
+
+[1440x900] marks
+  PASS    FR1   -              1440x900 marks script-focused headings draw no outline and Tab reaches a focus ring
+  PASS    shot  -              1440x900 marks /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/marks.png
+  note    F1    -              1440x900 marks not on this build: marks-heading, marks-answers
+  polish  F1    -              1440x900 marks "break" paper panel overlaps the Soil strip
+  PASS    F1    -              1440x900 marks named boxes in view and off the Soil strip
+  PASS    F2    -              1440x900 marks no text or control on the Soil strip
+  polish  F2    -              1440x900 marks paper panel overlaps the Soil strip (text is on the paper, so it reads): No. 2 diesel, retail price3.45 USD per g
+  PASS    G1    -              1440x900 marks no text or control on the Ghost body
+  PASS    G2    -              1440x900 marks Ghost centre x 1036.8 px, same as recall
+  BLOCKER GO1   soil-overlap   1440x900 marks GO1 text "3.45 USD per gallon" overlaps the Soil strip by 166.3 px wide and 17.1 px tall, want at least 8 px clear. (Break the seal, at the start)
+  BLOCKER GO1   soil-overlap   1440x900 marks GO1 text "3.45 USD per gallon" overlaps the Soil strip by 166.3 px wide and 17.1 px tall, want at least 8 px clear. (Break the seal, scrolled to the bottom)
+  BLOCKER LC1   track-gap      1440x900 marks LC1 text "You remembered, just now" starts 15 px below the step track, want at least 16 px. (Break the seal)
+  PASS    BTN   -              1440x900 marks main button "Break the seal" is fully in view
+  PASS    X1    scroll-width   1440x900 marks scrollWidth=1440px clientWidth=1440px threshold=scrollWidth<=clientWidth
+  PASS    NT1   -              1440x900 marks no judgement words, exclamation marks or red or green text
+  note    RS1   scale-overlap  1440x900 marks not on this build: no [data-recorded-scale]
+  PASS    ST1   step-indicator 1440x900 marks steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 1440x900 marks items=4 lines=1 ("Remember" clipped (107>67); "Break the seal" clipped (130>90); "Read" clipped (71>31)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    AL1   answer-list    1440x900 marks present=true onGhost=false onSealGroup=false threshold=present, clear of [data-ghost] and [data-seal-group]
+  PASS    CF1   card-fit       1440x900 marks cards=1 worstSlack=0.0px threshold=height minus content<=48px, holds a non-control
+  PASS    BO1   button-overflow 1440x900 marks buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  PASS    BC1   control-in-card 1440x900 marks containers=1 controls=0 worst=0.0px outside=0 threshold=0.5px
+
+[1440x900] seal
+  PASS    FR1   -              1440x900 seal script-focused headings draw no outline and Tab reaches a focus ring
+  PASS    shot  -              1440x900 seal /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/seal.png
+  PASS    U8    break-seal-size 1440x900 seal width=160.0px viewport=1440x900 threshold=width>=160px (U8.1), seal, Break the seal control and Skip inside the viewport
+  PASS    G2    -              1440x900 seal Ghost centre x 1036.8 px, same as recall
+  polish  GZ1   ghost-after-seal 1440x900 seal bodyCentre=1037px,368px hit=<main class="M9cNGq_main"> threshold=the Ghost or nothing
+
+[1440x900] letter
+  PASS    FR1   -              1440x900 letter script-focused headings draw no outline and Tab reaches a focus ring
+  PASS    shot  -              1440x900 letter /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/letter.png
+  PASS    F2    -              1440x900 letter no text or control on the Soil strip
+  polish  F2    -              1440x900 letter paper panel overlaps the Soil strip (text is on the paper, so it reads): See the receipts | Show everything
+  PASS    W1    letter-width   1440x900 letter width=29.2em (496.0px at 17px, [data-letter-text]) threshold=28em..40em
+  PASS    X1    scroll-width   1440x900 letter scrollWidth=1440px clientWidth=1440px threshold=scrollWidth<=clientWidth
+  polish  BTN   -              1440x900 letter main button "[data-advance="figures"]" is below the fold at 1440x900 (bottom 1256 px); reachable after scrolling
+  PASS    NT1   -              1440x900 letter no judgement words, exclamation marks or red or green text
+  PASS    GZ1   ghost-after-seal 1440x900 letter ghostElements=0 threshold=0
+  PASS    ST1   step-indicator 1440x900 letter steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 1440x900 letter items=4 lines=1 ("Remember" clipped (107>67); "Break the seal" clipped (127>87); "Read" clipped (72>32)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  note    GT1   ghost-over-text 1440x900 letter no [data-ghost] box at this Stage
+  note    CF1   card-fit       1440x900 letter no [data-card] or [data-stage-panel] at this Stage
+  PASS    BO1   button-overflow 1440x900 letter buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 1440x900 letter not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   1440x900 letter sans=inter sansLoaded=true body=inter serif=ebGaramond serifLoaded=true letter=ebGaramond ([data-letter-text]) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  1440x900 letter sans=inter measured=6 off=0 threshold=0
+
+[1440x900] figures
+  PASS    walk  -              1440x900 figures figures reached (data-ceremony is figures)
+  PASS    shot  -              1440x900 figures /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/figures.png at data-ceremony "figures", scrollY 1191
+  PASS    N1    numbers-focus  1440x900 figures via="[data-advance="figures"]" focused=true/true top=108.1px (close) then 108.1px (close) barBottom=68.0px viewport=900px drift=0.0px threshold=focused, barBottom<=top<viewport, drift<=1px
+  PASS    FV1   heading-focus-ring 1440x900 figures via=mouse outlineStyle=none outlineWidth=3px focused=true focusVisible=false threshold=none
+  PASS    F2    -              1440x900 figures no text or control on the Soil strip
+  PASS    NT1   -              1440x900 figures no judgement words, exclamation marks or red or green text
+  PASS    GZ1   ghost-after-seal 1440x900 figures ghostElements=0 threshold=0
+
+[1440x900] close
+  PASS    B1    figure-boxes   1440x900 close entries=2 boxes=8 outside=0 threshold=0
+  PASS    L1    line-labels    1440x900 close labels=6 worst=0.0px² threshold=0px²
+  PASS    X1    scroll-width   1440x900 close scrollWidth=1440px clientWidth=1440px threshold=scrollWidth<=clientWidth
+  PASS    FR1   -              1440x900 close script-focused headings draw no outline and Tab reaches a focus ring
+  PASS    shot  -              1440x900 close /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/close.png
+  PASS    F2    -              1440x900 close no text or control on the Soil strip
+  PASS    NT1   -              1440x900 close no judgement words, exclamation marks or red or green text
+  PASS    FT1   footer         1440x900 close footer=848..900px soil=420..546px threshold=no overlap
+  PASS    GZ1   ghost-after-seal 1440x900 close ghostElements=0 threshold=0
+  PASS    ST1   step-indicator 1440x900 close steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 1440x900 close items=4 lines=1 ("Remember" clipped (107>67); "Break the seal" clipped (127>87); "Read" clipped (71>31)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    TK1   tick-on-axis   1440x900 close axes=2 ticks=6 worstTopOffset=0.0px worstLabelGap=4.0px labelOverlaps=0 threshold=top offset 0±0.5px, label gap<=8px, no label overlap
+  note    CF1   card-fit       1440x900 close no [data-card] or [data-stage-panel] at this Stage
+  PASS    FONT2 fonts-sans-ui  1440x900 close sans=inter measured=9 off=0 threshold=0
+  PASS    BO1   button-overflow 1440x900 close buttons=3 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 1440x900 close not on this build: no [data-card], fieldset or [data-stage-panel]
+
+[1440x900] eu-tomas/intact
+
+[1440x900] eu-tomas/recall
+  PASS    walk  -              1440x900 eu-tomas/recall recall reached on load, with no pick-up press
+  PASS    FC1   load-focus     1440x900 eu-tomas/recall active=<h2#recall-q1-title> onHeading=true scrollY=0 atLoad=0 threshold=focus on [data-stage-heading], scrollY unchanged
+  PASS    R1    recall-in-view 1440x900 eu-tomas/recall question=444..553px field=630..699px next=711..755px viewport=1440x900 focusScroll=0px threshold=inside viewport at scrollY 0
+  PASS    FR1   -              1440x900 eu-tomas/recall script-focused headings draw no outline and Tab reaches a focus ring
+  PASS    shot  -              1440x900 eu-tomas/recall /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/eu-tomas/recall.png
+  PASS    X1    scroll-width   1440x900 eu-tomas/recall scrollWidth=1440px clientWidth=1440px threshold=scrollWidth<=clientWidth
+  PASS    T2    tick-labels    1440x900 eu-tomas/recall scales=1 overlaps=0 threshold=0
+  PASS    F1    -              1440x900 eu-tomas/recall named boxes in view and off the Soil strip
+  PASS    F2    -              1440x900 eu-tomas/recall no text or control on the Soil strip
+  PASS    G1    -              1440x900 eu-tomas/recall no text or control on the Ghost body
+  PASS    LC1   -              1440x900 eu-tomas/recall first line clear of the step track at 1440x900 (Remember)
+  PASS    G2    -              1440x900 eu-tomas/recall Ghost centre x 1036.8 px (expected 1036.8)
+  PASS    NT1   -              1440x900 eu-tomas/recall no judgement words, exclamation marks or red or green text
+  PASS    ST1   step-indicator 1440x900 eu-tomas/recall steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  PASS    F3    persona-remember 1440x900 eu-tomas/recall notice=26px..42px labels=4 question=553px continue="Next question" viewport=1440x900 threshold=notice clear of the step labels, question, answer and continue control inside the viewport
+  polish  SI1   step-indicator-fit 1440x900 eu-tomas/recall items=4 lines=1 ("Remember" clipped (109>69); "Break the seal" clipped (127>87); "Read" clipped (71>31)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    GT1   ghost-over-text 1440x900 eu-tomas/recall measured=26 ghostBody=866px..1208pxx169px..560px hits=0 threshold=0 outside [data-ghost] on the Ghost_Body_Box (at the Stage start and scrolled to the bottom)
+  note    CF1   card-fit       1440x900 eu-tomas/recall no [data-card] or [data-stage-panel] at this Stage
+  PASS    BO1   button-overflow 1440x900 eu-tomas/recall buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  PASS    BC1   control-in-card 1440x900 eu-tomas/recall containers=1 controls=4 worst=0.0px outside=0 threshold=0.5px
+  PASS    FONT1 fonts-loaded   1440x900 eu-tomas/recall sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  1440x900 eu-tomas/recall sans=inter measured=6 off=0 threshold=0
+  PASS    BTN   -              1440x900 eu-tomas/recall main button "Next question" is fully in view
+  PASS    G1    -              1440x900 eu-tomas/recall no text or control on the Ghost body
+  PASS    BTN   -              1440x900 eu-tomas/recall main button "Record my answers" is fully in view
+
+[1440x900] eu-tomas/marks
+  PASS    FR1   -              1440x900 eu-tomas/marks script-focused headings draw no outline and Tab reaches a focus ring
+  PASS    shot  -              1440x900 eu-tomas/marks /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/eu-tomas/marks.png
+  note    F1    -              1440x900 eu-tomas/marks not on this build: marks-heading, marks-answers
+  polish  F1    -              1440x900 eu-tomas/marks "break" paper panel overlaps the Soil strip
+  PASS    F1    -              1440x900 eu-tomas/marks named boxes in view and off the Soil strip
+  PASS    F2    -              1440x900 eu-tomas/marks no text or control on the Soil strip
+  polish  F2    -              1440x900 eu-tomas/marks paper panel overlaps the Soil strip (text is on the paper, so it reads): Automotive diesel, retail price includin
+  PASS    G1    -              1440x900 eu-tomas/marks no text or control on the Ghost body
+  PASS    G2    -              1440x900 eu-tomas/marks Ghost centre x 1036.8 px, same as recall
+  BLOCKER GO1   soil-overlap   1440x900 eu-tomas/marks GO1 text "1.49 EUR per litre" overlaps the Soil strip by 145.9 px wide and 17.1 px tall, want at least 8 px clear. (Break the seal, at the start)
+  BLOCKER GO1   soil-overlap   1440x900 eu-tomas/marks GO1 text "1.49 EUR per litre" overlaps the Soil strip by 145.9 px wide and 17.1 px tall, want at least 8 px clear. (Break the seal, scrolled to the bottom)
+  BLOCKER LC1   track-gap      1440x900 eu-tomas/marks LC1 text "You remembered, just now" starts 15 px below the step track, want at least 16 px. (Break the seal)
+  PASS    BTN   -              1440x900 eu-tomas/marks main button "Break the seal" is fully in view
+  PASS    X1    scroll-width   1440x900 eu-tomas/marks scrollWidth=1440px clientWidth=1440px threshold=scrollWidth<=clientWidth
+  PASS    NT1   -              1440x900 eu-tomas/marks no judgement words, exclamation marks or red or green text
+  note    RS1   scale-overlap  1440x900 eu-tomas/marks not on this build: no [data-recorded-scale]
+  PASS    ST1   step-indicator 1440x900 eu-tomas/marks steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 1440x900 eu-tomas/marks items=4 lines=1 ("Remember" clipped (107>67); "Break the seal" clipped (130>90); "Read" clipped (71>31)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    AL1   answer-list    1440x900 eu-tomas/marks present=true onGhost=false onSealGroup=false threshold=present, clear of [data-ghost] and [data-seal-group]
+  PASS    CF1   card-fit       1440x900 eu-tomas/marks cards=1 worstSlack=0.0px threshold=height minus content<=48px, holds a non-control
+  PASS    BO1   button-overflow 1440x900 eu-tomas/marks buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  PASS    BC1   control-in-card 1440x900 eu-tomas/marks containers=1 controls=0 worst=0.0px outside=0 threshold=0.5px
+
+[1440x900] eu-tomas/seal
+  PASS    FR1   -              1440x900 eu-tomas/seal script-focused headings draw no outline and Tab reaches a focus ring
+  PASS    shot  -              1440x900 eu-tomas/seal /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/eu-tomas/seal.png
+  PASS    U8    break-seal-size 1440x900 eu-tomas/seal width=160.0px viewport=1440x900 threshold=width>=160px (U8.1), seal, Break the seal control and Skip inside the viewport
+  PASS    G2    -              1440x900 eu-tomas/seal Ghost centre x 1036.8 px, same as recall
+  polish  GZ1   ghost-after-seal 1440x900 eu-tomas/seal bodyCentre=1037px,368px hit=<main class="M9cNGq_main"> threshold=the Ghost or nothing
+
+[1440x900] eu-tomas/letter
+  PASS    FR1   -              1440x900 eu-tomas/letter script-focused headings draw no outline and Tab reaches a focus ring
+  PASS    shot  -              1440x900 eu-tomas/letter /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/eu-tomas/letter.png
+  PASS    F2    -              1440x900 eu-tomas/letter no text or control on the Soil strip
+  polish  F2    -              1440x900 eu-tomas/letter paper panel overlaps the Soil strip (text is on the paper, so it reads): See the receipts | Show everything
+  PASS    W1    letter-width   1440x900 eu-tomas/letter width=29.2em (496.0px at 17px, [data-letter-text]) threshold=28em..40em
+  PASS    X1    scroll-width   1440x900 eu-tomas/letter scrollWidth=1440px clientWidth=1440px threshold=scrollWidth<=clientWidth
+  polish  BTN   -              1440x900 eu-tomas/letter main button "[data-advance="figures"]" is below the fold at 1440x900 (bottom 1342 px); reachable after scrolling
+  PASS    NT1   -              1440x900 eu-tomas/letter no judgement words, exclamation marks or red or green text
+  PASS    GZ1   ghost-after-seal 1440x900 eu-tomas/letter ghostElements=0 threshold=0
+  PASS    ST1   step-indicator 1440x900 eu-tomas/letter steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 1440x900 eu-tomas/letter items=4 lines=1 ("Remember" clipped (107>67); "Break the seal" clipped (127>87); "Read" clipped (72>32)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  note    GT1   ghost-over-text 1440x900 eu-tomas/letter no [data-ghost] box at this Stage
+  note    CF1   card-fit       1440x900 eu-tomas/letter no [data-card] or [data-stage-panel] at this Stage
+  PASS    BO1   button-overflow 1440x900 eu-tomas/letter buttons=4 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 1440x900 eu-tomas/letter not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   1440x900 eu-tomas/letter sans=inter sansLoaded=true body=inter serif=ebGaramond serifLoaded=true letter=ebGaramond ([data-letter-text]) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  1440x900 eu-tomas/letter sans=inter measured=6 off=0 threshold=0
+
+[1440x900] eu-tomas/figures
+  PASS    walk  -              1440x900 eu-tomas/figures figures reached (data-ceremony is figures)
+  PASS    shot  -              1440x900 eu-tomas/figures /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/eu-tomas/figures.png at data-ceremony "figures", scrollY 1742
+  PASS    N1    numbers-focus  1440x900 eu-tomas/figures via="[data-advance="figures"]" focused=true/true top=108.1px (close) then 108.1px (close) barBottom=68.0px viewport=900px drift=0.0px threshold=focused, barBottom<=top<viewport, drift<=1px
+  PASS    FV1   heading-focus-ring 1440x900 eu-tomas/figures via=keyboard outlineStyle=solid outlineWidth=2px focused=true focusVisible=true threshold=not none
+  PASS    F2    -              1440x900 eu-tomas/figures no text or control on the Soil strip
+  PASS    NT1   -              1440x900 eu-tomas/figures no judgement words, exclamation marks or red or green text
+  PASS    GZ1   ghost-after-seal 1440x900 eu-tomas/figures ghostElements=0 threshold=0
+
+[1440x900] eu-tomas/close
+  PASS    B1    figure-boxes   1440x900 eu-tomas/close entries=2 boxes=8 outside=0 threshold=0
+  PASS    L1    line-labels    1440x900 eu-tomas/close labels=6 worst=0.0px² threshold=0px²
+  PASS    X1    scroll-width   1440x900 eu-tomas/close scrollWidth=1440px clientWidth=1440px threshold=scrollWidth<=clientWidth
+  BLOCKER FR1   script-focus-outline 1440x900 eu-tomas/close Script-focused h2 (tabindex -1) draws an outline: style solid, width 2px, colour rgb(245, 243, 255).
+  PASS    shot  -              1440x900 eu-tomas/close /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/eu-tomas/close.png
+  PASS    F2    -              1440x900 eu-tomas/close no text or control on the Soil strip
+  PASS    NT1   -              1440x900 eu-tomas/close no judgement words, exclamation marks or red or green text
+  PASS    FT1   footer         1440x900 eu-tomas/close footer=847..900px soil=419..545px threshold=no overlap
+  PASS    GZ1   ghost-after-seal 1440x900 eu-tomas/close ghostElements=0 threshold=0
+  PASS    ST1   step-indicator 1440x900 eu-tomas/close steps=4 current=1 lines=1 threshold=present, current=1, lines<=1
+  polish  SI1   step-indicator-fit 1440x900 eu-tomas/close items=4 lines=1 ("Remember" clipped (107>67); "Break the seal" clipped (127>87); "Read" clipped (71>31)) threshold=4 items, scrollWidth<=clientWidth, inside the viewport, clear of [data-ghost], lines<=1
+  PASS    TK1   tick-on-axis   1440x900 eu-tomas/close axes=2 ticks=6 worstTopOffset=0.0px worstLabelGap=4.0px labelOverlaps=0 threshold=top offset 0±0.5px, label gap<=8px, no label overlap
+  note    CF1   card-fit       1440x900 eu-tomas/close no [data-card] or [data-stage-panel] at this Stage
+  PASS    FONT2 fonts-sans-ui  1440x900 eu-tomas/close sans=inter measured=9 off=0 threshold=0
+  PASS    BO1   button-overflow 1440x900 eu-tomas/close buttons=3 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 1440x900 eu-tomas/close not on this build: no [data-card], fieldset or [data-stage-panel]
+
+[1440x900] show everything
+  PASS    N1    numbers-focus  1440x900 show everything via="Skip to the receipts" focused=true/true top=108.1px (close) then 108.1px (close) barBottom=68.0px viewport=900px drift=0.0px threshold=focused, barBottom<=top<viewport, drift<=1px
+
+[1440x900] fastest path
+  polish  FP1   fastest-path   1440x900 fastest path questions=2 presses=0 reachedFiguresHeading=false stoppedAt=recall path=none threshold=<=4 presses to [data-figures-heading]
+  polish  W     write-step     1440x900 fastest path field top=629px questions=0 viewport=1440x900 threshold=field top at most 360px, question rows at most two lines (W1.3 Letter_Field top is 629px from the top, need at most 360px)
+  note    W8    heading-offset 1440x900 fastest path after Next press 1: not on this build: no [data-live-stepper] heading after the step change
+  note    T1    wait-envelope  1440x900 fastest path not reached: the Wait and live Remember steps come after a passkey seal, which this check does not make; Live_Walk measures them
+  note    TG2   wait-ghost     1440x900 fastest path not reached: the Wait and live Remember steps come after a passkey seal, which this check does not make; Live_Walk measures them
+  note    F4    live-remember  1440x900 fastest path not reached: the Wait and live Remember steps come after a passkey seal, which this check does not make; Live_Walk measures them
+  PASS    P1    press-envelope 1440x900 fastest path largest=BUTTON 392x253 press=392x253px accent=2 warningTop=286.8->286.8 viewport=1440x900 threshold=press largest, 44x44 px focusable, Press_Envelope and at most one Seal_Button inside [data-press-column] orange, Warning_Text unchanged in a 250 ms hold
+SF1 and TT1 on Press the seal at 1440x900
+  PASS    SF1   -              1440x900 fastest path Seal panel fills its surface at 1440x900
+  PASS    TT1   -              1440x900 fastest path press target wax mark meets the size floor at 1440x900
+UQ1, CT1 and SF1 on the Wait step at 1440x900
+  BLOCKER UQ1   unique-demo-label-and-seal 1440x900 fastest path UQ1 the Wait step was not reached at 1440x900, so nothing was measured: locator.waitFor: Timeout 30000ms exceeded. (data-live-step=cannot_lock). Want: the virtual-passkey walk reaches [data-live-step="sealed"].
+  BLOCKER CT1   text-contrast  1440x900 fastest path CT1 the Wait step was not reached at 1440x900, so nothing was measured: locator.waitFor: Timeout 30000ms exceeded. (data-live-step=cannot_lock). Want: the virtual-passkey walk reaches [data-live-step="sealed"].
+  BLOCKER SF1   panel-fills-surface 1440x900 fastest path SF1 the Wait step was not reached at 1440x900, so nothing was measured: locator.waitFor: Timeout 30000ms exceeded. (data-live-step=cannot_lock). Want: the virtual-passkey walk reaches [data-live-step="sealed"].
+
+[1440x900] live
+  PASS    FR1   -              1440x900 live script-focused headings draw no outline and Tab reaches a focus ring
+  PASS    shot  -              1440x900 live /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/live.png
+  PASS    X1    scroll-width   1440x900 live scrollWidth=1440px clientWidth=1440px threshold=scrollWidth<=clientWidth
+  PASS    FT1   footer         1440x900 live footer=848..900px soil=626..752px threshold=no overlap
+  PASS    NT1   -              1440x900 live no judgement words, exclamation marks or red or green text
+  note    W1.6  write-step     1440x900 live no Write card with a Letter_Field on /demo/live ([data-card="live-step-write"])
+  PASS    walk  -              1440x900 live /demo/live step "write" reached
+  PASS    BO1   button-overflow 1440x900 live buttons=18 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  polish  BC1   control-in-card 1440x900 live containers=3 controls=20 worst=8.0px outside=1 ("Remove" by 8.0px) threshold=0.5px
+  PASS    FONT1 fonts-loaded   1440x900 live sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  polish  FONT2 fonts-sans-ui  1440x900 live sans=inter measured=20 off=2 (<button> "+ What did I notice firs" in ebGaramond; <button> "+ What do I most want to" in ebGaramond) threshold=0
+  note    live  -              1440x900 live not reached: created, confirming, sealing, sealed, the wait, unlock, remember and receipts (they need a passkey)
+
+[1440x900] letter-page
+  note    X1    scroll-width   1440x900 letter-page /l/layoutcheck-unknown-id answered HTTP 404; measured that page, not a live letter
+  PASS    FR1   -              1440x900 letter-page script-focused headings draw no outline and Tab reaches a focus ring
+  PASS    shot  -              1440x900 letter-page /home/dopey/kiro/revenant-crew/.kirocrew-work/TASK_32b0d75d_1795718586879914928/layout-check-shots-32b0d75d/1440x900/letter-page.png
+  PASS    X1    scroll-width   1440x900 letter-page scrollWidth=1440px clientWidth=1440px threshold=scrollWidth<=clientWidth
+  PASS    FT1   footer         1440x900 letter-page footer=848..900px soil=230..356px threshold=no overlap
+  PASS    NT1   -              1440x900 letter-page no judgement words, exclamation marks or red or green text
+  PASS    BO1   button-overflow 1440x900 letter-page buttons=1 worst=0px over=0 threshold=scrollWidth<=clientWidth
+  note    BC1   control-in-card 1440x900 letter-page not on this build: no [data-card], fieldset or [data-stage-panel]
+  PASS    FONT1 fonts-loaded   1440x900 letter-page sans=inter sansLoaded=true body=inter letter=none (serif not checked) threshold=loaded and first
+  PASS    FONT2 fonts-sans-ui  1440x900 letter-page sans=inter measured=2 off=0 threshold=0
+
+==== 1440x900 (U9) ====
+
+[1440x900] demo-seals
+  PASS    U9    persona-seal-size 1440x900 demo-seals seals=3 widths=96.0px 96.0px 96.0px viewport=1440x900 threshold=width>=96px, inside its card, no sideways scroll
+
+==== 390x844 (U9) ====
+
+[390x844] demo-seals
+  PASS    U9    persona-seal-size 390x844 demo-seals seals=3 widths=96.0px 96.0px 96.0px viewport=390x844 threshold=width>=96px, inside its card, no sideways scroll
+
+==== 1440x900 (Q1.1 desk rows) ====
+
+[1440x900] write
+  PASS    S1    step-track     1440x900 write stage=write states=current,todo,todo,todo,todo,todo viewport=1440x900 threshold=six steps, one current, the S1.2 dot and label values, phone text at under 600 px
+  PASS    W1    write-layout   1440x900 write content=1176 sheet=804 panel=340 sticky=static viewport=1440x900 threshold=side by side from 992 px of content, sticky panel, no sideways scroll, Fold_Button reachable
+  PASS    W4    letter-sheet   1440x900 write viewport=1440x900 threshold=#f6ead4, 6 px radius, 48/56/40 padding (24/20 on a phone)
+  PASS    W6.1  perforation    1440x900 write viewport=1440x900 threshold=dashed 2 px line, sheet edge to sheet edge, rgba(74,64,54,.28)
+  PASS    W13.1 fold-button    1440x900 write viewport=1440x900 threshold=56 px, #ff7b1c fill, #0b0912 16 px weight 800 text, #ff8f3d on hover
+  PASS    W13.5 desk-accent    1440x900 write buttons=16 viewport=1440x900 threshold=no Accent fill or border on any desk button except the Fold_Button
+  PASS    W2    write-header   1440x900 write viewport=1440x900 threshold=eyebrow 12 px, one h1 at 56 px (36 px on a phone), intro 17 px within 620 px
+  PASS    W3    occasion-pills 1440x900 write pills=5 viewport=1440x900 threshold=five pills in order, 44 px, "A blank page" selected at load
+  PASS    W5    letter-field   1440x900 write height=296 viewport=1440x900 threshold=21 px text on 32 px lines, no border, transparent, at least 296 px tall, labelled "Your letter"
+  polish  W7    question-row   1440x900 write viewport=1440x900 threshold=Wax_Disc 30 px, 21 px question, 13 px Lock_Line, Remove at least 44 px (W7.3 no question input; W7.5 no Lock_Line)
+  PASS    W8    ask-another    1440x900 write rows=2 pills=0 viewport=1440x900 threshold="Ask another:", pills of at least 40 px with the W8.2 border and type, "+ Write my own" at 14 px 600
+  polish  W9    in-envelope-card 1440x900 write viewport=1440x900 threshold=card #15111f, 1px #2a2340, 10 px radius, 24 px padding, three Checklist_Lines (W9.5 9 Checklist_Lines, want 3)
+  polish  W10   receipt-card   1440x900 write viewport=1440x900 threshold=card style, Receipt_Toggle with 40 px buttons, "A public price" active (W10.3 "A public price" is 48px tall, want 40px; W10.3 "A number of my own" is 48px tall, want 40px)
+  PASS    W11   public-price-rows 1440x900 write rows=4 viewport=1440x900 threshold=rows at least 56 px, 8 px radius, unselected #0b0912 with 1px #2a2340, no Accent
+  PASS    W12   own-number     1440x900 write inputs=4 viewport=1440x900 threshold=four 44 px inputs, 8 px radius, #0b0912 fill, 1px #3a3350 border
+  PASS    W13.4 rehearsal-line 1440x900 write count=1 viewport=1440x900 threshold=the Rehearsal_Line once on the Write step
+  PASS    X2.1  desk-occasion-pill-work 1440x900 write control="Occasion pill Work" viewport=1440x900 threshold=each desk control activated twice: same state, letter and focus
+  polish  X2.1  desk-suggestion-pill 1440x900 write control="Suggestion pill" viewport=1440x900 threshold=each desk control activated twice: same state, letter and focus (X2.1 focus left "Suggestion pill" after its second activation)
+  polish  X2.1  desk-ask-another 1440x900 write "Ask another:" is a text label, not a control; its pills are checked as desk-suggestion-pill viewport=1440x900
+  note    X2.1  desk-add-a-letter 1440x900 write not on this build: no Add a letter control on the desk
+  note    X2.1  desk-write-my-own 1440x900 write not on this build: no + Write my own control on the desk
+  PASS    X2.1  desk-remove    1440x900 write control="Remove" viewport=1440x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-a-public-price 1440x900 write control="A public price" viewport=1440x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-a-number-of-my-own 1440x900 write control="A number of my own" viewport=1440x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-own-number-input-1 1440x900 write control="own-number input 1" viewport=1440x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-own-number-input-2 1440x900 write control="own-number input 2" viewport=1440x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-own-number-input-3 1440x900 write control="own-number input 3" viewport=1440x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-own-number-input-4 1440x900 write control="own-number input 4" viewport=1440x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-figure-row 1440x900 write control="Figure_Row" viewport=1440x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-details   1440x900 write control="Details" viewport=1440x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-fold-button 1440x900 write control="Fold_Button" viewport=1440x900 threshold=each desk control activated twice: same state, letter and focus
+  polish  W5.2  ruled-baseline 1440x900 write scrollTop=640px attachment=local rule-offset=7px before=[1:15.0 2:15.0 3:15.0] after=[21:15.0 22:15.0 23:15.0] viewport=1440x900 threshold=each measured baseline within 2 px of its ruled line, before and after the internal scroll, with the rules moving with the text (W5.2 line 1 baseline is 15.0px from its rule before the scroll, want at most 2px; W5.2 line 2 baseline is 15.0px from its rule before the scroll, want at most 2px; W5.2 line 3 baseline is 15.0px from its rule before the scroll, want at most 2px; W5.2 line 21 baseline is 15.0px from its rule after the scroll, want at most 2px; W5.2 line 22 baseline is 15.0px from its rule after the scroll, want at most 2px; W5.2 line 23 baseline is 15.0px from its rule after the scroll, want at most 2px)
+  note    S2    -              1440x900 write could not run: page.waitForSelector: Timeout 8000ms exceeded.
+  PASS    S1    step-track     1440x900 write stage=seal states=current,todo,todo,todo,todo,todo viewport=1440x900 threshold=six steps, one current, the S1.2 dot and label values, phone text at under 600 px
+
+[1440x900] seal
+  note    S3.1  seal-columns   1440x900 seal not on this build: no [data-seal-text] or [data-press-column]
+  note    S6.1  press-envelope 1440x900 seal not on this build: no [data-press-envelope]
+  note    S     -              1440x900 seal not on this build: no [data-backup-card="skip"] backup card
+
+==== 390x844 (Q1.1 desk rows) ====
+
+[390x844] write
+  polish  S1    step-track     390x844 write stage=write states=current,todo,todo,todo,todo,todo viewport=390x844 threshold=six steps, one current, the S1.2 dot and label values, phone text at under 600 px (S1.1 hairline 1 is 24.0px long, want 36px; S1.1 hairline 2 is 24.0px long, want 36px; S1.1 hairline 3 is 24.0px long, want 36px; S1.1 hairline 4 is 24.0px long, want 36px; S1.1 hairline 5 is 24.0px long, want 36px)
+  PASS    W1    write-layout   390x844 write content=310 sheet=310 panel=310 sticky=static viewport=390x844 threshold=side by side from 992 px of content, sticky panel, no sideways scroll, Fold_Button reachable
+  PASS    W4    letter-sheet   390x844 write viewport=390x844 threshold=#f6ead4, 6 px radius, 48/56/40 padding (24/20 on a phone)
+  PASS    W6.1  perforation    390x844 write viewport=390x844 threshold=dashed 2 px line, sheet edge to sheet edge, rgba(74,64,54,.28)
+  PASS    W13.1 fold-button    390x844 write viewport=390x844 threshold=56 px, #ff7b1c fill, #0b0912 16 px weight 800 text, #ff8f3d on hover
+  PASS    W13.5 desk-accent    390x844 write buttons=16 viewport=390x844 threshold=no Accent fill or border on any desk button except the Fold_Button
+  PASS    W2    write-header   390x844 write viewport=390x844 threshold=eyebrow 12 px, one h1 at 56 px (36 px on a phone), intro 17 px within 620 px
+  PASS    W3    occasion-pills 390x844 write pills=5 viewport=390x844 threshold=five pills in order, 44 px, "A blank page" selected at load
+  PASS    W5    letter-field   390x844 write height=296 viewport=390x844 threshold=21 px text on 32 px lines, no border, transparent, at least 296 px tall, labelled "Your letter"
+  polish  W7    question-row   390x844 write viewport=390x844 threshold=Wax_Disc 30 px, 21 px question, 13 px Lock_Line, Remove at least 44 px (W7.3 no question input; W7.5 no Lock_Line)
+  PASS    W8    ask-another    390x844 write rows=2 pills=0 viewport=390x844 threshold="Ask another:", pills of at least 40 px with the W8.2 border and type, "+ Write my own" at 14 px 600
+  polish  W9    in-envelope-card 390x844 write viewport=390x844 threshold=card #15111f, 1px #2a2340, 10 px radius, 24 px padding, three Checklist_Lines (W9.5 9 Checklist_Lines, want 3)
+  polish  W10   receipt-card   390x844 write viewport=390x844 threshold=card style, Receipt_Toggle with 40 px buttons, "A public price" active (W10.3 "A public price" is 48px tall, want 40px; W10.3 "A number of my own" is 48px tall, want 40px)
+  PASS    W11   public-price-rows 390x844 write rows=4 viewport=390x844 threshold=rows at least 56 px, 8 px radius, unselected #0b0912 with 1px #2a2340, no Accent
+  polish  W12   own-number     390x844 write inputs=4 viewport=390x844 threshold=four 44 px inputs, 8 px radius, #0b0912 fill, 1px #3a3350 border (W12.1 "What is it?" is 0px tall, want 44px; W12.1 "Amount" is 0px tall, want 44px; W12.1 "Unit" is 0px tall, want 44px; W12.1 "Where?" is 0px tall, want 44px)
+  PASS    W13.4 rehearsal-line 390x844 write count=1 viewport=390x844 threshold=the Rehearsal_Line once on the Write step
+  PASS    X2.1  desk-occasion-pill-work 390x844 write control="Occasion pill Work" viewport=390x844 threshold=each desk control activated twice: same state, letter and focus
+  polish  X2.1  desk-suggestion-pill 390x844 write control="Suggestion pill" viewport=390x844 threshold=each desk control activated twice: same state, letter and focus (X2.1 focus left "Suggestion pill" after its second activation)
+  polish  X2.1  desk-ask-another 390x844 write "Ask another:" is a text label, not a control; its pills are checked as desk-suggestion-pill viewport=390x844
+  note    X2.1  desk-add-a-letter 390x844 write not on this build: no Add a letter control on the desk
+  note    X2.1  desk-write-my-own 390x844 write not on this build: no + Write my own control on the desk
+  PASS    X2.1  desk-remove    390x844 write control="Remove" viewport=390x844 threshold=each desk control activated twice: same state, letter and focus
+  note    X2.1  desk-a-public-price 390x844 write not on this build: no A public price control on the desk
+  note    X2.1  desk-a-number-of-my-own 390x844 write not on this build: no A number of my own control on the desk
+  polish  X2.1  desk-own-number-input-1 390x844 write X2.1 "own-number input 1" could not be activated twice: locator.click: Timeout 3000ms exceeded. viewport=390x844
+  polish  X2.1  desk-own-number-input-2 390x844 write X2.1 "own-number input 2" could not be activated twice: locator.click: Timeout 3000ms exceeded. viewport=390x844
+  polish  X2.1  desk-own-number-input-3 390x844 write X2.1 "own-number input 3" could not be activated twice: locator.click: Timeout 3000ms exceeded. viewport=390x844
+  polish  X2.1  desk-own-number-input-4 390x844 write X2.1 "own-number input 4" could not be activated twice: locator.click: Timeout 3000ms exceeded. viewport=390x844
+  polish  X2.1  desk-figure-row 390x844 write X2.1 "Figure_Row" could not be activated twice: locator.click: Timeout 3000ms exceeded. viewport=390x844
+  polish  X2.1  desk-details   390x844 write X2.1 "Details" could not be activated twice: locator.click: Timeout 3000ms exceeded. viewport=390x844
+  PASS    X2.1  desk-fold-button 390x844 write control="Fold_Button" viewport=390x844 threshold=each desk control activated twice: same state, letter and focus
+  polish  W5.2  ruled-baseline 390x844 write scrollTop=640px attachment=local rule-offset=7px before=[1:15.0 2:15.0 3:15.0] after=[21:15.0 22:15.0 23:15.0] viewport=390x844 threshold=each measured baseline within 2 px of its ruled line, before and after the internal scroll, with the rules moving with the text (W5.2 line 1 baseline is 15.0px from its rule before the scroll, want at most 2px; W5.2 line 2 baseline is 15.0px from its rule before the scroll, want at most 2px; W5.2 line 3 baseline is 15.0px from its rule before the scroll, want at most 2px; W5.2 line 21 baseline is 15.0px from its rule after the scroll, want at most 2px; W5.2 line 22 baseline is 15.0px from its rule after the scroll, want at most 2px; W5.2 line 23 baseline is 15.0px from its rule after the scroll, want at most 2px)
+  note    S2    -              390x844 write could not run: page.waitForSelector: Timeout 8000ms exceeded.
+  polish  S1    step-track     390x844 write stage=seal states=current,todo,todo,todo,todo,todo viewport=390x844 threshold=six steps, one current, the S1.2 dot and label values, phone text at under 600 px (S1.1 hairline 1 is 24.0px long, want 36px; S1.1 hairline 2 is 24.0px long, want 36px; S1.1 hairline 3 is 24.0px long, want 36px; S1.1 hairline 4 is 24.0px long, want 36px; S1.1 hairline 5 is 24.0px long, want 36px)
+
+[390x844] seal
+  note    S3.1  seal-columns   390x844 seal not on this build: no [data-seal-text] or [data-press-column]
+  note    S6.1  press-envelope 390x844 seal not on this build: no [data-press-envelope]
+  note    S3.4  warning-to-seal 390x844 seal not on this build: no [data-warning-text] or [data-press-envelope]
+  note    S     -              390x844 seal not on this build: no [data-backup-card="skip"] backup card
+
+==== 1055x900 (Q1.1 desk rows) ====
+
+[1055x900] write
+  PASS    S1    step-track     1055x900 write stage=write states=current,todo,todo,todo,todo,todo viewport=1055x900 threshold=six steps, one current, the S1.2 dot and label values, phone text at under 600 px
+  PASS    W1    write-layout   1055x900 write content=928 sheet=928 panel=928 sticky=static viewport=1055x900 threshold=side by side from 992 px of content, sticky panel, no sideways scroll, Fold_Button reachable
+  PASS    W4    letter-sheet   1055x900 write viewport=1055x900 threshold=#f6ead4, 6 px radius, 48/56/40 padding (24/20 on a phone)
+  PASS    W6.1  perforation    1055x900 write viewport=1055x900 threshold=dashed 2 px line, sheet edge to sheet edge, rgba(74,64,54,.28)
+  PASS    W13.1 fold-button    1055x900 write viewport=1055x900 threshold=56 px, #ff7b1c fill, #0b0912 16 px weight 800 text, #ff8f3d on hover
+  PASS    W13.5 desk-accent    1055x900 write buttons=16 viewport=1055x900 threshold=no Accent fill or border on any desk button except the Fold_Button
+  PASS    W2    write-header   1055x900 write viewport=1055x900 threshold=eyebrow 12 px, one h1 at 56 px (36 px on a phone), intro 17 px within 620 px
+  PASS    W3    occasion-pills 1055x900 write pills=5 viewport=1055x900 threshold=five pills in order, 44 px, "A blank page" selected at load
+  PASS    W5    letter-field   1055x900 write height=296 viewport=1055x900 threshold=21 px text on 32 px lines, no border, transparent, at least 296 px tall, labelled "Your letter"
+  polish  W7    question-row   1055x900 write viewport=1055x900 threshold=Wax_Disc 30 px, 21 px question, 13 px Lock_Line, Remove at least 44 px (W7.3 no question input; W7.5 no Lock_Line)
+  PASS    W8    ask-another    1055x900 write rows=2 pills=0 viewport=1055x900 threshold="Ask another:", pills of at least 40 px with the W8.2 border and type, "+ Write my own" at 14 px 600
+  polish  W9    in-envelope-card 1055x900 write viewport=1055x900 threshold=card #15111f, 1px #2a2340, 10 px radius, 24 px padding, three Checklist_Lines (W9.5 9 Checklist_Lines, want 3)
+  PASS    W10   receipt-card   1055x900 write viewport=1055x900 threshold=card style, Receipt_Toggle with 40 px buttons, "A public price" active
+  PASS    W11   public-price-rows 1055x900 write rows=4 viewport=1055x900 threshold=rows at least 56 px, 8 px radius, unselected #0b0912 with 1px #2a2340, no Accent
+  PASS    W12   own-number     1055x900 write inputs=4 viewport=1055x900 threshold=four 44 px inputs, 8 px radius, #0b0912 fill, 1px #3a3350 border
+  PASS    W13.4 rehearsal-line 1055x900 write count=1 viewport=1055x900 threshold=the Rehearsal_Line once on the Write step
+  PASS    X2.1  desk-occasion-pill-work 1055x900 write control="Occasion pill Work" viewport=1055x900 threshold=each desk control activated twice: same state, letter and focus
+  polish  X2.1  desk-suggestion-pill 1055x900 write control="Suggestion pill" viewport=1055x900 threshold=each desk control activated twice: same state, letter and focus (X2.1 focus left "Suggestion pill" after its second activation)
+  polish  X2.1  desk-ask-another 1055x900 write "Ask another:" is a text label, not a control; its pills are checked as desk-suggestion-pill viewport=1055x900
+  note    X2.1  desk-add-a-letter 1055x900 write not on this build: no Add a letter control on the desk
+  note    X2.1  desk-write-my-own 1055x900 write not on this build: no + Write my own control on the desk
+  PASS    X2.1  desk-remove    1055x900 write control="Remove" viewport=1055x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-a-public-price 1055x900 write control="A public price" viewport=1055x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-a-number-of-my-own 1055x900 write control="A number of my own" viewport=1055x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-own-number-input-1 1055x900 write control="own-number input 1" viewport=1055x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-own-number-input-2 1055x900 write control="own-number input 2" viewport=1055x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-own-number-input-3 1055x900 write control="own-number input 3" viewport=1055x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-own-number-input-4 1055x900 write control="own-number input 4" viewport=1055x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-figure-row 1055x900 write control="Figure_Row" viewport=1055x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-details   1055x900 write control="Details" viewport=1055x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-fold-button 1055x900 write control="Fold_Button" viewport=1055x900 threshold=each desk control activated twice: same state, letter and focus
+  polish  W5.2  ruled-baseline 1055x900 write scrollTop=640px attachment=local rule-offset=7px before=[1:15.0 2:15.0 3:15.0] after=[21:15.0 22:15.0 23:15.0] viewport=1055x900 threshold=each measured baseline within 2 px of its ruled line, before and after the internal scroll, with the rules moving with the text (W5.2 line 1 baseline is 15.0px from its rule before the scroll, want at most 2px; W5.2 line 2 baseline is 15.0px from its rule before the scroll, want at most 2px; W5.2 line 3 baseline is 15.0px from its rule before the scroll, want at most 2px; W5.2 line 21 baseline is 15.0px from its rule after the scroll, want at most 2px; W5.2 line 22 baseline is 15.0px from its rule after the scroll, want at most 2px; W5.2 line 23 baseline is 15.0px from its rule after the scroll, want at most 2px)
+
+==== 1056x900 (Q1.1 desk rows) ====
+
+[1056x900] write
+  PASS    S1    step-track     1056x900 write stage=write states=current,todo,todo,todo,todo,todo viewport=1056x900 threshold=six steps, one current, the S1.2 dot and label values, phone text at under 600 px
+  PASS    W1    write-layout   1056x900 write content=929 sheet=929 panel=929 sticky=static viewport=1056x900 threshold=side by side from 992 px of content, sticky panel, no sideways scroll, Fold_Button reachable
+  PASS    W4    letter-sheet   1056x900 write viewport=1056x900 threshold=#f6ead4, 6 px radius, 48/56/40 padding (24/20 on a phone)
+  PASS    W6.1  perforation    1056x900 write viewport=1056x900 threshold=dashed 2 px line, sheet edge to sheet edge, rgba(74,64,54,.28)
+  PASS    W13.1 fold-button    1056x900 write viewport=1056x900 threshold=56 px, #ff7b1c fill, #0b0912 16 px weight 800 text, #ff8f3d on hover
+  PASS    W13.5 desk-accent    1056x900 write buttons=16 viewport=1056x900 threshold=no Accent fill or border on any desk button except the Fold_Button
+  PASS    W2    write-header   1056x900 write viewport=1056x900 threshold=eyebrow 12 px, one h1 at 56 px (36 px on a phone), intro 17 px within 620 px
+  PASS    W3    occasion-pills 1056x900 write pills=5 viewport=1056x900 threshold=five pills in order, 44 px, "A blank page" selected at load
+  PASS    W5    letter-field   1056x900 write height=296 viewport=1056x900 threshold=21 px text on 32 px lines, no border, transparent, at least 296 px tall, labelled "Your letter"
+  polish  W7    question-row   1056x900 write viewport=1056x900 threshold=Wax_Disc 30 px, 21 px question, 13 px Lock_Line, Remove at least 44 px (W7.3 no question input; W7.5 no Lock_Line)
+  PASS    W8    ask-another    1056x900 write rows=2 pills=0 viewport=1056x900 threshold="Ask another:", pills of at least 40 px with the W8.2 border and type, "+ Write my own" at 14 px 600
+  polish  W9    in-envelope-card 1056x900 write viewport=1056x900 threshold=card #15111f, 1px #2a2340, 10 px radius, 24 px padding, three Checklist_Lines (W9.5 9 Checklist_Lines, want 3)
+  PASS    W10   receipt-card   1056x900 write viewport=1056x900 threshold=card style, Receipt_Toggle with 40 px buttons, "A public price" active
+  PASS    W11   public-price-rows 1056x900 write rows=4 viewport=1056x900 threshold=rows at least 56 px, 8 px radius, unselected #0b0912 with 1px #2a2340, no Accent
+  PASS    W12   own-number     1056x900 write inputs=4 viewport=1056x900 threshold=four 44 px inputs, 8 px radius, #0b0912 fill, 1px #3a3350 border
+  PASS    W13.4 rehearsal-line 1056x900 write count=1 viewport=1056x900 threshold=the Rehearsal_Line once on the Write step
+  PASS    X2.1  desk-occasion-pill-work 1056x900 write control="Occasion pill Work" viewport=1056x900 threshold=each desk control activated twice: same state, letter and focus
+  polish  X2.1  desk-suggestion-pill 1056x900 write control="Suggestion pill" viewport=1056x900 threshold=each desk control activated twice: same state, letter and focus (X2.1 focus left "Suggestion pill" after its second activation)
+  polish  X2.1  desk-ask-another 1056x900 write "Ask another:" is a text label, not a control; its pills are checked as desk-suggestion-pill viewport=1056x900
+  note    X2.1  desk-add-a-letter 1056x900 write not on this build: no Add a letter control on the desk
+  note    X2.1  desk-write-my-own 1056x900 write not on this build: no + Write my own control on the desk
+  PASS    X2.1  desk-remove    1056x900 write control="Remove" viewport=1056x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-a-public-price 1056x900 write control="A public price" viewport=1056x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-a-number-of-my-own 1056x900 write control="A number of my own" viewport=1056x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-own-number-input-1 1056x900 write control="own-number input 1" viewport=1056x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-own-number-input-2 1056x900 write control="own-number input 2" viewport=1056x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-own-number-input-3 1056x900 write control="own-number input 3" viewport=1056x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-own-number-input-4 1056x900 write control="own-number input 4" viewport=1056x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-figure-row 1056x900 write control="Figure_Row" viewport=1056x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-details   1056x900 write control="Details" viewport=1056x900 threshold=each desk control activated twice: same state, letter and focus
+  PASS    X2.1  desk-fold-button 1056x900 write control="Fold_Button" viewport=1056x900 threshold=each desk control activated twice: same state, letter and focus
+  polish  W5.2  ruled-baseline 1056x900 write scrollTop=640px attachment=local rule-offset=7px before=[1:15.0 2:15.0 3:15.0] after=[21:15.0 22:15.0 23:15.0] viewport=1056x900 threshold=each measured baseline within 2 px of its ruled line, before and after the internal scroll, with the rules moving with the text (W5.2 line 1 baseline is 15.0px from its rule before the scroll, want at most 2px; W5.2 line 2 baseline is 15.0px from its rule before the scroll, want at most 2px; W5.2 line 3 baseline is 15.0px from its rule before the scroll, want at most 2px; W5.2 line 21 baseline is 15.0px from its rule after the scroll, want at most 2px; W5.2 line 22 baseline is 15.0px from its rule after the scroll, want at most 2px; W5.2 line 23 baseline is 15.0px from its rule after the scroll, want at most 2px)
+  note    B1.2  topbar-skip-disabled 360x640 live not on this build: no step on /demo/live with Skip disabled
+  note    B1.2  topbar-skip-enabled 360x640 live not on this build: no step on /demo/live with Skip enabled
+  note    B1.2  topbar-skip-disabled 390x844 live not on this build: no step on /demo/live with Skip disabled
+  note    B1.2  topbar-skip-enabled 390x844 live not on this build: no step on /demo/live with Skip enabled
+  PASS    D1.1  demo-lineup    1440x900 demo viewport=1440x900 threshold=card left edge on the wordmark
+  polish  D1.2  demo-card      1440x900 demo viewport=1440x900 threshold=card width and border match a persona card (D1.2 card border rgb(31, 27, 22), a persona card rgb(245, 243, 255))
+  PASS    D1.3  demo-scroll    1440x900 demo viewport=1440x900 threshold=no horizontal scroll on /demo
+  polish  D1.1  demo-lineup    390x844 demo viewport=390x844 threshold=card left edge on the wordmark (D1.1 card left 16px, wordmark left 116px)
+  polish  D1.2  demo-card      390x844 demo viewport=390x844 threshold=card width and border match a persona card (D1.2 card border rgb(31, 27, 22), a persona card rgb(245, 243, 255))
+  PASS    D1.3  demo-scroll    390x844 demo viewport=390x844 threshold=no horizontal scroll on /demo
+
+==== 360x640 (us-maya Q1.1 rows) ====
+
+[360x640] us-maya-recall
+  PASS    GC1   ghost-column   360x640 us-maya-recall viewport=360x640 threshold=ghost inside the viewport, centre within 8 px
+  PASS    PV1   primary-in-view 360x640 us-maya-recall viewport=360x640 threshold=the primary control inside the viewport
+  PASS    DL1   one-demo-label 360x640 us-maya-recall labels=1 viewport=360x640 threshold=one Demo label
+  PASS    B1.5  persona-bar    360x640 us-maya-recall bar=72px viewport=360x640 threshold=Top_Bar at most 96 px on the persona page
+  PASS    B1.4  persona-notice 360x640 us-maya-recall notices=1 viewport=360x640 threshold=the persona notice once, inside the Top_Bar
+
+==== 360x640 (eu-tomas Q1.1 rows) ====
+
+[360x640] eu-tomas-recall
+  PASS    GC1   ghost-column   360x640 eu-tomas-recall viewport=360x640 threshold=ghost inside the viewport, centre within 8 px
+  PASS    PV1   primary-in-view 360x640 eu-tomas-recall viewport=360x640 threshold=the primary control inside the viewport
+  PASS    DL1   one-demo-label 360x640 eu-tomas-recall labels=1 viewport=360x640 threshold=one Demo label
+  PASS    B1.5  persona-bar    360x640 eu-tomas-recall bar=72px viewport=360x640 threshold=Top_Bar at most 96 px on the persona page
+  PASS    B1.4  persona-notice 360x640 eu-tomas-recall notices=1 viewport=360x640 threshold=the persona notice once, inside the Top_Bar
+
+==== 390x844 (us-maya Q1.1 rows) ====
+
+[390x844] us-maya-recall
+  PASS    GC1   ghost-column   390x844 us-maya-recall viewport=390x844 threshold=ghost inside the viewport, centre within 8 px
+  PASS    PV1   primary-in-view 390x844 us-maya-recall viewport=390x844 threshold=the primary control inside the viewport
+  PASS    DL1   one-demo-label 390x844 us-maya-recall labels=1 viewport=390x844 threshold=one Demo label
+  polish  T1.6  recall-viewport 390x844 us-maya-recall persona=us-maya viewport=390x844 threshold=counter, question, Answer_Field and main button inside the First_Viewport (T1.6 no counter to measure)
+  PASS    T2.5  sample-note-viewport 390x844 us-maya-recall persona=us-maya viewport=390x844 threshold=a figure question's Sample_Note inside the First_Viewport
+  polish  T2.1  question-part-order 390x844 us-maya-recall persona=us-maya order=question,button,field,sample-note threshold=question, Sample_Note, Answer_Field and main button in that DOM order (T2.1 DOM order is question, button, field, sample-note, want question, sample-note, field, button)
+  PASS    B1.5  persona-bar    390x844 us-maya-recall bar=72px viewport=390x844 threshold=Top_Bar at most 96 px on the persona page
+  PASS    B1.4  persona-notice 390x844 us-maya-recall notices=1 viewport=390x844 threshold=the persona notice once, inside the Top_Bar
+  polish  T1.6  recall-viewport-200 390x844 us-maya-recall persona=us-maya length=200 viewport=390x844 threshold=200-character answer; counter, question, Answer_Field and main button inside the First_Viewport (T1.6 no counter to measure)
+
+==== 390x844 (eu-tomas Q1.1 rows) ====
+
+[390x844] eu-tomas-recall
+  PASS    GC1   ghost-column   390x844 eu-tomas-recall viewport=390x844 threshold=ghost inside the viewport, centre within 8 px
+  PASS    PV1   primary-in-view 390x844 eu-tomas-recall viewport=390x844 threshold=the primary control inside the viewport
+  PASS    DL1   one-demo-label 390x844 eu-tomas-recall labels=1 viewport=390x844 threshold=one Demo label
+  polish  T1.6  recall-viewport 390x844 eu-tomas-recall persona=eu-tomas viewport=390x844 threshold=counter, question, Answer_Field and main button inside the First_Viewport (T1.6 no counter to measure)
+  PASS    T2.5  sample-note-viewport 390x844 eu-tomas-recall persona=eu-tomas viewport=390x844 threshold=a figure question's Sample_Note inside the First_Viewport
+  polish  T2.1  question-part-order 390x844 eu-tomas-recall persona=eu-tomas order=question,button,field,sample-note threshold=question, Sample_Note, Answer_Field and main button in that DOM order (T2.1 DOM order is question, button, field, sample-note, want question, sample-note, field, button)
+  PASS    B1.5  persona-bar    390x844 eu-tomas-recall bar=72px viewport=390x844 threshold=Top_Bar at most 96 px on the persona page
+  PASS    B1.4  persona-notice 390x844 eu-tomas-recall notices=1 viewport=390x844 threshold=the persona notice once, inside the Top_Bar
+  polish  T1.6  recall-viewport-200 390x844 eu-tomas-recall persona=eu-tomas length=200 viewport=390x844 threshold=200-character answer; counter, question, Answer_Field and main button inside the First_Viewport (T1.6 no counter to measure)
+
+==== 1440x900 (us-maya Q1.1 rows) ====
+
+[1440x900] us-maya-recall
+  PASS    PV1   primary-in-view 1440x900 us-maya-recall viewport=1440x900 threshold=the primary control inside the viewport
+  PASS    DL1   one-demo-label 1440x900 us-maya-recall labels=1 viewport=1440x900 threshold=one Demo label
+  polish  R1.2  letter-column  1440x900 us-maya-recall column=n/apx viewport=1440x900 threshold=letter column centred on the Scene_Frame and at least 600 px wide (R1.2 no [data-letter-stage] to measure)
+  note    R2.2  crease-lines   1440x900 us-maya-recall not on this build: no [data-letter-text]
+  note    R3    reveal-actions 1440x900 us-maya-recall not on this build: no reveal action buttons
+  note    R6.1  line-labels    1440x900 us-maya-recall not on this build: no [data-line-label] on us-maya
+
+==== 1440x900 (eu-tomas Q1.1 rows) ====
+
+[1440x900] eu-tomas-recall
+  PASS    PV1   primary-in-view 1440x900 eu-tomas-recall viewport=1440x900 threshold=the primary control inside the viewport
+  PASS    DL1   one-demo-label 1440x900 eu-tomas-recall labels=1 viewport=1440x900 threshold=one Demo label
+  polish  R1.2  letter-column  1440x900 eu-tomas-recall column=n/apx viewport=1440x900 threshold=letter column centred on the Scene_Frame and at least 600 px wide (R1.2 no [data-letter-stage] to measure)
+  note    R2.2  crease-lines   1440x900 eu-tomas-recall not on this build: no [data-letter-text]
+  note    R3    reveal-actions 1440x900 eu-tomas-recall not on this build: no reveal action buttons
+  note    R6.1  line-labels    1440x900 eu-tomas-recall not on this build: no [data-line-label] on eu-tomas
+  PASS    B2.1  soil-text      1440x900 soil page=/ viewport=1440x900 threshold=no visible text box meets the soil strip at top, half or end scroll
+  PASS    B2.1  soil-text      1440x900 soil page=/demo viewport=1440x900 threshold=no visible text box meets the soil strip at top, half or end scroll
+  PASS    B2.1  soil-text      1440x900 soil page=/demo/personas/us-maya viewport=1440x900 threshold=no visible text box meets the soil strip at top, half or end scroll
+  PASS    B2.1  soil-text      1440x900 soil page=/demo/live viewport=1440x900 threshold=no visible text box meets the soil strip at top, half or end scroll
+
+==== 1440x900 (spec 16 rows of 17.3) ====
+
+[1440x900] hero calm=off
+  PASS    R5.4  hero-lines     1440x900 hero calm=off lines=["Memory drifts with time.","A sealed","letter doesn't."] calm=off viewport=1440x900 threshold=the first sentence on one line box (5.4)
+
+[1440x900] us-maya receipts calm=off
+  PASS    S20.c column-placement 1440x900 us-maya receipts calm=off /demo/personas/us-maya viewport=1440x900 record=448..728 letter=768..1048 threshold=letter column right of the record column, tops level within 1 px
+  PASS    S20.f letter-motion  1440x900 us-maya receipts calm=off /demo/personas/us-maya viewport=1440x900 animate calls=1 animations after move=0 node kept=true threshold=at most one animate call on the letter; the same letter node 2,000 ms after the move
+  PASS    S20.e focus-in-view  1440x900 us-maya receipts calm=off /demo/personas/us-maya viewport=1440x900 heading=108..151 bar bottom=68 threshold=Figures_Heading between the Top_Bar and the viewport bottom, 1 s after the move
+  PASS    S20.g figure-accent  1440x900 us-maya receipts calm=off /demo/personas/us-maya viewport=1440x900 figure text colours=72 accent=rgb(255, 123, 28) threshold=no figure value, change line, period or label in --accent
+  PASS    S20.d letter-sticks  1440x900 us-maya receipts calm=off letter top=-322 bar bottom=68 area bottom=482 letter bottom=482 /demo/personas/us-maya viewport=1440x900 threshold=letter top 0 to 32 px under the Top_Bar, unless the receipts end has reached the letter bottom
+
+[1440x900] seal calm=off
+  PASS    R14.3 passkey-warning 1440x900 seal calm=off warning=287..338 wax top=510 scrollY=40 calm=off viewport=1440x900 threshold=unfolded, inside the layout viewport and ending above the wax top, no scroll by the reader
+
+[1440x900] hero calm=on
+  PASS    R5.4  hero-lines     1440x900 hero calm=on lines=["Memory drifts with time.","A sealed","letter doesn't."] calm=on viewport=1440x900 threshold=the first sentence on one line box (5.4)
+
+[1440x900] us-maya receipts
+  PASS    R10.1 receipts-order 1440x900 us-maya receipts on=/demo/personas/us-maya order=figure,letter,figure,seal,end viewport=1440x900 threshold=question pairs, figures, the open letter beside them, the seal line, the end card; no fold on the letter
+
+[1440x900] live seal to receipts calm=on
+  note    R10.6 -              1440x900 live seal to receipts calm=on could not run: live step "first press": locator.waitFor: Timeout 30000ms exceeded.
+
+==== 1280x800 (spec 20 Part D, long letter) ====
+  note    S20.long -              1280x800 - could not run: live step "first press": locator.waitFor: Timeout 30000ms exceeded.
+
+==== 390x844 (spec 16 rows of 17.3) ====
+
+[390x844] hero calm=off
+  PASS    R5.4  hero-lines     390x844 hero calm=off lines=["Memory drifts with time.","A sealed letter doesn't."] calm=off viewport=390x844 threshold=no headline line holds one word (5.5)
+
+[390x844] us-maya receipts calm=off
+  PASS    S20.c column-placement 390x844 us-maya receipts calm=off /demo/personas/us-maya viewport=390x844 record=16..374 letter=16..374 threshold=no two blocks side by side in one column
+  PASS    S20.f letter-motion  390x844 us-maya receipts calm=off /demo/personas/us-maya viewport=390x844 animate calls=1 animations after move=0 node kept=true threshold=at most one animate call on the letter; the same letter node 2,000 ms after the move
+  PASS    S20.e focus-in-view  390x844 us-maya receipts calm=off /demo/personas/us-maya viewport=390x844 heading=108..139 bar bottom=72 threshold=Figures_Heading between the Top_Bar and the viewport bottom, 1 s after the move
+  PASS    S20.g figure-accent  390x844 us-maya receipts calm=off /demo/personas/us-maya viewport=390x844 figure text colours=72 accent=rgb(255, 123, 28) threshold=no figure value, change line, period or label in --accent
+  note    S20.d letter-sticks  390x844 us-maya receipts calm=off only checked at 900 px and wider; /demo/personas/us-maya viewport=390x844
+
+[390x844] seal calm=off
+  PASS    R14.3 passkey-warning 390x844 seal calm=off warning=286..388 wax top=913 scrollY=50 calm=off viewport=390x844 threshold=unfolded, inside the layout viewport and ending above the wax top, no scroll by the reader
+
+[390x844] hero calm=on
+  PASS    R5.4  hero-lines     390x844 hero calm=on lines=["Memory drifts with time.","A sealed letter doesn't."] calm=on viewport=390x844 threshold=no headline line holds one word (5.5)
+
+[390x844] us-maya receipts
+  PASS    R10.1 receipts-order 390x844 us-maya receipts on=/demo/personas/us-maya order=letter,figure,figure,seal,end viewport=390x844 threshold=question pairs, figures, the open letter beside them, the seal line, the end card; no fold on the letter
+
+[390x844] live seal to receipts calm=on
+  note    R10.6 -              390x844 live seal to receipts calm=on could not run: live step "first press": locator.waitFor: Timeout 30000ms exceeded.
+
+==== Summary ====
+Blockers:
+  [360x640] scene  CT1  a "Open the demo letters" needs 4.5:1 contrast: contrast 2.36:1 is below 4.5:1
+  [360x640] scene  F2  text or control on the Soil strip: Seal your own. It opens 30 seconds after
+  [360x640] recall  CW1  CW1 content column 254 px, want at least 312 px (viewport 360 px minus 48)
+  [360x640] recall  CT1  span#recall-q2-unit "in USD per gallon" needs 4.5:1 contrast: contrast 1.29:1 is below 4.5:1
+  [360x640] recall  CT1  label "No answer" needs 4.5:1 contrast: contrast 2.09:1 is below 4.5:1
+  [360x640] recall  CW1  CW1 content column 254 px, want at least 312 px (viewport 360 px minus 48)
+  [360x640] recall  G1  text or control on the Ghost body (scrollY 185): "revenant" | control "revenant" | control "Turn sound on"
+  [360x640] close  CT1  span "demo letter" needs 4.5:1 contrast: contrast 1.15:1 is below 4.5:1
+  [360x640] eu-tomas/recall  CW1  CW1 content column 254 px, want at least 312 px (viewport 360 px minus 48)
+  [360x640] eu-tomas/recall  CT1  p#recall-q2-unit-help "Published per 1,000 litres, shown per litre." needs 4.5:1 contrast: contrast 1.29:1 is below 4.5:1
+  [360x640] eu-tomas/recall  CT1  span "1.49" needs 4.5:1 contrast: contrast 1.31:1 is below 4.5:1
+  [360x640] eu-tomas/recall  CT1  label "No answer" needs 4.5:1 contrast: contrast 2.09:1 is below 4.5:1
+  [360x640] eu-tomas/recall  CW1  CW1 content column 254 px, want at least 312 px (viewport 360 px minus 48)
+  [360x640] eu-tomas/close  CT1  span "demo letter" needs 4.5:1 contrast: contrast 1.15:1 is below 4.5:1
+  [360x640] live  CW1  CW1 content column 280 px, want at least 312 px (viewport 360 px minus 48)
+  [768x1024] recall  R1  question=899..937px field=967..1011px next=1022..1066px viewport=768x1024 focusScroll=0px threshold=inside viewport at scrollY 0
+  [768x1024] eu-tomas/recall  R1  question=899..937px field=986..1030px next=1041..1085px viewport=768x1024 focusScroll=0px threshold=inside viewport at scrollY 0
+  [1280x800] scene  LG1  box=400x480px opacity=1.00 inViewport=true overlaps=headline threshold=visible, no overlap
+  [1440x900] scene  H1.6  hero=504px ritual-title=1180px resurrected-title=1180px coven-title=1180px viewport=1440x900 threshold=content box at least 864px (60% of width) (hero 504px is narrower than 864px)
+  [1440x900] marks  GO1  GO1 text "3.45 USD per gallon" overlaps the Soil strip by 166.3 px wide and 17.1 px tall, want at least 8 px clear. (Break the seal, at the start)
+  [1440x900] marks  GO1  GO1 text "3.45 USD per gallon" overlaps the Soil strip by 166.3 px wide and 17.1 px tall, want at least 8 px clear. (Break the seal, scrolled to the bottom)
+  [1440x900] marks  LC1  LC1 text "You remembered, just now" starts 15 px below the step track, want at least 16 px. (Break the seal)
+  [1440x900] eu-tomas/marks  GO1  GO1 text "1.49 EUR per litre" overlaps the Soil strip by 145.9 px wide and 17.1 px tall, want at least 8 px clear. (Break the seal, at the start)
+  [1440x900] eu-tomas/marks  GO1  GO1 text "1.49 EUR per litre" overlaps the Soil strip by 145.9 px wide and 17.1 px tall, want at least 8 px clear. (Break the seal, scrolled to the bottom)
+  [1440x900] eu-tomas/marks  LC1  LC1 text "You remembered, just now" starts 15 px below the step track, want at least 16 px. (Break the seal)
+  [1440x900] eu-tomas/close  FR1  Script-focused h2 (tabindex -1) draws an outline: style solid, width 2px, colour rgb(245, 243, 255).
+  [1440x900] fastest path  UQ1  UQ1 the Wait step was not reached at 1440x900, so nothing was measured: locator.waitFor: Timeout 30000ms exceeded. (data-live-step=cannot_lock). Want: the virtual-passkey walk reaches [data-live-step="sealed"].
+  [1440x900] fastest path  CT1  CT1 the Wait step was not reached at 1440x900, so nothing was measured: locator.waitFor: Timeout 30000ms exceeded. (data-live-step=cannot_lock). Want: the virtual-passkey walk reaches [data-live-step="sealed"].
+  [1440x900] fastest path  SF1  SF1 the Wait step was not reached at 1440x900, so nothing was measured: locator.waitFor: Timeout 30000ms exceeded. (data-live-step=cannot_lock). Want: the virtual-passkey walk reaches [data-live-step="sealed"].
+Blockers: 29   Polish: 163   Not reached: 139
+Time: 276.4 s
+Result: FAIL (blockers)

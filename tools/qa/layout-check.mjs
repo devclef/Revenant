@@ -179,22 +179,15 @@
 //
 // Spec 16 rows (spec 16 requirement 17.3, task 15), at 1440x900 and 390x844. Like the
 // spec 15 rows they block on any failure, with no --require (checkSpec16Rows):
-//   R10.1 receipts-order     Maya's Receipts step and live step 6. Two readings:
-//                            split (receiptsOrderFailures, with the split marker): question
+//   R10.1 receipts-order     Maya's Receipts step and live step 6 (receiptsOrderFailures): question
 //                            pairs, figure cards, the seal line and the end card top to bottom,
-//                            the letter beside the receipts rather than after the figures, no
-//                            fold control on the page, and the letter text visible.
-//                            folded (receiptsOrderFailuresFolded, today's build): the same
-//                            blocks top to bottom, with the letter folded shut under "Read the
-//                            letter again". The folded reading is removed by task 5.
-//   R10.6 live-column        live step 6: [data-receipts] and each question pair, figure card
-//                            and the letter centred within 1 px of the viewport centre, and
-//                            the column within 1 px of Maya's receipts column width. Two
-//                            readings: split (splitColumnFailures, with the split marker): the
-//                            record column (the union of the non-letter blocks) and the letter
-//                            column side by side, tops level, each at least 280 px wide. Folded
-//                            (receiptColumnFailures, today's build): one centred column with the
-//                            letter folded shut under it. The folded reading is removed by task 5.
+//                            the open letter beside the receipts rather than after the figures,
+//                            no fold control on the page, and the letter text visible.
+//   R10.6 live-column        live step 6 (splitColumnFailures): the record column (the union of the
+//                            non-letter blocks) and the letter column side by side, tops level,
+//                            each at least 280 px wide, the pair centred within 1 px of the
+//                            viewport centre, and the record column within 1 px of Maya's
+//                            receipts column width.
 //   R14.3 passkey-warning    live Press the seal, after the step scroll and before any reader
 //                            action: [data-warning-text] unfolded, inside the layout viewport,
 //                            its bottom above the wax top. Calm off and on.
@@ -204,8 +197,8 @@
 // the 30-second lock, so it needs the app's database and RP_ID set to the --url host.
 //
 // Spec 20 Part D readings (spec 20 design "QA browser steps", c to g). They run on the receipts
-// of Maya and of live step 6 and report "missing" unless the receipts carry
-// [data-receipts-layout="split"]. S20.long runs at 1280x800 with a 5,000-character letter.
+// of Maya and of live step 6 in every build. S20.long runs at 1280x800 with a 5,000-character
+// letter and needs [data-receipts-layout="split"], else it reports "missing".
 //   S20.c column-placement   900 px and wider: the letter column starts right of the record column,
 //                            tops level within 1 px. Narrower: no two blocks sit side by side.
 //   S20.d letter-sticks      900 px and wider only: after scrolling to the end, the letter column top
@@ -475,10 +468,8 @@ const LETTER_PHONE_MIN_PX = 280;
 const FOCUS_DRIFT_MAX_PX = 1;
 const FOCUS_SETTLE_MS = 1000;
 // Spec 15 rows. They always block (see report) and need no --require.
-// R10.1 (receipts order) and R10.6 (live column) each have a split reading, used when the
-// receipts carry [data-receipts-layout="split"], and a folded reading, used by today's build.
-// The folded reading (receiptsOrderFailuresFolded for R10.1, receiptColumnFailures for R10.6)
-// is removed by task 5.
+// R10.1 (receipts order) and R10.6 (live column) always use the open-letter readings
+// (receiptsOrderFailures and splitColumnFailures).
 const SPEC15_CHECKS = ["NB1", "GC1", "DL1", "PV1", "R10.1", "R10.6", "R14.3", "R5.4"];
 // Spec 20 Part D readings (see the header). They block on any failure, like the spec 15 rows.
 const S20_CHECKS = ["S20.c", "S20.d", "S20.e", "S20.f", "S20.f-reduced", "S20.g", "S20.long"];
@@ -4742,35 +4733,10 @@ const S16_CENTRE_TOL_PX = 1;
 const S16_RECEIPT_RANK = { pair: 0, figure: 1, letter: 2, seal: 3, end: 4 };
 
 /**
- * Folded reading of 10.1 (and 10.8), used by builds without the split marker. Removed by task 5.
- * The Receipts blocks read top to bottom, and the letter is folded shut.
- */
-export function receiptsOrderFailuresFolded({ blocks, letterClosed }) {
-  const out = [];
-  const ordered = [...blocks].sort((a, b) => a.top - b.top);
-  let last = -1;
-  for (const b of ordered) {
-    const rank = S16_RECEIPT_RANK[b.kind];
-    if (rank === undefined) {
-      out.push(`10.1 unknown block "${b.kind}"`);
-      continue;
-    }
-    if (rank < last) out.push(`10.1 "${b.kind}" sits after a later block`);
-    last = Math.max(last, rank);
-  }
-  for (const kind of ["letter", "seal", "end"]) {
-    if (!blocks.some((b) => b.kind === kind)) out.push(`10.1 no "${kind}" block`);
-  }
-  if (letterClosed !== true) out.push("10.2 the letter is not folded under Read the letter again");
-  return out;
-}
-
-/**
- * Split reading of 10.1: the open letter sits beside the receipts in order.
+ * 10.1: the open letter sits beside the receipts in order.
  * `blocks` are question pairs, figure cards, the letter, the seal line and the end card, each
- * with its top. `disclosurePresent` is true when a fold or "Read the letter again" control is
- * on the page. `letterTextVisible` is false when the letter text has no client rect or fails
- * checkVisibility().
+ * with its top. `disclosurePresent` is true when a fold control is on the page.
+ * `letterTextVisible` is false when the letter text has no client rect or fails checkVisibility().
  * @param {{ blocks: { kind: string, top: number }[], disclosurePresent: boolean, letterTextVisible: boolean }} args
  */
 export function receiptsOrderFailures({ blocks, disclosurePresent, letterTextVisible }) {
@@ -4794,7 +4760,7 @@ export function receiptsOrderFailures({ blocks, disclosurePresent, letterTextVis
   if (letter && figureTops.length > 0 && letter.top > Math.min(...figureTops)) {
     out.push("10.1 the letter sits after the figures");
   }
-  if (disclosurePresent === true) out.push("10.2 a fold or Read the letter again control is on the page");
+  if (disclosurePresent === true) out.push("10.2 a fold control is on the page");
   if (letterTextVisible !== true) out.push("10.2 the letter text is not visible");
   return out;
 }
@@ -4819,30 +4785,6 @@ export function splitColumnFailures({ record, letter, width, centre, viewportCen
   }
   if (Math.abs(centre - viewportCentre) > S16_CENTRE_TOL_PX) {
     out.push(`10.6 column centre ${centre} px, want ${viewportCentre} px within ${S16_CENTRE_TOL_PX} px`);
-  }
-  if (personaWidth === null || personaWidth === undefined) {
-    out.push("10.6 no persona receipts column to compare its width with");
-  } else if (Math.abs(width - personaWidth) > S16_CENTRE_TOL_PX) {
-    out.push(`10.6 column width ${width} px, persona ${personaWidth} px within ${S16_CENTRE_TOL_PX} px`);
-  }
-  return out;
-}
-
-/**
- * 10.6: live step 6 column centred on the viewport and as wide as the persona receipts column.
- * `blocks` (optional) is each question pair, figure card and letter with its own centre; each
- * must share the viewport centre too.
- * @param {{ centre: number, width: number, viewportCentre: number, personaWidth: number | null | undefined, blocks?: { kind: string, centre: number }[] }} args
- */
-export function receiptColumnFailures({ centre, width, viewportCentre, personaWidth, blocks = [] }) {
-  const out = [];
-  if (Math.abs(centre - viewportCentre) > S16_CENTRE_TOL_PX) {
-    out.push(`10.6 column centre ${centre} px, want ${viewportCentre} px within ${S16_CENTRE_TOL_PX} px`);
-  }
-  for (const b of blocks) {
-    if (Math.abs(b.centre - viewportCentre) > S16_CENTRE_TOL_PX) {
-      out.push(`10.6 "${b.kind}" centre ${b.centre} px, want ${viewportCentre} px within ${S16_CENTRE_TOL_PX} px`);
-    }
   }
   if (personaWidth === null || personaWidth === undefined) {
     out.push("10.6 no persona receipts column to compare its width with");
@@ -6246,9 +6188,7 @@ const RECEIPTS_READ = () => {
       unionTop = Math.min(unionTop, r.top);
     }
   }
-  const disclosure = col.querySelector("[data-letter-stage] [data-letter-disclosure]");
   const text = col.querySelector("[data-letter-stage] [data-letter-text]");
-  const textHidden = !text || text.getClientRects().length === 0 || !text.checkVisibility();
   const c = col.getBoundingClientRect();
   const letterStage = col.querySelector("[data-letter-stage]");
   const lr = letterStage ? letterStage.getBoundingClientRect() : null;
@@ -6257,7 +6197,6 @@ const RECEIPTS_READ = () => {
     : { left: c.left, right: c.right, top: c.top + window.scrollY };
   return {
     blocks,
-    letterClosed: !!disclosure && disclosure.open === false && textHidden,
     centre: c.left + c.width / 2,
     width: record.right - record.left,
     viewportCentre: vc,
@@ -6339,14 +6278,9 @@ function s16Order(ctx, where, r) {
     return;
   }
   const order = [...r.blocks].sort((a, b) => a.top - b.top).map((b) => b.kind).join(",");
-  // The split reading applies only when the build marks the receipts column as split.
-  const failures = r.split
-    ? receiptsOrderFailures({ blocks: r.blocks, disclosurePresent: r.disclosurePresent, letterTextVisible: r.letterTextVisible })
-    : receiptsOrderFailuresFolded(r);
-  const want = r.split
-    ? "question pairs, figures, the open letter beside them, the seal line, the end card; no fold on the letter"
-    : "question pairs, figures, the folded letter, the seal line, the end card; the letter closed";
-  report(ctx, verdictRow("R10.1", "receipts-order", failures, `on=${where} split=${r.split} order=${order} letterClosed=${r.letterClosed} viewport=${ctx.size}`, want));
+  const failures = receiptsOrderFailures({ blocks: r.blocks, disclosurePresent: r.disclosurePresent, letterTextVisible: r.letterTextVisible });
+  const want = "question pairs, figures, the open letter beside them, the seal line, the end card; no fold on the letter";
+  report(ctx, verdictRow("R10.1", "receipts-order", failures, `on=${where} order=${order} viewport=${ctx.size}`, want));
 }
 
 // Maya: Remember, Break the seal with the button, then See the receipts. Returns the
@@ -6546,8 +6480,8 @@ const S20_LONG_AFTER = () => {
 async function s20Readings(page, ctx, r, { reduced, where }) {
   const motionId = reduced ? "S20.f-reduced" : "S20.f";
   const motionName = reduced ? "letter-motion-reduced" : "letter-motion";
-  if (!r || !r.split || !r.s20) {
-    const why = r ? `no [data-receipts-layout="split"] on ${where}` : `no [data-receipts] on ${where}`;
+  if (!r || !r.s20) {
+    const why = r ? `no Spec 20 read on ${where}` : `no [data-receipts] on ${where}`;
     for (const [id, name] of [["S20.c", "column-placement"], ["S20.d", "letter-sticks"], ["S20.e", "focus-in-view"], [motionId, motionName], ["S20.g", "figure-accent"]]) {
       report(ctx, missingRow(id, name, why));
     }
@@ -6682,12 +6616,10 @@ async function checkSpec16Rows(browser, base, size, rep, required, scope = {}) {
           await s20Readings(page, ctx, r, { reduced: true, where: LIVE_PATH });
           // CW1 reads the live receipts column beside the R10.6 comparison.
           await guard(ctx, "CW1", () => checkCw1(page, ctx));
-          const blocks = r.blocks.filter((b) => b.kind === "pair" || b.kind === "figure" || b.kind === "letter");
-          let failures;
-          if (r.split && !r.letter) failures = ["10.6 no letter column on live step 6"];
-          else if (r.split) failures = splitColumnFailures({ record: r.record, letter: r.letter, width: r.width, centre: r.centre, viewportCentre: r.viewportCentre, personaWidth });
-          else failures = receiptColumnFailures({ centre: r.centre, width: r.width, viewportCentre: r.viewportCentre, personaWidth, blocks });
-          report(ctx, verdictRow("R10.6", "live-column", failures, `split=${r.split} centre=${num(r.centre)} viewport centre=${num(r.viewportCentre)} width=${num(r.width)} persona=${personaWidth === null ? "n/a" : num(personaWidth)} viewport=${ctx.size}`, r.split ? "record and letter columns side by side, tops level, each centred on the viewport within 1 px and the record column as wide as the persona receipts column within 1 px" : "one column centred within 1 px, as wide as the persona receipts column within 1 px"));
+          const failures = r.letter
+            ? splitColumnFailures({ record: r.record, letter: r.letter, width: r.width, centre: r.centre, viewportCentre: r.viewportCentre, personaWidth })
+            : ["10.6 no letter column on live step 6"];
+          report(ctx, verdictRow("R10.6", "live-column", failures, `split=${r.split} centre=${num(r.centre)} viewport centre=${num(r.viewportCentre)} width=${num(r.width)} persona=${personaWidth === null ? "n/a" : num(personaWidth)} viewport=${ctx.size}`, "record and letter columns side by side, tops level, each centred on the viewport within 1 px and the record column as wide as the persona receipts column within 1 px"));
         } finally {
           await page.close();
         }
