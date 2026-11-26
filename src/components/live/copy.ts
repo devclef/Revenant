@@ -156,7 +156,7 @@ export const LIVE_COPY = {
   copyKey: "Copy",
   copied: "Copied",
   /** The no-passkey instruction above the key and the last line (spec 15, task 9; screen 14). */
-  noPrfPress: "Save the key and tick the box. Then press the wax.",
+  noPrfPress: "Save the key and tick the box. Then choose Seal with this key.",
   noPrfOther:
     "Other options: try another device or browser, or open a persona letter.",
   savedLabel: "I have saved this key",
@@ -315,7 +315,7 @@ export const LIVE_COPY = {
  */
 export const REAL_COPY = {
   intro:
-    "Your letter is sealed with your own passkey. It opens at midnight on the date you choose, and no one can open it before then.",
+    "Your letter is sealed in this browser with your passkey or a backup key. It opens at midnight on the date you choose, and no one can open it before then.",
   dateLabel: "Opening date",
   dateHint:
     "Your letter opens at midnight on this date. It must be at least three months after you seal it. You cannot change the date once it is sealed.",

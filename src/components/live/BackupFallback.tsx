@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { DemoLabel } from "@/components/demo/DemoLabel";
 
@@ -11,7 +11,7 @@ import styles from "./live.module.css";
  * The backup-key screen for the live Seal_Page (spec 06-lock-and-unlock,
  * design.md "Backup_Fallback"; R20.1–R20.6, R19.1). It is shown in the
  * `fallback_key` state, after the judge chooses the backup key on a cannot_lock
- * screen.
+ * screen, or after the Seal_Step's Backup_Only_Start (spec 20, Part A).
  *
  * It shows:
  *
@@ -41,9 +41,9 @@ export interface BackupFallbackProps {
   onDecline: () => void;
   /** Real mode (the `/seal` letter): no Demo label is shown. */
   real?: boolean;
-  /** Where the fallback started. Behaviour that depends on it is added with the copy and focus work. */
-  origin?: BackupFallbackOrigin;
-  /** Asks the screen to take focus on mount. Behaviour is added with the focus work. */
+  /** Where the fallback started. `noPrfOther` shows only for `cannot_lock`. */
+  origin: BackupFallbackOrigin;
+  /** Takes focus on mount, once, so a screen reader announces the new step. */
   focusOnMount?: boolean;
 }
 
@@ -60,9 +60,18 @@ export function BackupFallback({
   onSealPress,
   onDecline,
   real = false,
+  origin,
+  focusOnMount = false,
 }: BackupFallbackProps) {
   const [saved, setSaved] = useState(false);
   const [copied, setCopied] = useState(false);
+  const headingRef = useRef<HTMLHeadingElement>(null);
+
+  useEffect(() => {
+    if (!focusOnMount) return;
+    const frame = requestAnimationFrame(() => headingRef.current?.focus());
+    return () => cancelAnimationFrame(frame);
+  }, [focusOnMount]);
 
   function onCopy(): void {
     void navigator.clipboard?.writeText(keyText).then(
@@ -74,7 +83,14 @@ export function BackupFallback({
   return (
     <div className={styles.panel} data-live-fallback="backup">
       {real ? null : <DemoLabel />}
-      <h1 className={styles.heading}>{LIVE_COPY.fallbackTitle}</h1>
+      <h1
+        ref={headingRef}
+        className={styles.heading}
+        data-step-heading=""
+        tabIndex={-1}
+      >
+        {LIVE_COPY.fallbackTitle}
+      </h1>
       <p className={styles.intro}>{LIVE_COPY.fallbackIntro}</p>
       <p className={styles.intro} data-no-prf-press="">
         {LIVE_COPY.noPrfPress}
@@ -122,9 +138,11 @@ export function BackupFallback({
           {LIVE_COPY.notNow}
         </button>
       </div>
-      <p className={styles.intro} data-no-prf-other="">
-        {LIVE_COPY.noPrfOther}
-      </p>
+      {origin === "cannot_lock" ? (
+        <p className={styles.intro} data-no-prf-other="">
+          {LIVE_COPY.noPrfOther}
+        </p>
+      ) : null}
     </div>
   );
 }

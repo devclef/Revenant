@@ -149,7 +149,6 @@ const REAL_SEALING_WORDING: readonly RegExp[] = [
 const HELD_FOR_OWNER: readonly string[] = [
   "src/components/brand/copy.ts|lock it with your passkey",
   "src/components/how/copy.ts|count as test letters",
-  "src/components/live/copy.ts|Your letter is sealed with your own passkey",
 ];
 
 type PhraseMatch = { file: string; line: number; text: string; phrase: string };
