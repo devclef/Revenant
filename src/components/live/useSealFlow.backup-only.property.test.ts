@@ -137,7 +137,7 @@ function mount(deps: SealDeps | null, d: SealDraft): SealFlow {
   return captured;
 }
 
-describe("Property 8: a backup-only start makes one key and touches no port", () => {
+describe("Property 8: A backup-only start makes one key and touches no port", () => {
   it("the first start succeeds, later starts are refused, and only one key is made", async () => {
     await fc.assert(
       fc.asyncProperty(fc.integer({ min: 1, max: 4 }), async (presses) => {
