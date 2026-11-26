@@ -10,7 +10,7 @@ import { describe, expect, it } from "vitest";
 import fc from "fast-check";
 
 import { PRESS_IDLE, pressStep } from "./press-hold";
-import type { PressState } from "./press-hold";
+import type { PressEvent, PressState } from "./press-hold";
 import { poolStage } from "./press-pose";
 import type { PoolStage } from "./press-pose";
 import { createPressController as currentController } from "./usePressEnvelope";
@@ -18,14 +18,21 @@ import type { PressConfig, PressMode } from "./usePressEnvelope";
 
 // --- Oracle: verbatim copy of createPressController at c2bf2db8 ---
 
+/** Receives the press progress (0 to 1) and the wax pool stage for each change. */
 type PressFrameSink = (progress: number, stage: PoolStage | null) => void;
 
-type OraclePressController = {
+type PressController = {
+  /** A pointer went down on the control. True when the press is tracked, so the caller listens for the release. */
   down: (now: number) => boolean;
+  /** A pointer release. Starts the prompt only after a full hold (write) or as the plain press (setting). */
   up: (now: number) => void;
+  /** A pointer cancel or blur. A cancelled press never starts a prompt. */
   cancel: (now: number) => void;
+  /** One animation frame of a running press. True while another frame is needed. */
   tick: (now: number) => boolean;
+  /** A click. Keyboard and assistive-technology clicks have detail 0 and start the press. */
   click: (detail: number) => void;
+  /** Ends the current press, for example after a failed prompt (RETRY). */
   reset: () => void;
 };
 
@@ -43,10 +50,14 @@ function needsFrames(state: PressState): boolean {
   );
 }
 
-function oracleController(
+/**
+ * The press controller. `readConfig` is read on every event, so a changed mode
+ * or disabled flag applies to the next event with no re-subscription.
+ */
+function createPressController(
   readConfig: () => PressConfig,
   onFrame: PressFrameSink,
-): OraclePressController {
+): PressController {
   let state: PressState = PRESS_IDLE;
   let lastMode: PressMode | null = null;
   let downOnControl = false;
@@ -67,10 +78,8 @@ function oracleController(
     onFrame(state.progress, stageFor(state));
   }
 
-  function apply(
-    config: PressConfig,
-    event: Parameters<typeof pressStep>[1],
-  ): void {
+  /** Runs one event through the model. The prompt starts after the state has moved on, so a re-entrant event is ignored. */
+  function apply(config: PressConfig, event: PressEvent): void {
     const result = pressStep(state, event);
     state = result.state;
     if (result.effect === "start_prompt") {
@@ -258,7 +267,7 @@ describe("Property 2: without activate(), the controller matches the c2bf2db8 or
           { maxLength: 60 },
         ),
         (steps) => {
-          const oracle = replay(oracleController, steps);
+          const oracle = replay(createPressController, steps);
           const current = replay(currentController, steps);
           expect(current).toEqual(oracle);
         },
