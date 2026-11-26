@@ -31,7 +31,11 @@ import {
   type TouchedState,
 } from "./touched";
 import { figureLimit } from "./form";
-import { simulatedChoice, IGNORE_CHOICE } from "./seal-step/simulated-mode";
+import {
+  simulatedChoice,
+  simulatedToggleEvent,
+  IGNORE_CHOICE,
+} from "./seal-step/simulated-mode";
 import { LiveStepper, type StepView } from "./stepper/LiveStepper";
 import { LiveWaitStep } from "./stepper/LiveWaitStep";
 import {
@@ -405,6 +409,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
             port={simulated ? (simPort ?? undefined) : deps?.port}
             rehearsal={rehearsal}
             host={view.host}
+            simulated={simulated}
           />
         </SealedStep>
       );
@@ -434,6 +439,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
             onRetry={flow.onRetry}
             onFallbackStart={onFallbackStart}
             real={mode === "real"}
+            simulated={simulated}
           />
         );
       case "fallback_key": {
@@ -531,6 +537,24 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
         onCreatePress={onCreatePress}
         onConfirmPress={flow.onConfirmPress}
         onBackupStart={onBackupOnlyStart}
+        simulate={
+          mode === "demo"
+            ? {
+                on: simulated,
+                disabled: state.tag !== "write",
+                unavailable: simUnavailable,
+                onChange: (on: boolean) => {
+                  // Turning it on selects the backup card through the same
+                  // draft event as a hand pick (Requirement 12.1). Turning it
+                  // off changes no draft value.
+                  setSimulateOn(on);
+                  if (on) setSimUnavailable(false);
+                  const event = simulatedToggleEvent(on);
+                  if (event !== null) dispatchDraft(event);
+                },
+              }
+            : undefined
+        }
         realDate={
           mode === "real"
             ? {

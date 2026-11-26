@@ -46,7 +46,7 @@ import { INITIAL_TOUCHED, showsFieldMessage, type TouchedState } from "./touched
 import type { SealState } from "./seal-machine";
 import { SelfReportedRows } from "./SelfReportedRows";
 import { StepStatus } from "./StepStatus";
-import { SealStep } from "./seal-step/SealStep";
+import { SealStep, type SimulateControl } from "./seal-step/SealStep";
 import sealStepStyles from "./seal-step/seal-step.module.css";
 import type { PressStatusTag } from "./seal-step/press-status";
 import {
@@ -189,6 +189,8 @@ export interface WriteFormProps {
    * press, only when prfHint is `missing`. Omit it and no backup option shows.
    */
   onBackupStart?: () => void;
+  /** Demo_Mode only: the Simulate_Control on the Seal step (spec 20, Part B). */
+  simulate?: SimulateControl;
   /** The Create_Press: starts the first passkey prompt. */
   onCreatePress: () => void;
   /** The Confirm_Press: starts the second prompt and the seal. */
@@ -263,6 +265,7 @@ export function WriteForm({
   prfHint = "none",
   figureDetails,
   onBackupStart,
+  simulate,
   warningTicked,
   backupCardTicked,
   touched = INITIAL_TOUCHED,
@@ -904,6 +907,7 @@ export function WriteForm({
           prfMissing={prfHint === "missing"}
           onBackupStart={onBackupStart}
           backupOnlyBlocked={backupOnlyBlocked}
+          simulate={simulate}
           onBack={onBack}
           showHeading={sealHeading}
           onCreatePress={onCreatePress}

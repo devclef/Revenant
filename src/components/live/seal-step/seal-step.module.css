@@ -170,6 +170,38 @@
   color: #bdb4dc;
 }
 
+/* The Simulate_Control (spec 20, Requirement 11.1): a native checkbox with its
+   label, on the same dark surface. The label text is #ffffff. */
+.simulate {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 0 0 16px;
+  min-height: 44px;
+  font-family: var(--font-sans);
+  font-size: 15px;
+  line-height: 1.5;
+  color: #ffffff;
+  cursor: pointer;
+}
+
+.simulate input {
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  margin: 3px 0 0;
+  accent-color: #ff7b1c;
+}
+
+.simulate input:focus-visible {
+  outline: 2px solid #ff7b1c;
+  outline-offset: 3px;
+}
+
+.simulate:has(input:disabled) {
+  cursor: not-allowed;
+}
+
 .fallback {
   min-width: 44px;
   min-height: 44px;

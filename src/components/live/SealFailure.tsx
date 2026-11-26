@@ -57,6 +57,11 @@ export interface SealFailureProps {
    * passkey wording are left out, and the copy comes from REAL_COPY.
    */
   real?: boolean;
+  /**
+   * Simulated_Mode: the passkey-deletion note is left out, since no passkey is
+   * made on the device (spec 20, Requirement 11.8).
+   */
+  simulated?: boolean;
 }
 
 function failedBody(
@@ -89,6 +94,7 @@ export function SealFailure({
   onRetry,
   onFallbackStart,
   real = false,
+  simulated = false,
 }: SealFailureProps) {
   if (state.tag === "cannot_lock") {
     return (
@@ -97,7 +103,7 @@ export function SealFailure({
         <p className={styles.intro}>{LIVE_COPY.cannotLockBody}</p>
         <p className={styles.intro}>{LIVE_COPY.cannotLockNext1}</p>
         <p className={styles.intro}>{LIVE_COPY.cannotLockNext2}</p>
-        {state.passkeyCreated ? (
+        {state.passkeyCreated && !simulated ? (
           <p className={styles.intro}>
             {real ? REAL_COPY.passkeyDeleteNote : LIVE_COPY.passkeyDeleteNote}
           </p>

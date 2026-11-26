@@ -32,6 +32,17 @@ import {
 } from "./press-status";
 import styles from "./seal-step.module.css";
 
+/** The Simulate_Control and its notice. Passed in Demo_Mode only (spec 20, Part B). */
+export type SimulateControl = {
+  /** Simulated_Mode is on. */
+  on: boolean;
+  /** The control can't change now (any Seal_State other than write). */
+  disabled: boolean;
+  onChange: (on: boolean) => void;
+  /** The simulated passkey could not start in this tab. Shown while the mode is off. */
+  unavailable: boolean;
+};
+
 export type SealStepProps = {
   /** The seal state tag the step is in (the Seal step's states only). */
   tag: PressStatusTag;
@@ -68,6 +79,8 @@ export type SealStepProps = {
   fieldProblem?: boolean;
   /** Rendered first in the text column, above the Backup_Choice and the press. */
   opening?: ReactNode;
+  /** Demo_Mode only: the Simulate_Control. Absent in Real_Mode (spec 20, Requirement 11.1). */
+  simulate?: SimulateControl;
 };
 
 /** The motion setting from the Calm control and the reduced-motion media query (S6.9). */
@@ -112,8 +125,10 @@ export function SealStep({
   needsDate = false,
   fieldProblem = false,
   opening,
+  simulate,
 }: SealStepProps) {
   const motion = useMotionSetting();
+  const simulated = simulate?.on === true;
   // pressStatusLine alone chooses the line: it never reads "choose first" once
   // a choice exists (P1.5).
   const status = pressStatusLine({
@@ -122,6 +137,7 @@ export function SealStep({
     motion,
     needsDate,
     fieldProblem,
+    simulated,
   });
   const running =
     tag === "creating" ||
@@ -166,9 +182,11 @@ export function SealStep({
             {LIVE_COPY.sealHeading}
           </h1>
         ) : null}
-        <p className={styles.body}>{LIVE_COPY.sealParagraph}</p>
+        <p className={styles.body}>
+          {simulated ? LIVE_COPY.sealParagraphSimulated : LIVE_COPY.sealParagraph}
+        </p>
         <p className={styles.body} data-warning-text="">
-          {LIVE_COPY.warning}
+          {simulated ? LIVE_COPY.warningSimulated : LIVE_COPY.warning}
         </p>
       </div>
       <div data-seal-text="" className={styles.text}>
@@ -184,9 +202,34 @@ export function SealStep({
             problem={backupChoiceProblem}
             disabled={tag !== "write"}
             skipHelp={!real}
+            skipDisabled={simulated}
+            note={simulated ? LIVE_COPY.simulatedBackupRequired : undefined}
           />
         </>
-        {prfMissing ? (
+        {simulate !== undefined ? (
+          <>
+            <label className={styles.simulate} data-simulate-control="">
+              <input
+                type="checkbox"
+                checked={simulate.on}
+                disabled={tag !== "write" || simulate.disabled}
+                onChange={(event) => simulate.onChange(event.target.checked)}
+              />
+              <span>{LIVE_COPY.simulateLabel}</span>
+            </label>
+            {simulate.on ? (
+              <p className={styles.body} data-simulated-notice="">
+                {LIVE_COPY.simulatedNotice}
+              </p>
+            ) : null}
+            {simulate.unavailable && !simulate.on ? (
+              <p className={styles.body} role="status">
+                {LIVE_COPY.simulatedUnavailable}
+              </p>
+            ) : null}
+          </>
+        ) : null}
+        {prfMissing && !simulated ? (
           <p className={styles.body} role="status">
             {LIVE_COPY.prfHint}
           </p>
@@ -208,17 +251,22 @@ export function SealStep({
             {LIVE_COPY.fallbackButton}
           </button>
         ) : null}
-        <SealLinks onBack={onBack} />
+        <SealLinks onBack={onBack} simulated={simulated} />
       </div>
       <div data-press-column="" className={styles.press}>
         <PressEnvelopeView press={view} lineId={lineId} />
         <SealButton
-          label={sealButtonLabel(tag)}
+          label={sealButtonLabel(tag, simulated)}
           blocked={pressBlocked}
           lineId={lineId}
           onActivate={press.activate}
         />
-        <SealSteps tag={tag} backupChoice={backupChoice} real={real} />
+        <SealSteps
+          tag={tag}
+          backupChoice={backupChoice}
+          real={real}
+          simulated={simulated}
+        />
       </div>
     </div>
   );

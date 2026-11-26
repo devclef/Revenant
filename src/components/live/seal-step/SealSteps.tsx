@@ -17,6 +17,8 @@ export type SealStepsProps = {
   backupChoice: BackupChoiceValue | null;
   /** Real_Mode step copy (spec 19). Defaults to the demo wording. */
   real?: boolean;
+  /** Simulated_Mode hints (spec 20, Requirement 11.7). Defaults to false. */
+  simulated?: boolean;
 };
 
 function StepItem({
@@ -43,8 +45,13 @@ function StepItem({
   );
 }
 
-export function SealSteps({ tag, backupChoice, real }: SealStepsProps) {
-  const view = sealStepsView({ tag, backupChoice, real });
+export function SealSteps({
+  tag,
+  backupChoice,
+  real,
+  simulated = false,
+}: SealStepsProps) {
+  const view = sealStepsView({ tag, backupChoice, real, simulated });
   return (
     <ol className={styles.steps} data-seal-steps="">
       <StepItem
