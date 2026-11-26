@@ -58,7 +58,7 @@ const NAMED: ReadonlyArray<readonly [string, string, string]> = [
   [
     "REAL_COPY.intro",
     REAL_COPY.intro,
-    "Your letter is sealed in this browser with your passkey or a backup key. It opens at midnight on the date you choose, and no one can open it before then.",
+    "Your letter is sealed in this browser with your passkey or a backup key.",
   ],
 ];
 
