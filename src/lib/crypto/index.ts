@@ -60,3 +60,5 @@ export type { SealInput, SealResult, PasskeyFactor } from "./seal";
 export { SealError } from "./seal";
 export type { OpenInput } from "./open";
 export type { OpeningRecord } from "./opening-records";
+// Simulated passkey port for live demo letters only (/demo/live). Never used by /seal or /l/[id].
+export { createSimulatedPort } from "./simulated-port";
