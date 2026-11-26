@@ -190,17 +190,11 @@ export const PAIRS: Pair[] = [
   },
 ];
 
-export function renderReal(
-  step: StepperStep,
-  state: SealState,
-  extra: Record<string, unknown> = {},
-): string {
+function renderReal(step: StepperStep, state: SealState): string {
   stub.step = step;
   stub.flowState = state;
   try {
-    return renderToStaticMarkup(
-      createElement(SealPage, { ...BASE, ...extra } as never),
-    );
+    return renderToStaticMarkup(createElement(SealPage, BASE));
   } finally {
     stub.step = null;
     stub.flowState = { tag: "write" };
