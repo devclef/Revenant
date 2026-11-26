@@ -51,7 +51,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
 
 ## Tasks
 
-- [ ] 1. Part C: Layout_Check P1 accepts the Seal_Button as the second orange control
+- [x] 1. Part C: Layout_Check P1 accepts the Seal_Button as the second orange control
   - Agent: `platform-dev` · Depends on: none · Estimated size: S, ~120 changed lines
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `tools/qa/layout-check.mjs` (only `p1Failures`, its page reader and the P1 row comment), `src/lib/layout-check-p1.test.ts` (new) or the existing `src/lib/*.test.ts` that pins `p1Failures`.
