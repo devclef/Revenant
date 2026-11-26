@@ -100,7 +100,6 @@ const SURFACE: Record<string, Surface> = {
   caption: "desk",
   lightShaft: "none",
   crease: "none",
-  letterDisclosure: "desk",
   // The Reveal's own buttons carry their paper background (--paper-deep), so
   // their ink is checked on paper.
   button: "paper",

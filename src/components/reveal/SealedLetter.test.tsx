@@ -298,30 +298,32 @@ describe("Property 11: the sealed-for-demo line takes only the seal date (R10.4,
   });
 });
 
-describe("SealedLetter collapsible letter (P6, P7)", () => {
-  function renderCollapsible(opened: Opened): string {
-    return renderToStaticMarkup(
-      createElement(SealedLetter, {
-        opened,
-        personaName: PERSONA_NAME,
-        collapsible: true,
-      }),
+describe("SealedLetter has no letter fold (spec 10, D)", () => {
+  it("renders no disclosure for any props", () => {
+    fc.assert(
+      fc.property(
+        fc.option(fc.constantFrom("persona" as const, "live" as const), { nil: undefined }),
+        fc.option(fc.string({ minLength: 1, maxLength: 20 }), { nil: undefined }),
+        fc.boolean(),
+        (variant, letterId, legacyCollapsible) => {
+          // `collapsible` was removed from the props; passing it must change nothing.
+          const props = {
+            opened: OPENED,
+            personaName: PERSONA_NAME,
+            variant,
+            letterId,
+            collapsible: legacyCollapsible,
+          };
+          const markup = renderToStaticMarkup(createElement(SealedLetter, props));
+          expect(markup).not.toMatch(/<details/);
+          expect(markup).not.toContain("<summary");
+          expect(markup).not.toContain("data-letter-disclosure");
+          expect(markup).toContain("data-letter-text");
+          expect(markup).toContain("LETTER_BODY_SECRET");
+        },
+      ),
+      { numRuns: 100 },
     );
-  }
-
-  it("puts the letter text in a closed disclosure when collapsible", () => {
-    const markup = renderCollapsible(OPENED);
-    expect(markup).toMatch(/<details[^>]*data-letter-disclosure=""/);
-    expect(markup).toContain(`<summary>${REVEAL_COPY.letterDisclosureSummary}</summary>`);
-    expect(markup).not.toMatch(/<details[^>]* open/);
-    expect(markup).toContain("data-letter-text");
-    expect(markup).toContain("LETTER_BODY_SECRET");
-  });
-
-  it("leaves the letter text unwrapped by default", () => {
-    const markup = render(OPENED);
-    expect(markup).not.toContain("data-letter-disclosure");
-    expect(markup).toContain("data-letter-text");
   });
 });
 

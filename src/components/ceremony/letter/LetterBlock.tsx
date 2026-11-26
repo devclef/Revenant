@@ -26,7 +26,6 @@ import {
   type SealedLetterProps,
 } from "@/components/reveal/SealedLetter";
 import type { LetterKind } from "@/components/reveal/FigureLine";
-import { REVEAL_COPY } from "@/components/reveal/copy";
 
 import { CREASE_POSITIONS, EASE_STANDARD, UNFOLD_AT_MS, UNFOLD_MS } from "../constants";
 import { useMotion } from "../motion";
@@ -78,7 +77,7 @@ function creaseTop(share: number): string {
 const CREASE_SIDES = ["left", "right"] as const;
 
 export function LetterBlock(props: LetterBlockProps) {
-  const { still = false, caption, collapsible = false, letterKind, ...letterProps } = props;
+  const { still = false, caption, letterKind, ...letterProps } = props;
   const { mode } = useMotion();
   const sheetRef = useRef<HTMLDivElement>(null);
   const shaftRef = useRef<HTMLDivElement>(null);
@@ -192,14 +191,7 @@ export function LetterBlock(props: LetterBlockProps) {
         />
         {caption}
       </header>
-      {collapsible ? (
-        <details className={styles.letterDisclosure} data-letter-disclosure="">
-          <summary>{REVEAL_COPY.letterDisclosureSummary}</summary>
-          {paper}
-        </details>
-      ) : (
-        paper
-      )}
+      {paper}
     </div>
   );
 }
