@@ -16,8 +16,18 @@ import type { CryptoModule } from "./crypto-module";
 import type { PrepareResult, SealApi, SealPostResult } from "./api";
 import type { SealDeps, SealDraft } from "./seal-runner";
 import { useSealFlow, type SealFlow } from "./useSealFlow";
+import { sealReducer } from "./seal-machine";
 import { catalogueMetric, makeFigures } from "./test-figures";
 import { encodeBase64url } from "@/lib/seal-format";
+
+// A pass-through spy on the reducer. The hook keeps its state private, so the
+// failed state's passkeyCreated flag is read from what the reducer returns.
+// The implementation is the real reducer, so no other test changes.
+vi.mock("./seal-machine", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./seal-machine")>();
+  return { ...actual, sealReducer: vi.fn(actual.sealReducer) };
+});
+const sealReducerSpy = vi.mocked(sealReducer);
 
 const T0 = Date.parse("2026-11-02T10:00:00.000Z");
 
@@ -451,10 +461,22 @@ describe("useSealFlow backup-only start from the Seal_Step", () => {
     const flow = mount(deps, draft());
     expect(flow.onBackupOnlyStart()).toBe(true);
 
+    sealReducerSpy.mockClear();
     flow.onFallbackSealPress();
     await waitUntil(() => flow.getBackupKeyText() === null);
 
     expect(flow.getBackupKeyText()).toBeNull();
+    // The FAILED event from the backup-only seal carries no passkey, and the
+    // reducer keeps that flag in the failed state it returns.
+    const failedIndex = sealReducerSpy.mock.calls.findIndex(
+      ([, event]) => event.type === "FAILED",
+    );
+    expect(failedIndex).toBeGreaterThanOrEqual(0);
+    expect(sealReducerSpy.mock.calls[failedIndex]?.[1]).toMatchObject({ passkeyCreated: false });
+    expect(sealReducerSpy.mock.results[failedIndex]?.value).toMatchObject({
+      tag: "failed",
+      passkeyCreated: false,
+    });
     // Failed is not write, so a backup-only start is refused.
     expect(flow.onBackupOnlyStart()).toBe(false);
   });
