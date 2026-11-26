@@ -125,9 +125,22 @@ function mount(deps: SealDeps | null, d: SealDraft): SealFlow {
   return captured;
 }
 
-/** Lets the pending promise chains of the press handlers settle. */
-async function settle(): Promise<void> {
-  for (let i = 0; i < 5; i++) await new Promise((resolve) => setTimeout(resolve, 0));
+/** Lets one pending promise chain of a press handler run. */
+async function tick(): Promise<void> {
+  await new Promise((resolve) => setTimeout(resolve, 0));
+}
+
+/**
+ * Repeats `press` until `done` holds, up to a bounded number of ticks. Each
+ * press guard in useSealFlow ignores a press while the flow is in another
+ * state, so a repeat before the flow is ready changes nothing. This waits for
+ * the state the test needs instead of assuming a fixed number of ticks.
+ */
+async function pressUntilDone(press: () => void, done: () => boolean): Promise<void> {
+  for (let i = 0; i < 200 && !done(); i++) {
+    press();
+    await tick();
+  }
 }
 
 interface SealedBytes {
@@ -153,14 +166,17 @@ async function runPath(
     expect(flow.onBackupOnlyStart()).toBe(true);
   } else {
     flow.onCreatePress();
-    await settle();
-    flow.onFallbackStart();
+    await pressUntilDone(
+      () => flow.onFallbackStart(),
+      () => generateSpy.mock.calls.length > 0,
+    );
   }
-  await settle();
   expect(generateSpy).toHaveBeenCalledTimes(1);
 
-  flow.onFallbackSealPress();
-  await settle();
+  await pressUntilDone(
+    () => flow.onFallbackSealPress(),
+    () => api.seal.mock.calls.length > 0,
+  );
 
   expect(createSpy).not.toHaveBeenCalled();
   expect(getSpy).not.toHaveBeenCalled();
