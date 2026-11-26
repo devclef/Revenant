@@ -47,7 +47,7 @@ vi.mock("./useSealFlow", () => ({
     onFallbackSealPress: () => {},
     onFallbackDecline: () => {},
     onRetry: () => {},
-    getBackupKeyText: () => "KEY-TEXT",
+    getBackupKeyText: () => SAMPLE_BACKUP_KEY,
   }),
 }));
 
@@ -94,6 +94,14 @@ const ENVELOPE_HASH = "ab".repeat(32);
 function metricId(): string {
   return [...DEMO_FIGURES.series.values()][0].metric.id;
 }
+
+/**
+ * A fixed sample backup key in the card form: 27 Crockford characters in
+ * groups of four. It is the output of formatBackupKey for the 16 bytes
+ * (i * 37 + 11) & 0xff, so its checksum is valid. Written out here because
+ * components/** may not statically import lib/crypto (import-boundary test).
+ */
+const SAMPLE_BACKUP_KEY = "0B61-AQN7-Y4X4-736P-3XMB-3YR4-9P7";
 
 /** The one fixed draft: letter text, two questions with answers, one figure. */
 function fixedDraft(): WriteDraft {
