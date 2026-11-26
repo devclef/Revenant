@@ -191,7 +191,7 @@ export function SealStep({
             {LIVE_COPY.prfHint}
           </p>
         ) : null}
-        {onBackupStart !== undefined ? (
+        {tag === "write" && onBackupStart !== undefined ? (
           <button
             type="button"
             className={styles.fallback}

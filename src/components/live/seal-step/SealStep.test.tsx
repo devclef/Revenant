@@ -361,3 +361,38 @@ describe("SealStep Seal_Button placement and wiring (spec 20, Part C)", () => {
     expect(source).not.toMatch(/onMouseDown/);
   });
 });
+
+describe("SealStep Backup_Only_Start is gated to the write tag (spec 20, Part A)", () => {
+  const NON_WRITE_TAGS = [
+    "creating",
+    "created",
+    "confirming",
+    "preparing",
+    "sealing",
+  ] as const;
+
+  it("offers Backup_Only_Start in the write tag once onBackupStart is set", () => {
+    const html = render({ tag: "write", onBackupStart: () => undefined });
+    expect(html).toMatch(/<button[^>]*data-backup-only-start=""[^>]*>/);
+  });
+
+  it.each(NON_WRITE_TAGS)(
+    "hides Backup_Only_Start in the %s tag even when onBackupStart is set",
+    (tag) => {
+      const html = render({ tag, onBackupStart: () => undefined });
+      expect(html).not.toContain("data-backup-only-start");
+      expect(html).not.toContain(LIVE_COPY.fallbackButton);
+    },
+  );
+
+  it("shows Backup_Only_Start with aria-disabled=\"true\" while blocked in the write tag", () => {
+    const html = render({
+      tag: "write",
+      onBackupStart: () => undefined,
+      backupOnlyBlocked: true,
+    });
+    expect(html).toMatch(
+      /<button[^>]*data-backup-only-start=""[^>]*aria-disabled="true"[^>]*>/,
+    );
+  });
+});
