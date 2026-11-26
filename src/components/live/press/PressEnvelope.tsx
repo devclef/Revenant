@@ -94,28 +94,24 @@ export function PressEnvelope({
     description = PRESS_COPY.setting;
   }
 
-  return (
-    <PressEnvelopeView
-      press={press}
-      lineId={lineId}
-      mode={mode}
-      inert={inert}
-      blocked={blocked}
-      pose={pose}
-      running={running}
-      ready={ready}
-      tone={tone}
-      caption={caption}
-      description={description}
-    />
-  );
+  const view: PressEnvelopeViewModel = {
+    ...press,
+    mode,
+    inert,
+    blocked,
+    pose,
+    running,
+    ready,
+    tone,
+    caption,
+    description,
+  };
+
+  return <PressEnvelopeView press={view} lineId={lineId} />;
 }
 
-export type PressEnvelopeViewProps = {
-  /** The press binding from usePressEnvelope: handlers, element ref and pool stage. */
-  press: UsePressEnvelope;
-  /** The id the status line uses; the control points to it with aria-describedby. */
-  lineId: string;
+/** What the view draws: the press binding plus the display values for one render. */
+export type PressEnvelopeViewModel = UsePressEnvelope & {
   mode: "write" | "setting";
   inert: boolean;
   /** True when the control is disabled or inert (aria-disabled). */
@@ -129,20 +125,28 @@ export type PressEnvelopeViewProps = {
   description: string;
 };
 
-export function PressEnvelopeView({
-  press,
-  lineId,
-  mode,
-  inert,
-  blocked,
-  pose,
-  running,
-  ready,
-  tone,
-  caption,
-  description,
-}: PressEnvelopeViewProps) {
-  const { handlers, elementRef, stage } = press;
+export type PressEnvelopeViewProps = {
+  /** The press binding and display values for this render. */
+  press: PressEnvelopeViewModel;
+  /** The id the status line uses; the control points to it with aria-describedby. */
+  lineId: string;
+};
+
+export function PressEnvelopeView({ press, lineId }: PressEnvelopeViewProps) {
+  const {
+    handlers,
+    elementRef,
+    stage,
+    mode,
+    inert,
+    blocked,
+    pose,
+    running,
+    ready,
+    tone,
+    caption,
+    description,
+  } = press;
 
   return (
     <div className={styles.wrap}>
