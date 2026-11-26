@@ -31,6 +31,7 @@ import {
   type TouchedState,
 } from "./touched";
 import { figureLimit } from "./form";
+import { simulatedChoice, IGNORE_CHOICE } from "./seal-step/simulated-mode";
 import { LiveStepper, type StepView } from "./stepper/LiveStepper";
 import { LiveWaitStep } from "./stepper/LiveWaitStep";
 import {
@@ -182,19 +183,55 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
     [],
   );
 
-  // SealDeps for the runner, built once the crypto module is loaded. Null until
-  // then, which keeps the flow's presses disabled. The figures request does not
-  // enter this condition (spec 11, X2.1).
+  // Simulated_Mode (spec 20, Part B). Only the demo page can turn it on, and it
+  // is off on every mount. The port is made by the loaded crypto module's
+  // createSimulatedPort, and only while the mode is on.
+  const [simulateOn, setSimulateOn] = useState(false);
+  const simulated = mode === "demo" && simulateOn;
+  const [simPort, setSimPort] = useState<AuthenticatorPort | null>(null);
+  const [simUnavailable, setSimUnavailable] = useState(false);
+
+  useEffect(() => {
+    if (!simulated || crypto === null) {
+      setSimPort(null);
+      return;
+    }
+    let active = true;
+    crypto.createSimulatedPort().then(
+      (port) => {
+        if (active) setSimPort(port);
+      },
+      () => {
+        if (active) {
+          setSimulateOn(false);
+          setSimUnavailable(true);
+        }
+      },
+    );
+    return () => {
+      active = false;
+    };
+  }, [simulated, crypto]);
+
+  // The port the seal and the in-page unlock use: the Simulated_Port while the
+  // mode is on, otherwise the injected or browser port.
+  const activePort: AuthenticatorPort | null = simulated
+    ? simPort
+    : (deps?.port ?? crypto?.browserAuthenticatorPort ?? null);
+
+  // SealDeps for the runner, built once the crypto module is loaded and the
+  // active port is ready. Null until then, which keeps the flow's presses
+  // disabled. The figures request does not enter this condition (spec 11, X2.1).
   const sealDeps: SealDeps | null = useMemo(() => {
-    if (crypto === null) return null;
+    if (crypto === null || activePort === null) return null;
     return {
       crypto,
-      port: deps?.port ?? crypto.browserAuthenticatorPort,
+      port: activePort,
       api: sealApiFor(mode, deps?.api),
       rpId,
       now: deps?.nowMs ?? Date.now,
     };
-  }, [crypto, deps?.port, deps?.api, deps?.nowMs, rpId, mode]);
+  }, [crypto, activePort, deps?.api, deps?.nowMs, rpId, mode]);
 
   // The figures the seal uses. Until the Create_Press they are the response's
   // figures, or none when the response is not ready. The Create_Press freezes
@@ -365,7 +402,7 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
             advanceTo={view.advanceTo}
             nowMs={deps?.nowMs ?? Date.now}
             getBackupKeyText={flow.getBackupKeyText}
-            port={deps?.port}
+            port={simulated ? (simPort ?? undefined) : deps?.port}
             rehearsal={rehearsal}
             host={view.host}
           />
@@ -485,9 +522,12 @@ export function SealPage({ rpId, appOrigin, mode = "demo", rehearsal = false, de
           dispatchDraft({ type: "BACKUP_CARD_CHANGED", ticked })
         }
         backupChoice={writeDraft.backupChoice}
-        onBackupChoice={(choice) =>
-          dispatchDraft({ type: "BACKUP_CHOICE_CHANGED", choice })
-        }
+        onBackupChoice={(choice) => {
+          // While Simulated_Mode is on, a change other than "card" is dropped.
+          const next = simulatedChoice(simulated, choice);
+          if (next === IGNORE_CHOICE) return;
+          dispatchDraft({ type: "BACKUP_CHOICE_CHANGED", choice: next });
+        }}
         onCreatePress={onCreatePress}
         onConfirmPress={flow.onConfirmPress}
         onBackupStart={onBackupOnlyStart}
