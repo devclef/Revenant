@@ -4,7 +4,9 @@ import {
   heroLineFailures,
   passkeyWarningFailures,
   receiptColumnFailures,
+  receiptsOrderFailures,
   receiptsOrderFailuresFolded,
+  splitColumnFailures,
 } from "../../tools/qa/layout-check.mjs";
 
 /** Unit tests for the spec 16 layout rows of 17.3 in tools/qa/layout-check.mjs. */
@@ -140,5 +142,100 @@ describe("rows 5.4 and 5.5 hero line boxes", () => {
     expect(
       heroLineFailures({ w: 390, firstSentenceLines: 0, lines: ["Memory drifts with time.", "doesn't."] }),
     ).toEqual(['5.5 line 2 "doesn\'t." holds one word']);
+  });
+});
+describe("row 10.1 split receipts order (open letter)", () => {
+  const SPLIT_BLOCKS = [
+    { kind: "pair", top: 100 },
+    { kind: "letter", top: 100 },
+    { kind: "figure", top: 300 },
+    { kind: "seal", top: 700 },
+    { kind: "end", top: 800 },
+  ];
+
+  it("passes an open letter beside the receipts, in order, with the text visible", () => {
+    expect(
+      receiptsOrderFailures({ blocks: SPLIT_BLOCKS, disclosurePresent: false, letterTextVisible: true }),
+    ).toEqual([]);
+  });
+
+  it("fails a letter that sits after the figures", () => {
+    const blocks = [
+      { kind: "pair", top: 100 },
+      { kind: "figure", top: 300 },
+      { kind: "letter", top: 500 },
+      { kind: "seal", top: 700 },
+      { kind: "end", top: 800 },
+    ];
+    expect(
+      receiptsOrderFailures({ blocks, disclosurePresent: false, letterTextVisible: true }),
+    ).toEqual(["10.1 the letter sits after the figures"]);
+  });
+
+  it("fails when a fold or Read the letter again control is on the page", () => {
+    expect(
+      receiptsOrderFailures({ blocks: SPLIT_BLOCKS, disclosurePresent: true, letterTextVisible: true }),
+    ).toEqual(["10.2 a fold or Read the letter again control is on the page"]);
+  });
+
+  it("fails when the letter text is not visible", () => {
+    expect(
+      receiptsOrderFailures({ blocks: SPLIT_BLOCKS, disclosurePresent: false, letterTextVisible: false }),
+    ).toEqual(["10.2 the letter text is not visible"]);
+  });
+});
+
+describe("row 10.6 split column (open letter beside the receipts)", () => {
+  const RECORD = { left: 100, right: 500, top: 100 };
+  const LETTER = { left: 520, right: 920, top: 100 };
+  const BASE = {
+    record: RECORD,
+    letter: LETTER,
+    width: 400,
+    centre: 510,
+    viewportCentre: 510,
+    personaWidth: 400,
+  };
+
+  it("passes side-by-side columns with level tops, centred, and the persona width", () => {
+    expect(splitColumnFailures(BASE)).toEqual([]);
+  });
+
+  it("accepts a top 1 px apart and a centre 1 px off", () => {
+    expect(
+      splitColumnFailures({ ...BASE, letter: { ...LETTER, top: 101 }, centre: 511 }),
+    ).toEqual([]);
+  });
+
+  it("fails when the columns overlap", () => {
+    const letter = { left: 480, right: 920, top: 100 };
+    expect(splitColumnFailures({ ...BASE, letter })).toEqual([
+      "10.6 the record column overlaps the letter column",
+    ]);
+  });
+
+  it("fails when the column tops are more than 1 px apart", () => {
+    expect(splitColumnFailures({ ...BASE, letter: { ...LETTER, top: 105 } })).toEqual([
+      "10.6 column tops 100 px and 105 px differ by more than 1 px",
+    ]);
+  });
+
+  it("fails a column under 280 px wide", () => {
+    const letter = { left: 520, right: 790, top: 100 };
+    expect(splitColumnFailures({ ...BASE, letter })).toEqual([
+      "10.6 the letter column is 270 px, want at least 280 px",
+    ]);
+  });
+
+  it("fails a centre more than 1 px off the viewport centre", () => {
+    expect(splitColumnFailures({ ...BASE, centre: 512 })).toEqual([
+      "10.6 column centre 512 px, want 510 px within 1 px",
+    ]);
+  });
+
+  it("fails a live width more than 1 px from the persona width", () => {
+    expect(splitColumnFailures({ ...BASE, width: 402 })).toEqual([
+      "10.6 column width 402 px, persona 400 px within 1 px",
+    ]);
   });
 });
