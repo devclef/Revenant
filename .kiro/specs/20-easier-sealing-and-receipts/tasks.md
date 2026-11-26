@@ -225,7 +225,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: `seal-machine.test.ts` cases that build `fallback_key` without `origin` may add `origin: "cannot_lock"` only. Name each.
   - Validation: `npx vitest run src/components/live`, the two golden tests from the rules, then the done check.
 
-- [ ] 7. Part A: Backup_Only_Start on the Seal_Step, BackupFallback origin and focus
+- [x] 7. Part A: Backup_Only_Start on the Seal_Step, BackupFallback origin and focus
   - Agent: `frontend-dev` · Depends on: 6 · Estimated size: M, ~700 changed lines plus goldens
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `src/components/live/SealPage.tsx`, `WriteForm.tsx`, `seal-step/SealStep.tsx`, `seal-step/seal-step.module.css`, `BackupFallback.tsx`, `copy.ts` (`LIVE_COPY.noPrfPress`, `REAL_COPY.intro`), `__golden__/seal-page-demo/**`, `seal-copy-tone.test.ts`, the tests named below, `src/test/integration/backup-only-walk.test.ts` (new).
