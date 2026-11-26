@@ -11,7 +11,7 @@ import { FiguresThenNow, SelfReportedOnly } from "./FiguresThenNow";
 import { useFigures, type FiguresState } from "./figures-api";
 import type { FiguresResponseV1 } from "@/lib/figures";
 import { QuestionPair } from "./QuestionPair";
-import { LetterPaper } from "./LetterPaper";
+import { LetterColumn } from "./LetterColumn";
 import { FigureReceipt } from "./FigureReceipt";
 import { SealLine } from "./SealLine";
 import { EndCard } from "./EndCard";
@@ -576,29 +576,21 @@ function RevealBody({
   // figures (stage 3), or after the letter with none (stage 2).
   const sealEndShown = figureCount === 0 ? stage >= 2 : stage >= 3;
 
-  // At stage 3 with figures, the letter folds after them (spec 15 R12.2): the
-  // figures come straight after the question pairs, and the letter sits in a
-  // closed disclosure after the figures. Without figures, or before stage 3,
-  // the letter keeps its place after the question pairs.
-  const foldLetter = stage === 3 && figureCount > 0;
-  const letterStage = (
-    <div
-      className={`${styles.stage} ${styles.fade} ${styles.letterCol}`}
-      data-letter-stage=""
-    >
-      {/* The letter in full, as it was sealed. The fingerprint moved to
-          the seal line after the figures (R12.6). A folded letter mounts
-          still: its disclosure is closed, so nothing unfolds under it. */}
-      <LetterPaper
-        opened={opened}
-        personaName={personaName}
-        variant={variant}
-        letterId={letterId}
-        still={jumpedToEnd || foldLetter}
-        collapsible={foldLetter}
-        letterKind={letterKind}
-      />
-    </div>
+  // At stage 3 with figures, the letter sits beside the figures in the split
+  // (spec 15 R12.2): one open letter, in one column, never folded.
+  const split = stage === 3 && figureCount > 0;
+  const letterColumn = (
+    <LetterColumn
+      split={split}
+      still={jumpedToEnd}
+      paper={{
+        opened,
+        personaName,
+        variant,
+        letterId,
+        letterKind,
+      }}
+    />
   );
 
   return (
@@ -617,6 +609,7 @@ function RevealBody({
           className={receiptsStyles.receipts}
           data-receipts=""
           data-content-column=""
+          data-receipts-layout={split ? "split" : undefined}
         >
           {showQuestions ? (
             <section
@@ -634,7 +627,7 @@ function RevealBody({
             </section>
           ) : null}
 
-          {foldLetter ? null : letterStage}
+          {letterColumn}
 
           {stage >= 3 && figures !== null && record !== null ? (
             <FigureReceipt count={figureCount}>
@@ -653,8 +646,6 @@ function RevealBody({
               <SelfReportedOnly payload={opened.payload} />
             </FigureReceipt>
           ) : null}
-
-          {foldLetter ? letterStage : null}
 
           {sealEndShown ? (
             <div className={`${styles.stage} ${styles.fade}`}>

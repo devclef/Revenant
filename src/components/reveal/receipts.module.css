@@ -124,3 +124,29 @@
   margin: 0;
   color: var(--muted);
 }
+
+/* The receipts split (spec 15 R12.2): from 900 px, with figures, the questions,
+   the figures, the seal line and the end card stack in the first track, and the
+   open letter sits in a sticky second track that scrolls on its own. */
+@media (min-width: 900px) {
+  .receipts[data-receipts-layout="split"] {
+    display: grid;
+    grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
+    column-gap: 2.5rem;
+    align-items: start;
+  }
+
+  .receipts[data-receipts-layout="split"] > * {
+    grid-column: 1;
+  }
+
+  .receipts[data-receipts-layout="split"] .letterColumn {
+    grid-column: 2;
+    grid-row: 1 / span 3;
+    position: sticky;
+    top: var(--topbar-clear);
+    max-block-size: calc(100vh - var(--topbar-clear));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
