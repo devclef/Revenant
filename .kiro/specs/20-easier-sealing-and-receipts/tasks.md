@@ -332,7 +332,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Copy evidence: tone-check for `live/copy.ts` and `live/press/copy.ts`.
   - Validation: `npx vitest run src/components/live src/lib/crypto`, the two golden tests from the rules, then the done check.
 
-- [ ] 10. Spec 20 final verification on merged `main`, report only
+- [x] 10. Spec 20 final verification on merged `main`, report only
   - Agent: `platform-dev` · Depends on: 1, 2, 3, 4, 5, 6, 7, 8, 9 · Estimated size: S, one empty commit
   - Follow 'Rules for every task' in tasks.md.
   - Scope: none. The record is the body of one empty commit (`git commit --allow-empty`). Change no source file.
