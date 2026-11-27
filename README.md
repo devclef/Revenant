@@ -8,7 +8,7 @@ A wax seal did two jobs: it showed whose letter it was, and whether anyone broke
 
 ## For judges: 60 seconds, no passkey needed
 
-1. Open [revenant.devclef.se/demo/personas/us-maya](https://revenant.devclef.se/demo/personas/us-maya) and answer the two questions from your own memory of November 2024.
+1. Open [revenant.devclef.se/demo/personas/us-maya](https://revenant.devclef.se/demo/personas/us-maya) and answer the two questions from your own memory of the month Maya wrote in.
 2. Press "Record my answers", then "Break the seal". Read the letter, then press "See the receipts".
 3. At the end of the receipts, press "Try to tamper with it", then "Also fix the fingerprint".
 4. Then seal your own at [revenant.devclef.se/demo/live](https://revenant.devclef.se/demo/live). It opens 30 seconds later. If your computer cannot use passkeys, tick "This computer can't use passkeys. Simulate the passkey in this tab." on the seal step.
@@ -59,11 +59,11 @@ So before the seal breaks, you remember first. You write what you think you answ
 3. **Keep.** A letter card with a QR link, a backup key card and an `.ics` file.
 4. **Wait.** Scanning early shows "still sealed" and a countdown.
 5. **Remember.** After the opening date, open the letter and unlock with your passkey or backup key. Revenant recalls each question you wrote, and you write what you remember answering. What you remember is stored before anything sealed is shown.
-6. **Receipts.** Break the seal. Each question with what you remembered beside the answer you sealed. Then any figures, then and now. The letter stays open: beside the questions and figures on a wide screen, and before the figures on a phone. Revenant does not explain the difference.
+6. **Receipts.** Break the seal. Each question with what you remembered beside the answer you sealed. The letter stays open, beside them on a wide screen and in its place on a phone. Then any figures, then and now. Revenant does not explain the difference.
 
 <p align="center">
   <img src="docs/ceremony-break.png" alt="The Break the seal step of Maya's letter at 1440 by 900: the step track at Break the seal, a list headed You remembered, just now, an orange Break the seal button, and the ghost holding the envelope with the orange wax seal" width="800">
-  <br><em>Maya's letter at the Break the seal step, before the seal is pressed. The two numbers under "You remembered, just now" are the demo's sample answers for November 2024, kept as filled in. They stand for what a judge remembered, and they are not records.</em>
+  <br><em>Maya's letter at the Break the seal step, before the seal is pressed. The two numbers under "You remembered, just now" are the demo's sample answers, kept as filled in. They stand for what a judge remembered, and they are not records.</em>
 </p>
 
 ## What's built and running
