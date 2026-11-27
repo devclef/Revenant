@@ -4,7 +4,7 @@
 
 A wax seal did two jobs: it showed whose letter it was, and whether anyone broke it before its time. Revenant brings the wax seal back with a passkey and browser crypto that do both jobs again ([job by job](#the-wax-seal-job-by-job)).
 
-**Live:** [Seal your own letter](https://revenant.devclef.se/demo/live) · [Open a persona letter](https://revenant.devclef.se/demo) · **Demo video:** [DEMO VIDEO LINK]
+**Live:** [Seal your own letter](https://revenant.devclef.se/demo/live) · [Open a persona letter](https://revenant.devclef.se/demo) · **Demo video:** [Demo Vide](https://youtu.be/v0uYAo7zcXg)
 
 ## For judges: 60 seconds, no passkey needed
 
