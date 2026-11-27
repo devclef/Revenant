@@ -5,9 +5,9 @@
 // next press is `current`, and only `current` carries its hint line.
 
 import { REAL_COPY } from "../copy";
-import { PRESS_COPY } from "../press/copy";
 import type { BackupChoiceValue } from "../write-draft";
 import type { PressStatusTag } from "./press-status";
+import { sealStepCopy } from "./simulated-copy";
 
 export type SealStepState = "pending" | "current" | "done";
 
@@ -28,13 +28,16 @@ export function sealStepsView(input: {
   tag: PressStatusTag;
   backupChoice: BackupChoiceValue | null;
   real?: boolean;
+  /** Simulated_Mode hints (spec 20, Part B, Requirement 11.7). */
+  simulated?: boolean;
 }): SealStepsView {
   const { tag, backupChoice } = input;
+  const copy = sealStepCopy(input.simulated === true);
   // Real_Mode swaps the two first-press hints for their REAL_COPY wording.
   const stepOneHint =
-    input.real === true ? REAL_COPY.stepOneHint : PRESS_COPY.stepOneHint;
+    input.real === true ? REAL_COPY.stepOneHint : copy.stepOneHint;
   const stepPasskeyMade =
-    input.real === true ? REAL_COPY.stepPasskeyMade : PRESS_COPY.stepPasskeyMade;
+    input.real === true ? REAL_COPY.stepPasskeyMade : copy.stepPasskeyMade;
   if (tag === "write" && backupChoice === null) {
     return {
       one: { state: "pending", hint: stepOneHint },
@@ -58,7 +61,7 @@ export function sealStepsView(input: {
     one: { state: "done", hint: stepPasskeyMade },
     two: {
       state: "current",
-      hint: tag === "confirming" ? PRESS_COPY.stepTwoHint : null,
+      hint: tag === "confirming" ? copy.stepTwoHint : null,
     },
   };
 }

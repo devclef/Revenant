@@ -33,4 +33,13 @@ export const PRESS_COPY = {
   stepPasskeyMade: 'Passkey made. Saved as "Revenant demo".',
   stepTwoHint:
     "Your device will ask once more to set the seal. Press the wax, or use the button under it.",
+  /** Simulated_Mode replacements for the press copy (spec 20, Part B, design 1.5 and 4.3). */
+  settingSimulated: "The simulated passkey is ready. Press the wax, or use the button under it.",
+  stepOneHintSimulated:
+    "Press the wax, or use the button under it. The simulated passkey lives only in this tab.",
+  stepPasskeyMadeSimulated: "Simulated passkey made. It lives only in this tab.",
+  stepTwoHintSimulated:
+    "The simulated passkey sets the seal in this tab. Press the wax, or use the button under it.",
+  /** The Seal_Button's label in Simulated_Mode in the write and creating states (Requirement 11.7). */
+  sealButtonCreateSimulated: "Make the simulated passkey",
 } as const;

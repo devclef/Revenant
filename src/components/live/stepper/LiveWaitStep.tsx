@@ -88,6 +88,11 @@ export interface LiveWaitStepProps {
    * it once the flow is mounted. Null until the stepper's host has mounted.
    */
   host?: HTMLElement | null;
+  /**
+   * Simulated_Mode (spec 20, Requirements 12.5 to 12.7). The backup key card is
+   * open from the first render and the reminder is the simulated one. Defaults to false.
+   */
+  simulated?: boolean;
 }
 
 /**
@@ -123,12 +128,14 @@ export function LiveWaitStep({
   port,
   rehearsal = false,
   host = null,
+  simulated = false,
 }: LiveWaitStepProps) {
   const opensAtMs = Date.parse(state.opensAt);
   const seconds = useSecondsLeft(opensAtMs, nowMs, state.offsetMs);
   const done = seconds <= 0;
   const waiting = step === "wait";
-  const [showBackupCard, setShowBackupCard] = useState(false);
+  // In Simulated_Mode the card is open at its first render, so no offer button is shown.
+  const [showBackupCard, setShowBackupCard] = useState(simulated);
   // The flow's portal target: the Reveal_Host once the flow is mounted (D5.2).
   const flowTarget = flowPortalTarget(host, step, done);
 
@@ -202,7 +209,9 @@ export function LiveWaitStep({
         <>
           {/* The key reminder sits with the unlock control it describes (D1.5). */}
           {showKeyReminder ? (
-            <p className={`${styles.intro} ${styles.onDesk} ${styles.noPrint}`}>{LIVE_COPY.keyReminder}</p>
+            <p className={`${styles.intro} ${styles.onDesk} ${styles.noPrint}`}>
+              {simulated ? LIVE_COPY.simulatedKeyReminder : LIVE_COPY.keyReminder}
+            </p>
           ) : null}
           {done ? (
             <div className={`${styles.actions} ${styles.noPrint}`}>

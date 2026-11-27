@@ -13,6 +13,7 @@ import fc from "fast-check";
 import { SealButton } from "./SealButton";
 import { sealButtonLabel } from "./seal-button";
 import { pressStatusLine, type PressStatusTag } from "./press-status";
+import { PRESS_COPY } from "../press/copy";
 
 const RUNS = { numRuns: 200 };
 
@@ -105,16 +106,39 @@ describe("Property 3: the Seal_Button is a native button with aria-disabled and 
   });
 });
 
-// Property 3, simulated flag: Simulated_Mode is not wired yet, so the flag must
-// never change the Seal_Button label or the Press_Status_Line. A false flag and
-// no flag give the same result for every Seal_State.
-describe("Property 3: the simulated flag is always false and changes nothing", () => {
-  it("gives the same Seal_Button label with simulated false as with no flag", () => {
+// Property 3, simulated flag (spec 20, Part B, Requirements 1.9, 11.7). The
+// Seal_Button label follows the Seal_State and the Simulated_Mode flag. A false
+// flag gives the passkey label, and a true flag gives the simulated label only
+// in write and creating.
+describe("Property 3: the Seal_Button label follows the Seal_State and the simulated flag", () => {
+  it("gives the passkey label with simulated false and no flag, and the simulated label in write and creating when true", () => {
     fc.assert(
-      fc.property(fc.constantFrom(...TAGS), (tag) => {
-        expect(sealButtonLabel(tag, false)).toBe(sealButtonLabel(tag));
-        expect(sealButtonLabel(tag, false).length).toBeGreaterThan(0);
+      fc.property(fc.constantFrom(...TAGS), fc.boolean(), (tag, simulated) => {
+        const label = sealButtonLabel(tag, simulated);
+        expect(label.length).toBeGreaterThan(0);
+        if (simulated && (tag === "write" || tag === "creating")) {
+          expect(label).toBe(PRESS_COPY.sealButtonCreateSimulated);
+        } else if (tag === "write" || tag === "creating") {
+          expect(label).toBe(PRESS_COPY.sealButtonCreate);
+        } else {
+          expect(label).toBe(PRESS_COPY.sealButtonSet);
+        }
+        if (!simulated) {
+          expect(label).toBe(sealButtonLabel(tag));
+        }
       }),
+      RUNS,
+    );
+  });
+
+  it("keeps the Seal_Button label in created, confirming, preparing and sealing with simulated true", () => {
+    fc.assert(
+      fc.property(
+        fc.constantFrom<PressStatusTag>("created", "confirming", "preparing", "sealing"),
+        (tag) => {
+          expect(sealButtonLabel(tag, true)).toBe(PRESS_COPY.sealButtonSet);
+        },
+      ),
       RUNS,
     );
   });

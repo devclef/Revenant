@@ -145,7 +145,7 @@ interface Pair {
 }
 
 /** Every step and Seal_State pair of the Real_Mode table (spec 19, design). */
-const PAIRS: Pair[] = [
+export const PAIRS: Pair[] = [
   {
     name: "write / write",
     step: "write",

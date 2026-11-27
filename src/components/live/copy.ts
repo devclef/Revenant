@@ -99,6 +99,23 @@ export const LIVE_COPY = {
   stepConfirming: "Waiting for your device. Confirm the passkey when it asks.",
   stepPreparing: "Preparing your letter.",
   stepSealing: "Sealing your letter.",
+  /** Simulated_Mode strings (spec 20, Part B, design 1.5 and 4.3, Requirements 11.7, 16.2). */
+  simulateLabel: "This computer can't use passkeys. Simulate the passkey in this tab.",
+  simulatedNotice:
+    "The passkey is simulated in this tab. No passkey is made on this device or saved in a passkey manager. After you leave or reload this tab, only the backup key opens the letter.",
+  simulatedBackupRequired:
+    "The backup key is required with a simulated passkey. After you leave or reload this tab, only the backup key opens the letter. A lost key means a lost letter. Revenant cannot recover it.",
+  simulatedKeyReminder:
+    "After you leave or reload this tab, only your backup key opens this letter. A lost key means a lost letter. Revenant cannot recover it.",
+  simulatedUnavailable:
+    "The simulated passkey could not start in this tab. You can seal with a backup key instead.",
+  sealParagraphSimulated:
+    "Press the wax twice: once to make the simulated passkey, once to set the seal.",
+  warningSimulated:
+    "After you leave or reload this tab, the backup key is the only way into this letter. A lost key means a lost letter. Revenant cannot recover it.",
+  stepCreatingSimulated: "Making the simulated passkey in this tab.",
+  stepCreatedSimulated: "The simulated passkey is made. Set the seal next.",
+  stepConfirmingSimulated: "Checking the simulated passkey in this tab.",
   letterEmpty:
     "Write something first. A letter needs at least one character that is not a space.",
   letterTooLong:

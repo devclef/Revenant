@@ -26,6 +26,10 @@ export interface BackupChoiceProps {
    * the skip card shows only its title and has no help span or description link.
    */
   skipHelp?: boolean;
+  /** Disables the skip option (Simulated_Mode, spec 20, Requirement 12.2). Defaults to false. */
+  skipDisabled?: boolean;
+  /** A line under the options, named by the fieldset's aria-describedby. */
+  note?: string;
 }
 
 const OPTIONS: readonly {
@@ -54,13 +58,19 @@ export function BackupChoice({
   problem,
   disabled = false,
   skipHelp = true,
+  skipDisabled = false,
+  note,
 }: BackupChoiceProps) {
   const problemId = "live-backup-choice-problem";
+  const noteId = "live-backup-choice-note";
+  const describedBy = [note ? noteId : null, problem ? problemId : null]
+    .filter((id): id is string => id !== null)
+    .join(" ");
   return (
     <fieldset
       className={cards.backupChoice}
       data-backup-choice=""
-      aria-describedby={problem ? problemId : undefined}
+      aria-describedby={describedBy === "" ? undefined : describedBy}
     >
       <legend className={cards.legend}>{LIVE_COPY.backupChoiceLegend}</legend>
       <div className={cards.cards}>
@@ -81,7 +91,7 @@ export function BackupChoice({
                 value={option.value}
                 className={cards.radio}
                 aria-describedby={showHelp ? helpId : undefined}
-                disabled={disabled}
+                disabled={disabled || (skipDisabled && option.value === "skip")}
                 checked={value === option.value}
                 onChange={() => onChange(option.value)}
               />
@@ -96,6 +106,11 @@ export function BackupChoice({
           );
         })}
       </div>
+      {note ? (
+        <p id={noteId} className={cards.problem}>
+          {note}
+        </p>
+      ) : null}
       <p id={problemId} className={cards.problem}>
         {problem}
       </p>
