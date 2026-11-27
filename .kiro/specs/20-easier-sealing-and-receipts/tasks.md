@@ -290,7 +290,7 @@ Each task is one GitHub issue and one PR for one role, inside that role's paths 
   - Earlier-spec tests changed or retired: none.
   - Validation: `npx vitest run src/lib/crypto`, then the done check. Report the JS budget result from `check.sh`. If the crypto chunk trips the budget, report it and do not raise the budget.
 
-- [ ] 9. Part B: Simulated_Mode on `/demo/live`
+- [x] 9. Part B: Simulated_Mode on `/demo/live`
   - Agent: `frontend-dev` · Depends on: 7, 8 · Estimated size: L, ~1,300 changed lines plus goldens
   - Follow 'Rules for every task' in tasks.md.
   - Scope: `src/components/live/SealPage.tsx`, `WriteForm.tsx`, `seal-step/SealStep.tsx`, `seal-step/SealSteps.tsx`, `seal-step/seal-steps.ts`, `seal-step/press-status.ts`, `seal-step/seal-button.ts`, `seal-step/simulated-copy.ts` (new), `seal-step/simulated-mode.ts` (new), `seal-step/seal-step.module.css`, `BackupChoice.tsx`, `SealLinks.tsx`, `SealFailure.tsx`, `LiveWaitStep.tsx`, `copy.ts`, `press/copy.ts`, `__golden__/seal-page-demo/**`, `SealPage.real.test.tsx` (export `PAIRS` only), the tests named below, `src/test/integration/simulated-walk.test.ts` (new). `LiveLetter.tsx`, `UnlockView.tsx`, `unlock.ts` and `src/app/l/**` do not change.
