@@ -138,6 +138,12 @@
 @media (min-width: 900px) {
   .receipts[data-receipts-layout="split"] {
     display: grid;
+    /* The split needs more room than the 34 rem content column
+       (--content-column-max, set by the Scene) that .receipts uses alone: two
+       280 px tracks and the gap already overflow it. Once the Ghost has left,
+       the split takes the width of its host up to 64 rem, so each track is
+       about 490 px at 1280 px and wider. */
+    max-inline-size: min(64rem, 100%);
     grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
     column-gap: 2.5rem;
     align-items: start;

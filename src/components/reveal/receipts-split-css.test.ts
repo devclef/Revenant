@@ -51,6 +51,10 @@ describe("receipts split CSS (R12.2)", () => {
     );
   });
 
+  it("lets the split use up to 64 rem of its host instead of the 34 rem content column", () => {
+    const body = blockOf(media, '.receipts[data-receipts-layout="split"]');
+    expect(body).toMatch(/max-inline-size:\s*min\(64rem,\s*100%\);/);
+  });
   it("keeps the receipts inline size, max inline size and inline margins", () => {
     const base = blockOf(css, ".receipts");
     expect(base).toMatch(/inline-size:\s*100%;/);

@@ -10,6 +10,7 @@ import {
   placementFailures,
   receiptsOrderFailures,
   splitColumnFailures,
+  splitWidthFailures,
   stickyFailures,
 } from "../../tools/qa/layout-check.mjs";
 
@@ -400,5 +401,42 @@ describe("row S20.long long letter column", () => {
     expect(longLetterFailures({ ...PASS, lastCharVisible: false })).toEqual([
       "S20.long the last character of the letter is not in view after End",
     ]);
+  });
+});
+
+describe("row S20.w split width", () => {
+  const ok = {
+    split: true,
+    record: { left: 208, right: 700 },
+    letter: { left: 740, right: 1232 },
+    intrusions: [],
+    heading: { scrollWidth: 442, clientWidth: 442, left: 233, right: 675 },
+    card: { left: 208, right: 700 },
+  };
+  it("passes two 492 px columns with the heading inside its card", () => {
+    expect(splitWidthFailures(ok)).toEqual([]);
+  });
+  it("fails the 280 px columns and the heading that ran out of its card", () => {
+    const out = splitWidthFailures({
+      ...ok,
+      record: { left: 448, right: 728 },
+      letter: { left: 768, right: 1048 },
+      intrusions: [{ label: 'h2[data-close-line] "What you remembered"', right: 805 }],
+      heading: { scrollWidth: 332, clientWidth: 332, left: 473, right: 805 },
+      card: { left: 448, right: 728 },
+    });
+    expect(out).toEqual([
+      "S20.w the record column is 280 px, want at least 420 px",
+      "S20.w the letter column is 280 px, want at least 420 px",
+      'S20.w h2[data-close-line] "What you remembered" ends at 805 px, inside the letter column from 768 px',
+      "S20.w the end-card heading spans 473..805 px, outside its card 448..728 px",
+    ]);
+  });
+  it("fails a heading whose text is wider than its box", () => {
+    const out = splitWidthFailures({ ...ok, heading: { ...ok.heading, scrollWidth: 460 } });
+    expect(out).toEqual(["S20.w the end-card heading scrollWidth 460 px is more than its clientWidth 442 px"]);
+  });
+  it("reports a receipts screen without the split", () => {
+    expect(splitWidthFailures({ ...ok, split: false })).toEqual(['S20.w no [data-receipts-layout="split"] on the receipts']);
   });
 });
