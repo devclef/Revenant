@@ -500,6 +500,7 @@ The write-up links only the first run. The nine later failed runs have no issue 
 ## Where this report goes
 
 This report is copied into the body of the commit that adds this section. The dispatcher copies commit message bodies into the pull request description, so the report reaches reviewers through the PR. `docs/kiro-writeup.md` is not changed by this report. The stale facts above (SHA `4b71564`, the 206 merged pull request count and the status line) are recorded as found and are not corrected here.
+
 ## Spec 20 final verification
 
 Main SHA: `b0ad426aa5a25eb7d08624ab90a9ce91479c8b62` (`git rev-parse origin/main`). The worktree HEAD is `1fcf75eb127773bbd306c1e37ff5f0cc601e21cc`.
@@ -564,7 +565,7 @@ Baseline for the diffs: `c2bf2db8`. Each check below was run from the worktree r
   - Command: `git diff -U0 c2bf2db8 HEAD -- '*.test.ts' '*.test.tsx' src/test, matched on describe/it/test .skip/.only/.todo and .only/.todo`
   - Expected: 0 added modifiers
   - Observed: 0 added modifiers. Runtime ctx.skip() lines added (count and file):       1 src/test/integration/backup-only-walk.test.ts       1 src/test/integration/simulated-walk.test.ts
-  - Result: PASS
+  - Result: PASS for the modifier scan. The two runtime ctx.skip() lines are flagged for owner review, not PASS: `src/test/integration/backup-only-walk.test.ts:245` and `src/test/integration/simulated-walk.test.ts:238`.
 
 - **Step 6 walk report, task 2**
   - Command: `git log -1 --format='%h %s' af2aa7ad and the commit body`
