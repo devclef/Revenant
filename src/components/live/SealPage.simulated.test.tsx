@@ -12,14 +12,29 @@
 
 import { createElement } from "react";
 import { renderToStaticMarkup } from "react-dom/server";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 
 import { LIVE_COPY, REAL_COPY } from "./copy";
+import type { PrepareResult, SealApi, SealPostResult } from "./api";
+import type { CryptoModule } from "./crypto-module";
 import { PRESS_COPY } from "./press/copy";
 import type { SealedState } from "./SealedView";
 import { SealFailure } from "./SealFailure";
+import {
+  pressConfirm,
+  pressCreate,
+  sealWithPasskey,
+  type AuthenticatorPort,
+  type Created,
+  type SealDeps,
+  type SealDraft,
+  type SealOutcome,
+} from "./seal-runner";
+import { catalogueMetric, makeFigures } from "./test-figures";
 import { LiveWaitStep } from "./stepper/LiveWaitStep";
 import { SealStep, type SealStepProps, type SimulateControl } from "./seal-step/SealStep";
+import { createFakeAuthenticator } from "@/lib/crypto/testing/fake-authenticator";
+import { encodeBase64url } from "@/lib/seal-format";
 
 const SAMPLE_KEY = "0B61-AQN7-Y4X4-736P-3XMB-3YR4-9P7";
 
@@ -253,5 +268,201 @@ describe("Wait step of a Simulated_Letter (Requirement 12.6, 12.7)", () => {
 
   it("keeps the real-mode line out of the simulated Wait step", () => {
     expect(renderWait()).not.toContain(REAL_COPY.stillSealed);
+  });
+});
+
+/**
+ * Counting-factory checks (spec 20, Part B). SealPage calls the crypto module's
+ * createSimulatedPort, and these tests replace it with a counting spy. The
+ * checks drive the seal runner with the port the factory returns.
+ *
+ * Two of the ticket's checks need a mounted page: the factory count after the
+ * mode is switched off and on, and the press being blocked until the factory
+ * resolves. Both depend on React effects and clicks. This test environment is
+ * Node with no DOM, so they are not checked here. The browser walk in
+ * src/test/integration/simulated-walk.test.ts covers the page behaviour.
+ */
+
+const COUNT_T0 = Date.parse("2026-11-02T10:00:00.000Z");
+
+const COUNT_PREPARED: PrepareResult = {
+  ok: true,
+  letterId: encodeBase64url(new Uint8Array(16)),
+  serverSecret: encodeBase64url(new Uint8Array(32)),
+  serverNow: "2026-11-02T10:00:00.000Z",
+};
+
+function countingDraft(): SealDraft {
+  return {
+    text: "A short note.",
+    metricIds: ["us-gasoline-regular"],
+    figures: makeFigures([
+      {
+        metric: catalogueMetric("us-gasoline-regular"),
+        figures: [{ period: "2026-10-26", value: "3.412" }],
+      },
+    ]),
+  };
+}
+
+/** A recording route pair: records each route name and the keys of each seal body. */
+function recordingApi() {
+  const routes: string[] = [];
+  const bodyKeys: string[][] = [];
+  const envelopes: unknown[] = [];
+  const api: SealApi = {
+    prepare: async () => {
+      routes.push("prepare");
+      return COUNT_PREPARED;
+    },
+    seal: async (body): Promise<SealPostResult> => {
+      routes.push("seal");
+      bodyKeys.push(Object.keys(body).sort());
+      envelopes.push(body.envelope);
+      return {
+        ok: true,
+        letterId: body.letterId,
+        sealedAt: "2026-11-02T10:00:00.000Z",
+        opensAt: "2026-11-02T10:00:30.000Z",
+        envelopeHash: body.envelopeHash,
+      };
+    },
+  };
+  return { api, routes, bodyKeys, envelopes };
+}
+
+interface CountedSeal {
+  outcome: SealOutcome;
+  created: Created;
+  routes: string[];
+  bodyKeys: string[][];
+  envelopes: unknown[];
+}
+
+/** One seal with both passkey presses, and a backup wrap, through the given port. */
+async function sealThrough(
+  port: AuthenticatorPort,
+  cryptoModule: CryptoModule,
+  backupKey: Parameters<typeof sealWithPasskey>[1]["backupKey"],
+): Promise<CountedSeal> {
+  const rec = recordingApi();
+  const deps: SealDeps = {
+    crypto: cryptoModule,
+    port,
+    api: rec.api,
+    rpId: "localhost",
+    now: () => COUNT_T0,
+  };
+  const create = await pressCreate(deps);
+  if (!create.ok) throw new Error(`create did not pass: ${create.event.type}`);
+  const confirm = await pressConfirm(deps, create.created);
+  if (!confirm.ok) throw new Error(`confirm did not pass: ${confirm.event.type}`);
+  const outcome = await sealWithPasskey(deps, {
+    draft: countingDraft(),
+    confirmed: confirm.confirmed,
+    backupKey,
+  });
+  return {
+    outcome,
+    created: create.created,
+    routes: rec.routes,
+    bodyKeys: rec.bodyKeys,
+    envelopes: rec.envelopes,
+  };
+}
+
+/** The wrap factor names in a sealed envelope header, sorted. */
+function wrapFactors(envelope: unknown): string[] {
+  const header = envelope as { wrappedDeks: { factor: string }[] };
+  return header.wrappedDeks.map((wrap) => wrap.factor).sort();
+}
+
+function portCreateOptions(prfSalt: Uint8Array) {
+  return {
+    rpId: "localhost",
+    rpName: "Revenant",
+    userId: new Uint8Array(16),
+    userName: "counting-check",
+    userDisplayName: "counting-check",
+    challenge: new Uint8Array(32),
+    pubKeyCredParams: [{ type: "public-key" as const, alg: -7 }],
+    residentKey: "required" as const,
+    userVerification: "required" as const,
+    attestation: "none" as const,
+    prfSalt,
+    timeoutMs: 1000,
+  };
+}
+
+describe("Counting factory on the Simulated_Port (Requirement 11, 12)", () => {
+  it("a seal through the simulated port has the same routes and body keys as the test fake port, with both wraps", async () => {
+    const crypto = await import("@/lib/crypto");
+    const factory = vi.fn(crypto.createSimulatedPort);
+    const cryptoModule = { ...crypto, createSimulatedPort: factory } as unknown as CryptoModule;
+
+    const simPort = await cryptoModule.createSimulatedPort();
+    const backupKey = crypto.generateBackupKey();
+    const simulated = await sealThrough(simPort, cryptoModule, backupKey);
+    const fake = await sealThrough(createFakeAuthenticator(), cryptoModule, backupKey);
+
+    expect(simulated.outcome.ok).toBe(true);
+    expect(fake.outcome.ok).toBe(true);
+    expect(simulated.routes).toEqual(["prepare", "seal"]);
+    expect(simulated.routes).toEqual(fake.routes);
+    expect(simulated.bodyKeys).toEqual(fake.bodyKeys);
+    expect(wrapFactors(simulated.envelopes[0])).toEqual(["backup", "passkey"]);
+    if (!simulated.outcome.ok) throw new Error("unreachable");
+    expect(simulated.outcome.event.factors).toBe("both");
+    expect(factory).toHaveBeenCalledTimes(1);
+  });
+
+  it("two factory calls give different PRF results for one salt", async () => {
+    const crypto = await import("@/lib/crypto");
+    const factory = vi.fn(crypto.createSimulatedPort);
+    const first = await factory();
+    const second = await factory();
+    expect(factory).toHaveBeenCalledTimes(2);
+
+    const salt = new Uint8Array(32).fill(7);
+    const a = await first.create(portCreateOptions(salt));
+    const b = await second.create(portCreateOptions(salt));
+    expect(a.prfResult).not.toBeNull();
+    expect(b.prfResult).not.toBeNull();
+    expect(a.prfResult).not.toEqual(b.prfResult);
+  });
+
+  it("a seal then an in-page unlock makes 1 create and 2 gets on the Simulated_Port, and none on the browser port", async () => {
+    const crypto = await import("@/lib/crypto");
+    const factory = vi.fn(crypto.createSimulatedPort);
+    const cryptoModule = { ...crypto, createSimulatedPort: factory } as unknown as CryptoModule;
+
+    const inner = await cryptoModule.createSimulatedPort();
+    const counts = { create: 0, get: 0 };
+    const counted: AuthenticatorPort = {
+      isAvailable: () => inner.isAvailable(),
+      create: (options) => {
+        counts.create += 1;
+        return inner.create(options);
+      },
+      get: (options) => {
+        counts.get += 1;
+        return inner.get(options);
+      },
+    };
+    const browser = createFakeAuthenticator();
+
+    const sealed = await sealThrough(counted, cryptoModule, crypto.generateBackupKey());
+    expect(sealed.outcome.ok).toBe(true);
+
+    const unlock = await crypto.assertPasskey(counted, {
+      rpId: "localhost",
+      credentialId: sealed.created.credentialId,
+      prfSalt: sealed.created.prfSalt,
+      pageHostname: "localhost",
+    });
+    expect(unlock.ok).toBe(true);
+
+    expect(counts).toEqual({ create: 1, get: 2 });
+    expect(browser.calls.length).toBe(0);
   });
 });
