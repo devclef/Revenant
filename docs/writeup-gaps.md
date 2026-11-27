@@ -500,3 +500,104 @@ The write-up links only the first run. The nine later failed runs have no issue 
 ## Where this report goes
 
 This report is copied into the body of the commit that adds this section. The dispatcher copies commit message bodies into the pull request description, so the report reaches reviewers through the PR. `docs/kiro-writeup.md` is not changed by this report. The stale facts above (SHA `4b71564`, the 206 merged pull request count and the status line) are recorded as found and are not corrected here.
+
+## Spec 20 final verification
+
+Main SHA: `b0ad426aa5a25eb7d08624ab90a9ce91479c8b62` (`git rev-parse origin/main`). The worktree HEAD is `1fcf75eb127773bbd306c1e37ff5f0cc601e21cc`.
+
+Baseline for the diffs: `c2bf2db8`. Each check below was run from the worktree root. Results are copied from the captured output of the command named in each row.
+
+- **Step 1a unit suite**
+  - Command: `npx vitest run src/components src/lib src/app`
+  - Expected: exit 0, no failing test
+  - Observed: exit 0;  Test Files 676 passed | 1 skipped (677)  Tests 8899 passed | 14 skipped (8913)
+  - Result: PASS
+
+- **Step 1b full gate**
+  - Command: `LAYOUT_CHECK=1 bash scripts/check.sh`
+  - Expected: exit 0
+  - Observed: exit 1;  Test Files 704 passed | 13 skipped (717)  Tests 9291 passed | 140 skipped (9431) DATABASE_URL is not set. Define it in the environment before running migrations. layout-gate: migrations exited with 1
+  - Result: FAIL
+
+- **Step 2a goldens**
+  - Command: `npx vitest run SealPage.demo-golden.test.tsx seal-draft.golden.test.tsx (no RECORD_GOLDEN)`
+  - Expected: exit 0, both files pass
+  - Observed: exit 0;  Test Files 2 passed (2)  Tests 26 passed (26)
+  - Result: PASS
+
+- **Step 2b golden directory diff**
+  - Command: `git diff --name-only c2bf2db8 HEAD -- src/components/live/__golden__/seal-draft/`
+  - Expected: 0 files
+  - Observed: 0 files
+  - Result: PASS
+
+- **Step 3a protected paths**
+  - Command: `git diff --name-status c2bf2db8 HEAD -- src/app/api src/lib/seal-format src/lib/letter-store src/lib/db drizzle deploy/helm .env.example package-lock.json`
+  - Expected: 0 entries
+  - Observed: 0 entries
+  - Result: PASS
+
+- **Step 3b package.json**
+  - Command: `git diff --name-status c2bf2db8 HEAD -- package.json`
+  - Expected: 0 entries (no dependencies or devDependencies change)
+  - Observed: 0 entries
+  - Result: PASS
+
+- **Step 3c crypto**
+  - Command: `git diff --name-status c2bf2db8 HEAD -- src/lib/crypto; git diff c2bf2db8 HEAD -- src/lib/crypto/index.ts`
+  - Expected: only A entries plus one M src/lib/crypto/index.ts, with 0 removed lines
+  - Observed: M	src/lib/crypto/index.ts;A	src/lib/crypto/simulated-port.property.test.ts;A	src/lib/crypto/simulated-port.scan.test.ts;A	src/lib/crypto/simulated-port.test.ts;A	src/lib/crypto/simulated-port.ts ; entries outside that set: 0 ; removed lines in index.ts: 0
+  - Result: PASS
+
+- **Step 3d live and unlock paths**
+  - Command: `git diff --name-status c2bf2db8 HEAD -- src/components/live/LiveLetter.tsx src/components/live/UnlockView.tsx src/components/live/unlock.ts src/app/l`
+  - Expected: 0 entries
+  - Observed: 0 entries
+  - Result: PASS
+
+- **Step 4 env names**
+  - Command: `process.env names in non-test files under src and scripts, at c2bf2db8 and HEAD`
+  - Expected: the two sets are equal
+  - Observed: exit 0 from diff; 8 names at c2bf2db8, 8 at HEAD: APP_ORIGIN APP_VERSION CHROMIUM_PATH CI DATABASE_URL FIGURES_SOURCE REAL_SEALING RP_ID
+  - Result: PASS
+
+- **Step 5 skip, only and todo**
+  - Command: `git diff -U0 c2bf2db8 HEAD -- '*.test.ts' '*.test.tsx' src/test, matched on describe/it/test .skip/.only/.todo and .only/.todo`
+  - Expected: 0 added modifiers
+  - Observed: 0 added modifiers. Runtime ctx.skip() lines added (count and file):       1 src/test/integration/backup-only-walk.test.ts       1 src/test/integration/simulated-walk.test.ts
+  - Result: PASS for the modifier scan. The two runtime ctx.skip() lines are flagged for owner review, not PASS: `src/test/integration/backup-only-walk.test.ts:245` and `src/test/integration/simulated-walk.test.ts:238`.
+
+- **Step 6 walk report, task 2**
+  - Command: `git log -1 --format='%h %s' af2aa7ad and the commit body`
+  - Expected: a body that lists every check with route, viewport, expected and observed result
+  - Observed: commit af2aa7ad [frontend-dev] Part C: Seal_Button, `activate()`, the Press_Status_Line and the press copy (#703); body lines with PASS: 12; lines naming expected: 12; lines naming observed: 12; lines naming a viewport: 13
+  - Result: PASS
+
+- **Step 6 walk report, task 5**
+  - Command: `git log -1 --format='%h %s' 508540f1 and the commit body`
+  - Expected: a body that lists every check with route, viewport, expected and observed result
+  - Observed: commit 508540f1 [platform-dev] Part D: docs, Layout_Check cleanup and the receipts walk (#705); body lines with PASS: 3; lines naming expected: 0; lines naming observed: 0; lines naming a viewport: 10
+  - Result: FAIL
+
+- **Step 6 walk report, task 7**
+  - Command: `git log -1 --format='%h %s' be26a9ab and the commit body`
+  - Expected: a body that lists every check with route, viewport, expected and observed result
+  - Observed: commit be26a9ab [frontend-dev] Part A: Backup_Only_Start on the Seal_Step, BackupFallback origin and focus (#706); body lines with PASS: 0; lines naming expected: 0; lines naming observed: 0; lines naming a viewport: 1
+  - Result: FAIL
+
+- **Step 6 walk report, task 9**
+  - Command: `git log -1 --format='%h %s' 864d6bee and the commit body`
+  - Expected: a body that lists every check with route, viewport, expected and observed result
+  - Observed: commit 864d6bee [frontend-dev] Part B: Simulated_Mode on `/demo/live` (#707); body lines with PASS: 9; lines naming expected: 0; lines naming observed: 0; lines naming a viewport: 1
+  - Result: FAIL
+
+### Notes on the record
+
+These notes are not results. No fix was made in this task.
+
+- Full gate, first run. Before the recorded run above, the same command exited 1 on one failing unit test: `src/lib/layout-baseline-cache.test.ts`, "resolveBaseline waits for a build in progress", AssertionError at line 103. That file passed in the unit suite row above. The failure looks timing-dependent. It was not investigated.
+- Full gate, recorded run. The gate stopped at the layout-gate migration step because `DATABASE_URL` is not set in this sandbox. The layout check and its walks did not run. This record does not claim that `scripts/check.sh` passed.
+- Task 5 walk. The Part D walk record is `tools/qa/part-d-walk-record.txt`, committed in 508540f1. The file lists each reading with its threshold, and its own result is FAIL: 29 blockers, 139 steps not reached, 163 polish items and 867 PASS. The commit body gives blocker counts by viewport but no per-check expected and observed values.
+- Task 7 walk. The body of be26a9ab says the walk has not been run against a live build.
+- Task 9 walk. The body of 864d6bee gives a PASS line per check, with no route, viewport, expected or observed value on each line.
+- HEAD. The worktree HEAD `1fcf75eb` is an empty record commit from an earlier step of this task. It is one commit ahead of `origin/main`. The commit that adds this section sits on top of it.

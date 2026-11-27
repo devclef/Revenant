@@ -85,12 +85,16 @@ describe("resolveBaseline waits for a build in progress", () => {
       writeFileSync(join(cache, ".lock", "owner"), `${process.pid} ${(await import("node:os")).hostname()} ${commit}\n`);
       writeFileSync(join(cache, ".lock", "stage"), "npm run build\n");
       expect(liveBuild(cache)?.stage).toBe("npm run build");
-      setTimeout(() => writeFileSync(where.file, validFile()), 300);
+      // The build "finishes" only after the first progress line has been logged, so the
+      // ordering does not depend on how fast the timers fire under load.
       const lines: string[] = [];
       const got = await resolveBaseline({
         base: commit,
         cwd: repo,
-        log: (t: string) => lines.push(t),
+        log: (t: string) => {
+          lines.push(t);
+          if (/still building/.test(t)) writeFileSync(where.file, validFile());
+        },
         spawnBuilder: () => {
           throw new Error("must not start a second build");
         },
