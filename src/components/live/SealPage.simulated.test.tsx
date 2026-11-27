@@ -33,7 +33,6 @@ import {
 import { catalogueMetric, makeFigures } from "./test-figures";
 import { LiveWaitStep } from "./stepper/LiveWaitStep";
 import { SealStep, type SealStepProps, type SimulateControl } from "./seal-step/SealStep";
-import { createFakeAuthenticator } from "@/lib/crypto/testing/fake-authenticator";
 import { encodeBase64url } from "@/lib/seal-format";
 
 const SAMPLE_KEY = "0B61-AQN7-Y4X4-736P-3XMB-3YR4-9P7";
@@ -400,6 +399,7 @@ describe("Counting factory on the Simulated_Port (Requirement 11, 12)", () => {
     const factory = vi.fn(crypto.createSimulatedPort);
     const cryptoModule = { ...crypto, createSimulatedPort: factory } as unknown as CryptoModule;
 
+    const { createFakeAuthenticator } = await import("@/lib/crypto/testing/fake-authenticator");
     const simPort = await cryptoModule.createSimulatedPort();
     const backupKey = crypto.generateBackupKey();
     const simulated = await sealThrough(simPort, cryptoModule, backupKey);
@@ -449,6 +449,7 @@ describe("Counting factory on the Simulated_Port (Requirement 11, 12)", () => {
         return inner.get(options);
       },
     };
+    const { createFakeAuthenticator } = await import("@/lib/crypto/testing/fake-authenticator");
     const browser = createFakeAuthenticator();
 
     const sealed = await sealThrough(counted, cryptoModule, crypto.generateBackupKey());
