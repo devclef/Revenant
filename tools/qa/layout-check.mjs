@@ -212,6 +212,11 @@
 //   S20.g figure-accent      no figure text is drawn in --accent.
 //   S20.long long-letter     the letter column has tabindex 0, End scrolls it, and the last
 //                            character comes into view.
+//   S20.w split-width        Maya's receipts at 1280x800, 1440x900 and 1920x1080, scrolled to the end:
+//                            the record column and the letter column are each at least 420 px wide,
+//                            no element of the record column reaches into the letter column, and the
+//                            end-card heading fits its card (scrollWidth <= clientWidth, box inside
+//                            the card). Runs once, with the first spec 16 size.
 //
 // FR1   script-focus-outline  (GitHub issue #577, tools/qa/layout-rules-17.mjs) at 1440x900 and 390x844,
 //                            on every step the walk shoots: a script-focused non-control draws no
@@ -472,7 +477,7 @@ const FOCUS_SETTLE_MS = 1000;
 // (receiptsOrderFailures and splitColumnFailures).
 const SPEC15_CHECKS = ["NB1", "GC1", "DL1", "PV1", "R10.1", "R10.6", "R14.3", "R5.4"];
 // Spec 20 Part D readings (see the header). They block on any failure, like the spec 15 rows.
-const S20_CHECKS = ["S20.c", "S20.d", "S20.e", "S20.f", "S20.f-reduced", "S20.g", "S20.long"];
+const S20_CHECKS = ["S20.c", "S20.d", "S20.e", "S20.f", "S20.f-reduced", "S20.g", "S20.long", "S20.w"];
 const GC1_CENTRE_TOL_PX = 8;
 // The text of the Top_Bar's Demo chip (scene/copy.ts) and of the DemoLabel (demo/copy.ts).
 const SPEC15_DEMO_LABEL = "Demo";
@@ -4896,6 +4901,38 @@ export function longLetterFailures({ tabindex, overflowing, scrolledBy, lastChar
   return out;
 }
 
+const S20_SPLIT_SIZES = ["1280x800", "1440x900", "1920x1080"];
+const S20_SPLIT_MIN_PX = 420;
+/**
+ * S20.w: on the persona receipts at 1280 px and wider, each column is at least 420 px wide, no
+ * record element reaches into the letter column, and the end-card heading fits its card.
+ * Boxes are { left, right } in px; `intrusions` lists record elements whose right edge passes the
+ * letter column's left edge, each { label, right }.
+ * @param {{ split: boolean, record: { left: number, right: number } | null, letter: { left: number, right: number } | null, intrusions: { label: string, right: number }[], heading: { scrollWidth: number, clientWidth: number, left: number, right: number } | null, card: { left: number, right: number } | null }} args
+ */
+export function splitWidthFailures({ split, record, letter, intrusions, heading, card }) {
+  if (!split) return ['S20.w no [data-receipts-layout="split"] on the receipts'];
+  if (!record || !letter) return ["S20.w no record or letter column to measure"];
+  const out = [];
+  for (const [name, box] of [["record", record], ["letter", letter]]) {
+    const width = Math.round(box.right - box.left);
+    if (width < S20_SPLIT_MIN_PX) out.push(`S20.w the ${name} column is ${width} px, want at least ${S20_SPLIT_MIN_PX} px`);
+  }
+  for (const i of intrusions) {
+    out.push(`S20.w ${i.label} ends at ${Math.round(i.right)} px, inside the letter column from ${Math.round(letter.left)} px`);
+  }
+  if (!heading || !card) {
+    out.push("S20.w no end-card heading ([data-close-line]) to measure");
+    return out;
+  }
+  if (heading.scrollWidth > heading.clientWidth) {
+    out.push(`S20.w the end-card heading scrollWidth ${heading.scrollWidth} px is more than its clientWidth ${heading.clientWidth} px`);
+  }
+  if (heading.left < card.left - S20_TOL_PX || heading.right > card.right + S20_TOL_PX) {
+    out.push(`S20.w the end-card heading spans ${Math.round(heading.left)}..${Math.round(heading.right)} px, outside its card ${Math.round(card.left)}..${Math.round(card.right)} px`);
+  }
+  return out;
+}
 /** 14.3 (6.3): the lost-passkey warning is unfolded, inside the viewport and above the wax. */
 export function passkeyWarningFailures({ unfolded, top, bottom, waxTop, viewportH }) {
   const out = [];
@@ -6530,6 +6567,81 @@ async function s20LongLetter(page, ctx, r) {
   }), `${LIVE_PATH} ${S20_LONG_SIZE} letter=${S20_LONG_LENGTH} tabindex=${before.tabindex ?? "none"} overflowing=${before.overflowing} viewport=${ctx.size}`, "tabindex 0, the column scrolls by End, the last character in view"));
 }
 
+// S20.w read, after a scroll to the end. The record column is every receipts block other than the
+// letter (question pairs, figures, the seal line and the end card) and all their descendants.
+const S20_SPLIT_READ = () => {
+  const col = document.querySelector("[data-receipts]");
+  if (!col) return null;
+  const letterEl = col.querySelector("[data-letter-stage]");
+  const lb = letterEl ? letterEl.getBoundingClientRect() : null;
+  const letter = lb ? { left: lb.left, right: lb.right } : null;
+  const sels = ["[data-question-pair]", "[data-figure-entry]", "[data-seal-line]", "[data-end-card]"];
+  let left = Infinity;
+  let right = -Infinity;
+  const intrusions = [];
+  const label = (el) => {
+    const tag = el.tagName.toLowerCase();
+    const hook = [...el.attributes].find((a) => a.name.startsWith("data-"))?.name;
+    const text = (el.textContent ?? "").trim().replace(/\s+/g, " ").slice(0, 32);
+    return `${tag}${hook ? `[${hook}]` : ""} "${text}"`;
+  };
+  for (const block of col.querySelectorAll(sels.join(","))) {
+    if (letterEl && (letterEl.contains(block) || block.contains(letterEl))) continue;
+    const b = block.getBoundingClientRect();
+    if (b.width === 0) continue;
+    left = Math.min(left, b.left);
+    right = Math.max(right, b.right);
+    if (!letter) continue;
+    for (const el of [block, ...block.querySelectorAll("*")]) {
+      const r = el.getBoundingClientRect();
+      if (r.width > 0 && r.height > 0 && r.right > letter.left + 1 && r.left < letter.right) intrusions.push({ label: label(el), right: r.right });
+    }
+  }
+  const h = col.querySelector("[data-end-card] [data-close-line]");
+  const card = h ? h.parentElement : null;
+  const hb = h ? h.getBoundingClientRect() : null;
+  const cb = card ? card.getBoundingClientRect() : null;
+  return {
+    split: col.getAttribute("data-receipts-layout") === "split",
+    record: Number.isFinite(left) ? { left, right } : null,
+    letter,
+    intrusions: intrusions.slice(0, 5),
+    heading: h ? { scrollWidth: h.scrollWidth, clientWidth: h.clientWidth, left: hb.left, right: hb.right } : null,
+    card: cb ? { left: cb.left, right: cb.right } : null,
+  };
+};
+/** S20.w: Maya's receipts at each S20_SPLIT_SIZES size, reduced motion, scrolled to the end. */
+async function s20SplitRun(browser, base, rep, required) {
+  for (const size of S20_SPLIT_SIZES) {
+    const [w, h] = parseSize(size);
+    const context = await browser.newContext({ viewport: { width: w, height: h }, reducedMotion: "reduce" });
+    await context.addInitScript(S20_SPY);
+    const ctx = s16Ctx(rep, size, required, true);
+    rep.setContext(ctx);
+    rep.log(`\n==== ${size} (spec 20 split width) ====`);
+    ctx.rep.stage("us-maya receipts split width");
+    try {
+      const page = await newPage(context);
+      try {
+        const r = await s16PersonaReceipts(page, base);
+        if (!r) {
+          report(ctx, missingRow("S20.w", "split-width", `no [data-receipts] on ${PERSONA_PATH}`));
+          continue;
+        }
+        await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+        await sleep(400);
+        const d = await page.evaluate(S20_SPLIT_READ);
+        const cols = d && d.record && d.letter ? `record=${num(d.record.left, 0)}..${num(d.record.right, 0)} letter=${num(d.letter.left, 0)}..${num(d.letter.right, 0)}` : "no columns";
+        const head = d && d.heading ? `heading scroll=${d.heading.scrollWidth} client=${d.heading.clientWidth}` : "no heading";
+        report(ctx, verdictRow("S20.w", "split-width", d ? splitWidthFailures(d) : ["S20.w no [data-receipts] to read"], `${PERSONA_PATH} ${cols} ${head} viewport=${size}`, `each column at least ${S20_SPLIT_MIN_PX} px, no record element in the letter column, the end-card heading inside its card`));
+      } finally {
+        await page.close();
+      }
+    } finally {
+      await context.close();
+    }
+  }
+}
 /** The 1280x800 run with the 5,000-character letter: the live receipts, reduced motion. */
 async function s20LongRun(browser, base, rep, required) {
   const [w, h] = parseSize(S20_LONG_SIZE);
@@ -6627,6 +6739,11 @@ async function checkSpec16Rows(browser, base, size, rep, required, scope = {}) {
       // The long-letter run is 1280x800 whatever the size; it runs once, with the first size.
       if (calm && runs("live") && size === S16_SIZES[0]) {
         await guard(ctx, "S20.long", () => s20LongRun(browser, base, rep, required));
+        rep.setContext(ctx);
+      }
+      // The split-width run has its own sizes; it runs once, with the first size.
+      if (calm && runs("persona") && size === S16_SIZES[0]) {
+        await guard(ctx, "S20.w", () => s20SplitRun(browser, base, rep, required));
         rep.setContext(ctx);
       }
     } finally {

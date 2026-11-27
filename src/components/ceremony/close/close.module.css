@@ -23,12 +23,18 @@
   border: 1px solid var(--ink-soft);
   border-radius: 4px;
   color: var(--ink);
+  /* The heading is sized to this card (cqi), not to the viewport. */
+  container-type: inline-size;
 }
 
+/* 10cqi keeps the longest word (about 6.1 em at weight 900) inside the card's
+   content box at every width. On a phone 10cqi is under 2 rem, so the 2 rem
+   floor holds as before. The 2 rem line is the fallback without cqi. */
 .heading {
   margin: 0;
   font-weight: 900;
-  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-size: 2rem;
+  font-size: clamp(2rem, 10cqi, 3.4rem);
   line-height: 1.1;
   color: var(--ink);
 }
